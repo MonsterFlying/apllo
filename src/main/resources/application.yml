@@ -23,3 +23,8 @@ aliyun:
     onsAddr: http://onsaddr-internet.aliyun.com/rocketmq/nsaddr4client-internet
 server:
   port: 8080
+jwt:
+  header: Authorization
+  secret: WWW.gOf0b@o.c0m@0701
+  expiration: 2592000
+  prefix: Bearer

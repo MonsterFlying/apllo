@@ -3,9 +3,13 @@ package com.gofobao.framework.member.entity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 
 /**
@@ -74,5 +78,4 @@ public class Users implements Serializable{
     @Basic
     @Column(name = "updated_at")
     private Date updatedAt;
-
 }

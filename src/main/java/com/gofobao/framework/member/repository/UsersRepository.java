@@ -8,5 +8,5 @@ import org.springframework.stereotype.Repository;
  * Created by Max on 17/5/16.
  */
 @Repository
-public interface UserRepository extends JpaRepository<Users,Long>{
+public interface UsersRepository extends JpaRepository<Users,Long>{
 }
