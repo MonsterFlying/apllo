@@ -14,3 +14,12 @@ spring:
     properties:
       hibernate:
         dialect : org.hibernate.dialect.MySQL5Dialect
+
+
+aliyun:
+  keys: # 阿里云
+    accessKey: pcJnstgkn9RGgE3f
+    secretKey: iZayTXG25VF2uYNN6BxczNI4kc0y4s
+    onsAddr: http://onsaddr-internet.aliyun.com/rocketmq/nsaddr4client-internet
+server:
+  port: 8080

@@ -3,8 +3,10 @@ package com.gofobao.framework.member.entity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.sql.Timestamp;
 
 /**
@@ -15,10 +17,10 @@ import java.sql.Timestamp;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class users {
+public class Users implements Serializable {
     @Id
     @Column(name = "id")
-    private int id;
+    private Long id;
     @Basic
     @Column(name = "username")
     private String username;
