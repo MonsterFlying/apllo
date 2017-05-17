@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.Objects;
 
 /**
+ * JWT 用户
  * Created by Max on 2017/5/17.
  */
 @Data

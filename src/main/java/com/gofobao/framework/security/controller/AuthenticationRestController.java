@@ -1,8 +1,12 @@
 package com.gofobao.framework.security.controller;
 
+import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.repository.UsersRepository;
+import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.vo.VoBasicUserInfo;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.gofobao.framework.security.vo.VoLoginReq;
+import com.sun.tools.internal.xjc.reader.xmlschema.bindinfo.BIConversion;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -10,14 +14,14 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * 权限验证模块
@@ -39,10 +43,10 @@ public class AuthenticationRestController {
     private JwtTokenHelper jwtTokenHelper;
 
     @Autowired
-    private UserDetailsService userDetailsService;
+    private UserService userService;
 
-    public ResponseEntity<?> login(HttpServletResponse response, @RequestBody VoLoginReq voLoginReq){
-
+    @PostMapping("/login")
+    public ResponseEntity<VoBasicUserInfo> login(HttpServletResponse response, @ModelAttribute VoLoginReq voLoginReq){
         // Perform the security
         final Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -53,11 +57,24 @@ public class AuthenticationRestController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // Reload password post-security so we can generate token
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(voLoginReq.getAccount());
-        final String token = jwtTokenHelper.generateToken(userDetails, voLoginReq.getSource());
+        Users where = new Users() ;
+        where.setEmail(voLoginReq.getAccount()) ;
+        where.setPhone(voLoginReq.getAccount()) ;
+        where.setUsername(voLoginReq.getAccount());
+        final List<Users> users = userService.listUser(where) ;
+
+        if(CollectionUtils.isEmpty(users)){
+            return ResponseEntity.badRequest().body(null);
+        }
+
+        Users user = users.get(0);
+        final String token = jwtTokenHelper.generateToken(user, voLoginReq.getSource());
         response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
         // Return the token
-        return ResponseEntity.ok(new VoBasicUserInfo());
+        VoBasicUserInfo voBasicUserInfo = new VoBasicUserInfo();
+        voBasicUserInfo.setEmail(user.getEmail());
+        voBasicUserInfo.setPhone(user.getPhone());
+        return ResponseEntity.ok(voBasicUserInfo);
     }
 
 }

@@ -1,5 +1,6 @@
 package com.gofobao.framework.security.helper;
 
+import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.security.entity.JwtUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -21,6 +22,7 @@ public class JwtTokenHelper implements Serializable {
     static final String CLAIM_KEY_USERNAME = "sub";
     static final String CLAIM_KEY_AUDIENCE = "audience";
     static final String CLAIM_KEY_CREATED = "created";
+    static final String CLAIM_KEY_ID = "id" ;
 
     private static final String AUDIENCE_UNKNOWN = "unknown";
     private static final String AUDIENCE_PC = "PC";
@@ -124,9 +126,10 @@ public class JwtTokenHelper implements Serializable {
         return (AUDIENCE_H5.equals(audience) || AUDIENCE_IOS.equals(audience) || AUDIENCE_ANDROID.equals(audience) || AUDIENCE_PC.equals(audience));
     }
 
-    public String generateToken(UserDetails userDetails, int source) {
+    public String generateToken(Users user, int source) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put(CLAIM_KEY_USERNAME, userDetails.getUsername());
+        claims.put(CLAIM_KEY_USERNAME, user.getUsername());
+        claims.put(CLAIM_KEY_ID, user.getId()) ;
         claims.put(CLAIM_KEY_AUDIENCE, generateAudience(source));
         claims.put(CLAIM_KEY_CREATED, new Date());
         return generateToken(claims);

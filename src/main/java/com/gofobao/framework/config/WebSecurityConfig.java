@@ -2,6 +2,7 @@ package com.gofobao.framework.config;
 
 import com.gofobao.framework.security.JwtAuthenticationEntryPoint;
 import com.gofobao.framework.security.JwtAuthenticationTokenFilter;
+import com.gofobao.framework.security.vo.ApolloPasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,7 +42,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new ApolloPasswordEncoder();
     }
 
     @Bean
