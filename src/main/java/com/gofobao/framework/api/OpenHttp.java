@@ -19,7 +19,7 @@ public class OpenHttp {
 
     private static final Gson gson = new GsonBuilder().create();
 
-    @Value("${jixin.testDomain}")
+    @Value("${jixin.domain}")
     private String testDomain;
 
     /**
