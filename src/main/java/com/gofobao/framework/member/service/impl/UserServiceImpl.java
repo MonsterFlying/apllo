@@ -26,7 +26,7 @@ import java.util.Optional;
  */
 @Service
 @Slf4j
-public class UserServiceImpl implements UserDetailsService, UserService{
+public class UserServiceImpl implements UserDetailsService, UserService {
 
     @Autowired
     private UsersRepository userRepository;
@@ -45,18 +45,24 @@ public class UserServiceImpl implements UserDetailsService, UserService{
 
     @Override
     public List<Users> listUser(Users users) {
-        Example<Users> usersExample = Example.of(users) ;
-        List<Users> usersList =  userRepository.findAll(usersExample) ;
-        return Optional.ofNullable(usersList).orElse(Collections.EMPTY_LIST) ;
+        Example<Users> usersExample = Example.of(users);
+        List<Users> usersList = userRepository.findAll(usersExample);
+        return Optional.ofNullable(usersList).orElse(Collections.EMPTY_LIST);
     }
 
     @Override
     public Users findByAccount(String account) {
-        List<Users> usersList = userRepository.findByUsernameOrPhoneOrEmail(account, account, account) ;
+        List<Users> usersList = userRepository.findByUsernameOrPhoneOrEmail(account, account, account);
 
-        if(!CollectionUtils.isEmpty(usersList)){
-            return usersList.get(0) ;
+        if (!CollectionUtils.isEmpty(usersList)) {
+            return usersList.get(0);
         }
         return null;
+    }
+
+    @Override
+    public boolean phoneIsOnly(String phone) {
+        List<Users> usersList = userRepository.findByPhone(phone);
+        return CollectionUtils.isEmpty(usersList);
     }
 }

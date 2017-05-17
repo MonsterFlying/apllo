@@ -1,5 +1,9 @@
 package com.gofobao.framework.message.biz.impl;
 
+import com.aliyun.openservices.ons.api.Message;
+import com.aliyun.openservices.ons.api.SendResult;
+import com.aliyun.openservices.ons.api.bean.ConsumerBean;
+import com.aliyun.openservices.ons.api.bean.ProducerBean;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.CaptchaHelper;
 import com.gofobao.framework.member.service.UserService;
@@ -23,14 +27,26 @@ public class MessageBizImpl implements MessageBiz {
     @Autowired
     CaptchaHelper captchaHelper ;
 
+    @Autowired
+    ProducerBean smsProducerBean ;
+
     @Override
     public ResponseEntity<VoBaseResp> sendRegisterCode(ServletRequest request, VoSmsReq voSmsReq) {
         // 验证短信用户是否
         boolean match = captchaHelper.match(voSmsReq.getPhone(), voSmsReq.getCaptcha());
         if(!match){
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "图形验证码错误，请重新提交"));
         }
 
-        return null;
+        // 查询用户是否唯一
+        boolean only = userService.phoneIsOnly(voSmsReq.getPhone()) ;
+
+        if(!only){
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "手机号已经注册"));
+        }
+        Message message = new Message() ;
+        SendResult send = smsProducerBean.send(message) ;
+        // 调用MQ 发送注册短信
+        return ResponseEntity.ok(VoBaseResp.ok("短信发送成功"));
     }
 }

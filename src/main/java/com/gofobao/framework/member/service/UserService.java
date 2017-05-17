@@ -12,4 +12,11 @@ public interface UserService {
     List<Users> listUser(Users users) ;
 
     Users findByAccount(String account) ;
+
+    /**
+     * 判断手机是否唯一
+     * @param phone 手机唯一
+     * @return
+     */
+    boolean phoneIsOnly(String phone);
 }
