@@ -11,8 +11,6 @@ import lombok.NoArgsConstructor;
  * Created by Max on 17/5/17.
  */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 @ApiModel
 public class VoSmsReq extends VoBaseReq{
     @ApiModelProperty(name = "手机号码", required = true, dataType = "String" )

@@ -24,7 +24,7 @@ import java.util.Optional;
  * 用户实体类
  * Created by Max on 20.03.16.
  */
-@Service
+@Service("userService")
 @Slf4j
 public class UserServiceImpl implements UserDetailsService, UserService{
 

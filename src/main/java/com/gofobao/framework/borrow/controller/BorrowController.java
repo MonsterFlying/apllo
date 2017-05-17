@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +25,7 @@ public class BorrowController {
     private BorrowService borrowService;
 
     @PostMapping("/list")
-    public List<VoViewBorrowListRes> borrowList(@RequestBody VoBorrowListReq voBorrowListReq) {
+    public List<VoViewBorrowListRes> borrowList(HttpServletRequest request, @RequestBody VoBorrowListReq voBorrowListReq) {
         List<VoViewBorrowListRes> listResList = new ArrayList<>();
         try {
             listResList = borrowService.findAll(voBorrowListReq);

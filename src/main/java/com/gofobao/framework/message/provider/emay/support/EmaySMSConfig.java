@@ -1,6 +1,7 @@
 package com.gofobao.framework.message.provider.emay.support;
 
-import com.gofobao.common.sms.AbstractSMSConfig;
+
+import com.gofobao.framework.message.provider.AbstractSMSConfig;
 
 /**
  * 亿美短信配置接口
