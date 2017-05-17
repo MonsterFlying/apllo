@@ -1,4 +1,4 @@
-package com.gofobao.framework.member.vo;
+package com.gofobao.framework.member.vo.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

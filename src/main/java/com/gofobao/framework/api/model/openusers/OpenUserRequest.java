@@ -1,10 +1,16 @@
 package com.gofobao.framework.api.model.openusers;
 
 import com.gofobao.framework.api.request.AbsRequest;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Created by Zeke on 2017/5/16.
  */
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class OpenUserRequest extends AbsRequest {
     /**
      * 证件类型

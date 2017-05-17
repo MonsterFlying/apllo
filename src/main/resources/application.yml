@@ -32,5 +32,9 @@ jwt:
   expiration: 2592000
   prefix: Bearer
 
-credit2go:
-  apiVersion: 10
+jixin:
+  domain: https://test.credit2go.cn
+  version: 10
+  txCode: accountOpen
+  instCode: 00170001
+  bankCode: 30050000
