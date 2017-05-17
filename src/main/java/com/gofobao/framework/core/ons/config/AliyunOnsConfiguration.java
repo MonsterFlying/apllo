@@ -1,4 +1,4 @@
-package com.gofobao.framework.core.mq.config;
+package com.gofobao.framework.core.ons.config;
 
 import com.aliyun.openservices.ons.api.MessageListener;
 import com.aliyun.openservices.ons.api.PropertyKeyConst;
@@ -21,15 +21,6 @@ import java.util.Properties;
  */
 @Configuration
 public class AliyunOnsConfiguration {
-
-    /** 短信 */
-    public static final String TOPIC_SMS = "GFB_SMS";
-    /** 邮箱 */
-    public static final String TOPIC_EMAIL = "GFB_EMAIL";
-    /** 通知 */
-    public static final String TOPIC_NOTIC = "GFB_NOTIC";
-    /** 自动投标 */
-    public static final String TOPIC_AUTO_TENDER = "GFB_AUTO_TENDER";
 
     public static final String SMS_PID = "PID_GFB_SMS";
     public static final String SMS_CID = "CID_GFB_SMS";
@@ -85,23 +76,23 @@ public class AliyunOnsConfiguration {
 
     @Bean(destroyMethod = "shutdown", initMethod = "start")
     public ConsumerBean smsConsumerBean(AliyunOnsAccessKey aliyunOnsAccessKey, SmsMessageListener smsMessageListener){
-        return buildConsumerBean(aliyunOnsAccessKey, SMS_CID, TOPIC_SMS, smsMessageListener) ;
+        return buildConsumerBean(aliyunOnsAccessKey, SMS_CID, OnsTopics.TOPIC_SMS, smsMessageListener) ;
     }
 
 
     @Bean(destroyMethod = "shutdown", initMethod = "start")
     public ConsumerBean emailConsumerBean(AliyunOnsAccessKey aliyunOnsAccessKey, EmailMessageListener emailMessageListener){
-        return buildConsumerBean(aliyunOnsAccessKey, EMAIL_CID, TOPIC_EMAIL, emailMessageListener) ;
+        return buildConsumerBean(aliyunOnsAccessKey, EMAIL_CID,  OnsTopics.TOPIC_EMAIL, emailMessageListener) ;
     }
 
     @Bean(destroyMethod = "shutdown", initMethod = "start")
     public ConsumerBean noticConsumerBean(AliyunOnsAccessKey aliyunOnsAccessKey, NoticMessageListener noticMessageListener){
-        return buildConsumerBean(aliyunOnsAccessKey, NOTIC_CID, TOPIC_NOTIC, noticMessageListener) ;
+        return buildConsumerBean(aliyunOnsAccessKey, NOTIC_CID,  OnsTopics.TOPIC_NOTIC, noticMessageListener) ;
     }
 
     @Bean(destroyMethod = "shutdown", initMethod = "start")
     public ConsumerBean autoTenderConsumerBean(AliyunOnsAccessKey aliyunOnsAccessKey, AutoTenderMessageListener autoTenderMessageListener){
-        return buildConsumerBean(aliyunOnsAccessKey, AUTO_TENDER_CID, TOPIC_AUTO_TENDER, autoTenderMessageListener) ;
+        return buildConsumerBean(aliyunOnsAccessKey, AUTO_TENDER_CID,  OnsTopics.TOPIC_AUTO_TENDER, autoTenderMessageListener) ;
     }
 
     private ConsumerBean buildConsumerBean(AliyunOnsAccessKey aliyunOnsAccessKey, String CID, String topic, MessageListener messageListener) {

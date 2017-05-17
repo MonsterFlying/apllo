@@ -18,7 +18,7 @@ import java.sql.Timestamp;
 public class GfbSmsTemplateEntity {
     @Id
     @Column(name = "ID")
-    private int id;
+    private Long id;
     @Basic
     @Column(name = "ALIAS_CODE")
     private String aliasCode;
