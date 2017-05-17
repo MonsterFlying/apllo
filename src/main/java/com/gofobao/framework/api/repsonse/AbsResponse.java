@@ -26,19 +26,19 @@ public class AbsResponse {
     /**
      * 交易日期
      */
-    protected int txDate;
+    protected String txDate;
     /**
      * 交易时间
      */
-    protected int txTime;
-    /**
-     * 交易时间
-     */
-    protected String seqNo;
+    protected String txTime;
     /**
      * 交易流水号
      */
-    protected int channel;
+    protected int seqNo;
+    /**
+     * 交易渠道
+     */
+    protected String channel;
     /**
      * 响应代码
      */

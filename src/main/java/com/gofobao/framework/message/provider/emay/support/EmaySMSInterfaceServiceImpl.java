@@ -1,8 +1,8 @@
 package com.gofobao.framework.message.provider.emay.support;
 
-import com.gofobao.common.sms.AbstractSMSConfig;
-import com.gofobao.common.sms.SMSInterfaceService;
-import com.gofobao.common.sms.emay.httpclient.SDKHttpClient;
+import com.gofobao.framework.message.provider.AbstractSMSConfig;
+import com.gofobao.framework.message.provider.SMSInterfaceService;
+import com.gofobao.framework.message.provider.emay.httpclient.SDKHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

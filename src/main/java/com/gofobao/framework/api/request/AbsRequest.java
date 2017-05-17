@@ -26,17 +26,17 @@ public abstract class AbsRequest {
     /**
      * 交易日期
      */
-    protected int txDate;
+    protected String txDate;
     /**
      * 交易时间
      */
-    protected int txTime;
+    protected String txTime;
     /**
      * 交易时间
      */
-    protected String seqNo;
+    protected Integer seqNo;
     /**
      * 交易流水号
      */
-    protected int channel;
+    protected String channel;
 }

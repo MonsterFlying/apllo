@@ -26,7 +26,10 @@ import java.util.Optional;
  */
 @Service
 @Slf4j
-public class UserServiceImpl implements UserDetailsService, UserService {
+public class UserServiceImpl implements UserDetailsService, UserService{
+
+    @Autowired
+    private OpenHttp openHttp;
 
     @Autowired
     private UsersRepository userRepository;
@@ -57,6 +60,32 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         if (!CollectionUtils.isEmpty(usersList)) {
             return usersList.get(0);
         }
+        return null;
+    }
+
+
+    /**
+     * 注册用户
+     * @param voRegisterReq
+     * @return
+     */
+    public VoRegisterResp register(VoRegisterReq voRegisterReq){
+        OpenUserRequest request = new OpenUserRequest();
+        request.setIdType(IdTypeContant.ID_CARD);
+        try {
+            openHttp.sendHttp(OpenMethodContant.OPEN_USER,request);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * 注册用户回调
+     * @param voRegisterCallReq
+     * @return
+     */
+    public VoRegisterCallResp registerCall(VoRegisterCallReq voRegisterCallReq){
         return null;
     }
 
