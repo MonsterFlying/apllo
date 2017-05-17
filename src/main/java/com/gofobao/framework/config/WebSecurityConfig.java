@@ -1,5 +1,6 @@
 package com.gofobao.framework.config;
 
+import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.security.JwtAuthenticationEntryPoint;
 import com.gofobao.framework.security.JwtAuthenticationTokenFilter;
 import com.gofobao.framework.security.vo.ApolloPasswordEncoder;
@@ -31,12 +32,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private JwtAuthenticationEntryPoint unauthorizedHandler;
 
     @Autowired
-    private UserDetailsService userDetailsService;
+    private UserDetailsService userService;
 
     @Autowired
     public void configureAuthentication(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
         authenticationManagerBuilder
-                .userDetailsService(this.userDetailsService)
+                .userDetailsService(this.userService)
                 .passwordEncoder(passwordEncoder());
     }
 

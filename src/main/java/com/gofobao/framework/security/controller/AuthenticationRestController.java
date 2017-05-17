@@ -15,6 +15,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -57,17 +58,12 @@ public class AuthenticationRestController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // Reload password post-security so we can generate token
-        Users where = new Users() ;
-        where.setEmail(voLoginReq.getAccount()) ;
-        where.setPhone(voLoginReq.getAccount()) ;
-        where.setUsername(voLoginReq.getAccount());
-        final List<Users> users = userService.listUser(where) ;
+        final Users user = userService.findByAccount(voLoginReq.getAccount());
 
-        if(CollectionUtils.isEmpty(users)){
+        if(ObjectUtils.isEmpty(user)){
             return ResponseEntity.badRequest().body(null);
         }
 
-        Users user = users.get(0);
         final String token = jwtTokenHelper.generateToken(user, voLoginReq.getSource());
         response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
         // Return the token
