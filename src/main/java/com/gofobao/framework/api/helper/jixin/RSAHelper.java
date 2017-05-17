@@ -1,37 +1,17 @@
 package com.gofobao.framework.api.helper.jixin;
 
-import java.io.File;
+import org.springframework.util.Base64Utils;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.Signature;
-import java.security.SignatureException;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-
-import javax.crypto.Cipher;
-
-import org.springframework.util.Base64Utils;
+import java.security.*;
 
 public class RSAHelper {
 	private String encoding = "UTF-8";
 	private String algorithm = "SHA1withRSA";// 加密算法  or "MD5withRSA"
 	private PublicKey publicKey ;
 	private PrivateKey privateKey ;
-	private static RSAHelper instance;
-	
-	public RSAHelper(){
-		//using default algorithm and encoding;
-	}
-	
-	public RSAHelper(String algorithm) {
-		this.algorithm=algorithm;
-	}
-	
+
 	public RSAHelper(PublicKey publicKey) {
 		this.publicKey=publicKey;
 	}
@@ -39,52 +19,6 @@ public class RSAHelper {
 	public RSAHelper(PrivateKey privateKey) {
 		this.privateKey=privateKey;
 	}
-
-	public static RSAHelper getInstance(){
-		if(instance==null){ instance = new RSAHelper();}
-		return instance;
-	}
-
-	//please ensure map.remove("sign") is invoked first;
-	public static String getValuesByKeySorted(Map<String,Object> map){
-		Map<String,Object> sortedMap = map;
-		if(!(map instanceof TreeMap)){
-			sortedMap = new TreeMap<>();
-			sortedMap.putAll(map);
-		}
-		StringBuilder sb = new StringBuilder();
-		for(Entry<String,Object> ent:sortedMap.entrySet()){
-			sb.append(ent.getValue()==null?"":ent.getValue().toString());
-		}
-		return sb.toString();
-	}
-
-	  /**
-	  * 使用指定的公钥加密数据。
-	  * 
-	  * @param publicKey 给定的公钥。
-	  * @param data 要加密的数据。
-	  * @return 加密后的数据。
-	  */
-	 public static byte[] encrypt(PublicKey publicKey, byte[] data) throws Exception {
-	     //Cipher cipher = Cipher.getInstance(algorithm, DEFAULT_PROVIDER);
-		    Cipher cipher= Cipher.getInstance("RSA");//, new BouncyCastleProvider()); 
-		    cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-	     return cipher.doFinal(data);
-	 }
-	
-	 /**
-	  * 使用指定的私钥解密数据。
-	  * @param privateKey 给定的私钥。
-	  * @param data 要解密的数据。
-	  * @return 原数据。
-	  */
-	 public static byte[] decrypt(PrivateKey privateKey, byte[] data) throws Exception {
-	     //Cipher cipher = Cipher.getInstance(algorithm, DEFAULT_PROVIDER);
-		    Cipher cipher= Cipher.getInstance("RSA");//, new BouncyCastleProvider()); 
-	     cipher.init(Cipher.DECRYPT_MODE, privateKey);
-	     return cipher.doFinal(data);
-	 }
 
 	/**
 	 * 
@@ -140,6 +74,7 @@ public class RSAHelper {
 	}
 	
 	/**
+	 * 签名
 	 * @param dataText 数据
 	 * @return
 	 */
@@ -175,39 +110,5 @@ public class RSAHelper {
 		}
 		return null;
 	}
-	
-	public static void main(String[] args) {
-		try {
-			// getPrivateKey("certs/signature.p12","pwd");
-			//SignatureHelper.testGenerateKeyPair();
-			//SignatureHelper.testGenerateKeys();
-			
-			String srcData = "5800300500002015092216161600000700000220150922161616O1013503211989100612341442977591026";
-			
-			//RSAHelper signHelper = new RSAHelper(new File("S:/work/dev/openssl/_cedit2go/certs/signature.crt")); 
-			//signHelper.setPublicCertFile("S:/work/dev/openssl/_cedit2go/certs/signature.crt");
-			//signHelper.setPrivatePKCS12File("file:///S:/work/dev/openssl/_cedit2go/certs/signature.p12", "credit2go");
-			RSAKeyUtil ru = new RSAKeyUtil(new File("D:/file/fdep/fdepCust.p12"),"fdep"); 
-			System.out.println("内容: " + srcData);
-			
-			RSAHelper signHelper = new RSAHelper(ru.getPrivateKey()); 
-			String signText = signHelper.sign(srcData);
-			System.out.println("签名: " + signText);
-			
-			RSAKeyUtil ru2 = new RSAKeyUtil(new File("D:/file/fdep/fdepCust.crt")); 
-			
-			signText = "IzOoJsRnPuNvs2B+HbwTOaEsE96SLa9fd6/9/w4G5yavCFXYUI8X0saX6w+IFXHlCgRd0WMagIdBucufNIeayac7v/ogPB//+2aLrJaNwmAA4FK9YNjvC+p6UdAPXz2YaE+FoQIg0hZxTLUGKPibuIjVV/A95Egzdc8jeCOdPEo=";
-			signHelper = new RSAHelper(ru2.getPublicKey()); 
-			boolean v = signHelper.verify(srcData, signText);
-			System.out.println("验签: "+v);
-
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	
-
 	
 }

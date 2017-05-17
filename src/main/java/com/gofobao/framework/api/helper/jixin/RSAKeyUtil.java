@@ -3,24 +3,8 @@ package com.gofobao.framework.api.helper.jixin;
 import org.springframework.security.crypto.codec.Hex;
 import org.springframework.util.Base64Utils;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.SecureRandom;
+import java.io.*;
+import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -46,11 +30,6 @@ public class RSAKeyUtil {
 		this.publicKey=getPublicKey(is);
 	}
 	
-	public RSAKeyUtil(String certPath) throws FileNotFoundException {
-		FileInputStream fis=new FileInputStream(certPath);
-		this.publicKey=getPublicKey(fis);
-	}
-	
 	public RSAKeyUtil(File keysFile,String pwd) throws GeneralSecurityException, IOException {
 		InputStream is = new FileInputStream(keysFile);
 		char[] pwds = pwd.toCharArray();
@@ -61,34 +40,9 @@ public class RSAKeyUtil {
 			this.publicKey=ks.getCertificate(alias).getPublicKey();
 		}
 	}
-	
-	public RSAKeyUtil(String keysPath,String pwd) throws GeneralSecurityException, IOException {
-		InputStream is = getClass().getClassLoader().getResourceAsStream(keysPath);
-		char[] pwds = pwd.toCharArray();
-		KeyStore ks = getKeyStore(is,pwds);
-		String alias = getKeyAlias(ks);
-		if(alias!=null){
-			this.privateKey=(PrivateKey) ks.getKey(alias, pwds);
-			this.publicKey=ks.getCertificate(alias).getPublicKey();
-		}
-	}
-	
 
 	/**
-	 * 获取公钥 publickey:
-	 * @param cert file pem file
-	 * @return
-	 */
-	public static PublicKey getPublicKey(String certPath) {
-		return getPublicKey(getStream(certPath));
-	}
-
-	public static PublicKey getPublicKeyBase64(String keyEncode) {
-		return getPublicKey(Base64Utils.decodeFromString(keyEncode));
-	}
-
-	/**
-	 * @param cert pem  Stream
+	 * @param certStream pem  Stream
 	 * @return
 	 */
 	public static PublicKey getPublicKey(InputStream certStream) {
@@ -138,71 +92,6 @@ public class RSAKeyUtil {
 	}
 
 	/**
-	 * 从公钥数据取得公钥
-	 * @param keyBytes only keyBytes, no header
-	 * @return
-	 */
-	public static PublicKey getPublicKey1(byte[] keyBytes) {
-		byte[] bX509PubKeyHeader = { 48, -127, -97, 48, 13, 6, 9, 42, -122, 72, -122, -9, 13, 1, 1, 1, 5, 0, 3, -127, -115, 0 };
-		byte[] bPubKey = new byte[keyBytes.length + bX509PubKeyHeader.length];
-		System.arraycopy(bX509PubKeyHeader, 0, bPubKey, 0, bX509PubKeyHeader.length);
-		System.arraycopy(keyBytes, 0, bPubKey, bX509PubKeyHeader.length, keyBytes.length);
-		return	getPublicKey(keyBytes);
-	}
-	
-	/**
-	 * @param keyFile 
-	 * the file of RSA Private Key file
-	 * @return PrivateKey
-	 * @throws IOException
-	 */
-	public static PrivateKey getPrivateKey(String keyFile) throws IOException{
-		//BufferedReader br = new BufferedReader(new FileReader(keyFile));
-		BufferedReader br = new BufferedReader(new InputStreamReader(getStream(keyFile)));
-	    String keyEncode = "";
-	    String line = br.readLine();
-	    line = br.readLine();	     
-	    while (line.charAt(0) != '-') {
-	    	keyEncode += line;// + "\r";
-	    	line = br.readLine();
-	    	if(line==null){break;}
-	    }
-	    br.close();
-	    System.out.println(keyEncode);
-	    return getPrivateKey(Base64Utils.decodeFromString(keyEncode));
-	}
-	/**
-	 * @param p12Path the pcks12 keystore file path in class path
-	 * @return
-	 * @throws GeneralSecurityException
-	 * @throws IOException
-	 */
-	public static PrivateKey getPrivateKey(String keysPath, String pwd) throws GeneralSecurityException, IOException {
-		return getPrivateKey(getStream(keysPath), pwd);
-	}
-	
-	/**
-	 * @param PKCS12 keystore inutstream 
-	 * @return
-	 * @throws GeneralSecurityException
-	 * @throws IOException
-	 */
-	public static PrivateKey getPrivateKey(InputStream is, String pwd) throws GeneralSecurityException, IOException {
-		char[] pwds = pwd.toCharArray();
-		KeyStore ks = getKeyStore(is,pwds);
-		String alias = getKeyAlias(ks);
-		if(alias!=null){
-			return (PrivateKey) ks.getKey(alias, pwds);
-		}
-		return null;
-	}
-
-
-	public static PrivateKey getPrivateKeyBase64(String keyEncode) {
-		return getPrivateKey(Base64Utils.decodeFromString(keyEncode));
-	}
-	
-	/**
 	 * @param keyBytes PKCS8Encoded key bytes
 	 * @return
 	 */
@@ -222,49 +111,10 @@ public class RSAKeyUtil {
 		return null;
 	}
 	
-	/**
-	 * @param private key pem file in class path
-	 * @return
-	 * @throws GeneralSecurityException
-	 * @throws IOException
-	 */
-	public static PrivateKey getPrivateKey2(String keyFile) throws GeneralSecurityException, IOException {
-		return getPrivateKey2(getStream(keyFile));
-	}	
-
-	/**
-	 * @param private encode key inputstream 
-	 * @return
-	 * @throws GeneralSecurityException
-	 * @throws IOException
-	 */
-	public static PrivateKey getPrivateKey2(InputStream is)  {
-		ByteArrayOutputStream bout = new ByteArrayOutputStream();
-		byte[] buf = new byte[1024];
-		int count = 0;
-		try{
-			while ((count = is.read(buf)) != -1) {
-				bout.write(buf, 0, count);
-				buf = new byte[1024];
-			}
-			is.close();
-		} catch (IOException e) {
-			//System.out.println("读取文件失败");
-			e.printStackTrace();
-		}
-		PrivateKey prikey = getPrivateKey(bout.toByteArray());
-		return prikey;
-	}
-	
-	private static InputStream getStream(String path){
-		return RSAKeyUtil.class.getClassLoader().getResourceAsStream(path);
-	}
-	
 	private static KeyStore getKeyStore(InputStream is, char[] pwds) throws IOException, GeneralSecurityException{
 		KeyStore ks = KeyStore.getInstance("PKCS12");
 		ks.load(is,  pwds);
 		is.close();
-		//System.out.println("keystore type = " + ks.getType());
 		return ks;
 	}
 	
@@ -272,8 +122,7 @@ public class RSAKeyUtil {
 		Enumeration<String> enuml = ks.aliases();
 		String keyAlias = null;
 		if (enuml.hasMoreElements()) {
-			keyAlias = (String) enuml.nextElement();
-			//System.out.println("alias=[" + keyAlias + "]");
+			keyAlias = enuml.nextElement();
 			if(ks.isKeyEntry(keyAlias)){
 				return keyAlias;
 			}
@@ -281,7 +130,6 @@ public class RSAKeyUtil {
 		return null;
 	}
 
-	///////////////////////test method//////////////////////
 	public static void testGenerateKeyPair() {
 		try {
 			KeyPairGenerator keygen = KeyPairGenerator.getInstance("RSA");
@@ -299,42 +147,4 @@ public class RSAKeyUtil {
 			e.printStackTrace();
 		}
 	}
-	
-	public static void testGenerateKeys() throws Exception {
-		byte[] keyBytes1 = Hex.decode("30819f300d06092a864886f70d010101050003818d0030818902818100886a4ba7ad410db5e579244afefa34dbd42dbfa0aa9d9d7079940b95d1b4e8f8f2d598c45ace42fb5ccc15941300d4723f22acc90c222ae5631fe9a4c7e5a6d8cc5333da22404a4fd2ba0dd58e1e77be12b590077e6ac3ee30658619669760036b7721ad6229289b13a6801dfcf55fefa20b43fbdbbfbc3034a15bf9dc8b970f0203010001");
-		PublicKey publicKey1 = getPublicKey(keyBytes1);
-		System.out.println("PublicKey1: " + new String(Hex.encode(publicKey1.getEncoded())));
-		System.out.println("PublicKey1: " +  Base64Utils.encodeToString(publicKey1.getEncoded()));
-
-		byte[] keyBytes2 = Base64Utils.decodeFromString("MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDGR1Tvv5OUwUuonkTgqbzN53+4wqB5mr+k6mMFKqUJ7Gu0t22urHBDC27zyARwMf45V/CRoRvmJCQi2VfntEuKkhAiSDjBz3AUuHrcpnSV0d+iGFSQ2IcbWVhI2MoUuWCiGFoRWbsQa5cUjztuXJfakvROcLYNhXTnGlCq83LFmQIDAQAB");
-		PublicKey publicKey2 = getPublicKey(keyBytes2);
-		System.out.println("PublicKey2: " + new String(Hex.encode(publicKey2.getEncoded())));
-		System.out.println("PublicKey2: " +  Base64Utils.encodeToString(publicKey2.getEncoded()));
-
-		byte[] keyBytes3 = Base64Utils.decodeFromString("MIICdwIBADANBgkqhkiG9w0BAQEFAASCAmEwggJdAgEAAoGBAMZHVO+/k5TBS6ieROCpvM3nf7jCoHmav6TqYwUqpQnsa7S3ba6scEMLbvPIBHAx/jlX8JGhG+YkJCLZV+e0S4qSECJIOMHPcBS4etymdJXR36IYVJDYhxtZWEjYyhS5YKIYWhFZuxBrlxSPO25cl9qS9E5wtg2FdOcaUKrzcsWZAgMBAAECgYEAsTKEdLJoKPPKMsom0gS/Z+Bwo2TEV4j1pmOV1MM0tTalVt7q1cTjmvc31AO3+7Ch+wtdQjiSH03DQaWtSrQ1IPINOpl22wiA5pS1iHSOJQtCIxqvAwoEs78E5D1/0TUs8O4P1SfZbpMabb0pLgFhtBQWGwvJN6zETSH/jUa1pNUCQQDjCikIh06qGA4Ws2l2H760n5FTzVXZhDMFZSqVEFsJa3ocumbdcQVPFE3eLBv3ysMv15MJ5JbtlpctSf0slrOHAkEA35H/UkNf+lR58nPZ5Wgu7tE3siFsou9RcNxIj2c5w4wj4gqyD8q3g+wZLUtvLZomlfMTn+a0MUz4luB0OC9F3wJALbflDWeZypyvcZjNOtEnqN2c+SAXEocRcxutGHlDq8DtxQ0wG5VfuU3gZEXDmAFHjsG9RTe3wL4bUS5eAfWSzwJBAJP7PCfERtwYXFt6CWlKa35R5261pwW2KI7uj+yzo81mjj3JXJENWiks9oE/pAhoN1AbhArcFrtnOkgLq4Gg8LsCQEKy7soJ4tcYvWED8uKq8x5fPoPHPk2OdJ3G+OVhKx1/yyfUFLjkTeN3+YHAmg89fyb4Yj/lQjPOoUJvonjIp4M=");
-		PrivateKey privateKey = getPrivateKey(keyBytes3);
-		System.out.println("privateKey3: " + new String(Hex.encode(privateKey.getEncoded())));
-		System.out.println("privateKey3: " + Base64Utils.encodeToString(privateKey.getEncoded()));
-		
-		RSAKeyUtil ru1 = new RSAKeyUtil("certs/credit2go.p12","credit2go"); 
-		System.out.println("PublicKey5: " + new String(Hex.encode(ru1.getPublicKey().getEncoded())));
-		System.out.println("PublicKey5: " + Base64Utils.encodeToString(ru1.getPublicKey().getEncoded()));
-		System.out.println("privateKey6: " + new String(Hex.encode(ru1.getPrivateKey().getEncoded())));
-		System.out.println("privateKey6: " + Base64Utils.encodeToString(ru1.getPrivateKey().getEncoded()));
-		
-		RSAKeyUtil ru2 = new RSAKeyUtil(new File("S:/work/dev/openssl/_cedit2go/certs/credit2go.crt")); 
-		System.out.println("PublicKey7: " + new String(Hex.encode(ru2.getPublicKey().getEncoded())));
-		System.out.println("PublicKey7: " + Base64Utils.encodeToString(ru2.getPublicKey().getEncoded()));
-	}
-
-	public static void main(String[] args) {
-		try {
-			// getPrivateKey("certs/credit2go.p12","pwd");
-			testGenerateKeyPair();
-			testGenerateKeys();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
 }
