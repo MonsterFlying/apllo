@@ -2,7 +2,7 @@ package com.gofobao.framework.security.controller;
 
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
-import com.gofobao.framework.member.vo.VoBasicUserInfo;
+import com.gofobao.framework.member.vo.response.VoBasicUserInfo;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.gofobao.framework.security.vo.VoLoginReq;
 import org.springframework.beans.factory.annotation.Autowired;

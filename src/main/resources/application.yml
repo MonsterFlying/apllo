@@ -31,3 +31,10 @@ jwt:
   secret: WWW.gOf0b@o.c0m@0701
   expiration: 2592000
   prefix: Bearer
+
+jixin:
+  domain: https://test.credit2go.cn
+  version: 10
+  txCode: accountOpen
+  instCode: 00170001
+  bankCode: 30050000

@@ -1,9 +1,6 @@
 package com.gofobao.framework.message.entity;
 
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 /**
  * Created by Max on 17/5/17.
@@ -11,8 +8,19 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "gfb_sms_notice_settings", schema = "gofobao9", catalog = "")
 public class GfbSmsNoticeSettingsEntity {
+    private int id;
     private byte receivedRepay;
     private byte borrowSuccess;
+
+    @Id
+    @Column(name = "ID")
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     @Basic
     @Column(name = "received_repay")
