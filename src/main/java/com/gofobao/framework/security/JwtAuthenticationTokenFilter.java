@@ -1,5 +1,6 @@
 package com.gofobao.framework.security;
 
+import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -10,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -31,9 +33,15 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
     @Value("${jwt.header}")
     private String tokenHeader;
 
+    @Value("${jwt.prefix}")
+    private String prefix ;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
         String authToken = request.getHeader(this.tokenHeader);
+        if(!StringUtils.isEmpty(authToken) && (authToken.contains(prefix))){
+            authToken = authToken.substring(7) ;
+        }
         // authToken.startsWith("Bearer ")
         // String authToken = header.substring(7);
         String username = jwtTokenHelper.getUsernameFromToken(authToken);
@@ -41,6 +49,9 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
         logger.info("checking authentication für user " + username);
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            // add userinfo indentify to head
+            Long userId = jwtTokenHelper.getUserIdFromToken(authToken);
+            request.setAttribute(SecurityContants.USERID_KEY, userId) ;
 
             // It is not compelling necessary to load the use details from the database. You could also store the information
             // in the token and read it from it. It's up to you ;)
