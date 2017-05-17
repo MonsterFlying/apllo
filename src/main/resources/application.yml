@@ -28,3 +28,6 @@ jwt:
   secret: WWW.gOf0b@o.c0m@0701
   expiration: 2592000
   prefix: Bearer
+
+credit2go:
+  apiVersion: 10
