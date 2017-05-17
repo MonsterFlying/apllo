@@ -18,6 +18,13 @@ public class EmailMessageListener implements MessageListener {
     public Action consume(Message message, ConsumeContext consumeContext) {
 
         log.info(String.format("Aliyn ons consume log: %s", message.getBody().toString()) );
+        message.getBody();
+        message.getKey();
+        message.getMsgID();
+        message.getTag();
+        message.getTopic();
+        message.getReconsumeTimes();
+        message.getStartDeliverTime() ;
         return Action.ReconsumeLater;
     }
 }
