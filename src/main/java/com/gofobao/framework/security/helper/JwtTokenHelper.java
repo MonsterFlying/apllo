@@ -59,6 +59,17 @@ public class JwtTokenHelper implements Serializable {
         return created;
     }
 
+    public Long getUserIdFromToken(String token) {
+        Long userId;
+        try {
+            final Claims claims = getClaimsFromToken(token);
+            userId = Long.parseLong(claims.get(CLAIM_KEY_ID).toString());
+        } catch (Exception e) {
+            userId = null;
+        }
+        return userId;
+    }
+
     public Date getExpirationDateFromToken(String token) {
         Date expiration;
         try {

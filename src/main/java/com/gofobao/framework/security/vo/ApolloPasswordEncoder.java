@@ -12,7 +12,11 @@ public class ApolloPasswordEncoder implements PasswordEncoder {
     @Override
     public String encode(CharSequence charSequence) {
         log.info(String.format("Spring security passwordEncoder encode %s", charSequence.toString()));
-        return charSequence.toString();
+        try {
+            return charSequence.toString();
+        } catch (Exception e) {
+            throw new RuntimeException(e) ;
+        }
     }
 
     @Override

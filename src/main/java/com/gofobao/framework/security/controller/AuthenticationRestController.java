@@ -1,12 +1,10 @@
 package com.gofobao.framework.security.controller;
 
 import com.gofobao.framework.member.entity.Users;
-import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.vo.VoBasicUserInfo;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.gofobao.framework.security.vo.VoLoginReq;
-import com.sun.tools.internal.xjc.reader.xmlschema.bindinfo.BIConversion;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -14,14 +12,13 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 
 /**
  * 权限验证模块
@@ -57,17 +54,12 @@ public class AuthenticationRestController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // Reload password post-security so we can generate token
-        Users where = new Users() ;
-        where.setEmail(voLoginReq.getAccount()) ;
-        where.setPhone(voLoginReq.getAccount()) ;
-        where.setUsername(voLoginReq.getAccount());
-        final List<Users> users = userService.listUser(where) ;
+        final Users user = userService.findByAccount(voLoginReq.getAccount());
 
-        if(CollectionUtils.isEmpty(users)){
+        if(ObjectUtils.isEmpty(user)){
             return ResponseEntity.badRequest().body(null);
         }
 
-        Users user = users.get(0);
         final String token = jwtTokenHelper.generateToken(user, voLoginReq.getSource());
         response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
         // Return the token

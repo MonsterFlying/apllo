@@ -10,4 +10,6 @@ import java.util.List;
 public interface UserService {
 
     List<Users> listUser(Users users) ;
+
+    Users findByAccount(String account) ;
 }
