@@ -63,7 +63,7 @@ public class JwtTokenHelper implements Serializable {
         Long userId;
         try {
             final Claims claims = getClaimsFromToken(token);
-            userId =  (Long) claims.get(CLAIM_KEY_ID);
+            userId = Long.parseLong(claims.get(CLAIM_KEY_ID).toString());
         } catch (Exception e) {
             userId = null;
         }

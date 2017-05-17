@@ -1,11 +1,19 @@
 package com.gofobao.framework.core.mq.config;
 
+import com.aliyun.openservices.ons.api.MessageListener;
 import com.aliyun.openservices.ons.api.PropertyKeyConst;
 import com.aliyun.openservices.ons.api.bean.ConsumerBean;
 import com.aliyun.openservices.ons.api.bean.ProducerBean;
+import com.aliyun.openservices.ons.api.bean.Subscription;
+import com.gofobao.framework.listener.AutoTenderMessageListener;
+import com.gofobao.framework.listener.EmailMessageListener;
+import com.gofobao.framework.listener.NoticMessageListener;
+import com.gofobao.framework.listener.SmsMessageListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -37,23 +45,29 @@ public class AliyunOnsConfiguration {
 
 
     @Bean
+    public SmsMessageListener smsMessageListener(){
+        return new SmsMessageListener();
+    }
+
+
+    @Bean(destroyMethod = "shutdown", initMethod = "start")
     public ProducerBean smsProducerBean(AliyunOnsAccessKey aliyunOnsAccessKey) {
         return buildProducerBean(aliyunOnsAccessKey, SMS_PID);
     }
 
-    @Bean
+    @Bean(destroyMethod = "shutdown", initMethod = "start")
     public ProducerBean noticProducerBean(AliyunOnsAccessKey aliyunOnsAccessKey) {
         return buildProducerBean(aliyunOnsAccessKey, NOTIC_PID);
     }
 
 
-    @Bean
+    @Bean(destroyMethod = "shutdown", initMethod = "start")
     public ProducerBean emailProducerBean(AliyunOnsAccessKey aliyunOnsAccessKey) {
         return buildProducerBean(aliyunOnsAccessKey, EMAIL_PID);
     }
 
 
-    @Bean
+    @Bean(destroyMethod = "shutdown", initMethod = "start")
     public ProducerBean autoTenderProducerBean(AliyunOnsAccessKey aliyunOnsAccessKey) {
         return buildProducerBean(aliyunOnsAccessKey, AUTO_TENDER_PID);
     }
@@ -69,28 +83,28 @@ public class AliyunOnsConfiguration {
         return bean;
     }
 
-    @Bean
-    public ConsumerBean smsConsumerBean(AliyunOnsAccessKey aliyunOnsAccessKey){
-        return buildConsumerBean(aliyunOnsAccessKey, SMS_CID) ;
+    @Bean(destroyMethod = "shutdown", initMethod = "start")
+    public ConsumerBean smsConsumerBean(AliyunOnsAccessKey aliyunOnsAccessKey, SmsMessageListener smsMessageListener){
+        return buildConsumerBean(aliyunOnsAccessKey, SMS_CID, TOPIC_SMS, smsMessageListener) ;
     }
 
 
-    @Bean
-    public ConsumerBean emailConsumerBean(AliyunOnsAccessKey aliyunOnsAccessKey){
-        return buildConsumerBean(aliyunOnsAccessKey, EMAIL_CID) ;
+    @Bean(destroyMethod = "shutdown", initMethod = "start")
+    public ConsumerBean emailConsumerBean(AliyunOnsAccessKey aliyunOnsAccessKey, EmailMessageListener emailMessageListener){
+        return buildConsumerBean(aliyunOnsAccessKey, EMAIL_CID, TOPIC_EMAIL, emailMessageListener) ;
     }
 
-    @Bean
-    public ConsumerBean noticConsumerBean(AliyunOnsAccessKey aliyunOnsAccessKey){
-        return buildConsumerBean(aliyunOnsAccessKey, NOTIC_CID) ;
+    @Bean(destroyMethod = "shutdown", initMethod = "start")
+    public ConsumerBean noticConsumerBean(AliyunOnsAccessKey aliyunOnsAccessKey, NoticMessageListener noticMessageListener){
+        return buildConsumerBean(aliyunOnsAccessKey, NOTIC_CID, TOPIC_NOTIC, noticMessageListener) ;
     }
 
-    @Bean
-    public ConsumerBean autoTenderConsumerBean(AliyunOnsAccessKey aliyunOnsAccessKey){
-        return buildConsumerBean(aliyunOnsAccessKey, AUTO_TENDER_CID) ;
+    @Bean(destroyMethod = "shutdown", initMethod = "start")
+    public ConsumerBean autoTenderConsumerBean(AliyunOnsAccessKey aliyunOnsAccessKey, AutoTenderMessageListener autoTenderMessageListener){
+        return buildConsumerBean(aliyunOnsAccessKey, AUTO_TENDER_CID, TOPIC_AUTO_TENDER, autoTenderMessageListener) ;
     }
 
-    private ConsumerBean buildConsumerBean(AliyunOnsAccessKey aliyunOnsAccessKey, String CID) {
+    private ConsumerBean buildConsumerBean(AliyunOnsAccessKey aliyunOnsAccessKey, String CID, String topic, MessageListener messageListener) {
         ConsumerBean bean = new ConsumerBean();
         Properties producerProperties = new Properties();
         producerProperties.setProperty(PropertyKeyConst.ConsumerId, CID);
@@ -98,6 +112,13 @@ public class AliyunOnsConfiguration {
         producerProperties.setProperty(PropertyKeyConst.SecretKey, aliyunOnsAccessKey.getSecretKey());
         producerProperties.setProperty(PropertyKeyConst.ONSAddr, aliyunOnsAccessKey.getOnsAddr());
         bean.setProperties(producerProperties);
+
+        Map<Subscription, MessageListener> subscriptionTable = new HashMap<>() ;
+        Subscription subscription = new Subscription() ;
+        subscription.setExpression("*") ;
+        subscription.setTopic(topic) ;
+        subscriptionTable.put(subscription, messageListener) ;
+        bean.setSubscriptionTable(subscriptionTable) ;
         return bean;
     }
 
