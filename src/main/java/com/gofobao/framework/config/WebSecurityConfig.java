@@ -1,6 +1,5 @@
 package com.gofobao.framework.config;
 
-import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.security.JwtAuthenticationEntryPoint;
 import com.gofobao.framework.security.JwtAuthenticationTokenFilter;
 import com.gofobao.framework.security.vo.ApolloPasswordEncoder;
@@ -15,7 +14,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 

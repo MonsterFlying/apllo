@@ -2,7 +2,6 @@ package com.gofobao.framework.listener.providers;
 
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.message.service.SmsTemplateService;
-import com.google.common.collect.ImmutableMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
