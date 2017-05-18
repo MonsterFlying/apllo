@@ -28,4 +28,20 @@ public interface MessageBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> sendFindPassword(HttpServletRequest request, VoSmsReq voSmsReq);
+
+    /**
+     * 发送更换手机号码短信验证码
+     * @param request 请求类
+     * @param voSmsReq 消息体
+     * @return
+     */
+    ResponseEntity<VoBaseResp> sendSwitchPhone(HttpServletRequest request, VoSmsReq voSmsReq);
+
+    /**
+     * 发送更换手机号码短信验证码
+     * @param request 请求类
+     * @param voSmsReq 消息体
+     * @return
+     */
+    ResponseEntity<VoBaseResp> sendBindPhone(HttpServletRequest request, VoSmsReq voSmsReq);
 }

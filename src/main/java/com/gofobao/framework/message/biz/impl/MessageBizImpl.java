@@ -115,4 +115,92 @@ public class MessageBizImpl implements MessageBiz {
         // 调用MQ 发送注册短信
         return ResponseEntity.ok(VoBaseResp.ok("短信发送成功"));
     }
+
+    /**
+     * 发送更换手机号码短信验证码
+     * @param request 请求类
+     * @param voSmsReq 消息体
+     * @return
+     */
+    public ResponseEntity<VoBaseResp> sendSwitchPhone(HttpServletRequest request, VoSmsReq voSmsReq){
+        // 验证短信用户是否
+        boolean match = captchaHelper.match(voSmsReq.getCaptchaToken(), voSmsReq.getCaptcha());
+        if(!match){
+            return ResponseEntity.
+                    badRequest().
+                    body(VoBaseResp.error(VoBaseResp.ERROR, "图形验证码错误或者已过期"));
+        }
+
+        // 查询用户是否存在
+        boolean notExistsState = userService.notExistsByPhone(voSmsReq.getPhone()) ;
+
+        if(notExistsState) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前手机号未在平台注册"));
+        }
+
+        OnsMessage onsMessage = new OnsMessage();
+        onsMessage.setTopic(OnsTopics.TOPIC_SMS);
+        onsMessage.setTag(OnsTags.SMS_SWICTH_PHONE);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(OnsBodyKeys.KEYS_PHONE, voSmsReq.getPhone(), OnsBodyKeys.KEYS_IP, request.getRemoteAddr()) ;
+
+        Gson gson = new Gson() ;
+        onsMessage.setBody(gson.toJson(body));
+        boolean state = apolloMQHelper.send(onsMessage) ;
+
+        if(!state) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍候重试！"));
+        }
+
+        // 调用MQ 发送注册短信
+        return ResponseEntity.ok(VoBaseResp.ok("短信发送成功"));
+    }
+
+    /**
+     * 发送更换手机号码短信验证码
+     * @param request 请求类
+     * @param voSmsReq 消息体
+     * @return
+     */
+    public ResponseEntity<VoBaseResp> sendBindPhone(HttpServletRequest request, VoSmsReq voSmsReq){
+        // 验证短信用户是否
+        boolean match = captchaHelper.match(voSmsReq.getCaptchaToken(), voSmsReq.getCaptcha());
+        if(!match){
+            return ResponseEntity.
+                    badRequest().
+                    body(VoBaseResp.error(VoBaseResp.ERROR, "图形验证码错误或者已过期"));
+        }
+
+        // 查询用户是否存在
+        boolean notExistsState = userService.notExistsByPhone(voSmsReq.getPhone()) ;
+
+        if(notExistsState) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前手机号未在平台注册"));
+        }
+
+        OnsMessage onsMessage = new OnsMessage();
+        onsMessage.setTopic(OnsTopics.TOPIC_SMS);
+        onsMessage.setTag(OnsTags.SMS_BUNDLE);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(OnsBodyKeys.KEYS_PHONE, voSmsReq.getPhone(), OnsBodyKeys.KEYS_IP, request.getRemoteAddr()) ;
+
+        Gson gson = new Gson() ;
+        onsMessage.setBody(gson.toJson(body));
+        boolean state = apolloMQHelper.send(onsMessage) ;
+
+        if(!state) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍候重试！"));
+        }
+
+        // 调用MQ 发送注册短信
+        return ResponseEntity.ok(VoBaseResp.ok("短信发送成功"));
+    }
 }

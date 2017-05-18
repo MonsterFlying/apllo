@@ -5,4 +5,5 @@ package com.gofobao.framework.message.controller;
  * Created by Max on 17/5/17.
  */
 public class SmsUserController {
+
 }
