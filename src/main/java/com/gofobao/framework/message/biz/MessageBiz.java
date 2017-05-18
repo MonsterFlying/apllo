@@ -13,8 +13,8 @@ public interface MessageBiz {
 
     /**
      * 发送注册短信验证码
-     * @param request
-     * @param voSmsReq
+     * @param request 请求类
+     * @param voSmsReq 消息体
      * @return
      */
     ResponseEntity<VoBaseResp> sendRegisterCode(ServletRequest request, VoSmsReq voSmsReq);
