@@ -6,9 +6,7 @@ import com.gofobao.framework.message.vo.VoSmsReq;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -18,16 +16,23 @@ import javax.validation.Valid;
  * Created by Max on 17/5/17.
  */
 @RestController
+@RequestMapping("/pub")
 public class SmsAnonymousController {
 
     @Autowired
     private MessageBiz messageBiz ;
 
 
-    @ApiOperation("发送注册短信")
-    @GetMapping("/anonymous/sms/register")
+    @ApiOperation("发送注册短信验证码")
+    @PostMapping("/sms/register")
     public ResponseEntity<VoBaseResp> register(HttpServletRequest request, @Valid @ModelAttribute VoSmsReq voSmsReq) {
         return messageBiz.sendRegisterCode(request, voSmsReq) ;
+    }
+
+    @ApiOperation("发送忘记密码短信验证码")
+    @PostMapping("/sms/findPassword")
+    public ResponseEntity<VoBaseResp> findPassword(HttpServletRequest request, @Valid @ModelAttribute VoSmsReq voSmsReq){
+        return messageBiz.sendFindPassword(request, voSmsReq) ;
     }
 
 }

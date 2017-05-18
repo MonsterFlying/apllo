@@ -1,6 +1,6 @@
 package com.gofobao.framework.api.helper.jixin;
 
-import org.springframework.util.Base64Utils;
+import org.apache.tomcat.util.codec.binary.Base64;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -32,7 +32,7 @@ public class RSAHelper {
 	 */
 	public boolean verify(String dataText, String signText) {
 		try {
-			byte[] signBytes = Base64Utils.decodeFromString(signText);
+			byte[] signBytes = Base64.decodeBase64(signText);
 			byte[] dataBytes = dataText.getBytes(encoding);
 			return verify(dataBytes, signBytes);
 		} catch (UnsupportedEncodingException e) {
@@ -82,7 +82,7 @@ public class RSAHelper {
 		try {
 			byte[] dataBytes = dataText.getBytes(encoding);
 			byte[] signed = sign(dataBytes); 
-			return Base64Utils.encodeToString(signed);
+			return Base64.encodeBase64String(signed);
 		} catch (UnsupportedEncodingException e) {
 			System.out.println("初始化加密算法时报错");
 			e.printStackTrace();

@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
+import java.util.Date;
 
 /**
  * Created by Max on 17/5/17.
@@ -15,10 +16,11 @@ import java.sql.Timestamp;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class GfbSmsEntity {
+public class SmsEntity {
     @Id
     @Column(name = "id")
-    private int id;
+    @GeneratedValue
+    private Long id;
     @Basic
     @Column(name = "username")
     private String username;
@@ -44,7 +46,7 @@ public class GfbSmsEntity {
 
     @Basic
     @Column(name = "status")
-    private byte status;
+    private Integer status;
 
     @Basic
     @Column(name = "ip")
@@ -52,5 +54,5 @@ public class GfbSmsEntity {
 
     @Basic
     @Column(name = "created_at")
-    private Timestamp createdAt;
+    private Date createdAt;
 }

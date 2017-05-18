@@ -1,7 +1,7 @@
 package com.gofobao.framework.message.provider.emay.support;
 
 import com.gofobao.framework.message.provider.AbstractSMSConfig;
-import com.gofobao.framework.message.provider.SMSInterfaceService;
+import com.gofobao.framework.message.provider.SmsInterfaceService;
 import com.gofobao.framework.message.provider.emay.httpclient.SDKHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +19,7 @@ import java.util.Map;
  * Created by Max on 17/2/16.
  */
 @Service
-public class EmaySMSInterfaceServiceImpl implements SMSInterfaceService {
+public class SmsInterfaceServiceImpl implements SmsInterfaceService {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 

@@ -30,12 +30,12 @@ public interface UserService {
      * @param voRegisterCallReq
      * @return
      */
-    VoRegisterCallResp registerCall(VoRegisterCallReq voRegisterCallReq);
+    VoRegisterCallResp registerCallBack(VoRegisterCallReq voRegisterCallReq);
 
     /**
      * 判断手机是否唯一
      * @param phone 手机唯一
      * @return
      */
-    boolean phoneIsOnly(String phone);
+    boolean notExistsByPhone(String phone);
 }

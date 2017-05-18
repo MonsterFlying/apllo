@@ -15,7 +15,7 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class GfbSmsNoticeSettingsEntity implements Serializable{
+public class SmsNoticeSettingsEntity implements Serializable{
     @Id
     @GeneratedValue
     @Column(name = "user_id")

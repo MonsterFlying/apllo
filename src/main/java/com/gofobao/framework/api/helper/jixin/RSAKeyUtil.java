@@ -129,22 +129,4 @@ public class RSAKeyUtil {
 		}
 		return null;
 	}
-
-	public static void testGenerateKeyPair() {
-		try {
-			KeyPairGenerator keygen = KeyPairGenerator.getInstance("RSA");
-			keygen.initialize(1024,  new SecureRandom("credit2go".getBytes()));
-			KeyPair keys = keygen.genKeyPair();
-			PublicKey publicKey = keys.getPublic();
-			PrivateKey privateKey = keys.getPrivate();
-
-			System.out.println("publicKey : " + new String(Hex.encode(publicKey.getEncoded())));
-			System.out.println("publicKey : " + Base64Utils.encodeToString(publicKey.getEncoded()));
-
-			System.out.println("privateKey: " + new String(Hex.encode(privateKey.getEncoded())));
-			System.out.println("privateKey: " + Base64Utils.encodeToString(privateKey.getEncoded()));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
 }

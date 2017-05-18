@@ -11,7 +11,7 @@ import java.util.Date;
 @Data
 public class OnsMessage {
     /** 一级分类 */
-    private String tipic ;
+    private String topic ;
     /** 二级分类*/
     private String tag ;
     /** 消息体 */

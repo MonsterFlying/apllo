@@ -6,7 +6,7 @@ import java.util.List;
  * 短信业务发送借口
  * Created by Max on 17/2/16.
  */
-public interface SMSInterfaceService {
+public interface SmsInterfaceService {
 
     /**
      * 短信发送

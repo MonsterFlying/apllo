@@ -21,6 +21,8 @@ public class DateHelper {
     public static final String DATE_FORMAT_YMDHM = "yyyy-MM-dd HH:mm";
     public static final String DATE_FORMAT_YMD = "yyyy-MM-dd";
     public static final String DATE_FORMAT_YMD_CH = "yyyy年MM月dd日";
+    public static final String DATE_FORMAT_YMD_NUM = "yyyyMMdd";
+    public static final String DATE_FORMAT_HMS_NUM = "HHmmss";
     private static SimpleDateFormat dateFormat = null;
 
     public static final long MILLIS_PER_SECOND = 1000; // Number of milliseconds in a standard second.
