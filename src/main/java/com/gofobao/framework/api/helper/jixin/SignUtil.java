@@ -35,7 +35,7 @@ public class SignUtil {
         try {
             RSAKeyUtil e = new RSAKeyUtil(new File(keys), pass);
             signer = new RSAHelper(e.getPrivateKey());
-            Map<String, String> tempMap = gson.fromJson(gson.toJson(absRequest), new TypeToken<MappingChange.Map<String, String>>() {
+            Map<String, String> tempMap = gson.fromJson(gson.toJson(absRequest), new TypeToken<Map<String, String>>() {
             }.getType());
 
             sign = signer.sign(getSignParamMap(tempMap));

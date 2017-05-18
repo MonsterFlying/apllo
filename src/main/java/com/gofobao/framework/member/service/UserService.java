@@ -30,7 +30,7 @@ public interface UserService {
      * @param voRegisterCallReq
      * @return
      */
-    VoRegisterCallResp registerCall(VoRegisterCallReq voRegisterCallReq);
+    VoRegisterCallResp registerCallBack(VoRegisterCallReq voRegisterCallReq);
 
     /**
      * 判断手机是否唯一

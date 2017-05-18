@@ -10,5 +10,8 @@ import lombok.Data;
 public class VoRegisterReq {
     @JsonIgnore
     private String channel;
-
+    private String cardId;//身份证号码
+    private String username;//用户昵称
+    private String mobile;//手机号码
+    private String cardNo;//绑定银行卡号
 }

@@ -44,13 +44,13 @@ public class OpenHttp {
     }
 
     /**
-     * 发送请求
+     * 发送Json请求
      *
      * @param method 请求方法
      * @param absRequest
      * @return
      */
-    public Map<String, String> sendHttp(String method, AbsRequest absRequest) throws Exception{
+    public Map<String, String> postJson(String method, AbsRequest absRequest) throws Exception{
 
         init(absRequest);//初始化请求参数
 
@@ -63,6 +63,26 @@ public class OpenHttp {
             throw new Exception("验签失败！");
         }
 
+        return null;
+    }
+
+    /**
+     * 发送Json请求
+     *
+     * @param method 请求方法
+     * @param absRequest
+     * @return
+     */
+    public Map<String, String> postForm(String method, AbsRequest absRequest) throws Exception{
+
+        init(absRequest);//初始化请求参数
+
+        Map<String, String> reqMap = gson.fromJson(gson.toJson(absRequest), new TypeToken<Map<String, String>>() {
+        }.getType());
+        reqMap.put("sign",SignUtil.sign(absRequest));
+
+        String bodyJson = OKHttpHelper.postForm(testDomain + method,reqMap,null );
+        System.out.println(bodyJson);
         return null;
     }
 }
