@@ -4,7 +4,7 @@ package com.gofobao.framework.message.provider;
  * 短信发送商配置
  * Created by Max on 17/2/22.
  */
-public class SMSServerConfig {
+public class SmsServerConfig {
     /**
      * 短信配置
      */
@@ -13,12 +13,12 @@ public class SMSServerConfig {
     /**
      * 服务商品发送类
      */
-    private SMSInterfaceService service;
+    private SmsInterfaceService service;
 
-    public SMSServerConfig() {
+    public SmsServerConfig() {
     }
 
-    public SMSServerConfig(AbstractSMSConfig config, SMSInterfaceService service) {
+    public SmsServerConfig(AbstractSMSConfig config, SmsInterfaceService service) {
 
         this.config = config;
         this.service = service;
@@ -32,11 +32,11 @@ public class SMSServerConfig {
         this.config = config;
     }
 
-    public SMSInterfaceService getService() {
+    public SmsInterfaceService getService() {
         return service;
     }
 
-    public void setService(SMSInterfaceService service) {
+    public void setService(SmsInterfaceService service) {
         this.service = service;
     }
 }

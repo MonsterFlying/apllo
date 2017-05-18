@@ -102,7 +102,7 @@ public class StringHelper {
         while (iterator.hasNext()) {
             key = iterator.next();
             value = params.get(key);
-            key = String.format(leftPlaceholder + "%s" + rightPlaceholder, key);
+            key = String.format("%s%s%s",leftPlaceholder, key,rightPlaceholder);
             template = template.replace(key, value);
         }
 

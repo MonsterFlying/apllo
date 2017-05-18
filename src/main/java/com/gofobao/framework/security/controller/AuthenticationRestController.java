@@ -53,7 +53,7 @@ public class AuthenticationRestController {
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // Reload password post-security so we can generate token
+        // Reload password post-security so we can generate captchaToken
         final Users user = userService.findByAccount(voLoginReq.getAccount());
 
         if(ObjectUtils.isEmpty(user)){
@@ -62,7 +62,7 @@ public class AuthenticationRestController {
 
         final String token = jwtTokenHelper.generateToken(user, voLoginReq.getSource());
         response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
-        // Return the token
+        // Return the captchaToken
         VoBasicUserInfo voBasicUserInfo = new VoBasicUserInfo();
         voBasicUserInfo.setEmail(user.getEmail());
         voBasicUserInfo.setPhone(user.getPhone());

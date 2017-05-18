@@ -33,13 +33,13 @@ public class ApolloMQHelper {
 
     public boolean send(OnsMessage onsMessage){
         checkNotNull(onsMessage, "ApolloMQHelper send params: onsMessage is null ") ;
-        ProducerBean producerBean = getProducerBean(onsMessage.getTipic());
+        ProducerBean producerBean = getProducerBean(onsMessage.getTopic());
         if(ObjectUtils.isEmpty(producerBean)) {
             log.error("ApolloMQHelper getProducerBean result is null");
             return false ;
         }
 
-        Message message = new Message(onsMessage.getTipic(), onsMessage.getTag(), onsMessage.getBody().getBytes() ) ;
+        Message message = new Message(onsMessage.getTopic(), onsMessage.getTag(), onsMessage.getBody().getBytes() ) ;
         // delay Time
         if(onsMessage.getDelayTime() > 0){
             message.setStartDeliverTime(System.currentTimeMillis() + onsMessage.getDelayTime() * 1000);

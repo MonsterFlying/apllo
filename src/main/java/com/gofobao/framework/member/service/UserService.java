@@ -37,5 +37,5 @@ public interface UserService {
      * @param phone 手机唯一
      * @return
      */
-    boolean phoneIsOnly(String phone);
+    boolean notExistsByPhone(String phone);
 }
