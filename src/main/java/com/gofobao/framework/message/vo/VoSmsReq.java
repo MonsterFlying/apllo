@@ -3,9 +3,7 @@ package com.gofobao.framework.message.vo;
 import com.gofobao.framework.core.vo.VoBaseReq;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
  * Created by Max on 17/5/17.

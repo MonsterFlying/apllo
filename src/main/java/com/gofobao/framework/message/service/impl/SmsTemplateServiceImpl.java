@@ -3,7 +3,6 @@ package com.gofobao.framework.message.service.impl;
 import com.gofobao.framework.message.entity.GfbSmsTemplateEntity;
 import com.gofobao.framework.message.repository.SmsTemplateRepository;
 import com.gofobao.framework.message.service.SmsTemplateService;
-import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;

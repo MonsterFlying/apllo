@@ -16,4 +16,8 @@ public interface BorrowRepository extends JpaRepository<Borrow,Long> {
 
     Page<Borrow> findByTypeAndStatusNotIn(Integer type, List<Integer>statusArray, Pageable pageable);
 
+
+    Page<Borrow> findByAndStatusNotIn(List<Integer>statusArray, Pageable pageable);
+
+
 }
