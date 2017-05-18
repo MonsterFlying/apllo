@@ -1,5 +1,6 @@
 package com.gofobao.framework.borrow.vo;
 
+import com.gofobao.framework.common.page.Page;
 import lombok.Data;
 
 /**
@@ -7,12 +8,10 @@ import lombok.Data;
  */
 
 @Data
-public class VoBorrowListReq {
+public class VoBorrowListReq extends Page{
 
     private Integer type;
 
-    private Integer pageIndex;
-
-    private Integer pageSize;
+    public VoBorrowListReq(){}
 
 }

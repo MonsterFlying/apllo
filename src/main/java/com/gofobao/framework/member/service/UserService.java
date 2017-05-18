@@ -1,6 +1,10 @@
 package com.gofobao.framework.member.service;
 
 import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.vo.request.VoRegisterCallReq;
+import com.gofobao.framework.member.vo.request.VoRegisterReq;
+import com.gofobao.framework.member.vo.response.VoRegisterCallResp;
+import com.gofobao.framework.member.vo.response.VoRegisterResp;
 
 import java.util.List;
 

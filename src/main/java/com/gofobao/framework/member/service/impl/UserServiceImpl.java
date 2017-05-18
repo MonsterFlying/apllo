@@ -1,8 +1,16 @@
 package com.gofobao.framework.member.service.impl;
 
+import com.gofobao.framework.api.OpenHttp;
+import com.gofobao.framework.api.contants.IdTypeContant;
+import com.gofobao.framework.api.contants.OpenMethodContant;
+import com.gofobao.framework.api.model.openusers.OpenUserRequest;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.member.service.UserService;
+import com.gofobao.framework.member.vo.request.VoRegisterCallReq;
+import com.gofobao.framework.member.vo.request.VoRegisterReq;
+import com.gofobao.framework.member.vo.response.VoRegisterCallResp;
+import com.gofobao.framework.member.vo.response.VoRegisterResp;
 import com.gofobao.framework.security.entity.JwtUserFactory;
 import javafx.scene.chart.ValueAxis;
 import lombok.extern.slf4j.Slf4j;

@@ -13,7 +13,6 @@ import java.util.Map;
  */
 public class JacksonHelper {
 
-
     private final static ObjectMapper objectMapper = new ObjectMapper();
 
     private JacksonHelper() {
