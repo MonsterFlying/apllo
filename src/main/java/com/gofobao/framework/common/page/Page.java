@@ -5,9 +5,6 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import org.springframework.util.ObjectUtils;
 
-/**
- * Created by Max on 2017/3/25.
- */
 @ApiModel("分页")
 public class Page {
 
