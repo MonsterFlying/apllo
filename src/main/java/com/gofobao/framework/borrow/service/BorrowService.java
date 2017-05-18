@@ -1,6 +1,5 @@
 package com.gofobao.framework.borrow.service;
 
-import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.vo.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.VoViewBorrowListRes;
 
@@ -11,6 +10,6 @@ import java.util.List;
  */
 public interface BorrowService {
 
-         List<VoViewBorrowListRes> findAll(VoBorrowListReq voBorrowListReq);
+    List<VoViewBorrowListRes> findAll(VoBorrowListReq voBorrowListReq);
 
 }
