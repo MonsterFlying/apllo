@@ -56,7 +56,7 @@ public class BorrowContants {
 
 
 
-    public static  final String MONTH="月";
+    public static  final String MONTH="个月";
 
 
     public static  final String DAY="天";

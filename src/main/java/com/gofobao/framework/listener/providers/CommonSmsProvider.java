@@ -10,10 +10,10 @@ import com.gofobao.framework.message.repository.SmsRepository;
 import com.gofobao.framework.message.service.SmsConfigService;
 import com.gofobao.framework.message.service.SmsTemplateService;
 import static com.google.common.base.Preconditions.*;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
@@ -26,9 +26,6 @@ import java.util.*;
 public class CommonSmsProvider {
 
     @Autowired
-    RedisHelper redisHelper ;
-
-    @Autowired
     SmsTemplateService smsTemplateService ;
 
     @Autowired
@@ -36,6 +33,9 @@ public class CommonSmsProvider {
 
     @Autowired
     SmsRepository smsRepository ;
+
+    @Autowired
+    RedisHelper redisHelper;
 
     public static final String TEMPLATE_KEY_SMSCODE = "smscode";
 
@@ -46,8 +46,7 @@ public class CommonSmsProvider {
      * @param body 请求内容
      * @return 发送是否成功
      */
-    public boolean doSendMessageCode(String tag,
-                                     Map<String, String> body){
+    public boolean doSendMessageCode(String tag, Map<String, String> body){
         checkNotNull(body,  "CommonSmsProvider doSendMessageCode body is null") ;
         String phone = body.get(OnsBodyKeys.KEYS_PHONE);
         String ip = body.get(OnsBodyKeys.KEYS_IP) ;

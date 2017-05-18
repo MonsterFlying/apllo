@@ -1,10 +1,12 @@
 package com.gofobao.framework.helper;
 
+import static com.google.common.base.Preconditions.*;
 import org.springframework.util.ObjectUtils;
 
 import java.text.DecimalFormat;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Created by Max on 2017/3/6.
@@ -107,6 +109,35 @@ public class StringHelper {
         }
 
         return template;
+    }
+
+
+    /**
+     * 获取Map的待签名字符串
+     * @param map
+     * @return
+     */
+    public static String mergeMap(Map<String, String> map){
+        checkNotNull(map, "") ;
+        Map<String,String> reqMap = new TreeMap<String,String>(map);
+
+        StringBuffer buff = new StringBuffer();
+
+        Iterator<Map.Entry<String, String>> iter = reqMap.entrySet().iterator();
+        Map.Entry<String, String> entry;
+        while (iter.hasNext()) {
+            entry = iter.next();
+            if (!"sign".equals(entry.getKey())) {
+                if(entry.getValue()==null){
+                    entry.setValue("");
+                    buff.append("");
+                }else{
+                    buff.append(String.valueOf(entry.getValue()));
+                }
+            }
+        }
+
+        return buff.toString();
     }
 
 }
