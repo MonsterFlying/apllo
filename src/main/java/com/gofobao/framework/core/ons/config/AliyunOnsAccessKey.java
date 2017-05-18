@@ -1,4 +1,4 @@
-package com.gofobao.framework.core.mq.config;
+package com.gofobao.framework.core.ons.config;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

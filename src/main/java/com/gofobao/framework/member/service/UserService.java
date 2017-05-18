@@ -31,4 +31,11 @@ public interface UserService {
      * @return
      */
     VoRegisterCallResp registerCall(VoRegisterCallReq voRegisterCallReq);
+
+    /**
+     * 判断手机是否唯一
+     * @param phone 手机唯一
+     * @return
+     */
+    boolean phoneIsOnly(String phone);
 }

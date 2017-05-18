@@ -13,11 +13,9 @@ import com.gofobao.framework.member.vo.request.VoRegisterReq;
 import com.gofobao.framework.member.vo.response.VoRegisterCallResp;
 import com.gofobao.framework.member.vo.response.VoRegisterResp;
 import com.gofobao.framework.security.entity.JwtUserFactory;
-import javafx.scene.chart.ValueAxis;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -33,7 +31,7 @@ import java.util.Optional;
  * 用户实体类
  * Created by Max on 20.03.16.
  */
-@Service("userService")
+@Service
 @Slf4j
 public class UserServiceImpl implements UserDetailsService, UserService{
 
@@ -57,17 +55,17 @@ public class UserServiceImpl implements UserDetailsService, UserService{
 
     @Override
     public List<Users> listUser(Users users) {
-        Example<Users> usersExample = Example.of(users) ;
-        List<Users> usersList =  userRepository.findAll(usersExample) ;
-        return Optional.ofNullable(usersList).orElse(Collections.EMPTY_LIST) ;
+        Example<Users> usersExample = Example.of(users);
+        List<Users> usersList = userRepository.findAll(usersExample);
+        return Optional.ofNullable(usersList).orElse(Collections.EMPTY_LIST);
     }
 
     @Override
     public Users findByAccount(String account) {
-        List<Users> usersList = userRepository.findByUsernameOrPhoneOrEmail(account, account, account) ;
+        List<Users> usersList = userRepository.findByUsernameOrPhoneOrEmail(account, account, account);
 
-        if(!CollectionUtils.isEmpty(usersList)){
-            return usersList.get(0) ;
+        if (!CollectionUtils.isEmpty(usersList)) {
+            return usersList.get(0);
         }
         return null;
     }
@@ -98,5 +96,11 @@ public class UserServiceImpl implements UserDetailsService, UserService{
      */
     public VoRegisterCallResp registerCall(VoRegisterCallReq voRegisterCallReq){
         return null;
+    }
+
+    @Override
+    public boolean phoneIsOnly(String phone) {
+        List<Users> usersList = userRepository.findByPhone(phone);
+        return CollectionUtils.isEmpty(usersList);
     }
 }

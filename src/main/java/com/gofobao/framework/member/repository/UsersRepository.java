@@ -13,4 +13,11 @@ import java.util.List;
 public interface UsersRepository extends JpaRepository<Users,Long>{
 
     List<Users> findByUsernameOrPhoneOrEmail(String username, String phone, String email);
+
+    /** 通过手机号码查找会员*/
+    List<Users> findByPhone(String phone);
+
+    /** 通过邮箱查找会员*/
+    List<Users> findByEmail(String email);
+
 }
