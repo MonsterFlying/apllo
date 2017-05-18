@@ -3,6 +3,7 @@ package com.gofobao.framework.member.service.impl;
 import com.gofobao.framework.api.OpenHttp;
 import com.gofobao.framework.api.contants.IdTypeContant;
 import com.gofobao.framework.api.contants.OpenMethodContant;
+import com.gofobao.framework.api.contants.SeqNoContant;
 import com.gofobao.framework.api.model.openusers.OpenUserRequest;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
@@ -80,6 +81,8 @@ public class UserServiceImpl implements UserDetailsService, UserService{
     public VoRegisterResp register(VoRegisterReq voRegisterReq){
         OpenUserRequest request = new OpenUserRequest();
         request.setIdType(IdTypeContant.ID_CARD);
+        request.setChannel(voRegisterReq.getChannel());
+        request.setSeqNo(SeqNoContant.MEMBER_NUM);
         try {
             openHttp.sendHttp(OpenMethodContant.OPEN_USER,request);
         } catch (Exception e) {
