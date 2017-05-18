@@ -96,7 +96,7 @@ public class UserServiceImpl implements UserDetailsService, UserService{
     }
 
     @Override
-    public boolean phoneIsOnly(String phone) {
+    public boolean notExistsByPhone(String phone) {
         List<Users> usersList = userRepository.findByPhone(phone);
         return CollectionUtils.isEmpty(usersList);
     }

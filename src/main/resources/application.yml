@@ -20,19 +20,19 @@ spring:
     port: 6379
 
 aliyun:
-  keys: # 阿里云
+  keys: # 阿里云 ons
     accessKey: pcJnstgkn9RGgE3f
     secretKey: iZayTXG25VF2uYNN6BxczNI4kc0y4s
     onsAddr: http://onsaddr-internet.aliyun.com/rocketmq/nsaddr4client-internet
 server:
   port: 8080
-jwt:
+jwt: #JWT 安全配置
   header: Authorization
   secret: WWW.gOf0b@o.c0m@0701
   expiration: 2592000
   prefix: Bearer
 
-jixin:
+jixin: #银行存管
   domain: https://test.credit2go.cn
   version: 10
   txCode: accountOpen

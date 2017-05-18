@@ -5,6 +5,7 @@ import com.gofobao.framework.message.vo.VoSmsReq;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Created by Max on 17/5/17.
@@ -18,4 +19,13 @@ public interface MessageBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> sendRegisterCode(ServletRequest request, VoSmsReq voSmsReq);
+
+
+    /**
+     * 发送忘记密码短信验证码
+     * @param request 请求类
+     * @param voSmsReq 消息体
+     * @return
+     */
+    ResponseEntity<VoBaseResp> sendFindPassword(HttpServletRequest request, VoSmsReq voSmsReq);
 }

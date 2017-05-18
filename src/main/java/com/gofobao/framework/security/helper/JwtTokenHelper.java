@@ -176,7 +176,7 @@ public class JwtTokenHelper implements Serializable {
         JwtUser user = (JwtUser) userDetails;
         final String username = getUsernameFromToken(token);
         final Date created = getCreatedDateFromToken(token);
-        //final Date expiration = getExpirationDateFromToken(token);
+        //final Date expiration = getExpirationDateFromToken(captchaToken);
         return (
                 username.equals(user.getUsername())
                         && !isTokenExpired(token)

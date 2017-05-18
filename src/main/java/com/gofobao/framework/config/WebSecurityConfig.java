@@ -56,7 +56,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
-                // we don't need CSRF because our token is invulnerable
+                // we don't need CSRF because our captchaToken is invulnerable
                 .csrf().disable()
 
                 .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
@@ -80,6 +80,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
                 .antMatchers(
                         "/borrow/**")
+                .permitAll()
+                .antMatchers(
+                        "/pub/**")
                 .permitAll()
                 .antMatchers("/auth/**").permitAll()
                 .anyRequest().authenticated();

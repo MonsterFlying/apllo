@@ -1,9 +1,8 @@
 package com.gofobao.framework.message.service.impl;
 
-import com.gofobao.framework.message.entity.GfbSmsTemplateEntity;
+import com.gofobao.framework.message.entity.SmsTemplateEntity;
 import com.gofobao.framework.message.repository.SmsTemplateRepository;
 import com.gofobao.framework.message.service.SmsTemplateService;
-import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -46,7 +45,7 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
      * @return
      */
     private String findSmsTemplateByAlias(String alias) {
-        List<GfbSmsTemplateEntity> templateEntities = smsTemplateRepository.findByAliasCode(alias);
+        List<SmsTemplateEntity> templateEntities = smsTemplateRepository.findByAliasCode(alias);
         if(!CollectionUtils.isEmpty(templateEntities)){
             return templateEntities.get(0).getTemplate() ;
         }
