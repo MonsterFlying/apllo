@@ -57,10 +57,7 @@ public class MessageBizImpl implements MessageBiz {
         OnsMessage onsMessage = new OnsMessage();
         onsMessage.setTag(OnsTags.RGISTER);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(OnsBodyKeys.KEYS_PHONE,
-                        voSmsReq.getPhone(),
-                         OnsBodyKeys.KEYS_IP,
-                        request.getRemoteAddr()) ;
+                .of(OnsBodyKeys.KEYS_PHONE, voSmsReq.getPhone(), OnsBodyKeys.KEYS_IP, request.getRemoteAddr()) ;
 
         Gson gson = new Gson() ;
         onsMessage.setBody(gson.toJson(body));
