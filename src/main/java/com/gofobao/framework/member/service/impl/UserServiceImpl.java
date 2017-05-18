@@ -1,6 +1,5 @@
 package com.gofobao.framework.member.service.impl;
 
-import com.gofobao.framework.api.OpenHttp;
 import com.gofobao.framework.api.contants.AcctUseContant;
 import com.gofobao.framework.api.contants.IdTypeContant;
 import com.gofobao.framework.api.contants.OpenMethodContant;
@@ -38,14 +37,10 @@ import java.util.Optional;
 @Service
 @Slf4j
 public class UserServiceImpl implements UserDetailsService, UserService{
-
-    @Autowired
-    private OpenHttp openHttp;
-
     @Autowired
     private UsersRepository userRepository;
 
-    @Value("${gofobao.callBack}")
+    // @Value("${gofobao.callBack}")
     public String callBack;
 
 
@@ -96,7 +91,7 @@ public class UserServiceImpl implements UserDetailsService, UserService{
         request.setAcctUse(AcctUseContant.GENERAL_ACCOUNT);
         request.setNotifyUrl(callBack+"/pub/user/reg/registerCallBack");
         try {
-            openHttp.postForm(OpenMethodContant.OPEN_USER,request);
+            //openHttp.postForm(OpenMethodContant.OPEN_USER,request);
         } catch (Exception e) {
             e.printStackTrace();
         }

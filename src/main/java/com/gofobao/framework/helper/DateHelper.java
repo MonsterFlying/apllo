@@ -575,4 +575,34 @@ public class DateHelper {
     public static boolean isFuture(final Date date) {
         return date.getTime() > new Date().getTime();
     }
+
+    /**
+     * 获取天（yyyyMMdd））
+     * @return
+     */
+    public static String getDate() {
+        Date nowDate = new Date() ;
+        dateFormat = new SimpleDateFormat(DATE_FORMAT_YMD_NUM);
+        try {
+            return dateFormat.format(nowDate);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+
+    /**
+     * 获取时间(HHmmss)
+     * @return
+     */
+    public static String getTime() {
+        Date nowDate = new Date() ;
+        dateFormat = new SimpleDateFormat(DATE_FORMAT_HMS_NUM);
+        try {
+            return dateFormat.format(nowDate);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
 }
