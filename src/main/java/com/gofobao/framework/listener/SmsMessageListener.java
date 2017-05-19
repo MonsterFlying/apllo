@@ -51,6 +51,7 @@ public class SmsMessageListener implements MessageListener {
         switch (tag){
             case OnsTags.SMS_REGISTER:  // 发送注册短信
             case OnsTags.SMS_RESET_PASSWORD: // 充值短信密码
+            case OnsTags.SMS_SWICTH_PHONE: // 发送更换手机
                 sendResult = commonSmsProvider.doSendMessageCode(tag, body) ;
                 break;
         }

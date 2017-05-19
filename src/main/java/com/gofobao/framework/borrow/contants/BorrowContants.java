@@ -61,4 +61,7 @@ public class BorrowContants {
 
     public static  final String DAY="天";
 
+    public static final String TIME="次";
+
+
 }

@@ -70,6 +70,9 @@ public class UserServiceImpl implements UserDetailsService, UserService{
         return null;
     }
 
+    public Users findById(Long id){
+        return userRepository.findOne(id);
+    }
 
     /**
      * 注册用户
@@ -109,5 +112,29 @@ public class UserServiceImpl implements UserDetailsService, UserService{
     public boolean notExistsByPhone(String phone) {
         List<Users> usersList = userRepository.findByPhone(phone);
         return CollectionUtils.isEmpty(usersList);
+    }
+
+    /**
+     * 根据id更新用户
+     * @param users
+     * @return
+     */
+    public boolean updUserById(Users users){
+        if (ObjectUtils.isEmpty(users.getId())){
+            return false;
+        }
+        return ObjectUtils.isEmpty(userRepository.save(users));
+    }
+
+    /**
+     * 根据手机号码更新用户
+     * @param users
+     * @return
+     */
+    public boolean updUserByPhone(Users users){
+        if (ObjectUtils.isEmpty(users.getPhone())){
+            return false;
+        }
+        return ObjectUtils.isEmpty(userRepository.save(users));
     }
 }

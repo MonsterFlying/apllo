@@ -1,5 +1,6 @@
 package com.gofobao.framework.tender.entity;
 
+import com.gofobao.framework.member.entity.Users;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -46,5 +47,12 @@ public class Tender {
     @Basic
     @Column(name = "updated_at")
     private Date updatedAt;
+    @Basic
+    @Column(name = "borrow_id")
+    private Integer borrowId;
+    @Basic
+    @JoinColumn(name="user_id")
+    @OneToOne(fetch = FetchType.LAZY)
+    private Users user;
 
 }

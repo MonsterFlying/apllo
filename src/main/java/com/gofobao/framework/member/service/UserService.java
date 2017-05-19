@@ -17,6 +17,8 @@ public interface UserService {
 
     Users findByAccount(String account) ;
 
+    Users findById(Long id) ;
+
     /**
      * 注册用户
      * @param voRegisterReq
@@ -38,4 +40,18 @@ public interface UserService {
      * @return
      */
     boolean notExistsByPhone(String phone);
+
+    /**
+     * 根据id更新用户
+     * @param users
+     * @return
+     */
+    boolean updUserById(Users users);
+
+    /**
+     * 根据手机号码更新用户
+     * @param users
+     * @return
+     */
+    boolean updUserByPhone(Users users);
 }
