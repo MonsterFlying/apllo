@@ -1,5 +1,6 @@
 package com.gofobao.framework.member.entity;
 
+import com.gofobao.framework.tender.entity.Tender;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -74,4 +75,6 @@ public class Users implements Serializable{
     @Basic
     @Column(name = "updated_at")
     private Date updatedAt;
+    @OneToOne(fetch = FetchType.EAGER,mappedBy ="user")
+    private Tender tender;
 }

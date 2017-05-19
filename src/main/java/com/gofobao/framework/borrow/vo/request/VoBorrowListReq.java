@@ -1,4 +1,4 @@
-package com.gofobao.framework.borrow.vo;
+package com.gofobao.framework.borrow.vo.request;
 
 import com.gofobao.framework.common.page.Page;
 import lombok.Data;
