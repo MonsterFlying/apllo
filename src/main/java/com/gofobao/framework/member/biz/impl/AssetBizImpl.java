@@ -10,11 +10,13 @@ import com.gofobao.framework.member.vo.request.VoUserAssetInfoReq;
 import com.gofobao.framework.member.vo.response.VoUserAssetInfoResp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
 /**
  * Created by Zeke on 2017/5/19.
  */
+@Service
 public class AssetBizImpl implements AssetBiz {
 
     @Autowired

@@ -13,11 +13,13 @@ import com.gofobao.framework.member.vo.request.VoModifyPasswordReq;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 
 /**
  * Created by Zeke on 2017/5/18.
  */
 @Slf4j
+@Service
 public class UserPasswordBizImpl implements UserPasswordBiz {
 
     @Autowired
