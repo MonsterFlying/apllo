@@ -41,6 +41,7 @@ public class BorrowController {
         try {
             listResList = borrowService.findAll(voBorrowListReq);
         } catch (Exception e) {
+            e.printStackTrace();
            log.error("BorrowController borrowList Exception ", e);
            return ResponseEntity.badRequest().body(Collections.EMPTY_LIST) ;
         }

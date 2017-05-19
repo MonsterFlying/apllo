@@ -63,5 +63,28 @@ public class BorrowContants {
 
     public static final String TIME="次";
 
+    /**
+     * 车贷标
+     */
+    public static final int INDEX_TYPE_CE_DAI = 1;
+    /**
+     * 净值标
+     */
+    public static final int INDEX_TYPE_JING_ZHI = 2;
+    /**
+     * 秒标
+     */
+    public static final int INDEX_TYPE_MIAO = 3;
+    /**
+     * 渠道标
+     */
+    public static final int INDEX_TYPE_QU_DAO = 4;
+    /**
+     * 转让标
+     */
+    public static final int INDEX_TYPE_LIU_ZHUAN = 5;
+
+
+
 
 }
