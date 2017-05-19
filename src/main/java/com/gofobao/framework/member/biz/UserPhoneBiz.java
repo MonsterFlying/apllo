@@ -1,8 +1,8 @@
 package com.gofobao.framework.member.biz;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.member.vo.request.VoBindSwitchPhone;
-import com.gofobao.framework.member.vo.request.VoCheckSwitchPhone;
+import com.gofobao.framework.member.vo.request.VoBindSwitchPhoneReq;
+import com.gofobao.framework.member.vo.request.VoCheckSwitchPhoneReq;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -11,15 +11,15 @@ import org.springframework.http.ResponseEntity;
 public interface UserPhoneBiz {
     /**
      * 更改手机
-     * @param voCheckSwitchPhone
+     * @param voCheckSwitchPhoneReq
      * @return
      */
-    ResponseEntity<VoBaseResp> checkSwitchPhone(VoCheckSwitchPhone voCheckSwitchPhone);
+    ResponseEntity<VoBaseResp> checkSwitchPhone(VoCheckSwitchPhoneReq voCheckSwitchPhoneReq);
 
     /**
      * 更改手机
-     * @param voBindSwitchPhone
+     * @param voBindSwitchPhoneReq
      * @return
      */
-    ResponseEntity<VoBaseResp> bindSwitchPhone(VoBindSwitchPhone voBindSwitchPhone);
+    ResponseEntity<VoBaseResp> bindSwitchPhone(VoBindSwitchPhoneReq voBindSwitchPhoneReq);
 }

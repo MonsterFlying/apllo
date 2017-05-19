@@ -10,7 +10,7 @@ import org.hibernate.validator.constraints.NotEmpty;
  * Created by Zeke on 2017/5/19.
  */
 @Data
-public class VoBindSwitchPhone extends VoBaseReq {
+public class VoBindSwitchPhoneReq extends VoBaseReq {
     @ApiModelProperty(hidden = true)
     @JsonIgnore
     private Long userId;

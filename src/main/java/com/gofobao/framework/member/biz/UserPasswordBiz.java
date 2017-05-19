@@ -1,9 +1,9 @@
 package com.gofobao.framework.member.biz;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.member.vo.request.VoCheckFindPassword;
-import com.gofobao.framework.member.vo.request.VoFindPassword;
-import com.gofobao.framework.member.vo.request.VoModifyPassword;
+import com.gofobao.framework.member.vo.request.VoCheckFindPasswordReq;
+import com.gofobao.framework.member.vo.request.VoFindPasswordReq;
+import com.gofobao.framework.member.vo.request.VoModifyPasswordReq;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -13,22 +13,22 @@ public interface UserPasswordBiz {
 
     /**
      * 用户修改密码
-     * @param voModifyPassword
+     * @param voModifyPasswordReq
      * @return
      */
-    ResponseEntity<VoBaseResp> modifyPassword(VoModifyPassword voModifyPassword);
+    ResponseEntity<VoBaseResp> modifyPassword(VoModifyPasswordReq voModifyPasswordReq);
 
     /**
      * 用户忘记密码
-     * @param voFindPassword
+     * @param voFindPasswordReq
      * @return
      */
-    ResponseEntity<VoBaseResp> findPassword(VoFindPassword voFindPassword);
+    ResponseEntity<VoBaseResp> findPassword(VoFindPasswordReq voFindPasswordReq);
 
     /**
      * 校验找回密码
-     * @param voCheckFindPassword
+     * @param voCheckFindPasswordReq
      * @return
      */
-    ResponseEntity<VoBaseResp> checkFindPassword(VoCheckFindPassword voCheckFindPassword);
+    ResponseEntity<VoBaseResp> checkFindPassword(VoCheckFindPasswordReq voCheckFindPasswordReq);
 }

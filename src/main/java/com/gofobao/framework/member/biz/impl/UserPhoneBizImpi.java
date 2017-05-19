@@ -3,12 +3,11 @@ package com.gofobao.framework.member.biz.impl;
 import com.gofobao.framework.core.ons.config.OnsTags;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.CaptchaHelper;
-import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.member.biz.UserPhoneBiz;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
-import com.gofobao.framework.member.vo.request.VoBindSwitchPhone;
-import com.gofobao.framework.member.vo.request.VoCheckSwitchPhone;
+import com.gofobao.framework.member.vo.request.VoBindSwitchPhoneReq;
+import com.gofobao.framework.member.vo.request.VoCheckSwitchPhoneReq;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ObjectUtils;
@@ -27,12 +26,12 @@ public class UserPhoneBizImpi implements UserPhoneBiz {
     /**
      * 更改手机验证
      *
-     * @param voCheckSwitchPhone
+     * @param voCheckSwitchPhoneReq
      * @return
      */
-    public ResponseEntity<VoBaseResp> checkSwitchPhone(VoCheckSwitchPhone voCheckSwitchPhone) {
-        Long userId = voCheckSwitchPhone.getUserId();
-        String phoneCaptcha = voCheckSwitchPhone.getPhoneCaptcha();
+    public ResponseEntity<VoBaseResp> checkSwitchPhone(VoCheckSwitchPhoneReq voCheckSwitchPhoneReq) {
+        Long userId = voCheckSwitchPhoneReq.getUserId();
+        String phoneCaptcha = voCheckSwitchPhoneReq.getPhoneCaptcha();
 
         Users users = userService.findById(userId);
         if (ObjectUtils.isEmpty(users) || ObjectUtils.isEmpty(users.getPhone())) {
@@ -55,14 +54,14 @@ public class UserPhoneBizImpi implements UserPhoneBiz {
     /**
      * 更换手机绑定
      *
-     * @param voBindSwitchPhone
+     * @param voBindSwitchPhoneReq
      * @return
      */
-    public ResponseEntity<VoBaseResp> bindSwitchPhone(VoBindSwitchPhone voBindSwitchPhone) {
-        Long userId = voBindSwitchPhone.getUserId();
-        String phoneCaptcha = voBindSwitchPhone.getPhoneCaptcha();
-        String newPhone = voBindSwitchPhone.getNewPhone();
-        String newPhoneCaptcha = voBindSwitchPhone.getNewPhoneCaptcha();
+    public ResponseEntity<VoBaseResp> bindSwitchPhone(VoBindSwitchPhoneReq voBindSwitchPhoneReq) {
+        Long userId = voBindSwitchPhoneReq.getUserId();
+        String phoneCaptcha = voBindSwitchPhoneReq.getPhoneCaptcha();
+        String newPhone = voBindSwitchPhoneReq.getNewPhone();
+        String newPhoneCaptcha = voBindSwitchPhoneReq.getNewPhoneCaptcha();
 
         Users users = userService.findById(userId);
         if (ObjectUtils.isEmpty(users) || ObjectUtils.isEmpty(users.getPhone())) {

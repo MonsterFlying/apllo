@@ -13,7 +13,7 @@ import javax.validation.constraints.Pattern;
  * Created by Zeke on 2017/5/18.
  */
 @Data
-public class VoModifyPassword  extends VoBaseReq {
+public class VoModifyPasswordReq extends VoBaseReq {
     @ApiModelProperty(hidden = true)
     @JsonIgnore
     private Long userId;

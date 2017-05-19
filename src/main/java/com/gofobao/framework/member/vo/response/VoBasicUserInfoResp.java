@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class VoBasicUserInfo {
+public class VoBasicUserInfoResp {
     private String username ;
     private String phone;
     private String email ;

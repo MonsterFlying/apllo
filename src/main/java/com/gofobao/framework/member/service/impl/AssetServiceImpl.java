@@ -1,0 +1,24 @@
+package com.gofobao.framework.member.service.impl;
+
+import com.gofobao.framework.member.entity.Asset;
+import com.gofobao.framework.member.repository.AssetRepository;
+import com.gofobao.framework.member.service.AssetService;
+import org.springframework.beans.factory.annotation.Autowired;
+
+/**
+ * Created by Zeke on 2017/5/19.
+ */
+public class AssetServiceImpl implements AssetService{
+
+    @Autowired
+    private AssetRepository assetRepository;
+
+    /**
+     * 根据id产寻资产
+     * @param id
+     * @return
+     */
+    public Asset findById(Long id){
+        return assetRepository.findOne(id);
+    }
+}

@@ -2,9 +2,9 @@ package com.gofobao.framework.member.controller;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.biz.UserPasswordBiz;
-import com.gofobao.framework.member.vo.request.VoCheckFindPassword;
-import com.gofobao.framework.member.vo.request.VoFindPassword;
-import com.gofobao.framework.member.vo.request.VoModifyPassword;
+import com.gofobao.framework.member.vo.request.VoCheckFindPasswordReq;
+import com.gofobao.framework.member.vo.request.VoFindPasswordReq;
+import com.gofobao.framework.member.vo.request.VoModifyPasswordReq;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,37 +39,37 @@ public class PasswordController {
     /**
      * 用户修改密码
      *
-     * @param voModifyPassword
+     * @param voModifyPasswordReq
      * @return
      */
     @ApiOperation("用户修改密码")
     @PostMapping("/user/password/modify")
-    public ResponseEntity<VoBaseResp> modifyPassword(@Valid @ModelAttribute VoModifyPassword voModifyPassword, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        voModifyPassword.setUserId(userId);
-        return userPasswordBiz.modifyPassword(voModifyPassword);
+    public ResponseEntity<VoBaseResp> modifyPassword(@Valid @ModelAttribute VoModifyPasswordReq voModifyPasswordReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        voModifyPasswordReq.setUserId(userId);
+        return userPasswordBiz.modifyPassword(voModifyPasswordReq);
     }
 
     /**
      * 用户忘记密码
      *
-     * @param voFindPassword
+     * @param voFindPasswordReq
      * @return
      */
     @ApiOperation("用户忘记密码")
     @PostMapping("/pub/user/password/find/modify")
-    public ResponseEntity<VoBaseResp> findPassword(@Valid @ModelAttribute VoFindPassword voFindPassword){
-        return userPasswordBiz.findPassword(voFindPassword);
+    public ResponseEntity<VoBaseResp> findPassword(@Valid @ModelAttribute VoFindPasswordReq voFindPasswordReq){
+        return userPasswordBiz.findPassword(voFindPasswordReq);
     }
 
     /**
      * 校验用户忘记密码
      *
-     * @param voCheckFindPassword
+     * @param voCheckFindPasswordReq
      * @return
      */
     @ApiOperation("校验用户忘记密码验证码")
     @PostMapping("/pub/user/password/find/check")
-    public ResponseEntity<VoBaseResp> checkFindPassword(@Valid @ModelAttribute VoCheckFindPassword voCheckFindPassword){
-        return userPasswordBiz.checkFindPassword(voCheckFindPassword);
+    public ResponseEntity<VoBaseResp> checkFindPassword(@Valid @ModelAttribute VoCheckFindPasswordReq voCheckFindPasswordReq){
+        return userPasswordBiz.checkFindPassword(voCheckFindPasswordReq);
     }
 }

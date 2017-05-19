@@ -12,7 +12,7 @@ import javax.validation.constraints.Pattern;
  * Created by Zeke on 2017/5/18.
  */
 @Data
-public class VoFindPassword  extends VoBaseReq {
+public class VoFindPasswordReq extends VoBaseReq {
 
     @ApiModelProperty(name = "手机号码", required = true, dataType = "String" )
     @Pattern(regexp = RegexHelper.REGEX_MOBILE_EXACT, message = "手机格式有误")

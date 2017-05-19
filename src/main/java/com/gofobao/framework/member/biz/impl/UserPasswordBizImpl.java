@@ -4,18 +4,15 @@ import com.gofobao.framework.core.helper.PasswordHelper;
 import com.gofobao.framework.core.ons.config.OnsTags;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.CaptchaHelper;
-import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.member.biz.UserPasswordBiz;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
-import com.gofobao.framework.member.vo.request.VoCheckFindPassword;
-import com.gofobao.framework.member.vo.request.VoFindPassword;
-import com.gofobao.framework.member.vo.request.VoModifyPassword;
+import com.gofobao.framework.member.vo.request.VoCheckFindPasswordReq;
+import com.gofobao.framework.member.vo.request.VoFindPasswordReq;
+import com.gofobao.framework.member.vo.request.VoModifyPasswordReq;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 
 /**
  * Created by Zeke on 2017/5/18.
@@ -32,13 +29,13 @@ public class UserPasswordBizImpl implements UserPasswordBiz {
     /**
      * 用户修改密码
      *
-     * @param voModifyPassword
+     * @param voModifyPasswordReq
      * @return
      */
-    public ResponseEntity<VoBaseResp> modifyPassword(VoModifyPassword voModifyPassword) {
-        String nowPassword = voModifyPassword.getNowPassword();
-        String newPassword = voModifyPassword.getNewPassword();
-        Long userId = voModifyPassword.getUserId();
+    public ResponseEntity<VoBaseResp> modifyPassword(VoModifyPasswordReq voModifyPasswordReq) {
+        String nowPassword = voModifyPasswordReq.getNowPassword();
+        String newPassword = voModifyPasswordReq.getNewPassword();
+        Long userId = voModifyPasswordReq.getUserId();
 
         Users users = userService.findById(userId);
 
@@ -69,12 +66,12 @@ public class UserPasswordBizImpl implements UserPasswordBiz {
     /**
      * 校验用户忘记密码
      *
-     * @param voCheckFindPassword
+     * @param voCheckFindPasswordReq
      * @return
      */
-    public ResponseEntity<VoBaseResp> checkFindPassword(VoCheckFindPassword voCheckFindPassword) {
-        String phone = voCheckFindPassword.getPhone();
-        String phoneCaptcha = voCheckFindPassword.getPhoneCaptcha();
+    public ResponseEntity<VoBaseResp> checkFindPassword(VoCheckFindPasswordReq voCheckFindPasswordReq) {
+        String phone = voCheckFindPasswordReq.getPhone();
+        String phoneCaptcha = voCheckFindPasswordReq.getPhoneCaptcha();
 
         boolean bool = captchaHelper.checkPhoneCaptcha(phone, phoneCaptcha, OnsTags.SMS_RESET_PASSWORD);//验证找回密码验证码是否正确
         if (!bool){
@@ -89,13 +86,13 @@ public class UserPasswordBizImpl implements UserPasswordBiz {
     /**
      * 用户忘记密码
      *
-     * @param voFindPassword
+     * @param voFindPasswordReq
      * @return
      */
-    public ResponseEntity<VoBaseResp> findPassword(VoFindPassword voFindPassword) {
-        String phone = voFindPassword.getPhone();
-        String phoneCaptcha = voFindPassword.getPhoneCaptcha();
-        String newPassword = voFindPassword.getNewPassword();
+    public ResponseEntity<VoBaseResp> findPassword(VoFindPasswordReq voFindPasswordReq) {
+        String phone = voFindPasswordReq.getPhone();
+        String phoneCaptcha = voFindPasswordReq.getPhoneCaptcha();
+        String newPassword = voFindPasswordReq.getNewPassword();
 
         boolean bool = captchaHelper.checkPhoneCaptcha(phone, phoneCaptcha, OnsTags.SMS_RESET_PASSWORD);//验证找回密码验证码是否正确
         captchaHelper.removePhoneCaptcha(phone, OnsTags.SMS_RESET_PASSWORD);//删除验证码

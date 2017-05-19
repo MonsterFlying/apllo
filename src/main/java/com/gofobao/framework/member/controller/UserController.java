@@ -2,16 +2,13 @@ package com.gofobao.framework.member.controller;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.biz.UserPhoneBiz;
-import com.gofobao.framework.member.vo.request.VoBindSwitchPhone;
-import com.gofobao.framework.member.vo.request.VoCheckSwitchPhone;
-import com.gofobao.framework.member.vo.request.VoFindPassword;
+import com.gofobao.framework.member.vo.request.VoBindSwitchPhoneReq;
+import com.gofobao.framework.member.vo.request.VoCheckSwitchPhoneReq;
+import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
@@ -27,13 +24,15 @@ public class UserController {
 
     @ApiOperation("更改手机验证")
     @PostMapping("/user/phone/switch/check")
-    public ResponseEntity<VoBaseResp> checkSwitchPhone(@Valid @ModelAttribute VoCheckSwitchPhone voCheckSwitchPhone){
-        return userPhoneBiz.checkSwitchPhone(voCheckSwitchPhone);
+    public ResponseEntity<VoBaseResp> checkSwitchPhone(@Valid @ModelAttribute VoCheckSwitchPhoneReq voCheckSwitchPhoneReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        voCheckSwitchPhoneReq.setUserId(userId);
+        return userPhoneBiz.checkSwitchPhone(voCheckSwitchPhoneReq);
     }
 
     @ApiOperation("更改手机绑定")
     @PostMapping("/user/phone/switch/bind")
-    public ResponseEntity<VoBaseResp> bindSwitchPhone(@Valid @ModelAttribute VoBindSwitchPhone voBindSwitchPhone){
-        return userPhoneBiz.bindSwitchPhone(voBindSwitchPhone);
+    public ResponseEntity<VoBaseResp> bindSwitchPhone(@Valid @ModelAttribute VoBindSwitchPhoneReq voBindSwitchPhoneReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        voBindSwitchPhoneReq.setUserId(userId);
+        return userPhoneBiz.bindSwitchPhone(voBindSwitchPhoneReq);
     }
 }
