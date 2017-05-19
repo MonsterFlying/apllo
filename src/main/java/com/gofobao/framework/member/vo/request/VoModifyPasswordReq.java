@@ -1,6 +1,7 @@
 package com.gofobao.framework.member.vo.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.gofobao.framework.core.vo.VoBaseReq;
 import com.gofobao.framework.helper.RegexHelper;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -12,7 +13,7 @@ import javax.validation.constraints.Pattern;
  * Created by Zeke on 2017/5/18.
  */
 @Data
-public class VoModifyPassword {
+public class VoModifyPasswordReq extends VoBaseReq {
     @ApiModelProperty(hidden = true)
     @JsonIgnore
     private Long userId;
