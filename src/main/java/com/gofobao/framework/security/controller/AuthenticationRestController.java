@@ -2,7 +2,7 @@ package com.gofobao.framework.security.controller;
 
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
-import com.gofobao.framework.member.vo.response.VoBasicUserInfo;
+import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.gofobao.framework.security.vo.VoLoginReq;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +13,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,7 +44,7 @@ public class AuthenticationRestController {
     private UserService userService;
 
     @PostMapping("/login")
-    public ResponseEntity<VoBasicUserInfo> login(HttpServletResponse response, @ModelAttribute VoLoginReq voLoginReq){
+    public ResponseEntity<VoBasicUserInfoResp> login(HttpServletResponse response, @ModelAttribute VoLoginReq voLoginReq){
         // Perform the security
         final Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -60,13 +61,18 @@ public class AuthenticationRestController {
             return ResponseEntity.badRequest().body(null);
         }
 
+        String username = user.getUsername();
+        if(StringUtils.isEmpty(username)) username = user.getPhone() ;
+        if(StringUtils.isEmpty(username)) username = user.getEmail() ;
+        user.setUsername(username);
+
         final String token = jwtTokenHelper.generateToken(user, voLoginReq.getSource());
         response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
         // Return the captchaToken
-        VoBasicUserInfo voBasicUserInfo = new VoBasicUserInfo();
-        voBasicUserInfo.setEmail(user.getEmail());
-        voBasicUserInfo.setPhone(user.getPhone());
-        return ResponseEntity.ok(voBasicUserInfo);
+        VoBasicUserInfoResp voBasicUserInfoResp = new VoBasicUserInfoResp();
+        voBasicUserInfoResp.setEmail(user.getEmail());
+        voBasicUserInfoResp.setPhone(user.getPhone());
+        return ResponseEntity.ok(voBasicUserInfoResp);
     }
 
 }

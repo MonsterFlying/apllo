@@ -1,11 +1,11 @@
 package com.gofobao.framework.api.model.openusers;
 
-import com.gofobao.framework.api.repsonse.AbsResponse;
+import com.gofobao.framework.api.repsonse.JixinBaseResponse;
 
 /**
  * Created by Zeke on 2017/5/16.
  */
-public class OpenUserResponse extends AbsResponse{
+public class AccountOpenResponse extends JixinBaseResponse {
     /**
      * 电子账号
      */

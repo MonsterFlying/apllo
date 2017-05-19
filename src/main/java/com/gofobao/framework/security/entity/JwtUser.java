@@ -17,7 +17,6 @@ import java.util.Objects;
  */
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class JwtUser implements UserDetails{
     private Long id;
     private Date updateAt ;
@@ -26,6 +25,20 @@ public class JwtUser implements UserDetails{
     private String email ;
     private String password ;
     private Integer isLock ;
+
+
+    public JwtUser(Long id, Date updateAt, String username, String phone, String email, String password, Integer isLock) {
+        this.id = id;
+        this.updateAt = updateAt;
+        String temp = username ;
+        if(Objects.isNull(temp)) temp = phone ;
+        if(Objects.isNull(temp)) temp = email ;
+        this.username = temp ;
+        this.phone = phone;
+        this.email = email;
+        this.password = password;
+        this.isLock = isLock;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -39,10 +52,7 @@ public class JwtUser implements UserDetails{
 
     @Override
     public String getUsername() {
-        String temp = username ;
-        if(Objects.isNull(temp)) temp = phone ;
-        if(Objects.isNull(temp)) temp = email ;
-        return temp;
+        return this.username;
     }
 
     @Override

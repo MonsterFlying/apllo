@@ -42,4 +42,7 @@ jixin: #银行存管
   bankCode: "30050000" #交易机构代码
 
 gofobao:
-  damain: http://lang.3w.dkys.org
+  #javaDomain: http://lang.3w.dkys.org
+  javaDomain: http://max.3w.dkys.org
+  webDomain: http://ci.gofobao.com
+  h5Domain: http://ci.gofobao.com
