@@ -31,7 +31,7 @@ public class TenderServiceImpl implements TenderService {
     private TenderRepository tenderRepository;
 
     /**
-     * 投标用户
+     * 投标用户列表
      * @param req
      * @return
      */
