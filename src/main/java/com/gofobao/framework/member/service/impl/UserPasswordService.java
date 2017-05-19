@@ -5,7 +5,9 @@ package com.gofobao.framework.member.service.impl;
  */
 public class UserPasswordService {
 
+    //修改密码
 
 
+    //忘记密码
 
 }

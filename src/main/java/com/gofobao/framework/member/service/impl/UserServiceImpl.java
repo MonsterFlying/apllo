@@ -1,6 +1,5 @@
 package com.gofobao.framework.member.service.impl;
 
-import com.gofobao.framework.api.OpenHttp;
 import com.gofobao.framework.api.contants.AcctUseContant;
 import com.gofobao.framework.api.contants.IdTypeContant;
 import com.gofobao.framework.api.contants.OpenMethodContant;
@@ -38,14 +37,10 @@ import java.util.Optional;
 @Service
 @Slf4j
 public class UserServiceImpl implements UserDetailsService, UserService{
-
-    @Autowired
-    private OpenHttp openHttp;
-
     @Autowired
     private UsersRepository userRepository;
 
-    @Value("${gofobao.callBack}")
+    // @Value("${gofobao.callBack}")
     public String callBack;
 
 
@@ -77,6 +72,9 @@ public class UserServiceImpl implements UserDetailsService, UserService{
         return null;
     }
 
+    public Users findById(Long id){
+        return userRepository.findOne(id);
+    }
 
     /**
      * 注册用户
@@ -96,7 +94,7 @@ public class UserServiceImpl implements UserDetailsService, UserService{
         request.setAcctUse(AcctUseContant.GENERAL_ACCOUNT);
         request.setNotifyUrl(callBack+"/pub/user/reg/registerCallBack");
         try {
-            openHttp.postForm(OpenMethodContant.OPEN_USER,request);
+            //openHttp.postForm(OpenMethodContant.OPEN_USER,request);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -116,5 +114,29 @@ public class UserServiceImpl implements UserDetailsService, UserService{
     public boolean notExistsByPhone(String phone) {
         List<Users> usersList = userRepository.findByPhone(phone);
         return CollectionUtils.isEmpty(usersList);
+    }
+
+    /**
+     * 根据id更新用户
+     * @param users
+     * @return
+     */
+    public boolean updUserById(Users users){
+        if (ObjectUtils.isEmpty(users.getId())){
+            return false;
+        }
+        return ObjectUtils.isEmpty(userRepository.save(users));
+    }
+
+    /**
+     * 根据手机号码更新用户
+     * @param users
+     * @return
+     */
+    public boolean updUserByPhone(Users users){
+        if (ObjectUtils.isEmpty(users.getPhone())){
+            return false;
+        }
+        return ObjectUtils.isEmpty(userRepository.save(users));
     }
 }
