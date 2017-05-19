@@ -43,7 +43,7 @@ public class PasswordController {
      * @return
      */
     @ApiOperation("用户修改密码")
-    @PostMapping("/user/modifyPassword")
+    @PostMapping("/user/password/modify")
     public ResponseEntity<VoBaseResp> modifyPassword(@Valid @ModelAttribute VoModifyPassword voModifyPassword, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voModifyPassword.setUserId(userId);
         return userPasswordBiz.modifyPassword(voModifyPassword);
@@ -56,7 +56,7 @@ public class PasswordController {
      * @return
      */
     @ApiOperation("用户忘记密码")
-    @PostMapping("/pub/user/findPassword")
+    @PostMapping("/pub/user/password/find/modify")
     public ResponseEntity<VoBaseResp> findPassword(@Valid @ModelAttribute VoFindPassword voFindPassword){
         return userPasswordBiz.findPassword(voFindPassword);
     }
@@ -68,7 +68,7 @@ public class PasswordController {
      * @return
      */
     @ApiOperation("校验用户忘记密码验证码")
-    @PostMapping("/pub/user/checkFindPassword")
+    @PostMapping("/pub/user/password/find/check")
     public ResponseEntity<VoBaseResp> checkFindPassword(@Valid @ModelAttribute VoCheckFindPassword voCheckFindPassword){
         return userPasswordBiz.checkFindPassword(voCheckFindPassword);
     }
