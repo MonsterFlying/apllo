@@ -6,7 +6,7 @@ package com.gofobao.framework.common.constans;
 public class MoneyConstans {
 
 
-    public  static  final  String YUAN="元";
+    public  static  final  String RMB ="元";
 
     public static  final String PERCENT="%";
 
