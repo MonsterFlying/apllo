@@ -6,7 +6,7 @@ import lombok.Data;
  * Created by Zeke on 2017/5/16.
  */
 @Data
-public abstract class AbsRequest {
+public abstract class JixinBaseRequest {
     /**
      * 版本号
      */
@@ -34,7 +34,7 @@ public abstract class AbsRequest {
     /**
      * 交易时间
      */
-    protected Integer seqNo;
+    protected String seqNo;
     /**
      * 交易流水号
      */

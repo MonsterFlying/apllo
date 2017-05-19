@@ -1,6 +1,6 @@
 package com.gofobao.framework.api.model.openusers;
 
-import com.gofobao.framework.api.request.AbsRequest;
+import com.gofobao.framework.api.request.JixinBaseRequest;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class OpenUserRequest extends AbsRequest {
+public class AccountOpenRequest extends JixinBaseRequest {
     /**
      * 证件类型
      */

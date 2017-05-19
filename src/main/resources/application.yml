@@ -36,10 +36,13 @@ jixin: #银行存管
   keysPath: /Users/Max/certs/yb_sit.p12 #私钥路径
   keysPassword: yibao_sit #私钥密码
   crtPath: /Users/Max/certs/fdep.crt #服务端证书文件路径
-  url: https://test.credit2go.cn/escrow/p2p/online #即信服务器路径
+  url: https://test.credit2go.cn #即信服务器路径
   version: 10 #版本号
   instCode: "00170001" #机构代码
   bankCode: "30050000" #交易机构代码
 
 gofobao:
-  damain: http://lang.3w.dkys.org
+  #javaDomain: http://lang.3w.dkys.org
+  javaDomain: http://max.3w.dkys.org
+  webDomain: http://ci.gofobao.com
+  h5Domain: http://ci.gofobao.com
