@@ -6,17 +6,26 @@ package com.gofobao.framework.api.helper;
  */
 
 public enum JixinTxCodeEnum {
-    /** 开户类型*/
+    /**
+     * 开户类型
+     */
     OPEN_ACCOUNT(
             "accountOpen",
-            "/escrow/p2p/page/mobile");
+            "/escrow/p2p/page/mobile"),
 
-    private String value ;
-    private String url ;
+    /**
+     * 发送短信验证码
+     */
+    SMS_CODE_APPLY(
+            "smsCodeApply",
+            "/escrow/p2p/online");
+
+    private String value;
+    private String url;
 
     private JixinTxCodeEnum(String value, String url) {
-        this.value = value ;
-        this.url = url ;
+        this.value = value;
+        this.url = url;
     }
 
     public String getValue() {
