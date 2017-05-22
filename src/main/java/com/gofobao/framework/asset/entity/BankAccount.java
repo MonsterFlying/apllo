@@ -10,7 +10,7 @@ import java.util.Date;
  */
 @Data
 @Entity
-@Table(name = "gfb_bank_account", schema = "gofobao9", catalog = "")
+@Table(name = "gfb_bank_account")
 public class BankAccount {
     @Id
     @Column(name = "id")
@@ -18,6 +18,9 @@ public class BankAccount {
     @Basic
     @Column(name = "trade_no")
     private String tradeNo;
+    @Basic
+    @Column(name = "user_id")
+    private String userId;
     @Basic
     @Column(name = "account")
     private String account;

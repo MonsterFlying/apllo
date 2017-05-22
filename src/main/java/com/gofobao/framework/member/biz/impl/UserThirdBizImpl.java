@@ -1,9 +1,9 @@
 package com.gofobao.framework.member.biz.impl;
 
+import com.gofobao.framework.asset.service.BankAccountService;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.biz.UserThirdBiz;
 import com.gofobao.framework.member.entity.Users;
-import com.gofobao.framework.member.service.BankAccountService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.vo.response.VoPreOpenAccountResp;
 import org.springframework.beans.factory.annotation.Autowired;

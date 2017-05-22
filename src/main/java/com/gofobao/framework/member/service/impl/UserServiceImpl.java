@@ -88,7 +88,6 @@ public class UserServiceImpl implements UserDetailsService, UserService{
         request.setName(voRegisterReq.getUsername());
         request.setMobile(voRegisterReq.getMobile());
         request.setAcctUse(AcctUseContant.GENERAL_ACCOUNT);
-        request.setNotifyUrl(callBack+"/pub/user/reg/registerCallBack");
         try {
             //openHttp.postForm(OpenMethodContant.OPEN_USER,request);
         } catch (Exception e) {

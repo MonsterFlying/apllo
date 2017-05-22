@@ -1,6 +1,9 @@
 package com.gofobao.framework.system.service.impl;
 
 import com.gofobao.framework.helper.RedisHelper;
+import com.gofobao.framework.system.cache.SysCacheContants;
+import com.gofobao.framework.system.entity.DictItem;
+import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.repository.DictItemRepository;
 import com.gofobao.framework.system.repository.DictValueRepository;
 
@@ -8,6 +11,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -35,24 +39,20 @@ public class DictServiceImpl {
             throw new Exception("aliasCode is empty");
         }
 
-      Gson gson = new Gson();
-        /*
+        Gson gson = new Gson();
+
         String cacheStr = redisHelper.get(SysCacheContants.DICT_ALIAS_CODE + aliasCode, null);
         if (StringUtils.isEmpty(cacheStr)) {
-            DictItemExample dictItemExample = new DictItemExample();
-            dictItemExample.or().andIsDelEqualTo(0).andAliasCodeEqualTo(aliasCode);
-            List<DictItem> dictItems = dictItemRepository.selectByExample(dictItemExample);
+            List<DictItem> dictItems = dictItemRepository.findByIsDelAndAliasCode(false, aliasCode);
 
             if (CollectionUtils.isEmpty(dictItems)) {
                 throw new Exception("aliasCode is invalidate");
             }
 
             DictItem dictItem = dictItems.get(0);
-            Integer dictItemId = dictItem.getId();
+            Long dictItemId = dictItem.getId();
 
-            DictValueExample dictValueExample = new DictValueExample();
-            dictValueExample.or().andIsDelEqualTo(0).andItemIdEqualTo(dictItemId);
-            List<DictValue> dictValues = dictValueRepository.selectByExample(dictValueExample);
+            List<DictValue> dictValues = dictValueRepository.findByIsDelAndItemId(false,dictItemId);
 
             if (CollectionUtils.isEmpty(dictValues)) {
                 throw new Exception("aliasCode values is empty");
@@ -60,7 +60,7 @@ public class DictServiceImpl {
 
             cacheStr = gson.toJson(dictValues);
             redisHelper.put(SysCacheContants.DICT_ALIAS_CODE + aliasCode, cacheStr);
-        }*/
+        }
 
 
         List<Map<String, String>> maps = gson.fromJson("", new TypeToken<List<Map<String, String>>>() {

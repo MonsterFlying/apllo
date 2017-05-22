@@ -63,8 +63,6 @@ public class RegisterController {
         request.setMobile("18964826795");
         request.setCardNo("6226628812120004");
         request.setAcctUse(AcctUseContant.GENERAL_ACCOUNT);
-        request.setNotifyUrl(String.format("%s%s", javaDomain, "/pub/user/registerCallBack"));
-        request.setRetUrl(javaDomain);
         request.setEmail("");
         request.setUserIP("");
         request.setAcqRes("1");

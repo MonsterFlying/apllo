@@ -1,5 +1,7 @@
 package com.gofobao.framework.system.entity;
 
+import lombok.Data;
+
 import javax.persistence.*;
 import java.sql.Timestamp;
 
@@ -7,6 +9,7 @@ import java.sql.Timestamp;
  * Created by Zeke on 2017/5/22.
  */
 @Entity
+@Data
 @Table(name = "gfb_dict_item")
 public class DictItem {
     @Id
