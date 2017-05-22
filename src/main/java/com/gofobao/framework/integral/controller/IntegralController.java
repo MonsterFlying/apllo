@@ -6,10 +6,7 @@ import com.gofobao.framework.integral.vo.request.VoListIntegralReq;
 import com.gofobao.framework.security.contants.SecurityContants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
@@ -29,6 +26,7 @@ public class IntegralController {
      * @param voListIntegralReq
      * @return
      */
+    @PostMapping("/integral/list")
     public ResponseEntity<VoBaseResp> list(@Valid @ModelAttribute VoListIntegralReq voListIntegralReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         voListIntegralReq.setUserId(userId);
         return integralBiz.list(voListIntegralReq);

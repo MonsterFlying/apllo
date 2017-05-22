@@ -1,6 +1,6 @@
 package com.gofobao.framework.asset.repository;
 
-import com.gofobao.framework.asset.entity.Currency;
+import com.gofobao.framework.currency.entity.Currency;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,4 +1,4 @@
-package com.gofobao.framework.asset.entity;
+package com.gofobao.framework.currency.entity;
 
 import lombok.Data;
 
