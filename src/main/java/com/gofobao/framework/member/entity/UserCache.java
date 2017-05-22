@@ -113,4 +113,13 @@ public class UserCache {
     @Column(name = "cash_total")
     private Long cashTotal;
 
+
+    /**
+     * 待付利息管理费
+     *
+     * @return
+     */
+    public int getWaitExpenditureInterestManageFee() {
+        return (int) ((this.tjWaitCollectionInterest + this.qdWaitCollectionInterest) * 0.1);
+    }
 }

@@ -1,11 +1,10 @@
-package com.gofobao.framework.member.entity;
+package com.gofobao.framework.asset.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
 import java.util.Date;
 
 /**
@@ -38,4 +37,8 @@ public class Asset {
     @Basic
     @Column(name = "updated_at")
     private Date updatedAt;
+
+    public int getTotal() {
+        return this.useMoney + this.noUseMoney + this.collection;
+    }
 }

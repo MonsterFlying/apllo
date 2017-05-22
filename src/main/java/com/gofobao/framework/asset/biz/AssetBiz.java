@@ -1,6 +1,6 @@
-package com.gofobao.framework.member.biz;
+package com.gofobao.framework.asset.biz;
 
-import com.gofobao.framework.member.vo.response.VoUserAssetInfoResp;
+import com.gofobao.framework.asset.vo.response.VoUserAssetInfoResp;
 import org.springframework.http.ResponseEntity;
 
 /**

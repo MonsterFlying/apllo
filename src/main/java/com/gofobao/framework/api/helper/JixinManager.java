@@ -113,7 +113,7 @@ public class JixinManager {
         return gson.fromJson(bgData, typeToken.getType());
     }
 
-    public <T extends JixinBaseRequest, S extends JixinBaseRequest> S send(JixinTxCodeEnum txCodeEnum, T req, Class<S> clazz){
+    public <T extends JixinBaseRequest, S extends JixinBaseResponse> S send(JixinTxCodeEnum txCodeEnum, T req, Class<S> clazz){
         checkNotNull(req, "请求体为null") ;
         // 前期初始化
         req.setBankCode(bankCode);

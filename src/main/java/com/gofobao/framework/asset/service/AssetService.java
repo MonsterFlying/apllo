@@ -1,6 +1,9 @@
-package com.gofobao.framework.member.service;
+package com.gofobao.framework.asset.service;
 
-import com.gofobao.framework.member.entity.Asset;
+
+import com.gofobao.framework.asset.entity.Asset;
+
+import java.util.List;
 
 /**
  * Created by Zeke on 2017/5/19.
@@ -13,4 +16,5 @@ public interface AssetService {
      * @return
      */
     Asset findById(Long id);
+
 }

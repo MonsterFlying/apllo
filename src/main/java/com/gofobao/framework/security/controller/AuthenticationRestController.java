@@ -13,6 +13,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -59,6 +60,11 @@ public class AuthenticationRestController {
         if(ObjectUtils.isEmpty(user)){
             return ResponseEntity.badRequest().body(null);
         }
+
+        String username = user.getUsername();
+        if(StringUtils.isEmpty(username)) username = user.getPhone() ;
+        if(StringUtils.isEmpty(username)) username = user.getEmail() ;
+        user.setUsername(username);
 
         final String token = jwtTokenHelper.generateToken(user, voLoginReq.getSource());
         response.addHeader(tokenHeader, String.format("%s %s", prefix, token));

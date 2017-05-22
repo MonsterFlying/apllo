@@ -2,7 +2,7 @@ package com.gofobao.framework.message.controller;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.message.biz.MessageBiz;
-import com.gofobao.framework.message.vo.VoSmsReq;
+import com.gofobao.framework.message.vo.VoAnonSmsReq;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -25,14 +25,13 @@ public class SmsAnonymousController {
 
     @ApiOperation("发送注册短信验证码")
     @PostMapping("/sms/register")
-    public ResponseEntity<VoBaseResp> register(HttpServletRequest request, @Valid @ModelAttribute VoSmsReq voSmsReq) {
-        return messageBiz.sendRegisterCode(request, voSmsReq) ;
+    public ResponseEntity<VoBaseResp> register(HttpServletRequest request, @Valid @ModelAttribute VoAnonSmsReq voAnonSmsReq) {
+        return messageBiz.sendRegisterCode(request, voAnonSmsReq) ;
     }
 
     @ApiOperation("发送忘记密码短信验证码")
     @PostMapping("/sms/findPassword")
-    public ResponseEntity<VoBaseResp> findPassword(HttpServletRequest request, @Valid @ModelAttribute VoSmsReq voSmsReq){
-        return messageBiz.sendFindPassword(request, voSmsReq) ;
+    public ResponseEntity<VoBaseResp> findPassword(HttpServletRequest request, @Valid @ModelAttribute VoAnonSmsReq voAnonSmsReq){
+        return messageBiz.sendFindPassword(request, voAnonSmsReq) ;
     }
-
 }

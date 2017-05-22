@@ -4,6 +4,7 @@ import com.gofobao.framework.core.helper.PasswordHelper;
 import com.gofobao.framework.core.ons.config.OnsTags;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.CaptchaHelper;
+import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.member.biz.UserPasswordBiz;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
@@ -27,6 +28,9 @@ public class UserPasswordBizImpl implements UserPasswordBiz {
 
     @Autowired
     private CaptchaHelper captchaHelper;
+
+    @Autowired
+    private RedisHelper redisHelper;
 
     /**
      * 用户修改密码
