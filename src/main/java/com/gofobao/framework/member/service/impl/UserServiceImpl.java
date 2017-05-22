@@ -2,10 +2,8 @@ package com.gofobao.framework.member.service.impl;
 
 import com.gofobao.framework.api.contants.AcctUseContant;
 import com.gofobao.framework.api.contants.IdTypeContant;
-import com.gofobao.framework.api.contants.SeqNoContant;
-import com.gofobao.framework.api.model.openusers.AccountOpenRequest;
+import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusRequest;
 import com.gofobao.framework.core.helper.RandomHelper;
-import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.member.service.UserService;
@@ -80,7 +78,7 @@ public class UserServiceImpl implements UserDetailsService, UserService{
      * @return
      */
     public VoRegisterResp register(VoRegisterReq voRegisterReq){
-        AccountOpenRequest request = new AccountOpenRequest();
+        AccountOpenPlusRequest request = new AccountOpenPlusRequest();
         request.setIdType(IdTypeContant.ID_CARD);
         request.setChannel(voRegisterReq.getChannel());
         request.setSeqNo(RandomHelper.generateNumberCode(6));

@@ -1,4 +1,4 @@
-package com.gofobao.framework.api.model.openusers;
+package com.gofobao.framework.api.model.account_open_plus;
 
 import com.gofobao.framework.api.request.JixinBaseRequest;
 import lombok.AllArgsConstructor;
@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AccountOpenRequest extends JixinBaseRequest {
+public class AccountOpenPlusRequest extends JixinBaseRequest {
     /**
      * 证件类型
      */
@@ -40,14 +40,18 @@ public class AccountOpenRequest extends JixinBaseRequest {
      * acctUse
      */
     private String acctUse;
+
     /**
-     * 前台跳转链接
+     * 前导业务授权码
      */
-    private String retUrl;
+    private String lastSrvAuthCode ;
+
     /**
-     * 后台通知连接
+     * 短信验证码
+     *
      */
-    private String notifyUrl;
+    private String smsCode ;
+
     /**
      * 客户IP
      */
@@ -55,5 +59,5 @@ public class AccountOpenRequest extends JixinBaseRequest {
     /**
      * 请求方保留
      */
-    protected String acqRes;
+    private String acqRes;
 }

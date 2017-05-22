@@ -1,6 +1,5 @@
 package com.gofobao.framework.member.entity;
 
-import com.gofobao.framework.tender.entity.Tender;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,7 +19,9 @@ import java.util.Date;
 public class Users implements Serializable{
     @Id
     @Column(name = "id")
+    @GeneratedValue
     private Long id;
+
     @Basic
     @Column(name = "username")
     private String username;
@@ -72,9 +73,16 @@ public class Users implements Serializable{
     @Basic
     @Column(name = "created_at")
     private Date createdAt;
+
     @Basic
     @Column(name = "updated_at")
     private Date updatedAt;
-    @OneToOne(fetch = FetchType.EAGER,mappedBy ="user")
-    private Tender tender;
+
+    @Basic
+    @Column(name = "third_account")
+    private String thirdAccount ;
+    @Basic
+    @Column(name = "third_account_type")
+    private String thirdAccountType ;
+
 }

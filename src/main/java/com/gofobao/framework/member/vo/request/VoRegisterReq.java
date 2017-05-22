@@ -2,12 +2,14 @@ package com.gofobao.framework.member.vo.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gofobao.framework.core.vo.VoBaseReq;
+import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
 /**
  * Created by Zeke on 2017/5/17.
  */
 @Data
+@ApiModel
 public class VoRegisterReq  extends VoBaseReq {
     @JsonIgnore
     private String channel;
