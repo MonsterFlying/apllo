@@ -2,6 +2,7 @@ package com.gofobao.framework.member.vo.request;
 
 import com.gofobao.framework.core.vo.VoBaseReq;
 import com.gofobao.framework.helper.RegexHelper;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.hibernate.validator.constraints.NotEmpty;
@@ -12,6 +13,7 @@ import javax.validation.constraints.Pattern;
  * Created by Zeke on 2017/5/18.
  */
 @Data
+@ApiModel
 public class VoFindPasswordReq extends VoBaseReq {
 
     @ApiModelProperty(name = "手机号码", required = true, dataType = "String" )

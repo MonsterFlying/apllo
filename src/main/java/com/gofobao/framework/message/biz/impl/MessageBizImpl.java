@@ -1,5 +1,6 @@
 package com.gofobao.framework.message.biz.impl;
 
+import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.contants.SrvTxCodeContants;
 import com.gofobao.framework.api.helper.JixinManager;
@@ -223,21 +224,33 @@ public class MessageBizImpl implements MessageBiz {
 
     @Override
     public ResponseEntity<VoBaseResp> openAccount(VoUserSmsReq voUserSmsReq) {
+        // 1.验证图形验证码
+        boolean match = captchaHelper.match(voUserSmsReq.getCaptchaToken(), voUserSmsReq.getCaptcha());
+        if(!match){
+            return ResponseEntity.
+                    badRequest().
+                    body(VoBaseResp.error(VoBaseResp.ERROR, "图形验证码错误或者已过期"));
+        }
+
+        // 2.判断用户是否存在
         Users users = userService.findById(voUserSmsReq.getUserId());
 
         if(ObjectUtils.isEmpty(users)){ // 判断用户是否存在
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户不存在！"));
         }
 
-        // 判断用户是否绑定手机
+        // 3.判断用户是否绑定手机
         String mobile = users.getPhone() ;
         if(StringUtils.isEmpty(mobile)){
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户未绑定手机，请绑定手机！"));
         }
 
+
+        // 4.请求即信发送验证码
         SmsCodeApplyRequest request = new SmsCodeApplyRequest() ;
         request.setSrvTxCode(SrvTxCodeContants.ACCOUNT_OPEN_PLUS) ;
         request.setMobile(mobile) ;
+        request.setChannel(ChannelContant.HTML);
 
         SmsCodeApplyResponse body = jixinManager.send(JixinTxCodeEnum.SMS_CODE_APPLY, request, SmsCodeApplyResponse.class);
 
@@ -249,7 +262,7 @@ public class MessageBizImpl implements MessageBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, body.getRetMsg()));
         }
 
-        // 写入redis
+        // 5.将授权码放入redis中
         try {
             redisHelper.put(String.format("%s_%s", SrvTxCodeContants.ACCOUNT_OPEN_PLUS, mobile), body.getSrvAuthCode(), 15 * 60);
         } catch (Exception e) {

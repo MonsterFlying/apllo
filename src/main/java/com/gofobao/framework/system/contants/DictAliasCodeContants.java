@@ -1,4 +1,4 @@
-package com.gofobao.framework.asset.contants;
+package com.gofobao.framework.system.contants;
 
 /**
  * 数据字典AliasCode常量集合

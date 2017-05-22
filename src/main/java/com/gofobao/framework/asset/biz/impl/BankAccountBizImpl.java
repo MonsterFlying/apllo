@@ -1,7 +1,6 @@
 package com.gofobao.framework.asset.biz.impl;
 
 import com.gofobao.framework.asset.biz.BankAccountBiz;
-import com.gofobao.framework.asset.contants.DictAliasCodeContants;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.entity.BankAccount;
 import com.gofobao.framework.asset.service.AssetService;
@@ -97,11 +96,11 @@ public class BankAccountBizImpl implements BankAccountBiz{
      */
     private Map<String, String> convertBankInfoToMap() {
         List<Map<String, String>> bankInfoList = null;
-        try {
+        /*try {
             bankInfoList = dictService.queryDictList(DictAliasCodeContants.PLATFORM_BANK);
         } catch (Exception e) {
             logger.error(String.format("银行信息装换异常：%s", e.getMessage()));
-        }
+        }*/
         Map<String, String> map = new HashMap<>();
 
         if (!CollectionUtils.isEmpty(bankInfoList)) {

@@ -1,11 +1,11 @@
-package com.gofobao.framework.api.model.openusers;
+package com.gofobao.framework.api.model.account_open_plus;
 
 import com.gofobao.framework.api.repsonse.JixinBaseResponse;
 
 /**
  * Created by Zeke on 2017/5/16.
  */
-public class AccountOpenResponse extends JixinBaseResponse {
+public class AccountOpenPlusResponse extends JixinBaseResponse {
     /**
      * 电子账号
      */
