@@ -1,8 +1,8 @@
-package com.gofobao.framework.member.service.impl;
+package com.gofobao.framework.asset.service.impl;
 
-import com.gofobao.framework.member.entity.Asset;
-import com.gofobao.framework.member.repository.AssetRepository;
-import com.gofobao.framework.member.service.AssetService;
+import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.repository.AssetRepository;
+import com.gofobao.framework.asset.service.AssetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

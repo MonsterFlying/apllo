@@ -50,7 +50,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
 
-
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
@@ -82,6 +81,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .permitAll()
                 .antMatchers(
                         "/pub/**")
+                .permitAll()
+                .antMatchers( //放行swagger-ui
+                        "/swagger-resources/**", "/v2/**"
+                )
                 .permitAll()
                 .antMatchers(
                         "/tender/**")

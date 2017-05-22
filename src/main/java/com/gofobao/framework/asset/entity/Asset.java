@@ -5,44 +5,40 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-/**
- * Created by admin on 2017/5/22.
- */
+import java.util.Date;
 
+/**
+ * Created by Zeke on 2017/5/19.
+ */
 @Entity
 @Table(name = "gfb_asset")
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class Asset {
-
     @Id
     @Column(name = "user_id")
     private Long userId;
-
     @Basic
     @Column(name = "use_money")
-    private Integer userMoney;
-
+    private Integer useMoney;
     @Basic
     @Column(name = "no_use_money")
-    private Integer noUserMoney;
-
+    private Integer noUseMoney;
     @Basic
     @Column(name = "virtual_money")
     private Integer virtualMoney;
-
     @Basic
     @Column(name = "collection")
     private Integer collection;
-
     @Basic
     @Column(name = "payment")
     private Integer payment;
-
     @Basic
     @Column(name = "updated_at")
-    private Integer updatedAt;
+    private Date updatedAt;
 
-
+    public int getTotal() {
+        return this.useMoney + this.noUseMoney + this.collection;
+    }
 }

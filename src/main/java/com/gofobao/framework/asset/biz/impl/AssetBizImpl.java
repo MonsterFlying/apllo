@@ -1,13 +1,12 @@
-package com.gofobao.framework.member.biz.impl;
+package com.gofobao.framework.asset.biz.impl;
 
+import com.gofobao.framework.asset.biz.AssetBiz;
+import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.asset.vo.response.VoUserAssetInfoResp;
 import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.member.biz.AssetBiz;
-import com.gofobao.framework.member.entity.Asset;
 import com.gofobao.framework.member.entity.UserCache;
-import com.gofobao.framework.member.service.AssetService;
 import com.gofobao.framework.member.service.UserCacheService;
-import com.gofobao.framework.member.vo.request.VoUserAssetInfoReq;
-import com.gofobao.framework.member.vo.response.VoUserAssetInfoResp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;

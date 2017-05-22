@@ -1,7 +1,7 @@
-package com.gofobao.framework.member.controller;
+package com.gofobao.framework.asset.controller;
 
-import com.gofobao.framework.member.biz.AssetBiz;
-import com.gofobao.framework.member.vo.response.VoUserAssetInfoResp;
+import com.gofobao.framework.asset.biz.AssetBiz;
+import com.gofobao.framework.asset.vo.response.VoUserAssetInfoResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +22,7 @@ public class AssetController {
     private AssetBiz assetBiz;
 
     @ApiOperation("获取用户资产信息")
-    @PostMapping("/asset/user/info")
+    @PostMapping("/asset/info")
     public ResponseEntity<VoUserAssetInfoResp> userAssetInfo(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return assetBiz.userAssetInfo(userId);
     }

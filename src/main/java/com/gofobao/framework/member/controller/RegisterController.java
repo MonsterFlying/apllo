@@ -5,23 +5,17 @@ import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.IdTypeContant;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
-import com.gofobao.framework.api.model.openusers.AccountOpenRequest;
-import com.gofobao.framework.api.model.openusers.AccountOpenResponse;
+import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusRequest;
+import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusResponse;
 import com.gofobao.framework.member.service.UserService;
-import com.gofobao.framework.member.vo.request.VoRegisterReq;
-import com.gofobao.framework.member.vo.response.VoRegisterCallResp;
-import com.gofobao.framework.member.vo.response.VoRegisterResp;
 import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.io.PrintWriter;
 
 /**
@@ -49,8 +43,8 @@ public class RegisterController {
     @RequestMapping(value = "/registerCallBack")
     public void registerCallBack(HttpServletRequest request, HttpServletResponse response){
             response.setCharacterEncoding("UTF-8");
-            TypeToken<AccountOpenResponse> accountOpenResponseTypeToken = new TypeToken<AccountOpenResponse>(){};
-            AccountOpenResponse accountOpenResponse = jixinManager.callback(request,response, accountOpenResponseTypeToken) ;
+            TypeToken<AccountOpenPlusResponse> accountOpenResponseTypeToken = new TypeToken<AccountOpenPlusResponse>(){};
+            AccountOpenPlusResponse accountOpenPlusResponse = jixinManager.callback(request,response, accountOpenResponseTypeToken) ;
 
     }
 
@@ -61,7 +55,7 @@ public class RegisterController {
      */
     @GetMapping(value = "/register")
     public void register(HttpServletResponse response){
-        AccountOpenRequest request = new AccountOpenRequest() ;
+        AccountOpenPlusRequest request = new AccountOpenPlusRequest() ;
         request.setChannel(ChannelContant.HTML);
         request.setIdType(IdTypeContant.ID_CARD);
         request.setIdNo("310114198407240819");
