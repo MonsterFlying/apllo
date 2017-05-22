@@ -1,12 +1,13 @@
 package com.gofobao.framework.common.page;
 
 import com.gofobao.framework.common.constans.CommonPageContants;
+import com.gofobao.framework.core.vo.VoBaseReq;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import org.springframework.util.ObjectUtils;
 
 @ApiModel("分页")
-public class Page {
+public class Page extends VoBaseReq{
 
     @ApiModelProperty(name = "pageIndex", value = "页码（不传默认为1）", dataType = "int", required = false)
     protected Integer pageIndex;

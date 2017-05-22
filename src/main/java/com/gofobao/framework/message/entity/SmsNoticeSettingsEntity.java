@@ -11,7 +11,7 @@ import java.io.Serializable;
  * Created by Max on 17/5/17.
  */
 @Entity
-@Table(name = "gfb_sms_notice_settings", schema = "gofobao9", catalog = "")
+@Table(name = "gfb_sms_notice_settings")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

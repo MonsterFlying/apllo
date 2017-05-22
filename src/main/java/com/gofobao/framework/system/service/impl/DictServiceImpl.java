@@ -63,7 +63,7 @@ public class DictServiceImpl {
         }
 
 
-        List<Map<String, String>> maps = gson.fromJson("", new TypeToken<List<Map<String, String>>>() {
+        List<Map<String, String>> maps = gson.fromJson(cacheStr, new TypeToken<List<Map<String, String>>>() {
         }.getType());
         return maps;
     }
