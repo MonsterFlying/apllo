@@ -16,6 +16,10 @@ public class CurrencyServiceImpl implements CurrencyService {
     @Autowired
     private CurrencyRepository currencyRepository;
 
+    public Currency findByUserIdLock(Long userId){
+        return currencyRepository.findByUserId(userId);
+    }
+
     public Currency findByUserId(Long userId){
         return currencyRepository.findOne(userId);
     }

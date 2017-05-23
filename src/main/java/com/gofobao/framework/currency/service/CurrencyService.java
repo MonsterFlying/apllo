@@ -9,6 +9,8 @@ public interface CurrencyService {
 
     Currency findByUserId(Long userId);
 
+    Currency findByUserIdLock(Long userId);
+
     boolean insert(Currency currency);
 
     boolean update(Currency currency);
