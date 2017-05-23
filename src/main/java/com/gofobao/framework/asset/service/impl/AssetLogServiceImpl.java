@@ -1,7 +1,7 @@
 package com.gofobao.framework.asset.service.impl;
 
 import com.gofobao.framework.asset.entity.AssetLog;
-import com.gofobao.framework.asset.repostitory.AssetLogRepository;
+import com.gofobao.framework.asset.repository.AssetLogRepository;
 import com.gofobao.framework.asset.service.AssetLogService;
 import com.gofobao.framework.asset.vo.repsonse.VoViewAssetLogRes;
 import com.gofobao.framework.asset.vo.request.VoAssetLog;

@@ -33,9 +33,9 @@ jwt: #JWT 安全配置
   prefix: Bearer
 
 jixin: #银行存管
-  keysPath: /Users/Max/certs/yb_sit.p12 #私钥路径
+  keysPath: D:/sign/yb_sit.p12 #私钥路径
   keysPassword: yibao_sit #私钥密码
-  crtPath: /Users/Max/certs/fdep.crt #服务端证书文件路径
+  crtPath: D:/sign/fdep.crt #服务端证书文件路径
   url: https://test.credit2go.cn #即信服务器路径
   version: 10 #版本号
   instCode: "00170001" #机构代码
