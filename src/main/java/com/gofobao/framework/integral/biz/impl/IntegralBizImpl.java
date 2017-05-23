@@ -6,8 +6,6 @@ import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.MathHelper;
-import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.integral.biz.IntegralBiz;
 import com.gofobao.framework.integral.entity.Integral;
@@ -23,6 +21,9 @@ import com.gofobao.framework.system.service.DictService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -97,7 +98,7 @@ public class IntegralBizImpl implements IntegralBiz {
         Integer collection = asset.getCollection();//代收金额
         Integer totalIntegral = integral.getUseIntegral() + integral.getNoUseIntegral();//总积分
 
-        VoListIntegralResp voListIntegralResp = new VoListIntegralResp();
+        VoListIntegralResp voListIntegralResp = VoBaseResp.ok("查询成功", VoListIntegralResp.class);
         voListIntegralResp.setTotalIntegral(totalIntegral);
         voListIntegralResp.setAvailableIntegral(integral.getUseIntegral());
         voListIntegralResp.setInvalidIntegral(integral.getNoUseIntegral());
@@ -112,7 +113,11 @@ public class IntegralBizImpl implements IntegralBiz {
 
         List<VoIntegral> voIntegralList = new ArrayList<>();
 
-        List<IntegralLog> integralLogList = integralLogService.findByUserId(userId, pageIndex, pageSize);
+        //分页和排序
+        Sort sort = new Sort(new Sort.Order(Sort.Direction.DESC, "id"));
+        Pageable pageable = new PageRequest(pageIndex, pageSize, sort);
+
+        List<IntegralLog> integralLogList = integralLogService.findListByUserId(userId, pageable);
         Optional<List<IntegralLog>> objIntegralLog = Optional.ofNullable(integralLogList);
         objIntegralLog.ifPresent(p -> p.forEach(integralLog -> {
             VoIntegral voIntegral = new VoIntegral();
@@ -125,9 +130,8 @@ public class IntegralBizImpl implements IntegralBiz {
             voIntegralList.add(voIntegral);
         }));
 
-        VoListIntegralResp res = VoBaseResp.ok("查询成功", VoListIntegralResp.class);
-        res.setVoIntegralList(voIntegralList);
-        return ResponseEntity.ok(res) ;
+        voListIntegralResp.setVoIntegralList(voIntegralList);
+        return ResponseEntity.ok(voListIntegralResp) ;
     }
 
     /**
