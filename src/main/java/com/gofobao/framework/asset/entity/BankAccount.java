@@ -21,11 +21,11 @@ public class BankAccount {
     @GeneratedValue
     private Long id;
     @Basic
-    @Column(name = "user_id")
-    private String userId;
-    @Basic
     @Column(name = "trade_no")
     private String tradeNo;
+    @Basic
+    @Column(name = "user_id")
+    private String userId;
     @Basic
     @Column(name = "account")
     private String account;

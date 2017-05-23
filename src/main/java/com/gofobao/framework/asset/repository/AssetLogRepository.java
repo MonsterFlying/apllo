@@ -1,4 +1,4 @@
-package com.gofobao.framework.asset.repostitory;
+package com.gofobao.framework.asset.repository;
 import com.gofobao.framework.asset.entity.AssetLog;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

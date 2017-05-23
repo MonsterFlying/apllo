@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.Date;
 
 /**
  * Created by admin on 2017/5/22.
@@ -30,7 +31,7 @@ public class AssetLog {
 
     @Basic
     @Column(name = "type")
-    private Integer type;
+    private String type;
 
     @Basic
     @Column(name = "money")
@@ -44,7 +45,7 @@ public class AssetLog {
 
     @Basic
     @Column(name = "no_use_money")
-    private Integer no_use_money;
+    private Integer noUseMoney;
 
 
     @Basic
@@ -66,11 +67,11 @@ public class AssetLog {
 
     @Basic
     @Column(name = "remark")
-    private Integer remark;
+    private String remark;
 
     @Basic
     @Column(name = "created_at")
-    private Integer createdAt;
+    private Date createdAt;
 
 
 }

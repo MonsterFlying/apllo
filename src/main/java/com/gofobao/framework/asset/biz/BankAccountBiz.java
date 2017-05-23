@@ -9,10 +9,4 @@ import org.springframework.http.ResponseEntity;
  */
 public interface BankAccountBiz {
 
-    /**
-     * 获取用户银行卡列表
-     * @param voUserBankListReq
-     * @return
-     */
-    ResponseEntity<VoUserBankListResp> listUserBank(VoUserBankListReq voUserBankListReq);
 }

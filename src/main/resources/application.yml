@@ -45,7 +45,3 @@ gofobao:
   javaDomain: http://max.3w.dkys.org
   webDomain: http://ci.gofobao.com
   h5Domain: http://ci.gofobao.com
-logging:
-  level: debug
-  root: debug
-debug: true

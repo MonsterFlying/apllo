@@ -1,5 +1,6 @@
 package com.gofobao.framework.asset.service;
 
+import com.gofobao.framework.asset.entity.AssetLog;
 import com.gofobao.framework.asset.vo.repsonse.VoViewAssetLogRes;
 import com.gofobao.framework.asset.vo.request.VoAssetLog;
 
@@ -18,4 +19,7 @@ public interface AssetLogService {
 
     List<VoViewAssetLogRes> assetLogList(VoAssetLog voAssetLog);
 
+    boolean insert(AssetLog assetLog);
+
+    boolean update(AssetLog assetLog);
 }

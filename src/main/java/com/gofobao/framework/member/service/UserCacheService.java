@@ -13,4 +13,9 @@ public interface UserCacheService {
      * @return
      */
     UserCache findById(Long id);
+
+    UserCache findByUserIdLock(Long userId);
+
+    boolean insert(UserCache userCache);
+    boolean update(UserCache userCache);
 }
