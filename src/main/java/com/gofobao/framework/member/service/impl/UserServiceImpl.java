@@ -88,6 +88,7 @@ public class UserServiceImpl implements UserDetailsService, UserService{
         request.setName(voRegisterReq.getUsername());
         request.setMobile(voRegisterReq.getMobile());
         request.setAcctUse(AcctUseContant.GENERAL_ACCOUNT);
+
         try {
             //openHttp.postForm(OpenMethodContant.OPEN_USER,request);
         } catch (Exception e) {
@@ -120,7 +121,8 @@ public class UserServiceImpl implements UserDetailsService, UserService{
         if (ObjectUtils.isEmpty(users.getId())){
             return false;
         }
-        return ObjectUtils.isEmpty(userRepository.save(users));
+        userRepository.save(users);
+        return true ;
     }
 
     /**
@@ -132,6 +134,7 @@ public class UserServiceImpl implements UserDetailsService, UserService{
         if (ObjectUtils.isEmpty(users.getPhone())){
             return false;
         }
-        return ObjectUtils.isEmpty(userRepository.save(users));
+        userRepository.save(users);
+        return true;
     }
 }

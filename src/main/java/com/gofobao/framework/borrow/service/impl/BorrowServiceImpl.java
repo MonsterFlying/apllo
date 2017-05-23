@@ -49,14 +49,13 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     public List<VoViewBorrowListRes> findAll(VoBorrowListReq voBorrowListReq) {
 
-
         /**
          * 排序
          */
         Sort sort = null;
         if (!StringUtils.isEmpty(voBorrowListReq.getType())&&voBorrowListReq.getType() != BorrowContants.INDEX_TYPE_CE_DAI) {
             sort = new Sort(
-                    new Sort.Order(Sort.Direction.DESC, " status,successAt,id"));
+                    new Sort.Order(Sort.Direction.DESC, "status,successAt,id"));
         }
         Pageable pageable = new PageRequest(voBorrowListReq.getPageIndex()
                 , voBorrowListReq.getPageSize()

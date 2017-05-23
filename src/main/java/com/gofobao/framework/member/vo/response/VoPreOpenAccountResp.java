@@ -17,12 +17,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class VoPreOpenAccountResp extends VoBaseResp {
-
-    public VoPreOpenAccountResp(long state, String msg){
-        this.setState(state);
-        this.setMsg(msg);
-    }
-
     /**
      * 手机号
      */

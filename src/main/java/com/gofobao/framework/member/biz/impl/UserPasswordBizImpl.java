@@ -49,7 +49,7 @@ public class UserPasswordBizImpl implements UserPasswordBiz {
         try {
             bool = PasswordHelper.verifyPassword(nowPassword, users.getPassword());
         } catch (Exception e) {
-            log.error("UserPasswordBizImpl modifyPassword check password error:", e);
+            log.error("UserPasswordBizImpl modifyPassword check password_reset error:", e);
         }
 
         if (!bool) {
@@ -112,7 +112,7 @@ public class UserPasswordBizImpl implements UserPasswordBiz {
         try {
             encoPassword = PasswordHelper.encodingPassword(newPassword);
         } catch (Exception e) {
-            log.error("UserPasswordBizImpl findPassword password encoding error:", e);
+            log.error("UserPasswordBizImpl findPassword password_reset encoding error:", e);
         }
 
         Users users = new Users();
