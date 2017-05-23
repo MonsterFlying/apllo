@@ -1,4 +1,4 @@
-package com.gofobao.framework.api.model.smscodeapply;
+package com.gofobao.framework.api.model.sms_code_apply;
 
 import com.gofobao.framework.api.repsonse.JixinBaseResponse;
 import lombok.Data;

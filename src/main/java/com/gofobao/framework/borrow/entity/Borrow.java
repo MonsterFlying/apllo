@@ -69,7 +69,7 @@ public class Borrow implements Serializable {
     @Column(name = "use")
     private Integer use;
     @Basic
-    @Column(name = "password")
+    @Column(name = "password_reset")
     private String password;
     @Basic
     @Column(name = "is_lock")

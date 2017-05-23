@@ -10,4 +10,8 @@ import java.util.List;
 public interface BankAccountService {
 
     List<BankAccount> findByDeletedAtIsNullAndUserIdAndIsVerify(Long userId, Integer isVerify);
+
+    List<BankAccount> listBankByUserId(Long userId);
+
+    BankAccount findByUserIdAndId(Long userId, Long bankId);
 }

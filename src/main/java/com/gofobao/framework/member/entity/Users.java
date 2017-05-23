@@ -78,11 +78,4 @@ public class Users implements Serializable{
     @Column(name = "updated_at")
     private Date updatedAt;
 
-    @Basic
-    @Column(name = "third_account")
-    private String thirdAccount ;
-    @Basic
-    @Column(name = "third_account_type")
-    private String thirdAccountType ;
-
 }

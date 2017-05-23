@@ -35,7 +35,7 @@ public class CaptchaHelper {
             String redisKey = String.format("%s%s", REDIS_CAPTCHA_PREFIX_KEY, key);
 
             String redisCaptcha = redisHelper.get(redisKey, null);
-            //  redisHelper.remove(redisKey);
+            redisHelper.remove(redisKey);
             if (Objects.isNull(redisCaptcha)) {
                 return false;
             }

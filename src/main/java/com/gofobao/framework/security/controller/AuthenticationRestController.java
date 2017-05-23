@@ -54,7 +54,7 @@ public class AuthenticationRestController {
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // Reload password post-security so we can generate captchaToken
+        // Reload password_reset post-security so we can generate captchaToken
         final Users user = userService.findByAccount(voLoginReq.getAccount());
 
         if(ObjectUtils.isEmpty(user)){

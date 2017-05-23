@@ -7,18 +7,33 @@ package com.gofobao.framework.api.helper;
 
 public enum JixinTxCodeEnum {
     /**
-     * 开户类型
+     * 开户增强
      */
-    OPEN_ACCOUNT(
-            "accountOpen",
-            "/escrow/p2p/page/mobile"),
+    OPEN_ACCOUNT_PLUS(
+            "accountOpenPlus",
+            "/escrow/p2p/online"),
 
     /**
      * 发送短信验证码
      */
     SMS_CODE_APPLY(
             "smsCodeApply",
-            "/escrow/p2p/online");
+            "/escrow/p2p/online"),
+
+
+    /**
+     * 初始化密码
+     */
+    PASSWORD_SET(
+            "passwordSet",
+                    "/escrow/p2p/page/mobile"),
+
+    /**
+     * 充值密码
+     */
+    PASSWORD_RESET(
+            "passwordReset",
+                    "/escrow/p2p/page/mobile");
 
     private String value;
     private String url;

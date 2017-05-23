@@ -42,9 +42,6 @@ public class RegisterController {
      */
     @RequestMapping(value = "/registerCallBack")
     public void registerCallBack(HttpServletRequest request, HttpServletResponse response){
-            response.setCharacterEncoding("UTF-8");
-            TypeToken<AccountOpenPlusResponse> accountOpenResponseTypeToken = new TypeToken<AccountOpenPlusResponse>(){};
-            AccountOpenPlusResponse accountOpenPlusResponse = jixinManager.callback(request,response, accountOpenResponseTypeToken) ;
 
     }
 
@@ -55,26 +52,6 @@ public class RegisterController {
      */
     @GetMapping(value = "/register")
     public void register(HttpServletResponse response){
-        AccountOpenPlusRequest request = new AccountOpenPlusRequest() ;
-        request.setChannel(ChannelContant.HTML);
-        request.setIdType(IdTypeContant.ID_CARD);
-        request.setIdNo("310114198407240819");
-        request.setName("卜唯渊");
-        request.setMobile("18964826795");
-        request.setCardNo("6226628812120004");
-        request.setAcctUse(AcctUseContant.GENERAL_ACCOUNT);
-        request.setNotifyUrl(String.format("%s%s", javaDomain, "/pub/user/registerCallBack"));
-        request.setRetUrl(javaDomain);
-        request.setEmail("");
-        request.setUserIP("");
-        request.setAcqRes("1");
-        String html = jixinManager.getHtml(JixinTxCodeEnum.OPEN_ACCOUNT, request);
-        log.info(html) ;
-        response.setContentType("text/html; charset=UTF-8");
-        try(PrintWriter writer = response.getWriter()){
-            writer.write(html);
-        }catch (Exception e){
-            log.error("请求异常", e);
-        }
+
     }
 }
