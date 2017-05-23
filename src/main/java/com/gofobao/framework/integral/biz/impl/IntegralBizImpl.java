@@ -125,10 +125,9 @@ public class IntegralBizImpl implements IntegralBiz {
             voIntegralList.add(voIntegral);
         }));
 
-        voListIntegralResp.setTime(DateHelper.getDateTime());
-        voListIntegralResp.setMsg("获取积分列表成功!");
-        voListIntegralResp.setVoIntegralList(voIntegralList);
-        return ResponseEntity.ok(voListIntegralResp);
+        VoListIntegralResp res = VoBaseResp.ok("查询成功", VoListIntegralResp.class);
+        res.setVoIntegralList(voIntegralList);
+        return ResponseEntity.ok(res) ;
     }
 
     /**
