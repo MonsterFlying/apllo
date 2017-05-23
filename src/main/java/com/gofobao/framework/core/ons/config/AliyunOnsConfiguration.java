@@ -35,30 +35,30 @@ public class AliyunOnsConfiguration {
     public static final String AUTO_TENDER_CID = "CID_GFB_AUTO_TENDER";
 
 
-    @Bean
+    //@Bean
     public SmsMessageListener smsMessageListener(){
         return new SmsMessageListener();
     }
 
 
-    @Bean(destroyMethod = "shutdown", initMethod = "start")
+    //@Bean(destroyMethod = "shutdown", initMethod = "start")
     public ProducerBean smsProducerBean(AliyunOnsAccessKey aliyunOnsAccessKey) {
         return buildProducerBean(aliyunOnsAccessKey, SMS_PID);
     }
 
-    @Bean(destroyMethod = "shutdown", initMethod = "start")
+    //@Bean(destroyMethod = "shutdown", initMethod = "start")
     public ProducerBean noticProducerBean(AliyunOnsAccessKey aliyunOnsAccessKey) {
         return buildProducerBean(aliyunOnsAccessKey, NOTIC_PID);
     }
 
 
-    @Bean(destroyMethod = "shutdown", initMethod = "start")
+    //@Bean(destroyMethod = "shutdown", initMethod = "start")
     public ProducerBean emailProducerBean(AliyunOnsAccessKey aliyunOnsAccessKey) {
         return buildProducerBean(aliyunOnsAccessKey, EMAIL_PID);
     }
 
 
-    @Bean(destroyMethod = "shutdown", initMethod = "start")
+    //@Bean(destroyMethod = "shutdown", initMethod = "start")
     public ProducerBean autoTenderProducerBean(AliyunOnsAccessKey aliyunOnsAccessKey) {
         return buildProducerBean(aliyunOnsAccessKey, AUTO_TENDER_PID);
     }
@@ -74,23 +74,23 @@ public class AliyunOnsConfiguration {
         return bean;
     }
 
-    @Bean(destroyMethod = "shutdown", initMethod = "start")
+    //@Bean(destroyMethod = "shutdown", initMethod = "start")
     public ConsumerBean smsConsumerBean(AliyunOnsAccessKey aliyunOnsAccessKey, SmsMessageListener smsMessageListener){
         return buildConsumerBean(aliyunOnsAccessKey, SMS_CID, OnsTopics.TOPIC_SMS, smsMessageListener) ;
     }
 
 
-    @Bean(destroyMethod = "shutdown", initMethod = "start")
+    //@Bean(destroyMethod = "shutdown", initMethod = "start")
     public ConsumerBean emailConsumerBean(AliyunOnsAccessKey aliyunOnsAccessKey, EmailMessageListener emailMessageListener){
         return buildConsumerBean(aliyunOnsAccessKey, EMAIL_CID,  OnsTopics.TOPIC_EMAIL, emailMessageListener) ;
     }
 
-    @Bean(destroyMethod = "shutdown", initMethod = "start")
+    //@Bean(destroyMethod = "shutdown", initMethod = "start")
     public ConsumerBean noticConsumerBean(AliyunOnsAccessKey aliyunOnsAccessKey, NoticMessageListener noticMessageListener){
         return buildConsumerBean(aliyunOnsAccessKey, NOTIC_CID,  OnsTopics.TOPIC_NOTIC, noticMessageListener) ;
     }
 
-    @Bean(destroyMethod = "shutdown", initMethod = "start")
+    //@Bean(destroyMethod = "shutdown", initMethod = "start")
     public ConsumerBean autoTenderConsumerBean(AliyunOnsAccessKey aliyunOnsAccessKey, AutoTenderMessageListener autoTenderMessageListener){
         return buildConsumerBean(aliyunOnsAccessKey, AUTO_TENDER_CID,  OnsTopics.TOPIC_AUTO_TENDER, autoTenderMessageListener) ;
     }
