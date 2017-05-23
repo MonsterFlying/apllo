@@ -1,5 +1,7 @@
 package com.gofobao.framework.currency.biz.impl;
 
+import com.gofobao.framework.common.capital.CapitalChangeEntity;
+import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.currency.biz.CurrencyBiz;
 import com.gofobao.framework.currency.entity.Currency;
@@ -11,6 +13,8 @@ import com.gofobao.framework.currency.vo.request.VoListCurrencyReq;
 import com.gofobao.framework.currency.vo.response.VoCurrency;
 import com.gofobao.framework.currency.vo.response.VoListCurrencyResp;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.project.CapitalChangeHelper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -18,7 +22,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import java.util.*;
 
@@ -27,12 +33,20 @@ import java.util.*;
  * Created by Zeke on 2017/5/23.
  */
 @Service
+@Slf4j
 public class CurrencyBizImpl implements CurrencyBiz {
+
+    /**
+     * 最小兑换广富币
+     */
+    public static final int CURRENCY_CONVERT_MIN = 100;
 
     @Autowired
     private CurrencyService currencyService;
     @Autowired
     private CurrencyLogService currencyLogService;
+    @Autowired
+    private CapitalChangeHelper capitalChangeHelper;
 
     private static Map<String, String> currencyTypeMap = new HashMap<>();
 
@@ -90,11 +104,73 @@ public class CurrencyBizImpl implements CurrencyBiz {
      *
      * @return
      */
-    public ResponseEntity<Integer> convert(VoConvertCurrencyReq voConvertCurrencyReq) {
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoBaseResp> convert(VoConvertCurrencyReq voConvertCurrencyReq) {
+        Long userId = voConvertCurrencyReq.getUserId();
+        Integer currency = voConvertCurrencyReq.getCurrency();
 
+        Currency currencyObj = currencyService.findByUserIdLock(userId);
+        if (ObjectUtils.isEmpty(currencyObj)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"兑换广富币异常：获取用户广富币失败!"));
+        }
 
+        if (currencyObj.getUseCurrency() < currency){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"当前兑换数量大于已有数量!"));
+        }
 
-        return null;
+        if (currency < CURRENCY_CONVERT_MIN){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"当前兑换数量最小兑换数量!"));
+        }
+
+        currencyObj.setUseCurrency(currencyObj.getUseCurrency() - currency);
+        currencyObj.setNoUseCurrency(currencyObj.getNoUseCurrency() + currency);
+        currencyObj.setUpdatedAt(new Date());
+
+        if (!currencyService.update(currencyObj)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"广富币兑换失败!"));
+        }
+
+        CurrencyLog currencyLog = new CurrencyLog();
+        currencyLog.setUseCurrency(currencyObj.getUseCurrency());
+        currencyLog.setNoUseCurrency(currencyObj.getNoUseCurrency());
+        currencyLog.setUserId(userId);
+        currencyLog.setType("convert");
+        currencyLog.setValue(currency);
+        currencyLog.setCreatedAt(new Date());
+
+        if (!currencyLogService.insert(currencyLog)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"广富币兑换失败!"));
+        }
+
+        CapitalChangeEntity capitalChangeEntity = new CapitalChangeEntity();
+        capitalChangeEntity.setUserId(userId);
+        capitalChangeEntity.setType(CapitalChangeEnum.IncomeOther);
+        capitalChangeEntity.setMoney(currency);
+        capitalChangeEntity.setRemark("广富币兑换可用金额!");
+
+        boolean flag = false;
+        try {
+            flag = capitalChangeHelper.capitalChange(capitalChangeEntity);
+        } catch (Exception e) {
+            log.error("兑换广富币异常:",e);
+        }
+
+        if (!flag){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"广富币兑换失败!"));
+        }
+        return ResponseEntity.ok(VoBaseResp.ok("广富币兑换成功!"));
     }
 
 
