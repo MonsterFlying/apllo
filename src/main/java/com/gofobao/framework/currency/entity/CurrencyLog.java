@@ -18,6 +18,9 @@ public class CurrencyLog {
     @Column(name = "id")
     private Long id;
     @Basic
+    @Column(name = "user_id")
+    private Long userId;
+    @Basic
     @Column(name = "type")
     private String type;
     @Basic

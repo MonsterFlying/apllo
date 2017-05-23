@@ -14,7 +14,11 @@ import java.util.Date;
 public class IntegralLog {
     @Id
     @Column(name = "id")
+    @GeneratedValue
     private Long id;
+    @Basic
+    @Column(name = "user_id")
+    private Long userId;
     @Basic
     @Column(name = "type")
     private String type;

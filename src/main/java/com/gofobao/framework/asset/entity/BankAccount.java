@@ -14,6 +14,7 @@ import java.util.Date;
 public class BankAccount {
     @Id
     @Column(name = "id")
+    @GeneratedValue
     private Long id;
     @Basic
     @Column(name = "trade_no")

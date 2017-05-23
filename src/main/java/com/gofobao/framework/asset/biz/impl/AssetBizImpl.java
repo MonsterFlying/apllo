@@ -31,7 +31,7 @@ public class AssetBizImpl implements AssetBiz {
      */
     public ResponseEntity<VoUserAssetInfoResp> userAssetInfo(Long userId){
 
-        Asset asset = assetService.findById(userId); //查询会员资产信息
+        Asset asset = assetService.findByUserId(userId); //查询会员资产信息
         if (ObjectUtils.isEmpty(asset)) {
             return null;
         }

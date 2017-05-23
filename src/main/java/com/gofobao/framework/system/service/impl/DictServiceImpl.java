@@ -7,6 +7,7 @@ import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.repository.DictItemRepository;
 import com.gofobao.framework.system.repository.DictValueRepository;
 
+import com.gofobao.framework.system.service.DictService;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,7 @@ import java.util.Map;
  * Created by Max on 17/3/1.
  */
 @Service
-public class DictServiceImpl {
+public class DictServiceImpl implements DictService{
 
     @Autowired
     private DictItemRepository dictItemRepository;
@@ -43,7 +44,7 @@ public class DictServiceImpl {
 
         String cacheStr = redisHelper.get(SysCacheContants.DICT_ALIAS_CODE + aliasCode, null);
         if (StringUtils.isEmpty(cacheStr)) {
-            List<DictItem> dictItems = dictItemRepository.findByIsDelAndAliasCode(false, aliasCode);
+            List<DictItem> dictItems = dictItemRepository.findByIsDelAndAliasCode(0, aliasCode);
 
             if (CollectionUtils.isEmpty(dictItems)) {
                 throw new Exception("aliasCode is invalidate");

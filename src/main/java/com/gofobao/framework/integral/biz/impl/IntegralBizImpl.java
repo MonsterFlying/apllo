@@ -2,12 +2,16 @@ package com.gofobao.framework.integral.biz.impl;
 
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.common.capital.CapitalChangeEntity;
+import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.MathHelper;
+import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.integral.biz.IntegralBiz;
 import com.gofobao.framework.integral.entity.Integral;
 import com.gofobao.framework.integral.entity.IntegralLog;
-import com.gofobao.framework.integral.repository.IntegralLogRepository;
 import com.gofobao.framework.integral.service.IntegralLogService;
 import com.gofobao.framework.integral.service.IntegralService;
 import com.gofobao.framework.integral.vo.request.VoIntegralTakeReq;
@@ -21,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
@@ -40,6 +45,8 @@ public class IntegralBizImpl implements IntegralBiz {
     private AssetService assetService;
     @Autowired
     private DictService dictService;
+    @Autowired
+    private CapitalChangeHelper capitalChangeHelper;
 
     private static Map<String, String> integralTypeMap = new HashMap<>();
 
@@ -70,10 +77,10 @@ public class IntegralBizImpl implements IntegralBiz {
         if (ObjectUtils.isEmpty(integral)) {
             return ResponseEntity.
                     badRequest().
-                    body(VoListIntegralResp.error(1,""));
+                    body(VoListIntegralResp.error(1, ""));
         }
 
-        Asset asset = assetService.findById(userId);
+        Asset asset = assetService.findByUserId(userId);
         if (ObjectUtils.isEmpty(integral)) {
             return ResponseEntity.
                     badRequest().
@@ -118,6 +125,8 @@ public class IntegralBizImpl implements IntegralBiz {
             voIntegralList.add(voIntegral);
         }));
 
+        voListIntegralResp.setTime(DateHelper.getDateTime());
+        voListIntegralResp.setMsg("获取积分列表成功!");
         voListIntegralResp.setVoIntegralList(voIntegralList);
         return ResponseEntity.ok(voListIntegralResp);
     }
@@ -128,8 +137,97 @@ public class IntegralBizImpl implements IntegralBiz {
      * @param voIntegralTakeReq
      * @return
      */
-    public ResponseEntity<Integer> doTakeRates(VoIntegralTakeReq voIntegralTakeReq) {
-        return null;
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoBaseResp> doTakeRates(VoIntegralTakeReq voIntegralTakeReq) {
+        Long userId = voIntegralTakeReq.getUserId();
+
+        Integral integral = integralService.findByUserIdLock(userId);
+
+        Integer integer = voIntegralTakeReq.getInteger();
+        if ((integer < 10000) || (integer % 1000 != 0)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "兑换积分必须10000起，并且是1000倍数!"));
+        }
+
+        if (ObjectUtils.isEmpty(integral)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询用户积分失败!"));
+        }
+
+        Integer useIntegral = integral.getUseIntegral();
+        if (integer >= useIntegral) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "折现积分大于可用积分!"));
+        }
+
+        Asset asset = assetService.findByUserIdLock(userId);
+        if (ObjectUtils.isEmpty(integral)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询用户资产失败!"));
+        }
+
+        List<Map<String, String>> integralRule = null;
+        try {
+            integralRule = dictService.queryDictList(DictAliasCodeContants.INTEGRAL_RULE);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        Integer collection = asset.getCollection();
+        String takeRatesStr = getTakeRates(collection, useIntegral, integralRule);
+        double takeRates = Double.parseDouble(takeRatesStr);//折现系数
+        long money = Math.round(takeRates * integer);  // 可兑换金额
+
+        CapitalChangeEntity capitalChangeEntity = new CapitalChangeEntity();
+        capitalChangeEntity.setType(CapitalChangeEnum.IntegralCash);
+        capitalChangeEntity.setMoney((int) money);
+        capitalChangeEntity.setUserId(new Long(userId).intValue());
+
+        boolean b = false;
+        try {
+            b = capitalChangeHelper.capitalChange(capitalChangeEntity);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (!b) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "用户资产变更失败!"));
+        }
+
+        Integral saveIntegral = new Integral();
+        saveIntegral.setUserId(userId);
+        saveIntegral.setNoUseIntegral(integral.getNoUseIntegral()+integer);
+        saveIntegral.setUseIntegral(integral.getUseIntegral()- integer);
+        saveIntegral.setUpdatedAt(new Date());
+        boolean bool = integralService.update(saveIntegral);
+        if (!bool){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "积分表更新失败!"));
+        }
+
+        IntegralLog integralLog = new IntegralLog();
+        integralLog.setUseIntegral(integral.getUseIntegral() - integer);
+        integralLog.setNoUseIntegral(integral.getNoUseIntegral() + integer);
+        integralLog.setUserId(userId);
+        integralLog.setCreatedAt(new Date());
+        integralLog.setValue(integer);
+        integralLog.setType("convert");
+
+        bool = integralLogService.insert(integralLog);
+        if (!bool){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "积分日志表插入失败!"));
+        }
+
+
+        return ResponseEntity.ok(VoBaseResp.ok("积分折现成功!"));
     }
 
     /**

@@ -1,25 +1,19 @@
 package com.gofobao.framework.asset.entity;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Generated;
-import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.util.Date;
 
 /**
- * Created by Zeke on 2017/5/19.
+ * Created by Zeke on 2017/5/22.
  */
-@Entity
-@Table(name = "gfb_asset")
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class Asset {
+@Entity
+@Table(name = "gfb_yesterday_asset")
+public class YesterdayAsset {
     @Id
     @Column(name = "user_id")
-    @GeneratedValue
     private Long userId;
     @Basic
     @Column(name = "use_money")
@@ -39,8 +33,4 @@ public class Asset {
     @Basic
     @Column(name = "updated_at")
     private Date updatedAt;
-
-    public int getTotal() {
-        return this.useMoney + this.noUseMoney + this.collection;
-    }
 }

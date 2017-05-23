@@ -1,26 +1,30 @@
 package com.gofobao.framework.asset.entity;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Generated;
-import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.util.Date;
 
 /**
- * Created by Zeke on 2017/5/19.
+ * Created by Zeke on 2017/5/22.
  */
-@Entity
-@Table(name = "gfb_asset")
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class Asset {
+@Entity
+@Table(name = "gfb_asset_log")
+public class AssetLog {
     @Id
-    @Column(name = "user_id")
+    @Column(name = "id")
     @GeneratedValue
+    private Long id;
+    @Basic
+    @Column(name = "user_id")
     private Long userId;
+    @Basic
+    @Column(name = "type")
+    private String type;
+    @Basic
+    @Column(name = "money")
+    private Integer money;
     @Basic
     @Column(name = "use_money")
     private Integer useMoney;
@@ -37,10 +41,13 @@ public class Asset {
     @Column(name = "payment")
     private Integer payment;
     @Basic
-    @Column(name = "updated_at")
-    private Date updatedAt;
+    @Column(name = "to_user_id")
+    private Integer toUserId;
+    @Basic
+    @Column(name = "remark")
+    private String remark;
+    @Basic
+    @Column(name = "created_at")
+    private Date createdAt;
 
-    public int getTotal() {
-        return this.useMoney + this.noUseMoney + this.collection;
-    }
 }

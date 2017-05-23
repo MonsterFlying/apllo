@@ -9,4 +9,8 @@ import java.util.List;
  */
 public interface IntegralLogService {
     List<IntegralLog> findByUserId(Long userId,int pageIndex,int pageSize);
+
+    boolean insert(IntegralLog integralLog);
+
+    boolean update(IntegralLog integralLog);
 }

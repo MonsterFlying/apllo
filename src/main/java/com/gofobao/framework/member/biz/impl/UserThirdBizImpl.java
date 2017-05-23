@@ -32,10 +32,10 @@ public class UserThirdBizImpl implements UserThirdBiz {
             return ResponseEntity.badRequest().body(new VoPreOpenAccountResp(VoBaseResp.ERROR, "你访问的账户不存在")) ;
         }
 
-        // 判断用户是否已经开过存管账户
+        /*// 判断用户是否已经开过存管账户
         if(!StringUtils.isEmpty(user.getThirdAccount())){
             return ResponseEntity.badRequest().body(new VoPreOpenAccountResp(VoBaseResp.ERROR, "你的账户已经开户！")) ;
-        }
+        }*/
 
 
         // 判断用户是否已经开过存管账户

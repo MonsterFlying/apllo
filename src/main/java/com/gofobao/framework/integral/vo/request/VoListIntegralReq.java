@@ -10,10 +10,9 @@ import lombok.Data;
 /**
  * Created by Zeke on 2017/5/22.
  */
-@ApiModel
 @Data
+@ApiModel
 public class VoListIntegralReq extends Page{
-
     @ApiModelProperty(hidden = true)
     @JsonIgnore
     private Long userId;

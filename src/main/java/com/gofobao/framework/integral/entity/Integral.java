@@ -14,6 +14,7 @@ import java.util.Date;
 public class Integral {
     @Id
     @Column(name = "user_id")
+    @GeneratedValue
     private Long userId;
     @Basic
     @Column(name = "use_integral")

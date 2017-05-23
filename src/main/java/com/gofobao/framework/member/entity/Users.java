@@ -21,7 +21,6 @@ public class Users implements Serializable{
     @Column(name = "id")
     @GeneratedValue
     private Long id;
-
     @Basic
     @Column(name = "username")
     private String username;
@@ -77,12 +76,5 @@ public class Users implements Serializable{
     @Basic
     @Column(name = "updated_at")
     private Date updatedAt;
-
-    @Basic
-    @Column(name = "third_account")
-    private String thirdAccount ;
-    @Basic
-    @Column(name = "third_account_type")
-    private String thirdAccountType ;
 
 }

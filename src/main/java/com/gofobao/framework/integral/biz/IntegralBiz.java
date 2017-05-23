@@ -25,7 +25,7 @@ public interface IntegralBiz {
      * @param voIntegralTakeReq
      * @return
      */
-    ResponseEntity<Integer> doTakeRates(VoIntegralTakeReq voIntegralTakeReq);
+    ResponseEntity<VoBaseResp> doTakeRates(VoIntegralTakeReq voIntegralTakeReq);
 
     /**
      * 积分折现系数说明
