@@ -20,11 +20,6 @@ public class BankAccount {
     @Column(name = "id")
     @GeneratedValue
     private Long id;
-
-    @Basic
-    @Column(name = "user_id")
-    private Long userId ;
-
     @Basic
     @Column(name = "user_id")
     private String userId;
