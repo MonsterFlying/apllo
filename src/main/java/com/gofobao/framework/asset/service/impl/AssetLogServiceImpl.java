@@ -1,11 +1,10 @@
 package com.gofobao.framework.asset.service.impl;
 
 import com.gofobao.framework.asset.entity.AssetLog;
-import com.gofobao.framework.asset.repostitory.AssetLogRepository;
+import com.gofobao.framework.asset.repository.AssetLogRepository;
 import com.gofobao.framework.asset.service.AssetLogService;
 import com.gofobao.framework.asset.vo.repsonse.VoViewAssetLogRes;
 import com.gofobao.framework.asset.vo.request.VoAssetLog;
-import com.gofobao.framework.common.page.Page;
 import com.gofobao.framework.helper.DateHelper;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -16,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import java.util.Collections;
 import java.util.List;
@@ -58,5 +58,20 @@ public class AssetLogServiceImpl implements AssetLogService {
         List<VoViewAssetLogRes> result = Optional.ofNullable(voViewAssetLogRes).orElse(Collections.EMPTY_LIST);
 
         return result;
+    }
+
+    public boolean insert(AssetLog assetLog){
+        if (ObjectUtils.isEmpty(assetLog)){
+            return false;
+        }
+        assetLog.setId(null);
+        return !ObjectUtils.isEmpty(assetLogRepository.save(assetLog));
+    }
+
+    public boolean update(AssetLog assetLog){
+        if (ObjectUtils.isEmpty(assetLog) || ObjectUtils.isEmpty(assetLog.getId())){
+            return false;
+        }
+        return !ObjectUtils.isEmpty(assetLogRepository.save(assetLog));
     }
 }

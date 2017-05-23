@@ -1,5 +1,7 @@
 package com.gofobao.framework.system.entity;
 
+import lombok.Data;
+
 import javax.persistence.*;
 import java.util.Date;
 
@@ -7,6 +9,7 @@ import java.util.Date;
  * Created by Zeke on 2017/5/22.
  */
 @Entity
+@Data
 @Table(name = "gfb_dict_value")
 public class DictValue {
     @Id
@@ -14,7 +17,7 @@ public class DictValue {
     private Long id;
     @Basic
     @Column(name = "ITEM_ID")
-    private Integer itemId;
+    private Long itemId;
     @Basic
     @Column(name = "VALUE01")
     private String value01;
@@ -47,7 +50,7 @@ public class DictValue {
     private Integer updateId;
     @Basic
     @Column(name = "IS_DEL")
-    private Integer isDel;
+    private Boolean isDel;
     @Basic
     @Column(name = "NAME")
     private String name;

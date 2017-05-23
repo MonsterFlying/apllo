@@ -3,8 +3,6 @@ package com.gofobao.framework.asset.service;
 
 import com.gofobao.framework.asset.entity.Asset;
 
-import java.util.List;
-
 /**
  * Created by Zeke on 2017/5/19.
  */
@@ -15,6 +13,10 @@ public interface AssetService {
      * @param id
      * @return
      */
-    Asset findById(Long id);
+    Asset findByUserId(Long id);
 
+    Asset findByUserIdLock(Long id);
+
+    boolean insert(Asset asset);
+    boolean update(Asset asset);
 }

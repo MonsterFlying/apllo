@@ -23,6 +23,7 @@ public class DateHelper {
     public static final String DATE_FORMAT_YMD_CH = "yyyy年MM月dd日";
     public static final String DATE_FORMAT_YMD_NUM = "yyyyMMdd";
     public static final String DATE_FORMAT_HMS_NUM = "HHmmss";
+    public static final String DATE_FORMAT_YMDHMS_NUM = "yyyyMMddHHmmss";
     private static SimpleDateFormat dateFormat = null;
 
     public static final long MILLIS_PER_SECOND = 1000; // Number of milliseconds in a standard second.
@@ -598,6 +599,20 @@ public class DateHelper {
     public static String getTime() {
         Date nowDate = new Date() ;
         dateFormat = new SimpleDateFormat(DATE_FORMAT_HMS_NUM);
+        try {
+            return dateFormat.format(nowDate);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * 获取时间(yyyyMMddHHmmss)
+     * @return
+     */
+    public static String getDateTime() {
+        Date nowDate = new Date() ;
+        dateFormat = new SimpleDateFormat(DATE_FORMAT_YMDHMS_NUM);
         try {
             return dateFormat.format(nowDate);
         } catch (Exception e) {

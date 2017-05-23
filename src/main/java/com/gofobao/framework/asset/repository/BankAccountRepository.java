@@ -13,4 +13,19 @@ import java.util.List;
 public interface BankAccountRepository extends JpaRepository<BankAccount,Long>{
 
     List<BankAccount> findByDeletedAtIsNullAndUserIdAndIsVerify(Long userId,Integer isVerify);
+
+    /**
+     * 根据用户ID查询银行卡
+     * @param userId 用户ID
+     * @return
+     */
+    List<BankAccount> findByUserIdAndDeletedAtIsNull(Long userId);
+
+    /**
+     * 根据用户Id和银行卡Id查询银行卡
+     * @param bankId
+     * @param userId
+     * @return
+     */
+    List<BankAccount> findByIdAndUserIdAndDeletedAtIsNull(Long bankId, Long userId);
 }

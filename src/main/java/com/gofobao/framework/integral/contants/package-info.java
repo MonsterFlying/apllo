@@ -2,4 +2,4 @@
  * 常量
  * Created by Max on 17/5/16.
  */
-package com.gofobao.framework.api.contants;
+package com.gofobao.framework.integral.contants;

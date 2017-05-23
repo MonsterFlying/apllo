@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
@@ -20,7 +21,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -78,21 +81,30 @@ public class JixinManager {
         String unSign = StringHelper.mergeMap(params);
         String sign = certHelper.doSign(unSign);
         params.put("sign", sign) ;
-        log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));
-        initHttps();
-        HttpEntity entity = getHttpEntity(params);
-        RestTemplate restTemplate =  new RestTemplate();
-        ResponseEntity<String> response = null;
-        try {
-            response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
-        }catch (Throwable e){
-            log.error("请求即信服务器异常", e);
-            return null ;
-        }
+        return genFormHtml(params, url);
+    }
 
-        String body =  response.getBody() ;
-        log.info(String.format("即信响应报文:url=%s body=%s",url, gson.toJson(body)));
-        return body;
+    /**
+     * 创建form表单
+     * @param params 参数
+     * @param url 链接
+     * @return
+     */
+    private String genFormHtml(Map<String, String> params, String url) {
+        StringBuilder sb = new StringBuilder() ;
+
+        sb.append("<form method=\"post\" action=\"").append(url).append("\">") ;
+        if(!CollectionUtils.isEmpty(params)){
+            Set<Map.Entry<String, String>> entries = params.entrySet();
+            Iterator<Map.Entry<String, String>> iterator = entries.iterator();
+            while (iterator.hasNext()){
+                Map.Entry<String, String> next = iterator.next();
+                sb.append("    <input type=\"hidden\" name=\"").append(next.getKey()).append("\" value=\"").append(next.getValue()).append("\"/> ");
+            }
+
+        }
+        sb.append("</form>") ;
+        return sb.toString() ;
     }
 
     private HttpEntity getHttpEntity(Map<String, String> params) {
@@ -103,14 +115,23 @@ public class JixinManager {
         return new HttpEntity(params, httpHeaders);
     }
 
-    public <T extends JixinBaseResponse> T callback(HttpServletRequest request, HttpServletResponse response, TypeToken<T> typeToken){
+    public <T extends JixinBaseResponse> T callback(HttpServletRequest request, TypeToken<T> typeToken){
         checkNotNull(request, "请求体为null") ;
-        checkNotNull(response, "请求体为null") ;
         String bgData = request.getParameter("bgData");
-
         log.info(String.format("即信异步响应返回值：%s", bgData));
         checkNotNull(bgData, "返回值内容为空");
-        return gson.fromJson(bgData, typeToken.getType());
+        T t  = gson.fromJson(bgData, typeToken.getType());
+        // 验证参数
+        String json = gson.toJson(t);
+        Map<String,String> param = gson.fromJson(json, new TypeToken<Map<String,String>>(){}.getType() ) ;
+        String unsige = StringHelper.mergeMap(param);
+        boolean result = certHelper.verify(unsige, param.get("sign"));
+        if(!result){
+            log.error("验签失败", bgData);
+            return null ;
+        }
+
+        return t;
     }
 
     public <T extends JixinBaseRequest, S extends JixinBaseResponse> S send(JixinTxCodeEnum txCodeEnum, T req, Class<S> clazz){

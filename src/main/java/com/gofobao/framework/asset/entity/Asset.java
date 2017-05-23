@@ -2,6 +2,7 @@ package com.gofobao.framework.asset.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Generated;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
@@ -18,6 +19,7 @@ import java.util.Date;
 public class Asset {
     @Id
     @Column(name = "user_id")
+    @GeneratedValue
     private Long userId;
     @Basic
     @Column(name = "use_money")

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1,minimum-scale=1" />
+    <title>积分折现系数规则说明</title>
+    <style>
+        html {
+            font-size: 50PX;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        body{
+            font-size: 0.24rem;
+        }
+        .bgBox {
+            background: #ffffff;
+            padding-bottom: 22px;
+        }
+
+        .head {
+            background: #f5f5f5;
+            font-weight: 700;
+        }
+        .head ul{
+            list-style: none;
+        }
+        .head ul li{
+            height: 0.72rem;
+            line-height: 0.72rem;
+            float: left;
+            width: 25%;
+            text-align: center;
+        }
+        .clear::after{
+            content:".";
+            display:block;
+            height:0;
+            clear:both;
+            visibility:hidden;
+        }
+        .block{
+            border-bottom: 1PX solid #e5e5e5;
+        }
+        .block ul{
+            list-style: none;
+            position: relative;
+            padding-left: 25%;
+            box-sizing: content-box;
+        }
+        .block ul li{
+            float: left;
+            text-align: center;
+            width: 30%;
+            color: #333333;
+        }
+        .block ul li:nth-child(1){
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 25%;
+            margin-top:-0.28rem;
+            font-weight: 600;
+        }
+        .block ul li:nth-child(2){
+            width: 69%;
+            border-left: 1PX solid #e5e5e5;
+            border-right: 1PX solid #e5e5e5;
+        }
+        .block dd{
+            height: 0.56rem;
+            line-height: 0.56rem;
+            border-bottom: 1PX solid #e5e5e5;
+        }
+        .block dd:last-child{
+            border-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+<div class="bgBox">
+    <div class="head">
+        <ul class="clear">
+            <li>总待收</li>
+            <li style="width: 50%">总积分</li>
+            <li>折现系数</li>
+        </ul>
+    </div>
+    <div class="block">
+        <ul class="clear">
+            <li>
+                <p>0至</p>
+                <p>20000元</p>
+            </li>
+            <li>
+                <dl>
+                    <dd>积分＜50000</dd>
+                    <dd>50000≤ 积分＜120000</dd>
+                    <dd>120000≤ 积分＜250000</dd>
+                    <dd>25000≤ 积分＜400000</dd>
+                    <dd>400000≤ 积分＜680000</dd>
+                    <dd>680000≤ 积分＜980000</dd>
+                    <dd>980000≤ 积分＜1280000</dd>
+                    <dd>积分≥1280000</dd>
+                </dl>
+            </li>
+            <li>
+                <dl>
+                    <dd>0.45%</dd>
+                    <dd>0.47%</dd>
+                    <dd>0.49%</dd>
+                    <dd>0.51%</dd>
+                    <dd>0.53%</dd>
+                    <dd>0.55%</dd>
+                    <dd>0.57%</dd>
+                    <dd>0.59%</dd>
+                </dl>
+            </li>
+        </ul>
+
+        <ul class="clear">
+            <li>
+                <p>20001至</p>
+                <p>50000元</p>
+            </li>
+            <li>
+                <dl>
+                    <dd>积分＜50000</dd>
+                    <dd>50000≤ 积分＜120000</dd>
+                    <dd>120000≤ 积分＜250000</dd>
+                    <dd>25000≤ 积分＜400000</dd>
+                    <dd>400000≤ 积分＜680000</dd>
+                    <dd>680000≤ 积分＜980000</dd>
+                    <dd>980000≤ 积分＜1280000</dd>
+                    <dd>积分≥1280000</dd>
+                </dl>
+            </li>
+            <li>
+                <dl>
+                    <dd>0.51%</dd>
+                    <dd>0.53%</dd>
+                    <dd>0.55%</dd>
+                    <dd>0.57%</dd>
+                    <dd>0.59%</dd>
+                    <dd>0.61%</dd>
+                    <dd>0.63%</dd>
+                    <dd>0.65%</dd>
+                </dl>
+            </li>
+        </ul>
+
+        <ul class="clear">
+            <li>
+                <p>50001至</p>
+                <p>150000元</p>
+            </li>
+            <li>
+                <dl>
+                    <dd>积分＜50000</dd>
+                    <dd>50000≤ 积分＜120000</dd>
+                    <dd>120000≤ 积分＜250000</dd>
+                    <dd>25000≤ 积分＜400000</dd>
+                    <dd>400000≤ 积分＜680000</dd>
+                    <dd>680000≤ 积分＜980000</dd>
+                    <dd>980000≤ 积分＜1280000</dd>
+                    <dd>积分≥1280000</dd>
+                </dl>
+            </li>
+            <li>
+                <dl>
+                    <dd>0.57%</dd>
+                    <dd>0.59%</dd>
+                    <dd>0.61%</dd>
+                    <dd>0.63%</dd>
+                    <dd>0.65%</dd>
+                    <dd>0.67%</dd>
+                    <dd>0.69%</dd>
+                    <dd>0.71%</dd>
+                </dl>
+            </li>
+        </ul>
+
+        <ul class="clear">
+            <li>
+                <p>150001至</p>
+                <p>300000元</p>
+            </li>
+            <li>
+                <dl>
+                    <dd>积分＜50000</dd>
+                    <dd>50000≤ 积分＜120000</dd>
+                    <dd>120000≤ 积分＜250000</dd>
+                    <dd>25000≤ 积分＜400000</dd>
+                    <dd>400000≤ 积分＜680000</dd>
+                    <dd>680000≤ 积分＜980000</dd>
+                    <dd>980000≤ 积分＜1280000</dd>
+                    <dd>积分≥1280000</dd>
+                </dl>
+            </li>
+            <li>
+                <dl>
+                    <dd>0.63%</dd>
+                    <dd>0.65%</dd>
+                    <dd>0.67%</dd>
+                    <dd>0.69%</dd>
+                    <dd>0.71%</dd>
+                    <dd>0.73%</dd>
+                    <dd>0.75%</dd>
+                    <dd>0.77%</dd>
+                </dl>
+            </li>
+        </ul>
+
+        <ul class="clear">
+            <li>
+                <p>300001至</p>
+                <p>500000元</p>
+            </li>
+            <li>
+                <dl>
+                    <dd>积分＜50000</dd>
+                    <dd>50000≤ 积分＜120000</dd>
+                    <dd>120000≤ 积分＜250000</dd>
+                    <dd>25000≤ 积分＜400000</dd>
+                    <dd>400000≤ 积分＜680000</dd>
+                    <dd>680000≤ 积分＜980000</dd>
+                    <dd>980000≤ 积分＜1280000</dd>
+                    <dd>积分≥1280000</dd>
+                </dl>
+            </li>
+            <li>
+                <dl>
+                    <dd>0.69%</dd>
+                    <dd>0.71%</dd>
+                    <dd>0.72%</dd>
+                    <dd>0.75%</dd>
+                    <dd>0.77%</dd>
+                    <dd>0.79%</dd>
+                    <dd>0.81%</dd>
+                    <dd>0.83%</dd>
+                </dl>
+            </li>
+        </ul>
+
+        <ul class="clear">
+            <li>
+                <p>500001至</p>
+                <p>800000元</p>
+            </li>
+            <li>
+                <dl>
+                    <dd>积分＜50000</dd>
+                    <dd>50000≤ 积分＜120000</dd>
+                    <dd>120000≤ 积分＜250000</dd>
+                    <dd>25000≤ 积分＜400000</dd>
+                    <dd>400000≤ 积分＜680000</dd>
+                    <dd>680000≤ 积分＜980000</dd>
+                    <dd>980000≤ 积分＜1280000</dd>
+                    <dd>积分≥1280000</dd>
+                </dl>
+            </li>
+            <li>
+                <dl>
+                    <dd>0.75%</dd>
+                    <dd>0.77%</dd>
+                    <dd>0.79%</dd>
+                    <dd>0.81%</dd>
+                    <dd>0.83%</dd>
+                    <dd>0.85%</dd>
+                    <dd>0.87%</dd>
+                    <dd>0.89%</dd>
+                </dl>
+            </li>
+        </ul>
+
+        <ul class="clear">
+            <li>
+                <p>800001至</p>
+                <p></p>
+            </li>
+            <li>
+                <dl>
+                    <dd>积分＜50000</dd>
+                    <dd>50000≤ 积分＜120000</dd>
+                    <dd>120000≤ 积分＜250000</dd>
+                    <dd>25000≤ 积分＜400000</dd>
+                    <dd>400000≤ 积分＜680000</dd>
+                    <dd>680000≤ 积分＜980000</dd>
+                    <dd>980000≤ 积分＜1280000</dd>
+                    <dd>积分≥1280000</dd>
+                </dl>
+            </li>
+            <li>
+                <dl>
+                    <dd>0.81%</dd>
+                    <dd>0.83%</dd>
+                    <dd>0.85%</dd>
+                    <dd>0.87%</dd>
+                    <dd>0.89%</dd>
+                    <dd>0.91%</dd>
+                    <dd>0.93%</dd>
+                    <dd>0.95%</dd>
+                </dl>
+            </li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>
