@@ -1,7 +1,7 @@
 package com.gofobao.framework.listener.providers;
 
+import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.core.helper.RandomHelper;
-import com.gofobao.framework.core.ons.config.OnsBodyKeys;
 import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.message.entity.SmsEntity;
@@ -9,14 +9,14 @@ import com.gofobao.framework.message.provider.SmsServerConfig;
 import com.gofobao.framework.message.repository.SmsRepository;
 import com.gofobao.framework.message.service.SmsConfigService;
 import com.gofobao.framework.message.service.SmsTemplateService;
-import static com.google.common.base.Preconditions.*;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Created by Max on 2017/5/17.
@@ -48,8 +48,8 @@ public class CommonSmsProvider {
      */
     public boolean doSendMessageCode(String tag, Map<String, String> body){
         checkNotNull(body,  "CommonSmsProvider doSendMessageCode body is null") ;
-        String phone = body.get(OnsBodyKeys.KEYS_PHONE);
-        String ip = body.get(OnsBodyKeys.KEYS_IP) ;
+        String phone = body.get(MqConfig.PHONE);
+        String ip = body.get(MqConfig.IP) ;
 
         checkNotNull(phone, "CommonSmsProvider doSendMessageCode phone is null") ;
         checkNotNull(ip, "CommonSmsProvider doSendMessageCode ip is null") ;

@@ -1,7 +1,7 @@
 package com.gofobao.framework.member.biz.impl;
 
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.PasswordHelper;
-import com.gofobao.framework.core.ons.config.OnsTags;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.CaptchaHelper;
 import com.gofobao.framework.helper.RedisHelper;
@@ -79,7 +79,7 @@ public class UserPasswordBizImpl implements UserPasswordBiz {
         String phone = voCheckFindPasswordReq.getPhone();
         String phoneCaptcha = voCheckFindPasswordReq.getPhoneCaptcha();
 
-        boolean bool = captchaHelper.checkPhoneCaptcha(phone, phoneCaptcha, OnsTags.SMS_RESET_PASSWORD);//验证找回密码验证码是否正确
+        boolean bool = captchaHelper.checkPhoneCaptcha(phone, phoneCaptcha, MqTagEnum.SMS_RESET_PASSWORD.getValue());//验证找回密码验证码是否正确
         if (!bool){
             return ResponseEntity
                     .badRequest()
@@ -100,8 +100,8 @@ public class UserPasswordBizImpl implements UserPasswordBiz {
         String phoneCaptcha = voFindPasswordReq.getPhoneCaptcha();
         String newPassword = voFindPasswordReq.getNewPassword();
 
-        boolean bool = captchaHelper.checkPhoneCaptcha(phone, phoneCaptcha, OnsTags.SMS_RESET_PASSWORD);//验证找回密码验证码是否正确
-        captchaHelper.removePhoneCaptcha(phone, OnsTags.SMS_RESET_PASSWORD);//删除验证码
+        boolean bool = captchaHelper.checkPhoneCaptcha(phone, phoneCaptcha, MqTagEnum.SMS_RESET_PASSWORD.getValue());//验证找回密码验证码是否正确
+        captchaHelper.removePhoneCaptcha(phone, MqTagEnum.SMS_RESET_PASSWORD.getValue() );//删除验证码
         if (!bool){
             return ResponseEntity
                     .badRequest()

@@ -11,6 +11,7 @@ import com.gofobao.framework.currency.vo.request.VoListCurrencyReq;
 import com.gofobao.framework.currency.vo.response.VoCurrency;
 import com.gofobao.framework.currency.vo.response.VoListCurrencyResp;
 import com.gofobao.framework.helper.DateHelper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +28,7 @@ import java.util.*;
  * Created by Zeke on 2017/5/23.
  */
 @Service
+@Slf4j
 public class CurrencyBizImpl implements CurrencyBiz {
 
     @Autowired

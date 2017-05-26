@@ -1,10 +1,8 @@
 package com.gofobao.framework.listener;
 
-import com.aliyun.openservices.ons.api.Action;
-import com.aliyun.openservices.ons.api.ConsumeContext;
-import com.aliyun.openservices.ons.api.Message;
-import com.aliyun.openservices.ons.api.MessageListener;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnumContants;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 /**
@@ -12,12 +10,8 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-public class NoticMessageListener implements MessageListener {
+@RabbitListener(queues = MqQueueEnumContants.RABBITMQ_NOTICE)
+public class NoticMessageListener  {
 
-    @Override
-    public Action consume(Message message, ConsumeContext consumeContext) {
 
-        log.info(String.format("Aliyn ons consume log: %s", message.getBody().toString()) );
-        return Action.ReconsumeLater;
-    }
 }
