@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Base64Utils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -166,6 +167,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         request.setSmsCode(voOpenAccountReq.getSmsCode());
         request.setCardNo(voOpenAccountReq.getCardNo());
 
+
         AccountOpenPlusResponse response = jixinManager.send(JixinTxCodeEnum.OPEN_ACCOUNT_PLUS, request, AccountOpenPlusResponse.class);
         if((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))){
             String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试": response.getRetMsg() ;
@@ -177,6 +179,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         UserThirdAccount entity = new UserThirdAccount() ;
         Date nowDate = new Date() ;
         entity.setUpdateAt(nowDate);
+        entity.setUserId(user.getId());
         entity.setCreateAt(nowDate);
         entity.setCreateId(user.getId());
         entity.setUserId(user.getId());
@@ -190,6 +193,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         entity.setAccountId(accountId);
         entity.setPasswordState(0);
         entity.setCardNoBindState(1);
+        entity.setName(voOpenAccountReq.getName());
         Long id = userThirdAccountService.save(entity) ;
 
         //  9.保存用户实名信息
@@ -208,7 +212,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     @Override
     public ResponseEntity<VoHtmlResp> modifyOpenAccPwd(Long userId) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId) ;
-        if(!ObjectUtils.isEmpty(userThirdAccount) ){
+        if(ObjectUtils.isEmpty(userThirdAccount) ){
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,  "当前账户还未实名", VoHtmlResp.class)) ;
         }
 
@@ -225,7 +229,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             passwordSetRequest.setIdNo(userThirdAccount.getIdNo());
             passwordSetRequest.setAcqRes(String.valueOf(userId));
             passwordSetRequest.setRetUrl(String.format("%s%s", h5Domain, ""));
-            passwordSetRequest.setNotifyUrl(String.format("%s%s", javaDomain, "/user/third/modifyOpenAccPwd/callback/1"));
+            passwordSetRequest.setNotifyUrl(String.format("%s%s", javaDomain, "/pub/user/third/modifyOpenAccPwd/callback/1"));
             html = jixinManager.getHtml(JixinTxCodeEnum.PASSWORD_SET, passwordSetRequest) ;
         }else{ // 重置密码
             PasswordResetRequest passwordResetRequest = new PasswordResetRequest() ;
@@ -237,7 +241,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             passwordResetRequest.setIdNo(userThirdAccount.getIdNo());
             passwordResetRequest.setAcqRes(String.valueOf(userId));
             passwordResetRequest.setRetUrl(String.format("%s%s", h5Domain, ""));
-            passwordResetRequest.setNotifyUrl(String.format("%s%s", javaDomain, "/user/third/modifyOpenAccPwd/callback/2"));
+            passwordResetRequest.setNotifyUrl(String.format("%s%s", javaDomain, "/pub/user/third/modifyOpenAccPwd/callback/2"));
             html = jixinManager.getHtml(JixinTxCodeEnum.PASSWORD_RESET, passwordResetRequest) ;
         }
 
@@ -248,7 +252,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
         VoHtmlResp voHtmlResp = VoBaseResp.ok("成功", VoHtmlResp.class);
         try {
-            voHtmlResp.setHtml(URLEncoder.encode(html, "UTF-8"));
+            voHtmlResp.setHtml(Base64Utils.encodeToString(html.getBytes("UTF-8")));
         } catch (UnsupportedEncodingException e) {
             log.error("UserThirdBizImpl modifyOpenAccPwd gethtml exceptio", e);
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,  "服务器开小差了， 请稍候重试", VoHtmlResp.class)) ;

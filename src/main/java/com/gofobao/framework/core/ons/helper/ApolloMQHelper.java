@@ -18,16 +18,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Component
 @Slf4j
 public class ApolloMQHelper {
-    @Autowired
+    // @Autowired
     ProducerBean smsProducerBean ;
 
-    @Autowired
+    // @Autowired
     ProducerBean noticProducerBean ;
 
-    @Autowired
+    // @Autowired
     ProducerBean emailProducerBean ;
 
-    @Autowired
+    // @Autowired
     ProducerBean autoTenderProducerBean ;
 
 

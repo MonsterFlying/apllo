@@ -92,7 +92,12 @@ public class JixinManager {
      */
     private String genFormHtml(Map<String, String> params, String url) {
         StringBuilder sb = new StringBuilder() ;
-
+        sb.append("<html>") ;
+        sb.append("<head>") ;
+        sb.append("     <title>银行存管设置密码</title>");
+        sb.append("     <meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\" /> ") ;
+        sb.append("</head>") ;
+        sb.append("<body>") ;
         sb.append("<form method=\"post\" action=\"").append(url).append("\">") ;
         if(!CollectionUtils.isEmpty(params)){
             Set<Map.Entry<String, String>> entries = params.entrySet();
@@ -104,6 +109,11 @@ public class JixinManager {
 
         }
         sb.append("</form>") ;
+        sb.append("<script>\n" +
+                "    document.getElementsByTagName('form')[0].submit();\n" +
+                "</script>") ;
+        sb.append("</body>") ;
+        sb.append("</html>") ;
         return sb.toString() ;
     }
 

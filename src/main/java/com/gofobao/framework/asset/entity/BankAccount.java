@@ -1,6 +1,8 @@
 package com.gofobao.framework.asset.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -11,6 +13,8 @@ import java.util.Date;
 @Data
 @Entity
 @Table(name = "gfb_bank_account")
+@AllArgsConstructor
+@NoArgsConstructor
 public class BankAccount {
     @Id
     @Column(name = "id")

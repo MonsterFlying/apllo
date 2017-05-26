@@ -21,9 +21,7 @@ public class IntegralLogServiceImpl implements IntegralLogService {
     @Autowired
     private IntegralLogRepository integralLogRepository;
 
-    public List<IntegralLog> findByUserId(Long userId, int pageIndex, int pageSize) {
-        Sort sort = new Sort(new Sort.Order(Sort.Direction.DESC, "id"));
-        Pageable pageable = new PageRequest(pageIndex, pageSize, sort);
+    public List<IntegralLog> findListByUserId(Long userId, Pageable pageable) {
         return integralLogRepository.findByUserId(userId, pageable);
     }
 

@@ -48,7 +48,7 @@ public class UserThirdController {
 
 
     @ApiOperation("银行存管密码管理回调")
-    @PostMapping("/user/third/modifyOpenAccPwd/callback/{type}")
+    @PostMapping("/pub/user/third/modifyOpenAccPwd/callback/{type}")
     public ResponseEntity<String> modifyOpenAccPwdCallback(HttpServletRequest request, HttpServletResponse response, @PathVariable Integer type) {
         return userThirdBiz.modifyOpenAccPwdCallback(request, response, type) ;
     }
