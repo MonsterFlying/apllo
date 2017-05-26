@@ -22,6 +22,7 @@ public class AssetLog {
 
     @Id
     @Column(name = "id")
+    @GeneratedValue
     private Long id;
 
     @Basic

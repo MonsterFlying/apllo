@@ -25,7 +25,7 @@ public class BankAccount {
     private String tradeNo;
     @Basic
     @Column(name = "user_id")
-    private String userId;
+    private Long userId;
     @Basic
     @Column(name = "account")
     private String account;

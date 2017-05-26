@@ -1,5 +1,13 @@
 package com.gofobao.framework.integral.biz.impl;
 
+import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.contants.DesLineFlagContant;
+import com.gofobao.framework.api.contants.JixinResultContants;
+import com.gofobao.framework.api.helper.JixinManager;
+import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusResponse;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
@@ -16,11 +24,14 @@ import com.gofobao.framework.integral.vo.request.VoIntegralTakeReq;
 import com.gofobao.framework.integral.vo.request.VoListIntegralReq;
 import com.gofobao.framework.integral.vo.response.VoIntegral;
 import com.gofobao.framework.integral.vo.response.VoListIntegralResp;
+import com.gofobao.framework.member.entity.UserThirdAccount;
+import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.contants.DictAliasCodeContants;
 import com.gofobao.framework.system.service.DictService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -48,6 +59,13 @@ public class IntegralBizImpl implements IntegralBiz {
     private DictService dictService;
     @Autowired
     private CapitalChangeHelper capitalChangeHelper;
+    @Autowired
+    private UserThirdAccountService userThirdAccountService;
+    @Autowired
+    private JixinManager jixinManager;
+
+    @Value(value = "${jixin.redPacketAccountId}")
+    private String redPacketAccountId; //存管红包账户
 
     private static Map<String, String> integralTypeMap = new HashMap<>();
 
@@ -131,7 +149,7 @@ public class IntegralBizImpl implements IntegralBiz {
         }));
 
         voListIntegralResp.setVoIntegralList(voIntegralList);
-        return ResponseEntity.ok(voListIntegralResp) ;
+        return ResponseEntity.ok(voListIntegralResp);
     }
 
     /**
@@ -141,10 +159,11 @@ public class IntegralBizImpl implements IntegralBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> doTakeRates(VoIntegralTakeReq voIntegralTakeReq) {
+    public ResponseEntity<VoBaseResp> doTakeRates(VoIntegralTakeReq voIntegralTakeReq) throws Exception {
         Long userId = voIntegralTakeReq.getUserId();
 
         Integral integral = integralService.findByUserIdLock(userId);
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
 
         Integer integer = voIntegralTakeReq.getInteger();
         if ((integer < 10000) || (integer % 1000 != 0)) {
@@ -154,10 +173,18 @@ public class IntegralBizImpl implements IntegralBiz {
         }
 
         if (ObjectUtils.isEmpty(integral)) {
+            throw new Exception("查询用户积分失败!");
+        }
+
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            log.error("================================积分兑换===================================");
+            log.error("当前用户未开户：用户id:" + userId);
+            log.error("===========================================================================");
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询用户积分失败!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍候重试！"));
         }
+
 
         Integer useIntegral = integral.getUseIntegral();
         if (integer >= useIntegral) {
@@ -168,9 +195,7 @@ public class IntegralBizImpl implements IntegralBiz {
 
         Asset asset = assetService.findByUserIdLock(userId);
         if (ObjectUtils.isEmpty(integral)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询用户资产失败!"));
+            throw new Exception("查询用户资产失败!");
         }
 
         List<Map<String, String>> integralRule = null;
@@ -197,21 +222,17 @@ public class IntegralBizImpl implements IntegralBiz {
             e.printStackTrace();
         }
         if (!b) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "用户资产变更失败!"));
+            throw new Exception("用户资产变更失败!");
         }
 
         Integral saveIntegral = new Integral();
         saveIntegral.setUserId(userId);
-        saveIntegral.setNoUseIntegral(integral.getNoUseIntegral()+integer);
-        saveIntegral.setUseIntegral(integral.getUseIntegral()- integer);
+        saveIntegral.setNoUseIntegral(integral.getNoUseIntegral() + integer);
+        saveIntegral.setUseIntegral(integral.getUseIntegral() - integer);
         saveIntegral.setUpdatedAt(new Date());
         boolean bool = integralService.update(saveIntegral);
-        if (!bool){
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "积分表更新失败!"));
+        if (!bool) {
+            throw new Exception("积分表更新失败!");
         }
 
         IntegralLog integralLog = new IntegralLog();
@@ -223,13 +244,23 @@ public class IntegralBizImpl implements IntegralBiz {
         integralLog.setType("convert");
 
         bool = integralLogService.insert(integralLog);
-        if (!bool){
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "积分日志表插入失败!"));
+        if (!bool) {
+            throw new Exception("积分日志表插入失败!");
+        } else {
+            //调用即信发送红包接口
+            VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
+            voucherPayRequest.setAccountId(redPacketAccountId);
+            voucherPayRequest.setTxAmount(money);
+            voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
+            voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
+            voucherPayRequest.setDesLine("用户积分兑换");
+            voucherPayRequest.setChannel(ChannelContant.HTML);
+            VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
+            if((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))){
+                String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试": response.getRetMsg() ;
+                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg)) ;
+            }
         }
-
-
         return ResponseEntity.ok(VoBaseResp.ok("积分折现成功!"));
     }
 

@@ -26,14 +26,21 @@ public enum JixinTxCodeEnum {
      */
     PASSWORD_SET(
             "passwordSet",
-                    "/escrow/p2p/page/mobile"),
+            "/escrow/p2p/page/mobile"),
 
     /**
      * 充值密码
      */
     PASSWORD_RESET(
             "passwordReset",
-                    "/escrow/p2p/page/mobile");
+            "/escrow/p2p/page/mobile"),
+
+    /**
+     * 红包发放
+     */
+    SEND_RED_PACKET(
+            "voucherPay",
+            "/escrow/p2p/online");
 
     private String value;
     private String url;

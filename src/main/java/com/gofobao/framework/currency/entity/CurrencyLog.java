@@ -15,6 +15,7 @@ import java.util.Date;
 public class CurrencyLog {
 
     @Id
+    @GeneratedValue
     @Column(name = "id")
     private Long id;
     @Basic

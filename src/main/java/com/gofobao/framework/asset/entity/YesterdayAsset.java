@@ -13,6 +13,7 @@ import java.util.Date;
 @Table(name = "gfb_yesterday_asset")
 public class YesterdayAsset {
     @Id
+    @GeneratedValue
     @Column(name = "user_id")
     private Long userId;
     @Basic
