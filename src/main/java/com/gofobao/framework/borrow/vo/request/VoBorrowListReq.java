@@ -1,17 +1,16 @@
 package com.gofobao.framework.borrow.vo.request;
-
-import com.gofobao.framework.common.page.Page;
 import lombok.Data;
+import org.springframework.data.querydsl.QPageRequest;
 
 /**
  * Created by admin on 2017/5/17.
  */
 
 @Data
-public class VoBorrowListReq extends Page{
+public class VoBorrowListReq extends QPageRequest {
 
     private Integer type;
 
-    public VoBorrowListReq(){}
+
 
 }

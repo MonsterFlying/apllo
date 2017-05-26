@@ -1,66 +1,58 @@
 package com.gofobao.framework.listener;
 
-import com.aliyun.openservices.ons.api.Action;
-import com.aliyun.openservices.ons.api.ConsumeContext;
-import com.aliyun.openservices.ons.api.Message;
-import com.aliyun.openservices.ons.api.MessageListener;
-import com.gofobao.framework.core.ons.config.OnsTags;
+import com.gofobao.framework.common.constans.TypeTokenContants;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnumContants;
 import com.gofobao.framework.listener.providers.CommonSmsProvider;
-import com.google.common.reflect.TypeToken;
+import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.annotation.RabbitHandler;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
-import java.util.HashMap;
+import java.util.Map;
+
+import static com.gofobao.framework.common.rabbitmq.MqTagEnum.*;
 
 /**
  * Created by Max on 17/5/17.
  */
 @Slf4j
 @Component
-public class SmsMessageListener implements MessageListener {
+@RabbitListener(queues = MqQueueEnumContants.RABBITMQ_SMS)
+public class SmsMessageListener{
 
     @Autowired
     CommonSmsProvider commonSmsProvider ;
 
     Gson gson = new GsonBuilder().create() ;
 
-    @Override
-    public Action consume(Message message, ConsumeContext consumeContext) {
-        log.info(String.format("Aliyn ons consume log: %s", message.getBody().toString()) );
-        String tag = message.getTag();
-        if(StringUtils.isEmpty(tag)){
-            log.error(" EmailMessageListener consume message tag is empty");
-            return Action.CommitMessage ;
+    @RabbitHandler
+    public void process(String message) {
+        Preconditions.checkNotNull(message, "SmsMessageListener process message is empty") ;
+        Map<String, Object> body = gson.fromJson(message, TypeTokenContants.MAP_TOKEN);
+
+
+        Preconditions.checkNotNull(body.get(MqConfig.MSG_TAG), "SmsMessageListener process tag is empty ") ;
+        Preconditions.checkNotNull(body.get(MqConfig.MSG_BODY), "SmsMessageListener process body is empty ") ;
+        String tag = body.get(MqConfig.MSG_TAG).toString();
+        Map<String, String> msg = (Map<String, String>)body.get(MqConfig.MSG_BODY) ;
+
+        boolean result = false;
+        if((tag.equals(SMS_REGISTER.getValue()))
+                || (tag.equals(SMS_RESET_PASSWORD.getValue()))
+                || (tag.equals(SMS_SWICTH_PHONE.getValue()))){
+            result  = commonSmsProvider.doSendMessageCode(tag, msg);
         }
 
-        HashMap<String, String> body = gson.fromJson(new String(message.getBody()), new TypeToken<HashMap<String, String>>() {
-        }.getType());
-
-        if(CollectionUtils.isEmpty(body)){
-            log.error(" EmailMessageListener consume message body is empty");
-            return Action.CommitMessage ;
+        if(!result){
+            log.error(String.format("SmsMessageListener process process error: %s", message));
         }
 
-
-        boolean sendResult = false;
-        switch (tag){
-            case OnsTags.SMS_REGISTER:  // 发送注册短信
-            case OnsTags.SMS_RESET_PASSWORD: // 充值短信密码
-            case OnsTags.SMS_SWICTH_PHONE: // 发送更换手机
-                sendResult = commonSmsProvider.doSendMessageCode(tag, body) ;
-                break;
-        }
-
-        if(sendResult){
-            return Action.CommitMessage ;
-        }else {
-            log.error(" EmailMessageListener consume: 发送短信失败");
-            return Action.CommitMessage;
-        }
     }
+
+
 }

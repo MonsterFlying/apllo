@@ -5,6 +5,8 @@ import com.gofobao.framework.common.constans.MoneyConstans;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.project.UserHelper;
+import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.repository.TenderRepository;
@@ -30,6 +32,10 @@ public class TenderServiceImpl implements TenderService {
     @Autowired
     private TenderRepository tenderRepository;
 
+
+    @Autowired
+    private UsersRepository usersRepository;
+
     /**
      * 投标用户列表
      * @param req
@@ -52,9 +58,10 @@ public class TenderServiceImpl implements TenderService {
             tenderUserRes.setMoney(NumberHelper.to2DigitString(item.getValidMoney() / 100d) + MoneyConstans.RMB);
             tenderUserRes.setDate(DateHelper.dateToString(item.getCreatedAt(), DateHelper.DATE_FORMAT_YMDHMS));
             tenderUserRes.setType(item.getIsAuto() == 0 ? TenderConstans.MANUAL : TenderConstans.AUTO);
-            String userName=StringUtils.isEmpty(item.getUser().getUsername())?
-                    UserHelper.hideChar(item.getUser().getPhone(),UserHelper.PHONE_NUM):
-                    UserHelper.hideChar(item.getUser().getUsername(),UserHelper.USERNAME_NUM);
+            Users user=usersRepository.findOne(new Long(item.getUserId()));
+            String userName=StringUtils.isEmpty(user.getUsername())?
+                    UserHelper.hideChar(user.getPhone(),UserHelper.PHONE_NUM):
+                    UserHelper.hideChar(user.getUsername(),UserHelper.USERNAME_NUM);
             tenderUserRes.setUserName(userName);
             tenderUserResList.add(tenderUserRes);
         }));

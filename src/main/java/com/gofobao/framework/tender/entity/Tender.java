@@ -50,10 +50,10 @@ public class Tender {
     @Basic
     @Column(name = "borrow_id")
     private Integer borrowId;
+
     @Basic
-    @JoinColumn(name = "user_id")
-    @OneToOne(fetch = FetchType.LAZY)
-    private Users user;
+    @JoinColumn(name="user_id")
+    private Integer userId;
 
 
     @Basic

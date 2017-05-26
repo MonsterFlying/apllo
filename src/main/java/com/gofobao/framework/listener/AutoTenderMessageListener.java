@@ -1,10 +1,8 @@
 package com.gofobao.framework.listener;
 
-import com.aliyun.openservices.ons.api.Action;
-import com.aliyun.openservices.ons.api.ConsumeContext;
-import com.aliyun.openservices.ons.api.Message;
-import com.aliyun.openservices.ons.api.MessageListener;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnumContants;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 /**
@@ -12,9 +10,8 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-public class AutoTenderMessageListener implements MessageListener {
-    @Override
-    public Action consume(Message message, ConsumeContext consumeContext) {
-        return null;
-    }
+@RabbitListener(queues = MqQueueEnumContants.RABBITMQ_AUTO_TENDER)
+public class AutoTenderMessageListener {
+
+
 }

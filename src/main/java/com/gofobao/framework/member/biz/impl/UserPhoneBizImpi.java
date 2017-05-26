@@ -1,6 +1,6 @@
 package com.gofobao.framework.member.biz.impl;
 
-import com.gofobao.framework.core.ons.config.OnsTags;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.CaptchaHelper;
 import com.gofobao.framework.member.biz.UserPhoneBiz;
@@ -43,7 +43,7 @@ public class UserPhoneBizImpi implements UserPhoneBiz {
         }
 
 
-        boolean bool = captchaHelper.checkPhoneCaptcha(users.getPhone(), phoneCaptcha, OnsTags.SMS_SWICTH_PHONE);
+        boolean bool = captchaHelper.checkPhoneCaptcha(users.getPhone(), phoneCaptcha, MqTagEnum.SMS_SWICTH_PHONE.getValue());
         if (!bool) {
             return ResponseEntity
                     .badRequest()
@@ -73,16 +73,16 @@ public class UserPhoneBizImpi implements UserPhoneBiz {
         }
 
         String phone = users.getPhone();
-        boolean bool = captchaHelper.checkPhoneCaptcha(phone, phoneCaptcha, OnsTags.SMS_SWICTH_PHONE);
-        captchaHelper.removePhoneCaptcha(phone, OnsTags.SMS_SWICTH_PHONE);//删除验证码
+        boolean bool = captchaHelper.checkPhoneCaptcha(phone, phoneCaptcha, MqTagEnum.SMS_SWICTH_PHONE.getValue());
+        captchaHelper.removePhoneCaptcha(phone, MqTagEnum.SMS_SWICTH_PHONE.getValue());//删除验证码
         if (!bool) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "旧手机短信验证码验证失败，请重试!"));
         }
 
-        bool = captchaHelper.checkPhoneCaptcha(newPhone, newPhoneCaptcha, OnsTags.SMS_BUNDLE);
-        captchaHelper.removePhoneCaptcha(newPhone, OnsTags.SMS_BUNDLE);//删除验证码
+        bool = captchaHelper.checkPhoneCaptcha(newPhone, newPhoneCaptcha, MqTagEnum.SMS_BUNDLE.getValue());
+        captchaHelper.removePhoneCaptcha(newPhone, MqTagEnum.SMS_BUNDLE.getValue());//删除验证码
         if (!bool) {
             return ResponseEntity
                     .badRequest()

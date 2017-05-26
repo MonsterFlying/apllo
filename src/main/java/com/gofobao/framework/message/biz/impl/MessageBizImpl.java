@@ -7,11 +7,10 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.sms_code_apply.SmsCodeApplyRequest;
 import com.gofobao.framework.api.model.sms_code_apply.SmsCodeApplyResponse;
-import com.gofobao.framework.core.ons.config.OnsBodyKeys;
-import com.gofobao.framework.core.ons.config.OnsMessage;
-import com.gofobao.framework.core.ons.config.OnsTags;
-import com.gofobao.framework.core.ons.config.OnsTopics;
-import com.gofobao.framework.core.ons.helper.ApolloMQHelper;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.CaptchaHelper;
 import com.gofobao.framework.helper.RedisHelper;
@@ -31,6 +30,8 @@ import org.springframework.util.StringUtils;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Max on 17/5/17.
@@ -46,7 +47,7 @@ public class MessageBizImpl implements MessageBiz {
     CaptchaHelper captchaHelper ;
 
     @Autowired
-    ApolloMQHelper apolloMQHelper ;
+    MqHelper apollomqHelper ;
 
     @Autowired
     JixinManager jixinManager ;
@@ -74,16 +75,14 @@ public class MessageBizImpl implements MessageBiz {
         }
 
 
-        OnsMessage onsMessage = new OnsMessage();
-        onsMessage.setTopic(OnsTopics.TOPIC_SMS);
-        onsMessage.setTag(OnsTags.SMS_REGISTER);
+        MqConfig config = new MqConfig() ;
+        config.setQueue(MqQueueEnum.RABBITMQ_SMS);
+        config.setTag(MqTagEnum.SMS_REGISTER);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(OnsBodyKeys.KEYS_PHONE, voAnonSmsReq.getPhone(), OnsBodyKeys.KEYS_IP, request.getRemoteAddr()) ;
+                .of(MqConfig.PHONE, voAnonSmsReq.getPhone(), MqConfig.IP, request.getRemoteAddr()) ;
+        config.setMsg(body);
 
-        Gson gson = new Gson() ;
-        onsMessage.setBody(gson.toJson(body));
-        boolean state = apolloMQHelper.send(onsMessage) ;
-
+        boolean state = apollomqHelper.convertAndSend(config);
         if(!state) {
             return ResponseEntity
                     .badRequest()
@@ -113,16 +112,14 @@ public class MessageBizImpl implements MessageBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前手机号未在平台注册"));
         }
 
-
-        OnsMessage onsMessage = new OnsMessage();
-        onsMessage.setTopic(OnsTopics.TOPIC_SMS);
-        onsMessage.setTag(OnsTags.SMS_RESET_PASSWORD);
+        MqConfig config = new MqConfig() ;
+        config.setQueue(MqQueueEnum.RABBITMQ_SMS);
+        config.setTag(MqTagEnum.SMS_RESET_PASSWORD);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(OnsBodyKeys.KEYS_PHONE, voAnonSmsReq.getPhone(), OnsBodyKeys.KEYS_IP, request.getRemoteAddr()) ;
+                .of(MqConfig.PHONE, voAnonSmsReq.getPhone(), MqConfig.IP, request.getRemoteAddr()) ;
+        config.setMsg(body);
 
-        Gson gson = new Gson() ;
-        onsMessage.setBody(gson.toJson(body));
-        boolean state = apolloMQHelper.send(onsMessage) ;
+        boolean state = apollomqHelper.convertAndSend(config);
 
         if(!state) {
             return ResponseEntity
@@ -158,15 +155,14 @@ public class MessageBizImpl implements MessageBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前手机号未在平台注册"));
         }
 
-        OnsMessage onsMessage = new OnsMessage();
-        onsMessage.setTopic(OnsTopics.TOPIC_SMS);
-        onsMessage.setTag(OnsTags.SMS_SWICTH_PHONE);
+        MqConfig config = new MqConfig() ;
+        config.setQueue(MqQueueEnum.RABBITMQ_SMS);
+        config.setTag(MqTagEnum.SMS_SWICTH_PHONE);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(OnsBodyKeys.KEYS_PHONE, voAnonSmsReq.getPhone(), OnsBodyKeys.KEYS_IP, request.getRemoteAddr()) ;
+                .of(MqConfig.PHONE, voAnonSmsReq.getPhone(), MqConfig.IP, request.getRemoteAddr()) ;
+        config.setMsg(body);
 
-        Gson gson = new Gson() ;
-        onsMessage.setBody(gson.toJson(body));
-        boolean state = apolloMQHelper.send(onsMessage) ;
+        boolean state = apollomqHelper.convertAndSend(config);
 
         if(!state) {
             return ResponseEntity
@@ -202,15 +198,16 @@ public class MessageBizImpl implements MessageBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前手机号未在平台注册"));
         }
 
-        OnsMessage onsMessage = new OnsMessage();
-        onsMessage.setTopic(OnsTopics.TOPIC_SMS);
-        onsMessage.setTag(OnsTags.SMS_BUNDLE);
+        MqConfig config = new MqConfig() ;
+        config.setQueue(MqQueueEnum.RABBITMQ_SMS);
+        config.setTag(MqTagEnum.SMS_BUNDLE);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(OnsBodyKeys.KEYS_PHONE, voAnonSmsReq.getPhone(), OnsBodyKeys.KEYS_IP, request.getRemoteAddr()) ;
+                .of(MqConfig.PHONE, voAnonSmsReq.getPhone(), MqConfig.IP, request.getRemoteAddr()) ;
+        config.setMsg(body);
 
-        Gson gson = new Gson() ;
-        onsMessage.setBody(gson.toJson(body));
-        boolean state = apolloMQHelper.send(onsMessage) ;
+        boolean state = apollomqHelper.convertAndSend(config);
+
+
 
         if(!state) {
             return ResponseEntity

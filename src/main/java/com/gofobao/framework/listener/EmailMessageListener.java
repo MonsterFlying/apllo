@@ -1,14 +1,8 @@
 package com.gofobao.framework.listener;
 
-import com.aliyun.openservices.ons.api.Action;
-import com.aliyun.openservices.ons.api.ConsumeContext;
-import com.aliyun.openservices.ons.api.Message;
-import com.aliyun.openservices.ons.api.MessageListener;
-import com.gofobao.framework.listener.providers.CommonSmsProvider;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnumContants;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 /**
@@ -16,15 +10,7 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-public class EmailMessageListener implements MessageListener {
-    @Autowired
-    CommonSmsProvider commonSmsProvider ;
+@RabbitListener(queues = MqQueueEnumContants.RABBITMQ_EMAIL)
+public class EmailMessageListener {
 
-    Gson gson = new GsonBuilder().create() ;
-
-    @Override
-    public Action consume(Message message, ConsumeContext consumeContext) {
-
-        return Action.ReconsumeLater;
-    }
 }

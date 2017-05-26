@@ -91,6 +91,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
 
         // 4.查询银行卡
+
         List<BankAccount> bankAccountList = bankAccountService.listBankByUserId(userId) ;
         List<VoBankResp> voBankResps = new ArrayList<>(bankAccountList.size()) ;
         VoBankResp voBankResp = null ;
