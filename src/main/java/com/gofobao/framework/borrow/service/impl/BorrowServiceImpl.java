@@ -14,7 +14,6 @@ import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.google.common.collect.Lists;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -27,7 +26,6 @@ import org.springframework.util.StringUtils;
 
 import java.util.*;
 
-import static java.util.Comparator.comparing;
 
 /**
  * Created by admin on 2017/5/17.
@@ -57,7 +55,7 @@ public class BorrowServiceImpl implements BorrowService {
             sort = new Sort(
                     new Sort.Order(Sort.Direction.DESC, "status,successAt,id"));
         }
-        Pageable pageable = new PageRequest(voBorrowListReq.getPageIndex()
+        Pageable pageable = new PageRequest(voBorrowListReq.getPageNumber()
                 , voBorrowListReq.getPageSize()
                 , sort);
 
