@@ -1,0 +1,45 @@
+ALTER TABLE `gfb_borrow` MODIFY COLUMN `tx_fee` int(11) DEFAULT NULL COMMENT '借款手续费(选填）';
+ALTER TABLE `gfb_borrow` MODIFY COLUMN `iparam1` int(11) DEFAULT NULL;
+ALTER TABLE `gfb_borrow` MODIFY COLUMN `iparam2` int(11) DEFAULT NULL;
+ALTER TABLE `gfb_borrow` MODIFY COLUMN `iparam3` int(11) DEFAULT NULL;
+ALTER TABLE `gfb_borrow` MODIFY COLUMN `vparam1` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
+ALTER TABLE `gfb_borrow` MODIFY COLUMN `vparam2` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
+ALTER TABLE `gfb_borrow` MODIFY COLUMN `vparam3` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
+ALTER TABLE `gfb_borrow` MODIFY COLUMN `t_user_id` int(11) DEFAULT NULL COMMENT '银行电子账户标 id';
+
+ALTER TABLE `gfb_borrow_tender` MODIFY COLUMN `authCode` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT '即信债权授权码';
+ALTER TABLE `gfb_borrow_tender` MODIFY COLUMN `iparam1` int(11) DEFAULT NULL;
+ALTER TABLE `gfb_borrow_tender` MODIFY COLUMN `iparam2` int(11) DEFAULT NULL;
+ALTER TABLE `gfb_borrow_tender` MODIFY COLUMN `iparam3` int(11) DEFAULT NULL;
+ALTER TABLE `gfb_borrow_tender` MODIFY COLUMN `vparam1` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
+ALTER TABLE `gfb_borrow_tender` MODIFY COLUMN `vparam2` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
+ALTER TABLE `gfb_borrow_tender` MODIFY COLUMN `vparam3` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
+ALTER TABLE `gfb_borrow_tender` MODIFY COLUMN `t_user_id` int(11) DEFAULT NULL COMMENT '银行电子账户标 id';
+
+ALTER TABLE `gfb_borrow_collection` MODIFY COLUMN `borrow_id` int(11) DEFAULT NULL COMMENT '借款id',;
+ALTER TABLE `gfb_borrow_collection` MODIFY COLUMN `user_id` int(11) DEFAULT NULL COMMENT '投标会员id';
+ALTER TABLE `gfb_borrow_collection` MODIFY COLUMN `iparam1` int(11) DEFAULT NULL;
+ALTER TABLE `gfb_borrow_collection` MODIFY COLUMN `iparam2` int(11) DEFAULT NULL;
+ALTER TABLE `gfb_borrow_collection` MODIFY COLUMN `iparam3` int(11) DEFAULT NULL;
+ALTER TABLE `gfb_borrow_collection` MODIFY COLUMN `vparam1` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
+ALTER TABLE `gfb_borrow_collection` MODIFY COLUMN `vparam2` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
+ALTER TABLE `gfb_borrow_collection` MODIFY COLUMN `vparam3` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
+ALTER TABLE `gfb_borrow_collection` MODIFY COLUMN `t_user_id` int(11) DEFAULT NULL COMMENT '银行电子账户标 id';
+
+ALTER TABLE `gfb_borrow_repayment` MODIFY COLUMN `user_id` int(11) DEFAULT NULL COMMENT '借款人id';
+ALTER TABLE `gfb_borrow_repayment` MODIFY COLUMN `iparam1` int(11) DEFAULT NULL;
+ALTER TABLE `gfb_borrow_repayment` MODIFY COLUMN `iparam2` int(11) DEFAULT NULL;
+ALTER TABLE `gfb_borrow_repayment` MODIFY COLUMN `iparam3` int(11) DEFAULT NULL;
+ALTER TABLE `gfb_borrow_repayment` MODIFY COLUMN `vparam1` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
+ALTER TABLE `gfb_borrow_repayment` MODIFY COLUMN `vparam2` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
+ALTER TABLE `gfb_borrow_repayment` MODIFY COLUMN `vparam3` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
+ALTER TABLE `gfb_borrow_repayment` MODIFY COLUMN `t_user_id` int(11) DEFAULT NULL COMMENT '银行电子账户标 id';
+
+ALTER TABLE `gfb_lend` MODIFY COLUMN `iparam1` int(11) DEFAULT NULL;
+ALTER TABLE `gfb_lend` MODIFY COLUMN `iparam2` int(11) DEFAULT NULL;
+ALTER TABLE `gfb_lend` MODIFY COLUMN `iparam3` int(11) DEFAULT NULL;
+ALTER TABLE `gfb_lend` MODIFY COLUMN `vparam1` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
+ALTER TABLE `gfb_lend` MODIFY COLUMN `vparam2` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
+ALTER TABLE `gfb_lend` MODIFY COLUMN `vparam3` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
+ALTER TABLE `gfb_lend` MODIFY COLUMN `t_user_id` int(11) DEFAULT NULL COMMENT '银行电子账户标 id';
+

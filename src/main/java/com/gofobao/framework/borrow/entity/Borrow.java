@@ -113,4 +113,29 @@ public class Borrow implements Serializable {
     @Basic
     @Column(name = "updated_at")
     private Date updatedAt;
+
+    @Basic
+    @Column(name = "t_user_id")
+    private Long tUserId;
+    @Basic
+    @Column(name = "tx_fee")
+    private Integer txFee;
+    @Basic
+    @Column(name = "iparam1")
+    private Integer iparam1;
+    @Basic
+    @Column(name = "iparam2")
+    private Integer iparam2;
+    @Basic
+    @Column(name = "iparam3")
+    private Integer iparam3;
+    @Basic
+    @Column(name = "vparam1")
+    private String vparam1;
+    @Basic
+    @Column(name = "vparam2")
+    private String vparam2;
+    @Basic
+    @Column(name = "vparam3")
+    private String vparam3;
 }

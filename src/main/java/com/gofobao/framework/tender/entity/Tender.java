@@ -51,8 +51,33 @@ public class Tender {
     @Column(name = "borrow_id")
     private Integer borrowId;
     @Basic
-    @JoinColumn(name="user_id")
+    @JoinColumn(name = "user_id")
     @OneToOne(fetch = FetchType.LAZY)
     private Users user;
 
+
+    @Basic
+    @Column(name = "authCode")
+    private String authCode;
+    @Basic
+    @Column(name = "iparam1")
+    private Integer iparam1;
+    @Basic
+    @Column(name = "iparam2")
+    private Integer iparam2;
+    @Basic
+    @Column(name = "iparam3")
+    private Integer iparam3;
+    @Basic
+    @Column(name = "vparam1")
+    private String vparam1;
+    @Basic
+    @Column(name = "vparam2")
+    private String vparam2;
+    @Basic
+    @Column(name = "vparam3")
+    private String vparam3;
+    @Basic
+    @Column(name = "t_user_id")
+    private Integer tUserId;
 }
