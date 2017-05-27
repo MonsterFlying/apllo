@@ -17,6 +17,9 @@ public class AutoTender {
     @Column(name = "id")
     private Long id;
     @Basic
+    @Column(name = "user_id")
+    private Long userId;
+    @Basic
     @Column(name = "status")
     private Boolean status;
     @Basic
@@ -65,7 +68,7 @@ public class AutoTender {
     @Column(name = "save_money")
     private Integer saveMoney;
     @Basic
-    @Column(name = "order")
+    @Column(name = "`order`")
     private Integer order;
     @Basic
     @Column(name = "auto_at")

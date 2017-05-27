@@ -13,6 +13,7 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
+import com.gofobao.framework.tender.entity.AutoTender;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,6 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Autowired
     private BorrowRepository borrowRepository;
-
 
     /**
      * 首页标列表
@@ -185,6 +185,21 @@ public class BorrowServiceImpl implements BorrowService {
 
     public long countByUserIdAndStatusIn(Long userId,List<Integer> statusList){
         return borrowRepository.countByUserIdAndStatusIn(userId,statusList);
+    }
+
+    public boolean insert(Borrow borrow){
+        if (ObjectUtils.isEmpty(borrow)){
+            return false;
+        }
+        borrow.setId(null);
+        return !ObjectUtils.isEmpty(borrowRepository.save(borrow));
+    }
+
+    public boolean update(Borrow borrow){
+        if (ObjectUtils.isEmpty(borrow) || ObjectUtils.isEmpty(borrow.getId())){
+            return false;
+        }
+        return !ObjectUtils.isEmpty(borrowRepository.save(borrow));
     }
 
 }

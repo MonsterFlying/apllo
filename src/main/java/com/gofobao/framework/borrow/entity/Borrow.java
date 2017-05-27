@@ -70,32 +70,32 @@ public class Borrow implements Serializable {
     @Column(name = "description")
     private String description;
     @Basic
-    @Column(name = "use")
+    @Column(name = "`use`")
     private Integer use;
     @Basic
-    @Column(name = "password_reset")
+    @Column(name = "password")
     private String password;
     @Basic
     @Column(name = "is_lock")
-    private Integer isLock;
+    private Boolean isLock;
     @Basic
     @Column(name = "is_vouch")
-    private Integer isVouch;
+    private Boolean isVouch;
     @Basic
     @Column(name = "is_mortgage")
-    private Integer isMortgage;
+    private Boolean isMortgage;
     @Basic
     @Column(name = "is_impawn")
-    private Integer isImpawn;
+    private Boolean isImpawn;
     @Basic
     @Column(name = "is_continued")
-    private Integer isContinued;
+    private Boolean isContinued ;
     @Basic
     @Column(name = "is_conversion")
-    private Integer isConversion;
+    private Boolean isConversion;
     @Basic
     @Column(name = "is_novice")
-    private Integer isNovice;
+    private Boolean isNovice;
     @Basic
     @Column(name = "money_yes")
     private Integer moneyYes;

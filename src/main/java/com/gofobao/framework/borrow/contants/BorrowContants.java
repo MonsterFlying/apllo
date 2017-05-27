@@ -6,6 +6,24 @@ package com.gofobao.framework.borrow.contants;
 public class BorrowContants {
 
     /**
+     * 车贷标
+     */
+    public static final int CE_DAI = 0;
+    /**
+     * 净值标
+     */
+    public static final int JING_ZHI = 1;
+    /**
+     * 秒标
+     */
+    public static final int MIAO = 2;
+    /**
+     * 渠道标
+     */
+    public static final int QU_DAO = 4;
+
+
+    /**
      * 发标待审
      */
     public static final Integer PENDING=0;

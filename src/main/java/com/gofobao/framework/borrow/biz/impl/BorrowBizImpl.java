@@ -3,6 +3,7 @@ package com.gofobao.framework.borrow.biz.impl;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
+import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoAddNetWorthBorrow;
@@ -14,18 +15,17 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.tender.entity.AutoTender;
+import com.gofobao.framework.tender.service.AutoTenderService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
-import javax.validation.Valid;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 
 /**
  * Created by Zeke on 2017/5/26.
@@ -44,12 +44,15 @@ public class BorrowBizImpl implements BorrowBiz{
     private AssetService assetService;
     @Autowired
     private BorrowService borrowService;
+    @Autowired
+    private AutoTenderService autoTenderService;
 
     /**
      * 新增净值借款
      * @param voAddNetWorthBorrow
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow){
         Long userId = voAddNetWorthBorrow.getUserId();
         String releaseAtStr = voAddNetWorthBorrow.getReleaseAt();
@@ -109,9 +112,78 @@ public class BorrowBizImpl implements BorrowBiz{
             saveAutoTender.setStatus(false);
             saveAutoTender.setUpdatedAt(new Date());
 
+            AutoTender condAutoTender = new AutoTender();
+            condAutoTender.setUserId(userId);
+            Example<AutoTender> autoTenderExample = Example.of(condAutoTender);
+
+            if (!autoTenderService.updateByExample(saveAutoTender,autoTenderExample)){
+                log.info("新增净值借款：自动投标关闭失败。");
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR,"自动投标关闭失败!"));
+            }
         }
 
-        return null;
+        Long borrowId = null;
+        try {
+            borrowId = insertBorrow(voAddNetWorthBorrow, userId);  // 插入标
+        } catch (Exception e) {
+            log.error("新增净值借款异常：",e);
+        }
+
+        if (borrowId<=0){
+            log.info("新增净值借款：净值标插入失败。");
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"净值标插入失败!"));
+        }
+
+        /**
+         * @// TODO: 2017/5/27 初审逻辑
+         */
+
+        return  ResponseEntity.ok(VoBaseResp.ok("净值借款成功!"));
+    }
+
+    private long insertBorrow(VoAddNetWorthBorrow voAddNetWorthBorrow, Long userId) throws Exception {
+        Borrow borrow = new Borrow();
+        borrow.setType(BorrowContants.JING_ZHI); // 净值标
+        borrow.setUserId(userId);
+        borrow.setUse(0);
+        borrow.setIsLock(false);
+        borrow.setIsImpawn(false);
+        borrow.setIsContinued(false);
+        borrow.setIsConversion(false);
+        borrow.setIsNovice(false);
+        borrow.setIsVouch(false);
+        borrow.setIsMortgage(false);
+        borrow.setName(voAddNetWorthBorrow.getName());
+        borrow.setMoney(voAddNetWorthBorrow.getMoney());
+        borrow.setRepayFashion(1);//voAddNetWorthBorrow.getRepayFashion()
+        borrow.setTimeLimit(voAddNetWorthBorrow.getTimeLimit());
+        borrow.setApr(voAddNetWorthBorrow.getApr());
+        borrow.setLowest(50 * 100);
+        borrow.setMost(0);
+        borrow.setMostAuto(0);
+        borrow.setValidDay(voAddNetWorthBorrow.getValidDay());
+        borrow.setAward(0);
+        borrow.setAwardType(0);
+        String releaseAt = voAddNetWorthBorrow.getReleaseAt();
+        if (!ObjectUtils.isEmpty(releaseAt)) {
+            borrow.setReleaseAt(DateHelper.stringToDate(releaseAt, "yyyy-MM-dd HH:mm:ss"));
+        }
+        borrow.setDescription("");
+        borrow.setPassword("");
+        borrow.setMoneyYes(0);
+        borrow.setTenderCount(0);
+        borrow.setCreatedAt(new Date());
+        borrow.setUpdatedAt(new Date());
+        boolean rs = borrowService.insert(borrow);
+        if (rs) {
+            return borrow.getId();
+        } else {
+            return 0;
+        }
     }
 
     /**
