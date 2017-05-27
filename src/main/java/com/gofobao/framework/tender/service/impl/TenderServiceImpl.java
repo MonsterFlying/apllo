@@ -8,6 +8,7 @@ import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.tender.contants.TenderConstans;
+import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.repository.TenderRepository;
 import com.gofobao.framework.tender.service.TenderService;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -68,4 +70,18 @@ public class TenderServiceImpl implements TenderService {
         return  Optional.empty().ofNullable(tenderUserResList).orElse(Collections.emptyList());
     }
 
+    public boolean insert(Tender tender){
+        if (ObjectUtils.isEmpty(tender)){
+            return false;
+        }
+        tender.setId(null);
+        return !ObjectUtils.isEmpty(tenderRepository.save(tender));
+    }
+
+    public boolean update(Tender tender){
+        if (ObjectUtils.isEmpty(tender) || ObjectUtils.isEmpty(tender.getId())){
+            return false;
+        }
+        return !ObjectUtils.isEmpty(tenderRepository.save(tender));
+    }
 }
