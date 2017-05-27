@@ -18,7 +18,7 @@ public class AutoTender {
     private Long id;
     @Basic
     @Column(name = "status")
-    private Integer status;
+    private Boolean status;
     @Basic
     @Column(name = "lowest")
     private Integer lowest;

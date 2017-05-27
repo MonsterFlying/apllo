@@ -52,7 +52,7 @@ public class BorrowServiceImpl implements BorrowService {
             sort = new Sort(
                     new Sort.Order(Sort.Direction.DESC, "status,successAt,id"));
         }
-        Pageable pageable = new PageRequest(voBorrowListReq.getPageNumber()
+        Pageable pageable = new PageRequest(voBorrowListReq.getPageIndex()
                 , voBorrowListReq.getPageSize()
                 , sort);
 

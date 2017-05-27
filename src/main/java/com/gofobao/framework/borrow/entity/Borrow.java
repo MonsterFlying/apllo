@@ -18,8 +18,12 @@ import java.util.Date;
 @AllArgsConstructor
 public class Borrow implements Serializable {
     @Id
+    @GeneratedValue
     @Column(name = "id")
     private Long id;
+    @Basic
+    @Column(name = "user_id")
+    private Long userId;
     @Basic
     @Column(name = "status")
     private Integer status;

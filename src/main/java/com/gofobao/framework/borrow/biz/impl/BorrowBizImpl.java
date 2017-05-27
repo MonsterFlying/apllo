@@ -13,6 +13,7 @@ import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
+import com.gofobao.framework.tender.entity.AutoTender;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
@@ -104,9 +105,10 @@ public class BorrowBizImpl implements BorrowBiz{
         }
 
         if (closeAuto){ //关闭用户自动投标
-            /**
-             * @// TODO: 2017/5/26 关闭自动投标
-             */
+            AutoTender saveAutoTender = new AutoTender();
+            saveAutoTender.setStatus(false);
+            saveAutoTender.setUpdatedAt(new Date());
+
         }
 
         return null;
