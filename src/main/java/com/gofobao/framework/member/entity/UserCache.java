@@ -82,19 +82,19 @@ public class UserCache {
     private Integer waitRepayInterest;
     @Basic
     @Column(name = "tender_tuijian")
-    private Integer tenderTuijian;
+    private Boolean tenderTuijian;
     @Basic
     @Column(name = "tender_jingzhi")
-    private Integer tenderJingzhi;
+    private Boolean tenderJingzhi;
     @Basic
     @Column(name = "tender_miao")
-    private Integer tenderMiao;
+    private Boolean tenderMiao;
     @Basic
     @Column(name = "tender_transfer")
-    private Integer tenderTransfer;
+    private Boolean tenderTransfer;
     @Basic
     @Column(name = "tender_qudao")
-    private Integer tenderQudao;
+    private Boolean tenderQudao;
     @Basic
     @Column(name = "first_tender_award")
     private Integer firstTenderAward;

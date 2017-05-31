@@ -48,10 +48,4 @@ public interface BorrowService {
      */
     boolean checkValidDay(Borrow borrow);
 
-    /**
-     * 检查投标是否太频繁
-     * @param borrow
-     * @return
-     */
-    boolean checkTenderNimiety(Borrow borrow);
 }

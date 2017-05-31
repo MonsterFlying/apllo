@@ -245,7 +245,4 @@ public class BorrowServiceImpl implements BorrowService {
         return (nowDate.getTime() < validDate.getTime());
     }
 
-    public boolean checkTenderNimiety(Borrow borrow){
-        return false;
-    }
 }

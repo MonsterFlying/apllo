@@ -1,6 +1,5 @@
 package com.gofobao.framework.tender.entity;
 
-import com.gofobao.framework.member.entity.Users;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -55,9 +54,8 @@ public class Tender {
     @JoinColumn(name="user_id")
     private Integer userId;
 
-
     @Basic
-    @Column(name = "authCode")
+    @Column(name = "auth_code")
     private String authCode;
     @Basic
     @Column(name = "iparam1")

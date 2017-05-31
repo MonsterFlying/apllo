@@ -1,28 +1,34 @@
 package com.gofobao.framework.tender.service.impl;
+
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.borrow.vo.request.VoBorrowByIdReq;
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
 import com.gofobao.framework.common.constans.MoneyConstans;
+import com.gofobao.framework.common.data.DataObject;
+import com.gofobao.framework.common.data.GeSpecification;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.tender.contants.TenderConstans;
-import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.repository.TenderRepository;
 import com.gofobao.framework.tender.service.TenderService;
+import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.Range;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+
+import javax.persistence.criteria.CriteriaBuilder;
+import java.util.*;
 
 /**
  * Created by admin on 2017/5/19.
@@ -84,8 +90,29 @@ public class TenderServiceImpl implements TenderService {
         }
         return !ObjectUtils.isEmpty(tenderRepository.save(tender));
     }
-    public List<Tender> findAll(){
-        return null;
+
+    public List<Tender> findList(Specification<Tender> specification){
+        if (ObjectUtils.isEmpty(specification)){
+            return null;
+        }
+        return tenderRepository.findAll(specification);
     }
 
+    /**
+     * 检查投标是否太频繁
+     * @param borrowId
+     * @param userId
+     * @return
+     */
+    public boolean checkTenderNimiety(Long borrowId,Long userId){
+
+        Specification<Tender> specification = Specifications.<Tender>and()
+                .eq("userId",userId)
+                .eq("borrowId",borrowId)
+                .eq("status",1)
+                .predicate(new GeSpecification<Tender>("updatedAt", new DataObject(DateHelper.subDays(new Date(),1))))
+                .build();
+        List<Tender> tenderList = tenderRepository.findAll(specification);
+        return !CollectionUtils.isEmpty(tenderList);
+    }
 }

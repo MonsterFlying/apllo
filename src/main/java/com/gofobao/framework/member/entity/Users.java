@@ -72,9 +72,7 @@ public class Users implements Serializable{
     @Basic
     @Column(name = "created_at")
     private Date createdAt;
-
     @Basic
     @Column(name = "updated_at")
     private Date updatedAt;
-
 }
