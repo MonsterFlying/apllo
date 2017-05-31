@@ -47,7 +47,7 @@ gofobao:
   javaDomain: http://max.3w.dkys.org
   webDomain: http://ci.gofobao.com
   h5Domain: http://ci.gofobao.com
-debug: true
+  captcha: false # 全站是否开启图形验证码验证
 logging:
   file: /Users/Max/logs/logback.log
   pattern:
