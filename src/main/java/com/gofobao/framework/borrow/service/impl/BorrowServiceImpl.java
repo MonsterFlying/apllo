@@ -245,4 +245,7 @@ public class BorrowServiceImpl implements BorrowService {
         return (nowDate.getTime() < validDate.getTime());
     }
 
+    public Borrow findById(Long borrowId){
+        return borrowRepository.findOne(borrowId);
+    }
 }

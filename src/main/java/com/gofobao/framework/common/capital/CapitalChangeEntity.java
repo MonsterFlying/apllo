@@ -16,7 +16,7 @@ public class CapitalChangeEntity {
     /**
      * userID
      */
-    private int toUserId;
+    private long toUserId;
 
     /**
      * 操作总金额

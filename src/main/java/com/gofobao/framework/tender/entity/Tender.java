@@ -27,7 +27,7 @@ public class Tender {
     private Integer source;
     @Basic
     @Column(name = "is_auto")
-    private byte isAuto;
+    private Boolean isAuto;
     @Basic
     @Column(name = "auto_order")
     private Integer autoOrder;
@@ -48,11 +48,11 @@ public class Tender {
     private Date updatedAt;
     @Basic
     @Column(name = "borrow_id")
-    private Integer borrowId;
+    private Long borrowId;
 
     @Basic
     @JoinColumn(name="user_id")
-    private Integer userId;
+    private Long userId;
 
     @Basic
     @Column(name = "auth_code")

@@ -25,6 +25,9 @@ public class Borrow implements Serializable {
     @Column(name = "user_id")
     private Long userId;
     @Basic
+    @Column(name = "tender_id")
+    private Long tenderId;
+    @Basic
     @Column(name = "status")
     private Integer status;
     @Basic

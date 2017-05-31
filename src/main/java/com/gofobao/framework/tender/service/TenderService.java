@@ -30,4 +30,6 @@ public interface TenderService {
      * @return
      */
     boolean checkTenderNimiety(Long borrowId,Long userId);
+
+    Tender findById(Long tenderId);
 }

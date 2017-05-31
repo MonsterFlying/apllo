@@ -64,7 +64,7 @@ public class AssetLog {
 
     @Basic
     @Column(name = "to_user_id")
-    private Integer toUserId;
+    private Long toUserId;
 
     @Basic
     @Column(name = "remark")

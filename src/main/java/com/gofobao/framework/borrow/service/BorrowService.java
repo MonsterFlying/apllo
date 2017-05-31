@@ -27,6 +27,8 @@ public interface BorrowService {
 
     Borrow findByIdLock(Long borrowId);
 
+    Borrow findById(Long borrowId);
+
     /**
      * 检查是否招标中
      * @param borrow

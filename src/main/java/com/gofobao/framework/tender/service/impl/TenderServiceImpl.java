@@ -115,4 +115,8 @@ public class TenderServiceImpl implements TenderService {
         List<Tender> tenderList = tenderRepository.findAll(specification);
         return !CollectionUtils.isEmpty(tenderList);
     }
+
+    public Tender findById(Long tenderId){
+        return tenderRepository.findOne(tenderId);
+    }
 }
