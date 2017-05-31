@@ -24,7 +24,7 @@ public class SmsAnonymousController {
 
 
     @ApiOperation("发送注册短信验证码")
-    @PostMapping("/sms/register")
+    @PostMapping("/v1/sms/register")
     public ResponseEntity<VoBaseResp> register(HttpServletRequest request, @Valid @ModelAttribute VoAnonSmsReq voAnonSmsReq) {
         return messageBiz.sendRegisterCode(request, voAnonSmsReq) ;
     }
