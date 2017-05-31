@@ -29,19 +29,19 @@ public class VoViewBorrowListRes implements Serializable {
     @ApiModelProperty("年化利率")
     private String apr;
     @ApiModelProperty("锁定状态；0：未锁定；1：已锁定（不能手动投标）")
-    private Integer lockStatus;
+    private Boolean lockStatus;
     @ApiModelProperty("担保标识")
-    private Integer isVouch;
+    private Boolean isVouch;
     @ApiModelProperty("抵押标识")
-    private Integer isMortgage;
+    private Boolean isMortgage;
     @ApiModelProperty("质押标识")
-    private Integer isImpawn;
+    private Boolean isImpawn;
     @ApiModelProperty("续贷标识")
-    private Integer isContinued;
+    private Boolean isContinued;
     @ApiModelProperty("赎楼标识")
-    private Integer isConversion;
+    private Boolean isConversion;
     @ApiModelProperty("新手标识")
-    private Integer isNovice;
+    private Boolean isNovice;
     @ApiModelProperty("满标金额")
     private String moneyYes;
     @ApiModelProperty("投标笔数")

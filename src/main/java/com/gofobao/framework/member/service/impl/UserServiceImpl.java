@@ -137,4 +137,13 @@ public class UserServiceImpl implements UserDetailsService, UserService{
         userRepository.save(users);
         return true;
     }
+
+    /**
+     * 带锁查询会员
+     * @param userId
+     * @return
+     */
+    public Users findByIdLock(Long userId){
+        return userRepository.findById(userId);
+    }
 }

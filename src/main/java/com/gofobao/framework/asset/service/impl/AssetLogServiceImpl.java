@@ -71,7 +71,7 @@ public class AssetLogServiceImpl implements AssetLogService {
         return !ObjectUtils.isEmpty(assetLogRepository.save(assetLog));
     }
 
-    public boolean update(AssetLog assetLog){
+    public boolean updateById(AssetLog assetLog){
         if (ObjectUtils.isEmpty(assetLog) || ObjectUtils.isEmpty(assetLog.getId())){
             return false;
         }

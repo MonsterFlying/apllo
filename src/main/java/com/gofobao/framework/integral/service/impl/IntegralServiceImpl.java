@@ -32,7 +32,7 @@ public class IntegralServiceImpl implements IntegralService {
         return !ObjectUtils.isEmpty(integralRepository.save(integral));
     }
 
-    public boolean update(Integral integral){
+    public boolean updateById(Integral integral){
         if (ObjectUtils.isEmpty(integral) || ObjectUtils.isEmpty(integral.getUserId())){
             return false;
         }

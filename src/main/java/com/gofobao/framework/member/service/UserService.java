@@ -54,4 +54,11 @@ public interface UserService {
      * @return
      */
     boolean updUserByPhone(Users users);
+
+    /**
+     * 带锁查询会员
+     * @param userId
+     * @return
+     */
+    Users findByIdLock(Long userId);
 }

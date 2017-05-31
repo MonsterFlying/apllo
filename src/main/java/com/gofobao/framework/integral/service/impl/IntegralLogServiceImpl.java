@@ -33,7 +33,7 @@ public class IntegralLogServiceImpl implements IntegralLogService {
         return !ObjectUtils.isEmpty(integralLogRepository.save(integralLog));
     }
 
-    public boolean update(IntegralLog integralLog){
+    public boolean updateById(IntegralLog integralLog){
         if (ObjectUtils.isEmpty(integralLog) || ObjectUtils.isEmpty(integralLog.getId())){
             return false;
         }

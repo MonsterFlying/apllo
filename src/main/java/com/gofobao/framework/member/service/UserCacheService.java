@@ -17,5 +17,5 @@ public interface UserCacheService {
     UserCache findByUserIdLock(Long userId);
 
     boolean insert(UserCache userCache);
-    boolean update(UserCache userCache);
+    boolean updateById(UserCache userCache);
 }

@@ -2,6 +2,7 @@ package com.gofobao.framework.borrow.vo.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gofobao.framework.borrow.contants.RepaymentContants;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -16,18 +17,12 @@ import static com.gofobao.framework.borrow.contants.BorrowVerifyContants.*;
  * Created by Zeke on 2017/5/26.
  */
 @Data
+@ApiModel
 public class VoAddNetWorthBorrow {
 
     @ApiModelProperty(hidden = true)
     @JsonIgnore
     private Long userId;
-    /**
-     * 还款方式
-     */
-    @ApiModelProperty(name = "repayFashion", value = "还款方式", dataType = "int", required = true)
-    @NotNull(message = "还款方式不能为空!")
-    @Digits(integer = RepaymentContants.YI_CI_XING_HUAN_BEN_FU_XI, fraction = RepaymentContants.YI_CI_XING_HUAN_BEN_FU_XI, message = "还款方式参数有误!")
-    private int repayFashion;
 
     /**
      * 借款期限

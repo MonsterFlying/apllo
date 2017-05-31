@@ -4,8 +4,10 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Repository;
 
+import javax.persistence.LockModeType;
 import java.util.List;
 
 /**
@@ -19,4 +21,7 @@ public interface BorrowRepository extends JpaRepository<Borrow,Long> {
     Page<Borrow> findByAndStatusNotIn(List<Integer>statusArray, Pageable pageable);
 
     long countByUserIdAndStatusIn(Long userId,List<Integer> statusList);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Borrow findById(Long borrowId);
 }

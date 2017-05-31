@@ -2,8 +2,10 @@ package com.gofobao.framework.member.repository;
 
 import com.gofobao.framework.member.entity.Users;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Repository;
 
+import javax.persistence.LockModeType;
 import java.util.List;
 
 /**
@@ -20,4 +22,7 @@ public interface UsersRepository extends JpaRepository<Users,Long>{
     /** 通过邮箱查找会员*/
     List<Users> findByEmail(String email);
 
+    /** 带锁查询会员 **/
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Users findById(Long userId);
 }

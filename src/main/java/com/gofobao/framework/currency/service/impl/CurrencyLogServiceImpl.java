@@ -31,7 +31,7 @@ public class CurrencyLogServiceImpl implements CurrencyLogService {
         return !ObjectUtils.isEmpty(currencyLogRepository.save(currencyLog));
     }
 
-    public boolean update(CurrencyLog currencyLog){
+    public boolean updateById(CurrencyLog currencyLog){
         if (ObjectUtils.isEmpty(currencyLog) || ObjectUtils.isEmpty(currencyLog.getId())){
             return false;
         }

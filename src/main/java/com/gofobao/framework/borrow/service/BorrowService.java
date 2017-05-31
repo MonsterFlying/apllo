@@ -21,4 +21,9 @@ public interface BorrowService {
 
     long countByUserIdAndStatusIn(Long userId,List<Integer> statusList);
 
+    boolean insert(Borrow borrow);
+
+    boolean updateById(Borrow borrow);
+
+    Borrow findByIdLock(Long borrowId);
 }

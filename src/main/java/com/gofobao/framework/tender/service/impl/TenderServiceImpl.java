@@ -78,7 +78,7 @@ public class TenderServiceImpl implements TenderService {
         return !ObjectUtils.isEmpty(tenderRepository.save(tender));
     }
 
-    public boolean update(Tender tender){
+    public boolean updateById(Tender tender){
         if (ObjectUtils.isEmpty(tender) || ObjectUtils.isEmpty(tender.getId())){
             return false;
         }

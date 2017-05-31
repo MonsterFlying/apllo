@@ -9,7 +9,13 @@ import org.springframework.http.ResponseEntity;
  * Created by Zeke on 2017/5/26.
  */
 public interface BorrowBiz {
-    ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow);
 
     ResponseEntity<VoBaseResp> cancelBorrow(VoCancelBorrow voCancelBorrow);
+
+    /**
+     * 新增净值借款
+     * @param voAddNetWorthBorrow
+     * @return
+     */
+    ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow);
 }
