@@ -11,8 +11,20 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface AssetLogRepository extends JpaRepository<AssetLog,Long> {
 
+    /**
+     * user=? and type=？ and createAt>=? and createAt <=?
+     * @param userId
+     * @param type
+     * @param pageable
+     * @return
+     */
+    Page<AssetLog> findByUserIdAndTypeAndCreateAtLessThanEqualAndCreateAtGreaterThanEqual(Integer userId,String type,String startTime,String endTime, Pageable pageable);
 
-    Page<AssetLog> findByUserIdAndType(Integer userId,String type, Pageable pageable);
-
-    Page<AssetLog> findByUserId(Integer userId,Pageable pageable);
+    /**
+     * user=? and createAt>=? and createAt <=?
+     * @param userId
+     * @param pageable
+     * @return
+     */
+    Page<AssetLog> findByUserIdAndCreateAtLessThanEqualAndCreateAtGreaterThanEqual(Integer userId,String startTime,String endTime,Pageable pageable);
 }

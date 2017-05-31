@@ -11,9 +11,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -45,11 +43,16 @@ public class AssetLogServiceImpl implements AssetLogService {
                 , voAssetLog.getPageSize()
                 , sort);
         org.springframework.data.domain.Page<AssetLog> assetLogPage;
-        if (StringUtils.isEmpty(voAssetLog.getType())) {
-            assetLogPage = assetLogRepository.findByUserId(voAssetLog.getUserId(), pageable);
-        } else {
-            assetLogPage = assetLogRepository.findByUserIdAndType(voAssetLog.getUserId(), voAssetLog.getType(), pageable);
 
+        AssetLog assetLog=new AssetLog();
+        Example<AssetLog>assetLogExample=Example.of(assetLog);
+
+        assetLogRepository.findAll(assetLogExample);
+
+        if (StringUtils.isEmpty(voAssetLog.getType())) {
+            assetLogPage = assetLogRepository.findByUserIdAndCreateAtLessThanEqualAndCreateAtGreaterThanEqual(voAssetLog.getUserId(),voAssetLog.getStartTime(),voAssetLog.getEndTime(), pageable);
+        } else {
+            assetLogPage = assetLogRepository.findByUserIdAndTypeAndCreateAtLessThanEqualAndCreateAtGreaterThanEqual(voAssetLog.getUserId(), voAssetLog.getType(),voAssetLog.getStartTime(),voAssetLog.getEndTime(), pageable);
         }
         Gson gson = new GsonBuilder().setDateFormat(DateHelper.DATE_FORMAT_YMDHMS).create();
         String jsonStr = gson.toJson(assetLogPage);

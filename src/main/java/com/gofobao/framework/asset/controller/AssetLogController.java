@@ -26,6 +26,7 @@ public class AssetLogController {
 
     @RequestMapping("list")
     public List<VoViewAssetLogRes> assetLogResList(@ModelAttribute VoAssetLog voAssetLog) {
+
         List<VoViewAssetLogRes> resList=new ArrayList<>();
         try {
            resList = assetLogService.assetLogList(voAssetLog);
