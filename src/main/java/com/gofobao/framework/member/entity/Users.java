@@ -44,7 +44,7 @@ public class Users implements Serializable{
     private String cardId;
     @Basic
     @Column(name = "is_lock")
-    private Integer isLock;
+    private Boolean isLock;
     @Basic
     @Column(name = "type")
     private String type;

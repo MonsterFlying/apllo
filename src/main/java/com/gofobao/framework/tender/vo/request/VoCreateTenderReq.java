@@ -39,7 +39,7 @@ public class VoCreateTenderReq extends VoBaseReq {
     private Integer autoOrder;
 
     @ApiModelProperty(name = "isAutoTender", value = "是否自动投标", hidden = true)
-    private boolean isAutoTender = false;
+    private Boolean isAutoTender = false;
 
     @ApiModelProperty(hidden = true)
     private String requestSource ;

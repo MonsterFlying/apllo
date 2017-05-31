@@ -61,4 +61,12 @@ public interface UserService {
      * @return
      */
     Users findByIdLock(Long userId);
+
+    /**
+     * 检查是否实名
+     * @param users
+     * @return
+     */
+    boolean checkRealname(Users users);
+
 }

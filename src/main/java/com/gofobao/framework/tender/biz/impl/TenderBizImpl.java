@@ -27,7 +27,7 @@ public class TenderBizImpl implements TenderBiz {
     public ResponseEntity<VoBaseResp> createTender(VoCreateTenderReq voCreateTenderReq) {
         Long userId = voCreateTenderReq.getUserId();
         Long borrowId = voCreateTenderReq.getBorrowId();
-        boolean isAutoTender = voCreateTenderReq.isAutoTender();
+        boolean isAutoTender = voCreateTenderReq.getIsAutoTender();
         Date nowDate = new Date();
 
         Borrow borrow = borrowService.findByIdLock(borrowId);//投标锁定借款
@@ -38,6 +38,25 @@ public class TenderBizImpl implements TenderBiz {
         }
 
         Users users = userService.findByIdLock(userId);
+        if (ObjectUtils.isEmpty(users)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "用户不存在!"));
+        }
+
+        if (users.getIsLock()){ //判断当前会员是否锁定
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户已被冻结操作，请联系客服人员!"));
+        }
+
+        if (!userService.checkRealname(users)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户已被冻结操作，请联系客服人员!"));
+        }
+
+
 
         return ResponseEntity.ok(VoBaseResp.ok("投标成功!"));
     }

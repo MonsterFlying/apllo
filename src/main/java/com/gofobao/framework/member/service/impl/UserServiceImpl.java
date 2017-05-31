@@ -146,4 +146,17 @@ public class UserServiceImpl implements UserDetailsService, UserService{
     public Users findByIdLock(Long userId){
         return userRepository.findById(userId);
     }
+
+    /**
+     * 检查是否实名
+     * @param users
+     * @return
+     */
+    public boolean checkRealname(Users users){
+        if (ObjectUtils.isEmpty(users)){
+            return false;
+        }
+        return !(ObjectUtils.isEmpty(users.getCardId()) || ObjectUtils.isEmpty(users.getUsername()));
+    }
+
 }
