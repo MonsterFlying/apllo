@@ -24,13 +24,13 @@ public class SmsAnonymousController {
 
 
     @ApiOperation("发送注册短信验证码")
-    @PostMapping("/v1/sms/register")
+    @PostMapping("/v2/sms/register")
     public ResponseEntity<VoBaseResp> register(HttpServletRequest request, @Valid @ModelAttribute VoAnonSmsReq voAnonSmsReq) {
         return messageBiz.sendRegisterCode(request, voAnonSmsReq) ;
     }
 
     @ApiOperation("发送忘记密码短信验证码")
-    @PostMapping("/sms/findPassword")
+    @PostMapping("/v2/sms/findPassword")
     public ResponseEntity<VoBaseResp> findPassword(HttpServletRequest request, @Valid @ModelAttribute VoAnonSmsReq voAnonSmsReq){
         return messageBiz.sendFindPassword(request, voAnonSmsReq) ;
     }

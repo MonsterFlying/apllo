@@ -28,12 +28,12 @@ public class SmsMessageListener{
     @Autowired
     CommonSmsProvider commonSmsProvider ;
 
-    Gson gson = new GsonBuilder().create() ;
+    static Gson GSON = new GsonBuilder().create() ;
 
     @RabbitHandler
     public void process(String message) {
         Preconditions.checkNotNull(message, "SmsMessageListener process message is empty") ;
-        Map<String, Object> body = gson.fromJson(message, TypeTokenContants.MAP_TOKEN);
+        Map<String, Object> body = GSON.fromJson(message, TypeTokenContants.MAP_TOKEN);
 
 
         Preconditions.checkNotNull(body.get(MqConfig.MSG_TAG), "SmsMessageListener process tag is empty ") ;

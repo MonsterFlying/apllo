@@ -56,21 +56,9 @@ public class MessageBizImpl implements MessageBiz {
     @Autowired
     RedisHelper redisHelper ;
 
-    @Value("${gofobao.captcha}")
-    private boolean captchaState ;
 
     @Override
     public ResponseEntity<VoBaseResp> sendRegisterCode(ServletRequest request, VoAnonSmsReq voAnonSmsReq) {
-        if(captchaState){  // 判断是否开启图形验证码验证
-            boolean match = captchaHelper.match(voAnonSmsReq.getCaptchaToken(), voAnonSmsReq.getCaptcha());
-            if(!match){
-                return ResponseEntity.
-                        badRequest().
-                        body(VoBaseResp.error(VoBaseResp.ERROR, "图形验证码错误或者已过期"));
-            }
-        }
-
-
         // 查询用户是否唯一
         boolean notExistsState = userService.notExistsByPhone(voAnonSmsReq.getPhone()) ;
 
@@ -101,14 +89,6 @@ public class MessageBizImpl implements MessageBiz {
 
     @Override
     public ResponseEntity<VoBaseResp> sendFindPassword(HttpServletRequest request, VoAnonSmsReq voAnonSmsReq) {
-        // 验证短信用户是否
-        boolean match = captchaHelper.match(voAnonSmsReq.getCaptchaToken(), voAnonSmsReq.getCaptcha());
-        if(!match){
-            return ResponseEntity.
-                    badRequest().
-                    body(VoBaseResp.error(VoBaseResp.ERROR, "图形验证码错误或者已过期"));
-        }
-
         // 查询用户是否存在
         boolean notExistsState = userService.notExistsByPhone(voAnonSmsReq.getPhone()) ;
 
