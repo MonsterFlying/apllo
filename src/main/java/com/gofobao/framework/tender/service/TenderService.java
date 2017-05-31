@@ -19,4 +19,5 @@ public interface TenderService {
 
     List<VoBorrowTenderUserRes> findBorrowTenderUser(VoBorrowByIdReq req);
 
+    List<Tender> findAll();
 }

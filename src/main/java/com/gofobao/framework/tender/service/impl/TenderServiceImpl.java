@@ -84,4 +84,8 @@ public class TenderServiceImpl implements TenderService {
         }
         return !ObjectUtils.isEmpty(tenderRepository.save(tender));
     }
+    public List<Tender> findAll(){
+        return null;
+    }
+
 }

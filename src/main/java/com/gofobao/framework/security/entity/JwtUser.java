@@ -24,10 +24,10 @@ public class JwtUser implements UserDetails{
     private String phone ;
     private String email ;
     private String password ;
-    private Integer isLock ;
+    private Boolean isLock ;
 
 
-    public JwtUser(Long id, Date updateAt, String username, String phone, String email, String password, Integer isLock) {
+    public JwtUser(Long id, Date updateAt, String username, String phone, String email, String password, Boolean isLock) {
         this.id = id;
         this.updateAt = updateAt;
         String temp = username ;
@@ -62,7 +62,7 @@ public class JwtUser implements UserDetails{
 
     @Override
     public boolean isAccountNonLocked() {
-        return isLock == 0;
+        return isLock == false;
     }
 
     @Override
