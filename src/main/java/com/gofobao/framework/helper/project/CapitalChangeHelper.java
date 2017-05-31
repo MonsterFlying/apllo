@@ -152,7 +152,7 @@ public class CapitalChangeHelper {
             if (yesterdayMoney != 0) {
                 userCache.setYesterdayUseMoney(yesterdayMoney > 0 ? yesterdayMoney : 0);
             }
-            bool = userCacheService.update(userCache);
+            bool = userCacheService.updateById(userCache);
             if (!bool) {
                 throw new Exception("更新用户资产缓存失败");
             }
@@ -160,7 +160,7 @@ public class CapitalChangeHelper {
             if (yesterdayMoney != 0) {
                 userCache.setYesterdayUseMoney(yesterdayMoney);
             }
-            bool = userCacheService.update(userCache);
+            bool = userCacheService.updateById(userCache);
             if (!bool) {
                 throw new Exception("更新用户资产缓存失败");
             }

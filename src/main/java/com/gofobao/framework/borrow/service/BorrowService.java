@@ -23,5 +23,7 @@ public interface BorrowService {
 
     boolean insert(Borrow borrow);
 
-    boolean update(Borrow borrow);
+    boolean updateById(Borrow borrow);
+
+    Borrow findByIdLock(Long borrowId);
 }

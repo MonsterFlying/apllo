@@ -37,7 +37,7 @@ public class UserCacheServiceImpl implements UserCacheService{
         return !ObjectUtils.isEmpty(userCacheRepository.save(userCache));
     }
 
-    public boolean update(UserCache userCache){
+    public boolean updateById(UserCache userCache){
         if (ObjectUtils.isEmpty(userCache) || ObjectUtils.isEmpty(userCache.getUserId())){
             return false;
         }

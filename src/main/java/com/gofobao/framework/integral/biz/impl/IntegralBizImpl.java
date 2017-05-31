@@ -230,7 +230,7 @@ public class IntegralBizImpl implements IntegralBiz {
         saveIntegral.setNoUseIntegral(integral.getNoUseIntegral() + integer);
         saveIntegral.setUseIntegral(integral.getUseIntegral() - integer);
         saveIntegral.setUpdatedAt(new Date());
-        boolean bool = integralService.update(saveIntegral);
+        boolean bool = integralService.updateById(saveIntegral);
         if (!bool) {
             throw new Exception("积分表更新失败!");
         }

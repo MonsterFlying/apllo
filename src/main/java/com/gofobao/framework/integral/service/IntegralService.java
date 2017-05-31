@@ -14,5 +14,5 @@ public interface IntegralService {
 
     boolean insert(Integral integral);
 
-    boolean update(Integral integral);
+    boolean updateById(Integral integral);
 }

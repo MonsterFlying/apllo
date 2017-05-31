@@ -13,5 +13,5 @@ public interface CurrencyService {
 
     boolean insert(Currency currency);
 
-    boolean update(Currency currency);
+    boolean updateById(Currency currency);
 }

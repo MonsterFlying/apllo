@@ -32,7 +32,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         return !ObjectUtils.isEmpty(currencyRepository.save(currency));
     }
 
-    public boolean update(Currency currency){
+    public boolean updateById(Currency currency){
         if (ObjectUtils.isEmpty(currency) || ObjectUtils.isEmpty(currency.getUserId())){
             return false;
         }

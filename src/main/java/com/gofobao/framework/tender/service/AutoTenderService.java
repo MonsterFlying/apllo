@@ -10,7 +10,7 @@ public interface AutoTenderService {
 
     boolean insert(AutoTender autoTender);
 
-    boolean update(AutoTender autoTender);
+    boolean updateById(AutoTender autoTender);
 
     boolean updateByExample(AutoTender autoTender, Example<AutoTender> example);
 }

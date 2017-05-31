@@ -21,5 +21,5 @@ public interface AssetLogService {
 
     boolean insert(AssetLog assetLog);
 
-    boolean update(AssetLog assetLog);
+    boolean updateById(AssetLog assetLog);
 }

@@ -195,11 +195,14 @@ public class BorrowServiceImpl implements BorrowService {
         return !ObjectUtils.isEmpty(borrowRepository.save(borrow));
     }
 
-    public boolean update(Borrow borrow){
+    public boolean updateById(Borrow borrow){
         if (ObjectUtils.isEmpty(borrow) || ObjectUtils.isEmpty(borrow.getId())){
             return false;
         }
         return !ObjectUtils.isEmpty(borrowRepository.save(borrow));
     }
 
+    public Borrow findByIdLock(Long borrowId){
+        return borrowRepository.findById(borrowId);
+    }
 }

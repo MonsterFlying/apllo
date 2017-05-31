@@ -14,5 +14,5 @@ public interface CurrencyLogService {
 
     boolean insert(CurrencyLog currencyLog);
 
-    boolean update(CurrencyLog currencyLog);
+    boolean updateById(CurrencyLog currencyLog);
 }

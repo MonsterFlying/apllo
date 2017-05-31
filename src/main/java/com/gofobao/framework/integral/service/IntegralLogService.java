@@ -13,5 +13,5 @@ public interface IntegralLogService {
 
     boolean insert(IntegralLog integralLog);
 
-    boolean update(IntegralLog integralLog);
+    boolean updateById(IntegralLog integralLog);
 }
