@@ -62,7 +62,7 @@ public class AplloApplicationTests {
         CriteriaQuery<Users> criteriaQuery = criteriaBuilder.createQuery(Users.class);
         Root<Users> root = criteriaQuery.from(Users.class);
         criteriaQuery.select(root);
-        List<Predicate> predicateList = new ArrayList<Predicate>();
+        List<Predicate> predicateList = new ArrayList<>();
         predicateList.add(criteriaBuilder.equal(root.get("id"), 30));
         Predicate[] predicates = new Predicate[predicateList.size()];
         criteriaQuery.where(predicateList.toArray(predicates));
