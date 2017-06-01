@@ -33,22 +33,23 @@ public interface MessageBiz {
     /**
      * 发送更换手机号码短信验证码
      * @param request 请求类
-     * @param voAnonSmsReq 消息体
+     * @param voUserSmsReq 消息体
      * @return
      */
-    ResponseEntity<VoBaseResp> sendSwitchPhone(HttpServletRequest request, VoAnonSmsReq voAnonSmsReq);
+    ResponseEntity<VoBaseResp> sendSwitchPhone(HttpServletRequest request, VoUserSmsReq voUserSmsReq);
 
     /**
      * 发送更换手机号码短信验证码
      * @param request 请求类
      * @param voAnonSmsReq 消息体
+     * @param userId
      * @return
      */
-    ResponseEntity<VoBaseResp> sendBindPhone(HttpServletRequest request, VoAnonSmsReq voAnonSmsReq);
+    ResponseEntity<VoBaseResp> sendBindPhone(HttpServletRequest request, VoAnonSmsReq voAnonSmsReq, Long userId);
 
 
     /**
-     * 发送开户短信
+     * 发送开户手机短息
      * @param voUserSmsReq
      * @return
      */

@@ -24,18 +24,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         return currencyRepository.findOne(userId);
     }
 
-    public boolean insert(Currency currency){
-        if (ObjectUtils.isEmpty(currency)){
-            return false;
-        }
-        currency.setUserId(null);
-        return !ObjectUtils.isEmpty(currencyRepository.save(currency));
-    }
+    public Currency save(Currency currency){ return currencyRepository.save(currency); }
 
-    public boolean updateById(Currency currency){
-        if (ObjectUtils.isEmpty(currency) || ObjectUtils.isEmpty(currency.getUserId())){
-            return false;
-        }
-        return !ObjectUtils.isEmpty(currencyRepository.save(currency));
-    }
+    public Currency updateById(Currency currency){ return currencyRepository.save(currency); }
 }

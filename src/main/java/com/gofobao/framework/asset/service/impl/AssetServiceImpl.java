@@ -29,18 +29,11 @@ public class AssetServiceImpl implements AssetService{
         return assetRepository.findByUserId(id);
     }
 
-    public boolean insert(Asset asset){
-        if (ObjectUtils.isEmpty(asset)){
-            return false;
-        }
-        asset.setUserId(null);
-        return !ObjectUtils.isEmpty(assetRepository.save(asset));
+    public Asset save(Asset asset){
+        return assetRepository.save(asset);
     }
 
-    public boolean update(Asset asset){
-        if (ObjectUtils.isEmpty(asset) || ObjectUtils.isEmpty(asset.getUserId())){
-            return false;
-        }
-        return !ObjectUtils.isEmpty(assetRepository.save(asset));
+    public Asset update(Asset asset){
+       return assetRepository.save(asset);
     }
 }

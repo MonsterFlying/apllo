@@ -1,20 +1,33 @@
 package com.gofobao.framework.member.vo.request;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gofobao.framework.core.vo.VoBaseReq;
 import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.hibernate.validator.constraints.NotEmpty;
 
 /**
  * Created by Zeke on 2017/5/17.
  */
-@Data
 @ApiModel
+@Data
 public class VoRegisterReq  extends VoBaseReq {
-    @JsonIgnore
-    private String channel;
-    private String cardId;//身份证号码
-    private String username;//用户昵称
-    private String mobile;//手机号码
-    private String cardNo;//绑定银行卡号
+    @ApiModelProperty(value = "注册来源")
+    @NotEmpty
+    private String source ;
+
+    @ApiModelProperty(value = "注册手机")
+    @NotEmpty
+    private String phone ;
+
+    @ApiModelProperty(value = "登录密码")
+    @NotEmpty
+    private String password ;
+
+    @ApiModelProperty(value = "用户名")
+    private String userName ;
+
+    @ApiModelProperty(value = "推荐码")
+    private String inviteCode ;
+
 }

@@ -1,57 +1,37 @@
 package com.gofobao.framework.member.controller;
 
-import com.gofobao.framework.api.contants.AcctUseContant;
-import com.gofobao.framework.api.contants.ChannelContant;
-import com.gofobao.framework.api.contants.IdTypeContant;
-import com.gofobao.framework.api.helper.JixinManager;
-import com.gofobao.framework.api.helper.JixinTxCodeEnum;
-import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusRequest;
-import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusResponse;
+import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.member.biz.UserBiz;
 import com.gofobao.framework.member.service.UserService;
-import com.google.common.reflect.TypeToken;
+import com.gofobao.framework.member.vo.request.VoRegisterReq;
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.PrintWriter;
 
 /**
  * Created by Zeke on 2017/5/18.
  */
 @RestController
-@RequestMapping("/pub/user/")
+@RequestMapping("/pub")
 @Slf4j
 public class RegisterController {
 
     @Autowired
-    private UserService userService;
+    private UserBiz userBiz;
 
-    @Value("${gofobao.javaDomain}")
-    private String javaDomain ;
-
-    @Autowired
-    JixinManager jixinManager ;
-
-    /**
-     * 注册用户回调
-     * @param request
-     * @return
-     */
-    @RequestMapping(value = "/registerCallBack")
-    public void registerCallBack(HttpServletRequest request, HttpServletResponse response){
-
-    }
-
-    /**
-     * 注册用户
-     * @param response
-     * @return
-     */
-    @GetMapping(value = "/register")
-    public void register(HttpServletResponse response){
+    @ApiOperation("用户注册")
+    @PostMapping(value = "/v2/register")
+    public ResponseEntity<VoBaseResp> register(HttpServletRequest request, VoRegisterReq voRegisterReq){
+       return userBiz.register(request, voRegisterReq) ;
 
     }
 }

@@ -32,25 +32,22 @@ public class SmsMessageListener{
 
     @RabbitHandler
     public void process(String message) {
-        Preconditions.checkNotNull(message, "SmsMessageListener process message is empty") ;
-        Map<String, Object> body = GSON.fromJson(message, TypeTokenContants.MAP_TOKEN);
-
-
-        Preconditions.checkNotNull(body.get(MqConfig.MSG_TAG), "SmsMessageListener process tag is empty ") ;
-        Preconditions.checkNotNull(body.get(MqConfig.MSG_BODY), "SmsMessageListener process body is empty ") ;
-        String tag = body.get(MqConfig.MSG_TAG).toString();
-        Map<String, String> msg = (Map<String, String>)body.get(MqConfig.MSG_BODY) ;
-
-        boolean result = false;
-        if((tag.equals(SMS_REGISTER.getValue()))
-                || (tag.equals(SMS_RESET_PASSWORD.getValue()))
-                || (tag.equals(SMS_SWICTH_PHONE.getValue()))){
-            result  = commonSmsProvider.doSendMessageCode(tag, msg);
+        log.info(String.format("smsMessageListener process info: %s", message));
+        try {
+            Preconditions.checkNotNull(message, "SmsMessageListener process message is empty") ;
+            Map<String, Object> body = GSON.fromJson(message, TypeTokenContants.MAP_TOKEN);
+            Preconditions.checkNotNull(body.get(MqConfig.MSG_TAG), "SmsMessageListener process tag is empty ") ;
+            Preconditions.checkNotNull(body.get(MqConfig.MSG_BODY), "SmsMessageListener process body is empty ") ;
+            String tag = body.get(MqConfig.MSG_TAG).toString();
+            Map<String, String> msg = (Map<String, String>)body.get(MqConfig.MSG_BODY) ;
+            boolean result  = commonSmsProvider.doSendMessageCode(tag, msg);
+            if(!result){
+                log.error(String.format("SmsMessageListener process process error: %s", message));
+            }
+        }catch (Throwable e){
+            log.error("SmsMessageListener process do exception", e);
         }
 
-        if(!result){
-            log.error(String.format("SmsMessageListener process process error: %s", message));
-        }
 
     }
 

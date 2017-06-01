@@ -25,4 +25,10 @@ public interface UsersRepository extends JpaRepository<Users,Long>{
     /** 带锁查询会员 **/
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Users findById(Long userId);
+
+    /** 通过用户名查找会员*/
+    List<Users> findByUsername(String userName);
+
+    /** 根据邀请码获取用户信息*/
+    List<Users> findByInviteCode(String inviteCode);
 }
