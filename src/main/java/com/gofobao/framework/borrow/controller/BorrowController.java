@@ -1,7 +1,6 @@
 package com.gofobao.framework.borrow.controller;
 
 import com.gofobao.framework.borrow.biz.BorrowBiz;
-import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoAddNetWorthBorrow;
 import com.gofobao.framework.borrow.vo.request.VoBorrowByIdReq;
@@ -46,8 +45,8 @@ public class BorrowController {
             listResList = borrowService.findAll(voBorrowListReq);
         } catch (Exception e) {
             e.printStackTrace();
-           log.error("BorrowController borrowList Exception ", e);
-           return ResponseEntity.badRequest().body(Collections.EMPTY_LIST) ;
+            log.error("BorrowController borrowList Exception ", e);
+            return ResponseEntity.badRequest().body(Collections.EMPTY_LIST);
         }
         return ResponseEntity.ok(listResList);
     }
@@ -55,28 +54,26 @@ public class BorrowController {
 
     @ApiOperation("标信息")
     @PostMapping("/info")
-    public VoBorrowByIdRes getByBorrowId(@ModelAttribute VoBorrowByIdReq req){
-        VoBorrowByIdRes voBorrowByIdRes=new VoBorrowByIdRes();
+    public VoBorrowByIdRes getByBorrowId(@ModelAttribute VoBorrowByIdReq req) {
+        VoBorrowByIdRes voBorrowByIdRes = new VoBorrowByIdRes();
         try {
             voBorrowByIdRes = borrowService.findByBorrowId(req);
-        }catch (Exception e){
+        } catch (Exception e) {
             log.error("BorrowController borrowList Exception ", e);
         }
-        return  voBorrowByIdRes;
+        return voBorrowByIdRes;
     }
 
-   /* @ApiOperation("标简介")
-    @PostMapping("/details")
-    public*/
 
     /**
      * 新增净值借款
+     *
      * @param voAddNetWorthBorrow
      * @return
      */
     @PostMapping("/addNetWorth")
     @ApiOperation("发布净值借款")
-    public ResponseEntity<VoBaseResp> addNetWorth(@Valid @ModelAttribute VoAddNetWorthBorrow voAddNetWorthBorrow, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+    public ResponseEntity<VoBaseResp> addNetWorth(@Valid @ModelAttribute VoAddNetWorthBorrow voAddNetWorthBorrow, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voAddNetWorthBorrow.setUserId(userId);
         return borrowBiz.addNetWorth(voAddNetWorthBorrow);
     }

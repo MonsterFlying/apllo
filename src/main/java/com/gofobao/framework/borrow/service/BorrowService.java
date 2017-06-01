@@ -3,9 +3,11 @@ package com.gofobao.framework.borrow.service;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.vo.request.VoBorrowByIdReq;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
+import com.gofobao.framework.borrow.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.borrow.vo.response.VoBorrowByIdRes;
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListRes;
+import com.gofobao.framework.borrow.vo.response.VoViewCollectionOrderListRes;
 import org.springframework.data.domain.Example;
 
 import java.util.List;
@@ -26,4 +28,5 @@ public interface BorrowService {
     boolean updateById(Borrow borrow);
 
     Borrow findByIdLock(Long borrowId);
+
 }

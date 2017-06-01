@@ -1,6 +1,10 @@
 package com.gofobao.framework;
 
+import com.gofobao.framework.asset.repository.AssetLogRepository;
+import com.gofobao.framework.asset.service.AssetLogService;
 import com.gofobao.framework.borrow.entity.Borrow;
+import com.gofobao.framework.collection.service.BorrowCollectionService;
+import com.gofobao.framework.borrow.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.helper.BeanHelper;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.repository.AutoTenderRepository;
@@ -8,7 +12,6 @@ import com.gofobao.framework.tender.service.AutoTenderService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Example;
@@ -25,6 +28,13 @@ public class AplloApplicationTests {
     private AutoTenderRepository autoTenderRepository;
     @Autowired
     private AutoTenderService autoTenderService;
+
+
+    @Autowired
+    private AssetLogService assetLogService;
+
+    @Autowired
+    private AssetLogRepository assetLogRepository;
 
     @Test
     public void contextLoads() {
@@ -61,4 +71,19 @@ public class AplloApplicationTests {
         System.out.println(autoTenderRepository.count(mapExample));*/
     }
 
+    @Autowired
+    private BorrowCollectionService borrowCollectionService;
+
+    @Test
+
+    public void tt(){
+
+
+        VoCollectionOrderReq voCollectionOrderReq=new VoCollectionOrderReq();
+        voCollectionOrderReq.setUserId(901L);
+        voCollectionOrderReq.setTime("2017-05-16 00:00:00");
+        borrowCollectionService.orderList(voCollectionOrderReq);
+
+
+    }
 }

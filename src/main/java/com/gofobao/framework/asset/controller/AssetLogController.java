@@ -35,4 +35,6 @@ public class AssetLogController {
         }
         return resList;
     }
+
+
 }

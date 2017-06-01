@@ -2,6 +2,7 @@ package com.gofobao.framework.borrow.service.impl;
 
 import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
+import com.gofobao.framework.collection.repository.BorrowCollectionRepository;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoBorrowByIdReq;
@@ -13,7 +14,6 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
-import com.gofobao.framework.tender.entity.AutoTender;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +34,11 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Autowired
     private BorrowRepository borrowRepository;
+
+
+
+    @Autowired
+    private BorrowCollectionRepository borrowCollectionRepository;
 
     /**
      * 首页标列表
@@ -205,4 +210,7 @@ public class BorrowServiceImpl implements BorrowService {
     public Borrow findByIdLock(Long borrowId){
         return borrowRepository.findById(borrowId);
     }
+
+
+
 }

@@ -1,5 +1,6 @@
 package com.gofobao.framework.asset.service.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.asset.entity.AssetLog;
 import com.gofobao.framework.asset.repository.AssetLogRepository;
 import com.gofobao.framework.asset.service.AssetLogService;
@@ -12,10 +13,12 @@ import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
+
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,8 +32,10 @@ public class AssetLogServiceImpl implements AssetLogService {
     @Autowired
     private AssetLogRepository assetLogRepository;
 
+
     /**
      * 资金流水
+     *
      * @param voAssetLog
      * @return
      */
@@ -42,39 +47,31 @@ public class AssetLogServiceImpl implements AssetLogService {
         Pageable pageable = new PageRequest(voAssetLog.getPageIndex()
                 , voAssetLog.getPageSize()
                 , sort);
-        org.springframework.data.domain.Page<AssetLog> assetLogPage;
 
-        AssetLog assetLog=new AssetLog();
-        Example<AssetLog>assetLogExample=Example.of(assetLog);
+        Specification<AssetLog> specification = Specifications.<AssetLog>and()
+                .eq(!StringUtils.isEmpty(voAssetLog.getType()), "type", voAssetLog.getType())
+                .between("createdAt", new Range<>(DateHelper.stringToDate(voAssetLog.getStartTime()),DateHelper.stringToDate(voAssetLog.getEndTime())))
+                .eq("userId", voAssetLog.getUserId())
+                .build();
+       Page<AssetLog> assetLogPage = assetLogRepository.findAll(specification, pageable);
 
-        assetLogRepository.findAll(assetLogExample);
-
-        if (StringUtils.isEmpty(voAssetLog.getType())) {
-            assetLogPage = assetLogRepository.findByUserIdAndCreateAtLessThanEqualAndCreateAtGreaterThanEqual(voAssetLog.getUserId(),voAssetLog.getStartTime(),voAssetLog.getEndTime(), pageable);
-        } else {
-            assetLogPage = assetLogRepository.findByUserIdAndTypeAndCreateAtLessThanEqualAndCreateAtGreaterThanEqual(voAssetLog.getUserId(), voAssetLog.getType(),voAssetLog.getStartTime(),voAssetLog.getEndTime(), pageable);
-        }
         Gson gson = new GsonBuilder().setDateFormat(DateHelper.DATE_FORMAT_YMDHMS).create();
-        String jsonStr = gson.toJson(assetLogPage);
+
+        String jsonStr = gson.toJson(assetLogPage.getContent());
         List<VoViewAssetLogRes> voViewAssetLogRes = gson.fromJson(jsonStr, new TypeToken<List<VoViewAssetLogRes>>() {
         }.getType());
         List<VoViewAssetLogRes> result = Optional.ofNullable(voViewAssetLogRes).orElse(Collections.EMPTY_LIST);
-
         return result;
     }
 
-    public boolean insert(AssetLog assetLog){
-        if (ObjectUtils.isEmpty(assetLog)){
-            return false;
-        }
-        assetLog.setId(null);
-        return !ObjectUtils.isEmpty(assetLogRepository.save(assetLog));
+    @Override
+    public boolean insert(AssetLog assetLog) {
+
+        return false;
     }
 
-    public boolean updateById(AssetLog assetLog){
-        if (ObjectUtils.isEmpty(assetLog) || ObjectUtils.isEmpty(assetLog.getId())){
-            return false;
-        }
-        return !ObjectUtils.isEmpty(assetLogRepository.save(assetLog));
+    @Override
+    public boolean updateById(AssetLog assetLog) {
+        return false;
     }
 }
