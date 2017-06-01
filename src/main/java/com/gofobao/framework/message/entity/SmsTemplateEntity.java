@@ -3,6 +3,7 @@ package com.gofobao.framework.message.entity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
@@ -14,6 +15,7 @@ import java.util.Date;
 @Entity
 @Table(name = "gfb_sms_template")
 @Data
+@DynamicInsert
 @NoArgsConstructor
 @AllArgsConstructor
 public class SmsTemplateEntity {

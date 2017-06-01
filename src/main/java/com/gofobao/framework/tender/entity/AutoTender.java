@@ -1,6 +1,7 @@
 package com.gofobao.framework.tender.entity;
 
 import lombok.Data;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -9,6 +10,7 @@ import java.util.Date;
  * Created by Zeke on 2017/5/27.
  */
 @Entity
+@DynamicInsert
 @Table(name = "gfb_auto_tender")
 @Data
 public class AutoTender {

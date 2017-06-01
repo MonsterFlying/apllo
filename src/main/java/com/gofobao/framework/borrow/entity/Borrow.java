@@ -3,6 +3,7 @@ package com.gofobao.framework.borrow.entity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -16,6 +17,7 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@DynamicInsert
 public class Borrow implements Serializable {
     @Id
     @GeneratedValue

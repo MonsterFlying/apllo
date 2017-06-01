@@ -1,6 +1,7 @@
 package com.gofobao.framework.repayment.entity;
 
 import lombok.Data;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -9,6 +10,7 @@ import java.util.Date;
  * Created by Zeke on 2017/5/26.
  */
 @Entity
+@DynamicInsert
 @Data
 @Table(name = "gfb_borrow_repayment")
 public class BorrowRepayment {

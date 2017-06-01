@@ -9,6 +9,6 @@ import lombok.Data;
 @Data
 public class VoBorrowByIdReq {
         @ApiModelProperty("标id")
-        private Integer borrowId;
+        private Long borrowId;
 
 }

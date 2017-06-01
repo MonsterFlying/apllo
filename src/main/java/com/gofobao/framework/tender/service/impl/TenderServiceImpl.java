@@ -46,6 +46,7 @@ public class TenderServiceImpl implements TenderService {
 
     /**
      * 投标用户列表
+     *
      * @param req
      * @return
      */
@@ -65,34 +66,34 @@ public class TenderServiceImpl implements TenderService {
             VoBorrowTenderUserRes tenderUserRes = new VoBorrowTenderUserRes();
             tenderUserRes.setMoney(NumberHelper.to2DigitString(item.getValidMoney() / 100d) + MoneyConstans.RMB);
             tenderUserRes.setDate(DateHelper.dateToString(item.getCreatedAt(), DateHelper.DATE_FORMAT_YMDHMS));
-            tenderUserRes.setType(item.getIsAuto() == 0 ? TenderConstans.MANUAL : TenderConstans.AUTO);
-            Users user=usersRepository.findOne(new Long(item.getUserId()));
-            String userName=StringUtils.isEmpty(user.getUsername())?
-                    UserHelper.hideChar(user.getPhone(),UserHelper.PHONE_NUM):
-                    UserHelper.hideChar(user.getUsername(),UserHelper.USERNAME_NUM);
+            tenderUserRes.setType(item.getIsAuto() ? TenderConstans.AUTO : TenderConstans.MANUAL);
+            Users user = usersRepository.findOne(new Long(item.getUserId()));
+            String userName = StringUtils.isEmpty(user.getUsername()) ?
+                    UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM) :
+                    UserHelper.hideChar(user.getUsername(), UserHelper.USERNAME_NUM);
             tenderUserRes.setUserName(userName);
             tenderUserResList.add(tenderUserRes);
         }));
-        return  Optional.empty().ofNullable(tenderUserResList).orElse(Collections.emptyList());
+        return Optional.empty().ofNullable(tenderUserResList).orElse(Collections.emptyList());
     }
 
-    public boolean insert(Tender tender){
-        if (ObjectUtils.isEmpty(tender)){
-            return false;
+    public Tender insert(Tender tender) {
+        if (ObjectUtils.isEmpty(tender)) {
+            return null;
         }
         tender.setId(null);
-        return !ObjectUtils.isEmpty(tenderRepository.save(tender));
+        return tenderRepository.save(tender);
     }
 
-    public boolean updateById(Tender tender){
-        if (ObjectUtils.isEmpty(tender) || ObjectUtils.isEmpty(tender.getId())){
+    public boolean updateById(Tender tender) {
+        if (ObjectUtils.isEmpty(tender) || ObjectUtils.isEmpty(tender.getId())) {
             return false;
         }
         return !ObjectUtils.isEmpty(tenderRepository.save(tender));
     }
 
-    public List<Tender> findList(Specification<Tender> specification){
-        if (ObjectUtils.isEmpty(specification)){
+    public List<Tender> findList(Specification<Tender> specification) {
+        if (ObjectUtils.isEmpty(specification)) {
             return null;
         }
         return tenderRepository.findAll(specification);
@@ -100,23 +101,24 @@ public class TenderServiceImpl implements TenderService {
 
     /**
      * 检查投标是否太频繁
+     *
      * @param borrowId
      * @param userId
      * @return
      */
-    public boolean checkTenderNimiety(Long borrowId,Long userId){
+    public boolean checkTenderNimiety(Long borrowId, Long userId) {
 
         Specification<Tender> specification = Specifications.<Tender>and()
-                .eq("userId",userId)
-                .eq("borrowId",borrowId)
-                .eq("status",1)
-                .predicate(new GeSpecification<Tender>("updatedAt", new DataObject(DateHelper.subDays(new Date(),1))))
+                .eq("userId", userId)
+                .eq("borrowId", borrowId)
+                .eq("status", 1)
+                .predicate(new GeSpecification<Tender>("updatedAt", new DataObject(DateHelper.subDays(new Date(), 1))))
                 .build();
         List<Tender> tenderList = tenderRepository.findAll(specification);
         return !CollectionUtils.isEmpty(tenderList);
     }
 
-    public Tender findById(Long tenderId){
+    public Tender findById(Long tenderId) {
         return tenderRepository.findOne(tenderId);
     }
 }

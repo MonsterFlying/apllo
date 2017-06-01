@@ -1,10 +1,12 @@
 package com.gofobao.framework.tender.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.api.contants.FrzFlagContant;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.borrow.vo.request.VoCreateThirdBorrowReq;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.core.helper.PasswordHelper;
@@ -19,9 +21,11 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.tender.biz.TenderBiz;
+import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
+import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +61,8 @@ public class TenderBizImpl implements TenderBiz {
     private AssetService assetService;
     @Autowired
     private CapitalChangeHelper capitalChangeHelper;
+    @Autowired
+    private TenderThirdBiz tenderThirdBiz;
 
     public Map<String,Object> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception{
         Map<String, Object> rsMap = null;
@@ -84,9 +90,9 @@ public class TenderBizImpl implements TenderBiz {
             borrowTender.setIsAuto(voCreateTenderReq.getIsAutoTender());
             borrowTender.setUpdatedAt(nowDate);
             borrowTender.setCreatedAt(nowDate);
-            boolean flag = tenderService.insert(borrowTender);
+            Tender tender = tenderService.insert(borrowTender);
 
-            if (flag) {
+            if (!ObjectUtils.isEmpty(tender)) {
                 //扣除待还
                 CapitalChangeEntity entity = new CapitalChangeEntity();
                 entity.setType(CapitalChangeEnum.Frozen);
@@ -104,9 +110,19 @@ public class TenderBizImpl implements TenderBiz {
                 tempBorrow.setTenderCount((borrow.getTenderCount() + 1));
                 tempBorrow.setId(borrow.getId());
                 tempBorrow.setUpdatedAt(nowDate);
-                flag = borrowService.updateById(tempBorrow);
+                boolean flag = borrowService.updateById(tempBorrow);
                 if (flag) {
-
+                    //调用即信投标申请操作
+                    VoCreateThirdTenderReq voCreateThirdTenderReq = new VoCreateThirdTenderReq();
+                    voCreateThirdTenderReq.setAcqRes(String.valueOf(userId));
+                    voCreateThirdTenderReq.setUserId(userId);
+                    voCreateThirdTenderReq.setTxAmount(StringHelper.formatDouble(validMoney,100,false));
+                    voCreateThirdTenderReq.setProductId(String.valueOf(tender.getId()));
+                    voCreateThirdTenderReq.setFrzFlag(FrzFlagContant.FREEZE);
+                    ResponseEntity<VoBaseResp> resp = tenderThirdBiz.createThirdTender(voCreateThirdTenderReq);
+                    if (!ObjectUtils.isEmpty(resp)){
+                        rsMap.put("msg",resp);
+                    }
                 }
                 if (tempBorrow.getMoneyYes() >= borrow.getMoney()) {
                     /**
@@ -125,7 +141,15 @@ public class TenderBizImpl implements TenderBiz {
      * @return
      */
     public ResponseEntity<VoBaseResp> tender(VoCreateTenderReq voCreateTenderReq){
-        Map<String,Object> rsMap = checkCreateTender(voCreateTenderReq);
+        Map<String,Object> rsMap = null;
+        try {
+            rsMap = createTender(voCreateTenderReq);
+        } catch (Exception e) {
+            log.error("创建投标异常：",e);
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,StringHelper.toString("投标失败!")));
+        }
         Object msg = rsMap.get("msg");
         if (!ObjectUtils.isEmpty(msg)) {
             return ResponseEntity

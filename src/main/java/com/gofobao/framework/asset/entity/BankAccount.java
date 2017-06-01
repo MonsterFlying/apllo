@@ -3,6 +3,7 @@ package com.gofobao.framework.asset.entity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -15,6 +16,7 @@ import java.util.Date;
 @Table(name = "gfb_bank_account")
 @AllArgsConstructor
 @NoArgsConstructor
+@DynamicInsert
 public class BankAccount {
     @Id
     @Column(name = "id")

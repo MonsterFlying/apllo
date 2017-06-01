@@ -3,6 +3,7 @@ package com.gofobao.framework.tender.entity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -13,6 +14,7 @@ import java.util.Date;
 @Entity
 @Table(name = "gfb_borrow_tender")
 @Data
+@DynamicInsert
 @NoArgsConstructor
 @AllArgsConstructor
 public class Tender {
@@ -77,5 +79,5 @@ public class Tender {
     private String vparam3;
     @Basic
     @Column(name = "t_user_id")
-    private Integer tUserId;
+    private Long tUserId;
 }

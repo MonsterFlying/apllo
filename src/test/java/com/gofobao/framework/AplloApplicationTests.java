@@ -1,5 +1,6 @@
 package com.gofobao.framework;
 
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.tender.service.TenderService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -19,7 +20,6 @@ public class AplloApplicationTests {
     @Test
     public void contextLoads() {
 
-        System.out.println(tenderService.checkTenderNimiety(300000201L,901L));
 
     }
 

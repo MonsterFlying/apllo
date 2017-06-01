@@ -3,6 +3,7 @@ package com.gofobao.framework.member.entity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -13,6 +14,7 @@ import java.util.Date;
 @Entity
 @Table(name = "gfb_user_cache")
 @Data
+@DynamicInsert
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserCache {

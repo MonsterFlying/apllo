@@ -45,7 +45,7 @@ public class AssetBizImpl implements AssetBiz {
         Integer useMoney = asset.getUseMoney();
         Integer waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
         Integer payment = asset.getPayment();
-        int netWorthQuota = new Double(Double.parseDouble(StringHelper.formatDouble((useMoney + waitCollectionPrincipal) * 0.8 - payment, 2))).intValue();//计算净值额度
+        int netWorthQuota = new Double((useMoney + waitCollectionPrincipal) * 0.8 - payment).intValue();//计算净值额度
 
         VoUserAssetInfoResp voUserAssetInfoResp = new VoUserAssetInfoResp();
         voUserAssetInfoResp.setUseMoney(useMoney);

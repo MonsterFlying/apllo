@@ -1,6 +1,7 @@
 package com.gofobao.framework.collection.entity;
 
 import lombok.Data;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -11,6 +12,7 @@ import java.util.Date;
 @Entity
 @Data
 @Table(name = "gfb_borrow_collection")
+@DynamicInsert
 public class BorrowCollection {
     @Id
     @GeneratedValue
