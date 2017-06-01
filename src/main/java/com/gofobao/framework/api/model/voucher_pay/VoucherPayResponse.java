@@ -17,9 +17,9 @@ public class VoucherPayResponse extends JixinBaseResponse{
      */
     private String accountId;
     /**
-     * 交易金额 红包金额
+     * 交易金额 红包金额  12,2
      */
-    private Integer txAmount;
+    private String txAmount;
     /**
      * 请求方保留 选填
      */

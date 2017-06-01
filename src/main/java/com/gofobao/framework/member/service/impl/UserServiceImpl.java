@@ -131,4 +131,17 @@ public class UserServiceImpl implements UserDetailsService, UserService{
     public Users save(Users users) {
         return userRepository.save(users);
     }
+
+    /**
+     * 检查是否实名
+     * @param users
+     * @return
+     */
+    public boolean checkRealname(Users users){
+        if (ObjectUtils.isEmpty(users)){
+            return false;
+        }
+        return !(ObjectUtils.isEmpty(users.getCardId()) || ObjectUtils.isEmpty(users.getUsername()));
+    }
+
 }

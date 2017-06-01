@@ -1,6 +1,7 @@
 package com.gofobao.framework.asset.entity;
 
 import lombok.Data;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -11,6 +12,7 @@ import java.util.Date;
 @Data
 @Entity
 @Table(name = "gfb_yesterday_asset")
+@DynamicInsert
 public class YesterdayAsset {
     @Id
     @GeneratedValue

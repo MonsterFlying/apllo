@@ -26,4 +26,28 @@ public interface BorrowService {
     boolean updateById(Borrow borrow);
 
     Borrow findByIdLock(Long borrowId);
+
+    Borrow findById(Long borrowId);
+
+    /**
+     * 检查是否招标中
+     * @param borrow
+     * @return
+     */
+    boolean checkBidding(Borrow borrow);
+
+    /**
+     * 检查是否在发布时间内
+     * @param borrow
+     * @return
+     */
+    boolean checkReleaseAt(Borrow borrow);
+
+    /**
+     * 检查招标时间是否有效
+     * @param borrow
+     * @return
+     */
+    boolean checkValidDay(Borrow borrow);
+
 }

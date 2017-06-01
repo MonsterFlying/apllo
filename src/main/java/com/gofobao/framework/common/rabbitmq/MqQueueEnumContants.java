@@ -9,5 +9,6 @@ public class MqQueueEnumContants {
     public  static final  String RABBITMQ_AUTO_TENDER = "rabbitmq_auto_tender" ;
     public  static final  String RABBITMQ_NOTICE = "rabbitmq_notice" ;
     public  static final  String RABBITMQ_USER_ACTIVE = "rabbitmq_user_active" ;
+    public  static final  String RABBITMQ_NOTICE = "rabbitmq_notice";
 
 }

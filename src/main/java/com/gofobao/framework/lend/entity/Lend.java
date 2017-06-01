@@ -1,6 +1,7 @@
 package com.gofobao.framework.lend.entity;
 
 import lombok.Data;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -10,6 +11,7 @@ import java.util.Date;
  */
 @Entity
 @Data
+@DynamicInsert
 @Table(name = "gfb_lend")
 public class Lend {
     @Id

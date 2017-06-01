@@ -1,6 +1,7 @@
 package com.gofobao.framework.helper;
 
 import static com.google.common.base.Preconditions.*;
+
 import org.springframework.util.ObjectUtils;
 
 import java.text.DecimalFormat;
@@ -17,40 +18,10 @@ public class StringHelper {
         return ObjectUtils.isEmpty(obj) ? "" : obj.toString();
     }
 
-
-    /**
-     * 保留两位小数
-     *
-     * @param number
-     * @return
-     */
-    public static String formatDouble(double number) {
-        return formatDouble(number,2);
-    }
-
-    /**
-     * 保留两位小数
-     *
-     * @param number
-     * @param retain 保留小数位
-     * @return
-     */
-    public static String formatDouble(double number,int retain) {
-        StringBuffer format = new StringBuffer("#");
-        if (retain>0){
-            format.append(".");
-        }
-        for (int i = 0;i<retain;i++){
-            format.append("0");
-        }
-        DecimalFormat df = new DecimalFormat(format.toString());
-        return df.format(number);
-    }
-
     public static void main(String[] args) {
 
         try {
-            System.out.println(formatMoney(1.0,100.0));
+            System.out.println(formatDouble(123545, 100, false));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -58,13 +29,21 @@ public class StringHelper {
 
     /**
      * 格式化金额
+     *
      * @param number 单位分
+     * @param symbol 是否有千分符
      * @return
      */
-    public static  String formatMoney(double number){
+    public static String formatDouble(double number, boolean symbol) {
         String va = "0.0";
         if (number > 0.001) {
-            DecimalFormat df = new DecimalFormat("#,##0.00");
+            String fomat = null;
+            if (symbol) {
+                fomat = "#,##0.00";
+            } else {
+                fomat = "###0.00";
+            }
+            DecimalFormat df = new DecimalFormat(fomat);
             va = df.format(number);
         }
         return va;
@@ -72,22 +51,14 @@ public class StringHelper {
 
     /**
      * 格式化金额
+     *
      * @param number 单位分
+     * @param symbol 是否添加千分符
      * @return
      */
-    public static  String formatMoney(double number,double divisor){
-        return formatMoney(number/divisor);
+    public static String formatDouble(double number, double divisor, boolean symbol) {
+        return formatDouble(NumberHelper.toDouble(number) / NumberHelper.toDouble(divisor), symbol);
     }
-
-    /**
-     * 格式化金额
-     * @param number 单位分
-     * @return
-     */
-    public static  String formatMoney(String number,double divisor){
-        return formatMoney(NumberHelper.toDouble(number),new Double(divisor).intValue());
-    }
-
 
     /**
      * 替换模板
@@ -104,7 +75,7 @@ public class StringHelper {
         while (iterator.hasNext()) {
             key = iterator.next();
             value = params.get(key);
-            key = String.format("%s%s%s",leftPlaceholder, key,rightPlaceholder);
+            key = String.format("%s%s%s", leftPlaceholder, key, rightPlaceholder);
             template = template.replace(key, value);
         }
 
@@ -114,12 +85,13 @@ public class StringHelper {
 
     /**
      * 获取Map的待签名字符串
+     *
      * @param map
      * @return
      */
-    public static String mergeMap(Map<String, String> map){
-        checkNotNull(map, "") ;
-        Map<String,String> reqMap = new TreeMap<String,String>(map);
+    public static String mergeMap(Map<String, String> map) {
+        checkNotNull(map, "");
+        Map<String, String> reqMap = new TreeMap<String, String>(map);
 
         StringBuffer buff = new StringBuffer();
 
@@ -128,10 +100,10 @@ public class StringHelper {
         while (iter.hasNext()) {
             entry = iter.next();
             if (!"sign".equals(entry.getKey())) {
-                if(entry.getValue()==null){
+                if (entry.getValue() == null) {
                     entry.setValue("");
                     buff.append("");
-                }else{
+                } else {
                     buff.append(String.valueOf(entry.getValue()));
                 }
             }

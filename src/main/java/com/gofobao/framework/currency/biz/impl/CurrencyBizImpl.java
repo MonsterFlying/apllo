@@ -19,11 +19,10 @@ import com.gofobao.framework.currency.vo.request.VoListCurrencyReq;
 import com.gofobao.framework.currency.vo.response.VoCurrency;
 import com.gofobao.framework.currency.vo.response.VoListCurrencyResp;
 import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
-import lombok.extern.slf4j.Slf4j;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -192,7 +191,7 @@ public class CurrencyBizImpl implements CurrencyBiz {
             //调用即信发送红包接口
             VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
             voucherPayRequest.setAccountId(redPacketAccountId);
-            voucherPayRequest.setTxAmount((long)currency);
+            voucherPayRequest.setTxAmount(StringHelper.formatDouble(currency , 100,false));
             voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
             voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
             voucherPayRequest.setDesLine("用户广富币兑换");

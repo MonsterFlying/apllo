@@ -1,9 +1,9 @@
 package com.gofobao.framework.tender.entity;
 
-import com.gofobao.framework.member.entity.Users;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -14,6 +14,7 @@ import java.util.Date;
 @Entity
 @Table(name = "gfb_borrow_tender")
 @Data
+@DynamicInsert
 @NoArgsConstructor
 @AllArgsConstructor
 public class Tender {
@@ -28,7 +29,7 @@ public class Tender {
     private Integer source;
     @Basic
     @Column(name = "is_auto")
-    private byte isAuto;
+    private Boolean isAuto;
     @Basic
     @Column(name = "auto_order")
     private Integer autoOrder;
@@ -49,15 +50,14 @@ public class Tender {
     private Date updatedAt;
     @Basic
     @Column(name = "borrow_id")
-    private Integer borrowId;
+    private Long borrowId;
 
     @Basic
     @JoinColumn(name="user_id")
-    private Integer userId;
-
+    private Long userId;
 
     @Basic
-    @Column(name = "authCode")
+    @Column(name = "auth_code")
     private String authCode;
     @Basic
     @Column(name = "iparam1")
@@ -79,5 +79,5 @@ public class Tender {
     private String vparam3;
     @Basic
     @Column(name = "t_user_id")
-    private Integer tUserId;
+    private Long tUserId;
 }

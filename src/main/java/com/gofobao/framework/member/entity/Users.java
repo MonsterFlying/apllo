@@ -3,6 +3,7 @@ package com.gofobao.framework.member.entity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -14,6 +15,7 @@ import java.util.Date;
 @Entity
 @Table(name = "gfb_users")
 @Data
+@DynamicInsert
 @NoArgsConstructor
 @AllArgsConstructor
 public class Users implements Serializable{
@@ -44,7 +46,7 @@ public class Users implements Serializable{
     private String cardId;
     @Basic
     @Column(name = "is_lock")
-    private Integer isLock;
+    private Boolean isLock;
     @Basic
     @Column(name = "type")
     private String type;
@@ -72,9 +74,7 @@ public class Users implements Serializable{
     @Basic
     @Column(name = "created_at")
     private Date createdAt;
-
     @Basic
     @Column(name = "updated_at")
     private Date updatedAt;
-
 }

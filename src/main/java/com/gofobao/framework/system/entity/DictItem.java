@@ -1,6 +1,7 @@
 package com.gofobao.framework.system.entity;
 
 import lombok.Data;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
@@ -10,6 +11,7 @@ import java.sql.Timestamp;
  */
 @Entity
 @Data
+@DynamicInsert
 @Table(name = "gfb_dict_item")
 public class DictItem {
     @Id
