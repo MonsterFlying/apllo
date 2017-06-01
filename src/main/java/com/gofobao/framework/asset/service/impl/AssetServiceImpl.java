@@ -29,7 +29,7 @@ public class AssetServiceImpl implements AssetService{
         return assetRepository.findByUserId(id);
     }
 
-    public boolean insert(Asset asset){
+    public boolean insertById(Asset asset){
         if (ObjectUtils.isEmpty(asset)){
             return false;
         }
