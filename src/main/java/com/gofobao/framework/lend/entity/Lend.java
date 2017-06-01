@@ -19,6 +19,9 @@ public class Lend {
     @Column(name = "id")
     private Long id;
     @Basic
+    @Column(name = "user_id")
+    private Long userId;
+    @Basic
     @Column(name = "money")
     private Integer money;
     @Basic
