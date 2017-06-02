@@ -11,9 +11,10 @@ import java.util.Date;
 /**
  * Created by Max on 17/6/2.
  */
-@Entity
+
 @Table(name = "gfb_incr_statistic")
 @Data
+@Entity
 @DynamicInsert
 @NoArgsConstructor
 @AllArgsConstructor

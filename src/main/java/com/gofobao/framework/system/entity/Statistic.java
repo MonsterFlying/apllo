@@ -14,6 +14,7 @@ import java.util.Date;
  */
 @Table(name = "gfb_statistic")
 @Data
+@Entity
 @DynamicInsert
 @NoArgsConstructor
 @AllArgsConstructor
