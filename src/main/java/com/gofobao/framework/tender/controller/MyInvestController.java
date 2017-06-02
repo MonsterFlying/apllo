@@ -51,7 +51,7 @@ public class MyInvestController {
 
 
     @ApiOperation("投标中列表")
-    @GetMapping("/v2/biddingList/list")
+    @GetMapping("/v2/bidding/list")
     public ResponseEntity<List<VoViewBiddingRes>> biddingList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoInvestListReq voInvestListReq = new VoInvestListReq();
         voInvestListReq.setUserId(userId);
@@ -67,7 +67,7 @@ public class MyInvestController {
 
 
     @ApiOperation("已结清列表")
-    @GetMapping("/v2/biddingList/list")
+    @GetMapping("/v2/settle/list")
     public ResponseEntity<List<VoViewSettleRes>> settleList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoInvestListReq voInvestListReq = new VoInvestListReq();
         voInvestListReq.setUserId(userId);
