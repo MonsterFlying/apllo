@@ -19,6 +19,9 @@ public class BorrowRepayment {
     @Column(name = "id")
     private Long id;
     @Basic
+    @Column(name = "borrow_id")
+    private Long borrowId;
+    @Basic
     @Column(name = "status")
     private Integer status;
     @Basic
