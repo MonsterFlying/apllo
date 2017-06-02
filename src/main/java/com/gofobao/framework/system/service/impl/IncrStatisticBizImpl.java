@@ -25,10 +25,12 @@ public class IncrStatisticBizImpl implements IncrStatisticBiz {
     @Override
     @Transactional
     public void caculate(IncrStatistic changeEntity) throws Exception {
+        log.info("IncrStatisticBizImpl.caculate is active");
         Preconditions.checkNotNull(changeEntity, "IncrStatisticBizImpl.caculate:changeEntity is empty ") ;
         Date now = new Date();
         IncrStatistic dbIncrStatistic = incrStatisticService.findOneByDate(now);
         MultiCaculateHelper.caculate(IncrStatistic.class, dbIncrStatistic, changeEntity) ;
         incrStatisticService.save(dbIncrStatistic);
+        log.info("IncrStatisticBizImpl.caculate success");
     }
 }

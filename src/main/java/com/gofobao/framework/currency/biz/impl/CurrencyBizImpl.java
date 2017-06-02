@@ -149,13 +149,7 @@ public class CurrencyBizImpl implements CurrencyBiz {
         currencyObj.setUseCurrency(currencyObj.getUseCurrency() - currency);
         currencyObj.setNoUseCurrency(currencyObj.getNoUseCurrency() + currency);
         currencyObj.setUpdatedAt(new Date());
-
-        if (!currencyService.updateById(currencyObj)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "广富币兑换失败!"));
-        }
-
+        currencyService.updateById(currencyObj);
         CurrencyLog currencyLog = new CurrencyLog();
         currencyLog.setUseCurrency(currencyObj.getUseCurrency());
         currencyLog.setNoUseCurrency(currencyObj.getNoUseCurrency());

@@ -230,11 +230,7 @@ public class IntegralBizImpl implements IntegralBiz {
         saveIntegral.setNoUseIntegral(integral.getNoUseIntegral() + integer);
         saveIntegral.setUseIntegral(integral.getUseIntegral() - integer);
         saveIntegral.setUpdatedAt(new Date());
-        boolean bool = integralService.updateById(saveIntegral);
-        if (!bool) {
-            throw new Exception("积分表更新失败!");
-        }
-
+        integralService.updateById(saveIntegral);
         IntegralLog integralLog = new IntegralLog();
         integralLog.setUseIntegral(integral.getUseIntegral() - integer);
         integralLog.setNoUseIntegral(integral.getNoUseIntegral() + integer);
@@ -243,7 +239,7 @@ public class IntegralBizImpl implements IntegralBiz {
         integralLog.setValue(integer);
         integralLog.setType("convert");
 
-        bool = integralLogService.insert(integralLog);
+        boolean bool = integralLogService.insert(integralLog);
         if (!bool) {
             throw new Exception("积分日志表插入失败!");
         } else {
