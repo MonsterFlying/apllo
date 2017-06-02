@@ -63,7 +63,7 @@ public class InvestServiceImpl implements InvestService {
                 .map(p -> p.getId())
                 .collect(Collectors.toList());
         //标Id集合
-        Set<Integer> borrowIdArrray = tenderList.stream()
+        Set<Long> borrowIdArrray = tenderList.stream()
                 .map(p -> p.getBorrowId())
                 .collect(Collectors.toSet());
         //期数集合
@@ -117,7 +117,7 @@ public class InvestServiceImpl implements InvestService {
         }
 
         //标ID集合
-        Set<Integer> borrowIdArrray = tenderList.stream()
+        Set<Long> borrowIdArrray = tenderList.stream()
                 .map(p -> p.getBorrowId())
                 .collect(Collectors.toSet());
 
@@ -158,7 +158,7 @@ public class InvestServiceImpl implements InvestService {
         if (CollectionUtils.isEmpty(tenderList)) {
             return Collections.EMPTY_LIST;
         }
-        Set<Integer> borrowIds = tenderList.stream()
+        Set<Long> borrowIds = tenderList.stream()
                 .map(p -> p.getBorrowId())
                 .collect(Collectors.toSet());
         List<Borrow> borrowList = borrowRepository.findByIdIn(new ArrayList(borrowIds));
