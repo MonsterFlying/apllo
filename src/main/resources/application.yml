@@ -47,7 +47,6 @@ gofobao:
   javaDomain: http://max.3w.dkys.org
   webDomain: http://ci.gofobao.com
   h5Domain: http://ci.gofobao.com
-debug: true
 logging:
   file: /Users/Max/logs/logback.log
   pattern:

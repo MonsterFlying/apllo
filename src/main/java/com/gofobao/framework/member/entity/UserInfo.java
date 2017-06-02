@@ -3,6 +3,7 @@ package com.gofobao.framework.member.entity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -15,10 +16,11 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@DynamicInsert
 public class UserInfo {
     @Id
     @Column(name = "user_id")
-    @GeneratedValue
+    // @GeneratedValue
     private Long userId ;
 
     @Basic
@@ -58,8 +60,8 @@ public class UserInfo {
     private boolean sex ;
 
     @Basic
-    @Column(name = "birth_day")
-    private Date birthDay ;
+    @Column(name = "birthday")
+    private Date birthday ;
 
     @Basic
     @Column(name = "qq")
@@ -90,12 +92,12 @@ public class UserInfo {
     private Integer industry ;
 
     @Basic
-    @Column(name = "emailStgraduationatus")
+    @Column(name = "graduation")
     private Integer graduation ;
 
     @Basic
-    @Column(name = "update_at")
-    private Date updateAt ;
+    @Column(name = "updated_at")
+    private Date updatedAt ;
 
     @Basic
     @Column(name = "birthday_y")
