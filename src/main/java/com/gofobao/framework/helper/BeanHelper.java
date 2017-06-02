@@ -22,7 +22,7 @@ public class BeanHelper {
      * @param source
      * @param target
      * @param excludeSet
-     * @param replace
+     * @param replace true 覆盖原有参数  false原参数有值不覆盖
      */
     public static void copyParamter(Object source, Object target, Set<String> excludeSet, boolean replace) {
         if (ObjectUtils.isEmpty(source) || ObjectUtils.isEmpty(target) || source.getClass() != target.getClass()) {

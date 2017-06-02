@@ -10,28 +10,21 @@ import java.io.Serializable;
 /**
  * Created by Zeke on 2017/5/31.
  */
-@AllArgsConstructor
-public class LeSpecification<T> implements Specification<T> {
-    private String property;
-    private final DataObject object;
+public class LeSpecification<T> extends BaseSpecification<T> {
+
+    protected String property;
+    protected DataObject dataObject;
+
+    public LeSpecification(String property, DataObject dataObject) {
+        this.property = property;
+        this.dataObject = dataObject;
+    }
 
     @Override
     public Predicate toPredicate(Root<T> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
         From from = this.getRoot(this.property, root);
         String field = this.getProperty(this.property);
-        return criteriaBuilder.lessThan(from.get(field),object.getVal());
+        return criteriaBuilder.lessThan(from.get(field), dataObject.getVal());
     }
 
-    public From getRoot(String property, Root<T> root) {
-        if(property.contains(".")) {
-            String joinProperty = StringUtils.split(property, ".")[0];
-            return root.join(joinProperty, JoinType.LEFT);
-        } else {
-            return root;
-        }
-    }
-
-    public String getProperty(String property) {
-        return property.contains(".")?StringUtils.split(property, ".")[1]:property;
-    }
 }

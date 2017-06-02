@@ -15,19 +15,16 @@ import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.repository.TenderRepository;
 import com.gofobao.framework.tender.service.TenderService;
-import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
-import org.springframework.data.domain.Range;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
-import javax.persistence.criteria.CriteriaBuilder;
 import java.util.*;
 
 /**

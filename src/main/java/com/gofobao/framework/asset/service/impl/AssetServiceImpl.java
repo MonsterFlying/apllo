@@ -11,29 +11,33 @@ import org.springframework.util.ObjectUtils;
  * Created by Zeke on 2017/5/19.
  */
 @Service
-public class AssetServiceImpl implements AssetService{
+public class AssetServiceImpl implements AssetService {
 
     @Autowired
     private AssetRepository assetRepository;
 
     /**
      * 根据id产寻资产
+     *
      * @param id
      * @return
      */
-    public Asset findByUserId(Long id){
+    public Asset findByUserId(Long id) {
         return assetRepository.findOne(id);
     }
 
-    public Asset findByUserIdLock(Long id){
+    public Asset findByUserIdLock(Long id) {
         return assetRepository.findByUserId(id);
     }
 
-    public Asset save(Asset asset){
+    public Asset save(Asset asset) {
         return assetRepository.save(asset);
     }
 
-    public Asset update(Asset asset){
-       return assetRepository.save(asset);
+    public Asset updateById(Asset asset) {
+        if (ObjectUtils.isEmpty(asset) || ObjectUtils.isEmpty(asset.getUserId())) {
+            return null;
+        }
+        return assetRepository.save(asset);
     }
 }

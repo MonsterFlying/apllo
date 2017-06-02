@@ -19,14 +19,14 @@ public class BorrowRepayment {
     @Column(name = "id")
     private Long id;
     @Basic
+    @Column(name = "borrow_id")
+    private Long borrowId;
+    @Basic
     @Column(name = "status")
     private Integer status;
     @Basic
     @Column(name = "order")
     private Integer order;
-    @Basic
-    @Column(name = "borrow_id")
-    private Long borrowId;
     @Basic
     @Column(name = "repay_money")
     private Integer repayMoney;

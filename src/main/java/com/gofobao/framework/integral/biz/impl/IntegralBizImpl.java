@@ -239,8 +239,8 @@ public class IntegralBizImpl implements IntegralBiz {
         integralLog.setValue(integer);
         integralLog.setType("convert");
 
-        boolean bool = integralLogService.insert(integralLog);
-        if (!bool) {
+        integralLog = integralLogService.insert(integralLog);
+        if (ObjectUtils.isEmpty(integralLog)) {
             throw new Exception("积分日志表插入失败!");
         } else {
             //调用即信发送红包接口

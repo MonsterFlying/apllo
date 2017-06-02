@@ -50,10 +50,6 @@ public class UserInfo {
     private String cardPic2;
 
     @Basic
-    @Column(name = "emailStatus")
-    private boolean email_status ;
-
-    @Basic
     @Column(name = "vip_expire_at")
     private Date vipExpireAt ;
 

@@ -11,7 +11,7 @@ import java.util.List;
 public interface IntegralLogService {
     List<IntegralLog> findListByUserId(Long userId, Pageable pageable);
 
-    boolean insert(IntegralLog integralLog);
+    IntegralLog insert(IntegralLog integralLog);
 
     boolean updateById(IntegralLog integralLog);
 }

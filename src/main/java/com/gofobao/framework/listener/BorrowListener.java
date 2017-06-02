@@ -45,9 +45,15 @@ public class BorrowListener {
             log.error("borrow listen 参数缺少");
         }
 
+        boolean bool = false;
         switch (type) {
             case FIRST_VERIFY:
-                if (borrowProvider.doFirstVerify(borrowId)){
+                try {
+                    bool = borrowProvider.doFirstVerify(borrowId);
+                } catch (Exception e) {
+                    log.error("初审异常:",e);
+                }
+                if (bool){
                     log.info("===========================borrow listen============================");
                     log.info("初审成功! borrowId："+borrowId);
                     log.info("====================================================================");
@@ -58,7 +64,13 @@ public class BorrowListener {
                 }
                 break;
             case AGAIN_VERIFY:
-                if (borrowProvider.doAgainVerify(borrowId)){
+                try {
+                    bool = borrowProvider.doAgainVerify(borrowId);
+                } catch (Exception e) {
+                    log.error("复审异常:",e);
+                }
+
+                if (bool){
                     log.info("===========================borrow listen============================");
                     log.info("复审成功! borrowId："+borrowId);
                     log.info("====================================================================");

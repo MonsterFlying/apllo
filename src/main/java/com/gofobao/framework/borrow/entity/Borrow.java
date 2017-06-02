@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
+import org.springframework.util.ObjectUtils;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -150,4 +151,12 @@ public class Borrow implements Serializable {
     @Basic
     @Column(name = "vparam3")
     private String vparam3;
+
+    /**
+     * 判断是否是转让标
+     * @return
+     */
+    public boolean isTransfer(){
+        return (this.type == 0) && (!ObjectUtils.isEmpty(tenderId)) && (tenderId > 0);
+    }
 }

@@ -19,5 +19,5 @@ public interface AssetService {
 
     Asset save(Asset asset);
 
-    Asset update(Asset asset);
+    Asset updateById(Asset asset);
 }
