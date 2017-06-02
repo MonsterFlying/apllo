@@ -24,7 +24,7 @@ public class AssetLogController {
     @Autowired
     private AssetLogService assetLogService;
 
-    @RequestMapping("list")
+    @RequestMapping("/v2/list")
     public List<VoViewAssetLogRes> assetLogResList(@ModelAttribute VoAssetLog voAssetLog) {
 
         List<VoViewAssetLogRes> resList=new ArrayList<>();

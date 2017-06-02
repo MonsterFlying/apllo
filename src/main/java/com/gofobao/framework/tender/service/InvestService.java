@@ -1,9 +1,12 @@
 package com.gofobao.framework.tender.service;
 
+import com.gofobao.framework.tender.vo.request.VoDetailReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;
+import com.gofobao.framework.tender.vo.request.VoViewReturnedMoney;
 import com.gofobao.framework.tender.vo.response.VoViewBackMoney;
 import com.gofobao.framework.tender.vo.response.VoViewBiddingRes;
 import com.gofobao.framework.tender.vo.response.VoViewSettleRes;
+import com.gofobao.framework.tender.vo.response.VoViewTenderDetail;
 
 import java.util.List;
 
@@ -34,10 +37,18 @@ public interface InvestService {
     List<VoViewSettleRes> settleList(VoInvestListReq voInvestListReq);
 
 
+    /**
+     * 已结清 and 回款中 详情
+     * @param voDetailReq
+     * @return
+     */
+    VoViewTenderDetail  tenderDetail(VoDetailReq voDetailReq);
 
-
-
-
-
+    /**
+     * 回款详情
+     * @param voDetailReq
+     * @return
+     */
+    VoViewReturnedMoney infoList(VoDetailReq voDetailReq);
 
 }

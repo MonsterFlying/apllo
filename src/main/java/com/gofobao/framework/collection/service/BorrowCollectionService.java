@@ -22,7 +22,6 @@ public interface BorrowCollectionService {
      *回款详情
      */
 
-
     VoViewOrderDetailRes orderDetail(VoOrderDetailReq voOrderDetailReq);
 
 }

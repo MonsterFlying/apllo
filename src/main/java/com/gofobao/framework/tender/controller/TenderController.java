@@ -35,7 +35,7 @@ public class TenderController {
     private TenderBiz tenderBiz;
 
     @ApiOperation("投标用户列表")
-    @PostMapping("/user/list")
+    @PostMapping("/v2/user/list")
     public List<VoBorrowTenderUserRes> findBorrowTenderUser(@ModelAttribute VoBorrowByIdReq req) {
         List<VoBorrowTenderUserRes> tenderUserResList=new ArrayList<>();
         try {
@@ -47,7 +47,7 @@ public class TenderController {
     }
 
     @ApiOperation("借款投标")
-    @PostMapping("/create")
+    @PostMapping("/v2/create")
     public ResponseEntity<VoBaseResp> tender(@ModelAttribute @Valid VoCreateTenderReq voCreateTenderReq , @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         voCreateTenderReq.setUserId(userId);
         return tenderBiz.tender(voCreateTenderReq);

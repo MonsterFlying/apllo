@@ -25,7 +25,7 @@ public class PaymentController {
     @Autowired
     private BorrowCollectionService borrowCollectionService;
     @ApiOperation("回款期数列表")
-    @GetMapping("/order/list/{time}")
+    @GetMapping("/v2/order/list/{time}")
     public ResponseEntity<VoViewCollectionOrderListRes> collectionOrderList(@PathVariable("time") String time,
                                                                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoCollectionOrderReq voCollectionOrderReq = new VoCollectionOrderReq();
@@ -43,7 +43,7 @@ public class PaymentController {
     }
 
     @ApiOperation("回款详情")
-    @GetMapping("/order/detail/{collectionId}")
+    @GetMapping("/v2/order/detail/{collectionId}")
     public ResponseEntity<VoViewOrderDetailRes> orderDetail(@PathVariable("collectionId") Long collectionId,
                                                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoOrderDetailReq voOrderDetailReq = new VoOrderDetailReq();

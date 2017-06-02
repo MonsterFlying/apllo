@@ -25,6 +25,6 @@ public interface BorrowRepository extends JpaRepository<Borrow,Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Borrow findById(Long borrowId);
 
-
     List<Borrow>findByIdIn(List<Integer> ids);
+
 }

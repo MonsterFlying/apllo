@@ -21,15 +21,25 @@ public class TenderConstans {
      */
     public static final Integer BIDDING=1;
 
+    public static final String BIDDING_STR="投标中";
+
+
     /**
      * 回款中
      */
     public static final Integer BACK_MONEY=2;
 
+
+    public static final String BACK_MONEY_STR="投标中";
+
+
     /**
      * 已结清
      */
     public static final Integer SETTLE =3;
+
+
+    public static final String SETTLE_STR="已结清";
 
 
     /**
@@ -48,6 +58,9 @@ public class TenderConstans {
      * 已转让
      */
     public static final Integer TRANSFER_YES=2;
+
+
+
 
 
 
