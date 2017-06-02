@@ -12,7 +12,7 @@ public class BorrowHelper {
      * @param borrowName
      * @return
      */
-    public static String getBorrowLink(int borrowId, String borrowName) {
+    public static String getBorrowLink(Long borrowId, String borrowName) {
         return "<a href=\"/borrow/" + borrowId + "\" target=\"_blank\">" + borrowName + "</a>";
     }
 

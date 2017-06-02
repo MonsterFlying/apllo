@@ -159,4 +159,12 @@ public class Borrow implements Serializable {
     public boolean isTransfer(){
         return (this.type == 0) && (!ObjectUtils.isEmpty(tenderId)) && (tenderId > 0);
     }
+
+    /**
+     * 获取借款总期数
+     * @return
+     */
+    public Integer getTotalOrder() {
+        return this.repayFashion == 1 ? 1 : this.getTimeLimit();
+    }
 }
