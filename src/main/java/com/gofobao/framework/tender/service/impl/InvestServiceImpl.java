@@ -9,6 +9,8 @@ import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.repository.BorrowCollectionRepository;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.repository.InvestRepository;
@@ -145,8 +147,17 @@ public class InvestServiceImpl implements InvestService {
             } else {
                 voViewBiddingRes.setTimeLimit(timeLimit + BorrowContants.MONTH);
             }
-            voViewBiddingRes.setApr(NumberHelper.to2DigitString(borrow.getApr()));
-            voViewBiddingRes.setMoney(NumberHelper.to2DigitString(p.getValidMoney() / 100));
+            Integer validMoney = p.getValidMoney();
+            Integer apr = borrow.getApr();
+
+            //预期收益
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(validMoney / 100D, apr / 100D, borrow.getTimeLimit(), borrow.getSuccessAt());
+            Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
+            Integer earnings = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("earnings")));
+
+            voViewBiddingRes.setExpectEarnings(NumberHelper.to2DigitString(earnings / 100));
+            voViewBiddingRes.setApr(NumberHelper.to2DigitString(apr / 100));
+            voViewBiddingRes.setMoney(NumberHelper.to2DigitString(validMoney / 100));
             voViewBiddingRes.setBorrowName(borrow.getName());
             viewBiddingResList.add(voViewBiddingRes);
         });
@@ -295,6 +306,7 @@ public class InvestServiceImpl implements InvestService {
 
     /**
      * 回款详情
+     *
      * @param voDetailReq
      * @return
      */
