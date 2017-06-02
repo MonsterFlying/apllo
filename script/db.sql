@@ -72,4 +72,5 @@ CREATE TABLE `gfb_user_third_account` (
 -- ----------------------------
 INSERT INTO `gfb_user_third_account` VALUES ('1', '901', '6212462040000050015', '崔灿', '1', '6222988812340046', '1', '342224198405191617', '18949830519', '2', '0', '1', '2017-05-23 14:15:07', '2017-05-23 14:15:07', '901', null, '0', null, null);
 
-
+# 统计表添加自增字段
+ALTER TABLE gfb_statistic ADD id INT NULL PRIMARY KEY AUTO_INCREMENT;
