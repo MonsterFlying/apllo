@@ -4,11 +4,13 @@ import com.gofobao.framework.lend.entity.Lend;
 import com.gofobao.framework.lend.repository.LendRepository;
 import com.gofobao.framework.lend.service.LendService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
 /**
  * Created by Zeke on 2017/6/1.
  */
+@Service
 public class LendServiceImpl implements LendService {
 
     @Autowired

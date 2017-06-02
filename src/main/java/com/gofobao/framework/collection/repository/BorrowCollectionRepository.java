@@ -13,5 +13,5 @@ import java.util.List;
 @Repository
 public interface BorrowCollectionRepository extends  JpaRepository<BorrowCollection,Long>,JpaSpecificationExecutor<BorrowCollection> {
 
-        List<BorrowCollection> findByInTenderId(List<Long> tenderId);
+        List<BorrowCollection> findByTenderIdIn(List<Long> tenderId);
 }
