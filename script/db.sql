@@ -62,15 +62,14 @@ CREATE TABLE `gfb_user_third_account` (
   `create_id` int(11) DEFAULT '0',
   `update_id` int(11) DEFAULT '0',
   `del` int(11) DEFAULT NULL COMMENT '0，有效， 1.无效',
-  `auto_tender_order_id` varchar(255) DEFAULT NULL,
-  `auto_transfer_bond_order_id` varchar(255) DEFAULT NULL,
+  `auto_tender_order_id` varchar(255) DEFAULT NULL COMMENT '自动投标签约订单号',
+  `auto_tender_tx_amount` int(12) DEFAULT '0' COMMENT '单笔投标金额的上限',
+  `auto_tender_tot_amount` int(12) DEFAULT '0' COMMENT '自动投标总金额上限',
+  `auto_transfer_bond_order_id` varchar(255) DEFAULT NULL COMMENT '自动债券转让签约单号',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COMMENT='银行电子账户标';
 
--- ----------------------------
--- Records of gfb_user_third_account
--- ----------------------------
-INSERT INTO `gfb_user_third_account` VALUES ('1', '901', '6212462040000050015', '崔灿', '1', '6222988812340046', '1', '342224198405191617', '18949830519', '2', '0', '1', '2017-05-23 14:15:07', '2017-05-23 14:15:07', '901', null, '0', null, null);
+INSERT INTO `gfb_user_third_account` VALUES ('1', '901', '6212462040000050015', '崔灿', '1', '6222988812340046', '1', '342224198405191617', '18949830519', '2', '0', '1', '2017-05-23 14:15:07', '2017-05-23 14:15:07', '901', null, '0', null, null, null, null);
 
 # 统计表添加自增字段
 ALTER TABLE gfb_statistic ADD id INT NULL PRIMARY KEY AUTO_INCREMENT;

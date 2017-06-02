@@ -7,5 +7,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
  */
 public interface InvestRepository extends JpaRepository<Tender,Long> ,JpaSpecificationExecutor <Tender> {
 
+    Tender findByIdAndUserId(Long tenderId,Long userId);
 
 }

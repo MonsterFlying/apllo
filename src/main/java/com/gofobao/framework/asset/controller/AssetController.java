@@ -22,7 +22,7 @@ public class AssetController {
     private AssetBiz assetBiz;
 
     @ApiOperation("获取用户资产信息")
-    @PostMapping("/asset/info")
+    @PostMapping("v2/asset/info")
     public ResponseEntity<VoUserAssetInfoResp> userAssetInfo(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return assetBiz.userAssetInfo(userId);
     }

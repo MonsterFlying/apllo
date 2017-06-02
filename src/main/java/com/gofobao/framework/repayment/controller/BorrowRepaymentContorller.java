@@ -25,7 +25,7 @@ public class BorrowRepaymentContorller {
     @Autowired
     private BorrowRepaymentService borrowRepaymentService;
 
-    @RequestMapping("/list/{time}")
+    @RequestMapping("/v2/list/{time}")
     @ApiOperation("还款计划列表")
     public ResponseEntity<VoViewCollectionOrderListRes> listRes(@PathVariable("time") String time,
                                                                 @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
@@ -43,7 +43,7 @@ public class BorrowRepaymentContorller {
         }
     }
 
-    @RequestMapping("/info/{repaymentId}")
+    @RequestMapping("/v2/info/{repaymentId}")
     @ApiOperation("还款计划列表")
     public ResponseEntity<VoViewOrderDetailRes> info(@PathVariable("repaymentId") String repaymentId,
                                                      @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {

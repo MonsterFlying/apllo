@@ -271,7 +271,7 @@ public class BorrowProvider {
                     borrowRepayment.setAdvanceMoneyYes(0);
                     borrowRepayment.setLateDays(0);
                     borrowRepayment.setLateInterest(0);
-                    //borrowRepaymentMapper.insertSelective(borrowRepayment);
+                    //borrowRepaymentService.i(borrowRepayment);
                 }
             }
 
