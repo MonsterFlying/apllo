@@ -1,6 +1,7 @@
 package com.gofobao.framework.integral.entity;
 
 import lombok.Data;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -10,6 +11,7 @@ import java.util.Date;
  */
 @Data
 @Entity
+@DynamicInsert
 @Table(name = "gfb_integral_log")
 public class IntegralLog {
     @Id

@@ -3,6 +3,7 @@ package com.gofobao.framework.asset.entity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -17,6 +18,7 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@DynamicInsert
 public class AssetLog {
 
 
@@ -64,7 +66,7 @@ public class AssetLog {
 
     @Basic
     @Column(name = "to_user_id")
-    private Integer toUserId;
+    private Long toUserId;
 
     @Basic
     @Column(name = "remark")

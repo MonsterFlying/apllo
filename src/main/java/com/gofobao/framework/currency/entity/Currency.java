@@ -1,6 +1,7 @@
 package com.gofobao.framework.currency.entity;
 
 import lombok.Data;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
@@ -12,6 +13,7 @@ import java.util.Date;
 @Data
 @Entity
 @Table(name = "gfb_currency")
+@DynamicInsert
 public class Currency {
     @Id
     @Column(name = "user_id")

@@ -53,7 +53,7 @@ public class BorrowServiceImpl implements BorrowService {
          * 排序
          */
         Sort sort = null;
-        if (!StringUtils.isEmpty(voBorrowListReq.getType())&&voBorrowListReq.getType() != BorrowContants.INDEX_TYPE_CE_DAI) {
+        if (!StringUtils.isEmpty(voBorrowListReq.getType()) && voBorrowListReq.getType() != BorrowContants.INDEX_TYPE_CE_DAI) {
             sort = new Sort(
                     new Sort.Order(Sort.Direction.DESC, "status,successAt,id"));
         }
@@ -79,14 +79,14 @@ public class BorrowServiceImpl implements BorrowService {
         if (StringUtils.isEmpty(voBorrowListReq.getType())) {//全部
             borrowLists.sort((o1, o2) -> {
                 if (o1.getMoneyYes() / o1.getMoney() == o2.getMoneyYes() / o2.getMoney()) {
-                    return  o2.getId().intValue()-o1.getId().intValue();
+                    return o2.getId().intValue() - o1.getId().intValue();
                 } else {
-                    return  o2.getMoneyYes() / o2.getMoney()-o1.getMoneyYes() / o1.getMoney() ;
+                    return o2.getMoneyYes() / o2.getMoney() - o1.getMoneyYes() / o1.getMoney();
                 }
             });
-        }else if(voBorrowListReq.getType()==BorrowContants.INDEX_TYPE_CE_DAI){  //车贷
-            Comparator<Borrow> c= Comparator.comparing(p->p.getStatus());
-            c.thenComparing(b->b.getMoney()/b.getMoneyYes()).reversed().thenComparing(w->w.getSuccessAt()).thenComparing(w->w.getId());
+        } else if (voBorrowListReq.getType() == BorrowContants.INDEX_TYPE_CE_DAI) {  //车贷
+            Comparator<Borrow> c = Comparator.comparing(p -> p.getStatus());
+            c.thenComparing(b -> b.getMoney() / b.getMoneyYes()).reversed().thenComparing(w -> w.getSuccessAt()).thenComparing(w -> w.getId());
             borrowLists.sort(c);
         }
         Optional<List<Borrow>> objBorrow = Optional.ofNullable(borrowLists);
@@ -115,9 +115,9 @@ public class BorrowServiceImpl implements BorrowService {
                         status = 4; //已完成
                     }
                     if (status == BorrowContants.BIDDING) {//发标中
-                       Integer validDay = m.getValidDay();
-                       Date endAt = DateHelper.addDays(DateHelper.beginOfDate(m.getReleaseAt()), (validDay + 1));
-                        if (new Date().getTime() >endAt.getTime()) {  //当前时间大于满标时间
+                        Integer validDay = m.getValidDay();
+                        Date endAt = DateHelper.addDays(DateHelper.beginOfDate(m.getReleaseAt()), (validDay + 1));
+                        if (new Date().getTime() > endAt.getTime()) {  //当前时间大于满标时间
                             status = 5; //已过期
                         } else {
                             status = 3; //招标中
@@ -188,27 +188,70 @@ public class BorrowServiceImpl implements BorrowService {
     }
 
 
-    public long countByUserIdAndStatusIn(Long userId,List<Integer> statusList){
-        return borrowRepository.countByUserIdAndStatusIn(userId,statusList);
+    public long countByUserIdAndStatusIn(Long userId, List<Integer> statusList) {
+        return borrowRepository.countByUserIdAndStatusIn(userId, statusList);
     }
 
-    public boolean insert(Borrow borrow){
-        if (ObjectUtils.isEmpty(borrow)){
+    public boolean insert(Borrow borrow) {
+        if (ObjectUtils.isEmpty(borrow)) {
             return false;
         }
         borrow.setId(null);
         return !ObjectUtils.isEmpty(borrowRepository.save(borrow));
     }
 
-    public boolean updateById(Borrow borrow){
-        if (ObjectUtils.isEmpty(borrow) || ObjectUtils.isEmpty(borrow.getId())){
+    public boolean updateById(Borrow borrow) {
+        if (ObjectUtils.isEmpty(borrow) || ObjectUtils.isEmpty(borrow.getId())) {
             return false;
         }
         return !ObjectUtils.isEmpty(borrowRepository.save(borrow));
     }
 
-    public Borrow findByIdLock(Long borrowId){
+    public Borrow findByIdLock(Long borrowId) {
         return borrowRepository.findById(borrowId);
+    }
+
+    /**
+     * 检查是否招标中
+     *
+     * @param borrow
+     * @return
+     */
+    public boolean checkBidding(Borrow borrow) {
+        if (ObjectUtils.isEmpty(borrow)) {
+            return false;
+        }
+        return (borrow.getStatus() == 1 && borrow.getMoneyYes() < borrow.getMoney());
+    }
+
+    /**
+     * 检查是否在发布时间内
+     *
+     * @param borrow
+     * @return
+     */
+    public boolean checkReleaseAt(Borrow borrow) {
+        Date releaseAt = borrow.getReleaseAt();
+        if (ObjectUtils.isEmpty(borrow) || ObjectUtils.isEmpty(releaseAt)) {
+            return false;
+        }
+        return new Date().getTime() > releaseAt.getTime();
+    }
+
+    /**
+     * 检查招标时间是否有效
+     *
+     * @param borrow
+     * @return
+     */
+    public boolean checkValidDay(Borrow borrow) {
+        Date nowDate = new Date();
+        Date validDate = DateHelper.beginOfDate(DateHelper.addDays(borrow.getReleaseAt(), borrow.getValidDay() + 1));
+        return (nowDate.getTime() < validDate.getTime());
+    }
+
+    public Borrow findById(Long borrowId){
+        return borrowRepository.findOne(borrowId);
     }
 
 

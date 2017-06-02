@@ -4,7 +4,9 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.vo.request.VoBorrowByIdReq;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.response.VoBorrowByIdRes;
+import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListRes;
+import org.springframework.data.domain.Example;
 
 import java.util.List;
 
@@ -24,5 +26,29 @@ public interface BorrowService {
     boolean updateById(Borrow borrow);
 
     Borrow findByIdLock(Long borrowId);
+
+
+    Borrow findById(Long borrowId);
+
+    /**
+     * 检查是否招标中
+     * @param borrow
+     * @return
+     */
+    boolean checkBidding(Borrow borrow);
+
+    /**
+     * 检查是否在发布时间内
+     * @param borrow
+     * @return
+     */
+    boolean checkReleaseAt(Borrow borrow);
+
+    /**
+     * 检查招标时间是否有效
+     * @param borrow
+     * @return
+     */
+    boolean checkValidDay(Borrow borrow);
 
 }

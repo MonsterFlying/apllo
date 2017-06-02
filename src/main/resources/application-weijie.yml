@@ -1,8 +1,8 @@
 spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
-    url: jdbc:mysql://120.27.31.182:3306/gofobao9?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&&useSSL=true
-    username: gofobao9
+    url: jdbc:mysql://192.168.1.3:3306/gofobao0524?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&&useSSL=true
+    username: gofobao0524
     password: GOFOBAO@0701.
     driver-class-name: com.mysql.jdbc.Driver
   jpa:
@@ -25,7 +25,7 @@ spring:
     password: gofobao
 
 server:
-  port: 8010
+  port: 8080
 jwt: #JWT 安全配置
   header: Authorization
   secret: WWW.gOf0b@o.c0m@0701
@@ -33,9 +33,9 @@ jwt: #JWT 安全配置
   prefix: Bearer
 
 jixin: #银行存管
-  keysPath: D:/sign/guangfubao_sit.p12 #私钥路径
+  keysPath: /Users/Max/certs/guangfubao_sit.p12 #私钥路径
   keysPassword: guangfubao_sit@2016 #私钥密码
-  crtPath: D:/sign/certs/fdep.crt #服务端证书文件路径
+  crtPath: /Users/Max/certs/fdep.crt #服务端证书文件路径
   url: https://test.credit2go.cn #即信服务器路径
   version: 10 #版本号
   instCode: "00960001" #机构代码
@@ -47,7 +47,9 @@ gofobao:
   javaDomain: http://max.3w.dkys.org
   webDomain: http://ci.gofobao.com
   h5Domain: http://ci.gofobao.com
-debug: true
+  captcha: false # 全站是否开启图形验证码验证
+  close-email-send: true # 关闭邮箱发送
+  close-phone-send: true # 关闭短信发送
 logging:
   file: /Users/Max/logs/logback.log
   pattern:

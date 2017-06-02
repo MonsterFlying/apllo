@@ -40,7 +40,21 @@ public enum JixinTxCodeEnum {
      */
     SEND_RED_PACKET(
             "voucherPay",
-            "/escrow/p2p/online");
+            "/escrow/p2p/online"),
+
+    /**
+     * 标的登记
+     */
+    DEBT_REGISTER(
+            "debtRegister",
+                    "/escrow/p2p/online"),
+
+    /**
+     * 自动投标申请
+     */
+    BID_AUTO_APPLY(
+            "bidAutoApply",
+                    "/escrow/p2p/online");
 
     private String value;
     private String url;

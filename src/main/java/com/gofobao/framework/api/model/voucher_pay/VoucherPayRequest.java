@@ -17,9 +17,9 @@ public class VoucherPayRequest extends JixinBaseRequest{
      */
     private String accountId;
     /**
-     * 交易金额 红包金额
+     * 交易金额 红包金额  12,2
      */
-    private Long txAmount;
+    private String txAmount;
     /**
      * 对手电子账号  接收方账号
      */

@@ -1,8 +1,8 @@
 spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
-    url: jdbc:mysql://120.27.31.182:3306/gofobao9?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&&useSSL=true
-    username: gofobao9
+    url: jdbc:mysql://192.168.1.3:3306/gofobao0524?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&&useSSL=true
+    username: gofobao0524
     password: GOFOBAO@0701.
     driver-class-name: com.mysql.jdbc.Driver
   jpa:
@@ -47,7 +47,9 @@ gofobao:
   javaDomain: http://max.3w.dkys.org
   webDomain: http://ci.gofobao.com
   h5Domain: http://ci.gofobao.com
-debug: true
+  captcha: false # 全站是否开启图形验证码验证
+  close-email-send: true # 关闭邮箱发送
+  close-phone-send: true # 关闭短信发送
 logging:
   file: /Users/Max/logs/logback.log
   pattern:

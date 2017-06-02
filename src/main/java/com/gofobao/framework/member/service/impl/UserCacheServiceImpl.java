@@ -29,18 +29,7 @@ public class UserCacheServiceImpl implements UserCacheService{
         return userCacheRepository.findByUserId(userId);
     }
 
-    public boolean insert(UserCache userCache){
-        if (ObjectUtils.isEmpty(userCache)){
-            return false;
-        }
-        userCache.setUserId(null);
-        return !ObjectUtils.isEmpty(userCacheRepository.save(userCache));
-    }
+    public UserCache save(UserCache userCache){ return userCacheRepository.save(userCache); }
 
-    public boolean updateById(UserCache userCache){
-        if (ObjectUtils.isEmpty(userCache) || ObjectUtils.isEmpty(userCache.getUserId())){
-            return false;
-        }
-        return !ObjectUtils.isEmpty(userCacheRepository.save(userCache));
-    }
+    public UserCache updateById(UserCache userCache){ return userCacheRepository.save(userCache); }
 }

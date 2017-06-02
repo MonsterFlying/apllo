@@ -36,10 +36,6 @@ public class UserServiceImpl implements UserDetailsService, UserService{
     @Autowired
     private UsersRepository userRepository;
 
-    // @Value("${gofobao.callBack}")
-    public String callBack;
-
-
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Users user = findByAccount(username);
@@ -72,39 +68,6 @@ public class UserServiceImpl implements UserDetailsService, UserService{
         return userRepository.findOne(id);
     }
 
-    /**
-     * 注册用户
-     * @param voRegisterReq
-     * @return
-     */
-    public VoRegisterResp register(VoRegisterReq voRegisterReq){
-        AccountOpenPlusRequest request = new AccountOpenPlusRequest();
-        request.setIdType(IdTypeContant.ID_CARD);
-        request.setChannel(voRegisterReq.getChannel());
-        request.setSeqNo(RandomHelper.generateNumberCode(6));
-        request.setIdType(IdTypeContant.ID_CARD);
-        request.setCardNo(voRegisterReq.getCardNo());
-        request.setIdNo(voRegisterReq.getCardId());
-        request.setName(voRegisterReq.getUsername());
-        request.setMobile(voRegisterReq.getMobile());
-        request.setAcctUse(AcctUseContant.GENERAL_ACCOUNT);
-
-        try {
-            //openHttp.postForm(OpenMethodContant.OPEN_USER,request);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    /**
-     * 注册用户回调
-     * @param voRegisterCallReq
-     * @return
-     */
-    public VoRegisterCallResp registerCallBack(VoRegisterCallReq voRegisterCallReq){
-        return null;
-    }
 
     @Override
     public boolean notExistsByPhone(String phone) {
@@ -146,4 +109,39 @@ public class UserServiceImpl implements UserDetailsService, UserService{
     public Users findByIdLock(Long userId){
         return userRepository.findById(userId);
     }
+
+    @Override
+    public boolean notExistsByUserName(String userName) {
+       List<Users> users = userRepository.findByUsername(userName) ;
+       return CollectionUtils.isEmpty(users) ;
+    }
+
+    @Override
+    public Users findByInviteCode(String inviteCode) {
+        List<Users> users = userRepository.findByInviteCode(inviteCode) ;
+        if(CollectionUtils.isEmpty(users)){
+            return null ;
+        }else{
+            return users.get(0) ;
+        }
+
+    }
+
+    @Override
+    public Users save(Users users) {
+        return userRepository.save(users);
+    }
+
+    /**
+     * 检查是否实名
+     * @param users
+     * @return
+     */
+    public boolean checkRealname(Users users){
+        if (ObjectUtils.isEmpty(users)){
+            return false;
+        }
+        return !(ObjectUtils.isEmpty(users.getCardId()) || ObjectUtils.isEmpty(users.getUsername()));
+    }
+
 }

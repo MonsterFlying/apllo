@@ -3,6 +3,7 @@ package com.gofobao.framework.member.entity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
@@ -13,6 +14,7 @@ import java.util.Date;
  */
 @Data
 @Entity
+@DynamicInsert
 @Table(name = "gfb_user_third_account")
 @NoArgsConstructor
 @AllArgsConstructor
@@ -81,6 +83,22 @@ public class UserThirdAccount {
     @Basic
     @Column(name = "update_id")
     private Long updateId;
+
+    @Basic
+    @Column(name = "auto_tender_tx_amount")
+    private Long autoTenderTxAmount;
+
+    @Basic
+    @Column(name = "auto_tender_tot_amount")
+    private Long autoTenderTotAmount;
+
+    @Basic
+    @Column(name = "auto_tender_order_id")
+    private String autoTenderOrderId;
+
+    @Basic
+    @Column(name = "auto_transfer_bond_order_id")
+    private String autoTransferBondOrderId;
 
     @Basic
     @Column(name = "del")

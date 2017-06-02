@@ -12,7 +12,7 @@ public interface IntegralService {
 
     Integral findByUserIdLock(Long userId);
 
-    boolean insert(Integral integral);
+    Integral save(Integral integral);
 
-    boolean updateById(Integral integral);
+    Integral updateById(Integral integral);
 }

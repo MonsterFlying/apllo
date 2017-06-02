@@ -24,18 +24,11 @@ public class IntegralServiceImpl implements IntegralService {
         return integralRepository.findOne(userId);
     }
 
-    public boolean insert(Integral integral){
-        if (ObjectUtils.isEmpty(integral)){
-            return false;
-        }
-        integral.setUserId(null);
-        return !ObjectUtils.isEmpty(integralRepository.save(integral));
+    public Integral save(Integral integral){
+        return integralRepository.save(integral);
     }
 
-    public boolean updateById(Integral integral){
-        if (ObjectUtils.isEmpty(integral) || ObjectUtils.isEmpty(integral.getUserId())){
-            return false;
-        }
-        return !ObjectUtils.isEmpty(integralRepository.save(integral));
+    public Integral updateById(Integral integral){
+        return integralRepository.save(integral);
     }
 }

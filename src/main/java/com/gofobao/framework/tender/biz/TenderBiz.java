@@ -4,9 +4,24 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import org.springframework.http.ResponseEntity;
 
+import java.util.Map;
+
 /**
  * Created by Zeke on 2017/5/31.
  */
 public interface TenderBiz {
-    ResponseEntity<VoBaseResp> createTender(VoCreateTenderReq voCreateTenderReq);
+    /**
+     * 创建投标
+     * @param voCreateTenderReq
+     * @return
+     * @throws Exception
+     */
+    Map<String,Object> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception;
+
+    /**
+     * 投标
+     * @param voCreateTenderReq
+     * @return
+     */
+    ResponseEntity<VoBaseResp> tender(VoCreateTenderReq voCreateTenderReq);
 }

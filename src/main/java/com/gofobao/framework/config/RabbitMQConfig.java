@@ -26,10 +26,19 @@ public class RabbitMQConfig {
         return new Queue(MqQueueEnum.RABBITMQ_AUTO_TENDER.getValue()) ;
     }
 
+    @Bean
+    public Queue borrowRabbitmq(){
+        return new Queue(MqQueueEnum.RABBITMQ_BORROW.getValue()) ;
+    }
 
     @Bean
     public Queue noticeRabbitmq(){
         return new Queue(MqQueueEnum.RABBITMQ_NOTICE.getValue()) ;
+    }
+
+    @Bean
+    public Queue userActiveRabbitmq(){
+        return new Queue(MqQueueEnum.RABBITMQ_USER_ACTIVE.getValue()) ;
     }
 
 }

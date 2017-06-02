@@ -7,8 +7,9 @@ public enum MqQueueEnum {
     RABBITMQ_SMS(MqQueueEnumContants.RABBITMQ_SMS),
     RABBITMQ_EMAIL(MqQueueEnumContants.RABBITMQ_EMAIL),
     RABBITMQ_AUTO_TENDER(MqQueueEnumContants.RABBITMQ_AUTO_TENDER),
-    RABBITMQ_NOTICE(MqQueueEnumContants.RABBITMQ_NOTICE) ;
-
+    RABBITMQ_NOTICE(MqQueueEnumContants.RABBITMQ_NOTICE) ,
+    RABBITMQ_BORROW(MqQueueEnumContants.RABBITMQ_BORROW) ,
+    RABBITMQ_USER_ACTIVE(MqQueueEnumContants.RABBITMQ_USER_ACTIVE) ;
 
     private String value ;
 

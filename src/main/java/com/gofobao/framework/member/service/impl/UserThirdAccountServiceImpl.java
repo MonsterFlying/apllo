@@ -19,6 +19,9 @@ public class UserThirdAccountServiceImpl implements UserThirdAccountService {
 
     @Override
     public UserThirdAccount findByUserId(Long id) {
+        if (ObjectUtils.isEmpty(id)){
+            return null;
+        }
         UserThirdAccount example = new UserThirdAccount();
         example.setUserId(id);
         example.setDel(0);

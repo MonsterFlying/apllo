@@ -5,7 +5,6 @@ import com.gofobao.framework.api.contants.DesLineFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
-import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusResponse;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.asset.entity.Asset;
@@ -14,6 +13,7 @@ import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.integral.biz.IntegralBiz;
 import com.gofobao.framework.integral.entity.Integral;
@@ -250,15 +250,15 @@ public class IntegralBizImpl implements IntegralBiz {
             //调用即信发送红包接口
             VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
             voucherPayRequest.setAccountId(redPacketAccountId);
-            voucherPayRequest.setTxAmount(money);
+            voucherPayRequest.setTxAmount(StringHelper.formatDouble(money , 100,false));
             voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
             voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
             voucherPayRequest.setDesLine("用户积分兑换");
             voucherPayRequest.setChannel(ChannelContant.HTML);
             VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
-            if((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))){
-                String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试": response.getRetMsg() ;
-                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg)) ;
+            if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+                String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
             }
         }
         return ResponseEntity.ok(VoBaseResp.ok("积分折现成功!"));
