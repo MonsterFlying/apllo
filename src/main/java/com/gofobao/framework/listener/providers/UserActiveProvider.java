@@ -43,7 +43,6 @@ public class UserActiveProvider {
         // 赠送用户体验金
         awardVirtualMoney(userId, 1000);
 
-        // 渠道用户送流量券
 
         // 增加统计
         IncrStatistic incrStatistic = new IncrStatistic() ;
@@ -67,5 +66,6 @@ public class UserActiveProvider {
         entity.setMoney(money * 100);
         entity.setRemark("赠送体验金");
         capitalChangeHelper.capitalChange(entity);
+        log.info("award virtualMoney success");
     }
 }

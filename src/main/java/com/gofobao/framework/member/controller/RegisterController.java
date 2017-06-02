@@ -30,8 +30,7 @@ public class RegisterController {
 
     @ApiOperation("用户注册")
     @PostMapping(value = "/v2/register")
-    public ResponseEntity<VoBaseResp> register(HttpServletRequest request, VoRegisterReq voRegisterReq)throws  Exception{
-       return userBiz.register(request, voRegisterReq) ;
-
+    public ResponseEntity<VoBaseResp> register(HttpServletRequest request, VoRegisterReq voRegisterReq) throws Exception{
+        return userBiz.register(request, voRegisterReq) ;
     }
 }
