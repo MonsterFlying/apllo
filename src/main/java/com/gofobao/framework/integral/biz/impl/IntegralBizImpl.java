@@ -230,11 +230,7 @@ public class IntegralBizImpl implements IntegralBiz {
         saveIntegral.setNoUseIntegral(integral.getNoUseIntegral() + integer);
         saveIntegral.setUseIntegral(integral.getUseIntegral() - integer);
         saveIntegral.setUpdatedAt(new Date());
-        saveIntegral = integralService.updateById(saveIntegral);
-        if (ObjectUtils.isEmpty(saveIntegral)) {
-            throw new Exception("积分表更新失败!");
-        }
-
+        integralService.updateById(saveIntegral);
         IntegralLog integralLog = new IntegralLog();
         integralLog.setUseIntegral(integral.getUseIntegral() - integer);
         integralLog.setNoUseIntegral(integral.getNoUseIntegral() + integer);

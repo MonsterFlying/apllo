@@ -493,11 +493,9 @@ public class ClassHelper {
                         e.printStackTrace();
                     }
 
-
                     if(ObjectUtils.isEmpty(pd)){
                         return null ;
                     }
-
 
                     field.setAccessible(true);
                     Method readMethod = pd.getReadMethod();
