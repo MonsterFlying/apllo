@@ -20,9 +20,9 @@ spring:
     port: 6379
   rabbitmq:
     host: 127.0.0.1
-    port: 5672
-    username: gofobao
-    password: gofobao
+    port: 15672
+    username: wangguo
+    password: wangguo123
 
 server:
   port: 8010
@@ -47,9 +47,6 @@ gofobao:
   javaDomain: http://max.3w.dkys.org
   webDomain: http://ci.gofobao.com
   h5Domain: http://ci.gofobao.com
-  captcha: false # 全站是否开启图形验证码验证
-  close-email-send: true # 关闭邮箱发送
-  close-phone-send: true # 关闭短信发送
 logging:
   file: /Users/Max/logs/logback.log
   pattern:
