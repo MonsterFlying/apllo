@@ -11,7 +11,8 @@ public interface CurrencyService {
 
     Currency findByUserIdLock(Long userId);
 
-    boolean insert(Currency currency);
+    Currency save(Currency currency);
 
-    boolean updateById(Currency currency);
+    Currency updateById(Currency currency);
+
 }

@@ -21,11 +21,11 @@ spring:
   rabbitmq:
     host: 127.0.0.1
     port: 5672
-    username: gofobao
-    password: gofobao
+    username: wangguo
+    password: wangguo123
 
 server:
-  port: 8010
+  port: 80
 jwt: #JWT 安全配置
   header: Authorization
   secret: WWW.gOf0b@o.c0m@0701
@@ -33,9 +33,9 @@ jwt: #JWT 安全配置
   prefix: Bearer
 
 jixin: #银行存管
-  keysPath: D:/sign/guangfubao_sit.p12 #私钥路径
+  keysPath: D:/cert/gofobao/guangfubao_sit.p12 #私钥路径
   keysPassword: guangfubao_sit@2016 #私钥密码
-  crtPath: D:/sign/certs/fdep.crt #服务端证书文件路径
+  crtPath: D:/cert/gofobao/fdep.crt #服务端证书文件路径
   url: https://test.credit2go.cn #即信服务器路径
   version: 10 #版本号
   instCode: "00960001" #机构代码
@@ -47,7 +47,7 @@ gofobao:
   javaDomain: http://max.3w.dkys.org
   webDomain: http://ci.gofobao.com
   h5Domain: http://ci.gofobao.com
-  captcha: false # 全站是否开启图形验证码验证
+debug: true
 logging:
   file: /Users/Max/logs/logback.log
   pattern:

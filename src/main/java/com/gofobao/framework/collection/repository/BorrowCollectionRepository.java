@@ -5,9 +5,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
- * Created by Zeke on 2017/6/2.
+ * Created by admin on 2017/5/31.
  */
 @Repository
-public interface BorrowCollectionRepository extends JpaRepository<BorrowCollection, Long> ,JpaSpecificationExecutor<BorrowCollection>{
+public interface BorrowCollectionRepository extends  JpaRepository<BorrowCollection,Long>,JpaSpecificationExecutor<BorrowCollection> {
+
+        List<BorrowCollection> findByInTenderId(List<Long> tenderId);
 }

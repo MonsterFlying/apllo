@@ -13,7 +13,7 @@ public class VoViewAssetLogRes {
         @ApiModelProperty("红包类型")
         private  String type;
         @ApiModelProperty("创建时间")
-        private String  createTime;
+        private String  createdAt;
         @ApiModelProperty("金额")
         private String money;
 }

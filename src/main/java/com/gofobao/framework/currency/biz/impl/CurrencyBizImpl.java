@@ -150,7 +150,7 @@ public class CurrencyBizImpl implements CurrencyBiz {
         currencyObj.setNoUseCurrency(currencyObj.getNoUseCurrency() + currency);
         currencyObj.setUpdatedAt(new Date());
 
-        if (!currencyService.updateById(currencyObj)) {
+        if (ObjectUtils.isEmpty(currencyService.updateById(currencyObj))) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "广富币兑换失败!"));

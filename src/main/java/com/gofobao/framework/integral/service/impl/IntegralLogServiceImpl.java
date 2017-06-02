@@ -25,12 +25,12 @@ public class IntegralLogServiceImpl implements IntegralLogService {
         return integralLogRepository.findByUserId(userId, pageable);
     }
 
-    public boolean insert(IntegralLog integralLog){
+    public IntegralLog insert(IntegralLog integralLog){
         if (ObjectUtils.isEmpty(integralLog)){
-            return false;
+            return null;
         }
         integralLog.setId(null);
-        return !ObjectUtils.isEmpty(integralLogRepository.save(integralLog));
+        return integralLogRepository.save(integralLog);
     }
 
     public boolean updateById(IntegralLog integralLog){

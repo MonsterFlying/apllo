@@ -17,6 +17,7 @@ public interface AssetService {
 
     Asset findByUserIdLock(Long id);
 
-    boolean insertById(Asset asset);
-    boolean update(Asset asset);
+    Asset save(Asset asset);
+
+    Asset updateById(Asset asset);
 }

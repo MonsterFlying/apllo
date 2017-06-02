@@ -25,6 +25,9 @@ public class BorrowCollection {
     @Column(name = "`order`")
     private Integer order;
     @Basic
+    @Column(name = "tender_id")
+    private Long tenderId;
+    @Basic
     @Column(name = "collection_money")
     private Integer collectionMoney;
     @Basic

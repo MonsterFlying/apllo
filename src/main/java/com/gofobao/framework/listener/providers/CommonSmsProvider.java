@@ -11,6 +11,7 @@ import com.gofobao.framework.message.service.SmsConfigService;
 import com.gofobao.framework.message.service.SmsTemplateService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
@@ -36,6 +37,9 @@ public class CommonSmsProvider {
 
     @Autowired
     RedisHelper redisHelper;
+
+    @Value("${gofobao.close-phone-send}")
+    boolean closePhoneSend ;
 
     public static final String TEMPLATE_KEY_SMSCODE = "smscode";
 
@@ -75,8 +79,11 @@ public class CommonSmsProvider {
 
         boolean rs = false;
         try {
-            smsServerConfig.getService().
-                    sendMessage(smsServerConfig.getConfig(), phones, message);
+            if(!closePhoneSend){
+                smsServerConfig.getService().
+                        sendMessage(smsServerConfig.getConfig(), phones, message);
+            }
+
             rs = true ;
         } catch (Exception e) {
             log.error("CommonSmsProvider doSendMessageCode send message error", e);

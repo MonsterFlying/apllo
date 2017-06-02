@@ -135,8 +135,8 @@ public class CapitalChangeHelper {
             }
 
             asset.setUpdatedAt(new Date());
-            bool = assetService.update(asset);
-            if (!bool) {
+            asset = assetService.updateById(asset);
+            if (ObjectUtils.isEmpty(asset)) {
                 throw new Exception("更新资金失败");
             }
         }
@@ -152,16 +152,16 @@ public class CapitalChangeHelper {
             if (yesterdayMoney != 0) {
                 userCache.setYesterdayUseMoney(yesterdayMoney > 0 ? yesterdayMoney : 0);
             }
-            bool = userCacheService.updateById(userCache);
-            if (!bool) {
+            userCache = userCacheService.updateById(userCache);
+            if (ObjectUtils.isEmpty(userCache)) {
                 throw new Exception("更新用户资产缓存失败");
             }
         } else {
             if (yesterdayMoney != 0) {
                 userCache.setYesterdayUseMoney(yesterdayMoney);
             }
-            bool = userCacheService.updateById(userCache);
-            if (!bool) {
+            userCache = userCacheService.updateById(userCache);
+            if (ObjectUtils.isEmpty(userCache)) {
                 throw new Exception("更新用户资产缓存失败");
             }
         }

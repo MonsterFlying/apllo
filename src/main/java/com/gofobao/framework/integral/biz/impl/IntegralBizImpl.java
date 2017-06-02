@@ -230,8 +230,8 @@ public class IntegralBizImpl implements IntegralBiz {
         saveIntegral.setNoUseIntegral(integral.getNoUseIntegral() + integer);
         saveIntegral.setUseIntegral(integral.getUseIntegral() - integer);
         saveIntegral.setUpdatedAt(new Date());
-        boolean bool = integralService.updateById(saveIntegral);
-        if (!bool) {
+        saveIntegral = integralService.updateById(saveIntegral);
+        if (ObjectUtils.isEmpty(saveIntegral)) {
             throw new Exception("积分表更新失败!");
         }
 
@@ -243,8 +243,8 @@ public class IntegralBizImpl implements IntegralBiz {
         integralLog.setValue(integer);
         integralLog.setType("convert");
 
-        bool = integralLogService.insert(integralLog);
-        if (!bool) {
+        integralLog = integralLogService.insert(integralLog);
+        if (ObjectUtils.isEmpty(integralLog)) {
             throw new Exception("积分日志表插入失败!");
         } else {
             //调用即信发送红包接口

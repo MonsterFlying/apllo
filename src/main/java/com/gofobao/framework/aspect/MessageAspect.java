@@ -39,6 +39,9 @@ public class MessageAspect {
     /** 冻结次数*/
     private static final int FREEZE_TIME = 24 * 60 * 60 ;
 
+    /** 操作间隙*/
+    private static final int OP_INTERVAL_TIME = 60 ;
+
     @Autowired
     RedisHelper redisHelper ;
 
@@ -105,12 +108,22 @@ public class MessageAspect {
             }
 
 
+
             //=========================================
             // 图形验证码
             //=========================================
-            if (verifyCaptcha(voAnonSmsReq, voUserSmsReq)) return ResponseEntity.
+            if (verifyCaptcha(voAnonSmsReq, voUserSmsReq))
+                return ResponseEntity.
                     badRequest().
                     body(VoBaseResp.error(VoBaseResp.ERROR, "图形验证码错误或者已过期"));
+
+            //=========================================
+            // 操作间隔
+            //=========================================
+            if (verifyOpInterval(name, voAnonSmsReq, voUserSmsReq, userId))
+                return ResponseEntity.
+                    badRequest().
+                    body(VoBaseResp.error(VoBaseResp.ERROR, "操作间隙必须大于60S"));
 
 
             //=========================================
@@ -121,6 +134,17 @@ public class MessageAspect {
         }else{
             throw new Throwable("MessageAspect invoke: joinPoint.getArgs() is empty") ;
         }
+    }
+
+    private boolean verifyOpInterval(String name, VoAnonSmsReq voAnonSmsReq, VoUserSmsReq voUserSmsReq, Long userId) throws Exception {
+        String key = ObjectUtils.isEmpty(voUserSmsReq) ? String.valueOf(userId) : voAnonSmsReq.getPhone() ;
+        String interval = redisHelper.get(String.format("%s_%s", name.toUpperCase(), key), null);
+        if(!ObjectUtils.isEmpty(interval)){
+            return true;
+        }else{
+            redisHelper.put(String.format("%s_%s", name.toUpperCase(), key), null, OP_INTERVAL_TIME);
+        }
+        return false;
     }
 
     /**

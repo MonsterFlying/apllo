@@ -14,7 +14,6 @@ import java.util.Date;
 @Entity
 @Table(name = "gfb_borrow_tender")
 @Data
-@DynamicInsert
 @NoArgsConstructor
 @AllArgsConstructor
 public class Tender {
@@ -51,11 +50,12 @@ public class Tender {
     @Basic
     @Column(name = "borrow_id")
     private Long borrowId;
-
     @Basic
     @JoinColumn(name="user_id")
     private Long userId;
-
+    @Basic
+    @JoinColumn(name="state")
+    private Integer state;
     @Basic
     @Column(name = "auth_code")
     private String authCode;
