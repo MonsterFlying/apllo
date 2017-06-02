@@ -27,6 +27,10 @@ public interface BorrowRepaymentService {
      */
     VoViewOrderDetailRes info(VoInfoReq voInfoReq);
 
+    BorrowRepayment save(BorrowRepayment borrowRepayment);
 
+    BorrowRepayment insert(BorrowRepayment borrowRepayment);
+
+    BorrowRepayment updateById(BorrowRepayment borrowRepayment);
 
 }
