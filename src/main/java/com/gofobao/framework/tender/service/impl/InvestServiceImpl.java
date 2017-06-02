@@ -9,20 +9,28 @@ import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.repository.BorrowCollectionRepository;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.repository.InvestRepository;
 import com.gofobao.framework.tender.service.InvestService;
+import com.gofobao.framework.tender.vo.request.ReturnedMoney;
+import com.gofobao.framework.tender.vo.request.VoDetailReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;
+import com.gofobao.framework.tender.vo.request.VoViewReturnedMoney;
 import com.gofobao.framework.tender.vo.response.VoViewBackMoney;
 import com.gofobao.framework.tender.vo.response.VoViewBiddingRes;
 import com.gofobao.framework.tender.vo.response.VoViewSettleRes;
+import com.gofobao.framework.tender.vo.response.VoViewTenderDetail;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import java.util.*;
 import java.util.function.Function;
@@ -33,6 +41,7 @@ import static java.util.stream.Collectors.groupingBy;
 /**
  * Created by admin on 2017/6/1.
  */
+@Service
 public class InvestServiceImpl implements InvestService {
 
     @Autowired
@@ -138,8 +147,17 @@ public class InvestServiceImpl implements InvestService {
             } else {
                 voViewBiddingRes.setTimeLimit(timeLimit + BorrowContants.MONTH);
             }
-            voViewBiddingRes.setApr(NumberHelper.to2DigitString(borrow.getApr()));
-            voViewBiddingRes.setMoney(NumberHelper.to2DigitString(p.getValidMoney() / 100));
+            Integer validMoney = p.getValidMoney();
+            Integer apr = borrow.getApr();
+
+            //预期收益
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(validMoney / 100D, apr / 100D, borrow.getTimeLimit(), borrow.getSuccessAt());
+            Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
+            Integer earnings = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("earnings")));
+
+            voViewBiddingRes.setExpectEarnings(NumberHelper.to2DigitString(earnings / 100));
+            voViewBiddingRes.setApr(NumberHelper.to2DigitString(apr / 100));
+            voViewBiddingRes.setMoney(NumberHelper.to2DigitString(validMoney / 100));
             voViewBiddingRes.setBorrowName(borrow.getName());
             viewBiddingResList.add(voViewBiddingRes);
         });
@@ -148,6 +166,7 @@ public class InvestServiceImpl implements InvestService {
 
     /**
      * 已结清列表
+     *
      * @param voInvestListReq
      * @return
      */
@@ -181,21 +200,19 @@ public class InvestServiceImpl implements InvestService {
             voViewSettleRes.setMoney(NumberHelper.to2DigitString(p.getValidMoney() / 100));
             voViewSettleRes.setCloseAt(DateHelper.dateToString(borrow.getCloseAt()));
             List<BorrowCollection> borrowCollectionList = borrowCollectionMaps.get(p.getId());
-            Integer principal=borrowCollectionList.stream()
-                    .filter(w->w.getStatus()==BorrowCollectionContants.STATUS_YES)
-                    .mapToInt(s->s.getPrincipal()).sum();
-            Integer interest=borrowCollectionList.stream()
-                    .filter(w->w.getStatus()==BorrowCollectionContants.STATUS_YES)
-                    .mapToInt(s->s.getInterest()).sum();
-            voViewSettleRes.setInterest(NumberHelper.to2DigitString(interest/100));
-            voViewSettleRes.setPrincipal(NumberHelper.to2DigitString(principal/100));
+            Integer principal = borrowCollectionList.stream()
+                    .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
+                    .mapToInt(s -> s.getPrincipal()).sum();
+            Integer interest = borrowCollectionList.stream()
+                    .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
+                    .mapToInt(s -> s.getInterest()).sum();
+            voViewSettleRes.setInterest(NumberHelper.to2DigitString(interest / 100));
+            voViewSettleRes.setPrincipal(NumberHelper.to2DigitString(principal / 100));
             voViewSettleRes.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
             voViewSettleResList.add(voViewSettleRes);
         });
         return Optional.ofNullable(voViewSettleResList).orElse(Collections.EMPTY_LIST);
     }
-
-
 
     /**
      * 公共查询
@@ -218,13 +235,115 @@ public class InvestServiceImpl implements InvestService {
         return Optional.ofNullable(tenderList).orElse(Collections.EMPTY_LIST);
     }
 
+    /**
+     * 已结清 and 回款中 详情
+     *
+     * @param voDetailReq
+     * @return
+     */
+    @Override
+    public VoViewTenderDetail tenderDetail(VoDetailReq voDetailReq) {
 
+        VoViewTenderDetail item = new VoViewTenderDetail();
+        Tender tender = investRepository.findByIdAndUserId(voDetailReq.getTenderId(), voDetailReq.getUserId());
+        if (ObjectUtils.isEmpty(tender)) {
+            return null;
+        }
+        Borrow borrow = borrowRepository.findById(tender.getBorrowId());
+        item.setCreatedAt(DateHelper.dateToString(tender.getCreatedAt()));
+        item.setBorrowName(borrow.getName());
+        //状态
+        if (tender.getState() == TenderConstans.BIDDING) {
+            item.setStatus(TenderConstans.BIDDING_STR);
+        }
+        if (tender.getState() == TenderConstans.BACK_MONEY) {
+            item.setStatus(TenderConstans.BACK_MONEY_STR);
+        }
+        if (tender.getState() == TenderConstans.SETTLE) {
+            item.setStatus(TenderConstans.SETTLE_STR);
+        }
+        item.setMoney(NumberHelper.to2DigitString(tender.getValidMoney() / 100));
+        item.setApr(NumberHelper.to2DigitString(borrow.getApr() / 100));
+        //期限
+        if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE) {
+            item.setRepayFashion(BorrowContants.REPAY_FASHION_ONCE_STR);
+            item.setTimeLimit(borrow.getTimeLimit() + BorrowContants.DAY);
+        } else {
+            item.setTimeLimit(borrow.getTimeLimit() + BorrowContants.MONTH);
+        }
 
+        //还款方式
+        if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_MONTH) {
+            item.setRepayFashion(BorrowContants.REPAY_FASHION_MONTH_STR);
+        }
+        if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL) {
+            item.setRepayFashion(BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL_STR);
+        }
 
+        if (tender.getState() == TenderConstans.BACK_MONEY || tender.getState() == TenderConstans.SETTLE) {
+            List<BorrowCollection> borrowCollectionList = borrowCollectionRepository.findByTenderId(tender.getId());
+            //利息
+            Integer interest = borrowCollectionList.stream()
+                    .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
+                    .mapToInt(s -> s.getInterest())
+                    .sum();
+            //本金
+            Integer principal = borrowCollectionList.stream()
+                    .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
+                    .mapToInt(s -> s.getPrincipal())
+                    .sum();
+            //应收利息
+            Integer receivableInterest = borrowCollectionList.stream()
+                    .mapToInt(s -> s.getInterest())
+                    .sum();
 
+            item.setInterest(NumberHelper.to2DigitString(interest / 100));
+            item.setPrincipal(NumberHelper.to2DigitString(principal / 100));
+            item.setReceivableInterest(NumberHelper.to2DigitString(receivableInterest / 100));
+        }
+        return item;
+    }
 
+    /**
+     * 回款详情
+     *
+     * @param voDetailReq
+     * @return
+     */
+    @Override
+    public VoViewReturnedMoney infoList(VoDetailReq voDetailReq) {
+        Tender tender = investRepository.findByIdAndUserId(voDetailReq.getTenderId(), voDetailReq.getUserId());
+        if (ObjectUtils.isEmpty(tender) || tender.getState() == TenderConstans.BIDDING) {
+            return null;
+        }
+        //回款中
+        Integer status = tender.getStatus() == TenderConstans.BACK_MONEY ? BorrowCollectionContants.STATUS_NO : BorrowCollectionContants.STATUS_YES;
+        Specification specification = Specifications.<BorrowCollection>and()
+                .eq("tenderId", tender.getId())
+                .eq("status", status)
+                .build();
+        List<BorrowCollection> borrowCollectionList = investRepository.findAll(specification);
+        if (CollectionUtils.isEmpty(borrowCollectionList)) {
+            return null;
+        }
+        VoViewReturnedMoney viewReturnedMoney = new VoViewReturnedMoney();
 
+        viewReturnedMoney.setOrderCount(borrowCollectionList.size());
+        Integer collectionMoneySum = borrowCollectionList.stream().mapToInt(p -> p.getCollectionMoney()).sum();
+        viewReturnedMoney.setCollectionMoneySum(NumberHelper.to2DigitString(collectionMoneySum));
 
-
-
+        List<ReturnedMoney> returnedMonies = new ArrayList<>(0);
+        borrowCollectionList.stream().forEach(p -> {
+            ReturnedMoney returnedMoney = new ReturnedMoney();
+            returnedMoney.setInterest(NumberHelper.to2DigitString(p.getInterest() / 100));
+            returnedMoney.setPrincipal(NumberHelper.to2DigitString(p.getPrincipal() / 100));
+            returnedMoney.setCollectionMoney(NumberHelper.to2DigitString(p.getCollectionMoney() / 100));
+            returnedMoney.setOrder(p.getOrder() + 1);
+            returnedMoney.setLateDays(p.getLateDays());
+            returnedMoney.setCollectionAt(DateHelper.dateToString(p.getCollectionAt()));
+            returnedMonies.add(returnedMoney);
+        });
+        viewReturnedMoney.setReturnedMonies(returnedMonies);
+        return Optional.ofNullable(viewReturnedMoney).orElse(null);
+    }
 }

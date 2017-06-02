@@ -61,16 +61,27 @@ public class BorrowContants {
     public  static final Integer  REPAY_FASHION_MONTH=0;
 
 
+    public  static final String  REPAY_FASHION_MONTH_STR="按月分期";
+
+
+
+
     /**
      * 一次性还本付息
      */
     public static final Integer REPAY_FASHION_ONCE=1;
 
 
+    public  static final String  REPAY_FASHION_ONCE_STR="一次性还本付息";
+
+
     /**
      * 先息后本
      */
     public static final  Integer REPAY_FASHION_INTEREST_THEN_PRINCIPAL=2;
+
+
+    public static final  String REPAY_FASHION_INTEREST_THEN_PRINCIPAL_STR="先息后本";
 
 
 
