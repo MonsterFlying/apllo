@@ -25,7 +25,7 @@ spring:
     password: wangguo123
 
 server:
-  port: 8010
+  port: 80
 jwt: #JWT 安全配置
   header: Authorization
   secret: WWW.gOf0b@o.c0m@0701

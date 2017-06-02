@@ -1,4 +1,4 @@
-package com.gofobao.framework.borrow.vo.response;
+package com.gofobao.framework.collection.vo.response;
 
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;

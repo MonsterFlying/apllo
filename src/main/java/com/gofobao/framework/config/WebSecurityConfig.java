@@ -80,6 +80,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
                 .permitAll()
                 .antMatchers(
+                        "/payment/**")
+
+                .permitAll()
+                .antMatchers(
                         "/pub/**")
                 .permitAll()
                 .antMatchers( //放行swagger-ui

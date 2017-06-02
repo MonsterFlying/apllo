@@ -50,12 +50,12 @@ public class Tender {
     @Basic
     @Column(name = "borrow_id")
     private Integer borrowId;
-
     @Basic
     @JoinColumn(name="user_id")
     private Integer userId;
-
-
+    @Basic
+    @JoinColumn(name="state")
+    private Integer state;
     @Basic
     @Column(name = "authCode")
     private String authCode;

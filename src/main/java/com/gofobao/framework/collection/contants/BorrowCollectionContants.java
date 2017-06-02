@@ -14,7 +14,7 @@ public class BorrowCollectionContants {
      * 未回款
      */
 
-    public static final Integer STATUS_NO=1;
+    public static final Integer STATUS_NO=0;
 
     /**
      * 未转让
@@ -26,4 +26,9 @@ public class BorrowCollectionContants {
      */
     public static final int TRANSFER_FLAG_YES=1;
 
+
+    public static  final String STATUS_YES_STR="已回款";
+
+
+    public static  final String STATUS_NO_STR="未回款";
 }

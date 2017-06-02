@@ -23,6 +23,9 @@ public class BorrowRepayment {
     @Column(name = "order")
     private Integer order;
     @Basic
+    @Column(name = "borrow_id")
+    private Long borrowId;
+    @Basic
     @Column(name = "repay_money")
     private Integer repayMoney;
     @Basic
