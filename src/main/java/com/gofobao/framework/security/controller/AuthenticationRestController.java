@@ -1,5 +1,8 @@
 package com.gofobao.framework.security.controller;
 
+import com.gofobao.framework.core.helper.PasswordHelper;
+import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.member.biz.UserBiz;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
@@ -11,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -26,39 +30,59 @@ import javax.servlet.http.HttpServletResponse;
  * Created by Max on 2017/5/16.
  */
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/pub/auth")
 public class AuthenticationRestController {
     @Value("${jwt.header}")
-    private String tokenHeader;
+    String tokenHeader;
 
     @Value("${jwt.prefix}")
-    private String prefix ;
+    String prefix ;
 
     @Autowired
-    private AuthenticationManager authenticationManager;
+    AuthenticationManager authenticationManager;
 
     @Autowired
-    private JwtTokenHelper jwtTokenHelper;
+    JwtTokenHelper jwtTokenHelper;
 
     @Autowired
-    private UserService userService;
+    UserService userService;
+
+    @Autowired
+    UserBiz userBiz ;
 
     @PostMapping("/login")
     public ResponseEntity<VoBasicUserInfoResp> login(HttpServletResponse response, @ModelAttribute VoLoginReq voLoginReq){
         // Perform the security
-        final Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        voLoginReq.getAccount(),
-                        voLoginReq.getPassword()
-                )
-        );
+        final Authentication authentication ;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            voLoginReq.getAccount(),
+                            voLoginReq.getPassword()
+                    )
+            );
+        } catch (AuthenticationException e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "账户/密码错误", VoBasicUserInfoResp.class)) ;
+        }
+
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // Reload password_reset post-security so we can generate captchaToken
-        final Users user = userService.findByAccount(voLoginReq.getAccount());
+        final Users user = userBiz.findByAccount(voLoginReq.getAccount());
 
         if(ObjectUtils.isEmpty(user)){
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "账户/密码错误", VoBasicUserInfoResp.class));
+        }
+
+
+        if(user.getIsLock()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "账户已被系统冻结，如有问题请联系客服！", VoBasicUserInfoResp.class));
         }
 
         String username = user.getUsername();
@@ -68,11 +92,7 @@ public class AuthenticationRestController {
 
         final String token = jwtTokenHelper.generateToken(user, voLoginReq.getSource());
         response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
-        // Return the captchaToken
-        VoBasicUserInfoResp voBasicUserInfoResp = new VoBasicUserInfoResp();
-        voBasicUserInfoResp.setEmail(user.getEmail());
-        voBasicUserInfoResp.setPhone(user.getPhone());
-        return ResponseEntity.ok(voBasicUserInfoResp);
+        return userBiz.getUserInfoResp(user) ;
     }
 
 }
