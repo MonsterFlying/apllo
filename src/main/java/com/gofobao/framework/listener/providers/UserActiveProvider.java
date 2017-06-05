@@ -42,8 +42,6 @@ public class UserActiveProvider {
         Long userId = Long.parseLong(body.get(MqConfig.MSG_USER_ID));
         // 赠送用户体验金
         awardVirtualMoney(userId, 1000);
-
-
         // 增加统计
         IncrStatistic incrStatistic = new IncrStatistic() ;
         incrStatistic.setRegisterCount(1);

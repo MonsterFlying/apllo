@@ -73,3 +73,62 @@ INSERT INTO `gfb_user_third_account` VALUES ('1', '901', '6212462040000050015', 
 
 # 统计表添加自增字段
 ALTER TABLE gfb_statistic ADD id INT NULL PRIMARY KEY AUTO_INCREMENT;
+
+#修改gfb_user_info默认值
+ALTER TABLE gfb_user_info ALTER COLUMN realname SET DEFAULT '';
+ALTER TABLE gfb_user_info ALTER COLUMN card_pic1 SET DEFAULT '';
+ALTER TABLE gfb_user_info ALTER COLUMN card_pic2 SET DEFAULT '';
+ALTER TABLE gfb_user_info ALTER COLUMN qq SET DEFAULT '';
+ALTER TABLE gfb_user_info ALTER COLUMN graduated_school SET DEFAULT '';
+ALTER TABLE gfb_user_info ALTER COLUMN address SET DEFAULT '';
+ALTER TABLE gfb_user_info ALTER COLUMN birthday_y SET DEFAULT 0;
+ALTER TABLE gfb_user_info ALTER COLUMN birthday_md SET DEFAULT 0;
+
+#修改gfb_asset默认值
+ALTER TABLE gfb_asset ALTER COLUMN use_money SET DEFAULT 0;
+ALTER TABLE gfb_asset ALTER COLUMN no_use_money SET DEFAULT 0;
+ALTER TABLE gfb_asset ALTER COLUMN virtual_money SET DEFAULT 0;
+ALTER TABLE gfb_asset ALTER COLUMN collection SET DEFAULT 0;
+ALTER TABLE gfb_asset ALTER COLUMN payment SET DEFAULT 0;
+ALTER TABLE gfb_asset ALTER COLUMN updated_at SET DEFAULT 0;
+
+
+#修改gfb_user_cache默认值
+ALTER TABLE gfb_user_cache ALTER COLUMN income_interest SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN income_award SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN income_overdue SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN income_integral_cash SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN income_bonus SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN income_other SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN wait_collection_principal SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN wait_collection_interest SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN tj_wait_collection_principal SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN tj_wait_collection_interest SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN qd_wait_collection_principal SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN qd_wait_collection_interest SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN expenditure_interest SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN expenditure_interest_manage SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN expenditure_manage SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN expenditure_fee SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN expenditure_overdue SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN expenditure_other SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN wait_repay_principal SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN wait_repay_interest SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN tender_tuijian SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN tender_jingzhi SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN tender_miao SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN tender_transfer SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN tender_qudao SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN first_tender_award SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN award_virtual_money SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN recharge_total SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN yesterday_use_money SET DEFAULT 0;
+ALTER TABLE gfb_user_cache ALTER COLUMN cash_total SET DEFAULT 0;
+
+#修改gfb_integral默认值
+ALTER TABLE gfb_integral ALTER COLUMN use_integral SET DEFAULT 0;
+ALTER TABLE gfb_integral ALTER COLUMN no_use_integral SET DEFAULT 0;
+
+#修改gfb_currency默认值
+ALTER TABLE gfb_currency ALTER COLUMN use_currency SET DEFAULT 0;
+ALTER TABLE gfb_currency ALTER COLUMN no_use_currency SET DEFAULT 0;

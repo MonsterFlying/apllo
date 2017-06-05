@@ -1,12 +1,11 @@
 package com.gofobao.framework;
 
-import com.gofobao.framework.borrow.repository.BorrowRepository;
-import com.gofobao.framework.collection.repository.BorrowCollectionRepository;
-import com.gofobao.framework.tender.entity.AutoTender;
-import com.gofobao.framework.tender.repository.AutoTenderRepository;
-import com.gofobao.framework.tender.repository.InvestRepository;
-import com.gofobao.framework.tender.service.AutoTenderService;
-import com.gofobao.framework.tender.service.InvestService;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
+import com.gofobao.framework.helper.DateHelper;
+import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -14,10 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import java.util.List;
+import java.util.Date;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -26,42 +22,17 @@ import java.util.List;
 public class AplloApplicationTests {
 
     @Autowired
-    private AutoTenderRepository autoTenderRepository;
-    @Autowired
-    private AutoTenderService autoTenderService;
-
-
-    @Autowired
-    private InvestRepository investRepository;
-
-    @Autowired
-    private BorrowRepository borrowRepository;
-
-    @Autowired
-    private BorrowCollectionRepository borrowCollectionRepository;
-
-    @Autowired
-    private InvestService investService;
-
-@PersistenceContext
-private EntityManager entityManager;
-
-    @Test
-    public void test(){
-
-        StringBuffer sql = new StringBuffer("select t.*  from gfb_auto_tender t left join gfb_asset a on t.user_id = a.user_id where 1=1 ");
-
-        Query query = entityManager.createNativeQuery(sql.toString(),AutoTender.class);
-
-        List<AutoTender> autoTenderList = query.getResultList();
-
-        System.out.println(autoTenderList);
-    }
-
+    MqHelper mqHelper ;
 
     @Test
     public void contextLoads() {
-
+        MqConfig mqConfig = new MqConfig() ;
+        mqConfig.setTag(MqTagEnum.SMS_REGISTER);
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_SMS);
+        ImmutableMap<String, String> body = ImmutableMap.of("i", "qqqq") ;
+        mqConfig.setMsg(body);
+        mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 3));
+        mqHelper.convertAndSend(mqConfig) ;
     }
 
 }

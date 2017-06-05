@@ -129,11 +129,7 @@ public class CapitalChangeHelper {
             assetLog.setPayment(asset.getPayment());
             assetLog.setCreatedAt(new Date());
             assetLog.setRemark(remark);
-            bool = assetLogService.insert(assetLog);
-            if (!bool) {
-                throw new Exception("插入日志失败");
-            }
-
+            assetLogService.insert(assetLog);
             asset.setUpdatedAt(new Date());
             assetService.updateById(asset);
         }

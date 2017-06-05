@@ -19,8 +19,8 @@ public interface AssetLogService {
 
     List<VoViewAssetLogRes> assetLogList(VoAssetLog voAssetLog);
 
-    boolean insert(AssetLog assetLog);
+    void insert(AssetLog assetLog);
 
-    boolean updateById(AssetLog assetLog);
+    void updateById(AssetLog assetLog);
 
 }

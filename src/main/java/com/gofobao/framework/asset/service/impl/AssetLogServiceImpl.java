@@ -3,6 +3,7 @@ package com.gofobao.framework.asset.service.impl;
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.asset.entity.AssetLog;
 import com.gofobao.framework.asset.repository.AssetLogRepository;
+import com.gofobao.framework.asset.repository.AssetRepository;
 import com.gofobao.framework.asset.service.AssetLogService;
 import com.gofobao.framework.asset.vo.repsonse.VoViewAssetLogRes;
 import com.gofobao.framework.asset.vo.request.VoAssetLog;
@@ -65,13 +66,12 @@ public class AssetLogServiceImpl implements AssetLogService {
     }
 
     @Override
-    public boolean insert(AssetLog assetLog) {
-
-        return false;
+    public void insert(AssetLog assetLog) {
+        assetLogRepository.save(assetLog) ;
     }
 
     @Override
-    public boolean updateById(AssetLog assetLog) {
-        return false;
+    public void updateById(AssetLog assetLog) {
+        assetLogRepository.save(assetLog) ;
     }
 }

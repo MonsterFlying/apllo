@@ -20,7 +20,7 @@ import java.util.Date;
 public class UserCache {
     @Id
     @Column(name = "user_id")
-    @GeneratedValue
+    // @GeneratedValue
     private Long userId;
     @Basic
     @Column(name = "income_interest")
