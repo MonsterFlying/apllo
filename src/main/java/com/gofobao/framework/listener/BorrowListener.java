@@ -41,7 +41,7 @@ public class BorrowListener {
         String tag = body.get(MqConfig.MSG_TAG).toString();
         Map<String, String> msg = (Map<String, String>) body.get(MqConfig.MSG_BODY);
 
-        Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get("borrowId")));
+        Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
 
         boolean bool = false;
         if (tag.equals(MqTagEnum.FIRST_VERIFY)) {  // 用户注册

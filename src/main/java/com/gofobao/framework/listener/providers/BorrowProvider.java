@@ -8,6 +8,9 @@ import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.NumberHelper;
@@ -25,6 +28,9 @@ import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -45,6 +51,8 @@ import java.util.*;
 @Slf4j
 public class BorrowProvider {
 
+    Gson GSON = new GsonBuilder().create();
+
     @Autowired
     private BorrowService borrowService;
     @Autowired
@@ -60,10 +68,11 @@ public class BorrowProvider {
     @Autowired
     private BorrowRepaymentService borrowRepaymentService;
     @Autowired
-    private AutoTenderService autoTenderService;
+    private MqHelper mqHelper;
 
     /**
      * 初审
+     *
      * @param msg
      * @return
      * @throws Exception
@@ -124,6 +133,18 @@ public class BorrowProvider {
             }
 
             //触发自动投标队列
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+            mqConfig.setTag(MqTagEnum.USER_ACTIVE_REGISTER);
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("borrowProvider autoTender send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Exception e) {
+                log.error("borrowProvider autoTender send mq exception", e);
+            }
 
         } while (false);
         return bool;
@@ -169,6 +190,7 @@ public class BorrowProvider {
 
     /**
      * 秒标初审
+     *
      * @param borrow
      * @return
      * @throws Exception
@@ -216,6 +238,7 @@ public class BorrowProvider {
 
     /**
      * 复审
+     *
      * @param msg
      * @return
      * @throws Exception
