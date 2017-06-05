@@ -16,14 +16,14 @@ public class Page extends VoBaseReq{
 
     public Integer getPageIndex() {
         if (ObjectUtils.isEmpty(pageIndex) || pageIndex <= 1) {
-            this.pageIndex = CommonPageContants.DEFAUIT_PAGE_INDEX;
+            this.pageIndex = CommonPageContants.DEFAULT_PAGE_INDEX;
         }
         return pageIndex;
     }
 
     public void setPageIndex(Integer pageIndex) {
         if (ObjectUtils.isEmpty(pageIndex) || pageIndex <= 1) {
-            this.pageIndex = CommonPageContants.DEFAUIT_PAGE_INDEX;
+            this.pageIndex = CommonPageContants.DEFAULT_PAGE_INDEX;
         } else {
             this.pageIndex = pageIndex;
         }
@@ -31,14 +31,14 @@ public class Page extends VoBaseReq{
 
     public Integer getPageSize() {
         if (ObjectUtils.isEmpty(pageSize) || pageSize <= 0) {
-            this.pageSize = CommonPageContants.DEFAUIT_PAGE_SIZE;
+            this.pageSize = CommonPageContants.DEFAULT_PAGE_SIZE;
         }
         return pageSize;
     }
 
     public void setPageSize(Integer pageSize) {
         if (ObjectUtils.isEmpty(pageSize) || pageSize <= 0) {
-            this.pageSize = CommonPageContants.DEFAUIT_PAGE_SIZE;
+            this.pageSize = CommonPageContants.DEFAULT_PAGE_SIZE;
         } else {
             this.pageSize = pageSize;
         }

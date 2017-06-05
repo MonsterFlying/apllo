@@ -22,7 +22,7 @@ public class SrvTxCodeContants {
     /** 提现 */
     public static final String INDIRECT_RECHARGE_PLUS = "indirectRechargePlus" ;
 
-    /** 自动投标*/
+    /** 自动投标签约*/
     public static final String AUTO_BID_AUTH_PLUS = "autoBidAuthPlus" ;
 
     /** 还款*/
