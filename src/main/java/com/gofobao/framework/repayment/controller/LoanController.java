@@ -38,6 +38,7 @@ public class LoanController {
             List<VoViewRefundRes> voViewRefundResList = loanService.refundResList(voLoanListReq);
             return ResponseEntity.ok(voViewRefundResList);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.
                     badRequest().
                     body(VoBaseResp.error(VoBaseResp.ERROR, "还款中列表失败!"));

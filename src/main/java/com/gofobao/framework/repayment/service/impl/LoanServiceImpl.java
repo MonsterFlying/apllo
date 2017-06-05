@@ -167,7 +167,7 @@ public class LoanServiceImpl implements LoanService {
         if (voLoanListReq.getType() == RepaymentContants.REFUND) { //还款中
             sort = new Sort(Sort.Direction.DESC, "closeAt");
             pageable = new PageRequest(voLoanListReq.getPageIndex(), voLoanListReq.getPageSize(), sort);
-            borrowPage = loanRepository.findByUserIdAndStatusIsAndSuccessAtIsNotNullAndCloseAtIsNull(
+            borrowPage = loanRepository.findByUserIdAndStatusIsAndSuccessAtIsNotNullAndCloseAtIsNullAndTenderIdIsNull(
                     voLoanListReq.getUserId(),
                     voLoanListReq.getStatus(),
                     pageable);
@@ -181,7 +181,7 @@ public class LoanServiceImpl implements LoanService {
         } else {
             sort = new Sort(Sort.Direction.DESC, "successAt");
             pageable = new PageRequest(voLoanListReq.getPageIndex(), voLoanListReq.getPageSize(), sort);
-            borrowPage = loanRepository.findByUserIdAndStatusIsAndSuccessAtIsNotNullAndCloseAtIsNotNull(
+            borrowPage = loanRepository.findByUserIdAndStatusIsAndSuccessAtIsNotNullAndCloseAtIsNotNullAndTenderIdIsNull(
                     voLoanListReq.getUserId(),
                     voLoanListReq.getStatus(),
                     pageable);
