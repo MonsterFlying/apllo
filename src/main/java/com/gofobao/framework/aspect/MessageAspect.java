@@ -2,6 +2,7 @@ package com.gofobao.framework.aspect;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.CaptchaHelper;
+import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.IpHelper;
 import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.message.vo.VoAnonSmsReq;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Date;
 
 /**
  * 短信拦截
@@ -137,12 +139,12 @@ public class MessageAspect {
     }
 
     private boolean verifyOpInterval(String name, VoAnonSmsReq voAnonSmsReq, VoUserSmsReq voUserSmsReq, Long userId) throws Exception {
-        String key = ObjectUtils.isEmpty(voUserSmsReq) ? String.valueOf(userId) : voAnonSmsReq.getPhone() ;
+        String key = ObjectUtils.isEmpty(voUserSmsReq) ? voAnonSmsReq.getPhone() : String.valueOf(userId) ;
         String interval = redisHelper.get(String.format("%s_%s", name.toUpperCase(), key), null);
         if(!ObjectUtils.isEmpty(interval)){
             return true;
         }else{
-            redisHelper.put(String.format("%s_%s", name.toUpperCase(), key), null, OP_INTERVAL_TIME);
+            redisHelper.put(String.format("%s_%s", name.toUpperCase(), key), DateHelper.dateToString(new Date()), OP_INTERVAL_TIME);
         }
         return false;
     }

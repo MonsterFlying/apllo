@@ -32,7 +32,7 @@ public class MultiCaculateHelper {
                 writeMethod =  pd.getWriteMethod();
                 typeName = field.getGenericType().getTypeName();
                 if(typeName.equals(Long.class.getTypeName())){
-                    lChangeValue = (Long) ClassHelper.getValueByRefler(Statistic.class, change, fieldName);
+                    lChangeValue = (Long) ClassHelper.getValueByRefler(clazz, change, fieldName);
                     if(ObjectUtils.isEmpty(lChangeValue)){
                         continue;
                     }
@@ -40,7 +40,7 @@ public class MultiCaculateHelper {
                     lDbValue = lDbValue == null ? 0 : lDbValue ;
                     writeMethod.invoke(org, lDbValue + lChangeValue) ;
                 }else if(typeName.equals(Integer.class.getTypeName())){
-                    iChangeValue = (Integer) ClassHelper.getValueByRefler(Statistic.class, change, fieldName);
+                    iChangeValue = (Integer) ClassHelper.getValueByRefler(clazz, change, fieldName);
                     if(ObjectUtils.isEmpty(lChangeValue)){
                         continue;
                     }

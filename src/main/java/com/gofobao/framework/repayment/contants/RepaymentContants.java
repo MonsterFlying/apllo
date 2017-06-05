@@ -12,17 +12,17 @@ public class RepaymentContants {
     /**
      * 招标中
      */
-    public static  final int BUDING=0;
+    public static  final Integer BUDING=1;
 
     /**
      * 已结清
      */
-    public static  final int CLOSE=2;
+    public static  final Integer CLOSE=3;
 
     /**
      * 还款中
      */
-    public static  final int REFUND=1;
+    public static  final Integer REFUND=2;
 
 
 

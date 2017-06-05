@@ -30,7 +30,6 @@ public class VoViewSettleRes {
     @ApiModelProperty("标id")
     private Long borrowId;
 
-
     @ApiModelProperty("结清时间")
     private String closeAt;
 

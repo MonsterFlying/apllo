@@ -43,10 +43,9 @@ public class UserActiveListener {
             String tag = body.get(MqConfig.MSG_TAG).toString();
             Map<String, String> msg = (Map<String, String>)body.get(MqConfig.MSG_BODY) ;
             boolean result = false;
-            if(tag.equals(MqTagEnum.USER_ACTIVE_REGISTER)){  // 用户注册
+            if(tag.equals(MqTagEnum.USER_ACTIVE_REGISTER.getValue())){  // 用户注册
                 result = userActiveProvider.registerActive(msg) ;
             }
-
 
             if(!result){
                 log.error(String.format("UserActiveListener process process error: %s", message));

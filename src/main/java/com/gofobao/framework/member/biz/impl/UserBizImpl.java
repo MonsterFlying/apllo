@@ -12,6 +12,7 @@ import com.gofobao.framework.currency.entity.Currency;
 import com.gofobao.framework.currency.service.CurrencyService;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.GenerateInviteCodeHelper;
+import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.integral.entity.Integral;
 import com.gofobao.framework.integral.service.IntegralService;
 import com.gofobao.framework.member.biz.UserBiz;
@@ -65,9 +66,20 @@ public class UserBizImpl implements UserBiz{
     @Autowired
     MqHelper mqHelper ;
 
+    @Autowired
+    RedisHelper redisHelper ;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> register(HttpServletRequest request, VoRegisterReq voRegisterReq) throws Exception{
+        // 0.短信验证码
+        String redisSmsCode = redisHelper.get(String.format("%s_%s", MqTagEnum.SMS_REGISTER, voRegisterReq.getPhone()), null);
+        if((StringUtils.isEmpty(redisSmsCode)) || (!redisSmsCode.equalsIgnoreCase(voRegisterReq.getSmsCode()))){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "短信验证码失效/错误")) ;
+        }
+
         // 1.手机处理
         boolean notPhoneState = userService.notExistsByPhone(voRegisterReq.getPhone());
         if(!notPhoneState){
@@ -142,6 +154,7 @@ public class UserBizImpl implements UserBiz{
         ImmutableMap<String, String> body = ImmutableMap
                 .of(MqConfig.MSG_USER_ID, users.getId().toString(), MqConfig.MSG_TIME, DateHelper.dateToString(now)) ;
         mqConfig.setMsg(body);
+        mqConfig.setSendTime(DateHelper.addSeconds(new Date(), 30));
         boolean mqState;
         try {
             log.info(String.format("userBizImpl register send mq %s", GSON.toJson(body)));
@@ -158,6 +171,8 @@ public class UserBizImpl implements UserBiz{
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍候再试！")) ;
 
         }
+        // 5.删除短信验证码
+        redisHelper.remove(String.format("%s_%s", MqTagEnum.SMS_REGISTER, voRegisterReq.getPhone()));
         return ResponseEntity.ok(VoBaseResp.ok("注册成功")) ;
     }
 
@@ -170,13 +185,19 @@ public class UserBizImpl implements UserBiz{
         Date now = new Date() ;
         UserInfo userInfo = new UserInfo() ;
         userInfo.setUserId(userId);
-        userInfo.setUpdateAt(now);
+        userInfo.setUpdatedAt(now);
         userInfo = userInfoService.save(userInfo) ;
         if((ObjectUtils.isEmpty(userInfo))){
             return false ;
         }
 
         Asset asset = new Asset() ;
+        asset.setCollection(0);
+        asset.setNoUseMoney(0);
+        asset.setPayment(0);
+        asset.setUpdatedAt(now);
+        asset.setUseMoney(0);
+        asset.setVirtualMoney(0);
         asset.setUserId(userId);
         asset = assetService.save(asset) ;
         if(ObjectUtils.isEmpty(asset)){

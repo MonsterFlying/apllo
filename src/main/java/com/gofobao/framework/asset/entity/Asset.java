@@ -21,7 +21,7 @@ import java.util.Date;
 public class Asset {
     @Id
     @Column(name = "user_id")
-    @GeneratedValue
+    //@GeneratedValue
     private Long userId;
     @Basic
     @Column(name = "use_money")

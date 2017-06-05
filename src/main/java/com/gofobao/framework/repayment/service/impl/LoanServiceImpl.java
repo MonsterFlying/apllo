@@ -90,7 +90,8 @@ public class LoanServiceImpl implements LoanService {
      */
     @Override
     public List<VoViewSettleRes> settleList(VoLoanListReq voLoanListReq) {
-
+        voLoanListReq.setType(RepaymentContants.CLOSE);
+        voLoanListReq.setStatus(BorrowContants.PASS);
         List<Borrow> borrowList = commonQuery(voLoanListReq);
         if (CollectionUtils.isEmpty(borrowList)) {
             return null;
@@ -130,6 +131,7 @@ public class LoanServiceImpl implements LoanService {
     @Override
     public List<VoViewBudingRes> budingList(VoLoanListReq voLoanListReq) {
         voLoanListReq.setType(RepaymentContants.BUDING);
+        voLoanListReq.setStatus(RepaymentContants.BUDING);
         List<Borrow> borrowList = commonQuery(voLoanListReq);
         if (CollectionUtils.isEmpty(borrowList)) {
             return null;
@@ -190,7 +192,7 @@ public class LoanServiceImpl implements LoanService {
     }
 
     /**
-     * 还款方式
+     * 还款详情
      *
      * @param voInfoReq
      * @return
