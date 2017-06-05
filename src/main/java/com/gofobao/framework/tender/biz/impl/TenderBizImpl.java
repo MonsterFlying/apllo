@@ -251,14 +251,21 @@ public class TenderBizImpl implements TenderBiz {
                     //添加队列自动投标
                     Map<String, String> msgMap = new HashMap<>();
                     msgMap.put("borrowId", StringHelper.toString(borrowId)); // 借款id
-                    Gson gson = new Gson();
                     String transactionId = System.currentTimeMillis() + RandomHelper.generateNumberCode(4);
-                    msgMap.put("transactionId", transactionId);
 
-                    /**
-                     * @// TODO: 2017/5/31  触发自动投标队列
-                     */
-                    //jmsMessagingTemplate.convertAndSend(ActiveMQConfig.AUTO_TENDER_QUEUE, gson.toJson(msgMap;
+                    //触发自动投标队列
+                    MqConfig mqConfig = new MqConfig();
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+                    mqConfig.setTag(MqTagEnum.USER_ACTIVE_REGISTER);
+                    ImmutableMap<String, String> body = ImmutableMap
+                            .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                    mqConfig.setMsg(body);
+                    try {
+                        log.info(String.format("borrowProvider autoTender send mq %s", GSON.toJson(body)));
+                        mqHelper.convertAndSend(mqConfig);
+                    } catch (Exception e) {
+                        log.error("borrowProvider autoTender send mq exception", e);
+                    }
                 }
 
                 if (borrow.getIsNovice()) {

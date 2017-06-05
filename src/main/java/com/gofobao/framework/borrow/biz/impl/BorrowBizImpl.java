@@ -75,7 +75,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow) throws Exception {
+    public ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow) {
         Long userId = voAddNetWorthBorrow.getUserId();
         String releaseAtStr = voAddNetWorthBorrow.getReleaseAt();
         Integer money = voAddNetWorthBorrow.getMoney();
@@ -167,13 +167,12 @@ public class BorrowBizImpl implements BorrowBiz {
         ImmutableMap<String, String> body = ImmutableMap
                 .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
-        boolean mqState;
+        boolean mqState = false;
         try {
             log.info(String.format("borrowBizImpl firstVerify send mq %s", GSON.toJson(body)));
             mqState = mqHelper.convertAndSend(mqConfig);
         } catch (Exception e) {
             log.error("borrowBizImpl firstVerify send mq exception", e);
-            throw new Exception(e);
         }
 
         /**
