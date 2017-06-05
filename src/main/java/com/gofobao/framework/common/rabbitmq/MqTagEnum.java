@@ -19,7 +19,8 @@ public enum MqTagEnum {
     SMS_REGISTER("SMS_REGISTER"),
     USER_ACTIVE_REGISTER("SMS_REGISTER"),  // 用户注册
     FIRST_VERIFY("FIRST_VERIFY"), //初审
-    AGAIN_VERIFY("AGAIN_VERIFY"); //复审
+    AGAIN_VERIFY("AGAIN_VERIFY"), //复审
+    NOTICE_PUBLISH("NOTICE_PUBLISH"); // 站内信通知
     private String value;
 
     private MqTagEnum(String value) {
