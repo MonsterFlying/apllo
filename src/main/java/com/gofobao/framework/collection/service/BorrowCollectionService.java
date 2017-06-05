@@ -35,4 +35,10 @@ public interface BorrowCollectionService {
     List<BorrowCollection> findList(Specification<BorrowCollection> specification, Sort sort);
 
     boolean updateBySpecification(BorrowCollection borrowCollection, Specification<BorrowCollection> specification);
+
+    BorrowCollection save(BorrowCollection borrowCollection);
+
+    BorrowCollection insert(BorrowCollection borrowCollection);
+
+    BorrowCollection updateById(BorrowCollection borrowCollection);
 }

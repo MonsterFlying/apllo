@@ -130,4 +130,23 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         detailRes.setStartAt(DateHelper.dateToString(borrowRepayment.getRepayAtYes()));
         return detailRes;
     }
+
+    public BorrowRepayment save(BorrowRepayment borrowRepayment){
+        return save(borrowRepayment);
+    }
+
+    public BorrowRepayment insert(BorrowRepayment borrowRepayment){
+        if (ObjectUtils.isEmpty(borrowRepayment)){
+            return null;
+        }
+        borrowRepayment.setId(null);
+        return borrowRepaymentRepository.save(borrowRepayment);
+    }
+
+    public BorrowRepayment updateById(BorrowRepayment borrowRepayment){
+        if (ObjectUtils.isEmpty(borrowRepayment) || ObjectUtils.isEmpty(borrowRepayment.getId())){
+            return null;
+        }
+        return borrowRepaymentRepository.save(borrowRepayment);
+    }
 }

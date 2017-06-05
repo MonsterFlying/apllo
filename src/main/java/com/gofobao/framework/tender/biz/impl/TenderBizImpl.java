@@ -9,6 +9,10 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoCreateThirdBorrowReq;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.PasswordHelper;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
@@ -27,6 +31,7 @@ import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -49,6 +54,9 @@ import java.util.Map;
 @Slf4j
 public class TenderBizImpl implements TenderBiz {
 
+    static final Gson GSON = new Gson();
+
+
     @Autowired
     private BorrowService borrowService;
     @Autowired
@@ -63,6 +71,8 @@ public class TenderBizImpl implements TenderBiz {
     private CapitalChangeHelper capitalChangeHelper;
     @Autowired
     private TenderThirdBiz tenderThirdBiz;
+    @Autowired
+    private MqHelper mqHelper;
 
     public Map<String,Object> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception{
         Map<String, Object> rsMap = null;
@@ -125,9 +135,22 @@ public class TenderBizImpl implements TenderBiz {
                     }
                 }
                 if (tempBorrow.getMoneyYes() >= borrow.getMoney()) {
-                    /**
-                     * @// TODO: 2017/5/31 复审
-                     */
+
+                    //复审
+                    MqConfig mqConfig = new MqConfig();
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+                    mqConfig.setTag(MqTagEnum.USER_ACTIVE_REGISTER);
+                    ImmutableMap<String, String> body = ImmutableMap
+                            .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                    mqConfig.setMsg(body);
+                    boolean mqState;
+                    try {
+                        log.info(String.format("tenderBizImpl againVerify send mq %s", GSON.toJson(body)));
+                        mqState = mqHelper.convertAndSend(mqConfig);
+                    } catch (Exception e) {
+                        log.error("tenderBizImpl againVerify send mq exception", e);
+                        throw new Exception(e);
+                    }
                 }
             }
         }while (false);

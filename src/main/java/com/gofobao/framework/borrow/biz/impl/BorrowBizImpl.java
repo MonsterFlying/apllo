@@ -11,6 +11,10 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoAddNetWorthBorrow;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.borrow.vo.request.VoCreateThirdBorrowReq;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -23,6 +27,8 @@ import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.service.AutoTenderService;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
@@ -43,6 +49,7 @@ import java.util.Date;
 @Slf4j
 public class BorrowBizImpl implements BorrowBiz {
 
+    static final Gson GSON = new Gson();
 
     @Autowired
     private UserService userService;
@@ -58,6 +65,8 @@ public class BorrowBizImpl implements BorrowBiz {
     private BorrowThirdBiz borrowThirdBiz;
     @Autowired
     private UserThirdAccountService userThirdAccountService;
+    @Autowired
+    private MqHelper mqHelper;
 
     /**
      * 新增净值借款
@@ -66,7 +75,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow) {
+    public ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow) throws Exception {
         Long userId = voAddNetWorthBorrow.getUserId();
         String releaseAtStr = voAddNetWorthBorrow.getReleaseAt();
         Integer money = voAddNetWorthBorrow.getMoney();
@@ -151,38 +160,53 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "净值标插入失败!"));
         }
 
-        /**
-         * @// TODO: 2017/5/27 初审逻辑
-         */
+        //初审
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+        mqConfig.setTag(MqTagEnum.USER_ACTIVE_REGISTER);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        boolean mqState;
+        try {
+            log.info(String.format("borrowBizImpl firstVerify send mq %s", GSON.toJson(body)));
+            mqState = mqHelper.convertAndSend(mqConfig);
+        } catch (Exception e) {
+            log.error("borrowBizImpl firstVerify send mq exception", e);
+            throw new Exception(e);
+        }
 
         /**
          * 这个操作应该在初审成功后做的步骤
          */
+        if (!mqState) {
+            return ResponseEntity.ok(VoBaseResp.ok("投标失败!"));
+        }
         String name = voAddNetWorthBorrow.getName();
 
         VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
         voCreateThirdBorrowReq.setUserId(userId);
-        voCreateThirdBorrowReq.setRate(StringHelper.formatDouble(voAddNetWorthBorrow.getApr(),100,false));
-        voCreateThirdBorrowReq.setTxAmount(StringHelper.formatDouble(money,100,false));
+        voCreateThirdBorrowReq.setRate(StringHelper.formatDouble(voAddNetWorthBorrow.getApr(), 100, false));
+        voCreateThirdBorrowReq.setTxAmount(StringHelper.formatDouble(money, 100, false));
         voCreateThirdBorrowReq.setAcqRes(String.valueOf(userId));
         voCreateThirdBorrowReq.setIntType(IntTypeContant.SINGLE_USE);
-        voCreateThirdBorrowReq.setDuration(String.valueOf(voAddNetWorthBorrow.getTimeLimit()) );
-        voCreateThirdBorrowReq.setProductDesc(StringUtils.isEmpty(name)?"净值借款":name);
+        voCreateThirdBorrowReq.setDuration(String.valueOf(voAddNetWorthBorrow.getTimeLimit()));
+        voCreateThirdBorrowReq.setProductDesc(StringUtils.isEmpty(name) ? "净值借款" : name);
         voCreateThirdBorrowReq.setProductId(String.valueOf(borrowId));
-        voCreateThirdBorrowReq.setRaiseDate(DateHelper.dateToString(new Date(),DateHelper.DATE_FORMAT_YMD_NUM));
-        voCreateThirdBorrowReq.setRaiseEndDate(DateHelper.dateToString(DateHelper.addDays(new Date(),1),DateHelper.DATE_FORMAT_YMD_NUM));
+        voCreateThirdBorrowReq.setRaiseDate(DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM));
+        voCreateThirdBorrowReq.setRaiseEndDate(DateHelper.dateToString(DateHelper.addDays(new Date(), 1), DateHelper.DATE_FORMAT_YMD_NUM));
 
         ResponseEntity<VoBaseResp> resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
-        if (!ObjectUtils.isEmpty(resp)){
+        if (!ObjectUtils.isEmpty(resp)) {
             return resp;
         }
-
         return ResponseEntity.ok(VoBaseResp.ok("投标成功!"));
+
     }
 
     private long insertBorrow(VoAddNetWorthBorrow voAddNetWorthBorrow, Long userId) throws Exception {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        Preconditions.checkNotNull(userThirdAccount,"借款人未开户!");
+        Preconditions.checkNotNull(userThirdAccount, "借款人未开户!");
 
         Borrow borrow = new Borrow();
         borrow.setType(BorrowContants.JING_ZHI); // 净值标
