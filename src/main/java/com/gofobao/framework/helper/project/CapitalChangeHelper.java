@@ -135,7 +135,7 @@ public class CapitalChangeHelper {
             }
 
             asset.setUpdatedAt(new Date());
-            assetService.update(asset);
+            assetService.updateById(asset);
         }
 
 

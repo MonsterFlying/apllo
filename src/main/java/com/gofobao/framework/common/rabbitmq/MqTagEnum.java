@@ -17,8 +17,10 @@ public enum MqTagEnum {
     SMS_RECEIVED_REPAY("SMS_RECEIVED_REPAY"),
     SMS_BORROW_REPAYMENT_PUSH("SMS_BORROW_REPAYMENT_PUSH"),
     SMS_REGISTER("SMS_REGISTER"),
-    USER_ACTIVE_REGISTER("SMS_REGISTER");  // 用户注册
-    private String value ;
+    USER_ACTIVE_REGISTER("SMS_REGISTER"),  // 用户注册
+    FIRST_VERIFY("FIRST_VERIFY"), //初审
+    AGAIN_VERIFY("AGAIN_VERIFY"); //复审
+    private String value;
 
     private MqTagEnum(String value) {
         this.value = value;

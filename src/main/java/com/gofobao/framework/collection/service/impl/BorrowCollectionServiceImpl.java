@@ -24,6 +24,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import java.util.*;
 import java.util.function.Function;
@@ -43,6 +44,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
 
     /**
      * 回款列表
+     *
      * @param voCollectionOrderReq
      * @return VoViewCollectionOrderListRes
      */
@@ -97,6 +99,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
 
     /**
      * 回款详情
+     *
      * @param voOrderDetailReq
      * @return VoViewOrderDetailRes
      */
@@ -119,7 +122,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
             interest = borrowCollection.getInterest();
             principal = borrowCollection.getPrincipal();
             detailRes.setStatus(BorrowCollectionContants.STATUS_YES_STR);
-        }else{
+        } else {
             detailRes.setStatus(BorrowCollectionContants.STATUS_YES_STR);
         }
         detailRes.setPrincipal(NumberHelper.to2DigitString(interest / 100));
@@ -133,15 +136,34 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
     }
 
     public List<BorrowCollection> findList(Specification<BorrowCollection> specification, Sort sort) {
-        return borrowCollectionRepository.findAll(specification,sort);
+        return borrowCollectionRepository.findAll(specification, sort);
     }
 
     public boolean updateBySpecification(BorrowCollection borrowCollection, Specification<BorrowCollection> specification) {
         List<BorrowCollection> borrowCollectionList = borrowCollectionRepository.findAll(specification);
         Optional<List<BorrowCollection>> optional = Optional.ofNullable(borrowCollectionList);
         optional.ifPresent(list -> list.forEach(obj -> {
-            BeanHelper.copyParamter(borrowCollection,obj,true);
+            BeanHelper.copyParamter(borrowCollection, obj, true);
         }));
         return !CollectionUtils.isEmpty(borrowCollectionRepository.save(borrowCollectionList));
+    }
+
+    public BorrowCollection save(BorrowCollection borrowCollection) {
+        return borrowCollectionRepository.save(borrowCollection);
+    }
+
+    public BorrowCollection insert(BorrowCollection borrowCollection) {
+        if (ObjectUtils.isEmpty(borrowCollection)) {
+            return null;
+        }
+        borrowCollection.setId(null);
+        return borrowCollectionRepository.save(borrowCollection);
+    }
+
+    public BorrowCollection updateById(BorrowCollection borrowCollection) {
+        if (ObjectUtils.isEmpty(borrowCollection) || ObjectUtils.isEmpty(borrowCollection.getId())) {
+            return null;
+        }
+        return borrowCollectionRepository.save(borrowCollection);
     }
 }

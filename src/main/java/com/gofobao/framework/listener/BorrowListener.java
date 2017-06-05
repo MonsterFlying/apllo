@@ -1,7 +1,9 @@
 package com.gofobao.framework.listener;
 
 import com.gofobao.framework.common.constans.TypeTokenContants;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnumContants;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
@@ -35,53 +37,49 @@ public class BorrowListener {
 
     @RabbitHandler
     public void process(String message) {
-        Preconditions.checkNotNull(message, "SmsMessageListener process message is empty");
+        Preconditions.checkNotNull(message, "BorrowListener process message is empty");
         Map<String, Object> body = gson.fromJson(message, TypeTokenContants.MAP_TOKEN);
+        Preconditions.checkNotNull(body.get(MqConfig.MSG_TAG), "BorrowListener process tag is empty ");
+        Preconditions.checkNotNull(body.get(MqConfig.MSG_BODY), "BorrowListener process body is empty ");
+        String tag = body.get(MqConfig.MSG_TAG).toString();
+        Map<String, String> msg = (Map<String, String>) body.get(MqConfig.MSG_BODY);
 
-        Long borrowId = NumberHelper.toLong(StringHelper.toString(body.get("borrowId")));
-        String type = StringHelper.toString(body.get("type"));
-
-        if (ObjectUtils.isEmpty(borrowId) || ObjectUtils.isEmpty(type)) {
-            log.error("borrow listen 参数缺少");
-        }
+        Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get("borrowId")));
 
         boolean bool = false;
-        switch (type) {
-            case FIRST_VERIFY:
-                try {
-                    bool = borrowProvider.doFirstVerify(borrowId);
-                } catch (Exception e) {
-                    log.error("初审异常:",e);
-                }
-                if (bool){
-                    log.info("===========================borrow listen============================");
-                    log.info("初审成功! borrowId："+borrowId);
-                    log.info("====================================================================");
-                }else {
-                    log.info("===========================borrow listen============================");
-                    log.info("初审失败! borrowId："+borrowId);
-                    log.info("====================================================================");
-                }
-                break;
-            case AGAIN_VERIFY:
-                try {
-                    bool = borrowProvider.doAgainVerify(borrowId);
-                } catch (Exception e) {
-                    log.error("复审异常:",e);
-                }
+        if (tag.equals(MqTagEnum.FIRST_VERIFY)) {  // 用户注册
+            try {
+                bool = borrowProvider.doFirstVerify(msg);
+            } catch (Exception e) {
+                log.error("初审异常:", e);
+            }
+            if (bool) {
+                log.info("===========================BorrowListener===========================");
+                log.info("初审成功! borrowId：" + borrowId);
+                log.info("====================================================================");
+            } else {
+                log.info("===========================BorrowListener===========================");
+                log.info("初审失败! borrowId：" + borrowId);
+                log.info("====================================================================");
+            }
+        } else if (tag.equals(MqTagEnum.AGAIN_VERIFY)) {
+            try {
+                bool = borrowProvider.doAgainVerify(msg);
+            } catch (Exception e) {
+                log.error("复审异常:", e);
+            }
 
-                if (bool){
-                    log.info("===========================borrow listen============================");
-                    log.info("复审成功! borrowId："+borrowId);
-                    log.info("====================================================================");
-                }else {
-                    log.info("===========================borrow listen============================");
-                    log.info("复审失败! borrowId："+borrowId);
-                    log.info("====================================================================");
-                }
-                break;
-            default:
-                log.error("borrow listen 未找到对应的type");
+            if (bool) {
+                log.info("===========================BorrowListener===========================");
+                log.info("复审成功! borrowId：" + borrowId);
+                log.info("====================================================================");
+            } else {
+                log.info("===========================BorrowListener===========================");
+                log.info("复审失败! borrowId：" + borrowId);
+                log.info("====================================================================");
+            }
+        } else {
+            log.error("BorrowListener 未找到对应的type");
         }
     }
 }

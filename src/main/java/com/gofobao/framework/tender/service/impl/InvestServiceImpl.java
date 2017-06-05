@@ -76,7 +76,7 @@ public class InvestServiceImpl implements InvestService {
                 .map(p -> p.getBorrowId())
                 .collect(Collectors.toSet());
         //期数集合
-        List<BorrowCollection> borrowCollections = borrowCollectionRepository.findByInTenderId(tenderIdArray);
+        List<BorrowCollection> borrowCollections = borrowCollectionRepository.findByTenderIdIn(tenderIdArray);
 
         //标集合
         List<Borrow> borrowList = borrowRepository.findByIdIn(new ArrayList(borrowIdArrray));
@@ -187,7 +187,7 @@ public class InvestServiceImpl implements InvestService {
         Set<Long> tenderIds = tenderList.stream()
                 .map(p -> p.getId())
                 .collect(Collectors.toSet());
-        List<BorrowCollection> borrowCollections = borrowCollectionRepository.findByInTenderId(new ArrayList(tenderIds));
+        List<BorrowCollection> borrowCollections = borrowCollectionRepository.findByTenderIdIn(new ArrayList(tenderIds));
 
         Map<Long, List<BorrowCollection>> borrowCollectionMaps = borrowCollections.stream()
                 .collect(groupingBy(BorrowCollection::getTenderId));

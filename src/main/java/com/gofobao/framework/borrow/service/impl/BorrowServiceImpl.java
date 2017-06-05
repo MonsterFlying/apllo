@@ -35,11 +35,6 @@ public class BorrowServiceImpl implements BorrowService {
     @Autowired
     private BorrowRepository borrowRepository;
 
-
-
-    @Autowired
-    private BorrowCollectionRepository borrowCollectionRepository;
-
     /**
      * 首页标列表
      *
