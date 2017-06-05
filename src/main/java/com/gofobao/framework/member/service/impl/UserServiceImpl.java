@@ -1,16 +1,8 @@
 package com.gofobao.framework.member.service.impl;
 
-import com.gofobao.framework.api.contants.AcctUseContant;
-import com.gofobao.framework.api.contants.IdTypeContant;
-import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusRequest;
-import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.member.service.UserService;
-import com.gofobao.framework.member.vo.request.VoRegisterCallReq;
-import com.gofobao.framework.member.vo.request.VoRegisterReq;
-import com.gofobao.framework.member.vo.response.VoRegisterCallResp;
-import com.gofobao.framework.member.vo.response.VoRegisterResp;
 import com.gofobao.framework.security.entity.JwtUserFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
@@ -31,7 +32,7 @@ import static java.util.stream.Collectors.groupingBy;
 /**
  * Created by admin on 2017/6/2.
  */
-@Service
+@Component
 public class LoanServiceImpl implements LoanService {
     @Autowired
     private BorrowRepaymentRepository repaymentRepository;
@@ -47,11 +48,8 @@ public class LoanServiceImpl implements LoanService {
      */
     @Override
     public List<VoViewRefundRes> refundResList(VoLoanListReq voLoanListReq) {
-        voLoanListReq.setType(RepaymentContants.REFUND);
-        voLoanListReq.setStatus(BorrowContants.PASS);
 
         List<Borrow> borrowList = commonQuery(voLoanListReq);
-
         if (CollectionUtils.isEmpty(borrowList)) {
             return null;
         }
