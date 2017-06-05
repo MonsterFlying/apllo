@@ -20,8 +20,6 @@ import java.util.Date;
 @AllArgsConstructor
 @DynamicInsert
 public class AssetLog {
-
-
     @Id
     @Column(name = "id")
     @GeneratedValue
@@ -75,6 +73,5 @@ public class AssetLog {
     @Basic
     @Column(name = "created_at")
     private Date createdAt;
-
 
 }

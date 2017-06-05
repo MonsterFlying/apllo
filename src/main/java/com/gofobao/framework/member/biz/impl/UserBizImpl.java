@@ -154,6 +154,7 @@ public class UserBizImpl implements UserBiz{
         ImmutableMap<String, String> body = ImmutableMap
                 .of(MqConfig.MSG_USER_ID, users.getId().toString(), MqConfig.MSG_TIME, DateHelper.dateToString(now)) ;
         mqConfig.setMsg(body);
+        mqConfig.setSendTime(DateHelper.addSeconds(new Date(), 30));
         boolean mqState;
         try {
             log.info(String.format("userBizImpl register send mq %s", GSON.toJson(body)));
