@@ -45,9 +45,6 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
         // authToken.startsWith("Bearer ")
         // String authToken = header.substring(7);
         String username = jwtTokenHelper.getUsernameFromToken(authToken);
-
-        logger.info("checking authentication für user " + username);
-
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             // add userinfo indentify to head
             Long userId = jwtTokenHelper.getUserIdFromToken(authToken);
@@ -66,7 +63,6 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }
-
         chain.doFilter(request, response);
     }
 }
