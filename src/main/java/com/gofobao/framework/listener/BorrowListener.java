@@ -29,9 +29,6 @@ public class BorrowListener {
 
     Gson gson = new GsonBuilder().create();
 
-    private final static String FIRST_VERIFY = "firstVerify";
-    private final static String AGAIN_VERIFY = "againVerify";
-
     @Autowired
     private BorrowProvider borrowProvider;
 

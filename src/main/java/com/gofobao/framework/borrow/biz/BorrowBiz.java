@@ -17,5 +17,5 @@ public interface BorrowBiz {
      * @param voAddNetWorthBorrow
      * @return
      */
-    ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow) throws Exception;
+    ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow);
 }

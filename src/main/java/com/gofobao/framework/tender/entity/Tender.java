@@ -16,6 +16,7 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@DynamicInsert
 public class Tender {
     @Id
     @Column(name = "id")

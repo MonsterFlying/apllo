@@ -1,15 +1,25 @@
 package com.gofobao.framework.tender.service.impl;
 
+import com.github.pagehelper.PageHelper;
 import com.gofobao.framework.helper.BeanHelper;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.repository.AutoTenderRepository;
 import com.gofobao.framework.tender.service.AutoTenderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.PluralJoin;
+import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +32,9 @@ public class AutoTenderServiceImpl implements AutoTenderService {
 
     @Autowired
     private AutoTenderRepository autoTenderRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public boolean insert(AutoTender autoTender) {
         if (ObjectUtils.isEmpty(autoTender)) {
@@ -52,5 +65,13 @@ public class AutoTenderServiceImpl implements AutoTenderService {
             updAutoTenders.add(temp);//更新对象
         }));
         return CollectionUtils.isEmpty(autoTenderRepository.save(updAutoTenders));
+    }
+
+    public List<AutoTender> findT(int pageIndex,int pageSize) {
+        StringBuffer sql = new StringBuffer("select t  from gfb_auto_tender t left join gfb_asset a on t.user_id = a.user_id where 1=1");
+        Query query = entityManager.createNativeQuery(sql.toString(),AutoTender.class);
+        List<AutoTender> autoTenderList = query.getResultList();
+        PageHelper.startPage(pageIndex,pageSize);
+        return null;
     }
 }

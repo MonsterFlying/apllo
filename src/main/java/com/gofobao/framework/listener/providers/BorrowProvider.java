@@ -7,6 +7,7 @@ import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.NumberHelper;
@@ -20,6 +21,7 @@ import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.google.common.base.Preconditions;
@@ -57,6 +59,8 @@ public class BorrowProvider {
     private TenderService tenderService;
     @Autowired
     private BorrowRepaymentService borrowRepaymentService;
+    @Autowired
+    private AutoTenderService autoTenderService;
 
     /**
      * 初审
@@ -65,7 +69,7 @@ public class BorrowProvider {
      * @throws Exception
      */
     public boolean doFirstVerify(Map<String, String> msg) throws Exception {
-        Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get("borrowId")));
+        Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
         Borrow borrow = borrowService.findByIdLock(borrowId);
         if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 0)) {
             return false;

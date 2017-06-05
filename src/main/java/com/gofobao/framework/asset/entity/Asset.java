@@ -13,11 +13,9 @@ import java.util.Date;
  * Created by Zeke on 2017/5/19.
  */
 @Entity
+@DynamicInsert
 @Table(name = "gfb_asset")
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-@DynamicInsert
 public class Asset {
     @Id
     @Column(name = "user_id")
