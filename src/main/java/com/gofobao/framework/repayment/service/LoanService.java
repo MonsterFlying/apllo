@@ -1,11 +1,8 @@
 package com.gofobao.framework.repayment.service;
 
-import com.gofobao.framework.repayment.vo.request.VoInfoReq;
+import com.gofobao.framework.repayment.vo.request.VoDetailReq;
 import com.gofobao.framework.repayment.vo.request.VoLoanListReq;
-import com.gofobao.framework.repayment.vo.response.VoViewBudingRes;
-import com.gofobao.framework.repayment.vo.response.VoViewRefundRes;
-import com.gofobao.framework.repayment.vo.response.VoViewRepaymentDetail;
-import com.gofobao.framework.repayment.vo.response.VoViewSettleRes;
+import com.gofobao.framework.repayment.vo.response.*;
 
 
 import java.util.List;
@@ -36,15 +33,23 @@ public interface LoanService {
      * @param voLoanListReq
      * @return
      */
-    List<VoViewBudingRes>budingList(VoLoanListReq voLoanListReq);
+    List<VoViewBudingRes> buddingList(VoLoanListReq voLoanListReq);
 
 
     /**
      * 还款方式
-     * @param voInfoReq
+     * @param voDetailReq
      * @return
      */
-    VoViewRepaymentDetail repaymentDetail(VoInfoReq voInfoReq);
+    VoViewRepaymentDetail repaymentDetail(VoDetailReq voDetailReq);
+
+
+    /**
+     * 还款列表
+     * @param voDetailReq
+     * @return
+     */
+    VoViewLoanList loanList(VoDetailReq voDetailReq);
 
 
 }

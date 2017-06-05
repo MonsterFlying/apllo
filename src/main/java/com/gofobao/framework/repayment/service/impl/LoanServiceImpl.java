@@ -4,17 +4,16 @@ import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.repayment.contants.RepaymentContants;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.repository.BorrowRepaymentRepository;
 import com.gofobao.framework.repayment.repository.LoanRepository;
 import com.gofobao.framework.repayment.service.LoanService;
-import com.gofobao.framework.repayment.vo.request.VoInfoReq;
+import com.gofobao.framework.repayment.vo.request.VoDetailReq;
 import com.gofobao.framework.repayment.vo.request.VoLoanListReq;
-import com.gofobao.framework.repayment.vo.response.VoViewBudingRes;
-import com.gofobao.framework.repayment.vo.response.VoViewRefundRes;
-import com.gofobao.framework.repayment.vo.response.VoViewRepaymentDetail;
-import com.gofobao.framework.repayment.vo.response.VoViewSettleRes;
+import com.gofobao.framework.repayment.vo.response.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -129,7 +128,7 @@ public class LoanServiceImpl implements LoanService {
      * @return
      */
     @Override
-    public List<VoViewBudingRes> budingList(VoLoanListReq voLoanListReq) {
+    public List<VoViewBudingRes> buddingList(VoLoanListReq voLoanListReq) {
         voLoanListReq.setType(RepaymentContants.BUDING);
         voLoanListReq.setStatus(RepaymentContants.BUDING);
         List<Borrow> borrowList = commonQuery(voLoanListReq);
@@ -194,14 +193,14 @@ public class LoanServiceImpl implements LoanService {
     /**
      * 还款详情
      *
-     * @param voInfoReq
+     * @param voDetailReq
      * @return
      */
     @Override
-    public VoViewRepaymentDetail repaymentDetail(VoInfoReq voInfoReq) {
+    public VoViewRepaymentDetail repaymentDetail(VoDetailReq voDetailReq) {
 
-        Borrow borrow = loanRepository.findOne(voInfoReq.getUserId());
-        if (ObjectUtils.isEmpty(borrow)) {
+        Borrow borrow = loanRepository.findOne(voDetailReq.getBorrowId());
+        if (ObjectUtils.isEmpty(borrow) || !borrow.getUserId().equals(voDetailReq.getUserId())) {
             return null;
         }
         VoViewRepaymentDetail repaymentDetail = new VoViewRepaymentDetail();
@@ -232,15 +231,85 @@ public class LoanServiceImpl implements LoanService {
                 statusStr = RepaymentContants.STATUS_NO_STR;
                 interest = borrowRepayments.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_NO).mapToInt(w -> w.getInterest()).sum();
                 principal = borrowRepayments.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_NO).mapToInt(w -> w.getPrincipal()).sum();
-            } else {
+            } else {   //以还清
                 statusStr = RepaymentContants.STATUS_YES_STR;
-                interest = borrowRepayments.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_NO).mapToInt(w -> w.getInterest()).sum();
-                principal = borrowRepayments.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_NO).mapToInt(w -> w.getPrincipal()).sum();
+                interest = borrowRepayments.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_YES).mapToInt(w -> w.getInterest()).sum();
+                principal = borrowRepayments.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_YES).mapToInt(w -> w.getPrincipal()).sum();
             }
             repaymentDetail.setInterest(NumberHelper.to2DigitString(interest / 100));
             repaymentDetail.setPrincipal(NumberHelper.to2DigitString(principal / 100));
             repaymentDetail.setStatusStr(statusStr);
+
+            //预期收益
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(borrow.getValidDay() / 100D, borrow.getApr() / 100D, borrow.getTimeLimit(), borrow.getSuccessAt());
+            Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
+            Integer receivableInterest = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("interest")));
+            repaymentDetail.setReceivableInterest(NumberHelper.to2DigitString(receivableInterest / 100));
+
         }
+
+
+        if (borrow.getTimeLimit() == 1) {
+            repaymentDetail.setTimeLimit(borrow.getTimeLimit() + BorrowContants.DAY);
+        } else {
+            repaymentDetail.setTimeLimit(borrow.getTimeLimit() + BorrowContants.MONTH);
+        }
+
         return repaymentDetail;
+    }
+
+
+    /**
+     * @param voDetailReq
+     * @return
+     */
+    @Override
+    public VoViewLoanList loanList(VoDetailReq voDetailReq) {
+        Borrow borrow = loanRepository.findOne(voDetailReq.getBorrowId());
+        if (ObjectUtils.isEmpty(borrow) || !borrow.getUserId().equals(voDetailReq.getUserId())) {
+            return null;
+        }
+        List<BorrowRepayment> repaymentList = repaymentRepository.findByBorrowId(borrow.getId());
+        if (CollectionUtils.isEmpty(repaymentList)) {
+            return null;
+        }
+        VoViewLoanList voViewLoanList = new VoViewLoanList();
+        Long countId = repaymentList.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_NO).mapToLong(w -> w.getId()).count();
+        List<BorrowRepayment> borrowRepayments = new ArrayList<>(0);
+        String statusStr;
+        if (countId > 0) {  //还款中
+            borrowRepayments = repaymentList.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_NO).collect(Collectors.toList());
+            voViewLoanList.setOrderCount(countId.intValue());
+            statusStr = RepaymentContants.STATUS_NO_STR;
+        } else { //此标已结清
+            borrowRepayments = repaymentList;
+            voViewLoanList.setOrderCount(repaymentList.size());
+            statusStr = RepaymentContants.STATUS_YES_STR;
+        }
+        Integer repayMoney = borrowRepayments.stream().mapToInt(w -> w.getRepayMoney()).sum();
+        voViewLoanList.setSumRepayMoney(NumberHelper.to2DigitString(repayMoney / 100));  //总金额
+        List<VoLoanInfo> voLoanInfoList=new ArrayList<>();
+        borrowRepayments.stream().forEach(p -> {
+            VoLoanInfo loanInfo = new VoLoanInfo();
+            loanInfo.setOrder(p.getOrder() + 1);
+            loanInfo.setStatusStr(statusStr);
+            loanInfo.setRepayMoney(NumberHelper.to2DigitString(p.getRepayMoney() / 100));
+            Date repayAt = new Date();
+            if (countId > 0) {
+                repayAt = p.getRepayAt();
+                loanInfo.setStatus(RepaymentContants.STATUS_NO);
+            } else {
+                repayAt = p.getRepayAtYes();
+                loanInfo.setStatus(RepaymentContants.STATUS_YES);
+            }
+            loanInfo.setRepayAt(DateHelper.dateToString(repayAt));
+            loanInfo.setLateDays(p.getLateDays());
+            loanInfo.setInterest(NumberHelper.to2DigitString(p.getInterest()/100));
+            loanInfo.setPrincipal(NumberHelper.to2DigitString(p.getPrincipal()/100));
+            voLoanInfoList.add(loanInfo);
+        });
+        voViewLoanList.setVoLoanInfoList(voLoanInfoList);
+
+        return Optional.ofNullable(voViewLoanList).orElse(null);
     }
 }
