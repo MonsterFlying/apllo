@@ -59,7 +59,7 @@ public class LoanServiceImpl implements LoanService {
         List<Long> borrowIds = borrowList.stream()
                 .map(s -> s.getId())
                 .collect(Collectors.toList());
-        List<BorrowRepayment> borrowRepayments = repaymentRepository.findByBorrowIdInAndStatusEq(borrowIds, RepaymentContants.STATUS_NO);
+        List<BorrowRepayment> borrowRepayments = repaymentRepository.findByBorrowIdInAndStatusIs(borrowIds, RepaymentContants.STATUS_NO);
         Map<Long, List<BorrowRepayment>> borrowRepaymentMaps = borrowRepayments.stream()
                 .collect(groupingBy(BorrowRepayment::getBorrowId));
 
@@ -98,7 +98,7 @@ public class LoanServiceImpl implements LoanService {
         List<Long> borrowIds = borrowList.stream()
                 .map(s -> s.getId())
                 .collect(Collectors.toList());
-        List<BorrowRepayment> borrowRepayments = repaymentRepository.findByBorrowIdInAndStatusEq(borrowIds, RepaymentContants.STATUS_YES);
+        List<BorrowRepayment> borrowRepayments = repaymentRepository.findByBorrowIdInAndStatusIs(borrowIds, RepaymentContants.STATUS_YES);
         Map<Long, List<BorrowRepayment>> borrowRepaymentMaps = borrowRepayments.stream()
                 .collect(groupingBy(BorrowRepayment::getBorrowId));
 
@@ -166,21 +166,21 @@ public class LoanServiceImpl implements LoanService {
         if (voLoanListReq.getType() == RepaymentContants.REFUND) { //还款中
             sort = new Sort(Sort.Direction.DESC, "closeAt");
             pageable = new PageRequest(voLoanListReq.getPageIndex(), voLoanListReq.getPageSize(), sort);
-            borrowPage = loanRepository.findByUserIdEqAndStatusEqAndSuccessAtIsNONullAndCloseAtIsNull(
+            borrowPage = loanRepository.findByUserIdAndStatusIsAndSuccessAtIsNotNullAndCloseAtIsNull(
                     voLoanListReq.getUserId(),
                     voLoanListReq.getStatus(),
                     pageable);
         } else if (voLoanListReq.getType() == RepaymentContants.BUDING) { //招标中
             sort = new Sort(Sort.Direction.DESC, "releaseAt");
             pageable = new PageRequest(voLoanListReq.getPageIndex(), voLoanListReq.getPageSize(), sort);
-            borrowPage = loanRepository.findByUserIdAndStatusEq(
+            borrowPage = loanRepository.findByUserIdAndStatusIs(
                     voLoanListReq.getUserId(),
                     voLoanListReq.getStatus(),
                     pageable);
         } else {
             sort = new Sort(Sort.Direction.DESC, "successAt");
             pageable = new PageRequest(voLoanListReq.getPageIndex(), voLoanListReq.getPageSize(), sort);
-            borrowPage = loanRepository.findByUserIdEqAndStatusEqAndSuccessAtIsNONullAndCloseAtIsNotNull(
+            borrowPage = loanRepository.findByUserIdAndStatusIsAndSuccessAtIsNotNullAndCloseAtIsNotNull(
                     voLoanListReq.getUserId(),
                     voLoanListReq.getStatus(),
                     pageable);
@@ -220,7 +220,7 @@ public class LoanServiceImpl implements LoanService {
         }
         repaymentDetail.setRepayFashion(repayFashion);
         if (borrow.getStatus() != BorrowContants.BIDDING) {
-            List<BorrowRepayment> borrowRepayments = repaymentRepository.findByBorrowIdEq(borrow.getId());
+            List<BorrowRepayment> borrowRepayments = repaymentRepository.findByBorrowId(borrow.getId());
             //统计还款中
             Long count = borrowRepayments.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_NO).mapToLong(w -> w.getId()).count();
             String statusStr = "";

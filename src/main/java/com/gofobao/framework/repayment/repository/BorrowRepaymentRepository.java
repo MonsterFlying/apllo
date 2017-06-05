@@ -18,7 +18,7 @@ public interface BorrowRepaymentRepository extends JpaRepository<BorrowRepayment
      * @param status
      * @return
      */
-    List<BorrowRepayment> findByBorrowIdInAndStatusEq(List<Long> borrowIds, Integer status);
+    List<BorrowRepayment> findByBorrowIdInAndStatusIs(List<Long> borrowIds, Integer status);
 
 
     /**
@@ -26,6 +26,6 @@ public interface BorrowRepaymentRepository extends JpaRepository<BorrowRepayment
      * @param borrowId
      * @return
      */
-    List<BorrowRepayment>findByBorrowIdEq(Long borrowId);
+    List<BorrowRepayment> findByBorrowId(Long borrowId);
 
 }

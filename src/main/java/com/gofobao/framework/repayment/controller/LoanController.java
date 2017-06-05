@@ -39,10 +39,11 @@ public class LoanController {
             List<VoViewRefundRes> voViewRefundResList = loanService.refundResList(voLoanListReq);
             return ResponseEntity.ok(voViewRefundResList);
         } catch (Exception e) {
-            return ResponseEntity.
+
+        }
+
+        return ResponseEntity.
                     badRequest().
                     body(VoBaseResp.error(VoBaseResp.ERROR, "获取广富币列表失败!"));
         }
     }
-
-}

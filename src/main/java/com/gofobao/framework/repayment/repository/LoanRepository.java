@@ -24,7 +24,7 @@ public interface LoanRepository extends JpaRepository<Borrow,Long>,JpaSpecificat
      * @param status
      * @return
      */
-    Page<Borrow> findByUserIdEqAndStatusEqAndSuccessAtIsNONullAndCloseAtIsNull(Long userId, int status, Pageable pageable);
+    Page<Borrow> findByUserIdAndStatusIsAndSuccessAtIsNotNullAndCloseAtIsNull(Long userId, int status, Pageable pageable);
 
 
     /**
@@ -35,7 +35,8 @@ public interface LoanRepository extends JpaRepository<Borrow,Long>,JpaSpecificat
      * @return
      *
      */
-    Page<Borrow>findByUserIdEqAndStatusEqAndSuccessAtIsNONullAndCloseAtIsNotNull(Long userId,int status,Pageable pageable);
+    Page<Borrow> findByUserIdAndStatusIsAndSuccessAtIsNotNullAndCloseAtIsNotNull(Long userId, int status, Pageable pageable);
+
 
 
     /**
@@ -45,7 +46,7 @@ public interface LoanRepository extends JpaRepository<Borrow,Long>,JpaSpecificat
      * @param pageable
      * @return
      */
-    Page<Borrow> findByUserIdAndStatusEq(Long userId, int status,Pageable pageable);
+    Page<Borrow> findByUserIdAndStatusIs(Long userId, int status, Pageable pageable);
 
 
 }
