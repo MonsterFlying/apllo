@@ -9,7 +9,7 @@ import com.gofobao.framework.collection.repository.BorrowCollectionRepository;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
-import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListRes;
+import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderList;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderRes;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailRes;
 import com.gofobao.framework.helper.BeanHelper;
@@ -22,7 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Range;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 /**
  * Created by admin on 2017/5/31.
  */
-@Service
+@Component
 public class BorrowCollectionServiceImpl implements BorrowCollectionService {
 
     @Autowired
@@ -49,7 +49,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
      * @return VoViewCollectionOrderListRes
      */
     @Override
-    public VoViewCollectionOrderListRes orderList(VoCollectionOrderReq voCollectionOrderReq) {
+    public VoViewCollectionOrderList orderList(VoCollectionOrderReq voCollectionOrderReq) {
         Date date = DateHelper.stringToDate(voCollectionOrderReq.getTime());
 
         Specification<BorrowCollection> specification = Specifications.<BorrowCollection>and()
@@ -69,7 +69,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
                 .stream()
                 .collect(Collectors.toMap(Borrow::getId, Function.identity()));
 
-        VoViewCollectionOrderListRes voViewCollectionOrderListRes = new VoViewCollectionOrderListRes();
+        VoViewCollectionOrderList voViewCollectionOrderListRes = new VoViewCollectionOrderList();
 
         List<VoViewCollectionOrderRes> orderResList = new ArrayList<>();
 
@@ -93,7 +93,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
                 .mapToInt(w -> w.getCollectionMoneyYes())
                 .sum();
         voViewCollectionOrderListRes.setSumCollectionMoneyYes(NumberHelper.to2DigitString(sumCollectionMoneyYes / 100));
-        Optional<VoViewCollectionOrderListRes> orderListRes = Optional.ofNullable(voViewCollectionOrderListRes);
+        Optional<VoViewCollectionOrderList> orderListRes = Optional.ofNullable(voViewCollectionOrderListRes);
         return orderListRes.orElseGet(() -> null);
     }
 

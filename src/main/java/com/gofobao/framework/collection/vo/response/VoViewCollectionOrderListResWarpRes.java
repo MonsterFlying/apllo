@@ -8,5 +8,5 @@ import lombok.Data;
  */
 @Data
 public class VoViewCollectionOrderListResWarpRes extends VoBaseResp {
-    private VoViewCollectionOrderListRes listRes =new VoViewCollectionOrderListRes();
+    private VoViewCollectionOrderList listRes =new VoViewCollectionOrderList();
 }

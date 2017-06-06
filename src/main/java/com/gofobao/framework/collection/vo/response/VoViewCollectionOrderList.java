@@ -10,7 +10,7 @@ import java.util.List;
  * Created by admin on 2017/5/31.
  */
 @Data
-public class VoViewCollectionOrderListRes extends VoBaseResp{
+public class VoViewCollectionOrderList extends VoBaseResp{
 
     @ApiModelProperty("总笔数")
     private Integer order;

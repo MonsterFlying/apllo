@@ -1,6 +1,6 @@
 package com.gofobao.framework.borrow.biz.impl;
 
-import com.gofobao.framework.api.contants.IntTypeContant;
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetail;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
 import com.gofobao.framework.asset.entity.Asset;
@@ -10,7 +10,10 @@ import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
-import com.gofobao.framework.borrow.vo.request.*;
+import com.gofobao.framework.borrow.vo.request.VoAddNetWorthBorrow;
+import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
+import com.gofobao.framework.borrow.vo.request.VoCancelThirdBorrow;
+import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
@@ -50,9 +53,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
-import java.util.Arrays;
-import java.util.Date;
+
 import java.util.*;
 
 /**
@@ -301,6 +302,7 @@ public class BorrowBizImpl implements BorrowBiz {
             }
         }
         //======================================================================================
+
 
         Specification<Tender> borrowSpecification = Specifications
                 .<Tender>and()

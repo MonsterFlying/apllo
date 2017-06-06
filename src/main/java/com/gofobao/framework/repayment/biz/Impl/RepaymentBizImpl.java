@@ -1,7 +1,7 @@
 package com.gofobao.framework.repayment.biz.Impl;
 
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
-import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListRes;
+import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderList;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListResWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailRes;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
@@ -29,7 +29,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
     @Override
     public ResponseEntity<VoViewCollectionOrderListResWarpRes> repaymentList(VoCollectionOrderReq voCollectionOrderReq) {
         try {
-            VoViewCollectionOrderListRes voViewCollectionOrderListRes = borrowRepaymentService.repaymentList(voCollectionOrderReq);
+            VoViewCollectionOrderList voViewCollectionOrderListRes = borrowRepaymentService.repaymentList(voCollectionOrderReq);
             VoViewCollectionOrderListResWarpRes voViewCollectionOrderListResWarpRes = VoBaseResp.ok("查询成功", VoViewCollectionOrderListResWarpRes.class);
             voViewCollectionOrderListResWarpRes.setListRes(voViewCollectionOrderListRes);
             return ResponseEntity.ok(voViewCollectionOrderListResWarpRes);
