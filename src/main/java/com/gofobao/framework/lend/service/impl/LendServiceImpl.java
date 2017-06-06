@@ -78,13 +78,13 @@ public class LendServiceImpl implements LendService {
         lendList.stream().forEach(p -> {
             VoViewLend lend = new VoViewLend();
             lend.setLendId(p.getId());
-            lend.setApr(NumberHelper.to2DigitString(p.getApr()));
+            lend.setApr(NumberHelper.to2DigitString(p.getApr()/100));
             Users user = usersMap.get(p.getUserId());
             String userName = StringUtils.isEmpty(user.getUsername()) ?
                     UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM) :
                     UserHelper.hideChar(user.getUsername(), UserHelper.USERNAME_NUM);
             lend.setUserName(userName);
-            lend.setMoney(NumberHelper.to2DigitString(p.getMoney()));
+            lend.setMoney(NumberHelper.to2DigitString(p.getMoney()/100));
             if (p.getStatus() == LendContants.STATUS_NO) {
                 lend.setStatusStr(LendContants.STATUS_NO_STR);
             } else {
