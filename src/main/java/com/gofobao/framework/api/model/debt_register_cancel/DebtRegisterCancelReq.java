@@ -13,6 +13,10 @@ public class DebtRegisterCancelReq extends JixinBaseRequest{
      */
     private String accountId;
     /**
+     * 由P2P生成，必须保证唯一
+     */
+    private String productId;
+    /**
      * 募集日 YYYYMMDD
      */
     private String raiseDate;

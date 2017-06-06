@@ -11,6 +11,9 @@ public class VoCancelThirdBorrow {
 
     @ApiModelProperty(value = "用户id", dataType = "int")
     private Long userId;
+
+    @ApiModelProperty(value = "借款id", dataType = "int")
+    private Long borrowId;
     /**
      * 募集日 YYYYMMDD
      */

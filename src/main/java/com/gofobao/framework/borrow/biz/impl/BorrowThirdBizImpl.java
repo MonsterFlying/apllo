@@ -83,11 +83,16 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
 
     public ResponseEntity<VoBaseResp> cancelThirdBorrow(VoCancelThirdBorrow voCancelThirdBorrow) {
         Long userId = voCancelThirdBorrow.getUserId();
+        Long borrowId = voCancelThirdBorrow.getBorrowId();
         String raiseDate = voCancelThirdBorrow.getRaiseDate();//募集日期
         if (ObjectUtils.isEmpty(raiseDate)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "募集日期不能为空!"));
+        }
+
+        if (ObjectUtils.isEmpty(borrowId) ) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "borrowId为空"));
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
@@ -96,6 +101,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         DebtRegisterCancelReq request = new DebtRegisterCancelReq();
         request.setChannel(ChannelContant.HTML);
         request.setAccountId(userThirdAccount.getAccountId());
+        request.setProductId(StringHelper.toString(borrowId));
         request.setRaiseDate(raiseDate);
 
         DebtRegisterCancelResp response = jixinManager.send(JixinTxCodeEnum.DEBT_REGISTER_CANCEL, request, DebtRegisterCancelResp.class);
@@ -140,7 +146,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             request.setPageSize(pageSize);
         }
 
-        DebtDetailsQueryResp response = jixinManager.send(JixinTxCodeEnum.DEBT_REGISTER_CANCEL, request, DebtDetailsQueryResp.class);
+        DebtDetailsQueryResp response = jixinManager.send(JixinTxCodeEnum.DEBT_DETAILS_QUERY, request, DebtDetailsQueryResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
             String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
             log.error(msg);

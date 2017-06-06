@@ -39,6 +39,7 @@ import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -192,32 +193,12 @@ public class BorrowBizImpl implements BorrowBiz {
             log.error("borrowBizImpl firstVerify send mq exception", e);
         }
 
-        /**
-         * 这个操作应该在初审成功后做的步骤
-         */
+        //即信等级标的
         if (!mqState) {
             return ResponseEntity.ok(VoBaseResp.ok("投标失败!"));
         }
-        String name = voAddNetWorthBorrow.getName();
 
-        VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
-        voCreateThirdBorrowReq.setUserId(userId);
-        voCreateThirdBorrowReq.setRate(StringHelper.formatDouble(voAddNetWorthBorrow.getApr(), 100, false));
-        voCreateThirdBorrowReq.setTxAmount(StringHelper.formatDouble(money, 100, false));
-        voCreateThirdBorrowReq.setAcqRes(String.valueOf(userId));
-        voCreateThirdBorrowReq.setIntType(IntTypeContant.SINGLE_USE);
-        voCreateThirdBorrowReq.setDuration(String.valueOf(voAddNetWorthBorrow.getTimeLimit()));
-        voCreateThirdBorrowReq.setProductDesc(StringUtils.isEmpty(name) ? "净值借款" : name);
-        voCreateThirdBorrowReq.setProductId(String.valueOf(borrowId));
-        voCreateThirdBorrowReq.setRaiseDate(DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM));
-        voCreateThirdBorrowReq.setRaiseEndDate(DateHelper.dateToString(DateHelper.addDays(new Date(), 1), DateHelper.DATE_FORMAT_YMD_NUM));
-
-        ResponseEntity<VoBaseResp> resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
-        if (!ObjectUtils.isEmpty(resp)) {
-            return resp;
-        }
         return ResponseEntity.ok(VoBaseResp.ok("投标成功!"));
-
     }
 
     private long insertBorrow(VoAddNetWorthBorrow voAddNetWorthBorrow, Long userId) throws Exception {
@@ -272,15 +253,15 @@ public class BorrowBizImpl implements BorrowBiz {
      * @param voCancelBorrow
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> cancelBorrow(VoCancelBorrow voCancelBorrow) {
         Long borrowId = voCancelBorrow.getBorrowId();
         Long userId = voCancelBorrow.getUserId();
-        Borrow tempBorrow = new Borrow();
         Date nowDate = new Date();
 
         Borrow borrow = borrowService.findByIdLock(borrowId);
         if (ObjectUtils.isEmpty(borrow) || ObjectUtils.isEmpty(userId)
-                || borrow.getStatus() != 0 || borrow.getStatus() != 1) {
+                || (borrow.getStatus() != 0 && borrow.getStatus() != 1)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "借款状态已发生更改!"));
@@ -299,16 +280,37 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "只有借款标过期或者本人才能取消借款!"));
         }
 
-        Set<Long> tenderUserIds = new HashSet<>();//投标用户id集合
+        //================================调用即信取消标的====================================
+        VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
+        voQueryThirdBorrowList.setBorrowId(borrowId);
+        voQueryThirdBorrowList.setUserId(userId);
+        voQueryThirdBorrowList.setPageNum("1");
+        voQueryThirdBorrowList.setPageSize("10");
+        DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
+        if (NumberHelper.toInt(resp.getTotalItems()) > 0) {//在即信查询到对应的标的
+            List<DebtDetail> debtDetailList = GSON.fromJson(resp.getSubPacks(),new TypeToken<List<DebtDetail>>(){}.getType());
+            Preconditions.checkNotNull(debtDetailList, "即信标的不存在!");
+
+            VoCancelThirdBorrow voCancelThirdBorrow = new VoCancelThirdBorrow();
+            voCancelThirdBorrow.setUserId(userId);
+            voCancelThirdBorrow.setBorrowId(borrowId);
+            voCancelThirdBorrow.setRaiseDate(debtDetailList.get(0).getRaiseDate());
+            ResponseEntity responseEntity = borrowThirdBiz.cancelThirdBorrow(voCancelThirdBorrow);
+            if (!ObjectUtils.isEmpty(responseEntity)) {
+                return responseEntity;
+            }
+        }
+        //======================================================================================
 
         Specification<Tender> borrowSpecification = Specifications
                 .<Tender>and()
                 .eq("status", 1)
                 .eq("borrowId", borrowId)
                 .build();
+
         List<Tender> tenderList = tenderService.findList(borrowSpecification);
         Tender tempTender = null;
-
+        Set<Long> tenderUserIds = new HashSet<>();//投标用户id集合
         if (!CollectionUtils.isEmpty(tenderList)) {
             Iterator<Tender> itTender = tenderList.iterator();
             Tender tender = null;
@@ -399,30 +401,9 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         //更新借款
-        tempBorrow.setStatus(5);
-        tempBorrow.setId(borrowId);
-        tempBorrow.setUpdatedAt(nowDate);
-        if (borrowService.updateById(tempBorrow)) {
-            //调用即信取消标的
-            VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
-            voQueryThirdBorrowList.setBorrowId(borrowId);
-            voQueryThirdBorrowList.setUserId(userId);
-            voQueryThirdBorrowList.setPageNum("1");
-            voQueryThirdBorrowList.setPageSize("10");
-            DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
-            if (NumberHelper.toInt(resp.getTotalItems()) > 0) {//在即信查询到对应的标的
-                List<DebtDetail> debtDetailList = resp.getSubPacks();
-                Preconditions.checkNotNull(debtDetailList, "即信标的不存在!");
-
-                VoCancelThirdBorrow voCancelThirdBorrow = new VoCancelThirdBorrow();
-                voCancelThirdBorrow.setUserId(userId);
-                voCancelThirdBorrow.setRaiseDate(debtDetailList.get(0).getRaiseDate());
-                ResponseEntity responseEntity = borrowThirdBiz.cancelThirdBorrow(voCancelThirdBorrow);
-                if (!ObjectUtils.isEmpty(responseEntity)) {
-                    return responseEntity;
-                }
-            }
-        }
+        borrow.setStatus(5);
+        borrow.setUpdatedAt(nowDate);
+        borrowService.updateById(borrow);
 
         return ResponseEntity.ok(VoBaseResp.ok("取消借款成功!"));
     }
