@@ -15,28 +15,21 @@ import java.sql.Timestamp;
 @Table(name = "gfb_dict_item")
 public class DictItem {
     @Id
-    @Column(name = "ID")
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    @Basic
-    @Column(name = "NAME")
+
     private String name;
-    @Basic
-    @Column(name = "ALIAS_CODE")
+
     private String aliasCode;
-    @Basic
-    @Column(name = "IS_DEL")
-    private Integer isDel;
-    @Basic
-    @Column(name = "CREATE_TIME")
+
+    private Integer del;
+
     private Timestamp createTime;
-    @Basic
-    @Column(name = "UPDATE_TIME")
+
     private Timestamp updateTime;
-    @Basic
-    @Column(name = "CREATE_ID")
+
     private Integer createId;
-    @Basic
-    @Column(name = "UPDATE_ID")
+
     private Integer updateId;
 
 }

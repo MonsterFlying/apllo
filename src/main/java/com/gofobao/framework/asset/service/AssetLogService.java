@@ -1,7 +1,7 @@
 package com.gofobao.framework.asset.service;
 
 import com.gofobao.framework.asset.entity.AssetLog;
-import com.gofobao.framework.asset.vo.repsonse.VoViewAssetLogRes;
+import com.gofobao.framework.asset.vo.response.VoViewAssetLogRes;
 import com.gofobao.framework.asset.vo.request.VoAssetLog;
 
 import java.util.List;

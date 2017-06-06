@@ -1,7 +1,6 @@
 package com.gofobao.framework.asset.biz;
 
-import com.gofobao.framework.asset.vo.request.VoUserBankListReq;
-import com.gofobao.framework.asset.vo.response.VoUserBankListResp;
+import com.gofobao.framework.asset.vo.response.VoBankTypeInfoResp;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -9,4 +8,12 @@ import org.springframework.http.ResponseEntity;
  */
 public interface BankAccountBiz {
 
+    /**
+     * 查找银行卡类型基本信息和限额
+     *
+     * @param userId
+     * @param account
+     * @return
+     */
+    ResponseEntity<VoBankTypeInfoResp> findTypeInfo(Long userId, String account);
 }

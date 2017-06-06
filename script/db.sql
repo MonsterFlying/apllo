@@ -138,3 +138,7 @@ ALTER TABLE gfb_users ALTER COLUMN password SET DEFAULT '';
 ALTER TABLE gfb_users ALTER COLUMN pay_password SET DEFAULT '';
 ALTER TABLE gfb_users ALTER COLUMN realname SET DEFAULT '';
 ALTER TABLE gfb_users ALTER COLUMN type SET DEFAULT 'borrower';
+
+#修改数字字典
+ALTER TABLE gfb_dict_item CHANGE IS_DEL DEL INT(11) DEFAULT '0' COMMENT '是否删除：0.存活，1.删除';
+ALTER TABLE gfb_dict_value CHANGE IS_DEL DEL INT(11) DEFAULT '0' COMMENT '是否删除：0.存活，1.删除';

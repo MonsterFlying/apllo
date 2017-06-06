@@ -1,7 +1,7 @@
 package com.gofobao.framework.asset.controller;
 
 import com.gofobao.framework.asset.service.AssetLogService;
-import com.gofobao.framework.asset.vo.repsonse.VoViewAssetLogRes;
+import com.gofobao.framework.asset.vo.response.VoViewAssetLogRes;
 import com.gofobao.framework.asset.vo.request.VoAssetLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

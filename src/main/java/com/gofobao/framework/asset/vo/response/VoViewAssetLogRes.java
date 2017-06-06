@@ -1,4 +1,4 @@
-package com.gofobao.framework.asset.vo.repsonse;
+package com.gofobao.framework.asset.vo.response;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
