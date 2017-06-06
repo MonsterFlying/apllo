@@ -14,6 +14,7 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.*;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -32,6 +33,7 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.AutoTenderService;
@@ -298,7 +300,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "只有借款标过期或者本人才能取消借款!"));
         }
 
-        Set<Integer> tenderUserIds = new HashSet<>();//投标用户id集合
+        Set<Long> tenderUserIds = new HashSet<>();//投标用户id集合
 
         Specification<Tender> borrowSpecification = Specifications
                 .<Tender>and()
@@ -311,8 +313,8 @@ public class BorrowBizImpl implements BorrowBiz {
         if (!CollectionUtils.isEmpty(tenderList)) {
             Iterator<Tender> itTender = tenderList.iterator();
             Tender tender = null;
+            Notices notices = null;
             tempTender = new Tender();
-            StringBuffer userIdStr = new StringBuffer();
             while (itTender.hasNext()) {
                 tender = itTender.next();
 
@@ -334,23 +336,30 @@ public class BorrowBizImpl implements BorrowBiz {
                 tempTender.setUpdatedAt(nowDate);
                 tenderService.updateById(tempTender);
 
-                /**
-                 * @// TODO: 2017/6/5 发送站内信
-                 */
-                /*  if (!tenderUserIds.contains(tempTender.getUserId())) {
-                        tenderUserIds.add(Tender.getUserId());
-                        userIdStr.append(Tender.getUserId()).append(",");
-                        notices.setFromUserId(1);
-                        notices.setUserId(Tender.getUserId());
-                        notices.setRead(false);
-                        notices.setName("投资的借款失败");
-                        notices.setContent("你所投资的借款[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]在" + DateHelper.nextDate(nowDate) + "已取消");
-                        notices.setType("system");
-                        notices.setCreatedAt(nowDate);
-                        notices.setUpdatedAt(nowDate);
-                        noticesMapper.insertSelective(notices);
-                        userIdStr.append(Tender.getUserId()).append(",");
-                    }*/
+                if (!tenderUserIds.contains(tempTender.getUserId())) {
+                    tenderUserIds.add(tender.getUserId());
+                    notices.setFromUserId(1L);
+                    notices.setUserId(tender.getUserId());
+                    notices.setRead(false);
+                    notices.setName("投资的借款失败");
+                    notices.setContent("你所投资的借款[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]在" + DateHelper.nextDate(nowDate) + "已取消");
+                    notices.setType("system");
+                    notices.setCreatedAt(nowDate);
+                    notices.setUpdatedAt(nowDate);
+
+                    //发送站内信
+                    MqConfig mqConfig = new MqConfig();
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
+                    mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
+                    Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
+                    mqConfig.setMsg(body);
+                    try {
+                        log.info(String.format("borrowBizImpl cancelBorrow send mq %s", GSON.toJson(body)));
+                        mqHelper.convertAndSend(mqConfig);
+                    } catch (Exception e) {
+                        log.error("borrowBizImpl cancelBorrow send mq exception", e);
+                    }
+                }
             }
         }
 

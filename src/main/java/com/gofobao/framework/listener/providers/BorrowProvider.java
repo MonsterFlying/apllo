@@ -7,6 +7,7 @@ import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -22,6 +23,7 @@ import com.gofobao.framework.lend.entity.Lend;
 import com.gofobao.framework.lend.service.LendService;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
+import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.AutoTenderService;
@@ -274,7 +276,6 @@ public class BorrowProvider {
                 tender.setTransferFlag(2);
                 tenderService.updateById(tender);
                 //======================================================================
-
                 //扣除转让待收
                 bcs = Specifications.<BorrowCollection>and()
                         .eq("status", 0)
@@ -411,13 +412,8 @@ public class BorrowProvider {
                 }
 
                 if (!tenderUserIds.contains(tender.getUserId())) {
-                    /**
-                     * @// TODO: 2017/6/2 发送站内信 
-                     */
-                    /*notices = new Notices();
-                    userIdStr.append(tender.getUserId()).append(",");
-                    tenderUserIds.add(tender.getUserId());
-                    notices.setFromUserId(1);
+                    Notices notices = new Notices();
+                    notices.setFromUserId(1L);
                     notices.setUserId(tender.getUserId());
                     notices.setRead(false);
                     notices.setName("投资的借款满标审核通过");
@@ -425,7 +421,19 @@ public class BorrowProvider {
                     notices.setType("system");
                     notices.setCreatedAt(nowDate);
                     notices.setUpdatedAt(nowDate);
-                    noticesMapper.insertSelective(notices);*/
+
+                    //发送站内信
+                    MqConfig mqConfig = new MqConfig();
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
+                    mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
+                    Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
+                    mqConfig.setMsg(body);
+                    try {
+                        log.info(String.format("borrowProvider doAgainVerify send mq %s", GSON.toJson(body)));
+                        mqHelper.convertAndSend(mqConfig);
+                    } catch (Exception e) {
+                        log.error("borrowProvider doAgainVerify send mq exception", e);
+                    }
                 }
 
                 //触发投标成功事件

@@ -231,9 +231,7 @@ public class TenderBizImpl implements TenderBiz {
             }
 
             if (!borrowService.checkValidDay(borrow)) { //检查是否是有效的招标时间
-                /**
-                 * @// TODO: 2017/5/31 调用取消借款函数
-                 */
+                //取消借款
                 VoCancelBorrow voCancelBorrow = new VoCancelBorrow();
                 voCancelBorrow.setBorrowId(borrowId);
                 voCancelBorrow.setUserId(userId);
