@@ -1,8 +1,11 @@
 package com.gofobao.framework.listener.providers;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.api.contants.IntTypeContant;
+import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.borrow.vo.request.VoCreateThirdBorrowReq;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
@@ -12,6 +15,7 @@ import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.NumberHelper;
@@ -39,9 +43,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.Persistence;
 import java.util.*;
@@ -71,6 +77,8 @@ public class BorrowProvider {
     private BorrowRepaymentService borrowRepaymentService;
     @Autowired
     private MqHelper mqHelper;
+    @Autowired
+    private BorrowThirdBiz borrowThirdBiz;
 
     /**
      * 初审
@@ -523,6 +531,30 @@ public class BorrowProvider {
             tempBorrow.setStatus(3);
             tempBorrow.setSuccessAt(nowDate);
             borrowService.updateById(tempBorrow);
+
+            //===================即信登记标的===========================
+            String name = borrow.getName();
+            Long userId = borrow.getUserId();
+
+            VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
+            voCreateThirdBorrowReq.setUserId(userId);
+            voCreateThirdBorrowReq.setRate(StringHelper.formatDouble(borrow.getApr(), 100, false));
+            voCreateThirdBorrowReq.setTxAmount(StringHelper.formatDouble(borrow.getMoney(), 100, false));
+            voCreateThirdBorrowReq.setAcqRes(String.valueOf(userId));
+            voCreateThirdBorrowReq.setIntType(IntTypeContant.SINGLE_USE);
+            voCreateThirdBorrowReq.setDuration(String.valueOf(borrow.getTimeLimit()));
+            voCreateThirdBorrowReq.setProductDesc(StringUtils.isEmpty(name) ? "净值借款" : name);
+            voCreateThirdBorrowReq.setProductId(String.valueOf(borrowId));
+            voCreateThirdBorrowReq.setRaiseDate(DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM));
+            voCreateThirdBorrowReq.setRaiseEndDate(DateHelper.dateToString(DateHelper.addDays(new Date(), 1), DateHelper.DATE_FORMAT_YMD_NUM));
+
+            ResponseEntity<VoBaseResp> resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
+            if (!ObjectUtils.isEmpty(resp)) {
+                log.error("===========================即信标的登记==============================");
+                log.error("即信标的登记失败：",resp.getBody().getState().getMsg());
+                log.error("=====================================================================");
+                return false;
+            }
 
             /**
              * @// TODO: 2017/6/2 复审事件

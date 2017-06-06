@@ -41,5 +41,5 @@ public class DebtDetailsQueryResp extends JixinBaseResponse{
     /**
      * 结果数组
      */
-    private List<DebtDetail> subPacks;
+    private String subPacks;
 }
