@@ -15,13 +15,9 @@ import javax.validation.constraints.Pattern;
 @Data
 @ApiModel
 public class VoModifyPasswordReq extends VoBaseReq {
-    @ApiModelProperty(hidden = true)
-    @JsonIgnore
-    private Long userId;
-
     @ApiModelProperty(name = "当前密码", required = true, dataType = "String" )
     @Pattern(regexp = RegexHelper.REGEX_LOGIN_PASSWORD, message = "当前密码格式验证不通过")
-    private String nowPassword;
+    private String oldPassword;
 
     @ApiModelProperty(name = "新密码", required = true, dataType = "String" )
     @Pattern(regexp = RegexHelper.REGEX_LOGIN_PASSWORD, message = "新的密码格式验证不通过")

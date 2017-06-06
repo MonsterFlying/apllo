@@ -20,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -251,6 +252,14 @@ public class BorrowServiceImpl implements BorrowService {
         return borrowRepository.findOne(borrowId);
     }
 
-
+    /**
+     * 查询列表
+     *
+     * @param specification
+     * @return
+     */
+    public List<Borrow> findList(Specification<Borrow> specification) {
+        return borrowRepository.findAll(specification);
+    }
 
 }

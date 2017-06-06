@@ -18,4 +18,6 @@ public interface BorrowBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow);
+
+
 }

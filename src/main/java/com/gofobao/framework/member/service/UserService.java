@@ -44,7 +44,7 @@ public interface UserService {
      * @param users
      * @return
      */
-    boolean updUserByPhone(Users users);
+    void update(Users users);
 
     /**
      * 带锁查询会员

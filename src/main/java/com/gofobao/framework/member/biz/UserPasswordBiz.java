@@ -13,10 +13,12 @@ public interface UserPasswordBiz {
 
     /**
      * 用户修改密码
+     *
+     * @param userId
      * @param voModifyPasswordReq
      * @return
      */
-    ResponseEntity<VoBaseResp> modifyPassword(VoModifyPasswordReq voModifyPasswordReq);
+    ResponseEntity<VoBaseResp> modifyPassword(Long userId, VoModifyPasswordReq voModifyPasswordReq);
 
     /**
      * 用户忘记密码
@@ -24,11 +26,4 @@ public interface UserPasswordBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> findPassword(VoFindPasswordReq voFindPasswordReq);
-
-    /**
-     * 校验找回密码
-     * @param voCheckFindPasswordReq
-     * @return
-     */
-    ResponseEntity<VoBaseResp> checkFindPassword(VoCheckFindPasswordReq voCheckFindPasswordReq);
 }

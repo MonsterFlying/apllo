@@ -24,20 +24,8 @@ import javax.validation.Valid;
 @RestController
 public class PasswordController {
 
-/*    @Autowired
-    private PasswordRepository userPasswordSetDao;*/
-
     @Autowired
     private UserPasswordBiz userPasswordBiz;
-
-    /**
-     * 密码设置
-     */
-    @PostMapping("/pub/user/password")
-    public void passwordSet(HttpServletRequest request, Integer userId) {
-
-
-    }
 
     /**
      * 用户修改密码
@@ -48,31 +36,19 @@ public class PasswordController {
     @ApiOperation("用户修改密码")
     @PostMapping("/user/password/modify")
     public ResponseEntity<VoBaseResp> modifyPassword(@Valid @ModelAttribute VoModifyPasswordReq voModifyPasswordReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        voModifyPasswordReq.setUserId(userId);
-        return userPasswordBiz.modifyPassword(voModifyPasswordReq);
+        return userPasswordBiz.modifyPassword(userId, voModifyPasswordReq);
     }
 
     /**
-     * 用户忘记密码
+     * 忘记密码
      *
      * @param voFindPasswordReq
      * @return
      */
     @ApiOperation("用户忘记密码")
-    @PostMapping("/pub/user/password/find/modify")
+    @PostMapping("/pub/user/password/find")
     public ResponseEntity<VoBaseResp> findPassword(@Valid @ModelAttribute VoFindPasswordReq voFindPasswordReq){
         return userPasswordBiz.findPassword(voFindPasswordReq);
     }
 
-    /**
-     * 校验用户忘记密码
-     *
-     * @param voCheckFindPasswordReq
-     * @return
-     */
-    @ApiOperation("校验用户忘记密码验证码")
-    @PostMapping("/pub/user/password/find/check")
-    public ResponseEntity<VoBaseResp> checkFindPassword(@Valid @ModelAttribute VoCheckFindPasswordReq voCheckFindPasswordReq){
-        return userPasswordBiz.checkFindPassword(voCheckFindPasswordReq);
-    }
 }
