@@ -1,9 +1,9 @@
 package com.gofobao.framework.tender.vo.response;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.google.common.collect.Lists;
 import lombok.Data;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -12,5 +12,5 @@ import java.util.List;
 @Data
 public class VoViewBackMoneyListWarpRes extends VoBaseResp {
 
-    private List<VoViewBackMoney> voViewBackMonies= Collections.EMPTY_LIST;
+    private List<VoViewBackMoney> voViewBackMonies= Lists.newArrayList();
 }

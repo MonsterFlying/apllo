@@ -1,9 +1,9 @@
 package com.gofobao.framework.repayment.vo.response;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.google.common.collect.Lists;
 import lombok.Data;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -11,5 +11,5 @@ import java.util.List;
  */
 @Data
 public class VoViewBuddingResListWrapRes extends VoBaseResp {
-    private List<VoViewBuddingRes> viewBuddingResList = Collections.EMPTY_LIST;
+    private List<VoViewBuddingRes> viewBuddingResList = Lists.newArrayList();
 }
