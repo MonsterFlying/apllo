@@ -13,17 +13,21 @@ import com.gofobao.framework.currency.service.CurrencyService;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.GenerateInviteCodeHelper;
 import com.gofobao.framework.helper.RedisHelper;
+import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.integral.entity.Integral;
 import com.gofobao.framework.integral.service.IntegralService;
 import com.gofobao.framework.member.biz.UserBiz;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserInfo;
+import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.enums.RegisterSourceEnum;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserInfoService;
 import com.gofobao.framework.member.service.UserService;
+import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.request.VoRegisterReq;
+import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -62,6 +66,9 @@ public class UserBizImpl implements UserBiz{
 
     @Autowired
     CurrencyService currencyService ;
+
+    @Autowired
+    UserThirdAccountService userThirdAccountService ;
 
     @Autowired
     MqHelper mqHelper ;
@@ -174,6 +181,39 @@ public class UserBizImpl implements UserBiz{
         // 5.删除短信验证码
         redisHelper.remove(String.format("%s_%s", MqTagEnum.SMS_REGISTER, voRegisterReq.getPhone()));
         return ResponseEntity.ok(VoBaseResp.ok("注册成功")) ;
+    }
+
+    @Override
+    public Users findByAccount(String account) {
+        return userService.findByAccount(account) ;
+    }
+
+    @Override
+    public ResponseEntity<VoBasicUserInfoResp> getUserInfoResp(Users user) {
+        VoBasicUserInfoResp voBasicUserInfoResp = VoBaseResp.ok("登录成功", VoBasicUserInfoResp.class) ;
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(user.getId());
+        if(ObjectUtils.isEmpty(userThirdAccount)){
+            voBasicUserInfoResp.setThirdAccountState(false);
+            voBasicUserInfoResp.setBankPassworState(false);
+            voBasicUserInfoResp.setBankState(false);
+            voBasicUserInfoResp.setBankAccout(" ");
+        }else{
+            voBasicUserInfoResp.setThirdAccountState(true);
+            voBasicUserInfoResp.setBankPassworState(userThirdAccount.getPasswordState() == 1);
+            voBasicUserInfoResp.setBankAccout(UserHelper.hideChar(userThirdAccount.getAccountId(), UserHelper.BANK_ACCOUNT_NUM));
+            voBasicUserInfoResp.setBankState(!StringUtils.isEmpty(userThirdAccount.getCardNo())) ;
+        }
+
+        voBasicUserInfoResp.setEmail(UserHelper.hideChar(StringUtils.isEmpty(user.getEmail())? " ": user.getEmail(), UserHelper.EMAIL_NUM)) ;
+        voBasicUserInfoResp.setEmailState(!StringUtils.isEmpty(user.getEmail()));
+        voBasicUserInfoResp.setPhone(UserHelper.hideChar(StringUtils.isEmpty(user.getPhone())? " ": user.getPhone(), UserHelper.PHONE_NUM));
+        voBasicUserInfoResp.setEmailState(!StringUtils.isEmpty(user.getPhone()));
+        voBasicUserInfoResp.setRealname(UserHelper.hideChar(StringUtils.isEmpty(user.getRealname())? " ": user.getRealname(), UserHelper.REALNAME_NUM));
+        voBasicUserInfoResp.setRealnameState(!StringUtils.isEmpty(user.getRealname()));
+        voBasicUserInfoResp.setIdNo(UserHelper.hideChar(StringUtils.isEmpty(user.getCardId())? " ": user.getCardId(), UserHelper.CARD_ID_NUM)); ;
+        voBasicUserInfoResp.setIdNoState(!StringUtils.isEmpty(user.getCardId()));
+        return ResponseEntity.ok(voBasicUserInfoResp);
     }
 
     /**

@@ -1,20 +1,13 @@
 package com.gofobao.framework.member.service.impl;
 
-import com.gofobao.framework.api.contants.AcctUseContant;
-import com.gofobao.framework.api.contants.IdTypeContant;
-import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusRequest;
-import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.member.service.UserService;
-import com.gofobao.framework.member.vo.request.VoRegisterCallReq;
-import com.gofobao.framework.member.vo.request.VoRegisterReq;
-import com.gofobao.framework.member.vo.response.VoRegisterCallResp;
-import com.gofobao.framework.member.vo.response.VoRegisterResp;
 import com.gofobao.framework.security.entity.JwtUserFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -22,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import javax.persistence.LockModeType;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -64,6 +58,7 @@ public class UserServiceImpl implements UserDetailsService, UserService{
         return null;
     }
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     public Users findById(Long id){
         return userRepository.findOne(id);
     }
@@ -93,12 +88,9 @@ public class UserServiceImpl implements UserDetailsService, UserService{
      * @param users
      * @return
      */
-    public boolean updUserByPhone(Users users){
-        if (ObjectUtils.isEmpty(users.getPhone())){
-            return false;
-        }
+    public void update(Users users){
         userRepository.save(users);
-        return true;
+
     }
 
     /**

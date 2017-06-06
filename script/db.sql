@@ -132,3 +132,9 @@ ALTER TABLE gfb_integral ALTER COLUMN no_use_integral SET DEFAULT 0;
 #修改gfb_currency默认值
 ALTER TABLE gfb_currency ALTER COLUMN use_currency SET DEFAULT 0;
 ALTER TABLE gfb_currency ALTER COLUMN no_use_currency SET DEFAULT 0;
+
+#修改gfb_users默认值
+ALTER TABLE gfb_users ALTER COLUMN password SET DEFAULT '';
+ALTER TABLE gfb_users ALTER COLUMN pay_password SET DEFAULT '';
+ALTER TABLE gfb_users ALTER COLUMN realname SET DEFAULT '';
+ALTER TABLE gfb_users ALTER COLUMN type SET DEFAULT 'borrower';

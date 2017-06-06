@@ -29,8 +29,8 @@ public class UserHelper {
     public static String hideChar(String str, Integer type) {
         StringBuffer rs = new StringBuffer();
         do {
-
-            if (ObjectUtils.isEmpty(str) || ObjectUtils.isEmpty(type)) {
+            str = StringUtils.trimAllWhitespace(str);
+            if ( (ObjectUtils.isEmpty(str)) || ObjectUtils.isEmpty(type)) {
                 break;
             }
 

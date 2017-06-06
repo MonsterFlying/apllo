@@ -1,5 +1,8 @@
 package com.gofobao.framework.member.vo.response;
 
+import com.gofobao.framework.core.vo.VoBaseResp;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,12 +14,47 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class VoBasicUserInfoResp {
+@ApiModel("用户基础信息")
+public class VoBasicUserInfoResp extends VoBaseResp{
+    @ApiModelProperty("用户名（已经加密）")
     private String username ;
+
+    @ApiModelProperty("手机（已经加密）")
     private String phone;
+
+    @ApiModelProperty("邮箱（已经加密）")
     private String email ;
+
+    @ApiModelProperty("实名（已经加密）")
+    private String realname ;
+
+    @ApiModelProperty("银行卡账号（已经加密）")
+    private String bankAccout ;
+
+    @ApiModelProperty("身份证号（已经加密）")
+    private String idNo ;
+
+    @ApiModelProperty("身份证号状态")
+    private boolean idNoState ;
+
+    @ApiModelProperty("银行存管状态")
+    private boolean thirdAccountState;
+
+    @ApiModelProperty("用户名状态")
+    private boolean usernameState;
+
+    @ApiModelProperty("是否绑定手机状态")
     private boolean phoneState;
+
+    @ApiModelProperty("是否绑定手机状态")
     private boolean emailState ;
+
+    @ApiModelProperty("银行卡绑定状态")
     private boolean bankState ;
-    private boolean realname ;
+
+    @ApiModelProperty("是否实名状态")
+    private boolean realnameState ;
+
+    @ApiModelProperty("银行密码状态")
+    private boolean bankPassworState ;
 }

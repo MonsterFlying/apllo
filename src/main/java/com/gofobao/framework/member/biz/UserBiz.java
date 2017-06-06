@@ -1,7 +1,9 @@
 package com.gofobao.framework.member.biz;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.vo.request.VoRegisterReq;
+import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
@@ -18,5 +20,9 @@ public interface UserBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> register(HttpServletRequest request, VoRegisterReq voRegisterReq) throws Exception;
+
+    Users findByAccount(String account);
+
+    ResponseEntity<VoBasicUserInfoResp> getUserInfoResp(Users user);
 }
 

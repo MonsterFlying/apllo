@@ -28,4 +28,16 @@ public class RepaymentContants {
      */
     public static final int[] ALLS = {AN_YUE_FEN_QI, YI_CI_XING_HUAN_BEN_FU_XI, XIAN_XI_HOU_BEN};
 
+
+    /**
+     * 未还
+     */
+    public  static final Integer STATUS_NO=0;
+
+    /**
+     * 已还
+     */
+    public  static final Integer STATUS_YES=1;
+
+
 }

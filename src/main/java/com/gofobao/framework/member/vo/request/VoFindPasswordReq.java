@@ -22,10 +22,10 @@ public class VoFindPasswordReq extends VoBaseReq {
 
     @ApiModelProperty(name = "短信验证码", required = true, dataType = "String" )
     @NotEmpty(message = "短信验证码不能为空!")
-    private String phoneCaptcha;
+    private String smsCode;
 
     @ApiModelProperty(name = "新密码", required = true, dataType = "String" )
     @Pattern(regexp = RegexHelper.REGEX_LOGIN_PASSWORD, message = "新的密码格式验证不通过!")
-    private String newPassword;
+    private String password;
 
 }
