@@ -1,9 +1,9 @@
 package com.gofobao.framework.member.controller;
 
-import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.biz.UserThirdBiz;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
+import com.gofobao.framework.member.vo.response.VoOpenAccountResp;
 import com.gofobao.framework.member.vo.response.VoPreOpenAccountResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.ApiOperation;
@@ -34,7 +34,7 @@ public class UserThirdController {
 
     @ApiOperation("银行存管开户")
     @PostMapping("/user/third/openAccout")
-    public ResponseEntity<VoBaseResp> openAccount(@Valid @ModelAttribute VoOpenAccountReq voOpenAccountReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoOpenAccountResp> openAccount(@Valid @ModelAttribute VoOpenAccountReq voOpenAccountReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return userThirdBiz.openAccount(voOpenAccountReq, userId) ;
     }
 
