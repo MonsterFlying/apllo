@@ -1,18 +1,18 @@
 package com.gofobao.framework.repayment.controller;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.repayment.biz.LoanBiz;
 import com.gofobao.framework.repayment.service.LoanService;
 import com.gofobao.framework.repayment.vo.request.VoDetailReq;
 import com.gofobao.framework.repayment.vo.request.VoLoanListReq;
 import com.gofobao.framework.repayment.vo.response.*;
+import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import java.util.List;
 
@@ -28,21 +28,16 @@ public class LoanController {
     @Autowired
     private LoanService loanService;
 
+    @Autowired
+    private LoanBiz loanBiz;
+
     @ApiOperation("还款中列表")
-    @GetMapping("/v2/refund/list")
-    public ResponseEntity refundResList(/*@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+    @RequestMapping(value = "/v2/refund/list",method = RequestMethod.GET,consumes ="application/json; charset=utf-8")
+    public ResponseEntity<List<VoViewRefundRes>>  refundResList(/*@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/ ) {
         VoLoanListReq voLoanListReq = new VoLoanListReq();
         Long userId = 901L;
         voLoanListReq.setUserId(userId);
-        try {
-            List<VoViewRefundRes> voViewRefundResList = loanService.refundResList(voLoanListReq);
-            return ResponseEntity.ok(voViewRefundResList);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.
-                    badRequest().
-                    body(VoBaseResp.error(VoBaseResp.ERROR, "还款中列表失败!"));
-        }
+        return  loanBiz.refundResList(voLoanListReq);
     }
 
     @ApiOperation("投标中列表")
