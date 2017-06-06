@@ -10,7 +10,7 @@ import lombok.Data;
 
 @Data
 @ApiModel("投标中")
-public class VoViewBudingRes {
+public class VoViewBuddingRes {
 
     @ApiModelProperty("标名")
     private String borrowName;

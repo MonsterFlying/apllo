@@ -33,7 +33,7 @@ public interface LoanService {
      * @param voLoanListReq
      * @return
      */
-    List<VoViewBudingRes> buddingList(VoLoanListReq voLoanListReq);
+    List<VoViewBuddingRes> buddingList(VoLoanListReq voLoanListReq);
 
 
     /**

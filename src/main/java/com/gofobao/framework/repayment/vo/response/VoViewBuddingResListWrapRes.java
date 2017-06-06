@@ -7,9 +7,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by admin on 2017/6/5.
+ * Created by admin on 2017/6/6.
  */
 @Data
-public class VoViewRefundWrapRes extends VoBaseResp{
-    private List<VoViewRefundRes> list = Collections.EMPTY_LIST ;
+public class VoViewBuddingResListWrapRes extends VoBaseResp {
+    private List<VoViewBuddingRes> viewBuddingResList = Collections.EMPTY_LIST;
 }

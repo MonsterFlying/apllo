@@ -18,17 +18,13 @@ import com.gofobao.framework.tender.service.InvestService;
 import com.gofobao.framework.tender.vo.request.ReturnedMoney;
 import com.gofobao.framework.tender.vo.request.VoDetailReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;
-import com.gofobao.framework.tender.vo.request.VoViewReturnedMoney;
-import com.gofobao.framework.tender.vo.response.VoViewBackMoney;
-import com.gofobao.framework.tender.vo.response.VoViewBiddingRes;
-import com.gofobao.framework.tender.vo.response.VoViewSettleRes;
-import com.gofobao.framework.tender.vo.response.VoViewTenderDetail;
+import com.gofobao.framework.tender.vo.response.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
@@ -39,9 +35,10 @@ import java.util.stream.Collectors;
 import static java.util.stream.Collectors.groupingBy;
 
 /**
+/**
  * Created by admin on 2017/6/1.
  */
-@Service
+@Component
 public class InvestServiceImpl implements InvestService {
 
     @Autowired
@@ -61,7 +58,7 @@ public class InvestServiceImpl implements InvestService {
      */
     @Override
     public List<VoViewBackMoney> backMoneyList(VoInvestListReq voInvestListReq) {
-        voInvestListReq.setType(TenderConstans.BACK_MONEY);
+
 
         List<Tender> tenderList = commonQuery(voInvestListReq);
         if (CollectionUtils.isEmpty(tenderList)) {
@@ -119,7 +116,7 @@ public class InvestServiceImpl implements InvestService {
      */
     @Override
     public List<VoViewBiddingRes> biddingList(VoInvestListReq voInvestListReq) {
-        voInvestListReq.setType(TenderConstans.BIDDING);
+
         List<Tender> tenderList = commonQuery(voInvestListReq);
         if (CollectionUtils.isEmpty(tenderList)) {
             return Collections.EMPTY_LIST;
@@ -172,7 +169,7 @@ public class InvestServiceImpl implements InvestService {
      */
     @Override
     public List<VoViewSettleRes> settleList(VoInvestListReq voInvestListReq) {
-        voInvestListReq.setType(TenderConstans.SETTLE);
+
         List<Tender> tenderList = commonQuery(voInvestListReq);
         if (CollectionUtils.isEmpty(tenderList)) {
             return Collections.EMPTY_LIST;
@@ -243,7 +240,6 @@ public class InvestServiceImpl implements InvestService {
      */
     @Override
     public VoViewTenderDetail tenderDetail(VoDetailReq voDetailReq) {
-
         VoViewTenderDetail item = new VoViewTenderDetail();
         Tender tender = investRepository.findByIdAndUserId(voDetailReq.getTenderId(), voDetailReq.getUserId());
         if (ObjectUtils.isEmpty(tender)) {

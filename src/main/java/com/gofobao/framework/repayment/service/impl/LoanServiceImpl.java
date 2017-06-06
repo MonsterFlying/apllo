@@ -20,7 +20,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
@@ -51,7 +50,7 @@ public class LoanServiceImpl implements LoanService {
 
         List<Borrow> borrowList = commonQuery(voLoanListReq);
         if (CollectionUtils.isEmpty(borrowList)) {
-            return null;
+            return Collections.EMPTY_LIST;
         }
         List<Long> borrowIds = borrowList.stream()
                 .map(s -> s.getId())
@@ -87,11 +86,10 @@ public class LoanServiceImpl implements LoanService {
      */
     @Override
     public List<VoViewSettleRes> settleList(VoLoanListReq voLoanListReq) {
-        voLoanListReq.setType(RepaymentContants.CLOSE);
-        voLoanListReq.setStatus(BorrowContants.PASS);
+
         List<Borrow> borrowList = commonQuery(voLoanListReq);
         if (CollectionUtils.isEmpty(borrowList)) {
-            return null;
+            return Collections.EMPTY_LIST;
         }
         List<Long> borrowIds = borrowList.stream()
                 .map(s -> s.getId())
@@ -126,16 +124,15 @@ public class LoanServiceImpl implements LoanService {
      * @return
      */
     @Override
-    public List<VoViewBudingRes> buddingList(VoLoanListReq voLoanListReq) {
-        voLoanListReq.setType(RepaymentContants.BUDING);
-        voLoanListReq.setStatus(RepaymentContants.BUDING);
+    public List<VoViewBuddingRes> buddingList(VoLoanListReq voLoanListReq) {
+
         List<Borrow> borrowList = commonQuery(voLoanListReq);
         if (CollectionUtils.isEmpty(borrowList)) {
-            return null;
+            return Collections.EMPTY_LIST;
         }
-        List<VoViewBudingRes> budingResList = new ArrayList<>();
+        List<VoViewBuddingRes> budingResList = new ArrayList<>();
         borrowList.stream().forEach(p -> {
-            VoViewBudingRes budingRes = new VoViewBudingRes();
+            VoViewBuddingRes budingRes = new VoViewBuddingRes();
             budingRes.setBorrowId(p.getId());
             budingRes.setBorrowName(p.getName());
             budingRes.setMoney(NumberHelper.to2DigitString(p.getMoney() / 100));

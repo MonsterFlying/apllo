@@ -1,5 +1,6 @@
-package com.gofobao.framework.tender.vo.request;
+package com.gofobao.framework.tender.vo.response;
 
+import com.gofobao.framework.tender.vo.request.ReturnedMoney;
 import lombok.Data;
 
 import java.util.List;
