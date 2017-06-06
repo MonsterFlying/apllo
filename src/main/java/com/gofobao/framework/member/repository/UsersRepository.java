@@ -31,4 +31,12 @@ public interface UsersRepository extends JpaRepository<Users,Long>{
 
     /** 根据邀请码获取用户信息*/
     List<Users> findByInviteCode(String inviteCode);
+
+    /**
+     *
+     * @return
+     */
+    List<Users> findByIdIn(List<Long> userIds);
+
+
 }
