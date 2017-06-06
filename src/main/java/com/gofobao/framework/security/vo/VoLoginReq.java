@@ -17,15 +17,18 @@ import java.io.Serializable;
 @AllArgsConstructor
 @ApiModel
 public class VoLoginReq implements Serializable{
-    @ApiModelProperty(value = "账号")
+    @ApiModelProperty(value = "账号", required = true)
     @NotNull(message = "账号不能为空！")
     private String account;
-    @ApiModelProperty(value = "密码")
+
+    @ApiModelProperty(value = "密码", required = true)
     @NotNull(message = "密码不能为空！")
     private String password;
-    @ApiModelProperty(value = "图形验证码")
+
+    @ApiModelProperty(value = "图形验证码" )
     @NotNull(message = "图形验证码不能为空！")
     private String captcha ;
-    @ApiModelProperty(value = "用户来源 0、PC；1、ANDROD；2、IOS 3.h5")
+
+    @ApiModelProperty(value = "用户来源: pc android h5 ios", required = true)
     private Integer source = 0 ;
 }

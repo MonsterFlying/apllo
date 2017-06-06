@@ -5,6 +5,7 @@ import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
 import com.gofobao.framework.member.vo.response.VoOpenAccountResp;
 import com.gofobao.framework.member.vo.response.VoPreOpenAccountResp;
+import com.gofobao.framework.message.vo.VoUserSmsReq;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,14 @@ public class UserThirdController {
     @PostMapping("/pub/user/third/modifyOpenAccPwd/callback/{type}")
     public ResponseEntity<String> modifyOpenAccPwdCallback(HttpServletRequest request, HttpServletResponse response, @PathVariable Integer type) {
         return userThirdBiz.modifyOpenAccPwdCallback(request, response, type) ;
+    }
+
+
+    @ApiOperation("开通自动投标协议")
+    @PostMapping("/pub/user/third/autoTender")
+    public ResponseEntity<VoHtmlResp> autoTender(@RequestAttribute(SecurityContants.USERID_KEY) Long userId, VoUserSmsReq voUserSmsReq) {
+        voUserSmsReq.setUserId(userId) ;
+        return userThirdBiz.autoTender(voUserSmsReq) ;
     }
 
 }

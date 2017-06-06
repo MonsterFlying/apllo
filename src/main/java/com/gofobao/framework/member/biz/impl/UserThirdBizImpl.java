@@ -23,6 +23,7 @@ import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
 import com.gofobao.framework.member.vo.response.VoBankResp;
 import com.gofobao.framework.member.vo.response.VoOpenAccountResp;
 import com.gofobao.framework.member.vo.response.VoPreOpenAccountResp;
+import com.gofobao.framework.message.vo.VoUserSmsReq;
 import com.google.common.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -232,7 +233,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
     public ResponseEntity<VoHtmlResp> modifyOpenAccPwd(Long userId) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId) ;
         if(ObjectUtils.isEmpty(userThirdAccount) ){
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,  "当前账户还未实名", VoHtmlResp.class)) ;
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,  "当前账户还未实名", VoHtmlResp.class)) ;
         }
 
         String html = null ;
@@ -265,7 +268,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
         if(StringUtils.isEmpty(html)){
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,  "服务器开小差了， 请稍候重试", VoHtmlResp.class)) ;
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,  "服务器开小差了， 请稍候重试", VoHtmlResp.class)) ;
         }
 
 
@@ -274,7 +279,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
             voHtmlResp.setHtml(Base64Utils.encodeToString(html.getBytes("UTF-8")));
         } catch (UnsupportedEncodingException e) {
             log.error("UserThirdBizImpl modifyOpenAccPwd gethtml exceptio", e);
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,  "服务器开小差了， 请稍候重试", VoHtmlResp.class)) ;
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,  "服务器开小差了， 请稍候重试", VoHtmlResp.class)) ;
         }
 
         return ResponseEntity.ok(voHtmlResp) ;
@@ -341,5 +348,12 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
         return ResponseEntity.ok("success") ;
+    }
+
+
+    @Override
+    public ResponseEntity<VoHtmlResp> autoTender(VoUserSmsReq voUserSmsReq) {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voUserSmsReq.getUserId());
+        return null;
     }
 }

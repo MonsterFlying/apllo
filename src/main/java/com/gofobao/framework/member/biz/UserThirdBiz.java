@@ -4,6 +4,7 @@ import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
 import com.gofobao.framework.member.vo.response.VoOpenAccountResp;
 import com.gofobao.framework.member.vo.response.VoPreOpenAccountResp;
+import com.gofobao.framework.message.vo.VoUserSmsReq;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
@@ -46,4 +47,6 @@ public interface UserThirdBiz {
      * @return
      */
     ResponseEntity<String> modifyOpenAccPwdCallback(HttpServletRequest request, HttpServletResponse response, Integer type);
+
+    ResponseEntity<VoHtmlResp> autoTender(VoUserSmsReq voUserSmsReq);
 }
