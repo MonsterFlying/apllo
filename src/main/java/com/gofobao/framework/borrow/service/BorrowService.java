@@ -7,6 +7,7 @@ import com.gofobao.framework.borrow.vo.response.VoBorrowByIdRes;
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListRes;
 import org.springframework.data.domain.Example;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 
@@ -26,7 +27,6 @@ public interface BorrowService {
     boolean updateById(Borrow borrow);
 
     Borrow findByIdLock(Long borrowId);
-
 
     Borrow findById(Long borrowId);
 
@@ -50,5 +50,12 @@ public interface BorrowService {
      * @return
      */
     boolean checkValidDay(Borrow borrow);
+
+    /**
+     * 查询列表
+     * @param specification
+     * @return
+     */
+    List<Borrow> findList(Specification<Borrow> specification);
 
 }

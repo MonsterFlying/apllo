@@ -4,8 +4,10 @@ import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.FrzFlagContant;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.borrow.vo.request.VoCreateThirdBorrowReq;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
@@ -73,6 +75,8 @@ public class TenderBizImpl implements TenderBiz {
     private TenderThirdBiz tenderThirdBiz;
     @Autowired
     private MqHelper mqHelper;
+    @Autowired
+    private BorrowBiz borrowBiz;
 
     public Map<String,Object> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception{
         Map<String, Object> rsMap = null;
@@ -230,6 +234,10 @@ public class TenderBizImpl implements TenderBiz {
                 /**
                  * @// TODO: 2017/5/31 调用取消借款函数
                  */
+                VoCancelBorrow voCancelBorrow = new VoCancelBorrow();
+                voCancelBorrow.setBorrowId(borrowId);
+                voCancelBorrow.setUserId(userId);
+                borrowBiz.cancelBorrow(voCancelBorrow);
                 msg = "当前借款不在有效招标时间中!";
                 break;
             }
@@ -251,7 +259,6 @@ public class TenderBizImpl implements TenderBiz {
                     //添加队列自动投标
                     Map<String, String> msgMap = new HashMap<>();
                     msgMap.put("borrowId", StringHelper.toString(borrowId)); // 借款id
-                    String transactionId = System.currentTimeMillis() + RandomHelper.generateNumberCode(4);
 
                     //触发自动投标队列
                     MqConfig mqConfig = new MqConfig();
@@ -260,6 +267,7 @@ public class TenderBizImpl implements TenderBiz {
                     ImmutableMap<String, String> body = ImmutableMap
                             .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
                     mqConfig.setMsg(body);
+                    mqConfig.setSendTime(releaseAt);
                     try {
                         log.info(String.format("borrowProvider autoTender send mq %s", GSON.toJson(body)));
                         mqHelper.convertAndSend(mqConfig);

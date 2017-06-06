@@ -18,6 +18,7 @@ import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -245,10 +246,18 @@ public class BorrowServiceImpl implements BorrowService {
         return (nowDate.getTime() < validDate.getTime());
     }
 
-    public Borrow findById(Long borrowId){
+    public Borrow findById(Long borrowId) {
         return borrowRepository.findOne(borrowId);
     }
 
-
+    /**
+     * 查询列表
+     *
+     * @param specification
+     * @return
+     */
+    public List<Borrow> findList(Specification<Borrow> specification) {
+        return borrowRepository.findAll(specification);
+    }
 
 }

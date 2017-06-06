@@ -54,7 +54,19 @@ public enum JixinTxCodeEnum {
      */
     BID_AUTO_APPLY(
             "bidAutoApply",
-                    "/escrow/p2p/online");
+                    "/escrow/p2p/online"),
+    /**
+     * 借款人标的撤销
+     */
+    DEBT_REGISTER_CANCEL(
+            "debtRegisterCancel",
+            "/escrow/p2p/online"),
+    /**
+     * 借款人标的信息查询
+     */
+    DEBT_DETAILS_QUERY(
+            "debtDetailsQuery",
+            "/escrow/p2p/online");
 
     private String value;
     private String url;

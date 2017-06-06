@@ -1,6 +1,9 @@
 package com.gofobao.framework.borrow.biz.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.IntTypeContant;
+import com.gofobao.framework.api.model.debt_details_query.DebtDetail;
+import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
@@ -8,16 +11,21 @@ import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
-import com.gofobao.framework.borrow.vo.request.VoAddNetWorthBorrow;
-import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
-import com.gofobao.framework.borrow.vo.request.VoCreateThirdBorrowReq;
+import com.gofobao.framework.borrow.vo.request.*;
+import com.gofobao.framework.common.capital.CapitalChangeEntity;
+import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.MathHelper;
+import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
+import com.gofobao.framework.helper.project.BorrowHelper;
+import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -25,22 +33,25 @@ import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.tender.entity.AutoTender;
+import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.AutoTenderService;
+import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.Persistence;
-import java.util.Arrays;
-import java.util.Date;
+import java.util.*;
 
 /**
  * Created by Zeke on 2017/5/26.
@@ -67,6 +78,11 @@ public class BorrowBizImpl implements BorrowBiz {
     private UserThirdAccountService userThirdAccountService;
     @Autowired
     private MqHelper mqHelper;
+    @Autowired
+    private TenderService tenderService;
+    @Autowired
+    private CapitalChangeHelper capitalChangeHelper;
+
 
     /**
      * 新增净值借款
@@ -222,7 +238,7 @@ public class BorrowBizImpl implements BorrowBiz {
         borrow.setIsMortgage(false);
         borrow.setName(voAddNetWorthBorrow.getName());
         borrow.setMoney(voAddNetWorthBorrow.getMoney());
-        borrow.setRepayFashion(1);//voAddNetWorthBorrow.getRepayFashion()
+        borrow.setRepayFashion(1);
         borrow.setTimeLimit(voAddNetWorthBorrow.getTimeLimit());
         borrow.setApr(voAddNetWorthBorrow.getApr());
         borrow.setLowest(50 * 100);
@@ -256,6 +272,150 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     public ResponseEntity<VoBaseResp> cancelBorrow(VoCancelBorrow voCancelBorrow) {
-        return null;
+        Long borrowId = voCancelBorrow.getBorrowId();
+        Long userId = voCancelBorrow.getUserId();
+        Borrow tempBorrow = new Borrow();
+        Date nowDate = new Date();
+
+        Borrow borrow = borrowService.findByIdLock(borrowId);
+        if (ObjectUtils.isEmpty(borrow) || ObjectUtils.isEmpty(userId)
+                || borrow.getStatus() != 0 || borrow.getStatus() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款状态已发生更改!"));
+        }
+
+        boolean bool = false;//债券转让默认不过期
+        if (!ObjectUtils.isEmpty(borrow.getReleaseAt())) {
+            bool = DateHelper.diffInDays(new Date(), borrow.getReleaseAt(), false) >= borrow.getValidDay();//比较借款时间是否过期
+        }
+
+        if (((borrow.getStatus() == 1) && (bool)) || (StringHelper.toString(borrow.getUserId()).equals(StringHelper.toString(voCancelBorrow.getUserId())))) {//只有借款标过期或者本人才能取消借款
+
+        } else {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "只有借款标过期或者本人才能取消借款!"));
+        }
+
+        Set<Integer> tenderUserIds = new HashSet<>();//投标用户id集合
+
+        Specification<Tender> borrowSpecification = Specifications
+                .<Tender>and()
+                .eq("status", 1)
+                .eq("borrowId", borrowId)
+                .build();
+        List<Tender> tenderList = tenderService.findList(borrowSpecification);
+        Tender tempTender = null;
+
+        if (!CollectionUtils.isEmpty(tenderList)) {
+            Iterator<Tender> itTender = tenderList.iterator();
+            Tender tender = null;
+            tempTender = new Tender();
+            StringBuffer userIdStr = new StringBuffer();
+            while (itTender.hasNext()) {
+                tender = itTender.next();
+
+                //更新资产记录
+                CapitalChangeEntity entity = new CapitalChangeEntity();
+                entity.setType(CapitalChangeEnum.Unfrozen);
+                entity.setUserId(tender.getUserId());
+                entity.setMoney(tender.getValidMoney());
+                entity.setRemark("借款 [" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "] 招标失败解除冻结资金。");
+                try {
+                    capitalChangeHelper.capitalChange(entity);
+                } catch (Exception e) {
+                    log.error("borrowBizImpl cancelBorrow error", e);
+                }
+
+                //更新投标记录状态
+                tempTender.setId(tender.getId());
+                tempTender.setStatus(2); // 取消状态
+                tempTender.setUpdatedAt(nowDate);
+                tenderService.updateById(tempTender);
+
+                /**
+                 * @// TODO: 2017/6/5 发送站内信
+                 */
+                /*  if (!tenderUserIds.contains(tempTender.getUserId())) {
+                        tenderUserIds.add(Tender.getUserId());
+                        userIdStr.append(Tender.getUserId()).append(",");
+                        notices.setFromUserId(1);
+                        notices.setUserId(Tender.getUserId());
+                        notices.setRead(false);
+                        notices.setName("投资的借款失败");
+                        notices.setContent("你所投资的借款[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]在" + DateHelper.nextDate(nowDate) + "已取消");
+                        notices.setType("system");
+                        notices.setCreatedAt(nowDate);
+                        notices.setUpdatedAt(nowDate);
+                        noticesMapper.insertSelective(notices);
+                        userIdStr.append(Tender.getUserId()).append(",");
+                    }*/
+            }
+        }
+
+        Long tenderId = borrow.getTenderId();
+        if ((borrow.getType() == 0) && (!ObjectUtils.isEmpty(tenderId)) && (tenderId > 0)) {//判断是否是转让标，并将借款状态置为0
+            tempTender = new Tender();
+            tempTender.setTransferFlag(0);
+            tempTender.setId(borrow.getTenderId());
+            tempTender.setUpdatedAt(nowDate);
+            tenderService.updateById(tempTender);
+        }
+
+        Integer payMoney = 0;
+        if (borrow.getType() == 2) {//如果是秒标则解除冻结
+            Double principal = NumberHelper.toDouble(StringHelper.toString(borrow.getMoney()));
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(principal,
+                    NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrow.getSuccessAt());
+            Map<String, Object> debx = borrowCalculatorHelper.dengEBenXi();
+            payMoney = (int) MathHelper.myRound((Double) debx.get("repayTotal") - principal, 2);
+
+            if (borrow.getAwardType() == 1) {
+                payMoney += borrow.getAward();
+            } else if (borrow.getAwardType() == 2) {
+                payMoney += (int) MathHelper.myRound(borrow.getMoney() * borrow.getAward(), 2);
+            }
+
+            //更新资产记录
+            CapitalChangeEntity entity = new CapitalChangeEntity();
+            entity.setType(CapitalChangeEnum.Unfrozen);
+            entity.setUserId(borrow.getUserId());
+            entity.setMoney(payMoney);
+            entity.setRemark("取消秒标借款[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]解除冻结资金");
+            try {
+                capitalChangeHelper.capitalChange(entity);
+            } catch (Exception e) {
+                log.error("borrowBizImpl cancelBorrow error", e);
+            }
+        }
+
+        //更新借款
+        tempBorrow.setStatus(5);
+        tempBorrow.setId(borrowId);
+        tempBorrow.setUpdatedAt(nowDate);
+        if (borrowService.updateById(tempBorrow)) {
+            //调用即信取消标的
+            VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
+            voQueryThirdBorrowList.setBorrowId(borrowId);
+            voQueryThirdBorrowList.setUserId(userId);
+            voQueryThirdBorrowList.setPageNum("1");
+            voQueryThirdBorrowList.setPageSize("10");
+            DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
+            if (NumberHelper.toInt(resp.getTotalItems()) > 0) {//在即信查询到对应的标的
+                List<DebtDetail> debtDetailList = resp.getSubPacks();
+                Preconditions.checkNotNull(debtDetailList, "即信标的不存在!");
+
+                VoCancelThirdBorrow voCancelThirdBorrow = new VoCancelThirdBorrow();
+                voCancelThirdBorrow.setUserId(userId);
+                voCancelThirdBorrow.setRaiseDate(debtDetailList.get(0).getRaiseDate());
+                ResponseEntity responseEntity = borrowThirdBiz.cancelThirdBorrow(voCancelThirdBorrow);
+                if (!ObjectUtils.isEmpty(responseEntity)) {
+                    return responseEntity;
+                }
+            }
+        }
+
+        return ResponseEntity.ok(VoBaseResp.ok("取消借款成功!"));
     }
 }
