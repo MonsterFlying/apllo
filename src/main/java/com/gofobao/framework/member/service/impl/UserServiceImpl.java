@@ -96,12 +96,9 @@ public class UserServiceImpl implements UserDetailsService, UserService{
      * @param users
      * @return
      */
-    public boolean updUserByPhone(Users users){
-        if (ObjectUtils.isEmpty(users.getPhone())){
-            return false;
-        }
+    public void update(Users users){
         userRepository.save(users);
-        return true;
+
     }
 
     /**

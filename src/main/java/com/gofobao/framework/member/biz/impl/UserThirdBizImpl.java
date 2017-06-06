@@ -74,13 +74,17 @@ public class UserThirdBizImpl implements UserThirdBiz {
         //1。 验证用户是否存在
         Users user = userService.findById(userId);
         if(ObjectUtils.isEmpty(user)){
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "你访问的账户不存在! ", VoPreOpenAccountResp.class)) ;
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你访问的账户不存在! ", VoPreOpenAccountResp.class)) ;
         }
 
         //2. 判断用户是否已经开过存管账户
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(user.getId()) ;
         if(!ObjectUtils.isEmpty(userThirdAccount) ){
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "你的账户已经开户！", VoPreOpenAccountResp.class)) ;
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你的账户已经开户！", VoPreOpenAccountResp.class)) ;
         }
 
 

@@ -31,7 +31,6 @@ public class VoBasicUserInfoResp extends VoBaseResp{
     @ApiModelProperty("银行卡账号（已经加密）")
     private String bankAccout ;
 
-
     @ApiModelProperty("身份证号（已经加密）")
     private String idNo ;
 
@@ -55,9 +54,6 @@ public class VoBasicUserInfoResp extends VoBaseResp{
 
     @ApiModelProperty("是否实名状态")
     private boolean realnameState ;
-
-    @ApiModelProperty("平台支付密码状态")
-    private boolean payPasswordState ;
 
     @ApiModelProperty("银行密码状态")
     private boolean bankPassworState ;

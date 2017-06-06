@@ -50,7 +50,6 @@ gofobao:
   captcha: false # 全站是否开启图形验证码验证
   close-email-send: true # 关闭邮箱发送
   close-phone-send: true # 关闭短信发送
-debug: true
 logging:
   file: /Users/Max/logs/logback.log
   pattern:

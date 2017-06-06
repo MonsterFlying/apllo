@@ -15,6 +15,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
+
+import java.util.Date;
 
 /**
  * Created by Zeke on 2017/5/18.
@@ -35,59 +38,40 @@ public class UserPasswordBizImpl implements UserPasswordBiz {
     /**
      * 用户修改密码
      *
+     *
+     * @param userId
      * @param voModifyPasswordReq
      * @return
      */
-    public ResponseEntity<VoBaseResp> modifyPassword(VoModifyPasswordReq voModifyPasswordReq) {
-        String nowPassword = voModifyPasswordReq.getNowPassword();
-        String newPassword = voModifyPasswordReq.getNewPassword();
-        Long userId = voModifyPasswordReq.getUserId();
-
+    public ResponseEntity<VoBaseResp> modifyPassword(Long userId, VoModifyPasswordReq voModifyPasswordReq) {
         Users users = userService.findById(userId);
 
         boolean bool = false;
         try {
-            bool = PasswordHelper.verifyPassword(nowPassword, users.getPassword());
+            bool = PasswordHelper.verifyPassword(users.getPassword(), voModifyPasswordReq.getOldPassword());
         } catch (Exception e) {
-            log.error("UserPasswordBizImpl modifyPassword check password_reset error:", e);
+            log.error("UserPasswordBizImpl modifyPassword check modifyPassword error:", e);
         }
 
         if (!bool) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前密码验证不通过!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "原始密码不正确!"));
         }
 
-        Users updUsers = new Users();
-        updUsers.setId(users.getId());
-        updUsers.setPassword(newPassword);
-        if (!userService.updUserByPhone(updUsers)) {
+        users.setUpdatedAt(new Date());
+        try {
+            users.setPassword(PasswordHelper.encodingPassword(voModifyPasswordReq.getNewPassword())) ;
+        } catch (Exception e) {
+            log.error("UserPasswordBizImpl modifyPassword check modifyPassword error:", e);
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "用户密码修改失败!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍后重试！"));
         }
-        return ResponseEntity.ok(VoBaseResp.ok("用户忘记密码修改成功!"));
+        userService.update(users) ;
+        return ResponseEntity.ok(VoBaseResp.ok("密码修改成功!"));
     }
 
-    /**
-     * 校验用户忘记密码
-     *
-     * @param voCheckFindPasswordReq
-     * @return
-     */
-    public ResponseEntity<VoBaseResp> checkFindPassword(VoCheckFindPasswordReq voCheckFindPasswordReq) {
-        String phone = voCheckFindPasswordReq.getPhone();
-        String phoneCaptcha = voCheckFindPasswordReq.getPhoneCaptcha();
-
-        boolean bool = captchaHelper.checkPhoneCaptcha(phone, phoneCaptcha, MqTagEnum.SMS_RESET_PASSWORD.getValue());//验证找回密码验证码是否正确
-        if (!bool){
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR,"用户忘记密码验证失败,请重试!"));
-        }
-
-        return ResponseEntity.ok(VoBaseResp.ok("用户忘记密码验证成功!"));
-    }
 
     /**
      * 用户忘记密码
@@ -96,35 +80,39 @@ public class UserPasswordBizImpl implements UserPasswordBiz {
      * @return
      */
     public ResponseEntity<VoBaseResp> findPassword(VoFindPasswordReq voFindPasswordReq) {
-        String phone = voFindPasswordReq.getPhone();
-        String phoneCaptcha = voFindPasswordReq.getPhoneCaptcha();
-        String newPassword = voFindPasswordReq.getNewPassword();
-
-        boolean bool = captchaHelper.checkPhoneCaptcha(phone, phoneCaptcha, MqTagEnum.SMS_RESET_PASSWORD.getValue());//验证找回密码验证码是否正确
-        captchaHelper.removePhoneCaptcha(phone, MqTagEnum.SMS_RESET_PASSWORD.getValue() );//删除验证码
+        // 1. 验证短信验证码
+        boolean bool = captchaHelper.checkPhoneCaptcha(voFindPasswordReq.getPhone(), voFindPasswordReq.getSmsCode(), MqTagEnum.SMS_RESET_PASSWORD.getValue());//验证找回密码验证码是否正确
         if (!bool){
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR,"用户忘记密码验证失败,请重试!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"短信验证码错误/已经过期!"));
         }
-
-        String encoPassword = null;
-        try {
-            encoPassword = PasswordHelper.encodingPassword(newPassword);
-        } catch (Exception e) {
-            log.error("UserPasswordBizImpl findPassword password_reset encoding error:", e);
-        }
-
-        Users users = new Users();
-        users.setPhone(phone);
-        users.setPassword(encoPassword);
-        if (!userService.updUserByPhone(users)) {
+        // 2. 验证手机号是否存在
+        Users users = userService.findByAccount(voFindPasswordReq.getPhone());
+        if(ObjectUtils.isEmpty(users)){
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "用户密码修改失败!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"手机号在平台不存在!"));
         }
 
-        return ResponseEntity.ok(VoBaseResp.ok("用户密码修改成功!"));
+        // 3.更新密码
+        String encoPassword = null;
+        try {
+            encoPassword = PasswordHelper.encodingPassword(voFindPasswordReq.getPassword());
+        } catch (Exception e) {
+            log.error("UserPasswordBizImpl findPassword password_reset encoding error:", e);
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"服务器开小差了，请稍候重试！"));
+        }
+
+        users.setPassword(encoPassword);
+        users.setUpdatedAt(new Date());
+        userService.update(users);
+
+        // 4.移除短信
+        captchaHelper.removePhoneCaptcha(voFindPasswordReq.getPhone(), MqTagEnum.SMS_RESET_PASSWORD.getValue() ); //删除验证码
+        return ResponseEntity.ok(VoBaseResp.ok("找回密码成功!"));
     }
 
 }
