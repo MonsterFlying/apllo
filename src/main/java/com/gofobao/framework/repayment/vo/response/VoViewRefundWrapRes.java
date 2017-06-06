@@ -11,5 +11,5 @@ import java.util.List;
  */
 @Data
 public class VoViewRefundWrapRes extends VoBaseResp{
-    List<VoViewRefundRes> voViewRefundRes = Collections.EMPTY_LIST ;
+    private List<VoViewRefundRes> list = Collections.EMPTY_LIST ;
 }

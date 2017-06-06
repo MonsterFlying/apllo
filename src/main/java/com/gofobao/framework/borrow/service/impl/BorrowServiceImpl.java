@@ -2,13 +2,12 @@ package com.gofobao.framework.borrow.service.impl;
 
 import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
-import com.gofobao.framework.collection.repository.BorrowCollectionRepository;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoBorrowByIdReq;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.response.VoBorrowByIdRes;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowListRes;
+import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
 import com.gofobao.framework.common.constans.MoneyConstans;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
@@ -17,7 +16,11 @@ import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -42,7 +45,7 @@ public class BorrowServiceImpl implements BorrowService {
      * @return
      */
     @Override
-    public List<VoViewBorrowListRes> findAll(VoBorrowListReq voBorrowListReq) {
+    public List<VoViewBorrowList> findAll(VoBorrowListReq voBorrowListReq) {
 
         /**
          * 排序
@@ -85,10 +88,10 @@ public class BorrowServiceImpl implements BorrowService {
             borrowLists.sort(c);
         }
         Optional<List<Borrow>> objBorrow = Optional.ofNullable(borrowLists);
-        List<VoViewBorrowListRes> listResList = new ArrayList<>();
+        List<VoViewBorrowList> listResList = new ArrayList<>();
         objBorrow.ifPresent(p -> p.forEach(
                 m -> {
-                    VoViewBorrowListRes item = new VoViewBorrowListRes();
+                    VoViewBorrowList item = new VoViewBorrowList();
                     item.setId(m.getId());
                     item.setMoney(NumberHelper.to2DigitString(new Double(m.getMoney() / 100d)) + MoneyConstans.RMB);
                     item.setIsContinued(m.getIsContinued());
@@ -136,7 +139,7 @@ public class BorrowServiceImpl implements BorrowService {
                 }
                 )
         );
-        Optional<List<VoViewBorrowListRes>> result = Optional.empty();
+        Optional<List<VoViewBorrowList>> result = Optional.empty();
         return result.ofNullable(listResList).orElse(Collections.emptyList());
     }
 
@@ -249,6 +252,14 @@ public class BorrowServiceImpl implements BorrowService {
         return borrowRepository.findOne(borrowId);
     }
 
-
+    /**
+     * 查询列表
+     *
+     * @param specification
+     * @return
+     */
+    public List<Borrow> findList(Specification<Borrow> specification) {
+        return borrowRepository.findAll(specification);
+    }
 
 }

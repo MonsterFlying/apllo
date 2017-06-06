@@ -1,16 +1,21 @@
 package com.gofobao.framework.listener.providers;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.api.contants.IntTypeContant;
+import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.borrow.vo.request.VoCreateThirdBorrowReq;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.NumberHelper;
@@ -22,26 +27,24 @@ import com.gofobao.framework.lend.entity.Lend;
 import com.gofobao.framework.lend.service.LendService;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
+import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.entity.Tender;
-import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
-import javax.persistence.Persistence;
 import java.util.*;
 
 /**
@@ -69,6 +72,8 @@ public class BorrowProvider {
     private BorrowRepaymentService borrowRepaymentService;
     @Autowired
     private MqHelper mqHelper;
+    @Autowired
+    private BorrowThirdBiz borrowThirdBiz;
 
     /**
      * 初审
@@ -274,7 +279,6 @@ public class BorrowProvider {
                 tender.setTransferFlag(2);
                 tenderService.updateById(tender);
                 //======================================================================
-
                 //扣除转让待收
                 bcs = Specifications.<BorrowCollection>and()
                         .eq("status", 0)
@@ -411,13 +415,8 @@ public class BorrowProvider {
                 }
 
                 if (!tenderUserIds.contains(tender.getUserId())) {
-                    /**
-                     * @// TODO: 2017/6/2 发送站内信 
-                     */
-                    /*notices = new Notices();
-                    userIdStr.append(tender.getUserId()).append(",");
-                    tenderUserIds.add(tender.getUserId());
-                    notices.setFromUserId(1);
+                    Notices notices = new Notices();
+                    notices.setFromUserId(1L);
                     notices.setUserId(tender.getUserId());
                     notices.setRead(false);
                     notices.setName("投资的借款满标审核通过");
@@ -425,7 +424,19 @@ public class BorrowProvider {
                     notices.setType("system");
                     notices.setCreatedAt(nowDate);
                     notices.setUpdatedAt(nowDate);
-                    noticesMapper.insertSelective(notices);*/
+
+                    //发送站内信
+                    MqConfig mqConfig = new MqConfig();
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
+                    mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
+                    Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
+                    mqConfig.setMsg(body);
+                    try {
+                        log.info(String.format("borrowProvider doAgainVerify send mq %s", GSON.toJson(body)));
+                        mqHelper.convertAndSend(mqConfig);
+                    } catch (Exception e) {
+                        log.error("borrowProvider doAgainVerify send mq exception", e);
+                    }
                 }
 
                 //触发投标成功事件
@@ -515,6 +526,30 @@ public class BorrowProvider {
             tempBorrow.setStatus(3);
             tempBorrow.setSuccessAt(nowDate);
             borrowService.updateById(tempBorrow);
+
+            //===================即信登记标的===========================
+            String name = borrow.getName();
+            Long userId = borrow.getUserId();
+
+            VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
+            voCreateThirdBorrowReq.setUserId(userId);
+            voCreateThirdBorrowReq.setRate(StringHelper.formatDouble(borrow.getApr(), 100, false));
+            voCreateThirdBorrowReq.setTxAmount(StringHelper.formatDouble(borrow.getMoney(), 100, false));
+            voCreateThirdBorrowReq.setAcqRes(String.valueOf(userId));
+            voCreateThirdBorrowReq.setIntType(IntTypeContant.SINGLE_USE);
+            voCreateThirdBorrowReq.setDuration(String.valueOf(borrow.getTimeLimit()));
+            voCreateThirdBorrowReq.setProductDesc(StringUtils.isEmpty(name) ? "净值借款" : name);
+            voCreateThirdBorrowReq.setProductId(String.valueOf(borrowId));
+            voCreateThirdBorrowReq.setRaiseDate(DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM));
+            voCreateThirdBorrowReq.setRaiseEndDate(DateHelper.dateToString(DateHelper.addDays(new Date(), 1), DateHelper.DATE_FORMAT_YMD_NUM));
+
+            ResponseEntity<VoBaseResp> resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
+            if (!ObjectUtils.isEmpty(resp)) {
+                log.error("===========================即信标的登记==============================");
+                log.error("即信标的登记失败：",resp.getBody().getState().getMsg());
+                log.error("=====================================================================");
+                return false;
+            }
 
             /**
              * @// TODO: 2017/6/2 复审事件

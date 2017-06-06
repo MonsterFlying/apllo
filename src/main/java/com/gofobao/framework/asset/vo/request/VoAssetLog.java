@@ -20,5 +20,5 @@ public class VoAssetLog extends Page {
 
     private String endTime;
     @ApiModelProperty(hidden = true)
-    private Integer userId;
+    private Long userId;
 }

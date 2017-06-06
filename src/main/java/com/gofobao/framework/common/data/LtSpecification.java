@@ -1,8 +1,5 @@
 package com.gofobao.framework.common.data;
 
-import lombok.AllArgsConstructor;
-import org.springframework.util.StringUtils;
-
 import javax.persistence.criteria.*;
 
 /**

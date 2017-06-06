@@ -1,7 +1,9 @@
 package com.gofobao.framework.borrow.biz;
 
 import com.gofobao.framework.borrow.vo.request.VoAddNetWorthBorrow;
+import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
+import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import org.springframework.http.ResponseEntity;
 
@@ -18,4 +20,14 @@ public interface BorrowBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow);
+
+
+    /**
+     * 首页标列表
+     * @param voBorrowListReq
+     * @return
+     */
+    ResponseEntity<VoViewBorrowListWarpRes> findAll(VoBorrowListReq voBorrowListReq);
+
+
 }

@@ -1,12 +1,10 @@
 package com.gofobao.framework.borrow.vo.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.gofobao.framework.borrow.contants.RepaymentContants;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
-import javax.validation.constraints.Digits;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
