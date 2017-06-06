@@ -1,10 +1,11 @@
 package com.gofobao.framework.member.controller;
 
-import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.biz.UserThirdBiz;
-import com.gofobao.framework.member.vo.VoHtmlResp;
-import com.gofobao.framework.member.vo.VoOpenAccountReq;
+import com.gofobao.framework.member.vo.response.VoHtmlResp;
+import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
+import com.gofobao.framework.member.vo.response.VoOpenAccountResp;
 import com.gofobao.framework.member.vo.response.VoPreOpenAccountResp;
+import com.gofobao.framework.message.vo.VoUserSmsReq;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +26,7 @@ public class UserThirdController {
     private UserThirdBiz userThirdBiz ;
 
 
-    @ApiOperation("银行存管开户前置请求")
+    @ApiOperation("银行存管前置请求第一步")
     @PostMapping("/user/third/preOpenAccout")
     public ResponseEntity<VoPreOpenAccountResp> preOpenAccout(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return userThirdBiz.preOpenAccount(userId)  ;
@@ -34,7 +35,7 @@ public class UserThirdController {
 
     @ApiOperation("银行存管开户")
     @PostMapping("/user/third/openAccout")
-    public ResponseEntity<VoBaseResp> openAccount(@Valid @ModelAttribute VoOpenAccountReq voOpenAccountReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoOpenAccountResp> openAccount(@Valid @ModelAttribute VoOpenAccountReq voOpenAccountReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return userThirdBiz.openAccount(voOpenAccountReq, userId) ;
     }
 
@@ -51,6 +52,14 @@ public class UserThirdController {
     @PostMapping("/pub/user/third/modifyOpenAccPwd/callback/{type}")
     public ResponseEntity<String> modifyOpenAccPwdCallback(HttpServletRequest request, HttpServletResponse response, @PathVariable Integer type) {
         return userThirdBiz.modifyOpenAccPwdCallback(request, response, type) ;
+    }
+
+
+    @ApiOperation("开通自动投标协议")
+    @PostMapping("/pub/user/third/autoTender")
+    public ResponseEntity<VoHtmlResp> autoTender(@RequestAttribute(SecurityContants.USERID_KEY) Long userId, VoUserSmsReq voUserSmsReq) {
+        voUserSmsReq.setUserId(userId) ;
+        return userThirdBiz.autoTender(voUserSmsReq) ;
     }
 
 }

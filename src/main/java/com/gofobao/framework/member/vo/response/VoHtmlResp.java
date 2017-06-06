@@ -1,4 +1,4 @@
-package com.gofobao.framework.member.vo;
+package com.gofobao.framework.member.vo.response;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import io.swagger.annotations.ApiModel;

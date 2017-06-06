@@ -47,6 +47,10 @@ gofobao:
   javaDomain: http://max.3w.dkys.org
   webDomain: http://ci.gofobao.com
   h5Domain: http://ci.gofobao.com
+  close-email-send: true # 关闭邮箱发送
+  close-phone-send: true # 关闭短信发送
+  aliyun-bankinfo-url: http://jisuyhkgsd.market.alicloudapi.com/bankcard/query
+  aliyun-bankinfo-appcode: 1fa8442456704a4686d950b099c188b9 #阿里云api管理中的appcode
 logging:
   file: /Users/Max/logs/logback.log
   pattern:

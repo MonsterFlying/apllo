@@ -32,6 +32,15 @@ public class SmsUserController {
         return result;
     }
 
+
+    @ApiOperation("发送开通自动投标协议短息")
+    @PostMapping("/openAutoTender")
+    public ResponseEntity<VoBaseResp> openAutoTender(HttpServletRequest request, @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoUserSmsReq voUserSmsReq){
+        voUserSmsReq.setUserId(userId);
+        ResponseEntity<VoBaseResp> result = messageBiz.openAutoTender(voUserSmsReq) ;
+        return result;
+    }
+
     @ApiOperation("发送解绑手机验证码")
     @PostMapping("/switchPhone")
     public ResponseEntity<VoBaseResp> switchPhone(HttpServletRequest request,  @RequestAttribute(SecurityContants.USERID_KEY) Long userId,  @Valid @ModelAttribute VoUserSmsReq voUserSmsReq){

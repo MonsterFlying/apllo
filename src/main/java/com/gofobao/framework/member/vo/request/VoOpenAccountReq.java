@@ -1,4 +1,4 @@
-package com.gofobao.framework.member.vo;
+package com.gofobao.framework.member.vo.request;
 
 import com.gofobao.framework.core.vo.VoBaseReq;
 import com.gofobao.framework.helper.RegexHelper;
@@ -29,8 +29,6 @@ public class VoOpenAccountReq extends VoBaseReq{
     @Pattern(regexp = RegexHelper.REGEX_MOBILE_EXACT, message = "手机格式不正确")
     private String mobile ;
 
-    @ApiModelProperty(value = "银行卡Id，当从用户银行卡列表选取时，请将选择的银行卡ID填入此处", required = true, dataType = "String")
-    private Long bankId ;
 
     @ApiModelProperty(value = "银行卡号", required = true, dataType = "String")
     @NotEmpty(message = "银行卡不能为空")

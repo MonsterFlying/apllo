@@ -18,10 +18,12 @@ import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
-import com.gofobao.framework.member.vo.VoHtmlResp;
-import com.gofobao.framework.member.vo.VoOpenAccountReq;
+import com.gofobao.framework.member.vo.response.VoHtmlResp;
+import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
 import com.gofobao.framework.member.vo.response.VoBankResp;
+import com.gofobao.framework.member.vo.response.VoOpenAccountResp;
 import com.gofobao.framework.member.vo.response.VoPreOpenAccountResp;
+import com.gofobao.framework.message.vo.VoUserSmsReq;
 import com.google.common.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,12 +90,13 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
         //3. 判断用户是否绑定手机
         if(StringUtils.isEmpty(user.getPhone())){
-            return ResponseEntity.badRequest().body( VoBaseResp.error(VoBaseResp.ERROR, "你的账户没有绑定手机，请先绑定手机！", VoPreOpenAccountResp.class)) ;
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你的账户没有绑定手机，请先绑定手机！", VoPreOpenAccountResp.class)) ;
         }
 
 
         // 4.查询银行卡
-
         List<BankAccount> bankAccountList = bankAccountService.listBankByUserId(userId) ;
         List<VoBankResp> voBankResps = new ArrayList<>(bankAccountList.size()) ;
         VoBankResp voBankResp = null ;
@@ -114,35 +117,39 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
-    public ResponseEntity<VoBaseResp> openAccount(VoOpenAccountReq voOpenAccountReq, Long userId) {
+    public ResponseEntity<VoOpenAccountResp> openAccount(VoOpenAccountReq voOpenAccountReq, Long userId) {
         // 1.用户用户信息
         Users user = userService.findById(userId);
         if(ObjectUtils.isEmpty(user))
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "你访问的账户不存在")) ;
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你访问的账户不存在", VoOpenAccountResp.class)) ;
         // 2. 判断用户是否已经开过存管账户
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(user.getId()) ;
         if(!ObjectUtils.isEmpty(userThirdAccount) )
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "你的账户已经开户！")) ;
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你的账户已经开户！", VoOpenAccountResp.class)) ;
 
         // 3. 判断用户是否绑定手机
         if(StringUtils.isEmpty(user.getPhone()))
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "你的账户没有绑定手机，请先绑定手机！")) ;
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你的账户没有绑定手机，请先绑定手机！", VoOpenAccountResp.class)) ;
 
         // 4.判断用户真实姓名
         if( (!StringUtils.isEmpty(user.getRealname())) && !(voOpenAccountReq.getName().equals(user.getRealname())) )
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "你的填写真实姓名与系统保存的不一致！")) ;
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你的填写真实姓名与系统保存的不一致！", VoOpenAccountResp.class)) ;
 
         // 5.判断身份证
         if( (!StringUtils.isEmpty(user.getCardId())) && !(voOpenAccountReq.getIdNo().equals(user.getCardId())))
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "你的填写身份证号与系统保存的不一致！")) ;
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你的填写身份证号与系统保存的不一致！", VoOpenAccountResp.class)) ;
 
         // 6.银行卡号
-        if(!ObjectUtils.isEmpty(voOpenAccountReq.getBankId())){
-           BankAccount bankAccount = bankAccountService.findByUserIdAndId(userId, voOpenAccountReq.getBankId()) ;
-           if(!bankAccount.getAccount().equals(voOpenAccountReq.getCardNo())){
-               return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "你的填写银行卡号与系统保存的不一致！")) ;
-           }
-        }
 
         // 7.短信验证码验证
         String srvTxCode = null ;
@@ -154,7 +161,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
         if(StringUtils.isEmpty(srvTxCode)){
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "短信验证码已过期，请重新获取")) ;
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "短信验证码已过期，请重新获取", VoOpenAccountResp.class)) ;
         }
 
         // 8.提交开户
@@ -174,7 +183,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
         AccountOpenPlusResponse response = jixinManager.send(JixinTxCodeEnum.OPEN_ACCOUNT_PLUS, request, AccountOpenPlusResponse.class);
         if((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))){
             String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试": response.getRetMsg() ;
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg)) ;
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, msg, VoOpenAccountResp.class)) ;
         }
 
         // 8.保存银行存管账户到用户中
@@ -206,17 +217,25 @@ public class UserThirdBizImpl implements UserThirdBiz {
         boolean b = userService.updUserById(user);
         if(!b){
             log.error("UserThirdBizImpl openAccount insert db error ");
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍候重试")) ;
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍候重试", VoOpenAccountResp.class)) ;
         }
 
-        return ResponseEntity.ok(VoBaseResp.ok("开户成功"));
+        VoOpenAccountResp voOpenAccountResp = VoBaseResp.ok("开户成功", VoOpenAccountResp.class);
+        voOpenAccountResp.setOpenAccountBankName("江西银行");
+        voOpenAccountResp.setAccount(accountId);
+        voOpenAccountResp.setName(voOpenAccountReq.getName());
+        return ResponseEntity.ok(voOpenAccountResp);
     }
 
     @Override
     public ResponseEntity<VoHtmlResp> modifyOpenAccPwd(Long userId) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId) ;
         if(ObjectUtils.isEmpty(userThirdAccount) ){
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,  "当前账户还未实名", VoHtmlResp.class)) ;
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,  "当前账户还未实名", VoHtmlResp.class)) ;
         }
 
         String html = null ;
@@ -249,7 +268,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
         if(StringUtils.isEmpty(html)){
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,  "服务器开小差了， 请稍候重试", VoHtmlResp.class)) ;
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,  "服务器开小差了， 请稍候重试", VoHtmlResp.class)) ;
         }
 
 
@@ -258,7 +279,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
             voHtmlResp.setHtml(Base64Utils.encodeToString(html.getBytes("UTF-8")));
         } catch (UnsupportedEncodingException e) {
             log.error("UserThirdBizImpl modifyOpenAccPwd gethtml exceptio", e);
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,  "服务器开小差了， 请稍候重试", VoHtmlResp.class)) ;
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,  "服务器开小差了， 请稍候重试", VoHtmlResp.class)) ;
         }
 
         return ResponseEntity.ok(voHtmlResp) ;
@@ -325,5 +348,12 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
         return ResponseEntity.ok("success") ;
+    }
+
+
+    @Override
+    public ResponseEntity<VoHtmlResp> autoTender(VoUserSmsReq voUserSmsReq) {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voUserSmsReq.getUserId());
+        return null;
     }
 }

@@ -36,4 +36,9 @@ public class UserThirdAccountServiceImpl implements UserThirdAccountService {
         }
         return account.getId() ;
     }
+
+    @Override
+    public UserThirdAccount findTopByCardNo(String account) {
+        return userThirdAccountRepository.findTopByCardNo(account) ;
+    }
 }

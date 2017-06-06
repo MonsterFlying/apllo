@@ -54,4 +54,13 @@ public interface MessageBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> openAccount(VoUserSmsReq voUserSmsReq);
+
+
+    /**
+     * 开通自动投标协议短信
+     * @param voUserSmsReq
+     * @return
+     */
+    ResponseEntity<VoBaseResp> openAutoTender(VoUserSmsReq voUserSmsReq);
+
 }
