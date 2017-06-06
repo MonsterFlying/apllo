@@ -6,6 +6,8 @@ import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.borrow.vo.request.VoBorrowByIdReq;
+import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
@@ -29,6 +31,7 @@ import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
+import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
@@ -73,7 +76,7 @@ public class TenderBizImpl implements TenderBiz {
     @Autowired
     private MqHelper mqHelper;
 
-    public Map<String,Object> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception{
+    public Map<String, Object> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception {
         Map<String, Object> rsMap = null;
         Date nowDate = new Date();
         Long userId = voCreateTenderReq.getUserId();
@@ -125,12 +128,12 @@ public class TenderBizImpl implements TenderBiz {
                     VoCreateThirdTenderReq voCreateThirdTenderReq = new VoCreateThirdTenderReq();
                     voCreateThirdTenderReq.setAcqRes(String.valueOf(userId));
                     voCreateThirdTenderReq.setUserId(userId);
-                    voCreateThirdTenderReq.setTxAmount(StringHelper.formatDouble(validMoney,100,false));
+                    voCreateThirdTenderReq.setTxAmount(StringHelper.formatDouble(validMoney, 100, false));
                     voCreateThirdTenderReq.setProductId(String.valueOf(tender.getId()));
                     voCreateThirdTenderReq.setFrzFlag(FrzFlagContant.FREEZE);
                     ResponseEntity<VoBaseResp> resp = tenderThirdBiz.createThirdTender(voCreateThirdTenderReq);
-                    if (!ObjectUtils.isEmpty(resp)){
-                        rsMap.put("msg",resp);
+                    if (!ObjectUtils.isEmpty(resp)) {
+                        rsMap.put("msg", resp);
                     }
                 }
                 if (tempBorrow.getMoneyYes() >= borrow.getMoney()) {
@@ -152,31 +155,32 @@ public class TenderBizImpl implements TenderBiz {
                     }
                 }
             }
-        }while (false);
+        } while (false);
         return rsMap;
     }
 
 
     /**
      * 投标
+     *
      * @param voCreateTenderReq
      * @return
      */
-    public ResponseEntity<VoBaseResp> tender(VoCreateTenderReq voCreateTenderReq){
-        Map<String,Object> rsMap = null;
+    public ResponseEntity<VoBaseResp> tender(VoCreateTenderReq voCreateTenderReq) {
+        Map<String, Object> rsMap = null;
         try {
             rsMap = createTender(voCreateTenderReq);
         } catch (Exception e) {
-            log.error("创建投标异常：",e);
+            log.error("创建投标异常：", e);
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR,StringHelper.toString("投标失败!")));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("投标失败!")));
         }
         Object msg = rsMap.get("msg");
         if (!ObjectUtils.isEmpty(msg)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR,StringHelper.toString(msg)));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString(msg)));
         }
         return ResponseEntity.ok(VoBaseResp.ok("投标成功!"));
     }
@@ -397,4 +401,21 @@ public class TenderBizImpl implements TenderBiz {
         return rsMap;
     }
 
+    /**
+     * 投标用户
+     *
+     * @param borrowId
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(Long borrowId) {
+        try {
+            List<VoBorrowTenderUserRes> tenderUserRes = tenderService.findBorrowTenderUser(borrowId);
+            VoBorrowTenderUserWarpListRes warpListRes = VoBaseResp.ok("查询成功", VoBorrowTenderUserWarpListRes.class);
+            warpListRes.setVoBorrowTenderUser(tenderUserRes);
+            return ResponseEntity.ok(warpListRes);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(VoBaseResp.ok("查询失败", VoBorrowTenderUserWarpListRes.class));
+        }
+    }
 }

@@ -4,7 +4,7 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.vo.request.VoBorrowByIdReq;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.response.VoBorrowByIdRes;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowListRes;
+import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
@@ -14,7 +14,7 @@ import java.util.List;
  */
 public interface BorrowService {
 
-    List<VoViewBorrowListRes> findAll(VoBorrowListReq voBorrowListReq);
+    List<VoViewBorrowList> findAll(VoBorrowListReq voBorrowListReq);
 
     VoBorrowByIdRes findByBorrowId(VoBorrowByIdReq req);
 

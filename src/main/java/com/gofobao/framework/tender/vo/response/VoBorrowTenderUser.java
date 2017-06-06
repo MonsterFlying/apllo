@@ -6,7 +6,7 @@ import lombok.Data;
  * Created by admin on 2017/5/19.
  */
 @Data
-public class VoBorrowTenderUserRes {
+public class VoBorrowTenderUser {
 
     private String userName;
 

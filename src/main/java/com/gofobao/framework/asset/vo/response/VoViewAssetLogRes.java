@@ -1,4 +1,4 @@
-package com.gofobao.framework.asset.vo.repsonse;
+package com.gofobao.framework.asset.vo.response;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -10,7 +10,7 @@ import lombok.Data;
 @Data
 @ApiModel("资金")
 public class VoViewAssetLogRes {
-        @ApiModelProperty("红包类型")
+        @ApiModelProperty("资金类型")
         private  String type;
         @ApiModelProperty("创建时间")
         private String  createdAt;

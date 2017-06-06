@@ -4,7 +4,7 @@ import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.asset.entity.AssetLog;
 import com.gofobao.framework.asset.repository.AssetLogRepository;
 import com.gofobao.framework.asset.service.AssetLogService;
-import com.gofobao.framework.asset.vo.repsonse.VoViewAssetLogRes;
+import com.gofobao.framework.asset.vo.response.VoViewAssetLogRes;
 import com.gofobao.framework.asset.vo.request.VoAssetLog;
 import com.gofobao.framework.helper.DateHelper;
 import com.google.common.reflect.TypeToken;

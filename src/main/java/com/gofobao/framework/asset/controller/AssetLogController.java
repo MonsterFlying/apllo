@@ -1,11 +1,15 @@
 package com.gofobao.framework.asset.controller;
 
+import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.service.AssetLogService;
-import com.gofobao.framework.asset.vo.repsonse.VoViewAssetLogRes;
+import com.gofobao.framework.asset.vo.response.VoViewAssetLogRes;
 import com.gofobao.framework.asset.vo.request.VoAssetLog;
+import com.gofobao.framework.security.contants.SecurityContants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,20 +24,13 @@ import java.util.List;
 @Slf4j
 public class AssetLogController {
 
-
     @Autowired
-    private AssetLogService assetLogService;
+    private AssetBiz assetBiz;
 
     @RequestMapping("/v2/list")
-    public List<VoViewAssetLogRes> assetLogResList(@ModelAttribute VoAssetLog voAssetLog) {
-
-        List<VoViewAssetLogRes> resList=new ArrayList<>();
-        try {
-           resList = assetLogService.assetLogList(voAssetLog);
-        } catch (Exception e) {
-            log.error("assetLog/list exception", e);
-        }
-        return resList;
+    public ResponseEntity assetLogResList(@ModelAttribute VoAssetLog voAssetLog, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        voAssetLog.setUserId(userId);
+        return assetBiz.assetLogResList(voAssetLog);
     }
 
 

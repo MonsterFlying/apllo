@@ -1,6 +1,9 @@
 package com.gofobao.framework.tender.service.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.borrow.entity.Borrow;
+import com.gofobao.framework.borrow.repository.BorrowRepository;
+import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoBorrowByIdReq;
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
 import com.gofobao.framework.common.constans.MoneyConstans;
@@ -37,6 +40,9 @@ public class TenderServiceImpl implements TenderService {
     @Autowired
     private TenderRepository tenderRepository;
 
+    @Autowired
+    private BorrowRepository borrowRepository;
+
 
     @Autowired
     private UsersRepository usersRepository;
@@ -44,14 +50,18 @@ public class TenderServiceImpl implements TenderService {
     /**
      * 投标用户列表
      *
-     * @param req
+     * @param borrowId
      * @return
      */
     @Override
-    public List<VoBorrowTenderUserRes> findBorrowTenderUser(VoBorrowByIdReq req) {
+    public List<VoBorrowTenderUserRes> findBorrowTenderUser(Long borrowId) {
+        Borrow borrow = borrowRepository.findById(borrowId);
+        if (ObjectUtils.isEmpty(borrow)) {
+            return Collections.EMPTY_LIST;
+        }
         List<VoBorrowTenderUserRes> tenderUserResList = new ArrayList<>();
         Tender tender = new Tender();
-        tender.setBorrowId(req.getBorrowId());
+        tender.setBorrowId(borrowId);
         tender.setStatus(TenderConstans.SUCCESS);
 
         ExampleMatcher matcher = ExampleMatcher.matching().withIgnorePaths("isAuto");

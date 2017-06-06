@@ -7,7 +7,8 @@ import com.gofobao.framework.borrow.vo.request.VoBorrowByIdReq;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.borrow.vo.response.VoBorrowByIdRes;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowListRes;
+import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
+import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
@@ -39,17 +40,15 @@ public class BorrowController {
     private BorrowBiz borrowBiz;
 
     @ApiOperation(value = "首页标列表")
-    @PostMapping("/list")
-    public ResponseEntity<List<VoViewBorrowListRes>> borrowList(@ModelAttribute VoBorrowListReq voBorrowListReq) {
-        List<VoViewBorrowListRes> listResList = new ArrayList<>();
-        try {
-            listResList = borrowService.findAll(voBorrowListReq);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error("BorrowController borrowList Exception ", e);
-            return ResponseEntity.badRequest().body(Collections.EMPTY_LIST);
-        }
-        return ResponseEntity.ok(listResList);
+    @GetMapping("/list/{type}/{pageIndex}/{pageSize}")
+    public ResponseEntity<VoViewBorrowListWarpRes> borrowList(@PathVariable Integer pageIndex,
+                                                              @PathVariable Integer pageSize,
+                                                              @PathVariable Integer type) {
+        VoBorrowListReq voBorrowListReq = new VoBorrowListReq();
+        voBorrowListReq.setPageIndex(pageIndex);
+        voBorrowListReq.setPageSize(pageSize);
+        voBorrowListReq.setType(type);
+        return borrowBiz.findAll(voBorrowListReq);
     }
 
 

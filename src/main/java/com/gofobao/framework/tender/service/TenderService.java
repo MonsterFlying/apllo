@@ -17,7 +17,7 @@ public interface TenderService {
 
     boolean updateById(Tender tender);
 
-    List<VoBorrowTenderUserRes> findBorrowTenderUser(VoBorrowByIdReq req);
+    List<VoBorrowTenderUserRes> findBorrowTenderUser(Long borrowId);
 
     List<Tender> findList(Specification<Tender> specification);
 
