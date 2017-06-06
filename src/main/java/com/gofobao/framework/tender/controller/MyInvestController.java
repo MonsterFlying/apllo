@@ -24,9 +24,6 @@ import java.util.List;
 public class MyInvestController {
 
     @Autowired
-    private InvestService investService;
-
-    @Autowired
     private MyInvestBiz investBiz;
 
     /**

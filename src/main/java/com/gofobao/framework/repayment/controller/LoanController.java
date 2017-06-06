@@ -23,7 +23,7 @@ public class LoanController {
     private LoanBiz loanBiz;
 
     @ApiOperation("还款中列表")
-    @RequestMapping(value = "/v2/refund/list/{pageIndex}/{pageSize}", method = RequestMethod.GET)
+    @RequestMapping(value = "/v2/refund/list/{pag             eIndex}/{pageSize}", method = RequestMethod.GET)
     public ResponseEntity<VoViewRefundWrapRes> refundResList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                     @PathVariable Integer pageIndex,
                                                     @PathVariable Integer pageSize) {
