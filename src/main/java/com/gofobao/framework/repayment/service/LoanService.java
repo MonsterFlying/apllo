@@ -4,7 +4,6 @@ import com.gofobao.framework.repayment.vo.request.VoDetailReq;
 import com.gofobao.framework.repayment.vo.request.VoLoanListReq;
 import com.gofobao.framework.repayment.vo.response.*;
 
-
 import java.util.List;
 
 /**

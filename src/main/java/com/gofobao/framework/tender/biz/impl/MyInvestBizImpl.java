@@ -7,6 +7,7 @@ import com.gofobao.framework.tender.service.InvestService;
 import com.gofobao.framework.tender.vo.request.VoDetailReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;
 import com.gofobao.framework.tender.vo.response.*;
+import groovy.util.logging.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import java.util.List;
 /**
  * Created by admin on 2017/6/6.
  */
+@Slf4j
 @Service
 public class MyInvestBizImpl implements MyInvestBiz {
 

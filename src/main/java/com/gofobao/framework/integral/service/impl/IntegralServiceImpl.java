@@ -5,7 +5,6 @@ import com.gofobao.framework.integral.repository.IntegralRepository;
 import com.gofobao.framework.integral.service.IntegralService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ObjectUtils;
 
 /**
  * Created by Zeke on 2017/5/22.

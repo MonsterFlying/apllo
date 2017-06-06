@@ -1,7 +1,6 @@
 package com.gofobao.framework.integral.service;
 
 import com.gofobao.framework.integral.entity.Integral;
-import org.springframework.util.ObjectUtils;
 
 /**
  * Created by Zeke on 2017/5/22.

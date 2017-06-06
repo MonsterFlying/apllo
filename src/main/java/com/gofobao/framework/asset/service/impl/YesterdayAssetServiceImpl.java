@@ -7,8 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
-import javax.validation.constraints.Null;
-
 /**
  * Created by Zeke on 2017/5/22.
  */

@@ -4,7 +4,6 @@ import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.vo.response.VoUserAssetInfoResp;
-import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.service.UserCacheService;
 import org.springframework.beans.factory.annotation.Autowired;

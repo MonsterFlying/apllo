@@ -6,7 +6,6 @@ import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.repository.DictItemRepository;
 import com.gofobao.framework.system.repository.DictValueRepository;
-
 import com.gofobao.framework.system.service.DictService;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;

@@ -1,6 +1,5 @@
 package com.gofobao.framework.listener.providers;
 
-import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.system.biz.NoticesBiz;
 import com.gofobao.framework.system.entity.Notices;
 import com.google.gson.Gson;

@@ -3,7 +3,6 @@ package com.gofobao.framework.message.vo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import org.hibernate.validator.constraints.NotEmpty;
 
 /**
  * Created by Max on 17/5/19.

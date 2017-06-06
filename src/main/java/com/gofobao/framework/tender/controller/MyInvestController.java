@@ -2,18 +2,14 @@ package com.gofobao.framework.tender.controller;
 
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.MyInvestBiz;
-import com.gofobao.framework.tender.service.InvestService;
 import com.gofobao.framework.tender.vo.request.VoDetailReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;
 import com.gofobao.framework.tender.vo.response.*;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * Created by admin on 2017/6/1.

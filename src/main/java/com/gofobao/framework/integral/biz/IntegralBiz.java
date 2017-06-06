@@ -3,7 +3,6 @@ package com.gofobao.framework.integral.biz;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.integral.vo.request.VoIntegralTakeReq;
 import com.gofobao.framework.integral.vo.request.VoListIntegralReq;
-import com.gofobao.framework.integral.vo.response.VoListIntegralResp;
 import org.springframework.http.ResponseEntity;
 
 /**

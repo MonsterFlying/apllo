@@ -1,13 +1,13 @@
 package com.gofobao.framework.helper;
 
-import static com.google.common.base.Preconditions.*;
-
 import org.springframework.util.ObjectUtils;
 
 import java.text.DecimalFormat;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Created by Max on 2017/3/6.

@@ -1,6 +1,5 @@
 package com.gofobao.framework.helper;
 
-import com.gofobao.framework.system.entity.Statistic;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.ObjectUtils;
 

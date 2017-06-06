@@ -18,7 +18,6 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.net.ssl.*;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Iterator;

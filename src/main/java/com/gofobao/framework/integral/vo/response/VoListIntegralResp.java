@@ -1,13 +1,11 @@
 package com.gofobao.framework.integral.vo.response;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.DateHelper;
 import io.swagger.annotations.ApiModel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
 import java.util.List;
 
 /**

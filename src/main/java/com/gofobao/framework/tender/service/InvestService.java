@@ -2,11 +2,7 @@ package com.gofobao.framework.tender.service;
 
 import com.gofobao.framework.tender.vo.request.VoDetailReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;
-import com.gofobao.framework.tender.vo.response.VoViewReturnedMoney;
-import com.gofobao.framework.tender.vo.response.VoViewBackMoney;
-import com.gofobao.framework.tender.vo.response.VoViewBiddingRes;
-import com.gofobao.framework.tender.vo.response.VoViewSettleRes;
-import com.gofobao.framework.tender.vo.response.VoViewTenderDetail;
+import com.gofobao.framework.tender.vo.response.*;
 
 import java.util.List;
 

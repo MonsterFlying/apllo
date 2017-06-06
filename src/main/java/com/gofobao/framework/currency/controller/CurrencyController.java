@@ -6,11 +6,9 @@ import com.gofobao.framework.currency.vo.request.VoConvertCurrencyReq;
 import com.gofobao.framework.currency.vo.request.VoListCurrencyReq;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 

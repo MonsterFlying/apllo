@@ -5,7 +5,6 @@ import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListRes;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailRes;
-import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
@@ -22,8 +21,10 @@ import springfox.documentation.annotations.ApiIgnore;
 @RestController
 @RequestMapping("/payment")
 public class PaymentController {
+
     @Autowired
     private BorrowCollectionService borrowCollectionService;
+
     @ApiOperation("回款期数列表")
     @GetMapping("/v2/order/list/{time}")
     public ResponseEntity<VoViewCollectionOrderListRes> collectionOrderList(@PathVariable("time") String time,

@@ -2,11 +2,9 @@ package com.gofobao.framework.tender.service;
 
 import com.gofobao.framework.borrow.vo.request.VoBorrowByIdReq;
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
-import com.gofobao.framework.integral.entity.Integral;
 import com.gofobao.framework.tender.entity.Tender;
 import org.springframework.data.jpa.domain.Specification;
 
-import javax.persistence.Persistence;
 import java.util.List;
 
 /**

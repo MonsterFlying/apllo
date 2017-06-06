@@ -19,6 +19,7 @@ import com.gofobao.framework.tender.vo.request.ReturnedMoney;
 import com.gofobao.framework.tender.vo.request.VoDetailReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;
 import com.gofobao.framework.tender.vo.response.*;
+import groovy.util.logging.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -38,6 +39,7 @@ import static java.util.stream.Collectors.groupingBy;
 /**
  * Created by admin on 2017/6/1.
  */
+@Slf4j
 @Component
 public class InvestServiceImpl implements InvestService {
 
