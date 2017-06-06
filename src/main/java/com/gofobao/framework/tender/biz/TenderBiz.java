@@ -2,6 +2,7 @@ package com.gofobao.framework.tender.biz;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
+import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Map;
@@ -24,4 +25,11 @@ public interface TenderBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> tender(VoCreateTenderReq voCreateTenderReq);
+
+    /**
+     * 债权转让
+     * @param voTransferTenderReq
+     * @return
+     */
+    ResponseEntity<VoBaseResp> transferTender(VoTransferTenderReq voTransferTenderReq);
 }

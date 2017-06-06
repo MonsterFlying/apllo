@@ -7,6 +7,8 @@ import com.gofobao.framework.borrow.vo.response.VoBorrowByIdRes;
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListRes;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
@@ -58,4 +60,21 @@ public interface BorrowService {
      */
     List<Borrow> findList(Specification<Borrow> specification);
 
+    /**
+     * 查询列表
+     *
+     * @param specification
+     * @return
+     */
+    List<Borrow> findList(Specification<Borrow> specification,Sort sort);
+
+    /**
+     * 查询列表
+     *
+     * @param specification
+     * @return
+     */
+    List<Borrow> findList(Specification<Borrow> specification,Pageable pageable);
+
+    long count(Specification<Borrow> specification);
 }

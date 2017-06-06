@@ -1,5 +1,8 @@
 package com.gofobao.framework;
 
+import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
+import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
+import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -34,27 +37,22 @@ public class AplloApplicationTests {
 
     @Autowired
     private LoanServiceImpl loanService;
+    @Autowired
+    private BorrowThirdBiz borrowThirdBiz;
 
     @Test
     public void contextLoads() {
-        MqConfig mqConfig = new MqConfig() ;
-        mqConfig.setTag(MqTagEnum.SMS_REGISTER);
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_SMS);
-        ImmutableMap<String, String> body = ImmutableMap.of("i", "qqqq") ;
-        mqConfig.setMsg(body);
-        mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 3));
-        mqHelper.convertAndSend(mqConfig) ;
     }
 
     @Test
     public void test(){
-        VoLoanListReq voLoanListReq=new VoLoanListReq();
-        voLoanListReq.setUserId(901L);
-        voLoanListReq.setPageIndex(1);
-        voLoanListReq.setPageSize(10);
-        List<VoViewSettleRes> refundResList= loanService.settleList(voLoanListReq);
-
-        refundResList.stream().forEach(p->System.out.println(p.getBorrowName()));
+        VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
+        voQueryThirdBorrowList.setBorrowId(165139L);
+        voQueryThirdBorrowList.setUserId(901L);
+        voQueryThirdBorrowList.setPageNum("1");
+        voQueryThirdBorrowList.setPageSize("10");
+        DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
+        System.out.println(resp);
 
     }
 

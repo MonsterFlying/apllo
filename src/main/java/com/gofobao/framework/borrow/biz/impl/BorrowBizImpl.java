@@ -181,8 +181,8 @@ public class BorrowBizImpl implements BorrowBiz {
 
         //初审
         MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
-        mqConfig.setTag(MqTagEnum.USER_ACTIVE_REGISTER);
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
+        mqConfig.setTag(MqTagEnum.FIRST_VERIFY);
         ImmutableMap<String, String> body = ImmutableMap
                 .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
@@ -194,12 +194,11 @@ public class BorrowBizImpl implements BorrowBiz {
             log.error("borrowBizImpl firstVerify send mq exception", e);
         }
 
-        //即信等级标的
         if (!mqState) {
-            return ResponseEntity.ok(VoBaseResp.ok("投标失败!"));
+            return ResponseEntity.ok(VoBaseResp.ok("发布净值借款失败!"));
         }
 
-        return ResponseEntity.ok(VoBaseResp.ok("投标成功!"));
+        return ResponseEntity.ok(VoBaseResp.ok("发布净值借款成功!"));
     }
 
     private long insertBorrow(VoAddNetWorthBorrow voAddNetWorthBorrow, Long userId) throws Exception {

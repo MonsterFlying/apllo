@@ -260,4 +260,27 @@ public class BorrowServiceImpl implements BorrowService {
         return borrowRepository.findAll(specification);
     }
 
+    /**
+     * 查询列表
+     *
+     * @param specification
+     * @return
+     */
+    public List<Borrow> findList(Specification<Borrow> specification,Sort sort) {
+        return borrowRepository.findAll(specification,sort);
+    }
+
+    /**
+     * 查询列表
+     *
+     * @param specification
+     * @return
+     */
+    public List<Borrow> findList(Specification<Borrow> specification,Pageable pageable) {
+        return borrowRepository.findAll(specification,pageable).getContent();
+    }
+
+    public long count(Specification<Borrow> specification){
+        return borrowRepository.count(specification);
+    }
 }
