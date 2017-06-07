@@ -36,7 +36,8 @@ public class FriendsController {
 
     @ApiOperation("邀请好友列表")
     @GetMapping("/statistic")
-    public ResponseEntity<VoViewInviteAwardStatisticsWarpRes> statistic(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoViewInviteAwardStatisticsWarpRes> statistic(/*@RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+        Long userId=901L;
         return brokerBounsBiz.statistic(userId);
     }
 

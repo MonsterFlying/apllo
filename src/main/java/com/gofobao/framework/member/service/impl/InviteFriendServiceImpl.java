@@ -68,9 +68,9 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
         return Optional.ofNullable(friendsList).orElse(Collections.EMPTY_LIST);
     }
 
+
     @Override
     public InviteAwardStatistics query(Long userId) {
-
         Specification<BrokerBouns> specification = Specifications.<BrokerBouns>and()
                 .eq("userId", userId)
                 .build();
@@ -78,32 +78,34 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
         if (CollectionUtils.isEmpty(brokerBounss)) {
             return new InviteAwardStatistics();
         }
-        Date yestodayDate = DateHelper.addDays(new Date(), 1);
-        Long yestodayBegin = DateHelper.beginOfDate(yestodayDate).getTime();
-        Long yestodayEnd = DateHelper.endOfDate(yestodayDate).getTime();
+        Date yesterdayDate = DateHelper.subDays(new Date(), 1);
+        Long yesterdayBegin = DateHelper.beginOfDate(yesterdayDate).getTime();
+        Long yesterdayEnd = DateHelper.endOfDate(yesterdayDate).getTime();
 
-
-        List<BrokerBouns> yestodayBroker = brokerBounss.stream()
+        List<BrokerBouns> yesterdayBroker = brokerBounss.stream()
                 .filter(p ->
-                        p.getCreatedAt().getTime() <= yestodayEnd && p.getCreatedAt().getTime() >= yestodayBegin)
+                        p.getCreatedAt().getTime() <= yesterdayEnd && p.getCreatedAt().getTime() >= yesterdayBegin)
                 .collect(Collectors.toList());
 
+        Users users=new Users();
+        users.setParentId(userId.intValue());
+        Example<Users> example = Example.of(users);
+        Long count=usersRepository.count(example);
 
         InviteAwardStatistics inviteAwardStatistics = new InviteAwardStatistics();
-        //邀请总人数
-        inviteAwardStatistics.setCountNum(brokerBounss.size());
 
+        //邀请总人数
+        inviteAwardStatistics.setCountNum(count.intValue());
         //昨日奖励
-        if (CollectionUtils.isEmpty(yestodayBroker)) {
+        if (CollectionUtils.isEmpty(yesterdayBroker)) {
             inviteAwardStatistics.setYesterdayAward("0.00");
         } else {
-            Integer yestodayBounsAward = yestodayBroker.stream().mapToInt(w -> w.getBounsAward()).sum();
-            inviteAwardStatistics.setYesterdayAward(NumberHelper.to2DigitString(yestodayBounsAward / 100));
+            Integer yesterdayBounsAward = yesterdayBroker.stream().mapToInt(w -> w.getBounsAward()).sum();
+            inviteAwardStatistics.setYesterdayAward(NumberHelper.to2DigitString(yesterdayBounsAward / 100));
         }
-
         //总奖励
-        Integer sumAwad = brokerBounss.stream().mapToInt(w -> w.getBounsAward()).sum();
-        inviteAwardStatistics.setSumAward(NumberHelper.to2DigitString(sumAwad / 100));
+        Integer sumAward = brokerBounss.stream().mapToInt(w -> w.getBounsAward()).sum();
+        inviteAwardStatistics.setSumAward(NumberHelper.to2DigitString(sumAward / 100));
 
         return inviteAwardStatistics;
     }
