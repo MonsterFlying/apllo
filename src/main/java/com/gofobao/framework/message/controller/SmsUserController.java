@@ -52,6 +52,14 @@ public class SmsUserController {
     }
 
 
+    @ApiOperation("充值短信发送")
+    @PostMapping("/recharge")
+    public ResponseEntity<VoBaseResp> recharge(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoUserSmsReq voUserSmsReq){
+        voUserSmsReq.setUserId(userId);
+        ResponseEntity<VoBaseResp> result = messageBiz.recharge(voUserSmsReq) ;
+        return result;
+    }
+
     @ApiOperation("发送解绑手机验证码")
     @PostMapping("/switchPhone")
     public ResponseEntity<VoBaseResp> switchPhone(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,  @Valid @ModelAttribute VoUserSmsReq voUserSmsReq){

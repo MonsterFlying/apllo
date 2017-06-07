@@ -398,4 +398,58 @@ public class MessageBizImpl implements MessageBiz {
         return ResponseEntity.ok(VoBaseResp.ok("短信发送成功"));
 
     }
+
+    @Override
+    public ResponseEntity<VoBaseResp> recharge(VoUserSmsReq voUserSmsReq) {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voUserSmsReq.getUserId());
+        if(ObjectUtils.isEmpty(userThirdAccount)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你没有开通银行存管，请先开通银行存管！"));
+        }
+
+        Integer passwordState = userThirdAccount.getPasswordState();
+        if(passwordState == 0){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "请先初始化江西银行存管账户交易密码！"));
+        }
+
+        SmsCodeApplyRequest request = new SmsCodeApplyRequest() ;
+        request.setSrvTxCode(SrvTxCodeContants.DIRECT_RECHARGE_PLUS) ;
+        request.setMobile(userThirdAccount.getMobile()) ;
+        request.setChannel(ChannelContant.HTML);
+        SmsCodeApplyResponse body = jixinManager.send(
+                JixinTxCodeEnum.SMS_CODE_APPLY,
+                request,
+                SmsCodeApplyResponse.class);
+
+        if(ObjectUtils.isEmpty(body)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前通讯网络不稳定，请稍候重试！"));
+        }
+
+        if(!JixinResultContants.SUCCESS.equals(body.getRetCode())){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, body.getRetMsg()));
+        }
+
+        // 5.将授权码放入redis中
+        try {
+            redisHelper.put(
+                    String.format("%s_%s", SrvTxCodeContants.DIRECT_RECHARGE_PLUS, userThirdAccount.getMobile()),
+                    body.getSrvAuthCode(),
+                    15 * 60);
+
+        } catch (Exception e) {
+            log.error("即信授权码写入redis异常", e);
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍候重试！"));
+        }
+
+        return ResponseEntity.ok(VoBaseResp.ok("短信发送成功"));
+    }
 }

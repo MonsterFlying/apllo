@@ -74,6 +74,14 @@ public enum JixinTxCodeEnum {
     DEBT_REGISTER_CANCEL(
             "debtRegisterCancel",
             "/escrow/p2p/online"),
+
+    /**
+     * 充值
+     */
+    DIRECT_RECHARGE_PLUS(
+            "directRechargePlus",
+            "/escrow/p2p/page/mobile/plus"),
+
     /**
      * 借款人标的信息查询
      */

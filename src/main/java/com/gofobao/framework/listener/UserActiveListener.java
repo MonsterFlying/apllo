@@ -44,6 +44,9 @@ public class UserActiveListener {
             boolean result = false;
             if(tag.equals(MqTagEnum.USER_ACTIVE_REGISTER.getValue())){  // 用户注册
                 result = userActiveProvider.registerActive(msg) ;
+            }else if(tag.equalsIgnoreCase(MqTagEnum.RECHARGE.getValue())){ // 充值
+                result = userActiveProvider.recharge(msg) ;
+
             }
 
             if(!result){

@@ -145,3 +145,26 @@ ALTER TABLE gfb_dict_value CHANGE IS_DEL DEL INT(11) DEFAULT '0' COMMENT '是否
 
 ALTER TABLE gfb_user_third_account ADD auto_tender_state INT DEFAULT 0 NULL;
 ALTER TABLE gfb_user_third_account ADD auto_transfer_state INT DEFAULT 0 NULL;
+
+
+#充值记录（新版）
+CREATE TABLE gfb_recharge_detail_log
+(
+  id INT PRIMARY KEY COMMENT '唯一标示' AUTO_INCREMENT,
+  user_id INT NOT NULL COMMENT '用户ID',
+  seq_no VARCHAR(32) DEFAULT '' COMMENT '交易流水号',
+  create_time DATETIME,
+  callback_time DATETIME,
+  state INT DEFAULT 0 COMMENT '充值状态：0：充值请求。1.充值成功。2.充值失败',
+  del INT DEFAULT 0 COMMENT '0.有效记录 1.无效记录',
+  recharge_type INT DEFAULT 0 COMMENT '充值类型： 0.渠道充值 1.线下转账',
+  card_no VARCHAR(32) DEFAULT '' COMMENT '卡号',
+  bank_name VARCHAR(32) DEFAULT '' COMMENT '充值银行',
+  money INT DEFAULT 0 COMMENT '充值金额',
+  recharge_source INT DEFAULT 0 COMMENT '充值来源： 0.pc 1.html5 2.android 3.ios',
+  recharge_channel INT DEFAULT 0 COMMENT '充值渠道：0.江西银行（线上）1.其他',
+  remark VARCHAR(255) DEFAULT '' COMMENT '备注',
+  mobile VARCHAR(32) DEFAULT '' COMMENT '手机',
+  update_time DATETIME COMMENT '更新时间',
+  ip VARCHAR(32) DEFAULT '' COMMENT 'ip'
+);
