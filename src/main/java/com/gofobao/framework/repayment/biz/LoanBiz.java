@@ -2,10 +2,8 @@ package com.gofobao.framework.repayment.biz;
 
 import com.gofobao.framework.repayment.vo.request.VoDetailReq;
 import com.gofobao.framework.repayment.vo.request.VoLoanListReq;
-import com.gofobao.framework.repayment.vo.response.VoViewRefundRes;
+import com.gofobao.framework.repayment.vo.response.*;
 import org.springframework.http.ResponseEntity;
-
-import java.util.List;
 
 /**
  * Created by admin on 2017/6/5.
@@ -20,7 +18,7 @@ public interface LoanBiz {
      * @param voLoanListReq
      * @return
      */
-    ResponseEntity<List<VoViewRefundRes>> refundResList(VoLoanListReq voLoanListReq);
+    ResponseEntity<VoViewRefundWrapRes> refundResList(VoLoanListReq voLoanListReq);
 
 
     /**
@@ -28,7 +26,7 @@ public interface LoanBiz {
      * @param voLoanListReq
      * @return
      */
-    ResponseEntity settleList(VoLoanListReq voLoanListReq);
+    ResponseEntity<VoViewSettleWarpListRes> settleList(VoLoanListReq voLoanListReq);
 
 
     /**
@@ -36,7 +34,7 @@ public interface LoanBiz {
      * @param voLoanListReq
      * @return
      */
-    ResponseEntity buddingList(VoLoanListReq voLoanListReq);
+    ResponseEntity<VoViewBuddingResListWrapRes> buddingList(VoLoanListReq voLoanListReq);
 
 
     /**
@@ -44,7 +42,7 @@ public interface LoanBiz {
      * @param voDetailReq
      * @return
      */
-    ResponseEntity repaymentDetail(VoDetailReq voDetailReq);
+    ResponseEntity<VoViewRepaymentDetailWrapRes> repaymentDetail(VoDetailReq voDetailReq);
 
 
     /**
@@ -52,7 +50,7 @@ public interface LoanBiz {
      * @param voDetailReq
      * @return
      */
-    ResponseEntity loanList(VoDetailReq voDetailReq);
+    ResponseEntity<VoViewLoanInfoListWrapRes> loanList(VoDetailReq voDetailReq);
 
 
 

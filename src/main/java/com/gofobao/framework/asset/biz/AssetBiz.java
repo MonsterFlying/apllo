@@ -1,6 +1,8 @@
 package com.gofobao.framework.asset.biz;
 
+import com.gofobao.framework.asset.vo.request.VoAssetLog;
 import com.gofobao.framework.asset.vo.response.VoUserAssetInfoResp;
+import com.gofobao.framework.asset.vo.response.VoViewAssetLogWarpRes;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -14,4 +16,12 @@ public interface AssetBiz {
      * @return
      */
     ResponseEntity<VoUserAssetInfoResp> userAssetInfo(Long userId);
+
+
+    /**
+     * 用户账户流水
+     * @return
+     */
+   ResponseEntity<VoViewAssetLogWarpRes> assetLogResList(VoAssetLog voAssetLog) ;
+
 }

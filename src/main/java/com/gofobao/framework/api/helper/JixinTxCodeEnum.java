@@ -21,12 +21,17 @@ public enum JixinTxCodeEnum {
             "/escrow/p2p/online"),
 
 
+    BID_AUTO_APPLY(
+            "bidAutoApply",
+            "/escrow/p2p/online"
+    ),
+
     /**
      * 初始化密码
      */
     PASSWORD_SET(
             "passwordSet",
-            "/escrow/p2p/page/mobile"),
+            "/escrow/p2p/page/passwordset"),
 
     /**
      * 充值密码
@@ -47,14 +52,22 @@ public enum JixinTxCodeEnum {
      */
     DEBT_REGISTER(
             "debtRegister",
-                    "/escrow/p2p/online"),
+            "/escrow/p2p/online"),
+
 
     /**
-     * 自动投标申请
+     * 自动投标
      */
-    BID_AUTO_APPLY(
-            "bidAutoApply",
-                    "/escrow/p2p/online"),
+    AUTO_BID_AUTH_PLUS(
+            "autoBidAuthPlus",
+            "/escrow/p2p/page/mobile/plus"),
+    /**
+     * 债权转让
+     */
+    AUTO_CREDIT_INVEST_AUTH_PLUS(
+            "autoCreditInvestAuthPlus",
+            "/escrow/p2p/page/mobile/plus"),
+
     /**
      * 借款人标的撤销
      */

@@ -12,5 +12,7 @@ import java.util.List;
 @Repository
 public interface DictItemRepository extends JpaRepository<DictItem,Long>{
 
-    List<DictItem> findByIsDelAndAliasCode(Integer isDel, String aliasCode);
+    List<DictItem> findByDelAndAliasCode(Integer isDel, String aliasCode);
+
+    DictItem findTopByAliasCodeAndDel(String aliasCode, int del);
 }

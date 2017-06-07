@@ -15,8 +15,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-import static com.gofobao.framework.common.rabbitmq.MqTagEnum.*;
-
 /**
  * Created by Max on 17/5/17.
  */

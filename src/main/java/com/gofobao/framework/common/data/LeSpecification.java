@@ -1,11 +1,6 @@
 package com.gofobao.framework.common.data;
 
-import lombok.AllArgsConstructor;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.util.StringUtils;
-
 import javax.persistence.criteria.*;
-import java.io.Serializable;
 
 /**
  * Created by Zeke on 2017/5/31.

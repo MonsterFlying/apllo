@@ -16,4 +16,9 @@ public interface BorrowThirdBiz {
     ResponseEntity<VoBaseResp> cancelThirdBorrow(VoCancelThirdBorrow voCancelThirdBorrow);
 
     DebtDetailsQueryResp queryThirdBorrowList(VoQueryThirdBorrowList voQueryThirdBorrowList);
+
+
+
+
+
 }

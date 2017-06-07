@@ -10,6 +10,7 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
+import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
@@ -17,6 +18,7 @@ import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.PasswordHelper;
+import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MathHelper;
@@ -32,6 +34,7 @@ import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
+import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
 import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -259,6 +262,7 @@ public class TenderBizImpl implements TenderBiz {
                     //添加队列自动投标
                     Map<String, String> msgMap = new HashMap<>();
                     msgMap.put("borrowId", StringHelper.toString(borrowId)); // 借款id
+                    String transactionId = System.currentTimeMillis() + RandomHelper.generateNumberCode(4);
 
                     //触发自动投标队列
                     MqConfig mqConfig = new MqConfig();
@@ -406,6 +410,23 @@ public class TenderBizImpl implements TenderBiz {
         return rsMap;
     }
 
+    /**
+     * 投标用户
+     *
+     * @param borrowId
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(Long borrowId) {
+        try {
+            List<VoBorrowTenderUserRes> tenderUserRes = tenderService.findBorrowTenderUser(borrowId);
+            VoBorrowTenderUserWarpListRes warpListRes = VoBaseResp.ok("查询成功", VoBorrowTenderUserWarpListRes.class);
+            warpListRes.setVoBorrowTenderUser(tenderUserRes);
+            return ResponseEntity.ok(warpListRes);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(VoBaseResp.ok("查询失败", VoBorrowTenderUserWarpListRes.class));
+        }
+    }
     /**
      * 债权转让
      *

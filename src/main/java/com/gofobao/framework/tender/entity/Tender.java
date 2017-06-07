@@ -11,7 +11,7 @@ import java.util.Date;
 /**
  * Created by Zeke on 2017/5/16.
  */
-@Entity
+@Entity(name = "Tender")
 @Table(name = "gfb_borrow_tender")
 @Data
 @NoArgsConstructor

@@ -15,4 +15,5 @@ import javax.persistence.LockModeType;
 public interface UserCacheRepository extends JpaRepository<UserCache,Long>,JpaSpecificationExecutor<UserCache> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     UserCache findByUserId(Long userId);
+
 }

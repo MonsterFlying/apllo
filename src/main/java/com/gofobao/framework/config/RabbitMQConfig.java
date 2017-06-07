@@ -1,12 +1,10 @@
 package com.gofobao.framework.config;
+
 import com.gofobao.framework.common.rabbitmq.MqExchangeContants;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import org.springframework.amqp.core.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created by Max on 17/5/26.

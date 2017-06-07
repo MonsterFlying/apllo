@@ -9,6 +9,7 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -26,22 +27,44 @@ public class SmsUserController {
 
     @ApiOperation("发送银行存管开户短信")
     @PostMapping("/openAccount")
-    public ResponseEntity<VoBaseResp> openAccount(HttpServletRequest request, @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoUserSmsReq voUserSmsReq){
+    public ResponseEntity<VoBaseResp> openAccount(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoUserSmsReq voUserSmsReq){
         voUserSmsReq.setUserId(userId);
         ResponseEntity<VoBaseResp> result = messageBiz.openAccount(voUserSmsReq) ;
         return result;
     }
 
+
+    @ApiOperation("发送开通自动投标协议短息")
+    @PostMapping("/openAutoTender")
+    public ResponseEntity<VoBaseResp> openAutoTender(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoUserSmsReq voUserSmsReq){
+        voUserSmsReq.setUserId(userId);
+        ResponseEntity<VoBaseResp> result = messageBiz.openAutoTender(voUserSmsReq) ;
+        return result;
+    }
+
+
+    @ApiOperation("发送开通自动债权转让协议短信")
+    @PostMapping("/openAutoTranfer")
+    public ResponseEntity<VoBaseResp> openAutoTranfer(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoUserSmsReq voUserSmsReq){
+        voUserSmsReq.setUserId(userId);
+        ResponseEntity<VoBaseResp> result = messageBiz.openAutoTranfer(voUserSmsReq) ;
+        return result;
+    }
+
+
     @ApiOperation("发送解绑手机验证码")
     @PostMapping("/switchPhone")
-    public ResponseEntity<VoBaseResp> switchPhone(HttpServletRequest request,  @RequestAttribute(SecurityContants.USERID_KEY) Long userId,  @Valid @ModelAttribute VoUserSmsReq voUserSmsReq){
+    public ResponseEntity<VoBaseResp> switchPhone(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,  @Valid @ModelAttribute VoUserSmsReq voUserSmsReq){
         voUserSmsReq.setUserId(userId);
         return messageBiz.sendSwitchPhone(request, voUserSmsReq) ;
     }
 
+
     @ApiOperation("发送绑定手机号码短信验证码")
     @PostMapping("/bindPhone")
-    public ResponseEntity<VoBaseResp> sendBindPhone(HttpServletRequest request,  @RequestAttribute(SecurityContants.USERID_KEY) Long userId,  @Valid @ModelAttribute VoAnonSmsReq voAnonSmsReq){
+    public ResponseEntity<VoBaseResp> sendBindPhone(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,  @Valid @ModelAttribute VoAnonSmsReq voAnonSmsReq){
         return messageBiz.sendBindPhone(request, voAnonSmsReq, userId) ;
     }
+
+
 }

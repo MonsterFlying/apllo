@@ -2,8 +2,7 @@ package com.gofobao.framework.repayment.service;
 
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
-import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
-import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListRes;
+import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderList;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailRes;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.vo.request.VoInfoReq;
@@ -24,7 +23,7 @@ public interface BorrowRepaymentService {
      * @param voCollectionOrderReq
      * @return
      */
-    VoViewCollectionOrderListRes repaymentList(VoCollectionOrderReq voCollectionOrderReq);
+    VoViewCollectionOrderList repaymentList(VoCollectionOrderReq voCollectionOrderReq);
 
 
     /**

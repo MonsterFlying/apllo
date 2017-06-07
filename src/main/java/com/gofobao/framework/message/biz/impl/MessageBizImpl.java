@@ -12,10 +12,11 @@ import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.CaptchaHelper;
 import com.gofobao.framework.helper.RedisHelper;
+import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
+import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.message.biz.MessageBiz;
 import com.gofobao.framework.message.vo.VoAnonSmsReq;
 import com.gofobao.framework.message.vo.VoUserSmsReq;
@@ -41,7 +42,7 @@ public class MessageBizImpl implements MessageBiz {
     UserService userService ;
 
     @Autowired
-    CaptchaHelper captchaHelper ;
+    UserThirdAccountService userThirdAccountService ;
 
     @Autowired
     MqHelper apollomqHelper ;
@@ -200,6 +201,14 @@ public class MessageBizImpl implements MessageBiz {
 
     @Override
     public ResponseEntity<VoBaseResp> openAccount(VoUserSmsReq voUserSmsReq) {
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voUserSmsReq.getUserId());
+
+        if(!ObjectUtils.isEmpty(userThirdAccount)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你已经开通银行存管，无需再次开通！"));
+        }
         // 2.判断用户是否存在
         Users users = userService.findById(voUserSmsReq.getUserId());
 
@@ -244,6 +253,137 @@ public class MessageBizImpl implements MessageBiz {
         try {
             redisHelper.put(
                     String.format("%s_%s", SrvTxCodeContants.ACCOUNT_OPEN_PLUS, mobile),
+                    body.getSrvAuthCode(),
+                    15 * 60);
+
+        } catch (Exception e) {
+            log.error("即信授权码写入redis异常", e);
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍候重试！"));
+        }
+
+        return ResponseEntity.ok(VoBaseResp.ok("短信发送成功"));
+
+    }
+
+    @Override
+    public ResponseEntity<VoBaseResp> openAutoTender(VoUserSmsReq voUserSmsReq) {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voUserSmsReq.getUserId());
+        if(ObjectUtils.isEmpty(userThirdAccount)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你没有开通银行存管，请先开通银行存管！"));
+        }
+
+
+        Integer autoTenderState = userThirdAccount.getAutoTenderState();
+
+        if(autoTenderState == 1){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你已经签署自动投标协议，无需再次签署！"));
+        }
+
+
+        Integer passwordState = userThirdAccount.getPasswordState();
+        if(passwordState == 0){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "请先初始化江西银行存管账户交易密码！"));
+        }
+
+        SmsCodeApplyRequest request = new SmsCodeApplyRequest() ;
+        request.setSrvTxCode(SrvTxCodeContants.AUTO_BID_AUTH_PLUS) ;
+        request.setMobile(userThirdAccount.getMobile()) ;
+        request.setChannel(ChannelContant.HTML);
+        SmsCodeApplyResponse body = jixinManager.send(
+                JixinTxCodeEnum.SMS_CODE_APPLY,
+                request,
+                SmsCodeApplyResponse.class);
+
+        if(ObjectUtils.isEmpty(body)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前通讯网络不稳定，请稍候重试！"));
+        }
+
+        if(!JixinResultContants.SUCCESS.equals(body.getRetCode())){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, body.getRetMsg()));
+        }
+
+
+        // 5.将授权码放入redis中
+        try {
+            redisHelper.put(
+                    String.format("%s_%s", SrvTxCodeContants.AUTO_BID_AUTH_PLUS, userThirdAccount.getMobile()),
+                    body.getSrvAuthCode(),
+                    15 * 60);
+
+        } catch (Exception e) {
+            log.error("即信授权码写入redis异常", e);
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍候重试！"));
+        }
+
+        return ResponseEntity.ok(VoBaseResp.ok("短信发送成功"));
+    }
+
+    @Override
+    public ResponseEntity<VoBaseResp> openAutoTranfer(VoUserSmsReq voUserSmsReq) {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voUserSmsReq.getUserId());
+        if(ObjectUtils.isEmpty(userThirdAccount)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你没有开通银行存管，请先开通银行存管！"));
+        }
+
+
+        Integer autoTransferState = userThirdAccount.getAutoTransferState();
+
+        if(autoTransferState == 1){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你已经签署自动投标协议，无需再次签署！"));
+        }
+
+
+        Integer passwordState = userThirdAccount.getPasswordState();
+        if(passwordState == 0){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "请先初始化江西银行存管账户交易密码！"));
+        }
+
+        SmsCodeApplyRequest request = new SmsCodeApplyRequest() ;
+        request.setSrvTxCode(SrvTxCodeContants.AUTO_CREDIT_INVEST_AUTH_PLUS) ;
+        request.setMobile(userThirdAccount.getMobile()) ;
+        request.setChannel(ChannelContant.HTML);
+        SmsCodeApplyResponse body = jixinManager.send(
+                JixinTxCodeEnum.SMS_CODE_APPLY,
+                request,
+                SmsCodeApplyResponse.class);
+
+        if(ObjectUtils.isEmpty(body)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前通讯网络不稳定，请稍候重试！"));
+        }
+
+        if(!JixinResultContants.SUCCESS.equals(body.getRetCode())){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, body.getRetMsg()));
+        }
+
+
+        // 5.将授权码放入redis中
+        try {
+            redisHelper.put(
+                    String.format("%s_%s", SrvTxCodeContants.AUTO_CREDIT_INVEST_AUTH_PLUS, userThirdAccount.getMobile()),
                     body.getSrvAuthCode(),
                     15 * 60);
 

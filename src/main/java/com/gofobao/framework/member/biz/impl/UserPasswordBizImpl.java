@@ -8,7 +8,6 @@ import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.member.biz.UserPasswordBiz;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
-import com.gofobao.framework.member.vo.request.VoCheckFindPasswordReq;
 import com.gofobao.framework.member.vo.request.VoFindPasswordReq;
 import com.gofobao.framework.member.vo.request.VoModifyPasswordReq;
 import lombok.extern.slf4j.Slf4j;

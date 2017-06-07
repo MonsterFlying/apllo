@@ -20,4 +20,7 @@ public interface UserThirdAccountService {
      * @return
      */
     Long save(UserThirdAccount entity);
+
+    UserThirdAccount findTopByCardNo(String account);
+
 }

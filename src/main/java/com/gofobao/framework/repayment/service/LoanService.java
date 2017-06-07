@@ -4,7 +4,6 @@ import com.gofobao.framework.repayment.vo.request.VoDetailReq;
 import com.gofobao.framework.repayment.vo.request.VoLoanListReq;
 import com.gofobao.framework.repayment.vo.response.*;
 
-
 import java.util.List;
 
 /**
@@ -33,7 +32,7 @@ public interface LoanService {
      * @param voLoanListReq
      * @return
      */
-    List<VoViewBudingRes> buddingList(VoLoanListReq voLoanListReq);
+    List<VoViewBuddingRes> buddingList(VoLoanListReq voLoanListReq);
 
 
     /**

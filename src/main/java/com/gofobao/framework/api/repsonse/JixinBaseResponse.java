@@ -27,4 +27,5 @@ public class JixinBaseResponse {
     protected String retCode;
     /**  响应描述 */
     protected String retMsg;
+    protected String sign ;
 }

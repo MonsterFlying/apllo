@@ -11,7 +11,6 @@ import com.gofobao.framework.api.model.debt_register.DebtRegisterResponse;
 import com.gofobao.framework.api.model.debt_register_cancel.DebtRegisterCancelReq;
 import com.gofobao.framework.api.model.debt_register_cancel.DebtRegisterCancelResp;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
-import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoCancelThirdBorrow;
 import com.gofobao.framework.borrow.vo.request.VoCreateThirdBorrowReq;
@@ -27,8 +26,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
-
-import javax.validation.Valid;
 
 /**
  * Created by Zeke on 2017/6/1.

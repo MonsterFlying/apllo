@@ -3,8 +3,6 @@ package com.gofobao.framework.api.model.debt_details_query;
 import com.gofobao.framework.api.repsonse.JixinBaseResponse;
 import lombok.Data;
 
-import java.util.List;
-
 /**
  * Created by Zeke on 2017/6/5.
  */

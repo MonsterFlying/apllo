@@ -1,7 +1,6 @@
 package com.gofobao.framework.borrow.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
-import com.gofobao.framework.api.contants.IntTypeContant;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetail;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
 import com.gofobao.framework.asset.entity.Asset;
@@ -12,6 +11,8 @@ import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.*;
+import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
+import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
@@ -51,9 +52,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 
-import javax.persistence.Persistence;
 import java.util.*;
 
 /**
@@ -86,6 +85,19 @@ public class BorrowBizImpl implements BorrowBiz {
     @Autowired
     private CapitalChangeHelper capitalChangeHelper;
 
+
+    @Override
+    public ResponseEntity<VoViewBorrowListWarpRes> findAll(VoBorrowListReq voBorrowListReq) {
+        try {
+            List<VoViewBorrowList> borrowLists = borrowService.findAll(voBorrowListReq);
+            VoViewBorrowListWarpRes listWarpRes = VoBaseResp.ok("查询成功", VoViewBorrowListWarpRes.class);
+            listWarpRes.setVoViewBorrowLists(borrowLists);
+            return ResponseEntity.ok(listWarpRes);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.ok("查询失败", VoViewBorrowListWarpRes.class));
+        }
+    }
 
     /**
      * 新增净值借款
@@ -288,7 +300,8 @@ public class BorrowBizImpl implements BorrowBiz {
         voQueryThirdBorrowList.setPageSize("10");
         DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
         if (NumberHelper.toInt(resp.getTotalItems()) > 0) {//在即信查询到对应的标的
-            List<DebtDetail> debtDetailList = GSON.fromJson(resp.getSubPacks(),new TypeToken<List<DebtDetail>>(){}.getType());
+            List<DebtDetail> debtDetailList = GSON.fromJson(resp.getSubPacks(), new TypeToken<List<DebtDetail>>() {
+            }.getType());
             Preconditions.checkNotNull(debtDetailList, "即信标的不存在!");
 
             VoCancelThirdBorrow voCancelThirdBorrow = new VoCancelThirdBorrow();
@@ -301,6 +314,7 @@ public class BorrowBizImpl implements BorrowBiz {
             }
         }
         //======================================================================================
+
 
         Specification<Tender> borrowSpecification = Specifications
                 .<Tender>and()

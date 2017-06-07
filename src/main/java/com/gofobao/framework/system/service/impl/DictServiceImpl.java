@@ -6,7 +6,6 @@ import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.repository.DictItemRepository;
 import com.gofobao.framework.system.repository.DictValueRepository;
-
 import com.gofobao.framework.system.service.DictService;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -44,7 +43,7 @@ public class DictServiceImpl implements DictService{
 
         String cacheStr = redisHelper.get(SysCacheContants.DICT_ALIAS_CODE + aliasCode, null);
         if (StringUtils.isEmpty(cacheStr)) {
-            List<DictItem> dictItems = dictItemRepository.findByIsDelAndAliasCode(0, aliasCode);
+            List<DictItem> dictItems = dictItemRepository.findByDelAndAliasCode(0, aliasCode);
 
             if (CollectionUtils.isEmpty(dictItems)) {
                 throw new Exception("aliasCode is invalidate");
@@ -53,7 +52,7 @@ public class DictServiceImpl implements DictService{
             DictItem dictItem = dictItems.get(0);
             Long dictItemId = dictItem.getId();
 
-            List<DictValue> dictValues = dictValueRepository.findByIsDelAndItemId(false,dictItemId);
+            List<DictValue> dictValues = dictValueRepository.findByDelAndItemId(false,dictItemId);
 
             if (CollectionUtils.isEmpty(dictValues)) {
                 throw new Exception("aliasCode values is empty");

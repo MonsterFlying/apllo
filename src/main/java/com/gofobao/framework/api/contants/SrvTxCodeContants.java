@@ -25,7 +25,7 @@ public class SrvTxCodeContants {
     /** 自动投标签约*/
     public static final String AUTO_BID_AUTH_PLUS = "autoBidAuthPlus" ;
 
-    /** 还款*/
+    /** 自动债权签约*/
     public static final String AUTO_CREDIT_INVEST_AUTH_PLUS = "autoCreditInvestAuthPlus" ;
 
 }

@@ -5,7 +5,6 @@ import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnumContants;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.listener.providers.UserActiveProvider;
-import com.gofobao.framework.system.biz.StatisticBiz;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;

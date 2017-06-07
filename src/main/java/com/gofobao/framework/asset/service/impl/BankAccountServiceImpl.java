@@ -3,7 +3,6 @@ package com.gofobao.framework.asset.service.impl;
 import com.gofobao.framework.asset.entity.BankAccount;
 import com.gofobao.framework.asset.repository.BankAccountRepository;
 import com.gofobao.framework.asset.service.BankAccountService;
-import com.gofobao.framework.member.entity.Users;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;

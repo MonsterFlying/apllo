@@ -4,8 +4,7 @@ import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
-import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
-import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListRes;
+import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderList;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderRes;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailRes;
 import com.gofobao.framework.helper.DateHelper;
@@ -20,7 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Range;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
@@ -31,7 +30,7 @@ import java.util.stream.Collectors;
 /**
  * Created by admin on 2017/6/1.
  */
-@Service
+@Component
 public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
 
     @Autowired
@@ -47,7 +46,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
      * @return VoViewCollectionOrderListRes
      */
     @Override
-    public VoViewCollectionOrderListRes repaymentList(VoCollectionOrderReq voCollectionOrderReq) {
+    public VoViewCollectionOrderList repaymentList(VoCollectionOrderReq voCollectionOrderReq) {
         Date date = DateHelper.beginOfDate(DateHelper.stringToDate(voCollectionOrderReq.getTime()));
         Specification<BorrowRepayment> specification = Specifications.<BorrowRepayment>and()
                 .eq("userId", voCollectionOrderReq.getUserId())
@@ -65,7 +64,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         Map<Long, Borrow> borrowMap = borrowList.stream()
                 .collect(Collectors
                         .toMap(Borrow::getId, Function.identity()));
-        VoViewCollectionOrderListRes orderListRes = new VoViewCollectionOrderListRes();
+        VoViewCollectionOrderList orderListRes = new VoViewCollectionOrderList();
         List<VoViewCollectionOrderRes> orderResList = new ArrayList<>();
 
         repaymentList.stream().forEach(p -> {

@@ -7,7 +7,6 @@ import com.gofobao.framework.helper.IpHelper;
 import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.message.vo.VoAnonSmsReq;
 import com.gofobao.framework.message.vo.VoUserSmsReq;
-import com.gofobao.framework.security.contants.SecurityContants;
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -91,13 +90,11 @@ public class MessageAspect {
                     }
 
                 }else if(arg instanceof Long){
-                    if(SecurityContants.USERID_KEY.equals(arg.getClass().getName())){
-                        userId = (Long)arg ;
-                        if(ObjectUtils.isEmpty(userId)){
-                            throw new Throwable("MessageAspect invoke: userId is empty ") ;
-                        }
-
+                    userId = (Long)arg ;
+                    if(ObjectUtils.isEmpty(userId)){
+                        throw new Throwable("MessageAspect invoke: userId is empty ") ;
                     }
+
                 }
             }
 
@@ -140,11 +137,11 @@ public class MessageAspect {
 
     private boolean verifyOpInterval(String name, VoAnonSmsReq voAnonSmsReq, VoUserSmsReq voUserSmsReq, Long userId) throws Exception {
         String key = ObjectUtils.isEmpty(voUserSmsReq) ? voAnonSmsReq.getPhone() : String.valueOf(userId) ;
-        String interval = redisHelper.get(String.format("%s_%s", name.toUpperCase(), key), null);
+        String interval = redisHelper.get(String.format("%s_%s_interval", name.toUpperCase(), key), null);
         if(!ObjectUtils.isEmpty(interval)){
             return true;
         }else{
-            redisHelper.put(String.format("%s_%s", name.toUpperCase(), key), DateHelper.dateToString(new Date()), OP_INTERVAL_TIME);
+            redisHelper.put(String.format("%s_%s__interval", name.toUpperCase(), key), DateHelper.dateToString(new Date()), OP_INTERVAL_TIME);
         }
         return false;
     }
@@ -166,7 +163,7 @@ public class MessageAspect {
                                  VoUserSmsReq voUserSmsReq,
                                  Long userId,
                                  String ip) throws Throwable {
-        String key = ObjectUtils.isEmpty(voUserSmsReq) ? String.valueOf(userId) : voAnonSmsReq.getPhone() ;
+        String key = ObjectUtils.isEmpty(voAnonSmsReq) ? String.valueOf(userId) : voAnonSmsReq.getPhone() ;
         // 从缓存中获取操作次数
         Integer ipCount = Integer.parseInt(
                 redisHelper.get(

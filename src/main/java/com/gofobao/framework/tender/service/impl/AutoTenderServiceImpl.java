@@ -3,9 +3,6 @@ package com.gofobao.framework.tender.service.impl;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.helper.BeanHelper;
-
-import java.util.Map;
-
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.repository.AutoTenderRepository;
 import com.gofobao.framework.tender.service.AutoTenderService;
@@ -22,6 +19,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**

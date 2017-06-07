@@ -1,6 +1,5 @@
 package com.gofobao.framework.security.controller;
 
-import com.gofobao.framework.core.helper.PasswordHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.biz.UserBiz;
 import com.gofobao.framework.member.entity.Users;

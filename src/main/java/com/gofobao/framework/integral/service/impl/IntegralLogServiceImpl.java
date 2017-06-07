@@ -4,9 +4,7 @@ import com.gofobao.framework.integral.entity.IntegralLog;
 import com.gofobao.framework.integral.repository.IntegralLogRepository;
 import com.gofobao.framework.integral.service.IntegralLogService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 

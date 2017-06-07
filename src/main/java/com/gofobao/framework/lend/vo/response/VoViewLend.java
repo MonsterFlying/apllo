@@ -1,0 +1,24 @@
+package com.gofobao.framework.lend.vo.response;
+
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+
+/**
+ * Created by admin on 2017/6/6.
+ */
+@Data
+public class VoViewLend {
+    @ApiModelProperty("名字")
+    private String userName;
+    @ApiModelProperty("年华率")
+    private String apr;
+    @ApiModelProperty("期限")
+    private Integer limit;
+    @ApiModelProperty("金额")
+    private String money;
+    @ApiModelProperty("出借ID")
+    private Long lendId;
+    @ApiModelProperty("状态描述")
+    private String statusStr;
+
+}
