@@ -29,7 +29,7 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
             warpRes.setFriendsList(inviteFriendsList);
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {
-            return ResponseEntity.ok(VoBaseResp.ok("查询失败", VoViewInviteFriendersWarpRes.class));
+            return ResponseEntity.ok(VoBaseResp.error(VoBaseResp.ERROR,"查询失败", VoViewInviteFriendersWarpRes.class));
         }
     }
 
@@ -47,7 +47,7 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
             warpRes.setInviteAwardStatistics(statistics);
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {
-            return ResponseEntity.ok(VoBaseResp.ok("查询失败", VoViewInviteAwardStatisticsWarpRes.class));
+            return ResponseEntity.ok(VoBaseResp.error(VoBaseResp.ERROR,"查询失败", VoViewInviteAwardStatisticsWarpRes.class));
         }
     }
 
@@ -64,7 +64,7 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
             warpRes.setFrindsTenderInfo(tenderInfoList);
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {
-            return ResponseEntity.ok(VoBaseResp.ok("查询失败", VoViewFriendsTenderInfoWarpRes.class));
+            return ResponseEntity.ok(VoBaseResp.error(VoBaseResp.ERROR,"查询失败", VoViewFriendsTenderInfoWarpRes.class));
         }
     }
 }

@@ -21,7 +21,8 @@ public enum MqTagEnum {
     FIRST_VERIFY("FIRST_VERIFY"), //初审
     AGAIN_VERIFY("AGAIN_VERIFY"), //复审
     AUTO_TENDER("AUTO_TENDER"), //自动投标
-    NOTICE_PUBLISH("NOTICE_PUBLISH"); // 站内信通知
+    NOTICE_PUBLISH("NOTICE_PUBLISH"), // 站内信通知
+    RECHARGE("RECHARGE"); // 充值
     private String value;
 
     private MqTagEnum(String value) {

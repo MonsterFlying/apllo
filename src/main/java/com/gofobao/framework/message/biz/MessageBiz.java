@@ -72,4 +72,10 @@ public interface MessageBiz {
     ResponseEntity<VoBaseResp> openAutoTranfer(VoUserSmsReq voUserSmsReq);
 
 
+    /**
+     * 发送充值短信
+     * @param voUserSmsReq
+     * @return
+     */
+    ResponseEntity<VoBaseResp> recharge(VoUserSmsReq voUserSmsReq);
 }

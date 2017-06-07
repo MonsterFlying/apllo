@@ -23,6 +23,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
     /**
      * 还款计划
+     *
      * @param voCollectionOrderReq
      * @return
      */
@@ -35,12 +36,14 @@ public class RepaymentBizImpl implements RepaymentBiz {
             return ResponseEntity.ok(voViewCollectionOrderListResWarpRes);
 
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(VoBaseResp.ok("查询失败", VoViewCollectionOrderListResWarpRes.class));
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewCollectionOrderListResWarpRes.class));
         }
     }
 
     /**
      * 还款详情
+     *
      * @param voInfoReq
      * @return
      */
@@ -52,7 +55,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             voViewOrderDetailWarpRes.setDetailWarpRes(voViewOrderDetailRes);
             return ResponseEntity.ok(voViewOrderDetailWarpRes);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(VoBaseResp.ok("查询失败", VoViewOrderDetailWarpRes.class));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewOrderDetailWarpRes.class));
         }
     }
 }

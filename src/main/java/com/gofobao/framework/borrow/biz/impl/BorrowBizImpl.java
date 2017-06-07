@@ -95,7 +95,7 @@ public class BorrowBizImpl implements BorrowBiz {
             return ResponseEntity.ok(listWarpRes);
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(VoBaseResp.ok("查询失败", VoViewBorrowListWarpRes.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"查询失败", VoViewBorrowListWarpRes.class));
         }
     }
 
