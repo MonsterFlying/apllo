@@ -10,9 +10,9 @@ import java.util.Date;
  * Created by Zeke on 2017/5/26.
  */
 @Entity
-@DynamicInsert
 @Data
 @Table(name = "gfb_borrow_repayment")
+
 public class BorrowRepayment {
     @Id
     @GeneratedValue
@@ -25,7 +25,7 @@ public class BorrowRepayment {
     @Column(name = "status")
     private Integer status;
     @Basic
-    @Column(name = "order")
+    @Column(name = "`order`")
     private Integer order;
     @Basic
     @Column(name = "repay_money")

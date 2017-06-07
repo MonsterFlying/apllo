@@ -323,14 +323,13 @@ public class BorrowBizImpl implements BorrowBiz {
                 .build();
 
         List<Tender> tenderList = tenderService.findList(borrowSpecification);
-        Tender tempTender = null;
         Set<Long> tenderUserIds = new HashSet<>();//投标用户id集合
         if (!CollectionUtils.isEmpty(tenderList)) {
             Iterator<Tender> itTender = tenderList.iterator();
             Tender tender = null;
             Notices notices = null;
-            tempTender = new Tender();
             while (itTender.hasNext()) {
+                notices = new Notices();
                 tender = itTender.next();
 
                 //更新资产记录
@@ -346,12 +345,12 @@ public class BorrowBizImpl implements BorrowBiz {
                 }
 
                 //更新投标记录状态
-                tempTender.setId(tender.getId());
-                tempTender.setStatus(2); // 取消状态
-                tempTender.setUpdatedAt(nowDate);
-                tenderService.updateById(tempTender);
+                tender.setId(tender.getId());
+                tender.setStatus(2); // 取消状态
+                tender.setUpdatedAt(nowDate);
+                tenderService.updateById(tender);
 
-                if (!tenderUserIds.contains(tempTender.getUserId())) {
+                if (!tenderUserIds.contains(tender.getUserId())) {
                     tenderUserIds.add(tender.getUserId());
                     notices.setFromUserId(1L);
                     notices.setUserId(tender.getUserId());
@@ -380,11 +379,10 @@ public class BorrowBizImpl implements BorrowBiz {
 
         Long tenderId = borrow.getTenderId();
         if ((borrow.getType() == 0) && (!ObjectUtils.isEmpty(tenderId)) && (tenderId > 0)) {//判断是否是转让标，并将借款状态置为0
-            tempTender = new Tender();
-            tempTender.setTransferFlag(0);
-            tempTender.setId(borrow.getTenderId());
-            tempTender.setUpdatedAt(nowDate);
-            tenderService.updateById(tempTender);
+            Tender tender = tenderService.findById(tenderId);
+            tender.setTransferFlag(0);
+            tender.setUpdatedAt(nowDate);
+            tenderService.updateById(tender);
         }
 
         Integer payMoney = 0;

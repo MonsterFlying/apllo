@@ -138,11 +138,11 @@ public class AutoTenderProvider {
         } while (false);
 
         //解除锁定
-        Borrow tempBorrow = new Borrow();
-        tempBorrow.setUpdatedAt(nowDate);
-        tempBorrow.setIsLock(false);
-        tempBorrow.setId(borrowId);
-        borrowService.updateById(tempBorrow);
+        Borrow borrow = borrowService.findById(borrowId);
+        borrow.setUpdatedAt(nowDate);
+        borrow.setIsLock(false);
+        borrow.setId(borrowId);
+        borrowService.updateById(borrow);
     }
 
 }

@@ -90,7 +90,7 @@ public class BorrowRepaymentImpl implements BorrowRepaymentBiz {
     private IntegralChangeHelper integralChangeHelper;
 
     /**
-     * 还款
+     * 立即还款
      *
      * @param voRepayReq
      * @return
@@ -592,7 +592,11 @@ public class BorrowRepaymentImpl implements BorrowRepaymentBiz {
                 borrowCollection.setLateInterest(lateInterest);
                 borrowCollection.setCollectionMoneyYes(collectionMoney);
 
+                //
                 borrowCollectionService.updateById(borrowCollection);
+
+                //更新投标
+                tender.setState(3);
                 tenderService.updateById(tender);
 
                 //收到车贷标回款扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金

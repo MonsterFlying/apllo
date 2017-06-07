@@ -175,8 +175,8 @@ public class BorrowProvider {
 
             //触发自动投标队列
             MqConfig mqConfig = new MqConfig();
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
-            mqConfig.setTag(MqTagEnum.USER_ACTIVE_REGISTER);
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_AUTO_TENDER);
+            mqConfig.setTag(MqTagEnum.AUTO_TENDER);
             ImmutableMap<String, String> body = ImmutableMap
                     .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
             mqConfig.setMsg(body);
@@ -385,10 +385,9 @@ public class BorrowProvider {
             }
 
             Date borrowDate = null;
-            BorrowCollection transferedBorrowCollection = transferedBorrowCollections.get(0); //最近一期转让债券
             BorrowCollection borrowCollection = null;
             for (Tender tender : tenderList) {
-                borrowDate = (borrow.getType() == 0) && (!ObjectUtils.isEmpty(borrow.getTenderId())) && (borrow.getTenderId() > 0) ? transferedBorrowCollection.getStartAt() : nowDate;
+                borrowDate = (borrow.getType() == 0) && (!ObjectUtils.isEmpty(borrow.getTenderId())) && (borrow.getTenderId() > 0) ? transferedBorrowCollections.get(0).getStartAt() : nowDate;
 
                 BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
                         NumberHelper.toDouble(StringHelper.toString(tender.getValidMoney())),
@@ -478,6 +477,10 @@ public class BorrowProvider {
                     } catch (Exception e) {
                         log.error("borrowProvider doAgainVerify send mq exception", e);
                     }
+
+                    //更新投标状态
+                    tender.setState(2);
+                    tenderService.updateById(tender);
                 }
 
                 //触发投标成功事件
@@ -562,11 +565,9 @@ public class BorrowProvider {
                 capitalChangeHelper.capitalChange(entity);
             }
 
-            Borrow tempBorrow = new Borrow();
-            tempBorrow.setId(borrow.getId());
-            tempBorrow.setStatus(3);
-            tempBorrow.setSuccessAt(nowDate);
-            borrowService.updateById(tempBorrow);
+            borrow.setStatus(3);
+            borrow.setSuccessAt(nowDate);
+            borrowService.updateById(borrow);
 
             /**
              * @// TODO: 2017/6/2 复审事件
