@@ -37,7 +37,7 @@ public interface TenderBiz {
 
     /**
      * 投标用户
-     * @param req
+     * @param borrowId
      * @return
      */
     ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(Long borrowId);

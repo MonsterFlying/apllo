@@ -343,6 +343,9 @@ public class BorrowProvider {
                 entity.setInterest(collectionInterest);
                 entity.setRemark("债权转让成功，扣除待收资金");
                 capitalChangeHelper.capitalChange(entity);
+
+                //========================================即信批量新增流转标===========================================
+
             } else {
                 BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(StringHelper.toString(borrow.getMoney())),
                         NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrow.getSuccessAt());

@@ -299,7 +299,8 @@ public class BorrowBizImpl implements BorrowBiz {
         voQueryThirdBorrowList.setPageNum("1");
         voQueryThirdBorrowList.setPageSize("10");
         DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
-        if (NumberHelper.toInt(resp.getTotalItems()) > 0) {//在即信查询到对应的标的
+        int totalItems = NumberHelper.toInt(resp.getTotalItems()) + 1;
+        if (totalItems > 0) {//在即信查询到对应的标的
             List<DebtDetail> debtDetailList = GSON.fromJson(resp.getSubPacks(), new TypeToken<List<DebtDetail>>() {
             }.getType());
             Preconditions.checkNotNull(debtDetailList, "即信标的不存在!");
@@ -314,7 +315,6 @@ public class BorrowBizImpl implements BorrowBiz {
             }
         }
         //======================================================================================
-
 
         Specification<Tender> borrowSpecification = Specifications
                 .<Tender>and()
