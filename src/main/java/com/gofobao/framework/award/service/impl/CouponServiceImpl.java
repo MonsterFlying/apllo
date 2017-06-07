@@ -30,23 +30,23 @@ public class CouponServiceImpl implements CouponService {
     public List<CouponRes> list(VoCouponReq couponReq) {
 
         StringBuffer sql = new StringBuffer();
-        sql.append("SELECT coupon FROM Coupon coupon WHERE coupon.userId = :userId");
-        String condtion = "";
+        sql.append("SELECT coupon FROM Coupon coupon WHERE coupon.userId =:userId");
+        String condition = "";
         if (couponReq.getStatus() == CouponContants.STATUS_YES) {
-            condtion = " and status=" + CouponContants.VALID;
+            condition = " and status=" + CouponContants.VALID;
         } else if(couponReq.getStatus() == CouponContants.STATUS_NO){
-            condtion = " and status=" + CouponContants.LOCK +
+            condition = " and status=" + CouponContants.LOCK +
                     " or status=" + CouponContants.LOCK +
                     " or status=" + CouponContants.USED +
                     " or status=" + CouponContants.FAILURE;
         }else{
             return Collections.EMPTY_LIST;
         }
-        sql.append(condtion);
-        TypedQuery<Coupon> query = entityManager.createQuery(sql.toString(), Coupon.class);
-        query.setParameter("userId",couponReq.getUserId());
-        query.setFirstResult(couponReq.getPageIndex());
-        query.setMaxResults(couponReq.getPageSize());
+        sql.append(condition);
+        TypedQuery<Coupon> query = entityManager.createQuery(sql.toString(), Coupon.class)
+                .setParameter("userId",couponReq.getUserId())
+                .setFirstResult(couponReq.getPageIndex())
+                .setMaxResults(couponReq.getPageSize());
         List<Coupon> couponList = query.getResultList();
 
         if (CollectionUtils.isEmpty(couponList)) {
