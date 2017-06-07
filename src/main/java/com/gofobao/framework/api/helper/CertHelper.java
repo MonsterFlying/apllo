@@ -14,6 +14,8 @@ import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
 import java.util.Enumeration;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -46,6 +48,11 @@ public class CertHelper {
      * 私钥
      */
     private PrivateKey privateKey;
+
+    /**
+     * 验证公钥
+     */
+    private PublicKey verifyPublicKey ;
 
     @PostConstruct
     public void init() {
@@ -86,10 +93,21 @@ public class CertHelper {
             this.privateKey = (PrivateKey) keyStore.getKey(keyAliases, pwds);
             this.publicKey = keyStore.getCertificate(keyAliases).getPublicKey();
             log.info("即信公私钥初始成功");
-
         } catch (Exception e) {
             log.error("初始化即信公钥私钥异常", e);
             throw new RuntimeException(e);
+        }
+
+        File certFile = new File(certPath) ;
+        checkArgument(certFile.exists(), "即信验证参数公钥路劲中的文件不存在");
+        try (InputStream is = new FileInputStream(certFile)) {
+            CertificateFactory factory = CertificateFactory.getInstance("X.509");
+            Certificate certificate = factory.generateCertificate(is);
+            verifyPublicKey = certificate.getPublicKey() ;
+            log.info("即信验证参数公私钥初始成功");
+        } catch (Exception e) {
+            log.error("即信验证参数公钥异常", e);
+            return;
         }
     }
 
@@ -134,7 +152,7 @@ public class CertHelper {
             byte[] signBytes = Base64Utils.decodeFromString(sign);
             byte[] unSignBytes = unSignData.getBytes(ENCODING);
             Signature signature = Signature.getInstance(ALGORITHM);
-            signature.initVerify(publicKey);
+            signature.initVerify(verifyPublicKey);
             signature.update(unSignBytes);
             return signature.verify(signBytes);
         } catch (Exception e) {

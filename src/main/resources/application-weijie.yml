@@ -45,8 +45,8 @@ jixin: #银行存管
 gofobao:
   #javaDomain: http://lang.3w.dkys.org
   javaDomain: http://max.3w.dkys.org
-  webDomain: http://ci.gofobao.com
-  h5Domain: http://ci.gofobao.com
+  webDomain: http://max.3w.dkys.org
+  h5Domain: http://max.3w.dkys.org
   captcha: false # 全站是否开启图形验证码验证
   close-email-send: true # 关闭邮箱发送
   close-phone-send: true # 关闭短信发送

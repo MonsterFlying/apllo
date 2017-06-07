@@ -2,6 +2,7 @@ package com.gofobao.framework.api.helper;
 
 import com.gofobao.framework.api.repsonse.JixinBaseResponse;
 import com.gofobao.framework.api.request.JixinBaseRequest;
+import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -131,8 +132,7 @@ public class JixinManager {
         checkNotNull(bgData, "返回值内容为空");
         T t  = gson.fromJson(bgData, typeToken.getType());
         // 验证参数
-        String json = gson.toJson(t);
-        Map<String,String> param = gson.fromJson(json, new TypeToken<Map<String,String>>(){}.getType() ) ;
+        Map<String,String> param = gson.fromJson(bgData, new TypeToken<Map<String,String>>(){}.getType() ) ;
         String unsige = StringHelper.mergeMap(param);
         boolean result = certHelper.verify(unsige, param.get("sign"));
         if(!result){
@@ -188,6 +188,15 @@ public class JixinManager {
 
         checkNotNull(response) ;
         S body = response.getBody();
+        // 验证参数
+        String bodyJson = gson.toJson(body);
+        Map<String, String> unverifyParams = gson.fromJson(bodyJson, TypeTokenContants.MAP_ALL_STRING_TOKEN) ;
+        String unsige = StringHelper.mergeMap(unverifyParams);
+        boolean result = certHelper.verify(unsige, unverifyParams.get("sign"));
+        if(!result){
+            log.error("即信请求返回值验证不通过");
+            return null ;
+        }
         log.info(String.format("即信响应报文:url=%s body=%s",url, gson.toJson(body)));
 
         // 请求插入数据
