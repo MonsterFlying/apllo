@@ -80,7 +80,7 @@ public class AssetBizImpl implements AssetBiz {
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(VoBaseResp.ok("查询成功", VoViewAssetLogWarpRes.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"查询成功", VoViewAssetLogWarpRes.class));
         }
     }
 }

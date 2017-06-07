@@ -38,7 +38,7 @@ public class PaymentBizImpl implements PaymentBiz {
             resWarpRes.setListRes(collectionOrderList);
             return ResponseEntity.ok(resWarpRes);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(VoBaseResp.ok("查询失败", VoViewCollectionOrderListResWarpRes.class));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"查询失败", VoViewCollectionOrderListResWarpRes.class));
         }
     }
 
@@ -56,7 +56,7 @@ public class PaymentBizImpl implements PaymentBiz {
             resWarpRes.setDetailWarpRes(detailRes);
             return ResponseEntity.ok(resWarpRes);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(VoBaseResp.ok("查询失败", VoViewOrderDetailWarpRes.class));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"查询失败", VoViewOrderDetailWarpRes.class));
         }
     }
 }
