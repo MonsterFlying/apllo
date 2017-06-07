@@ -7,7 +7,6 @@ import com.gofobao.framework.helper.IpHelper;
 import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.message.vo.VoAnonSmsReq;
 import com.gofobao.framework.message.vo.VoUserSmsReq;
-import com.gofobao.framework.security.contants.SecurityContants;
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;

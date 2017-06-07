@@ -3,6 +3,7 @@ package com.gofobao.framework.borrow.vo.response;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.google.common.collect.Lists;
 import lombok.Data;
+
 import java.util.List;
 
 /**

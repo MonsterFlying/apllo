@@ -1,18 +1,15 @@
 package com.gofobao.framework.asset.controller;
 
 import com.gofobao.framework.asset.biz.BankAccountBiz;
-import com.gofobao.framework.asset.vo.request.VoUserBankListReq;
 import com.gofobao.framework.asset.vo.response.VoBankTypeInfoResp;
-import com.gofobao.framework.asset.vo.response.VoUserBankListResp;
-import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import javax.persistence.Access;
-import javax.validation.Valid;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestAttribute;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Created by Zeke on 2017/5/22.

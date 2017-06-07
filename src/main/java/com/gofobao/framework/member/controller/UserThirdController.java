@@ -1,8 +1,8 @@
 package com.gofobao.framework.member.controller;
 
 import com.gofobao.framework.member.biz.UserThirdBiz;
-import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
+import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.member.vo.response.VoOpenAccountResp;
 import com.gofobao.framework.member.vo.response.VoPreOpenAccountResp;
 import com.gofobao.framework.security.contants.SecurityContants;

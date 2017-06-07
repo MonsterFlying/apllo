@@ -1,6 +1,5 @@
 package com.gofobao.framework.member.repository;
 
-import com.gofobao.framework.common.page.Page;
 import com.gofobao.framework.member.entity.UserCache;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
