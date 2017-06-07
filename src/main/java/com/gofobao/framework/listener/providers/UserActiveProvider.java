@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 import java.util.Date;
 import java.util.Map;
@@ -74,4 +75,5 @@ public class UserActiveProvider {
         capitalChangeHelper.capitalChange(entity);
         log.info("award virtualMoney success");
     }
+
 }

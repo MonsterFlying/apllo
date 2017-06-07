@@ -116,7 +116,6 @@ public class TenderBizImpl implements TenderBiz {
                 entity.setMoney(borrowTender.getValidMoney());
                 entity.setRemark("投标冻结资金");
                 if (!capitalChangeHelper.capitalChange(entity)) {
-
                     throw new Exception("资金操作失败！");
                 }
 
@@ -139,8 +138,8 @@ public class TenderBizImpl implements TenderBiz {
                         rsMap.put("msg", resp);
                     }
                 }
-                if (tempBorrow.getMoneyYes() >= borrow.getMoney()) {
 
+                if (borrow.getMoneyYes() >= borrow.getMoney()) {
                     //复审
                     MqConfig mqConfig = new MqConfig();
                     mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
@@ -169,6 +168,7 @@ public class TenderBizImpl implements TenderBiz {
      * @param voCreateTenderReq
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> tender(VoCreateTenderReq voCreateTenderReq) {
         Map<String, Object> rsMap = null;
         try {

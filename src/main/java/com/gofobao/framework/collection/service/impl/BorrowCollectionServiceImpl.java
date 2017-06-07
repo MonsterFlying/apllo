@@ -166,4 +166,12 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         }
         return borrowCollectionRepository.save(borrowCollection);
     }
+
+    public List<BorrowCollection> findList(Specification<BorrowCollection> specification){
+        return borrowCollectionRepository.findAll(specification);
+    }
+
+    public long count(Specification<BorrowCollection> specification){
+        return borrowCollectionRepository.count(specification);
+    }
 }

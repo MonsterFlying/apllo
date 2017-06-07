@@ -34,4 +34,5 @@ public interface IntegralBiz {
      * @throws Exception
      */
     ResponseEntity<String> takeRatesDesc();
+
 }
