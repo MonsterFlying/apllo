@@ -36,7 +36,7 @@ public class MyInvestBizImpl implements MyInvestBiz {
         } catch (Exception e) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.ok("查询失败", VoViewBackMoneyListWarpRes.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"查询失败", VoViewBackMoneyListWarpRes.class));
         }
     }
 
@@ -51,7 +51,7 @@ public class MyInvestBizImpl implements MyInvestBiz {
         } catch (Exception e) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.ok("查询失败", VoViewBiddingListWrapRes.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"查询失败", VoViewBiddingListWrapRes.class));
         }
     }
 
@@ -66,7 +66,7 @@ public class MyInvestBizImpl implements MyInvestBiz {
         } catch (Exception e) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.ok("查询失败", VoViewSettleWarpRes.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"查询失败", VoViewSettleWarpRes.class));
         }
     }
 
@@ -80,7 +80,7 @@ public class MyInvestBizImpl implements MyInvestBiz {
         } catch (Exception e) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.ok("查询失败", VoViewTenderDetailWarpRes.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"查询失败", VoViewTenderDetailWarpRes.class));
         }
     }
 
@@ -94,7 +94,7 @@ public class MyInvestBizImpl implements MyInvestBiz {
         } catch (Exception e) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.ok("查询失败", VoViewReturnMoneyWarpRes.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"查询失败", VoViewReturnMoneyWarpRes.class));
         }
     }
 }

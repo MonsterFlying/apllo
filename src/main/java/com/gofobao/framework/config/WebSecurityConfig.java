@@ -85,11 +85,15 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .permitAll()
                 .antMatchers(
                         "/lend/**")
-
+                .permitAll()
+                .antMatchers(
+                        "/coupon/**")
                 .permitAll()
                 .antMatchers(
                         "/loan/**")
-
+                .permitAll()
+                .antMatchers(
+                        "/invite/**")
                 .permitAll()
                 .antMatchers(
                         "/pub/**")
