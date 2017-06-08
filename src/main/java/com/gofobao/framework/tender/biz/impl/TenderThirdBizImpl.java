@@ -4,6 +4,8 @@ import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestReq;
+import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestResp;
 import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyRequest;
 import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyResponse;
 import com.gofobao.framework.core.vo.VoBaseResp;
@@ -15,12 +17,16 @@ import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
+import com.gofobao.framework.tender.vo.request.VoThirdBatchCreditInvest;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Created by Zeke on 2017/6/1.
@@ -63,7 +69,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
 
         BidAutoApplyRequest request = new BidAutoApplyRequest();
         request.setAccountId(userThirdAccount.getAccountId());
-        request.setOrderId(JixinHelper.getTenderOrderId());
+        request.setOrderId(JixinHelper.getOrderId());
         request.setTxAmount(voCreateThirdTenderReq.getTxAmount());
         request.setProductId(voCreateThirdTenderReq.getProductId());
         request.setFrzFlag(voCreateThirdTenderReq.getFrzFlag());
@@ -82,6 +88,40 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         updTender.setAuthCode(response.getAuthCode());
         updTender.setTUserId(userThirdAccount.getId());
         tenderService.updateById(updTender);
+        return null;
+    }
+
+
+    /**
+     * 投资人批次购买债权
+     *
+     * @param voThirdBatchCreditInvest
+     * @return
+     */
+    public ResponseEntity<VoBaseResp> thirdBatchCreditInvest(VoThirdBatchCreditInvest voThirdBatchCreditInvest) {
+
+        BatchCreditInvestReq request = new BatchCreditInvestReq();
+        BatchCreditInvestResp response = jixinManager.sendBatch(JixinTxCodeEnum.BATCH_CREDIT_INVEST, request, BatchCreditInvestResp.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(response.getReceived()))) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "投资人批次购买债权失败!"));
+        }
+        return null;
+    }
+
+
+    /**
+     * 投资人批次购买债权参数验证回调
+     * @return
+     */
+    public ResponseEntity<VoBaseResp> thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse response){
+        return null;
+    }
+
+    /**
+     * 投资人批次购买债权参数运行回调
+     * @return
+     */
+    public ResponseEntity<VoBaseResp> thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response){
         return null;
     }
 }

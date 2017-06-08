@@ -3,17 +3,20 @@ package com.gofobao.framework.repayment.controller;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListResWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
+import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
-import com.gofobao.framework.repayment.vo.request.VoInfoReq;
+import com.gofobao.framework.repayment.vo.request.*;
 import com.gofobao.framework.security.contants.SecurityContants;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Created by admin on 2017/6/1.
@@ -24,6 +27,8 @@ public class BorrowRepaymentContorller {
 
     @Autowired
     private RepaymentBiz repaymentBiz;
+    @Autowired
+    private BorrowRepaymentThirdBiz borrowRepaymentThirdBiz;
 
     @RequestMapping("/v2/list/{time}")
     @ApiOperation("还款计划列表")
@@ -43,7 +48,29 @@ public class BorrowRepaymentContorller {
         voInfoReq.setUserId(userId);
         voInfoReq.setRepaymentId(repaymentId);
         return repaymentBiz.info(voInfoReq);
-
     }
 
+    @RequestMapping("/v2/third/lendrepay/check")
+    @ApiOperation("批次放款参数检查通知")
+    public ResponseEntity<String> thirdLendRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
+        return borrowRepaymentThirdBiz.thirdBatchLendRepayCheckCall(request, response);
+    }
+
+    @RequestMapping("/v2/third/lendrepay/run")
+    @ApiOperation("批次放款运行结果通知")
+    public ResponseEntity<String> thirdLendRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
+        return borrowRepaymentThirdBiz.thirdBatchLendRepayRunCall(request, response);
+    }
+
+    @RequestMapping("/v2/third/repay/check")
+    @ApiOperation("批次还款参数检查通知")
+    public ResponseEntity<String> thirdRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
+        return borrowRepaymentThirdBiz.thirdBatchRepayCheckCall(request, response);
+    }
+
+    @RequestMapping("/v2/third/repay/run")
+    @ApiOperation("批次还款参数检查通知")
+    public ResponseEntity<String> thirdRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
+        return borrowRepaymentThirdBiz.thirdBatchRepayRunCall(request, response);
+    }
 }

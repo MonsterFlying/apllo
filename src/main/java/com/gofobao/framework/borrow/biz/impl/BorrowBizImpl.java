@@ -279,7 +279,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "借款状态已发生更改!"));
         }
 
-        boolean bool = false;//债券转让默认不过期
+        boolean bool = false;//债权转让默认不过期
         if (!ObjectUtils.isEmpty(borrow.getReleaseAt())) {
             bool = DateHelper.diffInDays(new Date(), borrow.getReleaseAt(), false) >= borrow.getValidDay();//比较借款时间是否过期
         }
