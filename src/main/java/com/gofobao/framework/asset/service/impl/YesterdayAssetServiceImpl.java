@@ -19,18 +19,12 @@ public class YesterdayAssetServiceImpl implements YesterdayAssetService{
         return yesterdayAssetRepository.findOne(userId);
     }
 
-    public boolean insert(YesterdayAsset yesterdayAsset){
-        if (ObjectUtils.isEmpty(yesterdayAsset)){
-           return false;
-        }
-        yesterdayAsset.setUserId(null);
-        return !ObjectUtils.isEmpty(yesterdayAssetRepository.save(yesterdayAsset));
+    public void insert(YesterdayAsset yesterdayAsset){
+
+         yesterdayAssetRepository.save(yesterdayAsset);
     }
 
-    public boolean update(YesterdayAsset yesterdayAsset){
-        if (ObjectUtils.isEmpty(yesterdayAsset) || ObjectUtils.isEmpty(yesterdayAsset.getUserId())){
-            return false;
-        }
-        return !ObjectUtils.isEmpty(yesterdayAssetRepository.save(yesterdayAsset));
+    public void update(YesterdayAsset yesterdayAsset){
+       yesterdayAssetRepository.save(yesterdayAsset);
     }
 }

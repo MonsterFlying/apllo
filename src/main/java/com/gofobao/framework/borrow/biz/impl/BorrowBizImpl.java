@@ -356,7 +356,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     tenderUserIds.add(tender.getUserId());
                     notices.setFromUserId(1L);
                     notices.setUserId(tender.getUserId());
-                    notices.setRead(false);
+                    notices.setRead(0);
                     notices.setName("投资的借款失败");
                     notices.setContent("你所投资的借款[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]在" + DateHelper.nextDate(nowDate) + "已取消");
                     notices.setType("system");

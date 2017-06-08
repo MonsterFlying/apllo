@@ -33,7 +33,7 @@ public class NoticesBizImpl implements NoticesBiz {
         Preconditions.checkNotNull(notices, "NoticesBizImpl.save: notices is empty") ;
         Preconditions.checkNotNull(notices.getUserId(), "NoticesBizImpl.save: userId is empty") ;
 
-        Users users = userService.findById(notices.getUserId());
+        Users users = userService.findByIdLock(notices.getUserId());
         if(ObjectUtils.isEmpty(users)){
             log.error("NoticesBizImpl.save: userId find null" );
             return false ;

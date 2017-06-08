@@ -1,6 +1,8 @@
 package com.gofobao.framework.system.entity;
 
 import lombok.Data;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -10,6 +12,8 @@ import java.util.Date;
  */
 @Entity
 @Table(name = "gfb_notices")
+@DynamicUpdate
+@DynamicInsert
 @Data
 public class Notices {
     @Id
@@ -20,7 +24,9 @@ public class Notices {
 
     private Long userId;
 
-    private Boolean read;
+    @Column(name = "`read`")
+    @Basic
+    private Integer read;
 
     private String name;
 

@@ -2,6 +2,7 @@ package com.gofobao.framework.asset.biz;
 
 import com.gofobao.framework.asset.vo.request.VoAssetLog;
 import com.gofobao.framework.asset.vo.request.VoRechargeReq;
+import com.gofobao.framework.asset.vo.response.VoRechargeBankInfoResp;
 import com.gofobao.framework.asset.vo.response.VoUserAssetInfoResp;
 import com.gofobao.framework.asset.vo.response.VoViewAssetLogWarpRes;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
@@ -48,4 +49,12 @@ public interface AssetBiz {
      * @return
      */
     ResponseEntity<String> rechargeCallback(HttpServletRequest request, HttpServletResponse response) throws Exception;
+
+
+    /**
+     * 获取存管信息
+     * @param userId
+     * @return
+     */
+    ResponseEntity<VoRechargeBankInfoResp> bankAcount(Long userId);
 }
