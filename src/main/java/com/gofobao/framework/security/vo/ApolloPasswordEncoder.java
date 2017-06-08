@@ -24,7 +24,6 @@ public class ApolloPasswordEncoder implements PasswordEncoder {
         try {
             return PasswordHelper.verifyPassword(s, charSequence.toString());
         } catch (Exception e) {
-            log.error("Spring security passwordEncoder matches exception", e );
             return false ;
         }
     }

@@ -7,7 +7,7 @@ import com.gofobao.framework.asset.entity.YesterdayAsset;
  */
 public interface YesterdayAssetService {
     YesterdayAsset findByUserId(Long userId);
-    boolean insert(YesterdayAsset yesterdayAsset);
-    boolean update(YesterdayAsset yesterdayAsset);
+    void insert(YesterdayAsset yesterdayAsset);
+    void update(YesterdayAsset yesterdayAsset);
 
 }

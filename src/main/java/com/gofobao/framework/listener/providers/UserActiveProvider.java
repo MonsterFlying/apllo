@@ -104,13 +104,13 @@ public class UserActiveProvider {
         String name = String.format("充值%s元已成功", StringHelper.formatDouble(rechargeDetailLog.getMoney() / 100D, true));
         String content = String.format("您已经于%s成功充值%s元", DateHelper.dateToString(rechargeDetailLog.getCreateTime()), StringHelper.formatDouble(rechargeDetailLog.getMoney() / 100D, true));
         Notices notices = new Notices();
-        notices.setRead(false);
+        notices.setRead(0);
         notices.setCreatedAt(new Date());
         notices.setUserId(rechargeDetailLog.getUserId());
+        notices.setFromUserId(0L);
         notices.setContent(content);
         notices.setName(name);
         notices.setType("system");
-        notices.setFromUserId(0L);
         noticesBiz.save(notices) ;
         return true;
     }

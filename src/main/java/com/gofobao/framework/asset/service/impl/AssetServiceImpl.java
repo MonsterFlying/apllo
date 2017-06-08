@@ -4,8 +4,11 @@ import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.repository.AssetRepository;
 import com.gofobao.framework.asset.service.AssetService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
+
+import javax.persistence.LockModeType;
 
 /**
  * Created by Zeke on 2017/5/19.

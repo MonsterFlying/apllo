@@ -74,13 +74,12 @@ public class CapitalChangeHelper {
             capitalChangeConfig.setAssetChangeRule(assetStr);
         }
 
-        long userId =  (long)entity.getUserId();
+        long userId = entity.getUserId();
         Asset asset = assetService.findByUserIdLock(userId);
         UserCache userCache = userCacheService.findByUserIdLock(userId);
 
         // 更新昨日资产
         Date zeroDate = DateHelper.beginOfDate(new Date());
-        boolean bool = false;
         int yesterdayMoney = 0; //  昨日资产
         if (asset.getUpdatedAt().getTime() < zeroDate.getTime()) { //  写入昨日资产
             YesterdayAsset yesterdayAsset = yesterdayAssetService.findByUserId(userId);
@@ -98,17 +97,13 @@ public class CapitalChangeHelper {
             yesterdayAsset.setUpdatedAt(new Date());
             yesterdayAsset.setUserId(entity.getUserId());
             if (isInsert) {
-                bool = !yesterdayAssetService.insert(yesterdayAsset);
+               yesterdayAssetService.insert(yesterdayAsset);
             } else {
-                bool = !yesterdayAssetService.update(yesterdayAsset);
-            }
-
-            if (bool) {
-                throw new Exception("插入昨日资产失败");
+               yesterdayAssetService.update(yesterdayAsset);
             }
         }
 
-        boolean flag = false;
+        boolean flag;
 
         if (!StringUtils.isEmpty(capitalChangeConfig.getAssetChangeRule())) {  // 用户资金变动
             flag = CapitalChangeRulePaser.paser(asset, capitalChangeConfig.getAssetChangeRule(), entity.getPrincipal(), entity.getInterest());

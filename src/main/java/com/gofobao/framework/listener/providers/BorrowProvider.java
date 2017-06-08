@@ -461,7 +461,7 @@ public class BorrowProvider {
                     Notices notices = new Notices();
                     notices.setFromUserId(1L);
                     notices.setUserId(tender.getUserId());
-                    notices.setRead(false);
+                    notices.setRead(0);
                     notices.setName("投资的借款满标审核通过");
                     notices.setContent("您所投资的借款[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]在 " + DateHelper.dateToString(nowDate) + " 已满标审核通过");
                     notices.setType("system");
