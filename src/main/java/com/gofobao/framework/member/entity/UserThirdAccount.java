@@ -66,4 +66,6 @@ public class UserThirdAccount {
     private Integer autoTenderState ;
 
     private Integer del;
+    private String bankName ;
+    private String bankLogo ;
 }
