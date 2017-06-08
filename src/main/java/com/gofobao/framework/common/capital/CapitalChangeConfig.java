@@ -224,6 +224,15 @@ public class CapitalChangeConfig {
         incomeOther.setUserCacheChangeRule("add@incomeOther");
         incomeOther.setRemark("其他收入");
         capitalChangeList.add(incomeOther);
+        //红包收入
+        CapitalChangeConfig redPackage = new CapitalChangeConfig();
+        redPackage.setType(CapitalChangeEnum.RedPackage);
+        redPackage.setName("红包收入");
+        redPackage.setAssetChangeRule("add@useMoney");
+        redPackage.setUserCacheChangeRule("add@incomeOther");
+        redPackage.setRemark("红包收入");
+        capitalChangeList.add(redPackage);
+
         //奖励体验金
         CapitalChangeConfig awardVirtualMoney = new CapitalChangeConfig();
         awardVirtualMoney.setType(CapitalChangeEnum.AwardVirtualMoney);

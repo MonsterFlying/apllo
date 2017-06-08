@@ -57,7 +57,4 @@ public class ActivityRedPacketLog {
     @Column(name = "VPARAM2", nullable = true, length = 255)
     private String vparam2;
 
-
-    public ActivityRedPacketLog(){}
-
 }

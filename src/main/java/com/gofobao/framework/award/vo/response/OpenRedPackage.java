@@ -10,7 +10,7 @@ import lombok.Data;
 public class OpenRedPackage {
 
     @ApiModelProperty("红包金额")
-    private String money;
+    private Double money;
 
     @ApiModelProperty(hidden = true)
     private boolean flag;
