@@ -13,6 +13,8 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.*;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
+import com.gofobao.framework.collection.entity.BorrowCollection;
+import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
@@ -34,6 +36,9 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.service.BorrowRepaymentService;
+import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.entity.Tender;
@@ -46,6 +51,7 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -84,6 +90,10 @@ public class BorrowBizImpl implements BorrowBiz {
     private TenderService tenderService;
     @Autowired
     private CapitalChangeHelper capitalChangeHelper;
+    @Autowired
+    private BorrowCollectionService borrowCollectionService;
+    @Autowired
+    private BorrowRepaymentService borrowRepaymentService;
 
 
     @Override
@@ -95,7 +105,7 @@ public class BorrowBizImpl implements BorrowBiz {
             return ResponseEntity.ok(listWarpRes);
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR,"查询失败", VoViewBorrowListWarpRes.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewBorrowListWarpRes.class));
         }
     }
 
@@ -418,5 +428,326 @@ public class BorrowBizImpl implements BorrowBiz {
         borrowService.updateById(borrow);
 
         return ResponseEntity.ok(VoBaseResp.ok("取消借款成功!"));
+    }
+
+
+    /**
+     * 非转让标复审
+     *
+     * @param borrow
+     * @return
+     * @throws Exception
+     */
+    public boolean notTransferedBorrowAgainVerify(Borrow borrow) throws Exception {
+        boolean bool = false;
+        do {
+
+            if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1) || (borrow.getMoney() == borrow.getMoneyYes())) {
+                break;
+            }
+            Date nowDate = new Date();
+            int repayMoney = 0;
+            int repayInterest = 0;
+
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(StringHelper.toString(borrow.getMoney())),
+                    NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrow.getSuccessAt());
+            Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
+            List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
+
+            BorrowRepayment borrowRepayment = new BorrowRepayment();
+            for (int i = 0; i < repayDetailList.size(); i++) {
+                Map<String, Object> repayDetailMap = repayDetailList.get(i);
+                repayMoney += new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue();
+                repayInterest += new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue();
+                borrowRepayment.setBorrowId(borrow.getId());
+                borrowRepayment.setStatus(0);
+                borrowRepayment.setOrder(i);
+                borrowRepayment.setRepayAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
+                borrowRepayment.setRepayMoney(new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue());
+                borrowRepayment.setPrincipal(new Double(NumberHelper.toDouble(repayDetailMap.get("principal"))).intValue());
+                borrowRepayment.setInterest(new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue());
+                borrowRepayment.setRepayMoneyYes(0);
+                borrowRepayment.setCreatedAt(nowDate);
+                borrowRepayment.setUpdatedAt(nowDate);
+                borrowRepayment.setAdvanceMoneyYes(0);
+                borrowRepayment.setLateDays(0);
+                borrowRepayment.setLateInterest(0);
+                borrowRepaymentService.insert(borrowRepayment);
+            }
+
+            //生成回款记录
+            bool = disposeBorrowCollection(borrow, nowDate);
+        } while (false);
+        return bool;
+    }
+
+    /**
+     * 转让标复审
+     *
+     * @return
+     */
+    public boolean transferedBorrowAgainVerify(Borrow borrow) throws Exception {
+        boolean bool = false;
+        do {
+            if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1) || (borrow.getMoney() == borrow.getMoneyYes())) {
+                break;
+            }
+            Long tenderId = borrow.getTenderId();
+            List<BorrowCollection> transferedBorrowCollections = null;
+
+            //============================更新转让标识=============================
+            BorrowCollection borrowCollection = new BorrowCollection();
+            borrowCollection.setTransferFlag(1);
+            Specification<BorrowCollection> bcs = Specifications.<BorrowCollection>and()
+                    .eq("tenderId", tenderId)
+                    .eq("status", 0)
+                    .build();
+            borrowCollectionService.updateBySpecification(borrowCollection, bcs);
+
+            Tender tender = tenderService.findById(tenderId);
+            tender.setId(tenderId);
+            tender.setTransferFlag(2);
+            tenderService.updateById(tender);
+            //======================================================================
+            //扣除转让待收
+            bcs = Specifications.<BorrowCollection>and()
+                    .eq("status", 0)
+                    .eq("transferFlag", 1)
+                    .build();
+
+            transferedBorrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "`order`"));
+
+            Integer collectionMoney = 0;
+            Integer collectionInterest = 0;
+            for (BorrowCollection temp : transferedBorrowCollections) {
+                collectionMoney += temp.getCollectionMoney();
+                collectionInterest += temp.getInterest();
+            }
+
+            //更新资产记录
+            CapitalChangeEntity entity = new CapitalChangeEntity();
+            entity.setType(CapitalChangeEnum.CollectionLower);
+            entity.setUserId(borrow.getUserId());
+            entity.setMoney(collectionMoney);
+            entity.setInterest(collectionInterest);
+            entity.setRemark("债权转让成功，扣除待收资金");
+            capitalChangeHelper.capitalChange(entity);
+
+            //生成回款记录
+            bool = disposeBorrowCollection(borrow, transferedBorrowCollections.get(0).getStartAt());
+        } while (false);
+        return bool;
+    }
+
+    /**
+     * 处理借款回款
+     *
+     * @param borrow
+     * @param borrowDate
+     * @return
+     * @throws Exception
+     */
+    private boolean disposeBorrowCollection(Borrow borrow, Date borrowDate) throws Exception {
+        Date nowDate = new Date();
+        long borrowId = borrow.getId();
+        Integer repayMoney = 0;
+        Integer repayInterest = 0;
+        Integer borrowType = borrow.getType();
+
+        //投标用户id集合
+        Set<Integer> tenderUserIds = new HashSet<>();
+        CapitalChangeEntity entity = null;
+
+        //查询当前借款的所有 状态为1的 tender记录
+        Specification<Tender> ts = Specifications.<Tender>and()
+                .eq("borrowId", borrowId)
+                .eq("status", 1)
+                .build();
+        List<Tender> tenderList = tenderService.findList(ts);
+        if (CollectionUtils.isEmpty(tenderList)) {
+            return false;
+        }
+
+        for (Tender tempTender : tenderList) {
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
+                    NumberHelper.toDouble(StringHelper.toString(tempTender.getValidMoney())),
+                    NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrowDate);
+            Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
+            List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
+
+            BorrowCollection borrowCollection = new BorrowCollection();
+            int collectionMoney = 0;
+            int collectionInterest = 0;
+            for (int i = 0; i < repayDetailList.size(); i++) {
+                Map<String, Object> repayDetailMap = repayDetailList.get(i);
+                collectionMoney += new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue();
+                collectionInterest += new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue();
+                borrowCollection.setTenderId(tempTender.getId());
+                borrowCollection.setStatus(0);
+                borrowCollection.setOrder(i);
+                borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))) : borrowDate);
+                borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))) : nowDate);
+                borrowCollection.setCollectionAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
+                borrowCollection.setCollectionMoney(new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue());
+                borrowCollection.setPrincipal(new Double(NumberHelper.toDouble(repayDetailMap.get("principal"))).intValue());
+                borrowCollection.setInterest(new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue());
+                borrowCollection.setCreatedAt(nowDate);
+                borrowCollection.setUpdatedAt(nowDate);
+                borrowCollection.setCollectionMoneyYes(0);
+                borrowCollection.setLateDays(0);
+                borrowCollection.setLateInterest(0);
+                borrowCollectionService.insert(borrowCollection);
+            }
+
+            //扣除冻结
+            entity = new CapitalChangeEntity();
+            entity.setType(CapitalChangeEnum.Tender);
+            entity.setUserId(tempTender.getUserId());
+            entity.setToUserId(borrow.getUserId());
+            entity.setMoney(tempTender.getValidMoney());
+            entity.setRemark("成功投资[" + BorrowHelper.getBorrowLink(borrowId, borrow.getName()) + "]");
+            capitalChangeHelper.capitalChange(entity);
+
+            //添加待收
+            entity = new CapitalChangeEntity();
+            entity.setType(CapitalChangeEnum.CollectionAdd);
+            entity.setUserId(tempTender.getUserId());
+            entity.setToUserId(borrow.getUserId());
+            entity.setMoney(collectionMoney);
+            entity.setInterest(collectionInterest);
+            entity.setRemark("添加待收金额");
+            capitalChangeHelper.capitalChange(entity);
+
+            //添加奖励
+            if (borrow.getAwardType() > 0) {
+                int money = (int) MathHelper.myRound((tempTender.getValidMoney() / borrow.getMoney()) * borrow.getAward(), 2);
+                if (borrow.getAwardType() == 2) {
+                    money = (int) MathHelper.myRound(tempTender.getValidMoney() * borrow.getAward() / 100, 2);
+                }
+
+                entity = new CapitalChangeEntity();
+                entity.setType(CapitalChangeEnum.Award);
+                entity.setUserId(tempTender.getUserId());
+                entity.setToUserId(borrow.getUserId());
+                entity.setMoney(money);
+                entity.setRemark("借款标[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]的奖励");
+                capitalChangeHelper.capitalChange(entity);
+            }
+
+            if (!tenderUserIds.contains(tempTender.getUserId())) {
+                Notices notices = new Notices();
+                notices.setFromUserId(1L);
+                notices.setUserId(tempTender.getUserId());
+                notices.setRead(false);
+                notices.setName("投资的借款满标审核通过");
+                notices.setContent("您所投资的借款[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]在 " + DateHelper.dateToString(nowDate) + " 已满标审核通过");
+                notices.setType("system");
+                notices.setCreatedAt(nowDate);
+                notices.setUpdatedAt(nowDate);
+
+                //发送站内信
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
+                mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
+                Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
+                mqConfig.setMsg(body);
+                try {
+                    log.info(String.format("borrowProvider doAgainVerify send mq %s", GSON.toJson(body)));
+                    mqHelper.convertAndSend(mqConfig);
+                } catch (Exception e) {
+                    log.error("borrowProvider doAgainVerify send mq exception", e);
+                }
+
+                //更新投标状态
+                tempTender.setState(2);
+                tenderService.updateById(tempTender);
+            }
+
+            //触发投标成功事件
+            //=============================================================
+            //投资车贷标成功添加 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
+            //更新 投过相应标种 标识
+            //=============================================================
+            /**
+             * @// TODO: 2017/6/2 投标成功事件
+             */
+
+        }
+
+        //借款入账
+        entity = new CapitalChangeEntity();
+        entity.setType(CapitalChangeEnum.Borrow);
+        entity.setUserId(borrow.getUserId());
+        entity.setMoney(borrow.getMoney());
+        entity.setRemark("通过[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]借到的款");
+
+        if (borrow.getType() == 2) {
+            entity.setAsset("add@noUseMoney");
+        }
+        capitalChangeHelper.capitalChange(entity);
+
+        //扣除奖励
+        Integer awardType = borrow.getAwardType();
+        if (!ObjectUtils.isEmpty(awardType)) {
+            entity = new CapitalChangeEntity();
+
+            if (borrow.getType() == 2) {
+                entity.setAsset("sub@noUseMoney");
+            }
+            int tempMoney = borrow.getAward();
+            if (borrow.getAwardType() == 2) {
+                tempMoney = borrow.getMoney() * borrow.getAward();
+            }
+            entity.setType(CapitalChangeEnum.Fee);
+            entity.setUserId(borrow.getUserId());
+            entity.setMoney(tempMoney);
+            entity.setRemark("扣除借款标[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]的奖励");
+            capitalChangeHelper.capitalChange(entity);
+        }
+
+        if ((borrow.getType() == 0) && (!ObjectUtils.isEmpty(borrow.getTenderId())) && (borrow.getTenderId() > 0)) { //转让管理费
+            double transferFeeRate = Math.min(0.004 + 0.0008 * (borrow.getTotalOrder() - 1), 0.0128);
+
+            //转让管理费
+            entity = new CapitalChangeEntity();
+            entity.setType(CapitalChangeEnum.Fee);
+            entity.setUserId(borrow.getUserId());
+            entity.setMoney((int) (borrow.getMoney() * transferFeeRate));
+            entity.setRemark("扣除借款标[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]的转让管理费");
+            capitalChangeHelper.capitalChange(entity);
+
+        } else {
+            //添加待还
+            entity = new CapitalChangeEntity();
+            entity.setType(CapitalChangeEnum.PaymentAdd);
+            entity.setUserId(borrow.getUserId());
+            entity.setMoney(repayMoney);
+            entity.setInterest(repayInterest);
+            entity.setRemark("添加待还金额");
+            capitalChangeHelper.capitalChange(entity);
+        }
+
+        //净值账户管理费
+        if (borrowType == 1) {
+            double manageFeeRate = 0.0012;
+            double fee = 0;
+            if (borrow.getRepayFashion() == 1) {
+                fee = MathHelper.myRound(borrow.getMoney() * manageFeeRate / 30 * borrow.getTimeLimit(), 2);
+            } else {
+                fee = MathHelper.myRound(borrow.getMoney() * manageFeeRate * borrow.getTimeLimit(), 2);
+            }
+
+            entity = new CapitalChangeEntity();
+            entity.setType(CapitalChangeEnum.Manager);
+            entity.setUserId(borrow.getUserId());
+            entity.setMoney((int) fee);
+            entity.setRemark("扣除借款标[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]的管理费");
+            capitalChangeHelper.capitalChange(entity);
+        }
+
+        borrow.setStatus(3);
+        borrow.setSuccessAt(nowDate);
+        borrowService.updateById(borrow);
+        return true;
     }
 }

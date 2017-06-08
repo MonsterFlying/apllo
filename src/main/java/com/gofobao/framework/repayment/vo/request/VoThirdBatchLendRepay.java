@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 public class VoThirdBatchLendRepay {
     /**
-     * boorowId
+     * borrowId
      */
     private Long borrowId;
 

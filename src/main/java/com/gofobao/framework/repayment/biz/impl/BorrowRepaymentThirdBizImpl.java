@@ -6,16 +6,20 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.batch_lend_pay.*;
 import com.gofobao.framework.api.model.batch_repay.BatchRepayCheckResp;
+import com.gofobao.framework.api.model.batch_repay.BatchRepayReq;
 import com.gofobao.framework.api.model.batch_repay.BatchRepayRunResp;
+import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.JixinHelper;
+import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
-import com.gofobao.framework.repayment.vo.request.*;
+import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
+import com.gofobao.framework.repayment.vo.request.VoThirdBatchRepay;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.reflect.TypeToken;
@@ -33,9 +37,7 @@ import org.springframework.util.ObjectUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by Zeke on 2017/6/8.
@@ -54,6 +56,10 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     private UserThirdAccountService userThirdAccountService;
     @Autowired
     private BorrowService borrowService;
+    @Autowired
+    private BorrowBiz borrowBiz;
+    @Autowired
+    private JixinHelper jixinHelper;
 
     @Value("${gofobao.webDomain}")
     private String webDomain;
@@ -65,6 +71,31 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * @return
      */
     public ResponseEntity<VoBaseResp> thirdBatchRepay(VoThirdBatchRepay voThirdBatchRepay) {
+        Long borrowId = voThirdBatchRepay.getBorrowId();
+        if (ObjectUtils.isEmpty(borrowId)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "borrowId不存在!"));
+        }
+
+        //查询当前借款的所有 状态为1的 tender记录
+        Specification<Tender> ts = Specifications.<Tender>and()
+                .eq("borrowId", borrowId)
+                .eq("status", 1)
+                .build();
+        List<Tender> tenderList = tenderService.findList(ts);
+        if (CollectionUtils.isEmpty(tenderList)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "不存在有效的投标记录!"));
+        }
+
+        Borrow borrow = borrowService.findById(borrowId);
+        UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
+
+        BatchRepayReq request = new BatchRepayReq();
+        //.setBatchNo();
+
         return null;
     }
 
@@ -121,7 +152,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         }
 
         BatchLendPayReq request = new BatchLendPayReq();
-        request.setBatchNo(JixinHelper.getBatchNo());
+        request.setBatchNo(jixinHelper.getBatchNo());
         request.setAcqRes(StringHelper.toString(borrowId));//存放borrowId 标id
         request.setNotifyURL(webDomain + "/v2/third/lendrepay/check");
         request.setRetNotifyURL(webDomain + "/v2/third/lendrepay/run");
@@ -175,6 +206,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("=============================即信批次还款处理结果回调===========================");
             log.error("回调失败! msg:" + repayRunResp.getRetMsg());
         }
+
         return ResponseEntity.ok("success");
     }
 
@@ -200,6 +232,19 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         log.info("批次号：" + lendRepayCheckResp.getBatchNo() + "," +
                 "交易金额：" + lendRepayCheckResp.getTxAmount() + "," +
                 "交易笔数：" + lendRepayCheckResp.getTxCounts());
+
+        long borrowId = NumberHelper.toLong(lendRepayCheckResp.getAcqRes());
+        Borrow borrow = borrowService.findById(borrowId);
+        boolean bool = false;
+        try {
+            bool = borrowBiz.notTransferedBorrowAgainVerify(borrow);
+        } catch (Exception e) {
+            log.error("非流转标复审异常:",e);
+        }
+        if (bool){
+            log.info("非流转标复审成功!");
+        }
+
         return ResponseEntity.ok("success");
     }
 
