@@ -26,7 +26,7 @@ import org.springframework.util.ObjectUtils;
  * Created by Zeke on 2017/6/1.
  */
 @Service
-public class TenderThirdBizImpl implements TenderThirdBiz{
+public class TenderThirdBizImpl implements TenderThirdBiz {
 
     @Autowired
     private UserThirdAccountService userThirdAccountService;
@@ -35,7 +35,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz{
     @Autowired
     private TenderService tenderService;
 
-    public ResponseEntity<VoBaseResp> createThirdTender(VoCreateThirdTenderReq voCreateThirdTenderReq){
+    public ResponseEntity<VoBaseResp> createThirdTender(VoCreateThirdTenderReq voCreateThirdTenderReq) {
         Long userId = voCreateThirdTenderReq.getUserId();
         String txAmount = voCreateThirdTenderReq.getTxAmount();
 
@@ -43,22 +43,22 @@ public class TenderThirdBizImpl implements TenderThirdBiz{
         Preconditions.checkNotNull(userThirdAccount, "投标人未开户!");
 
         String autoTenderOrderId = userThirdAccount.getAutoTenderOrderId();
-        if (StringUtils.isEmpty(autoTenderOrderId)){
+        if (StringUtils.isEmpty(autoTenderOrderId)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR,"投标人未进行投标签约!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "投标人未进行投标签约!"));
         }
         Long autoTenderTxAmount = userThirdAccount.getAutoTenderTxAmount();
-        if (autoTenderTxAmount < (NumberHelper.toDouble(txAmount) * 100)){
+        if (autoTenderTxAmount < (NumberHelper.toDouble(txAmount) * 100)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR,"投标金额超出签约单笔最大投标额!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "投标金额超出签约单笔最大投标额!"));
         }
         Long autoTenderTotAmount = userThirdAccount.getAutoTenderTotAmount();
-        if (autoTenderTotAmount < (NumberHelper.toDouble(txAmount) * 100)){
+        if (autoTenderTotAmount < (NumberHelper.toDouble(txAmount) * 100)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR,"投标金额超出签约总投标额!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "投标金额超出签约总投标额!"));
         }
 
         BidAutoApplyRequest request = new BidAutoApplyRequest();
@@ -78,13 +78,10 @@ public class TenderThirdBizImpl implements TenderThirdBiz{
         }
 
         //更新tender记录
-        Tender updTender = new Tender();
-        updTender.setId(NumberHelper.toLong(request.getAcqRes()));
+        Tender updTender = tenderService.findById(NumberHelper.toLong(request.getAcqRes()));
         updTender.setAuthCode(response.getAuthCode());
         updTender.setTUserId(userThirdAccount.getId());
-        if (tenderService.updateById(updTender)){
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "借款失败!"));
-        }
+        tenderService.updateById(updTender);
         return null;
     }
 }

@@ -14,6 +14,7 @@ import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
@@ -33,6 +34,7 @@ public class AutoTenderProvider {
     @Autowired
     private TenderBiz tenderBiz;
 
+    @Transactional(rollbackFor = Exception.class)
     public void autoTender(Map<String, String> msg) throws Exception {
         Date nowDate = new Date();
         Long borrowId = NumberHelper.toLong(msg.get(MqConfig.MSG_BORROW_ID));
@@ -136,11 +138,11 @@ public class AutoTenderProvider {
         } while (false);
 
         //解除锁定
-        Borrow tempBorrow = new Borrow();
-        tempBorrow.setUpdatedAt(nowDate);
-        tempBorrow.setIsLock(false);
-        tempBorrow.setId(borrowId);
-        borrowService.updateById(tempBorrow);
+        Borrow borrow = borrowService.findById(borrowId);
+        borrow.setUpdatedAt(nowDate);
+        borrow.setIsLock(false);
+        borrow.setId(borrowId);
+        borrowService.updateById(borrow);
     }
 
 }

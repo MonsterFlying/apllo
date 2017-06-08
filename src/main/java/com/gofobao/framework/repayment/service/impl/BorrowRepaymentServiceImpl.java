@@ -15,7 +15,9 @@ import com.gofobao.framework.repayment.repository.BorrowRepaymentRepository;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoInfoReq;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Range;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -148,4 +150,30 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         }
         return borrowRepaymentRepository.save(borrowRepayment);
     }
+
+
+    public BorrowRepayment findByIdLock(Long id){
+        return borrowRepaymentRepository.findById(id);
+    }
+
+    public BorrowRepayment findById(Long id){
+        return borrowRepaymentRepository.findOne(id);
+    }
+
+    public List<BorrowRepayment> findList(Specification<BorrowRepayment> specification){
+        return borrowRepaymentRepository.findAll(specification);
+    }
+
+    public List<BorrowRepayment> findList(Specification<BorrowRepayment> specification, Sort sort){
+        return borrowRepaymentRepository.findAll(specification,sort);
+    }
+
+    public List<BorrowRepayment> findList(Specification<BorrowRepayment> specification, Pageable pageable){
+        return borrowRepaymentRepository.findAll(specification,pageable).getContent();
+    }
+
+    public long count(Specification<BorrowRepayment> specification){
+        return borrowRepaymentRepository.count(specification);
+    }
+
 }

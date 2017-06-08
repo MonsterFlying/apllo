@@ -193,8 +193,8 @@ public class BorrowBizImpl implements BorrowBiz {
 
         //初审
         MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
-        mqConfig.setTag(MqTagEnum.USER_ACTIVE_REGISTER);
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
+        mqConfig.setTag(MqTagEnum.FIRST_VERIFY);
         ImmutableMap<String, String> body = ImmutableMap
                 .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
@@ -206,12 +206,11 @@ public class BorrowBizImpl implements BorrowBiz {
             log.error("borrowBizImpl firstVerify send mq exception", e);
         }
 
-        //即信等级标的
         if (!mqState) {
-            return ResponseEntity.ok(VoBaseResp.ok("投标失败!"));
+            return ResponseEntity.ok(VoBaseResp.ok("发布净值借款失败!"));
         }
 
-        return ResponseEntity.ok(VoBaseResp.ok("投标成功!"));
+        return ResponseEntity.ok(VoBaseResp.ok("发布净值借款成功!"));
     }
 
     private long insertBorrow(VoAddNetWorthBorrow voAddNetWorthBorrow, Long userId) throws Exception {
@@ -300,7 +299,8 @@ public class BorrowBizImpl implements BorrowBiz {
         voQueryThirdBorrowList.setPageNum("1");
         voQueryThirdBorrowList.setPageSize("10");
         DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
-        if (NumberHelper.toInt(resp.getTotalItems()) > 0) {//在即信查询到对应的标的
+        int totalItems = NumberHelper.toInt(resp.getTotalItems()) + 1;
+        if (totalItems > 0) {//在即信查询到对应的标的
             List<DebtDetail> debtDetailList = GSON.fromJson(resp.getSubPacks(), new TypeToken<List<DebtDetail>>() {
             }.getType());
             Preconditions.checkNotNull(debtDetailList, "即信标的不存在!");
@@ -316,7 +316,6 @@ public class BorrowBizImpl implements BorrowBiz {
         }
         //======================================================================================
 
-
         Specification<Tender> borrowSpecification = Specifications
                 .<Tender>and()
                 .eq("status", 1)
@@ -324,14 +323,13 @@ public class BorrowBizImpl implements BorrowBiz {
                 .build();
 
         List<Tender> tenderList = tenderService.findList(borrowSpecification);
-        Tender tempTender = null;
         Set<Long> tenderUserIds = new HashSet<>();//投标用户id集合
         if (!CollectionUtils.isEmpty(tenderList)) {
             Iterator<Tender> itTender = tenderList.iterator();
             Tender tender = null;
             Notices notices = null;
-            tempTender = new Tender();
             while (itTender.hasNext()) {
+                notices = new Notices();
                 tender = itTender.next();
 
                 //更新资产记录
@@ -347,12 +345,12 @@ public class BorrowBizImpl implements BorrowBiz {
                 }
 
                 //更新投标记录状态
-                tempTender.setId(tender.getId());
-                tempTender.setStatus(2); // 取消状态
-                tempTender.setUpdatedAt(nowDate);
-                tenderService.updateById(tempTender);
+                tender.setId(tender.getId());
+                tender.setStatus(2); // 取消状态
+                tender.setUpdatedAt(nowDate);
+                tenderService.updateById(tender);
 
-                if (!tenderUserIds.contains(tempTender.getUserId())) {
+                if (!tenderUserIds.contains(tender.getUserId())) {
                     tenderUserIds.add(tender.getUserId());
                     notices.setFromUserId(1L);
                     notices.setUserId(tender.getUserId());
@@ -381,11 +379,10 @@ public class BorrowBizImpl implements BorrowBiz {
 
         Long tenderId = borrow.getTenderId();
         if ((borrow.getType() == 0) && (!ObjectUtils.isEmpty(tenderId)) && (tenderId > 0)) {//判断是否是转让标，并将借款状态置为0
-            tempTender = new Tender();
-            tempTender.setTransferFlag(0);
-            tempTender.setId(borrow.getTenderId());
-            tempTender.setUpdatedAt(nowDate);
-            tenderService.updateById(tempTender);
+            Tender tender = tenderService.findById(tenderId);
+            tender.setTransferFlag(0);
+            tender.setUpdatedAt(nowDate);
+            tenderService.updateById(tender);
         }
 
         Integer payMoney = 0;

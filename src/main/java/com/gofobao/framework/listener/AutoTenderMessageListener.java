@@ -40,7 +40,7 @@ public class AutoTenderMessageListener {
         Map<String, String> msg = (Map<String, String>) body.get(MqConfig.MSG_BODY);
 
         Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
-        if (tag.equals(MqTagEnum.AUTO_TENDER)) {  // 用户注册
+        if (tag.equals(MqTagEnum.AUTO_TENDER.getValue())) {  // 用户注册
             try {
                 autoTenderProvider.autoTender(msg);
                 log.info("===========================AutoTenderListener===========================");

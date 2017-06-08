@@ -117,7 +117,7 @@ public class TenderServiceImpl implements TenderService {
                 .eq("userId", userId)
                 .eq("borrowId", borrowId)
                 .eq("status", 1)
-                .predicate(new GeSpecification<Tender>("updatedAt", new DataObject(DateHelper.subDays(new Date(), 1))))
+                .predicate(new GeSpecification<Tender>("updatedAt", new DataObject(DateHelper.subMinutes(new Date(), 1))))
                 .build();
         List<Tender> tenderList = tenderRepository.findAll(specification);
         return !CollectionUtils.isEmpty(tenderList);

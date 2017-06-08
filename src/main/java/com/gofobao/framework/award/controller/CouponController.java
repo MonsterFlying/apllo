@@ -26,9 +26,9 @@ public class CouponController {
     @GetMapping("/v2/list/{status}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewCouponWarpRes> list(@PathVariable Integer status,
                                                     @PathVariable Integer pageIndex,
-                                                    @PathVariable Integer pageSize
-                                                    /*@RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
-        Long userId=901L;
+                                                    @PathVariable Integer pageSize,
+                                                    @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+
         VoCouponReq voCouponReq = new VoCouponReq();
         voCouponReq.setStatus(status);
         voCouponReq.setUserId(userId);
