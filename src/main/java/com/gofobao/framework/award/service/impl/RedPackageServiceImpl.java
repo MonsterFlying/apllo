@@ -29,8 +29,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import static org.springframework.transaction.annotation.Propagation.REQUIRED;
-
 /**
  * Created by admin on 2017/6/7.
  */
@@ -45,6 +43,11 @@ public class RedPackageServiceImpl implements RedPackageService {
     @PersistenceContext
     private EntityManager entityManager;
 
+    /**
+     * 红包列表
+     * @param voRedPackageReq
+     * @return
+     */
     @Override
     public List<RedPackageRes> list(VoRedPackageReq voRedPackageReq) {
         Page<ActivityRedPacket> packetPage;
@@ -109,17 +112,17 @@ public class RedPackageServiceImpl implements RedPackageService {
     @Transactional(rollbackFor = Exception.class)
     public OpenRedPackage openRedPackage(VoOpenRedPackageReq voOpenRedPackageReq) {
         StringBuffer sb = new StringBuffer();
-        sb.append(" SELECT coupon FROM ActivityRedPackage redPackage " +
+        sb.append(" SELECT redPackage FROM ActivityRedPacket redPackage " +
                 " WHERE " +
-                " redPackage.userId =:userId" +
+                " redPackage.userId =:userId " +
                 " AND " +
-                " (id=:redId OR vparam1=:redId )" +
+                " (redPackage.id=:redId OR redPackage.vparam1=:redId )" +
                 " AND " +
-                " del=0 " +
+                " redPackage.del=0 " +
                 " AND  " +
-                " status=0" +
-                " AND" +
-                " entAt>NOW()");
+                " redPackage.status=0 " +
+                " AND " +
+                " redPackage.endAt>NOW()");
 
         OpenRedPackage openRedPackage = new OpenRedPackage();
         TypedQuery<ActivityRedPacket> redPackets = entityManager
@@ -143,7 +146,7 @@ public class RedPackageServiceImpl implements RedPackageService {
         }
         //
         if (CollectionUtils.isEmpty(packetList)) {
-            log.info("打开红包失败,该红包id不存在 或者已过期: {redPackageId:" + voOpenRedPackageReq.getRedPackageId() + ",userId:" + voOpenRedPackageReq.getUserId() + "}");
+            log.info("打开红包失败,该红包id不存在 或者已过期: {redPackageId:" + voOpenRedPackageReq.getRedPackageId() + ",userId:" + voOpenRedPackageReq.getUserId() + ",nowTime:"+DateHelper.dateToString(new Date())+"}");
             openRedPackage.setFlag(false);
             return openRedPackage;
         }
@@ -158,6 +161,7 @@ public class RedPackageServiceImpl implements RedPackageService {
             redPacket.setUpdateDate(new Date());
             redPackageRepository.save(redPacket);
             entityManager.flush();
+            openRedPackage.setFlag(true);
             log.info("打开红包成功: {redPackageId:" + redPacket.getId() + ",userId:" + redPacket.getUserId() + ",money:" + redPacket.getMoney() / 100d + ", nowTime:" + DateHelper.dateToString(new Date()) + "}");
         } catch (Exception e) {
             log.info("打开红包失败: {redPackageId:" + redPacket.getId() + ",userId:" + redPacket.getUserId() + ",money:" + redPacket.getMoney() / 100d + " ,nowTime:" + DateHelper.dateToString(new Date()) + "}");

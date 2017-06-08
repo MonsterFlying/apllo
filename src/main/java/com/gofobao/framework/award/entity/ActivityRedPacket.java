@@ -14,6 +14,7 @@ import java.util.Date;
 @Data
 public class ActivityRedPacket {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ID", nullable = false)
     private Integer id;
     @Basic

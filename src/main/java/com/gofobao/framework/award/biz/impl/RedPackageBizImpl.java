@@ -58,6 +58,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
                                 VoViewOpenRedPackageWarpRes.class));
             }
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,

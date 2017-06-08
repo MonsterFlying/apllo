@@ -1,4 +1,4 @@
-package com.gofobao.framework.repayment.biz.impl;
+package com.gofobao.framework.repayment.biz.Impl;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.asset.entity.AdvanceLog;
@@ -556,7 +556,7 @@ public class BorrowRepaymentImpl implements BorrowRepaymentBiz {
                     Notices notices = new Notices();
                     notices.setFromUserId(1L);
                     notices.setUserId(tenderUserId);
-                    notices.setRead(false);
+                    notices.setRead(0);
                     notices.setName("客户还款");
                     notices.setContent(noticeContent);
                     notices.setType("system");

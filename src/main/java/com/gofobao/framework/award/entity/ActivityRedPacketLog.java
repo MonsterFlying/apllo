@@ -15,6 +15,7 @@ public class ActivityRedPacketLog {
 
     @Id
     @Column(name = "ID", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     @Basic
     @Column(name = "RED_PACKET_ID", nullable = true)
