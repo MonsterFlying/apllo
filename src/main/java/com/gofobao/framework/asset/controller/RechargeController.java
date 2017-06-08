@@ -49,4 +49,11 @@ public class RechargeController {
         return assetBiz.bankAcount(userId) ;
     }
 
+    @ApiOperation("充值记录")
+    @PostMapping("/asset/recharge/log")
+    public ResponseEntity<VoRechargeBankInfoResp> log(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId ){
+        return assetBiz.bankAcount(userId) ;
+    }
+
+
 }
