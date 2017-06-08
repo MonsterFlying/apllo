@@ -2,9 +2,12 @@ package com.gofobao.framework;
 
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.common.integral.IntegralChangeEntity;
-import com.gofobao.framework.common.integral.IntegralChangeEnum;
+
+import java.util.HashMap;
+import java.util.Map;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.helper.project.IntegralChangeHelper;
+import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.repayment.service.impl.LoanServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -29,6 +32,8 @@ public class AplloApplicationTests {
     private BorrowThirdBiz borrowThirdBiz;
     @Autowired
     private IntegralChangeHelper integralChangeHelper;
+    @Autowired
+    private BorrowProvider borrowProvider;
 
     @Test
     public void contextLoads() {
@@ -37,12 +42,10 @@ public class AplloApplicationTests {
     @Test
     public void test(){
 
-        IntegralChangeEntity entity = new IntegralChangeEntity();
-        entity.setUserId(901L);
-        entity.setValue(1000);
-        entity.setType(IntegralChangeEnum.TENDER);
+        Map<String,String> map = new HashMap();
+        map.put("borrowId","165153");
         try {
-            integralChangeHelper.integralChange(entity);
+            borrowProvider.doAgainVerify(map);
         } catch (Exception e) {
             e.printStackTrace();
         }

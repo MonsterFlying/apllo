@@ -65,7 +65,7 @@ CREATE TABLE `gfb_user_third_account` (
   `auto_tender_order_id` varchar(255) DEFAULT NULL COMMENT '自动投标签约订单号',
   `auto_tender_tx_amount` int(12) DEFAULT '0' COMMENT '单笔投标金额的上限',
   `auto_tender_tot_amount` int(12) DEFAULT '0' COMMENT '自动投标总金额上限',
-  `auto_transfer_bond_order_id` varchar(255) DEFAULT NULL COMMENT '自动债券转让签约单号',
+  `auto_transfer_bond_order_id` varchar(255) DEFAULT NULL COMMENT '自动债权转让签约单号',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COMMENT='银行电子账户标';
 

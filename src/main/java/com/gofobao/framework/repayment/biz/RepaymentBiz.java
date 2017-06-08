@@ -3,7 +3,9 @@ package com.gofobao.framework.repayment.biz;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListResWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.vo.request.VoInfoReq;
+import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -24,4 +26,11 @@ public interface RepaymentBiz {
      * @return
      */
      ResponseEntity<VoViewOrderDetailWarpRes> info(VoInfoReq voInfoReq);
+
+    /**
+     * 还款
+     * @param voRepayReq
+     * @return
+     */
+    ResponseEntity<VoBaseResp> repay(VoRepayReq voRepayReq) throws Exception;
 }

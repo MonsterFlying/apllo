@@ -26,7 +26,7 @@ public class Notices {
 
     @Column(name = "`read`")
     @Basic
-    private Integer read;
+    private Boolean read;
 
     private String name;
 

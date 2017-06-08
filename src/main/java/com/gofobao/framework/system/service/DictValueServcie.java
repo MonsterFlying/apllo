@@ -9,4 +9,8 @@ public interface DictValueServcie {
 
 
     DictValue findTopByItemIdAndValue02(Long itemId, String bankName);
+
+    DictValue findTopByItemIdAndValue01(Long itemId, String bankName);
+
+    void save(DictValue dictValue);
 }

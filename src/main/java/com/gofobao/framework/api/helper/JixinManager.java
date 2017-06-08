@@ -1,6 +1,7 @@
 package com.gofobao.framework.api.helper;
 
 import com.gofobao.framework.api.repsonse.JixinBaseResponse;
+import com.gofobao.framework.api.repsonse.JixinBatchBaseResponse;
 import com.gofobao.framework.api.request.JixinBaseRequest;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.core.helper.RandomHelper;
@@ -34,176 +35,232 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Slf4j
 public class JixinManager {
     @Autowired
-    CertHelper certHelper ;
+    CertHelper certHelper;
 
-    Gson gson = new Gson() ;
+    Gson gson = new Gson();
 
     @Value("${jixin.url}")
-    String prefixUrl ;
+    String prefixUrl;
 
     @Value("${jixin.version}")
-    String version ;
+    String version;
 
     @Value("${jixin.instCode}")
-    String instCode ;
+    String instCode;
 
     @Value("${jixin.bankCode}")
-    String bankCode ;
+    String bankCode;
 
-    public  <T extends JixinBaseRequest> String getHtml(JixinTxCodeEnum txCodeEnum, T req){
-        checkNotNull(req, "请求体为null") ;
+    public <T extends JixinBaseRequest> String getHtml(JixinTxCodeEnum txCodeEnum, T req) {
+        checkNotNull(req, "请求体为null");
         // 前期初始化
         req.setBankCode(bankCode);
         req.setVersion(version);
         req.setInstCode(instCode);
 
-        if(StringUtils.isEmpty(req.getSeqNo())){
+        if (StringUtils.isEmpty(req.getSeqNo())) {
             req.setSeqNo(RandomHelper.generateNumberCode(6));
         }
 
-        if(StringUtils.isEmpty(req.getTxTime())){
+        if (StringUtils.isEmpty(req.getTxTime())) {
             req.setTxTime(DateHelper.getTime());
         }
 
-        if(StringUtils.isEmpty(req.getTxDate())){
+        if (StringUtils.isEmpty(req.getTxDate())) {
             req.setTxDate(DateHelper.getDate());
         }
 
 
-        if(StringUtils.isEmpty(req.getTxDate())){
+        if (StringUtils.isEmpty(req.getTxDate())) {
             req.setTxDate(DateHelper.getDate());
         }
 
         req.setTxCode(txCodeEnum.getValue());
-        String url = prefixUrl + txCodeEnum.getUrl() ;
+        String url = prefixUrl + txCodeEnum.getUrl();
         String json = gson.toJson(req);
-        Map<String, String> params = gson.fromJson(json, new TypeToken<Map<String, String>>(){}.getType()) ;
+        Map<String, String> params = gson.fromJson(json, new TypeToken<Map<String, String>>() {
+        }.getType());
         String unSign = StringHelper.mergeMap(params);
         String sign = certHelper.doSign(unSign);
-        params.put("sign", sign) ;
+        params.put("sign", sign);
         return genFormHtml(params, url);
     }
 
     /**
      * 创建form表单
+     *
      * @param params 参数
-     * @param url 链接
+     * @param url    链接
      * @return
      */
     private String genFormHtml(Map<String, String> params, String url) {
-        StringBuilder sb = new StringBuilder() ;
-        sb.append("<html>") ;
-        sb.append("<head>") ;
+        StringBuilder sb = new StringBuilder();
+        sb.append("<html>");
+        sb.append("<head>");
         sb.append("     <title>银行存管设置密码</title>");
-        sb.append("     <meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\" /> ") ;
-        sb.append("</head>") ;
-        sb.append("<body>") ;
-        sb.append("<form method=\"post\" action=\"").append(url).append("\">") ;
-        if(!CollectionUtils.isEmpty(params)){
+        sb.append("     <meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\" /> ");
+        sb.append("</head>");
+        sb.append("<body>");
+        sb.append("<form method=\"post\" action=\"").append(url).append("\">");
+        if (!CollectionUtils.isEmpty(params)) {
             Set<Map.Entry<String, String>> entries = params.entrySet();
             Iterator<Map.Entry<String, String>> iterator = entries.iterator();
-            while (iterator.hasNext()){
+            while (iterator.hasNext()) {
                 Map.Entry<String, String> next = iterator.next();
                 sb.append("    <input type=\"hidden\" name=\"").append(next.getKey()).append("\" value=\"").append(next.getValue()).append("\"/> ");
             }
 
         }
-        sb.append("</form>") ;
+        sb.append("</form>");
         sb.append("<script>\n" +
                 "    document.getElementsByTagName('form')[0].submit();\n" +
-                "</script>") ;
-        sb.append("</body>") ;
-        sb.append("</html>") ;
-        return sb.toString() ;
+                "</script>");
+        sb.append("</body>");
+        sb.append("</html>");
+        return sb.toString();
     }
 
     private HttpEntity getHttpEntity(Map<String, String> params) {
-        HttpHeaders httpHeaders = new HttpHeaders() ;
+        HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         httpHeaders.set("Accept-Charset", "UTF-8");
-        httpHeaders.set("contentType","application/json");
+        httpHeaders.set("contentType", "application/json");
         return new HttpEntity(params, httpHeaders);
     }
 
-    public <T extends JixinBaseResponse> T callback(HttpServletRequest request, TypeToken<T> typeToken){
-        checkNotNull(request, "请求体为null") ;
+    public <T extends JixinBaseResponse> T callback(HttpServletRequest request, TypeToken<T> typeToken) {
+        checkNotNull(request, "请求体为null");
         String bgData = request.getParameter("bgData");
         log.info(String.format("即信异步响应返回值：%s", bgData));
         checkNotNull(bgData, "返回值内容为空");
-        T t  = gson.fromJson(bgData, typeToken.getType());
+        T t = gson.fromJson(bgData, typeToken.getType());
         // 验证参数
-        Map<String,String> param = gson.fromJson(bgData, new TypeToken<Map<String,String>>(){}.getType() ) ;
+        Map<String, String> param = gson.fromJson(bgData, new TypeToken<Map<String, String>>() {
+        }.getType());
         String unsige = StringHelper.mergeMap(param);
         boolean result = certHelper.verify(unsige, param.get("sign"));
-        if(!result){
+        if (!result) {
             log.error("验签失败", bgData);
-            return null ;
+            return null;
         }
 
         return t;
     }
 
-    public <T extends JixinBaseRequest, S extends JixinBaseResponse> S send(JixinTxCodeEnum txCodeEnum, T req, Class<S> clazz){
-        checkNotNull(req, "请求体为null") ;
+    public <T extends JixinBaseRequest, S extends JixinBatchBaseResponse> S sendBatch(JixinTxCodeEnum txCodeEnum, T req, Class<S> clazz) {
+        checkNotNull(req, "请求体为null");
         // 前期初始化
         req.setBankCode(bankCode);
         req.setVersion(version);
         req.setInstCode(instCode);
 
-        if(StringUtils.isEmpty(req.getSeqNo())){
+        if (StringUtils.isEmpty(req.getSeqNo())) {
             req.setSeqNo(RandomHelper.generateNumberCode(6));
         }
 
-        if(StringUtils.isEmpty(req.getTxTime())){
+        if (StringUtils.isEmpty(req.getTxTime())) {
             req.setTxTime(DateHelper.getTime());
         }
 
-        if(StringUtils.isEmpty(req.getTxDate())){
+        if (StringUtils.isEmpty(req.getTxDate())) {
             req.setTxDate(DateHelper.getDate());
         }
 
 
-        if(StringUtils.isEmpty(req.getTxDate())){
+        if (StringUtils.isEmpty(req.getTxDate())) {
             req.setTxDate(DateHelper.getDate());
         }
 
         req.setTxCode(txCodeEnum.getValue());
-        String url = prefixUrl + txCodeEnum.getUrl() ;
+        String url = prefixUrl + txCodeEnum.getUrl();
         String json = gson.toJson(req);
-        Map<String, String> params = gson.fromJson(json, new TypeToken<Map<String, String>>(){}.getType()) ;
+        Map<String, String> params = gson.fromJson(json, new TypeToken<Map<String, String>>() {
+        }.getType());
         String unSign = StringHelper.mergeMap(params);
         String sign = certHelper.doSign(unSign);
-        params.put("sign", sign) ;
+        params.put("sign", sign);
         log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));
-        initHttps() ;
+        initHttps();
         HttpEntity entity = getHttpEntity(params);
-        RestTemplate restTemplate =  new RestTemplate();
+        RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<S> response = null;
         try {
             response = restTemplate.exchange(url, HttpMethod.POST, entity, clazz);
-        }catch (Throwable e){
+        } catch (Throwable e) {
             log.error("请求即信服务器异常", e);
-            return null ;
+            return null;
         }
 
-        checkNotNull(response) ;
+        checkNotNull(response);
+        S body = response.getBody();
+        log.info(String.format("即信响应报文:url=%s body=%s", url, gson.toJson(body)));
+
+        // 请求插入数据
+        return body;
+    }
+
+    public <T extends JixinBaseRequest, S extends JixinBaseResponse> S send(JixinTxCodeEnum txCodeEnum, T req, Class<S> clazz) {
+        checkNotNull(req, "请求体为null");
+        // 前期初始化
+        req.setBankCode(bankCode);
+        req.setVersion(version);
+        req.setInstCode(instCode);
+
+        if (StringUtils.isEmpty(req.getSeqNo())) {
+            req.setSeqNo(RandomHelper.generateNumberCode(6));
+        }
+
+        if (StringUtils.isEmpty(req.getTxTime())) {
+            req.setTxTime(DateHelper.getTime());
+        }
+
+        if (StringUtils.isEmpty(req.getTxDate())) {
+            req.setTxDate(DateHelper.getDate());
+        }
+
+
+        if (StringUtils.isEmpty(req.getTxDate())) {
+            req.setTxDate(DateHelper.getDate());
+        }
+
+        req.setTxCode(txCodeEnum.getValue());
+        String url = prefixUrl + txCodeEnum.getUrl();
+        String json = gson.toJson(req);
+        Map<String, String> params = gson.fromJson(json, new TypeToken<Map<String, String>>() {
+        }.getType());
+        String unSign = StringHelper.mergeMap(params);
+        String sign = certHelper.doSign(unSign);
+        params.put("sign", sign);
+        log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));
+        initHttps();
+        HttpEntity entity = getHttpEntity(params);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<S> response = null;
+        try {
+            response = restTemplate.exchange(url, HttpMethod.POST, entity, clazz);
+        } catch (Throwable e) {
+            log.error("请求即信服务器异常", e);
+            return null;
+        }
+
+        checkNotNull(response);
         S body = response.getBody();
         // 验证参数
         String bodyJson = gson.toJson(body);
-        Map<String, String> unverifyParams = gson.fromJson(bodyJson, TypeTokenContants.MAP_ALL_STRING_TOKEN) ;
+        Map<String, String> unverifyParams = gson.fromJson(bodyJson, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         String unsige = StringHelper.mergeMap(unverifyParams);
         boolean result = certHelper.verify(unsige, unverifyParams.get("sign"));
-        if(!result){
+        if (!result) {
             log.error("即信请求返回值验证不通过");
-            return null ;
+            return null;
         }
-        log.info(String.format("即信响应报文:url=%s body=%s",url, gson.toJson(body)));
+        log.info(String.format("即信响应报文:url=%s body=%s", url, gson.toJson(body)));
 
         // 请求插入数据
-        return body ;
+        return body;
     }
 
-    private void initHttps(){
+    private void initHttps() {
         try {
             TrustManager[] trustManagers = new TrustManager[1];
             TrustManager tm = new SimpleTrustManager();
@@ -217,19 +274,23 @@ public class JixinManager {
                     return true;
                 }
             });
-        }catch (Exception ex){
+        } catch (Exception ex) {
             log.error("即信通讯工具：初始化https失败", ex);
         }
     }
 
-    public static class SimpleTrustManager implements TrustManager, X509TrustManager{
+    public static class SimpleTrustManager implements TrustManager, X509TrustManager {
         @Override
-        public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {}
+        public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+        }
 
         @Override
-        public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {}
+        public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+        }
 
         @Override
-        public X509Certificate[] getAcceptedIssuers() { return null; }
+        public X509Certificate[] getAcceptedIssuers() {
+            return null;
+        }
     }
 }
