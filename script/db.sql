@@ -168,3 +168,7 @@ CREATE TABLE gfb_recharge_detail_log
   update_time DATETIME COMMENT '更新时间',
   ip VARCHAR(32) DEFAULT '' COMMENT 'ip'
 );
+
+#修改第三方存管账户
+ALTER TABLE gfb_user_third_account ADD bank_name VARCHAR(255) DEFAULT '其他' NULL;
+ALTER TABLE gfb_user_third_account ADD bank_logo VARCHAR(255) DEFAULT '' NULL;

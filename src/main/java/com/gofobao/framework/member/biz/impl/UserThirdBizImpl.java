@@ -15,8 +15,10 @@ import com.gofobao.framework.api.model.password_set.PasswordSetRequest;
 import com.gofobao.framework.api.model.password_set.PasswordSetResponse;
 import com.gofobao.framework.asset.entity.BankAccount;
 import com.gofobao.framework.asset.service.BankAccountService;
+import com.gofobao.framework.asset.vo.response.VoBankTypeInfoResp;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.OKHttpHelper;
 import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.member.biz.UserThirdBiz;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -29,6 +31,8 @@ import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.member.vo.response.VoOpenAccountResp;
 import com.gofobao.framework.member.vo.response.VoPreOpenAccountResp;
 import com.google.common.reflect.TypeToken;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,9 +45,7 @@ import org.springframework.util.StringUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Max on 17/5/22.
@@ -72,6 +74,12 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Value("${gofobao.h5Domain}")
     private String h5Domain ;
+
+    @Value("${gofobao.aliyun-bankinfo-url}")
+    String aliyunQueryBankUrl ;
+
+    @Value("${gofobao.aliyun-bankinfo-appcode}")
+    String aliyunQueryAppcode ;
 
     @Override
     public ResponseEntity<VoPreOpenAccountResp> preOpenAccount(Long userId) {
@@ -153,8 +161,6 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "你的填写身份证号与系统保存的不一致！", VoOpenAccountResp.class)) ;
 
-        // 6.银行卡号
-
         // 7.短信验证码验证
         String srvTxCode = null ;
         try {
@@ -192,6 +198,30 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, msg, VoOpenAccountResp.class)) ;
         }
 
+
+        String logo = null;
+        String bankName = null ;
+        // 获取银行卡信息
+        try {
+            String cardNo = voOpenAccountReq.getCardNo() ; // 银行卡
+            Map<String, String> params = new HashMap<>();
+            params.put("bankcard", cardNo);
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Authorization", String.format("APPCODE %s", aliyunQueryAppcode));
+            String jsonStr = OKHttpHelper.get(aliyunQueryBankUrl, params, headers);
+            JsonObject result = new JsonParser().parse(jsonStr).getAsJsonObject();
+            int status = result.get("status").getAsInt();
+            if (status == 0) {
+                JsonObject info = result.get("result").getAsJsonObject();
+                logo = info.get("bank").getAsString();
+                bankName = info.get("logo").getAsString();
+
+            }
+
+        } catch (Exception e) {
+            log.error("开户查询银行卡异常");
+        }
+
         // 8.保存银行存管账户到用户中
         String accountId = response.getAccountId();
         UserThirdAccount entity = new UserThirdAccount() ;
@@ -212,6 +242,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
         entity.setPasswordState(0);
         entity.setCardNoBindState(1);
         entity.setName(voOpenAccountReq.getName());
+        entity.setBankLogo(logo);
+        entity.setBankName(bankName);
         Long id = userThirdAccountService.save(entity) ;
 
         //  9.保存用户实名信息
