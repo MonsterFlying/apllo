@@ -89,7 +89,7 @@ public class InvestServiceImpl implements InvestService {
         List<VoViewBackMoney> backMoneyList = new ArrayList<>();
         tenderList.stream().forEach(p -> {
             VoViewBackMoney voViewBackMoney = new VoViewBackMoney();
-            voViewBackMoney.setMoney(NumberHelper.to2DigitString(p.getValidMoney() / 100));
+            voViewBackMoney.setMoney(NumberHelper.to2DigitString(p.getValidMoney() / 100D));
             List<BorrowCollection> borrowCollectionList = borrowCollectionMap.get(p.getId());
             Long count = borrowCollectionList.stream().filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_NO).count();
             voViewBackMoney.setOrder(count.intValue());
@@ -101,8 +101,8 @@ public class InvestServiceImpl implements InvestService {
             Integer interest = borrowCollectionList.stream()
                     .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_NO)
                     .mapToInt(s -> s.getInterest()).sum();
-            voViewBackMoney.setInterest(NumberHelper.to2DigitString(interest / 100));
-            voViewBackMoney.setPrincipal(NumberHelper.to2DigitString(principal / 100));
+            voViewBackMoney.setInterest(NumberHelper.to2DigitString(interest / 100D));
+            voViewBackMoney.setPrincipal(NumberHelper.to2DigitString(principal / 100D));
             voViewBackMoney.setTenderId(p.getId());
             voViewBackMoney.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
             backMoneyList.add(voViewBackMoney);
@@ -205,8 +205,8 @@ public class InvestServiceImpl implements InvestService {
             Integer interest = borrowCollectionList.stream()
                     .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
                     .mapToInt(s -> s.getInterest()).sum();
-            voViewSettleRes.setInterest(NumberHelper.to2DigitString(interest / 100));
-            voViewSettleRes.setPrincipal(NumberHelper.to2DigitString(principal / 100));
+            voViewSettleRes.setInterest(NumberHelper.to2DigitString(interest / 100D));
+            voViewSettleRes.setPrincipal(NumberHelper.to2DigitString(principal / 100D));
             voViewSettleRes.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
             voViewSettleResList.add(voViewSettleRes);
         });
@@ -295,9 +295,9 @@ public class InvestServiceImpl implements InvestService {
                     .mapToInt(s -> s.getInterest())
                     .sum();
 
-            item.setInterest(NumberHelper.to2DigitString(interest / 100));
-            item.setPrincipal(NumberHelper.to2DigitString(principal / 100));
-            item.setReceivableInterest(NumberHelper.to2DigitString(receivableInterest / 100));
+            item.setInterest(NumberHelper.to2DigitString(interest / 100D));
+            item.setPrincipal(NumberHelper.to2DigitString(principal / 100D));
+            item.setReceivableInterest(NumberHelper.to2DigitString(receivableInterest / 100D));
         }
         return item;
     }
@@ -333,9 +333,9 @@ public class InvestServiceImpl implements InvestService {
         List<ReturnedMoney> returnedMonies = new ArrayList<>(0);
         borrowCollectionList.stream().forEach(p -> {
             ReturnedMoney returnedMoney = new ReturnedMoney();
-            returnedMoney.setInterest(NumberHelper.to2DigitString(p.getInterest() / 100));
-            returnedMoney.setPrincipal(NumberHelper.to2DigitString(p.getPrincipal() / 100));
-            returnedMoney.setCollectionMoney(NumberHelper.to2DigitString(p.getCollectionMoney() / 100));
+            returnedMoney.setInterest(NumberHelper.to2DigitString(p.getInterest() / 100D));
+            returnedMoney.setPrincipal(NumberHelper.to2DigitString(p.getPrincipal() / 100D));
+            returnedMoney.setCollectionMoney(NumberHelper.to2DigitString(p.getCollectionMoney() / 100D));
             returnedMoney.setOrder(p.getOrder() + 1);
             returnedMoney.setLateDays(p.getLateDays());
             returnedMoney.setCollectionAt(DateHelper.dateToString(p.getCollectionAt()));
