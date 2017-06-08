@@ -79,8 +79,8 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
             item.setBorrowName(borrow.getName());
             item.setOrder(p.getOrder() + 1);
             item.setTimeLime(borrow.getTimeLimit());
-            item.setCollectionMoney(NumberHelper.to2DigitString(p.getCollectionMoney() / 100));
-            item.setCollectionMoneyYes(NumberHelper.to2DigitString(p.getCollectionMoneyYes() / 100));
+            item.setCollectionMoney(NumberHelper.to2DigitString(p.getCollectionMoney() / 100D));
+            item.setCollectionMoneyYes(NumberHelper.to2DigitString(p.getCollectionMoneyYes() / 100D));
             orderResList.add(item);
         });
         //回款列表
@@ -112,7 +112,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         Borrow borrow = borrowRepository.findOne(borrowCollection.getBorrowId().longValue());
         VoViewOrderDetailRes detailRes = new VoViewOrderDetailRes();
         detailRes.setOrder(borrowCollection.getOrder() + 1);
-        detailRes.setCollectionMoney(NumberHelper.to2DigitString(borrowCollection.getCollectionMoney() / 100));
+        detailRes.setCollectionMoney(NumberHelper.to2DigitString(borrowCollection.getCollectionMoney() / 100D));
         detailRes.setLateDays(borrowCollection.getLateDays());
         detailRes.setStartAt(DateHelper.dateToString(borrowCollection.getStartAtYes()));
         detailRes.setBorrowName(borrow.getName());
@@ -125,8 +125,8 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         } else {
             detailRes.setStatus(BorrowCollectionContants.STATUS_YES_STR);
         }
-        detailRes.setPrincipal(NumberHelper.to2DigitString(interest / 100));
-        detailRes.setInterest(NumberHelper.to2DigitString(principal / 100));
+        detailRes.setPrincipal(NumberHelper.to2DigitString(interest / 100D));
+        detailRes.setInterest(NumberHelper.to2DigitString(principal / 100D));
         return detailRes;
     }
 

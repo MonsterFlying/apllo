@@ -69,7 +69,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
 
         BidAutoApplyRequest request = new BidAutoApplyRequest();
         request.setAccountId(userThirdAccount.getAccountId());
-        request.setOrderId(JixinHelper.getOrderId());
+        request.setOrderId(JixinHelper.getOrderId(JixinHelper.TENDER_PREFIX));
         request.setTxAmount(voCreateThirdTenderReq.getTxAmount());
         request.setProductId(voCreateThirdTenderReq.getProductId());
         request.setFrzFlag(voCreateThirdTenderReq.getFrzFlag());

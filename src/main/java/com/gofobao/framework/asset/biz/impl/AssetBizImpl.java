@@ -17,6 +17,7 @@ import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
 import com.gofobao.framework.asset.vo.request.VoAssetLog;
 import com.gofobao.framework.asset.vo.request.VoRechargeReq;
+import com.gofobao.framework.asset.vo.response.VoRechargeBankInfoResp;
 import com.gofobao.framework.asset.vo.response.VoUserAssetInfoResp;
 import com.gofobao.framework.asset.vo.response.VoViewAssetLogRes;
 import com.gofobao.framework.asset.vo.response.VoViewAssetLogWarpRes;
@@ -211,7 +212,7 @@ public class AssetBizImpl implements AssetBiz {
         // 插入充值记录
         RechargeDetailLog rechargeDetailLog = new RechargeDetailLog() ;
         rechargeDetailLog.setUserId(users.getId());
-        rechargeDetailLog.setBankName("") ; // TODO 开户卡需要添加银行信息
+        rechargeDetailLog.setBankName(userThirdAccount.getBankName()) ;
         rechargeDetailLog.setCallbackTime(null);
         rechargeDetailLog.setCreateTime(now);
         rechargeDetailLog.setUpdateTime(now);
@@ -220,7 +221,7 @@ public class AssetBizImpl implements AssetBiz {
         rechargeDetailLog.setIp(IpHelper.getIpAddress(request));
         rechargeDetailLog.setMobile(users.getPhone());
         rechargeDetailLog.setMoney(new Double(voRechargeReq.getMoney() * 100 ).longValue());
-        rechargeDetailLog.setRechargeChannel(0); // TODO 需要添加渠道
+        rechargeDetailLog.setRechargeChannel(0);
         rechargeDetailLog.setSeqNo(directRechargePlusRequest.getTxDate() + directRechargePlusRequest.getTxTime() + directRechargePlusRequest.getSeqNo()) ;
 
         rechargeDetailLogService.save(rechargeDetailLog) ;
@@ -311,6 +312,7 @@ public class AssetBizImpl implements AssetBiz {
         CapitalChangeEntity entity = new CapitalChangeEntity() ;
         entity.setMoney(money.intValue());
         entity.setType(CapitalChangeEnum.Recharge);
+        entity.setUserId(userId);
         entity.setToUserId(userId);
         entity.setRemark("充值成功！");
         capitalChangeHelper.capitalChange(entity) ;
@@ -324,5 +326,35 @@ public class AssetBizImpl implements AssetBiz {
         mqConfig.setMsg(body);
         mqHelper.convertAndSend(mqConfig);
         return ResponseEntity.ok("success") ;
+    }
+
+    @Override
+    public ResponseEntity<VoRechargeBankInfoResp> bankAcount(Long userId) {
+        Users users = userService.findById(userId);
+        Preconditions.checkNotNull(users, "当前用户不存在") ;
+        if(users.getIsLock()){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoRechargeBankInfoResp.class));
+        }
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if(ObjectUtils.isEmpty(userThirdAccount)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你还没有开通江西银行存管，请前往开通！", VoRechargeBankInfoResp.class));
+        }
+
+        if(userThirdAccount.getPasswordState() != 1){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "请初始化江西银行存管账户密码！", VoRechargeBankInfoResp.class));
+        }
+
+        VoRechargeBankInfoResp voRechargeBankInfoResp = VoBaseResp.ok("查询成功!", VoRechargeBankInfoResp.class) ;
+        voRechargeBankInfoResp.setBankCardNo(userThirdAccount.getAccountId());
+        voRechargeBankInfoResp.setName(users.getRealname());
+        voRechargeBankInfoResp.setBankName("江西银行");
+        return ResponseEntity.ok(voRechargeBankInfoResp) ;
     }
 }

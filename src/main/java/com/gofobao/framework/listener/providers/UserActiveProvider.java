@@ -107,10 +107,10 @@ public class UserActiveProvider {
         notices.setRead(false);
         notices.setCreatedAt(new Date());
         notices.setUserId(rechargeDetailLog.getUserId());
+        notices.setFromUserId(0L);
         notices.setContent(content);
         notices.setName(name);
         notices.setType("system");
-        notices.setFromUserId(0L);
         noticesBiz.save(notices) ;
         return true;
     }
