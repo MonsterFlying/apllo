@@ -4,11 +4,12 @@ import lombok.Data;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
+import java.util.Date;
 
 /**
  * Created by admin on 2017/5/31.
  */
-@Entity
+@Entity(name ="ActivityRedPacket")
 @Table(name = "gfb_activity_red_packet")
 @Data
 public class ActivityRedPacket {
@@ -41,13 +42,13 @@ public class ActivityRedPacket {
     private Timestamp endAt;
     @Basic
     @Column(name = "CREATE_TIME", nullable = true)
-    private Timestamp createTime;
+    private Date createTime;
     @Basic
     @Column(name = "CREATE_UP", nullable = true)
     private Integer createUp;
     @Basic
     @Column(name = "UPDATE_DATE", nullable = true)
-    private Timestamp updateDate;
+    private Date updateDate;
     @Basic
     @Column(name = "UPDATE_UP", nullable = true)
     private Integer updateUp;

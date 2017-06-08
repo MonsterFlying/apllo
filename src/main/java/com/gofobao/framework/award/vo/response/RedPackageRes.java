@@ -10,12 +10,12 @@ import lombok.Data;
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RedPackageRes {
-    @ApiModelProperty("红包金额 查询未领取和已过期 请忽略该字段")
+    @ApiModelProperty("红包金额 查询未领取和已过期红包时 请忽略该字段")
     private String money;
     @ApiModelProperty("红包标题")
     private String title;
     @ApiModelProperty("有效期")
     private String expiryDate;
-    @ApiModelProperty("红包id 查询未领取和已过期 请忽略该字段")
+    @ApiModelProperty("红包id 查询未领取和已过期红包时 请忽略该字段")
     private Integer redPackageId;
 }
