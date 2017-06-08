@@ -2,6 +2,7 @@ package com.gofobao.framework.asset.controller;
 
 import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.vo.request.VoRechargeReq;
+import com.gofobao.framework.asset.vo.response.VoPreRechargeResp;
 import com.gofobao.framework.asset.vo.response.VoRechargeBankInfoResp;
 import com.gofobao.framework.asset.vo.response.VoRechargeEntityWrapResp;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
@@ -39,8 +40,6 @@ public class RechargeController {
         return assetBiz.rechargeCallback(request, response) ;
     }
 
-
-
     @ApiOperation("获取转账的银行账户信息")
     @GetMapping("/asset/recharge/bankAcount")
     public ResponseEntity<VoRechargeBankInfoResp> bankAcount(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
@@ -51,6 +50,12 @@ public class RechargeController {
     @GetMapping("/asset/recharge/log/{pageIndex}/{pageSize}")
     public ResponseEntity<VoRechargeEntityWrapResp> log(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable("pageIndex") int pageIndex, @PathVariable("pageSize")int pageSize){
         return assetBiz.log(userId, pageIndex, pageSize) ;
+    }
+
+    @ApiOperation("充值")
+    @PostMapping("/asset/preRecharge")
+    public ResponseEntity<VoPreRechargeResp> preRecharge(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+        return assetBiz.preRecharge(userId) ;
     }
 
 
