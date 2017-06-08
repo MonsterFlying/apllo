@@ -1,17 +1,26 @@
 package com.gofobao.framework.listener.providers;
 
+import com.gofobao.framework.asset.entity.RechargeDetailLog;
+import com.gofobao.framework.asset.service.RechargeDetailLogService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
+import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.system.biz.IncrStatisticBiz;
+import com.gofobao.framework.system.biz.NoticesBiz;
 import com.gofobao.framework.system.entity.IncrStatistic;
+import com.gofobao.framework.system.entity.Notices;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -28,6 +37,12 @@ public class UserActiveProvider {
 
     @Autowired
     IncrStatisticBiz incrStatisticBiz ;
+
+    @Autowired
+    RechargeDetailLogService rechargeDetailLogService ;
+
+    @Autowired
+    NoticesBiz noticesBiz ;
 
 
     /**
@@ -63,5 +78,40 @@ public class UserActiveProvider {
         entity.setRemark("赠送体验金");
         capitalChangeHelper.capitalChange(entity);
         log.info("award virtualMoney success");
+    }
+
+
+    /**
+     * 充值成功
+     * @param msg
+     * @return
+     */
+    public boolean recharge(Map<String, String> msg) {
+        Long rechargeId = Long.parseLong(msg.get(MqConfig.MSG_ID));
+        if(ObjectUtils.isEmpty(rechargeId)){
+            log.error("充值MQ回调参数为空");
+            return false ;
+        }
+
+
+        RechargeDetailLog rechargeDetailLog = rechargeDetailLogService.findById(rechargeId) ;
+        if(ObjectUtils.isEmpty(rechargeDetailLog)){
+            log.error("查无充值记录");
+            return false ;
+        }
+
+        // 充值发送通知
+        String name = String.format("充值%s元已成功", StringHelper.formatDouble(rechargeDetailLog.getMoney() / 100D, true));
+        String content = String.format("您已经于%s成功充值%s元", DateHelper.dateToString(rechargeDetailLog.getCreateTime()), StringHelper.formatDouble(rechargeDetailLog.getMoney() / 100D, true));
+        Notices notices = new Notices();
+        notices.setRead(false);
+        notices.setCreatedAt(new Date());
+        notices.setUserId(rechargeDetailLog.getUserId());
+        notices.setContent(content);
+        notices.setName(name);
+        notices.setType("system");
+        notices.setFromUserId(0L);
+        noticesBiz.save(notices) ;
+        return true;
     }
 }

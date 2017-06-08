@@ -34,6 +34,10 @@ public interface BorrowCollectionService {
 
     List<BorrowCollection> findList(Specification<BorrowCollection> specification, Sort sort);
 
+    List<BorrowCollection> findList(Specification<BorrowCollection> specification);
+
+    long count(Specification<BorrowCollection> specification);
+
     boolean updateBySpecification(BorrowCollection borrowCollection, Specification<BorrowCollection> specification);
 
     BorrowCollection save(BorrowCollection borrowCollection);

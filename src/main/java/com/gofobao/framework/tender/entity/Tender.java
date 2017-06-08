@@ -19,6 +19,7 @@ import java.util.Date;
 @DynamicInsert
 public class Tender {
     @Id
+    @GeneratedValue
     @Column(name = "id")
     private Long id;
     @Basic

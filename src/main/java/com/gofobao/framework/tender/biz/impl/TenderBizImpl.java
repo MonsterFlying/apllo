@@ -4,8 +4,12 @@ import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.FrzFlagContant;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
+import com.gofobao.framework.collection.entity.BorrowCollection;
+import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
@@ -31,22 +35,22 @@ import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
+import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Zeke on 2017/5/31.
@@ -57,9 +61,6 @@ public class TenderBizImpl implements TenderBiz {
 
     static final Gson GSON = new Gson();
 
-
-    @Autowired
-    private BorrowService borrowService;
     @Autowired
     private UserService userService;
     @Autowired
@@ -74,87 +75,88 @@ public class TenderBizImpl implements TenderBiz {
     private TenderThirdBiz tenderThirdBiz;
     @Autowired
     private MqHelper mqHelper;
+    @Autowired
+    private BorrowBiz borrowBiz;
+    @Autowired
+    private BorrowService borrowService;
+    @Autowired
+    private BorrowCollectionService borrowCollectionService;
 
     public Map<String, Object> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception {
         Map<String, Object> rsMap = null;
         Date nowDate = new Date();
         Long userId = voCreateTenderReq.getUserId();
 
-        do {
-            rsMap = checkCreateTender(voCreateTenderReq);
-            Object msg = rsMap.get("msg");
-            if (!ObjectUtils.isEmpty(msg)) {
-                break;
+        rsMap = checkCreateTender(voCreateTenderReq);
+        Object msg = rsMap.get("msg");
+        if (!ObjectUtils.isEmpty(msg)) {
+            return rsMap;
+        }
+
+        Integer validMoney = (int) Double.parseDouble(rsMap.get("validMoney").toString());
+        Borrow borrow = (Borrow) rsMap.get("borrow");
+
+        Tender borrowTender = new Tender();
+        borrowTender.setUserId(userId);
+        borrowTender.setBorrowId(voCreateTenderReq.getBorrowId());
+        borrowTender.setStatus(1);
+        borrowTender.setMoney(voCreateTenderReq.getTenderMoney());
+        borrowTender.setValidMoney(validMoney);
+        borrowTender.setSource(voCreateTenderReq.getTenderSource());
+        Integer autoOrder = voCreateTenderReq.getAutoOrder();
+        borrowTender.setAutoOrder(ObjectUtils.isEmpty(autoOrder) ? 0 : autoOrder);
+        borrowTender.setIsAuto(voCreateTenderReq.getIsAutoTender());
+        borrowTender.setUpdatedAt(nowDate);
+        borrowTender.setCreatedAt(nowDate);
+        borrowTender.setState(1);
+        borrowTender = tenderService.insert(borrowTender);
+
+        //===============================调用即信投标申请操作====================================
+        VoCreateThirdTenderReq voCreateThirdTenderReq = new VoCreateThirdTenderReq();
+        voCreateThirdTenderReq.setAcqRes(String.valueOf(borrowTender.getId()));
+        voCreateThirdTenderReq.setUserId(userId);
+        voCreateThirdTenderReq.setTxAmount(StringHelper.formatDouble(validMoney, 100, false));
+        voCreateThirdTenderReq.setProductId(String.valueOf(borrow.getId()));
+        voCreateThirdTenderReq.setFrzFlag(FrzFlagContant.FREEZE);
+        ResponseEntity<VoBaseResp> resp = tenderThirdBiz.createThirdTender(voCreateThirdTenderReq);
+        if (!ObjectUtils.isEmpty(resp)) {
+            throw new Exception(resp.getBody().getState().getMsg());
+        }
+
+        //扣除待还
+        CapitalChangeEntity entity = new CapitalChangeEntity();
+        entity.setType(CapitalChangeEnum.Frozen);
+        entity.setUserId(borrowTender.getUserId());
+        entity.setToUserId(borrow.getUserId());
+        entity.setMoney(borrowTender.getValidMoney());
+        entity.setRemark("投标冻结资金");
+        if (!capitalChangeHelper.capitalChange(entity)) {
+            throw new Exception("资金操作失败！");
+        }
+
+        borrow.setMoneyYes(borrow.getMoneyYes() + validMoney);
+        borrow.setTenderCount((borrow.getTenderCount() + 1));
+        borrow.setId(borrow.getId());
+        borrow.setUpdatedAt(nowDate);
+        borrowService.updateById(borrow);
+
+        if (borrow.getMoneyYes() >= borrow.getMoney()) {
+            //复审
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
+            mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("tenderBizImpl againVerify send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Exception e) {
+                log.error("tenderBizImpl againVerify send mq exception", e);
+                throw new Exception(e);
             }
+        }
 
-            Borrow borrow = (Borrow) rsMap.get("borrow");
-            Tender borrowTender = new Tender();
-            borrowTender.setUserId(userId);
-            borrowTender.setBorrowId(voCreateTenderReq.getBorrowId());
-            borrowTender.setStatus(1);
-            borrowTender.setMoney(voCreateTenderReq.getTenderMoney());
-            Integer validMoney = (int) Double.parseDouble(rsMap.get("validMoney").toString());
-            borrowTender.setValidMoney(validMoney);
-            borrowTender.setSource(voCreateTenderReq.getTenderSource());
-            Integer autoOrder = voCreateTenderReq.getAutoOrder();
-            borrowTender.setAutoOrder(ObjectUtils.isEmpty(autoOrder) ? 0 : autoOrder);
-            borrowTender.setIsAuto(voCreateTenderReq.getIsAutoTender());
-            borrowTender.setUpdatedAt(nowDate);
-            borrowTender.setCreatedAt(nowDate);
-            Tender tender = tenderService.insert(borrowTender);
-
-            if (!ObjectUtils.isEmpty(tender)) {
-                //扣除待还
-                CapitalChangeEntity entity = new CapitalChangeEntity();
-                entity.setType(CapitalChangeEnum.Frozen);
-                entity.setUserId(borrowTender.getUserId());
-                entity.setToUserId(borrow.getUserId());
-                entity.setMoney(borrowTender.getValidMoney());
-                entity.setRemark("投标冻结资金");
-                if (!capitalChangeHelper.capitalChange(entity)) {
-
-                    throw new Exception("资金操作失败！");
-                }
-
-                Borrow tempBorrow = new Borrow();
-                tempBorrow.setMoneyYes(borrow.getMoneyYes() + validMoney);
-                tempBorrow.setTenderCount((borrow.getTenderCount() + 1));
-                tempBorrow.setId(borrow.getId());
-                tempBorrow.setUpdatedAt(nowDate);
-                boolean flag = borrowService.updateById(tempBorrow);
-                if (flag) {
-                    //调用即信投标申请操作
-                    VoCreateThirdTenderReq voCreateThirdTenderReq = new VoCreateThirdTenderReq();
-                    voCreateThirdTenderReq.setAcqRes(String.valueOf(userId));
-                    voCreateThirdTenderReq.setUserId(userId);
-                    voCreateThirdTenderReq.setTxAmount(StringHelper.formatDouble(validMoney, 100, false));
-                    voCreateThirdTenderReq.setProductId(String.valueOf(tender.getId()));
-                    voCreateThirdTenderReq.setFrzFlag(FrzFlagContant.FREEZE);
-                    ResponseEntity<VoBaseResp> resp = tenderThirdBiz.createThirdTender(voCreateThirdTenderReq);
-                    if (!ObjectUtils.isEmpty(resp)) {
-                        rsMap.put("msg", resp);
-                    }
-                }
-                if (tempBorrow.getMoneyYes() >= borrow.getMoney()) {
-
-                    //复审
-                    MqConfig mqConfig = new MqConfig();
-                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
-                    mqConfig.setTag(MqTagEnum.USER_ACTIVE_REGISTER);
-                    ImmutableMap<String, String> body = ImmutableMap
-                            .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-                    mqConfig.setMsg(body);
-                    boolean mqState;
-                    try {
-                        log.info(String.format("tenderBizImpl againVerify send mq %s", GSON.toJson(body)));
-                        mqState = mqHelper.convertAndSend(mqConfig);
-                    } catch (Exception e) {
-                        log.error("tenderBizImpl againVerify send mq exception", e);
-                        throw new Exception(e);
-                    }
-                }
-            }
-        } while (false);
         return rsMap;
     }
 
@@ -165,6 +167,7 @@ public class TenderBizImpl implements TenderBiz {
      * @param voCreateTenderReq
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> tender(VoCreateTenderReq voCreateTenderReq) {
         Map<String, Object> rsMap = null;
         try {
@@ -229,9 +232,11 @@ public class TenderBizImpl implements TenderBiz {
             }
 
             if (!borrowService.checkValidDay(borrow)) { //检查是否是有效的招标时间
-                /**
-                 * @// TODO: 2017/5/31 调用取消借款函数
-                 */
+                //取消借款
+                VoCancelBorrow voCancelBorrow = new VoCancelBorrow();
+                voCancelBorrow.setBorrowId(borrowId);
+                voCancelBorrow.setUserId(userId);
+                borrowBiz.cancelBorrow(voCancelBorrow);
                 msg = "当前借款不在有效招标时间中!";
                 break;
             }
@@ -262,6 +267,7 @@ public class TenderBizImpl implements TenderBiz {
                     ImmutableMap<String, String> body = ImmutableMap
                             .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
                     mqConfig.setMsg(body);
+                    mqConfig.setSendTime(releaseAt);
                     try {
                         log.info(String.format("borrowProvider autoTender send mq %s", GSON.toJson(body)));
                         mqHelper.convertAndSend(mqConfig);
@@ -416,5 +422,115 @@ public class TenderBizImpl implements TenderBiz {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"查询失败", VoBorrowTenderUserWarpListRes.class));
         }
+    }
+
+    /**
+     * 债权转让
+     *
+     * @param voTransferTenderReq
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoBaseResp> transferTender(VoTransferTenderReq voTransferTenderReq) {
+        Date nowDate = new Date();
+        Long userId = voTransferTenderReq.getUserId();
+        Long tenderId = voTransferTenderReq.getTenderId();
+
+        Tender tender = tenderService.findById(tenderId);
+        if ((ObjectUtils.isEmpty(tender)) || (tender.getTransferFlag() != 0) || (tender.getStatus() != 1)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "操作不存在"));
+        }
+
+        Borrow borrow = borrowService.findById(tender.getBorrowId());
+        if ((borrow.getType() != 0) || (borrow.getStatus() != 3) || borrow.isTransfer()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "操作不存在"));
+        }
+
+        Specification<BorrowCollection> bcs = Specifications
+                .<BorrowCollection>and()
+                .eq("transferFlag", 0)
+                .eq("status", 0)
+                .eq("tenderId", tenderId)
+                .build();
+
+        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "`order`"));
+        if (CollectionUtils.isEmpty(borrowCollectionList)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "立即转让失败!"));
+        }
+
+        int waitRepayCount = borrowCollectionList.size();
+        if (waitRepayCount < 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "操作不存在"));
+        }
+
+        int cantrCapital = 0;
+        for (BorrowCollection borrowCollection : borrowCollectionList) {
+            cantrCapital += borrowCollection.getPrincipal();
+        }
+
+        if (cantrCapital < (1000 * 100)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "可转本金必须大于1000元才能转让"));
+        }
+
+        //转让借款
+        Borrow tempBorrow = new Borrow();
+        tempBorrow.setType(borrow.getType());
+        tempBorrow.setUse(borrow.getUse());
+        tempBorrow.setIsLock(false);
+        tempBorrow.setRepayFashion(borrow.getRepayFashion());
+        tempBorrow.setTimeLimit(borrow.getRepayFashion() == 1 ? borrow.getTimeLimit() : waitRepayCount);
+        tempBorrow.setMoney(cantrCapital);
+        tempBorrow.setApr(borrow.getApr());
+        tempBorrow.setLowest(1000 * 100);
+        tempBorrow.setValidDay(1);
+        tempBorrow.setName(borrow.getName());
+        tempBorrow.setDescription(borrow.getDescription());
+        tempBorrow.setIsVouch(borrow.getIsVouch());
+        tempBorrow.setIsMortgage(borrow.getIsMortgage());
+        tempBorrow.setIsConversion(borrow.getIsConversion());
+        tempBorrow.setUserId(userId);
+        tempBorrow.setTenderId(tender.getId());
+        tempBorrow.setCreatedAt(nowDate);
+        tempBorrow.setUpdatedAt(nowDate);
+        tempBorrow.setMost(0);
+        tempBorrow.setMostAuto(0);
+        tempBorrow.setAwardType(0);
+        tempBorrow.setAward(0);
+        tempBorrow.setPassword("");
+        tempBorrow.setMoneyYes(0);
+        tempBorrow.setTenderCount(0);
+
+        //锁定资产表
+        assetService.findByUserIdLock(userId);
+
+        Specification<Borrow> borrowSpecification = Specifications
+                .<Borrow>and()
+                .in("status", 0, 1)
+                .build();
+
+        long rsnum = borrowService.count(borrowSpecification);
+        if (rsnum > 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "您已经有一个进行中的借款标"));
+        }
+
+        borrowService.insert(tempBorrow);//插入转让标
+
+        tender.setTransferFlag(1);
+        tender.setUpdatedAt(nowDate);
+        tenderService.updateById(tender);
+
+        return ResponseEntity.ok(VoBaseResp.ok("立即转让成功!"));
     }
 }

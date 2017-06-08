@@ -2,8 +2,10 @@ package com.gofobao.framework.repayment.repository;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Repository;
 
+import javax.persistence.LockModeType;
 import java.util.List;
 
 /**
@@ -28,4 +30,6 @@ public interface BorrowRepaymentRepository extends JpaRepository<BorrowRepayment
      */
     List<BorrowRepayment> findByBorrowId(Long borrowId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    BorrowRepayment findById(Long id);
 }

@@ -41,6 +41,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -82,24 +83,59 @@ public class BorrowProvider {
      * @return
      * @throws Exception
      */
+    @Transactional(rollbackFor = Exception.class)
     public boolean doFirstVerify(Map<String, String> msg) throws Exception {
-        Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
-        Borrow borrow = borrowService.findByIdLock(borrowId);
-        if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 0)) {
+        boolean bool = false;
+        do {
+            Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
+            Borrow borrow = borrowService.findByIdLock(borrowId);
+            if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 0)) {
+                return false;
+            }
+
+            Integer borrowType = borrow.getType();
+            if (borrowType == 2) { //秒标
+                bool = miaoBorrow(borrow);
+            } else if (!ObjectUtils.isEmpty(borrow.getLendId())) { //转让标
+                bool = lendBorrow(borrow);
+            } else { //车贷、渠道、净值、转让 标
+                bool = baseBorrow(borrow);
+            }
+
+            if (!bool || borrow.isTransfer()) { //初审操作失败  或者 转让标不需要与即信通信
+                break;
+            }
+
+            bool = createThridBorrow(borrow);
+        } while (false);
+        return bool;
+    }
+
+    private boolean createThridBorrow(Borrow borrow) {
+        //===================即信登记标的===========================
+        String name = borrow.getName();
+        Long userId = borrow.getUserId();
+
+        VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
+        voCreateThirdBorrowReq.setUserId(userId);
+        voCreateThirdBorrowReq.setRate(StringHelper.formatDouble(borrow.getApr(), 100, false));
+        voCreateThirdBorrowReq.setTxAmount(StringHelper.formatDouble(borrow.getMoney(), 100, false));
+        voCreateThirdBorrowReq.setAcqRes(String.valueOf(userId));
+        voCreateThirdBorrowReq.setIntType(IntTypeContant.SINGLE_USE);
+        voCreateThirdBorrowReq.setDuration(String.valueOf(borrow.getTimeLimit()));
+        voCreateThirdBorrowReq.setProductDesc(StringUtils.isEmpty(name) ? "净值借款" : name);
+        voCreateThirdBorrowReq.setProductId(String.valueOf(borrow.getId()));
+        voCreateThirdBorrowReq.setRaiseDate(DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM));
+        voCreateThirdBorrowReq.setRaiseEndDate(DateHelper.dateToString(DateHelper.addDays(new Date(), 1), DateHelper.DATE_FORMAT_YMD_NUM));
+
+        ResponseEntity<VoBaseResp> resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
+        if (!ObjectUtils.isEmpty(resp)) {
+            log.error("===========================即信标的登记==============================");
+            log.error("即信标的登记失败：", resp.getBody().getState().getMsg());
+            log.error("=====================================================================");
             return false;
         }
-
-        Integer borrowType = borrow.getType();
-        boolean bool = false;
-        if (borrowType == 2) { //秒标
-            bool = miaoBorrow(borrow);
-        } else if (!ObjectUtils.isEmpty(borrow.getLendId())) { //转让标
-            bool = lendBorrow(borrow);
-        } else { //车贷、渠道、净值、转让 标
-            bool = baseBorrow(borrow);
-        }
-
-        return bool;
+        return true;
     }
 
     /**
@@ -113,8 +149,8 @@ public class BorrowProvider {
             Date nowDate = DateHelper.subSeconds(new Date(), 10);
 
             Integer borrowType = borrow.getType();
-            if ((ObjectUtils.isEmpty(borrow.getPassword())) && (borrowType == 0 || borrowType == 1 || borrowType == 4) && borrow.getApr() > 800) {
-                return false;
+            if ((!ObjectUtils.isEmpty(borrow.getPassword())) || (borrowType != 0 || borrowType != 1 || borrowType != 4) && borrow.getApr() < 800) {
+                break;
             }
 
             //更新借款状态
@@ -139,8 +175,8 @@ public class BorrowProvider {
 
             //触发自动投标队列
             MqConfig mqConfig = new MqConfig();
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
-            mqConfig.setTag(MqTagEnum.USER_ACTIVE_REGISTER);
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_AUTO_TENDER);
+            mqConfig.setTag(MqTagEnum.AUTO_TENDER);
             ImmutableMap<String, String> body = ImmutableMap
                     .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
             mqConfig.setMsg(body);
@@ -150,7 +186,7 @@ public class BorrowProvider {
             } catch (Exception e) {
                 log.error("borrowProvider autoTender send mq exception", e);
             }
-
+            bool = true;
         } while (false);
         return bool;
     }
@@ -163,6 +199,7 @@ public class BorrowProvider {
      * @throws Exception
      */
     private boolean lendBorrow(Borrow borrow) throws Exception {
+        boolean bool = false;
         do {
             Date nowDate = DateHelper.subSeconds(new Date(), 10);
 
@@ -189,8 +226,9 @@ public class BorrowProvider {
                     log.error(StringHelper.toString(msg));
                 }
             }
+            bool = true;
         } while (false);
-        return false;
+        return bool;
     }
 
     /**
@@ -201,13 +239,14 @@ public class BorrowProvider {
      * @throws Exception
      */
     private boolean miaoBorrow(Borrow borrow) throws Exception {
+        boolean bool = false;
         do {
             Date nowDate = DateHelper.subSeconds(new Date(), 10);
 
             Integer payMoney = 0;
             Integer borrowType = borrow.getType();
             if (borrowType != 2) {
-                return false;
+                break;
             }
             Double principal = NumberHelper.toDouble(StringHelper.toString(borrow.getMoney()));
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(principal,
@@ -237,8 +276,9 @@ public class BorrowProvider {
                 borrow.setReleaseAt(nowDate);
             }
             borrowService.updateById(borrow);
+            bool = true;
         } while (false);
-        return false;
+        return bool;
     }
 
     /**
@@ -248,15 +288,16 @@ public class BorrowProvider {
      * @return
      * @throws Exception
      */
+    @Transactional(rollbackFor = Exception.class)
     public boolean doAgainVerify(Map<String, String> msg) throws Exception {
-
+        boolean bool = false;
         do {
             Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get("borrowId")));
             Date nowDate = new Date();
 
             Borrow borrow = borrowService.findByIdLock(borrowId);
             if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1) || (borrow.getMoney() == borrow.getMoneyYes())) {
-                return false;
+                break;
             }
 
             Long tenderId = borrow.getTenderId();
@@ -302,6 +343,9 @@ public class BorrowProvider {
                 entity.setInterest(collectionInterest);
                 entity.setRemark("债权转让成功，扣除待收资金");
                 capitalChangeHelper.capitalChange(entity);
+
+                //========================================即信批量新增流转标===========================================
+
             } else {
                 BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(StringHelper.toString(borrow.getMoney())),
                         NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrow.getSuccessAt());
@@ -344,10 +388,9 @@ public class BorrowProvider {
             }
 
             Date borrowDate = null;
-            BorrowCollection transferedBorrowCollection = transferedBorrowCollections.get(0); //最近一期转让债券
             BorrowCollection borrowCollection = null;
             for (Tender tender : tenderList) {
-                borrowDate = (borrow.getType() == 0) && (!ObjectUtils.isEmpty(borrow.getTenderId())) && (borrow.getTenderId() > 0) ? transferedBorrowCollection.getStartAt() : nowDate;
+                borrowDate = (borrow.getType() == 0) && (!ObjectUtils.isEmpty(borrow.getTenderId())) && (borrow.getTenderId() > 0) ? transferedBorrowCollections.get(0).getStartAt() : nowDate;
 
                 BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
                         NumberHelper.toDouble(StringHelper.toString(tender.getValidMoney())),
@@ -437,6 +480,10 @@ public class BorrowProvider {
                     } catch (Exception e) {
                         log.error("borrowProvider doAgainVerify send mq exception", e);
                     }
+
+                    //更新投标状态
+                    tender.setState(2);
+                    tenderService.updateById(tender);
                 }
 
                 //触发投标成功事件
@@ -521,35 +568,9 @@ public class BorrowProvider {
                 capitalChangeHelper.capitalChange(entity);
             }
 
-            Borrow tempBorrow = new Borrow();
-            tempBorrow.setId(borrow.getId());
-            tempBorrow.setStatus(3);
-            tempBorrow.setSuccessAt(nowDate);
-            borrowService.updateById(tempBorrow);
-
-            //===================即信登记标的===========================
-            String name = borrow.getName();
-            Long userId = borrow.getUserId();
-
-            VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
-            voCreateThirdBorrowReq.setUserId(userId);
-            voCreateThirdBorrowReq.setRate(StringHelper.formatDouble(borrow.getApr(), 100, false));
-            voCreateThirdBorrowReq.setTxAmount(StringHelper.formatDouble(borrow.getMoney(), 100, false));
-            voCreateThirdBorrowReq.setAcqRes(String.valueOf(userId));
-            voCreateThirdBorrowReq.setIntType(IntTypeContant.SINGLE_USE);
-            voCreateThirdBorrowReq.setDuration(String.valueOf(borrow.getTimeLimit()));
-            voCreateThirdBorrowReq.setProductDesc(StringUtils.isEmpty(name) ? "净值借款" : name);
-            voCreateThirdBorrowReq.setProductId(String.valueOf(borrowId));
-            voCreateThirdBorrowReq.setRaiseDate(DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM));
-            voCreateThirdBorrowReq.setRaiseEndDate(DateHelper.dateToString(DateHelper.addDays(new Date(), 1), DateHelper.DATE_FORMAT_YMD_NUM));
-
-            ResponseEntity<VoBaseResp> resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
-            if (!ObjectUtils.isEmpty(resp)) {
-                log.error("===========================即信标的登记==============================");
-                log.error("即信标的登记失败：",resp.getBody().getState().getMsg());
-                log.error("=====================================================================");
-                return false;
-            }
+            borrow.setStatus(3);
+            borrow.setSuccessAt(nowDate);
+            borrowService.updateById(borrow);
 
             /**
              * @// TODO: 2017/6/2 复审事件
@@ -569,8 +590,8 @@ public class BorrowProvider {
              //还款事件得放最后面
              autoRepayForMiao(borrow);
              */
-            return true;
+            bool = true;
         } while (false);
-        return false;
+        return bool;
     }
 }
