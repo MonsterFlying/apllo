@@ -6,6 +6,7 @@ import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoInfoReq;
 import com.gofobao.framework.security.contants.SecurityContants;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ import springfox.documentation.annotations.ApiIgnore;
  * Created by admin on 2017/6/1.
  */
 @RestController
+@Api(description="还款计划")
 @RequestMapping("/repayment")
 public class BorrowRepaymentContorller {
 

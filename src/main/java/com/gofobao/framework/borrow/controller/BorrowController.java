@@ -27,7 +27,7 @@ import javax.validation.Valid;
 @RequestMapping("/borrow")
 @RestController
 @Slf4j
-@Api("首页标接口")
+@Api(description="首页标接口")
 public class BorrowController {
 
     @Autowired
