@@ -1,4 +1,4 @@
-package com.gofobao.framework.tender.entity;
+package com.gofobao.framework.collection.entity;
 
 import lombok.Data;
 

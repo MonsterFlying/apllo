@@ -16,5 +16,4 @@ public interface AssetRepository extends JpaRepository<Asset,Long> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Asset findByUserId(Long id);
-
 }
