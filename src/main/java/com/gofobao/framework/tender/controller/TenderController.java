@@ -5,7 +5,7 @@ import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
-import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +17,7 @@ import javax.validation.Valid;
 /**
  * Created by Max on 17/5/16.
  */
-@ApiModel("投标相关接口")
+@Api(description="投标相关接口")
 @RequestMapping("/tender")
 @RestController
 @Slf4j

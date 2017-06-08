@@ -3,6 +3,7 @@ package com.gofobao.framework.asset.controller;
 import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.vo.request.VoAssetLog;
 import com.gofobao.framework.security.contants.SecurityContants;
+import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Created by admin on 2017/5/22.
  */
+@Api(description = "资金流水")
 @RestController
 @RequestMapping("/assetLog")
 @Slf4j

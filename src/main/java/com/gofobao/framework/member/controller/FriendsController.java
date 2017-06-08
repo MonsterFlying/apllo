@@ -6,6 +6,7 @@ import com.gofobao.framework.member.vo.response.VoViewFriendsTenderInfoWarpRes;
 import com.gofobao.framework.member.vo.response.VoViewInviteAwardStatisticsWarpRes;
 import com.gofobao.framework.member.vo.response.VoViewInviteFriendersWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RequestMapping("/invite")
-@ApiModel("邀请好友")
+@Api(description="我的邀请")
 @RestController
 public class FriendsController {
 
