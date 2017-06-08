@@ -4,6 +4,7 @@ import com.gofobao.framework.repayment.vo.request.VoDetailReq;
 import com.gofobao.framework.repayment.vo.request.VoLoanListReq;
 import com.gofobao.framework.repayment.vo.response.*;
 import com.gofobao.framework.security.contants.SecurityContants;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,7 @@ import springfox.documentation.annotations.ApiIgnore;
  * Created by admin on 2017/6/2.
  */
 
-@ApiModel("我的借款")
+@Api(description="我的借款")
 @RestController
 @RequestMapping("/loan")
 public class LoanController {
@@ -23,7 +24,7 @@ public class LoanController {
     private LoanBiz loanBiz;
 
     @ApiOperation("还款中列表")
-    @RequestMapping(value = "/v2/refund/list/{pag             eIndex}/{pageSize}", method = RequestMethod.GET)
+    @RequestMapping(value = "/v2/refund/list/{pageIndex}/{pageSize}", method = RequestMethod.GET)
     public ResponseEntity<VoViewRefundWrapRes> refundResList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                     @PathVariable Integer pageIndex,
                                                     @PathVariable Integer pageSize) {

@@ -3,6 +3,7 @@ package com.gofobao.framework.lend.controller;
 import com.gofobao.framework.common.page.Page;
 import com.gofobao.framework.lend.biz.LendBiz;
 import com.gofobao.framework.lend.vo.response.VoViewLendListWarpRes;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Created by admin on 2017/6/6.
  */
-@ApiModel("出借列表")
+@Api(description="我的出借")
 @RestController
 @RequestMapping("/lend")
 public class LendController {

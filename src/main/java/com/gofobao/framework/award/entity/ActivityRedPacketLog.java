@@ -15,6 +15,7 @@ public class ActivityRedPacketLog {
 
     @Id
     @Column(name = "ID", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     @Basic
     @Column(name = "RED_PACKET_ID", nullable = true)
@@ -55,8 +56,5 @@ public class ActivityRedPacketLog {
     @Basic
     @Column(name = "VPARAM2", nullable = true, length = 255)
     private String vparam2;
-
-
-    public ActivityRedPacketLog(){}
 
 }

@@ -4,6 +4,7 @@ import com.gofobao.framework.award.biz.CouponBiz;
 import com.gofobao.framework.award.vo.VoViewCouponWarpRes;
 import com.gofobao.framework.award.vo.request.VoCouponReq;
 import com.gofobao.framework.security.contants.SecurityContants;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RequestMapping("/coupon")
 @RestController
-@ApiModel("流量券")
+@Api(description="流量券")
 public class CouponController {
 
     @Autowired

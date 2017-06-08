@@ -90,6 +90,11 @@ public enum CapitalChangeEnum {
      * 其他收入
      */
     IncomeOther("income_other"),
+
+    /**
+     * 其他收入
+     */
+    RedPackage("redPackage"),
     /**
      * 其他支出
      */

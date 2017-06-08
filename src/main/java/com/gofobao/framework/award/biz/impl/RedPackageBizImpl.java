@@ -9,7 +9,6 @@ import com.gofobao.framework.award.vo.response.RedPackageRes;
 import com.gofobao.framework.award.vo.response.VoViewOpenRedPackageWarpRes;
 import com.gofobao.framework.award.vo.response.VoViewRedPackageWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.sun.org.apache.regexp.internal.RE;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -58,6 +57,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
                                 VoViewOpenRedPackageWarpRes.class));
             }
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,

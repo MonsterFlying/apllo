@@ -4,10 +4,16 @@ import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.repository.RechargeDetailLogRepository;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.LockModeType;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by Max on 17/6/7.
@@ -31,5 +37,12 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService{
     @Override
     public RechargeDetailLog findById(Long rechargeId) {
         return rechargeDetailLogRepository.findTopByIdAndDel(rechargeId, 0) ;
+    }
+
+    @Override
+    public List<RechargeDetailLog> log(Long userId, int pageIndex, int pageSize) {
+        Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "id"))) ;
+        List<RechargeDetailLog> rechargeDetailLogs = rechargeDetailLogRepository.findByUserIdAndDel(userId, 0, pageable) ;
+        return Optional.ofNullable(rechargeDetailLogs).orElse(Collections.emptyList());
     }
 }

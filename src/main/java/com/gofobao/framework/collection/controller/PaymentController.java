@@ -6,6 +6,7 @@ import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListResWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,7 @@ import springfox.documentation.annotations.ApiIgnore;
 /**
  * Created by admin on 2017/5/31.
  */
-@ApiModel("回款明细")
+@Api(description="回款明细")
 @RestController
 @RequestMapping("/payment")
 public class PaymentController {

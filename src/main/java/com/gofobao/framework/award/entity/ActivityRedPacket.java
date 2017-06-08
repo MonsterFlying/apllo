@@ -14,6 +14,7 @@ import java.util.Date;
 @Data
 public class ActivityRedPacket {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ID", nullable = false)
     private Integer id;
     @Basic
@@ -53,27 +54,27 @@ public class ActivityRedPacket {
     @Column(name = "UPDATE_UP", nullable = true)
     private Integer updateUp;
     @Basic
-    @Column(name = "IP", nullable = true, length = 24)
+    @Column(name = "IP", length = 24)
     private String ip;
     @Basic
     @Column(name = "DEL", nullable = true)
     private Integer del;
     @Basic
-    @Column(name = "IPARAM1", nullable = true, length = 50)
+    @Column(name = "IPARAM1", length = 50)
     private String iparam1;
     @Basic
-    @Column(name = "IPARAM2", nullable = true, length = 50)
+    @Column(name = "IPARAM2",  length = 50)
     private String iparam2;
     @Basic
-    @Column(name = "IPARAM3", nullable = true, length = 50)
+    @Column(name = "IPARAM3",  length = 50)
     private String iparam3;
     @Basic
-    @Column(name = "VPARAM1", nullable = true, length = 255)
+    @Column(name = "VPARAM1", length = 255)
     private String vparam1;
     @Basic
-    @Column(name = "VPARAM2", nullable = true, length = 255)
+    @Column(name = "VPARAM2",  length = 255)
     private String vparam2;
     @Basic
-    @Column(name = "VPARAM3", nullable = true, length = 255)
+    @Column(name = "VPARAM3",  length = 255)
     private String vparam3;
 }

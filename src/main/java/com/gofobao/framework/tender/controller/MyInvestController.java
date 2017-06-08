@@ -5,7 +5,7 @@ import com.gofobao.framework.tender.biz.MyInvestBiz;
 import com.gofobao.framework.tender.vo.request.VoDetailReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;
 import com.gofobao.framework.tender.vo.response.*;
-import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
  * Created by admin on 2017/6/1.
  */
 @RequestMapping("/invest")
-@ApiModel("我的投资")
+@Api(description="我的投资")
 @RestController
 public class MyInvestController {
 

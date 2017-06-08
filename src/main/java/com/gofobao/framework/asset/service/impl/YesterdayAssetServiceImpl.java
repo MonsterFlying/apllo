@@ -5,7 +5,6 @@ import com.gofobao.framework.asset.repository.YesterdayAssetRepository;
 import com.gofobao.framework.asset.service.YesterdayAssetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ObjectUtils;
 
 /**
  * Created by Zeke on 2017/5/22.

@@ -3,6 +3,7 @@ package com.gofobao.framework.asset.controller;
 import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.vo.response.VoUserAssetInfoResp;
 import com.gofobao.framework.security.contants.SecurityContants;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Created by Zeke on 2017/5/19.
  */
+@Api(description = "资金模块")
 @RequestMapping
 @RestController
 public class AssetController {

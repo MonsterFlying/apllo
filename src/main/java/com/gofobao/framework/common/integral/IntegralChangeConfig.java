@@ -1,6 +1,5 @@
 package com.gofobao.framework.common.integral;
 
-import com.gofobao.framework.common.capital.CapitalChangeConfig;
 import lombok.Data;
 
 import java.util.ArrayList;
