@@ -1,6 +1,5 @@
 package com.gofobao.framework.repayment.service;
 
-import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderList;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailRes;
