@@ -17,10 +17,7 @@ import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
 import com.gofobao.framework.asset.vo.request.VoAssetLog;
 import com.gofobao.framework.asset.vo.request.VoRechargeReq;
-import com.gofobao.framework.asset.vo.response.VoRechargeBankInfoResp;
-import com.gofobao.framework.asset.vo.response.VoUserAssetInfoResp;
-import com.gofobao.framework.asset.vo.response.VoViewAssetLogRes;
-import com.gofobao.framework.asset.vo.response.VoViewAssetLogWarpRes;
+import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
@@ -31,6 +28,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.IpHelper;
 import com.gofobao.framework.helper.RedisHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -55,6 +53,7 @@ import org.springframework.util.StringUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -356,5 +355,29 @@ public class AssetBizImpl implements AssetBiz {
         voRechargeBankInfoResp.setName(users.getRealname());
         voRechargeBankInfoResp.setBankName("江西银行");
         return ResponseEntity.ok(voRechargeBankInfoResp) ;
+    }
+
+    @Override
+    public ResponseEntity<VoRechargeEntityWrapResp> log(Long userId, int pageIndex, int pageSize) {
+        pageIndex = pageIndex < 0 ? 0 : pageIndex ;
+        pageSize = pageSize < 0 ? 10 : pageSize ;
+        List<RechargeDetailLog> logs = rechargeDetailLogService.log(userId, pageIndex, pageSize) ;
+        List<VoRechargeEntityResp> voRechargeEntityRespList = new ArrayList<>(logs.size()) ;
+        logs.stream().forEach((RechargeDetailLog value) -> {
+            VoRechargeEntityResp bean = new VoRechargeEntityResp() ;
+            bean.setRechargeMoney(StringHelper.formatDouble(value.getMoney() / 100D, true));
+            String state = value.getState() == 0 ? "支付提交中": value.getState() == 1? "充值成功": "充值失败" ;
+            String channel = value.getRechargeChannel() == 0 ? "线上网银充值" : "线下转账" ;
+            bean.setTitle(String.format("%s-%s", channel, state));
+            String cardNo = value.getCardNo().substring(value.getCardNo().length() - 4);
+            bean.setBankNameAndCardNo(String.format("%s(%s)", value.getBankName(), cardNo));
+            bean.setSeqNo(value.getSeqNo());
+            bean.setRechargetime(DateHelper.dateToString(value.getCreateTime()));
+            voRechargeEntityRespList.add(bean) ;
+        });
+
+        VoRechargeEntityWrapResp resp = VoBaseResp.ok("查询成功", VoRechargeEntityWrapResp.class);
+        resp.getList().addAll(voRechargeEntityRespList) ;
+        return ResponseEntity.ok(resp);
     }
 }

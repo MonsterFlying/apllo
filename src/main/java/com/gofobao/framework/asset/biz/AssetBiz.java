@@ -3,6 +3,7 @@ package com.gofobao.framework.asset.biz;
 import com.gofobao.framework.asset.vo.request.VoAssetLog;
 import com.gofobao.framework.asset.vo.request.VoRechargeReq;
 import com.gofobao.framework.asset.vo.response.VoRechargeBankInfoResp;
+import com.gofobao.framework.asset.vo.response.VoRechargeEntityWrapResp;
 import com.gofobao.framework.asset.vo.response.VoUserAssetInfoResp;
 import com.gofobao.framework.asset.vo.response.VoViewAssetLogWarpRes;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
@@ -57,4 +58,15 @@ public interface AssetBiz {
      * @return
      */
     ResponseEntity<VoRechargeBankInfoResp> bankAcount(Long userId);
+
+
+    /**
+     * 查询充值日志列表
+     * @param userId
+     * @param pageIndex
+     * @param pageSize
+     * @return
+     */
+    ResponseEntity<VoRechargeEntityWrapResp> log(Long userId, int pageIndex, int pageSize);
+
 }

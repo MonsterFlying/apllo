@@ -3,15 +3,13 @@ package com.gofobao.framework.asset.controller;
 import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.vo.request.VoRechargeReq;
 import com.gofobao.framework.asset.vo.response.VoRechargeBankInfoResp;
+import com.gofobao.framework.asset.vo.response.VoRechargeEntityWrapResp;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestAttribute;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
@@ -44,15 +42,15 @@ public class RechargeController {
 
 
     @ApiOperation("获取转账的银行账户信息")
-    @PostMapping("/asset/recharge/bankAcount")
-    public ResponseEntity<VoRechargeBankInfoResp> bankAcount(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+    @GetMapping("/asset/recharge/bankAcount")
+    public ResponseEntity<VoRechargeBankInfoResp> bankAcount(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         return assetBiz.bankAcount(userId) ;
     }
 
     @ApiOperation("充值记录")
-    @PostMapping("/asset/recharge/log")
-    public ResponseEntity<VoRechargeBankInfoResp> log(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId ){
-        return assetBiz.bankAcount(userId) ;
+    @GetMapping("/asset/recharge/log/{pageIndex}/{pageSize}")
+    public ResponseEntity<VoRechargeEntityWrapResp> log(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable("pageIndex") int pageIndex, @PathVariable("pageSize")int pageSize){
+        return assetBiz.log(userId, pageIndex, pageSize) ;
     }
 
 
