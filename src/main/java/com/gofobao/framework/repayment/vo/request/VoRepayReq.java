@@ -1,6 +1,5 @@
 package com.gofobao.framework.repayment.vo.request;
 
-import com.gofobao.framework.borrow.entity.Borrow;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;

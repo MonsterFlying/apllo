@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.Date;
-import java.util.List;
 
 /**
  * Created by admin on 2017/6/7.

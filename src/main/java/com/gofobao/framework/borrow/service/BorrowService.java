@@ -4,9 +4,9 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.vo.request.VoBorrowByIdReq;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.response.VoBorrowByIdRes;
+import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;

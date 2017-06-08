@@ -6,7 +6,6 @@ import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.contants.SrvTxCodeContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
-import com.gofobao.framework.api.model.auto_credit_invest_auth_plus.AutoBidAuthPlusResponse;
 import com.gofobao.framework.api.model.direct_recharge_plus.auto_credit_invest_auth_plus.DirectRechargePlusRequest;
 import com.gofobao.framework.api.model.direct_recharge_plus.auto_credit_invest_auth_plus.DirectRechargePlusResponse;
 import com.gofobao.framework.asset.biz.AssetBiz;
