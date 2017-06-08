@@ -212,7 +212,7 @@ public class AssetBizImpl implements AssetBiz {
         // 插入充值记录
         RechargeDetailLog rechargeDetailLog = new RechargeDetailLog() ;
         rechargeDetailLog.setUserId(users.getId());
-        rechargeDetailLog.setBankName("") ; // TODO 开户卡需要添加银行信息
+        rechargeDetailLog.setBankName(userThirdAccount.getBankName()) ;
         rechargeDetailLog.setCallbackTime(null);
         rechargeDetailLog.setCreateTime(now);
         rechargeDetailLog.setUpdateTime(now);
@@ -221,7 +221,7 @@ public class AssetBizImpl implements AssetBiz {
         rechargeDetailLog.setIp(IpHelper.getIpAddress(request));
         rechargeDetailLog.setMobile(users.getPhone());
         rechargeDetailLog.setMoney(new Double(voRechargeReq.getMoney() * 100 ).longValue());
-        rechargeDetailLog.setRechargeChannel(0); // TODO 需要添加渠道
+        rechargeDetailLog.setRechargeChannel(0);
         rechargeDetailLog.setSeqNo(directRechargePlusRequest.getTxDate() + directRechargePlusRequest.getTxTime() + directRechargePlusRequest.getSeqNo()) ;
 
         rechargeDetailLogService.save(rechargeDetailLog) ;
