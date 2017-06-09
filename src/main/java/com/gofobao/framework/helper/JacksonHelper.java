@@ -25,7 +25,7 @@ public class JacksonHelper {
     }
 
     /**
-     * javaBean,list,array convert to json string
+     * javaBean,userTenderList,array convert to json string
      */
     public static String obj2json(Object obj) throws Exception {
         return objectMapper.writeValueAsString(obj);
@@ -63,7 +63,7 @@ public class JacksonHelper {
     }
 
     /**
-     * json array string convert to list with javaBean
+     * json array string convert to userTenderList with javaBean
      */
     public static <T> List<T> json2list(String jsonArrayStr, Class<T> clazz)
             throws Exception {

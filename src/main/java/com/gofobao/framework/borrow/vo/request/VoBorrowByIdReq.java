@@ -8,7 +8,7 @@ import lombok.Data;
  */
 @Data
 public class VoBorrowByIdReq {
-        @ApiModelProperty("标id")
+        @ApiModelProperty(value = "标id",hidden = true)
         private Long borrowId;
 
 }

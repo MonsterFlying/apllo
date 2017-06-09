@@ -11,6 +11,8 @@ import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.*;
+import com.gofobao.framework.borrow.vo.response.VoBorrowByIdRes;
+import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
 import com.gofobao.framework.collection.entity.BorrowCollection;
@@ -104,6 +106,7 @@ public class BorrowBizImpl implements BorrowBiz {
             listWarpRes.setVoViewBorrowLists(borrowLists);
             return ResponseEntity.ok(listWarpRes);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewBorrowListWarpRes.class));
         }
@@ -749,5 +752,22 @@ public class BorrowBizImpl implements BorrowBiz {
         borrow.setSuccessAt(nowDate);
         borrowService.updateById(borrow);
         return true;
+    }
+
+    @Override
+    public ResponseEntity<VoViewBorrowInfoWarpRes> info(Long borrowId) {
+        try {
+            VoBorrowByIdRes voBorrowByIdRes = borrowService.findByBorrowId(borrowId);
+            VoViewBorrowInfoWarpRes warpRes=VoBaseResp.ok("查询成功",VoViewBorrowInfoWarpRes.class);
+            warpRes.setVoBorrowByIdRes(voBorrowByIdRes);
+            return  ResponseEntity.ok(warpRes);
+        }catch (Exception e){
+            return  ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(
+                            VoBaseResp.ERROR,
+                            "查询失败",
+                            VoViewBorrowInfoWarpRes.class));
+        }
     }
 }

@@ -7,6 +7,7 @@ import com.gofobao.framework.borrow.vo.request.VoBorrowByIdReq;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.borrow.vo.response.VoBorrowByIdRes;
+import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
@@ -27,7 +28,7 @@ import javax.validation.Valid;
 @RequestMapping("/borrow")
 @RestController
 @Slf4j
-@Api(description="首页标接口")
+@Api(description = "首页标接口")
 public class BorrowController {
 
     @Autowired
@@ -35,7 +36,7 @@ public class BorrowController {
     @Autowired
     private BorrowBiz borrowBiz;
 
-    @ApiOperation(value = "首页标列表")
+    @ApiOperation(value = "首页标列表; type: 0：车贷标；1：净值标；2：秒标；4：渠道标；-1:全部")
     @GetMapping("/list/{type}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewBorrowListWarpRes> borrowList(@PathVariable Integer pageIndex,
                                                               @PathVariable Integer pageSize,
@@ -49,15 +50,9 @@ public class BorrowController {
 
 
     @ApiOperation("标信息")
-    @PostMapping("/info")
-    public VoBorrowByIdRes getByBorrowId(@ModelAttribute VoBorrowByIdReq req) {
-        VoBorrowByIdRes voBorrowByIdRes = new VoBorrowByIdRes();
-        try {
-            voBorrowByIdRes = borrowService.findByBorrowId(req);
-        } catch (Exception e) {
-            log.error("BorrowController borrowList Exception ", e);
-        }
-        return voBorrowByIdRes;
+    @PostMapping("/info/{borrowId}")
+    public ResponseEntity<VoViewBorrowInfoWarpRes> getByBorrowId(@PathVariable Long borrowId) {
+        return borrowBiz.info(borrowId);
     }
 
 
