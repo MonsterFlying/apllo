@@ -683,7 +683,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @throws Exception
      */
     public ResponseEntity<VoBaseResp> instantly(VoInstantlyRepaymentReq voInstantlyRepayment) throws Exception {
-
         VoRepayReq voRepayReq = new VoRepayReq();
         voRepayReq.setUserId(voInstantlyRepayment.getUserId());
         voRepayReq.setRepaymentId(voInstantlyRepayment.getRepaymentId());
