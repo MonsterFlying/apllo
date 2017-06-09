@@ -17,9 +17,23 @@ import java.util.List;
 @Repository
 public interface BorrowRepository extends JpaRepository<Borrow,Long>,JpaSpecificationExecutor<Borrow> {
 
+    /**
+     *
+     * @param type
+     * @param statusArray
+     * @param pageable
+     * @return
+     */
     Page<Borrow> findByTypeAndStatusNotIn(Integer type, List<Integer>statusArray, Pageable pageable);
 
-    Page<Borrow> findByAndStatusNotIn(List<Integer>statusArray, Pageable pageable);
+    /**
+     * 全部
+     * @param statusArray
+     * @param pageable
+     * @return
+     */
+    Page<Borrow> findByStatusNotIn(List<Integer>statusArray, Pageable pageable);
+
 
     long countByUserIdAndStatusIn(Long userId,List<Integer> statusList);
 

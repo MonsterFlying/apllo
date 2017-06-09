@@ -1,5 +1,7 @@
 package com.gofobao.framework.borrow.service.impl;
 
+import com.github.wenhao.jpa.Sorts;
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
@@ -13,15 +15,19 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
+import org.codehaus.groovy.util.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -31,7 +37,7 @@ import java.util.*;
 /**
  * Created by admin on 2017/5/17.
  */
-@Service
+@Component
 @Slf4j
 public class BorrowServiceImpl implements BorrowService {
 
@@ -46,34 +52,50 @@ public class BorrowServiceImpl implements BorrowService {
      */
     @Override
     public List<VoViewBorrowList> findAll(VoBorrowListReq voBorrowListReq) {
-
-        /**
-         * 排序
-         */
-        Sort sort = null;
-        if (!StringUtils.isEmpty(voBorrowListReq.getType()) && voBorrowListReq.getType() != BorrowContants.INDEX_TYPE_CE_DAI) {
-            sort = new Sort(
-                    new Sort.Order(Sort.Direction.DESC, "status,successAt,id"));
+        Integer type = voBorrowListReq.getType();
+        if (type == -1) {
+            type = null;
         }
-        Pageable pageable = new PageRequest(voBorrowListReq.getPageIndex()
-                , voBorrowListReq.getPageSize()
-                , sort);
-
         //过滤掉 发标待审 初审不通过；复审不通过 已取消
         List borrowsStatusArray = Lists.newArrayList(
                 new Integer(BorrowContants.CANCEL),
                 new Integer(BorrowContants.NO_PASS),
                 new Integer(BorrowContants.RECHECK_NO_PASS));
-        Page<Borrow> borrows;
-        if (!ObjectUtils.isEmpty(voBorrowListReq.getType())) {
-            borrows = borrowRepository.findByTypeAndStatusNotIn(voBorrowListReq.getType(),
-                    borrowsStatusArray
-                    , pageable);
-        } else {  //全部
-            borrows = borrowRepository.findByAndStatusNotIn(borrowsStatusArray, pageable);
+
+        Specification specification = Specifications.<Borrow>and()
+                .eq(!StringUtils.isEmpty(type), "type", type)
+                .notIn("status", borrowsStatusArray.toArray())
+                .build();
+        /**
+         * 排序
+         */
+        Sort sorts ;
+        if (StringUtils.isEmpty(type)) { //全部
+            sorts = Sorts.builder().asc("type")
+                    .desc("id")
+                    .build();
+        } else if (type == BorrowContants.INDEX_TYPE_CE_DAI) {
+
+            sorts = Sorts.builder()
+                    .asc("status")
+                    .desc("successAt")
+                    .desc("id")
+                    .build();
+        } else {
+            sorts = Sorts.builder()
+                    .desc("status")
+                    .desc("successAt")
+                    .desc("id")
+                    .build();
         }
 
-        List<Borrow> borrowLists = new ArrayList(borrows.getContent());
+        Page<Borrow> borrowPage=borrowRepository.findAll(specification, new PageRequest(voBorrowListReq.getPageIndex(), voBorrowListReq.getPageSize(), sorts));
+
+        List<Borrow> borrowLists = new ArrayList(borrowPage.getContent());
+        if (CollectionUtils.isEmpty(borrowLists)) {
+            return Collections.EMPTY_LIST;
+        }
+
         if (StringUtils.isEmpty(voBorrowListReq.getType())) {//全部
             borrowLists.sort((o1, o2) -> {
                 if (o1.getMoneyYes() / o1.getMoney() == o2.getMoneyYes() / o2.getMoney()) {
@@ -146,15 +168,15 @@ public class BorrowServiceImpl implements BorrowService {
     /**
      * 标详情
      *
-     * @param req
+     * @param borrowId
      * @return
      */
     @Override
-    public VoBorrowByIdRes findByBorrowId(VoBorrowByIdReq req) {
+    public VoBorrowByIdRes findByBorrowId(Long borrowId) {
 
         VoBorrowByIdRes voBorrowByIdRes = new VoBorrowByIdRes();
         try {
-            Borrow borrow = borrowRepository.findOne(new Long(req.getBorrowId()));
+            Borrow borrow = borrowRepository.findOne(new Long(borrowId));
             if (ObjectUtils.isEmpty(borrow)) {
                 return voBorrowByIdRes;
             }
@@ -248,7 +270,7 @@ public class BorrowServiceImpl implements BorrowService {
         return (nowDate.getTime() < validDate.getTime());
     }
 
-    public Borrow findById(Long borrowId){
+    public Borrow findById(Long borrowId) {
         return borrowRepository.findOne(borrowId);
     }
 
@@ -268,8 +290,8 @@ public class BorrowServiceImpl implements BorrowService {
      * @param specification
      * @return
      */
-    public List<Borrow> findList(Specification<Borrow> specification,Sort sort) {
-        return borrowRepository.findAll(specification,sort);
+    public List<Borrow> findList(Specification<Borrow> specification, Sort sort) {
+        return borrowRepository.findAll(specification, sort);
     }
 
     /**
@@ -278,11 +300,11 @@ public class BorrowServiceImpl implements BorrowService {
      * @param specification
      * @return
      */
-    public List<Borrow> findList(Specification<Borrow> specification,Pageable pageable) {
-        return borrowRepository.findAll(specification,pageable).getContent();
+    public List<Borrow> findList(Specification<Borrow> specification, Pageable pageable) {
+        return borrowRepository.findAll(specification, pageable).getContent();
     }
 
-    public long count(Specification<Borrow> specification){
+    public long count(Specification<Borrow> specification) {
         return borrowRepository.count(specification);
     }
 }

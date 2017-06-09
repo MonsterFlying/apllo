@@ -18,7 +18,7 @@ public interface BorrowService {
 
     List<VoViewBorrowList> findAll(VoBorrowListReq voBorrowListReq);
 
-    VoBorrowByIdRes findByBorrowId(VoBorrowByIdReq req);
+    VoBorrowByIdRes findByBorrowId(Long borrowId);
 
     long countByUserIdAndStatusIn(Long userId,List<Integer> statusList);
 

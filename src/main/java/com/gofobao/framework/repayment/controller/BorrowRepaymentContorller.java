@@ -32,7 +32,7 @@ public class BorrowRepaymentContorller {
     @Autowired
     private BorrowRepaymentThirdBiz borrowRepaymentThirdBiz;
 
-    @RequestMapping("/v2/list/{time}")
+    @RequestMapping(value = "/v2/list/{time}",method = RequestMethod.GET)
     @ApiOperation("还款计划列表")
     public ResponseEntity<VoViewCollectionOrderListResWarpRes> listRes(@PathVariable("time") String time,
                                                                        @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
@@ -42,8 +42,8 @@ public class BorrowRepaymentContorller {
         return repaymentBiz.repaymentList(orderReq);
     }
 
-    @RequestMapping("/v2/info/{repaymentId}")
-    @ApiOperation("还款计划列表")
+    @RequestMapping(value = "/v2/info/{repaymentId}",method = RequestMethod.GET)
+    @ApiOperation("还款信息")
     public ResponseEntity<VoViewOrderDetailWarpRes> info(@PathVariable("repaymentId") String repaymentId,
                                                          @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoInfoReq voInfoReq = new VoInfoReq();
