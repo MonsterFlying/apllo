@@ -184,7 +184,7 @@ public class BorrowProvider {
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_AUTO_TENDER);
             mqConfig.setTag(MqTagEnum.AUTO_TENDER);
-            mqConfig.setSendTime(releaseDate);
+            //mqConfig.setSendTime(releaseDate);
             ImmutableMap<String, String> body = ImmutableMap
                     .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
             mqConfig.setMsg(body);

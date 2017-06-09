@@ -129,7 +129,7 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
                 .map(p -> p.getId())
                 .collect(Collectors.toSet());
 
-        List<Tender> tenderList = tenderRepository.findUserFirstTender(new ArrayList(userArray));
+        List<Tender> tenderList = null;//tenderRepository.findUserFirstTender(new ArrayList(userArray));
 
         Map<Long, Tender> tenderMap = tenderList.stream()
                 .collect(Collectors.toMap(Tender::getUserId, a -> a));
