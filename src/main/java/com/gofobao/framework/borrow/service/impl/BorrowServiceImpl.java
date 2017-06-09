@@ -31,6 +31,9 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
 import java.util.*;
 
 
@@ -43,6 +46,9 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Autowired
     private BorrowRepository borrowRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     /**
      * 首页标列表
@@ -57,57 +63,44 @@ public class BorrowServiceImpl implements BorrowService {
             type = null;
         }
         //过滤掉 发标待审 初审不通过；复审不通过 已取消
-        List borrowsStatusArray = Lists.newArrayList(
+        List statusArray = Lists.newArrayList(
                 new Integer(BorrowContants.CANCEL),
                 new Integer(BorrowContants.NO_PASS),
                 new Integer(BorrowContants.RECHECK_NO_PASS));
 
-        Specification specification = Specifications.<Borrow>and()
-                .eq(!StringUtils.isEmpty(type), "type", type)
-                .notIn("status", borrowsStatusArray.toArray())
-                .build();
+        StringBuilder sb=new StringBuilder(" SELECT b FROM Borrow b WHERE 1=1 ");
+        /**
+         *条件
+         */
+        if(!StringUtils.isEmpty(type)){  // 全部
+            if (type==2) {
+                sb.append(" AND b.tenderId is not null ");
+            }else {
+                sb.append(" AND b.type=" + type);
+            }
+        }
+        sb.append(" AND b.status NOT IN(:statusArray)");
+
         /**
          * 排序
          */
-        Sort sorts ;
-        if (StringUtils.isEmpty(type)) { //全部
-            sorts = Sorts.builder().asc("type")
-                    .desc("id")
-                    .build();
-        } else if (type == BorrowContants.INDEX_TYPE_CE_DAI) {
-
-            sorts = Sorts.builder()
-                    .asc("status")
-                    .desc("successAt")
-                    .desc("id")
-                    .build();
-        } else {
-            sorts = Sorts.builder()
-                    .desc("status")
-                    .desc("successAt")
-                    .desc("id")
-                    .build();
+        if(StringUtils.isEmpty(type)){
+            sb.append(" ORDER BY FIELD(b.type,0, 4, 1, 2),(b.moneyYes / b.money) DESC, b.id DESC");
+        }else {
+            if (type == BorrowContants.INDEX_TYPE_CE_DAI) {
+                sb.append(" ORDER BY b.status ASC,(b.moneyYes / b.money) DESC, b.successAt DESC,b.id DESC");
+            } else {
+                sb.append(" ORDER BY b.status, b.successAt DESC, b.id DESC");
+            }
         }
+        List<Borrow>borrowLists=entityManager.createQuery(sb.toString(),Borrow.class)
+                .setParameter("statusArray",statusArray)
+                .setFirstResult(voBorrowListReq.getPageIndex())
+                .setMaxResults(voBorrowListReq.getPageSize())
+                .getResultList();
 
-        Page<Borrow> borrowPage=borrowRepository.findAll(specification, new PageRequest(voBorrowListReq.getPageIndex(), voBorrowListReq.getPageSize(), sorts));
-
-        List<Borrow> borrowLists = new ArrayList(borrowPage.getContent());
         if (CollectionUtils.isEmpty(borrowLists)) {
             return Collections.EMPTY_LIST;
-        }
-
-        if (StringUtils.isEmpty(voBorrowListReq.getType())) {//全部
-            borrowLists.sort((o1, o2) -> {
-                if (o1.getMoneyYes() / o1.getMoney() == o2.getMoneyYes() / o2.getMoney()) {
-                    return o2.getId().intValue() - o1.getId().intValue();
-                } else {
-                    return o2.getMoneyYes() / o2.getMoney() - o1.getMoneyYes() / o1.getMoney();
-                }
-            });
-        } else if (voBorrowListReq.getType() == BorrowContants.INDEX_TYPE_CE_DAI) {  //车贷
-            Comparator<Borrow> c = Comparator.comparing(p -> p.getStatus());
-            c.thenComparing(b -> b.getMoney() / b.getMoneyYes()).reversed().thenComparing(w -> w.getSuccessAt()).thenComparing(w -> w.getId());
-            borrowLists.sort(c);
         }
         Optional<List<Borrow>> objBorrow = Optional.ofNullable(borrowLists);
         List<VoViewBorrowList> listResList = new ArrayList<>();
@@ -115,13 +108,13 @@ public class BorrowServiceImpl implements BorrowService {
                 m -> {
                     VoViewBorrowList item = new VoViewBorrowList();
                     item.setId(m.getId());
-                    item.setMoney(NumberHelper.to2DigitString(new Double(m.getMoney() / 100d)) + MoneyConstans.RMB);
+                    item.setMoney(NumberHelper.to2DigitString(m.getMoney() / 100d) + MoneyConstans.RMB);
                     item.setIsContinued(m.getIsContinued());
                     item.setLockStatus(m.getIsLock());
                     item.setIsImpawn(m.getIsImpawn());
-                    item.setApr((m.getApr() / 100d) + MoneyConstans.PERCENT);
+                    item.setApr(NumberHelper.to2DigitString(m.getApr() / 100d) + MoneyConstans.PERCENT);
                     item.setName(m.getName());
-                    item.setMoneyYes(NumberHelper.to2DigitString(new Double(m.getMoneyYes() / 100d)) + MoneyConstans.RMB);
+                    item.setMoneyYes(NumberHelper.to2DigitString(m.getMoneyYes() / 100d) + MoneyConstans.RMB);
                     item.setIsNovice(m.getIsNovice());
                     item.setIsMortgage(m.getIsMortgage());
                     if (m.getType() == BorrowContants.REPAY_FASHION_ONCE) {
@@ -129,12 +122,15 @@ public class BorrowServiceImpl implements BorrowService {
                     } else {
                         item.setTimeLimit(m.getTimeLimit() + BorrowContants.MONTH);
                     }
+                    if(!StringUtils.isEmpty(m.getTenderId())&&m.getTenderId()>0){
+                        item.setType(2);
+                    }
                     //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
                     Integer status = m.getStatus();
-                    if (!ObjectUtils.isEmpty(m.getSuccessAt()) && !ObjectUtils.isEmpty(m.getCloseAt())) {   //满标时间 结清
-                        status = 4; //已完成
+                    if(status==0){ //待发布
+                        status=1;
                     }
-                    if (status == BorrowContants.BIDDING) {//发标中
+                    if (status == BorrowContants.BIDDING) {//招标中
                         Integer validDay = m.getValidDay();
                         Date endAt = DateHelper.addDays(DateHelper.beginOfDate(m.getReleaseAt()), (validDay + 1));
                         if (new Date().getTime() > endAt.getTime()) {  //当前时间大于满标时间
@@ -143,11 +139,17 @@ public class BorrowServiceImpl implements BorrowService {
                             status = 3; //招标中
                         }
                     }
+                    if (!ObjectUtils.isEmpty(m.getSuccessAt()) && !ObjectUtils.isEmpty(m.getCloseAt())) {   //满标时间 结清
+                        status = 4; //已完成
+                    }
                     if (status == BorrowContants.PASS && ObjectUtils.isEmpty(m.getCloseAt())) {
                         status = 2; //还款中
                     }
-                    if (status == BorrowContants.BIDDING) {
-                        status = 1;//待发布
+                    //速度
+                    if(status==3){
+                        item.setSpend(NumberHelper.to2DigitString(m.getMoneyYes()/m.getMoney()));
+                    }else {
+                        item.setSpend("0");
                     }
                     item.setStatus(status);
                     item.setRepayFashion(m.getRepayFashion());
@@ -156,10 +158,8 @@ public class BorrowServiceImpl implements BorrowService {
                     item.setIsConversion(m.getIsConversion());
                     item.setIsVouch(m.getIsVouch());
                     item.setTenderCount(m.getTenderCount());
-                    item.setType(m.getType());
                     listResList.add(item);
-                }
-                )
+                })
         );
         Optional<List<VoViewBorrowList>> result = Optional.empty();
         return result.ofNullable(listResList).orElse(Collections.emptyList());
@@ -197,12 +197,12 @@ public class BorrowServiceImpl implements BorrowService {
             voBorrowByIdRes.setTenderCount(borrow.getTenderCount() + BorrowContants.TIME);
             voBorrowByIdRes.setMoney(NumberHelper.to2DigitString(borrow.getMoney() / 100d));
             voBorrowByIdRes.setRepayFashion(borrow.getRepayFashion());
-            voBorrowByIdRes.setSpend(NumberHelper.to2DigitString(borrow.getMoneyYes() / borrow.getMoney()) + MoneyConstans.PERCENT);
+            voBorrowByIdRes.setSpend(borrow.getMoneyYes() / borrow.getMoney() + MoneyConstans.PERCENT);
             Date endAt = DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), (borrow.getValidDay() + 1));//结束时间
             voBorrowByIdRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
             voBorrowByIdRes.setSuccessAt(DateHelper.dateToString(borrow.getSuccessAt(), DateHelper.DATE_FORMAT_YMDHMS));
         } catch (Exception e) {
-            return null;
+            return voBorrowByIdRes;
         }
         return voBorrowByIdRes;
     }
