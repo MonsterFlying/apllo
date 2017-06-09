@@ -1,4 +1,4 @@
-package com.gofobao.framework.repayment.biz.Impl;
+package com.gofobao.framework.repayment.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.asset.entity.AdvanceLog;
