@@ -139,13 +139,12 @@ public class AssetBizImpl implements AssetBiz {
      * @param userId
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoUserAssetInfoResp> userAssetInfo(Long userId) {
-
         Asset asset = assetService.findByUserId(userId); //查询会员资产信息
         if (ObjectUtils.isEmpty(asset)) {
             return null;
         }
-
 
         UserCache userCache = userCacheService.findById(userId);  //查询会员缓存信息
         if (ObjectUtils.isEmpty(userCache)) {
@@ -489,6 +488,39 @@ public class AssetBizImpl implements AssetBiz {
         return null;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoBaseResp> synchronizedAsset(Long userId, String time) {
+        String type = "7820" ; // 线下转账
+        Users users = userService.findByIdLock(userId);
+        if(ObjectUtils.isEmpty(users)) return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "错误")) ;
+        Boolean isLock = users.getIsLock();
+        if(isLock) return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "错误"));
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if(ObjectUtils.isEmpty(userThirdAccount)) return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "错误"));
+        Asset asset = assetService.findByUserIdLock(userId);
+        if(ObjectUtils.isEmpty(asset)) return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "错误"));
+        Date endDate = new Date();// DateHelper.stringToDate("2016-08-30 12:00:00") ;
+        Date startDate = DateHelper.stringToDate(time) ;
+        int pageIndex = 1 ;
+        int pageSize = 10 ;
+        // 交易转出
+        AccountDetailsQueryResponse response = doQueryTx("1", pageIndex, pageSize, userThirdAccount.getAccountId(), startDate, endDate);
+        if(!ObjectUtils.isEmpty(response)){
+            int total = Integer.parseInt(response.getTotalItems());
+
+            doSynAsset(response, userId, userThirdAccount) ;
+            while (total - pageSize * pageIndex > 0){
+                ++pageIndex;
+                response = doQueryTx("1", pageIndex, pageSize, userThirdAccount.getAccountId(), startDate, endDate);
+            }
+
+        }
+
+        return ResponseEntity.ok(VoBaseResp.ok("成功")) ;
+    }
+
 
     /**
      * 获取免费提现额度
@@ -496,48 +528,12 @@ public class AssetBizImpl implements AssetBiz {
      * @return
      */
     private double getFreeCashCredit(long userId){
-        Asset asset = assetService.findByUserId(userId);
-
 
         return 0d;
     }
 
 
-    /**
-     * 与存管账户同步资金
-     * @param userId  用户Id
-     * @param startTime 交易其实时间
-     * @param endTime 交易结束时间
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public void synAsset(long userId, Date startTime, Date endTime){
-        Users users = userService.findByIdLock(userId);
-        if(ObjectUtils.isEmpty(users)) return ;
-        Boolean isLock = users.getIsLock();
-        if(isLock) return;
 
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        if(ObjectUtils.isEmpty(userThirdAccount)) return ;
-        Asset asset = assetService.findByUserIdLock(userId);
-        if(ObjectUtils.isEmpty(asset)) return ;
-        Date startDate = new Date() ;
-        Date endDate = DateHelper.subDays(startDate, 1) ;
-        int pageIndex = 0 ;
-        int pageSize = 100 ;
-        // 交易转出
-        AccountDetailsQueryResponse response = doQueryTx("1", pageIndex, pageSize, userThirdAccount.getAccountId(), startDate, endDate);
-        if(!ObjectUtils.isEmpty(response)){
-            int total = Integer.parseInt(response.getTotalItems());
-
-            doSynAsset(response, userId, userThirdAccount) ;
-            while (total - pageSize * (pageIndex  + 1)> 0){
-                ++pageIndex;
-                response = doQueryTx("1", pageIndex, pageSize, userThirdAccount.getAccountId(), startDate, endDate);
-            }
-
-        }
-
-    }
 
 
     /**
@@ -549,6 +545,7 @@ public class AssetBizImpl implements AssetBiz {
 
     @Transactional(rollbackFor = Exception.class)
     private void doSynAsset(AccountDetailsQueryResponse response, long userId, UserThirdAccount userThirdAccount) {
+        response.getSeqNo() ;
         List<RechargeDetailLog> detailLogs = rechargeDetailLogService.
                 findRechargeLogByUserIdAndDateRange(userId, response.getStartDate(), response.getEndDate()) ;
 
@@ -559,8 +556,8 @@ public class AssetBizImpl implements AssetBiz {
     private AccountDetailsQueryResponse doQueryTx(String type, int pageIndex, int pageSize, String accountId, Date startDate, Date endDate ){
         AccountDetailsQueryRequest request = new AccountDetailsQueryRequest() ;
         request.setAccountId(accountId);
-        request.setStartDate(DateHelper.dateToString(startDate, DateHelper.DATE_FORMAT_YMD));
-        request.setEndDate(DateHelper.dateToString(endDate, DateHelper.DATE_FORMAT_YMD));
+        request.setStartDate(DateHelper.dateToString(startDate, DateHelper.DATE_FORMAT_YMD_NUM));
+        request.setEndDate(DateHelper.dateToString(endDate, DateHelper.DATE_FORMAT_YMD_NUM));
         request.setChannel(ChannelContant.HTML);
         request.setType(type); // 转入
         request.setPageSize(String.valueOf(pageSize));
@@ -572,7 +569,7 @@ public class AssetBizImpl implements AssetBiz {
             return null;
         }
 
-        if(!JixinResultContants.BATCH_SUCCESS.equals(response.getRetCode())){
+        if(!JixinResultContants.SUCCESS.equals(response.getRetCode())){
             log.error(String.format("资金查询失败"));
             return null;
         }
