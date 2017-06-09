@@ -108,6 +108,13 @@ public enum JixinTxCodeEnum {
     BATCH_LEND_REPAY(
             "batchLendPay",
             "/escrow/p2p/online"
+    ),
+    /**
+     * 查询用户资金
+     */
+    ACCOUNT_DETAILS_QUERY(
+            "accountDetailsQuery",
+                    "/escrow/p2p/online"
     )
     ;
 

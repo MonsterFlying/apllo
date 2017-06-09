@@ -16,4 +16,6 @@ public interface RechargeDetailLogService {
     RechargeDetailLog findById(Long rechargeId);
 
     List<RechargeDetailLog> log(Long userId, int pageIndex, int pageSize);
+
+    List<RechargeDetailLog> findRechargeLogByUserIdAndDateRange(long userId, String startDate, String endDate);
 }

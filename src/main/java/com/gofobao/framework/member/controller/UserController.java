@@ -1,5 +1,6 @@
 package com.gofobao.framework.member.controller;
 
+import com.gofobao.framework.asset.vo.request.VoJudgmentAvailableReq;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.biz.UserPhoneBiz;
 import com.gofobao.framework.member.vo.request.VoBindSwitchPhoneReq;
@@ -34,5 +35,11 @@ public class UserController {
     public ResponseEntity<VoBaseResp> bindSwitchPhone(@Valid @ModelAttribute VoBindSwitchPhoneReq voBindSwitchPhoneReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voBindSwitchPhoneReq.setUserId(userId);
         return userPhoneBiz.bindSwitchPhone(voBindSwitchPhoneReq);
+    }
+
+    @ApiOperation("判断账户是否可用")
+    @PostMapping("/pub/user/info/checkOnly")
+    public ResponseEntity<VoBaseResp> checkOnlyForUserInfo(@Valid @ModelAttribute VoJudgmentAvailableReq VoJudgmentAvailableReq) {
+        return userPhoneBiz.checkOnlyForUserInfo(VoJudgmentAvailableReq);
     }
 }

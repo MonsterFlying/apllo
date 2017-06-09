@@ -82,4 +82,12 @@ public interface UserService {
      * @return
      */
     Users save(Users users);
+
+    /**
+     * 检测邮箱不存在
+     * @param email
+     * @return
+     */
+    boolean notExistsByEmail(String email);
+
 }
