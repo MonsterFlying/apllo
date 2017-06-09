@@ -50,7 +50,7 @@ public class BorrowController {
 
 
     @ApiOperation("标信息")
-    @PostMapping("/info/{borrowId}")
+    @GetMapping("/info/{borrowId}")
     public ResponseEntity<VoViewBorrowInfoWarpRes> getByBorrowId(@PathVariable Long borrowId) {
         return borrowBiz.info(borrowId);
     }
