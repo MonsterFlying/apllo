@@ -3,6 +3,7 @@ package com.gofobao.framework.tender.controller;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.TenderBiz;
+import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
 import io.swagger.annotations.Api;
@@ -12,12 +13,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 /**
  * Created by Max on 17/5/16.
  */
-@Api(description="投标相关接口")
+@Api(description = "投标相关接口")
 @RequestMapping("/tender")
 @RestController
 @Slf4j
@@ -25,11 +28,13 @@ public class TenderController {
 
     @Autowired
     private TenderBiz tenderBiz;
+    @Autowired
+    private TenderThirdBiz tenderThirdBiz;
 
     @ApiOperation("投标用户列表")
     @GetMapping("/v2/user/list/{borrowId}")
-    public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser( @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
-                                                                              @PathVariable Long borrowId ) {
+    public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                                                              @PathVariable Long borrowId) {
         return tenderBiz.findBorrowTenderUser(borrowId);
     }
 
@@ -38,5 +43,27 @@ public class TenderController {
     public ResponseEntity<VoBaseResp> tender(@ModelAttribute @Valid VoCreateTenderReq voCreateTenderReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voCreateTenderReq.setUserId(userId);
         return tenderBiz.tender(voCreateTenderReq);
+    }
+
+    /**
+     * 投资人批次购买债权运行回调
+     *
+     * @return
+     */
+    @ApiOperation("投资人批次购买债权运行回调")
+    @PostMapping("/v2/third/batch/creditinvest/run")
+    public ResponseEntity<String> thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) {
+        return tenderThirdBiz.thirdBatchCreditInvestRunCall(request, response);
+    }
+
+    /**
+     * 投资人批次购买债权参数验证回调
+     *
+     * @return
+     */
+    @ApiOperation("投资人批次购买债权参数验证回调")
+    @PostMapping("/v2/third/batch/creditinvest/check")
+    public ResponseEntity<String> thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse response) {
+        return tenderThirdBiz.thirdBatchCreditInvestRunCall(request, response);
     }
 }

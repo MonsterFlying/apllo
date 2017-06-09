@@ -82,4 +82,10 @@ public class Tender {
     @Basic
     @Column(name = "t_user_id")
     private Long tUserId;
+    @Basic
+    @Column(name = "third_tender_order_id")
+    private String thirdTenderOrderId;
+    @Basic
+    @Column(name = "third_transfer_order_id")
+    private String thirdTransferOrderId;
 }

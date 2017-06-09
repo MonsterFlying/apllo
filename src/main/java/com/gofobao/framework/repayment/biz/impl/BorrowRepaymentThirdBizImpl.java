@@ -5,9 +5,7 @@ import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.batch_lend_pay.*;
-import com.gofobao.framework.api.model.batch_repay.BatchRepayCheckResp;
-import com.gofobao.framework.api.model.batch_repay.BatchRepayReq;
-import com.gofobao.framework.api.model.batch_repay.BatchRepayRunResp;
+import com.gofobao.framework.api.model.batch_repay.*;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
@@ -93,9 +91,40 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         Borrow borrow = borrowService.findById(borrowId);
         UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
 
-        BatchRepayReq request = new BatchRepayReq();
-        //.setBatchNo();
+        List<Repay> lendPayList = new ArrayList<>();
+        Repay repay = null;
+        UserThirdAccount tenderUserThirdAccount = null;
+        int sumCount = 0;
+        int validMoney = 0;
+        for (Tender tender : tenderList) {
+            tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
+            validMoney = tender.getValidMoney();
+            sumCount += validMoney;
 
+            repay = new Repay();
+            repay.setAccountId(tenderUserThirdAccount.getAccountId());
+            repay.setAuthCode(tender.getAuthCode());
+            repay.setTxFeeIn("0");
+            repay.setTxFeeOut("0");
+            repay.setOrderId(JixinHelper.getOrderId(JixinHelper.LEND_PAY_PREFIX));
+            repay.setForAccountId(borrowUserThirdAccount.getAccountId());
+            repay.setTxAmount(StringHelper.formatDouble(validMoney, 100, false));
+            repay.setProductId(StringHelper.toString(borrowId));
+            lendPayList.add(repay);
+        }
+
+        BatchRepayReq request = new BatchRepayReq();
+        request.setBatchNo(jixinHelper.getBatchNo());
+        request.setTxAmount(StringHelper.toString(sumCount));
+        request.setRetNotifyURL(webDomain + "/v2/third/batch/repay/run");
+        request.setNotifyURL(webDomain + "/v2/third/batch/repay/check");
+        request.setAcqRes(StringHelper.toString(borrowId));
+        request.setSubPacks(GSON.toJson(lendPayList));
+        request.setTxCounts(StringHelper.toString(lendPayList.size()));
+        BatchRepayResp response = jixinManager.sendBatch(JixinTxCodeEnum.BATCH_REPAY, request, BatchRepayResp.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(response.getReceived()))) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "即信批次还款失败!"));
+        }
         return null;
     }
 
@@ -154,8 +183,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         BatchLendPayReq request = new BatchLendPayReq();
         request.setBatchNo(jixinHelper.getBatchNo());
         request.setAcqRes(StringHelper.toString(borrowId));//存放borrowId 标id
-        request.setNotifyURL(webDomain + "/v2/third/lendrepay/check");
-        request.setRetNotifyURL(webDomain + "/v2/third/lendrepay/run");
+        request.setNotifyURL(webDomain + "/v2/third/batch/lendrepay/check");
+        request.setRetNotifyURL(webDomain + "/v2/third/batch/lendrepay/run");
         request.setTxAmount(StringHelper.formatDouble(sumCount, 100, false));
         request.setTxCounts(StringHelper.toString(lendPayList.size()));
         request.setSubPacks(GSON.toJson(lendPayList));
@@ -185,6 +214,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("回调失败!");
         }
 
+        log.info("=============================即信批次放款检验参数回调===========================");
+        log.info("即信批次还款检验参数成功!");
+
         return ResponseEntity.ok("success");
     }
 
@@ -205,6 +237,18 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(repayRunResp.getRetCode())) {
             log.error("=============================即信批次还款处理结果回调===========================");
             log.error("回调失败! msg:" + repayRunResp.getRetMsg());
+        }
+
+        long borrowId = NumberHelper.toLong(repayRunResp.getAcqRes());
+        Borrow borrow = borrowService.findById(borrowId);
+        boolean bool = false;
+        try {
+            bool = borrowBiz.transferedBorrowAgainVerify(borrow);
+        } catch (Exception e) {
+            log.error("非流转标复审异常:", e);
+        }
+        if (bool) {
+            log.info("非流转标复审成功!");
         }
 
         return ResponseEntity.ok("success");
@@ -229,21 +273,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("回调失败! msg:" + lendRepayCheckResp.getRetMsg());
         }
 
-        log.info("批次号：" + lendRepayCheckResp.getBatchNo() + "," +
-                "交易金额：" + lendRepayCheckResp.getTxAmount() + "," +
-                "交易笔数：" + lendRepayCheckResp.getTxCounts());
-
-        long borrowId = NumberHelper.toLong(lendRepayCheckResp.getAcqRes());
-        Borrow borrow = borrowService.findById(borrowId);
-        boolean bool = false;
-        try {
-            bool = borrowBiz.notTransferedBorrowAgainVerify(borrow);
-        } catch (Exception e) {
-            log.error("非流转标复审异常:",e);
-        }
-        if (bool){
-            log.info("非流转标复审成功!");
-        }
+        log.info("=============================即信批次放款检验参数回调===========================");
+        log.info("即信批次放款检验参数成功!");
 
         return ResponseEntity.ok("success");
     }
@@ -266,7 +297,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("=============================即信批次放款处理结果回调===========================");
             log.error("回调失败! msg:" + lendRepayRunResp.getRetMsg());
         }
-
 
         return ResponseEntity.ok("success");
     }

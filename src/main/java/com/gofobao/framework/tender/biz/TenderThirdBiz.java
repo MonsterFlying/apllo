@@ -24,11 +24,11 @@ public interface TenderThirdBiz {
      * 投资人批次购买债权参数验证回调
      * @return
      */
-    ResponseEntity<VoBaseResp> thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 投资人批次购买债权参数运行回调
      * @return
      */
-    ResponseEntity<VoBaseResp> thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response);
 }
