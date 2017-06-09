@@ -250,18 +250,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("回调失败! msg:" + repayRunResp.getRetMsg());
         }
 
-        long borrowId = NumberHelper.toLong(repayRunResp.getAcqRes());
-        Borrow borrow = borrowService.findById(borrowId);
-        boolean bool = false;
-        try {
-            bool = borrowBiz.transferedBorrowAgainVerify(borrow);
-        } catch (Exception e) {
-            log.error("非流转标复审异常:", e);
-        }
-        if (bool) {
-            log.info("非流转标复审成功!");
-        }
-
         try {
             PrintWriter out = response.getWriter();
             out.print("success");
@@ -320,6 +308,18 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(lendRepayRunResp.getRetCode())) {
             log.error("=============================即信批次放款处理结果回调===========================");
             log.error("回调失败! msg:" + lendRepayRunResp.getRetMsg());
+        }
+
+        long borrowId = NumberHelper.toLong(lendRepayRunResp.getAcqRes());
+        Borrow borrow = borrowService.findById(borrowId);
+        boolean bool = false;
+        try {
+            bool = borrowBiz.transferedBorrowAgainVerify(borrow);
+        } catch (Exception e) {
+            log.error("非流转标复审异常:", e);
+        }
+        if (bool) {
+            log.info("非流转标复审成功!");
         }
 
         try {
