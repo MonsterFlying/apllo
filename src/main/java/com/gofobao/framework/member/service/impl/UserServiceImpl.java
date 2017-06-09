@@ -124,6 +124,12 @@ public class UserServiceImpl implements UserDetailsService, UserService{
         return userRepository.save(users);
     }
 
+    @Override
+    public boolean notExistsByEmail(String email) {
+        List<Users> users = userRepository.findByEmail(email) ;
+        return CollectionUtils.isEmpty(users) ;
+    }
+
     /**
      * 检查是否实名
      * @param users

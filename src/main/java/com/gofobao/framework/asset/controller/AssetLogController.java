@@ -1,7 +1,7 @@
 package com.gofobao.framework.asset.controller;
 
 import com.gofobao.framework.asset.biz.AssetBiz;
-import com.gofobao.framework.asset.vo.request.VoAssetLog;
+import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
@@ -25,9 +25,9 @@ public class AssetLogController {
     private AssetBiz assetBiz;
 
     @RequestMapping("/v2/list")
-    public ResponseEntity assetLogResList(@ModelAttribute VoAssetLog voAssetLog, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        voAssetLog.setUserId(userId);
-        return assetBiz.assetLogResList(voAssetLog);
+    public ResponseEntity assetLogResList(@ModelAttribute VoAssetLogReq voAssetLogReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        voAssetLogReq.setUserId(userId);
+        return assetBiz.assetLogResList(voAssetLogReq);
     }
 
 

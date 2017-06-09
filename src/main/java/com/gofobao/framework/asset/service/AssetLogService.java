@@ -1,7 +1,7 @@
 package com.gofobao.framework.asset.service;
 
 import com.gofobao.framework.asset.entity.AssetLog;
-import com.gofobao.framework.asset.vo.request.VoAssetLog;
+import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.response.VoViewAssetLogRes;
 
 import java.util.List;
@@ -13,11 +13,11 @@ public interface AssetLogService {
 
     /**
      * 资金流水
-     * @param voAssetLog
+     * @param voAssetLogReq
      * @return
      */
 
-    List<VoViewAssetLogRes> assetLogList(VoAssetLog voAssetLog);
+    List<VoViewAssetLogRes> assetLogList(VoAssetLogReq voAssetLogReq);
 
     void insert(AssetLog assetLog);
 

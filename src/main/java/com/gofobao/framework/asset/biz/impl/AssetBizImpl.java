@@ -14,7 +14,7 @@ import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.AssetLogService;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
-import com.gofobao.framework.asset.vo.request.VoAssetLog;
+import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.request.VoRechargeReq;
 import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
@@ -170,9 +170,9 @@ public class AssetBizImpl implements AssetBiz {
      * @return
      */
     @Override
-    public ResponseEntity<VoViewAssetLogWarpRes> assetLogResList(VoAssetLog voAssetLog) {
+    public ResponseEntity<VoViewAssetLogWarpRes> assetLogResList(VoAssetLogReq voAssetLogReq) {
         try {
-            List<VoViewAssetLogRes> resList = assetLogService.assetLogList(voAssetLog);
+            List<VoViewAssetLogRes> resList = assetLogService.assetLogList(voAssetLogReq);
             VoViewAssetLogWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewAssetLogWarpRes.class);
             warpRes.setResList(resList);
             return ResponseEntity.ok(warpRes);
@@ -458,5 +458,46 @@ public class AssetBizImpl implements AssetBiz {
         return ResponseEntity.ok(voPreRechargeResp);
     }
 
+    @Override
+    public ResponseEntity<VoPreCashResp> preCash(Long userId) {
+        Users users = userService.findById(userId);
+        Preconditions.checkNotNull(users, "当前用户不存在");
+        if (users.getIsLock()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoPreCashResp.class));
+        }
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你还没有开通江西银行存管，请前往开通！", VoPreCashResp.class));
+        }
+
+        if (userThirdAccount.getPasswordState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "请初始化江西银行存管账户密码！", VoPreCashResp.class));
+        }
+
+
+
+
+        return null;
+    }
+
+
+    /**
+     * 获取免费提现额度
+     * @param userId
+     * @return
+     */
+    private double getFreeCashCredit(long userId){
+        Asset asset = assetService.findByUserId(userId);
+
+
+        return 0d;
+    }
 
 }
