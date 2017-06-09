@@ -1,6 +1,6 @@
 package com.gofobao.framework.asset.biz;
 
-import com.gofobao.framework.asset.vo.request.VoAssetLog;
+import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.request.VoRechargeReq;
 import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
@@ -28,7 +28,7 @@ public interface AssetBiz {
      *
      * @return
      */
-    ResponseEntity<VoViewAssetLogWarpRes> assetLogResList(VoAssetLog voAssetLog);
+    ResponseEntity<VoViewAssetLogWarpRes> assetLogResList(VoAssetLogReq voAssetLogReq);
 
 
     /**
@@ -73,5 +73,13 @@ public interface AssetBiz {
      * @return
      */
     ResponseEntity<VoPreRechargeResp> preRecharge(Long userId);
+
+
+    /**
+     * 提现前置页面
+     * @param userId
+     * @return
+     */
+    ResponseEntity<VoPreCashResp> preCash(Long userId);
 
 }

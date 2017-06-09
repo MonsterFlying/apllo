@@ -4,7 +4,7 @@ import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.asset.entity.AssetLog;
 import com.gofobao.framework.asset.repository.AssetLogRepository;
 import com.gofobao.framework.asset.service.AssetLogService;
-import com.gofobao.framework.asset.vo.request.VoAssetLog;
+import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.response.VoViewAssetLogRes;
 import com.gofobao.framework.helper.DateHelper;
 import com.google.common.reflect.TypeToken;
@@ -35,22 +35,22 @@ public class AssetLogServiceImpl implements AssetLogService {
     /**
      * 资金流水
      *
-     * @param voAssetLog
+     * @param voAssetLogReq
      * @return
      */
     @Override
-    public List<VoViewAssetLogRes> assetLogList(VoAssetLog voAssetLog) {
+    public List<VoViewAssetLogRes> assetLogList(VoAssetLogReq voAssetLogReq) {
 
         Sort sort = new Sort(
                 new Sort.Order(Sort.Direction.DESC, "createdAt"));
-        Pageable pageable = new PageRequest(voAssetLog.getPageIndex()
-                , voAssetLog.getPageSize()
+        Pageable pageable = new PageRequest(voAssetLogReq.getPageIndex()
+                , voAssetLogReq.getPageSize()
                 , sort);
 
         Specification<AssetLog> specification = Specifications.<AssetLog>and()
-                .eq(!StringUtils.isEmpty(voAssetLog.getType()), "type", voAssetLog.getType())
-                .between("createdAt", new Range<>(DateHelper.stringToDate(voAssetLog.getStartTime()),DateHelper.stringToDate(voAssetLog.getEndTime())))
-                .eq("userId", voAssetLog.getUserId())
+                .eq(!StringUtils.isEmpty(voAssetLogReq.getType()), "type", voAssetLogReq.getType())
+                .between("createdAt", new Range<>(DateHelper.stringToDate(voAssetLogReq.getStartTime()),DateHelper.stringToDate(voAssetLogReq.getEndTime())))
+                .eq("userId", voAssetLogReq.getUserId())
                 .build();
        Page<AssetLog> assetLogPage = assetLogRepository.findAll(specification, pageable);
 

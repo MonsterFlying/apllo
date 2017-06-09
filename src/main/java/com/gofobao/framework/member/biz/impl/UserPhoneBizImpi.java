@@ -1,5 +1,6 @@
 package com.gofobao.framework.member.biz.impl;
 
+import com.gofobao.framework.asset.vo.request.VoJudgmentAvailableReq;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.CaptchaHelper;
@@ -99,5 +100,36 @@ public class UserPhoneBizImpi implements UserPhoneBiz {
         }
 
         return ResponseEntity.ok(VoBaseResp.ok("更换手机绑定成功!"));
+    }
+
+    @Override
+    public ResponseEntity<VoBaseResp> checkOnlyForUserInfo(VoJudgmentAvailableReq voJudgmentAvailableReq) {
+        String msg = "查询成功" ;
+        boolean flag = false ;
+
+        if("1".equalsIgnoreCase(voJudgmentAvailableReq.getCheckType())){
+            flag = !userService.notExistsByPhone(voJudgmentAvailableReq.getCheckValue()) ;
+            if(flag){
+                msg = "手机号已在平台注册！" ;
+            }
+        }else if("2".equalsIgnoreCase(voJudgmentAvailableReq.getCheckType())){
+            flag = !userService.notExistsByEmail(voJudgmentAvailableReq.getCheckValue()) ;
+            if(flag){
+                msg = "邮箱已在平台注册！" ;
+            }
+        }else{
+            flag = !userService.notExistsByUserName(voJudgmentAvailableReq.getCheckValue()) ;
+            if(flag){
+                msg = "用户名已在平台注册！" ;
+            }
+        }
+
+        if(flag){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, msg));
+        }else{
+            return ResponseEntity.ok(VoBaseResp.ok(msg));
+        }
     }
 }
