@@ -53,9 +53,9 @@ public class RedPackageController {
      * @return
      */
     @PostMapping("/v2/open")
-    public ResponseEntity<VoViewOpenRedPackageWarpRes> openRedPackage(@ModelAttribute VoOpenRedPackageReq voOpenRedPackageReq
-                                                                      /*@RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
-        voOpenRedPackageReq.setUserId(901L);
+    public ResponseEntity<VoViewOpenRedPackageWarpRes> openRedPackage(@ModelAttribute VoOpenRedPackageReq voOpenRedPackageReq,
+                                                                      @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        voOpenRedPackageReq.setUserId(userId);
         return redPackageBiz.openRedPackage(voOpenRedPackageReq);
     }
 }

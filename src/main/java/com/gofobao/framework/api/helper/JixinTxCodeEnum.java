@@ -87,7 +87,29 @@ public enum JixinTxCodeEnum {
      */
     DEBT_DETAILS_QUERY(
             "debtDetailsQuery",
-            "/escrow/p2p/online");
+            "/escrow/p2p/online"),
+    /**
+     * 批次投资人购买债权
+     */
+    BATCH_CREDIT_INVEST(
+            "batchCreditInvest",
+            "/escrow/p2p/online"
+    ),
+    /**
+     * 批次还款
+     */
+    BATCH_REPAY(
+            "batchRepay",
+            "/escrow/p2p/online"
+    ),
+    /**
+     * 批次放款
+     */
+    BATCH_LEND_REPAY(
+            "batchLendPay",
+            "/escrow/p2p/online"
+    )
+    ;
 
     private String value;
     private String url;

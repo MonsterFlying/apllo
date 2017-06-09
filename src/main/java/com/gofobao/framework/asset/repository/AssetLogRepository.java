@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * Created by admin on 2017/5/22.
  */
@@ -29,5 +31,12 @@ public interface AssetLogRepository  extends JpaRepository<AssetLog, Long>, JpaS
   //  Page<AssetLog> findByUserIdAndCreateAtLessThanEqualAndCreateAtGreaterThanEqual(Integer userId,String startTime,String endTime,Pageable pageable);
 
 
+    /**
+     *
+     * @param userId
+     * @param type
+     * @return
+     */
+    List<AssetLog> findByUserIdAndTypeIs(Long userId, String type);
 
 }

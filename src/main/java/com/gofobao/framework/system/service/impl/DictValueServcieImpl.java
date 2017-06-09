@@ -18,4 +18,13 @@ public class DictValueServcieImpl implements DictValueServcie{
     public DictValue findTopByItemIdAndValue02(Long itemId, String bankName) {
          return dictValueRepository.findTopByItemIdAndValue02AndDel(itemId, bankName, 0) ;
     }
+
+    @Override
+    public DictValue findTopByItemIdAndValue01(Long itemId, String bankName) {
+        return dictValueRepository.findTopByItemIdAndValue01AndDel(itemId, bankName, 0) ;
+    }
+
+    public void save(DictValue dictValue){
+        dictValueRepository.save(dictValue);
+    }
 }

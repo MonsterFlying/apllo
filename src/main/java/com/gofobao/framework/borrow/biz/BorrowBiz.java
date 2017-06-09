@@ -1,5 +1,6 @@
 package com.gofobao.framework.borrow.biz;
 
+import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.vo.request.VoAddNetWorthBorrow;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
@@ -29,5 +30,21 @@ public interface BorrowBiz {
      */
     ResponseEntity<VoViewBorrowListWarpRes> findAll(VoBorrowListReq voBorrowListReq);
 
+    /**
+     * 非转让标复审
+     *
+     * @param borrow
+     * @return
+     * @throws Exception
+     */
+    boolean notTransferedBorrowAgainVerify(Borrow borrow) throws Exception;
 
+    /**
+     * 转让标复审
+     *
+     * @param borrow
+     * @return
+     * @throws Exception
+     */
+    boolean transferedBorrowAgainVerify(Borrow borrow) throws Exception ;
 }
