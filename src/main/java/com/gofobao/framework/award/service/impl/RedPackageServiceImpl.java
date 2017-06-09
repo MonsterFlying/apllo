@@ -211,6 +211,8 @@ public class RedPackageServiceImpl implements RedPackageService {
             Notices notices = new Notices();
             notices.setFromUserId(1L);
             notices.setUserId(req.getUserId());
+            notices.setRead(true);
+            notices.setRead(false);
             notices.setRead(false);
             notices.setName("打开红包");
             notices.setContent("你在" + DateHelper.dateToString(new Date()) + "开启红包(" + redPacket.getActivityName() + ")获得奖励" + money + "元");

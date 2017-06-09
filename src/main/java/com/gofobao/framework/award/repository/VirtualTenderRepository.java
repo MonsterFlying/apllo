@@ -11,7 +11,7 @@ import java.util.List;
  * Created by admin on 2017/6/8.
  */
 @Repository
-public interface VirtualTenderRepasitory extends JpaRepository<VirtualTender,Long>,JpaSpecificationExecutor<VirtualTender> {
+public interface VirtualTenderRepository extends JpaRepository<VirtualTender,Long>,JpaSpecificationExecutor<VirtualTender> {
 
     List<VirtualTender>findByUserIdAndStatusIs(Long userId,Integer status);
 }

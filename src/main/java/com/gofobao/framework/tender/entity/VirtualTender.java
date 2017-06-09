@@ -17,7 +17,7 @@ public class VirtualTender {
     private Integer id;
     @Basic
     @Column(name = "user_id", nullable = false)
-    private Integer userId;
+    private Long userId;
     @Basic
     @Column(name = "borrow_id", nullable = false)
     private Integer borrowId;

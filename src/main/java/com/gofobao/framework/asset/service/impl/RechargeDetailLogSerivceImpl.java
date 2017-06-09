@@ -48,7 +48,6 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService{
 
     @Override
     public List<RechargeDetailLog> findRechargeLogByUserIdAndDateRange(long userId, String startDate, String endDate) {
-        return findRechargeLogByUserIdAndDateRange(userId, startDate, endDate);
+        return null ;
     }
-
 }
