@@ -6,6 +6,8 @@ import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.contants.SrvTxCodeContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
 import com.gofobao.framework.api.model.direct_recharge_plus.auto_credit_invest_auth_plus.DirectRechargePlusRequest;
 import com.gofobao.framework.api.model.direct_recharge_plus.auto_credit_invest_auth_plus.DirectRechargePlusResponse;
 import com.gofobao.framework.asset.biz.AssetBiz;
@@ -498,6 +500,84 @@ public class AssetBizImpl implements AssetBiz {
 
 
         return 0d;
+    }
+
+
+    /**
+     * 与存管账户同步资金
+     * @param userId  用户Id
+     * @param startTime 交易其实时间
+     * @param endTime 交易结束时间
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void synAsset(long userId, Date startTime, Date endTime){
+        Users users = userService.findByIdLock(userId);
+        if(ObjectUtils.isEmpty(users)) return ;
+        Boolean isLock = users.getIsLock();
+        if(isLock) return;
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if(ObjectUtils.isEmpty(userThirdAccount)) return ;
+        Asset asset = assetService.findByUserIdLock(userId);
+        if(ObjectUtils.isEmpty(asset)) return ;
+        Date startDate = new Date() ;
+        Date endDate = DateHelper.subDays(startDate, 1) ;
+        int pageIndex = 0 ;
+        int pageSize = 100 ;
+        // 交易转出
+        AccountDetailsQueryResponse response = doQueryTx("1", pageIndex, pageSize, userThirdAccount.getAccountId(), startDate, endDate);
+        if(!ObjectUtils.isEmpty(response)){
+            int total = Integer.parseInt(response.getTotalItems());
+
+            doSynAsset(response, userId, userThirdAccount) ;
+            while (total - pageSize * (pageIndex  + 1)> 0){
+                ++pageIndex;
+                response = doQueryTx("1", pageIndex, pageSize, userThirdAccount.getAccountId(), startDate, endDate);
+            }
+
+        }
+
+    }
+
+
+    /**
+     * 同步数据
+     * @param response
+     * @param userId
+     * @param userThirdAccount
+     */
+
+    @Transactional(rollbackFor = Exception.class)
+    private void doSynAsset(AccountDetailsQueryResponse response, long userId, UserThirdAccount userThirdAccount) {
+        List<RechargeDetailLog> detailLogs = rechargeDetailLogService.
+                findRechargeLogByUserIdAndDateRange(userId, response.getStartDate(), response.getEndDate()) ;
+
+
+    }
+
+
+    private AccountDetailsQueryResponse doQueryTx(String type, int pageIndex, int pageSize, String accountId, Date startDate, Date endDate ){
+        AccountDetailsQueryRequest request = new AccountDetailsQueryRequest() ;
+        request.setAccountId(accountId);
+        request.setStartDate(DateHelper.dateToString(startDate, DateHelper.DATE_FORMAT_YMD));
+        request.setEndDate(DateHelper.dateToString(endDate, DateHelper.DATE_FORMAT_YMD));
+        request.setChannel(ChannelContant.HTML);
+        request.setType(type); // 转入
+        request.setPageSize(String.valueOf(pageSize));
+        request.setPageNum(String.valueOf(pageIndex));
+
+        AccountDetailsQueryResponse response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, request, AccountDetailsQueryResponse.class);
+        if(ObjectUtils.isEmpty(response)){
+            log.error(String.format("查询资金请求异常"));
+            return null;
+        }
+
+        if(!JixinResultContants.BATCH_SUCCESS.equals(response.getRetCode())){
+            log.error(String.format("资金查询失败"));
+            return null;
+        }
+
+        return response;
     }
 
 }

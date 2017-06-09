@@ -17,15 +17,4 @@ public class AccountDetailsQueryResponse extends JixinBaseResponse {
     private String pageSize ;
     private String totalItems ;
     private String subPacks ;
-    private String accDate ;
-    private String inpDate ;
-    private String relDate ;
-    private String inpTime ;
-    private String traceNo ;
-    private String tranType ;
-    private String orFlag ;
-    private String describe ;
-    private String currency ;
-    private String currBal ;
-    private String forAccountId ;
 }
