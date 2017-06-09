@@ -37,6 +37,7 @@ import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.helper.project.IntegralChangeHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.service.UserCacheService;
+import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
@@ -94,6 +95,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private MqHelper mqHelper;
     @Autowired
     private IntegralChangeHelper integralChangeHelper;
+    @Autowired
+    private BorrowRepaymentThirdBiz borrowRepaymentThirdBiz;
 
     /**
      * 还款计划
@@ -693,6 +696,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
         if (!ObjectUtils.isEmpty(resp)){
             return resp;
         }
+        borrowRepaymentThirdBiz.thirdBatchRepay();
+
         return repay(voRepayReq);
     }
 }

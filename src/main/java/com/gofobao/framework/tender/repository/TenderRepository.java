@@ -16,6 +16,8 @@ import java.util.List;
 public interface TenderRepository extends JpaRepository<Tender,Long>,JpaSpecificationExecutor<Tender> {
 
 
+    @Query("select  tender  from #{#entityName}    tender where tender.userId IN :userArray and tender.status=1 group by tender.userId ORDER BY tender.createdAt ASC")
+    List<Tender> findUserFirstTender(@Param(value = "userArray") List<Long> userArray);
 
 
 
