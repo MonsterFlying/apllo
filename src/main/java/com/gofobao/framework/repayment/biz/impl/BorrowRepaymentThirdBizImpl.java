@@ -162,6 +162,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         UserThirdAccount tenderUserThirdAccount = null;
         int sumCount = 0;
         int validMoney = 0;
+        List<Tender> tenderList = null;
         for (Tender tender : tenderList) {
             tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
             validMoney = tender.getValidMoney();
