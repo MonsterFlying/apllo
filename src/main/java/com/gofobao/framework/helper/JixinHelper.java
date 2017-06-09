@@ -69,10 +69,16 @@ public class JixinHelper {
                         no = 100000;
                         dictValue.setValue03(StringHelper.toString(firstCreateAt));
                         jixinCache.put("firstCreateAt", dictValue);
+
+                        dictValue = jixinCache.get("no");
+                        dictValue.setValue03(StringHelper.toString(no));
+                        jixinCache.put("no", dictValue);
                         dictValueServcie.save(dictValue);
-                    }else {
+                    } else {
                         dictValue = jixinCache.get("no");
                         no = NumberHelper.toInt(StringHelper.toString(dictValue.getValue03()));
+                        dictValue.setValue03(StringHelper.toString(NumberHelper.toInt(dictValue.getValue03()) + 1));
+                        dictValueServcie.save(dictValue);
                     }
                 }
             } catch (ExecutionException e) {

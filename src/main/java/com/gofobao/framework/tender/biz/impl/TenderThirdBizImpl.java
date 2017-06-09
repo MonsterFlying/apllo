@@ -41,6 +41,8 @@ import org.springframework.util.ObjectUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -197,10 +199,11 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         request.setTxAmount(StringHelper.formatDouble(sumCount, 100, false));
         request.setSubPacks(GSON.toJson(creditInvestList));
         request.setAcqRes(StringHelper.toString(borrowId));
+        request.setChannel(ChannelContant.HTML);
         request.setNotifyURL("/pub/tender/v2/third/batch/creditinvest/check");
         request.setRetNotifyURL("/pub/tender/v2/third/batch/creditinvest/run");
-        BatchCreditInvestResp response = jixinManager.sendBatch(JixinTxCodeEnum.BATCH_CREDIT_INVEST, request, BatchCreditInvestResp.class);
-        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(response.getReceived()))) {
+        BatchCreditInvestResp response = jixinManager.send(JixinTxCodeEnum.BATCH_CREDIT_INVEST, request, BatchCreditInvestResp.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "投资人批次购买债权失败!"));
         }
         return null;
@@ -212,7 +215,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      *
      * @return
      */
-    public ResponseEntity<String> thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse response) {
+    public void thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse response) {
         BatchCreditInvestRunCall lendRepayRunResp = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
         });
 
@@ -226,7 +229,13 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             log.error("回调失败! msg:" + lendRepayRunResp.getRetMsg());
         }
 
-        return ResponseEntity.ok("success");
+        try {
+            PrintWriter out = response.getWriter();
+            out.print("success");
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -234,7 +243,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      *
      * @return
      */
-    public ResponseEntity<String> thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) {
+    public void thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) {
         BatchCreditInvestRunCall lendRepayRunResp = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
         });
 
@@ -260,6 +269,12 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             log.info("非流转标复审成功!");
         }
 
-        return ResponseEntity.ok("success");
+        try {
+            PrintWriter out = response.getWriter();
+            out.print("success");
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

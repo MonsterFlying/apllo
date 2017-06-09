@@ -45,4 +45,10 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService{
         List<RechargeDetailLog> rechargeDetailLogs = rechargeDetailLogRepository.findByUserIdAndDel(userId, 0, pageable) ;
         return Optional.ofNullable(rechargeDetailLogs).orElse(Collections.emptyList());
     }
+
+    @Override
+    public List<RechargeDetailLog> findRechargeLogByUserIdAndDateRange(long userId, String startDate, String endDate) {
+        return findRechargeLogByUserIdAndDateRange(userId, startDate, endDate);
+    }
+
 }

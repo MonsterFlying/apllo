@@ -1,6 +1,7 @@
 package com.gofobao.framework.repayment.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
@@ -34,6 +35,8 @@ import org.springframework.util.ObjectUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -120,9 +123,10 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         request.setNotifyURL(webDomain + "/pub/repayment/v2/third/batch/repay/check");
         request.setAcqRes(StringHelper.toString(borrowId));
         request.setSubPacks(GSON.toJson(lendPayList));
+        request.setChannel(ChannelContant.HTML);
         request.setTxCounts(StringHelper.toString(lendPayList.size()));
-        BatchRepayResp response = jixinManager.sendBatch(JixinTxCodeEnum.BATCH_REPAY, request, BatchRepayResp.class);
-        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(response.getReceived()))) {
+        BatchRepayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_REPAY, request, BatchRepayResp.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "即信批次还款失败!"));
         }
         return null;
@@ -188,8 +192,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         request.setTxAmount(StringHelper.formatDouble(sumCount, 100, false));
         request.setTxCounts(StringHelper.toString(lendPayList.size()));
         request.setSubPacks(GSON.toJson(lendPayList));
-        BatchLendPayResp response = jixinManager.sendBatch(JixinTxCodeEnum.BATCH_LEND_REPAY, request, BatchLendPayResp.class);
-        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(response.getReceived()))) {
+        request.setChannel(ChannelContant.HTML);
+        BatchLendPayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_LEND_REPAY, request, BatchLendPayResp.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "即信批次放款失败!"));
         }
         return null;
@@ -200,7 +205,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      *
      * @return
      */
-    public ResponseEntity<String> thirdBatchRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
+    public void thirdBatchRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
         BatchRepayCheckResp repayCheckResp = jixinManager.callback(request, new TypeToken<BatchRepayCheckResp>() {
         });
 
@@ -217,7 +222,13 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         log.info("=============================即信批次放款检验参数回调===========================");
         log.info("即信批次还款检验参数成功!");
 
-        return ResponseEntity.ok("success");
+        try {
+            PrintWriter out = response.getWriter();
+            out.print("success");
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -225,7 +236,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      *
      * @return
      */
-    public ResponseEntity<String> thirdBatchRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
+    public void thirdBatchRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
         BatchRepayRunResp repayRunResp = jixinManager.callback(request, new TypeToken<BatchRepayRunResp>() {
         });
 
@@ -251,7 +262,13 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.info("非流转标复审成功!");
         }
 
-        return ResponseEntity.ok("success");
+        try {
+            PrintWriter out = response.getWriter();
+            out.print("success");
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -259,7 +276,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      *
      * @return
      */
-    public ResponseEntity<String> thirdBatchLendRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
+    public void thirdBatchLendRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
         BatchLendPayCheckResp lendRepayCheckResp = jixinManager.callback(request, new TypeToken<BatchLendPayCheckResp>() {
         });
 
@@ -276,7 +293,14 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         log.info("=============================即信批次放款检验参数回调===========================");
         log.info("即信批次放款检验参数成功!");
 
-        return ResponseEntity.ok("success");
+
+        try {
+            PrintWriter out = response.getWriter();
+            out.print("success");
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -284,7 +308,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      *
      * @return
      */
-    public ResponseEntity<String> thirdBatchLendRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
+    public void thirdBatchLendRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
         BatchLendPayRunResp lendRepayRunResp = jixinManager.callback(request, new TypeToken<BatchLendPayRunResp>() {
         });
 
@@ -298,7 +322,13 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("回调失败! msg:" + lendRepayRunResp.getRetMsg());
         }
 
-        return ResponseEntity.ok("success");
+        try {
+            PrintWriter out = response.getWriter();
+            out.print("success");
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 

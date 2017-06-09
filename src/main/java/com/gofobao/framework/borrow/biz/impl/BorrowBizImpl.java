@@ -585,6 +585,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 borrowCollection.setTenderId(tempTender.getId());
                 borrowCollection.setStatus(0);
                 borrowCollection.setOrder(i);
+                borrowCollection.setUserId(tempTender.getUserId());
                 borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))) : borrowDate);
                 borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))) : nowDate);
                 borrowCollection.setCollectionAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));

@@ -31,8 +31,8 @@ public class TenderThirdController {
      */
     @ApiOperation("投资人批次购买债权运行回调")
     @RequestMapping("/v2/third/batch/creditinvest/run")
-    public ResponseEntity<String> thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) {
-        return tenderThirdBiz.thirdBatchCreditInvestRunCall(request, response);
+    public void thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) {
+        tenderThirdBiz.thirdBatchCreditInvestRunCall(request, response);
     }
 
     /**
@@ -42,7 +42,7 @@ public class TenderThirdController {
      */
     @ApiOperation("投资人批次购买债权参数验证回调")
     @RequestMapping("/v2/third/batch/creditinvest/check")
-    public ResponseEntity<String> thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse response) {
-        return tenderThirdBiz.thirdBatchCreditInvestCheckCall(request, response);
+    public void thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse response) {
+        tenderThirdBiz.thirdBatchCreditInvestCheckCall(request, response);
     }
 }

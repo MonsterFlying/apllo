@@ -24,14 +24,14 @@ public interface BorrowRepaymentThirdBiz {
      *
      * @return
      */
-    ResponseEntity<String> thirdBatchRepayCheckCall(HttpServletRequest request, HttpServletResponse response);
+    void thirdBatchRepayCheckCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 即信批次还款
      *
      * @return
      */
-    ResponseEntity<String> thirdBatchRepayRunCall(HttpServletRequest request, HttpServletResponse response);
+    void thirdBatchRepayRunCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 即信批次放款  （满标后调用）
@@ -46,12 +46,12 @@ public interface BorrowRepaymentThirdBiz {
      *
      * @return
      */
-    ResponseEntity<String> thirdBatchLendRepayCheckCall(HttpServletRequest request, HttpServletResponse response);
+    void thirdBatchLendRepayCheckCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 即信批次放款  （满标后调用）
      *
      * @return
      */
-    ResponseEntity<String> thirdBatchLendRepayRunCall(HttpServletRequest request, HttpServletResponse response);
+    void thirdBatchLendRepayRunCall(HttpServletRequest request, HttpServletResponse response);
 }

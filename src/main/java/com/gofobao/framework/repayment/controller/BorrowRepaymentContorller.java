@@ -4,20 +4,15 @@ import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListResWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.*;
 import com.gofobao.framework.security.contants.SecurityContants;
-import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * Created by admin on 2017/6/1.
@@ -29,8 +24,6 @@ public class BorrowRepaymentContorller {
 
     @Autowired
     private RepaymentBiz repaymentBiz;
-    @Autowired
-    private BorrowRepaymentThirdBiz borrowRepaymentThirdBiz;
 
     @RequestMapping("/v2/list/{time}")
     @ApiOperation("还款计划列表")
@@ -50,5 +43,18 @@ public class BorrowRepaymentContorller {
         voInfoReq.setUserId(userId);
         voInfoReq.setRepaymentId(repaymentId);
         return repaymentBiz.info(voInfoReq);
+    }
+
+    /**
+     * 立即还款
+     *
+     * @param voInstantlyRepaymentReq
+     * @return 0成功 1失败 2操作不存在 3该借款上一期还未还 4账户余额不足，请先充值
+     * @throws Exception
+     */
+    @RequestMapping("/v2/instantly")
+    @ApiOperation("立即还款")
+    public ResponseEntity<VoBaseResp> instantly(VoInstantlyRepaymentReq voInstantlyRepaymentReq) throws Exception {
+        return repaymentBiz.instantly(voInstantlyRepaymentReq);
     }
 }

@@ -15,4 +15,12 @@ public class LendContants {
     public static final String STATUS_YES_STR = "已完成";
 
 
+    public static final int MAX_MONEY = 20000000 * 100;
+    public static final int MIN_MONEY = 1000 * 100;
+    public static final int MIN_APR = 5 * 100;
+    public static final int MAX_APR = 24 * 100;
+    public static final int MIN_LOWEST = 1000 * 100;
+    public static final int MIN_TIME_LIMIT = 1;
+    public static final int MAX_TIME_LIMIT = 92;
+
 }
