@@ -197,8 +197,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         request.setTxAmount(StringHelper.formatDouble(sumCount, 100, false));
         request.setSubPacks(GSON.toJson(creditInvestList));
         request.setAcqRes(StringHelper.toString(borrowId));
-        request.setNotifyURL("/v2/third/batch/creditinvest/check");
-        request.setRetNotifyURL("/v2/third/batch/creditinvest/run");
+        request.setNotifyURL("/pub/tender/v2/third/batch/creditinvest/check");
+        request.setRetNotifyURL("/pub/tender/v2/third/batch/creditinvest/run");
         BatchCreditInvestResp response = jixinManager.sendBatch(JixinTxCodeEnum.BATCH_CREDIT_INVEST, request, BatchCreditInvestResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(response.getReceived()))) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "投资人批次购买债权失败!"));

@@ -116,8 +116,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         BatchRepayReq request = new BatchRepayReq();
         request.setBatchNo(jixinHelper.getBatchNo());
         request.setTxAmount(StringHelper.toString(sumCount));
-        request.setRetNotifyURL(webDomain + "/v2/third/batch/repay/run");
-        request.setNotifyURL(webDomain + "/v2/third/batch/repay/check");
+        request.setRetNotifyURL(webDomain + "/pub/repayment/v2/third/batch/repay/run");
+        request.setNotifyURL(webDomain + "/pub/repayment/v2/third/batch/repay/check");
         request.setAcqRes(StringHelper.toString(borrowId));
         request.setSubPacks(GSON.toJson(lendPayList));
         request.setTxCounts(StringHelper.toString(lendPayList.size()));
@@ -183,8 +183,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         BatchLendPayReq request = new BatchLendPayReq();
         request.setBatchNo(jixinHelper.getBatchNo());
         request.setAcqRes(StringHelper.toString(borrowId));//存放borrowId 标id
-        request.setNotifyURL(webDomain + "/v2/third/batch/lendrepay/check");
-        request.setRetNotifyURL(webDomain + "/v2/third/batch/lendrepay/run");
+        request.setNotifyURL(webDomain + "/pub/repayment/v2/third/batch/lendrepay/check");
+        request.setRetNotifyURL(webDomain + "/pub/repayment/v2/third/batch/lendrepay/run");
         request.setTxAmount(StringHelper.formatDouble(sumCount, 100, false));
         request.setTxCounts(StringHelper.toString(lendPayList.size()));
         request.setSubPacks(GSON.toJson(lendPayList));

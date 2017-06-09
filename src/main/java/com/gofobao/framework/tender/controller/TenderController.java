@@ -28,8 +28,7 @@ public class TenderController {
 
     @Autowired
     private TenderBiz tenderBiz;
-    @Autowired
-    private TenderThirdBiz tenderThirdBiz;
+
 
     @ApiOperation("投标用户列表")
     @GetMapping("/v2/user/list/{borrowId}")
@@ -43,27 +42,5 @@ public class TenderController {
     public ResponseEntity<VoBaseResp> tender(@ModelAttribute @Valid VoCreateTenderReq voCreateTenderReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voCreateTenderReq.setUserId(userId);
         return tenderBiz.tender(voCreateTenderReq);
-    }
-
-    /**
-     * 投资人批次购买债权运行回调
-     *
-     * @return
-     */
-    @ApiOperation("投资人批次购买债权运行回调")
-    @PostMapping("/v2/third/batch/creditinvest/run")
-    public ResponseEntity<String> thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) {
-        return tenderThirdBiz.thirdBatchCreditInvestRunCall(request, response);
-    }
-
-    /**
-     * 投资人批次购买债权参数验证回调
-     *
-     * @return
-     */
-    @ApiOperation("投资人批次购买债权参数验证回调")
-    @PostMapping("/v2/third/batch/creditinvest/check")
-    public ResponseEntity<String> thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse response) {
-        return tenderThirdBiz.thirdBatchCreditInvestRunCall(request, response);
     }
 }

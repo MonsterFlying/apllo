@@ -36,9 +36,11 @@ import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchRepay;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.tender.biz.TenderBiz;
+import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
+import com.gofobao.framework.tender.vo.request.VoThirdBatchCreditInvest;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -84,6 +86,8 @@ public class BorrowProvider {
     private BorrowThirdBiz borrowThirdBiz;
     @Autowired
     private BorrowRepaymentThirdBiz borrowRepaymentThirdBiz;
+    @Autowired
+    private TenderThirdBiz tenderThirdBiz;
 
     /**
      * 初审
@@ -308,9 +312,9 @@ public class BorrowProvider {
         Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get("borrowId")));
         Borrow borrow = borrowService.findById(borrowId);
         if (borrow.isTransfer()) { //转让标
-            VoThirdBatchRepay voThirdBatchRepay = new VoThirdBatchRepay();
-            voThirdBatchRepay.setBorrowId(borrowId);
-            ResponseEntity<VoBaseResp> resp = borrowRepaymentThirdBiz.thirdBatchRepay(voThirdBatchRepay);
+            VoThirdBatchCreditInvest voThirdBatchCreditInvest = new VoThirdBatchCreditInvest();
+            voThirdBatchCreditInvest.setBorrowId(borrowId);
+            ResponseEntity<VoBaseResp> resp = tenderThirdBiz.thirdBatchCreditInvest(voThirdBatchCreditInvest);
             if (ObjectUtils.isEmpty(resp)){
                 log.info("====================================================================");
                 log.info("转让标发起复审成功！");

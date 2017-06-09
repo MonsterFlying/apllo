@@ -51,28 +51,4 @@ public class BorrowRepaymentContorller {
         voInfoReq.setRepaymentId(repaymentId);
         return repaymentBiz.info(voInfoReq);
     }
-
-    @RequestMapping("/v2/third/batch/lendrepay/check")
-    @ApiOperation("批次放款参数检查通知")
-    public ResponseEntity<String> thirdLendRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
-        return borrowRepaymentThirdBiz.thirdBatchLendRepayCheckCall(request, response);
-    }
-
-    @RequestMapping("/v2/third/batch/lendrepay/run")
-    @ApiOperation("批次放款运行结果通知")
-    public ResponseEntity<String> thirdLendRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
-        return borrowRepaymentThirdBiz.thirdBatchLendRepayRunCall(request, response);
-    }
-
-    @RequestMapping("/v2/third/batch/repay/check")
-    @ApiOperation("批次还款参数检查通知")
-    public ResponseEntity<String> thirdRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
-        return borrowRepaymentThirdBiz.thirdBatchRepayCheckCall(request, response);
-    }
-
-    @RequestMapping("/v2/third/batch/repay/run")
-    @ApiOperation("批次还款参数检查通知")
-    public ResponseEntity<String> thirdRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
-        return borrowRepaymentThirdBiz.thirdBatchRepayRunCall(request, response);
-    }
 }
