@@ -3,6 +3,7 @@ package com.gofobao.framework.asset.biz;
 import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.request.VoRechargeReq;
 import com.gofobao.framework.asset.vo.response.*;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import org.springframework.http.ResponseEntity;
 
@@ -82,4 +83,12 @@ public interface AssetBiz {
      */
     ResponseEntity<VoPreCashResp> preCash(Long userId);
 
+
+    /**
+     * 同步存管资金
+     * @param userId
+     * @param time
+     * @return
+     */
+    ResponseEntity<VoBaseResp> synchronizedAsset(Long userId, String time);
 }

@@ -3,11 +3,9 @@ package com.gofobao.framework.borrow.controller;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoAddNetWorthBorrow;
-import com.gofobao.framework.borrow.vo.request.VoBorrowByIdReq;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
-import com.gofobao.framework.borrow.vo.response.VoBorrowByIdRes;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
+import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
@@ -51,8 +49,8 @@ public class BorrowController {
 
     @ApiOperation("标信息")
     @GetMapping("/info/{borrowId}")
-    public ResponseEntity<VoViewBorrowInfoWarpRes> getByBorrowId(@PathVariable Long borrowId) {
-        return borrowBiz.info(borrowId);
+    public ResponseEntity<VoViewBorrowInfoRes> getByBorrowId(@PathVariable Long borrowId) {
+        return null;/*borrowBiz.info(borrowId);*/
     }
 
 

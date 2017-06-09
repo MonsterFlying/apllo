@@ -1,13 +1,13 @@
 package com.gofobao.framework.borrow.service;
 
 import com.gofobao.framework.borrow.entity.Borrow;
-import com.gofobao.framework.borrow.vo.request.VoBorrowByIdReq;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
-import com.gofobao.framework.borrow.vo.response.VoBorrowByIdRes;
+import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ public interface BorrowService {
 
     List<VoViewBorrowList> findAll(VoBorrowListReq voBorrowListReq);
 
-    VoBorrowByIdRes findByBorrowId(Long borrowId);
+    VoViewBorrowInfoRes findByBorrowId(Long borrowId);
 
     long countByUserIdAndStatusIn(Long userId,List<Integer> statusList);
 

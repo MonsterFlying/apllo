@@ -47,7 +47,7 @@ public class VoViewBorrowList implements Serializable {
     @ApiModelProperty("投标笔数")
     private Integer tenderCount;
     @ApiModelProperty("速度")
-    private String spend;
+    private Double spend;
 
 
 }

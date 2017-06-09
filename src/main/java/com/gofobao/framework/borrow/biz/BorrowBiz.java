@@ -4,7 +4,7 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.vo.request.VoAddNetWorthBorrow;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
+import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import org.springframework.http.ResponseEntity;
@@ -55,5 +55,5 @@ public interface BorrowBiz {
      * @param borrowId
      * @return
      */
-    ResponseEntity<VoViewBorrowInfoWarpRes> info(Long borrowId);
+   /* VoViewBorrowInfoRes info(Long borrowId);*/
 }

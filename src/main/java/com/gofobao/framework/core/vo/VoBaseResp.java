@@ -1,5 +1,6 @@
 package com.gofobao.framework.core.vo;
 
+import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoRes;
 import com.gofobao.framework.helper.DateHelper;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,6 +18,8 @@ import java.util.Date;
 @NoArgsConstructor
 @Slf4j
 public class VoBaseResp implements Serializable {
+
+
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
