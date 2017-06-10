@@ -475,6 +475,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 borrowRepayment.setAdvanceMoneyYes(0);
                 borrowRepayment.setLateDays(0);
                 borrowRepayment.setLateInterest(0);
+                borrowRepayment.setUserId(borrow.getUserId());
                 borrowRepaymentService.insert(borrowRepayment);
             }
 

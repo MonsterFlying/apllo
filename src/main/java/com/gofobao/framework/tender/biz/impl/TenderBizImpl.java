@@ -111,6 +111,7 @@ public class TenderBizImpl implements TenderBiz {
         borrowTender.setIsAuto(voCreateTenderReq.getIsAutoTender());
         borrowTender.setUpdatedAt(nowDate);
         borrowTender.setCreatedAt(nowDate);
+        borrowTender.setTransferFlag(0);
         borrowTender.setState(1);
         borrowTender = tenderService.insert(borrowTender);
 

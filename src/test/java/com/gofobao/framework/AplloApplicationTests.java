@@ -5,6 +5,7 @@ import com.gofobao.framework.common.integral.IntegralChangeEntity;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.helper.project.IntegralChangeHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
@@ -23,15 +24,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 public class AplloApplicationTests {
 
     @Autowired
-    MqHelper mqHelper ;
+    MqHelper mqHelper;
 
-
-    @Autowired
-    private LoanServiceImpl loanService;
-    @Autowired
-    private BorrowThirdBiz borrowThirdBiz;
-    @Autowired
-    private IntegralChangeHelper integralChangeHelper;
     @Autowired
     private BorrowProvider borrowProvider;
 
@@ -40,10 +34,10 @@ public class AplloApplicationTests {
     }
 
     @Test
-    public void test(){
+    public void test() {
 
-        Map<String,String> map = new HashMap();
-        map.put("borrowId","165153");
+        Map<String, String> map = new HashMap();
+        map.put("borrowId", "165153");
         try {
             borrowProvider.doAgainVerify(map);
         } catch (Exception e) {

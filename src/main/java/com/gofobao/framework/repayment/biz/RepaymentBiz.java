@@ -15,18 +15,20 @@ import org.springframework.http.ResponseEntity;
 public interface RepaymentBiz {
 
     /**
-     *还款计划列表
+     * 还款计划列表
+     *
      * @param voCollectionOrderReq
      * @return
      */
-     ResponseEntity<VoViewCollectionOrderListResWarpRes> repaymentList(VoCollectionOrderReq voCollectionOrderReq);
+    ResponseEntity<VoViewCollectionOrderListResWarpRes> repaymentList(VoCollectionOrderReq voCollectionOrderReq);
 
     /**
      * 还款详情
+     *
      * @param voInfoReq
      * @return
      */
-     ResponseEntity<VoViewOrderDetailWarpRes> info(VoInfoReq voInfoReq);
+    ResponseEntity<VoViewOrderDetailWarpRes> info(VoInfoReq voInfoReq);
 
     /**
      * 立即还款
@@ -36,4 +38,13 @@ public interface RepaymentBiz {
      * @throws Exception
      */
     ResponseEntity<VoBaseResp> instantly(VoInstantlyRepaymentReq voInstantlyRepayment) throws Exception;
+
+    /**
+     * 还款
+     *
+     * @param voRepayReq
+     * @return
+     * @throws Exception
+     */
+    ResponseEntity<VoBaseResp> repay(VoRepayReq voRepayReq) throws Exception;
 }

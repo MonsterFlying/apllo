@@ -9,7 +9,6 @@ import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestReq;
 import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestResp;
 import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestRunCall;
 import com.gofobao.framework.api.model.batch_credit_invest.CreditInvest;
-import com.gofobao.framework.api.model.batch_lend_pay.LendPay;
 import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyRequest;
 import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyResponse;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
@@ -21,6 +20,7 @@ import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
@@ -67,6 +67,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
     private BorrowBiz borrowBiz;
     @Autowired
     private JixinHelper jixinHelper;
+    @Autowired
+    private TenderBiz tenderBiz;
 
     public ResponseEntity<VoBaseResp> createThirdTender(VoCreateThirdTenderReq voCreateThirdTenderReq) {
         Long userId = voCreateThirdTenderReq.getUserId();
@@ -171,7 +173,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         UserThirdAccount tenderUserThirdAccount = null;
         int sumCount = 0;
         int validMoney = 0;
-        String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_PAY_PREFIX);
+        String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
         for (Tender tender : tenderList) {
             tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
             validMoney = tender.getValidMoney();
@@ -246,27 +248,32 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
     public void thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) {
         BatchCreditInvestRunCall lendRepayRunResp = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
         });
-
+        boolean bool = true;
         if (ObjectUtils.isEmpty(lendRepayRunResp)) {
             log.error("=============================即信投资人批次购买债权处理结果回调===========================");
             log.error("请求体为空!");
+            bool = false;
         }
 
         if (!JixinResultContants.SUCCESS.equals(lendRepayRunResp.getRetCode())) {
             log.error("=============================即信投资人批次购买债权处理结果回调===========================");
             log.error("回调失败! msg:" + lendRepayRunResp.getRetMsg());
+            bool = false;
         }
 
-        long borrowId = NumberHelper.toLong(lendRepayRunResp.getAcqRes());
-        Borrow borrow = borrowService.findById(borrowId);
-        boolean bool = false;
-        try {
-            bool = borrowBiz.transferedBorrowAgainVerify(borrow);
-        } catch (Exception e) {
-            log.error("非流转标复审异常:", e);
+        if (bool) {
+            long borrowId = NumberHelper.toLong(lendRepayRunResp.getAcqRes());
+            Borrow borrow = borrowService.findById(borrowId);
+            try {
+                bool = borrowBiz.transferedBorrowAgainVerify(borrow);
+            } catch (Exception e) {
+                log.error("非流转标复审异常:", e);
+            }
         }
         if (bool) {
             log.info("非流转标复审成功!");
+        }else {
+            log.info("非流转标复审失败!");
         }
 
         try {

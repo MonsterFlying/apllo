@@ -44,6 +44,7 @@ import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoInfoReq;
 import com.gofobao.framework.repayment.vo.request.VoInstantlyRepaymentReq;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
+import com.gofobao.framework.repayment.vo.request.VoThirdBatchRepay;
 import com.gofobao.framework.system.biz.StatisticBiz;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.entity.Statistic;
@@ -58,6 +59,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.MessagingException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
@@ -166,7 +168,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Preconditions.checkNotNull(borrowRepayment, "用户资产查询失败!");
 
 
-        if ((!ObjectUtils.isEmpty(userId)) && (borrowUserId != userId)) {//存在userId时 判断是否是当前用户
+        if ((!ObjectUtils.isEmpty(userId)) && (!borrowUserId.equals(userId))) {//存在userId时 判断是否是当前用户
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("操作用户不是借款用户!")));
@@ -402,7 +404,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
             Specification<UserCache> ucs = Specifications
                     .<UserCache>and()
-                    .in("userId", userIds)
+                    .in("userId", userIds.toArray())
                     .build();
 
             List<UserCache> userCacheList = userCacheService.findList(ucs);
@@ -412,9 +414,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
             Specification<BorrowCollection> bcs = Specifications
                     .<BorrowCollection>and()
-                    .in("tenderId", tenderIds)
+                    .in("tenderId", tenderIds.toArray())
                     .eq("status", 0)
-                    .eq("`order`", order)
+                    .eq("order", order)
                     .build();
 
             List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
@@ -685,6 +687,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      * @throws Exception
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> instantly(VoInstantlyRepaymentReq voInstantlyRepayment) throws Exception {
         VoRepayReq voRepayReq = new VoRepayReq();
         voRepayReq.setUserId(voInstantlyRepayment.getUserId());
@@ -696,8 +699,14 @@ public class RepaymentBizImpl implements RepaymentBiz {
         if (!ObjectUtils.isEmpty(resp)){
             return resp;
         }
-        borrowRepaymentThirdBiz.thirdBatchRepay();
 
-        return repay(voRepayReq);
+        //调用即信还款
+        VoThirdBatchRepay voThirdBatchRepay = new VoThirdBatchRepay();
+        voThirdBatchRepay.setUserId(voInstantlyRepayment.getUserId());
+        voThirdBatchRepay.setRepaymentId(voInstantlyRepayment.getRepaymentId());
+        voThirdBatchRepay.setInterestPercent(0d);
+        voThirdBatchRepay.setIsUserOpen(true);
+
+        return borrowRepaymentThirdBiz.thirdBatchRepay(voThirdBatchRepay);
     }
 }
