@@ -147,58 +147,6 @@ public class JixinManager {
         return t;
     }
 
-    public <T extends JixinBaseRequest, S extends JixinBatchBaseResponse> S sendBatch(JixinTxCodeEnum txCodeEnum, T req, Class<S> clazz) {
-        checkNotNull(req, "请求体为null");
-        // 前期初始化
-        req.setBankCode(bankCode);
-        req.setVersion(version);
-        req.setInstCode(instCode);
-
-        if (StringUtils.isEmpty(req.getSeqNo())) {
-            req.setSeqNo(RandomHelper.generateNumberCode(6));
-        }
-
-        if (StringUtils.isEmpty(req.getTxTime())) {
-            req.setTxTime(DateHelper.getTime());
-        }
-
-        if (StringUtils.isEmpty(req.getTxDate())) {
-            req.setTxDate(DateHelper.getDate());
-        }
-
-
-        if (StringUtils.isEmpty(req.getTxDate())) {
-            req.setTxDate(DateHelper.getDate());
-        }
-
-        req.setTxCode(txCodeEnum.getValue());
-        String url = prefixUrl + txCodeEnum.getUrl();
-        String json = gson.toJson(req);
-        Map<String, String> params = gson.fromJson(json, new TypeToken<Map<String, String>>() {
-        }.getType());
-        String unSign = StringHelper.mergeMap(params);
-        String sign = certHelper.doSign(unSign);
-        params.put("sign", sign);
-        log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));
-        initHttps();
-        HttpEntity entity = getHttpEntity(params);
-        RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<S> response = null;
-        try {
-            response = restTemplate.exchange(url, HttpMethod.POST, entity, clazz);
-        } catch (Throwable e) {
-            log.error("请求即信服务器异常", e);
-            return null;
-        }
-
-        checkNotNull(response);
-        S body = response.getBody();
-        log.info(String.format("即信响应报文:url=%s body=%s", url, gson.toJson(body)));
-
-        // 请求插入数据
-        return body;
-    }
-
     public <T extends JixinBaseRequest, S extends JixinBaseResponse> S send(JixinTxCodeEnum txCodeEnum, T req, Class<S> clazz) {
         checkNotNull(req, "请求体为null");
         // 前期初始化

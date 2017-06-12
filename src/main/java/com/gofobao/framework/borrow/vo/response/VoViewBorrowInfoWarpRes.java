@@ -8,5 +8,5 @@ import lombok.Data;
  */
 @Data
 public class VoViewBorrowInfoWarpRes extends VoBaseResp {
-    private VoBorrowByIdRes voBorrowByIdRes;
+    private BorrowInfoRes borrowInfoRes;
 }

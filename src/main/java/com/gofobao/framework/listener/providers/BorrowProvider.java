@@ -36,9 +36,11 @@ import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchRepay;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.tender.biz.TenderBiz;
+import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
+import com.gofobao.framework.tender.vo.request.VoThirdBatchCreditInvest;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -73,17 +75,13 @@ public class BorrowProvider {
     @Autowired
     private CapitalChangeHelper capitalChangeHelper;
     @Autowired
-    private BorrowCollectionService borrowCollectionService;
-    @Autowired
-    private TenderService tenderService;
-    @Autowired
-    private BorrowRepaymentService borrowRepaymentService;
-    @Autowired
     private MqHelper mqHelper;
     @Autowired
     private BorrowThirdBiz borrowThirdBiz;
     @Autowired
     private BorrowRepaymentThirdBiz borrowRepaymentThirdBiz;
+    @Autowired
+    private TenderThirdBiz tenderThirdBiz;
 
     /**
      * 初审
@@ -105,17 +103,12 @@ public class BorrowProvider {
             Integer borrowType = borrow.getType();
             if (borrowType == 2) { //秒标
                 bool = miaoBorrow(borrow);
-            } else if (!ObjectUtils.isEmpty(borrow.getLendId())) { //转让标
+            } else if (!ObjectUtils.isEmpty(borrow.getLendId())) { //有草出借
                 bool = lendBorrow(borrow);
             } else { //车贷、渠道、净值、转让 标
                 bool = baseBorrow(borrow);
             }
 
-            if (!bool || borrow.isTransfer()) { //初审操作失败  或者 转让标不需要与即信通信
-                break;
-            }
-
-            bool = createThridBorrow(borrow);
         } while (false);
         return bool;
     }
@@ -126,7 +119,7 @@ public class BorrowProvider {
      * @param borrow
      * @return
      */
-    private boolean createThridBorrow(Borrow borrow) {
+    private boolean createThirdBorrow(Borrow borrow) {
         //===================即信登记标的===========================
         String name = borrow.getName();
         Long userId = borrow.getUserId();
@@ -191,6 +184,7 @@ public class BorrowProvider {
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_AUTO_TENDER);
             mqConfig.setTag(MqTagEnum.AUTO_TENDER);
+            //mqConfig.setSendTime(releaseDate);
             ImmutableMap<String, String> body = ImmutableMap
                     .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
             mqConfig.setMsg(body);
@@ -200,7 +194,10 @@ public class BorrowProvider {
             } catch (Exception e) {
                 log.error("borrowProvider autoTender send mq exception", e);
             }
-            bool = true;
+
+            if (!borrow.isTransfer()) {
+                bool = createThirdBorrow(borrow);
+            }
         } while (false);
         return bool;
     }
@@ -240,7 +237,7 @@ public class BorrowProvider {
                     log.error(StringHelper.toString(msg));
                 }
             }
-            bool = true;
+            bool = createThirdBorrow(borrow);
         } while (false);
         return bool;
     }
@@ -290,7 +287,7 @@ public class BorrowProvider {
                 borrow.setReleaseAt(nowDate);
             }
             borrowService.updateById(borrow);
-            bool = true;
+            bool = createThirdBorrow(borrow);
         } while (false);
         return bool;
     }
@@ -308,29 +305,31 @@ public class BorrowProvider {
         Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get("borrowId")));
         Borrow borrow = borrowService.findById(borrowId);
         if (borrow.isTransfer()) { //转让标
-            VoThirdBatchRepay voThirdBatchRepay = new VoThirdBatchRepay();
-            voThirdBatchRepay.setBorrowId(borrowId);
-            ResponseEntity<VoBaseResp> resp = borrowRepaymentThirdBiz.thirdBatchRepay(voThirdBatchRepay);
-            if (ObjectUtils.isEmpty(resp)){
+            VoThirdBatchCreditInvest voThirdBatchCreditInvest = new VoThirdBatchCreditInvest();
+            voThirdBatchCreditInvest.setBorrowId(borrowId);
+            ResponseEntity<VoBaseResp> resp = tenderThirdBiz.thirdBatchCreditInvest(voThirdBatchCreditInvest);
+            if (ObjectUtils.isEmpty(resp)) {
                 log.info("====================================================================");
                 log.info("转让标发起复审成功！");
                 log.info("====================================================================");
-            }else {
+                bool = true;
+            } else {
                 log.info("====================================================================");
-                log.info("转让标发起复审失败！ msg:"+resp.getBody().getState().getMsg());
+                log.info("转让标发起复审失败！ msg:" + resp.getBody().getState().getMsg());
                 log.info("====================================================================");
             }
         } else { //非转让标
             VoThirdBatchLendRepay voThirdBatchLendRepay = new VoThirdBatchLendRepay();
             voThirdBatchLendRepay.setBorrowId(borrowId);
             ResponseEntity<VoBaseResp> resp = borrowRepaymentThirdBiz.thirdBatchLendRepay(voThirdBatchLendRepay);
-            if (ObjectUtils.isEmpty(resp)){
+            if (ObjectUtils.isEmpty(resp)) {
                 log.info("====================================================================");
                 log.info("非转让标发起复审成功！");
                 log.info("====================================================================");
-            }else {
+                bool = true;
+            } else {
                 log.info("====================================================================");
-                log.info("非转让标发起复审失败！ msg:"+resp.getBody().getState().getMsg());
+                log.info("非转让标发起复审失败！ msg:" + resp.getBody().getState().getMsg());
                 log.info("====================================================================");
             }
 

@@ -17,6 +17,8 @@ import java.util.Date;
 @NoArgsConstructor
 @Slf4j
 public class VoBaseResp implements Serializable {
+
+
     @Data
     @AllArgsConstructor
     @NoArgsConstructor

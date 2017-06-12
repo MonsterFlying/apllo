@@ -94,7 +94,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
                 .sum();
         voViewCollectionOrderListRes.setSumCollectionMoneyYes(NumberHelper.to2DigitString(sumCollectionMoneyYes / 100));
         Optional<VoViewCollectionOrderList> orderListRes = Optional.ofNullable(voViewCollectionOrderListRes);
-        return orderListRes.orElseGet(() -> null);
+        return orderListRes.orElseGet(() -> new VoViewCollectionOrderList());
     }
 
     /**
