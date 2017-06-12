@@ -6,6 +6,7 @@ import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.contants.SrvTxCodeContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
 import com.gofobao.framework.api.model.direct_recharge_plus.auto_credit_invest_auth_plus.DirectRechargePlusRequest;
@@ -48,6 +49,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,6 +57,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Base64Utils;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -491,7 +494,6 @@ public class AssetBizImpl implements AssetBiz {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> synchronizedAsset(Long userId, String time) {
-        String type = "7820" ; // 线下转账
         Users users = userService.findByIdLock(userId);
         if(ObjectUtils.isEmpty(users)) return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "错误")) ;
         Boolean isLock = users.getIsLock();
@@ -501,23 +503,30 @@ public class AssetBizImpl implements AssetBiz {
         if(ObjectUtils.isEmpty(userThirdAccount)) return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "错误"));
         Asset asset = assetService.findByUserIdLock(userId);
         if(ObjectUtils.isEmpty(asset)) return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "错误"));
-        Date endDate = new Date();// DateHelper.stringToDate("2016-08-30 12:00:00") ;
+        Date endDate = new Date();
         Date startDate = DateHelper.stringToDate(time) ;
         int pageIndex = 1 ;
         int pageSize = 10 ;
-        // 交易转出
-        AccountDetailsQueryResponse response = doQueryTx("1", pageIndex, pageSize, userThirdAccount.getAccountId(), startDate, endDate);
-        if(!ObjectUtils.isEmpty(response)){
-            int total = Integer.parseInt(response.getTotalItems());
-
-            doSynAsset(response, userId, userThirdAccount) ;
-            while (total - pageSize * pageIndex > 0){
-                ++pageIndex;
-                response = doQueryTx("1", pageIndex, pageSize, userThirdAccount.getAccountId(), startDate, endDate);
+        boolean looperState = true;
+        Gson gson = new Gson();
+        do {
+            AccountDetailsQueryResponse response = doQueryTx("1", pageIndex, pageSize, userThirdAccount.getAccountId(), startDate, endDate);
+            if(ObjectUtils.isEmpty(response)) break;
+            if(StringUtils.isEmpty(response.getSubPacks())) break;
+            List<AccountDetailsQueryItem> accountDetailsQueryItems = gson.fromJson(response.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>(){}.getType()) ;
+            if(CollectionUtils.isEmpty(accountDetailsQueryItems)) break;
+            if(accountDetailsQueryItems.size() < 10){
+                looperState = false ;
             }
 
-        }
 
+            for(AccountDetailsQueryItem item : accountDetailsQueryItems){
+                log.info(gson.toJson(item));
+            }
+
+
+            pageIndex ++ ;
+        }while (looperState) ;
         return ResponseEntity.ok(VoBaseResp.ok("成功")) ;
     }
 
@@ -527,31 +536,10 @@ public class AssetBizImpl implements AssetBiz {
      * @param userId
      * @return
      */
-    private double getFreeCashCredit(long userId){
+    private double getFreeCashCredit(long userId) {
 
         return 0d;
     }
-
-
-
-
-
-    /**
-     * 同步数据
-     * @param response
-     * @param userId
-     * @param userThirdAccount
-     */
-
-    @Transactional(rollbackFor = Exception.class)
-    private void doSynAsset(AccountDetailsQueryResponse response, long userId, UserThirdAccount userThirdAccount) {
-        response.getSeqNo() ;
-        List<RechargeDetailLog> detailLogs = rechargeDetailLogService.
-                findRechargeLogByUserIdAndDateRange(userId, response.getStartDate(), response.getEndDate()) ;
-
-
-    }
-
 
     private AccountDetailsQueryResponse doQueryTx(String type, int pageIndex, int pageSize, String accountId, Date startDate, Date endDate ){
         AccountDetailsQueryRequest request = new AccountDetailsQueryRequest() ;
