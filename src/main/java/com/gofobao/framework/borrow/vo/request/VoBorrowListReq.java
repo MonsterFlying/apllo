@@ -10,7 +10,7 @@ import lombok.Data;
 
 @Data
 public class VoBorrowListReq extends Page {
-    @ApiModelProperty("0：车贷标；1：净值标；2：秒标；4：渠道标；")
+    @ApiModelProperty("0：车贷标；1：净值标；4：渠道标；")
     private Integer type;
 
 

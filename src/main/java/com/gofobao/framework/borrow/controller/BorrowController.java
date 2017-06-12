@@ -2,11 +2,9 @@ package com.gofobao.framework.borrow.controller;
 
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.service.BorrowService;
-import com.gofobao.framework.borrow.vo.request.VoAddNetWorthBorrow;
-import com.gofobao.framework.borrow.vo.request.VoBorrowByIdReq;
+import com.gofobao.framework.borrow.vo.request.VoAddBorrow;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
-import com.gofobao.framework.borrow.vo.response.VoBorrowByIdRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
@@ -36,7 +34,7 @@ public class BorrowController {
     @Autowired
     private BorrowBiz borrowBiz;
 
-    @ApiOperation(value = "首页标列表; type: 0：车贷标；1：净值标；2：秒标；4：渠道标；-1:全部")
+    @ApiOperation(value = "首页标列表; type: 0：车贷标；1：净值标；4：渠道标；-1:全部")
     @GetMapping("/list/{type}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewBorrowListWarpRes> borrowList(@PathVariable Integer pageIndex,
                                                               @PathVariable Integer pageSize,
@@ -64,7 +62,7 @@ public class BorrowController {
      */
     @PostMapping("/addNetWorth")
     @ApiOperation("发布净值借款")
-    public ResponseEntity<VoBaseResp> addNetWorth(@Valid @ModelAttribute VoAddNetWorthBorrow voAddNetWorthBorrow, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
+    public ResponseEntity<VoBaseResp> addNetWorth(@Valid @ModelAttribute VoAddBorrow voAddNetWorthBorrow, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
         voAddNetWorthBorrow.setUserId(userId);
         return borrowBiz.addNetWorth(voAddNetWorthBorrow);
     }

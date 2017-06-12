@@ -1,7 +1,7 @@
 package com.gofobao.framework.borrow.biz;
 
 import com.gofobao.framework.borrow.entity.Borrow;
-import com.gofobao.framework.borrow.vo.request.VoAddNetWorthBorrow;
+import com.gofobao.framework.borrow.vo.request.VoAddBorrow;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
@@ -21,7 +21,7 @@ public interface BorrowBiz {
      * @param voAddNetWorthBorrow
      * @return
      */
-    ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow);
+    ResponseEntity<VoBaseResp> addNetWorth(VoAddBorrow voAddNetWorthBorrow);
 
 
     /**
