@@ -46,8 +46,6 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService{
         return Optional.ofNullable(rechargeDetailLogs).orElse(Collections.emptyList());
     }
 
-    @Override
-    public List<RechargeDetailLog> findRechargeLogByUserIdAndDateRange(long userId, String startDate, String endDate) {
-        return null ;
-    }
+
+
 }

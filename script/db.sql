@@ -172,3 +172,7 @@ CREATE TABLE gfb_recharge_detail_log
 #修改第三方存管账户
 ALTER TABLE gfb_user_third_account ADD bank_name VARCHAR(255) DEFAULT '其他' NULL;
 ALTER TABLE gfb_user_third_account ADD bank_logo VARCHAR(255) DEFAULT '' NULL;
+
+
+ALTER TABLE gfb_recharge_detail_log MODIFY bank_name VARCHAR(64) DEFAULT '' COMMENT '充值银行';
+ALTER TABLE gfb_recharge_detail_log CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci;
