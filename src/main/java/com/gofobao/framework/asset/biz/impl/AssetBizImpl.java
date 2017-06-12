@@ -485,27 +485,94 @@ public class AssetBizImpl implements AssetBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "请初始化江西银行存管账户密码！", VoPreCashResp.class));
         }
 
-
-
-
         return null;
     }
 
     @Override
-    public ResponseEntity<VoBaseResp> asset(Long userId) {
+    public ResponseEntity<VoAssetIndexResp> asset(Long userId) {
         // 获取用户待还资金
+        Asset asset = assetService.findByUserId(userId);
+        if(ObjectUtils.isEmpty(asset)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍后重试！", VoAssetIndexResp.class));
+        }
+        UserCache userCache = userCacheService.findById(userId);
+        if(ObjectUtils.isEmpty(userCache)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍后重试！", VoAssetIndexResp.class));
+        }
 
-
-
-        // 获取用户待代收
-
-        // 用户总资产
-
-
-        return null;
+        VoAssetIndexResp response = VoBaseResp.ok("查询成功", VoAssetIndexResp.class);
+        response.setAccruedMoney( StringHelper.formatDouble(userCache.getIncomeTotal() / 100D, true)); //累计收益
+        response.setCollectionMoney( StringHelper.formatDouble((userCache.getWaitCollectionPrincipal() + userCache.getWaitCollectionInterest()) / 100D, true)  ); // 待收
+        response.setAccountMoney(StringHelper.formatDouble((asset.getNoUseMoney() + asset.getUseMoney()) / 100D , true));
+        response.setTotalAsset(StringHelper.formatDouble((asset.getUseMoney() + asset.getNoUseMoney() + asset.getCollection()) / 100D, true));
+        Double netAmount = ( (asset.getUseMoney() + userCache.getWaitCollectionPrincipal() ) * 0.8D - asset.getPayment())  / 100D;
+        response.setNetAmount(StringHelper.formatDouble(netAmount, true));
+        return ResponseEntity.ok(response) ;
     }
 
     @Override
+    public ResponseEntity<VoAccruedMoneyResp> accruedMoney(Long userId) {
+        UserCache userCache = userCacheService.findById(userId);
+        if(ObjectUtils.isEmpty(userCache)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoAccruedMoneyResp.class));
+        }
+
+        Integer incomeBonus = userCache.getIncomeBonus();
+        Integer incomeOverdue = userCache.getIncomeOverdue();
+        Integer incomeInterest = userCache.getIncomeInterest();
+        Integer incomeAward = userCache.getIncomeAward();
+        Integer incomeIntegralCash = userCache.getIncomeIntegralCash();
+        Integer incomeOther = userCache.getIncomeOther();
+        Integer totalIncome = incomeBonus + incomeOverdue + incomeInterest + incomeAward + incomeIntegralCash + incomeOther;
+        VoAccruedMoneyResp response = VoBaseResp.ok("查询成功", VoAccruedMoneyResp.class);
+        response.setIncomeBonus(StringHelper.formatDouble(incomeBonus / 100D, true));
+        response.setIncomeAward(StringHelper.formatDouble(incomeAward / 100D, true));
+        response.setIncomeInterest(StringHelper.formatDouble(incomeInterest / 100D, true));
+        response.setIncomeIntegralCash(StringHelper.formatDouble(incomeIntegralCash / 100, true));
+        response.setIncomeOther(StringHelper.formatDouble(incomeOther / 100D, true));
+        response.setTotalIncome(StringHelper.formatDouble(totalIncome / 100 , true)) ;
+        return ResponseEntity.ok(response) ;
+    }
+
+    @Override
+    public ResponseEntity<VoAvailableAssetInfoResp> accountMoney(Long userId) {
+        Asset asset = assetService.findByUserId(userId);
+
+        if(ObjectUtils.isEmpty(asset)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoAvailableAssetInfoResp.class));
+        }
+
+        VoAvailableAssetInfoResp resp = VoBaseResp.ok("查询成功", VoAvailableAssetInfoResp.class);
+        resp.setNoUseMoney(StringHelper.formatDouble(asset.getNoUseMoney() / 100D, true));
+        resp.setUseMoney(StringHelper.formatDouble(asset.getUseMoney() / 100D, true));
+        resp.setTotal(StringHelper.formatDouble((asset.getNoUseMoney() + asset.getUseMoney()) / 100D, true ));
+        return ResponseEntity.ok(resp) ;
+    }
+
+    @Override
+    public ResponseEntity<VoCollectionResp> collectionMoney(Long userId) {
+        UserCache userCache = userCacheService.findById(userId);
+        if(ObjectUtils.isEmpty(userCache)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoCollectionResp.class));
+        }
+
+        VoCollectionResp response = VoBaseResp.ok("查询成功", VoCollectionResp.class);
+        response.setInterest(StringHelper.formatDouble(userCache.getWaitCollectionInterest() / 100D, true));
+        response.setPrincipal(StringHelper.formatDouble(userCache.getWaitCollectionPrincipal() / 100D, true));
+        response.setWaitCollectionTotal(StringHelper.formatDouble((userCache.getWaitCollectionPrincipal() + userCache.getWaitCollectionInterest()) / 100D, true));
+        return ResponseEntity.ok(response);
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> synchronizedAsset(Long userId) throws Exception{
         Users users = userService.findByIdLock(userId);

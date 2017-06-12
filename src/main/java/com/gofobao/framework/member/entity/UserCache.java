@@ -117,6 +117,15 @@ public class UserCache {
     private Long cashTotal;
 
 
+
+    public int getIncomeTotal(){
+        return this.incomeInterest
+                + this.incomeAward
+                + this.incomeOverdue
+                + this.incomeIntegralCash
+                + this.getIncomeBonus()
+                + this.incomeOther ;
+    }
     /**
      * 待付利息管理费
      *

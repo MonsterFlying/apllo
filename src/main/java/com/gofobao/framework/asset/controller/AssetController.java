@@ -1,14 +1,14 @@
 package com.gofobao.framework.asset.controller;
 
 import com.gofobao.framework.asset.biz.AssetBiz;
-import com.gofobao.framework.asset.vo.response.VoUserAssetInfoResp;
-import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 /**
  * Created by Zeke on 2017/5/19.
@@ -22,14 +22,33 @@ public class AssetController {
 
     @ApiOperation("获取用户资产信息")
     @GetMapping("/asset/v2/info")
-    public ResponseEntity<VoUserAssetInfoResp> userAssetInfo(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoUserAssetInfoResp> userAssetInfo(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return assetBiz.userAssetInfo(userId);
     }
 
 
+    @ApiOperation("资产中心数据")
     @GetMapping("/asset/v2/index")
-    public ResponseEntity<VoBaseResp> asset(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoAssetIndexResp> asset(@ApiIgnore  @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return assetBiz.asset(userId) ;
     }
 
+    @ApiOperation("累计收益详情")
+    @GetMapping("/asset/v2/accruedMoney")
+    public ResponseEntity<VoAccruedMoneyResp> accruedMoney(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return assetBiz.accruedMoney(userId) ;
+    }
+
+
+    @ApiOperation("账户余额")
+    @GetMapping("/asset/v2/accountMoney")
+    public ResponseEntity<VoAvailableAssetInfoResp> accountMoney(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return assetBiz.accountMoney(userId) ;
+    }
+
+    @ApiOperation("待收总额")
+    @GetMapping("/asset/v2/collectionMoney")
+    public ResponseEntity<VoCollectionResp> collectionMoney(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return assetBiz.collectionMoney(userId) ;
+    }
 }
