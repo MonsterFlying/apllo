@@ -272,10 +272,16 @@ public class BorrowServiceImpl implements BorrowService {
         //发标用户
         Long borrowUserId = borrow.getUserId();
         Users users = usersRepository.findOne(borrowUserId);
-        Map<String, Object> borrowMap =new HashMap<>();
+
+
+        Gson gson= new GsonBuilder().create();
+        String jsonStr=gson.toJson(borrow);
+        Map<String,Object>borrowMap=gson.fromJson(jsonStr,new TypeToken< Map<String,Object>>() {
+        }.getType());
         borrowMap.put("username", StringUtils.isEmpty(users.getPhone()) ? users.getUsername() : users.getPhone());
         borrowMap.put("cardId", UserHelper.hideChar(users.getCardId(), UserHelper.CARD_ID_NUM));
-        borrowMap.put("id",borrow.getId());
+
+
         if (!ObjectUtils.isEmpty(borrow.getSuccessAt())) { //判断是否满标
             boolean successAtBool = DateHelper.getMonth(DateHelper.addMonths(borrow.getSuccessAt(), borrow.getTimeLimit())) % 12
                     !=
@@ -323,7 +329,6 @@ public class BorrowServiceImpl implements BorrowService {
         }
         List<Map<String, Object>> tenderMapList = Lists.newArrayList();
         if (!CollectionUtils.isEmpty(borrowTenderList)) {
-            Gson gson = new GsonBuilder().create();
             tenderMapList = gson.fromJson(
                     gson.toJson(borrowTenderList),
                     new TypeToken< List<Object>>() {
