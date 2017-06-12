@@ -13,7 +13,9 @@ import com.gofobao.framework.member.repository.UsersRepository;
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
@@ -94,5 +96,40 @@ public class LendServiceImpl implements LendService {
             lendListRes.add(lend);
         });
         return Optional.ofNullable(lendListRes).orElse(Collections.EMPTY_LIST);
+    }
+
+
+    /**
+     * 查询列表
+     *
+     * @param specification
+     * @return
+     */
+    public List<Lend> findList(Specification<Lend> specification) {
+        return lendRepository.findAll(specification);
+    }
+
+    /**
+     * 查询列表
+     *
+     * @param specification
+     * @return
+     */
+    public List<Lend> findList(Specification<Lend> specification,Sort sort) {
+        return lendRepository.findAll(specification,sort);
+    }
+
+    /**
+     * 查询列表
+     *
+     * @param specification
+     * @return
+     */
+    public List<Lend> findList(Specification<Lend> specification,Pageable pageable) {
+        return lendRepository.findAll(specification,pageable).getContent();
+    }
+
+    public long count(Specification<Lend> specification){
+        return lendRepository.count(specification);
     }
 }

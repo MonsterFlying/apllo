@@ -4,11 +4,9 @@ import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListResWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.*;
 import com.gofobao.framework.security.contants.SecurityContants;
-import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,23 +14,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
 /**
  * Created by admin on 2017/6/1.
  */
 @RestController
-@Api(description="还款计划")
+@Api(description = "还款计划")
 @RequestMapping("/repayment")
 public class BorrowRepaymentContorller {
 
     @Autowired
     private RepaymentBiz repaymentBiz;
-    @Autowired
-    private BorrowRepaymentThirdBiz borrowRepaymentThirdBiz;
 
-    @RequestMapping(value = "/v2/list/{time}",method = RequestMethod.GET)
+    @RequestMapping(value = "/v2/list/{time}", method = RequestMethod.GET)
     @ApiOperation("还款计划列表")
     public ResponseEntity<VoViewCollectionOrderListResWarpRes> listRes(@PathVariable("time") String time,
                                                                        @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
@@ -42,7 +37,7 @@ public class BorrowRepaymentContorller {
         return repaymentBiz.repaymentList(orderReq);
     }
 
-    @RequestMapping(value = "/v2/info/{repaymentId}",method = RequestMethod.GET)
+    @RequestMapping(value = "/v2/info/{repaymentId}", method = RequestMethod.GET)
     @ApiOperation("还款信息")
     public ResponseEntity<VoViewOrderDetailWarpRes> info(@PathVariable("repaymentId") String repaymentId,
                                                          @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
@@ -52,27 +47,17 @@ public class BorrowRepaymentContorller {
         return repaymentBiz.info(voInfoReq);
     }
 
-    @RequestMapping("/v2/third/lendrepay/check")
-    @ApiOperation("批次放款参数检查通知")
-    public ResponseEntity<String> thirdLendRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
-        return borrowRepaymentThirdBiz.thirdBatchLendRepayCheckCall(request, response);
-    }
-
-    @RequestMapping("/v2/third/lendrepay/run")
-    @ApiOperation("批次放款运行结果通知")
-    public ResponseEntity<String> thirdLendRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
-        return borrowRepaymentThirdBiz.thirdBatchLendRepayRunCall(request, response);
-    }
-
-    @RequestMapping("/v2/third/repay/check")
-    @ApiOperation("批次还款参数检查通知")
-    public ResponseEntity<String> thirdRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
-        return borrowRepaymentThirdBiz.thirdBatchRepayCheckCall(request, response);
-    }
-
-    @RequestMapping("/v2/third/repay/run")
-    @ApiOperation("批次还款参数检查通知")
-    public ResponseEntity<String> thirdRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
-        return borrowRepaymentThirdBiz.thirdBatchRepayRunCall(request, response);
+    /**
+     * 立即还款
+     *
+     * @param voInstantlyRepaymentReq
+     * @return 0成功 1失败 2操作不存在 3该借款上一期还未还 4账户余额不足，请先充值
+     * @throws Exception
+     */
+    @RequestMapping("/v2/instantly")
+    @ApiOperation("立即还款")
+    public ResponseEntity<VoBaseResp> instantly(@ModelAttribute @Valid VoInstantlyRepaymentReq voInstantlyRepaymentReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
+        voInstantlyRepaymentReq.setUserId(userId);
+        return repaymentBiz.instantly(voInstantlyRepaymentReq);
     }
 }

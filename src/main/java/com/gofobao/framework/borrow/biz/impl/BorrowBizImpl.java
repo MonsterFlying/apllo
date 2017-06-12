@@ -517,7 +517,7 @@ public class BorrowBizImpl implements BorrowBiz {
         boolean bool = false;
         do {
 
-            if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1) || (borrow.getMoney() == borrow.getMoneyYes())) {
+            if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1) || (borrow.getMoney() != borrow.getMoneyYes())) {
                 break;
             }
             Date nowDate = new Date();
@@ -547,6 +547,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 borrowRepayment.setAdvanceMoneyYes(0);
                 borrowRepayment.setLateDays(0);
                 borrowRepayment.setLateInterest(0);
+                borrowRepayment.setUserId(borrow.getUserId());
                 borrowRepaymentService.insert(borrowRepayment);
             }
 
@@ -564,7 +565,7 @@ public class BorrowBizImpl implements BorrowBiz {
     public boolean transferedBorrowAgainVerify(Borrow borrow) throws Exception {
         boolean bool = false;
         do {
-            if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1) || (borrow.getMoney() == borrow.getMoneyYes())) {
+            if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1) || (borrow.getMoney() != borrow.getMoneyYes())) {
                 break;
             }
             Long tenderId = borrow.getTenderId();
@@ -660,6 +661,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 borrowCollection.setTenderId(tempTender.getId());
                 borrowCollection.setStatus(0);
                 borrowCollection.setOrder(i);
+                borrowCollection.setUserId(tempTender.getUserId());
                 borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))) : borrowDate);
                 borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))) : nowDate);
                 borrowCollection.setCollectionAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));

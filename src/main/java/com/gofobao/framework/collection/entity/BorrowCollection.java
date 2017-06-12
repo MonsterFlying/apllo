@@ -81,7 +81,7 @@ public class BorrowCollection {
     private Integer borrowId;
     @Basic
     @Column(name = "user_id")
-    private Integer userId;
+    private Long userId;
     @Basic
     @Column(name = "iparam1")
     private Integer iparam1;

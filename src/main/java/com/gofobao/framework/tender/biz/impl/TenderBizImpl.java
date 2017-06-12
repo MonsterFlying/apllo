@@ -111,21 +111,23 @@ public class TenderBizImpl implements TenderBiz {
         borrowTender.setIsAuto(voCreateTenderReq.getIsAutoTender());
         borrowTender.setUpdatedAt(nowDate);
         borrowTender.setCreatedAt(nowDate);
+        borrowTender.setTransferFlag(0);
         borrowTender.setState(1);
         borrowTender = tenderService.insert(borrowTender);
 
-        //===============================调用即信投标申请操作====================================
-        VoCreateThirdTenderReq voCreateThirdTenderReq = new VoCreateThirdTenderReq();
-        voCreateThirdTenderReq.setAcqRes(String.valueOf(borrowTender.getId()));
-        voCreateThirdTenderReq.setUserId(userId);
-        voCreateThirdTenderReq.setTxAmount(StringHelper.formatDouble(validMoney, 100, false));
-        voCreateThirdTenderReq.setProductId(String.valueOf(borrow.getId()));
-        voCreateThirdTenderReq.setFrzFlag(FrzFlagContant.FREEZE);
-        ResponseEntity<VoBaseResp> resp = tenderThirdBiz.createThirdTender(voCreateThirdTenderReq);
-        if (!ObjectUtils.isEmpty(resp)) {
-            throw new Exception(resp.getBody().getState().getMsg());
+        if (!borrow.isTransfer()) { //转让标不需要调用即信投标申请接口
+            //===============================调用即信投标申请操作====================================
+            VoCreateThirdTenderReq voCreateThirdTenderReq = new VoCreateThirdTenderReq();
+            voCreateThirdTenderReq.setAcqRes(String.valueOf(borrowTender.getId()));
+            voCreateThirdTenderReq.setUserId(userId);
+            voCreateThirdTenderReq.setTxAmount(StringHelper.formatDouble(validMoney, 100, false));
+            voCreateThirdTenderReq.setProductId(String.valueOf(borrow.getId()));
+            voCreateThirdTenderReq.setFrzFlag(FrzFlagContant.FREEZE);
+            ResponseEntity<VoBaseResp> resp = tenderThirdBiz.createThirdTender(voCreateThirdTenderReq);
+            if (!ObjectUtils.isEmpty(resp)) {
+                throw new Exception(resp.getBody().getState().getMsg());
+            }
         }
-
         //扣除待还
         CapitalChangeEntity entity = new CapitalChangeEntity();
         entity.setType(CapitalChangeEnum.Frozen);
@@ -423,7 +425,7 @@ public class TenderBizImpl implements TenderBiz {
             warpListRes.setVoBorrowTenderUser(tenderUserRes);
             return ResponseEntity.ok(warpListRes);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"查询失败", VoBorrowTenderUserWarpListRes.class));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoBorrowTenderUserWarpListRes.class));
         }
     }
 
