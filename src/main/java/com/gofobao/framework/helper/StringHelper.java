@@ -112,4 +112,17 @@ public class StringHelper {
         return buff.toString();
     }
 
+    public static String formatMon(double number) {
+        String money = "0.0";
+        if (number > 0.001) {
+            DecimalFormat df = new DecimalFormat("#,##0.00");
+            money = df.format(number);
+            if (money.substring(money.length() - 3, money.length()).equals(".00")) {
+                return money.substring(0, money.length() - 3);
+            }
+        }
+        return money;
+    }
+
+
 }

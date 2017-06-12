@@ -1,13 +1,12 @@
 package com.gofobao.framework.borrow.controller;
 
 import com.gofobao.framework.borrow.biz.BorrowBiz;
-import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoAddBorrow;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -18,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.validation.Valid;
+import java.util.Map;
 
 /**
  * Created by Max on 17/5/16.
@@ -30,12 +30,12 @@ import javax.validation.Valid;
 public class BorrowController {
 
     @Autowired
-    private BorrowService borrowService;
-    @Autowired
     private BorrowBiz borrowBiz;
+    @Autowired
+    private ThymeleafHelper thymeleafHelper;
 
-    @ApiOperation(value = "首页标列表; type: 0：车贷标；1：净值标；4：渠道标；-1:全部")
-    @GetMapping("/list/{type}/{pageIndex}/{pageSize}")
+    @ApiOperation(value = "首页标列表; type: 0：车贷标；1：净值标；2：流转标；4：渠道标；-1:全部")
+    @GetMapping("v2/list/{type}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewBorrowListWarpRes> borrowList(@PathVariable Integer pageIndex,
                                                               @PathVariable Integer pageSize,
                                                               @PathVariable Integer type) {
@@ -48,9 +48,25 @@ public class BorrowController {
 
 
     @ApiOperation("标信息")
-    @GetMapping("/info/{borrowId}")
-    public ResponseEntity<VoViewBorrowInfoWarpRes> getByBorrowId(@PathVariable Long borrowId) {
+    @GetMapping("v2/info/{borrowId}")
+    public ResponseEntity getByBorrowId(@PathVariable Long borrowId) {
         return borrowBiz.info(borrowId);
+    }
+
+    @ApiOperation("标简介")
+    @GetMapping("v2/desc/{borrowId}")
+    public ResponseEntity desc(@PathVariable Long borrowId) {
+        return borrowBiz.desc(borrowId);
+    }
+
+
+    @ApiOperation(value = "标合同")
+    @GetMapping(value = "/pub/borrowProtocol/{borrowId}")
+    public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId){
+        Long userId=901L;
+        Map<String,Object>paramMaps= borrowBiz.contract(borrowId,userId);
+        String content = thymeleafHelper.build("borrowProtocol",paramMaps) ;
+        return ResponseEntity.ok(content);
     }
 
 

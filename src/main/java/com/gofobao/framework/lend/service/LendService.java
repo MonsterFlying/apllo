@@ -2,6 +2,7 @@ package com.gofobao.framework.lend.service;
 
 import com.gofobao.framework.common.page.Page;
 import com.gofobao.framework.lend.entity.Lend;
+import com.gofobao.framework.lend.vo.response.LendInfo;
 import com.gofobao.framework.lend.vo.response.VoViewLend;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -46,6 +47,14 @@ public interface LendService {
      * @return
      */
     List<Lend> findList(Specification<Lend> specification,Pageable pageable);
+
+    /**
+     * 借款信息
+     * @param userId
+     * @param lendId
+     * @return
+     */
+    LendInfo info(Long userId,Long lendId);
 
     long count(Specification<Lend> specification);
 }

@@ -42,4 +42,5 @@ public interface BorrowRepository extends JpaRepository<Borrow,Long>,JpaSpecific
 
     List<Borrow>findByIdIn(List<Integer> ids);
 
+
 }

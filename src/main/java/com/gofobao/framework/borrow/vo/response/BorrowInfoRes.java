@@ -1,13 +1,16 @@
 package com.gofobao.framework.borrow.vo.response;
 
+import com.gofobao.framework.core.vo.VoBaseResp;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.util.ArrayList;
+
 /**
- * Created by admin on 2017/5/18.
+ * Created by admin on 2017/6/9.
  */
 @Data
-public class VoBorrowByIdRes {
+public class   BorrowInfoRes {
 
     @ApiModelProperty("每万元收益")
     private String earnings;

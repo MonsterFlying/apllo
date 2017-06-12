@@ -29,4 +29,9 @@ public interface TenderService {
     boolean checkTenderNimiety(Long borrowId,Long userId);
 
     Tender findById(Long tenderId);
+
+
+
+
+
 }

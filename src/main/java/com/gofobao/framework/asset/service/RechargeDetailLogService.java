@@ -2,6 +2,7 @@ package com.gofobao.framework.asset.service;
 
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -17,5 +18,5 @@ public interface RechargeDetailLogService {
 
     List<RechargeDetailLog> log(Long userId, int pageIndex, int pageSize);
 
-    List<RechargeDetailLog> findRechargeLogByUserIdAndDateRange(long userId, String startDate, String endDate);
+    List<RechargeDetailLog> findByRecentLog(long userId, int del, Date startTime, Date startTime1);
 }

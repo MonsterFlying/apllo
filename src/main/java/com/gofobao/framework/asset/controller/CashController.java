@@ -26,4 +26,6 @@ public class CashController {
     public ResponseEntity<VoPreCashResp> preCash(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         return assetBiz.preCash(userId) ;
     }
+
+
 }

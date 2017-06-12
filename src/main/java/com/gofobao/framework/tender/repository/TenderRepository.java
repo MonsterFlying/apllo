@@ -1,6 +1,8 @@
 package com.gofobao.framework.tender.repository;
 
 import com.gofobao.framework.tender.entity.Tender;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -19,7 +21,7 @@ public interface TenderRepository extends JpaRepository<Tender,Long>,JpaSpecific
     @Query("select  tender  from #{#entityName}    tender where tender.userId IN :userArray and tender.status=1 group by tender.userId ORDER BY tender.createdAt ASC")
     List<Tender> findUserFirstTender(@Param(value = "userArray") List<Long> userArray);
 
+    List <Tender>findByBorrowIdAndUserIdIs(Long borrowId,Long userId);
 
-
-
+    Page<Tender> findByUserIdAndStatusIsAndTransferFlagIs(Long userId, Integer status,Integer transferFlag, Pageable pa);
 }

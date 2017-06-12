@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.LockModeType;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,7 +48,9 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService{
     }
 
     @Override
-    public List<RechargeDetailLog> findRechargeLogByUserIdAndDateRange(long userId, String startDate, String endDate) {
-        return null ;
+    public List<RechargeDetailLog> findByRecentLog(long userId, int del, Date startTime, Date endTime) {
+        return rechargeDetailLogRepository.findByUserIdAndDelAndCreateTimeBetweenAndState(userId, 0, startTime, endTime, 1) ;
     }
+
+
 }
