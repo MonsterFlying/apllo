@@ -463,8 +463,9 @@ public class AssetBizImpl implements AssetBiz {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoPreCashResp> preCash(Long userId) {
-        Users users = userService.findById(userId);
+        Users users = userService.findByIdLock(userId);
         Preconditions.checkNotNull(users, "当前用户不存在");
         if (users.getIsLock()) {
             return ResponseEntity
@@ -485,7 +486,53 @@ public class AssetBizImpl implements AssetBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "请初始化江西银行存管账户密码！", VoPreCashResp.class));
         }
 
+        Asset asset = assetService.findByUserIdLock(userId);
+        VoPreCashResp resp = VoBaseResp.ok("查询成功", VoPreCashResp.class);
+        resp.setBankName(userThirdAccount.getBankName());
+        resp.setLogo(userThirdAccount.getBankLogo());
+        resp.setCardNo(userThirdAccount.getCardNo());
+        resp.setUseMoneyShow(StringHelper.formatDouble(asset.getUseMoney() / 100D, true));
+        resp.setUseMoney(asset.getUseMoney() / 100D);
+
+        // 获取用户免费额度
+
+        // 获取用户资产
+
+        //
+
         return null;
+    }
+
+    /**
+     *  获取用户免费提现额度
+     * @param userId
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    private double getFreeCashMoney(long userId) {
+        UserCache userCache = userCacheService.findByUserIdLock(userId);
+        Asset asset = assetService.findByUserIdLock(userId);
+        int canCashMoney = Math.min(asset.getUseMoney(), asset.getTotal() - asset.getPayment()) ;
+        int allMoney = asset.getTotal() - asset.getPayment() - userCache.getWaitExpenditureInterestManageFee() ;
+
+        // 充值总额
+        long rechargeTotal = userCache.getRechargeTotal() ;
+        // 已经实现收入
+        int incomeTotal = userCache.getIncomeTotal() ;
+
+        // 提现总额
+        Long cashTotal = userCache.getCashTotal() ;
+
+        Date endTime = new Date() ;
+        Date startTime = DateHelper.subDays(endTime, 3) ;
+        Long recharge3Total = 0L ;
+        List<RechargeDetailLog> logs = rechargeDetailLogService.findByRecentLog(userId, 0, startTime, startTime) ;
+        if(!CollectionUtils.isEmpty(logs)){
+            recharge3Total = logs.stream().mapToLong(p->p.getMoney()).sum();
+        }
+
+
+        return 0d;
     }
 
     @Override
@@ -662,17 +709,6 @@ public class AssetBizImpl implements AssetBiz {
         ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
         mqConfig.setMsg(body);
         mqHelper.convertAndSend(mqConfig);
-    }
-
-
-    /**
-     * 获取免费提现额度
-     * @param userId
-     * @return
-     */
-    private double getFreeCashCredit(long userId) {
-
-        return 0d;
     }
 
     /**
