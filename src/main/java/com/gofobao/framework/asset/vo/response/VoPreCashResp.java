@@ -14,7 +14,7 @@ public class VoPreCashResp extends VoBaseResp {
     @ApiModelProperty("银行账号后4位")
     private String cardNo;
 
-    @ApiModelProperty("银行账号后4位")
+    @ApiModelProperty("提现银行名称")
     private String bankName ;
 
     @ApiModelProperty("存管账户余额")
@@ -23,6 +23,13 @@ public class VoPreCashResp extends VoBaseResp {
     @ApiModelProperty("免费提现额度金额")
     private double freeCashMoney ;
 
-    @ApiModelProperty("银行logo")
+    @ApiModelProperty("免费提现额度金额 用于显示")
+    private String freeCashMoneyShow ;
+
+    @ApiModelProperty("免费提现额度金额 用于显示")
+    private String useMoneyShow ;
+
+
+    @ApiModelProperty("提现银行logo")
     private String logo ;
 }

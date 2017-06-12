@@ -4,6 +4,7 @@ import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -15,4 +16,6 @@ public interface RechargeDetailLogRepository extends JpaRepository<RechargeDetai
     RechargeDetailLog findTopByIdAndDel(Long rechargeId, int del);
 
     List<RechargeDetailLog> findByUserIdAndDel(Long userId, int del, Pageable pageable);
+
+    List<RechargeDetailLog> findByUserIdAndDelAndCreateTimeBetweenAndState(long userId, int del, Date startTime, Date endTime, int state);
 }
