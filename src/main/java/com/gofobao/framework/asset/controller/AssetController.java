@@ -27,9 +27,9 @@ public class AssetController {
     }
 
 
-    @GetMapping("/asset/v2/synAsset/{time}")
-    public ResponseEntity<VoBaseResp> synAsset(@RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable("time") String time) {
-        return assetBiz.synchronizedAsset(userId, time) ;
+    @GetMapping("/asset/v2/index")
+    public ResponseEntity<VoBaseResp> asset(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return assetBiz.asset(userId) ;
     }
 
 }

@@ -83,12 +83,10 @@ public interface AssetBiz {
      */
     ResponseEntity<VoPreCashResp> preCash(Long userId);
 
-
     /**
-     * 同步存管资金
+     * 获取资产首页金额信息
      * @param userId
-     * @param time
      * @return
      */
-    ResponseEntity<VoBaseResp> synchronizedAsset(Long userId, String time);
+    ResponseEntity<VoBaseResp> asset(Long userId);
 }
