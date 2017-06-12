@@ -2,14 +2,15 @@ package com.gofobao.framework.borrow.service;
 
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoRes;
+import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
+import com.gofobao.framework.borrow.vo.response.VoBorrowDescRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.ResponseEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by admin on 2017/5/17.
@@ -18,7 +19,7 @@ public interface BorrowService {
 
     List<VoViewBorrowList> findAll(VoBorrowListReq voBorrowListReq);
 
-    VoViewBorrowInfoRes findByBorrowId(Long borrowId);
+    BorrowInfoRes findByBorrowId(Long borrowId);
 
     long countByUserIdAndStatusIn(Long userId,List<Integer> statusList);
 
@@ -75,4 +76,10 @@ public interface BorrowService {
     List<Borrow> findList(Specification<Borrow> specification,Pageable pageable);
 
     long count(Specification<Borrow> specification);
+
+
+    VoBorrowDescRes desc(Long borrowId);
+
+    Map<String, Object> contract(Long borrowId, Long userId);
+
 }

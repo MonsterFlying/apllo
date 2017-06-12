@@ -4,10 +4,12 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.vo.request.VoAddNetWorthBorrow;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
+import com.gofobao.framework.borrow.vo.response.VoViewVoBorrowDescWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import org.springframework.http.ResponseEntity;
+
+import java.util.Map;
 
 /**
  * Created by Zeke on 2017/5/26.
@@ -55,5 +57,19 @@ public interface BorrowBiz {
      * @param borrowId
      * @return
      */
-   /* VoViewBorrowInfoRes info(Long borrowId);*/
+    ResponseEntity<Object> info(Long borrowId);
+
+    /**
+     * 标简介
+     */
+    ResponseEntity<VoViewVoBorrowDescWarpRes> desc(Long borrowId);
+
+    /**
+     * 标合同
+     * @param borrowId
+     * @param userId
+     * @return
+     */
+    Map<String, Object> contract(Long borrowId, Long userId);
+
 }

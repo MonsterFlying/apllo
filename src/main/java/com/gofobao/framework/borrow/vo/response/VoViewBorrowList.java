@@ -42,6 +42,8 @@ public class VoViewBorrowList implements Serializable {
     private Boolean isConversion;
     @ApiModelProperty("新手标识")
     private Boolean isNovice;
+    @ApiModelProperty("流转标标识")
+    private Boolean isFlow;
     @ApiModelProperty("满标金额")
     private String moneyYes;
     @ApiModelProperty("投标笔数")

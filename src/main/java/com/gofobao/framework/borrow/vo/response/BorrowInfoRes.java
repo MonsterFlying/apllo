@@ -10,7 +10,7 @@ import java.util.ArrayList;
  * Created by admin on 2017/6/9.
  */
 @Data
-public class VoViewBorrowInfoRes extends VoBaseResp {
+public class   BorrowInfoRes {
 
     @ApiModelProperty("每万元收益")
     private String earnings;

@@ -11,9 +11,7 @@ import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.*;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoRes;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
+import com.gofobao.framework.borrow.vo.response.*;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
@@ -95,7 +93,12 @@ public class BorrowBizImpl implements BorrowBiz {
     @Autowired
     private BorrowRepaymentService borrowRepaymentService;
 
-
+    /**
+     * 理财首页标列表
+     *
+     * @param voBorrowListReq
+     * @return
+     */
     @Override
     public ResponseEntity<VoViewBorrowListWarpRes> findAll(VoBorrowListReq voBorrowListReq) {
         try {
@@ -104,9 +107,80 @@ public class BorrowBizImpl implements BorrowBiz {
             listWarpRes.setVoViewBorrowLists(borrowLists);
             return ResponseEntity.ok(listWarpRes);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.info("BorrowBizImpl findAll fail%s", e);
             return ResponseEntity.badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewBorrowListWarpRes.class));
+                    .body(VoBaseResp.error(
+                            VoBaseResp.ERROR,
+                            "查询失败",
+                            VoViewBorrowListWarpRes.class));
+        }
+    }
+
+    /**
+     * 标信息
+     *
+     * @param borrowId
+     * @return
+     */
+    @Override
+    public ResponseEntity<Object> info(Long borrowId) {
+        try {
+            BorrowInfoRes borrowInfoRes = borrowService.findByBorrowId(borrowId);
+            VoViewBorrowInfoWarpRes listWarpRes = VoBaseResp.ok("查询成功", VoViewBorrowInfoWarpRes.class);
+            if (ObjectUtils.isEmpty(borrowInfoRes)) {
+                return ResponseEntity.ok(VoBaseResp.ok(""));
+            } else {
+                listWarpRes.setBorrowInfoRes(borrowInfoRes);
+                return ResponseEntity.ok(listWarpRes);
+            }
+        } catch (Exception e) {
+
+            log.info("BorrowBizImpl info fail%s", e);
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(
+                            VoBaseResp.ERROR,
+                            "查询失败",
+                            VoViewBorrowInfoWarpRes.class));
+        }
+
+    }
+
+    /**
+     * 标简介
+     *
+     * @param borrowId
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoViewVoBorrowDescWarpRes> desc(Long borrowId) {
+        try {
+            VoViewVoBorrowDescWarpRes borrowDescWarpRes = VoBaseResp.ok("查询成功", VoViewVoBorrowDescWarpRes.class);
+            VoBorrowDescRes voBorrowDescRes = borrowService.desc(borrowId);
+            borrowDescWarpRes.setVoBorrowDescRes(voBorrowDescRes);
+            return ResponseEntity.ok(borrowDescWarpRes);
+        } catch (Exception e) {
+            log.info("BorrowBizImpl desc fail%s", e);
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(
+                            VoBaseResp.ERROR,
+                            "查询失败",
+                            VoViewVoBorrowDescWarpRes.class));
+        }
+    }
+
+    /**
+     * 标合同
+     * @param borrowId
+     * @param userId
+     * @return
+     */
+    @Override
+    public Map<String, Object> contract(Long borrowId, Long userId) {
+        try {
+            return borrowService.contract(borrowId, userId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -752,8 +826,5 @@ public class BorrowBizImpl implements BorrowBiz {
         return true;
     }
 
- /*   @Override
-    public ResponseEntity<VoViewBorrowInfoRes> info(Long borrowId) {
-          return  new  ResponseEntity<VoViewBorrowInfoRes>();
-    }*/
+
 }
