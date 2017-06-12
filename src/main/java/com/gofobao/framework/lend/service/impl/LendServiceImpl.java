@@ -1,12 +1,17 @@
 package com.gofobao.framework.lend.service.impl;
 
+import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.common.page.Page;
+import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.lend.contants.LendContants;
 import com.gofobao.framework.lend.entity.Lend;
 import com.gofobao.framework.lend.repository.LendRepository;
 import com.gofobao.framework.lend.service.LendService;
+import com.gofobao.framework.lend.vo.response.LendInfo;
 import com.gofobao.framework.lend.vo.response.VoViewLend;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
@@ -98,6 +103,35 @@ public class LendServiceImpl implements LendService {
         return Optional.ofNullable(lendListRes).orElse(Collections.EMPTY_LIST);
     }
 
+    @Override
+    public LendInfo info(Long userId, Long lendId) {
+        Specification specification= Specifications.<Lend>and()
+                .eq("userId",userId)
+                .eq("id",lendId)
+                .build();
+        Lend lend=lendRepository.findOne(specification);
+        LendInfo lendInfo=new LendInfo();
+        lendInfo.setApr(StringHelper.formatMon(lend.getApr()/100d));
+        lendInfo.setId(lend.getId());
+        lendInfo.setStartMoney(StringHelper.formatMon(lend.getLowest()/100d));
+
+        if(lend.getStatus()==LendContants.STATUS_NO){
+            lendInfo.setSurplusMoney(StringHelper.formatMon(lend.getMoney()-lend.getMoneyYes()));
+        }else{
+            lendInfo.setSurplusMoney(StringHelper.formatMon(lend.getMoney()));
+        }
+        if(lend.getTimeLimit()== BorrowContants.REPAY_FASHION_ONCE){
+            lendInfo.setTimeLimit(lend.getTimeLimit()+BorrowContants.DAY);
+        }else{
+            lendInfo.setTimeLimit(lend.getTimeLimit()+BorrowContants.MONTH);
+        }
+        lendInfo.setCollectionAt(DateHelper.dateToString(lend.getRepayAt()));
+        Users users=usersRepository.findById(lend.getUserId());
+        lendInfo.setUserName(StringUtils.isEmpty(users.getUsername())?users.getPhone():users.getUsername());
+
+
+        return lendInfo;
+    }
 
     /**
      * 查询列表
