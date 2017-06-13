@@ -8,6 +8,7 @@ import com.gofobao.framework.award.vo.response.VoViewVirtualTenderResWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,26 +25,28 @@ public class VirtualController {
     @Autowired
     private VirtualBiz virtualBiz;
 
+    @ApiOperation("收益统计")
     @PostMapping(value = "/v2/statistics")
     public ResponseEntity<VoViewVirtualStatisticsWarpRes> query(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return virtualBiz.query(userId);
     }
 
+    @ApiOperation("用户投标体验金列表")
     @PostMapping(value = "/v2/userTenderList")
     public ResponseEntity<VoViewVirtualTenderResWarpRes> userTenderList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return virtualBiz.userTenderList(userId);
     }
 
-
+    @ApiOperation("体验金列表")
     @PostMapping(value = "/v2/list")
     public ResponseEntity<VoViewVirtualBorrowResWarpRes> list() {
         return virtualBiz.list();
     }
 
+    @ApiOperation("体验金投标")
     @PostMapping("v2/createTender")
     public ResponseEntity<VoBaseResp> createTender(@ModelAttribute VoVirtualReq voVirtualReq) {
-
-    return  null;
+        return virtualBiz.createTender(voVirtualReq);
     }
 
 }

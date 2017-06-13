@@ -1,5 +1,6 @@
 package com.gofobao.framework.award.service.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.asset.contants.AssetTypeContants;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.entity.AssetLog;
@@ -15,20 +16,28 @@ import com.gofobao.framework.award.vo.response.VirtualStatistics;
 import com.gofobao.framework.award.vo.response.VirtualTenderRes;
 import com.gofobao.framework.borrow.contants.BorrowVirtualContants;
 import com.gofobao.framework.borrow.entity.BorrowVirtual;
+import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.entity.VirtualCollection;
+import com.gofobao.framework.common.capital.CapitalChangeEntity;
+import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
+import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.tender.contants.VirtualTenderContants;
 import com.gofobao.framework.tender.entity.VirtualTender;
 import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -36,6 +45,7 @@ import java.util.stream.Collectors;
  */
 
 
+@Slf4j
 @Component
 public class VirtualServiceImpl implements VirtualService {
 
@@ -47,14 +57,16 @@ public class VirtualServiceImpl implements VirtualService {
     private AssetRepository assetRepository;
 
     @Autowired
+    private VirtualBorrowRepository virtualBorrowRepository;
+
+    @Autowired
     private VirtualTenderRepository virtualTenderRepository;
 
     @Autowired
     private VirtualCollectionRepository virtualCollectionRepository;
 
     @Autowired
-    private VirtualBorrowRepository virtualBorrowRepository;
-
+    private CapitalChangeHelper capitalChangeHelper;
 
     /**
      * 体验金统计
@@ -135,19 +147,78 @@ public class VirtualServiceImpl implements VirtualService {
         return Optional.ofNullable(virtualBorrowRes).orElse(Collections.EMPTY_LIST);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED,rollbackFor=Exception.class)
     @Override
     public Boolean tenderCreate(VoVirtualReq voVirtualReq) {
-        BorrowVirtual borrowVirtual=virtualBorrowRepository.findOne(voVirtualReq.getId());
-        if(ObjectUtils.isEmpty(borrowVirtual)){
-            return  false;
-        }
-        Asset asset = assetRepository.findByUserId(voVirtualReq.getUserId());
-        if(ObjectUtils.isEmpty(asset)){
-            return  false;
-        }
-        Integer userVirtualMoney = asset.getVirtualMoney();
-       /* if(userVirtualMoney<borrowVirtual.get)*/
 
-        return null;
+        BorrowVirtual borrowVirtual = virtualBorrowRepository.findOne(voVirtualReq.getId());
+        if (ObjectUtils.isEmpty(borrowVirtual)) {
+            return false;
+        }
+        Specification specification = Specifications.<Asset>and()
+                .eq("userId", voVirtualReq.getUserId())
+                .gt("virtualMoney", borrowVirtual.getLowest())
+                .build();
+        Asset asset = assetRepository.findOne(specification);
+        if (ObjectUtils.isEmpty(asset)) {
+            return false;
+        }
+        VirtualTender virtualTender = new VirtualTender();
+        virtualTender.setUserId(virtualTender.getUserId());
+        virtualTender.setStatus(VirtualTenderContants.VIRTUALTENDERSUCCESS);
+        virtualTender.setBorrowId(voVirtualReq.getId().intValue());
+        virtualTender.setCreatedAt(new Date());
+        virtualTender.setUpdatedAt(new Date());
+        virtualTender.setMoney(asset.getVirtualMoney());
+        try {
+            virtualTenderRepository.save(virtualTender);
+        } catch (Exception e) {
+            log.info("tenderCreate list  virtualTenderRepository.save  fail",e);
+            return false;
+        }
+
+        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(virtualTender.getMoney().doubleValue(), borrowVirtual.getApr().doubleValue(), borrowVirtual.getTimeLimit(), new Date());
+        Map<String, Object> resultMap = borrowCalculatorHelper.ycxhbfx();
+
+        //还款期数
+        VirtualCollection virtualCollection=new VirtualCollection();
+        virtualCollection.setOrder(1);
+        virtualCollection.setUpdatedAt(new Date());
+        virtualCollection.setUpdatedAt(new Date());
+        List objectMap = (ArrayList) resultMap.get("repayDetailList");
+        Map<String, String> repayMaps = (Map<String, String>) objectMap.get(0);
+        Integer collectionMoney = NumberHelper.toInt(repayMaps.get("repayMoney"));//应收本息
+        Integer interest = NumberHelper.toInt(repayMaps.get("interest"));//应收利息
+        Integer principal = NumberHelper.toInt(repayMaps.get("principal"));//应收本金
+        Date collectionAt = DateHelper.stringToDate(repayMaps.get("repayAt"));
+        virtualCollection.setCollectionMoney(collectionMoney);
+        virtualCollection.setInterest(interest);
+        virtualCollection.setPrincipal(principal);
+        virtualCollection.setCollectionAt(collectionAt);
+        virtualCollection.setStatus(BorrowVirtualContants.STATUS_NO);
+        virtualCollection.setTenderId(virtualTender.getId());
+        virtualCollection.setCollectionMoneyYes(0);
+        virtualCollection.setCreatedAt(new Date());
+        try {
+            virtualCollectionRepository.save(virtualCollection);
+        }catch (Exception e){
+            log.info("tenderCreate list  virtualCollectionRepository.save  fail",e);
+        }
+        //=========================================
+        //=资金变动
+        //=========================================
+        CapitalChangeEntity capitalChangeEntity = new CapitalChangeEntity();
+        capitalChangeEntity.setType(CapitalChangeEnum.VirtualTender);
+        capitalChangeEntity.setMoney(asset.getVirtualMoney());
+        capitalChangeEntity.setUserId(voVirtualReq.getUserId());
+        capitalChangeEntity.setToUserId(voVirtualReq.getUserId());
+        capitalChangeEntity.setRemark("投资体验标扣除体验金");
+        boolean flag=true;
+        try {
+            flag= capitalChangeHelper.capitalChange(capitalChangeEntity);
+        }catch (Exception e){
+            log.info(" VirtualServiceImpl tenderCreate capitalChangeHelper.capitalChange fail",e);
+        }
+        return flag;
     }
 }
