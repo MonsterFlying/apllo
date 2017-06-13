@@ -14,10 +14,10 @@ import java.sql.Timestamp;
 public class BorrowVirtual {
     @Id
     @Column(name = "id", nullable = false)
-    private Integer id;
+    private Long id;
     @Basic
     @Column(name = "user_id", nullable = false)
-    private Integer userId;
+    private Long userId;
     @Basic
     @Column(name = "name", nullable = false, length = 255)
     private String name;

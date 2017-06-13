@@ -147,7 +147,7 @@ public class VirtualServiceImpl implements VirtualService {
         return Optional.ofNullable(virtualBorrowRes).orElse(Collections.EMPTY_LIST);
     }
 
-    @Transactional(propagation = Propagation.REQUIRED,rollbackFor=Exception.class)
+    @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     @Override
     public Boolean tenderCreate(VoVirtualReq voVirtualReq) {
 
@@ -156,8 +156,11 @@ public class VirtualServiceImpl implements VirtualService {
             return false;
         }
         Specification specification = Specifications.<Asset>and()
+                .ge(Objects.nonNull(
+                        borrowVirtual.getLowest()),
+                        "virtualMoney",
+                        borrowVirtual.getLowest())
                 .eq("userId", voVirtualReq.getUserId())
-                .gt("virtualMoney", borrowVirtual.getLowest())
                 .build();
         Asset asset = assetRepository.findOne(specification);
         if (ObjectUtils.isEmpty(asset)) {
@@ -173,7 +176,7 @@ public class VirtualServiceImpl implements VirtualService {
         try {
             virtualTenderRepository.save(virtualTender);
         } catch (Exception e) {
-            log.info("tenderCreate list  virtualTenderRepository.save  fail",e);
+            log.info("tenderCreate list  virtualTenderRepository.save  fail", e);
             return false;
         }
 
@@ -181,7 +184,7 @@ public class VirtualServiceImpl implements VirtualService {
         Map<String, Object> resultMap = borrowCalculatorHelper.ycxhbfx();
 
         //还款期数
-        VirtualCollection virtualCollection=new VirtualCollection();
+        VirtualCollection virtualCollection = new VirtualCollection();
         virtualCollection.setOrder(1);
         virtualCollection.setUpdatedAt(new Date());
         virtualCollection.setUpdatedAt(new Date());
@@ -201,8 +204,8 @@ public class VirtualServiceImpl implements VirtualService {
         virtualCollection.setCreatedAt(new Date());
         try {
             virtualCollectionRepository.save(virtualCollection);
-        }catch (Exception e){
-            log.info("tenderCreate list  virtualCollectionRepository.save  fail",e);
+        } catch (Exception e) {
+            log.info("tenderCreate list  virtualCollectionRepository.save  fail", e);
         }
         //=========================================
         //=资金变动
@@ -213,11 +216,12 @@ public class VirtualServiceImpl implements VirtualService {
         capitalChangeEntity.setUserId(voVirtualReq.getUserId());
         capitalChangeEntity.setToUserId(voVirtualReq.getUserId());
         capitalChangeEntity.setRemark("投资体验标扣除体验金");
-        boolean flag=true;
+        boolean flag = true;
         try {
-            flag= capitalChangeHelper.capitalChange(capitalChangeEntity);
-        }catch (Exception e){
-            log.info(" VirtualServiceImpl tenderCreate capitalChangeHelper.capitalChange fail",e);
+            flag = capitalChangeHelper.capitalChange(capitalChangeEntity);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.info(" VirtualServiceImpl tenderCreate capitalChangeHelper.capitalChange fail", e);
         }
         return flag;
     }

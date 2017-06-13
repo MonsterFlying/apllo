@@ -27,13 +27,15 @@ public class VirtualController {
 
     @ApiOperation("收益统计")
     @PostMapping(value = "/v2/statistics")
-    public ResponseEntity<VoViewVirtualStatisticsWarpRes> query(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoViewVirtualStatisticsWarpRes> query(/*@RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+      Long userId=901L;
         return virtualBiz.query(userId);
     }
 
     @ApiOperation("用户投标体验金列表")
     @PostMapping(value = "/v2/userTenderList")
-    public ResponseEntity<VoViewVirtualTenderResWarpRes> userTenderList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoViewVirtualTenderResWarpRes> userTenderList(/*@RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+        Long userId=901L;
         return virtualBiz.userTenderList(userId);
     }
 
