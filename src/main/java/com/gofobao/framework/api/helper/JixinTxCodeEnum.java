@@ -114,8 +114,23 @@ public enum JixinTxCodeEnum {
      */
     ACCOUNT_DETAILS_QUERY(
             "accountDetailsQuery",
-                    "/escrow/p2p/online"
+            "/escrow/p2p/online"
+    ),
+    /**
+     * 批次融资人还担保账户垫款
+     */
+    BATCH_REPAY_BAIL(
+            "batchRepayBail",
+            "/escrow/p2p/online"
+    ),
+    Batch_Bail_Repay(
+            "batchBailRepay",
+            "/escrow/p2p/online"
     )
+    ,
+    TRUSTEE_PAY(
+            "trusteePay",
+            "/escrow/p2p/page/trusteePay"),
     ;
 
     private String value;

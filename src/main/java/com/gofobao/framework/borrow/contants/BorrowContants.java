@@ -13,10 +13,7 @@ public class BorrowContants {
      * 净值标
      */
     public static final int JING_ZHI = 1;
-    /**
-     * 秒标
-     */
-    public static final int MIAO = 2;
+
     /**
      * 渠道标
      */
@@ -97,10 +94,7 @@ public class BorrowContants {
      * 净值标
      */
     public static final int INDEX_TYPE_JING_ZHI = 2;
-    /**
-     * 秒标
-     */
-    public static final int INDEX_TYPE_MIAO = 3;
+
     /**
      * 渠道标
      */

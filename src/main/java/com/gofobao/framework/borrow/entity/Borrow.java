@@ -98,7 +98,7 @@ public class Borrow implements Serializable {
     private Boolean isImpawn;
     @Basic
     @Column(name = "is_continued")
-    private Boolean isContinued ;
+    private Boolean isContinued;
     @Basic
     @Column(name = "is_conversion")
     private Boolean isConversion;
@@ -151,17 +151,22 @@ public class Borrow implements Serializable {
     @Basic
     @Column(name = "vparam3")
     private String vparam3;
+    @Basic
+    @Column(name = "bail_account_id")
+    private String bailAccountId;
 
     /**
      * 判断是否是转让标
+     *
      * @return
      */
-    public boolean isTransfer(){
-        return (this.type == 0) && (!ObjectUtils.isEmpty(tenderId)) && (tenderId > 0);
+    public boolean isTransfer() {
+        return this.type == 3 || ((!ObjectUtils.isEmpty(tenderId)) && (tenderId > 0));
     }
 
     /**
      * 获取借款总期数
+     *
      * @return
      */
     public Integer getTotalOrder() {

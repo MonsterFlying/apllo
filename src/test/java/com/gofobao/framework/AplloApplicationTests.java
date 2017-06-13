@@ -1,6 +1,9 @@
 package com.gofobao.framework;
 
+import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
+import com.gofobao.framework.borrow.entity.Borrow;
+import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.integral.IntegralChangeEntity;
 
 import java.util.HashMap;
@@ -29,17 +32,27 @@ public class AplloApplicationTests {
     @Autowired
     private BorrowProvider borrowProvider;
 
+    @Autowired
+    private BorrowBiz borrowBiz;
+    @Autowired
+    private BorrowService borrowService;
+
     @Test
     public void contextLoads() {
+        Borrow borrow = borrowService.findById(165168L);
+        try {
+            borrowBiz.notTransferedBorrowAgainVerify(borrow);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
     public void test() {
 
-        Map<String, String> map = new HashMap();
-        map.put("borrowId", "165153");
+        Borrow borrow = borrowService.findById(165168L);
         try {
-            borrowProvider.doAgainVerify(map);
+            borrowBiz.notTransferedBorrowAgainVerify(borrow);
         } catch (Exception e) {
             e.printStackTrace();
         }
