@@ -16,10 +16,10 @@ import com.gofobao.framework.award.vo.response.VirtualStatistics;
 import com.gofobao.framework.award.vo.response.VirtualTenderRes;
 import com.gofobao.framework.borrow.contants.BorrowVirtualContants;
 import com.gofobao.framework.borrow.entity.BorrowVirtual;
-import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.entity.VirtualCollection;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -37,7 +37,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import java.sql.*;
 import java.util.*;
+
+import java.util.Date;
 import java.util.stream.Collectors;
 
 /**
@@ -166,12 +169,13 @@ public class VirtualServiceImpl implements VirtualService {
         if (ObjectUtils.isEmpty(asset)) {
             return false;
         }
+        Date date=new Date();
         VirtualTender virtualTender = new VirtualTender();
-        virtualTender.setUserId(virtualTender.getUserId());
+        virtualTender.setUserId(asset.getUserId());
         virtualTender.setStatus(VirtualTenderContants.VIRTUALTENDERSUCCESS);
         virtualTender.setBorrowId(voVirtualReq.getId().intValue());
-        virtualTender.setCreatedAt(new Date());
-        virtualTender.setUpdatedAt(new Date());
+        virtualTender.setCreatedAt(date);
+        virtualTender.setUpdatedAt(date);
         virtualTender.setMoney(asset.getVirtualMoney());
         try {
             virtualTenderRepository.save(virtualTender);
@@ -185,9 +189,9 @@ public class VirtualServiceImpl implements VirtualService {
 
         //还款期数
         VirtualCollection virtualCollection = new VirtualCollection();
+        virtualCollection.setStatus(BorrowVirtualContants.STATUS_NO);
         virtualCollection.setOrder(1);
-        virtualCollection.setUpdatedAt(new Date());
-        virtualCollection.setUpdatedAt(new Date());
+        virtualCollection.setTenderId(virtualTender.getId());
         List objectMap = (ArrayList) resultMap.get("repayDetailList");
         Map<String, String> repayMaps = (Map<String, String>) objectMap.get(0);
         Integer collectionMoney = NumberHelper.toInt(repayMaps.get("repayMoney"));//应收本息
@@ -198,14 +202,14 @@ public class VirtualServiceImpl implements VirtualService {
         virtualCollection.setInterest(interest);
         virtualCollection.setPrincipal(principal);
         virtualCollection.setCollectionAt(collectionAt);
-        virtualCollection.setStatus(BorrowVirtualContants.STATUS_NO);
-        virtualCollection.setTenderId(virtualTender.getId());
         virtualCollection.setCollectionMoneyYes(0);
-        virtualCollection.setCreatedAt(new Date());
+        virtualCollection.setUpdatedAt(date);
+        virtualCollection.setCreatedAt(date);
         try {
             virtualCollectionRepository.save(virtualCollection);
         } catch (Exception e) {
             log.info("tenderCreate list  virtualCollectionRepository.save  fail", e);
+            return  false;
         }
         //=========================================
         //=资金变动
