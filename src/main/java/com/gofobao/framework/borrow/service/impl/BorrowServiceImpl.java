@@ -78,7 +78,13 @@ public class BorrowServiceImpl implements BorrowService {
      */
     @Override
     public List<VoViewBorrowList> findAll(VoBorrowListReq voBorrowListReq) {
+
         Integer type = voBorrowListReq.getType();
+        List<Integer> typeArray = Arrays.asList(-1, 1, 2, 3, 4, 5);
+        Boolean flag = typeArray.contains(type);
+        if (!flag) {
+            return Collections.EMPTY_LIST;
+        }
         if (type == -1) {
             type = null;
         }
@@ -93,7 +99,7 @@ public class BorrowServiceImpl implements BorrowService {
          *条件
          */
         if (type != null) {  // 全部
-            if (type == 2) {
+            if (type == 5) {
                 sb.append(" AND b.tenderId is not null ");
             } else {
                 sb.append(" AND b.type=" + type);
@@ -175,7 +181,7 @@ public class BorrowServiceImpl implements BorrowService {
                     } else {
                         item.setIsFlow(false);
                     }
-                    item.setType(m.getType());
+                    item.setType(voBorrowListReq.getType());
                     item.setStatus(status);
                     item.setRepayFashion(m.getRepayFashion());
                     item.setIsContinued(m.getIsContinued());

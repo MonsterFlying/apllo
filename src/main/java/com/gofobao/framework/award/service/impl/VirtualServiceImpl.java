@@ -9,6 +9,7 @@ import com.gofobao.framework.award.repository.VirtualBorrowRepository;
 import com.gofobao.framework.award.repository.VirtualCollectionRepository;
 import com.gofobao.framework.award.repository.VirtualTenderRepository;
 import com.gofobao.framework.award.service.VirtualService;
+import com.gofobao.framework.award.vo.request.VoVirtualReq;
 import com.gofobao.framework.award.vo.response.VirtualBorrowRes;
 import com.gofobao.framework.award.vo.response.VirtualStatistics;
 import com.gofobao.framework.award.vo.response.VirtualTenderRes;
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -131,5 +133,21 @@ public class VirtualServiceImpl implements VirtualService {
             virtualBorrowRes.add(borrowRes);
         });
         return Optional.ofNullable(virtualBorrowRes).orElse(Collections.EMPTY_LIST);
+    }
+
+    @Override
+    public Boolean tenderCreate(VoVirtualReq voVirtualReq) {
+        BorrowVirtual borrowVirtual=virtualBorrowRepository.findOne(voVirtualReq.getId());
+        if(ObjectUtils.isEmpty(borrowVirtual)){
+            return  false;
+        }
+        Asset asset = assetRepository.findByUserId(voVirtualReq.getUserId());
+        if(ObjectUtils.isEmpty(asset)){
+            return  false;
+        }
+        Integer userVirtualMoney = asset.getVirtualMoney();
+       /* if(userVirtualMoney<borrowVirtual.get)*/
+
+        return null;
     }
 }
