@@ -7,12 +7,12 @@ public class LendContants {
 
     public static final Integer STATUS_NO = 0;
 
-    public static final String STATUS_NO_STR = "出借中";
+    public static final String STATUS_NO_STR = "可借中";
 
 
-    public static final Integer STATUS_YES = 0;
+    public static final Integer STATUS_YES = 1;
 
-    public static final String STATUS_YES_STR = "已完成";
+    public static final String STATUS_YES_STR = "已结束";
 
 
     public static final int MAX_MONEY = 20000000 * 100;
