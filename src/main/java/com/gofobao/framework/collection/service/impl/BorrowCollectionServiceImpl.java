@@ -194,4 +194,8 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
     public long count(Specification<BorrowCollection> specification){
         return borrowCollectionRepository.count(specification);
     }
+
+    public List<BorrowCollection> save(List<BorrowCollection> borrowCollectionList){
+        return borrowCollectionRepository.save(borrowCollectionList);
+    }
 }

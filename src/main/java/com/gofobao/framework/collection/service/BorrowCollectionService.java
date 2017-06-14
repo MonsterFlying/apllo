@@ -18,6 +18,7 @@ public interface BorrowCollectionService {
 
     /**
      * 回款列表
+     *
      * @param voCollectionOrderReq
      * @return
      */
@@ -25,7 +26,7 @@ public interface BorrowCollectionService {
 
 
     /**
-     *回款详情
+     * 回款详情
      */
 
     VoViewOrderDetailRes orderDetail(VoOrderDetailReq voOrderDetailReq);
@@ -49,4 +50,6 @@ public interface BorrowCollectionService {
     BorrowCollection insert(BorrowCollection borrowCollection);
 
     BorrowCollection updateById(BorrowCollection borrowCollection);
+
+    List<BorrowCollection> save(List<BorrowCollection> borrowCollectionList);
 }
