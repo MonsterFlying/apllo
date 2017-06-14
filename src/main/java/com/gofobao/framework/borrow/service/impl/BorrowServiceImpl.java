@@ -309,14 +309,19 @@ public class BorrowServiceImpl implements BorrowService {
         //发标用户
         Long borrowUserId = borrow.getUserId();
         Users users = usersRepository.findOne(borrowUserId);
-
-
-        Gson gson = new GsonBuilder().create();
+        Gson gson = new Gson();
         String jsonStr = gson.toJson(borrow);
         Map<String, Object> borrowMap = gson.fromJson(jsonStr, new TypeToken<Map<String, Object>>() {
         }.getType());
-        borrowMap.put("username", StringUtils.isEmpty(users.getPhone()) ? users.getUsername() : users.getPhone());
+
+        borrowMap.put("username", StringUtils.isEmpty(users.getUsername()) ? users.getPhone() : users.getUsername());
         borrowMap.put("cardId", UserHelper.hideChar(users.getCardId(), UserHelper.CARD_ID_NUM));
+        borrowMap.put("id",borrow.getId());
+        borrowMap.put("money",StringHelper.formatMon(borrow.getMoney()/100d));
+        borrowMap.put("timeLimit",borrow.getTimeLimit()+"");
+        borrowMap.put("apr",StringHelper.formatMon(borrow.getApr()/100d));
+        borrowMap.put("successAt",StringUtils.isEmpty(borrow.getSuccessAt())?null:DateHelper.dateToString(borrow.getSuccessAt()));
+        borrowMap.put("endAt",DateHelper.dateToString(DateHelper.addDays(borrow.getReleaseAt(),borrow.getValidDay())));
 
 
         if (!ObjectUtils.isEmpty(borrow.getSuccessAt())) { //判断是否满标
@@ -378,9 +383,14 @@ public class BorrowServiceImpl implements BorrowService {
             for (Map<String, Object> tempTenderMap : tenderMapList) {
                 Long tempUserId = new Double(tempTenderMap.get("userId").toString()).longValue();
                 Users usersTemp = userMap.get(tempUserId);
-                tempTenderMap.put("username", UserHelper.hideChar(StringUtils.isEmpty(usersTemp.getUsername()) ? usersTemp.getPhone() : usersTemp.getPhone(), UserHelper.USERNAME_NUM));
+                tempTenderMap.put("username", UserHelper.hideChar(StringUtils.isEmpty(usersTemp.getUsername()) ? usersTemp.getPhone() : usersTemp.getUsername(), UserHelper.USERNAME_NUM));
                 borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(tempTenderMap.get("validMoney")), new Double(borrow.getApr()), borrow.getTimeLimit(), null);
                 calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
+                calculatorMap.put("earnings",StringHelper.formatMon(Double.parseDouble(calculatorMap.get("earnings").toString())/100));
+                calculatorMap.put("eachRepay",StringHelper.formatMon(Double.parseDouble(calculatorMap.get("eachRepay").toString())/100));
+                calculatorMap.put("repayTotal",StringHelper.formatMon(Double.parseDouble(calculatorMap.get("repayTotal").toString())/100));
+                calculatorMap.put("repayDetailList",calculatorMap.get("repayDetailList"));
+
                 tempTenderMap.put("calculatorMap", calculatorMap);
             }
         }

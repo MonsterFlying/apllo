@@ -78,9 +78,10 @@ public class BorrowController {
 
     @ApiOperation(value = "标合同")
     @GetMapping(value = "/pub/borrowProtocol/{borrowId}")
-    public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId){
-        Long userId=901L;
-        Map<String,Object>paramMaps= borrowBiz.contract(borrowId,userId);
+    public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId/*,
+                                                @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/){
+
+        Map<String,Object>paramMaps= borrowBiz.contract(borrowId,901L);
         String content = thymeleafHelper.build("borrowProtocol",paramMaps) ;
         return ResponseEntity.ok(content);
     }

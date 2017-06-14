@@ -49,9 +49,9 @@ public class PaymentController {
 
     @ApiOperation("当月有回款日期,time：'2017-05'")
     @GetMapping("/v2/collection/days/{time}")
-    public ResponseEntity<VoViewCollectionDaysWarpRes> days(@PathVariable("time") String time
-                                                               /* @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
-        Long userId=901L;
+    public ResponseEntity<VoViewCollectionDaysWarpRes> days(@PathVariable("time") String time,
+                                                            @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+
         return paymentBiz.collectionDays(time,userId);
     }
 
