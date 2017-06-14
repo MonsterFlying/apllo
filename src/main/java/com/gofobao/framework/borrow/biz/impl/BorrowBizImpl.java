@@ -540,7 +540,8 @@ public class BorrowBizImpl implements BorrowBiz {
     public boolean transferedBorrowAgainVerify(Borrow borrow) throws Exception {
         boolean bool = false;
         do {
-            if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1) || (borrow.getMoney() != borrow.getMoneyYes())) {
+            if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1)
+                    || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
                 break;
             }
             Long tenderId = borrow.getTenderId();

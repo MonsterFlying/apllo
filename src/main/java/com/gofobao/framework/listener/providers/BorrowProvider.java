@@ -200,7 +200,8 @@ public class BorrowProvider {
         boolean bool = false;
         Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get("borrowId")));
         Borrow borrow = borrowService.findById(borrowId);
-        if (borrow.isTransfer()) { //转让标
+        if (borrow.isTransfer()) {
+            //批次债券转让
             VoThirdBatchCreditInvest voThirdBatchCreditInvest = new VoThirdBatchCreditInvest();
             voThirdBatchCreditInvest.setBorrowId(borrowId);
             ResponseEntity<VoBaseResp> resp = tenderThirdBiz.thirdBatchCreditInvest(voThirdBatchCreditInvest);

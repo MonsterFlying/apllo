@@ -118,7 +118,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         Tender updTender = tenderService.findById(NumberHelper.toLong(request.getAcqRes()));
         updTender.setAuthCode(response.getAuthCode());
         updTender.setTUserId(userThirdAccount.getId());
-        updTender.setThirdTransferOrderId(orderId);
+        updTender.setThirdTenderOrderId(orderId);
         tenderService.updateById(updTender);
         return null;
     }
@@ -261,6 +261,13 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             bool = false;
         }
 
+        int num = NumberHelper.toInt(lendRepayRunResp.getFailCounts());
+        if (num > 0) {
+            log.error("=============================即信投资人批次购买债权处理结果回调===========================");
+            log.error("即信投资人批次购买债权失败! 一共:" + num + "笔");
+            bool = false;
+        }
+
         if (bool) {
             long borrowId = NumberHelper.toLong(lendRepayRunResp.getAcqRes());
             Borrow borrow = borrowService.findById(borrowId);
@@ -272,7 +279,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         }
         if (bool) {
             log.info("非流转标复审成功!");
-        }else {
+        } else {
             log.info("非流转标复审失败!");
         }
 

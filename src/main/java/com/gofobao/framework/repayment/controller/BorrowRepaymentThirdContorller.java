@@ -23,25 +23,25 @@ public class BorrowRepaymentThirdContorller {
 
     @RequestMapping("/v2/third/batch/lendrepay/check")
     @ApiOperation("批次放款参数检查通知")
-    public void thirdLendRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
+    public void thirdBatchLendRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
         borrowRepaymentThirdBiz.thirdBatchLendRepayCheckCall(request, response);
     }
 
     @RequestMapping("/v2/third/batch/lendrepay/run")
     @ApiOperation("批次放款运行结果通知")
-    public void thirdLendRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
+    public void thirdBatchLendRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
         borrowRepaymentThirdBiz.thirdBatchLendRepayRunCall(request, response);
     }
 
     @RequestMapping("/v2/third/batch/repay/check")
     @ApiOperation("批次还款参数检查通知")
-    public void thirdRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
+    public void thirdBatchRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
         borrowRepaymentThirdBiz.thirdBatchRepayCheckCall(request, response);
     }
 
     @RequestMapping("/v2/third/batch/repay/run")
     @ApiOperation("批次还款参数检查通知")
-    public void thirdRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
+    public void thirdBatchRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
         borrowRepaymentThirdBiz.thirdBatchRepayRunCall(request, response);
     }
 
@@ -54,7 +54,7 @@ public class BorrowRepaymentThirdContorller {
     @RequestMapping("/v2/third/batch/bailrepay/run")
     @ApiOperation("批次担保账户代偿业务处理回调")
     public void thirdBatchBailRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
-        borrowRepaymentThirdBiz.thirdBatchRepayRunCall(request, response);
+        borrowRepaymentThirdBiz.thirdBatchBailRepayRunCall(request, response);
     }
 
     @RequestMapping("/v2/third/batch/repaybail/check")
