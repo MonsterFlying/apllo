@@ -45,6 +45,9 @@ public class   BorrowInfoRes {
     @ApiModelProperty("满标时间")
     private String successAt;
 
+    @ApiModelProperty("新手标标识")
+    private Boolean isNovice;
+
     @ApiModelProperty("状态 1.待发布 2.还款中 3.招标中 4.已完成 5.其它")
     private Integer status;
 

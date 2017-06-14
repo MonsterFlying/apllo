@@ -239,7 +239,7 @@ public class BorrowServiceImpl implements BorrowService {
         borrowInfoRes.setTenderCount(borrow.getTenderCount() + BorrowContants.TIME);
         borrowInfoRes.setMoney(StringHelper.formatMon(borrow.getMoney() / 100d));
         borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
-        borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes() / borrow.getMoney())));
+        borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes() / borrow.getMoney().doubleValue())));
         Date endAt = DateHelper.addDays(borrow.getReleaseAt(), borrow.getValidDay());//结束时间
         borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
         borrowInfoRes.setSurplusSecond(-1L);
@@ -260,6 +260,7 @@ public class BorrowServiceImpl implements BorrowService {
         } else if (status == BorrowContants.PASS && ObjectUtils.isEmpty(borrow.getCloseAt())) {
             status = 2; //还款中
         }
+        borrowInfoRes.setIsNovice(borrow.getIsNovice());
         borrowInfoRes.setStatus(status);
         borrowInfoRes.setSuccessAt(StringUtils.isEmpty(borrow.getSuccessAt()) ? "" : DateHelper.dateToString(borrow.getSuccessAt()));
         return borrowInfoRes;
