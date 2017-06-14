@@ -8,7 +8,7 @@ import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderList;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderRes;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailRes;
 import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.repayment.contants.RepaymentContants;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.repository.BorrowRepaymentRepository;
@@ -23,6 +23,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -38,6 +41,10 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
 
     @Autowired
     private BorrowRepository borrowRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
 
     /**
      * 还款计划列表
@@ -72,8 +79,8 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
             Borrow borrow = borrowMap.get(p.getId());
             collectionOrderRes.setBorrowName(borrow.getName());
             collectionOrderRes.setOrder(p.getOrder() + 1);
-            collectionOrderRes.setCollectionMoneyYes(NumberHelper.to2DigitString(p.getRepayMoneyYes() / 100));
-            collectionOrderRes.setCollectionMoney(NumberHelper.to2DigitString(p.getRepayMoney() / 100));
+            collectionOrderRes.setCollectionMoneyYes(StringHelper.formatMon(p.getRepayMoneyYes() / 100d));
+            collectionOrderRes.setCollectionMoney(StringHelper.formatMon(p.getRepayMoney() / 100d));
             collectionOrderRes.setTimeLime(borrow.getTimeLimit());
             orderResList.add(collectionOrderRes);
         });
@@ -87,7 +94,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
                 .filter(p -> p.getStatus() == 1)
                 .mapToInt(w -> w.getRepayMoneyYes())
                 .sum();
-        orderListRes.setSumCollectionMoneyYes(NumberHelper.to2DigitString(moneyYesSum / 100));
+        orderListRes.setSumCollectionMoneyYes(StringHelper.formatMon(moneyYesSum / 100d));
         return orderListRes;
     }
 
@@ -110,7 +117,6 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         if (ObjectUtils.isEmpty(borrowRepayment)) {
             return detailRes;
         }
-
         Long borrowId = borrowRepayment.getBorrowId();
         Borrow borrow = borrowRepository.findOne(borrowId);
         Integer principal = 0;
@@ -122,14 +128,29 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         } else {
             detailRes.setStatus(RepaymentContants.STATUS_YES_STR);
         }
-        detailRes.setInterest(NumberHelper.to2DigitString(interest / 100));
-        detailRes.setPrincipal(NumberHelper.to2DigitString(principal / 100));
+        detailRes.setInterest(StringHelper.formatMon(interest / 100d));
+        detailRes.setPrincipal(StringHelper.formatMon(principal / 100d));
         detailRes.setBorrowName(borrow.getName());
-        detailRes.setCollectionMoney(NumberHelper.to2DigitString(borrowRepayment.getRepayMoneyYes()));
+        detailRes.setCollectionMoney(StringHelper.formatMon(borrowRepayment.getRepayMoneyYes()/100d));
         detailRes.setLateDays(borrowRepayment.getLateDays());
         detailRes.setOrder(borrowRepayment.getOrder() + 1);
         detailRes.setStartAt(DateHelper.dateToString(borrowRepayment.getRepayAtYes()));
         return detailRes;
+    }
+
+
+    @Override
+    public List<Integer> days(Long userId, String time) {
+        String sql="SELECT DAY(repay_at) FROM gfb_borrow_repayment " +
+                "where " +
+                "user_id="+userId+" " +
+                "and " +
+                "`status`=0 " +
+                "and   date_format(repay_at,'%Y%m') =" +time+
+                " GROUP BY  day(repay_at)";
+        Query query=entityManager.createNativeQuery(sql);
+        List result= query.getResultList();
+        return result;
     }
 
     public BorrowRepayment save(BorrowRepayment borrowRepayment){

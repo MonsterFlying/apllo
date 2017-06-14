@@ -4,7 +4,9 @@ import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.vo.request.VoAddBorrow;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
+import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
+import com.gofobao.framework.borrow.vo.response.VoViewVoBorrowDescWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
@@ -63,22 +65,23 @@ public class BorrowController {
 
     @ApiOperation("标信息")
     @GetMapping("v2/info/{borrowId}")
-    public ResponseEntity getByBorrowId(@PathVariable Long borrowId) {
+    public ResponseEntity<VoViewBorrowInfoWarpRes> getByBorrowId(@PathVariable Long borrowId) {
         return borrowBiz.info(borrowId);
     }
 
     @ApiOperation("标简介")
     @GetMapping("v2/desc/{borrowId}")
-    public ResponseEntity desc(@PathVariable Long borrowId) {
+    public ResponseEntity<VoViewVoBorrowDescWarpRes> desc(@PathVariable Long borrowId) {
         return borrowBiz.desc(borrowId);
     }
 
 
     @ApiOperation(value = "标合同")
     @GetMapping(value = "/pub/borrowProtocol/{borrowId}")
-    public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId){
-        Long userId=901L;
-        Map<String,Object>paramMaps= borrowBiz.contract(borrowId,userId);
+    public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId/*,
+                                                @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/){
+
+        Map<String,Object>paramMaps= borrowBiz.contract(borrowId,901L);
         String content = thymeleafHelper.build("borrowProtocol",paramMaps) ;
         return ResponseEntity.ok(content);
     }

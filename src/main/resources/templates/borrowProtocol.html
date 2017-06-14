@@ -20,7 +20,7 @@
      style="padding: 10px; word-wrap: break-word; font: 14px/1.5 Microsoft YaHei, droidsansfallback; color: #5e5e5e; background: #fff; position: relative">
     <div class="wrapper-xl padder-v-xl bg-white animated fadeIn">
         <h6 style="font-size: 100%; font-weight: 500; margin: 0">合同编号：
-        <!-- <span th:text="${T(com.gofobao.framework.helper.StringHelper).formatDouble(borrowMap['id'],0)}"></span>-->
+            <span th:text="${borrowMap['id']}"></span>
         </h6>
 
         <p style="margin-top: 20px">甲方（出借人）：</p>
@@ -54,20 +54,20 @@
             <tr style="height: 35px" th:each="tenderMap : ${tenderMapList}">
                 <td width="25%"  style="text-align: center" th:text="${tenderMap['username']}"></td>
                 <td width="25%"  style="text-align: center"
-                    th:text="${T(com.gofobao.framework.helper.StringHelper).formatDouble( tenderMap['validMoney'] ,100.0)} +'元'"></td>
+                    th:text="${tenderMap['validMoney']} +'元'"></td>
                 <td width="25%"  style="text-align: center"
-                    th:text="${T(com.gofobao.framework.helper.StringHelper).formatDouble(borrowMap['timeLimit'],0)} + ((${borrowMap['repayFashion']} == 1)?'天':'个月') "></td>
+                    th:text="${borrowMap['timeLimit']} + ((${borrowMap['repayFashion']} == 1)?'天':'个月') "></td>
                 <td style="text-align: center"
                     th:text="(${borrowMap['repayFashion']} == 2)?
-                    '前 '+(${borrowMap['timeLimit']} - 1)+' 个月每月收取利息 '+${T(com.gofobao.framework.helper.StringHelper).formatDouble(   tenderMap['calculatorMap']['eachRepay'] ,100.0)}+
-                    ' 元,到期收取本息 '+((${T(com.gofobao.framework.helper.StringHelper).formatDouble( tenderMap['validMoney'],100.0)}
-                    +${T(com.gofobao.framework.helper.StringHelper).formatDouble( tenderMap['calculatorMap']['eachRepay'],100.0)}))+' 元'
+                    '前 '+(${borrowMap['timeLimit']} - 1)+' 个月每月收取利息 '+${   tenderMap['calculatorMap']['eachRepay'] }+
+                    ' 元,到期收取本息 '+ ${ tenderMap['validMoney']}
+                    +${ tenderMap['calculatorMap']['eachRepay']}+' 元'
                     :
                     (
                         (${borrowMap['repayFashion']} == 1)?
-                        '到期收取本息 '+(${T(com.gofobao.framework.helper.StringHelper).formatDouble( tenderMap['calculatorMap']['repayTotal'] ,100.0)})+' 元'
+                        '到期收取本息 '+(${tenderMap['calculatorMap']['repayTotal']})+' 元'
                         :
-                        '每月收取 '+(${T(com.gofobao.framework.helper.StringHelper).formatDouble(  tenderMap['calculatorMap']['eachRepay'] ,100.0)})+' 元'
+                        '每月收取 '+(${  tenderMap['calculatorMap']['eachRepay'] })+' 元'
                     )
                     "
                 ></td>
@@ -142,23 +142,23 @@
             <tr style="height: 35px">
                 <td width="140" style="padding: 0 20px">借款金额</td>
                 <td width="360" style="padding: 0 20px"
-                    th:text="(${T(com.gofobao.framework.helper.StringHelper).formatDouble(  borrowMap['money'] ,100.0)}) + '元'"></td>
+                    th:text="(${borrowMap['money']}) + '元'"></td>
             </tr>
             <tr style="height: 35px">
                 <td style="padding: 0 20px">借款期限</td>
                 <td style="padding: 0 20px"
-                    th:text="${T(com.gofobao.framework.helper.StringHelper).formatDouble(borrowMap['timeLimit'],0)} + ((${borrowMap['repayFashion']} == 1)?'天':'个月') ">
+                    th:text="${borrowMap['timeLimit']} + ((${borrowMap['repayFashion']} == 1)?'天':'个月') ">
                 </td>
             </tr>
             <tr style="height: 35px">
                 <td style="padding: 0 20px">年利率</td>
                 <td style="padding: 0 20px"
-                    th:text="(${T(com.gofobao.framework.helper.StringHelper).formatDouble(  borrowMap['apr'] ,100.0)}) +'%'"></td>
+                    th:text="(${  borrowMap['apr'] }) +'%'"></td>
             </tr>
             <tr style="height: 35px">
                 <td style="padding: 0 20px">借款开始日</td>
                 <td style="padding: 0 20px"
-                    th:text="${T(com.gofobao.framework.helper.DateHelper).dateToString(  borrowMap['successAt'] ,'yyyy-MM-dd')}">
+                    th:text="${borrowMap['successAt']}">
                 </td>
             </tr>
             <tr style="height: 35px">
@@ -177,14 +177,14 @@
                 <td style="padding: 0 20px">月还款本息</td>
                 <td style="padding: 0 20px"
                     th:text="(${borrowMap['repayFashion']} == 2)?
-                    '前 '+(${borrowMap['timeLimit'] } - 1)+' 个月每月还款利息 '+${T(com.gofobao.framework.helper.StringHelper).formatDouble(calculatorMap['eachRepay'],100.0)}+
-                     ' 元,到期还款本息 '+(${T(com.gofobao.framework.helper.StringHelper).formatDouble(borrowMap['money']+calculatorMap['eachRepay'],100.0)})+' 元'
+                    '前 '+(${borrowMap['timeLimit'] } - 1)+' 个月每月还款利息 '+${calculatorMap['eachRepay']}+
+                     ' 元,到期还款本息 '+(${borrowMap['money']+calculatorMap['eachRepay']})+' 元'
                     :
                     (
                         (${borrowMap['repayFashion']} == 1)?
-                        '到期还款本息 '+${T(com.gofobao.framework.helper.StringHelper).formatDouble(calculatorMap['repayTotal'],100.0)}+' 元'
+                        '到期还款本息 '+${calculatorMap['repayTotal']}+' 元'
                         :
-                        '每月还款 '+${T(com.gofobao.framework.helper.StringHelper).formatDouble(calculatorMap['eachRepay'],100.0)}+' 元'
+                        '每月还款 '+${calculatorMap['eachRepay']}+' 元'
                     )"
                 ></td>
             </tr>

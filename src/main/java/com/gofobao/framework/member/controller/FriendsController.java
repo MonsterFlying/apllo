@@ -7,7 +7,6 @@ import com.gofobao.framework.member.vo.response.VoViewInviteAwardStatisticsWarpR
 import com.gofobao.framework.member.vo.response.VoViewInviteFriendersWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

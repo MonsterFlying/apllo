@@ -1,6 +1,7 @@
 package com.gofobao.framework.repayment.biz;
 
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
+import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListResWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
@@ -48,6 +49,14 @@ public interface RepaymentBiz {
      * @throws Exception
      */
     ResponseEntity<VoBaseResp> repay(VoRepayReq voRepayReq) throws Exception;
+
+    /**
+     * 当前应还款日期
+     * @param userId
+     * @param time
+     * @return
+     */
+    ResponseEntity<VoViewCollectionDaysWarpRes>days(Long userId,String time);
 
     /**
      * 垫付

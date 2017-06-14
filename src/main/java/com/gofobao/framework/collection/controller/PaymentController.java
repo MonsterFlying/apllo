@@ -3,11 +3,11 @@ package com.gofobao.framework.collection.controller;
 import com.gofobao.framework.collection.biz.PaymentBiz;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
+import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListResWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -46,6 +46,15 @@ public class PaymentController {
 
         return paymentBiz.orderDetail(voOrderDetailReq);
     }
+
+    @ApiOperation("当月有回款日期,time：'2017-05'")
+    @GetMapping("/v2/collection/days/{time}")
+    public ResponseEntity<VoViewCollectionDaysWarpRes> days(@PathVariable("time") String time,
+                                                            @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+
+        return paymentBiz.collectionDays(time,userId);
+    }
+
 
 
 }

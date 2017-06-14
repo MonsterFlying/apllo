@@ -31,6 +31,10 @@ public interface BorrowCollectionService {
 
     VoViewOrderDetailRes orderDetail(VoOrderDetailReq voOrderDetailReq);
 
+
+    List<Integer> collectionDay(String date,Long userId);
+
+
     List<BorrowCollection> findList(Specification<BorrowCollection> specification, Pageable pageable);
 
     List<BorrowCollection> findList(Specification<BorrowCollection> specification, Sort sort);

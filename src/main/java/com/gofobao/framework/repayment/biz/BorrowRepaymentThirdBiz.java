@@ -1,7 +1,10 @@
 package com.gofobao.framework.repayment.biz;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.repayment.vo.request.*;
+import com.gofobao.framework.repayment.vo.request.VoBatchBailRepayReq;
+import com.gofobao.framework.repayment.vo.request.VoBatchRepayBailReq;
+import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
+import com.gofobao.framework.repayment.vo.request.VoThirdBatchRepay;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;

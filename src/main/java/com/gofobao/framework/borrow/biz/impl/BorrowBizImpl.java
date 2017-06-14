@@ -44,7 +44,6 @@ import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -124,12 +123,12 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Override
-    public ResponseEntity<Object> info(Long borrowId) {
+    public ResponseEntity<VoViewBorrowInfoWarpRes> info(Long borrowId) {
         try {
             BorrowInfoRes borrowInfoRes = borrowService.findByBorrowId(borrowId);
             VoViewBorrowInfoWarpRes listWarpRes = VoBaseResp.ok("查询成功", VoViewBorrowInfoWarpRes.class);
             if (ObjectUtils.isEmpty(borrowInfoRes)) {
-                return ResponseEntity.ok(VoBaseResp.ok(""));
+                return ResponseEntity.ok(VoBaseResp.ok("",VoViewBorrowInfoWarpRes.class));
             } else {
                 listWarpRes.setBorrowInfoRes(borrowInfoRes);
                 return ResponseEntity.ok(listWarpRes);
