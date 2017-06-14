@@ -2,6 +2,7 @@ package com.gofobao.framework.repayment.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.contants.DesLineFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
@@ -9,6 +10,8 @@ import com.gofobao.framework.api.model.batch_bail_repay.*;
 import com.gofobao.framework.api.model.batch_lend_pay.*;
 import com.gofobao.framework.api.model.batch_repay.*;
 import com.gofobao.framework.api.model.batch_repay_bail.*;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.asset.entity.AdvanceLog;
 import com.gofobao.framework.asset.service.AdvanceLogService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
@@ -88,6 +91,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
     @Value("${gofobao.webDomain}")
     private String webDomain;
+
+    @Value(value = "${jixin.redPacketAccountId}")
+    private String redPacketAccountId; //存管红包账户
 
     /**
      * 即信批次还款
@@ -297,13 +303,28 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                             endAt = (Date) collectionAt.clone();
                         }
 
+                        //债权转让人应收利息
                         accruedInterest = Math.round(interest *
                                 Math.max(DateHelper.diffInDays(startAtYes, endAt, false), 0) /
                                 DateHelper.diffInDays(startAt, collectionAt, false));
 
                         if (accruedInterest > 0) {
-                            //利息管理费
-                            txFeeIn += (accruedInterest * 0.1);
+                            //债权转让人利息管理费
+                            accruedInterest -= accruedInterest * 0.1;
+                            //通过红包账户发放
+                            //调用即信发放债权转让人应收利息
+                            VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
+                            voucherPayRequest.setAccountId(redPacketAccountId);
+                            voucherPayRequest.setTxAmount(StringHelper.formatDouble(accruedInterest, 100, false));
+                            voucherPayRequest.setForAccountId(tenderUserThirdAccount.getAccountId());
+                            voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
+                            voucherPayRequest.setDesLine("发放债权转让人应收利息");
+                            voucherPayRequest.setChannel(ChannelContant.HTML);
+                            VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
+                            if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+                                String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+                                log.error("BorrowRepaymentThirdBizImpl 调用即信发送发放债权转让人应收利息异常:" + msg);
+                            }
                         }
                     }
 
@@ -488,6 +509,13 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             bool = false;
         }
 
+        int num = NumberHelper.toInt(repayRunResp.getFailCounts());
+        if (num > 0) {
+            log.error("=============================即信批次还款处理结果回调===========================");
+            log.error("即信批次还款处理失败! 一共:" + num + "笔");
+            bool = false;
+        }
+
         if (bool) {
             ResponseEntity<VoBaseResp> resp = null;
             try {
@@ -565,12 +593,19 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             bool = false;
         }
 
+        int num = NumberHelper.toInt(lendRepayRunResp.getFailCounts());
+        if (num > 0) {
+            log.error("=============================即信批次放款处理结果回调===========================");
+            log.error("还款失败! 一共:" + num + "笔");
+            bool = false;
+        }
+
         if (bool) {
             long borrowId = NumberHelper.toLong(lendRepayRunResp.getAcqRes());
             Borrow borrow = borrowService.findById(borrowId);
 
             try {
-                bool = borrowBiz.transferedBorrowAgainVerify(borrow);
+                bool = borrowBiz.notTransferedBorrowAgainVerify(borrow);
             } catch (Exception e) {
                 log.error("非流转标复审异常:", e);
             }
@@ -650,15 +685,14 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         request.setProductId(StringHelper.toString(borrowId));
         request.setTxAmount(StringHelper.formatDouble(txAmount, false));
         request.setTxCounts(StringHelper.toString(bailRepayList.size()));
-        request.setNotifyURL(webDomain + "/v2/third/batch/bailrepay/check");
-        request.setRetNotifyURL(webDomain + "/v2/third/batch/bailrepay/run");
+        request.setNotifyURL(webDomain + "/pub/repayment/v2/third/batch/bailrepay/check");
+        request.setRetNotifyURL(webDomain + "/pub/repayment/v2/third/batch/bailrepay/run");
         request.setAcqRes(StringHelper.toString(repaymentId));
         request.setSubPacks(GSON.toJson(bailRepayList));
-        BatchBailRepayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_REPAY, request, BatchBailRepayResp.class);
+        BatchBailRepayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_BAIL_REPAY, request, BatchBailRepayResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "批次担保账户代偿失败!"));
         }
-
         return ResponseEntity.ok(VoBaseResp.ok("批次担保账户代偿成功!"));
     }
 
@@ -885,14 +919,21 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         });
         boolean bool = true;
         if (ObjectUtils.isEmpty(batchBailRepayRunResp)) {
-            log.error("=============================即信批次放款处理结果回调===========================");
+            log.error("=============================批次担保账户代偿业务处理回调===========================");
             log.error("请求体为空!");
             bool = false;
         }
 
         if (!JixinResultContants.SUCCESS.equals(batchBailRepayRunResp.getRetCode())) {
-            log.error("=============================即信批次放款处理结果回调===========================");
+            log.error("=============================批次担保账户代偿业务处理回调===========================");
             log.error("回调失败! msg:" + batchBailRepayRunResp.getRetMsg());
+            bool = false;
+        }
+
+        int num = NumberHelper.toInt(batchBailRepayRunResp.getFailCounts());
+        if (num > 0) {
+            log.error("=============================批次担保账户代偿业务处理回调===========================");
+            log.error("批次担保账户代偿失败! 一共:" + num + "笔");
             bool = false;
         }
 
@@ -1008,8 +1049,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         request.setTxAmount(StringHelper.formatDouble(sumPrincipal, 100, false));
         request.setSubPacks(GSON.toJson(repayBailList));
         request.setTxCounts(StringHelper.toString(repayBailList.size()));
-        request.setNotifyURL(webDomain + "/v2/third/batch/repaybail/check");
-        request.setRetNotifyURL(webDomain + "/v2/third/batch/repaybail/run");
+        request.setNotifyURL(webDomain + "/pub/repayment/v2/third/batch/repaybail/check");
+        request.setRetNotifyURL(webDomain + "/pub/repayment/v2/third/batch/repaybail/run");
         request.setAcqRes(GSON.toJson(acqRes));
         request.setChannel(ChannelContant.HTML);
         BatchRepayBailResp response = jixinManager.send(JixinTxCodeEnum.BATCH_REPAY_BAIL, request, BatchRepayBailResp.class);
@@ -1068,6 +1109,13 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(batchRepayBailRunResp.getRetCode())) {
             log.error("=============================即信批次放款处理结果回调===========================");
             log.error("回调失败! msg:" + batchRepayBailRunResp.getRetMsg());
+            bool = false;
+        }
+
+        int num = NumberHelper.toInt(batchRepayBailRunResp.getFailCounts());
+        if (num > 0) {
+            log.error("=============================即信批次放款处理结果回调===========================");
+            log.error("批次放款失败! 一共:" + num + "笔");
             bool = false;
         }
 

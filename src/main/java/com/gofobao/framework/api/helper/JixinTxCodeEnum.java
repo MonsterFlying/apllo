@@ -123,15 +123,32 @@ public enum JixinTxCodeEnum {
             "batchRepayBail",
             "/escrow/p2p/online"
     ),
-    Batch_Bail_Repay(
+    /**
+     * 批次担保账户代偿
+     */
+    BATCH_BAIL_REPAY(
             "batchBailRepay",
             "/escrow/p2p/online"
-    )
-    ,
+    ),
+    /**
+     * 借款人受托支付申请
+     */
     TRUSTEE_PAY(
             "trusteePay",
             "/escrow/p2p/page/trusteePay"),
-    ;
+    /**
+     * 查询批次交易明细状态
+     */
+    BATCH_DETAILS_QUERY(
+            "batchDetailsQuery",
+            "/escrow/p2p/online"
+    ),
+    /**
+     * 投资人投标申请查询
+     */
+    BID_APPLY_QUERY(
+            "bidApplyQuery",
+            "/escrow/p2p/online");
 
     private String value;
     private String url;

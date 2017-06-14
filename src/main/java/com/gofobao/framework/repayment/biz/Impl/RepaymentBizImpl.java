@@ -169,7 +169,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Preconditions.checkNotNull(borrowRepayment, "用户资产查询失败!");
 
 
-        if ((!ObjectUtils.isEmpty(userId)) && (!borrowUserId.equals(userId))) {//存在userId时 判断是否是当前用户
+        if ((!ObjectUtils.isEmpty(userId)) && (!StringHelper.toString(borrowUserId).equals(StringHelper.toString(userId)))) {//存在userId时 判断是否是当前用户
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("操作用户不是借款用户!")));

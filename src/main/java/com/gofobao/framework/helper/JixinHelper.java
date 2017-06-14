@@ -79,8 +79,8 @@ public class JixinHelper {
                         dictValueServcie.save(dictValue);
                     } else {
                         dictValue = jixinCache.get("no");
-                        no = NumberHelper.toInt(StringHelper.toString(dictValue.getValue03()));
-                        dictValue.setValue03(StringHelper.toString(NumberHelper.toInt(dictValue.getValue03()) + 1));
+                        no = NumberHelper.toInt(StringHelper.toString(dictValue.getValue03())) + 1;
+                        dictValue.setValue03(StringHelper.toString(no));
                         dictValueServcie.save(dictValue);
                     }
                 }
