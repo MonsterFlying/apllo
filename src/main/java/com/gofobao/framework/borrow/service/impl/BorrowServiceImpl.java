@@ -154,13 +154,12 @@ public class BorrowServiceImpl implements BorrowService {
             } else {
                 item.setTimeLimit(m.getTimeLimit() + BorrowContants.MONTH);
             }
+            item.setSurplusSecond(-1L);
             //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
             Integer status = m.getStatus();
             if (status == 0) { //待发布
                 status = 1;
-            }
-            item.setSurplusSecond(-1L);
-            if (status == BorrowContants.BIDDING) {//招标中
+            } else if (status == BorrowContants.BIDDING) {//招标中
                 Integer validDay = m.getValidDay();
                 Date endAt = DateHelper.addDays(m.getReleaseAt(), validDay);
                 Date nowDate = new Date(System.currentTimeMillis());
@@ -170,11 +169,9 @@ public class BorrowServiceImpl implements BorrowService {
                     status = 3; //招标中
                     item.setSurplusSecond((endAt.getTime() - nowDate.getTime()) + 5);
                 }
-            }
-            if (!ObjectUtils.isEmpty(m.getSuccessAt()) && !ObjectUtils.isEmpty(m.getCloseAt())) {   //满标时间 结清
+            } else if (!ObjectUtils.isEmpty(m.getSuccessAt()) && !ObjectUtils.isEmpty(m.getCloseAt())) {   //满标时间 结清
                 status = 4; //已完成
-            }
-            if (status == BorrowContants.PASS && ObjectUtils.isEmpty(m.getCloseAt())) {
+            } else if (status == BorrowContants.PASS && ObjectUtils.isEmpty(m.getCloseAt())) {
                 status = 2; //还款中
             }
             //速度
@@ -225,9 +222,9 @@ public class BorrowServiceImpl implements BorrowService {
             return null;
 
         }
-        borrowInfoRes.setApr(NumberHelper.to2DigitString(borrow.getApr() / 100d));
+        borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
         borrowInfoRes.setLowest(borrow.getLowest() / 100d + "");
-        borrowInfoRes.setMoneyYes(NumberHelper.to2DigitString(borrow.getMoneyYes() / 100d));
+        borrowInfoRes.setMoneyYes(StringHelper.formatMon(borrow.getMoneyYes() / 100d));
         if (borrow.getType() == BorrowContants.REPAY_FASHION_ONCE) {
             borrowInfoRes.setTimeLimit(borrow.getTimeLimit() + BorrowContants.DAY);
         } else {
@@ -240,12 +237,31 @@ public class BorrowServiceImpl implements BorrowService {
         Integer earnings = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("earnings")));
         borrowInfoRes.setEarnings(earnings + MoneyConstans.RMB);
         borrowInfoRes.setTenderCount(borrow.getTenderCount() + BorrowContants.TIME);
-        borrowInfoRes.setMoney(NumberHelper.to2DigitString(borrow.getMoney() / 100d));
+        borrowInfoRes.setMoney(StringHelper.formatMon(borrow.getMoney() / 100d));
         borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
         borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes() / borrow.getMoney())));
-        Date endAt = DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), (borrow.getValidDay() + 1));//结束时间
+        Date endAt = DateHelper.addDays(borrow.getReleaseAt(), borrow.getValidDay());//结束时间
         borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
-        borrowInfoRes.setSuccessAt(StringUtils.isEmpty(borrow.getSuccessAt())?"":DateHelper.dateToString(borrow.getSuccessAt()));
+        borrowInfoRes.setSurplusSecond(-1L);
+        //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
+        Integer status = borrow.getStatus();
+        if (status == 0) { //待发布
+            status = 1;
+        } else if (status == BorrowContants.BIDDING) {//招标中
+            Date nowDate = new Date(System.currentTimeMillis());
+            if (nowDate.getTime() > endAt.getTime()) {  //当前时间大于满标时间
+                status = 5; //已过期
+            } else {
+                status = 3; //招标中
+                borrowInfoRes.setSurplusSecond((endAt.getTime() - nowDate.getTime()) + 5);
+            }
+        } else if (!ObjectUtils.isEmpty(borrow.getSuccessAt()) && !ObjectUtils.isEmpty(borrow.getCloseAt())) {   //满标时间 结清
+            status = 4; //已完成
+        } else if (status == BorrowContants.PASS && ObjectUtils.isEmpty(borrow.getCloseAt())) {
+            status = 2; //还款中
+        }
+        borrowInfoRes.setStatus(status);
+        borrowInfoRes.setSuccessAt(StringUtils.isEmpty(borrow.getSuccessAt()) ? "" : DateHelper.dateToString(borrow.getSuccessAt()));
         return borrowInfoRes;
 
     }

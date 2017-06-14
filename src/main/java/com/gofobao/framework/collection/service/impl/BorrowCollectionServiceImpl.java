@@ -15,6 +15,7 @@ import com.gofobao.framework.collection.vo.response.VoViewOrderDetailRes;
 import com.gofobao.framework.helper.BeanHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -85,8 +86,8 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
             item.setBorrowName(borrow.getName());
             item.setOrder(p.getOrder() + 1);
             item.setTimeLime(borrow.getTimeLimit());
-            item.setCollectionMoney(NumberHelper.to2DigitString(p.getCollectionMoney() / 100D));
-            item.setCollectionMoneyYes(NumberHelper.to2DigitString(p.getCollectionMoneyYes() / 100D));
+            item.setCollectionMoney(StringHelper.formatMon(p.getCollectionMoney() / 100d));
+            item.setCollectionMoneyYes(StringHelper.formatMon(p.getCollectionMoneyYes() / 100d));
             orderResList.add(item);
         });
         //回款列表
@@ -98,7 +99,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
                 .filter(p -> p.getStatus() == BorrowCollectionContants.STATUS_YES)
                 .mapToInt(w -> w.getCollectionMoneyYes())
                 .sum();
-        voViewCollectionOrderListRes.setSumCollectionMoneyYes(NumberHelper.to2DigitString(sumCollectionMoneyYes / 100));
+        voViewCollectionOrderListRes.setSumCollectionMoneyYes(StringHelper.formatMon(sumCollectionMoneyYes / 100d));
         Optional<VoViewCollectionOrderList> orderListRes = Optional.ofNullable(voViewCollectionOrderListRes);
         return orderListRes.orElseGet(() -> new VoViewCollectionOrderList());
     }
@@ -118,7 +119,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         Borrow borrow = borrowRepository.findOne(borrowCollection.getBorrowId().longValue());
         VoViewOrderDetailRes detailRes = new VoViewOrderDetailRes();
         detailRes.setOrder(borrowCollection.getOrder() + 1);
-        detailRes.setCollectionMoney(NumberHelper.to2DigitString(borrowCollection.getCollectionMoney() / 100D));
+        detailRes.setCollectionMoney(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100d));
         detailRes.setLateDays(borrowCollection.getLateDays());
         detailRes.setStartAt(DateHelper.dateToString(borrowCollection.getStartAtYes()));
         detailRes.setBorrowName(borrow.getName());
