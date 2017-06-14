@@ -1,5 +1,6 @@
 package com.gofobao.framework.award.service;
 
+import com.gofobao.framework.award.vo.request.VoVirtualReq;
 import com.gofobao.framework.award.vo.response.VirtualBorrowRes;
 import com.gofobao.framework.award.vo.response.VirtualStatistics;
 import com.gofobao.framework.award.vo.response.VirtualTenderRes;
@@ -31,4 +32,7 @@ public interface VirtualService {
      * @return
      */
     List<VirtualBorrowRes>list();
+
+
+    Boolean tenderCreate(VoVirtualReq voVirtualReq);
 }

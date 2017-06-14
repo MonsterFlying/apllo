@@ -3,7 +3,7 @@ package com.gofobao.framework.collection.entity;
 import lombok.Data;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
+import java.util.Date;
 
 /**
  * Created by admin on 2017/5/31.
@@ -26,10 +26,10 @@ public class VirtualCollection {
     private Integer tenderId;
     @Basic
     @Column(name = "collection_at", nullable = true)
-    private Timestamp collectionAt;
+    private Date collectionAt;
     @Basic
     @Column(name = "collection_at_yes", nullable = true)
-    private Timestamp collectionAtYes;
+    private Date collectionAtYes;
     @Basic
     @Column(name = "collection_money", nullable = false)
     private Integer collectionMoney;
@@ -44,8 +44,8 @@ public class VirtualCollection {
     private Integer interest;
     @Basic
     @Column(name = "created_at", nullable = true)
-    private Timestamp createdAt;
+    private Date createdAt;
     @Basic
     @Column(name = "updated_at", nullable = true)
-    private Timestamp updatedAt;
+    private Date updatedAt;
 }

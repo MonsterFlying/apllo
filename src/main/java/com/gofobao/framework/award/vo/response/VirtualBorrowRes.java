@@ -25,7 +25,7 @@ public class VirtualBorrowRes {
     private String money;
 
     @ApiModelProperty("id")
-    private Integer id;
+    private Long id;
 
 
 }

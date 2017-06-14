@@ -3,7 +3,7 @@ package com.gofobao.framework.tender.entity;
 import lombok.Data;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
+import java.util.Date;
 
 /**
  * Created by admin on 2017/5/31.
@@ -29,8 +29,8 @@ public class VirtualTender {
     private Integer money;
     @Basic
     @Column(name = "created_at", nullable = true)
-    private Timestamp createdAt;
+    private Date createdAt;
     @Basic
     @Column(name = "updated_at", nullable = true)
-    private Timestamp updatedAt;
+    private Date updatedAt;
 }

@@ -29,6 +29,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -70,6 +71,9 @@ public class BorrowServiceImpl implements BorrowService {
     @Autowired
     private ThymeleafHelper thymeleafHelper;
 
+    @Value("${gofobao.webDomain}")
+    private String webDomain;
+
     /**
      * 首页标列表
      *
@@ -78,7 +82,13 @@ public class BorrowServiceImpl implements BorrowService {
      */
     @Override
     public List<VoViewBorrowList> findAll(VoBorrowListReq voBorrowListReq) {
+
         Integer type = voBorrowListReq.getType();
+        List<Integer> typeArray = Arrays.asList(-1, 1, 2, 3, 4, 5);
+        Boolean flag = typeArray.contains(type);
+        if (!flag) {
+            return Collections.EMPTY_LIST;
+        }
         if (type == -1) {
             type = null;
         }
@@ -93,7 +103,7 @@ public class BorrowServiceImpl implements BorrowService {
          *条件
          */
         if (type != null) {  // 全部
-            if (type == 2) {
+            if (type == 5) {
                 sb.append(" AND b.tenderId is not null ");
             } else {
                 sb.append(" AND b.type=" + type);
@@ -122,70 +132,80 @@ public class BorrowServiceImpl implements BorrowService {
         if (CollectionUtils.isEmpty(borrowLists)) {
             return Collections.EMPTY_LIST;
         }
-        Optional<List<Borrow>> objBorrow = Optional.ofNullable(borrowLists);
+
         List<VoViewBorrowList> listResList = new ArrayList<>();
-        objBorrow.ifPresent(p -> p.forEach(
-                m -> {
-                    VoViewBorrowList item = new VoViewBorrowList();
-                    item.setId(m.getId());
-                    item.setMoney(StringHelper.formatMon(m.getMoney() / 100d) + MoneyConstans.RMB);
-                    item.setIsContinued(m.getIsContinued());
-                    item.setLockStatus(m.getIsLock());
-                    item.setIsImpawn(m.getIsImpawn());
-                    item.setApr(StringHelper.formatMon(m.getApr() / 100d) + MoneyConstans.PERCENT);
-                    item.setName(m.getName());
-                    item.setMoneyYes(StringHelper.formatMon(m.getMoneyYes() / 100d) + MoneyConstans.RMB);
-                    item.setIsNovice(m.getIsNovice());
-                    item.setIsMortgage(m.getIsMortgage());
-                    if (m.getType() == BorrowContants.REPAY_FASHION_ONCE) {
-                        item.setTimeLimit(m.getTimeLimit() + BorrowContants.DAY);
-                    } else {
-                        item.setTimeLimit(m.getTimeLimit() + BorrowContants.MONTH);
-                    }
+        Set<Long> userIdArray = borrowLists.stream().map(p -> p.getUserId()).collect(Collectors.toSet());
+        List<Users> usersList = usersRepository.findByIdIn(new ArrayList(userIdArray));
+        Map<Long, Users> usersMap = usersList.stream().collect(Collectors.toMap(Users::getId, Function.identity()));
+        borrowLists.stream().forEach(m -> {
+            VoViewBorrowList item = new VoViewBorrowList();
+            item.setId(m.getId());
+            item.setMoney(StringHelper.formatMon(m.getMoney() / 100d) + MoneyConstans.RMB);
+            item.setIsContinued(m.getIsContinued());
+            item.setLockStatus(m.getIsLock());
+            item.setIsImpawn(m.getIsImpawn());
+            item.setApr(StringHelper.formatMon(m.getApr() / 100d) + MoneyConstans.PERCENT);
+            item.setName(m.getName());
+            item.setMoneyYes(StringHelper.formatMon(m.getMoneyYes() / 100d) + MoneyConstans.RMB);
+            item.setIsNovice(m.getIsNovice());
+            item.setIsMortgage(m.getIsMortgage());
+            if (m.getType() == BorrowContants.REPAY_FASHION_ONCE) {
+                item.setTimeLimit(m.getTimeLimit() + BorrowContants.DAY);
+            } else {
+                item.setTimeLimit(m.getTimeLimit() + BorrowContants.MONTH);
+            }
+            //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
+            Integer status = m.getStatus();
+            if (status == 0) { //待发布
+                status = 1;
+            }
+            item.setSurplusSecond(-1L);
+            if (status == BorrowContants.BIDDING) {//招标中
+                Integer validDay = m.getValidDay();
+                Date endAt = DateHelper.addDays(m.getReleaseAt(), validDay);
+                Date nowDate = new Date(System.currentTimeMillis());
+                if (nowDate.getTime() > endAt.getTime()) {  //当前时间大于满标时间
+                    status = 5; //已过期
+                } else {
+                    status = 3; //招标中
+                    item.setSurplusSecond((endAt.getTime() - nowDate.getTime())+5);
+                }
+            }
+            if (!ObjectUtils.isEmpty(m.getSuccessAt()) && !ObjectUtils.isEmpty(m.getCloseAt())) {   //满标时间 结清
+                status = 4; //已完成
+            }
+            if (status == BorrowContants.PASS && ObjectUtils.isEmpty(m.getCloseAt())) {
+                status = 2; //还款中
+            }
+            //速度
+            if (status == 3) {
+                item.setSpend(Double.parseDouble(StringHelper.formatMon(m.getMoneyYes().doubleValue() / m.getMoney())));
+            } else {
+                item.setSpend(0d);
+            }
 
-                    //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
-                    Integer status = m.getStatus();
-                    if (status == 0) { //待发布
-                        status = 1;
-                    }
-                    if (status == BorrowContants.BIDDING) {//招标中
-                        Integer validDay = m.getValidDay();
-                        Date endAt = DateHelper.addDays(DateHelper.beginOfDate(m.getReleaseAt()), (validDay + 1));
-                        if (new Date().getTime() > endAt.getTime()) {  //当前时间大于满标时间
-                            status = 5; //已过期
-                        } else {
-                            status = 3; //招标中
-                        }
-                    }
-                    if (!ObjectUtils.isEmpty(m.getSuccessAt()) && !ObjectUtils.isEmpty(m.getCloseAt())) {   //满标时间 结清
-                        status = 4; //已完成
-                    }
-                    if (status == BorrowContants.PASS && ObjectUtils.isEmpty(m.getCloseAt())) {
-                        status = 2; //还款中
-                    }
-                    //速度
-                    if (status == 3) {
-                        item.setSpend(Double.parseDouble(StringHelper.formatMon(m.getMoneyYes().doubleValue() / m.getMoney())));
-                    } else {
-                        item.setSpend(0d);
-                    }
+            if (!StringUtils.isEmpty(m.getTenderId()) && m.getTenderId() > 0) {
+                item.setIsFlow(true);
+            } else {
+                item.setIsFlow(false);
+            }
+            Long userId=m.getUserId();
+            Users user = usersMap.get(userId);
+            item.setUserName(!StringUtils.isEmpty(user.getUsername()) ? user.getUsername() : user.getPhone());
+            item.setType(m.getType());
+            if (voBorrowListReq.getType() == 5) {
+                item.setType(5);
+            }
+            item.setStatus(status);
+            item.setRepayFashion(m.getRepayFashion());
+            item.setIsContinued(m.getIsContinued());
+            item.setIsConversion(m.getIsConversion());
+            item.setIsVouch(m.getIsVouch());
+            item.setTenderCount(m.getTenderCount());
+            item.setAvatar(webDomain+"/data/images/avatar/"+userId+"_avatar_small.jpg");
+            listResList.add(item);
+        });
 
-                    if (!StringUtils.isEmpty(m.getTenderId()) && m.getTenderId() > 0) {
-                        item.setIsFlow(true);
-                    } else {
-                        item.setIsFlow(false);
-                    }
-                    item.setType(m.getType());
-                    item.setStatus(status);
-                    item.setRepayFashion(m.getRepayFashion());
-                    item.setIsContinued(m.getIsContinued());
-
-                    item.setIsConversion(m.getIsConversion());
-                    item.setIsVouch(m.getIsVouch());
-                    item.setTenderCount(m.getTenderCount());
-                    listResList.add(item);
-                })
-        );
         Optional<List<VoViewBorrowList>> result = Optional.empty();
         return result.ofNullable(listResList).orElse(Collections.emptyList());
     }
@@ -274,9 +294,9 @@ public class BorrowServiceImpl implements BorrowService {
         Users users = usersRepository.findOne(borrowUserId);
 
 
-        Gson gson= new GsonBuilder().create();
-        String jsonStr=gson.toJson(borrow);
-        Map<String,Object>borrowMap=gson.fromJson(jsonStr,new TypeToken< Map<String,Object>>() {
+        Gson gson = new GsonBuilder().create();
+        String jsonStr = gson.toJson(borrow);
+        Map<String, Object> borrowMap = gson.fromJson(jsonStr, new TypeToken<Map<String, Object>>() {
         }.getType());
         borrowMap.put("username", StringUtils.isEmpty(users.getPhone()) ? users.getUsername() : users.getPhone());
         borrowMap.put("cardId", UserHelper.hideChar(users.getCardId(), UserHelper.CARD_ID_NUM));
@@ -331,7 +351,7 @@ public class BorrowServiceImpl implements BorrowService {
         if (!CollectionUtils.isEmpty(borrowTenderList)) {
             tenderMapList = gson.fromJson(
                     gson.toJson(borrowTenderList),
-                    new TypeToken< List<Object>>() {
+                    new TypeToken<List<Object>>() {
                     }.getType());
 
             List<Long> tenderUserList = borrowTenderList.stream().map(m -> m.getUserId()).collect(Collectors.toList());

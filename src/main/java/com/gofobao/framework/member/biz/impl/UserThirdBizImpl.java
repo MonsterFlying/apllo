@@ -15,7 +15,6 @@ import com.gofobao.framework.api.model.password_set.PasswordSetRequest;
 import com.gofobao.framework.api.model.password_set.PasswordSetResponse;
 import com.gofobao.framework.asset.entity.BankAccount;
 import com.gofobao.framework.asset.service.BankAccountService;
-import com.gofobao.framework.asset.vo.response.VoBankTypeInfoResp;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.OKHttpHelper;

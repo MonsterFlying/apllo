@@ -5,7 +5,10 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.lend.vo.request.VoCreateLend;
 import com.gofobao.framework.lend.vo.request.VoEndLend;
 import com.gofobao.framework.lend.vo.request.VoLend;
+import com.gofobao.framework.lend.vo.request.VoUserLendReq;
+import com.gofobao.framework.lend.vo.response.VoViewLendInfoWarpRes;
 import com.gofobao.framework.lend.vo.response.VoViewLendListWarpRes;
+import com.gofobao.framework.lend.vo.response.VoViewUserLendInfoWarpRes;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -14,6 +17,11 @@ import org.springframework.http.ResponseEntity;
 public interface LendBiz {
 
     ResponseEntity<VoViewLendListWarpRes> list(Page page);
+
+
+    ResponseEntity<VoViewLendInfoWarpRes>info(Long userId,Long lendId);
+
+    ResponseEntity<VoViewUserLendInfoWarpRes>byUserId(VoUserLendReq voUserLendReq);
 
     /**
      * 发布有草出借
@@ -38,4 +46,7 @@ public interface LendBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> lend(VoLend voLend) throws Exception;
+
+
+
 }

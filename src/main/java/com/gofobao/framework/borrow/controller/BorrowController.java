@@ -27,6 +27,7 @@ import java.util.Map;
 @RestController
 @Slf4j
 @Api(description = "首页标接口")
+@SuppressWarnings("all")
 public class BorrowController {
 
     @Autowired
@@ -34,7 +35,7 @@ public class BorrowController {
     @Autowired
     private ThymeleafHelper thymeleafHelper;
 
-    @ApiOperation(value = "首页标列表; type: 0：车贷标；1：净值标；2：流转标；4：渠道标；-1:全部")
+    @ApiOperation(value = "首页标列表; type:-1：全部 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
     @GetMapping("v2/list/{type}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewBorrowListWarpRes> borrowList(@PathVariable Integer pageIndex,
                                                               @PathVariable Integer pageSize,
@@ -45,6 +46,19 @@ public class BorrowController {
         voBorrowListReq.setType(type);
         return borrowBiz.findAll(voBorrowListReq);
     }
+
+    @ApiOperation(value = "首页标列表; type:-1：全部 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
+    @GetMapping("v2/pc/list/{type}/{pageIndex}/{pageSize}")
+    public ResponseEntity<VoViewBorrowListWarpRes> pcList(@PathVariable Integer pageIndex,
+                                                          @PathVariable Integer pageSize,
+                                                          @PathVariable Integer type){
+        VoBorrowListReq voBorrowListReq = new VoBorrowListReq();
+        voBorrowListReq.setPageIndex(pageIndex);
+        voBorrowListReq.setPageSize(pageSize);
+        voBorrowListReq.setType(type);
+        return borrowBiz.findAll(voBorrowListReq);
+    }
+
 
 
     @ApiOperation("标信息")
