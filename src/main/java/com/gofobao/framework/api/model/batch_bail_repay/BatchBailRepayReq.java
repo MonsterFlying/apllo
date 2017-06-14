@@ -11,6 +11,10 @@ public class BatchBailRepayReq extends JixinBaseRequest{
     /**
      * 担保电子账户
      */
+    private String batchNo;
+    /**
+     * 担保电子账户
+     */
     private String accountId;
     /**
      * 投标的原标的号

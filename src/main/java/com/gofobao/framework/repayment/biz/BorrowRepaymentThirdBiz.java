@@ -54,4 +54,45 @@ public interface BorrowRepaymentThirdBiz {
      * @return
      */
     void thirdBatchLendRepayRunCall(HttpServletRequest request, HttpServletResponse response);
+
+    /**
+     * 批次担保账户代偿
+     *
+     * @param voBatchBailRepayReq
+     */
+    ResponseEntity<VoBaseResp> thirdBatchBailRepay(VoBatchBailRepayReq voBatchBailRepayReq) throws Exception;
+
+    /**
+     * 批次担保账户代偿参数检查回调
+     */
+    void thirdBatchBailRepayCheckCall(HttpServletRequest request, HttpServletResponse response);
+
+    /**
+     * 批次担保账户代偿业务处理回调
+     */
+    void thirdBatchBailRepayRunCall(HttpServletRequest request, HttpServletResponse response);
+
+    /**
+     * 批次融资人还担保账户垫款
+     *
+     * @param voBatchRepayBailReq
+     */
+    ResponseEntity<VoBaseResp> thirdBatchRepayBail(VoBatchRepayBailReq voBatchRepayBailReq);
+
+    /**
+     * 批次融资人还担保账户垫款参数检查回调
+     *
+     * @param request
+     * @param response
+     */
+    void thirdBatchRepayBailCheckCall(HttpServletRequest request, HttpServletResponse response);
+
+    /**
+     * 批次融资人还担保账户垫款业务处理回调
+     *
+     * @param request
+     * @param response
+     */
+    void thirdBatchRepayBailRunCall(HttpServletRequest request, HttpServletResponse response);
+
 }

@@ -86,7 +86,6 @@ public class BorrowProvider {
                 return false;
             }
 
-            Integer borrowType = borrow.getType();
             if (!ObjectUtils.isEmpty(borrow.getLendId())) { //有草出借
                 bool = lendBorrow(borrow);
             } else { //车贷、渠道、净值、转让 标
@@ -243,6 +242,12 @@ public class BorrowProvider {
         return bool;
     }
 
+    /**
+     * 第三方等级标的与债权
+     *
+     * @param borrowId
+     * @return
+     */
     public ResponseEntity<VoBaseResp> thirdRegisterBorrowAndTender(Long borrowId) {
         //标的登记
         VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();

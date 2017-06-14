@@ -24,7 +24,7 @@ import javax.servlet.http.HttpServletResponse;
  * Created by admin on 2017/6/1.
  */
 @RestController
-@Api(description="还款计划")
+@Api(description = "还款计划")
 @RequestMapping("/pub/repayment")
 public class BorrowRepaymentThirdContorller {
 
@@ -53,5 +53,29 @@ public class BorrowRepaymentThirdContorller {
     @ApiOperation("批次还款参数检查通知")
     public void thirdRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
         borrowRepaymentThirdBiz.thirdBatchRepayRunCall(request, response);
+    }
+
+    @RequestMapping("/v2/third/batch/bailrepay/check")
+    @ApiOperation("批次担保账户代偿参数检查回调")
+    public void thirdBatchBailRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
+        borrowRepaymentThirdBiz.thirdBatchRepayCheckCall(request, response);
+    }
+
+    @RequestMapping("/v2/third/batch/bailrepay/run")
+    @ApiOperation("批次担保账户代偿业务处理回调")
+    public void thirdBatchBailRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
+        borrowRepaymentThirdBiz.thirdBatchRepayRunCall(request, response);
+    }
+
+    @RequestMapping("/v2/third/batch/repaybail/check")
+    @ApiOperation("批次融资人还担保账户垫款参数检查回调")
+    public void thirdBatchRepayBailCheckCall(HttpServletRequest request, HttpServletResponse response) {
+        borrowRepaymentThirdBiz.thirdBatchRepayBailCheckCall(request, response);
+    }
+
+    @RequestMapping("/v2/third/batch/repaybail/run")
+    @ApiOperation("批次融资人还担保账户垫款业务处理回调")
+    public void thirdBatchRepayBailRunCall(HttpServletRequest request, HttpServletResponse response) {
+        borrowRepaymentThirdBiz.thirdBatchRepayBailRunCall(request, response);
     }
 }
