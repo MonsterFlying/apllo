@@ -6,7 +6,8 @@ import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListRes
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
-import com.gofobao.framework.repayment.vo.request.*;
+import com.gofobao.framework.repayment.vo.request.VoInfoReq;
+import com.gofobao.framework.repayment.vo.request.VoInstantlyRepaymentReq;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

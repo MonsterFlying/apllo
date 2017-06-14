@@ -8,7 +8,6 @@ import com.gofobao.framework.lend.vo.response.VoViewLendListWarpRes;
 import com.gofobao.framework.lend.vo.response.VoViewUserLendInfoWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

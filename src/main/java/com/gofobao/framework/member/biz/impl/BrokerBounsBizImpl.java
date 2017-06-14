@@ -5,7 +5,6 @@ import com.gofobao.framework.member.biz.BrokerBounsBiz;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.member.service.InviteFriendsService;
-import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.vo.request.VoFriendsReq;
 import com.gofobao.framework.member.vo.response.*;
 import lombok.extern.slf4j.Slf4j;

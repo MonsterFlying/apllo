@@ -1,7 +1,6 @@
 package com.gofobao.framework.tender.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
-import com.gofobao.framework.api.contants.FrzFlagContant;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
@@ -33,7 +32,6 @@ import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
-import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
 import com.google.common.base.Preconditions;

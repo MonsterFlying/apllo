@@ -1,18 +1,10 @@
 package com.gofobao.framework;
 
 import com.gofobao.framework.borrow.biz.BorrowBiz;
-import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
-import com.gofobao.framework.common.integral.IntegralChangeEntity;
-
-import java.util.HashMap;
-import java.util.Map;
-
 import com.gofobao.framework.common.rabbitmq.MqHelper;
-import com.gofobao.framework.helper.project.IntegralChangeHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
-import com.gofobao.framework.repayment.service.impl.LoanServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;

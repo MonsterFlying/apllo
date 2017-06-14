@@ -3,7 +3,6 @@ package com.gofobao.framework.helper;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.service.DictItemServcie;
-import com.gofobao.framework.system.service.DictService;
 import com.gofobao.framework.system.service.DictValueServcie;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;

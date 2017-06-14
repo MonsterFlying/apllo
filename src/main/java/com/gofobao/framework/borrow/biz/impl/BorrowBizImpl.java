@@ -44,7 +44,6 @@ import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

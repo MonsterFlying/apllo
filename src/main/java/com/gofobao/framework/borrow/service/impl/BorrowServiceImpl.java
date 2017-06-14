@@ -26,7 +26,6 @@ import com.gofobao.framework.tender.repository.TenderRepository;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,6 +39,7 @@ import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -123,8 +123,12 @@ public class BorrowServiceImpl implements BorrowService {
                 sb.append(" ORDER BY b.status, b.successAt DESC, b.id DESC");
             }
         }
-        List<Borrow> borrowLists = entityManager.createQuery(sb.toString(), Borrow.class)
-                .setParameter("statusArray", statusArray)
+
+        Query query=entityManager.createNativeQuery(sb.toString(),Borrow.class);
+        query.setParameter("statusArray", statusArray);
+        Integer pageCount=query.getMaxResults();
+
+        List<Borrow> borrowLists = query
                 .setFirstResult(voBorrowListReq.getPageIndex())
                 .setMaxResults(voBorrowListReq.getPageSize())
                 .getResultList();
