@@ -6,11 +6,14 @@ import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.entity.AssetLog;
 import com.gofobao.framework.asset.repository.AssetLogRepository;
 import com.gofobao.framework.asset.repository.AssetRepository;
-import com.gofobao.framework.award.repository.VirtualBorrowRepository;
-import com.gofobao.framework.award.repository.VirtualCollectionRepository;
-import com.gofobao.framework.award.repository.VirtualTenderRepository;
+import com.gofobao.framework.award.contants.CouponContants;
+import com.gofobao.framework.award.contants.RedPacketContants;
+import com.gofobao.framework.award.entity.ActivityRedPacket;
+import com.gofobao.framework.award.entity.Coupon;
+import com.gofobao.framework.award.repository.*;
 import com.gofobao.framework.award.service.VirtualService;
 import com.gofobao.framework.award.vo.request.VoVirtualReq;
+import com.gofobao.framework.award.vo.response.AwardStatistics;
 import com.gofobao.framework.award.vo.response.VirtualBorrowRes;
 import com.gofobao.framework.award.vo.response.VirtualStatistics;
 import com.gofobao.framework.award.vo.response.VirtualTenderRes;
@@ -19,7 +22,6 @@ import com.gofobao.framework.borrow.entity.BorrowVirtual;
 import com.gofobao.framework.collection.entity.VirtualCollection;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
-import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -30,6 +32,7 @@ import com.gofobao.framework.tender.entity.VirtualTender;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -37,10 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
-import java.sql.*;
 import java.util.*;
-
-import java.util.Date;
 import java.util.stream.Collectors;
 
 /**
@@ -70,6 +70,13 @@ public class VirtualServiceImpl implements VirtualService {
 
     @Autowired
     private CapitalChangeHelper capitalChangeHelper;
+
+
+    @Autowired
+    private RedPackageRepository redPackageRepository;
+
+    @Autowired
+    private CouponRepository couponRepository;
 
     /**
      * 体验金统计
@@ -169,7 +176,7 @@ public class VirtualServiceImpl implements VirtualService {
         if (ObjectUtils.isEmpty(asset)) {
             return false;
         }
-        Date date=new Date();
+        Date date = new Date();
         VirtualTender virtualTender = new VirtualTender();
         virtualTender.setUserId(asset.getUserId());
         virtualTender.setStatus(VirtualTenderContants.VIRTUALTENDERSUCCESS);
@@ -209,7 +216,7 @@ public class VirtualServiceImpl implements VirtualService {
             virtualCollectionRepository.save(virtualCollection);
         } catch (Exception e) {
             log.info("tenderCreate list  virtualCollectionRepository.save  fail", e);
-            return  false;
+            return false;
         }
         //=========================================
         //=资金变动
@@ -228,5 +235,25 @@ public class VirtualServiceImpl implements VirtualService {
             log.info(" VirtualServiceImpl tenderCreate capitalChangeHelper.capitalChange fail", e);
         }
         return flag;
+    }
+
+    @Override
+    public AwardStatistics query(Long userId) {
+        AwardStatistics awardStatistics = new AwardStatistics();
+        Specification redPackageSpec = Specifications.<Coupon>and()
+                .eq("userId", userId)
+                .eq("status", RedPacketContants.unUsed)
+                .build();
+        List<ActivityRedPacket> activityRedPackets=redPackageRepository.findAll(redPackageSpec);
+        awardStatistics.setRedPackageCount(activityRedPackets.size());
+        Specification specification = Specifications.<Coupon>and()
+                .eq("userId", userId)
+                .eq("status", CouponContants.VALID)
+                .build();
+        List<Coupon> couponList = couponRepository.findAll(specification);
+        awardStatistics.setCouponCount(couponList.size());
+        Asset asset = assetRepository.findOne(userId);
+        awardStatistics.setVirtualMoney(StringHelper.formatMon(asset.getVirtualMoney()));
+        return awardStatistics;
     }
 }

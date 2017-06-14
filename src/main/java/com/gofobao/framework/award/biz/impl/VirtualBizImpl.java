@@ -81,12 +81,35 @@ public class VirtualBizImpl implements VirtualBiz {
                 return ResponseEntity.ok(VoBaseResp.ok("投标成功"));
             } else {
                 return ResponseEntity.badRequest()
-                        .body(VoBaseResp.ok("投标失败"));
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "投标失败"));
             }
         } catch (Exception e) {
-            log.info("VirtualBizImpl createTender fail",e);
+            log.info("VirtualBizImpl createTender fail", e);
             return ResponseEntity.badRequest()
-                    .body(VoBaseResp.ok("投标失败"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "投标失败"));
+        }
+    }
+
+    /**
+     * 奖励统计
+     * @param userId
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoViewAwardStatisticsWarpRes> statistics(Long userId) {
+        VoViewAwardStatisticsWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewAwardStatisticsWarpRes.class);
+        try {
+            AwardStatistics awardStatistics = virtualService.query(userId);
+            warpRes.setAwardStatistics(awardStatistics);
+            return ResponseEntity.ok(warpRes);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(
+                        VoBaseResp.error(
+                                VoBaseResp.ERROR,
+                                "查询失败",
+                                VoViewAwardStatisticsWarpRes.class
+                            ));
         }
     }
 }

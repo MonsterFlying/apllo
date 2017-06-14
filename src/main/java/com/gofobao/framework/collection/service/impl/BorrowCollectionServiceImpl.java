@@ -26,6 +26,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -41,6 +44,9 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
 
     @Autowired
     private BorrowRepository borrowRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     /**
      * 回款列表
@@ -128,6 +134,20 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         detailRes.setPrincipal(NumberHelper.to2DigitString(interest / 100D));
         detailRes.setInterest(NumberHelper.to2DigitString(principal / 100D));
         return detailRes;
+    }
+
+    @Override
+    public List<Integer> collectionDay(String date,Long userId) {
+        String sql="SELECT DAY(collection_at) FROM gfb_borrow_collection " +
+                   "where " +
+                        "user_id="+userId+" " +
+                    "and " +
+                        "`status`=0 " +
+                    "and   date_format(collection_at,'%Y%m') =" +date+
+                    " GROUP BY  day(collection_at)";
+        Query query=entityManager.createNativeQuery(sql);
+        List result= query.getResultList();
+        return result;
     }
 
     public List<BorrowCollection> findList(Specification<BorrowCollection> specification, Pageable pageable) {

@@ -34,7 +34,7 @@ public class   BorrowInfoRes {
     private String moneyYes;
 
     @ApiModelProperty("进度")
-    private String spend;
+    private double spend;
 
     @ApiModelProperty("年华率")
     private String apr;

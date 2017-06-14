@@ -1,6 +1,7 @@
 package com.gofobao.framework.award.biz;
 
 import com.gofobao.framework.award.vo.request.VoVirtualReq;
+import com.gofobao.framework.award.vo.response.VoViewAwardStatisticsWarpRes;
 import com.gofobao.framework.award.vo.response.VoViewVirtualBorrowResWarpRes;
 import com.gofobao.framework.award.vo.response.VoViewVirtualStatisticsWarpRes;
 import com.gofobao.framework.award.vo.response.VoViewVirtualTenderResWarpRes;
@@ -35,5 +36,11 @@ public interface VirtualBiz {
 
 
     ResponseEntity<VoBaseResp> createTender(VoVirtualReq voVirtualReq);
+
+    /**
+     * 奖励统计
+     * @return
+     */
+    ResponseEntity<VoViewAwardStatisticsWarpRes>statistics (Long userId);
 
 }

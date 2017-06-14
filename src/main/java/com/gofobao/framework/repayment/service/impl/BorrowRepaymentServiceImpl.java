@@ -23,6 +23,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -38,6 +41,10 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
 
     @Autowired
     private BorrowRepository borrowRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
 
     /**
      * 还款计划列表
@@ -130,6 +137,21 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         detailRes.setOrder(borrowRepayment.getOrder() + 1);
         detailRes.setStartAt(DateHelper.dateToString(borrowRepayment.getRepayAtYes()));
         return detailRes;
+    }
+
+
+    @Override
+    public List<Integer> days(Long userId, String time) {
+        String sql="SELECT DAY(repay_at) FROM gfb_borrow_repayment " +
+                "where " +
+                "user_id="+userId+" " +
+                "and " +
+                "`status`=0 " +
+                "and   date_format(repay_at,'%Y%m') =" +time+
+                " GROUP BY  day(repay_at)";
+        Query query=entityManager.createNativeQuery(sql);
+        List result= query.getResultList();
+        return result;
     }
 
     public BorrowRepayment save(BorrowRepayment borrowRepayment){

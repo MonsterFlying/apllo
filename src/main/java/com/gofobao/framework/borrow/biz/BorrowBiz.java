@@ -4,6 +4,7 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.vo.request.VoAddBorrow;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
+import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewVoBorrowDescWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
@@ -57,7 +58,7 @@ public interface BorrowBiz {
      * @param borrowId
      * @return
      */
-    ResponseEntity<Object> info(Long borrowId);
+    ResponseEntity<VoViewBorrowInfoWarpRes> info(Long borrowId);
 
     /**
      * 标简介

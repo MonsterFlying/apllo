@@ -1,4 +1,4 @@
-package com.gofobao.framework.repayment.biz.impl;
+package com.gofobao.framework.repayment.biz.Impl;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.asset.entity.AdvanceLog;
@@ -12,10 +12,7 @@ import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
-import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderList;
-import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListResWarpRes;
-import com.gofobao.framework.collection.vo.response.VoViewOrderDetailRes;
-import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
+import com.gofobao.framework.collection.vo.response.*;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
@@ -96,6 +93,22 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private BorrowRepaymentService borrowRepaymentService;
     @Autowired
     private AdvanceLogService advanceLogService;
+
+
+    @Override
+    public ResponseEntity<VoViewCollectionDaysWarpRes> days(Long userId, String time) {
+        VoViewCollectionDaysWarpRes collectionDayWarpRes=VoBaseResp.ok("查询成功",VoViewCollectionDaysWarpRes.class);
+        try {
+            Date date1=DateHelper.stringToDate(time,"yyyyMM");
+            List<Integer> result=borrowRepaymentService.days(userId,time);
+            collectionDayWarpRes.setWarpRes(result);
+            return  ResponseEntity.ok(collectionDayWarpRes);
+        }catch (Exception e){
+            return  ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"查询失败",VoViewCollectionDaysWarpRes.class ));
+
+        }
+    }
 
     /**
      * 还款计划
@@ -205,6 +218,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
         return null;
     }
+
+
 
     /**
      * 立即还款

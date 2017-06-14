@@ -24,7 +24,6 @@ public interface BorrowRepaymentService {
      */
     VoViewCollectionOrderList repaymentList(VoCollectionOrderReq voCollectionOrderReq);
 
-
     /**
      * 还款详情
      *
@@ -32,6 +31,16 @@ public interface BorrowRepaymentService {
      * @return
      */
     VoViewOrderDetailRes info(VoInfoReq voInfoReq);
+
+    /**
+     * 当月还款天数
+     * @param userId
+     * @param time
+     * @return
+     */
+    List<Integer> days(Long userId,String time);
+
+
 
     BorrowRepayment save(BorrowRepayment borrowRepayment);
 

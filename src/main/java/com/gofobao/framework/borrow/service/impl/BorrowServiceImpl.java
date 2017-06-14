@@ -168,7 +168,7 @@ public class BorrowServiceImpl implements BorrowService {
                     status = 5; //已过期
                 } else {
                     status = 3; //招标中
-                    item.setSurplusSecond((endAt.getTime() - nowDate.getTime())+5);
+                    item.setSurplusSecond((endAt.getTime() - nowDate.getTime()) + 5);
                 }
             }
             if (!ObjectUtils.isEmpty(m.getSuccessAt()) && !ObjectUtils.isEmpty(m.getCloseAt())) {   //满标时间 结清
@@ -189,7 +189,7 @@ public class BorrowServiceImpl implements BorrowService {
             } else {
                 item.setIsFlow(false);
             }
-            Long userId=m.getUserId();
+            Long userId = m.getUserId();
             Users user = usersMap.get(userId);
             item.setUserName(!StringUtils.isEmpty(user.getUsername()) ? user.getUsername() : user.getPhone());
             item.setType(m.getType());
@@ -202,7 +202,7 @@ public class BorrowServiceImpl implements BorrowService {
             item.setIsConversion(m.getIsConversion());
             item.setIsVouch(m.getIsVouch());
             item.setTenderCount(m.getTenderCount());
-            item.setAvatar(webDomain+"/data/images/avatar/"+userId+"_avatar_small.jpg");
+            item.setAvatar(webDomain + "/data/images/avatar/" + userId + "_avatar_small.jpg");
             listResList.add(item);
         });
 
@@ -242,10 +242,10 @@ public class BorrowServiceImpl implements BorrowService {
         borrowInfoRes.setTenderCount(borrow.getTenderCount() + BorrowContants.TIME);
         borrowInfoRes.setMoney(NumberHelper.to2DigitString(borrow.getMoney() / 100d));
         borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
-        borrowInfoRes.setSpend(borrow.getMoneyYes() / borrow.getMoney() + MoneyConstans.PERCENT);
+        borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes() / borrow.getMoney())));
         Date endAt = DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), (borrow.getValidDay() + 1));//结束时间
         borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
-        borrowInfoRes.setSuccessAt(DateHelper.dateToString(borrow.getSuccessAt(), DateHelper.DATE_FORMAT_YMDHMS));
+        borrowInfoRes.setSuccessAt(StringUtils.isEmpty(borrow.getSuccessAt())?"":DateHelper.dateToString(borrow.getSuccessAt()));
         return borrowInfoRes;
 
     }
