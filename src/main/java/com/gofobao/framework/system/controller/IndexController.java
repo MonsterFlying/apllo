@@ -1,6 +1,8 @@
 package com.gofobao.framework.system.controller;
 
+import com.gofobao.framework.system.biz.BannerBiz;
 import com.gofobao.framework.system.biz.StatisticBiz;
+import com.gofobao.framework.system.vo.response.VoViewIndexBannerWarpRes;
 import com.gofobao.framework.system.vo.response.VoViewIndexStatisticsWarpRes;
 import io.swagger.annotations.ApiModel;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,10 +21,19 @@ public class IndexController {
 
     @Autowired
     private StatisticBiz statisticBiz;
+    @Autowired
+    private BannerBiz bannerBiz;
 
     @GetMapping("/v2/statistic")
     public ResponseEntity<VoViewIndexStatisticsWarpRes> statistic() {
         return statisticBiz.query();
     }
+
+    @GetMapping("/v2/banner/list")
+    public  ResponseEntity<VoViewIndexBannerWarpRes>index(){
+        return bannerBiz.index();
+    }
+
+
 
 }
