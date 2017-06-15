@@ -11,6 +11,7 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoAddBorrow;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
+import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
 import com.gofobao.framework.borrow.vo.response.*;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
@@ -45,6 +46,7 @@ import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
@@ -128,7 +130,7 @@ public class BorrowBizImpl implements BorrowBiz {
             BorrowInfoRes borrowInfoRes = borrowService.findByBorrowId(borrowId);
             VoViewBorrowInfoWarpRes listWarpRes = VoBaseResp.ok("查询成功", VoViewBorrowInfoWarpRes.class);
             if (ObjectUtils.isEmpty(borrowInfoRes)) {
-                return ResponseEntity.ok(VoBaseResp.ok("",VoViewBorrowInfoWarpRes.class));
+                return ResponseEntity.ok(VoBaseResp.ok("", VoViewBorrowInfoWarpRes.class));
             } else {
                 listWarpRes.setBorrowInfoRes(borrowInfoRes);
                 return ResponseEntity.ok(listWarpRes);
@@ -804,4 +806,83 @@ public class BorrowBizImpl implements BorrowBiz {
         return true;
     }
 
+
+    /**
+     * 提前结清
+     *
+     * @param voRepayAllReq
+     * @return
+     */
+    public ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq) {
+        Long borrowId = voRepayAllReq.getBorrowId();
+        Borrow borrow = borrowService.findByIdLock(borrowId);
+        if ((borrow.getStatus() != 3) || (borrow.getType() != 0 && borrow.getType() != 4)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款状态非可结清状态！"));
+        }
+
+        Specification<BorrowRepayment> brs = Specifications
+                .<BorrowRepayment>and()
+                .eq("borrowId", borrowId)
+                .eq("status", 0)
+                .build();
+        if (borrowRepaymentService.count(brs) < 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "该借款剩余未还期数小于1期！"));
+        }
+
+        Asset borrowAsset = assetService.findByUserId(borrow.getUserId());
+        Preconditions.checkNotNull(borrowAsset, "借款人资产记录不存在!");
+
+        int repaymentTotal = 0;
+        List<BorrowRepayment> repaymentList = new ArrayList<>();
+        int penalty = 0;
+        int lateInterest = 0;
+        int lateDays = 0;
+        int overPrincipal = 0;
+        Date startAt = null;
+        Date endAt = null;
+        BorrowRepayment borrowRepayment = null;
+        double interestPercent = 0;
+        brs = Specifications
+                .<BorrowRepayment>and()
+                .eq("borrowId", borrowId)
+                .build();
+        List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
+
+        for (int i = 0; i < borrowRepaymentList.size(); i++) {
+            borrowRepayment = borrowRepaymentList.get(i);
+            if (borrowRepayment.getStatus() != 0) {
+                continue;
+            }
+
+            if (borrowRepayment.getOrder() == 0) {
+                startAt = DateHelper.beginOfDate(borrow.getSuccessAt());
+            } else {
+                startAt = DateHelper.beginOfDate(borrowRepaymentList.get(i - 1).getRepayAt());
+            }
+            endAt = DateHelper.beginOfDate(borrowRepayment.getRepayAt());
+
+            //以结清第一期的6天利息作为违约金
+            if (penalty == 0) {
+                penalty = borrowRepayment.getInterest() / DateHelper.diffInDays(endAt, startAt, false) * 6;
+            }
+
+            Date nowStartDate = DateHelper.beginOfDate(new Date());
+            if (nowStartDate.getTime() <= startAt.getTime()) {
+                interestPercent = 0;
+            } else {
+                interestPercent = MathHelper.min(DateHelper.diffInDays(nowStartDate, startAt, false) / DateHelper.diffInDays(endAt, startAt, false), 1);
+            }
+
+            lateDays = DateHelper.diffInDays(nowStartDate, endAt, false);
+            if (interestPercent == 1 && lateDays > 0){
+
+                lateInterest = new Double(overPrincipal * 0.004 * lateDays).intValue();
+            }
+        }
+        return ResponseEntity.ok(VoBaseResp.ok("提前结清成功!"));
+    }
 }
