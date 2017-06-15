@@ -176,3 +176,29 @@ ALTER TABLE gfb_user_third_account ADD bank_logo VARCHAR(255) DEFAULT '' NULL;
 
 ALTER TABLE gfb_recharge_detail_log MODIFY bank_name VARCHAR(64) DEFAULT '' COMMENT '充值银行';
 ALTER TABLE gfb_recharge_detail_log CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci;
+
+
+#创建提现表
+create table gfb_cash_detail_log
+(
+	id int auto_increment
+		primary key,
+	user_id int default '0' not null comment '用户ID',
+	third_account_id varchar(32) default '' null comment '银行存管账号',
+	card_no varchar(32) default '' null comment '提现卡号',
+	bank_name varchar(32) default '' null comment '提现银行名称',
+	company_bank_no varchar(32) default '' null comment '联行号',
+	money int default '0' null comment '提现金额',
+	fee int default '0' null comment '费用',
+	verify_user_id int default '0' null comment '审核人',
+	verify_time datetime null comment '审核时间',
+	verify_remark varchar(255) default '' null comment '审核备注',
+	state int default '0' null comment '-1.取消提现.0:申请中,1.系统审核通过,2.系统审核不通过, 3.银行提现成功.4.银行提现失败.',
+	create_time datetime null comment '提现申请时间',
+	callbak_time datetime null comment '存管回调时间',
+	cancel_time datetime null comment '取消时间',
+	ip varchar(32) default '' null comment '提现IP',
+	cash_type int default '0' null comment '0:渠道提现,1.人行提现'
+);
+ALTER TABLE gfb_cash_detail_log ADD seq_no VARCHAR(32) DEFAULT '' NULL;
+ALTER TABLE gfb_cash_detail_log CHANGE callbak_time callback_time DATETIME COMMENT '存管回调时间';

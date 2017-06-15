@@ -180,7 +180,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     }
 
 
-
     /**
      * 收到垫付还款
      */
@@ -476,10 +475,10 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(repayCheckResp.getRetCode())) {
             log.error("=============================即信批次还款检验参数回调===========================");
             log.error("回调失败! msg:" + repayCheckResp.getRetMsg());
+        } else {
+            log.info("=============================即信批次放款检验参数回调===========================");
+            log.info("即信批次还款检验参数成功!");
         }
-
-        log.info("=============================即信批次放款检验参数回调===========================");
-        log.info("即信批次还款检验参数成功!");
 
         try {
             PrintWriter out = response.getWriter();
@@ -1127,6 +1126,11 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 }.getType());
                 long repaymentId = NumberHelper.toLong(StringHelper.toString(acqRes.get("repaymentId")));
                 BorrowRepayment borrowRepayment = borrowRepaymentService.findById(repaymentId);
+                if (borrowRepayment.getStatus() != 0) {
+                    log.info("立即还款：该笔借款已归还");
+                    return;
+                }
+
                 Preconditions.checkNotNull(borrowRepayment, "还款记录不存在!");
                 Borrow borrow = borrowService.findById(borrowRepayment.getBorrowId());
                 Preconditions.checkNotNull(borrow, "借款记录不存在!");

@@ -1,0 +1,483 @@
+package com.gofobao.framework.asset.biz.impl;
+
+import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.contants.IdTypeContant;
+import com.gofobao.framework.api.contants.JixinResultContants;
+import com.gofobao.framework.api.helper.JixinManager;
+import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.with_daw.WithDrawRequest;
+import com.gofobao.framework.api.model.with_daw.WithDrawResponse;
+import com.gofobao.framework.asset.biz.CashDetailLogBiz;
+import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.entity.CashDetailLog;
+import com.gofobao.framework.asset.entity.RechargeDetailLog;
+import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.asset.service.CashDetailLogService;
+import com.gofobao.framework.asset.service.RechargeDetailLogService;
+import com.gofobao.framework.asset.vo.request.VoBankApsReq;
+import com.gofobao.framework.asset.vo.request.VoCashReq;
+import com.gofobao.framework.asset.vo.response.*;
+import com.gofobao.framework.common.capital.CapitalChangeEntity;
+import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.OKHttpHelper;
+import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.project.CapitalChangeHelper;
+import com.gofobao.framework.member.entity.UserCache;
+import com.gofobao.framework.member.entity.UserThirdAccount;
+import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.service.UserCacheService;
+import com.gofobao.framework.member.service.UserService;
+import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.member.vo.response.VoHtmlResp;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Base64Utils;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.UnsupportedEncodingException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Created by Administrator on 2017/6/12 0012.
+ */
+@Component
+@Slf4j
+public class CashDetailLogBizImpl implements CashDetailLogBiz {
+    @Autowired
+    AssetService assetService;
+
+    @Autowired
+    UserCacheService userCacheService ;
+
+    @Autowired
+    UserService userService ;
+
+    @Autowired
+    CashDetailLogService cashDetailLogService ;
+
+    @Autowired
+    UserThirdAccountService userThirdAccountService ;
+
+    @Autowired
+    RechargeDetailLogService rechargeDetailLogService ;
+
+    @Autowired
+    JixinManager jixinManager ;
+
+    @Autowired
+    CapitalChangeHelper capitalChangeHelper ;
+
+    @Value("${gofobao.javaDomain}")
+    String javaDomain;
+
+    static final Gson GSON = new Gson() ;
+
+    @Value("${gofobao.aliyun-bankaps-url}")
+    String aliyunQueryBankapsUrl ;
+
+    @Value("${gofobao.aliyun-bankinfo-appcode}")
+    String aliyunQueryAppcode ;
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoPreCashResp> preCash(Long userId) {
+        Users users = userService.findByIdLock(userId);
+        Preconditions.checkNotNull(users, "当前用户不存在");
+        if (users.getIsLock()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoPreCashResp.class));
+        }
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你还没有开通江西银行存管，请前往开通！", VoPreCashResp.class));
+        }
+
+        if (userThirdAccount.getPasswordState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "请初始化江西银行存管账户密码！", VoPreCashResp.class));
+        }
+
+        Asset asset = assetService.findByUserIdLock(userId);
+        VoPreCashResp resp = VoBaseResp.ok("查询成功", VoPreCashResp.class);
+        resp.setBankName(userThirdAccount.getBankName());
+        resp.setLogo(userThirdAccount.getBankLogo());
+        resp.setCardNo(userThirdAccount.getCardNo());
+        resp.setUseMoneyShow(StringHelper.formatDouble(asset.getUseMoney() / 100D, true));
+        resp.setUseMoney(asset.getUseMoney() / 100D);
+        int time = queryFreeTime(userId) ;
+        resp.setFreeTime(time);
+        return ResponseEntity.ok(resp) ;
+    }
+
+
+    /**
+     * 获取免费提现次数
+     * @param userId
+     * @return
+     */
+    private int queryFreeTime(Long userId) {
+        ImmutableList<Integer> states = ImmutableList.of(0, 1, 3) ;
+        List<CashDetailLog> cashDetailLogs = cashDetailLogService.findByStateInAndUserId(states, userId) ;
+        return CollectionUtils.isEmpty(cashDetailLogs) ? 0 : cashDetailLogs.size() ;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoHtmlResp> cash(Long userId, VoCashReq voCashReq)  throws  Exception{
+        Users users = userService.findByIdLock(userId);
+        Preconditions.checkNotNull(users, "当前用户不存在");
+        if (users.getIsLock()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoHtmlResp.class));
+        }
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你还没有开通江西银行存管，请前往开通！", VoHtmlResp.class));
+        }
+
+        if (userThirdAccount.getPasswordState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "请初始化江西银行存管账户密码！", VoHtmlResp.class));
+        }
+
+        // 用户可提现余额
+        Asset asset = assetService.findByUserIdLock(userId);
+        Integer useMoney = asset.getUseMoney() ;
+        if(useMoney <= 0){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "账户余额为0！", VoHtmlResp.class));
+        }
+
+        if( (voCashReq.getCashMoney() >= 200000) && (StringUtils.isEmpty(voCashReq.getBankAps()))){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "提现金额大于20万,请走人行通道！", VoHtmlResp.class));
+        }
+
+        boolean bigCashState = false ; // 人行通道?
+        if((voCashReq.getCashMoney() >= 200000) && (!StringUtils.isEmpty(voCashReq.getBankAps()))){
+            bigCashState = true;
+        }
+
+        Date nowDate = new Date() ;
+
+        if(bigCashState){
+            Date zeroDate = DateHelper.beginOfDate(nowDate) ;
+            Date startDate = DateHelper.addHours(zeroDate, 9)  ;
+            Date endDate = DateHelper.addMinutes(zeroDate, 60 * 16 + 45) ;
+
+            if(  (startDate.getTime() > zeroDate.getTime())  || (endDate.getTime() < nowDate.getTime()) ){
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "江西银行的大额度提现通道开放时间:09:00-16:45(仅限工作日),建议进行实时提现,提到提现效率.", VoHtmlResp.class));
+            }
+        }
+
+
+        double cashMoney = voCashReq.getCashMoney() * 100;  // 提现金额
+        // 免费体现次数
+        int freeTime = queryFreeTime(userId) ;
+        // 计算提现费用
+        long fee = 0L ;
+        if(freeTime > 10){  // 收费
+            fee = 200L ;
+        }
+
+        WithDrawRequest request = new WithDrawRequest() ;
+        request.setIdType(IdTypeContant.ID_CARD);
+        request.setIdNo(users.getCardId());
+        request.setName(users.getRealname());
+        request.setMobile(users.getPhone());
+        request.setCardNo(userThirdAccount.getCardNo());
+        request.setAccountId(userThirdAccount.getAccountId());
+        request.setTxAmount(StringHelper.formatDouble(new Double((cashMoney - fee) / 100D), false )); //  交易金额
+        if(bigCashState){
+            request.setRouteCode("2");
+            request.setCardBankCnaps(voCashReq.getBankAps());
+        }else{
+            request.setRouteCode("0");
+        }
+        if(fee == 0){  // 费用
+            request.setTxFee("0");
+        }else{
+            request.setTxFee( StringHelper.formatDouble( new Double(fee / 100D), false));
+        }
+
+        request.setForgotPwdUrl(String.format("%s/%s", javaDomain, ""));  // TODO 待加忘记密码回调
+        request.setRetUrl(String.format("%s/%s", javaDomain, ""));
+        request.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/asset/cash/callback"));
+        request.setAcqRes(String.valueOf(userId));
+        request.setChannel(ChannelContant.HTML);
+        // 生成提现表单
+        String html = jixinManager.getHtml(JixinTxCodeEnum.WITH_DRAW, request);
+        if(StringUtils.isEmpty(html)){
+            log.error("CashDetailLogBizImpl.cash 生成表单 ");
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,  "服务器开小差了， 请稍候重试", VoHtmlResp.class)) ;
+        }else{
+            // 写入提现记录
+            CashDetailLog cashDetailLog = new CashDetailLog() ;
+            cashDetailLog.setThirdAccountId(userThirdAccount.getAccountId());
+            cashDetailLog.setBankName(userThirdAccount.getBankName());
+            cashDetailLog.setCardNo(userThirdAccount.getCardNo());
+            cashDetailLog.setCashType(bigCashState ? 1 : 0);
+            cashDetailLog.setCompanyBankNo(voCashReq.getBankAps());
+            cashDetailLog.setFee(fee);
+            cashDetailLog.setCreateTime(nowDate);
+            cashDetailLog.setMoney(new Double(cashMoney).longValue());
+            cashDetailLog.setSeqNo(request.getTxDate() + request.getTxTime() + request.getSeqNo());
+            cashDetailLog.setState(1);  //  审核成功
+            cashDetailLog.setVerifyTime(nowDate);
+            cashDetailLog.setVerifyUserId(0L);
+            cashDetailLog.setUserId(userId);
+            cashDetailLog.setVerifyRemark("系统自动审核通过");
+            cashDetailLogService.save(cashDetailLog) ;
+            // 冻结金额
+            CapitalChangeEntity entity = new CapitalChangeEntity() ;
+            entity.setType(CapitalChangeEnum.Frozen);
+            entity.setMoney(new Double(cashMoney).intValue());
+            entity.setUserId(userId);
+            entity.setToUserId(userId);
+            entity.setRemark("提现冻结资金");
+            capitalChangeHelper.capitalChange(entity) ;
+        }
+
+        VoHtmlResp voHtmlResp = VoBaseResp.ok("成功", VoHtmlResp.class);
+        try {
+            voHtmlResp.setHtml(Base64Utils.encodeToString(html.getBytes("UTF-8")));
+        } catch (UnsupportedEncodingException e) {
+            log.error("CashDetailLogBizImpl cash gethtml exceptio", e);
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,  "服务器开小差了， 请稍候重试", VoHtmlResp.class)) ;
+        }
+
+        return ResponseEntity.ok(voHtmlResp) ;
+    }
+
+    @Override
+    public ResponseEntity<VoBankApsWrapResp> bankAps(Long userId, VoBankApsReq voBankApsReq) {
+        Users users = userService.findById(userId);
+        if (users.getIsLock()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoBankApsWrapResp.class));
+        }
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if(ObjectUtils.isEmpty(userThirdAccount)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你还没有开通江西银行存管，请前往开通！", VoBankApsWrapResp.class));
+        }
+
+        Map<String, String> params = new HashMap<>();
+        params.put("card", userThirdAccount.getCardNo());
+        params.put("page", voBankApsReq.getPage().toString() );
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Authorization", String.format("APPCODE %s", aliyunQueryAppcode));
+        String jsonStr = null;
+        try {
+            jsonStr = OKHttpHelper.get(aliyunQueryBankapsUrl, params, headers);
+        } catch (Exception e) {
+            log.error("CashDetailLogBizImpl.bankAps   银行联行查询异常");
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前网络异常,请稍后重试", VoBankApsWrapResp.class));
+        }
+        JsonParser jsonParser = new JsonParser();
+        JsonElement root = jsonParser.parse(jsonStr);
+        JsonObject rootObject = root.getAsJsonObject();
+        JsonObject resp = rootObject.getAsJsonObject("resp");
+        String respCode = resp.get("RespCode").getAsString() ;
+        if(!respCode.equals("200")){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前网络异常,请稍后重试", VoBankApsWrapResp.class));
+        }
+        JsonObject data = rootObject.getAsJsonObject("data");
+        VoBankApsWrapResp voBankApsWrapResp = GSON.fromJson(data, VoBankApsWrapResp.class) ;
+        voBankApsWrapResp.setState(new VoBaseResp.State(VoBaseResp.OK, "查询成功" , DateHelper.dateToString(new Date())));
+        return ResponseEntity.ok(voBankApsWrapResp) ;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<String> cashCallback(HttpServletRequest request) throws Exception {
+        WithDrawResponse response = jixinManager.callback(request, new TypeToken<WithDrawResponse>(){}) ;
+        if (ObjectUtils.isEmpty(response)) {
+            log.error("CashDetailDizImpl.cashCallback: 网络异常");
+            return ResponseEntity.ok("failed") ;
+        }
+
+        Long userId =  Long.parseLong( response.getAcqRes() );
+        if( (ObjectUtils.isEmpty(userId)) ||(userId <= 0) ){
+            log.error(String.format("CashDetailDizImpl.cashCallback: userId %s", response.getAcqRes()));
+            return ResponseEntity.ok("failed") ;
+        }
+
+        Users users = userService.findByIdLock(userId);
+        if(ObjectUtils.isEmpty(users)){
+            log.error("CashDetailDizImpl.cashCallback: 用户不存在") ;
+            return ResponseEntity.ok("failed") ;
+        }
+
+        String seqNo = response.getTxDate() + response.getTxTime() + response.getSeqNo() ;  // 交易流水
+        CashDetailLog  cashDetailLog  = cashDetailLogService.findTopBySeqNoLock(seqNo) ;
+        if(ObjectUtils.isEmpty(cashDetailLog)){
+            log.error("CashDetailDizImpl.cashCallback: 交易记录不存在") ;
+            return ResponseEntity.ok("failed") ;
+        }
+        if(cashDetailLog.getState() == 3){
+            log.error("CashDetailDizImpl.cashCallback: 提现成功重复调用") ;
+            return ResponseEntity.ok("success") ;
+        }
+
+        if (JixinResultContants.SUCCESS.equals(response.getRetCode())) { // 交易成功
+            // 更改用户提现记录
+            cashDetailLog.setState(3);
+            cashDetailLog.setCallbackTime(new Date());
+            cashDetailLogService.save(cashDetailLog);
+
+            // 更改用户资金
+            CapitalChangeEntity entity = new CapitalChangeEntity() ;
+            entity.setType(CapitalChangeEnum.Cash);
+            entity.setMoney(cashDetailLog.getMoney().intValue());
+            entity.setUserId(userId);
+            entity.setToUserId(userId);
+            capitalChangeHelper.capitalChange(entity) ;
+            return ResponseEntity.ok("success") ;
+        }else{  // 交易失败
+            log.info(String.format("处理提现失败: 交易流水: %s 返回状态/信息: %s/%s", seqNo, response.getRetCode(), response.getRetMsg()));
+            cashDetailLog.setState(4);
+            cashDetailLog.setCallbackTime(new Date());
+            cashDetailLog.setVerifyRemark(response.getRetMsg());
+            cashDetailLogService.save(cashDetailLog) ;
+            CapitalChangeEntity entity = new CapitalChangeEntity() ;
+            entity.setType(CapitalChangeEnum.Unfrozen);
+            entity.setMoney(cashDetailLog.getMoney().intValue());
+            entity.setUserId(userId);
+            entity.setToUserId(userId);
+            capitalChangeHelper.capitalChange(entity) ;  // 借去冻结资金
+            return ResponseEntity.ok("success") ;
+        }
+    }
+
+    @Override
+    public ResponseEntity<VoCashLogWrapResp> log(Long userId, int pageIndex, int pageSize) {
+        pageIndex = pageIndex < 0 ? 0 : pageIndex ;
+        pageSize = pageSize < 0 ?  10 : pageSize;
+
+        PageRequest page = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "ID")));
+        List<CashDetailLog> logs = cashDetailLogService.findByUserIdAndPage(userId, page) ;
+
+        VoCashLogWrapResp respone = VoBaseResp.ok("查询成功", VoCashLogWrapResp.class);
+
+        logs.forEach(bean -> {
+            VoCashLogResp voCashLogResp = new VoCashLogResp() ;
+            voCashLogResp.setBankNameAndCardNo(String.format("%s(%s)", bean.getBankName(), bean.getCardNo().substring(bean.getCardNo().length() - 4)));
+            voCashLogResp.setCashMoney(StringHelper.formatDouble(bean.getMoney() / 100D, true));
+            voCashLogResp.setCreateTime(DateHelper.dateToString(bean.getCreateTime()));
+            voCashLogResp.setState(bean.getState() == 1 ? 0 : bean.getState() == 3 ? 1 : 2);
+            voCashLogResp.setMsg(bean.getState() == 1 ? "等待银行处理,请耐心等候!" : bean.getState() == 3 ? "提现成功!" : "提现失败!");
+            voCashLogResp.setId(bean.getId());
+            respone.getData().add(voCashLogResp) ;
+        });
+
+        return ResponseEntity.ok(respone);
+    }
+
+    @Override
+    public ResponseEntity<VoCashLogDetailResp> logDetail(Long id) {
+        CashDetailLog cashDetailLog = cashDetailLogService.findById(id) ;
+        if(ObjectUtils.isEmpty(cashDetailLog)){
+            log.error("CashDetailLogBizImpl.logDetail 查询用户提现记录不存在!");
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,  "服务器开小差了， 请稍候重试", VoCashLogDetailResp.class)) ;
+        }
+
+        VoCashLogDetailResp response = VoBaseResp.ok("查询成功", VoCashLogDetailResp.class) ;
+        response.setBankNameAndCardNo(String.format("%s(%s)", cashDetailLog.getBankName(), cashDetailLog.getCardNo().substring(cashDetailLog.getCardNo().length() - 4)));
+        response.setBankProcessTime(DateHelper.dateToString(cashDetailLog.getVerifyTime()));
+        response.setCashMoney(StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
+        response.setCashTime(DateHelper.dateToString(cashDetailLog.getCreateTime()));
+        response.setFee(StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true));
+        response.setRealCashMoney(StringHelper.formatDouble( (cashDetailLog.getMoney() - cashDetailLog.getFee()) / 100D, true));
+        Date cashTime = null ;
+        if(cashDetailLog.getState() == 1){
+            cashTime =  DateHelper.addHours(cashDetailLog.getCreateTime() , 2) ;
+        }else{
+            cashTime = cashDetailLog.getCallbackTime() ;
+        }
+
+        response.setRealCashTime(DateHelper.dateToString(cashTime));
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     *  获取用户免费提现额度
+     * @param userId
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    private long getFreeCashMoney(long userId) {
+        UserCache userCache = userCacheService.findByUserIdLock(userId);
+        Asset asset = assetService.findByUserIdLock(userId);
+        // 充值总额
+        long rechargeTotal = userCache.getRechargeTotal() ;
+        // 已经实现收入
+        int incomeTotal = userCache.getIncomeTotal() ;
+        // 提现总额
+        Long cashTotal = userCache.getCashTotal() ;
+
+        Date endTime = new Date() ;
+        Date startTime = DateHelper.subDays(endTime, 3) ;
+        Long recharge3Total = 0L ; // 三天内充值的金额
+        List<RechargeDetailLog> logs = rechargeDetailLogService.findByRecentLog(userId, 0, startTime, startTime) ;
+        if(!CollectionUtils.isEmpty(logs)){
+            recharge3Total = logs.stream().mapToLong(p->p.getMoney()).sum();
+        }
+
+        ImmutableList<Integer> states = ImmutableList.of(0, 1) ;
+        List<CashDetailLog> cashDetailLogs = cashDetailLogService.findByStateInAndUserId(states, userId) ;
+        Long cashingMoney = 0L; // 提现中
+        if(!CollectionUtils.isEmpty(cashDetailLogs)){
+            cashingMoney = cashDetailLogs.stream().mapToLong(p -> p.getMoney()).sum() ;
+        }
+        return rechargeTotal + incomeTotal - cashingMoney -  cashTotal - recharge3Total ;
+    }
+
+}

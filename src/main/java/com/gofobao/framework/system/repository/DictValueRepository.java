@@ -11,7 +11,7 @@ import java.util.List;
  */
 @Repository
 public interface DictValueRepository extends JpaRepository<DictValue,Long>{
-    List<DictValue> findByDelAndItemId(Boolean isDel, Long itemId);
+    List<DictValue> findByDelAndItemId(Integer del, Long itemId);
 
     DictValue findTopByItemIdAndValue02AndDel(Long itemId, String bankName, int i);
     DictValue findTopByItemIdAndValue01AndDel(Long itemId, String bankName, int i);

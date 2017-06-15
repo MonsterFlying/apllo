@@ -103,15 +103,15 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
     @Override
     public ResponseEntity<VoViewCollectionDaysWarpRes> days(Long userId, String time) {
-        VoViewCollectionDaysWarpRes collectionDayWarpRes=VoBaseResp.ok("查询成功",VoViewCollectionDaysWarpRes.class);
+        VoViewCollectionDaysWarpRes collectionDayWarpRes = VoBaseResp.ok("查询成功", VoViewCollectionDaysWarpRes.class);
         try {
-            Date date1=DateHelper.stringToDate(time,"yyyyMM");
-            List<Integer> result=borrowRepaymentService.days(userId,time);
+            Date date1 = DateHelper.stringToDate(time, "yyyyMM");
+            List<Integer> result = borrowRepaymentService.days(userId, time);
             collectionDayWarpRes.setWarpRes(result);
-            return  ResponseEntity.ok(collectionDayWarpRes);
-        }catch (Exception e){
-            return  ResponseEntity.badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR,"查询失败",VoViewCollectionDaysWarpRes.class ));
+            return ResponseEntity.ok(collectionDayWarpRes);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewCollectionDaysWarpRes.class));
 
         }
     }
@@ -239,14 +239,18 @@ public class RepaymentBizImpl implements RepaymentBiz {
     }
 
 
-
     /**
      * 立即还款
      *
      * @param voRepayReq
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> repay(VoRepayReq voRepayReq) throws Exception {
+        ResponseEntity resp = checkRepay(voRepayReq);
+        if (!ObjectUtils.isEmpty(resp)) {
+            return null;
+        }
         Date nowDate = new Date();
         int lateInterest = 0;//逾期利息
         Double interestPercent = voRepayReq.getInterestPercent();
@@ -295,10 +299,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
         entity.setRemark("对借款[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]第" + (borrowRepayment.getOrder() + 1) + "期的还款");
         if (borrowType == 2) {
             entity.setAsset("sub@no_use_money");
-        } else if (!isUserOpen) {
-            entity.setRemark("（系统自动还款）");
         } else if (interestPercent < 1) {
             entity.setRemark("（提前结清）");
+        } else if (!isUserOpen) {
+            entity.setRemark("（系统自动还款）");
         }
         try {
             capitalChangeHelper.capitalChange(entity);
@@ -837,6 +841,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @throws Exception
      */
     public ResponseEntity<VoBaseResp> advanceDeal(VoAdvanceReq voAdvanceReq) throws Exception {
+
+        ResponseEntity resp = advanceCheck(voAdvanceReq);//垫付检查
+        if (!ObjectUtils.isEmpty(resp)) {
+            return resp;
+        }
         Long repaymentId = voAdvanceReq.getRepaymentId();
         List<BailRepayRun> bailRepayRunList = voAdvanceReq.getBailRepayRunList();
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);
@@ -919,9 +928,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if (CollectionUtils.isEmpty(borrowCollectionList)) {
                 break;
             }
-            for (BorrowCollection borrowCollection : borrowCollectionList){
+            for (BorrowCollection borrowCollection : borrowCollectionList) {
                 for (BailRepayRun bailRepayRun : bailRepayRunList) {
-                    if (borrowCollection.getTRepayOrderId().equals(bailRepayRun.getOrderId())){
+                    if (borrowCollection.getTRepayOrderId().equals(bailRepayRun.getOrderId())) {
                         borrowCollection.setTBailAuthCode(bailRepayRun.getAuthCode());
                         break;
                     }

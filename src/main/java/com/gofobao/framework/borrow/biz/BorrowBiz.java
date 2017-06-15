@@ -4,6 +4,7 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.vo.request.VoAddBorrow;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
+import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowStatisticsWarpRes;
@@ -22,6 +23,7 @@ public interface BorrowBiz {
 
     /**
      * 新增净值借款
+     *
      * @param voAddNetWorthBorrow
      * @return
      */
@@ -30,6 +32,7 @@ public interface BorrowBiz {
 
     /**
      * 首页标列表
+     *
      * @param voBorrowListReq
      * @return
      */
@@ -51,11 +54,12 @@ public interface BorrowBiz {
      * @return
      * @throws Exception
      */
-    boolean transferedBorrowAgainVerify(Borrow borrow) throws Exception ;
+    boolean transferedBorrowAgainVerify(Borrow borrow) throws Exception;
 
 
     /**
      * 标信息
+     *
      * @param borrowId
      * @return
      */
@@ -68,6 +72,7 @@ public interface BorrowBiz {
 
     /**
      * 标合同
+     *
      * @param borrowId
      * @param userId
      * @return
@@ -81,6 +86,13 @@ public interface BorrowBiz {
      */
     Map<String, Object> pcContract(Long borrowId, Long userId);
 
+    /**
+     * 提前结清
+     *
+     * @param voRepayAllReq
+     * @return
+     */
+    ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq) throws Exception;
     /**
      * PC:招标中统计
      * @param

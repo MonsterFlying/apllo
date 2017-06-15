@@ -2,10 +2,13 @@ package com.gofobao.framework.listener.providers;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.FrzFlagContant;
+import com.gofobao.framework.api.model.debt_details_query.DebtDetail;
+import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoCreateThirdBorrowReq;
+import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -27,6 +30,7 @@ import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoThirdBatchCreditInvest;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -200,6 +204,11 @@ public class BorrowProvider {
         boolean bool = false;
         Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get("borrowId")));
         Borrow borrow = borrowService.findById(borrowId);
+        if (borrow.getStatus() != 1) {
+            log.error("复审：借款状态已发生改变！");
+            return false;
+        }
+
         if (borrow.isTransfer()) {
             //批次债券转让
             VoThirdBatchCreditInvest voThirdBatchCreditInvest = new VoThirdBatchCreditInvest();
@@ -216,7 +225,21 @@ public class BorrowProvider {
                 log.info("====================================================================");
             }
         } else { //非转让标
-            ResponseEntity<VoBaseResp> resp = thirdRegisterBorrowAndTender(borrowId);
+
+            VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
+            voQueryThirdBorrowList.setBorrowId(borrowId);
+            voQueryThirdBorrowList.setUserId(borrow.getUserId());
+            voQueryThirdBorrowList.setPageNum("1");
+            voQueryThirdBorrowList.setPageSize("10");
+            DebtDetailsQueryResp response = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
+
+            List<DebtDetail> debtDetailList = GSON.fromJson(response.getSubPacks(), new TypeToken<List<DebtDetail>>() {
+            }.getType());
+
+            ResponseEntity<VoBaseResp> resp = null;
+            if (debtDetailList.size() < 1) {
+                resp = thirdRegisterBorrowAndTender(borrowId);
+            }
             if (ObjectUtils.isEmpty(resp)) {
                 //批次放款
                 VoThirdBatchLendRepay voThirdBatchLendRepay = new VoThirdBatchLendRepay();

@@ -36,7 +36,7 @@ public class BorrowRepaymentThirdContorller {
     @RequestMapping("/v2/third/batch/repay/check")
     @ApiOperation("批次还款参数检查通知")
     public void thirdBatchRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
-        borrowRepaymentThirdBiz.thirdBatchRepayCheckCall(request, response);
+;        borrowRepaymentThirdBiz.thirdBatchRepayCheckCall(request, response);
     }
 
     @RequestMapping("/v2/third/batch/repay/run")
