@@ -27,7 +27,7 @@ import javax.validation.Valid;
 public class CashController {
 
     @Autowired
-    CashDetailLogBiz cashDetailLogBiz;
+    private CashDetailLogBiz cashDetailLogBiz;
 
 
     @ApiOperation("提现前期请求")
