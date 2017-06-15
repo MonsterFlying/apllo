@@ -3,6 +3,7 @@ package com.gofobao.framework.repayment.service.impl;
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
+import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderList;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderRes;
@@ -14,6 +15,8 @@ import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.repository.BorrowRepaymentRepository;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoInfoReq;
+import com.gofobao.framework.repayment.vo.response.RepayCollectionLog;
+import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Range;
@@ -99,7 +102,6 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
     }
 
 
-
     /**
      * 还款详情
      *
@@ -131,7 +133,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         detailRes.setInterest(StringHelper.formatMon(interest / 100d));
         detailRes.setPrincipal(StringHelper.formatMon(principal / 100d));
         detailRes.setBorrowName(borrow.getName());
-        detailRes.setCollectionMoney(StringHelper.formatMon(borrowRepayment.getRepayMoneyYes()/100d));
+        detailRes.setCollectionMoney(StringHelper.formatMon(borrowRepayment.getRepayMoneyYes() / 100d));
         detailRes.setLateDays(borrowRepayment.getLateDays());
         detailRes.setOrder(borrowRepayment.getOrder() + 1);
         detailRes.setStartAt(DateHelper.dateToString(borrowRepayment.getRepayAtYes()));
@@ -141,59 +143,88 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
 
     @Override
     public List<Integer> days(Long userId, String time) {
-        String sql="SELECT DAY(repay_at) FROM gfb_borrow_repayment " +
+        String sql = "SELECT DAY(repay_at) FROM gfb_borrow_repayment " +
                 "where " +
-                "user_id="+userId+" " +
+                "user_id=" + userId + " " +
                 "and " +
                 "`status`=0 " +
-                "and   date_format(repay_at,'%Y%m') =" +time+
+                "and   date_format(repay_at,'%Y%m') =" + time +
                 " GROUP BY  day(repay_at)";
-        Query query=entityManager.createNativeQuery(sql);
-        List result= query.getResultList();
+        Query query = entityManager.createNativeQuery(sql);
+        List result = query.getResultList();
         return result;
     }
 
-    public BorrowRepayment save(BorrowRepayment borrowRepayment){
+    @Override
+    public List<RepayCollectionLog> logs(Long borrowId) {
+        List<BorrowRepayment> repaymentList = borrowRepaymentRepository.findByBorrowId(borrowId);
+        if (CollectionUtils.isEmpty(repaymentList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<RepayCollectionLog> logList = Lists.newArrayList();
+        repaymentList.stream().forEach(p -> {
+            RepayCollectionLog log = new RepayCollectionLog();
+            log.setInterest(StringHelper.formatMon(p.getInterest() / 100d));
+            log.setLateInterest(StringHelper.formatMon(p.getLateDays() / 100d));
+            log.setOrder(p.getOrder() + 1);
+            log.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100d));
+            log.setRepayAt(DateHelper.dateToString(p.getRepayAt()));
+            log.setRepayMoney(StringHelper.formatMon(p.getRepayMoney() / 100d));
+            log.setRepayMoneyYes(StringHelper.formatMon(p.getRepayMoneyYes() / 100d));
+            if (p.getStatus() == RepaymentContants.STATUS_NO) { //未还款
+                log.setRepayAtYes("---");
+                log.setRemark("---");
+            } else {
+                String date = DateHelper.dateToString(p.getRepayAtYes());
+                log.setRepayAtYes(date);
+                log.setRemark(date + RepaymentContants.STATUS_YES_STR);
+            }
+            logList.add(log);
+        });
+        return logList;
+    }
+
+    public BorrowRepayment save(BorrowRepayment borrowRepayment) {
         return save(borrowRepayment);
     }
 
-    public BorrowRepayment insert(BorrowRepayment borrowRepayment){
-        if (ObjectUtils.isEmpty(borrowRepayment)){
+    public BorrowRepayment insert(BorrowRepayment borrowRepayment) {
+        if (ObjectUtils.isEmpty(borrowRepayment)) {
             return null;
         }
         borrowRepayment.setId(null);
         return borrowRepaymentRepository.save(borrowRepayment);
     }
 
-    public BorrowRepayment updateById(BorrowRepayment borrowRepayment){
-        if (ObjectUtils.isEmpty(borrowRepayment) || ObjectUtils.isEmpty(borrowRepayment.getId())){
+    public BorrowRepayment updateById(BorrowRepayment borrowRepayment) {
+        if (ObjectUtils.isEmpty(borrowRepayment) || ObjectUtils.isEmpty(borrowRepayment.getId())) {
             return null;
         }
         return borrowRepaymentRepository.save(borrowRepayment);
     }
 
 
-    public BorrowRepayment findByIdLock(Long id){
+    public BorrowRepayment findByIdLock(Long id) {
         return borrowRepaymentRepository.findById(id);
     }
 
-    public BorrowRepayment findById(Long id){
+    public BorrowRepayment findById(Long id) {
         return borrowRepaymentRepository.findOne(id);
     }
 
-    public List<BorrowRepayment> findList(Specification<BorrowRepayment> specification){
+    public List<BorrowRepayment> findList(Specification<BorrowRepayment> specification) {
         return borrowRepaymentRepository.findAll(specification);
     }
 
-    public List<BorrowRepayment> findList(Specification<BorrowRepayment> specification, Sort sort){
-        return borrowRepaymentRepository.findAll(specification,sort);
+    public List<BorrowRepayment> findList(Specification<BorrowRepayment> specification, Sort sort) {
+        return borrowRepaymentRepository.findAll(specification, sort);
     }
 
-    public List<BorrowRepayment> findList(Specification<BorrowRepayment> specification, Pageable pageable){
-        return borrowRepaymentRepository.findAll(specification,pageable).getContent();
+    public List<BorrowRepayment> findList(Specification<BorrowRepayment> specification, Pageable pageable) {
+        return borrowRepaymentRepository.findAll(specification, pageable).getContent();
     }
 
-    public long count(Specification<BorrowRepayment> specification){
+    public long count(Specification<BorrowRepayment> specification) {
         return borrowRepaymentRepository.count(specification);
     }
 

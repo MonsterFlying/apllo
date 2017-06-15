@@ -10,5 +10,5 @@ public class UserAttachmentRes {
 
     private String name;
 
-    private String filePath;
+    private String filepath;
 }

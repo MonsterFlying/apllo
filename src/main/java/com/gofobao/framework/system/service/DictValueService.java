@@ -5,7 +5,7 @@ import com.gofobao.framework.system.entity.DictValue;
 /**
  * Created by Max on 17/6/6.
  */
-public interface DictValueServcie {
+public interface DictValueService {
 
 
     DictValue findTopByItemIdAndValue02(Long itemId, String bankName);

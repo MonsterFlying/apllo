@@ -2,9 +2,7 @@ package com.gofobao.framework.borrow.service;
 
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
-import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
-import com.gofobao.framework.borrow.vo.response.VoBorrowDescRes;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
+import com.gofobao.framework.borrow.vo.response.*;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -66,6 +64,14 @@ public interface BorrowService {
      * @return
      */
     List<Borrow> findList(Specification<Borrow> specification,Sort sort);
+
+
+    /**
+     * 招标统计
+     * @param
+     * @return
+     */
+    List<BorrowStatistics> statistics();
 
     /**
      * 查询列表

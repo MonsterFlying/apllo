@@ -47,7 +47,7 @@ public class PaymentController {
         return paymentBiz.orderDetail(voOrderDetailReq);
     }
 
-    @ApiOperation("当月有回款日期,time：'2017-05'")
+    @ApiOperation("当月有回款日期,time：'201705'")
     @GetMapping("/v2/collection/days/{time}")
     public ResponseEntity<VoViewCollectionDaysWarpRes> days(@PathVariable("time") String time,
                                                             @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {

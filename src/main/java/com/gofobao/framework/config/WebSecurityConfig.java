@@ -111,6 +111,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         "/lend/**")
                 .permitAll()
                 .antMatchers(
+                        "/notices/**")
+                .permitAll()
+                .antMatchers(
                         "/coupon/**")
                 .permitAll()
                 .antMatchers(

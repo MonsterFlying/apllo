@@ -4,7 +4,7 @@ import com.gofobao.framework.system.biz.BannerBiz;
 import com.gofobao.framework.system.biz.StatisticBiz;
 import com.gofobao.framework.system.vo.response.VoViewIndexBannerWarpRes;
 import com.gofobao.framework.system.vo.response.VoViewIndexStatisticsWarpRes;
-import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Created by admin on 2017/6/14.
  */
 @RestController
-@ApiModel("首页")
+@Api(description = "首页")
 @RequestMapping("/index")
 public class IndexController {
 

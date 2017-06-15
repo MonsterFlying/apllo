@@ -3,7 +3,7 @@ package com.gofobao.framework.helper;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.service.DictItemServcie;
-import com.gofobao.framework.system.service.DictValueServcie;
+import com.gofobao.framework.system.service.DictValueService;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -31,7 +31,7 @@ public class JixinHelper {
     @Autowired
     private DictItemServcie dictItemServcie;
     @Autowired
-    private DictValueServcie dictValueServcie;
+    private DictValueService dictValueServcie;
 
     LoadingCache<String, DictValue> jixinCache = CacheBuilder
             .newBuilder()

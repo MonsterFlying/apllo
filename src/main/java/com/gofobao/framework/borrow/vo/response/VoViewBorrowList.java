@@ -56,5 +56,6 @@ public class VoViewBorrowList implements Serializable {
     private Long surplusSecond;
     @ApiModelProperty("头像")
     private String avatar;
-
+    @ApiModelProperty(hidden = true)
+    private Integer pageCount;
 }

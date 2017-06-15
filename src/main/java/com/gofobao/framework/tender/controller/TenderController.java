@@ -29,10 +29,18 @@ public class TenderController {
 
     @ApiOperation("投标用户列表")
     @GetMapping("/v2/user/list/{borrowId}")
-    public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
-                                                                              @PathVariable Long borrowId) {
+    public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(@PathVariable Long borrowId) {
         return tenderBiz.findBorrowTenderUser(borrowId);
     }
+
+    @ApiOperation("pc:投标用户列表")
+    @GetMapping("pc/v2/user/list/{borrowId}")
+    public ResponseEntity<VoBorrowTenderUserWarpListRes> pcFindBorrowTenderUser(@PathVariable Long borrowId) {
+        return tenderBiz.findBorrowTenderUser(borrowId);
+    }
+
+
+
 
     @ApiOperation("借款投标")
     @PostMapping("/v2/create")

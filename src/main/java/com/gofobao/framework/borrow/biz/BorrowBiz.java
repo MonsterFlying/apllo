@@ -7,6 +7,7 @@ import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
+import com.gofobao.framework.borrow.vo.response.VoViewBorrowStatisticsWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewVoBorrowDescWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import org.springframework.http.ResponseEntity;
@@ -85,4 +86,11 @@ public interface BorrowBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq) throws Exception;
+    /**
+     * PC:招标中统计
+     * @param
+     * @return
+     */
+    ResponseEntity<VoViewBorrowStatisticsWarpRes> statistics();
+
 }

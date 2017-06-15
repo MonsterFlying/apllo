@@ -9,6 +9,7 @@ import com.gofobao.framework.repayment.vo.request.VoAdvanceReq;
 import com.gofobao.framework.repayment.vo.request.VoInfoReq;
 import com.gofobao.framework.repayment.vo.request.VoInstantlyRepaymentReq;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
+import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -31,6 +32,13 @@ public interface RepaymentBiz {
      * @return
      */
     ResponseEntity<VoViewOrderDetailWarpRes> info(VoInfoReq voInfoReq);
+
+    /**
+     * 标还款记录
+     * @param borrowId
+     * @return
+     */
+    ResponseEntity<VoViewRepayCollectionLogWarpRes>logs(Long borrowId);
 
     /**
      * 立即还款

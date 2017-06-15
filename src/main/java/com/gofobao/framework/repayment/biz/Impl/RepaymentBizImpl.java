@@ -40,6 +40,8 @@ import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.*;
+import com.gofobao.framework.repayment.vo.response.RepayCollectionLog;
+import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
 import com.gofobao.framework.system.biz.StatisticBiz;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.entity.Statistic;
@@ -149,6 +151,19 @@ public class RepaymentBizImpl implements RepaymentBiz {
             return ResponseEntity.ok(voViewOrderDetailWarpRes);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewOrderDetailWarpRes.class));
+        }
+    }
+
+
+    @Override
+    public ResponseEntity<VoViewRepayCollectionLogWarpRes> logs(Long borrowId) {
+        try {
+            List<RepayCollectionLog> logList = borrowRepaymentService.logs(borrowId);
+            VoViewRepayCollectionLogWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewRepayCollectionLogWarpRes.class);
+            warpRes.setCollectionLogs(logList);
+            return ResponseEntity.ok(warpRes);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewRepayCollectionLogWarpRes.class));
         }
     }
 
