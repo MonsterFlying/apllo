@@ -73,6 +73,13 @@ public interface BorrowBiz {
      * @return
      */
     Map<String, Object> contract(Long borrowId, Long userId);
+    /**
+     * pc：标合同
+     * @param borrowId
+     * @param userId
+     * @return
+     */
+    Map<String, Object> pcContract(Long borrowId, Long userId);
 
     /**
      * PC:招标中统计
@@ -80,5 +87,7 @@ public interface BorrowBiz {
      * @return
      */
     ResponseEntity<VoViewBorrowStatisticsWarpRes> statistics();
+
+
 
 }

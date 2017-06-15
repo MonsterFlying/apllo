@@ -50,8 +50,8 @@ public class BorrowController {
         return borrowBiz.findAll(voBorrowListReq);
     }
 
-    @ApiOperation(value = "首页标列表; type:-1：全部 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
-    @GetMapping("v2/pc/0/{type}/{pageIndex}/{pageSize}")
+    @ApiOperation(value = "pc:首页标列表; type:-1：全部 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
+    @GetMapping("pc/v2//{type}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewBorrowListWarpRes> pcList(@PathVariable Integer pageIndex,
                                                           @PathVariable Integer pageSize,
                                                           @PathVariable Integer type){
@@ -67,19 +67,24 @@ public class BorrowController {
     public ResponseEntity<VoViewBorrowInfoWarpRes> getByBorrowId(@PathVariable Long borrowId) {
         return borrowBiz.info(borrowId);
     }
+    @ApiOperation("标信息")
+    @GetMapping("pc/v2/info/{borrowId}")
+    public ResponseEntity<VoViewBorrowInfoWarpRes> pcgetByBorrowId(@PathVariable Long borrowId) {
+        return borrowBiz.info(borrowId);
+    }
+
+
 
     @ApiOperation("标简介")
     @GetMapping("v2/desc/{borrowId}")
     public ResponseEntity<VoViewVoBorrowDescWarpRes> desc(@PathVariable Long borrowId) {
         return borrowBiz.desc(borrowId);
     }
-
     @ApiOperation("pc：标简介")
     @GetMapping("pc/v2/desc/{borrowId}")
     public ResponseEntity<VoViewVoBorrowDescWarpRes> pcDesc(@PathVariable Long borrowId) {
         return borrowBiz.desc(borrowId);
     }
-
 
 
     @ApiOperation(value = "标合同")
@@ -90,6 +95,17 @@ public class BorrowController {
         String content = thymeleafHelper.build("borrowProtocol",paramMaps) ;
         return ResponseEntity.ok(content);
     }
+
+    @ApiOperation(value = "pc:标合同")
+    @GetMapping(value = "pc/pub/borrowProtocol/{borrowId}")
+    public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId /*,
+                                               @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/){
+        Map<String,Object>paramMaps= borrowBiz.pcContract(borrowId,901L);
+
+        return ResponseEntity.ok(null);
+    }
+
+
 
     @ApiOperation(value = "pc：招标中统计")
     @GetMapping(value = "pc/v2/statistics")
@@ -122,4 +138,7 @@ public class BorrowController {
         voCancelBorrow.setUserId(userId);
         return borrowBiz.cancelBorrow(voCancelBorrow);
     }
+
+
+
 }

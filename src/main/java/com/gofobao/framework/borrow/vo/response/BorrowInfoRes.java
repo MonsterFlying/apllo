@@ -51,4 +51,7 @@ public class   BorrowInfoRes {
     @ApiModelProperty("秒差 ：当状态是招标中 为正数  其他状态则返回-1")
     private Long surplusSecond;
 
+    @ApiModelProperty("标类型 type: 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
+    private Integer type;
+
 }

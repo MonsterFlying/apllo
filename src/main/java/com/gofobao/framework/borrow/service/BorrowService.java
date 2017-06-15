@@ -88,4 +88,7 @@ public interface BorrowService {
 
     Map<String, Object> contract(Long borrowId, Long userId);
 
+
+    Map<String, Object> pcContract(Long borrowId, Long userId);
+
 }
