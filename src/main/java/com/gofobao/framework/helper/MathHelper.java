@@ -206,4 +206,15 @@ public class MathHelper {
         return num1 > num2 ? num1 : num2;
     }
 
+    /**
+     * 比较两个参数返回最大值
+     *
+     * @param num1
+     * @param num2
+     * @return
+     */
+    public static double min(double num1, double num2) {
+        return num1 > num2 ? num2 : num1;
+    }
+
 }

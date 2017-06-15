@@ -9,7 +9,7 @@ import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.service.DictItemServcie;
-import com.gofobao.framework.system.service.DictValueServcie;
+import com.gofobao.framework.system.service.DictValueService;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -42,7 +42,7 @@ public class BankAccountBizImpl implements BankAccountBiz{
     String aliyunQueryAppcode ;
 
     @Autowired
-    DictValueServcie dictValueServcie ;
+    DictValueService dictValueServcie ;
 
     @Autowired
     DictItemServcie dictItemServcie ;

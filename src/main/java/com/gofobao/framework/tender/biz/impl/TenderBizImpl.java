@@ -1,7 +1,6 @@
 package com.gofobao.framework.tender.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
-import com.gofobao.framework.api.contants.FrzFlagContant;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
@@ -33,7 +32,6 @@ import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
-import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
 import com.google.common.base.Preconditions;
@@ -115,19 +113,6 @@ public class TenderBizImpl implements TenderBiz {
         borrowTender.setState(1);
         borrowTender = tenderService.insert(borrowTender);
 
-        if (!borrow.isTransfer()) { //转让标不需要调用即信投标申请接口
-            //===============================调用即信投标申请操作====================================
-            VoCreateThirdTenderReq voCreateThirdTenderReq = new VoCreateThirdTenderReq();
-            voCreateThirdTenderReq.setAcqRes(String.valueOf(borrowTender.getId()));
-            voCreateThirdTenderReq.setUserId(userId);
-            voCreateThirdTenderReq.setTxAmount(StringHelper.formatDouble(validMoney, 100, false));
-            voCreateThirdTenderReq.setProductId(String.valueOf(borrow.getId()));
-            voCreateThirdTenderReq.setFrzFlag(FrzFlagContant.FREEZE);
-            ResponseEntity<VoBaseResp> resp = tenderThirdBiz.createThirdTender(voCreateThirdTenderReq);
-            if (!ObjectUtils.isEmpty(resp)) {
-                throw new Exception(resp.getBody().getState().getMsg());
-            }
-        }
         //扣除待还
         CapitalChangeEntity entity = new CapitalChangeEntity();
         entity.setType(CapitalChangeEnum.Frozen);
@@ -240,7 +225,7 @@ public class TenderBizImpl implements TenderBiz {
                 //取消借款
                 VoCancelBorrow voCancelBorrow = new VoCancelBorrow();
                 voCancelBorrow.setBorrowId(borrowId);
-                voCancelBorrow.setUserId(userId);
+                voCancelBorrow.setUserId(borrow.getUserId());
                 borrowBiz.cancelBorrow(voCancelBorrow);
                 msg = "当前借款不在有效招标时间中!";
                 break;
@@ -372,27 +357,6 @@ public class TenderBizImpl implements TenderBiz {
                     msg = "该借款已达到自投限额!";
                     break;
                 }
-            } else {
-
-                if (borrow.getType() == 2 && borrow.getMost() >= borrow.getLowest()) { //除秒标外,其他标手动不限额
-                    Specification<Tender> specification = Specifications.<Tender>and()
-                            .eq("userId", userId)
-                            .eq("status", 1)
-                            .build();
-                    List<Tender> tenderList = tenderService.findList(specification);
-                    double tempTenderMoney = 0;
-                    if (CollectionUtils.isEmpty(tenderList)) {
-                        for (int i = 0; i < tenderList.size(); i++) {
-                            tempTenderMoney += tenderList.get(i).getValidMoney();
-                        }
-                    }
-
-                    validMoney = MathHelper.myRound(Math.min(validMoney, borrow.getMost() - tempTenderMoney), 2);
-                    if (validMoney <= 0) {
-                        msg = "你的投标额已经达到该借款的限额!";
-                        break;
-                    }
-                }
             }
 
             Asset asset = assetService.findByUserIdLock(userId);
@@ -425,6 +389,7 @@ public class TenderBizImpl implements TenderBiz {
             warpListRes.setVoBorrowTenderUser(tenderUserRes);
             return ResponseEntity.ok(warpListRes);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoBorrowTenderUserWarpListRes.class));
         }
     }
@@ -489,7 +454,7 @@ public class TenderBizImpl implements TenderBiz {
 
         //转让借款
         Borrow tempBorrow = new Borrow();
-        tempBorrow.setType(borrow.getType());
+        tempBorrow.setType(3);//3 转让标
         tempBorrow.setUse(borrow.getUse());
         tempBorrow.setIsLock(false);
         tempBorrow.setRepayFashion(borrow.getRepayFashion());

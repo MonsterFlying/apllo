@@ -40,12 +40,12 @@ jixin: #银行存管
   version: 10 #版本号
   instCode: "00960001" #机构代码
   bankCode: "30050000" #交易机构代码
-  redPacketAccountId: "6212461270000000444" #红包账户
-  handlingChargeAccountId: "6212461270000000360" #电子手续费账户
+  redPacketAccountId: "6212462040000150021" #红包账户
+  handlingChargeAccountId: "6227002154215326514" #电子手续费账户
 gofobao:
   #javaDomain: http://lang.3w.dkys.org
   javaDomain: http://max.3w.dkys.org
-  webDomain: http://langlang.3w.dkys.org
+  webDomain: http://lang.hk1.mofasuidao.cn
   h5Domain: http://ci.gofobao.com
   captcha: false # 全站是否开启图形验证码验证
   close-email-send: true # 关闭邮箱发送

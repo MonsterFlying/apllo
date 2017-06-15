@@ -6,6 +6,8 @@ import com.gofobao.framework.member.vo.response.VoViewInviteAwardStatisticsWarpR
 import com.gofobao.framework.member.vo.response.VoViewInviteFriendersWarpRes;
 import org.springframework.http.ResponseEntity;
 
+import java.util.Map;
+
 /**
  * Created by admin on 2017/6/7.
  */
@@ -18,4 +20,8 @@ public interface BrokerBounsBiz  {
 
 
     ResponseEntity<VoViewFriendsTenderInfoWarpRes> firstTender(VoFriendsReq voFriendsReq);
+
+
+    ResponseEntity<Map<String,String>>shareRegister(Long userId);
+
 }

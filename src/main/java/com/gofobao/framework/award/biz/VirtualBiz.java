@@ -1,8 +1,11 @@
 package com.gofobao.framework.award.biz;
 
+import com.gofobao.framework.award.vo.request.VoVirtualReq;
+import com.gofobao.framework.award.vo.response.VoViewAwardStatisticsWarpRes;
 import com.gofobao.framework.award.vo.response.VoViewVirtualBorrowResWarpRes;
 import com.gofobao.framework.award.vo.response.VoViewVirtualStatisticsWarpRes;
 import com.gofobao.framework.award.vo.response.VoViewVirtualTenderResWarpRes;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -30,5 +33,14 @@ public interface VirtualBiz {
      * @return
      */
     ResponseEntity<VoViewVirtualBorrowResWarpRes> list();
+
+
+    ResponseEntity<VoBaseResp> createTender(VoVirtualReq voVirtualReq);
+
+    /**
+     * 奖励统计
+     * @return
+     */
+    ResponseEntity<VoViewAwardStatisticsWarpRes>statistics (Long userId);
 
 }

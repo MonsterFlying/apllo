@@ -2,6 +2,7 @@ package com.gofobao.framework.award.biz.impl;
 
 import com.gofobao.framework.award.biz.VirtualBiz;
 import com.gofobao.framework.award.service.VirtualService;
+import com.gofobao.framework.award.vo.request.VoVirtualReq;
 import com.gofobao.framework.award.vo.response.*;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import lombok.extern.slf4j.Slf4j;
@@ -69,6 +70,46 @@ public class VirtualBizImpl implements VirtualBiz {
                             VoBaseResp.ERROR,
                             "查询失败",
                             VoViewVirtualBorrowResWarpRes.class));
+        }
+    }
+
+    @Override
+    public ResponseEntity<VoBaseResp> createTender(VoVirtualReq voVirtualReq) {
+        try {
+            boolean flag = virtualService.tenderCreate(voVirtualReq);
+            if (flag) {
+                return ResponseEntity.ok(VoBaseResp.ok("投标成功"));
+            } else {
+                return ResponseEntity.badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "投标失败"));
+            }
+        } catch (Exception e) {
+            log.info("VirtualBizImpl createTender fail", e);
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "投标失败"));
+        }
+    }
+
+    /**
+     * 奖励统计
+     * @param userId
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoViewAwardStatisticsWarpRes> statistics(Long userId) {
+        VoViewAwardStatisticsWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewAwardStatisticsWarpRes.class);
+        try {
+            AwardStatistics awardStatistics = virtualService.query(userId);
+            warpRes.setAwardStatistics(awardStatistics);
+            return ResponseEntity.ok(warpRes);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(
+                        VoBaseResp.error(
+                                VoBaseResp.ERROR,
+                                "查询失败",
+                                VoViewAwardStatisticsWarpRes.class
+                            ));
         }
     }
 }

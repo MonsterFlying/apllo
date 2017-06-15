@@ -3,8 +3,7 @@ package com.gofobao.framework.helper;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.service.DictItemServcie;
-import com.gofobao.framework.system.service.DictService;
-import com.gofobao.framework.system.service.DictValueServcie;
+import com.gofobao.framework.system.service.DictValueService;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -32,7 +31,7 @@ public class JixinHelper {
     @Autowired
     private DictItemServcie dictItemServcie;
     @Autowired
-    private DictValueServcie dictValueServcie;
+    private DictValueService dictValueServcie;
 
     LoadingCache<String, DictValue> jixinCache = CacheBuilder
             .newBuilder()
@@ -53,6 +52,8 @@ public class JixinHelper {
     public static final String TENDER_PREFIX = "GFBT_";
     public static final String LEND_REPAY_PREFIX = "GFBLP_";
     public static final String REPAY_PREFIX = "GFBP_";
+    public static final String REPAY_BAIL_PREFIX = "GFBBP_";
+    public static final String BAIL_REPAY_PREFIX = "GFBPB_";
 
     public static String getOrderId(String prefix) {
         return prefix + new Date().getTime();
@@ -77,8 +78,8 @@ public class JixinHelper {
                         dictValueServcie.save(dictValue);
                     } else {
                         dictValue = jixinCache.get("no");
-                        no = NumberHelper.toInt(StringHelper.toString(dictValue.getValue03()));
-                        dictValue.setValue03(StringHelper.toString(NumberHelper.toInt(dictValue.getValue03()) + 1));
+                        no = NumberHelper.toInt(StringHelper.toString(dictValue.getValue03())) + 1;
+                        dictValue.setValue03(StringHelper.toString(no));
                         dictValueServcie.save(dictValue);
                     }
                 }

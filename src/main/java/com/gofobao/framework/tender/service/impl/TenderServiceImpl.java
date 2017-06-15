@@ -9,6 +9,7 @@ import com.gofobao.framework.common.data.DataObject;
 import com.gofobao.framework.common.data.GeSpecification;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
@@ -20,7 +21,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
@@ -31,7 +35,7 @@ import java.util.*;
 /**
  * Created by admin on 2017/5/19.
  */
-@Service
+@Component
 @Slf4j
 public class TenderServiceImpl implements TenderService {
 
@@ -53,7 +57,7 @@ public class TenderServiceImpl implements TenderService {
      */
     @Override
     public List<VoBorrowTenderUserRes> findBorrowTenderUser(Long borrowId) {
-        Borrow borrow = borrowRepository.findById(borrowId);
+        Borrow borrow = borrowRepository.findOne(borrowId);
         if (ObjectUtils.isEmpty(borrow)) {
             return Collections.EMPTY_LIST;
         }
@@ -69,7 +73,8 @@ public class TenderServiceImpl implements TenderService {
 
         listOptional.ifPresent(items -> items.forEach(item -> {
             VoBorrowTenderUserRes tenderUserRes = new VoBorrowTenderUserRes();
-            tenderUserRes.setMoney(NumberHelper.to2DigitString(item.getValidMoney() / 100d) + MoneyConstans.RMB);
+            tenderUserRes.setMoney(StringHelper.formatMon(item.getMoney() / 100d) + MoneyConstans.RMB);
+            tenderUserRes.setValidMoney(StringHelper.formatMon(item.getValidMoney() / 100d) + MoneyConstans.RMB);
             tenderUserRes.setDate(DateHelper.dateToString(item.getCreatedAt(), DateHelper.DATE_FORMAT_YMDHMS));
             tenderUserRes.setType(item.getIsAuto() ? TenderConstans.AUTO : TenderConstans.MANUAL);
             Users user = usersRepository.findOne(new Long(item.getUserId()));
@@ -104,6 +109,26 @@ public class TenderServiceImpl implements TenderService {
         return tenderRepository.findAll(specification);
     }
 
+    public List<Tender> findList(Specification<Tender> specification, Pageable pageable) {
+        if (ObjectUtils.isEmpty(specification) || ObjectUtils.isEmpty(pageable)) {
+            return null;
+        }
+        return tenderRepository.findAll(specification, pageable).getContent() ;
+    }
+
+    public List<Tender> findList(Specification<Tender> specification, Sort sort) {
+        if (ObjectUtils.isEmpty(specification) || ObjectUtils.isEmpty(sort)) {
+            return null;
+        }
+        return tenderRepository.findAll(specification, sort);
+    }
+
+    public long count(Specification<Tender> specification) {
+        if (ObjectUtils.isEmpty(specification)) {
+            return 0;
+        }
+        return tenderRepository.count(specification);
+    }
     /**
      * 检查投标是否太频繁
      *

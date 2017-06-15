@@ -42,7 +42,7 @@ import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.service.DictItemServcie;
-import com.gofobao.framework.system.service.DictValueServcie;
+import com.gofobao.framework.system.service.DictValueService;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -114,7 +114,7 @@ public class AssetBizImpl implements AssetBiz {
     MqHelper mqHelper;
 
     @Autowired
-    DictValueServcie dictValueServcie;
+    DictValueService dictValueServcie;
 
     @Autowired
     DictItemServcie dictItemServcie;
@@ -159,11 +159,12 @@ public class AssetBizImpl implements AssetBiz {
         Integer payment = asset.getPayment();
         int netWorthQuota = new Double((useMoney + waitCollectionPrincipal) * 0.8 - payment).intValue();//计算净值额度
 
-        VoUserAssetInfoResp voUserAssetInfoResp = new VoUserAssetInfoResp();
+        VoUserAssetInfoResp voUserAssetInfoResp =VoBaseResp.ok("成功", VoUserAssetInfoResp.class) ;
         voUserAssetInfoResp.setUseMoney(useMoney);
         voUserAssetInfoResp.setNoUseMoney(asset.getNoUseMoney());
         voUserAssetInfoResp.setPayment(payment);
         voUserAssetInfoResp.setCollection(asset.getCollection());
+        voUserAssetInfoResp.setVirtualMoney(asset.getVirtualMoney());
         voUserAssetInfoResp.setNetWorthQuota(netWorthQuota);
         return ResponseEntity.ok(voUserAssetInfoResp);
     }

@@ -7,7 +7,6 @@ import com.gofobao.framework.award.vo.response.VoViewOpenRedPackageWarpRes;
 import com.gofobao.framework.award.vo.response.VoViewRedPackageWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

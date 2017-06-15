@@ -1,8 +1,6 @@
 package com.gofobao.framework.borrow.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
-import com.gofobao.framework.api.model.debt_details_query.DebtDetail;
-import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
@@ -10,7 +8,10 @@ import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
-import com.gofobao.framework.borrow.vo.request.*;
+import com.gofobao.framework.borrow.vo.request.VoAddBorrow;
+import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
+import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
+import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
 import com.gofobao.framework.borrow.vo.response.*;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
@@ -35,8 +36,10 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
+import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.entity.Tender;
@@ -44,11 +47,12 @@ import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
@@ -92,6 +96,8 @@ public class BorrowBizImpl implements BorrowBiz {
     private BorrowCollectionService borrowCollectionService;
     @Autowired
     private BorrowRepaymentService borrowRepaymentService;
+    @Autowired
+    private RepaymentBiz repaymentBiz;
 
     /**
      * 理财首页标列表
@@ -101,6 +107,7 @@ public class BorrowBizImpl implements BorrowBiz {
      */
     @Override
     public ResponseEntity<VoViewBorrowListWarpRes> findAll(VoBorrowListReq voBorrowListReq) {
+
         try {
             List<VoViewBorrowList> borrowLists = borrowService.findAll(voBorrowListReq);
             VoViewBorrowListWarpRes listWarpRes = VoBaseResp.ok("查询成功", VoViewBorrowListWarpRes.class);
@@ -123,12 +130,12 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Override
-    public ResponseEntity<Object> info(Long borrowId) {
+    public ResponseEntity<VoViewBorrowInfoWarpRes> info(Long borrowId) {
         try {
             BorrowInfoRes borrowInfoRes = borrowService.findByBorrowId(borrowId);
             VoViewBorrowInfoWarpRes listWarpRes = VoBaseResp.ok("查询成功", VoViewBorrowInfoWarpRes.class);
             if (ObjectUtils.isEmpty(borrowInfoRes)) {
-                return ResponseEntity.ok(VoBaseResp.ok(""));
+                return ResponseEntity.ok(VoBaseResp.ok("", VoViewBorrowInfoWarpRes.class));
             } else {
                 listWarpRes.setBorrowInfoRes(borrowInfoRes);
                 return ResponseEntity.ok(listWarpRes);
@@ -169,7 +176,31 @@ public class BorrowBizImpl implements BorrowBiz {
     }
 
     /**
+     * PC:招标中统计
+     *
+     * @param
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoViewBorrowStatisticsWarpRes> statistics() {
+        try {
+            VoViewBorrowStatisticsWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewBorrowStatisticsWarpRes.class);
+            List<BorrowStatistics> voBorrowDescRes = borrowService.statistics();
+            warpRes.setStatisticsList(voBorrowDescRes);
+            return ResponseEntity.ok(warpRes);
+        } catch (Exception e) {
+            log.info("BorrowBizImpl desc fail%s", e);
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(
+                            VoBaseResp.ERROR,
+                            "查询失败",
+                            VoViewBorrowStatisticsWarpRes.class));
+        }
+    }
+
+    /**
      * 标合同
+     *
      * @param borrowId
      * @param userId
      * @return
@@ -185,13 +216,13 @@ public class BorrowBizImpl implements BorrowBiz {
     }
 
     /**
-     * 新增净值借款
+     * 新增借款
      *
      * @param voAddNetWorthBorrow
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow) {
+    public ResponseEntity<VoBaseResp> addNetWorth(VoAddBorrow voAddNetWorthBorrow) {
         Long userId = voAddNetWorthBorrow.getUserId();
         String releaseAtStr = voAddNetWorthBorrow.getReleaseAt();
         Integer money = voAddNetWorthBorrow.getMoney();
@@ -199,7 +230,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
         Asset asset = assetService.findByUserIdLock(userId);
         if (ObjectUtils.isEmpty(asset)) {
-            log.info("新增净值借款：用户asset未被查询得到。");
+            log.info("新增借款：用户asset未被查询得到。");
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍候重试！"));
@@ -207,7 +238,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
         Users users = userService.findById(userId);
         if (ObjectUtils.isEmpty(users.getCardId())) {
-            log.info("新增净值借款：当前用户未实名。");
+            log.info("新增借款：当前用户未实名。");
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户未实名认证!"));
@@ -215,7 +246,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
         Date releaseAt = DateHelper.stringToDate(releaseAtStr, DateHelper.DATE_FORMAT_YMDHMS);
         if (releaseAt.getTime() > DateHelper.addDays(new Date(), 1).getTime()) {
-            log.info("新增净值借款：发布时间必须在24小时内。");
+            log.info("新增借款：发布时间必须在24小时内。");
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "发布时间必须在24小时内!"));
@@ -223,7 +254,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
         UserCache userCache = userCacheService.findById(userId);
         if (ObjectUtils.isEmpty(userCache)) {
-            log.info("新增净值借款：用户usercache未被查询得到。");
+            log.info("新增借款：用户usercache未被查询得到。");
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍候重试！"));
@@ -231,7 +262,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
         double totalMoney = (asset.getUseMoney() + userCache.getWaitCollectionPrincipal()) * 0.8 - asset.getPayment();
         if (totalMoney < money) {
-            log.info("新增净值借款：借款金额大于净值额度。");
+            log.info("新增借款：借款金额大于净值额度。");
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "借款金额大于净值额度!"));
@@ -239,7 +270,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
         long count = borrowService.countByUserIdAndStatusIn(userId, Arrays.asList(0, 1));
         if (count > 0) {
-            log.info("新增净值借款：您已经有一个进行中的借款标。");
+            log.info("新增借款：您已经有一个进行中的借款标。");
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "您已经有一个进行中的借款标!"));
@@ -255,7 +286,7 @@ public class BorrowBizImpl implements BorrowBiz {
             Example<AutoTender> autoTenderExample = Example.of(condAutoTender);
 
             if (!autoTenderService.updateByExample(saveAutoTender, autoTenderExample)) {
-                log.info("新增净值借款：自动投标关闭失败。");
+                log.info("新增借款：自动投标关闭失败。");
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "自动投标关闭失败!"));
@@ -266,11 +297,11 @@ public class BorrowBizImpl implements BorrowBiz {
         try {
             borrowId = insertBorrow(voAddNetWorthBorrow, userId);  // 插入标
         } catch (Exception e) {
-            log.error("新增净值借款异常：", e);
+            log.error("新增借款异常：", e);
         }
 
         if (borrowId <= 0) {
-            log.info("新增净值借款：净值标插入失败。");
+            log.info("新增借款：净值标插入失败。");
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "净值标插入失败!"));
@@ -298,7 +329,7 @@ public class BorrowBizImpl implements BorrowBiz {
         return ResponseEntity.ok(VoBaseResp.ok("发布净值借款成功!"));
     }
 
-    private long insertBorrow(VoAddNetWorthBorrow voAddNetWorthBorrow, Long userId) throws Exception {
+    private long insertBorrow(VoAddBorrow voAddNetWorthBorrow, Long userId) throws Exception {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "借款人未开户!");
 
@@ -378,7 +409,7 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         //================================调用即信取消标的====================================
-        VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
+        /*VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
         voQueryThirdBorrowList.setBorrowId(borrowId);
         voQueryThirdBorrowList.setUserId(userId);
         voQueryThirdBorrowList.setPageNum("1");
@@ -398,7 +429,7 @@ public class BorrowBizImpl implements BorrowBiz {
             if (!ObjectUtils.isEmpty(responseEntity)) {
                 return responseEntity;
             }
-        }
+        }*/
         //======================================================================================
 
         Specification<Tender> borrowSpecification = Specifications
@@ -470,33 +501,6 @@ public class BorrowBizImpl implements BorrowBiz {
             tenderService.updateById(tender);
         }
 
-        Integer payMoney = 0;
-        if (borrow.getType() == 2) {//如果是秒标则解除冻结
-            Double principal = NumberHelper.toDouble(StringHelper.toString(borrow.getMoney()));
-            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(principal,
-                    NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrow.getSuccessAt());
-            Map<String, Object> debx = borrowCalculatorHelper.dengEBenXi();
-            payMoney = (int) MathHelper.myRound((Double) debx.get("repayTotal") - principal, 2);
-
-            if (borrow.getAwardType() == 1) {
-                payMoney += borrow.getAward();
-            } else if (borrow.getAwardType() == 2) {
-                payMoney += (int) MathHelper.myRound(borrow.getMoney() * borrow.getAward(), 2);
-            }
-
-            //更新资产记录
-            CapitalChangeEntity entity = new CapitalChangeEntity();
-            entity.setType(CapitalChangeEnum.Unfrozen);
-            entity.setUserId(borrow.getUserId());
-            entity.setMoney(payMoney);
-            entity.setRemark("取消秒标借款[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]解除冻结资金");
-            try {
-                capitalChangeHelper.capitalChange(entity);
-            } catch (Exception e) {
-                log.error("borrowBizImpl cancelBorrow error", e);
-            }
-        }
-
         //更新借款
         borrow.setStatus(5);
         borrow.setUpdatedAt(nowDate);
@@ -517,7 +521,8 @@ public class BorrowBizImpl implements BorrowBiz {
         boolean bool = false;
         do {
 
-            if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1) || (borrow.getMoney() != borrow.getMoneyYes())) {
+            if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1)
+                    || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
                 break;
             }
             Date nowDate = new Date();
@@ -565,7 +570,8 @@ public class BorrowBizImpl implements BorrowBiz {
     public boolean transferedBorrowAgainVerify(Borrow borrow) throws Exception {
         boolean bool = false;
         do {
-            if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1) || (borrow.getMoney() != borrow.getMoneyYes())) {
+            if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1)
+                    || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
                 break;
             }
             Long tenderId = borrow.getTenderId();
@@ -829,4 +835,191 @@ public class BorrowBizImpl implements BorrowBiz {
     }
 
 
+    /**
+     * 提前结清
+     *
+     * @param voRepayAllReq
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq) throws Exception {
+        Long borrowId = voRepayAllReq.getBorrowId();
+        Borrow borrow = borrowService.findByIdLock(borrowId);
+        if ((borrow.getStatus() != 3) || (borrow.getType() != 0 && borrow.getType() != 4)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款状态非可结清状态！"));
+        }
+
+        Specification<BorrowRepayment> brs = Specifications
+                .<BorrowRepayment>and()
+                .eq("borrowId", borrowId)
+                .eq("status", 0)
+                .build();
+        if (borrowRepaymentService.count(brs) < 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "该借款剩余未还期数小于1期！"));
+        }
+
+        Asset borrowAsset = assetService.findByUserId(borrow.getUserId());
+        Preconditions.checkNotNull(borrowAsset, "借款人资产记录不存在!");
+
+        int repaymentTotal = 0;
+        List<VoRepayReq> voRepayReqList = new ArrayList<>();
+        int penalty = 0;
+        int lateInterest = 0;
+        int lateDays = 0;
+        int overPrincipal = 0;
+        Date startAt = null;
+        Date endAt = null;
+        BorrowRepayment borrowRepayment = null;
+        double interestPercent = 0;
+        VoRepayReq voRepayReq = null;
+        brs = Specifications
+                .<BorrowRepayment>and()
+                .eq("borrowId", borrowId)
+                .build();
+        List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
+
+        for (int i = 0; i < borrowRepaymentList.size(); i++) {
+            borrowRepayment = borrowRepaymentList.get(i);
+            if (borrowRepayment.getStatus() != 0) {
+                continue;
+            }
+
+            if (borrowRepayment.getOrder() == 0) {
+                startAt = DateHelper.beginOfDate(borrow.getSuccessAt());
+            } else {
+                startAt = DateHelper.beginOfDate(borrowRepaymentList.get(i - 1).getRepayAt());
+            }
+            endAt = DateHelper.beginOfDate(borrowRepayment.getRepayAt());
+
+            //以结清第一期的14天利息作为违约金
+            if (penalty == 0) {
+                penalty = borrowRepayment.getInterest() / DateHelper.diffInDays(endAt, startAt, false) * 14;
+            }
+
+            Date nowStartDate = DateHelper.beginOfDate(new Date());
+            if (nowStartDate.getTime() <= startAt.getTime()) {
+                interestPercent = 0;
+            } else {
+                interestPercent = MathHelper.min(DateHelper.diffInDays(nowStartDate, startAt, false) / DateHelper.diffInDays(endAt, startAt, false), 1);
+            }
+
+            lateDays = DateHelper.diffInDays(nowStartDate, endAt, false);
+            if (interestPercent == 1 && lateDays > 0) {
+                for (int j = i; j < borrowRepaymentList.size(); j++) {
+                    overPrincipal += borrowRepaymentList.get(j).getPrincipal();
+                }
+                lateInterest = new Double(overPrincipal * 0.004 * lateDays).intValue();
+            }
+            repaymentTotal += borrowRepayment.getPrincipal() + borrowRepayment.getInterest() * interestPercent + lateInterest;
+            voRepayReq = new VoRepayReq();
+            voRepayReq.setInterestPercent(interestPercent);
+            voRepayReq.setRepaymentId(borrowRepayment.getId());
+            voRepayReq.setUserId(borrowRepayment.getUserId());
+            voRepayReq.setIsUserOpen(false);
+            voRepayReqList.add(voRepayReq);
+        }
+
+        int repayMoney = repaymentTotal + penalty;
+        if (borrowAsset.getUseMoney() < (repayMoney)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "结清总共需要还款 " + repayMoney + " 元，您的账户余额不足，请先充值!！"));
+        }
+
+        for (VoRepayReq tempVoRepayReq : voRepayReqList) {
+            try {
+                repaymentBiz.repay(tempVoRepayReq);
+            } catch (Exception e) {
+                log.error("提前结清异常：", e);
+            }
+        }
+
+        if (penalty > 0) {
+            CapitalChangeEntity entity = new CapitalChangeEntity();
+            entity.setUserId(borrow.getUserId());
+            entity.setType(CapitalChangeEnum.Fee);
+            entity.setMoney(penalty);
+            entity.setRemark("扣除提前结清的违约金");
+            receivedPenalty(borrow, penalty);
+        }
+
+        return ResponseEntity.ok(VoBaseResp.ok("提前结清成功!"));
+    }
+
+    /**
+     * 提前结清给投资者违约金
+     *
+     * @param borrow
+     * @param penalty
+     */
+    private void receivedPenalty(Borrow borrow, int penalty) throws Exception {
+        Date nowDate = new Date();
+        List<Long> collectionUserIds = new ArrayList<>();
+        Specification<Tender> ts = Specifications
+                .<Tender>and()
+                .eq("status", 1)
+                .build();
+        Pageable pageable = null;
+        List<Tender> tenderList = null;
+        int pageNum = 0;
+        int pageSize = 10;
+        int tempPenalty = 0;
+        Borrow tempBorrow = null;
+        long tenderUserId = 0;
+        do {
+            pageable = new PageRequest(pageNum++, pageSize, new Sort(Sort.Direction.ASC));
+            tenderList = tenderService.findList(ts, pageable);
+            for (Tender tender : tenderList) {
+                tenderUserId = tender.getUserId();
+                tempPenalty = tender.getValidMoney() / borrow.getMoney() * penalty;
+                if (tender.getTransferFlag() == 2) { //已转让
+                    Specification<Borrow> bs = Specifications
+                            .<Borrow>and()
+                            .eq("tenderId", tender.getId())
+                            .eq("status", 3)
+                            .build();
+                    List<Borrow> borrowList = borrowService.findList(bs);
+                    receivedPenalty(borrowList.get(0), tempPenalty);
+                    continue;
+                }
+
+                CapitalChangeEntity entity = new CapitalChangeEntity();
+                entity.setUserId(tenderUserId);
+                entity.setType(CapitalChangeEnum.IncomeOther);
+                entity.setMoney(tempPenalty);
+                entity.setRemark("收到借款用户提前结清的违约金");
+                capitalChangeHelper.capitalChange(entity);
+
+                if (!collectionUserIds.contains(tenderUserId)) {
+                    collectionUserIds.add(tenderUserId);
+                    Notices notices = new Notices();
+                    notices.setFromUserId(1L);
+                    notices.setUserId(tenderUserId);
+                    notices.setRead(false);
+                    notices.setName("违约金");
+                    notices.setContent("客户在" + DateHelper.dateToString(new Date()) + "已将借款[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]]提前结清，收到" + tempPenalty + "元违约金");
+                    notices.setType("system");
+                    notices.setCreatedAt(nowDate);
+                    notices.setUpdatedAt(nowDate);
+
+                    //发送站内信
+                    MqConfig mqConfig = new MqConfig();
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
+                    mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
+                    Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
+                    mqConfig.setMsg(body);
+                    try {
+                        log.info(String.format("borrowProvider doAgainVerify send mq %s", GSON.toJson(body)));
+                        mqHelper.convertAndSend(mqConfig);
+                    } catch (Exception e) {
+                        log.error("borrowProvider doAgainVerify send mq exception", e);
+                    }
+                }
+            }
+        } while (tenderList.size() < 10);
+    }
 }

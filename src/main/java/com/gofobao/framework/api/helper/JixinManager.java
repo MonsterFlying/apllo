@@ -1,7 +1,6 @@
 package com.gofobao.framework.api.helper;
 
 import com.gofobao.framework.api.repsonse.JixinBaseResponse;
-import com.gofobao.framework.api.repsonse.JixinBatchBaseResponse;
 import com.gofobao.framework.api.request.JixinBaseRequest;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.core.helper.RandomHelper;

@@ -6,10 +6,7 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
-import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
-import com.gofobao.framework.borrow.vo.response.UserAttachmentRes;
-import com.gofobao.framework.borrow.vo.response.VoBorrowDescRes;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
+import com.gofobao.framework.borrow.vo.response.*;
 import com.gofobao.framework.common.constans.MoneyConstans;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
@@ -26,9 +23,9 @@ import com.gofobao.framework.tender.repository.TenderRepository;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -39,9 +36,13 @@ import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.groupingBy;
 
 
 /**
@@ -70,6 +71,9 @@ public class BorrowServiceImpl implements BorrowService {
     @Autowired
     private ThymeleafHelper thymeleafHelper;
 
+    @Value("${gofobao.webDomain}")
+    private String webDomain;
+
     /**
      * 首页标列表
      *
@@ -78,7 +82,13 @@ public class BorrowServiceImpl implements BorrowService {
      */
     @Override
     public List<VoViewBorrowList> findAll(VoBorrowListReq voBorrowListReq) {
+
         Integer type = voBorrowListReq.getType();
+        List<Integer> typeArray = Arrays.asList(-1, 1, 2, 3, 4, 5);
+        Boolean flag = typeArray.contains(type);
+        if (!flag) {
+            return Collections.EMPTY_LIST;
+        }
         if (type == -1) {
             type = null;
         }
@@ -88,33 +98,45 @@ public class BorrowServiceImpl implements BorrowService {
                 new Integer(BorrowContants.NO_PASS),
                 new Integer(BorrowContants.RECHECK_NO_PASS));
 
-        StringBuilder sb = new StringBuilder(" SELECT b FROM Borrow b WHERE 1=1 ");
+        StringBuilder pageSb = new StringBuilder(" SELECT b FROM Borrow b WHERE 1=1 ");
+
+        StringBuilder countSb = new StringBuilder(" SELECT COUNT(id) FROM Borrow b WHERE 1=1 ");
+        StringBuilder condtionSql = new StringBuilder("");
         /**
+         *
+         *
+         *
          *条件
          */
         if (type != null) {  // 全部
-            if (type == 2) {
-                sb.append(" AND b.tenderId is not null ");
+            if (type == 5) {
+                condtionSql.append(" AND b.tenderId is not null ");
             } else {
-                sb.append(" AND b.type=" + type);
+                condtionSql.append(" AND b.type=" + type);
             }
         }
-        sb.append(" AND b.status NOT IN(:statusArray)");
+        condtionSql.append(" AND b.status NOT IN(:statusArray)");
 
         /**
          * 排序
          */
         if (StringUtils.isEmpty(type)) {
-            sb.append(" ORDER BY FIELD(b.type,0, 4, 1, 2),(b.moneyYes / b.money) DESC, b.id DESC");
+            condtionSql.append(" ORDER BY FIELD(b.type,0, 4, 1, 2),(b.moneyYes / b.money) DESC, b.id DESC");
         } else {
             if (type == BorrowContants.INDEX_TYPE_CE_DAI) {
-                sb.append(" ORDER BY b.status ASC,(b.moneyYes / b.money) DESC, b.successAt DESC,b.id DESC");
+                condtionSql.append(" ORDER BY b.status ASC,(b.moneyYes / b.money) DESC, b.successAt DESC,b.id DESC");
             } else {
-                sb.append(" ORDER BY b.status, b.successAt DESC, b.id DESC");
+                condtionSql.append(" ORDER BY b.status, b.successAt DESC, b.id DESC");
             }
         }
-        List<Borrow> borrowLists = entityManager.createQuery(sb.toString(), Borrow.class)
-                .setParameter("statusArray", statusArray)
+
+        Query pageQuery = entityManager.createQuery(pageSb.append(condtionSql).toString(), Borrow.class);
+        pageQuery.setParameter("statusArray", statusArray);
+
+        Query countQuery = entityManager.createQuery(countSb.append(condtionSql).toString(), Long.class);
+        countQuery.setParameter("statusArray", statusArray);
+        Long count = (Long) countQuery.getSingleResult();
+        List<Borrow> borrowLists = pageQuery
                 .setFirstResult(voBorrowListReq.getPageIndex())
                 .setMaxResults(voBorrowListReq.getPageSize())
                 .getResultList();
@@ -122,70 +144,78 @@ public class BorrowServiceImpl implements BorrowService {
         if (CollectionUtils.isEmpty(borrowLists)) {
             return Collections.EMPTY_LIST;
         }
-        Optional<List<Borrow>> objBorrow = Optional.ofNullable(borrowLists);
-        List<VoViewBorrowList> listResList = new ArrayList<>();
-        objBorrow.ifPresent(p -> p.forEach(
-                m -> {
-                    VoViewBorrowList item = new VoViewBorrowList();
-                    item.setId(m.getId());
-                    item.setMoney(StringHelper.formatMon(m.getMoney() / 100d) + MoneyConstans.RMB);
-                    item.setIsContinued(m.getIsContinued());
-                    item.setLockStatus(m.getIsLock());
-                    item.setIsImpawn(m.getIsImpawn());
-                    item.setApr(StringHelper.formatMon(m.getApr() / 100d) + MoneyConstans.PERCENT);
-                    item.setName(m.getName());
-                    item.setMoneyYes(StringHelper.formatMon(m.getMoneyYes() / 100d) + MoneyConstans.RMB);
-                    item.setIsNovice(m.getIsNovice());
-                    item.setIsMortgage(m.getIsMortgage());
-                    if (m.getType() == BorrowContants.REPAY_FASHION_ONCE) {
-                        item.setTimeLimit(m.getTimeLimit() + BorrowContants.DAY);
-                    } else {
-                        item.setTimeLimit(m.getTimeLimit() + BorrowContants.MONTH);
-                    }
 
-                    //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
-                    Integer status = m.getStatus();
-                    if (status == 0) { //待发布
-                        status = 1;
-                    }
-                    if (status == BorrowContants.BIDDING) {//招标中
-                        Integer validDay = m.getValidDay();
-                        Date endAt = DateHelper.addDays(DateHelper.beginOfDate(m.getReleaseAt()), (validDay + 1));
-                        if (new Date().getTime() > endAt.getTime()) {  //当前时间大于满标时间
-                            status = 5; //已过期
-                        } else {
-                            status = 3; //招标中
-                        }
-                    }
-                    if (!ObjectUtils.isEmpty(m.getSuccessAt()) && !ObjectUtils.isEmpty(m.getCloseAt())) {   //满标时间 结清
-                        status = 4; //已完成
-                    }
-                    if (status == BorrowContants.PASS && ObjectUtils.isEmpty(m.getCloseAt())) {
-                        status = 2; //还款中
-                    }
-                    //速度
-                    if (status == 3) {
-                        item.setSpend(Double.parseDouble(StringHelper.formatMon(m.getMoneyYes().doubleValue() / m.getMoney())));
-                    } else {
-                        item.setSpend(0d);
-                    }
+        List<VoViewBorrowList> listResList = new ArrayList<>(voBorrowListReq.getPageSize());
+        Set<Long> userIdArray = borrowLists.stream().map(p -> p.getUserId()).collect(Collectors.toSet());
+        List<Users> usersList = usersRepository.findByIdIn(new ArrayList(userIdArray));
+        Map<Long, Users> usersMap = usersList.stream().collect(Collectors.toMap(Users::getId, Function.identity()));
+        borrowLists.stream().forEach(m -> {
+            VoViewBorrowList item = new VoViewBorrowList();
+            item.setId(m.getId());
+            item.setMoney(StringHelper.formatMon(m.getMoney() / 100d) + MoneyConstans.RMB);
+            item.setIsContinued(m.getIsContinued());
+            item.setLockStatus(m.getIsLock());
+            item.setIsImpawn(m.getIsImpawn());
+            item.setApr(StringHelper.formatMon(m.getApr() / 100d) + MoneyConstans.PERCENT);
+            item.setName(m.getName());
+            item.setMoneyYes(StringHelper.formatMon(m.getMoneyYes() / 100d) + MoneyConstans.RMB);
+            item.setIsNovice(m.getIsNovice());
+            item.setIsMortgage(m.getIsMortgage());
+            if (m.getType() == BorrowContants.REPAY_FASHION_ONCE) {
+                item.setTimeLimit(m.getTimeLimit() + BorrowContants.DAY);
+            } else {
+                item.setTimeLimit(m.getTimeLimit() + BorrowContants.MONTH);
+            }
+            item.setSurplusSecond(-1L);
+            //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
+            Integer status = m.getStatus();
+            if (status == 0) { //待发布
+                status = 1;
+            } else if (status == BorrowContants.BIDDING) {//招标中
+                Integer validDay = m.getValidDay();
+                Date endAt = DateHelper.addDays(m.getReleaseAt(), validDay);
+                Date nowDate = new Date(System.currentTimeMillis());
+                if (nowDate.getTime() > endAt.getTime()) {  //当前时间大于满标时间
+                    status = 5; //已过期
+                } else {
+                    status = 3; //招标中
+                    item.setSurplusSecond((endAt.getTime() - nowDate.getTime()) + 5);
+                }
+            } else if (!ObjectUtils.isEmpty(m.getSuccessAt()) && !ObjectUtils.isEmpty(m.getCloseAt())) {   //满标时间 结清
+                status = 4; //已完成
+            } else if (status == BorrowContants.PASS && ObjectUtils.isEmpty(m.getCloseAt())) {
+                status = 2; //还款中
+            }
+            //速度
+            if (status == 3) {
+                item.setSpend(Double.parseDouble(StringHelper.formatMon(m.getMoneyYes().doubleValue() / m.getMoney())));
+            } else {
+                item.setSpend(0d);
+            }
 
-                    if (!StringUtils.isEmpty(m.getTenderId()) && m.getTenderId() > 0) {
-                        item.setIsFlow(true);
-                    } else {
-                        item.setIsFlow(false);
-                    }
-                    item.setType(m.getType());
-                    item.setStatus(status);
-                    item.setRepayFashion(m.getRepayFashion());
-                    item.setIsContinued(m.getIsContinued());
+            if (!StringUtils.isEmpty(m.getTenderId()) && m.getTenderId() > 0) {
+                item.setIsFlow(true);
+            } else {
+                item.setIsFlow(false);
+            }
+            Long userId = m.getUserId();
+            Users user = usersMap.get(userId);
+            item.setUserName(!StringUtils.isEmpty(user.getUsername()) ? user.getUsername() : user.getPhone());
+            item.setType(m.getType());
+            if (voBorrowListReq.getType() == 5) {
+                item.setType(5);
+            }
+            item.setStatus(status);
+            item.setRepayFashion(m.getRepayFashion());
+            item.setIsContinued(m.getIsContinued());
+            item.setIsConversion(m.getIsConversion());
+            item.setIsVouch(m.getIsVouch());
+            item.setTenderCount(m.getTenderCount());
+            item.setAvatar(webDomain + "/data/images/avatar/" + userId + "_avatar_small.jpg");
+            item.setPageCount(count.intValue());
+            listResList.add(item);
+        });
 
-                    item.setIsConversion(m.getIsConversion());
-                    item.setIsVouch(m.getIsVouch());
-                    item.setTenderCount(m.getTenderCount());
-                    listResList.add(item);
-                })
-        );
         Optional<List<VoViewBorrowList>> result = Optional.empty();
         return result.ofNullable(listResList).orElse(Collections.emptyList());
     }
@@ -205,9 +235,9 @@ public class BorrowServiceImpl implements BorrowService {
             return null;
 
         }
-        borrowInfoRes.setApr(NumberHelper.to2DigitString(borrow.getApr() / 100d));
+        borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
         borrowInfoRes.setLowest(borrow.getLowest() / 100d + "");
-        borrowInfoRes.setMoneyYes(NumberHelper.to2DigitString(borrow.getMoneyYes() / 100d));
+        borrowInfoRes.setMoneyYes(StringHelper.formatMon(borrow.getMoneyYes() / 100d));
         if (borrow.getType() == BorrowContants.REPAY_FASHION_ONCE) {
             borrowInfoRes.setTimeLimit(borrow.getTimeLimit() + BorrowContants.DAY);
         } else {
@@ -220,12 +250,32 @@ public class BorrowServiceImpl implements BorrowService {
         Integer earnings = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("earnings")));
         borrowInfoRes.setEarnings(earnings + MoneyConstans.RMB);
         borrowInfoRes.setTenderCount(borrow.getTenderCount() + BorrowContants.TIME);
-        borrowInfoRes.setMoney(NumberHelper.to2DigitString(borrow.getMoney() / 100d));
+        borrowInfoRes.setMoney(StringHelper.formatMon(borrow.getMoney() / 100d));
         borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
-        borrowInfoRes.setSpend(borrow.getMoneyYes() / borrow.getMoney() + MoneyConstans.PERCENT);
-        Date endAt = DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), (borrow.getValidDay() + 1));//结束时间
+        borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes() / borrow.getMoney().doubleValue())));
+        Date endAt = DateHelper.addDays(borrow.getReleaseAt(), borrow.getValidDay());//结束时间
         borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
-        borrowInfoRes.setSuccessAt(DateHelper.dateToString(borrow.getSuccessAt(), DateHelper.DATE_FORMAT_YMDHMS));
+        borrowInfoRes.setSurplusSecond(-1L);
+        //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
+        Integer status = borrow.getStatus();
+        if (status == 0) { //待发布
+            status = 1;
+        } else if (status == BorrowContants.BIDDING) {//招标中
+            Date nowDate = new Date(System.currentTimeMillis());
+            if (nowDate.getTime() > endAt.getTime()) {  //当前时间大于满标时间
+                status = 5; //已过期
+            } else {
+                status = 3; //招标中
+                borrowInfoRes.setSurplusSecond((endAt.getTime() - nowDate.getTime()) + 5);
+            }
+        } else if (!ObjectUtils.isEmpty(borrow.getSuccessAt()) && !ObjectUtils.isEmpty(borrow.getCloseAt())) {   //满标时间 结清
+            status = 4; //已完成
+        } else if (status == BorrowContants.PASS && ObjectUtils.isEmpty(borrow.getCloseAt())) {
+            status = 2; //还款中
+        }
+        borrowInfoRes.setIsNovice(borrow.getIsNovice());
+        borrowInfoRes.setStatus(status);
+        borrowInfoRes.setSuccessAt(StringUtils.isEmpty(borrow.getSuccessAt()) ? "" : DateHelper.dateToString(borrow.getSuccessAt()));
         return borrowInfoRes;
 
     }
@@ -246,7 +296,7 @@ public class BorrowServiceImpl implements BorrowService {
         Long userId = borrow.getUserId();
         voViewBorrowDescRes.setBorrowDesc(borrow.getDescription());
         List<UserAttachment> attachmentList = userAttachmentRepository.findByUserId(userId);
-        if (CollectionUtils.isEmpty(attachmentList)) {
+        if (!CollectionUtils.isEmpty(attachmentList)) {
             Gson gson = new Gson();
             String jsonStr = gson.toJson(attachmentList);
             List<UserAttachmentRes> attachmentRes = gson.fromJson(jsonStr, new TypeToken<List<UserAttachmentRes>>() {
@@ -272,14 +322,19 @@ public class BorrowServiceImpl implements BorrowService {
         //发标用户
         Long borrowUserId = borrow.getUserId();
         Users users = usersRepository.findOne(borrowUserId);
-
-
-        Gson gson= new GsonBuilder().create();
-        String jsonStr=gson.toJson(borrow);
-        Map<String,Object>borrowMap=gson.fromJson(jsonStr,new TypeToken< Map<String,Object>>() {
+        Gson gson = new Gson();
+        String jsonStr = gson.toJson(borrow);
+        Map<String, Object> borrowMap = gson.fromJson(jsonStr, new TypeToken<Map<String, Object>>() {
         }.getType());
-        borrowMap.put("username", StringUtils.isEmpty(users.getPhone()) ? users.getUsername() : users.getPhone());
+
+        borrowMap.put("username", StringUtils.isEmpty(users.getUsername()) ? users.getPhone() : users.getUsername());
         borrowMap.put("cardId", UserHelper.hideChar(users.getCardId(), UserHelper.CARD_ID_NUM));
+        borrowMap.put("id", borrow.getId());
+        borrowMap.put("money", StringHelper.formatMon(borrow.getMoney() / 100d));
+        borrowMap.put("timeLimit", borrow.getTimeLimit() + "");
+        borrowMap.put("apr", StringHelper.formatMon(borrow.getApr() / 100d));
+        borrowMap.put("successAt", StringUtils.isEmpty(borrow.getSuccessAt()) ? null : DateHelper.dateToString(borrow.getSuccessAt()));
+        borrowMap.put("endAt", DateHelper.dateToString(DateHelper.addDays(borrow.getReleaseAt(), borrow.getValidDay())));
 
 
         if (!ObjectUtils.isEmpty(borrow.getSuccessAt())) { //判断是否满标
@@ -331,7 +386,7 @@ public class BorrowServiceImpl implements BorrowService {
         if (!CollectionUtils.isEmpty(borrowTenderList)) {
             tenderMapList = gson.fromJson(
                     gson.toJson(borrowTenderList),
-                    new TypeToken< List<Object>>() {
+                    new TypeToken<List<Object>>() {
                     }.getType());
 
             List<Long> tenderUserList = borrowTenderList.stream().map(m -> m.getUserId()).collect(Collectors.toList());
@@ -341,9 +396,14 @@ public class BorrowServiceImpl implements BorrowService {
             for (Map<String, Object> tempTenderMap : tenderMapList) {
                 Long tempUserId = new Double(tempTenderMap.get("userId").toString()).longValue();
                 Users usersTemp = userMap.get(tempUserId);
-                tempTenderMap.put("username", UserHelper.hideChar(StringUtils.isEmpty(usersTemp.getUsername()) ? usersTemp.getPhone() : usersTemp.getPhone(), UserHelper.USERNAME_NUM));
+                tempTenderMap.put("username", UserHelper.hideChar(StringUtils.isEmpty(usersTemp.getUsername()) ? usersTemp.getPhone() : usersTemp.getUsername(), UserHelper.USERNAME_NUM));
                 borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(tempTenderMap.get("validMoney")), new Double(borrow.getApr()), borrow.getTimeLimit(), null);
                 calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
+                calculatorMap.put("earnings", StringHelper.formatMon(Double.parseDouble(calculatorMap.get("earnings").toString()) / 100));
+                calculatorMap.put("eachRepay", StringHelper.formatMon(Double.parseDouble(calculatorMap.get("eachRepay").toString()) / 100));
+                calculatorMap.put("repayTotal", StringHelper.formatMon(Double.parseDouble(calculatorMap.get("repayTotal").toString()) / 100));
+                calculatorMap.put("repayDetailList", calculatorMap.get("repayDetailList"));
+
                 tempTenderMap.put("calculatorMap", calculatorMap);
             }
         }
@@ -354,6 +414,56 @@ public class BorrowServiceImpl implements BorrowService {
         templateMap.put("tenderMapList", tenderMapList);
         templateMap.put("calculatorMap", calculatorMap);
         return templateMap;
+    }
+
+    /**
+     * pc:招标统计
+     *
+     * @param
+     * @return
+     */
+    @Override
+    public List<BorrowStatistics> statistics() {
+        List<BorrowStatistics> borrowStatisticss = Lists.newArrayList();
+        StringBuilder sql = new StringBuilder("SELECT b  FROM Borrow AS b where 1=1 " +
+                        "AND  " +
+                            "b.status=3 " +
+                        "AND " +
+                            "b.successAt is null ");
+        TypedQuery query1 = entityManager.createQuery(sql + " and b.tenderId is null",Borrow.class);
+        BorrowStatistics borrowStatistics = new BorrowStatistics();
+        Integer cheDai = 0;
+        Integer jingZhi = 0;
+        Integer quDao = 0;
+        Integer miaoBiao = 0;
+        Integer sum1 = 0;
+        List<Borrow> borrowList = query1.getResultList();
+        Date nowDate = new Date();
+        if (!CollectionUtils.isEmpty(borrowList)) {
+            List<Borrow> tempBorrowList = borrowList.stream().filter(p -> nowDate.getTime() < DateHelper.addDays(p.getReleaseAt(), p.getValidDay()).getTime()).collect(Collectors.toList());
+            sum1 = tempBorrowList.size();
+            Map<Integer, List<Borrow>> borrowMaps = tempBorrowList.stream().collect(groupingBy(Borrow::getType));
+            borrowList=borrowMaps.get(BorrowContants.CE_DAI);
+            cheDai=CollectionUtils.isEmpty(borrowList)?0:borrowList.size();
+            borrowList=borrowMaps.get(BorrowContants.JING_ZHI);
+            jingZhi=CollectionUtils.isEmpty(borrowList)?0:borrowList.size();
+            borrowList=borrowMaps.get(BorrowContants.QU_DAO);
+            quDao=CollectionUtils.isEmpty(borrowList)?0:borrowList.size();
+            borrowList=borrowMaps.get(BorrowContants.MIAO_BIAO);
+            miaoBiao=CollectionUtils.isEmpty(borrowList)?0:borrowList.size();
+        }
+        TypedQuery query2 = entityManager.createQuery(sql + " and b.tenderId IS NOT NULL",Borrow.class);
+        List<Borrow> liuZhuanBorrow = query2.getResultList();
+        List<Borrow> borrowList1 = liuZhuanBorrow.stream().filter(p -> nowDate.getTime() < DateHelper.addDays(p.getReleaseAt(), p.getValidDay()).getTime()).collect(Collectors.toList());
+        Integer liuZhuanCount = borrowList1.size();
+        borrowStatistics.setJingZhi(jingZhi);
+        borrowStatistics.setCheDai(cheDai);
+        borrowStatistics.setMiaoBiao(miaoBiao);
+        borrowStatistics.setQuDao(quDao);
+        borrowStatistics.setLiuZhuan(liuZhuanCount);
+        borrowStatistics.setSum(sum1 + liuZhuanCount);
+        borrowStatisticss.add(borrowStatistics);
+        return borrowStatisticss;
     }
 
     public long countByUserIdAndStatusIn(Long userId, List<Integer> statusList) {

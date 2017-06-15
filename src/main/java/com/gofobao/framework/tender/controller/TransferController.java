@@ -5,7 +5,7 @@ import com.gofobao.framework.tender.vo.request.VoTransferReq;
 import com.gofobao.framework.tender.vo.response.VoViewTransferMayWarpRes;
 import com.gofobao.framework.tender.vo.response.VoViewTransferOfWarpRes;
 import com.gofobao.framework.tender.vo.response.VoViewTransferedWarpRes;
-import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/transfer")
-@ApiModel("债券")
+@Api(description = "债券")
 public class TransferController {
 
     @Autowired

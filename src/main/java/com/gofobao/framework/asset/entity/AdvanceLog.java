@@ -17,6 +17,7 @@ public class AdvanceLog {
     @Column(name = "id")
     private Long id;
     private Long userId;
+    private Long repaymentId;
     private Integer status;
     private Date advanceAtYes;
     private Integer advanceMoneyYes;

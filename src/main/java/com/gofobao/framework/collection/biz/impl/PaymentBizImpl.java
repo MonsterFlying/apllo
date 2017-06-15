@@ -4,15 +4,16 @@ import com.gofobao.framework.collection.biz.PaymentBiz;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
-import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderList;
-import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListResWarpRes;
-import com.gofobao.framework.collection.vo.response.VoViewOrderDetailRes;
-import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
+import com.gofobao.framework.collection.vo.response.*;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.DateHelper;
 import groovy.util.logging.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.List;
 
 /**
  * Created by admin on 2017/6/6.
@@ -57,6 +58,21 @@ public class PaymentBizImpl implements PaymentBiz {
             return ResponseEntity.ok(resWarpRes);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"查询失败", VoViewOrderDetailWarpRes.class));
+        }
+    }
+
+    @Override
+    public ResponseEntity<VoViewCollectionDaysWarpRes> collectionDays(String date, Long userId) {
+        VoViewCollectionDaysWarpRes collectionDayWarpRes=VoBaseResp.ok("查询成功",VoViewCollectionDaysWarpRes.class);
+        try {
+            Date date1=DateHelper.stringToDate(date,"yyyy-MM");
+            List<Integer> result=borrowCollectionService.collectionDay(date,userId);
+            collectionDayWarpRes.setWarpRes(result);
+            return  ResponseEntity.ok(collectionDayWarpRes);
+        }catch (Exception e){
+            return  ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"查询失败",VoViewCollectionDaysWarpRes.class ));
+
         }
     }
 }

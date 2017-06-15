@@ -1,61 +1,49 @@
 package com.gofobao.framework.listener.providers;
 
 import com.github.wenhao.jpa.Specifications;
-import com.gofobao.framework.api.contants.IntTypeContant;
-import com.gofobao.framework.api.helper.JixinManager;
-import com.gofobao.framework.api.helper.JixinTxCodeEnum;
-import com.gofobao.framework.api.model.batch_lend_pay.BatchLendPayReq;
+import com.gofobao.framework.api.contants.FrzFlagContant;
+import com.gofobao.framework.api.model.debt_details_query.DebtDetail;
+import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoCreateThirdBorrowReq;
-import com.gofobao.framework.collection.entity.BorrowCollection;
-import com.gofobao.framework.collection.service.BorrowCollectionService;
-import com.gofobao.framework.common.capital.CapitalChangeEntity;
-import com.gofobao.framework.common.capital.CapitalChangeEnum;
-import com.gofobao.framework.common.constans.TypeTokenContants;
+import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
-import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.lend.entity.Lend;
 import com.gofobao.framework.lend.service.LendService;
 import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
-import com.gofobao.framework.repayment.biz.impl.BorrowRepaymentThirdBizImpl;
-import com.gofobao.framework.repayment.entity.BorrowRepayment;
-import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
-import com.gofobao.framework.repayment.vo.request.VoThirdBatchRepay;
-import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
+import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoThirdBatchCreditInvest;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Zeke on 2017/5/31.
@@ -82,6 +70,8 @@ public class BorrowProvider {
     private BorrowRepaymentThirdBiz borrowRepaymentThirdBiz;
     @Autowired
     private TenderThirdBiz tenderThirdBiz;
+    @Autowired
+    private TenderService tenderService;
 
     /**
      * 初审
@@ -100,10 +90,7 @@ public class BorrowProvider {
                 return false;
             }
 
-            Integer borrowType = borrow.getType();
-            if (borrowType == 2) { //秒标
-                bool = miaoBorrow(borrow);
-            } else if (!ObjectUtils.isEmpty(borrow.getLendId())) { //有草出借
+            if (!ObjectUtils.isEmpty(borrow.getLendId())) { //有草出借
                 bool = lendBorrow(borrow);
             } else { //车贷、渠道、净值、转让 标
                 bool = baseBorrow(borrow);
@@ -111,39 +98,6 @@ public class BorrowProvider {
 
         } while (false);
         return bool;
-    }
-
-    /**
-     * 即信标的登记
-     *
-     * @param borrow
-     * @return
-     */
-    private boolean createThirdBorrow(Borrow borrow) {
-        //===================即信登记标的===========================
-        String name = borrow.getName();
-        Long userId = borrow.getUserId();
-
-        VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
-        voCreateThirdBorrowReq.setUserId(userId);
-        voCreateThirdBorrowReq.setRate(StringHelper.formatDouble(borrow.getApr(), 100, false));
-        voCreateThirdBorrowReq.setTxAmount(StringHelper.formatDouble(borrow.getMoney(), 100, false));
-        voCreateThirdBorrowReq.setAcqRes(String.valueOf(userId));
-        voCreateThirdBorrowReq.setIntType(IntTypeContant.SINGLE_USE);
-        voCreateThirdBorrowReq.setDuration(String.valueOf(borrow.getTimeLimit()));
-        voCreateThirdBorrowReq.setProductDesc(StringUtils.isEmpty(name) ? "净值借款" : name);
-        voCreateThirdBorrowReq.setProductId(String.valueOf(borrow.getId()));
-        voCreateThirdBorrowReq.setRaiseDate(DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM));
-        voCreateThirdBorrowReq.setRaiseEndDate(DateHelper.dateToString(DateHelper.addDays(new Date(), 1), DateHelper.DATE_FORMAT_YMD_NUM));
-
-        ResponseEntity<VoBaseResp> resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
-        if (!ObjectUtils.isEmpty(resp)) {
-            log.error("===========================即信标的登记==============================");
-            log.error("即信标的登记失败：", resp.getBody().getState().getMsg());
-            log.error("=====================================================================");
-            return false;
-        }
-        return true;
     }
 
     /**
@@ -195,9 +149,6 @@ public class BorrowProvider {
                 log.error("borrowProvider autoTender send mq exception", e);
             }
 
-            if (!borrow.isTransfer()) {
-                bool = createThirdBorrow(borrow);
-            }
         } while (false);
         return bool;
     }
@@ -237,57 +188,6 @@ public class BorrowProvider {
                     log.error(StringHelper.toString(msg));
                 }
             }
-            bool = createThirdBorrow(borrow);
-        } while (false);
-        return bool;
-    }
-
-    /**
-     * 秒标初审
-     *
-     * @param borrow
-     * @return
-     * @throws Exception
-     */
-    private boolean miaoBorrow(Borrow borrow) throws Exception {
-        boolean bool = false;
-        do {
-            Date nowDate = DateHelper.subSeconds(new Date(), 10);
-
-            Integer payMoney = 0;
-            Integer borrowType = borrow.getType();
-            if (borrowType != 2) {
-                break;
-            }
-            Double principal = NumberHelper.toDouble(StringHelper.toString(borrow.getMoney()));
-            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(principal,
-                    NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrow.getSuccessAt());
-            Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
-            payMoney = (int) MathHelper.myRound((Double) rsMap.get("repayTotal") - principal, 2);
-
-            if (borrow.getAwardType() == 1) {
-                payMoney += borrow.getAward();
-            } else if (borrow.getAwardType() == 2) {  //
-                payMoney += (int) MathHelper.myRound(borrow.getMoney() * borrow.getAward() / 100 / 100, 2);
-            }
-
-            //更新资产记录
-            CapitalChangeEntity entity = new CapitalChangeEntity();
-            entity.setType(CapitalChangeEnum.Frozen);
-            entity.setUserId(borrow.getUserId());
-            entity.setMoney(payMoney);
-            entity.setRemark("冻结秒标应付资金");
-            capitalChangeHelper.capitalChange(entity);
-
-            //更新借款状态
-            borrow.setStatus(1);
-            borrow.setVerifyAt(nowDate);
-            Date releaseAt = borrow.getReleaseAt();
-            if (ObjectUtils.isEmpty(releaseAt)) {
-                borrow.setReleaseAt(nowDate);
-            }
-            borrowService.updateById(borrow);
-            bool = createThirdBorrow(borrow);
         } while (false);
         return bool;
     }
@@ -304,7 +204,13 @@ public class BorrowProvider {
         boolean bool = false;
         Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get("borrowId")));
         Borrow borrow = borrowService.findById(borrowId);
-        if (borrow.isTransfer()) { //转让标
+        if (borrow.getStatus() != 1) {
+            log.error("复审：借款状态已发生改变！");
+            return false;
+        }
+
+        if (borrow.isTransfer()) {
+            //批次债券转让
             VoThirdBatchCreditInvest voThirdBatchCreditInvest = new VoThirdBatchCreditInvest();
             voThirdBatchCreditInvest.setBorrowId(borrowId);
             ResponseEntity<VoBaseResp> resp = tenderThirdBiz.thirdBatchCreditInvest(voThirdBatchCreditInvest);
@@ -319,9 +225,28 @@ public class BorrowProvider {
                 log.info("====================================================================");
             }
         } else { //非转让标
-            VoThirdBatchLendRepay voThirdBatchLendRepay = new VoThirdBatchLendRepay();
-            voThirdBatchLendRepay.setBorrowId(borrowId);
-            ResponseEntity<VoBaseResp> resp = borrowRepaymentThirdBiz.thirdBatchLendRepay(voThirdBatchLendRepay);
+
+            VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
+            voQueryThirdBorrowList.setBorrowId(borrowId);
+            voQueryThirdBorrowList.setUserId(borrow.getUserId());
+            voQueryThirdBorrowList.setPageNum("1");
+            voQueryThirdBorrowList.setPageSize("10");
+            DebtDetailsQueryResp response = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
+
+            List<DebtDetail> debtDetailList = GSON.fromJson(response.getSubPacks(), new TypeToken<List<DebtDetail>>() {
+            }.getType());
+
+            ResponseEntity<VoBaseResp> resp = null;
+            if (debtDetailList.size() < 1) {
+                resp = thirdRegisterBorrowAndTender(borrowId);
+            }
+            if (ObjectUtils.isEmpty(resp)) {
+                //批次放款
+                VoThirdBatchLendRepay voThirdBatchLendRepay = new VoThirdBatchLendRepay();
+                voThirdBatchLendRepay.setBorrowId(borrowId);
+                resp = borrowRepaymentThirdBiz.thirdBatchLendRepay(voThirdBatchLendRepay);
+            }
+
             if (ObjectUtils.isEmpty(resp)) {
                 log.info("====================================================================");
                 log.info("非转让标发起复审成功！");
@@ -339,5 +264,43 @@ public class BorrowProvider {
          * @// TODO: 2017/6/2 复审事件
          */
         return bool;
+    }
+
+    /**
+     * 第三方等级标的与债权
+     *
+     * @param borrowId
+     * @return
+     */
+    public ResponseEntity<VoBaseResp> thirdRegisterBorrowAndTender(Long borrowId) {
+        //标的登记
+        VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
+        voCreateThirdBorrowReq.setBorrowId(borrowId);
+        ResponseEntity<VoBaseResp> resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
+        if (!ObjectUtils.isEmpty(resp)) {
+            return resp;
+        }
+        //批量投标
+        Specification<Tender> ts = Specifications
+                .<Tender>and()
+                .eq("status", 1)
+                .eq("borrowId", borrowId)
+                .build();
+        List<Tender> tenderList = tenderService.findList(ts);
+        for (Tender tender : tenderList) {
+            VoCreateThirdTenderReq voCreateThirdTenderReq = new VoCreateThirdTenderReq();
+            voCreateThirdTenderReq.setAcqRes(String.valueOf(tender.getId()));
+            voCreateThirdTenderReq.setUserId(tender.getUserId());
+            voCreateThirdTenderReq.setTxAmount(StringHelper.formatDouble(tender.getValidMoney(), 100, false));
+            voCreateThirdTenderReq.setProductId(String.valueOf(borrowId));
+            voCreateThirdTenderReq.setFrzFlag(FrzFlagContant.FREEZE);
+            resp = tenderThirdBiz.createThirdTender(voCreateThirdTenderReq);
+            if (!ObjectUtils.isEmpty(resp)) {
+                log.error("tenderId:" + tender.getId() + "msg:" + resp.getBody().getState().getMsg());
+                return resp;
+            }
+        }
+
+        return null;
     }
 }

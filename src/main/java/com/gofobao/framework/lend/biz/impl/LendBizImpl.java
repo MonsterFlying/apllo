@@ -21,8 +21,8 @@ import com.gofobao.framework.lend.service.LendService;
 import com.gofobao.framework.lend.vo.request.VoCreateLend;
 import com.gofobao.framework.lend.vo.request.VoEndLend;
 import com.gofobao.framework.lend.vo.request.VoLend;
-import com.gofobao.framework.lend.vo.response.VoViewLend;
-import com.gofobao.framework.lend.vo.response.VoViewLendListWarpRes;
+import com.gofobao.framework.lend.vo.request.VoUserLendReq;
+import com.gofobao.framework.lend.vo.response.*;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
@@ -36,7 +36,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.Date;
@@ -67,6 +66,12 @@ public class LendBizImpl implements LendBiz {
     @Autowired
     private MqHelper mqHelper;
 
+    /**
+     * 出借列表
+     *
+     * @param page
+     * @return
+     */
     @Override
     public ResponseEntity<VoViewLendListWarpRes> list(Page page) {
         try {
@@ -75,8 +80,43 @@ public class LendBizImpl implements LendBiz {
             warpRes.setVoViewLends(lends);
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {
-            log.info("", e);
+            log.info("LendBizImpl list query fail", e);
             return ResponseEntity.badRequest().body(VoBaseResp.ok("查询失败", VoViewLendListWarpRes.class));
+        }
+    }
+
+    /**
+     * @param userId
+     * @param lendId
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoViewLendInfoWarpRes> info(Long userId, Long lendId) {
+        try {
+            VoViewLendInfoWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewLendInfoWarpRes.class);
+            LendInfo lends = lendService.info(userId, lendId);
+            warpRes.setLendInfo(lends);
+            return ResponseEntity.ok(warpRes);
+        } catch (Exception e) {
+            log.info("LendBizImpl info query fail", e);
+            return ResponseEntity.badRequest().body(VoBaseResp.ok("查询失败", VoViewLendInfoWarpRes.class));
+        }
+    }
+
+    /**
+     * @param voUserLendReq
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoViewUserLendInfoWarpRes> byUserId(VoUserLendReq voUserLendReq) {
+        try {
+            VoViewUserLendInfoWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewUserLendInfoWarpRes.class);
+            List<UserLendInfo> lends = lendService.queryUser(voUserLendReq);
+            warpRes.setLendInfos(lends);
+            return ResponseEntity.ok(warpRes);
+        } catch (Exception e) {
+            log.info("LendBizImpl info query fail", e);
+            return ResponseEntity.badRequest().body(VoBaseResp.ok("查询失败", VoViewUserLendInfoWarpRes.class));
         }
     }
 

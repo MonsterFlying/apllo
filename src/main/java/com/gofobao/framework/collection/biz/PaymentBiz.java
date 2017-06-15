@@ -2,6 +2,7 @@ package com.gofobao.framework.collection.biz;
 
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
+import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListResWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
 import org.springframework.http.ResponseEntity;
@@ -24,5 +25,8 @@ public interface PaymentBiz {
      * @return
      */
    ResponseEntity<VoViewOrderDetailWarpRes> orderDetail(VoOrderDetailReq voOrderDetailReq);
+
+
+   ResponseEntity<VoViewCollectionDaysWarpRes> collectionDays(String date, Long userId);
 
 }

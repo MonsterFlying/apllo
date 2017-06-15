@@ -1,10 +1,7 @@
 package com.gofobao.framework.borrow.vo.response;
 
-import com.gofobao.framework.core.vo.VoBaseResp;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-
-import java.util.ArrayList;
 
 /**
  * Created by admin on 2017/6/9.
@@ -34,7 +31,7 @@ public class   BorrowInfoRes {
     private String moneyYes;
 
     @ApiModelProperty("进度")
-    private String spend;
+    private double spend;
 
     @ApiModelProperty("年华率")
     private String apr;
@@ -44,5 +41,14 @@ public class   BorrowInfoRes {
 
     @ApiModelProperty("满标时间")
     private String successAt;
+
+    @ApiModelProperty("新手标标识")
+    private Boolean isNovice;
+
+    @ApiModelProperty("状态 1.待发布 2.还款中 3.招标中 4.已完成 5.其它")
+    private Integer status;
+
+    @ApiModelProperty("秒差 ：当状态是招标中 为正数  其他状态则返回-1")
+    private Long surplusSecond;
 
 }

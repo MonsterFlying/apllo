@@ -16,7 +16,7 @@ import static com.gofobao.framework.borrow.contants.BorrowVerifyContants.*;
  */
 @Data
 @ApiModel
-public class VoAddNetWorthBorrow {
+public class VoAddBorrow {
 
     @ApiModelProperty(hidden = true)
     @JsonIgnore
