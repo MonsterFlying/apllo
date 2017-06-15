@@ -278,9 +278,11 @@ public class BorrowServiceImpl implements BorrowService {
             status = 2; //还款中
         }
         borrowInfoRes.setType(borrow.getType());
-        if(StringUtils.isEmpty(borrow.getTenderId())){
+        if (StringUtils.isEmpty(borrow.getTenderId())) {
             borrowInfoRes.setType(5);
         }
+        Users users=usersRepository.findOne(borrow.getUserId());
+        borrowInfoRes.setUserName(!StringUtils.isEmpty(users.getUsername())?users.getUsername():users.getPhone());
         borrowInfoRes.setIsNovice(borrow.getIsNovice());
         borrowInfoRes.setStatus(status);
         borrowInfoRes.setSuccessAt(StringUtils.isEmpty(borrow.getSuccessAt()) ? "" : DateHelper.dateToString(borrow.getSuccessAt()));
@@ -486,16 +488,20 @@ public class BorrowServiceImpl implements BorrowService {
         BorrowerInfo borrowerInfo = new BorrowerInfo();
         borrowerInfo.setName(userName);
         borrowerInfo.setIdCard(UserHelper.hideChar(users.getCardId(), CARD_ID_NUM));
+        borrowerInfo.setBorrowId(borrowId);
         resultMap.put("borrowInfo", borrowerInfo);
 
         RepaymentBasisInfo repaymentBasisInfo = new RepaymentBasisInfo();
-        repaymentBasisInfo.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
+        repaymentBasisInfo.setApr(StringHelper.formatMon(borrow.getApr() / 100d)+"%");
         repaymentBasisInfo.setMoney(StringHelper.formatMon(borrow.getMoney() / 100d));
+        String timeLimit = borrow.getTimeLimit() + "";
         if (borrow.getRepayFashion() == 1) {
-            repaymentBasisInfo.setTimeLimit(borrow.getTimeLimit() + BorrowContants.DAY);
+            timeLimit += BorrowContants.DAY;
         } else {
-            repaymentBasisInfo.setTimeLimit(borrow.getTimeLimit() + BorrowContants.MONTH);
+            timeLimit += BorrowContants.MONTH;
         }
+
+        repaymentBasisInfo.setTimeLimit(timeLimit);
         repaymentBasisInfo.setRepayAt(DateHelper.dateToString(borrow.getReleaseAt()));
         repaymentBasisInfo.setEndAt(DateHelper.dateToString(DateHelper.addDays(borrow.getReleaseAt(), borrow.getValidDay())));
 
@@ -506,7 +512,7 @@ public class BorrowServiceImpl implements BorrowService {
         } else {
             borrowMoney = borrow.getMoney();
         }
-        String repaymentAt = "";
+        String repaymentAt;
         if (borrow.getRepayFashion() == 1) {
             repaymentAt = DateHelper.dateToString(DateHelper.addDays(borrow.getSuccessAt(), borrow.getTimeLimit()), "yyyy-MM-dd");
         } else {
@@ -517,6 +523,7 @@ public class BorrowServiceImpl implements BorrowService {
         Double eachRepay = new Double(calculatorMap.get("eachRepay").toString());
         repaymentBasisInfo.setMonthAsReimbursement(StringHelper.formatMon(eachRepay / 100));
         repaymentBasisInfo.setMonthRepaymentAt(repaymentAt);
+        resultMap.put("repaymentBasisInfo", repaymentBasisInfo);
 
         Specification specification;
         List<Tender> tenderList = Lists.newArrayList();
@@ -535,20 +542,28 @@ public class BorrowServiceImpl implements BorrowService {
             }
             tenderList = tenderRepository.findAll(specification);
         }
+        List<Lender> lenders = Lists.newArrayList();
         if (!CollectionUtils.isEmpty(tenderList)) {
             List<Long> userIdArray = tenderList.stream().map(p -> p.getUserId()).collect(Collectors.toList());
-            List<Users> usersList=usersRepository.findByIdIn(userIdArray);
+            List<Users> usersList = usersRepository.findByIdIn(userIdArray);
 
-            tenderList.stream().forEach(p->{
-
-
-
+            Map<Long, Users> usersMap = usersList.stream().collect(Collectors.toMap(Users::getId, Function.identity()));
+            String temp = timeLimit;
+            tenderList.stream().forEach(p -> {
+                Lender lender = new Lender();
+                lender.setTimeLimit(temp);
+                lender.setMoney(StringHelper.formatMon(p.getValidMoney() / 100d));
+                Users user = usersMap.get(p.getUserId());
+                lender.setName(StringUtils.isEmpty(user.getUsername()) ? user.getPhone() : user.getUsername());
+                BorrowCalculatorHelper userCalculator = new BorrowCalculatorHelper(new Double(p.getValidMoney()), new Double(borrow.getApr()), borrow.getTimeLimit(), borrow.getSuccessAt());
+                Map userCalculatorMap = userCalculator.simpleCount(borrow.getRepayFashion());
+                Double eachRepay1 = new Double(userCalculatorMap.get("eachRepay").toString());
+                lender.setMonthAsReimbursement(StringHelper.formatMon(eachRepay1 / 100));
+                lenders.add(lender);
             });
-
-
         }
-
-        return null;
+        resultMap.put("lenders", CollectionUtils.isEmpty(lenders) ? "" : lenders);
+        return resultMap;
     }
 
     public long countByUserIdAndStatusIn(Long userId, List<Integer> statusList) {

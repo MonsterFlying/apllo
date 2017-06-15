@@ -7,10 +7,7 @@ import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * Created by admin on 2017/5/22.
@@ -24,7 +21,7 @@ public class AssetLogController {
     @Autowired
     private AssetBiz assetBiz;
 
-    @RequestMapping("/v2/list")
+    @RequestMapping(value = "/v2/list",method = RequestMethod.POST)
     public ResponseEntity assetLogResList(@ModelAttribute VoAssetLogReq voAssetLogReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voAssetLogReq.setUserId(userId);
         return assetBiz.assetLogResList(voAssetLogReq);

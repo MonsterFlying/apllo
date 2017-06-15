@@ -98,11 +98,10 @@ public class BorrowController {
 
     @ApiOperation(value = "pc:标合同")
     @GetMapping(value = "pc/pub/borrowProtocol/{borrowId}")
-    public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId /*,
+    public ResponseEntity<Map<String,Object>> takeRatesDesc(@PathVariable Long borrowId /*,
                                                @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/){
         Map<String,Object>paramMaps= borrowBiz.pcContract(borrowId,901L);
-
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok(paramMaps);
     }
 
 

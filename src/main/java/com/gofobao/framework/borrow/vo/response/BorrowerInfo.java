@@ -14,4 +14,7 @@ public class BorrowerInfo {
     private String name;
     @ApiModelProperty("身份证")
     private String idCard;
+
+    @ApiModelProperty("标ID")
+    private Long borrowId;
 }

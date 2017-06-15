@@ -18,7 +18,7 @@ public class Lender {
     private String money;
 
     @ApiModelProperty("出借期限")
-    private Integer timeLimit;
+    private String timeLimit;
 
     @ApiModelProperty("月本息")
     private String monthAsReimbursement;

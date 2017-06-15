@@ -54,4 +54,7 @@ public class   BorrowInfoRes {
     @ApiModelProperty("标类型 type: 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
     private Integer type;
 
+    @ApiModelProperty("账号名")
+    private String userName;
+
 }
