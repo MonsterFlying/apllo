@@ -74,14 +74,6 @@ public interface AssetBiz {
      */
     ResponseEntity<VoPreRechargeResp> preRecharge(Long userId);
 
-
-    /**
-     * 提现前置页面
-     * @param userId
-     * @return
-     */
-    ResponseEntity<VoPreCashResp> preCash(Long userId);
-
     /**
      * 获取资产首页金额信息
      * @param userId

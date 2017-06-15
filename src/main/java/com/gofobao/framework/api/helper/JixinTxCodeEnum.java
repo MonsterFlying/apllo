@@ -14,6 +14,14 @@ public enum JixinTxCodeEnum {
             "/escrow/p2p/online"),
 
     /**
+     * 提现
+     */
+    WITH_DRAW(
+            "withdraw",
+            "/escrow/p2p/page/withdraw"),
+
+
+    /**
      * 发送短信验证码
      */
     SMS_CODE_APPLY(

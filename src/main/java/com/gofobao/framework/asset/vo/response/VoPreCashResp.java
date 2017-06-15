@@ -20,15 +20,11 @@ public class VoPreCashResp extends VoBaseResp {
     @ApiModelProperty("存管账户余额")
     private double useMoney ;
 
-    @ApiModelProperty("免费提现额度金额")
-    private double freeCashMoney ;
-
-    @ApiModelProperty("免费提现额度金额 用于显示")
-    private String freeCashMoneyShow ;
-
-    @ApiModelProperty("免费提现额度金额 用于显示")
+    @ApiModelProperty("展示存管账户余额")
     private String useMoneyShow ;
 
+    @ApiModelProperty("免费提现次数")
+    private long freeTime ;
 
     @ApiModelProperty("提现银行logo")
     private String logo ;
