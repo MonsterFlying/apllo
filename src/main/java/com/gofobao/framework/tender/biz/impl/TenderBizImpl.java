@@ -389,6 +389,7 @@ public class TenderBizImpl implements TenderBiz {
             warpListRes.setVoBorrowTenderUser(tenderUserRes);
             return ResponseEntity.ok(warpListRes);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoBorrowTenderUserWarpListRes.class));
         }
     }

@@ -128,7 +128,7 @@ public class BorrowBizImpl implements BorrowBiz {
             BorrowInfoRes borrowInfoRes = borrowService.findByBorrowId(borrowId);
             VoViewBorrowInfoWarpRes listWarpRes = VoBaseResp.ok("查询成功", VoViewBorrowInfoWarpRes.class);
             if (ObjectUtils.isEmpty(borrowInfoRes)) {
-                return ResponseEntity.ok(VoBaseResp.ok("",VoViewBorrowInfoWarpRes.class));
+                return ResponseEntity.ok(VoBaseResp.ok("", VoViewBorrowInfoWarpRes.class));
             } else {
                 listWarpRes.setBorrowInfoRes(borrowInfoRes);
                 return ResponseEntity.ok(listWarpRes);
@@ -165,6 +165,29 @@ public class BorrowBizImpl implements BorrowBiz {
                             VoBaseResp.ERROR,
                             "查询失败",
                             VoViewVoBorrowDescWarpRes.class));
+        }
+    }
+
+    /**
+     * PC:招标中统计
+     *
+     * @param
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoViewBorrowStatisticsWarpRes> statistics() {
+        try {
+            VoViewBorrowStatisticsWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewBorrowStatisticsWarpRes.class);
+            List<BorrowStatistics> voBorrowDescRes = borrowService.statistics();
+            warpRes.setStatisticsList(voBorrowDescRes);
+            return ResponseEntity.ok(warpRes);
+        } catch (Exception e) {
+            log.info("BorrowBizImpl desc fail%s", e);
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(
+                            VoBaseResp.ERROR,
+                            "查询失败",
+                            VoViewBorrowStatisticsWarpRes.class));
         }
     }
 

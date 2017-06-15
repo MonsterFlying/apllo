@@ -8,6 +8,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoInfoReq;
 import com.gofobao.framework.repayment.vo.request.VoInstantlyRepaymentReq;
+import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -31,9 +32,9 @@ public class BorrowRepaymentContorller {
 
     @RequestMapping(value = "/v2/collection/days/{time}", method = RequestMethod.GET)
     @ApiOperation("还款计划列表 time: 201706")
-    public ResponseEntity<VoViewCollectionDaysWarpRes> days(@PathVariable String time/*, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/){
-        Long userId=901L;
-        return repaymentBiz.days(userId,time);
+    public ResponseEntity<VoViewCollectionDaysWarpRes> days(@PathVariable String time/*, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+        Long userId = 901L;
+        return repaymentBiz.days(userId, time);
     }
 
     @RequestMapping(value = "/v2/list/{time}", method = RequestMethod.GET)
@@ -55,6 +56,13 @@ public class BorrowRepaymentContorller {
         voInfoReq.setRepaymentId(repaymentId);
         return repaymentBiz.info(voInfoReq);
     }
+
+    @RequestMapping(value = "pc/v2/logs/{borrowId}", method = RequestMethod.GET)
+    @ApiOperation("还款记录")
+    public ResponseEntity<VoViewRepayCollectionLogWarpRes> info(@PathVariable("borrowId") Long borrowId) {
+        return repaymentBiz.logs(borrowId);
+    }
+
 
     /**
      * 立即还款

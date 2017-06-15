@@ -16,4 +16,6 @@ public class VoBorrowTenderUserRes {
 
     public String money;
 
+    private String validMoney;
+
 }

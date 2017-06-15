@@ -5,6 +5,7 @@ import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderList;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailRes;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.vo.request.VoInfoReq;
+import com.gofobao.framework.repayment.vo.response.RepayCollectionLog;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -40,6 +41,8 @@ public interface BorrowRepaymentService {
      */
     List<Integer> days(Long userId,String time);
 
+
+    List<RepayCollectionLog> logs(Long borrowId);
 
 
     BorrowRepayment save(BorrowRepayment borrowRepayment);

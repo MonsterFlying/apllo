@@ -21,7 +21,7 @@ public class NoticesController {
     @Autowired
     private NoticesBiz noticesBiz;
 
-    @ApiOperation("站内信列表")
+    @ApiOperation(value="站内信列表")
     @RequestMapping(path = "v2/list/{pageIndex}/{pageSize}", method = RequestMethod.GET)
     public ResponseEntity<VoViewUserNoticesWarpRes> list(@PathVariable Integer pageIndex,
                                                          @PathVariable Integer pageSize,
@@ -34,7 +34,7 @@ public class NoticesController {
     }
 
 
-    @ApiOperation("站内信列表")
+    @ApiOperation("站内信内容")
     @RequestMapping(path = "v2/info/{noticesId}", method = RequestMethod.GET)
     public ResponseEntity<VoViewNoticesInfoWarpRes> list(@PathVariable Long noticesId,
                                                          @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {

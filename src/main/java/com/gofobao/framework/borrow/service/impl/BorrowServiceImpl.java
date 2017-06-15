@@ -6,10 +6,7 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
-import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
-import com.gofobao.framework.borrow.vo.response.UserAttachmentRes;
-import com.gofobao.framework.borrow.vo.response.VoBorrowDescRes;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
+import com.gofobao.framework.borrow.vo.response.*;
 import com.gofobao.framework.common.constans.MoneyConstans;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
@@ -40,9 +37,12 @@ import org.springframework.util.StringUtils;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.groupingBy;
 
 
 /**
@@ -135,7 +135,7 @@ public class BorrowServiceImpl implements BorrowService {
 
         Query countQuery = entityManager.createQuery(countSb.append(condtionSql).toString(), Long.class);
         countQuery.setParameter("statusArray", statusArray);
-        Long count=(Long) countQuery.getSingleResult();
+        Long count = (Long) countQuery.getSingleResult();
         List<Borrow> borrowLists = pageQuery
                 .setFirstResult(voBorrowListReq.getPageIndex())
                 .setMaxResults(voBorrowListReq.getPageSize())
@@ -296,7 +296,7 @@ public class BorrowServiceImpl implements BorrowService {
         Long userId = borrow.getUserId();
         voViewBorrowDescRes.setBorrowDesc(borrow.getDescription());
         List<UserAttachment> attachmentList = userAttachmentRepository.findByUserId(userId);
-        if (CollectionUtils.isEmpty(attachmentList)) {
+        if (!CollectionUtils.isEmpty(attachmentList)) {
             Gson gson = new Gson();
             String jsonStr = gson.toJson(attachmentList);
             List<UserAttachmentRes> attachmentRes = gson.fromJson(jsonStr, new TypeToken<List<UserAttachmentRes>>() {
@@ -414,6 +414,56 @@ public class BorrowServiceImpl implements BorrowService {
         templateMap.put("tenderMapList", tenderMapList);
         templateMap.put("calculatorMap", calculatorMap);
         return templateMap;
+    }
+
+    /**
+     * pc:招标统计
+     *
+     * @param
+     * @return
+     */
+    @Override
+    public List<BorrowStatistics> statistics() {
+        List<BorrowStatistics> borrowStatisticss = Lists.newArrayList();
+        StringBuilder sql = new StringBuilder("SELECT b  FROM Borrow AS b where 1=1 " +
+                        "AND  " +
+                            "b.status=3 " +
+                        "AND " +
+                            "b.successAt is null ");
+        TypedQuery query1 = entityManager.createQuery(sql + " and b.tenderId is null",Borrow.class);
+        BorrowStatistics borrowStatistics = new BorrowStatistics();
+        Integer cheDai = 0;
+        Integer jingZhi = 0;
+        Integer quDao = 0;
+        Integer miaoBiao = 0;
+        Integer sum1 = 0;
+        List<Borrow> borrowList = query1.getResultList();
+        Date nowDate = new Date();
+        if (!CollectionUtils.isEmpty(borrowList)) {
+            List<Borrow> tempBorrowList = borrowList.stream().filter(p -> nowDate.getTime() < DateHelper.addDays(p.getReleaseAt(), p.getValidDay()).getTime()).collect(Collectors.toList());
+            sum1 = tempBorrowList.size();
+            Map<Integer, List<Borrow>> borrowMaps = tempBorrowList.stream().collect(groupingBy(Borrow::getType));
+            borrowList=borrowMaps.get(BorrowContants.CE_DAI);
+            cheDai=CollectionUtils.isEmpty(borrowList)?0:borrowList.size();
+            borrowList=borrowMaps.get(BorrowContants.JING_ZHI);
+            jingZhi=CollectionUtils.isEmpty(borrowList)?0:borrowList.size();
+            borrowList=borrowMaps.get(BorrowContants.QU_DAO);
+            quDao=CollectionUtils.isEmpty(borrowList)?0:borrowList.size();
+            borrowList=borrowMaps.get(BorrowContants.MIAO_BIAO);
+            miaoBiao=CollectionUtils.isEmpty(borrowList)?0:borrowList.size();
+        }
+        TypedQuery query2 = entityManager.createQuery(sql + " and b.tenderId IS NOT NULL",Borrow.class);
+        List<Borrow> liuZhuanBorrow = query2.getResultList();
+        List<Borrow> borrowList1 = liuZhuanBorrow.stream().filter(p -> nowDate.getTime() < DateHelper.addDays(p.getReleaseAt(), p.getValidDay()).getTime()).collect(Collectors.toList());
+        Integer liuZhuanCount = borrowList1.size();
+        borrowStatistics.setJingZhi(jingZhi);
+        borrowStatistics.setCheDai(cheDai);
+        borrowStatistics.setMiaoBiao(miaoBiao);
+        borrowStatistics.setQuDao(quDao);
+        borrowStatistics.setLiuZhuan(liuZhuanCount);
+        borrowStatistics.setSum(sum1 + liuZhuanCount);
+        borrowStatisticss.add(borrowStatistics);
+        return borrowStatisticss;
     }
 
     public long countByUserIdAndStatusIn(Long userId, List<Integer> statusList) {

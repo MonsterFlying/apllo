@@ -6,6 +6,7 @@ import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
+import com.gofobao.framework.borrow.vo.response.VoViewBorrowStatisticsWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewVoBorrowDescWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.ThymeleafHelper;
@@ -50,7 +51,7 @@ public class BorrowController {
     }
 
     @ApiOperation(value = "首页标列表; type:-1：全部 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
-    @GetMapping("v2/pc/list/{type}/{pageIndex}/{pageSize}")
+    @GetMapping("v2/pc/0/{type}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewBorrowListWarpRes> pcList(@PathVariable Integer pageIndex,
                                                           @PathVariable Integer pageSize,
                                                           @PathVariable Integer type){
@@ -60,8 +61,6 @@ public class BorrowController {
         voBorrowListReq.setType(type);
         return borrowBiz.findAll(voBorrowListReq);
     }
-
-
 
     @ApiOperation("标信息")
     @GetMapping("v2/info/{borrowId}")
@@ -75,17 +74,28 @@ public class BorrowController {
         return borrowBiz.desc(borrowId);
     }
 
+    @ApiOperation("pc：标简介")
+    @GetMapping("pc/v2/desc/{borrowId}")
+    public ResponseEntity<VoViewVoBorrowDescWarpRes> pcDesc(@PathVariable Long borrowId) {
+        return borrowBiz.desc(borrowId);
+    }
+
+
 
     @ApiOperation(value = "标合同")
     @GetMapping(value = "/pub/borrowProtocol/{borrowId}")
-    public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId/*,
-                                                @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/){
-
-        Map<String,Object>paramMaps= borrowBiz.contract(borrowId,901L);
+    public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId,
+                                                @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+        Map<String,Object>paramMaps= borrowBiz.contract(borrowId,userId);
         String content = thymeleafHelper.build("borrowProtocol",paramMaps) ;
         return ResponseEntity.ok(content);
     }
 
+    @ApiOperation(value = "pc：招标中统计")
+    @GetMapping(value = "pc/v2/statistics")
+    public ResponseEntity<VoViewBorrowStatisticsWarpRes> statistics(){
+        return borrowBiz.statistics();
+    }
 
     /**
      * 新增净值借款

@@ -15,6 +15,11 @@ public class BorrowContants {
     public static final int JING_ZHI = 1;
 
     /**
+     *秒标
+     */
+    public static final int MIAO_BIAO = 2;
+
+    /**
      * 渠道标
      */
     public static final int QU_DAO = 4;
