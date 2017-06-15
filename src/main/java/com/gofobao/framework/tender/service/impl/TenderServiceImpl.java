@@ -20,6 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -104,6 +106,26 @@ public class TenderServiceImpl implements TenderService {
         return tenderRepository.findAll(specification);
     }
 
+    public List<Tender> findList(Specification<Tender> specification, Pageable pageable) {
+        if (ObjectUtils.isEmpty(specification) || ObjectUtils.isEmpty(pageable)) {
+            return null;
+        }
+        return tenderRepository.findAll(specification, pageable).getContent() ;
+    }
+
+    public List<Tender> findList(Specification<Tender> specification, Sort sort) {
+        if (ObjectUtils.isEmpty(specification) || ObjectUtils.isEmpty(sort)) {
+            return null;
+        }
+        return tenderRepository.findAll(specification, sort);
+    }
+
+    public long count(Specification<Tender> specification) {
+        if (ObjectUtils.isEmpty(specification)) {
+            return 0;
+        }
+        return tenderRepository.count(specification);
+    }
     /**
      * 检查投标是否太频繁
      *

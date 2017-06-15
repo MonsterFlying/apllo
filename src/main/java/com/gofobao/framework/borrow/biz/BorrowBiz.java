@@ -84,5 +84,5 @@ public interface BorrowBiz {
      * @param voRepayAllReq
      * @return
      */
-    ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq);
+    ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq) throws Exception;
 }
