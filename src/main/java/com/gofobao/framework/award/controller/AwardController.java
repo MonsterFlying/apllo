@@ -2,7 +2,7 @@ package com.gofobao.framework.award.controller;
 
 import com.gofobao.framework.award.biz.VirtualBiz;
 import com.gofobao.framework.award.vo.response.VoViewAwardStatisticsWarpRes;
-import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Created by admin on 2017/6/13.
  */
-@ApiModel("我的奖励")
+@Api(description = "我的奖励")
 @RequestMapping("award")
 @RestController
 public class AwardController {

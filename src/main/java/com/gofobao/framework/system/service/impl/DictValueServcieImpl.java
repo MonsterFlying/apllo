@@ -2,7 +2,7 @@ package com.gofobao.framework.system.service.impl;
 
 import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.repository.DictValueRepository;
-import com.gofobao.framework.system.service.DictValueServcie;
+import com.gofobao.framework.system.service.DictValueService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
  * Created by Max on 17/6/6.
  */
 @Service
-public class DictValueServcieImpl implements DictValueServcie{
+public class DictValueServcieImpl implements DictValueService {
     @Autowired
     DictValueRepository dictValueRepository ;
 

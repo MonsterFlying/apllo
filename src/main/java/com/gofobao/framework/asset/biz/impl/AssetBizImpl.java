@@ -42,7 +42,7 @@ import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.service.DictItemServcie;
-import com.gofobao.framework.system.service.DictValueServcie;
+import com.gofobao.framework.system.service.DictValueService;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -114,7 +114,7 @@ public class AssetBizImpl implements AssetBiz {
     MqHelper mqHelper;
 
     @Autowired
-    DictValueServcie dictValueServcie;
+    DictValueService dictValueServcie;
 
     @Autowired
     DictItemServcie dictItemServcie;
