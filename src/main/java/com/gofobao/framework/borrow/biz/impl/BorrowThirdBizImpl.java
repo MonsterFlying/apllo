@@ -63,7 +63,6 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "借款人未开户!");
 
-
         DebtRegisterRequest request = new DebtRegisterRequest();
         request.setAccountId(userThirdAccount.getAccountId());
         request.setProductId(StringHelper.toString(borrowId));

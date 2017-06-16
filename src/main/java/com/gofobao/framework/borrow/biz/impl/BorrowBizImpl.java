@@ -836,13 +836,11 @@ public class BorrowBizImpl implements BorrowBiz {
 
 
     /**
-     * 提前结清
-     *
+     * 检查提前结清参数
      * @param voRepayAllReq
      * @return
      */
-    @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq) throws Exception {
+    public ResponseEntity<VoBaseResp> checkRepayAll(VoRepayAllReq voRepayAllReq){
         Long borrowId = voRepayAllReq.getBorrowId();
         Borrow borrow = borrowService.findByIdLock(borrowId);
         if ((borrow.getStatus() != 3) || (borrow.getType() != 0 && borrow.getType() != 4)) {
@@ -861,7 +859,19 @@ public class BorrowBizImpl implements BorrowBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "该借款剩余未还期数小于1期！"));
         }
+        return null;
+    }
 
+    /**
+     * 提前结清
+     *
+     * @param voRepayAllReq
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq) throws Exception {
+        Long borrowId = voRepayAllReq.getBorrowId();
+        Borrow borrow = borrowService.findByIdLock(borrowId);
         Asset borrowAsset = assetService.findByUserId(borrow.getUserId());
         Preconditions.checkNotNull(borrowAsset, "借款人资产记录不存在!");
 
@@ -876,7 +886,7 @@ public class BorrowBizImpl implements BorrowBiz {
         BorrowRepayment borrowRepayment = null;
         double interestPercent = 0;
         VoRepayReq voRepayReq = null;
-        brs = Specifications
+        Specification<BorrowRepayment> brs = Specifications
                 .<BorrowRepayment>and()
                 .eq("borrowId", borrowId)
                 .build();

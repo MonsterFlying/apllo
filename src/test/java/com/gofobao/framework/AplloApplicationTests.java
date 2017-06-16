@@ -81,8 +81,8 @@ public class AplloApplicationTests {
         DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
         System.out.println((resp.getTotalItems()));*/
 
-        /*Map<String,String> msg = new HashMap<>();
-        msg.put("borrowId","165180");
+       /* Map<String,String> msg = new HashMap<>();
+        msg.put("borrowId","165184");
         try {
             borrowProvider.doAgainVerify(msg);
         } catch (Exception e) {
@@ -90,7 +90,7 @@ public class AplloApplicationTests {
         }*/
 
         //"userId\":901,\"repaymentId\":168675,\"interestPercent\":0.0,\"isUserOpen\":true
-        VoRepayReq voRepayReq = new VoRepayReq();
+        /*VoRepayReq voRepayReq = new VoRepayReq();
         voRepayReq.setUserId(901L);
         voRepayReq.setRepaymentId(168675L);
         voRepayReq.setInterestPercent(0.0);
@@ -99,7 +99,7 @@ public class AplloApplicationTests {
             repaymentBiz.repay(voRepayReq);
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
 
 
         /*BidApplyQueryReq request = new BidApplyQueryReq();
@@ -118,12 +118,13 @@ public class AplloApplicationTests {
         request.setChannel(ChannelContant.HTML);
         BatchDetailsQueryResp response = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, request, BatchDetailsQueryResp.class);
         System.out.println(response);
-        Borrow borrow = borrowService.findById(165176L);
+        */
+        Borrow borrow = borrowService.findById(165184L);
         try {
             borrowBiz.notTransferedBorrowAgainVerify(borrow);
         } catch (Exception e) {
             e.printStackTrace();
-        }*/
+        }
     }
 
 }
