@@ -197,17 +197,16 @@ public class BorrowServiceImpl implements BorrowService {
                 item.setSpend(0d);
             }
 
-            if (!StringUtils.isEmpty(m.getTenderId()) && m.getTenderId() > 0) {
-                item.setIsFlow(true);
-            } else {
-                item.setIsFlow(false);
-            }
+
             Long userId = m.getUserId();
             Users user = usersMap.get(userId);
             item.setUserName(!StringUtils.isEmpty(user.getUsername()) ? user.getUsername() : user.getPhone());
             item.setType(m.getType());
-            if (voBorrowListReq.getType() == 5) {
+            if (!StringUtils.isEmpty(m.getTenderId()) && m.getTenderId() > 0) {
+                item.setIsFlow(true);
                 item.setType(5);
+            } else {
+                item.setIsFlow(false);
             }
             item.setStatus(status);
             item.setRepayFashion(m.getRepayFashion());
@@ -237,7 +236,6 @@ public class BorrowServiceImpl implements BorrowService {
         Borrow borrow = borrowRepository.findOne(new Long(borrowId));
         if (ObjectUtils.isEmpty(borrow)) {
             return null;
-
         }
         borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
         borrowInfoRes.setLowest(StringHelper.formatMon(borrow.getLowest() / 100d));
@@ -278,7 +276,7 @@ public class BorrowServiceImpl implements BorrowService {
             status = 2; //还款中
         }
         borrowInfoRes.setType(borrow.getType());
-        if (StringUtils.isEmpty(borrow.getTenderId())) {
+        if (!StringUtils.isEmpty(borrow.getTenderId())) {
             borrowInfoRes.setType(5);
         }
         Users users=usersRepository.findOne(borrow.getUserId());
@@ -307,10 +305,13 @@ public class BorrowServiceImpl implements BorrowService {
         voViewBorrowDescRes.setBorrowDesc(borrow.getDescription());
         List<UserAttachment> attachmentList = userAttachmentRepository.findByUserId(userId);
         if (!CollectionUtils.isEmpty(attachmentList)) {
-            Gson gson = new Gson();
-            String jsonStr = gson.toJson(attachmentList);
-            List<UserAttachmentRes> attachmentRes = gson.fromJson(jsonStr, new TypeToken<List<UserAttachmentRes>>() {
-            }.getType());
+            List<UserAttachmentRes> attachmentRes=Lists.newArrayList();
+            attachmentList.stream().forEach(p->{
+                UserAttachmentRes attachment=new UserAttachmentRes();
+                attachment.setFilepath( webDomain+p.getFilepath());
+                attachment.setName(p.getName());
+                attachmentRes.add(attachment);
+            });
             voViewBorrowDescRes.setUserAttachmentRes(attachmentRes);
         }
         return voViewBorrowDescRes;

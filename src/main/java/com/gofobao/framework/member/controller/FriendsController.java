@@ -1,6 +1,9 @@
 package com.gofobao.framework.member.controller;
 
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.biz.BrokerBounsBiz;
+import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.member.vo.request.VoFriendsReq;
 import com.gofobao.framework.member.vo.response.VoViewFriendsTenderInfoWarpRes;
 import com.gofobao.framework.member.vo.response.VoViewInviteAwardStatisticsWarpRes;
@@ -10,9 +13,12 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -27,6 +33,10 @@ public class FriendsController {
 
     @Autowired
     private BrokerBounsBiz brokerBounsBiz;
+
+
+    @Value("${gofobao.h5Domain}")
+    private String h5Domain;
 
     @ApiOperation("邀请好友列表")
     @GetMapping("v2/list")
@@ -52,10 +62,8 @@ public class FriendsController {
 
     @ApiOperation("分享注册邀请码")
     @GetMapping("v2/shareRegister/page")
-    public ResponseEntity<Map<String, String>> shareRegister(/*@RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
-        Long userId=901L;
+    public ResponseEntity<Map<String, String>> shareRegister(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return brokerBounsBiz.shareRegister(userId);
     }
-
 
 }

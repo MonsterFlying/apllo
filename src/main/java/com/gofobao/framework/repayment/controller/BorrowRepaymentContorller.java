@@ -38,7 +38,7 @@ public class BorrowRepaymentContorller {
     }
 
     @RequestMapping(value = "/v2/list/{time}", method = RequestMethod.GET)
-    @ApiOperation("还款计划列表")
+    @ApiOperation("还款计划列表 time:2017-05-02")
     public ResponseEntity<VoViewCollectionOrderListResWarpRes> listRes(@PathVariable("time") String time,
                                                                        @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoCollectionOrderReq orderReq = new VoCollectionOrderReq();
