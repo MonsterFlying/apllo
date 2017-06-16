@@ -3,6 +3,7 @@ package com.gofobao.framework.tender.controller;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.TenderBiz;
+import com.gofobao.framework.tender.vo.request.TenderUserReq;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
 import io.swagger.annotations.Api;
@@ -29,18 +30,28 @@ public class TenderController {
 
     @ApiOperation("投标用户列表")
     @GetMapping("/v2/user/list/{borrowId}")
-    public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(@PathVariable Long borrowId) {
-        return tenderBiz.findBorrowTenderUser(borrowId);
+    public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(@PathVariable Long borrowId,
+                                                                              @PathVariable Integer pageIndex,
+                                                                              @PathVariable Integer pageSize) {
+        TenderUserReq tenderUserReq=new TenderUserReq();
+        tenderUserReq.setPageSize(pageSize);
+        tenderUserReq.setPageIndex(pageIndex);
+        tenderUserReq.setBorrowId(borrowId);
+        return tenderBiz.findBorrowTenderUser(tenderUserReq);
     }
 
     @ApiOperation("pc:投标用户列表")
-    @GetMapping("pc/v2/user/list/{borrowId}")
-    public ResponseEntity<VoBorrowTenderUserWarpListRes> pcFindBorrowTenderUser(@PathVariable Long borrowId) {
-        return tenderBiz.findBorrowTenderUser(borrowId);
+    @GetMapping("pc/v2/user/list/{pageIndex}/{pageSize}{borrowId}")
+    public ResponseEntity<VoBorrowTenderUserWarpListRes> pcFindBorrowTenderUser(@PathVariable Long borrowId,
+                                                                                @PathVariable Integer pageIndex,
+                                                                                @PathVariable Integer pageSize) {
+
+        TenderUserReq tenderUserReq=new TenderUserReq();
+        tenderUserReq.setPageSize(pageSize);
+        tenderUserReq.setPageIndex(pageIndex);
+        tenderUserReq.setBorrowId(borrowId);
+        return tenderBiz.findBorrowTenderUser(tenderUserReq);
     }
-
-
-
 
     @ApiOperation("借款投标")
     @PostMapping("/v2/create")

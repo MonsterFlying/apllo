@@ -1,6 +1,7 @@
 package com.gofobao.framework.tender.biz;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.tender.vo.request.TenderUserReq;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
@@ -37,10 +38,10 @@ public interface TenderBiz {
 
     /**
      * 投标用户
-     * @param borrowId
+     * @param tenderUserReq
      * @return
      */
-    ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(Long borrowId);
+    ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(TenderUserReq tenderUserReq);
 
 
 }

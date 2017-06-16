@@ -31,6 +31,7 @@ import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
+import com.gofobao.framework.tender.vo.request.TenderUserReq;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
@@ -378,13 +379,13 @@ public class TenderBizImpl implements TenderBiz {
     /**
      * 投标用户
      *
-     * @param borrowId
+     * @param tenderUserReq
      * @return
      */
     @Override
-    public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(Long borrowId) {
+    public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(TenderUserReq tenderUserReq) {
         try {
-            List<VoBorrowTenderUserRes> tenderUserRes = tenderService.findBorrowTenderUser(borrowId);
+            List<VoBorrowTenderUserRes> tenderUserRes = tenderService.findBorrowTenderUser(tenderUserReq);
             VoBorrowTenderUserWarpListRes warpListRes = VoBaseResp.ok("查询成功", VoBorrowTenderUserWarpListRes.class);
             warpListRes.setVoBorrowTenderUser(tenderUserRes);
             return ResponseEntity.ok(warpListRes);

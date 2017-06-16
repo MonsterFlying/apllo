@@ -2,6 +2,7 @@ package com.gofobao.framework.tender.service;
 
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
 import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.vo.request.TenderUserReq;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -19,7 +20,7 @@ public interface TenderService {
 
     boolean updateById(Tender tender);
 
-    List<VoBorrowTenderUserRes> findBorrowTenderUser(Long borrowId);
+    List<VoBorrowTenderUserRes> findBorrowTenderUser(TenderUserReq tenderUserReq);
 
     List<Tender> findList(Specification<Tender> specification);
 
