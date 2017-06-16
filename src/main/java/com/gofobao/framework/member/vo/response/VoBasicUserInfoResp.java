@@ -16,6 +16,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @ApiModel("用户基础信息")
 public class VoBasicUserInfoResp extends VoBaseResp{
+    @ApiModelProperty("头像链接")
+    private String avatarUrl ;
+
+    @ApiModelProperty("vip状态")
+    private boolean vipState ;
+
     @ApiModelProperty("用户名（已经加密）")
     private String username ;
 
