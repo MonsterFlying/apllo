@@ -25,7 +25,7 @@ public class PaymentController {
     @Autowired
     private PaymentBiz paymentBiz;
 
-    @ApiOperation("回款期数列表")
+    @ApiOperation("回款期数列表 time:2017-05-06")
     @GetMapping("/v2/order/list/{time}")
     public ResponseEntity<VoViewCollectionOrderListResWarpRes> collectionOrderList(@PathVariable("time") String time,
                                                                                    @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
@@ -33,7 +33,6 @@ public class PaymentController {
         voCollectionOrderReq.setUserId(userId);
         voCollectionOrderReq.setTime(time);
         return paymentBiz.orderList(voCollectionOrderReq);
-
     }
 
     @ApiOperation("回款详情")

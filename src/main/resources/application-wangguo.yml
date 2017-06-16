@@ -49,9 +49,11 @@ jixin: #银行存管
   handlingChargeAccountId: "6212461270000000360" #电子手续费账户
 gofobao:
   #javaDomain: http://lang.3w.dkys.org
-  javaDomain: http://max.3w.dkys.org
-  webDomain: http://ci.gofobao.com
-  h5Domain: http://ci.gofobao.com
+  javaDomain: http://qtfja75.hk1.mofasuidao.cn
+  webDomain: http://qtfja75.hk1.mofasuidao.cn
+  h5Domain:  http://qtfja75.hk1.mofasuidao.cn
+  imageDomain : http://www.gofobao.com
+  captcha: false # 全站是否开启图形验证码验证
   close-email-send: true # 关闭邮箱发送
   close-phone-send: true # 关闭短信发送
   aliyun-bankinfo-url: http://jisuyhkgsd.market.alicloudapi.com/bankcard/query

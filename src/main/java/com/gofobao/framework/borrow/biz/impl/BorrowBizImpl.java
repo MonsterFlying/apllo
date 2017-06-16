@@ -176,7 +176,7 @@ public class BorrowBizImpl implements BorrowBiz {
     }
 
     /**
-     * PC:招标中统计
+     * pc:招标中统计
      *
      * @param
      * @return
@@ -209,6 +209,16 @@ public class BorrowBizImpl implements BorrowBiz {
     public Map<String, Object> contract(Long borrowId, Long userId) {
         try {
             return borrowService.contract(borrowId, userId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public Map<String, Object> pcContract(Long borrowId, Long userId) {
+        try {
+            return borrowService.pcContract(borrowId, userId);
         } catch (Exception e) {
             e.printStackTrace();
             return null;

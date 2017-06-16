@@ -13,6 +13,7 @@ import com.gofobao.framework.api.model.direct_recharge_plus.auto_credit_invest_a
 import com.gofobao.framework.api.model.direct_recharge_plus.auto_credit_invest_auth_plus.DirectRechargePlusResponse;
 import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.entity.AssetLog;
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.AssetLogService;
 import com.gofobao.framework.asset.service.AssetService;
@@ -65,6 +66,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -188,6 +190,20 @@ public class AssetBizImpl implements AssetBiz {
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询成功", VoViewAssetLogWarpRes.class));
         }
+    }
+
+    @Override
+    public ResponseEntity<AssetLog> pcLogs(VoAssetLogReq voAssetLogReq) {
+        try {
+            List<AssetLog> resList = assetLogService.pcList(voAssetLogReq);
+
+           // return ResponseEntity.ok(Arrays.asList(resList));
+        } catch (Exception e) {
+            //return ResponseEntity.badRequest()
+              //      .body(VoBaseResp.error(VoBaseResp.ERROR, "查询成功", AssetLogt.class));
+        }
+
+        return null;
     }
 
     @Override

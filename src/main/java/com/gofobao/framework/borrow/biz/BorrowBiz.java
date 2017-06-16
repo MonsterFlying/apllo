@@ -78,6 +78,13 @@ public interface BorrowBiz {
      * @return
      */
     Map<String, Object> contract(Long borrowId, Long userId);
+    /**
+     * pc：标合同
+     * @param borrowId
+     * @param userId
+     * @return
+     */
+    Map<String, Object> pcContract(Long borrowId, Long userId);
 
     /**
      * 提前结清
@@ -87,10 +94,13 @@ public interface BorrowBiz {
      */
     ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq) throws Exception;
     /**
-     * PC:招标中统计
+     * pc:招标中统计
      * @param
      * @return
      */
     ResponseEntity<VoViewBorrowStatisticsWarpRes> statistics();
+
+
+
 
 }

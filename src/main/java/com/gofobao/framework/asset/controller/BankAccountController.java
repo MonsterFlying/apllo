@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class BankAccountController {
 
     @Autowired
-    BankAccountBiz bankAccountBiz ;
+    private BankAccountBiz bankAccountBiz ;
 
     @GetMapping("/bank/typeinfo/{account}")
     @ApiOperation("根据银行卡获取银行卡基础信息和限额")

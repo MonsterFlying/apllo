@@ -107,8 +107,10 @@ public class LendServiceImpl implements LendService {
             if (p.getStatus() == LendContants.STATUS_NO) {
                 lend.setStatusStr(LendContants.STATUS_NO_STR);
             } else {
+                lend.setSpend(1d);
                 lend.setStatusStr(LendContants.STATUS_YES_STR);
             }
+            lend.setSpend(Double.parseDouble(StringHelper.formatMon(p.getMoneyYes()/new Double(p.getMoney()))));
             lend.setLimit(p.getTimeLimit());
             lendListRes.add(lend);
         });

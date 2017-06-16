@@ -24,7 +24,7 @@ import javax.validation.Valid;
 public class RechargeController {
 
     @Autowired
-    AssetBiz assetBiz ;
+    private AssetBiz assetBiz ;
 
     @ApiOperation("充值")
     @PostMapping("/asset/recharge")
