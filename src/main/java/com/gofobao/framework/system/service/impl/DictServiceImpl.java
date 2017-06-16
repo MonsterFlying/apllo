@@ -52,7 +52,7 @@ public class DictServiceImpl implements DictService{
             DictItem dictItem = dictItems.get(0);
             Long dictItemId = dictItem.getId();
 
-            List<DictValue> dictValues = dictValueRepository.findByDelAndItemId(false,dictItemId);
+            List<DictValue> dictValues = dictValueRepository.findByDelAndItemId(0, dictItemId);
 
             if (CollectionUtils.isEmpty(dictValues)) {
                 throw new Exception("aliasCode values is empty");

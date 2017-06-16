@@ -56,7 +56,7 @@ public class CapitalChangeConfig {
         capitalChangeList.add(cash);
 
         // UnCash("uncash"),
-        //提现
+        //取消提现
         CapitalChangeConfig uncash = new CapitalChangeConfig();
         cash.setType(CapitalChangeEnum.Cash);
         cash.setName("取消提现");

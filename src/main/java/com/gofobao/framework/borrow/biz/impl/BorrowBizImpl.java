@@ -215,6 +215,16 @@ public class BorrowBizImpl implements BorrowBiz {
         }
     }
 
+    @Override
+    public Map<String, Object> pcContract(Long borrowId, Long userId) {
+        try {
+            return borrowService.pcContract(borrowId, userId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     /**
      * 新增借款
      *
