@@ -24,9 +24,11 @@ import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserCache;
+import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
+import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
@@ -82,6 +84,8 @@ public class TenderBizImpl implements TenderBiz {
     private BorrowService borrowService;
     @Autowired
     private BorrowCollectionService borrowCollectionService;
+    @Autowired
+    private UserThirdAccountService userThirdAccountService;
 
     public Map<String, Object> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception {
         Map<String, Object> rsMap = null;
@@ -206,8 +210,10 @@ public class TenderBizImpl implements TenderBiz {
                 break;
             }
 
-            if (!userService.checkRealname(users)) {
-                msg = "当前用户未实名认证!";
+            UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+            if (ObjectUtils.isEmpty(userThirdAccount)) {
+                log.info("用户投标：当前用户未开户。");
+                msg = "当前用户未开户!";
                 break;
             }
 

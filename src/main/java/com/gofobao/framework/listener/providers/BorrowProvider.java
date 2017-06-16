@@ -239,6 +239,10 @@ public class BorrowProvider {
 
             ResponseEntity<VoBaseResp> resp = null;
             if (debtDetailList.size() < 1) {
+                if (ObjectUtils.isEmpty(borrow.getSuccessAt())) {
+                    borrow.setSuccessAt(new Date());
+                    borrowService.updateById(borrow);
+                }
                 resp = thirdRegisterBorrowAndTender(borrowId);
             }
             if (ObjectUtils.isEmpty(resp)) {

@@ -246,12 +246,12 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍候重试！"));
         }
 
-        Users users = userService.findById(userId);
-        if (ObjectUtils.isEmpty(users.getCardId())) {
-            log.info("新增借款：当前用户未实名。");
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            log.info("新增借款：当前用户未开户。");
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户未实名认证!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户未开户!"));
         }
 
         Date releaseAt = DateHelper.stringToDate(releaseAtStr, DateHelper.DATE_FORMAT_YMDHMS);
