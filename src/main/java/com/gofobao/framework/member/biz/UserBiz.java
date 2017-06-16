@@ -24,5 +24,7 @@ public interface UserBiz {
     Users findByAccount(String account);
 
     ResponseEntity<VoBasicUserInfoResp> getUserInfoResp(Users user);
+
+
 }
 

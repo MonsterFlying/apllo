@@ -1,4 +1,4 @@
-package com.gofobao.framework.message.vo;
+package com.gofobao.framework.message.vo.request;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;

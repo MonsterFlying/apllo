@@ -5,11 +5,11 @@ import com.gofobao.framework.asset.repository.CashDetailLogRepository;
 import com.gofobao.framework.asset.service.CashDetailLogService;
 import com.google.common.collect.ImmutableList;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,7 +38,7 @@ public class CashDetailLogServiceImpl implements CashDetailLogService {
     }
 
     @Override
-    public List<CashDetailLog> findByUserIdAndPage(Long userId, PageRequest page) {
+    public List<CashDetailLog> findByUserIdAndPage(Long userId, Pageable page) {
         List<CashDetailLog> byUserIdAndPage = cashDetailLogRepository.findByUserId(userId, page);
         Optional<List<CashDetailLog>> optional = Optional.ofNullable(byUserIdAndPage) ;
         return optional.orElse(Collections.EMPTY_LIST) ;
@@ -47,5 +47,10 @@ public class CashDetailLogServiceImpl implements CashDetailLogService {
     @Override
     public CashDetailLog findById(Long id) {
         return cashDetailLogRepository.findOne(id);
+    }
+
+    @Override
+    public List<CashDetailLog> findByUserIdAndStateInAndCreateTimeBetween(Long userId, ImmutableList<Integer> stateList, Date startDate, Date endDate) {
+        return cashDetailLogRepository.findByUserIdAndStateInAndCreateTimeBetween(userId, stateList, startDate, endDate) ;
     }
 }

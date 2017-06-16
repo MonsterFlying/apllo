@@ -3,8 +3,8 @@ package com.gofobao.framework.member.biz.impl;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.PasswordHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.CaptchaHelper;
 import com.gofobao.framework.helper.RedisHelper;
+import com.gofobao.framework.helper.MacthHelper;
 import com.gofobao.framework.member.biz.UserPasswordBiz;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
@@ -29,7 +29,7 @@ public class UserPasswordBizImpl implements UserPasswordBiz {
     private UserService userService;
 
     @Autowired
-    private CaptchaHelper captchaHelper;
+    MacthHelper macthHelper;
 
     @Autowired
     private RedisHelper redisHelper;
@@ -45,6 +45,11 @@ public class UserPasswordBizImpl implements UserPasswordBiz {
     public ResponseEntity<VoBaseResp> modifyPassword(Long userId, VoModifyPasswordReq voModifyPasswordReq) {
         Users users = userService.findById(userId);
 
+        if(users.getIsLock()){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前账户处于锁定状态,如有问题请联系客户!"));
+        }
         boolean bool = false;
         try {
             bool = PasswordHelper.verifyPassword(users.getPassword(), voModifyPasswordReq.getOldPassword());
@@ -80,11 +85,13 @@ public class UserPasswordBizImpl implements UserPasswordBiz {
      */
     public ResponseEntity<VoBaseResp> findPassword(VoFindPasswordReq voFindPasswordReq) {
         // 1. 验证短信验证码
-        boolean bool = captchaHelper.checkPhoneCaptcha(voFindPasswordReq.getPhone(), voFindPasswordReq.getSmsCode(), MqTagEnum.SMS_RESET_PASSWORD.getValue());//验证找回密码验证码是否正确
+        boolean bool = macthHelper.match(MqTagEnum.SMS_RESET_PASSWORD.getValue(),
+                voFindPasswordReq.getPhone(),
+                voFindPasswordReq.getSmsCode());//验证找回密码验证码是否正确
         if (!bool){
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR,"短信验证码错误/已经过期!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"短信验证码错误/已经过期, 请重新获取短信验证码!"));
         }
         // 2. 验证手机号是否存在
         Users users = userService.findByAccount(voFindPasswordReq.getPhone());
@@ -108,9 +115,6 @@ public class UserPasswordBizImpl implements UserPasswordBiz {
         users.setPassword(encoPassword);
         users.setUpdatedAt(new Date());
         userService.update(users);
-
-        // 4.移除短信
-        captchaHelper.removePhoneCaptcha(voFindPasswordReq.getPhone(), MqTagEnum.SMS_RESET_PASSWORD.getValue() ); //删除验证码
         return ResponseEntity.ok(VoBaseResp.ok("找回密码成功!"));
     }
 

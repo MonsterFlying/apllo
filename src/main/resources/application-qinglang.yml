@@ -23,7 +23,12 @@ spring:
     port: 5672
     username: gofobao
     password: gofobao
-
+  mail:
+    host: smtp.qq.com
+    port: 587
+    username: service@gofobao.com
+    password: gofobaochina123
+    default-encoding: UTF-8
 server:
   port: 8080
 jwt: #JWT 安全配置

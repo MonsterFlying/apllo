@@ -13,7 +13,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 @Data
 public class VoJudgmentAvailableReq extends VoBaseReq{
     @NotEmpty
-    @ApiModelProperty("检测类型： 1。手机号， 2。邮件。 3用户名")
+    @ApiModelProperty("检测类型： 1.手机号， 2.邮件, 3,用户名")
     private String checkType ;
 
     @NotEmpty

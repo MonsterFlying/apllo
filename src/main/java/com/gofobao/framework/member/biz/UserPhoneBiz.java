@@ -2,8 +2,9 @@ package com.gofobao.framework.member.biz;
 
 import com.gofobao.framework.asset.vo.request.VoJudgmentAvailableReq;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.member.vo.request.VoBindPhone;
 import com.gofobao.framework.member.vo.request.VoBindSwitchPhoneReq;
-import com.gofobao.framework.member.vo.request.VoCheckSwitchPhoneReq;
+import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -12,17 +13,10 @@ import org.springframework.http.ResponseEntity;
 public interface UserPhoneBiz {
     /**
      * 更改手机
-     * @param voCheckSwitchPhoneReq
-     * @return
-     */
-    ResponseEntity<VoBaseResp> checkSwitchPhone(VoCheckSwitchPhoneReq voCheckSwitchPhoneReq);
-
-    /**
-     * 更改手机
      * @param voBindSwitchPhoneReq
      * @return
      */
-    ResponseEntity<VoBaseResp> bindSwitchPhone(VoBindSwitchPhoneReq voBindSwitchPhoneReq);
+    ResponseEntity<VoBasicUserInfoResp> bindSwitchPhone(VoBindSwitchPhoneReq voBindSwitchPhoneReq);
 
 
     /**
@@ -31,4 +25,15 @@ public interface UserPhoneBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> checkOnlyForUserInfo(VoJudgmentAvailableReq voJudgmentAvailableReq);
+
+
+    /**
+     * 绑定手机
+     * @param voBindPhone
+     * @param userId
+     * @return
+     */
+    ResponseEntity<VoBasicUserInfoResp> bindPhone(VoBindPhone voBindPhone, Long userId);
+
+
 }

@@ -2,7 +2,7 @@ package com.gofobao.framework.message.controller;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.message.biz.MessageBiz;
-import com.gofobao.framework.message.vo.VoAnonSmsReq;
+import com.gofobao.framework.message.vo.request.VoAnonSmsReq;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
