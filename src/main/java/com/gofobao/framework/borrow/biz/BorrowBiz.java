@@ -92,7 +92,7 @@ public interface BorrowBiz {
      * @param voRepayAllReq
      * @return
      */
-    ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq) throws Exception;
+    ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq);
     /**
      * PC:招标中统计
      * @param

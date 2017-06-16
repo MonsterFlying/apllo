@@ -880,7 +880,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq) throws Exception {
+    public ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq) {
         Long borrowId = voRepayAllReq.getBorrowId();
         Borrow borrow = borrowService.findByIdLock(borrowId);
         Asset borrowAsset = assetService.findByUserId(borrow.getUserId());
@@ -963,7 +963,12 @@ public class BorrowBizImpl implements BorrowBiz {
             entity.setType(CapitalChangeEnum.Fee);
             entity.setMoney(penalty);
             entity.setRemark("扣除提前结清的违约金");
-            receivedPenalty(borrow, penalty);
+            try {
+                capitalChangeHelper.capitalChange(entity);
+                receivedPenalty(borrow, penalty);
+            } catch (Exception e) {
+                log.error("BorrowBizImpl 异常:", e);
+            }
         }
 
         return ResponseEntity.ok(VoBaseResp.ok("提前结清成功!"));
