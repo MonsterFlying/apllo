@@ -1,5 +1,6 @@
 package com.gofobao.framework.asset.biz;
 
+import com.gofobao.framework.asset.entity.AssetLog;
 import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.request.VoRechargeReq;
 import com.gofobao.framework.asset.vo.response.*;
@@ -102,4 +103,12 @@ public interface AssetBiz {
      * @return
      */
     ResponseEntity<VoCollectionResp> collectionMoney(Long userId);
+
+
+    /**
+     * pc:资金流水
+     * @param voAssetLogReq
+     * @return
+     */
+    ResponseEntity<AssetLog> pcLogs(VoAssetLogReq voAssetLogReq);
 }

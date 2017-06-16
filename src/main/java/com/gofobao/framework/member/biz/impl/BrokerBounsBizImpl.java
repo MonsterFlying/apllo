@@ -1,6 +1,7 @@
 package com.gofobao.framework.member.biz.impl;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.member.biz.BrokerBounsBiz;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
@@ -31,6 +32,12 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
 
     @Value("${gofobao.h5Domain}")
     private String h5Domain;
+
+    @Value("${gofobao.imageDomain}")
+    private String imageDomain;
+
+    @Autowired
+    private ThymeleafHelper thymeleafHelper;
 
     @Override
     public ResponseEntity<VoViewInviteFriendersWarpRes> list(VoFriendsReq voFriendsReq) {
@@ -85,14 +92,17 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
      * @return
      */
     @Override
-    public ResponseEntity<Map<String, String>> shareRegister(Long userId) {
-        Map<String, String> paramMaps = new HashMap<>();
+    public Map<String, Object> shareRegister(Long userId) {
+        Map<String, Object> paramMaps = new HashMap<>();
         Users user = usersRepository.findOne(userId);
-        String url = h5Domain + "/#/auth/register?shareRegisterCode=" + user.getInviteCode();
-        paramMaps.put("url", url);
-        paramMaps.put("title", "邀请好友投资，奖金送不停");
-        paramMaps.put("desc", "新手福利，注册即送1000元投标体验金+加息0.5%- 3%");
-        paramMaps.put("imageUrl", h5Domain + "/bannar/logo.png");
-        return ResponseEntity.ok(paramMaps);
+        String inviteCode=user.getInviteCode();
+        paramMaps.put("inviteUrl", imageDomain + "/#/auth/register?inviteCode=" + inviteCode);
+        paramMaps.put("inviteCode", inviteCode);
+        paramMaps.put("invitePhone", user.getPhone());
+        paramMaps.put("QRCodeURL",   "qrcode/getInviteFriendQRCode?inviteCode=" + inviteCode);
+        paramMaps.put("requestSource", 3);
+
+        //String content = thymeleafHelper.build("friends", paramMaps);
+        return paramMaps;
     }
 }

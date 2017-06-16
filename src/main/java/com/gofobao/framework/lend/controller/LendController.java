@@ -17,7 +17,7 @@ import springfox.documentation.annotations.ApiIgnore;
 /**
  * Created by admin on 2017/6/6.
  */
-@Api(description = "我的出借")
+@Api(description = "出借")
 @RestController
 @RequestMapping("/lend")
 public class LendController {
@@ -37,7 +37,7 @@ public class LendController {
 
 
     @RequestMapping(value = "/v2/info/{lendId}", method = RequestMethod.GET)
-    @ApiOperation("出借列表")
+    @ApiOperation("出借想起")
     public ResponseEntity<VoViewLendInfoWarpRes> info(@PathVariable Long lendId,
                                                       @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
 
@@ -45,7 +45,7 @@ public class LendController {
     }
 
     @RequestMapping(value = "/v2/list/byUser/{pageIndex}/{pageSize}", method = RequestMethod.GET)
-    @ApiOperation("出借列表")
+    @ApiOperation("我的出借列表")
     public ResponseEntity<VoViewUserLendInfoWarpRes> byUser(
             @PathVariable Integer pageIndex,
             @PathVariable Integer pageSize,

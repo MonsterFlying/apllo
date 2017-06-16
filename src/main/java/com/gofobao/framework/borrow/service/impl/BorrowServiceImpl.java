@@ -75,8 +75,8 @@ public class BorrowServiceImpl implements BorrowService {
     @Autowired
     private ThymeleafHelper thymeleafHelper;
 
-    @Value("${gofobao.webDomain}")
-    private String webDomain;
+    @Value("${gofobao.imageDomain}")
+    private String imageDomain;
 
     /**
      * 首页标列表
@@ -214,7 +214,7 @@ public class BorrowServiceImpl implements BorrowService {
             item.setIsConversion(m.getIsConversion());
             item.setIsVouch(m.getIsVouch());
             item.setTenderCount(m.getTenderCount());
-            item.setAvatar(webDomain + "/data/images/avatar/" + userId + "_avatar_small.jpg");
+            item.setAvatar(imageDomain + "/data/images/avatar/" + userId + "_avatar_small.jpg");
             item.setPageCount(count.intValue());
             listResList.add(item);
         });
@@ -308,7 +308,7 @@ public class BorrowServiceImpl implements BorrowService {
             List<UserAttachmentRes> attachmentRes=Lists.newArrayList();
             attachmentList.stream().forEach(p->{
                 UserAttachmentRes attachment=new UserAttachmentRes();
-                attachment.setFilepath( webDomain+p.getFilepath());
+                attachment.setFilepath( imageDomain+p.getFilepath());
                 attachment.setName(p.getName());
                 attachmentRes.add(attachment);
             });

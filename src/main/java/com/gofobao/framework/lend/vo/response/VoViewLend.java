@@ -20,5 +20,7 @@ public class VoViewLend {
     private Long lendId;
     @ApiModelProperty("状态描述")
     private String statusStr;
+    @ApiModelProperty("进度")
+    private Double spend;
 
 }

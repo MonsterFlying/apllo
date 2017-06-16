@@ -176,7 +176,7 @@ public class BorrowBizImpl implements BorrowBiz {
     }
 
     /**
-     * PC:招标中统计
+     * pc:招标中统计
      *
      * @param
      * @return

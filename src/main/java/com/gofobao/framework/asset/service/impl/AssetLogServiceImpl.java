@@ -7,6 +7,7 @@ import com.gofobao.framework.asset.service.AssetLogService;
 import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.response.VoViewAssetLogRes;
 import com.gofobao.framework.helper.DateHelper;
+import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.Collections;
@@ -49,10 +51,10 @@ public class AssetLogServiceImpl implements AssetLogService {
 
         Specification<AssetLog> specification = Specifications.<AssetLog>and()
                 .eq(!StringUtils.isEmpty(voAssetLogReq.getType()), "type", voAssetLogReq.getType())
-                .between("createdAt", new Range<>(DateHelper.stringToDate(voAssetLogReq.getStartTime()),DateHelper.stringToDate(voAssetLogReq.getEndTime())))
+                .between("createdAt", new Range<>(DateHelper.stringToDate(voAssetLogReq.getStartTime()), DateHelper.stringToDate(voAssetLogReq.getEndTime())))
                 .eq("userId", voAssetLogReq.getUserId())
                 .build();
-       Page<AssetLog> assetLogPage = assetLogRepository.findAll(specification, pageable);
+        Page<AssetLog> assetLogPage = assetLogRepository.findAll(specification, pageable);
 
         Gson gson = new GsonBuilder().setDateFormat(DateHelper.DATE_FORMAT_YMDHMS).create();
 
@@ -64,12 +66,37 @@ public class AssetLogServiceImpl implements AssetLogService {
     }
 
     @Override
+    public List<AssetLog> pcList(VoAssetLogReq voAssetLogReq) {
+        Specification specification = Specifications.<AssetLog>and()
+                .eq("type", voAssetLogReq.getType())
+                .eq("userId", voAssetLogReq.getUserId())
+                .between("createdAt", new Range<>(voAssetLogReq.getEndTime(), voAssetLogReq.getEndTime()))
+                .build();
+        Page<AssetLog> assetLogPage = assetLogRepository.findAll(specification, new PageRequest(voAssetLogReq.getPageIndex(), voAssetLogReq.getPageSize(), new Sort(Sort.Direction.DESC, "id")));
+        List<AssetLog>assetLogs=assetLogPage.getContent();
+
+        if(CollectionUtils.isEmpty(assetLogs)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<AssetLog>logs= Lists.newArrayList();
+
+        assetLogs.stream().forEach(p->{
+
+
+
+        });
+
+    return  null;
+        // return Optional.ofNullable(assetLogPage.getContent()).orElse(Collections.EMPTY_LIST);
+    }
+
+    @Override
     public void insert(AssetLog assetLog) {
-        assetLogRepository.save(assetLog) ;
+        assetLogRepository.save(assetLog);
     }
 
     @Override
     public void updateById(AssetLog assetLog) {
-        assetLogRepository.save(assetLog) ;
+        assetLogRepository.save(assetLog);
     }
 }
