@@ -94,11 +94,12 @@ public interface BorrowBiz {
      */
     ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq);
     /**
-     * PC:招标中统计
+     * pc:招标中统计
      * @param
      * @return
      */
     ResponseEntity<VoViewBorrowStatisticsWarpRes> statistics();
+
 
 
 

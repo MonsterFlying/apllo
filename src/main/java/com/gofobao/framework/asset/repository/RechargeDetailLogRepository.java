@@ -1,6 +1,7 @@
 package com.gofobao.framework.asset.repository;
 
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
+import com.google.common.collect.ImmutableList;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -17,5 +18,7 @@ public interface RechargeDetailLogRepository extends JpaRepository<RechargeDetai
 
     List<RechargeDetailLog> findByUserIdAndDel(Long userId, int del, Pageable pageable);
 
-    List<RechargeDetailLog> findByUserIdAndDelAndCreateTimeBetweenAndState(long userId, int del, Date startTime, Date endTime, int state);
+    List<RechargeDetailLog> findByUserIdAndDelAndStateInAndCreateTimeBetween(long userId, int del, ImmutableList<Integer> stateList, Date startTime, Date endTime);
+
+
 }

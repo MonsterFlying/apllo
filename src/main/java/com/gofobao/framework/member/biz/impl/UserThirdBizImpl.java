@@ -25,10 +25,7 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
-import com.gofobao.framework.member.vo.response.VoBankResp;
-import com.gofobao.framework.member.vo.response.VoHtmlResp;
-import com.gofobao.framework.member.vo.response.VoOpenAccountResp;
-import com.gofobao.framework.member.vo.response.VoPreOpenAccountResp;
+import com.gofobao.framework.member.vo.response.*;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -212,8 +209,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
             int status = result.get("status").getAsInt();
             if (status == 0) {
                 JsonObject info = result.get("result").getAsJsonObject();
-                logo = info.get("bank").getAsString();
-                bankName = info.get("logo").getAsString();
+                bankName = info.get("bank").getAsString();
+                logo = info.get("logo").getAsString();
 
             }
 
@@ -619,6 +616,28 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
         return ResponseEntity.ok("success") ;
+    }
+
+    @Override
+    public ResponseEntity<VoSignInfoResp> querySigned(Long userId) {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if(ObjectUtils.isEmpty(userThirdAccount)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,  "请先开通江西银行存管账户！", VoSignInfoResp.class)) ;
+        }
+
+        if( userThirdAccount.getPasswordState() != 1 ){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,  "请先设置江西银行存管账户交易密码！", VoSignInfoResp.class)) ;
+        }
+
+
+        VoSignInfoResp re = VoBaseResp.ok("查询成功", VoSignInfoResp.class);
+        re.setAutoTenderState(userThirdAccount.getAutoTenderState() == 1);
+        re.setAutoTenderState(userThirdAccount.getAutoTransferState() == 1);
+        return ResponseEntity.ok(re) ;
     }
 
 }

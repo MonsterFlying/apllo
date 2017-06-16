@@ -3,6 +3,7 @@ package com.gofobao.framework.asset.service.impl;
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.repository.RechargeDetailLogRepository;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
+import com.google.common.collect.ImmutableList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -48,8 +49,8 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService{
     }
 
     @Override
-    public List<RechargeDetailLog> findByRecentLog(long userId, int del, Date startTime, Date endTime) {
-        return rechargeDetailLogRepository.findByUserIdAndDelAndCreateTimeBetweenAndState(userId, 0, startTime, endTime, 1) ;
+    public List<RechargeDetailLog> findByUserIdAndDelAndStateInAndCreateTimeBetween(long userId, int del, ImmutableList<Integer> stateList, Date startTime, Date endTime) {
+        return rechargeDetailLogRepository.findByUserIdAndDelAndStateInAndCreateTimeBetween(userId, 0, stateList, startTime, endTime) ;
     }
 
 

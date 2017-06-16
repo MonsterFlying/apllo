@@ -22,6 +22,6 @@ public interface BrokerBounsBiz  {
     ResponseEntity<VoViewFriendsTenderInfoWarpRes> firstTender(VoFriendsReq voFriendsReq);
 
 
-    ResponseEntity<Map<String,String>>shareRegister(Long userId);
+    Map<String, Object> shareRegister(Long userId);
 
 }

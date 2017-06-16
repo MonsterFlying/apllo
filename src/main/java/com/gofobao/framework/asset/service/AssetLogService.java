@@ -23,4 +23,11 @@ public interface AssetLogService {
 
     void updateById(AssetLog assetLog);
 
+    /**
+     * pc: 资金流水
+     * @param voAssetLogReq
+     * @return
+     */
+    List<AssetLog> pcList(VoAssetLogReq voAssetLogReq);
+
 }

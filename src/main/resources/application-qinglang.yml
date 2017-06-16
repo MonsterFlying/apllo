@@ -23,7 +23,12 @@ spring:
     port: 5672
     username: gofobao
     password: gofobao
-
+  mail:
+    host: smtp.qq.com
+    port: 587
+    username: service@gofobao.com
+    password: gofobaochina123
+    default-encoding: UTF-8
 server:
   port: 8080
 jwt: #JWT 安全配置
@@ -43,9 +48,9 @@ jixin: #银行存管
   redPacketAccountId: "6212462040000150021" #红包账户
   handlingChargeAccountId: "6227002154215326514" #电子手续费账户
 gofobao:
-  #javaDomain: http://lang.3w.dkys.org
   javaDomain: http://lang.hk1.mofasuidao.cn
   webDomain: http://lang.hk1.mofasuidao.cn
+  imageDomain : http://www.gofobao.com
   h5Domain: http://lang.hk1.mofasuidao.cn
   captcha: false # 全站是否开启图形验证码验证
   close-email-send: true # 关闭邮箱发送

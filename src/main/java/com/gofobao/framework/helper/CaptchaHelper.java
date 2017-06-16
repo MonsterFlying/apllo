@@ -62,45 +62,4 @@ public class CaptchaHelper {
         return false;
     }
 
-    /**
-     * 校验忘记密码手机验证码
-     *
-     * @param phone
-     * @param phoneCaptcha
-     * @param SMSType
-     * @return 0成功 1手机验证码失效 2.手机验证码错误
-     */
-    public boolean checkPhoneCaptcha(String phone, String phoneCaptcha, String SMSType) {
-        String checkPhoneCaptcha = null;
-        boolean bool = false;
-
-        try {
-            checkPhoneCaptcha = redisHelper.get(String.format("%s_%s", SMSType, phone), "");
-        } catch (Exception e) {
-            log.error("CaptchaHelper phoneCaptcha not exist:", e);
-        }
-
-        if (checkPhoneCaptcha.equals(phoneCaptcha)) {
-            bool = true;
-        }
-
-        return bool;
-    }
-
-    /**
-     * 校验忘记密码手机验证码
-     *
-     * @param phone
-     * @param SMSType
-     * @return 0成功 1手机验证码失效 2.手机验证码错误
-     */
-    public boolean removePhoneCaptcha(String phone,String SMSType) {
-        try {
-            redisHelper.remove(String.format("%s_%s", SMSType, phone));
-            return true;
-        } catch (Exception e) {
-            log.error("CaptchaHelper add exception", e);
-        }
-        return false;
-    }
 }

@@ -52,7 +52,7 @@ public class RechargeController {
         return assetBiz.log(userId, pageIndex, pageSize) ;
     }
 
-    @ApiOperation("充值")
+    @ApiOperation("充值前置条件")
     @PostMapping("/asset/preRecharge")
     public ResponseEntity<VoPreRechargeResp> preRecharge(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         return assetBiz.preRecharge(userId) ;

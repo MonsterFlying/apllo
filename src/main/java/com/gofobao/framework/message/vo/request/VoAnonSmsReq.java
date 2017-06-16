@@ -1,4 +1,4 @@
-package com.gofobao.framework.message.vo;
+package com.gofobao.framework.message.vo.request;
 
 import com.gofobao.framework.helper.RegexHelper;
 import io.swagger.annotations.ApiModel;

@@ -25,7 +25,7 @@ public class JwtTokenHelper implements Serializable {
     static final String CLAIM_KEY_ID = "id" ;
 
     private static final String AUDIENCE_UNKNOWN = "unknown";
-    private static final String AUDIENCE_PC = "PC";
+    private static final String AUDIENCE_PC = "pc";
     private static final String AUDIENCE_H5 = "h5";
     private static final String AUDIENCE_ANDROID = "ANDROID";
     private static final String AUDIENCE_IOS = "IOS";

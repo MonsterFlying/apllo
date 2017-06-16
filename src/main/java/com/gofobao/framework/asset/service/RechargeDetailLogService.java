@@ -1,6 +1,7 @@
 package com.gofobao.framework.asset.service;
 
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
+import com.google.common.collect.ImmutableList;
 
 import java.util.Date;
 import java.util.List;
@@ -18,5 +19,5 @@ public interface RechargeDetailLogService {
 
     List<RechargeDetailLog> log(Long userId, int pageIndex, int pageSize);
 
-    List<RechargeDetailLog> findByRecentLog(long userId, int del, Date startTime, Date startTime1);
+    List<RechargeDetailLog> findByUserIdAndDelAndStateInAndCreateTimeBetween(long userId, int del, ImmutableList<Integer> stateList, Date startTime, Date startTime1);
 }

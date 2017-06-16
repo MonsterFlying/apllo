@@ -2,8 +2,9 @@ package com.gofobao.framework.asset.service;
 
 import com.gofobao.framework.asset.entity.CashDetailLog;
 import com.google.common.collect.ImmutableList;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -27,7 +28,9 @@ public interface CashDetailLogService {
      * @param page
      * @return
      */
-    List<CashDetailLog> findByUserIdAndPage(Long userId, PageRequest page);
+    List<CashDetailLog> findByUserIdAndPage(Long userId, Pageable page);
 
     CashDetailLog findById(Long id) ;
+
+    List<CashDetailLog> findByUserIdAndStateInAndCreateTimeBetween(Long userId, ImmutableList<Integer> stateList, Date startDate, Date endDate);
 }

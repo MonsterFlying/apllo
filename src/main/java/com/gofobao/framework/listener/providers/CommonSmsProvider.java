@@ -2,7 +2,7 @@ package com.gofobao.framework.listener.providers;
 
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.core.helper.RandomHelper;
-import com.gofobao.framework.helper.RedisHelper;
+import com.gofobao.framework.helper.MacthHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.message.entity.SmsEntity;
 import com.gofobao.framework.message.provider.SmsServerConfig;
@@ -36,7 +36,7 @@ public class CommonSmsProvider {
     SmsRepository smsRepository ;
 
     @Autowired
-    RedisHelper redisHelper;
+    MacthHelper macthHelper;
 
     @Value("${gofobao.close-phone-send}")
     boolean closePhoneSend ;
@@ -94,7 +94,7 @@ public class CommonSmsProvider {
         //  写入缓存
         if(rs){
             try {
-                redisHelper.put(String.format("%s_%s", tag, phone), code, 15 * 60);
+                macthHelper.add(tag, phone, code) ;
             } catch (Exception e) {
                 log.error("CommonSmsProvider doSendMessageCode put redis error", e);
                 return false;

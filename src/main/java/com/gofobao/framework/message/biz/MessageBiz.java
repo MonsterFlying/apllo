@@ -1,8 +1,9 @@
 package com.gofobao.framework.message.biz;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.message.vo.VoAnonSmsReq;
-import com.gofobao.framework.message.vo.VoUserSmsReq;
+import com.gofobao.framework.message.vo.request.VoAnonEmailReq;
+import com.gofobao.framework.message.vo.request.VoAnonSmsReq;
+import com.gofobao.framework.message.vo.request.VoUserSmsReq;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.ServletRequest;
@@ -78,4 +79,6 @@ public interface MessageBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> recharge(VoUserSmsReq voUserSmsReq);
+
+    ResponseEntity<VoBaseResp> sendBindEmail(HttpServletRequest request, VoAnonEmailReq voAnonEmailReq, Long userId);
 }

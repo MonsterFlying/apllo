@@ -17,21 +17,16 @@ import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.integral.entity.Integral;
 import com.gofobao.framework.integral.service.IntegralService;
 import com.gofobao.framework.member.biz.UserBiz;
-import com.gofobao.framework.member.entity.UserCache;
-import com.gofobao.framework.member.entity.UserInfo;
-import com.gofobao.framework.member.entity.UserThirdAccount;
-import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.entity.*;
 import com.gofobao.framework.member.enums.RegisterSourceEnum;
-import com.gofobao.framework.member.service.UserCacheService;
-import com.gofobao.framework.member.service.UserInfoService;
-import com.gofobao.framework.member.service.UserService;
-import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.member.service.*;
 import com.gofobao.framework.member.vo.request.VoRegisterReq;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,10 +66,16 @@ public class UserBizImpl implements UserBiz{
     UserThirdAccountService userThirdAccountService ;
 
     @Autowired
+    VipService vipService ;
+
+    @Autowired
     MqHelper mqHelper ;
 
     @Autowired
     RedisHelper redisHelper ;
+
+    @Value("${gofobao.imageDomain}")
+    String imageDomain ;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -191,7 +192,6 @@ public class UserBizImpl implements UserBiz{
     @Override
     public ResponseEntity<VoBasicUserInfoResp> getUserInfoResp(Users user) {
         VoBasicUserInfoResp voBasicUserInfoResp = VoBaseResp.ok("登录成功", VoBasicUserInfoResp.class) ;
-
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(user.getId());
         if(ObjectUtils.isEmpty(userThirdAccount)){
             voBasicUserInfoResp.setThirdAccountState(false);
@@ -205,6 +205,11 @@ public class UserBizImpl implements UserBiz{
             voBasicUserInfoResp.setBankState(!StringUtils.isEmpty(userThirdAccount.getCardNo())) ;
         }
 
+
+        // 获取vip状态
+        Vip vip = vipService.findTopByUserIdAndStatus(user.getId(), 1) ;
+        voBasicUserInfoResp.setAvatarUrl(String.format("%S/data/images/avatar/$s_avatar_small.jpg", imageDomain, user.getId()));
+        voBasicUserInfoResp.setVipState(ObjectUtils.isEmpty(vip) ? false : DateHelper.diffInDays(new Date(), vip.getExpireAt(), false)  > 0);
         voBasicUserInfoResp.setEmail(UserHelper.hideChar(StringUtils.isEmpty(user.getEmail())? " ": user.getEmail(), UserHelper.EMAIL_NUM)) ;
         voBasicUserInfoResp.setEmailState(!StringUtils.isEmpty(user.getEmail()));
         voBasicUserInfoResp.setPhone(UserHelper.hideChar(StringUtils.isEmpty(user.getPhone())? " ": user.getPhone(), UserHelper.PHONE_NUM));

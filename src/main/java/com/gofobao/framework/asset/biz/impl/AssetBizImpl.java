@@ -13,6 +13,7 @@ import com.gofobao.framework.api.model.direct_recharge_plus.auto_credit_invest_a
 import com.gofobao.framework.api.model.direct_recharge_plus.auto_credit_invest_auth_plus.DirectRechargePlusResponse;
 import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.entity.AssetLog;
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.AssetLogService;
 import com.gofobao.framework.asset.service.AssetService;
@@ -65,6 +66,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -118,6 +120,9 @@ public class AssetBizImpl implements AssetBiz {
 
     @Autowired
     DictItemServcie dictItemServcie;
+
+    @Autowired
+    BankAccountBizImpl bankAccountBiz ;
 
 
     LoadingCache<String, DictValue> bankLimitCache = CacheBuilder
@@ -188,6 +193,20 @@ public class AssetBizImpl implements AssetBiz {
     }
 
     @Override
+    public ResponseEntity<AssetLog> pcLogs(VoAssetLogReq voAssetLogReq) {
+        try {
+            List<AssetLog> resList = assetLogService.pcList(voAssetLogReq);
+
+           // return ResponseEntity.ok(Arrays.asList(resList));
+        } catch (Exception e) {
+            //return ResponseEntity.badRequest()
+              //      .body(VoBaseResp.error(VoBaseResp.ERROR, "查询成功", AssetLogt.class));
+        }
+
+        return null;
+    }
+
+    @Override
     public ResponseEntity<VoHtmlResp> recharge(HttpServletRequest request, VoRechargeReq voRechargeReq) {
         Users users = userService.findById(voRechargeReq.getUserId());
         Preconditions.checkNotNull(users, "当前用户不存在");
@@ -223,6 +242,45 @@ public class AssetBizImpl implements AssetBiz {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "短信验证码已过期，请重新获取", VoHtmlResp.class));
+        }
+
+        // 提现额度判断
+        // 判断提现额度剩余
+        double[] rechargeCredit = bankAccountBiz.getCashCredit(voRechargeReq.getUserId());
+        // 判断单笔额度
+        double oneTimes = rechargeCredit[0];
+        if(voRechargeReq.getMoney() > oneTimes){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,
+                            String.format("%s每笔最大充值额度为%s元",
+                                    userThirdAccount.getBankName(),
+                                    StringHelper.formatDouble(oneTimes, true)),
+                            VoHtmlResp.class));
+        }
+
+        // 判断当天额度
+        double dayTimes = rechargeCredit[1];
+        if( (dayTimes <= 0) || (dayTimes - voRechargeReq.getMoney() < 0)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,
+                            String.format("今天你在%s的剩余充值额度%s",
+                                    userThirdAccount.getBankName(),
+                                    StringHelper.formatDouble(dayTimes < 0? 0 : dayTimes, true)),
+                            VoHtmlResp.class));
+        }
+
+        // 判断每月额度
+        double mouthTimes = rechargeCredit[2];
+        if( (mouthTimes <= 0) || (mouthTimes - voRechargeReq.getMoney() < 0)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,
+                            String.format("当月你在%s的剩余充值额度%s元",
+                                    userThirdAccount.getBankName(),
+                                    StringHelper.formatDouble(mouthTimes < 0? 0 : mouthTimes, true)),
+                            VoHtmlResp.class));
         }
 
         DirectRechargePlusRequest directRechargePlusRequest = new DirectRechargePlusRequest();
@@ -284,21 +342,16 @@ public class AssetBizImpl implements AssetBiz {
                     .body("error");
         }
 
-        if (!JixinResultContants.SUCCESS.equals(directRechargePlusResponse.getRetCode())) {
-            log.error("AssetBizImpl.rechargeCallback: 回调出失败");
-            return ResponseEntity
-                    .badRequest()
-                    .body("error");
-        }
-
         Long userId = Long.parseLong(directRechargePlusResponse.getAcqRes());
-
-
         if (ObjectUtils.isEmpty(userId)) {
             log.error("AssetBizImpl.rechargeCallback:  userId is null");
             return ResponseEntity.badRequest().body("error");
         }
-
+        Users users = userService.findByIdLock(userId);
+        if(ObjectUtils.isEmpty(users)){
+            log.error("AssetBizImpl.rechargeCallback:  userId is null");
+            return ResponseEntity.badRequest().body("error");
+        }
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         if (ObjectUtils.isEmpty(userThirdAccount)) {
             log.error("AssetBizImpl.rechargeCallback: userThirdAccount is null");
@@ -317,50 +370,63 @@ public class AssetBizImpl implements AssetBiz {
                     .body("error");
         }
 
-        if (rechargeDetailLog.getState() == 1) {
+        if (JixinResultContants.SUCCESS.equals(directRechargePlusResponse.getRetCode())) {
+            if (rechargeDetailLog.getState() == 1) {
+                return ResponseEntity.ok("success");
+            }
+
+            if (!userId.equals(rechargeDetailLog.getUserId())) {
+                log.error("AssetBizImpl.rechargeCallback: 当前充值不属于该用户");
+                return ResponseEntity
+                        .badRequest()
+                        .body("error");
+            }
+
+            Double money = new Double(directRechargePlusResponse.getTxAmount()) * 100;
+            // 验证金额
+            if (rechargeDetailLog.getMoney() != money.longValue()) {
+                log.error("AssetBizImpl.rechargeCallback: 充值金额不一致");
+                return ResponseEntity
+                        .badRequest()
+                        .body("error");
+            }
+
+            Date now = new Date();
+            rechargeDetailLog.setCallbackTime(now);
+            rechargeDetailLog.setUpdateTime(now);
+            rechargeDetailLog.setState(1);
+            rechargeDetailLogService.save(rechargeDetailLog);
+
+            // 修改资金记录
+            CapitalChangeEntity entity = new CapitalChangeEntity();
+            entity.setMoney(money.intValue());
+            entity.setType(CapitalChangeEnum.Recharge);
+            entity.setUserId(userId);
+            entity.setToUserId(userId);
+            entity.setRemark("充值成功！");
+            capitalChangeHelper.capitalChange(entity);
+
+            // 触发用户充值
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setTag(MqTagEnum.RECHARGE);
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+            mqConfig.setSendTime(DateHelper.addSeconds(now, 30));
+            ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
+            mqConfig.setMsg(body);
+            mqHelper.convertAndSend(mqConfig);
+            return ResponseEntity.ok("success");
+        }else{  // 充值失败
+            if (rechargeDetailLog.getState() == 2) {
+                return ResponseEntity.ok("success");
+            }
+
+            Date now = new Date();
+            rechargeDetailLog.setCallbackTime(now);
+            rechargeDetailLog.setUpdateTime(now);
+            rechargeDetailLog.setState(2); // 充值失败
+            rechargeDetailLogService.save(rechargeDetailLog);
             return ResponseEntity.ok("success");
         }
-
-        if (!userId.equals(rechargeDetailLog.getUserId())) {
-            log.error("AssetBizImpl.rechargeCallback: 当前充值不属于该用户");
-            return ResponseEntity
-                    .badRequest()
-                    .body("error");
-        }
-
-        Double money = new Double(directRechargePlusResponse.getTxAmount()) * 100;
-        // 验证金额
-        if (rechargeDetailLog.getMoney() != money.longValue()) {
-            log.error("AssetBizImpl.rechargeCallback: 充值金额不一致");
-            return ResponseEntity
-                    .badRequest()
-                    .body("error");
-        }
-
-        Date now = new Date();
-        rechargeDetailLog.setCallbackTime(now);
-        rechargeDetailLog.setUpdateTime(now);
-        rechargeDetailLog.setState(1);
-        rechargeDetailLogService.save(rechargeDetailLog);
-
-        // 修改资金记录
-        CapitalChangeEntity entity = new CapitalChangeEntity();
-        entity.setMoney(money.intValue());
-        entity.setType(CapitalChangeEnum.Recharge);
-        entity.setUserId(userId);
-        entity.setToUserId(userId);
-        entity.setRemark("充值成功！");
-        capitalChangeHelper.capitalChange(entity);
-
-        // 触发用户充值
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setTag(MqTagEnum.RECHARGE);
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
-        mqConfig.setSendTime(DateHelper.addSeconds(now, 30));
-        ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
-        mqConfig.setMsg(body);
-        mqHelper.convertAndSend(mqConfig);
-        return ResponseEntity.ok("success");
     }
 
     @Override
@@ -457,9 +523,9 @@ public class AssetBizImpl implements AssetBiz {
             voPreRechargeResp.setMouthLimit("未知");
         }
         // 返回银行信息
-        voPreRechargeResp.setTimesLimit(bank.getValue04());
-        voPreRechargeResp.setDayLimit(bank.getValue05());
-        voPreRechargeResp.setMouthLimit(bank.getValue06());
+        voPreRechargeResp.setTimesLimit(bank.getValue04().split(",")[0]);
+        voPreRechargeResp.setDayLimit(bank.getValue05().split(",")[0]);
+        voPreRechargeResp.setMouthLimit(bank.getValue06().split(",")[0]);
         return ResponseEntity.ok(voPreRechargeResp);
     }
 
