@@ -101,7 +101,7 @@ public class TenderBizImpl implements TenderBiz {
         borrowTender.setUserId(userId);
         borrowTender.setBorrowId(voCreateTenderReq.getBorrowId());
         borrowTender.setStatus(1);
-        borrowTender.setMoney(voCreateTenderReq.getTenderMoney());
+        borrowTender.setMoney((int)voCreateTenderReq.getTenderMoney());
         borrowTender.setValidMoney(validMoney);
         borrowTender.setSource(voCreateTenderReq.getTenderSource());
         Integer autoOrder = voCreateTenderReq.getAutoOrder();
@@ -352,7 +352,7 @@ public class TenderBizImpl implements TenderBiz {
                     break;
                 }
 
-                Integer lowest = voCreateTenderReq.getLowest();
+                double lowest = voCreateTenderReq.getLowest();
                 if (lowest > 0 && validMoney < lowest) {  //自动投标单笔最低投标额
                     msg = "该借款已达到自投限额!";
                     break;

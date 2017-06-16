@@ -8,7 +8,7 @@ import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
-import com.gofobao.framework.borrow.vo.request.VoAddBorrow;
+import com.gofobao.framework.borrow.vo.request.VoAddNetWorthBorrow;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
@@ -222,10 +222,10 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> addNetWorth(VoAddBorrow voAddNetWorthBorrow) {
+    public ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow) {
         Long userId = voAddNetWorthBorrow.getUserId();
         String releaseAtStr = voAddNetWorthBorrow.getReleaseAt();
-        Integer money = voAddNetWorthBorrow.getMoney();
+        Integer money = (int) voAddNetWorthBorrow.getMoney();
         boolean closeAuto = voAddNetWorthBorrow.isCloseAuto();
 
         Asset asset = assetService.findByUserIdLock(userId);
@@ -329,7 +329,7 @@ public class BorrowBizImpl implements BorrowBiz {
         return ResponseEntity.ok(VoBaseResp.ok("发布净值借款成功!"));
     }
 
-    private long insertBorrow(VoAddBorrow voAddNetWorthBorrow, Long userId) throws Exception {
+    private long insertBorrow(VoAddNetWorthBorrow voAddNetWorthBorrow, Long userId) throws Exception {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "借款人未开户!");
 
@@ -347,7 +347,7 @@ public class BorrowBizImpl implements BorrowBiz {
         borrow.setIsVouch(false);
         borrow.setIsMortgage(false);
         borrow.setName(voAddNetWorthBorrow.getName());
-        borrow.setMoney(voAddNetWorthBorrow.getMoney());
+        borrow.setMoney((int) voAddNetWorthBorrow.getMoney());
         borrow.setRepayFashion(1);
         borrow.setTimeLimit(voAddNetWorthBorrow.getTimeLimit());
         borrow.setApr(voAddNetWorthBorrow.getApr());
@@ -837,10 +837,11 @@ public class BorrowBizImpl implements BorrowBiz {
 
     /**
      * 检查提前结清参数
+     *
      * @param voRepayAllReq
      * @return
      */
-    public ResponseEntity<VoBaseResp> checkRepayAll(VoRepayAllReq voRepayAllReq){
+    public ResponseEntity<VoBaseResp> checkRepayAll(VoRepayAllReq voRepayAllReq) {
         Long borrowId = voRepayAllReq.getBorrowId();
         Borrow borrow = borrowService.findByIdLock(borrowId);
         if ((borrow.getStatus() != 3) || (borrow.getType() != 0 && borrow.getType() != 4)) {
@@ -889,14 +890,12 @@ public class BorrowBizImpl implements BorrowBiz {
         Specification<BorrowRepayment> brs = Specifications
                 .<BorrowRepayment>and()
                 .eq("borrowId", borrowId)
+                .eq("status", 0)
                 .build();
         List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
 
         for (int i = 0; i < borrowRepaymentList.size(); i++) {
             borrowRepayment = borrowRepaymentList.get(i);
-            if (borrowRepayment.getStatus() != 0) {
-                continue;
-            }
 
             if (borrowRepayment.getOrder() == 0) {
                 startAt = DateHelper.beginOfDate(borrow.getSuccessAt());

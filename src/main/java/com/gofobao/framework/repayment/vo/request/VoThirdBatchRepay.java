@@ -10,13 +10,13 @@ import javax.validation.constraints.NotNull;
  */
 @Data
 public class VoThirdBatchRepay {
-    @ApiModelProperty( hidden = true)
+    @ApiModelProperty(hidden = true)
     private Long userId;
-    @ApiModelProperty( value = "借款还款id", dataType = "int", required = true)
+    @ApiModelProperty(value = "借款还款id", dataType = "int", required = true)
     @NotNull(message = "借款还款Id不能为空!")
     private Long repaymentId;
-    @ApiModelProperty( value = "利息百分比", dataType = "int", required = true)
+    @ApiModelProperty(value = "利息百分比", dataType = "int", required = true)
     private Double interestPercent;
-    @ApiModelProperty( value = "是否是用户主动还款", dataType = "int", required = true)
+    @ApiModelProperty(value = "是否是用户主动还款", dataType = "int", required = true)
     private Boolean isUserOpen;
 }

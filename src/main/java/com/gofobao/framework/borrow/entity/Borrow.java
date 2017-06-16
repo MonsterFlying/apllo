@@ -15,10 +15,10 @@ import java.util.Date;
  */
 @Entity
 @Table(name = "gfb_borrow")
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @DynamicInsert
+@Data
 public class Borrow implements Serializable {
     @Id
     @GeneratedValue
@@ -154,6 +154,8 @@ public class Borrow implements Serializable {
     @Basic
     @Column(name = "bail_account_id")
     private String bailAccountId;
+
+
 
     /**
      * 判断是否是转让标

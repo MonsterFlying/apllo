@@ -15,6 +15,7 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
@@ -180,7 +181,7 @@ public class BorrowProvider {
                 VoCreateTenderReq voCreateTenderReq = new VoCreateTenderReq();
                 voCreateTenderReq.setUserId(lend.getUserId());
                 voCreateTenderReq.setBorrowId(borrow.getId());
-                voCreateTenderReq.setTenderMoney(borrow.getMoney());
+                voCreateTenderReq.setTenderMoney(MathHelper.myRound(borrow.getMoney() / 100.0, 2));
                 Map<String, Object> rsMap = tenderBiz.createTender(voCreateTenderReq);
 
                 Object msg = rsMap.get("msg");

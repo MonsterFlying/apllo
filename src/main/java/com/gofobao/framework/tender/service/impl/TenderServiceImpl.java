@@ -113,7 +113,7 @@ public class TenderServiceImpl implements TenderService {
         if (ObjectUtils.isEmpty(specification) || ObjectUtils.isEmpty(pageable)) {
             return null;
         }
-        return tenderRepository.findAll(specification, pageable).getContent() ;
+        return tenderRepository.findAll(specification, pageable).getContent();
     }
 
     public List<Tender> findList(Specification<Tender> specification, Sort sort) {
@@ -129,6 +129,7 @@ public class TenderServiceImpl implements TenderService {
         }
         return tenderRepository.count(specification);
     }
+
     /**
      * 检查投标是否太频繁
      *
@@ -150,5 +151,9 @@ public class TenderServiceImpl implements TenderService {
 
     public Tender findById(Long tenderId) {
         return tenderRepository.findOne(tenderId);
+    }
+
+    public Tender findByAuthCode(String authCode) {
+        return tenderRepository.findByAuthCode(authCode);
     }
 }

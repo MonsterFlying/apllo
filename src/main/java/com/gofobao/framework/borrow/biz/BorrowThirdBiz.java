@@ -4,8 +4,13 @@ import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
 import com.gofobao.framework.borrow.vo.request.VoCancelThirdBorrow;
 import com.gofobao.framework.borrow.vo.request.VoCreateThirdBorrowReq;
 import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
+import com.gofobao.framework.borrow.vo.request.VoThirdBatchRepayAll;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.repayment.vo.request.VoThirdBatchRepay;
 import org.springframework.http.ResponseEntity;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Created by Zeke on 2017/6/1.
@@ -17,8 +22,25 @@ public interface BorrowThirdBiz {
 
     DebtDetailsQueryResp queryThirdBorrowList(VoQueryThirdBorrowList voQueryThirdBorrowList);
 
+    /**
+     * 即信批次还款(提前结清)
+     *
+     * @param voThirdBatchRepay
+     * @return
+     */
+    ResponseEntity<VoBaseResp> thirdBatchRepayAll(VoThirdBatchRepayAll voThirdBatchRepay) throws Exception;
 
+    /**
+     * 即信批次还款(提前结清)
+     *
+     * @return
+     */
+    void thirdBatchRepayAllCheckCall(HttpServletRequest request, HttpServletResponse response);
 
-
-
+    /**
+     * 即信批次还款
+     *
+     * @return
+     */
+    void thirdBatchRepayAllRunCall(HttpServletRequest request, HttpServletResponse response);
 }
