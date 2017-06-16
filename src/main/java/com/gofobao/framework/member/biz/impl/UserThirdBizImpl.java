@@ -209,8 +209,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
             int status = result.get("status").getAsInt();
             if (status == 0) {
                 JsonObject info = result.get("result").getAsJsonObject();
-                logo = info.get("bank").getAsString();
-                bankName = info.get("logo").getAsString();
+                bankName = info.get("bank").getAsString();
+                logo = info.get("logo").getAsString();
 
             }
 

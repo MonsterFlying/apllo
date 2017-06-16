@@ -33,5 +33,5 @@ public class Vip {
 
     private Date createdAt ;
 
-    private Date updatedAd ;
+    private Date updatedAt ;
 }

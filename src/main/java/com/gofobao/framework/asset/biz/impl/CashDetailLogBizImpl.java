@@ -407,7 +407,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         if(!respCode.equals("200")){
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前网络异常,请稍后重试", VoBankApsWrapResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, resp.get("RespMsg").getAsString(), VoBankApsWrapResp.class));
         }
         JsonObject data = rootObject.getAsJsonObject("data");
         VoBankApsWrapResp voBankApsWrapResp = GSON.fromJson(data, VoBankApsWrapResp.class) ;
