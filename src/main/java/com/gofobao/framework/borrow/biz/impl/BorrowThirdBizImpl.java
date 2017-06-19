@@ -31,11 +31,18 @@ import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchRepay;
 import com.gofobao.framework.system.contants.ThirdBatchNoTypeContant;
+import com.gofobao.framework.system.entity.DictItem;
+import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
+import com.gofobao.framework.system.service.DictItemServcie;
+import com.gofobao.framework.system.service.DictValueService;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -59,6 +66,8 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Zeke on 2017/6/1.
@@ -89,13 +98,39 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     private UserThirdAccountService userThirdAccountService;
     @Autowired
     private BorrowBiz borrowBiz;
+    @Autowired
+    private DictItemServcie dictItemServcie;
+    @Autowired
+    private DictValueService dictValueService;
 
     @Value("gofobao.webDomain")
     private String webDomain;
     @Value("jixin.redPacketAccountId")
     private String redPacketAccountId;
 
+    LoadingCache<String, DictValue> jixinCache = CacheBuilder
+            .newBuilder()
+            .expireAfterWrite(60, TimeUnit.MINUTES)
+            .maximumSize(1024)
+            .build(new CacheLoader<String, DictValue>() {
+                @Override
+                public DictValue load(String bankName) throws Exception {
+                    DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
+                    if (ObjectUtils.isEmpty(dictItem)) {
+                        return null;
+                    }
 
+                    return dictValueService.findTopByItemIdAndValue01(dictItem.getId(), bankName);
+                }
+            });
+
+
+    /**
+     * 登记即信标的
+     *
+     * @param voCreateThirdBorrowReq
+     * @return
+     */
     public ResponseEntity<VoBaseResp> createThirdBorrow(VoCreateThirdBorrowReq voCreateThirdBorrowReq) {
         Long borrowId = voCreateThirdBorrowReq.getBorrowId();
 
@@ -107,6 +142,11 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
 
         Borrow borrow = borrowService.findById(borrowId);
         Preconditions.checkNotNull(borrow, "借款记录不存在！");
+
+        int type = borrow.getType();
+        if (type == 0 || type == 4) { //判断是否是官标、官标不需要在这里登记标的
+            return null;
+        }
 
         Long userId = borrow.getUserId();
         int repayFashion = borrow.getRepayFashion();
@@ -132,13 +172,17 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         request.setDuration(StringHelper.toString(duration));
         request.setTxAmount(StringHelper.formatDouble(borrow.getMoney(), 100, false));
         request.setRate(StringHelper.formatDouble(borrow.getApr(), 100, false));
-        /**
-         * @// TODO: 2017/6/12 借款手续费
-         */
         request.setTxFee("0");
         String bailAccountId = borrow.getBailAccountId();
         if (!ObjectUtils.isEmpty(bailAccountId)) {
             request.setBailAccountId(bailAccountId);
+        } else {
+            try {
+                DictValue dictValue = jixinCache.get("bailAccountId");
+                request.setBailAccountId(dictValue.getValue03());
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
         }
         request.setAcqRes(StringHelper.toString(borrowId));
         request.setChannel(ChannelContant.HTML);
@@ -151,6 +195,12 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         return null;
     }
 
+    /**
+     * 取消即信借款
+     *
+     * @param voCancelThirdBorrow
+     * @return
+     */
     public ResponseEntity<VoBaseResp> cancelThirdBorrow(VoCancelThirdBorrow voCancelThirdBorrow) {
         Long userId = voCancelThirdBorrow.getUserId();
         Long borrowId = voCancelThirdBorrow.getBorrowId();

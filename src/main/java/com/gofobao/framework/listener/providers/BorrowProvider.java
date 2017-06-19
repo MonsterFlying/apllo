@@ -285,6 +285,7 @@ public class BorrowProvider {
         if (!ObjectUtils.isEmpty(resp)) {
             return resp;
         }
+
         //批量投标
         Specification<Tender> ts = Specifications
                 .<Tender>and()

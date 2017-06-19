@@ -512,6 +512,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      * @throws Exception
      */
+    @Transactional(rollbackFor = Exception.class)
     public boolean notTransferedBorrowAgainVerify(Borrow borrow) throws Exception {
         boolean bool = false;
         do {
@@ -548,7 +549,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 borrowRepayment.setLateDays(0);
                 borrowRepayment.setLateInterest(0);
                 borrowRepayment.setUserId(borrow.getUserId());
-                borrowRepaymentService.insert(borrowRepayment);
+                borrowRepaymentService.save(borrowRepayment);
             }
 
             //生成回款记录
@@ -562,6 +563,7 @@ public class BorrowBizImpl implements BorrowBiz {
      *
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public boolean transferedBorrowAgainVerify(Borrow borrow) throws Exception {
         boolean bool = false;
         do {
@@ -868,7 +870,7 @@ public class BorrowBizImpl implements BorrowBiz {
     public ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq) {
 
         ResponseEntity resp = checkRepayAll(voRepayAllReq);
-        if (!ObjectUtils.isEmpty(resp)){
+        if (!ObjectUtils.isEmpty(resp)) {
             return resp;
         }
 
