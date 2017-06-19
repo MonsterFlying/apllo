@@ -30,14 +30,16 @@ public interface UserThirdBiz {
      * @param userId
      * @return
      */
-    ResponseEntity<VoOpenAccountResp> openAccount(VoOpenAccountReq voOpenAccountReq, Long userId);
+    ResponseEntity<VoOpenAccountResp> openAccount(VoOpenAccountReq voOpenAccountReq, Long userId, HttpServletRequest httpServletRequest);
 
     /**
      * 初始化银行存管密码
+     *
+     * @param httpServletRequest
      * @param userId
      * @return
      */
-    ResponseEntity<VoHtmlResp> modifyOpenAccPwd(Long userId);
+    ResponseEntity<VoHtmlResp> modifyOpenAccPwd(HttpServletRequest httpServletRequest, Long userId);
 
     /**
      * 银行存管密码回调
@@ -59,20 +61,24 @@ public interface UserThirdBiz {
 
     /**
      * 自动投标签约
+     *
+     * @param httpServletRequest
      * @param userId 用户Id
      * @param smsCode 短信验证码
      * @return
      */
-    ResponseEntity<VoHtmlResp> autoTender(Long userId, String smsCode);
+    ResponseEntity<VoHtmlResp> autoTender(HttpServletRequest httpServletRequest, Long userId, String smsCode);
 
 
     /**
      * 自动转让
+     *
+     * @param httpServletRequest
      * @param userId
      * @param smsCode
      * @return
      */
-    ResponseEntity<VoHtmlResp> autoTranfter(Long userId, String smsCode);
+    ResponseEntity<VoHtmlResp> autoTranfter(HttpServletRequest httpServletRequest, Long userId, String smsCode);
 
 
     /**

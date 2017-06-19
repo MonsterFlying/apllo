@@ -6,6 +6,10 @@ import com.gofobao.framework.system.service.DictValueService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
 /**
  * Created by Max on 17/6/6.
  */
@@ -26,5 +30,12 @@ public class DictValueServcieImpl implements DictValueService {
 
     public void save(DictValue dictValue){
         dictValueRepository.save(dictValue);
+    }
+
+    @Override
+    public List<DictValue> findByItemId(Long id) {
+        List<DictValue> dictValues = dictValueRepository.findByItemId(id);
+        Optional< List<DictValue>> res = Optional.ofNullable(dictValues) ;
+        return res.orElse(Collections.EMPTY_LIST) ;
     }
 }

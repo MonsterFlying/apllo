@@ -11,6 +11,7 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.OKHttpHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.service.DictItemServcie;
@@ -27,14 +28,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -44,12 +43,14 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Slf4j
 public class BankAccountBizImpl implements BankAccountBiz{
-
     @Value("${gofobao.aliyun-bankinfo-url}")
     String aliyunQueryBankUrl ;
 
     @Value("${gofobao.aliyun-bankinfo-appcode}")
     String aliyunQueryAppcode ;
+
+    @Value("${gofobao.javaDomain}")
+    String javaDomain ;
 
     @Autowired
     DictValueService dictValueServcie ;
@@ -65,7 +66,6 @@ public class BankAccountBizImpl implements BankAccountBiz{
 
     @Autowired
     CashDetailLogService cashDetailLogService ;
-
 
     LoadingCache<String, DictValue> bankLimitCache = CacheBuilder
             .newBuilder()
@@ -160,6 +160,35 @@ public class BankAccountBizImpl implements BankAccountBiz{
         resp.setBankIcon(info.get("logo").getAsString());
 
         return ResponseEntity.ok(resp) ;
+
+    }
+
+    @Override
+    public ResponseEntity<VoHtmlResp> credit() {
+        return null;
+    }
+
+    @Override
+    public void showDesc(Model model) {
+        DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("PLATFORM_BANK", 0) ;
+        if(ObjectUtils.isEmpty(dictItem)){
+            throw new RuntimeException("BankAccountBizImpl.showDesc： 查询平台支持银行卡列表异常， 请联系平台客服!");
+        }
+
+        List<DictValue>  list = dictValueServcie.findByItemId(dictItem.getId()) ;
+        List<Map<String, String>> bankList = new ArrayList<>() ;
+        list.forEach(bean ->{
+            Map<String, String> rs = new HashMap<>() ;
+            rs.put("logo", String.format("%s/%s", javaDomain, bean.getValue03())) ; // logo
+            rs.put("name", bean.getName()) ;
+            rs.put("desc", String.format("单笔限额%s元，每日限额%s元，每月限额%s元"
+                    , bean.getValue04().split(",")[0]
+                    , bean.getValue05().split(",")[0]
+                    , bean.getValue06().split(",")[0])) ;
+            bankList.add(rs) ;
+        });
+
+        model.addAttribute("bankList", bankList) ;
 
     }
 

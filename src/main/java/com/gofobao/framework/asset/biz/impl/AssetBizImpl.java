@@ -27,6 +27,7 @@ import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
+import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.IpHelper;
@@ -54,9 +55,11 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
 import org.springframework.util.Base64Utils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
@@ -65,10 +68,7 @@ import org.springframework.util.StringUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -207,6 +207,21 @@ public class AssetBizImpl implements AssetBiz {
     }
 
     @Override
+    public String rechargeShow(HttpServletRequest request, Model model, String seqNo) {
+        // 查询充值信息
+        RechargeDetailLog rechargeDetailLog = rechargeDetailLogService.findTopBySeqNo(seqNo);
+        if(ObjectUtils.isEmpty(rechargeDetailLog)){
+            return "/recharge/faile" ;
+        }else if(rechargeDetailLog.getState() == 0){
+            return "/recharge/loading" ;
+        }else if(rechargeDetailLog.getState() == 1){
+            return "/recharge/success" ;
+        }else{
+            return "/recharge/faile" ;
+        }
+    }
+
+    @Override
     public ResponseEntity<VoHtmlResp> recharge(HttpServletRequest request, VoRechargeReq voRechargeReq) {
         Users users = userService.findById(voRechargeReq.getUserId());
         Preconditions.checkNotNull(users, "当前用户不存在");
@@ -284,6 +299,9 @@ public class AssetBizImpl implements AssetBiz {
         }
 
         DirectRechargePlusRequest directRechargePlusRequest = new DirectRechargePlusRequest();
+        directRechargePlusRequest.setSeqNo(RandomHelper.generateNumberCode(6));
+        directRechargePlusRequest.setTxTime(DateHelper.getTime());
+        directRechargePlusRequest.setTxDate(DateHelper.getDate());
         directRechargePlusRequest.setAccountId(userThirdAccount.getAccountId());
         directRechargePlusRequest.setIdType(IdTypeContant.ID_CARD);
         directRechargePlusRequest.setIdNo(userThirdAccount.getIdNo());
@@ -292,10 +310,11 @@ public class AssetBizImpl implements AssetBiz {
         directRechargePlusRequest.setCardNo(userThirdAccount.getCardNo());
         directRechargePlusRequest.setCurrency("156");
         directRechargePlusRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/asset/recharge/callback"));
+        directRechargePlusRequest.setRetUrl(String.format("%s/%s/%s", javaDomain, "/pub/recharge/show", directRechargePlusRequest.getTxDate() + directRechargePlusRequest.getTxTime() + directRechargePlusRequest.getSeqNo()));
         directRechargePlusRequest.setLastSrvAuthCode(srvTxCode);
         directRechargePlusRequest.setSmsCode(voRechargeReq.getSmsCode());
         directRechargePlusRequest.setAcqRes(users.getId().toString());
-        directRechargePlusRequest.setChannel(ChannelContant.HTML);
+        directRechargePlusRequest.setChannel(ChannelContant.getchannel(request));
         directRechargePlusRequest.setTxAmount(voRechargeReq.getMoney().toString());
         VoHtmlResp resp = VoBaseResp.ok("成功", VoHtmlResp.class);
         String html = jixinManager.getHtml(JixinTxCodeEnum.DIRECT_RECHARGE_PLUS, directRechargePlusRequest);
