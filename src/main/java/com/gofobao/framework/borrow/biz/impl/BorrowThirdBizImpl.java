@@ -228,12 +228,13 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     /**
      * 即信批次还款(提前结清)
      *
-     * @param voThirdBatchRepayAll
+     * @param voRepayAllReq
      * @return
      */
-    public ResponseEntity<VoBaseResp> thirdBatchRepayAll(VoThirdBatchRepayAll voThirdBatchRepayAll) throws Exception {
+    public ResponseEntity<VoBaseResp> thirdBatchRepayAll(VoRepayAllReq voRepayAllReq) {
+
         Date nowDate = new Date();
-        Long borrowId = voThirdBatchRepayAll.getBorrowId();
+        Long borrowId = voRepayAllReq.getBorrowId();
         Borrow borrow = borrowService.findByIdLock(borrowId);
         Asset borrowAsset = assetService.findByUserId(borrow.getUserId());
         Preconditions.checkNotNull(borrowAsset, "借款人资产记录不存在!");
@@ -351,7 +352,11 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
 
         //存在违约金的时候将违约金发放给投资者
         if (penalty > 0) {
-            receivedPenalty(borrow, penalty);
+            try {
+                receivedPenalty(borrow, penalty);
+            } catch (Exception e) {
+                log.error("borrowThirdBizImpl thirdBatchRepayAll 发放违约金失败");
+            }
         }
 
         return null;

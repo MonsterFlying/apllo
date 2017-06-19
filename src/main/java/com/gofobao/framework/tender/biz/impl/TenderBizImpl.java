@@ -21,6 +21,7 @@ import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MathHelper;
+import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserCache;
@@ -105,7 +106,7 @@ public class TenderBizImpl implements TenderBiz {
         borrowTender.setUserId(userId);
         borrowTender.setBorrowId(voCreateTenderReq.getBorrowId());
         borrowTender.setStatus(1);
-        borrowTender.setMoney((int)voCreateTenderReq.getTenderMoney());
+        borrowTender.setMoney(NumberHelper.toInt(voCreateTenderReq.getTenderMoney()));
         borrowTender.setValidMoney(validMoney);
         borrowTender.setSource(voCreateTenderReq.getTenderSource());
         Integer autoOrder = voCreateTenderReq.getAutoOrder();
@@ -211,9 +212,19 @@ public class TenderBizImpl implements TenderBiz {
             }
 
             UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-            if (ObjectUtils.isEmpty(userThirdAccount)) {
+            if (ObjectUtils.isEmpty(userThirdAccount) || ObjectUtils.isEmpty(userThirdAccount.getAccountId())) {
                 log.info("用户投标：当前用户未开户。");
                 msg = "当前用户未开户!";
+                break;
+            }
+
+            if (userThirdAccount.getPasswordState() == 0) {
+                msg = "银行存管:密码未初始化!";
+                break;
+            }
+
+            if (userThirdAccount.getCardNoBindState() == 0) {
+                msg = "银行存管:银行卡未初始化!";
                 break;
             }
 

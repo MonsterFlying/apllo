@@ -1,6 +1,7 @@
 package com.gofobao.framework.borrow.controller;
 
 import com.gofobao.framework.borrow.biz.BorrowBiz;
+import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.vo.request.*;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
@@ -40,6 +41,8 @@ public class BorrowController {
     private BorrowBiz borrowBiz;
     @Autowired
     private ThymeleafHelper thymeleafHelper;
+    @Autowired
+    private BorrowThirdBiz borrowThirdBiz;
 
     @Autowired
     private JwtTokenHelper jwtTokenHelper;
@@ -180,7 +183,7 @@ public class BorrowController {
     @PostMapping("/repayAll")
     @ApiOperation("提前还款")
     public ResponseEntity<VoBaseResp> repayAll(@Valid @ModelAttribute VoRepayAllReq voRepayAllReq) {
-        return borrowBiz.repayAll(voRepayAllReq);
+        return borrowThirdBiz.thirdBatchRepayAll(voRepayAllReq);
     }
 
     /**

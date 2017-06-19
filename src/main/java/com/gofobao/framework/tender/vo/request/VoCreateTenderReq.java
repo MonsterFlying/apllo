@@ -17,7 +17,7 @@ public class VoCreateTenderReq extends VoBaseReq {
     @ApiModelProperty(name = "userId", hidden = true)
     private Long userId;
 
-    @ApiModelProperty(name = "tenderMoney", value = "投标金额", dataType = "int", required = true)
+    @ApiModelProperty(name = "tenderMoney", value = "投标金额", dataType = "double",required = true)
     @NotNull(message = "投标金额不能为空!")
     private Double tenderMoney;
 
@@ -45,16 +45,16 @@ public class VoCreateTenderReq extends VoBaseReq {
     @ApiModelProperty(hidden = true)
     private String requestSource;
 
-    public double getTenderMoney() {
-        return (int) MathHelper.myRound(tenderMoney, 0);
+    public Double getTenderMoney() {
+        return MathHelper.myRound(tenderMoney, 0);
     }
 
     public void setTenderMoney(Double tenderMoney) {
         this.tenderMoney = MathHelper.myRound(tenderMoney * 100.0, 0);
     }
 
-    public double getLowest() {
-        return (int) MathHelper.myRound(lowest, 0);
+    public Double getLowest() {
+        return MathHelper.myRound(lowest, 0);
     }
 
     public void setLowest(Double lowest) {

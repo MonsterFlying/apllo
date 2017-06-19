@@ -244,11 +244,23 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        if (ObjectUtils.isEmpty(userThirdAccount)) {
+        if (ObjectUtils.isEmpty(userThirdAccount) || ObjectUtils.isEmpty(userThirdAccount.getAccountId())) {
             log.info("新增借款：当前用户未开户。");
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户未开户!"));
+        }
+
+        if (userThirdAccount.getPasswordState() == 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "银行存管:密码未初始化!"));
+        }
+
+        if (userThirdAccount.getCardNoBindState() == 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "银行存管:银行卡未初始化!"));
         }
 
         Date releaseAt = DateHelper.stringToDate(releaseAtStr, DateHelper.DATE_FORMAT_YMDHMS);
@@ -414,30 +426,6 @@ public class BorrowBizImpl implements BorrowBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "只有借款标过期或者本人才能取消借款!"));
         }
-
-        //================================调用即信取消标的====================================
-        /*VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
-        voQueryThirdBorrowList.setBorrowId(borrowId);
-        voQueryThirdBorrowList.setUserId(userId);
-        voQueryThirdBorrowList.setPageNum("1");
-        voQueryThirdBorrowList.setPageSize("10");
-        DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
-        int totalItems = NumberHelper.toInt(resp.getTotalItems()) + 1;
-        if (totalItems > 0) {//在即信查询到对应的标的
-            List<DebtDetail> debtDetailList = GSON.fromJson(resp.getSubPacks(), new TypeToken<List<DebtDetail>>() {
-            }.getType());
-            Preconditions.checkNotNull(debtDetailList, "即信标的不存在!");
-
-            VoCancelThirdBorrow voCancelThirdBorrow = new VoCancelThirdBorrow();
-            voCancelThirdBorrow.setUserId(userId);
-            voCancelThirdBorrow.setBorrowId(borrowId);
-            voCancelThirdBorrow.setRaiseDate(debtDetailList.get(0).getRaiseDate());
-            ResponseEntity responseEntity = borrowThirdBiz.cancelThirdBorrow(voCancelThirdBorrow);
-            if (!ObjectUtils.isEmpty(responseEntity)) {
-                return responseEntity;
-            }
-        }*/
-        //======================================================================================
 
         Specification<Tender> borrowSpecification = Specifications
                 .<Tender>and()
@@ -878,6 +866,12 @@ public class BorrowBizImpl implements BorrowBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq) {
+
+        ResponseEntity resp = checkRepayAll(voRepayAllReq);
+        if (!ObjectUtils.isEmpty(resp)){
+            return resp;
+        }
+
         Long borrowId = voRepayAllReq.getBorrowId();
         Borrow borrow = borrowService.findByIdLock(borrowId);
         Asset borrowAsset = assetService.findByUserId(borrow.getUserId());

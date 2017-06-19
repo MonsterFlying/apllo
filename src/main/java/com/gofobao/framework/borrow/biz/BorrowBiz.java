@@ -93,6 +93,7 @@ public interface BorrowBiz {
      */
     ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq);
 
+
     /**
      * pc:招标中统计
      *
@@ -105,5 +106,7 @@ public interface BorrowBiz {
      * 请求复审
      */
     ResponseEntity<VoBaseResp> doAgainVerify(VoDoAgainVerifyReq voDoAgainVerifyReq);
+
+    ResponseEntity<VoBaseResp> checkRepayAll(VoRepayAllReq voRepayAllReq);
 
 }

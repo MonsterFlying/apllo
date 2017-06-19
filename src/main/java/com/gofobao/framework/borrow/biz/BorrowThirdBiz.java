@@ -1,10 +1,7 @@
 package com.gofobao.framework.borrow.biz;
 
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
-import com.gofobao.framework.borrow.vo.request.VoCancelThirdBorrow;
-import com.gofobao.framework.borrow.vo.request.VoCreateThirdBorrowReq;
-import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
-import com.gofobao.framework.borrow.vo.request.VoThirdBatchRepayAll;
+import com.gofobao.framework.borrow.vo.request.*;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchRepay;
 import org.springframework.http.ResponseEntity;
@@ -25,10 +22,10 @@ public interface BorrowThirdBiz {
     /**
      * 即信批次还款(提前结清)
      *
-     * @param voThirdBatchRepay
+     * @param voRepayAllReq
      * @return
      */
-    ResponseEntity<VoBaseResp> thirdBatchRepayAll(VoThirdBatchRepayAll voThirdBatchRepay) throws Exception;
+    ResponseEntity<VoBaseResp> thirdBatchRepayAll(VoRepayAllReq voRepayAllReq);
 
     /**
      * 即信批次还款(提前结清)
