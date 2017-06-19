@@ -80,6 +80,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
                 .permitAll()
                 .antMatchers(
+                        "/pc/**")
+
+                .permitAll()
+                .antMatchers(
                         "/redPackage/**")
 
                 .permitAll()

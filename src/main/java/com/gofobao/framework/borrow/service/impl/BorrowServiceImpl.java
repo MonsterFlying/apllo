@@ -88,7 +88,7 @@ public class BorrowServiceImpl implements BorrowService {
     public List<VoViewBorrowList> findAll(VoBorrowListReq voBorrowListReq) {
 
         Integer type = voBorrowListReq.getType();
-        List<Integer> typeArray = Arrays.asList(-1, 1, 2, 3, 4, 5);
+        List<Integer> typeArray = Arrays.asList(-1, 1, 2, 0,4, 5);
         Boolean flag = typeArray.contains(type);
         if (!flag) {
             return Collections.EMPTY_LIST;
@@ -104,7 +104,7 @@ public class BorrowServiceImpl implements BorrowService {
 
         StringBuilder pageSb = new StringBuilder(" SELECT b FROM Borrow b WHERE 1=1 ");
 
-        StringBuilder countSb = new StringBuilder(" SELECT COUNT(id) FROM Borrow b WHERE 1=1 ");
+        //StringBuilder countSb = new StringBuilder(" SELECT COUNT(id) FROM Borrow b WHERE 1=1 ");
         StringBuilder condtionSql = new StringBuilder("");
         /**
          *
@@ -137,9 +137,9 @@ public class BorrowServiceImpl implements BorrowService {
         Query pageQuery = entityManager.createQuery(pageSb.append(condtionSql).toString(), Borrow.class);
         pageQuery.setParameter("statusArray", statusArray);
 
-        Query countQuery = entityManager.createQuery(countSb.append(condtionSql).toString(), Long.class);
-        countQuery.setParameter("statusArray", statusArray);
-        Long count = (Long) countQuery.getSingleResult();
+     //   Query countQuery = entityManager.createQuery(countSb.append(condtionSql).toString(), Long.class);
+     //   countQuery.setParameter("statusArray", statusArray);
+       // Long count = (Long) countQuery.getSingleResult();
         List<Borrow> borrowLists = pageQuery
                 .setFirstResult(voBorrowListReq.getPageIndex())
                 .setMaxResults(voBorrowListReq.getPageSize())
@@ -215,7 +215,7 @@ public class BorrowServiceImpl implements BorrowService {
             item.setIsVouch(m.getIsVouch());
             item.setTenderCount(m.getTenderCount());
             item.setAvatar(imageDomain + "/data/images/avatar/" + userId + "_avatar_small.jpg");
-            item.setPageCount(count.intValue());
+         //   item.setPageCount(count.intValue());
             listResList.add(item);
         });
 
@@ -239,7 +239,9 @@ public class BorrowServiceImpl implements BorrowService {
         }
         borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
         borrowInfoRes.setLowest(StringHelper.formatMon(borrow.getLowest() / 100d));
-        borrowInfoRes.setMoneyYes(StringHelper.formatMon(borrow.getMoneyYes() / 100d));
+        Integer surplusMoney= borrow.getMoney()-borrow.getMoneyYes();
+        borrowInfoRes.setViewSurplusMoney(StringHelper.formatMon(surplusMoney/100));
+        borrowInfoRes.setHideSurplusMoney(surplusMoney);
         if (borrow.getType() == BorrowContants.REPAY_FASHION_ONCE) {
             borrowInfoRes.setTimeLimit(borrow.getTimeLimit() + BorrowContants.DAY);
         } else {
@@ -279,19 +281,22 @@ public class BorrowServiceImpl implements BorrowService {
         if (!StringUtils.isEmpty(borrow.getTenderId())) {
             borrowInfoRes.setType(5);
         }
+
+        borrowInfoRes.setPassWord(StringUtils.isEmpty(borrow.getPassword())?false:true);
         Users users=usersRepository.findOne(borrow.getUserId());
         borrowInfoRes.setUserName(!StringUtils.isEmpty(users.getUsername())?users.getUsername():users.getPhone());
         borrowInfoRes.setIsNovice(borrow.getIsNovice());
         borrowInfoRes.setStatus(status);
         borrowInfoRes.setSuccessAt(StringUtils.isEmpty(borrow.getSuccessAt()) ? "" : DateHelper.dateToString(borrow.getSuccessAt()));
+        borrowInfoRes.setBorrowName(borrow.getName());
         return borrowInfoRes;
-
     }
 
     /**
      * 标简介
      *
      * @param borrowId
+
      * @return
      */
     @Override

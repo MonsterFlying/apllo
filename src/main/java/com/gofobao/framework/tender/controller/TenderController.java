@@ -2,10 +2,13 @@ package com.gofobao.framework.tender.controller;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
+import com.gofobao.framework.tender.biz.AutoTenderBiz;
 import com.gofobao.framework.tender.biz.TenderBiz;
+import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.vo.request.TenderUserReq;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
+import com.gofobao.framework.tender.vo.response.VoViewUserAutoTenderWarpRes;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -27,26 +30,17 @@ public class TenderController {
     @Autowired
     private TenderBiz tenderBiz;
 
+    @Autowired
+    private AutoTenderBiz autoTenderBiz;
+
+    TenderUserReq tenderUserReq=new TenderUserReq();
+
 
     @ApiOperation("投标用户列表")
-    @GetMapping("/v2/user/list/{borrowId}")
-    public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(@PathVariable Long borrowId,
-                                                                              @PathVariable Integer pageIndex,
-                                                                              @PathVariable Integer pageSize) {
-        TenderUserReq tenderUserReq=new TenderUserReq();
-        tenderUserReq.setPageSize(pageSize);
-        tenderUserReq.setPageIndex(pageIndex);
-        tenderUserReq.setBorrowId(borrowId);
-        return tenderBiz.findBorrowTenderUser(tenderUserReq);
-    }
-
-    @ApiOperation("pc:投标用户列表")
-    @GetMapping("pc/v2/user/list/{pageIndex}/{pageSize}{borrowId}")
-    public ResponseEntity<VoBorrowTenderUserWarpListRes> pcFindBorrowTenderUser(@PathVariable Long borrowId,
-                                                                                @PathVariable Integer pageIndex,
-                                                                                @PathVariable Integer pageSize) {
-
-        TenderUserReq tenderUserReq=new TenderUserReq();
+    @GetMapping("/v2/user/list/{pageIndex}/{pageSize}/{borrowId}")
+    public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(@PathVariable Integer pageIndex,
+                                                                              @PathVariable Integer pageSize,
+                                                                              @PathVariable Long borrowId) {
         tenderUserReq.setPageSize(pageSize);
         tenderUserReq.setPageIndex(pageIndex);
         tenderUserReq.setBorrowId(borrowId);
@@ -59,4 +53,11 @@ public class TenderController {
         voCreateTenderReq.setUserId(userId);
         return tenderBiz.tender(voCreateTenderReq);
     }
+
+    @ApiOperation("借款投标")
+    @PostMapping("/v2/user/autoTender/list")
+    public ResponseEntity<VoViewUserAutoTenderWarpRes> tender(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return autoTenderBiz.list(userId);
+    }
+
 }

@@ -543,9 +543,16 @@ public class AssetBizImpl implements AssetBiz {
         }
 
         VoAvailableAssetInfoResp resp = VoBaseResp.ok("查询成功", VoAvailableAssetInfoResp.class);
-        resp.setNoUseMoney(StringHelper.formatDouble(asset.getNoUseMoney() / 100D, true));
-        resp.setUseMoney(StringHelper.formatDouble(asset.getUseMoney() / 100D, true));
-        resp.setTotal(StringHelper.formatDouble((asset.getNoUseMoney() + asset.getUseMoney()) / 100D, true ));
+        Integer noUserMoney=asset.getNoUseMoney() ;
+        Integer userMoney= asset.getUseMoney() ;
+        Integer total=(asset.getNoUseMoney() + asset.getUseMoney()) ;
+
+        resp.setNoUseMoney(noUserMoney);
+        resp.setViewNoUseMoney(StringHelper.formatMon(noUserMoney/100d));
+        resp.setUseMoney(userMoney);
+        resp.setViewUseMoney(StringHelper.formatMon(userMoney/100d));
+        resp.setTotal(total);
+        resp.setViwTotal(StringHelper.formatMon(total/100d));
         return ResponseEntity.ok(resp) ;
     }
 
@@ -559,9 +566,19 @@ public class AssetBizImpl implements AssetBiz {
         }
 
         VoCollectionResp response = VoBaseResp.ok("查询成功", VoCollectionResp.class);
-        response.setInterest(StringHelper.formatDouble(userCache.getWaitCollectionInterest() / 100D, true));
-        response.setPrincipal(StringHelper.formatDouble(userCache.getWaitCollectionPrincipal() / 100D, true));
-        response.setWaitCollectionTotal(StringHelper.formatDouble((userCache.getWaitCollectionPrincipal() + userCache.getWaitCollectionInterest()) / 100D, true));
+
+        Integer waitCollectionInterest= userCache.getWaitCollectionInterest();
+
+        Integer waitCollectionPrincipal =userCache.getWaitCollectionPrincipal();
+        Integer waitCollectionTotal=userCache.getWaitCollectionPrincipal() + userCache.getWaitCollectionInterest();
+        response.setHideInterest(waitCollectionInterest);
+        response.setInterest(StringHelper.formatMon(waitCollectionInterest/100d));
+
+        response.setPrincipal(StringHelper.formatMon(waitCollectionPrincipal/100d));
+        response.setHidePrincipal(waitCollectionPrincipal);
+
+        response.setWaitCollectionTotal(StringHelper.formatMon(waitCollectionTotal/100d));
+        response.setHideWaitCollectionTotal(waitCollectionTotal);
         return ResponseEntity.ok(response);
     }
 
