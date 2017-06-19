@@ -18,13 +18,15 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.message.biz.MessageBiz;
-import com.gofobao.framework.message.vo.VoAnonSmsReq;
-import com.gofobao.framework.message.vo.VoUserSmsReq;
+import com.gofobao.framework.message.vo.request.VoAnonEmailReq;
+import com.gofobao.framework.message.vo.request.VoAnonSmsReq;
+import com.gofobao.framework.message.vo.request.VoUserSmsReq;
 import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -123,17 +125,16 @@ public class MessageBizImpl implements MessageBiz {
     public ResponseEntity<VoBaseResp> sendSwitchPhone(HttpServletRequest request, VoUserSmsReq voUserSmsReq){
         // 查询用户是否存在
         Users user = userService.findById(voUserSmsReq.getUserId()) ;
-
         if(ObjectUtils.isEmpty(user)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前手机号未在平台注册"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前手机号未在平台注册!"));
         }
 
         if(StringUtils.isEmpty(user.getPhone())){
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前手机"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户未绑定手机,你可以前往绑定手机操作!"));
         }
 
 
@@ -450,5 +451,50 @@ public class MessageBizImpl implements MessageBiz {
         }
 
         return ResponseEntity.ok(VoBaseResp.ok("短信发送成功"));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoBaseResp> sendBindEmail(HttpServletRequest request, VoAnonEmailReq voAnonEmailReq, Long userId) {
+        // 验证用户是否无效
+        Users user = userService.findByIdLock(userId);
+        if(ObjectUtils.isEmpty(user)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户不存在！"));
+        }
+
+        // 验证用户是否已经绑定邮箱
+        if(!StringUtils.isEmpty(user.getEmail())){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户已经绑定邮箱,请勿重新绑定!"));
+        }
+
+        // 邮箱邮箱是否唯一
+        boolean notExistsState = userService.notExistsByEmail(voAnonEmailReq.getEmail());
+        if(!notExistsState){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前邮箱已在平台注册,请选择其他邮箱注册!"));
+        }
+
+
+        MqConfig config = new MqConfig() ;
+        config.setQueue(MqQueueEnum.RABBITMQ_EMAIL);
+        config.setTag(MqTagEnum.SMS_EMAIL_BIND);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.EMAIL, voAnonEmailReq.getEmail(), MqConfig.IP, request.getRemoteAddr(), "subject", "广富宝金服账号邮箱绑定") ;
+        config.setMsg(body);
+
+        boolean state = apollomqHelper.convertAndSend(config);
+        if(state){
+            return ResponseEntity.ok(VoBaseResp.ok("邮箱发送成功"));
+        }else{
+            log.error("邮箱绑定邮件发送失败");
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍候重试！"));
+        }
     }
 }

@@ -20,6 +20,7 @@ public class MqConfig {
 
     public static final String IP = "ip";
     public static final String PHONE = "phone";
+    public static final String EMAIL = "email";
     private MqQueueEnum queue;
     private MqTagEnum tag;
     private Map<String, String> msg;

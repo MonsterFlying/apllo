@@ -36,7 +36,7 @@ public abstract class JixinBaseRequest {
      */
     protected String seqNo;
     /**
-     * 交易流水号
+     * 渠道类型
      */
     protected String channel;
 }

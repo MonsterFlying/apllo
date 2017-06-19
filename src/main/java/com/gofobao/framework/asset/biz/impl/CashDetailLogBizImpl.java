@@ -31,7 +31,14 @@ import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
+import com.gofobao.framework.system.entity.DictItem;
+import com.gofobao.framework.system.entity.DictValue;
+import com.gofobao.framework.system.service.DictItemServcie;
+import com.gofobao.framework.system.service.DictValueService;
 import com.google.common.base.Preconditions;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -42,6 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -57,6 +65,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Administrator on 2017/6/12 0012.
@@ -88,6 +98,9 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     @Autowired
     CapitalChangeHelper capitalChangeHelper ;
 
+    @Autowired
+    BankAccountBizImpl bankAccountBiz ;
+
     @Value("${gofobao.javaDomain}")
     String javaDomain;
 
@@ -98,6 +111,31 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
     @Value("${gofobao.aliyun-bankinfo-appcode}")
     String aliyunQueryAppcode ;
+
+
+    @Autowired
+    DictItemServcie dictItemServcie ;
+
+    @Autowired
+    DictValueService dictValueService ;
+
+    LoadingCache<String, DictValue> bankLimitCache = CacheBuilder
+            .newBuilder()
+            .expireAfterWrite(60, TimeUnit.MINUTES)
+            .maximumSize(1024)
+            .build(new CacheLoader<String, DictValue>() {
+                @Override
+                public DictValue load(String bankName) throws Exception {
+                    DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("PLATFORM_BANK", 0) ;
+                    if(ObjectUtils.isEmpty(dictItem)){
+                        return null ;
+                    }
+
+                    return dictValueService.findTopByItemIdAndValue02(dictItem.getId(), bankName);
+                }
+            }) ;
+
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -127,7 +165,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         VoPreCashResp resp = VoBaseResp.ok("查询成功", VoPreCashResp.class);
         resp.setBankName(userThirdAccount.getBankName());
         resp.setLogo(userThirdAccount.getBankLogo());
-        resp.setCardNo(userThirdAccount.getCardNo());
+        resp.setCardNo(userThirdAccount.getCardNo().substring(userThirdAccount.getCardNo().length() - 4));
         resp.setUseMoneyShow(StringHelper.formatDouble(asset.getUseMoney() / 100D, true));
         resp.setUseMoney(asset.getUseMoney() / 100D);
         int time = queryFreeTime(userId) ;
@@ -185,6 +223,46 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "提现金额大于20万,请走人行通道！", VoHtmlResp.class));
         }
+
+
+        // 判断提现额度剩余
+        double[] cashCredit = bankAccountBiz.getCashCredit(userId);
+        // 判断单笔额度
+        double oneTimes = cashCredit[0];
+        if(voCashReq.getCashMoney() > oneTimes){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,
+                            String.format("%s每笔最大提现额度为%s元",
+                                    userThirdAccount.getBankName(),
+                                    StringHelper.formatDouble(oneTimes, true)),
+                            VoHtmlResp.class));
+        }
+
+        // 判断当天额度
+        double dayTimes = cashCredit[1];
+        if( (dayTimes <= 0) || (dayTimes - voCashReq.getCashMoney() < 0)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,
+                            String.format("今天你在%s的剩余提现额度%s",
+                                    userThirdAccount.getBankName(),
+                                    StringHelper.formatDouble(dayTimes < 0? 0 : dayTimes, true)),
+                            VoHtmlResp.class));
+        }
+
+        // 判断每月额度
+        double mouthTimes = cashCredit[2];
+        if( (mouthTimes <= 0) || (mouthTimes - voCashReq.getCashMoney() < 0)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,
+                            String.format("当月你在%s的剩余提现额度%s元",
+                                    userThirdAccount.getBankName(),
+                                    StringHelper.formatDouble(mouthTimes < 0? 0 : mouthTimes, true)),
+                            VoHtmlResp.class));
+        }
+
 
         boolean bigCashState = false ; // 人行通道?
         if((voCashReq.getCashMoney() >= 200000) && (!StringUtils.isEmpty(voCashReq.getBankAps()))){
@@ -288,6 +366,10 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         return ResponseEntity.ok(voHtmlResp) ;
     }
 
+
+
+
+
     @Override
     public ResponseEntity<VoBankApsWrapResp> bankAps(Long userId, VoBankApsReq voBankApsReq) {
         Users users = userService.findById(userId);
@@ -325,7 +407,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         if(!respCode.equals("200")){
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前网络异常,请稍后重试", VoBankApsWrapResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, resp.get("RespMsg").getAsString(), VoBankApsWrapResp.class));
         }
         JsonObject data = rootObject.getAsJsonObject("data");
         VoBankApsWrapResp voBankApsWrapResp = GSON.fromJson(data, VoBankApsWrapResp.class) ;
@@ -400,7 +482,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         pageIndex = pageIndex < 0 ? 0 : pageIndex ;
         pageSize = pageSize < 0 ?  10 : pageSize;
 
-        PageRequest page = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "ID")));
+        Pageable page = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
         List<CashDetailLog> logs = cashDetailLogService.findByUserIdAndPage(userId, page) ;
 
         VoCashLogWrapResp respone = VoBaseResp.ok("查询成功", VoCashLogWrapResp.class);
@@ -445,39 +527,6 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
         response.setRealCashTime(DateHelper.dateToString(cashTime));
         return ResponseEntity.ok(response);
-    }
-
-    /**
-     *  获取用户免费提现额度
-     * @param userId
-     * @return
-     */
-    @Transactional(rollbackFor = Exception.class)
-    private long getFreeCashMoney(long userId) {
-        UserCache userCache = userCacheService.findByUserIdLock(userId);
-        Asset asset = assetService.findByUserIdLock(userId);
-        // 充值总额
-        long rechargeTotal = userCache.getRechargeTotal() ;
-        // 已经实现收入
-        int incomeTotal = userCache.getIncomeTotal() ;
-        // 提现总额
-        Long cashTotal = userCache.getCashTotal() ;
-
-        Date endTime = new Date() ;
-        Date startTime = DateHelper.subDays(endTime, 3) ;
-        Long recharge3Total = 0L ; // 三天内充值的金额
-        List<RechargeDetailLog> logs = rechargeDetailLogService.findByRecentLog(userId, 0, startTime, startTime) ;
-        if(!CollectionUtils.isEmpty(logs)){
-            recharge3Total = logs.stream().mapToLong(p->p.getMoney()).sum();
-        }
-
-        ImmutableList<Integer> states = ImmutableList.of(0, 1) ;
-        List<CashDetailLog> cashDetailLogs = cashDetailLogService.findByStateInAndUserId(states, userId) ;
-        Long cashingMoney = 0L; // 提现中
-        if(!CollectionUtils.isEmpty(cashDetailLogs)){
-            cashingMoney = cashDetailLogs.stream().mapToLong(p -> p.getMoney()).sum() ;
-        }
-        return rechargeTotal + incomeTotal - cashingMoney -  cashTotal - recharge3Total ;
     }
 
 }

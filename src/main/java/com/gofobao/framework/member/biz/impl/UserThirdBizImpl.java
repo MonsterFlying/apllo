@@ -25,10 +25,7 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
-import com.gofobao.framework.member.vo.response.VoBankResp;
-import com.gofobao.framework.member.vo.response.VoHtmlResp;
-import com.gofobao.framework.member.vo.response.VoOpenAccountResp;
-import com.gofobao.framework.member.vo.response.VoPreOpenAccountResp;
+import com.gofobao.framework.member.vo.response.*;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -128,7 +125,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
-    public ResponseEntity<VoOpenAccountResp> openAccount(VoOpenAccountReq voOpenAccountReq, Long userId) {
+    public ResponseEntity<VoOpenAccountResp> openAccount(VoOpenAccountReq voOpenAccountReq, Long userId, HttpServletRequest httpServletRequest) {
         // 1.用户用户信息
         Users user = userService.findById(userId);
         if(ObjectUtils.isEmpty(user))
@@ -184,7 +181,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         request.setAcctUse(AcctUseContant.GENERAL_ACCOUNT);
         request.setAcqRes(String.valueOf(user.getId()));
         request.setLastSrvAuthCode(srvTxCode);
-        request.setChannel(ChannelContant.HTML);
+        request.setChannel(ChannelContant.getchannel(httpServletRequest));
         request.setSmsCode(voOpenAccountReq.getSmsCode());
         request.setCardNo(voOpenAccountReq.getCardNo());
 
@@ -212,8 +209,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
             int status = result.get("status").getAsInt();
             if (status == 0) {
                 JsonObject info = result.get("result").getAsJsonObject();
-                logo = info.get("bank").getAsString();
-                bankName = info.get("logo").getAsString();
+                bankName = info.get("bank").getAsString();
+                logo = info.get("logo").getAsString();
 
             }
 
@@ -265,7 +262,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
-    public ResponseEntity<VoHtmlResp> modifyOpenAccPwd(Long userId) {
+    public ResponseEntity<VoHtmlResp> modifyOpenAccPwd(HttpServletRequest httpServletRequest, Long userId) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId) ;
         if(ObjectUtils.isEmpty(userThirdAccount) ){
             return ResponseEntity
@@ -279,7 +276,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         if(passwordState.equals(0)){ // 初始化密码
             PasswordSetRequest passwordSetRequest = new PasswordSetRequest() ;
             passwordSetRequest.setMobile(userThirdAccount.getMobile());
-            passwordSetRequest.setChannel(ChannelContant.HTML);
+            passwordSetRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
             passwordSetRequest.setName(userThirdAccount.getName());
             passwordSetRequest.setAccountId(userThirdAccount.getAccountId());
             passwordSetRequest.setIdType(IdTypeContant.ID_CARD);
@@ -437,7 +434,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
-    public ResponseEntity<VoHtmlResp> autoTender(Long userId, String smsCode) {
+    public ResponseEntity<VoHtmlResp> autoTender(HttpServletRequest httpServletRequest, Long userId, String smsCode) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         if(ObjectUtils.isEmpty(userThirdAccount)){
             return ResponseEntity
@@ -476,7 +473,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         autoBidAuthPlusRequest.setLastSrvAuthCode(srvTxCode);
         autoBidAuthPlusRequest.setSmsCode(smsCode);
         autoBidAuthPlusRequest.setAcqRes(userId.toString());
-        autoBidAuthPlusRequest.setChannel(ChannelContant.HTML);
+        autoBidAuthPlusRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
         String html = null;
         try {
             html = jixinManager.getHtml(JixinTxCodeEnum.AUTO_BID_AUTH_PLUS, autoBidAuthPlusRequest);
@@ -500,7 +497,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
-    public ResponseEntity<VoHtmlResp> autoTranfter(Long userId, String smsCode) {
+    public ResponseEntity<VoHtmlResp> autoTranfter(HttpServletRequest httpServletRequest, Long userId, String smsCode) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         if(ObjectUtils.isEmpty(userThirdAccount)){
             return ResponseEntity
@@ -544,7 +541,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         autoCreditInvestAuthPlusRequest.setLastSrvAuthCode(srvTxCode);
         autoCreditInvestAuthPlusRequest.setSmsCode(smsCode);
         autoCreditInvestAuthPlusRequest.setAcqRes(userId.toString());
-        autoCreditInvestAuthPlusRequest.setChannel(ChannelContant.HTML);
+        autoCreditInvestAuthPlusRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
 
 
         String html = null;
@@ -619,6 +616,28 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
         return ResponseEntity.ok("success") ;
+    }
+
+    @Override
+    public ResponseEntity<VoSignInfoResp> querySigned(Long userId) {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if(ObjectUtils.isEmpty(userThirdAccount)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,  "请先开通江西银行存管账户！", VoSignInfoResp.class)) ;
+        }
+
+        if( userThirdAccount.getPasswordState() != 1 ){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,  "请先设置江西银行存管账户交易密码！", VoSignInfoResp.class)) ;
+        }
+
+
+        VoSignInfoResp re = VoBaseResp.ok("查询成功", VoSignInfoResp.class);
+        re.setAutoTenderState(userThirdAccount.getAutoTenderState() == 1);
+        re.setAutoTenderState(userThirdAccount.getAutoTransferState() == 1);
+        return ResponseEntity.ok(re) ;
     }
 
 }

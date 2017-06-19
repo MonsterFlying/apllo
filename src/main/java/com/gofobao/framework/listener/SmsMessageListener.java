@@ -45,8 +45,6 @@ public class SmsMessageListener{
         }catch (Throwable e){
             log.error("SmsMessageListener process do exception", e);
         }
-
-
     }
 
 

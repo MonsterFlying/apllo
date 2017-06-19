@@ -2,6 +2,7 @@ package com.gofobao.framework.asset.controller;
 
 import com.gofobao.framework.asset.biz.BankAccountBiz;
 import com.gofobao.framework.asset.vo.response.VoBankTypeInfoResp;
+import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,4 +26,12 @@ public class BankAccountController {
     public ResponseEntity<VoBankTypeInfoResp> findTypeInfo( @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable("account") String account){
         return bankAccountBiz.findTypeInfo(userId, account) ;
     }
+
+
+    @GetMapping("/bank/credit")
+    @ApiOperation("额度列表")
+    public ResponseEntity<VoHtmlResp> credit(){
+        return bankAccountBiz.credit() ;
+    }
+
 }

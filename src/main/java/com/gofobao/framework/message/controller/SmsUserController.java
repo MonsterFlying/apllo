@@ -2,8 +2,8 @@ package com.gofobao.framework.message.controller;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.message.biz.MessageBiz;
-import com.gofobao.framework.message.vo.VoAnonSmsReq;
-import com.gofobao.framework.message.vo.VoUserSmsReq;
+import com.gofobao.framework.message.vo.request.VoAnonSmsReq;
+import com.gofobao.framework.message.vo.request.VoUserSmsReq;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,11 +68,17 @@ public class SmsUserController {
     }
 
 
-    @ApiOperation("发送绑定手机号码短信验证码")
+    @ApiOperation("发送用户绑定手机")
     @PostMapping("/bindPhone")
     public ResponseEntity<VoBaseResp> sendBindPhone(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,  @Valid @ModelAttribute VoAnonSmsReq voAnonSmsReq){
         return messageBiz.sendBindPhone(request, voAnonSmsReq, userId) ;
     }
 
+
+    @ApiOperation("发送用户跟换手机号的绑定新手机短信")
+    @PostMapping("/switch/bindPhone")
+    public ResponseEntity<VoBaseResp> sendBindPhone4Switch(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,  @Valid @ModelAttribute VoAnonSmsReq voAnonSmsReq){
+        return messageBiz.sendBindPhone(request, voAnonSmsReq, userId) ;
+    }
 
 }

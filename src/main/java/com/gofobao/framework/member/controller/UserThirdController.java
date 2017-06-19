@@ -34,16 +34,16 @@ public class UserThirdController {
 
     @ApiOperation("银行存管开户")
     @PostMapping("/user/third/openAccout")
-    public ResponseEntity<VoOpenAccountResp> openAccount(@Valid @ModelAttribute VoOpenAccountReq voOpenAccountReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        return userThirdBiz.openAccount(voOpenAccountReq, userId) ;
+    public ResponseEntity<VoOpenAccountResp> openAccount(HttpServletRequest httpServletRequest, @Valid @ModelAttribute VoOpenAccountReq voOpenAccountReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return userThirdBiz.openAccount(voOpenAccountReq, userId, httpServletRequest) ;
     }
 
 
 
     @ApiOperation("银行存管密码管理")
     @PostMapping("/user/third/modifyOpenAccPwd")
-    public ResponseEntity<VoHtmlResp> modifyOpenAccPwd(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        return userThirdBiz.modifyOpenAccPwd(userId) ;
+    public ResponseEntity<VoHtmlResp> modifyOpenAccPwd(HttpServletRequest httpServletRequest, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return userThirdBiz.modifyOpenAccPwd(httpServletRequest, userId) ;
     }
 
     @ApiOperation("银行存管密码管理回调")
@@ -55,14 +55,14 @@ public class UserThirdController {
 
     @ApiOperation("开通自动投标协议")
     @PostMapping("/user/third/autoTender/{smsCode}")
-    public ResponseEntity<VoHtmlResp> autoTender(@RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable  String smsCode) {
-        return userThirdBiz.autoTender(userId, smsCode) ;
+    public ResponseEntity<VoHtmlResp> autoTender(HttpServletRequest httpServletRequest, @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable  String smsCode) {
+        return userThirdBiz.autoTender(httpServletRequest, userId, smsCode) ;
     }
 
     @ApiOperation("开通自动转让协议")
     @PostMapping("/user/third/autoTranfter/{smsCode}")
-    public ResponseEntity<VoHtmlResp> autoTranfter(@RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable  String smsCode) {
-        return userThirdBiz.autoTranfter(userId, smsCode) ;
+    public ResponseEntity<VoHtmlResp> autoTranfter(HttpServletRequest httpServletRequest, @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable  String smsCode) {
+        return userThirdBiz.autoTranfter(httpServletRequest, userId, smsCode) ;
     }
 
 

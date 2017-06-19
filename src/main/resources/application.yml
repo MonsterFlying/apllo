@@ -23,6 +23,12 @@ spring:
     port: 5672
     username: wangguo
     password: wangguo123
+  mail:
+    host: smtp.qq.com
+    port: 587
+    username: service@gofobao.com
+    password: gofobaochina123
+    default-encoding: UTF-8
 
 server:
   port: 80
@@ -43,7 +49,6 @@ jixin: #银行存管
   redPacketAccountId: "6212461270000000444" #红包账户
   handlingChargeAccountId: "6212461270000000360" #电子手续费账户
 gofobao:
-  #javaDomain: http://lang.3w.dkys.org
   javaDomain: http://qtfja75.hk1.mofasuidao.cn
   webDomain: http://qtfja75.hk1.mofasuidao.cn
   h5Domain:  http://qtfja75.hk1.mofasuidao.cn
