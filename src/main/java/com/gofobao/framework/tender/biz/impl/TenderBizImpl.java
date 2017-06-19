@@ -228,6 +228,11 @@ public class TenderBizImpl implements TenderBiz {
                 break;
             }
 
+            if (ObjectUtils.isEmpty(userThirdAccount.getAutoTenderOrderId())) {
+                msg = "银行存管：投标未签约!";
+                break;
+            }
+
             if (!borrowService.checkBidding(borrow)) { //检查借款状态是否实在招标中
                 msg = "当前借款不在招标中!";
                 break;
@@ -237,6 +242,12 @@ public class TenderBizImpl implements TenderBiz {
                 msg = "当前借款未到招标时间!";
                 break;
             }
+
+            if (!borrowService.checkReleaseAt(borrow)) { //检查借款是否到发布时间
+                msg = "当前借款未到招标时间!";
+                break;
+            }
+
 
             if (!borrowService.checkValidDay(borrow)) { //检查是否是有效的招标时间
                 //取消借款
