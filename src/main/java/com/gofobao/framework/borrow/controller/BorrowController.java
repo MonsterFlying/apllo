@@ -1,10 +1,7 @@
 package com.gofobao.framework.borrow.controller;
 
 import com.gofobao.framework.borrow.biz.BorrowBiz;
-import com.gofobao.framework.borrow.vo.request.VoAddNetWorthBorrow;
-import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
-import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
-import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
+import com.gofobao.framework.borrow.vo.request.*;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowStatisticsWarpRes;
@@ -105,7 +102,7 @@ public class BorrowController {
 
     @ApiOperation(value = "标合同")
     @GetMapping(value = "pub/borrowProtocol/{borrowId}")
-    public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId,HttpServletRequest request) {
+    public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId, HttpServletRequest request) {
         Long userId = 0L;
         String authToken = request.getHeader(this.tokenHeader);
         if (!StringUtils.isEmpty(authToken) && (authToken.contains(prefix))) {
@@ -127,7 +124,7 @@ public class BorrowController {
 
     @ApiOperation(value = "pc:标合同")
     @GetMapping(value = "pc/pub/borrowProtocol/{borrowId}")
-    public ResponseEntity<String> pcTakeRatesDesc(HttpServletRequest request,@PathVariable Long borrowId) {
+    public ResponseEntity<String> pcTakeRatesDesc(HttpServletRequest request, @PathVariable Long borrowId) {
         Long userId = 0L;
         String authToken = request.getHeader(this.tokenHeader);
         if (!StringUtils.isEmpty(authToken) && (authToken.contains(prefix))) {
@@ -180,9 +177,21 @@ public class BorrowController {
         return borrowBiz.cancelBorrow(voCancelBorrow);
     }
 
-
-    public ResponseEntity<VoBaseResp> repayAll(@Valid @ModelAttribute VoRepayAllReq voRepayAllReq){
+    @PostMapping("/repayAll")
+    @ApiOperation("提前还款")
+    public ResponseEntity<VoBaseResp> repayAll(@Valid @ModelAttribute VoRepayAllReq voRepayAllReq) {
         return borrowBiz.repayAll(voRepayAllReq);
     }
 
+    /**
+     * 复审
+     *
+     * @param voDoAgainVerifyReq
+     * @return
+     */
+    @PostMapping("/doAgainVerify")
+    @ApiOperation("复审")
+    public ResponseEntity<VoBaseResp> doAgainVerify(VoDoAgainVerifyReq voDoAgainVerifyReq) {
+        return borrowBiz.doAgainVerify(voDoAgainVerifyReq);
+    }
 }

@@ -73,6 +73,8 @@ public class AplloApplicationTests {
     @Test
     public void test() {
 
+        System.out.println(true + "");
+
         /*VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
         voQueryThirdBorrowList.setBorrowId(165180L);
         voQueryThirdBorrowList.setUserId(901L);
@@ -119,12 +121,12 @@ public class AplloApplicationTests {
         BatchDetailsQueryResp response = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, request, BatchDetailsQueryResp.class);
         System.out.println(response);
         */
-        Borrow borrow = borrowService.findById(165184L);
+        /*Borrow borrow = borrowService.findById(165184L);
         try {
             borrowBiz.notTransferedBorrowAgainVerify(borrow);
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
 }

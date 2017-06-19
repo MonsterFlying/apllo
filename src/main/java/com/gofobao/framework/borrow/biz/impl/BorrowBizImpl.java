@@ -4,14 +4,10 @@ import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
-import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
-import com.gofobao.framework.borrow.vo.request.VoAddNetWorthBorrow;
-import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
-import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
-import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
+import com.gofobao.framework.borrow.vo.request.*;
 import com.gofobao.framework.borrow.vo.response.*;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
@@ -30,6 +26,8 @@ import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
+import com.gofobao.framework.helper.project.SecurityHelper;
+import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -48,6 +46,7 @@ import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
@@ -73,8 +72,6 @@ public class BorrowBizImpl implements BorrowBiz {
     static final Gson GSON = new Gson();
 
     @Autowired
-    private UserService userService;
-    @Autowired
     private UserCacheService userCacheService;
     @Autowired
     private AssetService assetService;
@@ -82,8 +79,6 @@ public class BorrowBizImpl implements BorrowBiz {
     private BorrowService borrowService;
     @Autowired
     private AutoTenderService autoTenderService;
-    @Autowired
-    private BorrowThirdBiz borrowThirdBiz;
     @Autowired
     private UserThirdAccountService userThirdAccountService;
     @Autowired
@@ -98,6 +93,8 @@ public class BorrowBizImpl implements BorrowBiz {
     private BorrowRepaymentService borrowRepaymentService;
     @Autowired
     private RepaymentBiz repaymentBiz;
+    @Autowired
+    private BorrowProvider borrowProvider;
 
     /**
      * 理财首页标列表
@@ -1045,5 +1042,26 @@ public class BorrowBizImpl implements BorrowBiz {
                 }
             }
         } while (tenderList.size() < 10);
+    }
+
+    /**
+     * 请求复审
+     */
+    public ResponseEntity<VoBaseResp> doAgainVerify(VoDoAgainVerifyReq voDoAgainVerifyReq) {
+
+        String paramStr = voDoAgainVerifyReq.getParamStr();
+        if (!SecurityHelper.checkRequest(voDoAgainVerifyReq.getSign(), paramStr)) {
+            log.error("BorrowBizImpl doAgainVerify error：签名校验不通过");
+        }
+
+        Map<String, String> paramMap = GSON.fromJson(paramStr, new TypeToken<Map<String, String>>() {
+        }.getType());
+        boolean flag = false;
+        try {
+            flag = borrowProvider.doAgainVerify(paramMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ResponseEntity.ok(VoBaseResp.ok(StringHelper.toString(flag)));
     }
 }
