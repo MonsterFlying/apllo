@@ -29,8 +29,4 @@ public class AssetLogController {
     }
 
 
-    public static void main(String[] args) {
-        URLHelper.write(,"https://api.gofobao.com/borrow/openFirstVerify");
-
-    }
 }
