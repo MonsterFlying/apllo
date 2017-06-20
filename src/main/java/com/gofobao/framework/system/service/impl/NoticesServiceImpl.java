@@ -70,7 +70,13 @@ public class NoticesServiceImpl implements NoticesService {
             return noticesInfo;
         }
         noticesInfo.setTitle(notices.getName());
-        noticesInfo.setContent(notices.getContent());
+        String content= notices.getContent();
+        if(content.contains("[")){
+            content= content.replace("[","");
+        }if(content.contains("[")){
+            content= content.replace("[","");
+        }
+        noticesInfo.setContent(content);
         noticesInfo.setCreateTime(DateHelper.dateToString(notices.getCreatedAt()));
         return noticesInfo;
     }

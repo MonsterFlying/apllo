@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import sun.plugin2.message.helper.URLHelper;
 
 /**
  * Created by admin on 2017/5/22.
@@ -28,4 +29,8 @@ public class AssetLogController {
     }
 
 
+    public static void main(String[] args) {
+        URLHelper.write(,"https://api.gofobao.com/borrow/openFirstVerify");
+
+    }
 }

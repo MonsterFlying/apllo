@@ -15,4 +15,7 @@ public interface DictValueRepository extends JpaRepository<DictValue,Long>{
 
     DictValue findTopByItemIdAndValue02AndDel(Long itemId, String bankName, int i);
     DictValue findTopByItemIdAndValue01AndDel(Long itemId, String bankName, int i);
+
+    List<DictValue> findByItemId(Long id);
+
 }

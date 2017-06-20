@@ -125,7 +125,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
-    public ResponseEntity<VoOpenAccountResp> openAccount(VoOpenAccountReq voOpenAccountReq, Long userId) {
+    public ResponseEntity<VoOpenAccountResp> openAccount(VoOpenAccountReq voOpenAccountReq, Long userId, HttpServletRequest httpServletRequest) {
         // 1.用户用户信息
         Users user = userService.findById(userId);
         if(ObjectUtils.isEmpty(user))
@@ -181,7 +181,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         request.setAcctUse(AcctUseContant.GENERAL_ACCOUNT);
         request.setAcqRes(String.valueOf(user.getId()));
         request.setLastSrvAuthCode(srvTxCode);
-        request.setChannel(ChannelContant.HTML);
+        request.setChannel(ChannelContant.getchannel(httpServletRequest));
         request.setSmsCode(voOpenAccountReq.getSmsCode());
         request.setCardNo(voOpenAccountReq.getCardNo());
 
@@ -262,7 +262,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
-    public ResponseEntity<VoHtmlResp> modifyOpenAccPwd(Long userId) {
+    public ResponseEntity<VoHtmlResp> modifyOpenAccPwd(HttpServletRequest httpServletRequest, Long userId) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId) ;
         if(ObjectUtils.isEmpty(userThirdAccount) ){
             return ResponseEntity
@@ -276,7 +276,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         if(passwordState.equals(0)){ // 初始化密码
             PasswordSetRequest passwordSetRequest = new PasswordSetRequest() ;
             passwordSetRequest.setMobile(userThirdAccount.getMobile());
-            passwordSetRequest.setChannel(ChannelContant.HTML);
+            passwordSetRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
             passwordSetRequest.setName(userThirdAccount.getName());
             passwordSetRequest.setAccountId(userThirdAccount.getAccountId());
             passwordSetRequest.setIdType(IdTypeContant.ID_CARD);
@@ -434,7 +434,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
-    public ResponseEntity<VoHtmlResp> autoTender(Long userId, String smsCode) {
+    public ResponseEntity<VoHtmlResp> autoTender(HttpServletRequest httpServletRequest, Long userId, String smsCode) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         if(ObjectUtils.isEmpty(userThirdAccount)){
             return ResponseEntity
@@ -473,7 +473,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         autoBidAuthPlusRequest.setLastSrvAuthCode(srvTxCode);
         autoBidAuthPlusRequest.setSmsCode(smsCode);
         autoBidAuthPlusRequest.setAcqRes(userId.toString());
-        autoBidAuthPlusRequest.setChannel(ChannelContant.HTML);
+        autoBidAuthPlusRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
         String html = null;
         try {
             html = jixinManager.getHtml(JixinTxCodeEnum.AUTO_BID_AUTH_PLUS, autoBidAuthPlusRequest);
@@ -497,7 +497,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
-    public ResponseEntity<VoHtmlResp> autoTranfter(Long userId, String smsCode) {
+    public ResponseEntity<VoHtmlResp> autoTranfter(HttpServletRequest httpServletRequest, Long userId, String smsCode) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         if(ObjectUtils.isEmpty(userThirdAccount)){
             return ResponseEntity
@@ -541,7 +541,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         autoCreditInvestAuthPlusRequest.setLastSrvAuthCode(srvTxCode);
         autoCreditInvestAuthPlusRequest.setSmsCode(smsCode);
         autoCreditInvestAuthPlusRequest.setAcqRes(userId.toString());
-        autoCreditInvestAuthPlusRequest.setChannel(ChannelContant.HTML);
+        autoCreditInvestAuthPlusRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
 
 
         String html = null;
