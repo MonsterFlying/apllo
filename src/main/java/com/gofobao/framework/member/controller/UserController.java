@@ -33,6 +33,7 @@ public class UserController {
     @Autowired
     private UserEmailBiz userEmailBiz ;
 
+    @Autowired
     private UserThirdBiz userThirdBiz ;
 
     @ApiOperation("更改手机号")

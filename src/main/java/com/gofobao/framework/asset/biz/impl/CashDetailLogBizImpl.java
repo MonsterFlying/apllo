@@ -10,7 +10,6 @@ import com.gofobao.framework.api.model.with_daw.WithDrawResponse;
 import com.gofobao.framework.asset.biz.CashDetailLogBiz;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.entity.CashDetailLog;
-import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.CashDetailLogService;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
@@ -24,7 +23,6 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.OKHttpHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
-import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
@@ -65,7 +63,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -164,7 +161,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         Asset asset = assetService.findByUserIdLock(userId);
         VoPreCashResp resp = VoBaseResp.ok("查询成功", VoPreCashResp.class);
         resp.setBankName(userThirdAccount.getBankName());
-        resp.setLogo(userThirdAccount.getBankLogo());
+        resp.setLogo(String.format("%s/%s", javaDomain, userThirdAccount.getBankLogo()));
         resp.setCardNo(userThirdAccount.getCardNo().substring(userThirdAccount.getCardNo().length() - 4));
         resp.setUseMoneyShow(StringHelper.formatDouble(asset.getUseMoney() / 100D, true));
         resp.setUseMoney(asset.getUseMoney() / 100D);
@@ -187,7 +184,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoHtmlResp> cash(Long userId, VoCashReq voCashReq)  throws  Exception{
+    public ResponseEntity<VoHtmlResp> cash(HttpServletRequest httpServletRequest, Long userId, VoCashReq voCashReq)  throws  Exception{
         Users users = userService.findByIdLock(userId);
         Preconditions.checkNotNull(users, "当前用户不存在");
         if (users.getIsLock()) {
@@ -222,6 +219,13 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "提现金额大于20万,请走人行通道！", VoHtmlResp.class));
+        }
+
+        // 判断提现金额
+        if(useMoney < voCashReq.getCashMoney() * 100){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "提现金额大于账户可用余额！", VoHtmlResp.class));
         }
 
 
@@ -317,7 +321,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         request.setRetUrl(String.format("%s/%s", javaDomain, ""));
         request.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/asset/cash/callback"));
         request.setAcqRes(String.valueOf(userId));
-        request.setChannel(ChannelContant.HTML);
+        request.setChannel(ChannelContant.getchannel(httpServletRequest));
         // 生成提现表单
         String html = jixinManager.getHtml(JixinTxCodeEnum.WITH_DRAW, request);
         if(StringUtils.isEmpty(html)){
