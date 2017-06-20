@@ -20,6 +20,9 @@ import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.system.contants.ThirdBatchNoTypeContant;
+import com.gofobao.framework.system.entity.ThirdBatchLog;
+import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
@@ -30,6 +33,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +48,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -69,6 +74,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
     private JixinHelper jixinHelper;
     @Autowired
     private TenderBiz tenderBiz;
+    @Autowired
+    private ThirdBatchLogService thirdBatchLogService;
 
     public ResponseEntity<VoBaseResp> createThirdTender(VoCreateThirdTenderReq voCreateThirdTenderReq) {
         Long userId = voCreateThirdTenderReq.getUserId();
@@ -131,7 +138,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      * @return
      */
     public ResponseEntity<VoBaseResp> thirdBatchCreditInvest(VoThirdBatchCreditInvest voThirdBatchCreditInvest) {
-
+        Date nowDate = new Date();
         Long borrowId = voThirdBatchCreditInvest.getBorrowId();
         if (ObjectUtils.isEmpty(borrowId)) {
             return ResponseEntity
@@ -196,8 +203,19 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             tenderService.updateById(tender);
         }
 
+        //记录日志
+        String batchNo = jixinHelper.getBatchNo();
+        ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
+        thirdBatchLog.setBatchNo(batchNo);
+        thirdBatchLog.setCreateAt(nowDate);
+        thirdBatchLog.setUpdateAt(nowDate);
+        thirdBatchLog.setSourceId(borrowId);
+        thirdBatchLog.setType(ThirdBatchNoTypeContant.BATCH_CREDIT_INVEST);
+        thirdBatchLog.setRemark("投资人批次购买债权");
+        thirdBatchLogService.save(thirdBatchLog);
+
         BatchCreditInvestReq request = new BatchCreditInvestReq();
-        request.setBatchNo(jixinHelper.getBatchNo());
+        request.setBatchNo(batchNo);
         request.setTxAmount(StringHelper.formatDouble(sumCount, 100, false));
         request.setSubPacks(GSON.toJson(creditInvestList));
         request.setAcqRes(StringHelper.toString(borrowId));

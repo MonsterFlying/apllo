@@ -28,20 +28,19 @@ public interface TenderService {
 
     List<Tender> findList(Specification<Tender> specification, Sort sort);
 
-    long count(Specification<Tender> specification) ;
+    long count(Specification<Tender> specification);
 
     /**
      * 检查投标是否太频繁
+     *
      * @param borrowId
      * @param userId
      * @return
      */
-    boolean checkTenderNimiety(Long borrowId,Long userId);
+    boolean checkTenderNimiety(Long borrowId, Long userId);
 
     Tender findById(Long tenderId);
 
-
-
-
+    Tender findByAuthCode(String authCode);
 
 }

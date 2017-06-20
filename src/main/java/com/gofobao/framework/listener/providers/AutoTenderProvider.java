@@ -3,6 +3,7 @@ package com.gofobao.framework.listener.providers;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.tender.biz.TenderBiz;
@@ -97,9 +98,9 @@ public class AutoTenderProvider {
                     VoCreateTenderReq voCreateBorrowTender = new VoCreateTenderReq();
                     voCreateBorrowTender.setBorrowId(borrowId);
                     voCreateBorrowTender.setUserId(NumberHelper.toLong(StringHelper.toString(autoTenderMap.get("userId"))));
-                    voCreateBorrowTender.setTenderMoney(money);
+                    voCreateBorrowTender.setTenderMoney(MathHelper.myRound(money / 100.0, 2));
                     voCreateBorrowTender.setAutoOrder(NumberHelper.toInt(autoTenderMap.get("order")));
-                    voCreateBorrowTender.setLowest(NumberHelper.toInt(StringHelper.toString(autoTenderMap.get("lowest"))));
+                    voCreateBorrowTender.setLowest(MathHelper.myRound(NumberHelper.toInt(StringHelper.toString(autoTenderMap.get("lowest"))) / 100.0, 2));
                     voCreateBorrowTender.setIsAutoTender(true);//自动标识
 
                     Map<String, Object> rs = null;

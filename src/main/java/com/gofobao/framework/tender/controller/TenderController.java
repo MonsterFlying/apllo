@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.validation.Valid;
 
@@ -49,7 +50,7 @@ public class TenderController {
 
     @ApiOperation("借款投标")
     @PostMapping("/v2/create")
-    public ResponseEntity<VoBaseResp> tender(@ModelAttribute @Valid VoCreateTenderReq voCreateTenderReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoBaseResp> tender(@ModelAttribute @Valid VoCreateTenderReq voCreateTenderReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voCreateTenderReq.setUserId(userId);
         return tenderBiz.tender(voCreateTenderReq);
     }

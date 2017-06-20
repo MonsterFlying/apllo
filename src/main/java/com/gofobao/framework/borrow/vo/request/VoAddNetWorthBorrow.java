@@ -1,6 +1,7 @@
 package com.gofobao.framework.borrow.vo.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.gofobao.framework.helper.MathHelper;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -16,7 +17,7 @@ import static com.gofobao.framework.borrow.contants.BorrowVerifyContants.*;
  */
 @Data
 @ApiModel
-public class VoAddBorrow {
+public class VoAddNetWorthBorrow {
 
     @ApiModelProperty(hidden = true)
     @JsonIgnore
@@ -33,18 +34,18 @@ public class VoAddBorrow {
     /**
      * 借款金额
      */
-    @ApiModelProperty(name = "money", value = "借款金额", dataType = "int", required = true)
+    @ApiModelProperty(name = "money", value = "借款金额(元)", dataType = "double", required = true)
     @NotNull(message = "借款金额不能为空!")
-    @Min(value = MONEY_MIN,  message = "借款金额参数有误!")
-    @Max(value = MONEY_MAX,message = "借款金额参数有误!")
-    private int money;
+    @Min(value = MONEY_MIN, message = "借款金额参数有误!")
+    @Max(value = MONEY_MAX, message = "借款金额参数有误!")
+    private double money;
 
     /**
      * 年化率
      */
     @ApiModelProperty(name = "apr", value = "年化率", dataType = "int", required = true)
     @NotNull(message = "年化率不能为空!")
-    @Min(value = APR_MIN ,message = "年华利率参数有误!")
+    @Min(value = APR_MIN, message = "年华利率参数有误!")
     @Max(value = APR_MAX, message = "年华利率参数有误!")
     private int apr;
 
@@ -76,4 +77,12 @@ public class VoAddBorrow {
     @ApiModelProperty(name = "closeAuto", value = "关闭自动投标", dataType = "String", required = true, example = "0：不关闭，1：关闭")
     @NotNull(message = "关闭自动投标不能为空!")
     private boolean closeAuto;
+
+    public double getMoney() {
+        return (int) MathHelper.myRound(money, 0);
+    }
+
+    public void setMoney(double money) {
+        this.money = money * 100.0;
+    }
 }

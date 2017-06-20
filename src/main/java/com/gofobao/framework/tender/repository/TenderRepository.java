@@ -24,4 +24,6 @@ public interface TenderRepository extends JpaRepository<Tender,Long>,JpaSpecific
     List <Tender>findByBorrowIdAndUserIdIs(Long borrowId,Long userId);
 
     Page<Tender> findByUserIdAndStatusIsAndTransferFlagIs(Long userId, Integer status,Integer transferFlag, Pageable pa);
+
+    Tender findByAuthCode(String authCode);
 }

@@ -15,7 +15,6 @@ import java.util.Date;
 @DynamicInsert
 public class YesterdayAsset {
     @Id
-    @GeneratedValue
     @Column(name = "user_id")
     private Long userId;
     @Basic
