@@ -65,10 +65,9 @@ public interface UserThirdBiz {
      *
      * @param httpServletRequest
      * @param userId 用户Id
-     * @param smsCode 短信验证码
      * @return
      */
-    ResponseEntity<VoHtmlResp> autoTender(HttpServletRequest httpServletRequest, Long userId, String smsCode);
+    ResponseEntity<VoHtmlResp> autoTender(HttpServletRequest httpServletRequest, Long userId);
 
 
     /**
@@ -76,10 +75,9 @@ public interface UserThirdBiz {
      *
      * @param httpServletRequest
      * @param userId
-     * @param smsCode
      * @return
      */
-    ResponseEntity<VoHtmlResp> autoTranfter(HttpServletRequest httpServletRequest, Long userId, String smsCode);
+    ResponseEntity<VoHtmlResp> autoTranfter(HttpServletRequest httpServletRequest, Long userId);
 
 
     /**

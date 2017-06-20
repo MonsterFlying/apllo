@@ -5,10 +5,10 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusRequest;
 import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusResponse;
-import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoCreditInvestAuthPlusRequest;
-import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoCreditInvestAuthPlusResponse;
-import com.gofobao.framework.api.model.auto_credit_invest_auth_plus.AutoBidAuthPlusRequest;
-import com.gofobao.framework.api.model.auto_credit_invest_auth_plus.AutoBidAuthPlusResponse;
+import com.gofobao.framework.api.model.auto_credit_invest_auth.AutoCreditInvestAuthRequest;
+import com.gofobao.framework.api.model.auto_credit_invest_auth.AutoCreditInvestAuthResponse;
+import com.gofobao.framework.api.model.auto_credit_invest_auth_plus.AutoBidAuthRequest;
+import com.gofobao.framework.api.model.auto_credit_invest_auth_plus.AutoBidAuthResponse;
 import com.gofobao.framework.api.model.password_reset.PasswordResetRequest;
 import com.gofobao.framework.api.model.password_reset.PasswordResetResponse;
 import com.gofobao.framework.api.model.password_set.PasswordSetRequest;
@@ -430,23 +430,23 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Override
     public ResponseEntity<String> autoTenderCallback(HttpServletRequest request, HttpServletResponse response) {
-        AutoBidAuthPlusResponse autoBidAuthPlusResponse = jixinManager.callback(request, new TypeToken<AutoBidAuthPlusResponse>() {
+        AutoBidAuthResponse autoBidAuthResponse = jixinManager.callback(request, new TypeToken<AutoBidAuthResponse>() {
         });
 
-        if(ObjectUtils.isEmpty(autoBidAuthPlusResponse)){
+        if(ObjectUtils.isEmpty(autoBidAuthResponse)){
             return ResponseEntity
                     .badRequest()
                     .body("error");
         }
 
-        if(!JixinResultContants.SUCCESS.equals(autoBidAuthPlusResponse.getRetCode())){
+        if(!JixinResultContants.SUCCESS.equals(autoBidAuthResponse.getRetCode())){
             log.error("UserThirdBizImpl.autoTenderCallback: 回调出失败");
             return ResponseEntity
                     .badRequest()
                     .body("error");
         }
 
-        Long userId = Long.parseLong(autoBidAuthPlusResponse.getAcqRes());
+        Long userId = Long.parseLong(autoBidAuthResponse.getAcqRes());
 
 
         if(ObjectUtils.isEmpty(userId)){
@@ -470,7 +470,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         userThirdAccount.setAutoTenderState(1);
         userThirdAccount.setAutoTenderTotAmount(999999999L);
         userThirdAccount.setAutoTenderTxAmount(999999999L);
-        userThirdAccount.setAutoTenderOrderId(autoBidAuthPlusResponse.getOrderId());
+        userThirdAccount.setAutoTenderOrderId(autoBidAuthResponse.getOrderId());
         userThirdAccount.setUpdateAt(new Date());
         Long id = userThirdAccountService.save(userThirdAccount);
         if(id ==  0){
@@ -484,7 +484,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
-    public ResponseEntity<VoHtmlResp> autoTender(HttpServletRequest httpServletRequest, Long userId, String smsCode) {
+    public ResponseEntity<VoHtmlResp> autoTender(HttpServletRequest httpServletRequest, Long userId) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         if(ObjectUtils.isEmpty(userThirdAccount)){
             return ResponseEntity
@@ -498,35 +498,20 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR,  "请先设置江西银行存管账户交易密码！", VoHtmlResp.class)) ;
         }
 
-        String srvTxCode = null ;
-        try {
-            srvTxCode = redisHelper.get(String.format("%s_%s", SrvTxCodeContants.AUTO_BID_AUTH_PLUS, userThirdAccount.getMobile()), null) ;
-            redisHelper.remove(String.format("%s_%s", SrvTxCodeContants.AUTO_BID_AUTH_PLUS, userThirdAccount.getMobile()));
-        }catch (Exception e){
-            log.error("UserThirdBizImpl autoTender get redis exception ", e);
-        }
-
-        if(StringUtils.isEmpty(srvTxCode)){
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "短信验证码已过期，请重新获取", VoHtmlResp.class)) ;
-        }
-
-        AutoBidAuthPlusRequest autoBidAuthPlusRequest = new AutoBidAuthPlusRequest() ;
-        autoBidAuthPlusRequest.setAccountId(userThirdAccount.getAccountId());
-        autoBidAuthPlusRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
-        autoBidAuthPlusRequest.setTxAmount("999999999") ;
-        autoBidAuthPlusRequest.setTotAmount("999999999"); ;
-        autoBidAuthPlusRequest.setForgotPwdUrl(h5Domain);
-        autoBidAuthPlusRequest.setRetUrl(h5Domain);
-        autoBidAuthPlusRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/user/third/autoTender/callback"));
-        autoBidAuthPlusRequest.setLastSrvAuthCode(srvTxCode);
-        autoBidAuthPlusRequest.setSmsCode(smsCode);
-        autoBidAuthPlusRequest.setAcqRes(userId.toString());
-        autoBidAuthPlusRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
+        AutoBidAuthRequest autoBidAuthRequest = new AutoBidAuthRequest() ;
+        autoBidAuthRequest.setAccountId(userThirdAccount.getAccountId());
+        autoBidAuthRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
+        autoBidAuthRequest.setTxAmount("999999999") ;
+        autoBidAuthRequest.setTotAmount("999999999");
+        autoBidAuthRequest.setForgotPwdUrl(h5Domain);
+        autoBidAuthRequest.setRetUrl(h5Domain);
+        autoBidAuthRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/user/third/autoTender/callback"));
+        autoBidAuthRequest.setAcqRes(userId.toString());
+        autoBidAuthRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
         String html = null;
+
         try {
-            html = jixinManager.getHtml(JixinTxCodeEnum.AUTO_BID_AUTH_PLUS, autoBidAuthPlusRequest);
+            html = jixinManager.getHtml(JixinTxCodeEnum.AUTO_BID_AUTH, autoBidAuthRequest);
         } catch (Exception e) {
             log.error("UserThirdBizImpl autoTender get redis exception ", e);
             return ResponseEntity
@@ -547,7 +532,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
-    public ResponseEntity<VoHtmlResp> autoTranfter(HttpServletRequest httpServletRequest, Long userId, String smsCode) {
+    public ResponseEntity<VoHtmlResp> autoTranfter(HttpServletRequest httpServletRequest, Long userId) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         if(ObjectUtils.isEmpty(userThirdAccount)){
             return ResponseEntity
@@ -582,21 +567,19 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "短信验证码已过期，请重新获取", VoHtmlResp.class)) ;
         }
 
-        AutoCreditInvestAuthPlusRequest autoCreditInvestAuthPlusRequest = new AutoCreditInvestAuthPlusRequest() ;
+        AutoCreditInvestAuthRequest autoCreditInvestAuthPlusRequest = new AutoCreditInvestAuthRequest() ;
         autoCreditInvestAuthPlusRequest.setAccountId(userThirdAccount.getAccountId());
         autoCreditInvestAuthPlusRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
         autoCreditInvestAuthPlusRequest.setForgotPwdUrl(h5Domain);
         autoCreditInvestAuthPlusRequest.setRetUrl(h5Domain);
         autoCreditInvestAuthPlusRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/user/third/autoTranfer/callback"));
-        autoCreditInvestAuthPlusRequest.setLastSrvAuthCode(srvTxCode);
-        autoCreditInvestAuthPlusRequest.setSmsCode(smsCode);
         autoCreditInvestAuthPlusRequest.setAcqRes(userId.toString());
         autoCreditInvestAuthPlusRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
 
 
         String html = null;
         try {
-            html = jixinManager.getHtml(JixinTxCodeEnum.AUTO_CREDIT_INVEST_AUTH_PLUS, autoCreditInvestAuthPlusRequest);
+            html = jixinManager.getHtml(JixinTxCodeEnum.AUTO_CREDIT_INVEST_AUTH, autoCreditInvestAuthPlusRequest);
         } catch (Exception e) {
             log.error("UserThirdBizImpl autoTranfter get redis exception ", e);
             return ResponseEntity
@@ -618,23 +601,23 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Override
     public ResponseEntity<String> autoTranferCallback(HttpServletRequest request, HttpServletResponse response) {
-        AutoCreditInvestAuthPlusResponse autoCreditInvestAuthPlusResponse = jixinManager.callback(request, new TypeToken<AutoCreditInvestAuthPlusResponse>() {
+        AutoCreditInvestAuthResponse autoCreditInvestAuthResponse = jixinManager.callback(request, new TypeToken<AutoCreditInvestAuthResponse>() {
         });
 
-        if(ObjectUtils.isEmpty(autoCreditInvestAuthPlusResponse)){
+        if(ObjectUtils.isEmpty(autoCreditInvestAuthResponse)){
             return ResponseEntity
                     .badRequest()
                     .body("error");
         }
 
-        if(!JixinResultContants.SUCCESS.equals(autoCreditInvestAuthPlusResponse.getRetCode())){
+        if(!JixinResultContants.SUCCESS.equals(autoCreditInvestAuthResponse.getRetCode())){
             log.error("UserThirdBizImpl.autoTranferCallback: 回调出失败");
             return ResponseEntity
                     .badRequest()
                     .body("error");
         }
 
-        Long userId = Long.parseLong(autoCreditInvestAuthPlusResponse.getAcqRes());
+        Long userId = Long.parseLong(autoCreditInvestAuthResponse.getAcqRes());
 
         if(ObjectUtils.isEmpty(userId)){
             log.error("UserThirdBizImpl autoTranferCallback userId is null");
@@ -655,7 +638,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
         userThirdAccount.setAutoTransferState(1);
-        userThirdAccount.setAutoTransferBondOrderId(autoCreditInvestAuthPlusResponse.getOrderId());
+        userThirdAccount.setAutoTransferBondOrderId(autoCreditInvestAuthResponse.getOrderId());
         userThirdAccount.setUpdateAt(new Date());
         Long id = userThirdAccountService.save(userThirdAccount);
         if(id ==  0){

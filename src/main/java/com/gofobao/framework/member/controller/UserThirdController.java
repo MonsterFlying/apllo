@@ -54,15 +54,15 @@ public class UserThirdController {
 
 
     @ApiOperation("开通自动投标协议")
-    @PostMapping("/user/third/autoTender/{smsCode}")
-    public ResponseEntity<VoHtmlResp> autoTender(HttpServletRequest httpServletRequest, @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable  String smsCode) {
-        return userThirdBiz.autoTender(httpServletRequest, userId, smsCode) ;
+    @PostMapping("/user/third/autoTender")
+    public ResponseEntity<VoHtmlResp> autoTender(HttpServletRequest httpServletRequest, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return userThirdBiz.autoTender(httpServletRequest, userId) ;
     }
 
     @ApiOperation("开通自动转让协议")
-    @PostMapping("/user/third/autoTranfter/{smsCode}")
-    public ResponseEntity<VoHtmlResp> autoTranfter(HttpServletRequest httpServletRequest, @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable  String smsCode) {
-        return userThirdBiz.autoTranfter(httpServletRequest, userId, smsCode) ;
+    @PostMapping("/user/third/autoTranfter")
+    public ResponseEntity<VoHtmlResp> autoTranfter(HttpServletRequest httpServletRequest, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return userThirdBiz.autoTranfter(httpServletRequest, userId) ;
     }
 
 

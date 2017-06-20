@@ -34,24 +34,6 @@ public class SmsUserController {
     }
 
 
-    @ApiOperation("发送开通自动投标协议短息")
-    @PostMapping("/openAutoTender")
-    public ResponseEntity<VoBaseResp> openAutoTender(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoUserSmsReq voUserSmsReq){
-        voUserSmsReq.setUserId(userId);
-        ResponseEntity<VoBaseResp> result = messageBiz.openAutoTender(voUserSmsReq) ;
-        return result;
-    }
-
-
-    @ApiOperation("发送开通自动债权转让协议短信")
-    @PostMapping("/openAutoTranfer")
-    public ResponseEntity<VoBaseResp> openAutoTranfer(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoUserSmsReq voUserSmsReq){
-        voUserSmsReq.setUserId(userId);
-        ResponseEntity<VoBaseResp> result = messageBiz.openAutoTranfer(voUserSmsReq) ;
-        return result;
-    }
-
-
     @ApiOperation("充值短信发送")
     @PostMapping("/recharge")
     public ResponseEntity<VoBaseResp> recharge(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoUserSmsReq voUserSmsReq){
