@@ -27,10 +27,4 @@ public class AssetLogController {
         voAssetLogReq.setUserId(userId);
         return assetBiz.assetLogResList(voAssetLogReq);
     }
-
-
-    public static void main(String[] args) {
-        URLHelper.write(,"https://api.gofobao.com/borrow/openFirstVerify");
-
-    }
 }
