@@ -3,7 +3,6 @@ package com.gofobao.framework.borrow.biz;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
 import com.gofobao.framework.borrow.vo.request.*;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.repayment.vo.request.VoThirdBatchRepay;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
@@ -32,12 +31,28 @@ public interface BorrowThirdBiz {
      *
      * @return
      */
-    void thirdBatchRepayAllCheckCall(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> thirdBatchRepayAllCheckCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 即信批次还款
      *
      * @return
      */
-    void thirdBatchRepayAllRunCall(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> thirdBatchRepayAllRunCall(HttpServletRequest request, HttpServletResponse response);
+
+    /**
+     * 即信受托支付
+     *
+     * @param voThirdTrusteePayReq
+     * @return
+     */
+    ResponseEntity<String> thirdTrusteePay(VoThirdTrusteePayReq voThirdTrusteePayReq);
+
+    /**
+     * 即信受托支付回调
+     *
+     * @param request
+     * @param response
+     */
+    ResponseEntity<String> thirdTrusteePayCall(HttpServletRequest request, HttpServletResponse response);
 }

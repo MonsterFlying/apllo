@@ -154,7 +154,7 @@ public class Borrow implements Serializable {
     @Basic
     @Column(name = "bail_account_id")
     private String bailAccountId;
-
+    private Long takeUserId;
 
 
     /**

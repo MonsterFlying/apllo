@@ -13,6 +13,8 @@ import com.gofobao.framework.api.model.debt_register.DebtRegisterRequest;
 import com.gofobao.framework.api.model.debt_register.DebtRegisterResponse;
 import com.gofobao.framework.api.model.debt_register_cancel.DebtRegisterCancelReq;
 import com.gofobao.framework.api.model.debt_register_cancel.DebtRegisterCancelResp;
+import com.gofobao.framework.api.model.trustee_pay.TrusteePayReq;
+import com.gofobao.framework.api.model.trustee_pay.TrusteePayResp;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.asset.entity.Asset;
@@ -22,6 +24,11 @@ import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.*;
+import com.gofobao.framework.common.constans.TypeTokenContants;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -31,18 +38,12 @@ import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchRepay;
 import com.gofobao.framework.system.contants.ThirdBatchNoTypeContant;
-import com.gofobao.framework.system.entity.DictItem;
-import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
-import com.gofobao.framework.system.service.DictItemServcie;
-import com.gofobao.framework.system.service.DictValueService;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -55,19 +56,16 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Zeke on 2017/6/1.
@@ -99,31 +97,12 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     @Autowired
     private BorrowBiz borrowBiz;
     @Autowired
-    private DictItemServcie dictItemServcie;
-    @Autowired
-    private DictValueService dictValueService;
+    private MqHelper mqHelper;
 
     @Value("gofobao.webDomain")
     private String webDomain;
     @Value("jixin.redPacketAccountId")
     private String redPacketAccountId;
-
-    LoadingCache<String, DictValue> jixinCache = CacheBuilder
-            .newBuilder()
-            .expireAfterWrite(60, TimeUnit.MINUTES)
-            .maximumSize(1024)
-            .build(new CacheLoader<String, DictValue>() {
-                @Override
-                public DictValue load(String bankName) throws Exception {
-                    DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
-                    if (ObjectUtils.isEmpty(dictItem)) {
-                        return null;
-                    }
-
-                    return dictValueService.findTopByItemIdAndValue01(dictItem.getId(), bankName);
-                }
-            });
-
 
     /**
      * 登记即信标的
@@ -131,6 +110,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
      * @param voCreateThirdBorrowReq
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> createThirdBorrow(VoCreateThirdBorrowReq voCreateThirdBorrowReq) {
         Long borrowId = voCreateThirdBorrowReq.getBorrowId();
 
@@ -142,11 +122,6 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
 
         Borrow borrow = borrowService.findById(borrowId);
         Preconditions.checkNotNull(borrow, "借款记录不存在！");
-
-        int type = borrow.getType();
-        if (type == 0 || type == 4) { //判断是否是官标、官标不需要在这里登记标的
-            return null;
-        }
 
         Long userId = borrow.getUserId();
         int repayFashion = borrow.getRepayFashion();
@@ -173,17 +148,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         request.setTxAmount(StringHelper.formatDouble(borrow.getMoney(), 100, false));
         request.setRate(StringHelper.formatDouble(borrow.getApr(), 100, false));
         request.setTxFee("0");
-        String bailAccountId = borrow.getBailAccountId();
-        if (!ObjectUtils.isEmpty(bailAccountId)) {
-            request.setBailAccountId(bailAccountId);
-        } else {
-            try {
-                DictValue dictValue = jixinCache.get("bailAccountId");
-                request.setBailAccountId(dictValue.getValue03());
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
-        }
+        request.setBailAccountId(jixinHelper.getBailAccountId(borrowId));
         request.setAcqRes(StringHelper.toString(borrowId));
         request.setChannel(ChannelContant.HTML);
 
@@ -389,8 +354,8 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         BatchRepayReq request = new BatchRepayReq();
         request.setBatchNo(batchNo);
         request.setTxAmount(StringHelper.formatDouble(sumTxAmount, false));
-        request.setRetNotifyURL(webDomain + "/pub/repayment/v2/third/batch/repay/run");
-        request.setNotifyURL(webDomain + "/pub/repayment/v2/third/batch/repay/check");
+        request.setRetNotifyURL(webDomain + "/pub/borrow/v2/third/repayall/run");
+        request.setNotifyURL(webDomain + "/pub/borrow/v2/third/repayall/check");
         request.setAcqRes(GSON.toJson(borrowId));
         request.setSubPacks(GSON.toJson(tempRepayList));
         request.setChannel(ChannelContant.HTML);
@@ -470,7 +435,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
      *
      * @return
      */
-    public void thirdBatchRepayAllCheckCall(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> thirdBatchRepayAllCheckCall(HttpServletRequest request, HttpServletResponse response) {
         BatchRepayCheckResp repayCheckResp = jixinManager.callback(request, new TypeToken<BatchRepayCheckResp>() {
         });
 
@@ -487,13 +452,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             log.info("即信批次还款检验参数成功!");
         }
 
-        try {
-            PrintWriter out = response.getWriter();
-            out.print("success");
-            out.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        return ResponseEntity.ok("success");
     }
 
     /**
@@ -501,7 +460,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
      *
      * @return
      */
-    public void thirdBatchRepayAllRunCall(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> thirdBatchRepayAllRunCall(HttpServletRequest request, HttpServletResponse response) {
         BatchRepayRunResp repayRunResp = jixinManager.callback(request, new TypeToken<BatchRepayRunResp>() {
         });
         boolean bool = true;
@@ -541,13 +500,86 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         } else {
             log.info("提前结清失败!");
         }
-        try {
-            PrintWriter out = response.getWriter();
-            out.print("success");
-            out.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        return ResponseEntity.ok("success");
     }
 
+
+    /**
+     * 即信受托支付
+     *
+     * @param voThirdTrusteePayReq
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<String> thirdTrusteePay(VoThirdTrusteePayReq voThirdTrusteePayReq) {
+        long borrowId = voThirdTrusteePayReq.getBorrowId();
+        Borrow borrow = borrowService.findById(borrowId);
+        Preconditions.checkNotNull(borrow, "borrowThirdBizImpl thirdTrusteePay： 借款记录不存在!");
+
+        long lendUserId = borrow.getUserId(); //借款人id
+        UserThirdAccount lendUserThirdAccount = userThirdAccountService.findByUserId(lendUserId);
+        Preconditions.checkNotNull(lendUserThirdAccount, "borrowThirdBizImpl thirdTrusteePay：借款人不存在!");
+
+        long takeUserId = borrow.getTakeUserId(); //收款人id
+        UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
+        Preconditions.checkNotNull(lendUserThirdAccount, "borrowThirdBizImpl thirdTrusteePay：收款人不存在!");
+
+        TrusteePayReq request = new TrusteePayReq();
+        request.setAccountId(lendUserThirdAccount.getAccountId());
+        request.setChannel(ChannelContant.HTML);
+        request.setAcqRes(StringHelper.toString(borrowId));
+        request.setForgotPwdUrl("");
+        request.setIdNo(lendUserThirdAccount.getIdNo());
+        request.setIdType(StringHelper.toString(lendUserThirdAccount.getIdType()));
+        request.setNotifyUrl(webDomain + "/pub/borrow/v2/third/trusteepay/run");
+        request.setProductId(StringHelper.toString(borrowId));
+        request.setReceiptAccountId(takeUserThirdAccount.getAccountId());
+        request.setRetUrl("");
+        return ResponseEntity.ok(jixinManager.getHtml(JixinTxCodeEnum.TRUSTEE_PAY, request));
+    }
+
+    /**
+     * 即信受托支付回调
+     *
+     * @param request
+     * @param response
+     */
+    public ResponseEntity<String> thirdTrusteePayCall(HttpServletRequest request, HttpServletResponse response) {
+        TrusteePayResp trusteePayResp = jixinManager.callback(request, new TypeToken<TrusteePayResp>() {
+        });
+        boolean bool = true;
+        if (ObjectUtils.isEmpty(trusteePayResp)) {
+            log.error("=============================即信受托支付回调===========================");
+            log.error("请求体为空!");
+            bool = false;
+        }
+
+        if (!JixinResultContants.SUCCESS.equals(trusteePayResp.getRetCode())) {
+            log.error("=============================即信受托支付回调==========================");
+            log.error("回调失败! msg:" + trusteePayResp.getRetMsg());
+            bool = false;
+        }
+        if (bool) {
+            long borrowId = NumberHelper.toLong(trusteePayResp.getAcqRes());
+            //初审
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
+            mqConfig.setTag(MqTagEnum.FIRST_VERIFY);
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            boolean mqState = false;
+            try {
+                log.info(String.format("borrowBizImpl firstVerify send mq %s", GSON.toJson(body)));
+                mqState = mqHelper.convertAndSend(mqConfig);
+            } catch (Exception e) {
+                log.error("borrowBizImpl firstVerify send mq exception", e);
+            }
+
+            if (!mqState) {
+                return ResponseEntity.ok("初审失败!");
+            }
+        }
+        return ResponseEntity.ok("success");
+    }
 }

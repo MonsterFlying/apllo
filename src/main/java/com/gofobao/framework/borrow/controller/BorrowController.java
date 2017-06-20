@@ -180,6 +180,19 @@ public class BorrowController {
         return borrowBiz.cancelBorrow(voCancelBorrow);
     }
 
+    /**
+     * pc取消借款
+     *
+     * @param voPcCancelThirdBorrow
+     * @return
+     */
+    @PostMapping("/pub/pc/cancelBorrow")
+    @ApiOperation("pc取消借款")
+    public ResponseEntity<VoBaseResp> cancelBorrow(@Valid @ModelAttribute VoPcCancelThirdBorrow voPcCancelThirdBorrow) {
+        return borrowBiz.pcCancelBorrow(voPcCancelThirdBorrow);
+    }
+
+
     @PostMapping("/repayAll")
     @ApiOperation("提前还款")
     public ResponseEntity<VoBaseResp> repayAll(@Valid @ModelAttribute VoRepayAllReq voRepayAllReq) {

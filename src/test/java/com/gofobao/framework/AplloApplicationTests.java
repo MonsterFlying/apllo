@@ -15,6 +15,7 @@ import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
+import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
 import com.gofobao.framework.common.integral.IntegralChangeEntity;
 
 import java.util.HashMap;
@@ -73,6 +74,17 @@ public class AplloApplicationTests {
     @Test
     public void test() {
 
+        VoRepayReq voRepayReq = new VoRepayReq();
+        voRepayReq.setRepaymentId(168683L);
+        voRepayReq.setUserId(901L);
+        voRepayReq.setIsUserOpen(false);
+        voRepayReq.setInterestPercent(1d);
+        try {
+            repaymentBiz.repay(voRepayReq);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         System.out.println(true + "");
 
         /*VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
@@ -112,21 +124,21 @@ public class AplloApplicationTests {
         System.out.println(response);*/
 
         /*BatchDetailsQueryReq request = new BatchDetailsQueryReq();
-        request.setBatchNo("100003");
-        request.setBatchTxDate("20170615");
-        request.setType("2");
+        request.setBatchNo("100002");
+        request.setBatchTxDate("20170619");
+        request.setType("1");
         request.setPageNum("1");
         request.setPageSize("10");
         request.setChannel(ChannelContant.HTML);
         BatchDetailsQueryResp response = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, request, BatchDetailsQueryResp.class);
-        System.out.println(response);
-        */
-        Borrow borrow = borrowService.findById(165198L);
+        System.out.println(response);*/
+
+        /*Borrow borrow = borrowService.findById(165198L);
         try {
             borrowBiz.notTransferedBorrowAgainVerify(borrow);
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
 }

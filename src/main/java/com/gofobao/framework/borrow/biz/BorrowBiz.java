@@ -16,7 +16,19 @@ import java.util.Map;
  */
 public interface BorrowBiz {
 
+    /**
+     * 取消借款
+     * @param voCancelBorrow
+     * @return
+     */
     ResponseEntity<VoBaseResp> cancelBorrow(VoCancelBorrow voCancelBorrow);
+
+    /**
+     * pc取消借款
+     * @param voPcCancelThirdBorrow
+     * @return
+     */
+    ResponseEntity<VoBaseResp> pcCancelBorrow(VoPcCancelThirdBorrow voPcCancelThirdBorrow);
 
     /**
      * 新增净值借款
@@ -107,6 +119,19 @@ public interface BorrowBiz {
      */
     ResponseEntity<VoBaseResp> doAgainVerify(VoDoAgainVerifyReq voDoAgainVerifyReq);
 
+    /**
+     * 校验提前结清参数
+     *
+     * @param voRepayAllReq
+     * @return
+     */
     ResponseEntity<VoBaseResp> checkRepayAll(VoRepayAllReq voRepayAllReq);
 
+    /**
+     * 登记官方借款（车贷标、渠道标）
+     *
+     * @param voRegisterOfficialBorrow
+     * @return
+     */
+    ResponseEntity<String> registerOfficialBorrow(VoRegisterOfficialBorrow voRegisterOfficialBorrow);
 }
