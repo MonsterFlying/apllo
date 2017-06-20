@@ -116,6 +116,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> createThirdBorrow(VoCreateThirdBorrowReq voCreateThirdBorrowReq) {
         Long borrowId = voCreateThirdBorrowReq.getBorrowId();
+        boolean entrustFlag = voCreateThirdBorrowReq.getEntrustFlag();
 
         if (ObjectUtils.isEmpty(borrowId)) {
             return ResponseEntity
@@ -128,6 +129,9 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
 
         Long userId = borrow.getUserId();
         int repayFashion = borrow.getRepayFashion();
+
+        Long takeUserId = borrow.getTakeUserId();
+        UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "借款人未开户!");
@@ -154,6 +158,10 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         request.setBailAccountId(jixinHelper.getBailAccountId(borrowId));
         request.setAcqRes(StringHelper.toString(borrowId));
         request.setChannel(ChannelContant.HTML);
+        if (entrustFlag && !ObjectUtils.isEmpty(takeUserThirdAccount)) {
+            request.setEntrustFlag("1");
+            request.setReceiptAccountId(takeUserThirdAccount.getAccountId());
+        }
 
         DebtRegisterResponse response = jixinManager.send(JixinTxCodeEnum.DEBT_REGISTER, request, DebtRegisterResponse.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {

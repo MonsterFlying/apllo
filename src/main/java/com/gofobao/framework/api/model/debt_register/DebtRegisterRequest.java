@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class DebtRegisterRequest extends JixinBaseRequest{
+public class DebtRegisterRequest extends JixinBaseRequest {
     /**
      * 电子账号
      */
@@ -30,20 +30,20 @@ public class DebtRegisterRequest extends JixinBaseRequest{
     private String raiseDate;
     /**
      * 募集结束日期  YYYYMMDD
-     募集期不得超过规定工作日，超过结束日期未能满标，标的失效，不能再投标或满标，但需要P2P主动发起撤销所有
+     * 募集期不得超过规定工作日，超过结束日期未能满标，标的失效，不能再投标或满标，但需要P2P主动发起撤销所有
      */
     private String raiseEndDate;
     /**
      * 付息方式 0-到期与本金一起归还
-     1-每月固定日期支付
-     2-每月不确定日期支付
+     * 1-每月固定日期支付
+     * 2-每月不确定日期支付
      */
     private String intType;
     /**
      * 利息每月支付日 DD 选填
-     付息方式为1时必填；
-     若设置日期大于月份最后一天时，则为该月最后一天支付
-     平台仅记录
+     * 付息方式为1时必填；
+     * 若设置日期大于月份最后一天时，则为该月最后一天支付
+     * 平台仅记录
      */
     private String intPayDay;
     /**
@@ -74,4 +74,13 @@ public class DebtRegisterRequest extends JixinBaseRequest{
      * 请求方保留 选填
      */
     private String acqRes;
+    /**
+     * 当entrustFlag不为空时必填
+     */
+    private String receiptAccountId;
+    /**
+     * 为空时单一借款人模式
+     * 1：受托支付业务类别
+     */
+    private String entrustFlag;
 }

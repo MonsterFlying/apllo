@@ -1,5 +1,6 @@
 package com.gofobao.framework.award.service;
 
+import com.gofobao.framework.award.entity.Coupon;
 import com.gofobao.framework.award.vo.request.VoCouponReq;
 import com.gofobao.framework.award.vo.response.CouponRes;
 
@@ -11,4 +12,7 @@ import java.util.List;
 public interface CouponService {
 
     List<CouponRes>list(VoCouponReq couponReq);
+
+    Coupon save(Coupon coupon);
+
 }

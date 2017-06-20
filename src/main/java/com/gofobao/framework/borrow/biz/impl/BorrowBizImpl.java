@@ -21,6 +21,7 @@ import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
+import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MathHelper;
@@ -33,14 +34,19 @@ import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
+import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
+import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
+import com.gofobao.framework.system.biz.IncrStatisticBiz;
+import com.gofobao.framework.system.entity.IncrStatistic;
 import com.gofobao.framework.system.entity.Notices;
+import com.gofobao.framework.system.service.IncrStatisticService;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.AutoTenderService;
@@ -57,6 +63,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.MessagingException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -99,6 +106,10 @@ public class BorrowBizImpl implements BorrowBiz {
     private BorrowProvider borrowProvider;
     @Autowired
     private BorrowThirdBiz borrowThirdBiz;
+    @Autowired
+    private IncrStatisticBiz incrStatisticBiz;
+    @Autowired
+    private UserService userService;
 
     /**
      * 理财首页标列表
@@ -894,9 +905,7 @@ public class BorrowBizImpl implements BorrowBiz {
             //投资车贷标成功添加 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
             //更新 投过相应标种 标识
             //=============================================================
-            /**
-             * @// TODO: 2017/6/2 投标成功事件
-             */
+            updateUserCacheByTenderSuccess(tempTender, borrow, repayDetailList);
 
         }
 
@@ -977,6 +986,114 @@ public class BorrowBizImpl implements BorrowBiz {
         return true;
     }
 
+    /**
+     * 投资车贷标成功添加 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
+     * 更新 投过相应标种 标识
+     *
+     * @param tender
+     * @param borrow
+     * @param repayDetailList
+     */
+    private Map<String, Object> updateUserCacheByTenderSuccess(Tender tender, Borrow borrow, List<Map<String, Object>> repayDetailList) throws Exception {
+        Map<String, Object> resultMap = new HashMap<>();
+        Users user = userService.findById(tender.getUserId());
+        UserCache userCache = userCacheService.findById(tender.getUserId());
+        log.debug("-------updateUserCacheByTenderSuccess---" + GSON.toJson(borrow) + "-------");
+        log.debug("------------------");
+        log.debug("-------updateUserCacheByTenderSuccess---" + GSON.toJson(tender) + "-------");
+        if ((borrow.getType() == 0 || borrow.getType() == 4) && (!borrow.isTransfer())
+                && (!userCache.getTenderTuijian()) && (!userCache.getTenderQudao())) {
+            //首次投资推荐标满2000元赠送流量
+            Set<Integer> tempSet = new HashSet<>();
+            tempSet.add(3);
+            tempSet.add(5);
+            tempSet.add(7);
+            if ((!tempSet.contains(tender.getSource())) && tender.getValidMoney() >= 2000 * 100) {
+
+            } else if ((user.getSource() == 5) && (tender.getValidMoney() >= 1000 * 100)) {
+
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_ACTIVITY);
+                mqConfig.setTag(MqTagEnum.GIVE_COUPON);
+                ImmutableMap<String, String> body = ImmutableMap
+                        .of(MqConfig.MSG_TENDER_ID, StringHelper.toString(tender.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                mqConfig.setMsg(body);
+                boolean mqState = false;
+                try {
+                    log.info(String.format("borrowBizImpl firstVerify send mq %s", GSON.toJson(body)));
+                    mqState = mqHelper.convertAndSend(mqConfig);
+                } catch (Exception e) {
+                    log.error("borrowBizImpl firstVerify send mq exception", e);
+                }
+                if (!mqState) {
+                    log.error("赠送流量券失败!");
+                }
+            }
+        }
+
+        Integer countInterest = 0;
+        for (int i = 0; i < repayDetailList.size(); i++) {
+            Map<String, Object> repayDetailMap = repayDetailList.get(i);
+            countInterest += new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue();
+        }
+
+        UserCache tempUserCache = new UserCache();
+        if (borrow.getType() == 0) {
+            tempUserCache.setTjWaitCollectionPrincipal(userCache.getTjWaitCollectionPrincipal() + tender.getValidMoney());
+            tempUserCache.setTjWaitCollectionInterest(userCache.getTjWaitCollectionInterest() + countInterest);
+        }
+
+        if (borrow.getType() == 4) {
+            tempUserCache.setQdWaitCollectionPrincipal(userCache.getQdWaitCollectionPrincipal() + tender.getValidMoney());
+            tempUserCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() + countInterest);
+        }
+
+        try {
+            IncrStatistic incrStatistic = new IncrStatistic();
+            if ((!userCache.getTenderTransfer()) && (!userCache.getTenderTuijian()) && (!userCache.getTenderJingzhi()) && (!userCache.getTenderMiao()) && (!userCache.getTenderQudao())) {
+                incrStatistic.setTenderCount(1);
+                incrStatistic.setTenderTotal(1);
+            }
+
+            if (borrow.isTransfer() && (!userCache.getTenderTransfer())) {
+                tempUserCache.setTenderTransfer(true);
+                incrStatistic.setTenderLzCount(1);
+                incrStatistic.setTenderLzTotalCount(1);
+            } else if ((borrow.getType() == 0) && (!userCache.getTenderTuijian())) {
+                tempUserCache.setTenderTuijian(true);
+                incrStatistic.setTenderTjCount(1);
+                incrStatistic.setTenderTjTotalCount(1);
+            } else if ((borrow.getType() == 1) && (!userCache.getTenderJingzhi())) {
+                tempUserCache.setTenderJingzhi(true);
+                incrStatistic.setTenderJzCount(1);
+                incrStatistic.setTenderJzTotalCount(1);
+            } else if ((borrow.getType() == 2) && (!userCache.getTenderMiao())) {
+                tempUserCache.setTenderMiao(true);
+                incrStatistic.setTenderMiaoCount(1);
+                incrStatistic.setTenderMiaoTotalCount(1);
+            } else if ((borrow.getType() == 4) && (!userCache.getTenderQudao())) {
+                tempUserCache.setTenderQudao(true);
+                incrStatistic.setTenderQdCount(1);
+                incrStatistic.setTenderQdTotalCount(1);
+            }
+            if (!ObjectUtils.isEmpty(incrStatistic)) {
+                incrStatisticBiz.caculate(incrStatistic);
+            }
+        } catch (MessagingException e) {
+            log.error(String.format("投标成功统计错误：%s", e.getMessage()));
+        }
+
+        //======================================
+        // 老用户投标红包
+        //======================================
+
+
+        //======================================
+        // 推荐用户投资红包
+        //======================================
+
+        return resultMap;
+    }
 
     /**
      * 检查提前结清参数
