@@ -28,9 +28,21 @@ public class UserThirdWebController {
     private UserThirdBiz userThirdBiz ;
 
     @GetMapping("/pub/password/show/{id}")
-    public String shwoPassword(@PathVariable("id") Long id) {
-        return userThirdBiz.shwoPassword(id)  ;
+    public String shwoPassword(@PathVariable("id") Long id, Model model) {
+        return userThirdBiz.shwoPassword(id, model)  ;
     }
+
+
+    @GetMapping("/pub/autoTender/show/{id}")
+    public String showAutoTender(@PathVariable("id") Long id, Model model) {
+        return userThirdBiz.showAutoTender(id, model)  ;
+    }
+
+    @GetMapping("/pub/autoTranfer/show/{id}")
+    public String showAutoTranfer(@PathVariable("id") Long id, Model model) {
+        return userThirdBiz.showAutoTranfer(id, model)  ;
+    }
+
 
     @ApiOperation("江西银行网络交易资金账户服务三方协议")
     @GetMapping("/thirdAccount/protocol")

@@ -210,6 +210,7 @@ public class AssetBizImpl implements AssetBiz {
     public String rechargeShow(HttpServletRequest request, Model model, String seqNo) {
         // 查询充值信息
         RechargeDetailLog rechargeDetailLog = rechargeDetailLogService.findTopBySeqNo(seqNo);
+        model.addAttribute("h5Domain", h5Domain) ;
         if(ObjectUtils.isEmpty(rechargeDetailLog)){
             return "/recharge/faile" ;
         }else if(rechargeDetailLog.getState() == 0){

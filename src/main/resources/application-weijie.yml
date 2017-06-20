@@ -50,7 +50,7 @@ jixin: #银行存管
 gofobao:
   javaDomain: http://max.hk1.mofasuidao.cn
   webDomain: http://max.hk1.mofasuidao.cn
-  h5Domain: http://max.hk1.mofasuidao.cn
+  h5Domain: http://ng.hk1.mofasuidao.cn
   imageDomain : http://www.gofobao.com
   captcha: false # 全站是否开启图形验证码验证
   close-email-send: true # 关闭邮箱发送

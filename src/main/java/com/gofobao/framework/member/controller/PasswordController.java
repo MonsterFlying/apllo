@@ -48,5 +48,4 @@ public class PasswordController {
     public ResponseEntity<VoBaseResp> findPassword(@Valid @ModelAttribute VoFindPasswordReq voFindPasswordReq){
         return userPasswordBiz.findPassword(voFindPasswordReq);
     }
-
 }

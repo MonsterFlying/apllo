@@ -69,11 +69,6 @@ public class JixinManager {
             req.setTxDate(DateHelper.getDate());
         }
 
-
-        if (StringUtils.isEmpty(req.getTxDate())) {
-            req.setTxDate(DateHelper.getDate());
-        }
-
         req.setTxCode(txCodeEnum.getValue());
         String url = prefixUrl + txCodeEnum.getUrl();
         String json = gson.toJson(req);
@@ -97,7 +92,7 @@ public class JixinManager {
         StringBuilder sb = new StringBuilder();
         sb.append("<html>");
         sb.append("<head>");
-        sb.append("     <title>银行存管设置密码</title>");
+        sb.append("     <title>广富宝金服-江西银行存管系统</title>");
         sb.append("     <meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\" /> ");
         sb.append("</head>");
         sb.append("<body>");
@@ -161,11 +156,6 @@ public class JixinManager {
         if (StringUtils.isEmpty(req.getTxTime())) {
             req.setTxTime(DateHelper.getTime());
         }
-
-        if (StringUtils.isEmpty(req.getTxDate())) {
-            req.setTxDate(DateHelper.getDate());
-        }
-
 
         if (StringUtils.isEmpty(req.getTxDate())) {
             req.setTxDate(DateHelper.getDate());

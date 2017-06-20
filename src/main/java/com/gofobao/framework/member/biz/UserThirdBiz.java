@@ -98,9 +98,10 @@ public interface UserThirdBiz {
     /**
      * 设置密码回调
      * @param id
+     * @param model
      * @return
      */
-    String shwoPassword(Long id);
+    String shwoPassword(Long id, Model model);
 
     /**
      * 银行存管协议
@@ -108,4 +109,16 @@ public interface UserThirdBiz {
      * @param model
      */
     void thirdAccountProtocol(Long userId, Model model);
+
+    /**
+     * 自动投标签约回调
+     * @param id
+     * @param model
+     * @return
+     */
+    String showAutoTender(Long id, Model model);
+
+    String showAutoTranfer(Long id, Model model);
+
+    ResponseEntity<String> publicPasswordModify(HttpServletRequest httpServletRequest, String encode, String channel);
 }

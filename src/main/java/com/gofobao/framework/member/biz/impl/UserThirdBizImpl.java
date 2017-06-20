@@ -19,6 +19,7 @@ import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.OKHttpHelper;
 import com.gofobao.framework.helper.RedisHelper;
+import com.gofobao.framework.helper.ThirdAccountPasswordHelper;
 import com.gofobao.framework.member.biz.UserThirdBiz;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -86,6 +87,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Value("${gofobao.aliyun-bankinfo-appcode}")
     String aliyunQueryAppcode;
+
+    @Autowired
+    ThirdAccountPasswordHelper thirdAccountPasswordHelper ;
 
 
     @Autowired
@@ -338,7 +342,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         } else { // 重置密码
             PasswordResetRequest passwordResetRequest = new PasswordResetRequest();
             passwordResetRequest.setMobile(userThirdAccount.getMobile());
-            passwordResetRequest.setChannel(ChannelContant.HTML);
+            passwordResetRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
             passwordResetRequest.setName(userThirdAccount.getName());
             passwordResetRequest.setAccountId(userThirdAccount.getAccountId());
             passwordResetRequest.setIdType(IdTypeContant.ID_CARD);
@@ -507,8 +511,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
         autoBidAuthRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
         autoBidAuthRequest.setTxAmount("999999999") ;
         autoBidAuthRequest.setTotAmount("999999999");
-        autoBidAuthRequest.setForgotPwdUrl(h5Domain);
-        autoBidAuthRequest.setRetUrl(h5Domain);
+        autoBidAuthRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountPasswordUrl(httpServletRequest, userId));
+        autoBidAuthRequest.setRetUrl(String.format("%s%s%s", javaDomain, "/pub/autoTender/show/", userId));
         autoBidAuthRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/user/third/autoTender/callback"));
         autoBidAuthRequest.setAcqRes(userId.toString());
         autoBidAuthRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
@@ -556,26 +560,11 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "请先签约江西银行自动投标协议！", VoHtmlResp.class));
         }
 
-
-        String srvTxCode = null;
-        try {
-            srvTxCode = redisHelper.get(String.format("%s_%s", SrvTxCodeContants.AUTO_CREDIT_INVEST_AUTH_PLUS, userThirdAccount.getMobile()), null);
-            redisHelper.remove(String.format("%s_%s", SrvTxCodeContants.AUTO_CREDIT_INVEST_AUTH_PLUS, userThirdAccount.getMobile()));
-        } catch (Exception e) {
-            log.error("UserThirdBizImpl autoTranfter get redis exception", e);
-        }
-
-        if (StringUtils.isEmpty(srvTxCode)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "短信验证码已过期，请重新获取", VoHtmlResp.class));
-        }
-
         AutoCreditInvestAuthRequest autoCreditInvestAuthPlusRequest = new AutoCreditInvestAuthRequest() ;
         autoCreditInvestAuthPlusRequest.setAccountId(userThirdAccount.getAccountId());
         autoCreditInvestAuthPlusRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
-        autoCreditInvestAuthPlusRequest.setForgotPwdUrl(h5Domain);
-        autoCreditInvestAuthPlusRequest.setRetUrl(h5Domain);
+        autoCreditInvestAuthPlusRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountPasswordUrl(httpServletRequest, userId));
+        autoCreditInvestAuthPlusRequest.setRetUrl(String.format("%s%s%s", javaDomain, "/pub/autoTranfer/show/", userId));
         autoCreditInvestAuthPlusRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/user/third/autoTranfer/callback"));
         autoCreditInvestAuthPlusRequest.setAcqRes(userId.toString());
         autoCreditInvestAuthPlusRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
@@ -678,8 +667,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
-    public String shwoPassword(Long id) {
+    public String shwoPassword(Long id, Model model) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(id);
+        model.addAttribute("h5Domain", h5Domain) ;
         if(ObjectUtils.isEmpty(userThirdAccount)){
             return "/password/faile" ;
         }
@@ -704,6 +694,61 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
         model.addAttribute("customerName", username) ;
         model.addAttribute("playformName",  "深圳市广富宝金融信息服务有限公司") ;
+    }
+
+    @Override
+    public String showAutoTender(Long id, Model model) {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(id);
+        model.addAttribute("h5Domain", h5Domain) ;
+        if(ObjectUtils.isEmpty(userThirdAccount)){
+            return "/autoTender/faile" ;
+        }
+
+        if(userThirdAccount.getAutoTenderState() == 1){
+            return "/autoTender/success" ;
+        }else{
+            return "/autoTender/faile" ;
+        }
+    }
+
+    @Override
+    public String showAutoTranfer(Long id, Model model) {
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(id);
+        model.addAttribute("h5Domain", h5Domain) ;
+        if(ObjectUtils.isEmpty(userThirdAccount)){
+            return "/autoTranfer/faile" ;
+        }
+
+        if(userThirdAccount.getAutoTransferState() == 1){
+            return "/autoTranfer/success" ;
+        }else{
+            return "/autoTranfer/faile" ;
+        }
+    }
+
+    @Override
+    public ResponseEntity<String> publicPasswordModify(HttpServletRequest httpServletRequest, String encode, String channel) {
+        Long userId = thirdAccountPasswordHelper.getUserId(encode);
+        if(userId == null){
+            throw  new RuntimeException("非法请求");
+        }
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if(ObjectUtils.isEmpty(userThirdAccount)){
+            throw  new RuntimeException("设置密码");
+        }
+        PasswordResetRequest passwordResetRequest = new PasswordResetRequest() ;
+        passwordResetRequest.setMobile(userThirdAccount.getMobile());
+        passwordResetRequest.setChannel(channel);
+        passwordResetRequest.setName(userThirdAccount.getName());
+        passwordResetRequest.setAccountId(userThirdAccount.getAccountId());
+        passwordResetRequest.setIdType(IdTypeContant.ID_CARD);
+        passwordResetRequest.setIdNo(userThirdAccount.getIdNo());
+        passwordResetRequest.setAcqRes(String.valueOf(userId));
+        passwordResetRequest.setRetUrl(String.format("%s%s/%s", javaDomain, "/pub/password/show", userId));
+        passwordResetRequest.setNotifyUrl(String.format("%s%s", javaDomain, "/pub/user/third/modifyOpenAccPwd/callback/2"));
+        String html = jixinManager.getHtml(JixinTxCodeEnum.PASSWORD_RESET, passwordResetRequest) ;
+        return ResponseEntity.ok(html);
     }
 
 }
