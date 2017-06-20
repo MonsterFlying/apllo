@@ -74,7 +74,7 @@ public class AplloApplicationTests {
     @Test
     public void test() {
 
-        VoRepayReq voRepayReq = new VoRepayReq();
+        /*VoRepayReq voRepayReq = new VoRepayReq();
         voRepayReq.setRepaymentId(168683L);
         voRepayReq.setUserId(901L);
         voRepayReq.setIsUserOpen(false);
@@ -85,15 +85,15 @@ public class AplloApplicationTests {
             e.printStackTrace();
         }
 
-        System.out.println(true + "");
+        System.out.println(true + "");*/
 
-        /*VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
-        voQueryThirdBorrowList.setBorrowId(165180L);
+        VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
+        voQueryThirdBorrowList.setBorrowId(165200L);
         voQueryThirdBorrowList.setUserId(901L);
         voQueryThirdBorrowList.setPageNum("1");
         voQueryThirdBorrowList.setPageSize("10");
         DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
-        System.out.println((resp.getTotalItems()));*/
+        System.out.println((resp.getTotalItems()));
 
        /* Map<String,String> msg = new HashMap<>();
         msg.put("borrowId","165184");

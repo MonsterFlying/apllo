@@ -7,6 +7,7 @@ import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowStatisticsWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewVoBorrowDescWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Map;
@@ -133,5 +134,5 @@ public interface BorrowBiz {
      * @param voRegisterOfficialBorrow
      * @return
      */
-    ResponseEntity<String> registerOfficialBorrow(VoRegisterOfficialBorrow voRegisterOfficialBorrow);
+    ResponseEntity<VoHtmlResp> registerOfficialBorrow(VoRegisterOfficialBorrow voRegisterOfficialBorrow);
 }

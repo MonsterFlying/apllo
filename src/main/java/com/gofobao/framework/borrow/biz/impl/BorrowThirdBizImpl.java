@@ -33,6 +33,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
@@ -57,12 +58,14 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Base64Utils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -138,9 +141,9 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         request.setIntType(StringHelper.toString(repayFashion == 1 ? 0 : 1));
         int duration = 0;
         if (repayFashion != 1) {
-            Date successAt = borrow.getSuccessAt();
-            request.setIntPayDay(DateHelper.dateToString(successAt, "dd"));
-            duration = DateHelper.diffInDays(DateHelper.addMonths(successAt, borrow.getTimeLimit()), successAt, false);
+            Date releaseAt = borrow.getReleaseAt();
+            request.setIntPayDay(DateHelper.dateToString(releaseAt, "dd"));
+            duration = DateHelper.diffInDays(DateHelper.addMonths(releaseAt, borrow.getTimeLimit()), releaseAt, false);
         } else {//一次性还本付息
             duration = borrow.getTimeLimit();
         }
@@ -511,7 +514,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<String> thirdTrusteePay(VoThirdTrusteePayReq voThirdTrusteePayReq) {
+    public ResponseEntity<VoHtmlResp> thirdTrusteePay(VoThirdTrusteePayReq voThirdTrusteePayReq) {
         long borrowId = voThirdTrusteePayReq.getBorrowId();
         Borrow borrow = borrowService.findById(borrowId);
         Preconditions.checkNotNull(borrow, "borrowThirdBizImpl thirdTrusteePay： 借款记录不存在!");
@@ -535,7 +538,18 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         request.setProductId(StringHelper.toString(borrowId));
         request.setReceiptAccountId(takeUserThirdAccount.getAccountId());
         request.setRetUrl("");
-        return ResponseEntity.ok(jixinManager.getHtml(JixinTxCodeEnum.TRUSTEE_PAY, request));
+        String html = jixinManager.getHtml(JixinTxCodeEnum.TRUSTEE_PAY, request);
+
+        VoHtmlResp resp = VoBaseResp.ok("请求成功", VoHtmlResp.class);
+        try {
+            resp.setHtml(Base64Utils.encodeToString(html.getBytes("UTF-8")));
+        } catch (UnsupportedEncodingException e) {
+            log.error("UserThirdBizImpl autoTender gethtml exceptio", e);
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了， 请稍候重试", VoHtmlResp.class));
+        }
+        return ResponseEntity.ok(resp);
     }
 
     /**

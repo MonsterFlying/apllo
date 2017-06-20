@@ -35,6 +35,7 @@ import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
@@ -1212,12 +1213,16 @@ public class BorrowBizImpl implements BorrowBiz {
      * @param voRegisterOfficialBorrow
      * @return
      */
-    public ResponseEntity<String> registerOfficialBorrow(VoRegisterOfficialBorrow voRegisterOfficialBorrow) {
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoHtmlResp> registerOfficialBorrow(VoRegisterOfficialBorrow voRegisterOfficialBorrow) {
         long borrowId = voRegisterOfficialBorrow.getBorrowId();
+        Borrow borrow = borrowService.findById(borrowId);
+        Preconditions.checkNotNull(borrow, "借款不存在!");
+
         //检查标的是否登记
         VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
         voQueryThirdBorrowList.setBorrowId(borrowId);
-        voQueryThirdBorrowList.setUserId(borrowId);
+        voQueryThirdBorrowList.setUserId(borrow.getUserId());
         voQueryThirdBorrowList.setPageNum("1");
         voQueryThirdBorrowList.setPageSize("10");
         DebtDetailsQueryResp response = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);

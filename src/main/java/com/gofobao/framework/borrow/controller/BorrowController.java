@@ -9,6 +9,7 @@ import com.gofobao.framework.borrow.vo.response.VoViewBorrowStatisticsWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewVoBorrowDescWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.ThymeleafHelper;
+import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import io.swagger.annotations.Api;
@@ -209,5 +210,17 @@ public class BorrowController {
     @ApiOperation("复审")
     public ResponseEntity<VoBaseResp> doAgainVerify(VoDoAgainVerifyReq voDoAgainVerifyReq) {
         return borrowBiz.doAgainVerify(voDoAgainVerifyReq);
+    }
+
+    /**
+     * 登记官方借款（车贷标、渠道标）
+     *
+     * @param voRegisterOfficialBorrow
+     * @return
+     */
+    @RequestMapping("/pub/pc/official/register")
+    @ApiOperation("登记官方借款（车贷标、渠道标）")
+    public ResponseEntity<VoHtmlResp> registerOfficialBorrow(@ModelAttribute @Valid VoRegisterOfficialBorrow voRegisterOfficialBorrow){
+        return borrowBiz.registerOfficialBorrow(voRegisterOfficialBorrow);
     }
 }

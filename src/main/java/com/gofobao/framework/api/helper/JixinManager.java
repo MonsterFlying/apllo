@@ -82,6 +82,7 @@ public class JixinManager {
         String unSign = StringHelper.mergeMap(params);
         String sign = certHelper.doSign(unSign);
         params.put("sign", sign);
+        log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));
         return genFormHtml(params, url);
     }
 

@@ -29,14 +29,14 @@ public interface BorrowRepaymentThirdBiz {
      *
      * @return
      */
-    void thirdBatchRepayCheckCall(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> thirdBatchRepayCheckCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 即信批次还款
      *
      * @return
      */
-    void thirdBatchRepayRunCall(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> thirdBatchRepayRunCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 即信批次放款  （满标后调用）
@@ -51,14 +51,14 @@ public interface BorrowRepaymentThirdBiz {
      *
      * @return
      */
-    void thirdBatchLendRepayCheckCall(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> thirdBatchLendRepayCheckCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 即信批次放款  （满标后调用）
      *
      * @return
      */
-    void thirdBatchLendRepayRunCall(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> thirdBatchLendRepayRunCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 批次担保账户代偿
@@ -70,12 +70,12 @@ public interface BorrowRepaymentThirdBiz {
     /**
      * 批次担保账户代偿参数检查回调
      */
-    void thirdBatchBailRepayCheckCall(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> thirdBatchBailRepayCheckCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 批次担保账户代偿业务处理回调
      */
-    void thirdBatchBailRepayRunCall(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> thirdBatchBailRepayRunCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 批次融资人还担保账户垫款
@@ -90,7 +90,7 @@ public interface BorrowRepaymentThirdBiz {
      * @param request
      * @param response
      */
-    void thirdBatchRepayBailCheckCall(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> thirdBatchRepayBailCheckCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 批次融资人还担保账户垫款业务处理回调
@@ -98,7 +98,7 @@ public interface BorrowRepaymentThirdBiz {
      * @param request
      * @param response
      */
-    void thirdBatchRepayBailRunCall(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> thirdBatchRepayBailRunCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 获取即信还款集合
