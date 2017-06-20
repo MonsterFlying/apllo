@@ -71,14 +71,14 @@ public class InvestServiceImpl implements InvestService {
                 .map(p -> p.getId())
                 .collect(Collectors.toList());
         //标Id集合
-        Set<Long> borrowIdArrray = tenderList.stream()
+        Set<Long> borrowIdArray = tenderList.stream()
                 .map(p -> p.getBorrowId())
                 .collect(Collectors.toSet());
         //期数集合
         List<BorrowCollection> borrowCollections = borrowCollectionRepository.findByTenderIdIn(tenderIdArray);
 
         //标集合
-        List<Borrow> borrowList = borrowRepository.findByIdIn(new ArrayList(borrowIdArrray));
+        List<Borrow> borrowList = borrowRepository.findByIdIn(new ArrayList(borrowIdArray));
 
         Map<Long, Borrow> borrowMap = borrowList.stream()
                 .collect(Collectors.toMap(Borrow::getId, Function.identity()));
@@ -89,7 +89,7 @@ public class InvestServiceImpl implements InvestService {
         List<VoViewBackMoney> backMoneyList = new ArrayList<>();
         tenderList.stream().forEach(p -> {
             VoViewBackMoney voViewBackMoney = new VoViewBackMoney();
-            voViewBackMoney.setMoney(NumberHelper.to2DigitString(p.getValidMoney() / 100D));
+            voViewBackMoney.setMoney(StringHelper.formatMon(p.getValidMoney() / 100d));
             List<BorrowCollection> borrowCollectionList = borrowCollectionMap.get(p.getId());
             Long count = borrowCollectionList.stream().filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_NO).count();
             voViewBackMoney.setOrder(count.intValue());
@@ -101,8 +101,8 @@ public class InvestServiceImpl implements InvestService {
             Integer interest = borrowCollectionList.stream()
                     .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_NO)
                     .mapToInt(s -> s.getInterest()).sum();
-            voViewBackMoney.setInterest(NumberHelper.to2DigitString(interest / 100D));
-            voViewBackMoney.setPrincipal(NumberHelper.to2DigitString(principal / 100D));
+            voViewBackMoney.setInterest(StringHelper.formatMon(interest / 100d));
+            voViewBackMoney.setPrincipal(StringHelper.formatMon(principal / 100d));
             voViewBackMoney.setTenderId(p.getId());
             voViewBackMoney.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
             backMoneyList.add(voViewBackMoney);
@@ -150,14 +150,15 @@ public class InvestServiceImpl implements InvestService {
             Integer apr = borrow.getApr();
 
             //预期收益
-            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(validMoney / 100D, apr / 100D, borrow.getTimeLimit(), borrow.getSuccessAt());
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(validMoney), new Double(apr) , borrow.getTimeLimit(), borrow.getSuccessAt());
             Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
             Integer earnings = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("earnings")));
 
-            voViewBiddingRes.setExpectEarnings(NumberHelper.to2DigitString(earnings / 100));
-            voViewBiddingRes.setApr(NumberHelper.to2DigitString(apr / 100));
-            voViewBiddingRes.setMoney(NumberHelper.to2DigitString(validMoney / 100));
+            voViewBiddingRes.setExpectEarnings(StringHelper.formatMon(earnings / 100d));
+            voViewBiddingRes.setApr(StringHelper.formatMon(apr / 100d));
+            voViewBiddingRes.setMoney(StringHelper.formatMon(validMoney / 100d));
             voViewBiddingRes.setBorrowName(borrow.getName());
+            voViewBiddingRes.setTenderId(p.getId());
             viewBiddingResList.add(voViewBiddingRes);
         });
         return Optional.ofNullable(viewBiddingResList).orElse(Collections.EMPTY_LIST);
@@ -196,7 +197,7 @@ public class InvestServiceImpl implements InvestService {
             VoViewSettleRes voViewSettleRes = new VoViewSettleRes();
             Borrow borrow = borrowMap.get(p.getBorrowId());
             voViewSettleRes.setBorrowName(borrow.getName());
-            voViewSettleRes.setMoney(NumberHelper.to2DigitString(p.getValidMoney() / 100));
+            voViewSettleRes.setMoney(StringHelper.formatMon(p.getValidMoney() / 100d));
             voViewSettleRes.setCloseAt(DateHelper.dateToString(borrow.getCloseAt()));
             List<BorrowCollection> borrowCollectionList = borrowCollectionMaps.get(p.getId());
             Integer principal = borrowCollectionList.stream()
@@ -205,8 +206,8 @@ public class InvestServiceImpl implements InvestService {
             Integer interest = borrowCollectionList.stream()
                     .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
                     .mapToInt(s -> s.getInterest()).sum();
-            voViewSettleRes.setInterest(NumberHelper.to2DigitString(interest / 100D));
-            voViewSettleRes.setPrincipal(NumberHelper.to2DigitString(principal / 100D));
+            voViewSettleRes.setInterest(StringHelper.formatMon(interest / 100d));
+            voViewSettleRes.setPrincipal(StringHelper.formatMon(principal / 100d));
             voViewSettleRes.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
             voViewSettleResList.add(voViewSettleRes);
         });
@@ -260,8 +261,8 @@ public class InvestServiceImpl implements InvestService {
         if (tender.getState() == TenderConstans.SETTLE) {
             item.setStatus(TenderConstans.SETTLE_STR);
         }
-        item.setMoney(NumberHelper.to2DigitString(tender.getValidMoney() / 100));
-        item.setApr(NumberHelper.to2DigitString(borrow.getApr() / 100));
+        item.setMoney(StringHelper.formatMon(tender.getValidMoney() / 100d));
+        item.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
         //期限
         if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE) {
             item.setRepayFashion(BorrowContants.REPAY_FASHION_ONCE_STR);
@@ -295,9 +296,9 @@ public class InvestServiceImpl implements InvestService {
                     .mapToInt(s -> s.getInterest())
                     .sum();
 
-            item.setInterest(NumberHelper.to2DigitString(interest / 100D));
-            item.setPrincipal(NumberHelper.to2DigitString(principal / 100D));
-            item.setReceivableInterest(NumberHelper.to2DigitString(receivableInterest / 100D));
+            item.setInterest(StringHelper.formatMon(interest / 100d));
+            item.setPrincipal(StringHelper.formatMon(principal / 100d));
+            item.setReceivableInterest(StringHelper.formatMon(receivableInterest / 100d));
         }
         return item;
     }
@@ -333,9 +334,9 @@ public class InvestServiceImpl implements InvestService {
         List<ReturnedMoney> returnedMonies = new ArrayList<>(0);
         borrowCollectionList.stream().forEach(p -> {
             ReturnedMoney returnedMoney = new ReturnedMoney();
-            returnedMoney.setInterest(NumberHelper.to2DigitString(p.getInterest() / 100D));
-            returnedMoney.setPrincipal(NumberHelper.to2DigitString(p.getPrincipal() / 100D));
-            returnedMoney.setCollectionMoney(NumberHelper.to2DigitString(p.getCollectionMoney() / 100D));
+            returnedMoney.setInterest(StringHelper.formatMon(p.getInterest() / 100d));
+            returnedMoney.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100d));
+            returnedMoney.setCollectionMoney(StringHelper.formatMon(p.getCollectionMoney() / 100d));
             returnedMoney.setOrder(p.getOrder() + 1);
             returnedMoney.setLateDays(p.getLateDays());
             returnedMoney.setCollectionAt(DateHelper.dateToString(p.getCollectionAt()));

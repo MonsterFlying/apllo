@@ -5,10 +5,10 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusRequest;
 import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusResponse;
-import com.gofobao.framework.api.model.auto_bid_auth_plus.auto_credit_invest_auth_plus.AutoCreditInvestAuthPlusRequest;
-import com.gofobao.framework.api.model.auto_bid_auth_plus.auto_credit_invest_auth_plus.AutoCreditInvestAuthPlusResponse;
-import com.gofobao.framework.api.model.auto_credit_invest_auth_plus.AutoBidAuthPlusRequest;
-import com.gofobao.framework.api.model.auto_credit_invest_auth_plus.AutoBidAuthPlusResponse;
+import com.gofobao.framework.api.model.auto_credit_invest_auth.AutoCreditInvestAuthRequest;
+import com.gofobao.framework.api.model.auto_credit_invest_auth.AutoCreditInvestAuthResponse;
+import com.gofobao.framework.api.model.auto_credit_invest_auth_plus.AutoBidAuthRequest;
+import com.gofobao.framework.api.model.auto_credit_invest_auth_plus.AutoBidAuthResponse;
 import com.gofobao.framework.api.model.password_reset.PasswordResetRequest;
 import com.gofobao.framework.api.model.password_reset.PasswordResetResponse;
 import com.gofobao.framework.api.model.password_set.PasswordSetRequest;
@@ -26,6 +26,13 @@ import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
 import com.gofobao.framework.member.vo.response.*;
+import com.gofobao.framework.system.entity.DictItem;
+import com.gofobao.framework.system.entity.DictValue;
+import com.gofobao.framework.system.service.DictItemServcie;
+import com.gofobao.framework.system.service.DictValueService;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -34,6 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.ui.Model;
 import org.springframework.util.Base64Utils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -42,6 +50,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Max on 17/5/22.
@@ -76,6 +86,31 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Value("${gofobao.aliyun-bankinfo-appcode}")
     String aliyunQueryAppcode;
+
+
+    @Autowired
+    DictValueService dictValueServcie ;
+
+    @Autowired
+    DictItemServcie dictItemServcie ;
+
+
+    LoadingCache<String, DictValue> bankLimitCache = CacheBuilder
+            .newBuilder()
+            .expireAfterWrite(60, TimeUnit.MINUTES)
+            .maximumSize(1024)
+            .build(new CacheLoader<String, DictValue>() {
+                @Override
+                public DictValue load(String bankName) throws Exception {
+                    DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("PLATFORM_BANK", 0) ;
+                    if(ObjectUtils.isEmpty(dictItem)){
+                        return null ;
+                    }
+
+                    return dictValueServcie.findTopByItemIdAndValue02(dictItem.getId(), bankName);
+                }
+            }) ;
+
 
     @Override
     public ResponseEntity<VoPreOpenAccountResp> preOpenAccount(Long userId) {
@@ -157,6 +192,44 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "你的填写身份证号与系统保存的不一致！", VoOpenAccountResp.class));
 
+
+        String logo = null;
+        String bankName = null ;
+        // 获取银行卡信息
+        try {
+            String cardNo = voOpenAccountReq.getCardNo() ; // 银行卡
+            Map<String, String> params = new HashMap<>();
+            params.put("bankcard", cardNo);
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Authorization", String.format("APPCODE %s", aliyunQueryAppcode));
+            String jsonStr = OKHttpHelper.get(aliyunQueryBankUrl, params, headers);
+            JsonObject result = new JsonParser().parse(jsonStr).getAsJsonObject();
+            int status = result.get("status").getAsInt();
+            if (status == 0) {
+                JsonObject info = result.get("result").getAsJsonObject();
+                bankName = info.get("bank").getAsString();
+                logo = info.get("logo").getAsString();
+
+            }
+
+        } catch (Exception e) {
+            log.error("开户查询银行卡异常");
+        }
+
+
+        // 6 判断银行卡
+        DictValue dictValue = null;
+        try {
+            dictValue = bankLimitCache.get(bankName);
+        } catch (ExecutionException e) {
+            log.error("查询平台支持银行异常", e);
+        }
+        if( ObjectUtils.isEmpty(dictValue) ){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, String.format("当前平台不支持%s", bankName), VoOpenAccountResp.class)) ;
+        }
+
         // 7.短信验证码验证
         String srvTxCode = null;
         try {
@@ -171,6 +244,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "短信验证码已过期，请重新获取", VoOpenAccountResp.class));
         }
+
 
         // 8.提交开户
         AccountOpenPlusRequest request = new AccountOpenPlusRequest();
@@ -194,30 +268,6 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, msg, VoOpenAccountResp.class));
         }
 
-
-        String logo = null;
-        String bankName = null;
-        // 获取银行卡信息
-        try {
-            String cardNo = voOpenAccountReq.getCardNo(); // 银行卡
-            Map<String, String> params = new HashMap<>();
-            params.put("bankcard", cardNo);
-            Map<String, String> headers = new HashMap<>();
-            headers.put("Authorization", String.format("APPCODE %s", aliyunQueryAppcode));
-            String jsonStr = OKHttpHelper.get(aliyunQueryBankUrl, params, headers);
-            JsonObject result = new JsonParser().parse(jsonStr).getAsJsonObject();
-            int status = result.get("status").getAsInt();
-            if (status == 0) {
-                JsonObject info = result.get("result").getAsJsonObject();
-                bankName = info.get("bank").getAsString();
-                logo = info.get("logo").getAsString();
-
-            }
-
-        } catch (Exception e) {
-            log.error("开户查询银行卡异常");
-        }
-
         // 8.保存银行存管账户到用户中
         String accountId = response.getAccountId();
         UserThirdAccount entity = new UserThirdAccount();
@@ -232,13 +282,13 @@ public class UserThirdBizImpl implements UserThirdBiz {
         entity.setIdType(1);
         entity.setIdNo(voOpenAccountReq.getIdNo());
         entity.setCardNo(voOpenAccountReq.getCardNo());
-        entity.setChannel(Integer.parseInt(ChannelContant.HTML));
+        entity.setChannel(Integer.parseInt(ChannelContant.getchannel(httpServletRequest)));
         entity.setAcctUse(1);
         entity.setAccountId(accountId);
         entity.setPasswordState(0);
         entity.setCardNoBindState(1);
         entity.setName(voOpenAccountReq.getName());
-        entity.setBankLogo(logo);
+        entity.setBankLogo(dictValue.getValue03());
         entity.setBankName(bankName);
         Long id = userThirdAccountService.save(entity);
 
@@ -282,7 +332,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             passwordSetRequest.setIdType(IdTypeContant.ID_CARD);
             passwordSetRequest.setIdNo(userThirdAccount.getIdNo());
             passwordSetRequest.setAcqRes(String.valueOf(userId));
-            passwordSetRequest.setRetUrl(String.format("%s%s", h5Domain, ""));
+            passwordSetRequest.setRetUrl(String.format("%s%s/%s", javaDomain, "/pub/password/show", userId));
             passwordSetRequest.setNotifyUrl(String.format("%s%s", javaDomain, "/pub/user/third/modifyOpenAccPwd/callback/1"));
             html = jixinManager.getHtml(JixinTxCodeEnum.PASSWORD_SET, passwordSetRequest);
         } else { // 重置密码
@@ -294,7 +344,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             passwordResetRequest.setIdType(IdTypeContant.ID_CARD);
             passwordResetRequest.setIdNo(userThirdAccount.getIdNo());
             passwordResetRequest.setAcqRes(String.valueOf(userId));
-            passwordResetRequest.setRetUrl(String.format("%s%s", h5Domain, ""));
+            passwordResetRequest.setRetUrl(String.format("%s%s/%s", javaDomain, "/pub/password/show", userId));
             passwordResetRequest.setNotifyUrl(String.format("%s%s", javaDomain, "/pub/user/third/modifyOpenAccPwd/callback/2"));
             html = jixinManager.getHtml(JixinTxCodeEnum.PASSWORD_RESET, passwordResetRequest);
         }
@@ -384,23 +434,23 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Override
     public ResponseEntity<String> autoTenderCallback(HttpServletRequest request, HttpServletResponse response) {
-        AutoBidAuthPlusResponse autoBidAuthPlusResponse = jixinManager.callback(request, new TypeToken<AutoBidAuthPlusResponse>() {
+        AutoBidAuthResponse autoBidAuthResponse = jixinManager.callback(request, new TypeToken<AutoBidAuthResponse>() {
         });
 
-        if (ObjectUtils.isEmpty(autoBidAuthPlusResponse)) {
+        if(ObjectUtils.isEmpty(autoBidAuthResponse)){
             return ResponseEntity
                     .badRequest()
                     .body("error");
         }
 
-        if (!JixinResultContants.SUCCESS.equals(autoBidAuthPlusResponse.getRetCode())) {
+        if(!JixinResultContants.SUCCESS.equals(autoBidAuthResponse.getRetCode())){
             log.error("UserThirdBizImpl.autoTenderCallback: 回调出失败");
             return ResponseEntity
                     .badRequest()
                     .body("error");
         }
 
-        Long userId = Long.parseLong(autoBidAuthPlusResponse.getAcqRes());
+        Long userId = Long.parseLong(autoBidAuthResponse.getAcqRes());
 
 
         if (ObjectUtils.isEmpty(userId)) {
@@ -424,7 +474,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         userThirdAccount.setAutoTenderState(1);
         userThirdAccount.setAutoTenderTotAmount(999999999L);
         userThirdAccount.setAutoTenderTxAmount(999999999L);
-        userThirdAccount.setAutoTenderOrderId(autoBidAuthPlusResponse.getOrderId());
+        userThirdAccount.setAutoTenderOrderId(autoBidAuthResponse.getOrderId());
         userThirdAccount.setUpdateAt(new Date());
         Long id = userThirdAccountService.save(userThirdAccount);
         if (id == 0) {
@@ -438,7 +488,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
-    public ResponseEntity<VoHtmlResp> autoTender(HttpServletRequest httpServletRequest, Long userId, String smsCode) {
+    public ResponseEntity<VoHtmlResp> autoTender(HttpServletRequest httpServletRequest, Long userId) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         if (ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
@@ -452,36 +502,20 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "请先设置江西银行存管账户交易密码！", VoHtmlResp.class));
         }
 
-        String srvTxCode = null;
-        try {
-            srvTxCode = redisHelper.get(String.format("%s_%s", SrvTxCodeContants.AUTO_BID_AUTH_PLUS, userThirdAccount.getMobile()), null);
-            redisHelper.remove(String.format("%s_%s", SrvTxCodeContants.AUTO_BID_AUTH_PLUS, userThirdAccount.getMobile()));
-        } catch (Exception e) {
-            log.error("UserThirdBizImpl autoTender get redis exception ", e);
-        }
-
-        if (StringUtils.isEmpty(srvTxCode)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "短信验证码已过期，请重新获取", VoHtmlResp.class));
-        }
-
-        AutoBidAuthPlusRequest autoBidAuthPlusRequest = new AutoBidAuthPlusRequest();
-        autoBidAuthPlusRequest.setAccountId(userThirdAccount.getAccountId());
-        autoBidAuthPlusRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
-        autoBidAuthPlusRequest.setTxAmount("999999999");
-        autoBidAuthPlusRequest.setTotAmount("999999999");
-        ;
-        autoBidAuthPlusRequest.setForgotPwdUrl(h5Domain);
-        autoBidAuthPlusRequest.setRetUrl(h5Domain);
-        autoBidAuthPlusRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/user/third/autoTender/callback"));
-        autoBidAuthPlusRequest.setLastSrvAuthCode(srvTxCode);
-        autoBidAuthPlusRequest.setSmsCode(smsCode);
-        autoBidAuthPlusRequest.setAcqRes(userId.toString());
-        autoBidAuthPlusRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
+        AutoBidAuthRequest autoBidAuthRequest = new AutoBidAuthRequest() ;
+        autoBidAuthRequest.setAccountId(userThirdAccount.getAccountId());
+        autoBidAuthRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
+        autoBidAuthRequest.setTxAmount("999999999") ;
+        autoBidAuthRequest.setTotAmount("999999999");
+        autoBidAuthRequest.setForgotPwdUrl(h5Domain);
+        autoBidAuthRequest.setRetUrl(h5Domain);
+        autoBidAuthRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/user/third/autoTender/callback"));
+        autoBidAuthRequest.setAcqRes(userId.toString());
+        autoBidAuthRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
         String html = null;
+
         try {
-            html = jixinManager.getHtml(JixinTxCodeEnum.AUTO_BID_AUTH_PLUS, autoBidAuthPlusRequest);
+            html = jixinManager.getHtml(JixinTxCodeEnum.AUTO_BID_AUTH, autoBidAuthRequest);
         } catch (Exception e) {
             log.error("UserThirdBizImpl autoTender get redis exception ", e);
             return ResponseEntity
@@ -502,7 +536,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
-    public ResponseEntity<VoHtmlResp> autoTranfter(HttpServletRequest httpServletRequest, Long userId, String smsCode) {
+    public ResponseEntity<VoHtmlResp> autoTranfter(HttpServletRequest httpServletRequest, Long userId) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         if (ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
@@ -537,21 +571,19 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "短信验证码已过期，请重新获取", VoHtmlResp.class));
         }
 
-        AutoCreditInvestAuthPlusRequest autoCreditInvestAuthPlusRequest = new AutoCreditInvestAuthPlusRequest();
+        AutoCreditInvestAuthRequest autoCreditInvestAuthPlusRequest = new AutoCreditInvestAuthRequest() ;
         autoCreditInvestAuthPlusRequest.setAccountId(userThirdAccount.getAccountId());
         autoCreditInvestAuthPlusRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
         autoCreditInvestAuthPlusRequest.setForgotPwdUrl(h5Domain);
         autoCreditInvestAuthPlusRequest.setRetUrl(h5Domain);
         autoCreditInvestAuthPlusRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/user/third/autoTranfer/callback"));
-        autoCreditInvestAuthPlusRequest.setLastSrvAuthCode(srvTxCode);
-        autoCreditInvestAuthPlusRequest.setSmsCode(smsCode);
         autoCreditInvestAuthPlusRequest.setAcqRes(userId.toString());
         autoCreditInvestAuthPlusRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
 
 
         String html = null;
         try {
-            html = jixinManager.getHtml(JixinTxCodeEnum.AUTO_CREDIT_INVEST_AUTH_PLUS, autoCreditInvestAuthPlusRequest);
+            html = jixinManager.getHtml(JixinTxCodeEnum.AUTO_CREDIT_INVEST_AUTH, autoCreditInvestAuthPlusRequest);
         } catch (Exception e) {
             log.error("UserThirdBizImpl autoTranfter get redis exception ", e);
             return ResponseEntity
@@ -573,23 +605,23 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Override
     public ResponseEntity<String> autoTranferCallback(HttpServletRequest request, HttpServletResponse response) {
-        AutoCreditInvestAuthPlusResponse autoCreditInvestAuthPlusResponse = jixinManager.callback(request, new TypeToken<AutoCreditInvestAuthPlusResponse>() {
+        AutoCreditInvestAuthResponse autoCreditInvestAuthResponse = jixinManager.callback(request, new TypeToken<AutoCreditInvestAuthResponse>() {
         });
 
-        if (ObjectUtils.isEmpty(autoCreditInvestAuthPlusResponse)) {
+        if(ObjectUtils.isEmpty(autoCreditInvestAuthResponse)){
             return ResponseEntity
                     .badRequest()
                     .body("error");
         }
 
-        if (!JixinResultContants.SUCCESS.equals(autoCreditInvestAuthPlusResponse.getRetCode())) {
+        if(!JixinResultContants.SUCCESS.equals(autoCreditInvestAuthResponse.getRetCode())){
             log.error("UserThirdBizImpl.autoTranferCallback: 回调出失败");
             return ResponseEntity
                     .badRequest()
                     .body("error");
         }
 
-        Long userId = Long.parseLong(autoCreditInvestAuthPlusResponse.getAcqRes());
+        Long userId = Long.parseLong(autoCreditInvestAuthResponse.getAcqRes());
 
         if (ObjectUtils.isEmpty(userId)) {
             log.error("UserThirdBizImpl autoTranferCallback userId is null");
@@ -610,7 +642,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
         userThirdAccount.setAutoTransferState(1);
-        userThirdAccount.setAutoTransferBondOrderId(autoCreditInvestAuthPlusResponse.getOrderId());
+        userThirdAccount.setAutoTransferBondOrderId(autoCreditInvestAuthResponse.getOrderId());
         userThirdAccount.setUpdateAt(new Date());
         Long id = userThirdAccountService.save(userThirdAccount);
         if (id == 0) {
@@ -643,6 +675,35 @@ public class UserThirdBizImpl implements UserThirdBiz {
         re.setAutoTenderState(userThirdAccount.getAutoTenderState() == 1);
         re.setAutoTenderState(userThirdAccount.getAutoTransferState() == 1);
         return ResponseEntity.ok(re);
+    }
+
+    @Override
+    public String shwoPassword(Long id) {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(id);
+        if(ObjectUtils.isEmpty(userThirdAccount)){
+            return "/password/faile" ;
+        }
+
+        if(userThirdAccount.getPasswordState() == 1){
+            return "/password/success" ;
+        }else{
+            return "/password/faile" ;
+        }
+    }
+
+    @Override
+    public void thirdAccountProtocol(Long userId, Model model) {
+        Users users = userService.findById(userId);
+        String username = users.getUsername();
+        if(StringUtils.isEmpty(username)){
+            username = users.getPhone() ;
+        }
+        if(StringUtils.isEmpty(username)){
+            username = users.getEmail() ;
+        }
+
+        model.addAttribute("customerName", username) ;
+        model.addAttribute("playformName",  "深圳市广富宝金融信息服务有限公司") ;
     }
 
 }

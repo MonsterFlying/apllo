@@ -528,7 +528,7 @@ public class AssetBizImpl implements AssetBiz {
         VoPreRechargeResp voPreRechargeResp = VoBaseResp.ok("查询成功", VoPreRechargeResp.class);
         voPreRechargeResp.setBankName(userThirdAccount.getBankName());
         voPreRechargeResp.setCardNo(userThirdAccount.getCardNo().substring(userThirdAccount.getCardNo().length() - 4));
-        voPreRechargeResp.setLogo(userThirdAccount.getBankLogo());
+        voPreRechargeResp.setLogo(String.format("%s/%s", javaDomain, userThirdAccount.getBankLogo()));
         DictValue bank = null;
         try {
             bank = bankLimitCache.get(userThirdAccount.getBankName());

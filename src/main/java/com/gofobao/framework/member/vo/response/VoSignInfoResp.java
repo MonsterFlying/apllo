@@ -19,5 +19,5 @@ public class VoSignInfoResp extends VoBaseResp{
     private boolean autoTenderState  ;
 
     @ApiModelProperty("自动债权转让状态")
-    private String autoTransferState ;
+    private boolean autoTransferState ;
 }

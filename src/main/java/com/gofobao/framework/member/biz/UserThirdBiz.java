@@ -6,6 +6,7 @@ import com.gofobao.framework.member.vo.response.VoOpenAccountResp;
 import com.gofobao.framework.member.vo.response.VoPreOpenAccountResp;
 import com.gofobao.framework.member.vo.response.VoSignInfoResp;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -64,10 +65,9 @@ public interface UserThirdBiz {
      *
      * @param httpServletRequest
      * @param userId 用户Id
-     * @param smsCode 短信验证码
      * @return
      */
-    ResponseEntity<VoHtmlResp> autoTender(HttpServletRequest httpServletRequest, Long userId, String smsCode);
+    ResponseEntity<VoHtmlResp> autoTender(HttpServletRequest httpServletRequest, Long userId);
 
 
     /**
@@ -75,10 +75,9 @@ public interface UserThirdBiz {
      *
      * @param httpServletRequest
      * @param userId
-     * @param smsCode
      * @return
      */
-    ResponseEntity<VoHtmlResp> autoTranfter(HttpServletRequest httpServletRequest, Long userId, String smsCode);
+    ResponseEntity<VoHtmlResp> autoTranfter(HttpServletRequest httpServletRequest, Long userId);
 
 
     /**
@@ -95,4 +94,18 @@ public interface UserThirdBiz {
      * @return
      */
     ResponseEntity<VoSignInfoResp> querySigned(Long userId);
+
+    /**
+     * 设置密码回调
+     * @param id
+     * @return
+     */
+    String shwoPassword(Long id);
+
+    /**
+     * 银行存管协议
+     * @param userId
+     * @param model
+     */
+    void thirdAccountProtocol(Long userId, Model model);
 }

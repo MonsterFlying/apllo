@@ -25,11 +25,13 @@ public interface CashDetailLogBiz {
 
     /**
      * 提现
+     *
+     * @param httpServletRequest
      * @param userId
      * @param voCashReq
      * @return
      */
-    ResponseEntity<VoHtmlResp> cash(Long userId, VoCashReq voCashReq) throws  Exception;
+    ResponseEntity<VoHtmlResp> cash(HttpServletRequest httpServletRequest, Long userId, VoCashReq voCashReq) throws  Exception;
 
     /**
      * 查询联行号

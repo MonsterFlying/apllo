@@ -14,7 +14,7 @@ public class VoPreRechargeResp extends VoBaseResp {
     @ApiModelProperty("银行账号后4位")
     private String cardNo;
 
-    @ApiModelProperty("银行账号后4位")
+    @ApiModelProperty("银行名称")
     private String bankName ;
 
     @ApiModelProperty("每次限额")

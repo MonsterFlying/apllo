@@ -64,17 +64,31 @@ public enum JixinTxCodeEnum {
 
 
     /**
-     * 自动投标
+     * 自动投标增强
      */
     AUTO_BID_AUTH_PLUS(
             "autoBidAuthPlus",
             "/escrow/p2p/page/mobile/plus"),
+
     /**
-     * 债权转让
+     * 自动投标
+     */
+    AUTO_BID_AUTH(
+            "autoBidAuth",
+            "/escrow/p2p/page/mobile"),
+    /**
+     * 债权转让增强
      */
     AUTO_CREDIT_INVEST_AUTH_PLUS(
             "autoCreditInvestAuthPlus",
             "/escrow/p2p/page/mobile/plus"),
+    /**
+     * 债权转让
+     */
+    AUTO_CREDIT_INVEST_AUTH(
+            "autoCreditInvestAuth",
+            "/escrow/p2p/page/mobile"),
+
 
     /**
      * 借款人标的撤销

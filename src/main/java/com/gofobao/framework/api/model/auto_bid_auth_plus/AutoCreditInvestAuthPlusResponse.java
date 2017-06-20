@@ -1,4 +1,4 @@
-package com.gofobao.framework.api.model.auto_bid_auth_plus.auto_credit_invest_auth_plus;
+package com.gofobao.framework.api.model.auto_bid_auth_plus;
 
 import com.gofobao.framework.api.repsonse.JixinBaseResponse;
 import lombok.Data;
