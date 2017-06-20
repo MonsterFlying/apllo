@@ -10,10 +10,10 @@ import lombok.Data;
 public class IndexStatistics {
 
     @ApiModelProperty("交易总额")
-    private String  transactionsTotal;
+    private Long  transactionsTotal;
 
     @ApiModelProperty("待收总额")
-    private String dueTotal;
+    private Long dueTotal;
 
 /*    @ApiModelProperty("安全运营天数")
     private String securityDays;*/

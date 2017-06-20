@@ -27,8 +27,11 @@ public class   BorrowInfoRes {
     @ApiModelProperty("融资金额")
     private String money;
 
-    @ApiModelProperty("剩余金额")
-    private String moneyYes;
+    @ApiModelProperty("显示剩余金额")
+    private String viewSurplusMoney;
+
+    @ApiModelProperty("不显示剩余金额")
+    private Integer hideSurplusMoney;
 
     @ApiModelProperty("进度")
     private double spend;
@@ -56,5 +59,11 @@ public class   BorrowInfoRes {
 
     @ApiModelProperty("账号名")
     private String userName;
+
+    @ApiModelProperty("标名")
+    private String BorrowName;
+
+    @ApiModelProperty("是否需要密码")
+    private boolean isPassWord;
 
 }

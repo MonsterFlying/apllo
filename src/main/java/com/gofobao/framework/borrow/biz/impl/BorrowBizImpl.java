@@ -4,14 +4,10 @@ import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
-import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
-import com.gofobao.framework.borrow.vo.request.VoAddBorrow;
-import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
-import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
-import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
+import com.gofobao.framework.borrow.vo.request.*;
 import com.gofobao.framework.borrow.vo.response.*;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
@@ -30,6 +26,8 @@ import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
+import com.gofobao.framework.helper.project.SecurityHelper;
+import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -48,6 +46,7 @@ import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
@@ -73,8 +72,6 @@ public class BorrowBizImpl implements BorrowBiz {
     static final Gson GSON = new Gson();
 
     @Autowired
-    private UserService userService;
-    @Autowired
     private UserCacheService userCacheService;
     @Autowired
     private AssetService assetService;
@@ -82,8 +79,6 @@ public class BorrowBizImpl implements BorrowBiz {
     private BorrowService borrowService;
     @Autowired
     private AutoTenderService autoTenderService;
-    @Autowired
-    private BorrowThirdBiz borrowThirdBiz;
     @Autowired
     private UserThirdAccountService userThirdAccountService;
     @Autowired
@@ -98,6 +93,8 @@ public class BorrowBizImpl implements BorrowBiz {
     private BorrowRepaymentService borrowRepaymentService;
     @Autowired
     private RepaymentBiz repaymentBiz;
+    @Autowired
+    private BorrowProvider borrowProvider;
 
     /**
      * 理财首页标列表
@@ -232,10 +229,10 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> addNetWorth(VoAddBorrow voAddNetWorthBorrow) {
+    public ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow) {
         Long userId = voAddNetWorthBorrow.getUserId();
         String releaseAtStr = voAddNetWorthBorrow.getReleaseAt();
-        Integer money = voAddNetWorthBorrow.getMoney();
+        Integer money = (int) voAddNetWorthBorrow.getMoney();
         boolean closeAuto = voAddNetWorthBorrow.isCloseAuto();
 
         Asset asset = assetService.findByUserIdLock(userId);
@@ -246,12 +243,24 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍候重试！"));
         }
 
-        Users users = userService.findById(userId);
-        if (ObjectUtils.isEmpty(users.getCardId())) {
-            log.info("新增借款：当前用户未实名。");
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if (ObjectUtils.isEmpty(userThirdAccount) || ObjectUtils.isEmpty(userThirdAccount.getAccountId())) {
+            log.info("新增借款：当前用户未开户。");
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户未实名认证!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户未开户!"));
+        }
+
+        if (userThirdAccount.getPasswordState() == 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "银行存管:密码未初始化!"));
+        }
+
+        if (userThirdAccount.getCardNoBindState() == 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "银行存管:银行卡未初始化!"));
         }
 
         Date releaseAt = DateHelper.stringToDate(releaseAtStr, DateHelper.DATE_FORMAT_YMDHMS);
@@ -339,7 +348,7 @@ public class BorrowBizImpl implements BorrowBiz {
         return ResponseEntity.ok(VoBaseResp.ok("发布净值借款成功!"));
     }
 
-    private long insertBorrow(VoAddBorrow voAddNetWorthBorrow, Long userId) throws Exception {
+    private long insertBorrow(VoAddNetWorthBorrow voAddNetWorthBorrow, Long userId) throws Exception {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "借款人未开户!");
 
@@ -357,7 +366,7 @@ public class BorrowBizImpl implements BorrowBiz {
         borrow.setIsVouch(false);
         borrow.setIsMortgage(false);
         borrow.setName(voAddNetWorthBorrow.getName());
-        borrow.setMoney(voAddNetWorthBorrow.getMoney());
+        borrow.setMoney((int) voAddNetWorthBorrow.getMoney());
         borrow.setRepayFashion(1);
         borrow.setTimeLimit(voAddNetWorthBorrow.getTimeLimit());
         borrow.setApr(voAddNetWorthBorrow.getApr());
@@ -417,30 +426,6 @@ public class BorrowBizImpl implements BorrowBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "只有借款标过期或者本人才能取消借款!"));
         }
-
-        //================================调用即信取消标的====================================
-        /*VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
-        voQueryThirdBorrowList.setBorrowId(borrowId);
-        voQueryThirdBorrowList.setUserId(userId);
-        voQueryThirdBorrowList.setPageNum("1");
-        voQueryThirdBorrowList.setPageSize("10");
-        DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
-        int totalItems = NumberHelper.toInt(resp.getTotalItems()) + 1;
-        if (totalItems > 0) {//在即信查询到对应的标的
-            List<DebtDetail> debtDetailList = GSON.fromJson(resp.getSubPacks(), new TypeToken<List<DebtDetail>>() {
-            }.getType());
-            Preconditions.checkNotNull(debtDetailList, "即信标的不存在!");
-
-            VoCancelThirdBorrow voCancelThirdBorrow = new VoCancelThirdBorrow();
-            voCancelThirdBorrow.setUserId(userId);
-            voCancelThirdBorrow.setBorrowId(borrowId);
-            voCancelThirdBorrow.setRaiseDate(debtDetailList.get(0).getRaiseDate());
-            ResponseEntity responseEntity = borrowThirdBiz.cancelThirdBorrow(voCancelThirdBorrow);
-            if (!ObjectUtils.isEmpty(responseEntity)) {
-                return responseEntity;
-            }
-        }*/
-        //======================================================================================
 
         Specification<Tender> borrowSpecification = Specifications
                 .<Tender>and()
@@ -527,6 +512,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      * @throws Exception
      */
+    @Transactional(rollbackFor = Exception.class)
     public boolean notTransferedBorrowAgainVerify(Borrow borrow) throws Exception {
         boolean bool = false;
         do {
@@ -563,7 +549,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 borrowRepayment.setLateDays(0);
                 borrowRepayment.setLateInterest(0);
                 borrowRepayment.setUserId(borrow.getUserId());
-                borrowRepaymentService.insert(borrowRepayment);
+                borrowRepaymentService.save(borrowRepayment);
             }
 
             //生成回款记录
@@ -577,6 +563,7 @@ public class BorrowBizImpl implements BorrowBiz {
      *
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public boolean transferedBorrowAgainVerify(Borrow borrow) throws Exception {
         boolean bool = false;
         do {
@@ -846,13 +833,12 @@ public class BorrowBizImpl implements BorrowBiz {
 
 
     /**
-     * 提前结清
+     * 检查提前结清参数
      *
      * @param voRepayAllReq
      * @return
      */
-    @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq) throws Exception {
+    public ResponseEntity<VoBaseResp> checkRepayAll(VoRepayAllReq voRepayAllReq) {
         Long borrowId = voRepayAllReq.getBorrowId();
         Borrow borrow = borrowService.findByIdLock(borrowId);
         if ((borrow.getStatus() != 3) || (borrow.getType() != 0 && borrow.getType() != 4)) {
@@ -871,7 +857,25 @@ public class BorrowBizImpl implements BorrowBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "该借款剩余未还期数小于1期！"));
         }
+        return null;
+    }
 
+    /**
+     * 提前结清
+     *
+     * @param voRepayAllReq
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq) {
+
+        ResponseEntity resp = checkRepayAll(voRepayAllReq);
+        if (!ObjectUtils.isEmpty(resp)) {
+            return resp;
+        }
+
+        Long borrowId = voRepayAllReq.getBorrowId();
+        Borrow borrow = borrowService.findByIdLock(borrowId);
         Asset borrowAsset = assetService.findByUserId(borrow.getUserId());
         Preconditions.checkNotNull(borrowAsset, "借款人资产记录不存在!");
 
@@ -886,17 +890,15 @@ public class BorrowBizImpl implements BorrowBiz {
         BorrowRepayment borrowRepayment = null;
         double interestPercent = 0;
         VoRepayReq voRepayReq = null;
-        brs = Specifications
+        Specification<BorrowRepayment> brs = Specifications
                 .<BorrowRepayment>and()
                 .eq("borrowId", borrowId)
+                .eq("status", 0)
                 .build();
         List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
 
         for (int i = 0; i < borrowRepaymentList.size(); i++) {
             borrowRepayment = borrowRepaymentList.get(i);
-            if (borrowRepayment.getStatus() != 0) {
-                continue;
-            }
 
             if (borrowRepayment.getOrder() == 0) {
                 startAt = DateHelper.beginOfDate(borrow.getSuccessAt());
@@ -954,7 +956,12 @@ public class BorrowBizImpl implements BorrowBiz {
             entity.setType(CapitalChangeEnum.Fee);
             entity.setMoney(penalty);
             entity.setRemark("扣除提前结清的违约金");
-            receivedPenalty(borrow, penalty);
+            try {
+                capitalChangeHelper.capitalChange(entity);
+                receivedPenalty(borrow, penalty);
+            } catch (Exception e) {
+                log.error("BorrowBizImpl 异常:", e);
+            }
         }
 
         return ResponseEntity.ok(VoBaseResp.ok("提前结清成功!"));
@@ -1031,5 +1038,26 @@ public class BorrowBizImpl implements BorrowBiz {
                 }
             }
         } while (tenderList.size() < 10);
+    }
+
+    /**
+     * 请求复审
+     */
+    public ResponseEntity<VoBaseResp> doAgainVerify(VoDoAgainVerifyReq voDoAgainVerifyReq) {
+
+        String paramStr = voDoAgainVerifyReq.getParamStr();
+        if (!SecurityHelper.checkRequest(voDoAgainVerifyReq.getSign(), paramStr)) {
+            log.error("BorrowBizImpl doAgainVerify error：签名校验不通过");
+        }
+
+        Map<String, String> paramMap = GSON.fromJson(paramStr, new TypeToken<Map<String, String>>() {
+        }.getType());
+        boolean flag = false;
+        try {
+            flag = borrowProvider.doAgainVerify(paramMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ResponseEntity.ok(VoBaseResp.ok(StringHelper.toString(flag)));
     }
 }

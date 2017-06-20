@@ -1,9 +1,8 @@
 package com.gofobao.framework.borrow.controller;
 
 import com.gofobao.framework.borrow.biz.BorrowBiz;
-import com.gofobao.framework.borrow.vo.request.VoAddBorrow;
-import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
-import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
+import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
+import com.gofobao.framework.borrow.vo.request.*;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowStatisticsWarpRes;
@@ -42,6 +41,8 @@ public class BorrowController {
     private BorrowBiz borrowBiz;
     @Autowired
     private ThymeleafHelper thymeleafHelper;
+    @Autowired
+    private BorrowThirdBiz borrowThirdBiz;
 
     @Autowired
     private JwtTokenHelper jwtTokenHelper;
@@ -104,7 +105,7 @@ public class BorrowController {
 
     @ApiOperation(value = "标合同")
     @GetMapping(value = "pub/borrowProtocol/{borrowId}")
-    public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId,HttpServletRequest request) {
+    public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId, HttpServletRequest request) {
         Long userId = 0L;
         String authToken = request.getHeader(this.tokenHeader);
         if (!StringUtils.isEmpty(authToken) && (authToken.contains(prefix))) {
@@ -126,7 +127,7 @@ public class BorrowController {
 
     @ApiOperation(value = "pc:标合同")
     @GetMapping(value = "pc/pub/borrowProtocol/{borrowId}")
-    public ResponseEntity<String> pcTakeRatesDesc(HttpServletRequest request,@PathVariable Long borrowId) {
+    public ResponseEntity<String> pcTakeRatesDesc(HttpServletRequest request, @PathVariable Long borrowId) {
         Long userId = 0L;
         String authToken = request.getHeader(this.tokenHeader);
         if (!StringUtils.isEmpty(authToken) && (authToken.contains(prefix))) {
@@ -161,7 +162,7 @@ public class BorrowController {
      */
     @PostMapping("/addNetWorth")
     @ApiOperation("发布净值借款")
-    public ResponseEntity<VoBaseResp> addNetWorth(@Valid @ModelAttribute VoAddBorrow voAddNetWorthBorrow, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
+    public ResponseEntity<VoBaseResp> addNetWorth(@Valid @ModelAttribute VoAddNetWorthBorrow voAddNetWorthBorrow, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
         voAddNetWorthBorrow.setUserId(userId);
         return borrowBiz.addNetWorth(voAddNetWorthBorrow);
     }
@@ -179,5 +180,21 @@ public class BorrowController {
         return borrowBiz.cancelBorrow(voCancelBorrow);
     }
 
+    @PostMapping("/repayAll")
+    @ApiOperation("提前还款")
+    public ResponseEntity<VoBaseResp> repayAll(@Valid @ModelAttribute VoRepayAllReq voRepayAllReq) {
+        return borrowThirdBiz.thirdBatchRepayAll(voRepayAllReq);
+    }
 
+    /**
+     * 复审
+     *
+     * @param voDoAgainVerifyReq
+     * @return
+     */
+    @PostMapping("/doAgainVerify")
+    @ApiOperation("复审")
+    public ResponseEntity<VoBaseResp> doAgainVerify(VoDoAgainVerifyReq voDoAgainVerifyReq) {
+        return borrowBiz.doAgainVerify(voDoAgainVerifyReq);
+    }
 }

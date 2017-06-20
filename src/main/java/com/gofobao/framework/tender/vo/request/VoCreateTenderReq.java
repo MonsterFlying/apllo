@@ -1,6 +1,7 @@
 package com.gofobao.framework.tender.vo.request;
 
 import com.gofobao.framework.core.vo.VoBaseReq;
+import com.gofobao.framework.helper.MathHelper;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -16,12 +17,12 @@ public class VoCreateTenderReq extends VoBaseReq {
     @ApiModelProperty(name = "userId", hidden = true)
     private Long userId;
 
-    @ApiModelProperty(name = "tenderMoney", value = "投标金额", dataType = "int", required = true)
+    @ApiModelProperty(name = "tenderMoney", value = "投标金额", dataType = "double",required = true)
     @NotNull(message = "投标金额不能为空!")
-    private Integer tenderMoney;
+    private Double tenderMoney;
 
-    @ApiModelProperty(name = "lowest", value = "最低投标额度(分)", hidden = true)
-    private Integer lowest;
+    @ApiModelProperty(name = "lowest", value = "最低投标额度(元)", hidden = true)
+    private Double lowest;
 
     @ApiModelProperty(name = "payPassword", value = "交易密码", dataType = "String", required = false)
     private String payPassword;
@@ -42,5 +43,21 @@ public class VoCreateTenderReq extends VoBaseReq {
     private Boolean isAutoTender = false;
 
     @ApiModelProperty(hidden = true)
-    private String requestSource ;
+    private String requestSource;
+
+    public Double getTenderMoney() {
+        return MathHelper.myRound(tenderMoney, 0);
+    }
+
+    public void setTenderMoney(Double tenderMoney) {
+        this.tenderMoney = MathHelper.myRound(tenderMoney * 100.0, 0);
+    }
+
+    public Double getLowest() {
+        return MathHelper.myRound(lowest, 0);
+    }
+
+    public void setLowest(Double lowest) {
+        this.lowest = MathHelper.myRound(lowest * 100.0, 0);
+    }
 }

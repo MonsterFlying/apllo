@@ -32,7 +32,7 @@ public class BorrowVerifyContants {
     /**
      * 借款最大金额
      */
-    public static final int MONEY_MAX = 100000 * 100;
+    public static final int MONEY_MAX = 100000 * 100;//1200000
 
     /**
      * 最小年化率

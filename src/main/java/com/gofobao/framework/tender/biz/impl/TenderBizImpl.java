@@ -21,16 +21,20 @@ import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MathHelper;
+import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserCache;
+import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
+import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
+import com.gofobao.framework.tender.vo.request.TenderUserReq;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
@@ -82,6 +86,8 @@ public class TenderBizImpl implements TenderBiz {
     private BorrowService borrowService;
     @Autowired
     private BorrowCollectionService borrowCollectionService;
+    @Autowired
+    private UserThirdAccountService userThirdAccountService;
 
     public Map<String, Object> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception {
         Map<String, Object> rsMap = null;
@@ -101,7 +107,7 @@ public class TenderBizImpl implements TenderBiz {
         borrowTender.setUserId(userId);
         borrowTender.setBorrowId(voCreateTenderReq.getBorrowId());
         borrowTender.setStatus(1);
-        borrowTender.setMoney(voCreateTenderReq.getTenderMoney());
+        borrowTender.setMoney(NumberHelper.toInt(voCreateTenderReq.getTenderMoney()));
         borrowTender.setValidMoney(validMoney);
         borrowTender.setSource(voCreateTenderReq.getTenderSource());
         Integer autoOrder = voCreateTenderReq.getAutoOrder();
@@ -206,8 +212,25 @@ public class TenderBizImpl implements TenderBiz {
                 break;
             }
 
-            if (!userService.checkRealname(users)) {
-                msg = "当前用户未实名认证!";
+            UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+            if (ObjectUtils.isEmpty(userThirdAccount) || ObjectUtils.isEmpty(userThirdAccount.getAccountId())) {
+                log.info("用户投标：当前用户未开户。");
+                msg = "当前用户未开户!";
+                break;
+            }
+
+            if (userThirdAccount.getPasswordState() == 0) {
+                msg = "银行存管:密码未初始化!";
+                break;
+            }
+
+            if (userThirdAccount.getCardNoBindState() == 0) {
+                msg = "银行存管:银行卡未初始化!";
+                break;
+            }
+
+            if (ObjectUtils.isEmpty(userThirdAccount.getAutoTenderOrderId())) {
+                msg = "银行存管：投标未签约!";
                 break;
             }
 
@@ -220,6 +243,12 @@ public class TenderBizImpl implements TenderBiz {
                 msg = "当前借款未到招标时间!";
                 break;
             }
+
+            if (!borrowService.checkReleaseAt(borrow)) { //检查借款是否到发布时间
+                msg = "当前借款未到招标时间!";
+                break;
+            }
+
 
             if (!borrowService.checkValidDay(borrow)) { //检查是否是有效的招标时间
                 //取消借款
@@ -352,7 +381,7 @@ public class TenderBizImpl implements TenderBiz {
                     break;
                 }
 
-                Integer lowest = voCreateTenderReq.getLowest();
+                double lowest = voCreateTenderReq.getLowest();
                 if (lowest > 0 && validMoney < lowest) {  //自动投标单笔最低投标额
                     msg = "该借款已达到自投限额!";
                     break;
@@ -378,13 +407,13 @@ public class TenderBizImpl implements TenderBiz {
     /**
      * 投标用户
      *
-     * @param borrowId
+     * @param tenderUserReq
      * @return
      */
     @Override
-    public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(Long borrowId) {
+    public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(TenderUserReq tenderUserReq) {
         try {
-            List<VoBorrowTenderUserRes> tenderUserRes = tenderService.findBorrowTenderUser(borrowId);
+            List<VoBorrowTenderUserRes> tenderUserRes = tenderService.findBorrowTenderUser(tenderUserReq);
             VoBorrowTenderUserWarpListRes warpListRes = VoBaseResp.ok("查询成功", VoBorrowTenderUserWarpListRes.class);
             warpListRes.setVoBorrowTenderUser(tenderUserRes);
             return ResponseEntity.ok(warpListRes);

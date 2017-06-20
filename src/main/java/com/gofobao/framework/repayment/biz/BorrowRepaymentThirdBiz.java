@@ -1,5 +1,6 @@
 package com.gofobao.framework.repayment.biz;
 
+import com.gofobao.framework.api.model.batch_repay.Repay;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.vo.request.VoBatchBailRepayReq;
 import com.gofobao.framework.repayment.vo.request.VoBatchRepayBailReq;
@@ -9,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * Created by Zeke on 2017/6/8.
@@ -97,5 +99,14 @@ public interface BorrowRepaymentThirdBiz {
      * @param response
      */
     void thirdBatchRepayBailRunCall(HttpServletRequest request, HttpServletResponse response);
+
+    /**
+     * 获取即信还款集合
+     *
+     * @param voThirdBatchRepay
+     * @return
+     * @throws Exception
+     */
+    List<Repay> getRepayList(VoThirdBatchRepay voThirdBatchRepay) throws Exception;
 
 }

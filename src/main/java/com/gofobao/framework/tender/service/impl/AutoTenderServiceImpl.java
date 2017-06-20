@@ -3,10 +3,13 @@ package com.gofobao.framework.tender.service.impl;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.helper.BeanHelper;
+import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.repository.AutoTenderRepository;
 import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.vo.VoFindAutoTenderList;
+import com.gofobao.framework.tender.vo.response.UserAutoTender;
+import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
@@ -17,10 +20,7 @@ import org.springframework.util.StringUtils;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created by Zeke on 2017/5/27.
@@ -151,5 +151,24 @@ public class AutoTenderServiceImpl implements AutoTenderService {
                 " gfb_auto_tender t2, ( SELECT @rownum :=0 )t3  ORDER BY t2.auto_at ASC, t2.order ASC ) t4  SET t1.`order` = t4.listorder WHERE t1.id = t4.id");
         Query query = entityManager.createNativeQuery(sql.toString());
         return query.executeUpdate() > 0;
+    }
+
+    /**
+     * @param userId
+     * @return
+     */
+    @Override
+    public List<UserAutoTender> list(Long userId) {
+        List<AutoTender> autoTenders = autoTenderRepository.findByUserId(userId);
+        List<UserAutoTender> userAutoTenders= Lists.newArrayList();
+        autoTenders.stream().forEach(p->{
+            UserAutoTender userAutoTender=new UserAutoTender();
+            userAutoTender.setId(p.getId());
+            userAutoTender.setStatus(p.getStatus());
+            userAutoTender.setOrder(p.getOrder());
+            userAutoTender.setDays(DateHelper.diffInDays(new Date(),p.getCreatedAt(),true));
+            userAutoTenders.add(userAutoTender);
+        });
+        return Optional.ofNullable(userAutoTenders).orElse(Collections.EMPTY_LIST);
     }
 }

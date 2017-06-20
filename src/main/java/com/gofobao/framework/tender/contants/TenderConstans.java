@@ -23,6 +23,8 @@ public class TenderConstans {
 
     public static final String BIDDING_STR="投标中";
 
+    public static  String BIDDING_TYPE="1";
+
 
     /**
      * 回款中
@@ -32,14 +34,14 @@ public class TenderConstans {
 
     public static final String BACK_MONEY_STR="投标中";
 
-
+    public static  String BACK_MONEY_TYPE="2";
     /**
      * 已结清
      */
     public static final Integer SETTLE =3;
 
-
-    public static final String SETTLE_STR="已结清";
+    public static final String SETTLE_STR_TYPE="3";
+    public static  String SETTLE_STR="已结清";
 
 
     /**
@@ -58,8 +60,6 @@ public class TenderConstans {
      * 已转让
      */
     public static final Integer TRANSFER_YES=2;
-
-
 
 
 

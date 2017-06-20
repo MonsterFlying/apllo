@@ -62,8 +62,8 @@ public class StatisticBizImpl implements StatisticBiz {
             } else {
                 Statistic statistic = statisticService.findLast();
                 Long borrowTotal = statistic.getBorrowTotal();
-                indexStatistics.setTransactionsTotal(StringHelper.formatMon(borrowTotal / 100d));
-                indexStatistics.setDueTotal(StringHelper.formatMon(statistic.getWaitRepayTotal() / 100d));
+                indexStatistics.setTransactionsTotal(borrowTotal);
+                indexStatistics.setDueTotal(statistic.getWaitRepayTotal());
                 redisHelper.put("indexStatistic",gson.toJson(indexStatistics));
             }
         } catch (Exception e) {

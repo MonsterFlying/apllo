@@ -17,12 +17,10 @@ import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.repository.TenderRepository;
 import com.gofobao.framework.tender.service.TenderService;
+import com.gofobao.framework.tender.vo.request.TenderUserReq;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -52,11 +50,12 @@ public class TenderServiceImpl implements TenderService {
     /**
      * 投标用户列表
      *
-     * @param borrowId
+     * @param tenderUserReq
      * @return
      */
     @Override
-    public List<VoBorrowTenderUserRes> findBorrowTenderUser(Long borrowId) {
+    public List<VoBorrowTenderUserRes> findBorrowTenderUser(TenderUserReq tenderUserReq) {
+        Long borrowId=tenderUserReq.getBorrowId();
         Borrow borrow = borrowRepository.findOne(borrowId);
         if (ObjectUtils.isEmpty(borrow)) {
             return Collections.EMPTY_LIST;
@@ -68,10 +67,14 @@ public class TenderServiceImpl implements TenderService {
 
         ExampleMatcher matcher = ExampleMatcher.matching().withIgnorePaths("isAuto");
         Example<Tender> ex = Example.of(tender, matcher);
-        List<Tender> tenderList = tenderRepository.findAll(ex);
-        Optional<List<Tender>> listOptional = Optional.ofNullable(tenderList);
+        Page<Tender> tenderPage = tenderRepository.findAll(ex,new PageRequest(tenderUserReq.getPageIndex(),tenderUserReq.getPageSize(),new Sort(Sort.Direction.DESC,"id")));
+        //Optional<List<Tender>> listOptional = Optional.ofNullable(tenderList);
+        List<Tender> tenderList=tenderPage.getContent();
+        if(CollectionUtils.isEmpty(tenderList)){
+            return Collections.EMPTY_LIST;
+        }
 
-        listOptional.ifPresent(items -> items.forEach(item -> {
+        tenderList.stream().forEach(item -> {
             VoBorrowTenderUserRes tenderUserRes = new VoBorrowTenderUserRes();
             tenderUserRes.setMoney(StringHelper.formatMon(item.getMoney() / 100d) + MoneyConstans.RMB);
             tenderUserRes.setValidMoney(StringHelper.formatMon(item.getValidMoney() / 100d) + MoneyConstans.RMB);
@@ -83,7 +86,7 @@ public class TenderServiceImpl implements TenderService {
                     UserHelper.hideChar(user.getUsername(), UserHelper.USERNAME_NUM);
             tenderUserRes.setUserName(userName);
             tenderUserResList.add(tenderUserRes);
-        }));
+        });
         return Optional.empty().ofNullable(tenderUserResList).orElse(Collections.emptyList());
     }
 
@@ -113,7 +116,7 @@ public class TenderServiceImpl implements TenderService {
         if (ObjectUtils.isEmpty(specification) || ObjectUtils.isEmpty(pageable)) {
             return null;
         }
-        return tenderRepository.findAll(specification, pageable).getContent() ;
+        return tenderRepository.findAll(specification, pageable).getContent();
     }
 
     public List<Tender> findList(Specification<Tender> specification, Sort sort) {
@@ -129,6 +132,7 @@ public class TenderServiceImpl implements TenderService {
         }
         return tenderRepository.count(specification);
     }
+
     /**
      * 检查投标是否太频繁
      *
@@ -150,5 +154,9 @@ public class TenderServiceImpl implements TenderService {
 
     public Tender findById(Long tenderId) {
         return tenderRepository.findOne(tenderId);
+    }
+
+    public Tender findByAuthCode(String authCode) {
+        return tenderRepository.findByAuthCode(authCode);
     }
 }

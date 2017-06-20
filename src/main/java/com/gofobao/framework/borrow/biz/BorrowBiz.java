@@ -1,10 +1,7 @@
 package com.gofobao.framework.borrow.biz;
 
 import com.gofobao.framework.borrow.entity.Borrow;
-import com.gofobao.framework.borrow.vo.request.VoAddBorrow;
-import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
-import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
-import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
+import com.gofobao.framework.borrow.vo.request.*;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowStatisticsWarpRes;
@@ -27,7 +24,7 @@ public interface BorrowBiz {
      * @param voAddNetWorthBorrow
      * @return
      */
-    ResponseEntity<VoBaseResp> addNetWorth(VoAddBorrow voAddNetWorthBorrow);
+    ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow);
 
 
     /**
@@ -78,8 +75,10 @@ public interface BorrowBiz {
      * @return
      */
     Map<String, Object> contract(Long borrowId, Long userId);
+
     /**
      * pc：标合同
+     *
      * @param borrowId
      * @param userId
      * @return
@@ -92,15 +91,22 @@ public interface BorrowBiz {
      * @param voRepayAllReq
      * @return
      */
-    ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq) throws Exception;
+    ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq);
+
+
     /**
      * pc:招标中统计
+     *
      * @param
      * @return
      */
     ResponseEntity<VoViewBorrowStatisticsWarpRes> statistics();
 
+    /**
+     * 请求复审
+     */
+    ResponseEntity<VoBaseResp> doAgainVerify(VoDoAgainVerifyReq voDoAgainVerifyReq);
 
-
+    ResponseEntity<VoBaseResp> checkRepayAll(VoRepayAllReq voRepayAllReq);
 
 }
