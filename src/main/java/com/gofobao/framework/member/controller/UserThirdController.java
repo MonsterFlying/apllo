@@ -46,6 +46,14 @@ public class UserThirdController {
         return userThirdBiz.modifyOpenAccPwd(httpServletRequest, userId) ;
     }
 
+
+    @ApiOperation("存管设置密码回调")
+    @GetMapping("/pub/third/password/{encode}/{channel}")
+    public ResponseEntity<String> publicPasswordModify(HttpServletRequest httpServletRequest, @PathVariable("encode") String encode, @PathVariable("channel") String channel) {
+        return userThirdBiz.publicPasswordModify(httpServletRequest, encode, channel) ;
+    }
+
+
     @ApiOperation("银行存管密码管理回调")
     @PostMapping("/pub/user/third/modifyOpenAccPwd/callback/{type}")
     public ResponseEntity<String> modifyOpenAccPwdCallback(HttpServletRequest request, HttpServletResponse response, @PathVariable Integer type) {

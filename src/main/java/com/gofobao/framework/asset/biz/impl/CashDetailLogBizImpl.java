@@ -18,10 +18,12 @@ import com.gofobao.framework.asset.vo.request.VoCashReq;
 import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.OKHttpHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.ThirdAccountPasswordHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -52,6 +54,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
 import org.springframework.util.Base64Utils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
@@ -73,9 +76,6 @@ import java.util.concurrent.TimeUnit;
 public class CashDetailLogBizImpl implements CashDetailLogBiz {
     @Autowired
     AssetService assetService;
-
-    @Autowired
-    UserCacheService userCacheService ;
 
     @Autowired
     UserService userService ;
@@ -101,6 +101,10 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     @Value("${gofobao.javaDomain}")
     String javaDomain;
 
+    @Value("${gofobao.h5Domain}")
+    String h5Domain;
+
+
     static final Gson GSON = new Gson() ;
 
     @Value("${gofobao.aliyun-bankaps-url}")
@@ -109,6 +113,8 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     @Value("${gofobao.aliyun-bankinfo-appcode}")
     String aliyunQueryAppcode ;
 
+    @Autowired
+    ThirdAccountPasswordHelper thirdAccountPasswordHelper ;
 
     @Autowired
     DictItemServcie dictItemServcie ;
@@ -298,6 +304,9 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
         WithDrawRequest request = new WithDrawRequest() ;
+        request.setSeqNo(RandomHelper.generateNumberCode(6));
+        request.setTxTime(DateHelper.getTime());
+        request.setTxDate(DateHelper.getDate());
         request.setIdType(IdTypeContant.ID_CARD);
         request.setIdNo(users.getCardId());
         request.setName(users.getRealname());
@@ -317,7 +326,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             request.setTxFee( StringHelper.formatDouble( new Double(fee / 100D), false));
         }
 
-        request.setForgotPwdUrl(String.format("%s/%s", javaDomain, ""));  // TODO 待加忘记密码回调
+        request.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountPasswordUrl(httpServletRequest, userId));  // TODO 待加忘记密码回调
         request.setRetUrl(String.format("%s/%s", javaDomain, ""));
         request.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/asset/cash/callback"));
         request.setAcqRes(String.valueOf(userId));
@@ -531,6 +540,22 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
         response.setRealCashTime(DateHelper.dateToString(cashTime));
         return ResponseEntity.ok(response);
+    }
+
+    @Override
+    public String showCash(String seqNo, Model model) {
+        CashDetailLog  cashDetailLog  = cashDetailLogService.findTopBySeqNoLock(seqNo) ;
+        model.addAttribute("h5Domain", h5Domain) ;
+        if(ObjectUtils.isEmpty(cashDetailLog)){
+            return "/cash/faile" ;
+        }
+        if(cashDetailLog.getState().equals(1)){
+            return "/cash/loading" ;
+        }else if(cashDetailLog.getState().equals(3)){
+            return "/cash/success" ;
+        }else {
+            return "/cash/faile" ;
+        }
     }
 
 }

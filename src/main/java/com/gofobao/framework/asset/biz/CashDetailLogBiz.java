@@ -8,6 +8,7 @@ import com.gofobao.framework.asset.vo.response.VoCashLogWrapResp;
 import com.gofobao.framework.asset.vo.response.VoPreCashResp;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -67,4 +68,13 @@ public interface CashDetailLogBiz {
      * @return
      */
     ResponseEntity<VoCashLogDetailResp> logDetail(Long id);
+
+
+    /**
+     * 展示提现结果
+     * @param seqNo
+     * @param model
+     * @return
+     */
+    String showCash(String seqNo, Model model);
 }
