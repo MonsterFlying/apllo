@@ -1,9 +1,12 @@
 package com.gofobao.framework.borrow.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.api.model.debt_details_query.DebtDetail;
+import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
+import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
@@ -30,10 +33,9 @@ import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
-import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
-import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
@@ -95,6 +97,8 @@ public class BorrowBizImpl implements BorrowBiz {
     private RepaymentBiz repaymentBiz;
     @Autowired
     private BorrowProvider borrowProvider;
+    @Autowired
+    private BorrowThirdBiz borrowThirdBiz;
 
     /**
      * 理财首页标列表
@@ -504,6 +508,148 @@ public class BorrowBizImpl implements BorrowBiz {
         return ResponseEntity.ok(VoBaseResp.ok("取消借款成功!"));
     }
 
+
+    /**
+     * pc取消借款
+     *
+     * @param voPcCancelThirdBorrow
+     * @return
+     */
+    public ResponseEntity<VoBaseResp> pcCancelBorrow(VoPcCancelThirdBorrow voPcCancelThirdBorrow) {
+        Date nowDate = new Date();
+        String paramStr = voPcCancelThirdBorrow.getParamStr();
+        if (SecurityHelper.checkRequest(voPcCancelThirdBorrow.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc取消借款 签名验证不通过!"));
+        }
+
+        Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        Long borrowId = NumberHelper.toLong(paramMap.get("borrowId"));
+
+        Borrow borrow = borrowService.findByIdLock(borrowId);
+        if (ObjectUtils.isEmpty(borrow)
+                || (borrow.getStatus() != 0 && borrow.getStatus() != 1)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款状态已发生更改!"));
+        }
+
+        boolean bool = false;//债权转让默认不过期
+        if (!ObjectUtils.isEmpty(borrow.getReleaseAt())) {
+            bool = DateHelper.diffInDays(new Date(), borrow.getReleaseAt(), false) >= borrow.getValidDay();//比较借款时间是否过期
+        }
+
+        if (((borrow.getStatus() == 1) && (bool))) {//只有借款标招标
+
+        } else {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "只有借款标招标才能取消借款!"));
+        }
+
+        //================================即信取消标的==================================
+        //检查标的是否登记
+        VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
+        voQueryThirdBorrowList.setBorrowId(borrowId);
+        voQueryThirdBorrowList.setUserId(borrowId);
+        voQueryThirdBorrowList.setPageNum("1");
+        voQueryThirdBorrowList.setPageSize("10");
+        DebtDetailsQueryResp response = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
+
+        List<DebtDetail> debtDetailList = GSON.fromJson(response.getSubPacks(), new com.google.common.reflect.TypeToken<List<DebtDetail>>() {
+        }.getType());
+
+        ResponseEntity<VoBaseResp> resp = null;
+        if (debtDetailList.size() < 1) {
+            VoCancelThirdBorrow voCancelThirdBorrow = new VoCancelThirdBorrow();
+            voCancelThirdBorrow.setBorrowId(borrowId);
+            voCancelThirdBorrow.setUserId(borrow.getUserId());
+            voCancelThirdBorrow.setRaiseDate(DateHelper.dateToString(borrow.getReleaseAt(), DateHelper.DATE_FORMAT_YMD_NUM));
+            voCancelThirdBorrow.setAcqRes(StringHelper.toString(borrowId));
+            resp = borrowThirdBiz.cancelThirdBorrow(voCancelThirdBorrow);
+            if (!ObjectUtils.isEmpty(resp)) {
+                return resp;
+            }
+        }
+        //==============================================================================
+
+        Specification<Tender> borrowSpecification = Specifications
+                .<Tender>and()
+                .eq("status", 1)
+                .eq("borrowId", borrowId)
+                .build();
+
+        List<Tender> tenderList = tenderService.findList(borrowSpecification);
+        Set<Long> tenderUserIds = new HashSet<>();//投标用户id集合
+        if (!CollectionUtils.isEmpty(tenderList)) {
+            Iterator<Tender> itTender = tenderList.iterator();
+            Tender tender = null;
+            Notices notices = null;
+            while (itTender.hasNext()) {
+                notices = new Notices();
+                tender = itTender.next();
+
+                //更新资产记录
+                CapitalChangeEntity entity = new CapitalChangeEntity();
+                entity.setType(CapitalChangeEnum.Unfrozen);
+                entity.setUserId(tender.getUserId());
+                entity.setMoney(tender.getValidMoney());
+                entity.setRemark("借款 [" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "] 招标失败解除冻结资金。");
+                try {
+                    capitalChangeHelper.capitalChange(entity);
+                } catch (Exception e) {
+                    log.error("borrowBizImpl pcCancelBorrow error", e);
+                }
+
+                //更新投标记录状态
+                tender.setId(tender.getId());
+                tender.setStatus(2); // 取消状态
+                tender.setUpdatedAt(nowDate);
+                tenderService.updateById(tender);
+
+                if (!tenderUserIds.contains(tender.getUserId())) {
+                    tenderUserIds.add(tender.getUserId());
+                    notices.setFromUserId(1L);
+                    notices.setUserId(tender.getUserId());
+                    notices.setRead(false);
+                    notices.setName("投资的借款失败");
+                    notices.setContent("你所投资的借款[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]在" + DateHelper.nextDate(nowDate) + "已取消");
+                    notices.setType("system");
+                    notices.setCreatedAt(nowDate);
+                    notices.setUpdatedAt(nowDate);
+
+                    //发送站内信
+                    MqConfig mqConfig = new MqConfig();
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
+                    mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
+                    Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
+                    mqConfig.setMsg(body);
+                    try {
+                        log.info(String.format("borrowBizImpl pcCancelBorrow send mq %s", GSON.toJson(body)));
+                        mqHelper.convertAndSend(mqConfig);
+                    } catch (Exception e) {
+                        log.error("borrowBizImpl pcCancelBorrow send mq exception", e);
+                    }
+                }
+            }
+        }
+
+        Long tenderId = borrow.getTenderId();
+        if ((borrow.getType() == 0) && (!ObjectUtils.isEmpty(tenderId)) && (tenderId > 0)) {//判断是否是转让标，并将借款状态置为0
+            Tender tender = tenderService.findById(tenderId);
+            tender.setTransferFlag(0);
+            tender.setUpdatedAt(nowDate);
+            tenderService.updateById(tender);
+        }
+
+        //更新借款
+        borrow.setStatus(5);
+        borrow.setUpdatedAt(nowDate);
+        borrowService.updateById(borrow);
+
+        return ResponseEntity.ok(VoBaseResp.ok("取消借款成功!"));
+    }
 
     /**
      * 非转让标复审
@@ -1059,5 +1205,47 @@ public class BorrowBizImpl implements BorrowBiz {
             e.printStackTrace();
         }
         return ResponseEntity.ok(VoBaseResp.ok(StringHelper.toString(flag)));
+    }
+
+    /**
+     * 登记官方借款（车贷标、渠道标）
+     *
+     * @param voRegisterOfficialBorrow
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoHtmlResp> registerOfficialBorrow(VoRegisterOfficialBorrow voRegisterOfficialBorrow) {
+        long borrowId = voRegisterOfficialBorrow.getBorrowId();
+        Borrow borrow = borrowService.findById(borrowId);
+        Preconditions.checkNotNull(borrow, "借款不存在!");
+
+        //检查标的是否登记
+        VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
+        voQueryThirdBorrowList.setBorrowId(borrowId);
+        voQueryThirdBorrowList.setUserId(borrow.getUserId());
+        voQueryThirdBorrowList.setPageNum("1");
+        voQueryThirdBorrowList.setPageSize("10");
+        DebtDetailsQueryResp response = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
+
+        List<DebtDetail> debtDetailList = GSON.fromJson(response.getSubPacks(), new com.google.common.reflect.TypeToken<List<DebtDetail>>() {
+        }.getType());
+
+        ResponseEntity<VoBaseResp> resp = null;
+        if (debtDetailList.size() < 1) {
+            //即信标的登记
+            VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
+            voCreateThirdBorrowReq.setBorrowId(borrowId);
+            resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
+            if (!ObjectUtils.isEmpty(resp)) {
+                ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, resp.getBody().getState().getMsg()));
+            }
+        }
+
+        //受托支付
+        VoThirdTrusteePayReq voThirdTrusteePayReq = new VoThirdTrusteePayReq();
+        voThirdTrusteePayReq.setBorrowId(borrowId);
+        return borrowThirdBiz.thirdTrusteePay(voThirdTrusteePayReq);
     }
 }
