@@ -170,7 +170,15 @@ public enum JixinTxCodeEnum {
      */
     BID_APPLY_QUERY(
             "bidApplyQuery",
-            "/escrow/p2p/online");
+            "/escrow/p2p/online"),
+
+    /**
+     * 受托支付查询
+     */
+    TRUSTEE_PAY_QUERY(
+            "trusteePayQuery",
+            "/escrow/p2p/online"
+    );
 
     private String value;
     private String url;

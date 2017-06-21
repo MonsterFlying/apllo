@@ -1,9 +1,11 @@
 package com.gofobao.framework.tender.controller;
 
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.vo.request.VoTransferReq;
+import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
 import com.gofobao.framework.tender.vo.response.VoViewTransferMayWarpRes;
 import com.gofobao.framework.tender.vo.response.VoViewTransferOfWarpRes;
 import com.gofobao.framework.tender.vo.response.VoViewTransferedWarpRes;
@@ -12,13 +14,16 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
+
+import javax.validation.Valid;
 
 /**
  * Created by admin on 2017/6/12.
  */
 @RestController
 @RequestMapping("/transfer")
-@Api(description = "债券")
+@Api(description = "债权相关控制器")
 public class TransferController {
 
     @Autowired
@@ -39,9 +44,9 @@ public class TransferController {
         return transferBiz.tranferOfList(transferReq);
     }
 
-    @ApiOperation("转让中列表")
+    @ApiOperation("已转让列表")
     @GetMapping("v2/transfered/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewTransferedWarpRes> transferedlist(@RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable Integer pageIndex, @PathVariable Integer pageSize) {
+    public ResponseEntity<VoViewTransferedWarpRes> transferedlist(@PathVariable Integer pageIndex, @PathVariable Integer pageSize, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
 
         VoTransferReq transferReq = new VoTransferReq();
         transferReq.setUserId(userId);
@@ -52,7 +57,7 @@ public class TransferController {
 
     @ApiOperation("转让中列表")
     @GetMapping("v2/transferMay/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewTransferMayWarpRes> transferMayList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable Integer pageIndex, @PathVariable Integer pageSize) {
+    public ResponseEntity<VoViewTransferMayWarpRes> transferMayList(@PathVariable Integer pageIndex, @PathVariable Integer pageSize, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoTransferReq transferReq = new VoTransferReq();
         transferReq.setUserId(userId);
         transferReq.setPageIndex(pageIndex);
@@ -71,5 +76,17 @@ public class TransferController {
             content = thymeleafHelper.build("load_error", null);
         }
         return ResponseEntity.ok(content);
+    }
+    /**
+     * 债权转让
+     *
+     * @param voTransferTenderReq
+     * @return
+     */
+    @ApiOperation("债权转让")
+    @GetMapping("v2/tender/transfer")
+    public ResponseEntity<VoBaseResp> transferTender(@ModelAttribute @Valid VoTransferTenderReq voTransferTenderReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        voTransferTenderReq.setUserId(userId);
+        return transferBiz.transferTender(voTransferTenderReq);
     }
 }

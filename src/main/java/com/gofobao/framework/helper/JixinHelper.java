@@ -62,7 +62,7 @@ public class JixinHelper {
         DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
 
         Date nowDate = new Date();
-        int no = 10000;
+        int no = 100000;
 
         DictValue dictValue = dictValueService.findTopByItemIdAndValue01(dictItem.getId(), "firstCreateAt");
         if (!ObjectUtils.isEmpty(dictValue)) {

@@ -103,9 +103,9 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     @Autowired
     private MqHelper mqHelper;
 
-    @Value("gofobao.webDomain")
+    @Value("${gofobao.webDomain}")
     private String webDomain;
-    @Value("jixin.redPacketAccountId")
+    @Value("${jixin.redPacketAccountId}")
     private String redPacketAccountId;
 
     /**

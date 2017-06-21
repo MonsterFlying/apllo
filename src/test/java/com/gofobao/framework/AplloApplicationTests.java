@@ -10,6 +10,8 @@ import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
 import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyRequest;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
+import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
+import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
@@ -83,8 +85,8 @@ public class AplloApplicationTests {
     }
 
     public static void main(String[] args) {
-        Map<String,Object> map = new HashMap<>();
-        map.put("borrowId",165204);
+        Map<String, Object> map = new HashMap<>();
+        map.put("borrowId", 165206);
 
         Gson gson = new Gson();
         String paramStr = gson.toJson(map);
@@ -95,7 +97,20 @@ public class AplloApplicationTests {
 
     @Test
     public void test() {
+        /*Map<String,String> map = new HashMap<>();
+        map.put("borrowId","165206");
+        try {
+            borrowProvider.doFirstVerify(map);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
 
+/*        TrusteePayQueryReq request = new TrusteePayQueryReq();
+        request.setAccountId("6212462040000050015");
+        request.setProductId("165206");
+        request.setChannel(ChannelContant.HTML);
+        TrusteePayQueryResp response = jixinManager.send(JixinTxCodeEnum.TRUSTEE_PAY_QUERY, request, TrusteePayQueryResp.class);
+        System.out.println(response);*/
 
         /*VoRepayReq voRepayReq = new VoRepayReq();
         voRepayReq.setRepaymentId(168683L);
@@ -118,13 +133,13 @@ public class AplloApplicationTests {
         DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
         System.out.println((resp.getTotalItems()));*/
 
-       /* Map<String,String> msg = new HashMap<>();
-        msg.put("borrowId","165184");
+        Map<String,String> msg = new HashMap<>();
+        msg.put("borrowId","165206");
         try {
             borrowProvider.doAgainVerify(msg);
         } catch (Exception e) {
             e.printStackTrace();
-        }*/
+        }
 
         //"userId\":901,\"repaymentId\":168675,\"interestPercent\":0.0,\"isUserOpen\":true
         /*VoRepayReq voRepayReq = new VoRepayReq();
