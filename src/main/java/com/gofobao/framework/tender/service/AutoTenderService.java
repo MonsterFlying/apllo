@@ -37,4 +37,10 @@ public interface AutoTenderService {
     long count(Specification<AutoTender> specification);
 
     void delete(long id);
+
+    /**
+     * 获取自动投标序号
+     * @return
+     */
+    int getOrderNum();
 }

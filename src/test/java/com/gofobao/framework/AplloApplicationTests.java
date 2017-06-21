@@ -19,10 +19,13 @@ import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
 import com.gofobao.framework.common.integral.IntegralChangeEntity;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.helper.JixinHelper;
+import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.IntegralChangeHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
@@ -35,6 +38,10 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -60,6 +67,8 @@ public class AplloApplicationTests {
     private BorrowThirdBiz borrowThirdBiz;
     @Autowired
     private RepaymentBiz repaymentBiz;
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Test
     public void contextLoads() {
@@ -74,6 +83,7 @@ public class AplloApplicationTests {
     @Test
     public void test() {
 
+
         /*VoRepayReq voRepayReq = new VoRepayReq();
         voRepayReq.setRepaymentId(168683L);
         voRepayReq.setUserId(901L);
@@ -87,13 +97,13 @@ public class AplloApplicationTests {
 
         System.out.println(true + "");*/
 
-        VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
+        /*VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
         voQueryThirdBorrowList.setBorrowId(165200L);
         voQueryThirdBorrowList.setUserId(901L);
         voQueryThirdBorrowList.setPageNum("1");
         voQueryThirdBorrowList.setPageSize("10");
         DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
-        System.out.println((resp.getTotalItems()));
+        System.out.println((resp.getTotalItems()));*/
 
        /* Map<String,String> msg = new HashMap<>();
         msg.put("borrowId","165184");

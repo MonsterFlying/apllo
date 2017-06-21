@@ -4,6 +4,8 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.helper.BeanHelper;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.repository.AutoTenderRepository;
 import com.gofobao.framework.tender.service.AutoTenderService;
@@ -149,11 +151,27 @@ public class AutoTenderServiceImpl implements AutoTenderService {
         return query.getResultList();
     }
 
+    /**
+     * 更新自动投标order
+     *
+     * @return
+     */
     public boolean updateAutoTenderOrder() {
         StringBuffer sql = new StringBuffer("UPDATE gfb_auto_tender t1, ( SELECT id, @rownum := @rownum + 1 AS listorder FROM" +
                 " gfb_auto_tender t2, ( SELECT @rownum :=0 )t3  ORDER BY t2.auto_at ASC, t2.order ASC ) t4  SET t1.`order` = t4.listorder WHERE t1.id = t4.id");
         Query query = entityManager.createNativeQuery(sql.toString());
         return query.executeUpdate() > 0;
+    }
+
+    /**
+     * 获取自动投标序号
+     *
+     * @return
+     */
+    public int getOrderNum() {
+        StringBuffer sql = new StringBuffer("select MAX(`order`) FROM gfb_auto_tender");
+        Query query = entityManager.createNativeQuery(sql.toString());
+        return NumberHelper.toInt(query.getResultList().get(0));
     }
 
     /**
@@ -163,35 +181,35 @@ public class AutoTenderServiceImpl implements AutoTenderService {
     @Override
     public List<UserAutoTender> list(Long userId) {
         List<AutoTender> autoTenders = autoTenderRepository.findByUserId(userId);
-        List<UserAutoTender> userAutoTenders= Lists.newArrayList();
-        autoTenders.stream().forEach(p->{
-            UserAutoTender userAutoTender=new UserAutoTender();
+        List<UserAutoTender> userAutoTenders = Lists.newArrayList();
+        autoTenders.stream().forEach(p -> {
+            UserAutoTender userAutoTender = new UserAutoTender();
             userAutoTender.setId(p.getId());
             userAutoTender.setStatus(p.getStatus());
             userAutoTender.setOrder(p.getOrder());
-            userAutoTender.setDays(DateHelper.diffInDays(new Date(),p.getCreatedAt(),true));
+            userAutoTender.setDays(DateHelper.diffInDays(new Date(), p.getCreatedAt(), true));
             userAutoTenders.add(userAutoTender);
         });
         return Optional.ofNullable(userAutoTenders).orElse(Collections.EMPTY_LIST);
     }
 
-    public List<AutoTender> findList(Specification<AutoTender> specification){
+    public List<AutoTender> findList(Specification<AutoTender> specification) {
         return autoTenderRepository.findAll(specification);
     }
 
-    public List<AutoTender> findList(Specification<AutoTender> specification, Sort sort){
-        return autoTenderRepository.findAll(specification,sort);
+    public List<AutoTender> findList(Specification<AutoTender> specification, Sort sort) {
+        return autoTenderRepository.findAll(specification, sort);
     }
 
-    public List<AutoTender> findList(Specification<AutoTender> specification, Pageable pageable){
-        return autoTenderRepository.findAll(specification,pageable).getContent();
+    public List<AutoTender> findList(Specification<AutoTender> specification, Pageable pageable) {
+        return autoTenderRepository.findAll(specification, pageable).getContent();
     }
 
-    public long count(Specification<AutoTender> specification){
+    public long count(Specification<AutoTender> specification) {
         return autoTenderRepository.count(specification);
     }
 
-    public void delete(long id){
+    public void delete(long id) {
         autoTenderRepository.delete(id);
     }
 }

@@ -4,8 +4,15 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.tender.vo.request.VoDelAutoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoOpenAutoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoSaveAutoTenderReq;
+import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
 import com.gofobao.framework.tender.vo.response.VoViewUserAutoTenderWarpRes;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
+import org.springframework.web.bind.annotation.RequestParam;
+import springfox.documentation.annotations.ApiIgnore;
 
 /**
  * Created by Zeke on 2017/5/27.
@@ -15,6 +22,7 @@ public interface AutoTenderBiz {
 
     /**
      * 创建自动投标规则
+     *
      * @param voSaveAutoTenderReq
      * @return
      */
@@ -22,13 +30,24 @@ public interface AutoTenderBiz {
 
     /**
      * 创建自动投标规则
+     *
      * @param voSaveAutoTenderReq
      * @return
      */
     ResponseEntity<VoBaseResp> updateAutoTender(VoSaveAutoTenderReq voSaveAutoTenderReq);
 
     /**
+     * 查询自动投标详情
+     *
+     * @param autoTenderId
+     * @param userId
+     * @return
+     */
+    ResponseEntity<VoAutoTenderInfo> queryAutoTenderInfo(Long autoTenderId, Long userId);
+
+    /**
      * 开启自动投标
+     *
      * @param voOpenAutoTenderReq
      * @return
      */
@@ -36,6 +55,7 @@ public interface AutoTenderBiz {
 
     /**
      * 删除自动投标跪着
+     *
      * @param voDelAutoTenderReq
      * @return
      */
