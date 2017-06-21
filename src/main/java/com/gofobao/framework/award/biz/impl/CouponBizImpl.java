@@ -11,7 +11,6 @@ import com.gofobao.framework.award.vo.response.CouponRes;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.JacksonHelper;
 import com.gofobao.framework.helper.OKHttpHelper;
 import com.google.gson.Gson;
 import com.thoughtworks.xstream.XStream;

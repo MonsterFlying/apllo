@@ -1,7 +1,6 @@
 package com.gofobao.framework.asset.vo.request;
 
 import com.gofobao.framework.core.vo.VoBaseReq;
-import com.gofobao.framework.core.vo.VoBaseResp;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;

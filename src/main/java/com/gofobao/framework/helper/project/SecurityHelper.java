@@ -2,7 +2,6 @@ package com.gofobao.framework.helper.project;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.springframework.util.Base64Utils;
 import org.springframework.util.StringUtils;
 
 /**

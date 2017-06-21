@@ -1,40 +1,15 @@
 package com.gofobao.framework;
 
-import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.helper.JixinManager;
-import com.gofobao.framework.api.helper.JixinTxCodeEnum;
-import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
-import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
-import com.gofobao.framework.api.model.batch_repay_bail.BatchRepayBailResp;
-import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
-import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
-import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyRequest;
-import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
-import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
-import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
-import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
-import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
-import com.gofobao.framework.common.integral.IntegralChangeEntity;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.helper.JixinHelper;
-import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.helper.project.IntegralChangeHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
-import com.gofobao.framework.repayment.service.BorrowRepaymentService;
-import com.gofobao.framework.repayment.service.impl.LoanServiceImpl;
-import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -45,7 +20,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
+import java.util.HashMap;
+import java.util.Map;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest

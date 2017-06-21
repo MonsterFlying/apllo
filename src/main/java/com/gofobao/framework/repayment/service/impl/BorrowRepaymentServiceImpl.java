@@ -3,7 +3,6 @@ package com.gofobao.framework.repayment.service.impl;
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
-import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderList;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderRes;

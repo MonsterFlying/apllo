@@ -43,9 +43,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.gofobao.framework.helper.project.UserHelper.CARD_ID_NUM;
-import static com.gofobao.framework.helper.project.UserHelper.PHONE_NUM;
-import static com.gofobao.framework.helper.project.UserHelper.USERNAME_NUM;
+import static com.gofobao.framework.helper.project.UserHelper.*;
 import static java.util.stream.Collectors.groupingBy;
 
 

@@ -6,13 +6,7 @@ import com.gofobao.framework.tender.vo.request.VoOpenAutoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoSaveAutoTenderReq;
 import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
 import com.gofobao.framework.tender.vo.response.VoViewUserAutoTenderWarpRes;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiOperation;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestAttribute;
-import org.springframework.web.bind.annotation.RequestParam;
-import springfox.documentation.annotations.ApiIgnore;
 
 /**
  * Created by Zeke on 2017/5/27.

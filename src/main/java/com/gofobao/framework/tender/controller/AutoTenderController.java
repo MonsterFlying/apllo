@@ -3,8 +3,6 @@ package com.gofobao.framework.tender.controller;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.AutoTenderBiz;
-import com.gofobao.framework.tender.repository.AutoTenderRepository;
-import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.vo.request.VoDelAutoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoOpenAutoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoSaveAutoTenderReq;

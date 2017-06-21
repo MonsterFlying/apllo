@@ -3,19 +3,20 @@ package com.gofobao.framework.asset.controller;
 import com.gofobao.framework.asset.biz.CashDetailLogBiz;
 import com.gofobao.framework.asset.vo.request.VoBankApsReq;
 import com.gofobao.framework.asset.vo.request.VoCashReq;
-import com.gofobao.framework.asset.vo.response.*;
+import com.gofobao.framework.asset.vo.response.VoBankApsWrapResp;
+import com.gofobao.framework.asset.vo.response.VoCashLogDetailResp;
+import com.gofobao.framework.asset.vo.response.VoCashLogWrapResp;
+import com.gofobao.framework.asset.vo.response.VoPreCashResp;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 /**
