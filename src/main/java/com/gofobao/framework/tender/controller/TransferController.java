@@ -1,5 +1,6 @@
 package com.gofobao.framework.tender.controller;
 
+import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.vo.request.VoTransferReq;
 import com.gofobao.framework.tender.vo.response.VoViewTransferMayWarpRes;
@@ -9,10 +10,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * Created by admin on 2017/6/12.
@@ -28,10 +26,10 @@ public class TransferController {
 
     @ApiOperation("转让中列表")
     @GetMapping("v2/transferOf/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewTransferOfWarpRes> tranferOfList(@PathVariable Integer pageIndex,@PathVariable Integer pageSize){
+    public ResponseEntity<VoViewTransferOfWarpRes> tranferOfList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,@PathVariable Integer pageIndex,@PathVariable Integer pageSize){
 
         VoTransferReq transferReq=new VoTransferReq();
-        transferReq.setUserId(901L);
+        transferReq.setUserId(userId);
         transferReq.setPageIndex(pageIndex);
         transferReq.setPageSize(pageSize);
         return transferBiz.tranferOfList(transferReq);
@@ -39,19 +37,19 @@ public class TransferController {
 
     @ApiOperation("转让中列表")
     @GetMapping("v2/transfered/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewTransferedWarpRes> transferedlist(@PathVariable Integer pageIndex, @PathVariable Integer pageSize){
+    public ResponseEntity<VoViewTransferedWarpRes> transferedlist(@RequestAttribute(SecurityContants.USERID_KEY) Long userId ,@PathVariable Integer pageIndex, @PathVariable Integer pageSize){
 
         VoTransferReq transferReq=new VoTransferReq();
-        transferReq.setUserId(901L);
+        transferReq.setUserId(userId);
         transferReq.setPageIndex(pageIndex);
         transferReq.setPageSize(pageSize);
         return transferBiz.transferedlist(transferReq);
     }
     @ApiOperation("转让中列表")
     @GetMapping("v2/transferMay/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewTransferMayWarpRes> transferMayList(@PathVariable Integer pageIndex, @PathVariable Integer pageSize){
+    public ResponseEntity<VoViewTransferMayWarpRes> transferMayList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,@PathVariable Integer pageIndex, @PathVariable Integer pageSize){
         VoTransferReq transferReq=new VoTransferReq();
-        transferReq.setUserId(901L);
+        transferReq.setUserId(userId);
         transferReq.setPageIndex(pageIndex);
         transferReq.setPageSize(pageSize);
         return transferBiz.transferMayList(transferReq);
