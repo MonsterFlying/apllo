@@ -22,5 +22,5 @@ public interface CouponService {
     List<Coupon> takeFlow(Long userId, Long couponId);
 
 
-
+    Coupon save(Coupon coupon);
 }

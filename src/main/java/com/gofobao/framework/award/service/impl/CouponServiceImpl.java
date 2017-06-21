@@ -87,4 +87,8 @@ public class CouponServiceImpl implements CouponService {
         return couponList;
     }
 
+    public Coupon save(Coupon coupon){
+        return couponRepository.save(coupon);
+    }
+
 }
