@@ -44,7 +44,7 @@ public interface BorrowRepaymentThirdBiz {
      * @param voThirdBatchLendRepay
      * @return
      */
-    ResponseEntity<VoBaseResp> thirdBatchLendRepay(VoThirdBatchLendRepay voThirdBatchLendRepay);
+    ResponseEntity<VoBaseResp> thirdBatchLendRepay(VoThirdBatchLendRepay voThirdBatchLendRepay) throws Exception;
 
     /**
      * 即信批次放款  （满标后调用）

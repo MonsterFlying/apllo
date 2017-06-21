@@ -1,6 +1,7 @@
 package com.gofobao.framework.borrow.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetail;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
 import com.gofobao.framework.asset.entity.Asset;
@@ -1349,6 +1350,12 @@ public class BorrowBizImpl implements BorrowBiz {
         voQueryThirdBorrowList.setPageNum("1");
         voQueryThirdBorrowList.setPageSize("10");
         DebtDetailsQueryResp response = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+            String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoHtmlResp.error(VoHtmlResp.ERROR,msg,VoHtmlResp.class));
+        }
 
         List<DebtDetail> debtDetailList = GSON.fromJson(response.getSubPacks(), new com.google.common.reflect.TypeToken<List<DebtDetail>>() {
         }.getType());
