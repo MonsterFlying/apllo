@@ -54,8 +54,6 @@ import org.springframework.util.ObjectUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.*;
 
 /**
@@ -181,8 +179,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             if (borrowRepayment.getOrder() < (borrow.getTotalOrder() - 1)) {
                 Specification<BorrowRepayment> brs = Specifications
                         .<BorrowRepayment>and()
-                        .eq("borrowId", borrowId)
                         .eq("status", 0)
+                        .eq("borrowId", borrowId)
                         .build();
                 List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
                 Preconditions.checkNotNull(borrowRepayment, "还款不存在");
@@ -198,7 +196,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         List<Repay> repayList = new ArrayList<>();
         if (ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) {
             repayList = new ArrayList<>();
-            receivedReapy(repayList, borrow, borrowUserThirdAccount.getAccountId(), borrowRepayment.getOrder(), interestPercent, lateDays, lateInterest / 2);
+            receivedRepay(repayList, borrow, borrowUserThirdAccount.getAccountId(), borrowRepayment.getOrder(), interestPercent, lateDays, lateInterest / 2);
         } else {
             //批次融资人还担保账户垫款
             VoBatchRepayBailReq voBatchRepayBailReq = new VoBatchRepayBailReq();
@@ -222,7 +220,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * @return
      * @throws Exception
      */
-    public void receivedReapy(List<Repay> repayList, Borrow borrow, String borrowAccountId, int order, double interestPercent, int lateDays, int lateInterest) throws Exception {
+    public void receivedRepay(List<Repay> repayList, Borrow borrow, String borrowAccountId, int order, double interestPercent, int lateDays, int lateInterest) throws Exception {
         do {
             //===================================还款校验==========================================
             if (ObjectUtils.isEmpty(borrow)) {
@@ -361,7 +359,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     }
 
                     //回调
-                    receivedReapy(repayList, tempBorrow, borrowAccountId, tempOrder, interestPercent, lateDays, tempLateInterest);
+                    receivedRepay(repayList, tempBorrow, borrowAccountId, tempOrder, interestPercent, lateDays, tempLateInterest);
                     continue;
                 }
 
@@ -419,7 +417,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             }
         } while (false);
     }
-
 
     /**
      * 即信批次放款  （满标后调用）
@@ -505,7 +502,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      *
      * @return
      */
-    public void thirdBatchRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> thirdBatchRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
         BatchRepayCheckResp repayCheckResp = jixinManager.callback(request, new TypeToken<BatchRepayCheckResp>() {
         });
 
@@ -522,13 +519,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.info("即信批次还款检验参数成功!");
         }
 
-        try {
-            PrintWriter out = response.getWriter();
-            out.print("success");
-            out.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        return ResponseEntity.ok("success");
     }
 
     /**
@@ -536,7 +527,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      *
      * @return
      */
-    public void thirdBatchRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> thirdBatchRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
         BatchRepayRunResp repayRunResp = jixinManager.callback(request, new TypeToken<BatchRepayRunResp>() {
         });
         boolean bool = true;
@@ -574,13 +565,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         } else {
             log.info("还款失败!");
         }
-        try {
-            PrintWriter out = response.getWriter();
-            out.print("success");
-            out.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        return ResponseEntity.ok("success");
     }
 
     /**
@@ -588,7 +573,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      *
      * @return
      */
-    public void thirdBatchLendRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> thirdBatchLendRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
         BatchLendPayCheckResp lendRepayCheckResp = jixinManager.callback(request, new TypeToken<BatchLendPayCheckResp>() {
         });
 
@@ -606,13 +591,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         log.info("即信批次放款检验参数成功!");
 
 
-        try {
-            PrintWriter out = response.getWriter();
-            out.print("success");
-            out.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        return ResponseEntity.ok("success");
     }
 
     /**
@@ -620,7 +599,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      *
      * @return
      */
-    public void thirdBatchLendRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> thirdBatchLendRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
         BatchLendPayRunResp lendRepayRunResp = jixinManager.callback(request, new TypeToken<BatchLendPayRunResp>() {
         });
         boolean bool = true;
@@ -659,13 +638,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.info("非流转标复审失败!");
         }
 
-        try {
-            PrintWriter out = response.getWriter();
-            out.print("success");
-            out.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        return ResponseEntity.ok("success");
     }
 
 
@@ -944,7 +917,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     /**
      * 批次担保账户代偿参数检查回调
      */
-    public void thirdBatchBailRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> thirdBatchBailRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
         BatchBailRepayCheckResp batchBailRepayCheckResp = jixinManager.callback(request, new TypeToken<BatchBailRepayCheckResp>() {
         });
         if (ObjectUtils.isEmpty(batchBailRepayCheckResp)) {
@@ -957,19 +930,13 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("回调失败! msg:" + batchBailRepayCheckResp.getRetMsg());
         }
 
-        try {
-            PrintWriter out = response.getWriter();
-            out.print("success");
-            out.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        return ResponseEntity.ok("success");
     }
 
     /**
      * 批次担保账户代偿业务处理回调
      */
-    public void thirdBatchBailRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> thirdBatchBailRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
         BatchBailRepayRunResp batchBailRepayRunResp = jixinManager.callback(request, new TypeToken<BatchBailRepayRunResp>() {
         });
         boolean bool = true;
@@ -1011,13 +978,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             }
         }
 
-        try {
-            PrintWriter out = response.getWriter();
-            out.print("success");
-            out.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        return ResponseEntity.ok("success");
     }
 
     /**
@@ -1135,7 +1096,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * @param response
      */
 
-    public void thirdBatchRepayBailCheckCall(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> thirdBatchRepayBailCheckCall(HttpServletRequest request, HttpServletResponse response) {
         BatchRepayBailCheckResp batchRepayBailCheckResp = jixinManager.callback(request, new TypeToken<BatchRepayBailCheckResp>() {
         });
         if (ObjectUtils.isEmpty(batchRepayBailCheckResp)) {
@@ -1148,13 +1109,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("回调失败! msg:" + batchRepayBailCheckResp.getRetMsg());
         }
 
-        try {
-            PrintWriter out = response.getWriter();
-            out.print("success");
-            out.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        return ResponseEntity.ok("success");
     }
 
     /**
@@ -1163,7 +1118,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * @param request
      * @param response
      */
-    public void thirdBatchRepayBailRunCall(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> thirdBatchRepayBailRunCall(HttpServletRequest request, HttpServletResponse response) {
         BatchRepayBailRunResp batchRepayBailRunResp = jixinManager.callback(request, new TypeToken<BatchRepayBailRunResp>() {
         });
         boolean bool = true;
@@ -1194,7 +1149,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 BorrowRepayment borrowRepayment = borrowRepaymentService.findById(repaymentId);
                 if (borrowRepayment.getStatus() != 0) {
                     log.info("立即还款：该笔借款已归还");
-                    return;
+                    return ResponseEntity.ok("success");
                 }
 
                 Preconditions.checkNotNull(borrowRepayment, "还款记录不存在!");
@@ -1226,13 +1181,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             }
         }
 
-        try {
-            PrintWriter out = response.getWriter();
-            out.print("success");
-            out.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        return ResponseEntity.ok("success");
 
     }
 }

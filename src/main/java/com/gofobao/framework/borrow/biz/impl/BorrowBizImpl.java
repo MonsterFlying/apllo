@@ -1,9 +1,12 @@
 package com.gofobao.framework.borrow.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.api.model.debt_details_query.DebtDetail;
+import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
+import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
@@ -34,10 +37,13 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
+import com.gofobao.framework.system.biz.IncrStatisticBiz;
+import com.gofobao.framework.system.entity.IncrStatistic;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.entity.Tender;
@@ -55,6 +61,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.MessagingException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -95,6 +102,12 @@ public class BorrowBizImpl implements BorrowBiz {
     private RepaymentBiz repaymentBiz;
     @Autowired
     private BorrowProvider borrowProvider;
+    @Autowired
+    private BorrowThirdBiz borrowThirdBiz;
+    @Autowired
+    private IncrStatisticBiz incrStatisticBiz;
+    @Autowired
+    private UserService userService;
 
     /**
      * 理财首页标列表
@@ -506,6 +519,148 @@ public class BorrowBizImpl implements BorrowBiz {
 
 
     /**
+     * pc取消借款
+     *
+     * @param voPcCancelThirdBorrow
+     * @return
+     */
+    public ResponseEntity<VoBaseResp> pcCancelBorrow(VoPcCancelThirdBorrow voPcCancelThirdBorrow) {
+        Date nowDate = new Date();
+        String paramStr = voPcCancelThirdBorrow.getParamStr();
+        if (!SecurityHelper.checkSign(voPcCancelThirdBorrow.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc取消借款 签名验证不通过!"));
+        }
+
+        Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        Long borrowId = NumberHelper.toLong(paramMap.get("borrowId"));
+
+        Borrow borrow = borrowService.findByIdLock(borrowId);
+        if (ObjectUtils.isEmpty(borrow)
+                || (borrow.getStatus() != 0 && borrow.getStatus() != 1)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款状态已发生更改!"));
+        }
+
+        boolean bool = false;//债权转让默认不过期
+        if (!ObjectUtils.isEmpty(borrow.getReleaseAt())) {
+            bool = DateHelper.diffInDays(new Date(), borrow.getReleaseAt(), false) >= borrow.getValidDay();//比较借款时间是否过期
+        }
+
+        if (((borrow.getStatus() == 1) && (bool))) {//只有借款标招标
+
+        } else {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "只有借款标招标才能取消借款!"));
+        }
+
+        //================================即信取消标的==================================
+        //检查标的是否登记
+        VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
+        voQueryThirdBorrowList.setBorrowId(borrowId);
+        voQueryThirdBorrowList.setUserId(borrowId);
+        voQueryThirdBorrowList.setPageNum("1");
+        voQueryThirdBorrowList.setPageSize("10");
+        DebtDetailsQueryResp response = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
+
+        List<DebtDetail> debtDetailList = GSON.fromJson(response.getSubPacks(), new com.google.common.reflect.TypeToken<List<DebtDetail>>() {
+        }.getType());
+
+        ResponseEntity<VoBaseResp> resp = null;
+        if (debtDetailList.size() < 1) {
+            VoCancelThirdBorrow voCancelThirdBorrow = new VoCancelThirdBorrow();
+            voCancelThirdBorrow.setBorrowId(borrowId);
+            voCancelThirdBorrow.setUserId(borrow.getUserId());
+            voCancelThirdBorrow.setRaiseDate(DateHelper.dateToString(borrow.getReleaseAt(), DateHelper.DATE_FORMAT_YMD_NUM));
+            voCancelThirdBorrow.setAcqRes(StringHelper.toString(borrowId));
+            resp = borrowThirdBiz.cancelThirdBorrow(voCancelThirdBorrow);
+            if (!ObjectUtils.isEmpty(resp)) {
+                return resp;
+            }
+        }
+        //==============================================================================
+
+        Specification<Tender> borrowSpecification = Specifications
+                .<Tender>and()
+                .eq("status", 1)
+                .eq("borrowId", borrowId)
+                .build();
+
+        List<Tender> tenderList = tenderService.findList(borrowSpecification);
+        Set<Long> tenderUserIds = new HashSet<>();//投标用户id集合
+        if (!CollectionUtils.isEmpty(tenderList)) {
+            Iterator<Tender> itTender = tenderList.iterator();
+            Tender tender = null;
+            Notices notices = null;
+            while (itTender.hasNext()) {
+                notices = new Notices();
+                tender = itTender.next();
+
+                //更新资产记录
+                CapitalChangeEntity entity = new CapitalChangeEntity();
+                entity.setType(CapitalChangeEnum.Unfrozen);
+                entity.setUserId(tender.getUserId());
+                entity.setMoney(tender.getValidMoney());
+                entity.setRemark("借款 [" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "] 招标失败解除冻结资金。");
+                try {
+                    capitalChangeHelper.capitalChange(entity);
+                } catch (Exception e) {
+                    log.error("borrowBizImpl pcCancelBorrow error", e);
+                }
+
+                //更新投标记录状态
+                tender.setId(tender.getId());
+                tender.setStatus(2); // 取消状态
+                tender.setUpdatedAt(nowDate);
+                tenderService.updateById(tender);
+
+                if (!tenderUserIds.contains(tender.getUserId())) {
+                    tenderUserIds.add(tender.getUserId());
+                    notices.setFromUserId(1L);
+                    notices.setUserId(tender.getUserId());
+                    notices.setRead(false);
+                    notices.setName("投资的借款失败");
+                    notices.setContent("你所投资的借款[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]在" + DateHelper.nextDate(nowDate) + "已取消");
+                    notices.setType("system");
+                    notices.setCreatedAt(nowDate);
+                    notices.setUpdatedAt(nowDate);
+
+                    //发送站内信
+                    MqConfig mqConfig = new MqConfig();
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
+                    mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
+                    Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
+                    mqConfig.setMsg(body);
+                    try {
+                        log.info(String.format("borrowBizImpl pcCancelBorrow send mq %s", GSON.toJson(body)));
+                        mqHelper.convertAndSend(mqConfig);
+                    } catch (Exception e) {
+                        log.error("borrowBizImpl pcCancelBorrow send mq exception", e);
+                    }
+                }
+            }
+        }
+
+        Long tenderId = borrow.getTenderId();
+        if ((borrow.getType() == 0) && (!ObjectUtils.isEmpty(tenderId)) && (tenderId > 0)) {//判断是否是转让标，并将借款状态置为0
+            Tender tender = tenderService.findById(tenderId);
+            tender.setTransferFlag(0);
+            tender.setUpdatedAt(nowDate);
+            tenderService.updateById(tender);
+        }
+
+        //更新借款
+        borrow.setStatus(5);
+        borrow.setUpdatedAt(nowDate);
+        borrowService.updateById(borrow);
+
+        return ResponseEntity.ok(VoBaseResp.ok("取消借款成功!"));
+    }
+
+    /**
      * 非转让标复审
      *
      * @param borrow
@@ -748,9 +903,7 @@ public class BorrowBizImpl implements BorrowBiz {
             //投资车贷标成功添加 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
             //更新 投过相应标种 标识
             //=============================================================
-            /**
-             * @// TODO: 2017/6/2 投标成功事件
-             */
+            updateUserCacheByTenderSuccess(tempTender, borrow, repayDetailList);
 
         }
 
@@ -831,6 +984,114 @@ public class BorrowBizImpl implements BorrowBiz {
         return true;
     }
 
+    /**
+     * 投资车贷标成功添加 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
+     * 更新 投过相应标种 标识
+     *
+     * @param tender
+     * @param borrow
+     * @param repayDetailList
+     */
+    private Map<String, Object> updateUserCacheByTenderSuccess(Tender tender, Borrow borrow, List<Map<String, Object>> repayDetailList) throws Exception {
+        Map<String, Object> resultMap = new HashMap<>();
+        Users user = userService.findById(tender.getUserId());
+        UserCache userCache = userCacheService.findById(tender.getUserId());
+        log.debug("-------updateUserCacheByTenderSuccess---" + GSON.toJson(borrow) + "-------");
+        log.debug("------------------");
+        log.debug("-------updateUserCacheByTenderSuccess---" + GSON.toJson(tender) + "-------");
+        if ((borrow.getType() == 0 || borrow.getType() == 4) && (!borrow.isTransfer())
+                && (!userCache.getTenderTuijian()) && (!userCache.getTenderQudao())) {
+            //首次投资推荐标满2000元赠送流量
+            Set<Integer> tempSet = new HashSet<>();
+            tempSet.add(3);
+            tempSet.add(5);
+            tempSet.add(7);
+            if ((!tempSet.contains(tender.getSource())) && tender.getValidMoney() >= 2000 * 100) {
+
+            } else if ((user.getSource() == 5) && (tender.getValidMoney() >= 1000 * 100)) {
+
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_ACTIVITY);
+                mqConfig.setTag(MqTagEnum.GIVE_COUPON);
+                ImmutableMap<String, String> body = ImmutableMap
+                        .of(MqConfig.MSG_TENDER_ID, StringHelper.toString(tender.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                mqConfig.setMsg(body);
+                boolean mqState = false;
+                try {
+                    log.info(String.format("borrowBizImpl firstVerify send mq %s", GSON.toJson(body)));
+                    mqState = mqHelper.convertAndSend(mqConfig);
+                } catch (Exception e) {
+                    log.error("borrowBizImpl firstVerify send mq exception", e);
+                }
+                if (!mqState) {
+                    log.error("赠送流量券失败!");
+                }
+            }
+        }
+
+        Integer countInterest = 0;
+        for (int i = 0; i < repayDetailList.size(); i++) {
+            Map<String, Object> repayDetailMap = repayDetailList.get(i);
+            countInterest += new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue();
+        }
+
+        UserCache tempUserCache = new UserCache();
+        if (borrow.getType() == 0) {
+            tempUserCache.setTjWaitCollectionPrincipal(userCache.getTjWaitCollectionPrincipal() + tender.getValidMoney());
+            tempUserCache.setTjWaitCollectionInterest(userCache.getTjWaitCollectionInterest() + countInterest);
+        }
+
+        if (borrow.getType() == 4) {
+            tempUserCache.setQdWaitCollectionPrincipal(userCache.getQdWaitCollectionPrincipal() + tender.getValidMoney());
+            tempUserCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() + countInterest);
+        }
+
+        try {
+            IncrStatistic incrStatistic = new IncrStatistic();
+            if ((!userCache.getTenderTransfer()) && (!userCache.getTenderTuijian()) && (!userCache.getTenderJingzhi()) && (!userCache.getTenderMiao()) && (!userCache.getTenderQudao())) {
+                incrStatistic.setTenderCount(1);
+                incrStatistic.setTenderTotal(1);
+            }
+
+            if (borrow.isTransfer() && (!userCache.getTenderTransfer())) {
+                tempUserCache.setTenderTransfer(true);
+                incrStatistic.setTenderLzCount(1);
+                incrStatistic.setTenderLzTotalCount(1);
+            } else if ((borrow.getType() == 0) && (!userCache.getTenderTuijian())) {
+                tempUserCache.setTenderTuijian(true);
+                incrStatistic.setTenderTjCount(1);
+                incrStatistic.setTenderTjTotalCount(1);
+            } else if ((borrow.getType() == 1) && (!userCache.getTenderJingzhi())) {
+                tempUserCache.setTenderJingzhi(true);
+                incrStatistic.setTenderJzCount(1);
+                incrStatistic.setTenderJzTotalCount(1);
+            } else if ((borrow.getType() == 2) && (!userCache.getTenderMiao())) {
+                tempUserCache.setTenderMiao(true);
+                incrStatistic.setTenderMiaoCount(1);
+                incrStatistic.setTenderMiaoTotalCount(1);
+            } else if ((borrow.getType() == 4) && (!userCache.getTenderQudao())) {
+                tempUserCache.setTenderQudao(true);
+                incrStatistic.setTenderQdCount(1);
+                incrStatistic.setTenderQdTotalCount(1);
+            }
+            if (!ObjectUtils.isEmpty(incrStatistic)) {
+                incrStatisticBiz.caculate(incrStatistic);
+            }
+        } catch (MessagingException e) {
+            log.error(String.format("投标成功统计错误：%s", e.getMessage()));
+        }
+
+        //======================================
+        // 老用户投标红包
+        //======================================
+
+
+        //======================================
+        // 推荐用户投资红包
+        //======================================
+
+        return resultMap;
+    }
 
     /**
      * 检查提前结清参数
@@ -1046,7 +1307,7 @@ public class BorrowBizImpl implements BorrowBiz {
     public ResponseEntity<VoBaseResp> doAgainVerify(VoDoAgainVerifyReq voDoAgainVerifyReq) {
 
         String paramStr = voDoAgainVerifyReq.getParamStr();
-        if (!SecurityHelper.checkRequest(voDoAgainVerifyReq.getSign(), paramStr)) {
+        if (!SecurityHelper.checkSign(voDoAgainVerifyReq.getSign(), paramStr)) {
             log.error("BorrowBizImpl doAgainVerify error：签名校验不通过");
         }
 
@@ -1059,5 +1320,56 @@ public class BorrowBizImpl implements BorrowBiz {
             e.printStackTrace();
         }
         return ResponseEntity.ok(VoBaseResp.ok(StringHelper.toString(flag)));
+    }
+
+    /**
+     * 登记官方借款（车贷标、渠道标）
+     *
+     * @param voRegisterOfficialBorrow
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoHtmlResp> registerOfficialBorrow(VoRegisterOfficialBorrow voRegisterOfficialBorrow) {
+        String paramStr = voRegisterOfficialBorrow.getParamStr();
+        if (!SecurityHelper.checkSign(voRegisterOfficialBorrow.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc 登记官方借款 签名验证不通过", VoHtmlResp.class));
+        }
+
+        Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        Long borrowId = NumberHelper.toLong(paramMap.get("borrowId"));
+        Borrow borrow = borrowService.findById(borrowId);
+        Preconditions.checkNotNull(borrow, "借款不存在!");
+
+        //检查标的是否登记
+        VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
+        voQueryThirdBorrowList.setBorrowId(borrowId);
+        voQueryThirdBorrowList.setUserId(borrow.getUserId());
+        voQueryThirdBorrowList.setPageNum("1");
+        voQueryThirdBorrowList.setPageSize("10");
+        DebtDetailsQueryResp response = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
+
+        List<DebtDetail> debtDetailList = GSON.fromJson(response.getSubPacks(), new com.google.common.reflect.TypeToken<List<DebtDetail>>() {
+        }.getType());
+
+        ResponseEntity<VoBaseResp> resp = null;
+        if (debtDetailList.size() < 1) {
+            //即信标的登记
+            VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
+            voCreateThirdBorrowReq.setBorrowId(borrowId);
+            voCreateThirdBorrowReq.setEntrustFlag(true);
+            resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
+            if (!ObjectUtils.isEmpty(resp)) {
+                ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, resp.getBody().getState().getMsg()));
+            }
+        }
+
+        //受托支付
+        VoThirdTrusteePayReq voThirdTrusteePayReq = new VoThirdTrusteePayReq();
+        voThirdTrusteePayReq.setBorrowId(borrowId);
+        return borrowThirdBiz.thirdTrusteePay(voThirdTrusteePayReq);
     }
 }

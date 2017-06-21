@@ -14,8 +14,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @ApiModel
-public class VoCreateThirdBorrowReq extends VoBaseReq{
+public class VoCreateThirdBorrowReq extends VoBaseReq {
 
     @ApiModelProperty(value = "借款id", dataType = "int")
     private Long borrowId;
+    @ApiModelProperty(value = "是否受托支付", hidden = true)
+    private Boolean entrustFlag = false;//默认非受托支付
 }

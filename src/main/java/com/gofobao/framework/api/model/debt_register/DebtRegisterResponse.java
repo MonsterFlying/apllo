@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class DebtRegisterResponse extends JixinBaseResponse{
+public class DebtRegisterResponse extends JixinBaseResponse {
     /**
      * 电子账号
      */
@@ -36,6 +36,12 @@ public class DebtRegisterResponse extends JixinBaseResponse{
      * 名义借款人电子账号
      */
     private String nominalAcctountId;
+
+    /**
+     * 收款人电子帐户
+     */
+    private String receiptAccountId;
+
     /**
      * 请求方保留
      */

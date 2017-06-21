@@ -10,5 +10,6 @@ public class MqQueueEnumContants {
     public  static final  String RABBITMQ_BORROW = "rabbitmq_borrow" ;
     public  static final  String RABBITMQ_USER_ACTIVE = "rabbitmq_user_active" ;
     public  static final  String RABBITMQ_NOTICE = "rabbitmq_notice";
+    public static final String RABBITMQ_ACTIVITY = "rabbitmq_activity";
 
 }

@@ -15,25 +15,35 @@ import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
+import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
 import com.gofobao.framework.common.integral.IntegralChangeEntity;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.helper.JixinHelper;
+import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.IntegralChangeHelper;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.service.impl.LoanServiceImpl;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -59,6 +69,8 @@ public class AplloApplicationTests {
     private BorrowThirdBiz borrowThirdBiz;
     @Autowired
     private RepaymentBiz repaymentBiz;
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Test
     public void contextLoads() {
@@ -70,13 +82,36 @@ public class AplloApplicationTests {
         }
     }
 
+    public static void main(String[] args) {
+        Map<String,Object> map = new HashMap<>();
+        map.put("borrowId",165204);
+
+        Gson gson = new Gson();
+        String paramStr = gson.toJson(map);
+        System.out.println(paramStr);
+
+        System.out.println(SecurityHelper.getSign(paramStr));
+    }
+
     @Test
     public void test() {
 
-        System.out.println(true + "");
+
+        /*VoRepayReq voRepayReq = new VoRepayReq();
+        voRepayReq.setRepaymentId(168683L);
+        voRepayReq.setUserId(901L);
+        voRepayReq.setIsUserOpen(false);
+        voRepayReq.setInterestPercent(1d);
+        try {
+            repaymentBiz.repay(voRepayReq);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        System.out.println(true + "");*/
 
         /*VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
-        voQueryThirdBorrowList.setBorrowId(165180L);
+        voQueryThirdBorrowList.setBorrowId(165200L);
         voQueryThirdBorrowList.setUserId(901L);
         voQueryThirdBorrowList.setPageNum("1");
         voQueryThirdBorrowList.setPageSize("10");
@@ -112,21 +147,21 @@ public class AplloApplicationTests {
         System.out.println(response);*/
 
         /*BatchDetailsQueryReq request = new BatchDetailsQueryReq();
-        request.setBatchNo("100003");
-        request.setBatchTxDate("20170615");
-        request.setType("2");
+        request.setBatchNo("100002");
+        request.setBatchTxDate("20170619");
+        request.setType("1");
         request.setPageNum("1");
         request.setPageSize("10");
         request.setChannel(ChannelContant.HTML);
         BatchDetailsQueryResp response = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, request, BatchDetailsQueryResp.class);
-        System.out.println(response);
-        */
-        Borrow borrow = borrowService.findById(165198L);
+        System.out.println(response);*/
+
+        /*Borrow borrow = borrowService.findById(165198L);
         try {
             borrowBiz.notTransferedBorrowAgainVerify(borrow);
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
 }

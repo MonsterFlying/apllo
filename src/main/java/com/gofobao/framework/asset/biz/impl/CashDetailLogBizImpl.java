@@ -10,7 +10,6 @@ import com.gofobao.framework.api.model.with_daw.WithDrawResponse;
 import com.gofobao.framework.asset.biz.CashDetailLogBiz;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.entity.CashDetailLog;
-import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.CashDetailLogService;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
@@ -19,12 +18,13 @@ import com.gofobao.framework.asset.vo.request.VoCashReq;
 import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.OKHttpHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.ThirdAccountPasswordHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
-import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
@@ -54,6 +54,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
 import org.springframework.util.Base64Utils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
@@ -65,7 +66,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -76,9 +76,6 @@ import java.util.concurrent.TimeUnit;
 public class CashDetailLogBizImpl implements CashDetailLogBiz {
     @Autowired
     AssetService assetService;
-
-    @Autowired
-    UserCacheService userCacheService ;
 
     @Autowired
     UserService userService ;
@@ -104,6 +101,10 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     @Value("${gofobao.javaDomain}")
     String javaDomain;
 
+    @Value("${gofobao.h5Domain}")
+    String h5Domain;
+
+
     static final Gson GSON = new Gson() ;
 
     @Value("${gofobao.aliyun-bankaps-url}")
@@ -112,6 +113,8 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     @Value("${gofobao.aliyun-bankinfo-appcode}")
     String aliyunQueryAppcode ;
 
+    @Autowired
+    ThirdAccountPasswordHelper thirdAccountPasswordHelper ;
 
     @Autowired
     DictItemServcie dictItemServcie ;
@@ -164,7 +167,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         Asset asset = assetService.findByUserIdLock(userId);
         VoPreCashResp resp = VoBaseResp.ok("查询成功", VoPreCashResp.class);
         resp.setBankName(userThirdAccount.getBankName());
-        resp.setLogo(userThirdAccount.getBankLogo());
+        resp.setLogo(String.format("%s/%s", javaDomain, userThirdAccount.getBankLogo()));
         resp.setCardNo(userThirdAccount.getCardNo().substring(userThirdAccount.getCardNo().length() - 4));
         resp.setUseMoneyShow(StringHelper.formatDouble(asset.getUseMoney() / 100D, true));
         resp.setUseMoney(asset.getUseMoney() / 100D);
@@ -187,7 +190,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoHtmlResp> cash(Long userId, VoCashReq voCashReq)  throws  Exception{
+    public ResponseEntity<VoHtmlResp> cash(HttpServletRequest httpServletRequest, Long userId, VoCashReq voCashReq)  throws  Exception{
         Users users = userService.findByIdLock(userId);
         Preconditions.checkNotNull(users, "当前用户不存在");
         if (users.getIsLock()) {
@@ -222,6 +225,13 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "提现金额大于20万,请走人行通道！", VoHtmlResp.class));
+        }
+
+        // 判断提现金额
+        if(useMoney < voCashReq.getCashMoney() * 100){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "提现金额大于账户可用余额！", VoHtmlResp.class));
         }
 
 
@@ -294,6 +304,9 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
         WithDrawRequest request = new WithDrawRequest() ;
+        request.setSeqNo(RandomHelper.generateNumberCode(6));
+        request.setTxTime(DateHelper.getTime());
+        request.setTxDate(DateHelper.getDate());
         request.setIdType(IdTypeContant.ID_CARD);
         request.setIdNo(users.getCardId());
         request.setName(users.getRealname());
@@ -313,11 +326,11 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             request.setTxFee( StringHelper.formatDouble( new Double(fee / 100D), false));
         }
 
-        request.setForgotPwdUrl(String.format("%s/%s", javaDomain, ""));  // TODO 待加忘记密码回调
+        request.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountPasswordUrl(httpServletRequest, userId));  // TODO 待加忘记密码回调
         request.setRetUrl(String.format("%s/%s", javaDomain, ""));
         request.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/asset/cash/callback"));
         request.setAcqRes(String.valueOf(userId));
-        request.setChannel(ChannelContant.HTML);
+        request.setChannel(ChannelContant.getchannel(httpServletRequest));
         // 生成提现表单
         String html = jixinManager.getHtml(JixinTxCodeEnum.WITH_DRAW, request);
         if(StringUtils.isEmpty(html)){
@@ -527,6 +540,22 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
         response.setRealCashTime(DateHelper.dateToString(cashTime));
         return ResponseEntity.ok(response);
+    }
+
+    @Override
+    public String showCash(String seqNo, Model model) {
+        CashDetailLog  cashDetailLog  = cashDetailLogService.findTopBySeqNoLock(seqNo) ;
+        model.addAttribute("h5Domain", h5Domain) ;
+        if(ObjectUtils.isEmpty(cashDetailLog)){
+            return "/cash/faile" ;
+        }
+        if(cashDetailLog.getState().equals(1)){
+            return "/cash/loading" ;
+        }else if(cashDetailLog.getState().equals(3)){
+            return "/cash/success" ;
+        }else {
+            return "/cash/faile" ;
+        }
     }
 
 }

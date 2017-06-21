@@ -210,6 +210,7 @@ public class AssetBizImpl implements AssetBiz {
     public String rechargeShow(HttpServletRequest request, Model model, String seqNo) {
         // 查询充值信息
         RechargeDetailLog rechargeDetailLog = rechargeDetailLogService.findTopBySeqNo(seqNo);
+        model.addAttribute("h5Domain", h5Domain) ;
         if(ObjectUtils.isEmpty(rechargeDetailLog)){
             return "/recharge/faile" ;
         }else if(rechargeDetailLog.getState() == 0){
@@ -528,7 +529,7 @@ public class AssetBizImpl implements AssetBiz {
         VoPreRechargeResp voPreRechargeResp = VoBaseResp.ok("查询成功", VoPreRechargeResp.class);
         voPreRechargeResp.setBankName(userThirdAccount.getBankName());
         voPreRechargeResp.setCardNo(userThirdAccount.getCardNo().substring(userThirdAccount.getCardNo().length() - 4));
-        voPreRechargeResp.setLogo(userThirdAccount.getBankLogo());
+        voPreRechargeResp.setLogo(String.format("%s/%s", javaDomain, userThirdAccount.getBankLogo()));
         DictValue bank = null;
         try {
             bank = bankLimitCache.get(userThirdAccount.getBankName());

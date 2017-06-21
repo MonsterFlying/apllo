@@ -1,0 +1,55 @@
+<!DOCTYPE html >
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>提现结果</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+    <meta name="viewport" content="initial-scale=1, maximum-scale=3, minimum-scale=1, user-scalable=no"/>
+    <style>
+        .head {
+            padding-left: 4px;
+            width: 100%;
+            height: 34px;
+            line-height: 34px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .box {
+            width: 100%;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .title {
+            font-size: 20px;
+        }
+
+        .box .btn {
+            text-decoration: none;
+            display: block;
+            height: 40px;
+            line-height: 40px;
+            font-size: 18px;
+            background-color: #ff3333;
+            color: #ffffff;
+            width: 80%;
+            margin: 20px auto;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="head">
+    提现结果详情
+</div>
+<div class="box">
+    <img src="data:image/png;base64,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"
+         width="48" alt=""/>
+    <div class="title">提现成功</div>
+    <a class="btn" th:href="${h5Domain}+'/#/user/cash/record'">
+        完成
+    </a>
+</div>
+</body>
+</html>

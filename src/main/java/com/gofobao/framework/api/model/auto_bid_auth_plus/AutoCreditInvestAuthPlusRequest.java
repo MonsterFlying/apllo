@@ -1,4 +1,4 @@
-package com.gofobao.framework.api.model.auto_credit_invest_auth_plus;
+package com.gofobao.framework.api.model.auto_bid_auth_plus;
 
 import com.gofobao.framework.api.request.JixinBaseRequest;
 import lombok.AllArgsConstructor;
@@ -11,14 +11,10 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AutoBidAuthPlusRequest extends JixinBaseRequest {
+public class AutoCreditInvestAuthPlusRequest extends JixinBaseRequest {
     private String accountId ;
 
     private String orderId ;
-
-    private String txAmount ;
-
-    private String totAmount ;
 
     private String forgotPwdUrl ;
 

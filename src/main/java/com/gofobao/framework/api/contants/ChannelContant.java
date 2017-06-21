@@ -15,9 +15,9 @@ public class ChannelContant {
         String requestSource = request.getHeader("requestSource");
         if(requestSource.equals("0")){
             return WE_CHAT ;
-        }else if(request.equals("1")){
+        }else if(requestSource.equals("1")){
             return APP ;
-        }else if(request.equals("2")){
+        }else if(requestSource.equals("2")){
             return APP;
         }else{
             return HTML ;

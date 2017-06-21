@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
@@ -30,9 +31,10 @@ public class CouponServiceImpl implements CouponService {
 
     @PersistenceContext
     private EntityManager entityManager;
-
     @Autowired
     private CouponRepository couponRepository;
+
+
 
     @Override
     public List<CouponRes> list(VoCouponReq couponReq) {
@@ -84,7 +86,5 @@ public class CouponServiceImpl implements CouponService {
         }
         return couponList;
     }
-
-
 
 }

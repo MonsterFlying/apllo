@@ -243,7 +243,7 @@ public class BorrowProvider {
                     borrow.setSuccessAt(new Date());
                     borrowService.updateById(borrow);
                 }
-                resp = thirdRegisterBorrowAndTender(borrowId);
+                resp = thirdRegisterBorrowAndTender(borrow);
             }
             if (ObjectUtils.isEmpty(resp)) {
                 //批次放款
@@ -274,16 +274,22 @@ public class BorrowProvider {
     /**
      * 第三方等级标的与债权
      *
-     * @param borrowId
+     * @param borrow
      * @return
      */
-    public ResponseEntity<VoBaseResp> thirdRegisterBorrowAndTender(Long borrowId) {
+    public ResponseEntity<VoBaseResp> thirdRegisterBorrowAndTender(Borrow borrow) {
+        long borrowId = borrow.getId();
+        ResponseEntity<VoBaseResp> resp = null;
+
         //标的登记
-        VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
-        voCreateThirdBorrowReq.setBorrowId(borrowId);
-        ResponseEntity<VoBaseResp> resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
-        if (!ObjectUtils.isEmpty(resp)) {
-            return resp;
+        int type = borrow.getType();
+        if (type != 0 && type != 4) { //判断是否是官标、官标不需要在这里登记标的
+            VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
+            voCreateThirdBorrowReq.setBorrowId(borrowId);
+            resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
+            if (!ObjectUtils.isEmpty(resp)) {
+                return resp;
+            }
         }
 
         //批量投标
@@ -306,7 +312,6 @@ public class BorrowProvider {
                 return resp;
             }
         }
-
         return null;
     }
 }

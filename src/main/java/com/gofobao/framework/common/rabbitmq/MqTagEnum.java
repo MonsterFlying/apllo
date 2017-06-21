@@ -22,7 +22,8 @@ public enum MqTagEnum {
     AGAIN_VERIFY("AGAIN_VERIFY"), //复审
     AUTO_TENDER("AUTO_TENDER"), //自动投标
     NOTICE_PUBLISH("NOTICE_PUBLISH"), // 站内信通知
-    RECHARGE("RECHARGE"); // 充值
+    RECHARGE("RECHARGE"), // 充值
+    GIVE_COUPON("GIVE_COUPON"); // 赠送流量券
     private String value;
 
     private MqTagEnum(String value) {

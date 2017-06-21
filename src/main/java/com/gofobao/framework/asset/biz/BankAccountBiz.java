@@ -1,5 +1,6 @@
 package com.gofobao.framework.asset.biz;
 
+import com.gofobao.framework.asset.vo.response.VoBankListResp;
 import com.gofobao.framework.asset.vo.response.VoBankTypeInfoResp;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import org.springframework.http.ResponseEntity;
@@ -26,4 +27,11 @@ public interface BankAccountBiz {
      * @param model
      */
     void showDesc(Model model);
+
+    /**
+     * 查询用户银行卡列表
+     * @param userId
+     * @return
+     */
+    ResponseEntity<VoBankListResp> list(Long userId);
 }

@@ -252,7 +252,7 @@ public class LendBizImpl implements LendBiz {
         UserCache userCache = userCacheService.findById(userId);
         Preconditions.checkNotNull(lend, "用户缓存记录获取失败!");
         double totalMoney = (asset.getUseMoney() + userCache.getWaitCollectionPrincipal()) * 0.8 - asset.getPayment();  // 用户净值金额
-        if (totalMoney < money) {
+        if (money > totalMoney) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "摘草金额大于净值额度"));
@@ -267,7 +267,7 @@ public class LendBizImpl implements LendBiz {
         if (StringHelper.toString(lend.getUserId()).equals(StringHelper.toString(userId))) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "改出借是本人发布的"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "该出借是本人发布的"));
         }
 
         Specification<LendBlacklist> lbs = Specifications
