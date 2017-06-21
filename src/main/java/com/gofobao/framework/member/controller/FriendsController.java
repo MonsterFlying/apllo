@@ -11,6 +11,7 @@ import com.gofobao.framework.member.vo.response.VoViewInviteAwardStatisticsWarpR
 import com.gofobao.framework.member.vo.response.VoViewInviteFriendersWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
+import com.google.gson.Gson;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -71,11 +72,11 @@ public class FriendsController {
 
     @ApiOperation("分享注册邀请码")
     @GetMapping("v2/shareRegister")
-    public ResponseEntity<String> shareRegister(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,HttpServletRequest request) {
-
+    public ResponseEntity<String> shareRegister(/*@RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
         String content;
         try {
-            Map<String,Object> resultMaps=brokerBounsBiz.shareRegister(userId);
+            Map<String,Object> resultMaps=brokerBounsBiz.shareRegister(901L);
+            System.out.println(new Gson().toJson(resultMaps ));
             content=thymeleafHelper.build("user/friends",resultMaps);
         }catch (Exception e){
             content=thymeleafHelper.build("load_error",null);

@@ -1,4 +1,4 @@
-package com.gofobao.framework.currency.controller;
+package com.gofobao.framework.currency.controller.web;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.currency.biz.CurrencyBiz;
@@ -19,18 +19,15 @@ import javax.validation.Valid;
  */
 @RestController
 @RequestMapping
-@Api(description = "广富币模块")
-public class CurrencyController {
+@Api(description = "pc:广富币模块")
+public class WebCurrencyController {
 
     @Autowired
     private CurrencyBiz currencyBiz;
 
-    @ApiOperation("获取用户广富币列表")
-    @GetMapping("pub/currency/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoBaseResp> list(@PathVariable Integer pageIndex, @PathVariable Integer pageSize, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        VoListCurrencyReq voListCurrencyReq = new VoListCurrencyReq();
-        voListCurrencyReq.setPageIndex(pageIndex);
-        voListCurrencyReq.setPageSize(pageSize);
+    @ApiOperation("pc:获取用户广富币列表")
+    @PostMapping("pc/currency/list")
+    public ResponseEntity<VoBaseResp> pcList(@Valid @ModelAttribute VoListCurrencyReq voListCurrencyReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         voListCurrencyReq.setUserId(userId);
         return currencyBiz.list(voListCurrencyReq);
     }
@@ -40,9 +37,9 @@ public class CurrencyController {
      *
      * @return
      */
-    @ApiOperation("兑换广富币")
-    @PostMapping("/currency/convert")
-    public ResponseEntity<VoBaseResp> convert(@Valid @ModelAttribute VoConvertCurrencyReq voConvertCurrencyReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    @ApiOperation("pc:兑换广富币")
+    @PostMapping("pc/currency/convert")
+    public ResponseEntity<VoBaseResp> pcConvert(@Valid @ModelAttribute VoConvertCurrencyReq voConvertCurrencyReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         voConvertCurrencyReq.setUserId(userId);
         return currencyBiz.convert(voConvertCurrencyReq);
     }

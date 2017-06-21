@@ -87,4 +87,9 @@ public class CouponServiceImpl implements CouponService {
         return couponList;
     }
 
+
+    @Override
+    public Coupon save(Coupon coupon) {
+        return couponRepository.save(coupon);
+    }
 }
