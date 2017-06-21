@@ -29,14 +29,6 @@ public interface TenderBiz {
     ResponseEntity<VoBaseResp> tender(VoCreateTenderReq voCreateTenderReq);
 
     /**
-     * 债权转让
-     * @param voTransferTenderReq
-     * @return
-     */
-    ResponseEntity<VoBaseResp> transferTender(VoTransferTenderReq voTransferTenderReq);
-
-
-    /**
      * 投标用户
      * @param tenderUserReq
      * @return
