@@ -22,7 +22,7 @@ import javax.validation.Valid;
  */
 @RestController
 @RequestMapping("/transfer")
-@Api(description = "债券")
+@Api(description = "债权相关控制器")
 public class TransferController {
 
     @Autowired
@@ -31,31 +31,31 @@ public class TransferController {
 
     @ApiOperation("转让中列表")
     @GetMapping("v2/transferOf/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewTransferOfWarpRes> tranferOfList(@PathVariable Integer pageIndex, @PathVariable Integer pageSize) {
+    public ResponseEntity<VoViewTransferOfWarpRes> tranferOfList(@PathVariable Integer pageIndex, @PathVariable Integer pageSize, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
 
         VoTransferReq transferReq = new VoTransferReq();
-        transferReq.setUserId(901L);
+        transferReq.setUserId(userId);
         transferReq.setPageIndex(pageIndex);
         transferReq.setPageSize(pageSize);
         return transferBiz.tranferOfList(transferReq);
     }
 
-    @ApiOperation("转让中列表")
+    @ApiOperation("已转让列表")
     @GetMapping("v2/transfered/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewTransferedWarpRes> transferedlist(@PathVariable Integer pageIndex, @PathVariable Integer pageSize) {
+    public ResponseEntity<VoViewTransferedWarpRes> transferedlist(@PathVariable Integer pageIndex, @PathVariable Integer pageSize, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
 
         VoTransferReq transferReq = new VoTransferReq();
-        transferReq.setUserId(901L);
+        transferReq.setUserId(userId);
         transferReq.setPageIndex(pageIndex);
         transferReq.setPageSize(pageSize);
         return transferBiz.transferedlist(transferReq);
     }
 
-    @ApiOperation("转让中列表")
+    @ApiOperation("可转让列表")
     @GetMapping("v2/transferMay/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewTransferMayWarpRes> transferMayList(@PathVariable Integer pageIndex, @PathVariable Integer pageSize) {
+    public ResponseEntity<VoViewTransferMayWarpRes> transferMayList(@PathVariable Integer pageIndex, @PathVariable Integer pageSize, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoTransferReq transferReq = new VoTransferReq();
-        transferReq.setUserId(901L);
+        transferReq.setUserId(userId);
         transferReq.setPageIndex(pageIndex);
         transferReq.setPageSize(pageSize);
         return transferBiz.transferMayList(transferReq);

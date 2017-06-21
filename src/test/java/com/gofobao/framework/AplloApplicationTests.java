@@ -84,7 +84,7 @@ public class AplloApplicationTests {
 
     public static void main(String[] args) {
         Map<String,Object> map = new HashMap<>();
-        map.put("borrowId",165204);
+        map.put("borrowId",165205);
 
         Gson gson = new Gson();
         String paramStr = gson.toJson(map);
