@@ -21,7 +21,6 @@ import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
-import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MathHelper;
@@ -46,7 +45,6 @@ import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.system.biz.IncrStatisticBiz;
 import com.gofobao.framework.system.entity.IncrStatistic;
 import com.gofobao.framework.system.entity.Notices;
-import com.gofobao.framework.system.service.IncrStatisticService;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.AutoTenderService;
@@ -529,7 +527,7 @@ public class BorrowBizImpl implements BorrowBiz {
     public ResponseEntity<VoBaseResp> pcCancelBorrow(VoPcCancelThirdBorrow voPcCancelThirdBorrow) {
         Date nowDate = new Date();
         String paramStr = voPcCancelThirdBorrow.getParamStr();
-        if (SecurityHelper.checkRequest(voPcCancelThirdBorrow.getSign(), paramStr)) {
+        if (!SecurityHelper.checkSign(voPcCancelThirdBorrow.getSign(), paramStr)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "pc取消借款 签名验证不通过!"));
@@ -1309,7 +1307,7 @@ public class BorrowBizImpl implements BorrowBiz {
     public ResponseEntity<VoBaseResp> doAgainVerify(VoDoAgainVerifyReq voDoAgainVerifyReq) {
 
         String paramStr = voDoAgainVerifyReq.getParamStr();
-        if (!SecurityHelper.checkRequest(voDoAgainVerifyReq.getSign(), paramStr)) {
+        if (!SecurityHelper.checkSign(voDoAgainVerifyReq.getSign(), paramStr)) {
             log.error("BorrowBizImpl doAgainVerify error：签名校验不通过");
         }
 
@@ -1333,7 +1331,7 @@ public class BorrowBizImpl implements BorrowBiz {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoHtmlResp> registerOfficialBorrow(VoRegisterOfficialBorrow voRegisterOfficialBorrow) {
         String paramStr = voRegisterOfficialBorrow.getParamStr();
-        if (SecurityHelper.checkRequest(voRegisterOfficialBorrow.getSign(), paramStr)) {
+        if (!SecurityHelper.checkSign(voRegisterOfficialBorrow.getSign(), paramStr)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "pc 登记官方借款 签名验证不通过", VoHtmlResp.class));
@@ -1360,6 +1358,7 @@ public class BorrowBizImpl implements BorrowBiz {
             //即信标的登记
             VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
             voCreateThirdBorrowReq.setBorrowId(borrowId);
+            voCreateThirdBorrowReq.setEntrustFlag(true);
             resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
             if (!ObjectUtils.isEmpty(resp)) {
                 ResponseEntity

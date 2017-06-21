@@ -3,6 +3,7 @@ package com.gofobao.framework.borrow.biz.impl;
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.DesLineFlagContant;
+import com.gofobao.framework.api.contants.IdTypeContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
@@ -541,7 +542,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         request.setAcqRes(StringHelper.toString(borrowId));
         request.setForgotPwdUrl("");
         request.setIdNo(lendUserThirdAccount.getIdNo());
-        request.setIdType(StringHelper.toString(lendUserThirdAccount.getIdType()));
+        request.setIdType(JixinHelper.getIdType(lendUserThirdAccount.getIdType()));
         request.setNotifyUrl(webDomain + "/pub/borrow/v2/third/trusteepay/run");
         request.setProductId(StringHelper.toString(borrowId));
         request.setReceiptAccountId(takeUserThirdAccount.getAccountId());

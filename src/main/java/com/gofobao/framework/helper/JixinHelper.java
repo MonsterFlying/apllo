@@ -1,5 +1,6 @@
 package com.gofobao.framework.helper;
 
+import com.gofobao.framework.api.contants.IdTypeContant;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.system.entity.DictItem;
@@ -108,5 +109,21 @@ public class JixinHelper {
             }
         }
         return null;
+    }
+
+    /**
+     * 获取身份证类型
+     * @param type
+     * @return
+     */
+    public static String getIdType(int type) {
+        String idType = null;
+        switch (type) {
+            case 1:
+                idType = IdTypeContant.ID_CARD;
+                break;
+            default:
+        }
+        return idType;
     }
 }

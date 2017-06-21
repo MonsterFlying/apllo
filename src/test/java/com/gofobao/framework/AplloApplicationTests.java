@@ -27,11 +27,13 @@ import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.IntegralChangeHelper;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.service.impl.LoanServiceImpl;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -78,6 +80,17 @@ public class AplloApplicationTests {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static void main(String[] args) {
+        Map<String,Object> map = new HashMap<>();
+        map.put("borrowId",165204);
+
+        Gson gson = new Gson();
+        String paramStr = gson.toJson(map);
+        System.out.println(paramStr);
+
+        System.out.println(SecurityHelper.getSign(paramStr));
     }
 
     @Test
