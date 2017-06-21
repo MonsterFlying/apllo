@@ -1,5 +1,6 @@
 package com.gofobao.framework.award.service.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.award.contants.CouponContants;
 import com.gofobao.framework.award.entity.Coupon;
 import com.gofobao.framework.award.repository.CouponRepository;
@@ -8,8 +9,11 @@ import com.gofobao.framework.award.vo.request.VoCouponReq;
 import com.gofobao.framework.award.vo.response.CouponRes;
 import com.gofobao.framework.helper.DateHelper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
+
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -29,6 +33,8 @@ public class CouponServiceImpl implements CouponService {
     private EntityManager entityManager;
     @Autowired
     private CouponRepository couponRepository;
+
+
 
     @Override
     public List<CouponRes> list(VoCouponReq couponReq) {
@@ -68,7 +74,17 @@ public class CouponServiceImpl implements CouponService {
         return Optional.ofNullable(resList).orElse(Collections.EMPTY_LIST);
     }
 
-    public Coupon save(Coupon coupon) {
-        return couponRepository.save(coupon);
+    @Override
+    public List<Coupon> takeFlow(Long userId, Long couponId) {
+        Specification specification = Specifications.<Coupon>and()
+                .eq("userId", userId)
+                .eq("id", couponId)
+                .build();
+        List<Coupon> couponList = couponRepository.findAll(specification);
+        if (ObjectUtils.isEmpty(couponList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return couponList;
     }
+
 }

@@ -33,7 +33,7 @@ public class TransferController {
     @GetMapping("v2/transferOf/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewTransferOfWarpRes> tranferOfList(@PathVariable Integer pageIndex, @PathVariable Integer pageSize, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
 
-        VoTransferReq transferReq = new VoTransferReq();
+        VoTransferReq transferReq=new VoTransferReq();
         transferReq.setUserId(userId);
         transferReq.setPageIndex(pageIndex);
         transferReq.setPageSize(pageSize);

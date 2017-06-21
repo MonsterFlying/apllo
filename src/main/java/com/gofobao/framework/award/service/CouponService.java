@@ -13,6 +13,14 @@ public interface CouponService {
 
     List<CouponRes>list(VoCouponReq couponReq);
 
-    Coupon save(Coupon coupon);
+    /**
+     * 流量券兑换
+     * @param userId
+     * @param couponId
+     * @return
+     */
+    List<Coupon> takeFlow(Long userId, Long couponId);
+
+
 
 }
