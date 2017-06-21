@@ -12,6 +12,7 @@ import com.gofobao.framework.currency.entity.Currency;
 import com.gofobao.framework.currency.service.CurrencyService;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.GenerateInviteCodeHelper;
+import com.gofobao.framework.helper.MacthHelper;
 import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.integral.entity.Integral;
@@ -74,6 +75,9 @@ public class UserBizImpl implements UserBiz{
     @Autowired
     RedisHelper redisHelper ;
 
+    @Autowired
+    MacthHelper macthHelper;
+
     @Value("${gofobao.imageDomain}")
     String imageDomain ;
 
@@ -81,11 +85,12 @@ public class UserBizImpl implements UserBiz{
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> register(HttpServletRequest request, VoRegisterReq voRegisterReq) throws Exception{
         // 0.短信验证码
-        String redisSmsCode = redisHelper.get(String.format("%s_%s", MqTagEnum.SMS_REGISTER, voRegisterReq.getPhone()), null);
-        if((StringUtils.isEmpty(redisSmsCode)) || (!redisSmsCode.equalsIgnoreCase(voRegisterReq.getSmsCode()))){
+
+        boolean match = macthHelper.match(MqTagEnum.SMS_REGISTER.getValue(), voRegisterReq.getPhone(), voRegisterReq.getSmsCode());
+        if(!match){
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "短信验证码失效/错误")) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "短信验证码失效/错误, 请重新发送短信验证码!")) ;
         }
 
         // 1.手机处理

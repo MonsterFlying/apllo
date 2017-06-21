@@ -5,10 +5,12 @@ import com.gofobao.framework.asset.entity.CashDetailLog;
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.CashDetailLogService;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
+import com.gofobao.framework.asset.vo.response.VoBankListResp;
 import com.gofobao.framework.asset.vo.response.VoBankTypeInfoResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.OKHttpHelper;
+import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
@@ -190,6 +192,29 @@ public class BankAccountBizImpl implements BankAccountBiz{
 
         model.addAttribute("bankList", bankList) ;
 
+    }
+
+    @Override
+    public ResponseEntity<VoBankListResp> list(Long userId) {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if(ObjectUtils.isEmpty(userThirdAccount)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "请开通银行存管", VoBankListResp.class)) ;
+        }
+
+        if(userThirdAccount.getPasswordState() == 0){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "请先初始化密码", VoBankListResp.class)) ;
+        }
+
+        VoBankListResp response = VoBaseResp.ok("查询成功", VoBankListResp.class) ;
+        response.setBankCard(UserHelper.hideChar(userThirdAccount.getCardNo(), UserHelper.BANK_ACCOUNT_NUM ));
+        response.setBankLogo(String.format("%s/%s", javaDomain, userThirdAccount.getBankLogo())) ;
+        response.setBankName(userThirdAccount.getBankName());
+        response.setBankType("储蓄卡");
+        return ResponseEntity.ok(response) ;
     }
 
 

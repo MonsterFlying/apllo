@@ -64,6 +64,10 @@ public class CommonSmsProvider {
 
         // 获取随机验证码
         String code = RandomHelper.generateNumberCode(6); // 生成验证码
+        if(closePhoneSend){
+            code = "111111" ;
+        }
+
         log.info(String.format("验证码: %s", code));
         Map<String, String> params = new HashMap<>() ;
         params.put(TEMPLATE_KEY_SMSCODE, code) ;
