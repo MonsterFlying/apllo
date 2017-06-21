@@ -16,5 +16,5 @@ import java.util.List;
 public interface CouponRepository  extends JpaRepository<Coupon,Long>,JpaSpecificationExecutor<Coupon> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    List<Coupon> findById(Long id);
+    List<Coupon> findById(Integer id);
 }

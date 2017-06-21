@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
 import org.springframework.util.ObjectUtils;
@@ -227,6 +228,7 @@ public class CouponBizImpl implements CouponBiz {
 
 
     @Override
+    @Transactional
     public String takeFlowCallBack(String key) throws Exception {
 
         log.info(String.format("流量劵回调接口:%s ", key));
@@ -243,17 +245,12 @@ public class CouponBizImpl implements CouponBiz {
         if (ObjectUtils.isEmpty(body)) {
             return ReturnResponse.FAILUE.toXml();
         }
-
-
         for (Item item : body) {
-
-            Long   couponId = Long.valueOf(item.getOrderId().substring(8));
-            List<Coupon>coupons=couponRepository.findById(couponId);
-
+            Integer couponId =  Integer.valueOf(item.getOrderId().substring(8));
+            List<Coupon> coupons = couponRepository.findById(couponId);
             if (ObjectUtils.isEmpty(coupons)) {
                 return ReturnResponse.FAILUE.toXml();
             }
-
             Coupon coupon = coupons.get(0);
             if (!coupon.getStatus().equals(2)) {
                 ReturnResponse returnResponse = new ReturnResponse();
