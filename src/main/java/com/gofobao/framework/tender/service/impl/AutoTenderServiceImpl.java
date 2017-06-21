@@ -12,6 +12,9 @@ import com.gofobao.framework.tender.vo.response.UserAutoTender;
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
@@ -170,5 +173,25 @@ public class AutoTenderServiceImpl implements AutoTenderService {
             userAutoTenders.add(userAutoTender);
         });
         return Optional.ofNullable(userAutoTenders).orElse(Collections.EMPTY_LIST);
+    }
+
+    public List<AutoTender> findList(Specification<AutoTender> specification){
+        return autoTenderRepository.findAll(specification);
+    }
+
+    public List<AutoTender> findList(Specification<AutoTender> specification, Sort sort){
+        return autoTenderRepository.findAll(specification,sort);
+    }
+
+    public List<AutoTender> findList(Specification<AutoTender> specification, Pageable pageable){
+        return autoTenderRepository.findAll(specification,pageable).getContent();
+    }
+
+    public long count(Specification<AutoTender> specification){
+        return autoTenderRepository.count(specification);
+    }
+
+    public void delete(long id){
+        autoTenderRepository.delete(id);
     }
 }

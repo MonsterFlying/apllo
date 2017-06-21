@@ -1,6 +1,7 @@
 package com.gofobao.framework.helper.project;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.util.Base64Utils;
 import org.springframework.util.StringUtils;
 
@@ -16,6 +17,6 @@ public class SecurityHelper {
             log.info("SecurityHelper info：缺少必填请求参数！");
             return false;
         }
-        return sign.equals(Base64Utils.encodeToString((requestPrefix + paramStr).getBytes()));
+        return sign.equals(DigestUtils.md5Hex((requestPrefix + paramStr).getBytes()));
     }
 }

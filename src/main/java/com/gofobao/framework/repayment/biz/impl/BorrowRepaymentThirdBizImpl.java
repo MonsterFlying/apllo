@@ -418,7 +418,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         } while (false);
     }
 
-
     /**
      * 即信批次放款  （满标后调用）
      *
