@@ -1,6 +1,10 @@
 package com.gofobao.framework;
 
+import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.helper.JixinManager;
+import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
+import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
@@ -110,7 +114,7 @@ public class AplloApplicationTests {
         System.out.println((resp.getTotalItems()));*/
 
         Map<String,String> msg = new HashMap<>();
-        msg.put("borrowId","165206");
+        msg.put("borrowId","165208");
         try {
             borrowProvider.doAgainVerify(msg);
         } catch (Exception e) {
@@ -138,9 +142,9 @@ public class AplloApplicationTests {
         System.out.println(response);*/
 
         /*BatchDetailsQueryReq request = new BatchDetailsQueryReq();
-        request.setBatchNo("100002");
-        request.setBatchTxDate("20170619");
-        request.setType("1");
+        request.setBatchNo("100000");
+        request.setBatchTxDate("20170622");
+        request.setType("2");
         request.setPageNum("1");
         request.setPageSize("10");
         request.setChannel(ChannelContant.HTML);
