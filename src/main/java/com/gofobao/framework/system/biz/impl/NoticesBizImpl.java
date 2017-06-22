@@ -58,7 +58,7 @@ public class NoticesBizImpl implements NoticesBiz {
         noticeCount = noticeCount <= 0 ? 0 : noticeCount;
         users.setNoticeCount(noticeCount + 1);
         users.setUpdatedAt(now);
-        userService.updUserById(users);
+        userService.save(users);
         return true;
     }
 

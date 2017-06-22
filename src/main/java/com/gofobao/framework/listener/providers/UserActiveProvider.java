@@ -1,5 +1,11 @@
 package com.gofobao.framework.listener.providers;
 
+import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.contants.JixinResultContants;
+import com.gofobao.framework.api.helper.JixinManager;
+import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
+import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
@@ -8,7 +14,10 @@ import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
+import com.gofobao.framework.member.biz.UserThirdBiz;
+import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserService;
+import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.biz.IncrStatisticBiz;
 import com.gofobao.framework.system.biz.NoticesBiz;
 import com.gofobao.framework.system.entity.IncrStatistic;
@@ -28,8 +37,9 @@ import java.util.Map;
 @Component
 @Slf4j
 public class UserActiveProvider {
+
     @Autowired
-    UserService userService;
+    UserThirdBiz userThirdBiz ;
 
     @Autowired
     CapitalChangeHelper capitalChangeHelper ;
@@ -42,6 +52,12 @@ public class UserActiveProvider {
 
     @Autowired
     NoticesBiz noticesBiz ;
+
+    @Autowired
+    UserThirdAccountService userThirdAccountService  ;
+
+    @Autowired
+    JixinManager jixinManager ;
 
 
     /**
@@ -111,6 +127,37 @@ public class UserActiveProvider {
         notices.setName(name);
         notices.setType("system");
         noticesBiz.save(notices) ;
+        return true;
+    }
+
+
+    /**
+     *  用户登录事件触发
+     * @param msg
+     * @return
+     */
+    public boolean userLogin(Map<String, String> msg) {
+        Long userId = Long.parseLong(msg.get(MqConfig.MSG_USER_ID)) ;
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if(ObjectUtils.isEmpty(userThirdAccount)){
+            return true ;
+        }
+
+        //===================
+        // 同步签约状态
+        //===================
+        userThirdBiz.synCreditQuth(userThirdAccount) ;
+
+        //=================
+        // 同步提现
+        //=================
+
+
+        //=================
+        // 同步充值
+        //=================
+
+
         return true;
     }
 }

@@ -32,8 +32,8 @@ public class CashController {
 
     @ApiOperation("提现前期请求")
     @GetMapping("/asset/cash/show")
-    public ResponseEntity<VoPreCashResp> preCash(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
-        return cashDetailLogBiz.preCash(userId) ;
+    public ResponseEntity<VoPreCashResp> preCash(HttpServletRequest httpServletRequest,  @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+        return cashDetailLogBiz.preCash(userId, httpServletRequest) ;
     }
 
 

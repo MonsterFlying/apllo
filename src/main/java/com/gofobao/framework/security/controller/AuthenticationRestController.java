@@ -1,12 +1,18 @@
 package com.gofobao.framework.security.controller;
 
+import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.member.biz.UserBiz;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.gofobao.framework.security.vo.VoLoginReq;
+import com.google.common.collect.ImmutableMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.Date;
 
 /**
  * 权限验证模块
@@ -48,6 +55,9 @@ public class AuthenticationRestController {
 
     @Autowired
     UserBiz userBiz ;
+
+    @Autowired
+    MqHelper mqHelper ;
 
     @PostMapping("/login")
     public ResponseEntity<VoBasicUserInfoResp> login(HttpServletResponse response, @ModelAttribute VoLoginReq voLoginReq){
@@ -91,6 +101,16 @@ public class AuthenticationRestController {
 
         final String token = jwtTokenHelper.generateToken(user, voLoginReq.getSource());
         response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
+
+        // 出发登录队列
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setTag(MqTagEnum.LOGIN);
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+        mqConfig.setSendTime(DateHelper.addSeconds(new Date(), 10));
+        ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_USER_ID, user.getId().toString());
+        mqConfig.setMsg(body);
+        mqHelper.convertAndSend(mqConfig);
+
         return userBiz.getUserInfoResp(user) ;
     }
 

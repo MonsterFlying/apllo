@@ -7,8 +7,10 @@ import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusRequest;
 import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusResponse;
 import com.gofobao.framework.api.model.auto_credit_invest_auth.AutoCreditInvestAuthRequest;
 import com.gofobao.framework.api.model.auto_credit_invest_auth.AutoCreditInvestAuthResponse;
-import com.gofobao.framework.api.model.auto_credit_invest_auth_plus.AutoBidAuthRequest;
-import com.gofobao.framework.api.model.auto_credit_invest_auth_plus.AutoBidAuthResponse;
+import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthRequest;
+import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthResponse;
+import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
+import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
 import com.gofobao.framework.api.model.password_reset.PasswordResetRequest;
 import com.gofobao.framework.api.model.password_reset.PasswordResetResponse;
 import com.gofobao.framework.api.model.password_set.PasswordSetRequest;
@@ -157,7 +159,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         VoPreOpenAccountResp voPreOpenAccountResp = VoBaseResp.ok("查询成功", VoPreOpenAccountResp.class);
         voPreOpenAccountResp.setMobile(user.getPhone());
         voPreOpenAccountResp.setIdType("01"); //证件类型：身份证
-        voPreOpenAccountResp.setIdNo(user.getCardId());
+        voPreOpenAccountResp.setIdNo(ObjectUtils.isEmpty(user.getCardId()) ? "" :  user.getCardId());
         voPreOpenAccountResp.setName(user.getRealname());
         voPreOpenAccountResp.setBankList(voBankResps);
         return ResponseEntity.ok(voPreOpenAccountResp);
@@ -213,7 +215,6 @@ public class UserThirdBizImpl implements UserThirdBiz {
                 JsonObject info = result.get("result").getAsJsonObject();
                 bankName = info.get("bank").getAsString();
                 logo = info.get("logo").getAsString();
-
             }
 
         } catch (Exception e) {
@@ -300,14 +301,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         user.setRealname(voOpenAccountReq.getName());
         user.setCardId(voOpenAccountReq.getIdNo());
         user.setUpdatedAt(nowDate);
-        boolean b = userService.updUserById(user);
-        if (!b) {
-            log.error("UserThirdBizImpl openAccount insert db error ");
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍候重试", VoOpenAccountResp.class));
-        }
-
+        userService.save(user);
         VoOpenAccountResp voOpenAccountResp = VoBaseResp.ok("开户成功", VoOpenAccountResp.class);
         voOpenAccountResp.setOpenAccountBankName("江西银行");
         voOpenAccountResp.setAccount(accountId);
@@ -660,6 +654,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
 
+        userThirdAccount = synCreditQuth(userThirdAccount);
         VoSignInfoResp re = VoBaseResp.ok("查询成功", VoSignInfoResp.class);
         re.setAutoTenderState(userThirdAccount.getAutoTenderState() == 1);
         re.setAutoTenderState(userThirdAccount.getAutoTransferState() == 1);
@@ -749,6 +744,52 @@ public class UserThirdBizImpl implements UserThirdBiz {
         passwordResetRequest.setNotifyUrl(String.format("%s%s", javaDomain, "/pub/user/third/modifyOpenAccPwd/callback/2"));
         String html = jixinManager.getHtml(JixinTxCodeEnum.PASSWORD_RESET, passwordResetRequest) ;
         return ResponseEntity.ok(html);
+    }
+
+    @Override
+    public UserThirdAccount synCreditQuth(UserThirdAccount userThirdAccount) {
+        if(userThirdAccount.getAutoTenderState() == 0){
+            CreditAuthQueryRequest creditAuthQueryRequest = new CreditAuthQueryRequest() ;
+            creditAuthQueryRequest.setAccountId(userThirdAccount.getAccountId()) ;
+            creditAuthQueryRequest.setType("1") ;
+            creditAuthQueryRequest.setChannel(ChannelContant.APP) ;
+            CreditAuthQueryResponse creditAuthQueryResponse = jixinManager
+                    .send(JixinTxCodeEnum.CREDIT_AUTH_QUERY, creditAuthQueryRequest, CreditAuthQueryResponse.class);
+
+            if( (!ObjectUtils.isEmpty(creditAuthQueryResponse)) && (creditAuthQueryResponse.getRetCode().equalsIgnoreCase(JixinResultContants.SUCCESS)) ) {
+                if(creditAuthQueryResponse.getState().equalsIgnoreCase("1")){
+                    // 同步信息
+                    UserThirdAccount dbEntity = userThirdAccountService.findByUserId(userThirdAccount.getUserId());
+                    dbEntity.setUpdateAt(new Date());
+                    dbEntity.setAutoTenderState(1);
+                    dbEntity.setAutoTenderOrderId(creditAuthQueryResponse.getOrderId());
+                    dbEntity.setAutoTenderTotAmount(999999999L);
+                    dbEntity.setAutoTenderTxAmount(999999999L );
+                    userThirdAccountService.save(dbEntity) ;
+                }
+            }
+        }
+
+        if(userThirdAccount.getAutoTransferState() == 0){
+            CreditAuthQueryRequest creditAuthQueryRequest = new CreditAuthQueryRequest() ;
+            creditAuthQueryRequest.setAccountId(userThirdAccount.getAccountId()) ;
+            creditAuthQueryRequest.setType("2") ;
+            creditAuthQueryRequest.setChannel(ChannelContant.APP) ;
+            CreditAuthQueryResponse creditAuthQueryResponse = jixinManager
+                    .send(JixinTxCodeEnum.CREDIT_AUTH_QUERY, creditAuthQueryRequest, CreditAuthQueryResponse.class);
+            if( (!ObjectUtils.isEmpty(creditAuthQueryResponse)) && (creditAuthQueryResponse.getRetCode().equalsIgnoreCase(JixinResultContants.SUCCESS))){
+                if(creditAuthQueryResponse.getState().equalsIgnoreCase("1")){
+                    // 同步信息
+                    UserThirdAccount dbEntity = userThirdAccountService.findByUserId(userThirdAccount.getUserId());
+                    dbEntity.setUpdateAt(new Date());
+                    dbEntity.setAutoTransferState(1);
+                    dbEntity.setAutoTransferBondOrderId(creditAuthQueryResponse.getOrderId());
+                    userThirdAccountService.save(dbEntity) ;
+                }
+            }
+        }
+
+        return userThirdAccountService.findByUserId(userThirdAccount.getUserId()) ;
     }
 
 }

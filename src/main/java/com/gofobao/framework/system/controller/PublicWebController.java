@@ -16,4 +16,11 @@ public class PublicWebController {
         return "aboutMe/about" ;
     }
 
+
+    @ApiOperation("提现说明")
+    @GetMapping("/pub/cash/desc")
+    public String cashDesc(){
+        return "cash/cashDesc" ;
+    }
+
 }

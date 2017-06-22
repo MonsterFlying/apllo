@@ -9,8 +9,10 @@ import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
-import com.gofobao.framework.api.model.direct_recharge_plus.auto_credit_invest_auth_plus.DirectRechargePlusRequest;
-import com.gofobao.framework.api.model.direct_recharge_plus.auto_credit_invest_auth_plus.DirectRechargePlusResponse;
+import com.gofobao.framework.api.model.direct_recharge_online.DirectRechargeOnlineRequest;
+import com.gofobao.framework.api.model.direct_recharge_online.DirectRechargeOnlineResponse;
+import com.gofobao.framework.api.model.direct_recharge_plus.DirectRechargePlusRequest;
+import com.gofobao.framework.api.model.direct_recharge_plus.DirectRechargePlusResponse;
 import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.entity.AssetLog;
@@ -55,7 +57,6 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -220,6 +221,150 @@ public class AssetBizImpl implements AssetBiz {
         }else{
             return "/recharge/faile" ;
         }
+    }
+
+    @Override
+    public ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest request, VoRechargeReq voRechargeReq) {
+        Users users = userService.findById(voRechargeReq.getUserId());
+        Preconditions.checkNotNull(users, "当前用户不存在");
+        if (users.getIsLock()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！"));
+        }
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voRechargeReq.getUserId());
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你还没有开通江西银行存管，请前往开通！"));
+        }
+
+        if (userThirdAccount.getPasswordState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "请初始化江西银行存管账户密码！"));
+        }
+
+
+        String smsSeq = null;
+        try {
+            smsSeq = redisHelper.get(String.format("%s_%s", SrvTxCodeContants.DIRECT_RECHARGE_ONLINE, userThirdAccount.getMobile()), null);
+            redisHelper.remove(String.format("%s_%s", SrvTxCodeContants.DIRECT_RECHARGE_ONLINE, userThirdAccount.getMobile()));
+        } catch (Exception e) {
+            log.error("UserThirdBizImpl rechargeOnline get redis exception ", e);
+        }
+
+        if (StringUtils.isEmpty(smsSeq)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "短信验证码已过期，请重新获取"));
+        }
+
+        // 提现额度判断
+        // 判断提现额度剩余
+        double[] rechargeCredit = bankAccountBiz.getCashCredit(voRechargeReq.getUserId());
+        // 判断单笔额度
+        double oneTimes = rechargeCredit[0];
+        if(voRechargeReq.getMoney() > oneTimes){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,
+                            String.format("%s每笔最大充值额度为%s元",
+                                    userThirdAccount.getBankName(),
+                                    StringHelper.formatDouble(oneTimes, true))));
+        }
+
+        // 判断当天额度
+        double dayTimes = rechargeCredit[1];
+        if( (dayTimes <= 0) || (dayTimes - voRechargeReq.getMoney() < 0)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,
+                            String.format("今天你在%s的剩余充值额度%s",
+                                    userThirdAccount.getBankName(),
+                                    StringHelper.formatDouble(dayTimes < 0? 0 : dayTimes, true))));
+        }
+
+        // 判断每月额度
+        double mouthTimes = rechargeCredit[2];
+        if( (mouthTimes <= 0) || (mouthTimes - voRechargeReq.getMoney() < 0)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,
+                            String.format("当月你在%s的剩余充值额度%s元",
+                                    userThirdAccount.getBankName(),
+                                    StringHelper.formatDouble(mouthTimes < 0? 0 : mouthTimes, true))));
+        }
+
+        DirectRechargeOnlineRequest directRechargeOnlineRequest = new DirectRechargeOnlineRequest();
+        directRechargeOnlineRequest.setSeqNo(RandomHelper.generateNumberCode(6));
+        directRechargeOnlineRequest.setTxTime(DateHelper.getTime());
+        directRechargeOnlineRequest.setTxDate(DateHelper.getDate());
+        directRechargeOnlineRequest.setAccountId(userThirdAccount.getAccountId());
+        directRechargeOnlineRequest.setIdType(IdTypeContant.ID_CARD);
+        directRechargeOnlineRequest.setIdNo(userThirdAccount.getIdNo());
+        directRechargeOnlineRequest.setName(users.getRealname());
+        directRechargeOnlineRequest.setMobile(users.getPhone());
+        directRechargeOnlineRequest.setCardNo(userThirdAccount.getCardNo());
+        directRechargeOnlineRequest.setCurrency("156");
+        directRechargeOnlineRequest.setSmsSeq(smsSeq);
+        directRechargeOnlineRequest.setSmsCode(voRechargeReq.getSmsCode());
+        directRechargeOnlineRequest.setAcqRes(users.getId().toString());
+        directRechargeOnlineRequest.setChannel(ChannelContant.getchannel(request));
+        directRechargeOnlineRequest.setTxAmount(voRechargeReq.getMoney().toString());
+        VoHtmlResp resp = VoBaseResp.ok("成功", VoHtmlResp.class);
+        DirectRechargeOnlineResponse directRechargeOnlineResponse = jixinManager.send(JixinTxCodeEnum.DIRECT_RECHARGE_ONLINE, directRechargeOnlineRequest, DirectRechargeOnlineResponse.class);
+        if(ObjectUtils.isEmpty(directRechargeOnlineResponse)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前网络不稳定, 请稍后重试!"));
+        }
+        Gson gson = new Gson();
+        Integer state = 0 ;
+        if(!directRechargeOnlineResponse.getRetCode().equals(JixinResultContants.SUCCESS)){
+            log.error(String.format("请求即信联机充值异常: %s", gson.toJson(directRechargeOnlineResponse))) ;
+            state = 2 ;
+        }else{
+            state = 1 ;
+        }
+
+        Date now = new Date();
+        // 插入充值记录
+        RechargeDetailLog rechargeDetailLog = new RechargeDetailLog();
+        rechargeDetailLog.setUserId(users.getId());
+        rechargeDetailLog.setBankName(userThirdAccount.getBankName());
+        rechargeDetailLog.setCallbackTime(null);
+        rechargeDetailLog.setCreateTime(now);
+        rechargeDetailLog.setUpdateTime(now);
+        rechargeDetailLog.setCardNo(userThirdAccount.getCardNo());
+        rechargeDetailLog.setDel(0);
+        rechargeDetailLog.setIp(IpHelper.getIpAddress(request));
+        rechargeDetailLog.setMobile(users.getPhone());
+        rechargeDetailLog.setMoney(new Double(voRechargeReq.getMoney() * 100).longValue());
+        rechargeDetailLog.setRechargeChannel(0);
+        rechargeDetailLog.setState(state); // 充值成功
+        rechargeDetailLog.setSeqNo(directRechargeOnlineRequest.getTxDate() + directRechargeOnlineRequest.getTxTime() + directRechargeOnlineRequest.getSeqNo());
+        rechargeDetailLog.setResponseMessage(gson.toJson(directRechargeOnlineResponse));  // 响应吗
+        rechargeDetailLogService.save(rechargeDetailLog);
+
+        if(state == 1){
+            // 触发用户充值
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setTag(MqTagEnum.RECHARGE);
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+            mqConfig.setSendTime(DateHelper.addSeconds(now, 60));
+            ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
+            mqConfig.setMsg(body);
+            mqHelper.convertAndSend(mqConfig);
+
+            return ResponseEntity.ok(VoBaseResp.ok("充值成功"));
+        }else {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "充值失败！"));
+        }
+
     }
 
     @Override

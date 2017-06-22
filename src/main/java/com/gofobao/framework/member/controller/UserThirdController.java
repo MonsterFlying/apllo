@@ -74,14 +74,12 @@ public class UserThirdController {
     }
 
 
-    @ApiOperation("开通自动投标协议回调")
     @PostMapping("/pub/user/third/autoTender/callback")
     public ResponseEntity<String> autoTenderCallback(HttpServletRequest request, HttpServletResponse response) {
         return userThirdBiz.autoTenderCallback(request, response) ;
     }
 
 
-    @ApiOperation("开通自动投标协议回调")
     @PostMapping("/pub/user/third/autoTranfer/callback")
     public ResponseEntity<String> autoTranferCallback(HttpServletRequest request, HttpServletResponse response) {
         return userThirdBiz.autoTranferCallback(request, response) ;

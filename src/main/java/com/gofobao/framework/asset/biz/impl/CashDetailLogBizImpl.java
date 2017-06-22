@@ -5,6 +5,8 @@ import com.gofobao.framework.api.contants.IdTypeContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
+import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.api.model.with_daw.WithDrawRequest;
 import com.gofobao.framework.api.model.with_daw.WithDrawResponse;
 import com.gofobao.framework.asset.biz.CashDetailLogBiz;
@@ -27,7 +29,6 @@ import com.gofobao.framework.helper.ThirdAccountPasswordHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
-import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
@@ -142,7 +143,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoPreCashResp> preCash(Long userId) {
+    public ResponseEntity<VoPreCashResp> preCash(Long userId, HttpServletRequest httpServletRequest) {
         Users users = userService.findByIdLock(userId);
         Preconditions.checkNotNull(users, "当前用户不存在");
         if (users.getIsLock()) {
@@ -164,6 +165,30 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "请初始化江西银行存管账户密码！", VoPreCashResp.class));
         }
 
+        BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest() ;
+        balanceQueryRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
+        balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
+        BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
+        if(ObjectUtils.isEmpty(balanceQueryResponse)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前网络不稳定,请稍后重试！", VoPreCashResp.class));
+        }
+
+        if(!balanceQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前网络不稳定,请稍后重试！", VoPreCashResp.class));
+        }
+
+
+        if(!balanceQueryResponse.getWithdrawFlag().equals("1")){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前存管账户被银行禁止提现, 如有问题请联系广富宝金服客服!", VoPreCashResp.class));
+        }
+
+        // 判断当前用户资金是否一直
         Asset asset = assetService.findByUserIdLock(userId);
         VoPreCashResp resp = VoBaseResp.ok("查询成功", VoPreCashResp.class);
         resp.setBankName(userThirdAccount.getBankName());

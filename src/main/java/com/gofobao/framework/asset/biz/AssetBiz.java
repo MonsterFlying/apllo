@@ -4,6 +4,7 @@ import com.gofobao.framework.asset.entity.AssetLog;
 import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.request.VoRechargeReq;
 import com.gofobao.framework.asset.vo.response.*;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
@@ -114,4 +115,13 @@ public interface AssetBiz {
     ResponseEntity<AssetLog> pcLogs(VoAssetLogReq voAssetLogReq);
 
     String rechargeShow(HttpServletRequest request, Model model, String seqNo);
+
+
+    /**
+     * 联机充值
+     * @param request
+     * @param voRechargeReq
+     * @return
+     */
+    ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest request, VoRechargeReq voRechargeReq);
 }

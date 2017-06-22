@@ -1,4 +1,4 @@
-package com.gofobao.framework.api.model.direct_recharge_plus.auto_credit_invest_auth_plus;
+package com.gofobao.framework.api.model.direct_recharge_plus;
 
 import com.gofobao.framework.api.request.JixinBaseRequest;
 import lombok.AllArgsConstructor;

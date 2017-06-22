@@ -1,7 +1,7 @@
 package com.gofobao.framework.config;
 
 import com.gofobao.framework.security.JwtAuthenticationEntryPoint;
-import com.gofobao.framework.security.JwtAuthenticationTokenFilter;
+import com.gofobao.framework.security.JwtAuthenticationTokenBeforeFilter;
 import com.gofobao.framework.security.vo.ApolloPasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -45,10 +45,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
-    public JwtAuthenticationTokenFilter authenticationTokenFilterBean() throws Exception {
-        return new JwtAuthenticationTokenFilter();
+    public JwtAuthenticationTokenBeforeFilter authenticationTokenFilterBeforeBean() throws Exception {
+        return new JwtAuthenticationTokenBeforeFilter();
     }
-
 
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
@@ -79,70 +78,76 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
                 .antMatchers(
                         "/borrow/**")
-
                 .permitAll()
+
                 .antMatchers(
                         "/pc/**")
-
                 .permitAll()
+
                 .antMatchers(
                         "/redPackage/**")
-
                 .permitAll()
+
                 .antMatchers(
                         "/virtual/**")
-
                 .permitAll()
+
                 .antMatchers(
                         "/award/**")
-
                 .permitAll()
+
                 .antMatchers(
                         "/index/**")
-
                 .permitAll()
+
                 .antMatchers(
                         "/payment/**")
-
                 .permitAll()
+
                 .antMatchers(
                         "/repayment/**")
-
                 .permitAll()
+
                 .antMatchers(
                         "/transfer/**")
-
                 .permitAll()
+
                 .antMatchers(
                         "/lend/**")
                 .permitAll()
+
                 .antMatchers(
                         "/notices/**")
                 .permitAll()
+
                 .antMatchers(
                         "/coupon/**")
                 .permitAll()
+
                 .antMatchers(
                         "/loan/**")
                 .permitAll()
+
                 .antMatchers(
                         "/invite/**")
                 .permitAll()
+
                 .antMatchers(
                         "/pub/**")
                 .permitAll()
+
                 .antMatchers( //放行swagger-ui
                         "/swagger-resources/**", "/v2/**","/webjars/springfox-swagger-ui/**"
                 )
                 .permitAll()
+
                 .antMatchers(
                         "/tender/**")
                 .permitAll()
                 .anyRequest().authenticated();
 
         // Custom JWT based security filter
-        httpSecurity.addFilterBefore(authenticationTokenFilterBean(), UsernamePasswordAuthenticationFilter.class);
-
+        httpSecurity.addFilterBefore(authenticationTokenFilterBeforeBean(), UsernamePasswordAuthenticationFilter.class);
         // disable page caching
         httpSecurity.headers().cacheControl();
     }
