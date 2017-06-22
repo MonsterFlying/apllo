@@ -85,12 +85,12 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         detailRes.setBorrowName(borrow.getName());
         Integer interest = 0;  //利息
         Integer principal = 0;//本金
-        if (borrowCollection.getStatus() == 1) {
+        if (borrowCollection.getStatus() == BorrowCollectionContants.STATUS_YES) {
             interest = borrowCollection.getInterest();
             principal = borrowCollection.getPrincipal();
             detailRes.setStatus(BorrowCollectionContants.STATUS_YES_STR);
         } else {
-            detailRes.setStatus(BorrowCollectionContants.STATUS_YES_STR);
+            detailRes.setStatus(BorrowCollectionContants.STATUS_NO_STR);
         }
         detailRes.setPrincipal(NumberHelper.to2DigitString(interest / 100D));
         detailRes.setInterest(NumberHelper.to2DigitString(principal / 100D));
