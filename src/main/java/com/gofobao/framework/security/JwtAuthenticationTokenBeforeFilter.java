@@ -17,11 +17,13 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import javax.mail.internet.ContentType;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 public class
 
@@ -29,7 +31,7 @@ JwtAuthenticationTokenBeforeFilter extends OncePerRequestFilter {
 
     private final Log logger = LogFactory.getLog(this.getClass());
 
-    static final Gson GSON = new Gson() ;
+    Gson GSON = new Gson() ;
 
     @Autowired
     private UserDetailsService userDetailsService;
@@ -62,6 +64,21 @@ JwtAuthenticationTokenBeforeFilter extends OncePerRequestFilter {
             // For simple validation it is completely sufficient to just check the captchaToken integrity. You don't have to call
             // the database compellingly. Again it's up to you ;)
             if (jwtTokenHelper.validateToken(authToken, userDetails)) {
+//                //  判断用户TOKEN是否过期
+//                try {
+//                    jwtTokenHelper.validateSign(authToken) ;
+//                } catch (Exception e) {
+//                    response.setContentType("application/json");
+//                    response.setCharacterEncoding("UTF-8");
+//                    try(PrintWriter printWriter = response.getWriter()) {
+//                        VoBaseResp error = VoBaseResp.error(VoBaseResp.RELOGIN, e.getMessage());
+//                        printWriter.write(GSON.toJson(error));
+//                        printWriter.flush();
+//                    }catch (Exception ex){
+//                        logger.error("权限验证异常") ;
+//                    }
+//                    return;
+//                }
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 logger.info("authenticated user " + username + ", setting security context");

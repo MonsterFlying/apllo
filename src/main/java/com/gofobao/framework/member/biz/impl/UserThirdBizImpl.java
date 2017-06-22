@@ -37,6 +37,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
@@ -656,8 +657,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
         userThirdAccount = synCreditQuth(userThirdAccount);
         VoSignInfoResp re = VoBaseResp.ok("查询成功", VoSignInfoResp.class);
-        re.setAutoTenderState(userThirdAccount.getAutoTenderState() == 1);
-        re.setAutoTenderState(userThirdAccount.getAutoTransferState() == 1);
+        re.setAutoTenderState(userThirdAccount.getAutoTenderState().equals(1));
+        re.setAutoTransferState(userThirdAccount.getAutoTransferState().equals(1));
         return ResponseEntity.ok(re);
     }
 
