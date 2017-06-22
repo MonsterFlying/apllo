@@ -7,6 +7,7 @@ import com.gofobao.framework.award.repository.CouponRepository;
 import com.gofobao.framework.award.service.CouponService;
 import com.gofobao.framework.award.vo.VoViewCouponWarpRes;
 import com.gofobao.framework.award.vo.request.VoCouponReq;
+import com.gofobao.framework.award.vo.request.VoTakeFlowReq;
 import com.gofobao.framework.award.vo.response.CouponRes;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
@@ -155,9 +156,9 @@ public class CouponBizImpl implements CouponBiz {
     }
 
 
-    public ResponseEntity<VoBaseResp> exchange(Long userId, Long couponId) {
+    public ResponseEntity<VoBaseResp> exchange(VoTakeFlowReq takeFlowReq) {
 
-        List<Coupon> couponList = couponService.takeFlow(userId, couponId);
+        List<Coupon> couponList = couponService.takeFlow(takeFlowReq.getUserId(),takeFlowReq.getCouponId());
         if (CollectionUtils.isEmpty(couponList)) {
             VoBaseResp.error(VoBaseResp.ERROR, "");
         }

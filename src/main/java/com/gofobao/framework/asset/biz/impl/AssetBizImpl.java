@@ -740,12 +740,13 @@ public class AssetBizImpl implements AssetBiz {
         Integer incomeOther = userCache.getIncomeOther();
         Integer totalIncome = incomeBonus + incomeOverdue + incomeInterest + incomeAward + incomeIntegralCash + incomeOther;
         VoAccruedMoneyResp response = VoBaseResp.ok("查询成功", VoAccruedMoneyResp.class);
-        response.setIncomeBonus(StringHelper.formatDouble(incomeBonus / 100D, true));
-        response.setIncomeAward(StringHelper.formatDouble(incomeAward / 100D, true));
-        response.setIncomeInterest(StringHelper.formatDouble(incomeInterest / 100D, true));
-        response.setIncomeIntegralCash(StringHelper.formatDouble(incomeIntegralCash / 100, true));
-        response.setIncomeOther(StringHelper.formatDouble(incomeOther / 100D, true));
-        response.setTotalIncome(StringHelper.formatDouble(totalIncome / 100 , true)) ;
+        response.setIncomeBonus(StringHelper.formatMon(incomeBonus / 100D));
+        response.setIncomeAward(StringHelper.formatMon(incomeAward / 100D));
+        response.setIncomeInterest(StringHelper.formatMon(incomeInterest / 100D));
+        response.setIncomeIntegralCash(StringHelper.formatMon(incomeIntegralCash / 100D));
+        response.setIncomeOther(StringHelper.formatMon(incomeOther / 100D));
+        response.setTotalIncome(StringHelper.formatMon(totalIncome / 100D )) ;
+        response.setIncomeOverdue(StringHelper.formatMon(incomeOverdue/100D));
         return ResponseEntity.ok(response) ;
     }
 

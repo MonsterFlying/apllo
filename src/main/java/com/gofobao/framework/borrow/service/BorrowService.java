@@ -2,7 +2,6 @@ package com.gofobao.framework.borrow.service;
 
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
-import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
 import com.gofobao.framework.borrow.vo.response.BorrowStatistics;
 import com.gofobao.framework.borrow.vo.response.VoBorrowDescRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;

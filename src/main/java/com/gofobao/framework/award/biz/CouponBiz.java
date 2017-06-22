@@ -2,6 +2,7 @@ package com.gofobao.framework.award.biz;
 
 import com.gofobao.framework.award.vo.VoViewCouponWarpRes;
 import com.gofobao.framework.award.vo.request.VoCouponReq;
+import com.gofobao.framework.award.vo.request.VoTakeFlowReq;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import org.springframework.http.ResponseEntity;
 
@@ -14,11 +15,10 @@ public interface CouponBiz {
 
     /**
      * 流量券兑换
-     * @param userId
-     * @param couponId
+     *takeFlowReq
      * @return
      */
-    ResponseEntity<VoBaseResp>exchange(Long userId, Long couponId);
+    ResponseEntity<VoBaseResp>exchange(VoTakeFlowReq takeFlowReq);
 
 
 

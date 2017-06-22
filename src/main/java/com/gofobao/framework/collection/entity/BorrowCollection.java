@@ -78,7 +78,7 @@ public class BorrowCollection {
     private Date updatedAt;
     @Basic
     @Column(name = "borrow_id")
-    private Integer borrowId;
+    private Long borrowId;
     @Basic
     @Column(name = "user_id")
     private Long userId;
