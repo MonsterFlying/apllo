@@ -106,8 +106,6 @@ public class BorrowServiceImpl implements BorrowService {
         StringBuilder condtionSql = new StringBuilder("");
         /**
          *
-         *
-         *
          *条件
          */
         if (type != null) {  // 全部
@@ -228,66 +226,9 @@ public class BorrowServiceImpl implements BorrowService {
      * @return
      */
     @Override
-    public BorrowInfoRes findByBorrowId(Long borrowId) {
-
-        BorrowInfoRes borrowInfoRes = new BorrowInfoRes();
+    public Borrow findByBorrowId(Long borrowId) {
         Borrow borrow = borrowRepository.findOne(new Long(borrowId));
-        if (ObjectUtils.isEmpty(borrow)) {
-            return null;
-        }
-        borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
-        borrowInfoRes.setLowest(StringHelper.formatMon(borrow.getLowest() / 100d));
-        Integer surplusMoney= borrow.getMoney()-borrow.getMoneyYes();
-        borrowInfoRes.setViewSurplusMoney(StringHelper.formatMon(surplusMoney/100));
-        borrowInfoRes.setHideSurplusMoney(surplusMoney);
-        if (borrow.getType() == BorrowContants.REPAY_FASHION_ONCE) {
-            borrowInfoRes.setTimeLimit(borrow.getTimeLimit() + BorrowContants.DAY);
-        } else {
-            borrowInfoRes.setTimeLimit(borrow.getTimeLimit() + BorrowContants.MONTH);
-        }
-        double principal = (double) 10000 * 100;
-        double apr = NumberHelper.toDouble(StringHelper.toString(borrow.getApr()));
-        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(principal, apr, borrow.getTimeLimit(), borrow.getSuccessAt());
-        Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
-        Integer earnings = NumberHelper.toInt(calculatorMap.get("earnings"));
-        borrowInfoRes.setEarnings(StringHelper.formatMon(earnings / 100d) + MoneyConstans.RMB);
-        borrowInfoRes.setTenderCount(borrow.getTenderCount() + BorrowContants.TIME);
-        borrowInfoRes.setMoney(StringHelper.formatMon(borrow.getMoney() / 100d));
-        borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
-        borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes() / borrow.getMoney().doubleValue())));
-        Date endAt = DateHelper.addDays(borrow.getReleaseAt(), borrow.getValidDay());//结束时间
-        borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
-        borrowInfoRes.setSurplusSecond(-1L);
-        //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
-        Integer status = borrow.getStatus();
-        if (status == 0) { //待发布
-            status = 1;
-        } else if (status == BorrowContants.BIDDING) {//招标中
-            Date nowDate = new Date(System.currentTimeMillis());
-            if (nowDate.getTime() > endAt.getTime()) {  //当前时间大于满标时间
-                status = 5; //已过期
-            } else {
-                status = 3; //招标中
-                borrowInfoRes.setSurplusSecond((endAt.getTime() - nowDate.getTime()) + 5);
-            }
-        } else if (!ObjectUtils.isEmpty(borrow.getSuccessAt()) && !ObjectUtils.isEmpty(borrow.getCloseAt())) {   //满标时间 结清
-            status = 4; //已完成
-        } else if (status == BorrowContants.PASS && ObjectUtils.isEmpty(borrow.getCloseAt())) {
-            status = 2; //还款中
-        }
-        borrowInfoRes.setType(borrow.getType());
-        if (!StringUtils.isEmpty(borrow.getTenderId())) {
-            borrowInfoRes.setType(5);
-        }
-
-        borrowInfoRes.setPassWord(StringUtils.isEmpty(borrow.getPassword())?false:true);
-        Users users=usersRepository.findOne(borrow.getUserId());
-        borrowInfoRes.setUserName(!StringUtils.isEmpty(users.getUsername())?users.getUsername():users.getPhone());
-        borrowInfoRes.setIsNovice(borrow.getIsNovice());
-        borrowInfoRes.setStatus(status);
-        borrowInfoRes.setSuccessAt(StringUtils.isEmpty(borrow.getSuccessAt()) ? "" : DateHelper.dateToString(borrow.getSuccessAt()));
-        borrowInfoRes.setBorrowName(borrow.getName());
-        return borrowInfoRes;
+        return  borrow;
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.gofobao.framework.member.biz;
 
+import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.member.vo.response.VoOpenAccountResp;
@@ -121,4 +122,11 @@ public interface UserThirdBiz {
     String showAutoTranfer(Long id, Model model);
 
     ResponseEntity<String> publicPasswordModify(HttpServletRequest httpServletRequest, String encode, String channel);
+
+    /**
+     *  同步协议状态
+     * @param userThirdAccount
+     */
+    UserThirdAccount synCreditQuth(UserThirdAccount userThirdAccount);
+
 }

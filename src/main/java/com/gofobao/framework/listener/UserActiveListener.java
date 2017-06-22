@@ -23,12 +23,10 @@ import java.util.Map;
 @Component
 @RabbitListener(queues = MqQueueEnumContants.RABBITMQ_USER_ACTIVE)
 public class UserActiveListener {
-
     private static final Gson GSON = new Gson() ;
+
     @Autowired
     private UserActiveProvider userActiveProvider ;
-
-
 
 
     @RabbitHandler
@@ -46,13 +44,14 @@ public class UserActiveListener {
                 result = userActiveProvider.registerActive(msg) ;
             }else if(tag.equalsIgnoreCase(MqTagEnum.RECHARGE.getValue())){ // 充值
                 result = userActiveProvider.recharge(msg) ;
-
+            }else if(tag.equalsIgnoreCase(MqTagEnum.LOGIN.getValue())){ // 登录
+                result = userActiveProvider.userLogin(msg) ;
             }
 
             if(!result){
                 log.error(String.format("UserActiveListener process process error: %s", message));
             }
-        }catch (Throwable e){
+        }catch (Exception e){
             log.error("UserActiveListener process do exception", e);
         }
 

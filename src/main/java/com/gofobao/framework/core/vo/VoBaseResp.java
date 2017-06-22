@@ -18,7 +18,6 @@ import java.util.Date;
 @Slf4j
 public class VoBaseResp implements Serializable {
 
-
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
@@ -35,6 +34,7 @@ public class VoBaseResp implements Serializable {
 
     public static final long OK = 0;
     public static final long ERROR = 1;
+    public static final long RELOGIN = 5;
 
 
     public static VoBaseResp ok(String msg){

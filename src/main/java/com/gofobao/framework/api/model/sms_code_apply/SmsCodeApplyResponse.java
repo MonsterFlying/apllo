@@ -14,6 +14,12 @@ public class SmsCodeApplyResponse extends JixinBaseResponse {
     private String srvTxCode ;
     /** 业务权限码*/
     private String srvAuthCode ;
+    /** 短信发送时间 */
+    private String sendTime ;
+    /** 短信序号 */
+    private String smsSeq;
+    /**  验证码有效时长*/
+    private String validTime ;
     /** 请求方保留*/
     private String acqRes ;
 }

@@ -11,14 +11,10 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AutoBidAuthRequest extends JixinBaseRequest {
+public class AutoCreditInvestAuthPlusRequest extends JixinBaseRequest {
     private String accountId ;
 
     private String orderId ;
-
-    private String txAmount ;
-
-    private String totAmount ;
 
     private String forgotPwdUrl ;
 

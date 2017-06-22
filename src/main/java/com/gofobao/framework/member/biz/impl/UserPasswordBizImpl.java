@@ -72,7 +72,7 @@ public class UserPasswordBizImpl implements UserPasswordBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍后重试！"));
         }
-        userService.update(users) ;
+        userService.save(users) ;
         return ResponseEntity.ok(VoBaseResp.ok("密码修改成功!"));
     }
 
@@ -114,7 +114,7 @@ public class UserPasswordBizImpl implements UserPasswordBiz {
 
         users.setPassword(encoPassword);
         users.setUpdatedAt(new Date());
-        userService.update(users);
+        userService.save(users);
         return ResponseEntity.ok(VoBaseResp.ok("找回密码成功!"));
     }
 

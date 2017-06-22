@@ -7,18 +7,15 @@ import lombok.Data;
  * Created by Zeke on 2017/5/16.
  */
 @Data
-public class AutoCreditInvestAuthPlusResponse extends JixinBaseResponse {
-    /**
-     * 电子账号
-     */
+public class AutoBidAuthResponse extends JixinBaseResponse {
     private String accountId;
 
-    /**
-     * 订单号
-     */
     private String orderId ;
-    /**
-     * 请求方保留
-     */
+
     private String acqRes;
+
+    private String name ;
+
+    private String txAmount ;
 }
+

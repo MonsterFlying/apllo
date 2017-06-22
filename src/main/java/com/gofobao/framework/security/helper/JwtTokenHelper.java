@@ -1,13 +1,17 @@
 package com.gofobao.framework.security.helper;
 
+import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.security.entity.JwtUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -15,21 +19,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
+@Slf4j
 public class JwtTokenHelper implements Serializable {
-
     private static final long serialVersionUID = -3301605591108950415L;
-
     static final String CLAIM_KEY_USERNAME = "sub";
     static final String CLAIM_KEY_AUDIENCE = "audience";
     static final String CLAIM_KEY_CREATED = "created";
-    static final String CLAIM_KEY_ID = "id" ;
+    static final String CLAIM_KEY_ID = "id";
 
-    private static final String AUDIENCE_UNKNOWN = "unknown";
-    private static final String AUDIENCE_PC = "pc";
-    private static final String AUDIENCE_H5 = "h5";
+    private static final String AUDIENCE_UNKNOWN = "UNKNOWN";
+    private static final String AUDIENCE_PC = "PC";
+    private static final String AUDIENCE_H5 = "H5";
     private static final String AUDIENCE_ANDROID = "ANDROID";
     private static final String AUDIENCE_IOS = "IOS";
 
+
+    @Autowired
+    RedisHelper redisHelper;
 
     @Value("${jwt.secret}")
     private String secret;
@@ -37,7 +43,7 @@ public class JwtTokenHelper implements Serializable {
     @Value("${jwt.expiration}")
     private Long expiration;
 
-    public String getUsernameFromToken(String token) {
+    public String getUsernameFromToken(String token){
         String username;
         try {
             final Claims claims = getClaimsFromToken(token);
@@ -120,14 +126,14 @@ public class JwtTokenHelper implements Serializable {
 
     private String generateAudience(int source) {
         String audience = AUDIENCE_UNKNOWN;
-        if(0 == source){
-            audience = AUDIENCE_PC ;
-        }else if(1 == source){
-            audience = AUDIENCE_ANDROID ;
-        }else if(2 == source){
-            audience = AUDIENCE_IOS ;
-        }else if(3 == source){
-            audience = AUDIENCE_H5 ;
+        if (0 == source) {
+            audience = AUDIENCE_PC;
+        } else if (1 == source) {
+            audience = AUDIENCE_ANDROID;
+        } else if (2 == source) {
+            audience = AUDIENCE_IOS;
+        } else if (3 == source) {
+            audience = AUDIENCE_H5;
         }
         return audience;
     }
@@ -140,18 +146,24 @@ public class JwtTokenHelper implements Serializable {
     public String generateToken(Users user, int source) {
         Map<String, Object> claims = new HashMap<>();
         claims.put(CLAIM_KEY_USERNAME, user.getUsername());
-        claims.put(CLAIM_KEY_ID, user.getId()) ;
+        claims.put(CLAIM_KEY_ID, user.getId());
         claims.put(CLAIM_KEY_AUDIENCE, generateAudience(source));
         claims.put(CLAIM_KEY_CREATED, new Date());
         return generateToken(claims);
     }
 
     String generateToken(Map<String, Object> claims) {
-        return Jwts.builder()
+        String token = Jwts.builder()
                 .setClaims(claims)
                 .setExpiration(generateExpirationDate())
                 .signWith(SignatureAlgorithm.HS512, secret)
                 .compact();
+        try {
+            redisHelper.put(String.format("JWT_TOKEN_%S", claims.get(CLAIM_KEY_ID).toString()), token, expiration.intValue());
+        } catch (Exception e) {
+            log.error("JwtTokenHelper.generateToken exception", e);
+        }
+        return token;
     }
 
     public Boolean canTokenBeRefreshed(String token, Date lastPasswordReset) {
@@ -181,5 +193,19 @@ public class JwtTokenHelper implements Serializable {
                 username.equals(user.getUsername())
                         && !isTokenExpired(token)
                         && !isCreatedBeforeLastPasswordReset(created, user.getUpdateAt()));
+    }
+
+    public void validateSign(String authToken) throws  Exception{
+        // 从redis 中获取
+        Long userId = getUserIdFromToken(authToken);
+        String redisToken = redisHelper.get(String.format("JWT_TOKEN_%s", userId), null);
+        if (StringUtils.isEmpty(redisToken)) {
+            throw new Exception("当前账号登录信息已失效,请重新登录!");
+        }
+
+        if (!redisToken.equals(authToken)) {
+            String audienceFromToken = getAudienceFromToken(redisToken);
+            throw new Exception(String.format("当前账号已在%s登录, 请重新登录!", audienceFromToken));
+        }
     }
 }

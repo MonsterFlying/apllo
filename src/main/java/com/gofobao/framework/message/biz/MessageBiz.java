@@ -81,4 +81,12 @@ public interface MessageBiz {
     ResponseEntity<VoBaseResp> recharge(VoUserSmsReq voUserSmsReq);
 
     ResponseEntity<VoBaseResp> sendBindEmail(HttpServletRequest request, VoAnonEmailReq voAnonEmailReq, Long userId);
+
+    /**
+     * 联机充值短信发送
+     * @param httpServletRequest
+     * @param voUserSmsReq
+     * @return
+     */
+    ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest httpServletRequest, VoUserSmsReq voUserSmsReq);
 }

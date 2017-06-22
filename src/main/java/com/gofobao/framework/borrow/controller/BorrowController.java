@@ -66,40 +66,16 @@ public class BorrowController {
         return borrowBiz.findAll(voBorrowListReq);
     }
 
-    @ApiOperation(value = "pc:首页标列表; type:-1：全部 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
-    @GetMapping("pc/v2//{type}/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewBorrowListWarpRes> pcList(@PathVariable Integer pageIndex,
-                                                          @PathVariable Integer pageSize,
-                                                          @PathVariable Integer type) {
-        VoBorrowListReq voBorrowListReq = new VoBorrowListReq();
-        voBorrowListReq.setPageIndex(pageIndex);
-        voBorrowListReq.setPageSize(pageSize);
-        voBorrowListReq.setType(type);
-        return borrowBiz.findAll(voBorrowListReq);
-    }
 
     @ApiOperation("标信息")
     @GetMapping("v2/info/{borrowId}")
-    public ResponseEntity<VoViewBorrowInfoWarpRes> getByBorrowId(@PathVariable Long borrowId) {
+    public ResponseEntity<VoBaseResp> getByBorrowId(@PathVariable Long borrowId) {
         return borrowBiz.info(borrowId);
     }
-
-    @ApiOperation("标信息")
-    @GetMapping("pc/v2/info/{borrowId}")
-    public ResponseEntity<VoViewBorrowInfoWarpRes> pcgetByBorrowId(@PathVariable Long borrowId) {
-        return borrowBiz.info(borrowId);
-    }
-
 
     @ApiOperation("标简介")
     @GetMapping("v2/desc/{borrowId}")
     public ResponseEntity<VoViewVoBorrowDescWarpRes> desc(@PathVariable Long borrowId) {
-        return borrowBiz.desc(borrowId);
-    }
-
-    @ApiOperation("pc：标简介")
-    @GetMapping("pc/v2/desc/{borrowId}")
-    public ResponseEntity<VoViewVoBorrowDescWarpRes> pcDesc(@PathVariable Long borrowId) {
         return borrowBiz.desc(borrowId);
     }
 
@@ -125,36 +101,6 @@ public class BorrowController {
         }
         return ResponseEntity.ok(content);
     }
-
-    @ApiOperation(value = "pc:标合同")
-    @GetMapping(value = "pc/pub/borrowProtocol/{borrowId}")
-    public ResponseEntity<String> pcTakeRatesDesc(HttpServletRequest request, @PathVariable Long borrowId) {
-        Long userId = 0L;
-        String authToken = request.getHeader(this.tokenHeader);
-        if (!StringUtils.isEmpty(authToken) && (authToken.contains(prefix))) {
-            authToken = authToken.substring(7);
-        }
-        String username = jwtTokenHelper.getUsernameFromToken(authToken);
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            userId = jwtTokenHelper.getUserIdFromToken(authToken);
-        }
-        String content = "";
-        try {
-            Map<String, Object> paramMaps = borrowBiz.pcContract(borrowId, userId);
-            content = thymeleafHelper.build("borrowProtcol", paramMaps);
-        } catch (Exception e) {
-            content = thymeleafHelper.build("load_error", null);
-        }
-        return ResponseEntity.ok(content);
-    }
-
-
-    @ApiOperation(value = "pc：招标中统计")
-    @GetMapping(value = "pc/v2/statistics")
-    public ResponseEntity<VoViewBorrowStatisticsWarpRes> statistics() {
-        return borrowBiz.statistics();
-    }
-
     /**
      * 新增净值借款
      *
@@ -180,19 +126,6 @@ public class BorrowController {
         voCancelBorrow.setUserId(userId);
         return borrowBiz.cancelBorrow(voCancelBorrow);
     }
-
-    /**
-     * pc取消借款
-     *
-     * @param voPcCancelThirdBorrow
-     * @return
-     */
-    @PostMapping("/pub/pc/cancelBorrow")
-    @ApiOperation("pc取消借款")
-    public ResponseEntity<VoBaseResp> cancelBorrow(@Valid @ModelAttribute VoPcCancelThirdBorrow voPcCancelThirdBorrow) {
-        return borrowBiz.pcCancelBorrow(voPcCancelThirdBorrow);
-    }
-
 
     @PostMapping("/repayAll")
     @ApiOperation("提前还款")

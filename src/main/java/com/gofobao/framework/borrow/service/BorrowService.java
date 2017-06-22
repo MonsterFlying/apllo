@@ -20,7 +20,7 @@ public interface BorrowService {
 
     List<VoViewBorrowList> findAll(VoBorrowListReq voBorrowListReq);
 
-    BorrowInfoRes findByBorrowId(Long borrowId);
+    Borrow findByBorrowId(Long borrowId);
 
     long countByUserIdAndStatusIn(Long userId,List<Integer> statusList);
 

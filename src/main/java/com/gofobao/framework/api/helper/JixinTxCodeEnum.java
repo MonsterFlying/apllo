@@ -14,6 +14,20 @@ public enum JixinTxCodeEnum {
             "/escrow/p2p/online"),
 
     /**
+     * 查询用户资产
+     */
+    BALANCE_QUERY(
+            "balanceQuery",
+            "/escrow/p2p/online"),
+
+    /**
+     * 查询签约状态
+     */
+    CREDIT_AUTH_QUERY(
+            "creditAuthQuery",
+            "/escrow/p2p/online"),
+
+    /**
      * 提现
      */
     WITH_DRAW(
@@ -103,6 +117,14 @@ public enum JixinTxCodeEnum {
     DIRECT_RECHARGE_PLUS(
             "directRechargePlus",
             "/escrow/p2p/page/mobile/plus"),
+
+
+    /**
+     * 联机充值
+     */
+    DIRECT_RECHARGE_ONLINE(
+            "directRechargeOnline",
+            "/escrow/p2p/online"),
 
     /**
      * 借款人标的信息查询
