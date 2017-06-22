@@ -39,6 +39,27 @@ public class MacthHelper {
         return false;
     }
 
+    /**
+     * 判断短信验证码,但不删除短信
+     * @param tag tag
+     * @param phone 手机号
+     * @param smsCode 短信验证码
+     * @return
+     */
+    public boolean matchAndNoRemove(String tag, String phone, String smsCode) {
+        try {
+            String redisKey = String.format("%s%s",tag, phone);
+            String redisSmsCode = redisHelper.get(redisKey, null);
+            if (Objects.isNull(redisSmsCode)) {
+                return false;
+            }
+            return smsCode.equalsIgnoreCase(redisSmsCode);
+        } catch (Exception e) {
+            log.error("SmsHelper match exception", e);
+        }
+        return false;
+    }
+
 
     public boolean add(String tag, String phone, String smsCode) {
         try {

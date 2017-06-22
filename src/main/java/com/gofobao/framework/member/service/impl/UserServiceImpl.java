@@ -1,6 +1,5 @@
 package com.gofobao.framework.member.service.impl;
 
-import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.member.service.UserService;
@@ -33,32 +32,16 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Slf4j
 public class UserServiceImpl implements UserDetailsService, UserService{
-
-    LoadingCache<String, UserDetails> userDetailsLoadingCache = CacheBuilder
-            .newBuilder()
-            .maximumSize(1024 * 10)
-            .expireAfterWrite(30, TimeUnit.MINUTES)
-            .build(new CacheLoader<String, UserDetails>() {
-                @Override
-                public UserDetails load(String username) throws Exception {
-                    Users user  = findByAccount(username) ;
-                    if(!ObjectUtils.isEmpty(user)){
-                        return JwtUserFactory.create(user) ;
-                    }else {
-                        throw new  Exception(String.format("No user found with username '%s'.", username)) ;
-                    }
-                }
-            }) ;
-
     @Autowired
     private UsersRepository userRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        try {
-            return userDetailsLoadingCache.get(username) ;
-        } catch (ExecutionException e) {
+        Users users = findByAccount(username);
+        if(ObjectUtils.isEmpty(users)){
             throw new UsernameNotFoundException(String.format("No user found with username '%s'.", username));
+        }else{
+            return  JwtUserFactory.create(users) ;
         }
     }
 

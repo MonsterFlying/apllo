@@ -1,8 +1,13 @@
 package com.gofobao.framework.security;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.security.contants.SecurityContants;
+import com.gofobao.framework.security.entity.JwtUserFactory;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.gson.Gson;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -24,11 +29,27 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 public class
 
 JwtAuthenticationTokenBeforeFilter extends OncePerRequestFilter {
 
+    LoadingCache<String, UserDetails> userDetailsLoadingCache = CacheBuilder
+            .newBuilder()
+            .maximumSize(1024 * 10)
+            .expireAfterWrite(30, TimeUnit.MINUTES)
+            .build(new CacheLoader<String, UserDetails>() {
+                @Override
+                public UserDetails load(String username) throws Exception {
+                    UserDetails userDetails  = userDetailsService.loadUserByUsername(username) ;
+                    if(ObjectUtils.isEmpty(userDetails)){
+                        throw new Exception("找不到该对象") ;
+                    }
+                    return userDetails ;
+                }
+            }) ;
     private final Log logger = LogFactory.getLog(this.getClass());
 
     Gson GSON = new Gson() ;
@@ -59,7 +80,12 @@ JwtAuthenticationTokenBeforeFilter extends OncePerRequestFilter {
 
             // It is not compelling necessary to load the use details from the database. You could also store the information
             // in the captchaToken and read it from it. It's up to you ;)
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+            UserDetails userDetails = null;
+            try {
+                userDetails = userDetailsLoadingCache.get(username);
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
 
             // For simple validation it is completely sufficient to just check the captchaToken integrity. You don't have to call
             // the database compellingly. Again it's up to you ;)

@@ -36,7 +36,7 @@ public class CommonEmaiProvider {
     @Autowired
     MacthHelper macthHelper;
 
-    @Value("${gofobao.close-phone-send}")
+    @Value("${gofobao.close-email-send}")
     boolean closeEmailSend;
 
     public static final String TEMPLATE_KEY_SMSCODE = "smscode";
@@ -70,6 +70,9 @@ public class CommonEmaiProvider {
 
         // 获取随机验证码
         String code = RandomHelper.generateNumberCode(6); // 生成验证码
+        if(closeEmailSend){
+            code = "111111" ;
+        }
         log.info(String.format("验证码: %s", code));
         Map<String, String> params = new HashMap<>() ;
         params.put(TEMPLATE_KEY_SMSCODE, code) ;
@@ -96,26 +99,6 @@ public class CommonEmaiProvider {
                 log.error("CommonEmaiProvider doSendMessageCode put redis error", e);
                 return false;
             }
-        }
-
-        // 写入数据库
-        Date nowDate = new Date() ;
-        SmsEntity smsEntity = new SmsEntity();
-        smsEntity.setIp(ip) ;
-        smsEntity.setType(tag) ;
-        smsEntity.setContent(message) ;
-        smsEntity.setPhone(email) ;
-        smsEntity.setCreatedAt(nowDate) ;
-        smsEntity.setStatus(rs? 0: 1) ;
-        smsEntity.setUsername(email) ;
-        smsEntity.setExt(" ");
-        smsEntity.setId(null);
-        smsEntity.setRrid(" ");
-        smsEntity.setStime(" ");
-        try {
-            smsRepository.save(smsEntity);
-        }catch (Exception e){
-            log.error("保存数据失败", e);
         }
         return rs ;
     }

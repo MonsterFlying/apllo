@@ -60,7 +60,7 @@ public class UserEmailBizImpl implements UserEmailBiz {
         }
 
         // 验证邮箱
-        boolean match = macthHelper.match(MqTagEnum.SMS_EMAIL_BIND.getValue(), voBindEmailReq.getEmail(), voBindEmailReq.getEmail());
+        boolean match = macthHelper.match(MqTagEnum.SMS_EMAIL_BIND.getValue(), voBindEmailReq.getEmail(), voBindEmailReq.getEmailCode());
         if(!match){
             return ResponseEntity
                     .badRequest()

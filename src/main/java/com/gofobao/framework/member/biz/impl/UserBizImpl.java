@@ -196,7 +196,7 @@ public class UserBizImpl implements UserBiz{
 
     @Override
     public ResponseEntity<VoBasicUserInfoResp> getUserInfoResp(Users user) {
-        VoBasicUserInfoResp voBasicUserInfoResp = VoBaseResp.ok("登录成功", VoBasicUserInfoResp.class) ;
+        VoBasicUserInfoResp voBasicUserInfoResp = VoBaseResp.ok("操作成功", VoBasicUserInfoResp.class) ;
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(user.getId());
         if(ObjectUtils.isEmpty(userThirdAccount)){
             voBasicUserInfoResp.setThirdAccountState(false);

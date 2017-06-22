@@ -56,7 +56,7 @@ public class DictBizImpl implements DictBiz {
 
         List<DictValue> dictValues = null;
         try {
-            dictValues = dictValueCache.get("SERVICE_PLATFORM");
+            dictValues = dictValueCache.get("ABOUT_CODE");
         } catch (ExecutionException e) {
             return ResponseEntity
                     .badRequest()
