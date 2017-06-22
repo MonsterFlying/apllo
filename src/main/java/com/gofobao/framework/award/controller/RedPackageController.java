@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
  * Created by admin on 2017/6/7.
  */
 @RestController
-@RequestMapping("/redPackage")
 @Api(description="红包")
 public class RedPackageController {
 
@@ -31,7 +30,7 @@ public class RedPackageController {
      * @param userId
      * @return
      */
-    @GetMapping("/v2/list/{status}/{pageIndex}/{pageSize}")
+    @GetMapping("redPackage/v2/list/{status}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewRedPackageWarpRes> list(@PathVariable Integer status,
                                                         @PathVariable Integer pageIndex,
                                                         @PathVariable Integer pageSize,
@@ -51,7 +50,7 @@ public class RedPackageController {
      * @param voOpenRedPackageReq
      * @return
      */
-    @PostMapping("/v2/open")
+    @PostMapping("redPackage/v2/open")
     public ResponseEntity<VoViewOpenRedPackageWarpRes> openRedPackage(@ModelAttribute VoOpenRedPackageReq voOpenRedPackageReq,
                                                                       @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voOpenRedPackageReq.setUserId(userId);

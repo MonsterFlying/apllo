@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
  * Created by admin on 2017/6/13.
  */
 @Api(description = "我的奖励")
-@RequestMapping("award")
 @RestController
 public class AwardController {
 
@@ -22,7 +21,7 @@ public class AwardController {
     private VirtualBiz virtualBiz;
 
     @ApiOperation("奖励统计")
-    @GetMapping("/v2/statistics")
+    @GetMapping("award/v2/statistics")
     public ResponseEntity<VoViewAwardStatisticsWarpRes> statistics(){
         Long userId=901L;
        return virtualBiz.statistics(userId);

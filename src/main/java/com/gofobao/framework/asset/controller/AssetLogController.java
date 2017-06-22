@@ -14,14 +14,13 @@ import org.springframework.web.bind.annotation.*;
  */
 @Api(description = "资金流水")
 @RestController
-@RequestMapping("/assetLog")
 @Slf4j
 public class AssetLogController {
 
     @Autowired
     private AssetBiz assetBiz;
 
-    @RequestMapping(value = "/v2/list",method = RequestMethod.POST)
+    @RequestMapping(value = "/assetLog/v2/list",method = RequestMethod.POST)
     public ResponseEntity assetLogResList(@ModelAttribute VoAssetLogReq voAssetLogReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voAssetLogReq.setUserId(userId);
         return assetBiz.assetLogResList(voAssetLogReq);
