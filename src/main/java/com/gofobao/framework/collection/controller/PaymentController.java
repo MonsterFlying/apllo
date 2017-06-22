@@ -27,10 +27,10 @@ public class PaymentController {
 
     @ApiOperation("回款期数列表 time:2017-05-06")
     @GetMapping("/v2/order/list/{time}")
-    public ResponseEntity<VoBaseResp> collectionOrderList(@PathVariable("time") String time/*,
-                                                          @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+    public ResponseEntity<VoBaseResp> collectionOrderList(@PathVariable("time") String time,
+                                                          @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoCollectionOrderReq voCollectionOrderReq = new VoCollectionOrderReq();
-        voCollectionOrderReq.setUserId(901L);
+        voCollectionOrderReq.setUserId(userId);
         voCollectionOrderReq.setTime(time);
         return paymentBiz.orderList(voCollectionOrderReq);
     }

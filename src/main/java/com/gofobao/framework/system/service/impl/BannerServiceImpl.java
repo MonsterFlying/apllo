@@ -19,8 +19,8 @@ public class BannerServiceImpl implements BannerService {
     @Autowired
     private BannerRepository bannerRepository;
 
-    @Value("${gofobao.h5Domain}")
-    private String h5Domain;
+    @Value("${gofobao.imageDomain}")
+    private String imageDomain;
     @Override
     public List<IndexBanner> index() {
         List<Banner> banners=bannerRepository.findByStatusAndTerminal(new Byte("1"),1);
@@ -28,7 +28,7 @@ public class BannerServiceImpl implements BannerService {
         banners.stream().forEach(p-> {
             IndexBanner indexBanner = new IndexBanner();
             indexBanner.setClickUrl(p.getClickurl());
-            indexBanner.setImageUrl(h5Domain+p.getImgurl());
+            indexBanner.setImageUrl(imageDomain+p.getImgurl());
             indexBanner.setTitle(p.getTitle());
             bannerList.add(indexBanner);
         });

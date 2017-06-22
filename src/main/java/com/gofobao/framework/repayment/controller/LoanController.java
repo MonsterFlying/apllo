@@ -23,12 +23,14 @@ public class LoanController {
     @Autowired
     private LoanBiz loanBiz;
 
+    private VoLoanListReq voLoanListReq = new VoLoanListReq();
+
     @ApiOperation("还款中列表")
     @RequestMapping(value = "/v2/refund/list/{pageIndex}/{pageSize}", method = RequestMethod.GET)
     public ResponseEntity<VoViewRefundWrapRes> refundResList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                     @PathVariable Integer pageIndex,
                                                     @PathVariable Integer pageSize) {
-        VoLoanListReq voLoanListReq = new VoLoanListReq();
+
         voLoanListReq.setUserId(userId);
         voLoanListReq.setPageIndex(pageIndex);
         voLoanListReq.setPageSize(pageSize);
@@ -40,7 +42,6 @@ public class LoanController {
     public ResponseEntity<VoViewBuddingResListWrapRes> buddingList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                                    @PathVariable Integer pageIndex,
                                                                    @PathVariable Integer pageSize) {
-        VoLoanListReq voLoanListReq = new VoLoanListReq();
         voLoanListReq.setPageIndex(pageIndex);
         voLoanListReq.setPageSize(pageSize);
         voLoanListReq.setUserId(userId);
@@ -51,7 +52,6 @@ public class LoanController {
     @GetMapping("/v2/settle/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewSettleWarpListRes>  settleList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId ,
                                                      @PathVariable Integer pageIndex, @PathVariable Integer pageSize) {
-        VoLoanListReq voLoanListReq = new VoLoanListReq();
         voLoanListReq.setPageIndex(pageIndex);
         voLoanListReq.setPageSize(pageSize);
         voLoanListReq.setUserId(901L);
