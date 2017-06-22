@@ -448,7 +448,12 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         }
 
         Borrow borrow = borrowService.findById(borrowId);
-        UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
+        UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());//收款人存管账户记录
+
+        Long takeUserId = borrow.getTakeUserId();
+        if (!ObjectUtils.isEmpty(takeUserId)) {
+            takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
+        }
 
         List<LendPay> lendPayList = new ArrayList<>();
         LendPay lendPay = null;
@@ -466,7 +471,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             lendPay.setBidFee("0");
             lendPay.setDebtFee("0");
             lendPay.setOrderId(JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX));
-            lendPay.setForAccountId(borrowUserThirdAccount.getAccountId());
+            lendPay.setForAccountId(takeUserThirdAccount.getAccountId());
             lendPay.setTxAmount(StringHelper.formatDouble(validMoney, 100, false));
             lendPay.setProductId(StringHelper.toString(borrowId));
             lendPayList.add(lendPay);
@@ -505,6 +510,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
     /**
      * 即信批次还款
+     *
      * @return
      */
     public ResponseEntity<String> thirdBatchRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {

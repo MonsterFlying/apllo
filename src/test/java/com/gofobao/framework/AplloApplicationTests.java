@@ -109,13 +109,13 @@ public class AplloApplicationTests {
         DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
         System.out.println((resp.getTotalItems()));*/
 
-        Map<String,String> msg = new HashMap<>();
+        /*Map<String,String> msg = new HashMap<>();
         msg.put("borrowId","165212");
         try {
             borrowProvider.doAgainVerify(msg);
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
 
         //"userId\":901,\"repaymentId\":168675,\"interestPercent\":0.0,\"isUserOpen\":true
         /*VoRepayReq voRepayReq = new VoRepayReq();
@@ -137,15 +137,15 @@ public class AplloApplicationTests {
         BidApplyQueryResp response = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, request, BidApplyQueryResp.class);
         System.out.println(response);*/
 
-        /*BatchDetailsQueryReq request = new BatchDetailsQueryReq();
-        request.setBatchNo("100000");
+        BatchDetailsQueryReq request = new BatchDetailsQueryReq();
+        request.setBatchNo("100001");
         request.setBatchTxDate("20170622");
-        request.setType("1");
+        request.setType("9");
         request.setPageNum("1");
         request.setPageSize("10");
         request.setChannel(ChannelContant.HTML);
         BatchDetailsQueryResp response = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, request, BatchDetailsQueryResp.class);
-        System.out.println(response);*/
+        System.out.println(response);
 
         /*Borrow borrow = borrowService.findById(165210L);
         try {
