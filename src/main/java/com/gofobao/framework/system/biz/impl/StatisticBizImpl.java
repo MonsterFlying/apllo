@@ -3,7 +3,6 @@ package com.gofobao.framework.system.biz.impl;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.MultiCaculateHelper;
 import com.gofobao.framework.helper.RedisHelper;
-import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.system.biz.StatisticBiz;
 import com.gofobao.framework.system.entity.Statistic;
 import com.gofobao.framework.system.service.StatisticService;

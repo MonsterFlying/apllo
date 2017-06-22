@@ -24,7 +24,6 @@ import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.*;
-import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -102,9 +101,9 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     @Autowired
     private MqHelper mqHelper;
 
-    @Value("gofobao.webDomain")
+    @Value("${gofobao.webDomain}")
     private String webDomain;
-    @Value("jixin.redPacketAccountId")
+    @Value("${jixin.redPacketAccountId}")
     private String redPacketAccountId;
 
     /**
@@ -541,7 +540,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         request.setAcqRes(StringHelper.toString(borrowId));
         request.setForgotPwdUrl("");
         request.setIdNo(lendUserThirdAccount.getIdNo());
-        request.setIdType(StringHelper.toString(lendUserThirdAccount.getIdType()));
+        request.setIdType(JixinHelper.getIdType(lendUserThirdAccount.getIdType()));
         request.setNotifyUrl(webDomain + "/pub/borrow/v2/third/trusteepay/run");
         request.setProductId(StringHelper.toString(borrowId));
         request.setReceiptAccountId(takeUserThirdAccount.getAccountId());

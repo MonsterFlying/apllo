@@ -4,21 +4,30 @@ import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.BeanHelper;
 import com.gofobao.framework.helper.MathHelper;
+import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.tender.biz.AutoTenderBiz;
+import com.gofobao.framework.tender.contants.AutoTenderContants;
+import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.vo.request.VoDelAutoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoOpenAutoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoSaveAutoTenderReq;
 import com.gofobao.framework.tender.vo.response.UserAutoTender;
+import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
 import com.gofobao.framework.tender.vo.response.VoViewUserAutoTenderWarpRes;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import java.util.Date;
 import java.util.List;
@@ -53,6 +62,11 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
     public ResponseEntity<VoBaseResp> createAutoTender(VoSaveAutoTenderReq voSaveAutoTenderReq) {
         Long userId = voSaveAutoTenderReq.getUserId();
 
+        ResponseEntity resp = verifySaveAutoTender(voSaveAutoTenderReq);
+        if (!ObjectUtils.isEmpty(resp)) {
+            return resp;
+        }
+
         Specification<AutoTender> atSpecification = Specifications
                 .<AutoTender>and()
                 .eq("userId", userId)
@@ -65,18 +79,16 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "自动投标规则超过三条!"));
         }
 
-        /*Date nowDate = new Date();
-        AutoTender autoTender = getSaveAutoTender(voSaveAutoTender);
-        autoTender.setOrder(autoTenderMapper.getOrderNum() + 1);
+        Date nowDate = new Date();
+        AutoTender autoTender = getSaveAutoTender(voSaveAutoTenderReq);
+        autoTender.setOrder(autoTenderService.getOrderNum() + 1);
         autoTender.setCreatedAt(nowDate);
         autoTender.setUpdatedAt(nowDate);
         autoTender.setAutoAt(nowDate);
-        autoTender.setUserId(voSaveAutoTender.getUserId());
+        autoTender.setUserId(voSaveAutoTenderReq.getUserId());
 
-        if (autoTenderMapper.insertSelective(autoTender) > 0) {
-            rs = 0;
-        }*/
-        return null;
+        autoTenderService.insert(autoTender);
+        return ResponseEntity.ok(VoBaseResp.ok("新增自动投标规则成功！"));
     }
 
     /**
@@ -88,6 +100,11 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
     public ResponseEntity<VoBaseResp> updateAutoTender(VoSaveAutoTenderReq voSaveAutoTenderReq) {
         Long tenderId = voSaveAutoTenderReq.getId();
         Long userId = voSaveAutoTenderReq.getUserId();
+
+        ResponseEntity resp = verifySaveAutoTender(voSaveAutoTenderReq);
+        if (!ObjectUtils.isEmpty(resp)) {
+            return resp;
+        }
 
         Specification<AutoTender> atSpecification = Specifications
                 .<AutoTender>and()
@@ -102,7 +119,73 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
             autoTenderService.updateById(autoTender);
         }
 
-        return ResponseEntity.ok(VoBaseResp.ok("更新自动投标规则！"));
+        return ResponseEntity.ok(VoBaseResp.ok("更新自动投标规则成功！"));
+    }
+
+    /**
+     * 验证创建/更新自动投标参数
+     *
+     * @param voSaveAutoTenderReq
+     * @return
+     */
+    private ResponseEntity<VoBaseResp> verifySaveAutoTender(VoSaveAutoTenderReq voSaveAutoTenderReq) {
+
+        Double tenderMoney = voSaveAutoTenderReq.getTenderMoney();
+        if (ObjectUtils.isEmpty(tenderMoney)) {
+            voSaveAutoTenderReq.setMode(0);
+            voSaveAutoTenderReq.setTenderMoney(0d);
+        } else {
+            voSaveAutoTenderReq.setMode(1);
+            voSaveAutoTenderReq.setTenderMoney(tenderMoney);
+        }
+
+        Integer mode = voSaveAutoTenderReq.getMode();
+        if ((mode == 1) && ((ObjectUtils.isEmpty(tenderMoney)) || tenderMoney < voSaveAutoTenderReq.getLowest() || (tenderMoney < AutoTenderContants.MAX_TENDER_MONEY))) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "自动投标最大投标金额不准确!"));
+        }
+
+        // 期限类型
+        Integer timelimitType = voSaveAutoTenderReq.getTimelimitType();
+        Integer timelimitFirst = voSaveAutoTenderReq.getTimelimitFirst();
+        Integer timelimitLast = voSaveAutoTenderReq.getTimelimitLast();
+        if ((timelimitType != 0 && ObjectUtils.isEmpty(timelimitFirst)) || (timelimitType != 0 && ObjectUtils.isEmpty(timelimitLast))) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "自动投标期限选择有误!"));
+        }
+
+        if ((timelimitType != 0) && (timelimitLast < timelimitFirst)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "自动投标期限起始时间有误!"));
+        }
+
+        String[] repayFashionArr = voSaveAutoTenderReq.getRepayFashions().split(",");
+        if (timelimitType == AutoTenderContants.TIME_LIMIT_TYPE_BY_MONTH) {
+            if (!ArrayUtils.contains(repayFashionArr, BorrowContants.REPAY_FASHION_AYFQ) && !ArrayUtils.contains(repayFashionArr, BorrowContants.REPAY_FASHION_XXHB)) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "还款方式错误!"));
+            }
+        } else if (timelimitType == AutoTenderContants.TIME_LIMIT_TYPE_BY_DAY) {
+            if (!ArrayUtils.contains(repayFashionArr, BorrowContants.REPAY_FASHION_YCBX)) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "还款方式错误!"));
+            }
+        }
+        // 年化率
+        Integer aprFirst = voSaveAutoTenderReq.getAprFirst();
+        Integer aprLast = voSaveAutoTenderReq.getAprLast();
+        if ((ObjectUtils.isEmpty(aprFirst)) || (ObjectUtils.isEmpty(aprLast)) || (aprLast < aprFirst)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "自动投标年化率有误!"));
+        }
+
+        return null;
     }
 
     /**
@@ -219,5 +302,88 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
         }
 
         return ResponseEntity.ok(VoBaseResp.ok("删除自动投标规则成功!"));
+    }
+
+    /**
+     * 查询自动投标详情
+     *
+     * @param autoTenderId
+     * @param userId
+     * @return
+     */
+    public ResponseEntity<VoAutoTenderInfo> queryAutoTenderInfo(Long autoTenderId, Long userId) {
+        if (ObjectUtils.isEmpty(autoTenderId) || ObjectUtils.isEmpty(userId)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoAutoTenderInfo.ERROR, "自动投标：参数缺少!", VoAutoTenderInfo.class));
+        }
+        Specification<AutoTender> specification = Specifications
+                .<AutoTender>and()
+                .eq("userId", userId)
+                .eq("id", autoTenderId)
+                .build();
+        List<AutoTender> autoTenderList = autoTenderService.findList(specification);
+        if (CollectionUtils.isEmpty(autoTenderList)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoAutoTenderInfo.ERROR, "自动投标：未找到自动投标规则!", VoAutoTenderInfo.class));
+        }
+
+        AutoTender autoTender = autoTenderList.get(0);
+        VoAutoTenderInfo voAutoTenderInfo = VoBaseResp.ok("自动投标：详情查询成功!", VoAutoTenderInfo.class);
+        voAutoTenderInfo.setAprFirst(new Integer(autoTender.getAprFirst()));
+        voAutoTenderInfo.setAprLast(new Integer(autoTender.getAprLast()));
+
+        StringBuffer borrowTypes = new StringBuffer();
+        //标的类型
+        if (autoTender.getTender0() == 1) {
+            borrowTypes.append(",0");
+        }
+
+        if (autoTender.getTender1() == 1) {
+            borrowTypes.append(",1");
+        }
+
+        if (autoTender.getTender3() == 1) {
+            borrowTypes.append(",3");
+        }
+
+        if (autoTender.getTender4() == 1) {
+            borrowTypes.append(",4");
+        }
+
+        if (!StringUtils.isEmpty(borrowTypes)) {
+            voAutoTenderInfo.setBorrowTypes(borrowTypes.toString().substring(1));
+        } else {
+            voAutoTenderInfo.setBorrowTypes("");
+        }
+
+        voAutoTenderInfo.setId(autoTender.getId());
+        voAutoTenderInfo.setLowest(NumberHelper.toDouble(autoTender.getLowest()));
+        voAutoTenderInfo.setMode(autoTender.getMode());
+        Integer repayFashions = autoTender.getRepayFashions();  // 投标类型
+
+        String repayFashionsStr = new StringBuffer(Integer.toBinaryString(repayFashions)).reverse().toString();
+        StringBuffer repayFashionsSb = new StringBuffer();
+        for (int i = 0; i < repayFashionsStr.length(); i++) {
+            if ("1".equals(StringHelper.toString(repayFashionsStr.charAt(i)))) {
+                repayFashionsSb.append(String.format(",%s", i));
+            }
+        }
+
+        if (!StringUtils.isEmpty(repayFashionsSb)) {
+            voAutoTenderInfo.setRepayFashions(repayFashionsSb.substring(1));
+        } else {
+            voAutoTenderInfo.setRepayFashions("");
+        }
+
+        voAutoTenderInfo.setSaveMoney(NumberHelper.toDouble(autoTender.getSaveMoney()));
+        voAutoTenderInfo.setStatus(autoTender.getStatus());
+        voAutoTenderInfo.setTenderMoney(NumberHelper.toDouble(autoTender.getTenderMoney()));
+        voAutoTenderInfo.setTimelimitType(autoTender.getTimelimitType());
+        voAutoTenderInfo.setTimelimitFirst(autoTender.getTimelimitFirst());
+        voAutoTenderInfo.setTimelimitLast(autoTender.getTimelimitLast());
+
+        return ResponseEntity.ok(voAutoTenderInfo);
     }
 }

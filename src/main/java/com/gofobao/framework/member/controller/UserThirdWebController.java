@@ -1,22 +1,15 @@
 package com.gofobao.framework.member.controller;
 
 import com.gofobao.framework.member.biz.UserThirdBiz;
-import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
-import com.gofobao.framework.member.vo.response.VoHtmlResp;
-import com.gofobao.framework.member.vo.response.VoOpenAccountResp;
-import com.gofobao.framework.member.vo.response.VoPreOpenAccountResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import springfox.documentation.annotations.ApiIgnore;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 
 /**
  * 存管账户

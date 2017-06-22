@@ -1,7 +1,7 @@
 package com.gofobao.framework.member.biz;
 
-import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.member.vo.request.VoBindEmailReq;
+import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import org.springframework.http.ResponseEntity;
 
 /**

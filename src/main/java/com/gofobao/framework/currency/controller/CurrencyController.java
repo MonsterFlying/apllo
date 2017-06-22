@@ -26,8 +26,11 @@ public class CurrencyController {
     private CurrencyBiz currencyBiz;
 
     @ApiOperation("获取用户广富币列表")
-    @PostMapping("/currency/list")
-    public ResponseEntity<VoBaseResp> list(@Valid @ModelAttribute VoListCurrencyReq voListCurrencyReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+    @GetMapping("pub/currency/list/{pageIndex}/{pageSize}")
+    public ResponseEntity<VoBaseResp> list(@PathVariable Integer pageIndex, @PathVariable Integer pageSize, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        VoListCurrencyReq voListCurrencyReq = new VoListCurrencyReq();
+        voListCurrencyReq.setPageIndex(pageIndex);
+        voListCurrencyReq.setPageSize(pageSize);
         voListCurrencyReq.setUserId(userId);
         return currencyBiz.list(voListCurrencyReq);
     }
@@ -39,7 +42,7 @@ public class CurrencyController {
      */
     @ApiOperation("兑换广富币")
     @PostMapping("/currency/convert")
-    public ResponseEntity<VoBaseResp> convert(@Valid @ModelAttribute VoConvertCurrencyReq voConvertCurrencyReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+    public ResponseEntity<VoBaseResp> convert(@Valid @ModelAttribute VoConvertCurrencyReq voConvertCurrencyReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voConvertCurrencyReq.setUserId(userId);
         return currencyBiz.convert(voConvertCurrencyReq);
     }

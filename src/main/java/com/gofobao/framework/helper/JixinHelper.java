@@ -1,5 +1,6 @@
 package com.gofobao.framework.helper;
 
+import com.gofobao.framework.api.contants.IdTypeContant;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.system.entity.DictItem;
@@ -61,7 +62,7 @@ public class JixinHelper {
         DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
 
         Date nowDate = new Date();
-        int no = 10000;
+        int no = 100000;
 
         DictValue dictValue = dictValueService.findTopByItemIdAndValue01(dictItem.getId(), "firstCreateAt");
         if (!ObjectUtils.isEmpty(dictValue)) {
@@ -108,5 +109,21 @@ public class JixinHelper {
             }
         }
         return null;
+    }
+
+    /**
+     * 获取身份证类型
+     * @param type
+     * @return
+     */
+    public static String getIdType(int type) {
+        String idType = null;
+        switch (type) {
+            case 1:
+                idType = IdTypeContant.ID_CARD;
+                break;
+            default:
+        }
+        return idType;
     }
 }

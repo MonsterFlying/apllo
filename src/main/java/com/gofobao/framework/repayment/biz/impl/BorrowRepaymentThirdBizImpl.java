@@ -424,7 +424,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * @param voThirdBatchLendRepay
      * @return
      */
-    public ResponseEntity<VoBaseResp> thirdBatchLendRepay(VoThirdBatchLendRepay voThirdBatchLendRepay) {
+    public ResponseEntity<VoBaseResp> thirdBatchLendRepay(VoThirdBatchLendRepay voThirdBatchLendRepay) throws Exception {
         Date nowDate = new Date();
         Long borrowId = voThirdBatchLendRepay.getBorrowId();
         if (ObjectUtils.isEmpty(borrowId)) {
@@ -491,8 +491,11 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         request.setSubPacks(GSON.toJson(lendPayList));
         request.setChannel(ChannelContant.HTML);
         BatchLendPayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_LEND_REPAY, request, BatchLendPayResp.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+            throw new Exception("即信批次放款失败:" + response.getRetMsg());
+        }
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "即信批次放款失败!"));
+            throw new Exception("即信批次放款失败!");
         }
         return null;
     }

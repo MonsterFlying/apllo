@@ -4,7 +4,6 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.AutoTenderBiz;
 import com.gofobao.framework.tender.biz.TenderBiz;
-import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.vo.request.TenderUserReq;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;

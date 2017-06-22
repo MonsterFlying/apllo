@@ -8,5 +8,8 @@ import lombok.Data;
  */
 @Data
 public class BatchLendPayResp  extends JixinBatchBaseResponse {
-
+    /**
+     * 接收结果  success接收成功
+     */
+    private String  received;
 }

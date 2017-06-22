@@ -1,40 +1,27 @@
 package com.gofobao.framework;
 
-import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.helper.JixinManager;
-import com.gofobao.framework.api.helper.JixinTxCodeEnum;
-import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
-import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
-import com.gofobao.framework.api.model.batch_repay_bail.BatchRepayBailResp;
-import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
-import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
-import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyRequest;
-import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
-import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
-import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
-import com.gofobao.framework.common.integral.IntegralChangeEntity;
-
-import java.util.HashMap;
-import java.util.Map;
-
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.helper.JixinHelper;
-import com.gofobao.framework.helper.project.IntegralChangeHelper;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
-import com.gofobao.framework.repayment.service.BorrowRepaymentService;
-import com.gofobao.framework.repayment.service.impl.LoanServiceImpl;
-import com.gofobao.framework.repayment.vo.request.VoRepayReq;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.util.HashMap;
+import java.util.Map;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -60,6 +47,8 @@ public class AplloApplicationTests {
     private BorrowThirdBiz borrowThirdBiz;
     @Autowired
     private RepaymentBiz repaymentBiz;
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Test
     public void contextLoads() {
@@ -71,8 +60,33 @@ public class AplloApplicationTests {
         }
     }
 
+    public static void main(String[] args) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("borrowId", 165206);
+
+        Gson gson = new Gson();
+        String paramStr = gson.toJson(map);
+        System.out.println(paramStr);
+
+        System.out.println(SecurityHelper.getSign(paramStr));
+    }
+
     @Test
     public void test() {
+        /*Map<String,String> map = new HashMap<>();
+        map.put("borrowId","165206");
+        try {
+            borrowProvider.doFirstVerify(map);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
+
+/*        TrusteePayQueryReq request = new TrusteePayQueryReq();
+        request.setAccountId("6212462040000050015");
+        request.setProductId("165206");
+        request.setChannel(ChannelContant.HTML);
+        TrusteePayQueryResp response = jixinManager.send(JixinTxCodeEnum.TRUSTEE_PAY_QUERY, request, TrusteePayQueryResp.class);
+        System.out.println(response);*/
 
         /*VoRepayReq voRepayReq = new VoRepayReq();
         voRepayReq.setRepaymentId(168683L);
@@ -87,21 +101,21 @@ public class AplloApplicationTests {
 
         System.out.println(true + "");*/
 
-        VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
+        /*VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
         voQueryThirdBorrowList.setBorrowId(165200L);
         voQueryThirdBorrowList.setUserId(901L);
         voQueryThirdBorrowList.setPageNum("1");
         voQueryThirdBorrowList.setPageSize("10");
         DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
-        System.out.println((resp.getTotalItems()));
+        System.out.println((resp.getTotalItems()));*/
 
-       /* Map<String,String> msg = new HashMap<>();
-        msg.put("borrowId","165184");
+        Map<String,String> msg = new HashMap<>();
+        msg.put("borrowId","165206");
         try {
             borrowProvider.doAgainVerify(msg);
         } catch (Exception e) {
             e.printStackTrace();
-        }*/
+        }
 
         //"userId\":901,\"repaymentId\":168675,\"interestPercent\":0.0,\"isUserOpen\":true
         /*VoRepayReq voRepayReq = new VoRepayReq();

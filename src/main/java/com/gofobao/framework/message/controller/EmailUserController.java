@@ -3,7 +3,6 @@ package com.gofobao.framework.message.controller;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.message.biz.MessageBiz;
 import com.gofobao.framework.message.vo.request.VoAnonEmailReq;
-import com.gofobao.framework.message.vo.request.VoAnonSmsReq;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;

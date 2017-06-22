@@ -10,12 +10,19 @@ public class CouponContants {
      */
     public static final Integer VALID = 1;
 
+
+    public static final String  VALID_STR = "有效";
+
+
+
     public static final Integer LOCK = 2;
+    public static final String  LOCK_STR = "锁定中";
 
     public static final Integer USED = 3;
+    public static final String  USED_STR = "已使用";
 
     public static final Integer FAILURE = 4;
-
+    public static final String  FAILURE_STR = "已使用";
 
     /**
      * 有效

@@ -1,5 +1,6 @@
 package com.gofobao.framework.tender.vo.request;
 
+import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.tender.contants.AutoTenderContants;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -27,8 +28,8 @@ public class VoSaveAutoTenderReq {
     @NotNull(message = "自动投标不能为空!")
     private Boolean status;
 
-    @ApiModelProperty(name = "lowest", value = "最低投标金额 分 不填写默认50", dataType = "int", required = false)
-    private Integer lowest = 50 * 100;
+    @ApiModelProperty(name = "lowest", value = "最低投标金额 分 不填写默认50", required = false)
+    private Double lowest = 50 * 100d;
 
     @ApiModelProperty(name = "borrowTypes", value = "投标种类（0：车贷标；4、渠道标；1、净值标；3、转让标） 选中则带上相应数字 用,隔开 0,1,3", dataType = "String", required = true)
     @NotNull(message = "投标种类不能为空!")
@@ -48,8 +49,8 @@ public class VoSaveAutoTenderReq {
     @ApiModelProperty(name = "timelimitLast", value = "期限范围结束值 timelimitType不为0时必填", dataType = "int", required = false)
     private Integer timelimitLast = 0;
 
-    @ApiModelProperty(name = "tenderMoney", value = "最大投标金额(分) ", dataType = "int", required = false)
-    private Integer tenderMoney = null;
+    @ApiModelProperty(name = "tenderMoney", value = "最大投标金额(分) ", required = false)
+    private Double tenderMoney = null;
 
     @ApiModelProperty(name = "repayFashions", value = "返款方式（0、按月分期 1、一次性还本付息2、先息后本） 选中则带上相应数字 用,隔开 例如 0,1", dataType = "String", required = true)
     @NotNull(message = "返款方式不能为空!")
@@ -66,6 +67,30 @@ public class VoSaveAutoTenderReq {
     @Max(value = AutoTenderContants.APR_LAST, message = "年化利率起始值不能大于24%!")
     private Integer aprLast;
 
-    @ApiModelProperty(name = "saveMoney", value = "账户保留金额（分） 不填写默认0", dataType = "int", required = false)
-    private Integer saveMoney = 0;
+    @ApiModelProperty(name = "saveMoney", value = "账户保留金额（分） 不填写默认0", required = false)
+    private Double saveMoney = 0d;
+
+    public Double getLowest() {
+        return MathHelper.myRound(lowest, 0);
+    }
+
+    public void setLowest(Double lowest) {
+        this.lowest = MathHelper.myRound(lowest * 100.0, 0);
+    }
+
+    public Double getTenderMoney() {
+        return MathHelper.myRound(tenderMoney, 0);
+    }
+
+    public void setTenderMoney(Double tenderMoney) {
+        this.tenderMoney = MathHelper.myRound(tenderMoney * 100.0, 0);
+    }
+
+    public Double getSaveMoney() {
+        return MathHelper.myRound(saveMoney, 0);
+    }
+
+    public void setSaveMoney(Double saveMoney) {
+        this.saveMoney = MathHelper.myRound(saveMoney * 100.0, 0);
+    }
 }

@@ -2,14 +2,13 @@ package com.gofobao.framework.member.controller;
 
 import com.gofobao.framework.asset.vo.request.VoJudgmentAvailableReq;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.member.biz.UserBiz;
 import com.gofobao.framework.member.biz.UserEmailBiz;
 import com.gofobao.framework.member.biz.UserPhoneBiz;
 import com.gofobao.framework.member.biz.UserThirdBiz;
+import com.gofobao.framework.member.vo.request.VoBindEmailReq;
 import com.gofobao.framework.member.vo.request.VoBindPhone;
 import com.gofobao.framework.member.vo.request.VoBindSwitchPhoneReq;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
-import com.gofobao.framework.member.vo.request.VoBindEmailReq;
 import com.gofobao.framework.member.vo.response.VoSignInfoResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.ApiOperation;

@@ -29,8 +29,6 @@ public class WebTransferController {
     public ResponseEntity<VoViewTransferOfWarpRes> tranferOfList(@PathVariable Integer pageIndex,
                                                                  @PathVariable Integer pageSize,
                                                                  @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
-
-
         transferReq.setUserId(userId);
         transferReq.setPageIndex(pageIndex);
         transferReq.setPageSize(pageSize);
