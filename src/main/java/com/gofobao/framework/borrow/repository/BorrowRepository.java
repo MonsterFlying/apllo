@@ -32,15 +32,27 @@ public interface BorrowRepository extends JpaRepository<Borrow,Long>,JpaSpecific
      * @param pageable
      * @return
      */
-    Page<Borrow> findByStatusNotIn(List<Integer>statusArray, Pageable pageable);
+    Page<Borrow> findByStatusNotIn(List<Long>statusArray, Pageable pageable);
 
-
+    /**
+     *
+     * @param userId
+     * @param statusList
+     * @return
+     */
     long countByUserIdAndStatusIn(Long userId,List<Integer> statusList);
+
+    /**
+     *
+     * @param ids
+     * @return
+     */
+    List<Borrow>findByIdIn(List<Long> ids);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Borrow findById(Long borrowId);
 
-    List<Borrow>findByIdIn(List<Integer> ids);
+
 
 
 }

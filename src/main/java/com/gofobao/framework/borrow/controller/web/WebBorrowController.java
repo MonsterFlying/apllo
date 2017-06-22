@@ -2,15 +2,13 @@ package com.gofobao.framework.borrow.controller.web;
 
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
-import com.gofobao.framework.borrow.vo.request.*;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
+import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
+import com.gofobao.framework.borrow.vo.request.VoPcCancelThirdBorrow;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowStatisticsWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewVoBorrowDescWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.ThymeleafHelper;
-import com.gofobao.framework.member.vo.response.VoHtmlResp;
-import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -21,7 +19,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
-import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -100,6 +97,7 @@ public class WebBorrowController {
             Map<String, Object> paramMaps = borrowBiz.pcContract(borrowId, userId);
             content = thymeleafHelper.build("borrowProtcol", paramMaps);
         } catch (Exception e) {
+            e.printStackTrace();
             content = thymeleafHelper.build("load_error", null);
         }
         return ResponseEntity.ok(content);

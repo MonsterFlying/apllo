@@ -8,6 +8,7 @@ import com.gofobao.framework.asset.service.AdvanceLogService;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
+import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.collection.entity.BorrowCollection;
@@ -64,6 +65,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created by admin on 2017/6/6.
@@ -99,6 +102,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private BorrowRepaymentService borrowRepaymentService;
     @Autowired
     private AdvanceLogService advanceLogService;
+    @Autowired
+    private BorrowRepository borrowRepository;
 
 
     @Override
@@ -123,12 +128,56 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      */
     @Override
-    public ResponseEntity<VoViewCollectionOrderListResWarpRes> repaymentList(VoCollectionOrderReq voCollectionOrderReq) {
+    public ResponseEntity<VoBaseResp> repaymentList(VoCollectionOrderReq voCollectionOrderReq) {
         try {
-            VoViewCollectionOrderList voViewCollectionOrderListRes = borrowRepaymentService.repaymentList(voCollectionOrderReq);
-            VoViewCollectionOrderListResWarpRes voViewCollectionOrderListResWarpRes = VoBaseResp.ok("查询成功", VoViewCollectionOrderListResWarpRes.class);
-            voViewCollectionOrderListResWarpRes.setListRes(voViewCollectionOrderListRes);
-            return ResponseEntity.ok(voViewCollectionOrderListResWarpRes);
+            List<BorrowRepayment> repaymentList = borrowRepaymentService.repaymentList(voCollectionOrderReq);
+            if (CollectionUtils.isEmpty(repaymentList)) {
+
+                return ResponseEntity.badRequest().body(
+                        VoBaseResp.error(
+                                VoBaseResp.ERROR, "非法请求", VoViewCollectionOrderListResWarpRes.class));
+            }
+
+            Set<Long> borrowIdSet = repaymentList.stream()
+                    .map(p -> p.getBorrowId())
+                    .collect(Collectors.toSet());
+
+            List<Borrow> borrowList = borrowRepository.findByIdIn(new ArrayList(borrowIdSet));
+            Map<Long, Borrow> borrowMap = borrowList.stream()
+                    .collect(Collectors
+                            .toMap(Borrow::getId, Function.identity()));
+
+            List<VoViewCollectionOrderList> orderListRes = new ArrayList<>(0);
+
+            List<VoViewCollectionOrderRes> orderResList = new ArrayList<>();
+
+            repaymentList.stream().forEach(p -> {
+                VoViewCollectionOrderRes collectionOrderRes = new VoViewCollectionOrderRes();
+                Borrow borrow = borrowMap.get(p.getBorrowId());
+                collectionOrderRes.setBorrowName(borrow.getName());
+                collectionOrderRes.setOrder(p.getOrder() + 1);
+                collectionOrderRes.setCollectionMoneyYes(StringHelper.formatMon(p.getRepayMoneyYes() / 100d));
+                collectionOrderRes.setCollectionMoney(StringHelper.formatMon(p.getRepayMoney() / 100d));
+                collectionOrderRes.setTimeLime(borrow.getTimeLimit());
+                orderResList.add(collectionOrderRes);
+            });
+
+            VoViewCollectionOrderList collectionOrder = new VoViewCollectionOrderList();
+
+            collectionOrder.setOrderResList(orderResList);
+            //总数
+            collectionOrder.setOrder(orderResList.size());
+            //已还款
+            Integer moneyYesSum = repaymentList.stream()
+                    .filter(p -> p.getStatus() == 1)
+                    .mapToInt(w -> w.getRepayMoneyYes())
+                    .sum();
+            collectionOrder.setSumCollectionMoneyYes(StringHelper.formatMon(moneyYesSum / 100d));
+            orderListRes.add(collectionOrder);
+            VoViewCollectionOrderListResWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewCollectionOrderListResWarpRes.class);
+            warpRes.setListRes(orderListRes);
+
+            return ResponseEntity.ok(warpRes);
 
         } catch (Exception e) {
             return ResponseEntity.badRequest()

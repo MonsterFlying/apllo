@@ -3,9 +3,7 @@ package com.gofobao.framework.borrow.controller;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.vo.request.*;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowStatisticsWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewVoBorrowDescWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.ThymeleafHelper;
@@ -97,6 +95,7 @@ public class BorrowController {
         try {
             content = thymeleafHelper.build("borrowProtocol", paramMaps);
         } catch (Exception e) {
+            e.printStackTrace();
             content = thymeleafHelper.build("load_error", null);
         }
         return ResponseEntity.ok(content);

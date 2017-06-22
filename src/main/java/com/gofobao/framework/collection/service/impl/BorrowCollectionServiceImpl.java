@@ -9,14 +9,11 @@ import com.gofobao.framework.collection.repository.BorrowCollectionRepository;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
-import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderList;
-import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderRes;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailRes;
 import com.gofobao.framework.helper.BeanHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
-import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,8 +28,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Created by admin on 2017/5/31.
@@ -56,52 +51,17 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
      * @return VoViewCollectionOrderListRes
      */
     @Override
-    public VoViewCollectionOrderList orderList(VoCollectionOrderReq voCollectionOrderReq) {
-        Date date = DateHelper.stringToDate(voCollectionOrderReq.getTime());
+    public List<BorrowCollection> orderList(VoCollectionOrderReq voCollectionOrderReq) {
+        Date date = DateHelper.stringToDate(voCollectionOrderReq.getTime(),DateHelper.DATE_FORMAT_YMD);
 
         Specification<BorrowCollection> specification = Specifications.<BorrowCollection>and()
                 .eq("userId", voCollectionOrderReq.getUserId())
-                .between("startAt", new Range<>(date, DateHelper.addDays(date, 1)))
+                .between("collectionAt", new Range<>(date, DateHelper.endOfDate(date)))
                 .eq("transferFlag", BorrowCollectionContants.TRANSFER_FLAG_NO)
+                .ne("borrowId",null)
                 .build();
         List<BorrowCollection> borrowCollections = borrowCollectionRepository.findAll(specification);
-        if (CollectionUtils.isEmpty(borrowCollections)) {
-            return null;
-        }
-        Set<Integer> borrowIdSet = borrowCollections.stream()
-                .map(f -> f.getBorrowId())
-                .collect(Collectors.toSet());
-        List<Borrow> borrowList = borrowRepository.findByIdIn(Lists.newArrayList(borrowIdSet));
-        Map<Long, Borrow> borrowMap = borrowList
-                .stream()
-                .collect(Collectors.toMap(Borrow::getId, Function.identity()));
-
-        VoViewCollectionOrderList voViewCollectionOrderListRes = new VoViewCollectionOrderList();
-
-        List<VoViewCollectionOrderRes> orderResList = new ArrayList<>();
-
-        borrowCollections.stream().forEach(p -> {
-            VoViewCollectionOrderRes item = new VoViewCollectionOrderRes();
-            Borrow borrow = borrowMap.get(p.getBorrowId());
-            item.setBorrowName(borrow.getName());
-            item.setOrder(p.getOrder() + 1);
-            item.setTimeLime(borrow.getTimeLimit());
-            item.setCollectionMoney(StringHelper.formatMon(p.getCollectionMoney() / 100d));
-            item.setCollectionMoneyYes(StringHelper.formatMon(p.getCollectionMoneyYes() / 100d));
-            orderResList.add(item);
-        });
-        //回款列表
-        voViewCollectionOrderListRes.setOrderResList(orderResList);
-        //总回款期数
-        voViewCollectionOrderListRes.setOrder(orderResList.size());
-        //已回款金额
-        Integer sumCollectionMoneyYes = borrowCollections.stream()
-                .filter(p -> p.getStatus() == BorrowCollectionContants.STATUS_YES)
-                .mapToInt(w -> w.getCollectionMoneyYes())
-                .sum();
-        voViewCollectionOrderListRes.setSumCollectionMoneyYes(StringHelper.formatMon(sumCollectionMoneyYes / 100d));
-        Optional<VoViewCollectionOrderList> orderListRes = Optional.ofNullable(voViewCollectionOrderListRes);
-        return orderListRes.orElseGet(() -> new VoViewCollectionOrderList());
+        return Optional.ofNullable(borrowCollections).orElse(Collections.EMPTY_LIST);
     }
 
     /**
@@ -138,16 +98,16 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
     }
 
     @Override
-    public List<Integer> collectionDay(String date,Long userId) {
-        String sql="SELECT DAY(collection_at) FROM gfb_borrow_collection " +
-                   "where " +
-                        "user_id="+userId+" " +
-                    "and " +
-                        "`status`=0 " +
-                    "and   date_format(collection_at,'%Y%m') =" +date+
-                    " GROUP BY  day(collection_at)";
-        Query query=entityManager.createNativeQuery(sql);
-        List result= query.getResultList();
+    public List<Integer> collectionDay(String date, Long userId) {
+        String sql = "SELECT DAY(collection_at) FROM gfb_borrow_collection " +
+                "where " +
+                "user_id=" + userId + " " +
+                "and " +
+                "`status`=0 " +
+                "and   date_format(collection_at,'%Y%m') =" + date +
+                " GROUP BY  day(collection_at)";
+        Query query = entityManager.createNativeQuery(sql);
+        List result = query.getResultList();
         return result;
     }
 
@@ -188,15 +148,15 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         return borrowCollectionRepository.save(borrowCollection);
     }
 
-    public List<BorrowCollection> findList(Specification<BorrowCollection> specification){
+    public List<BorrowCollection> findList(Specification<BorrowCollection> specification) {
         return borrowCollectionRepository.findAll(specification);
     }
 
-    public long count(Specification<BorrowCollection> specification){
+    public long count(Specification<BorrowCollection> specification) {
         return borrowCollectionRepository.count(specification);
     }
 
-    public List<BorrowCollection> save(List<BorrowCollection> borrowCollectionList){
+    public List<BorrowCollection> save(List<BorrowCollection> borrowCollectionList) {
         return borrowCollectionRepository.save(borrowCollectionList);
     }
 }

@@ -4,8 +4,6 @@ import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
-import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderList;
-import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderRes;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailRes;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -28,9 +26,9 @@ import org.springframework.util.ObjectUtils;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Created by admin on 2017/6/1.
@@ -55,49 +53,14 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
      * @return VoViewCollectionOrderListRes
      */
     @Override
-    public VoViewCollectionOrderList repaymentList(VoCollectionOrderReq voCollectionOrderReq) {
-        Date date = DateHelper.beginOfDate(DateHelper.stringToDate(voCollectionOrderReq.getTime()));
+    public List<BorrowRepayment> repaymentList(VoCollectionOrderReq voCollectionOrderReq) {
+        Date date = DateHelper.beginOfDate(DateHelper.stringToDate(voCollectionOrderReq.getTime(),DateHelper.DATE_FORMAT_YMD));
         Specification<BorrowRepayment> specification = Specifications.<BorrowRepayment>and()
                 .eq("userId", voCollectionOrderReq.getUserId())
-                .between("repayAt", new Range<>(date, DateHelper.addDays(date, 1)))
+                .between("repayAt", new Range<>(date, DateHelper.endOfDate(date)))
                 .build();
-        List<BorrowRepayment> repaymentList = borrowRepaymentRepository.findAll(specification);
-        if (CollectionUtils.isEmpty(repaymentList)) {
-            return null;
-        }
-        Set<Long> borrowIdSet = repaymentList.stream()
-                .map(p -> p.getBorrowId())
-                .collect(Collectors.toSet());
+        return borrowRepaymentRepository.findAll(specification);
 
-        List<Borrow> borrowList = borrowRepository.findByIdIn(new ArrayList(borrowIdSet));
-        Map<Long, Borrow> borrowMap = borrowList.stream()
-                .collect(Collectors
-                        .toMap(Borrow::getId, Function.identity()));
-        VoViewCollectionOrderList orderListRes = new VoViewCollectionOrderList();
-        List<VoViewCollectionOrderRes> orderResList = new ArrayList<>();
-
-        repaymentList.stream().forEach(p -> {
-            VoViewCollectionOrderRes collectionOrderRes = new VoViewCollectionOrderRes();
-            Borrow borrow = borrowMap.get(p.getId());
-            collectionOrderRes.setBorrowName(borrow.getName());
-            collectionOrderRes.setOrder(p.getOrder() + 1);
-            collectionOrderRes.setCollectionMoneyYes(StringHelper.formatMon(p.getRepayMoneyYes() / 100d));
-            collectionOrderRes.setCollectionMoney(StringHelper.formatMon(p.getRepayMoney() / 100d));
-            collectionOrderRes.setTimeLime(borrow.getTimeLimit());
-            orderResList.add(collectionOrderRes);
-        });
-
-        if (CollectionUtils.isEmpty(orderResList)) {
-            return null;
-        }
-        orderListRes.setOrderResList(orderResList);
-        orderListRes.setOrder(orderResList.size());
-        Integer moneyYesSum = repaymentList.stream()
-                .filter(p -> p.getStatus() == 1)
-                .mapToInt(w -> w.getRepayMoneyYes())
-                .sum();
-        orderListRes.setSumCollectionMoneyYes(StringHelper.formatMon(moneyYesSum / 100d));
-        return orderListRes;
     }
 
 

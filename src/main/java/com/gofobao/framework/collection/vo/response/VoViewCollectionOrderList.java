@@ -1,6 +1,5 @@
 package com.gofobao.framework.collection.vo.response;
 
-import com.gofobao.framework.core.vo.VoBaseResp;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -10,7 +9,7 @@ import java.util.List;
  * Created by admin on 2017/5/31.
  */
 @Data
-public class VoViewCollectionOrderList extends VoBaseResp{
+public class VoViewCollectionOrderList {
 
     @ApiModelProperty("总笔数")
     private Integer order;

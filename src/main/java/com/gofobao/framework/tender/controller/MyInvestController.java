@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 /**
  * Created by admin on 2017/6/1.
  */
-@RequestMapping("/invest")
+@RequestMapping("pub/invest")
 @Api(description = "我的投资")
 @RestController
 public class MyInvestController {
@@ -37,6 +37,7 @@ public class MyInvestController {
     public ResponseEntity<VoViewBackMoneyListWarpRes> backMoneyList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                                     @PathVariable Integer pageIndex,
                                                                     @PathVariable Integer pageSize) {
+
         return commonResult(pageIndex, pageSize, userId,TenderConstans.BACK_MONEY);
     }
 
