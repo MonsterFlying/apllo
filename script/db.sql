@@ -202,3 +202,21 @@ create table gfb_cash_detail_log
 );
 ALTER TABLE gfb_cash_detail_log ADD seq_no VARCHAR(32) DEFAULT '' NULL;
 ALTER TABLE gfb_cash_detail_log CHANGE callbak_time callback_time DATETIME COMMENT '存管回调时间';
+ALTER TABLE gfb_recharge_detail_log ADD response_message VARCHAR(2048) NULL;
+
+
+ALTER TABLE gfb_activity_red_packet ALTER COLUMN CREATE_UP SET DEFAULT 0;
+ALTER TABLE gfb_activity_red_packet ALTER COLUMN UPDATE_UP SET DEFAULT 0;
+ALTER TABLE gfb_activity_red_packet ALTER COLUMN IP SET DEFAULT '';
+ALTER TABLE gfb_activity_red_packet ALTER COLUMN IPARAM1 SET DEFAULT '';
+ALTER TABLE gfb_activity_red_packet ALTER COLUMN IPARAM2 SET DEFAULT '';
+ALTER TABLE gfb_activity_red_packet ALTER COLUMN IPARAM3 SET DEFAULT '';
+ALTER TABLE gfb_activity_red_packet ALTER COLUMN VPARAM1 SET DEFAULT '';
+ALTER TABLE gfb_activity_red_packet ALTER COLUMN VPARAM2 SET DEFAULT '';
+ALTER TABLE gfb_activity_red_packet ALTER COLUMN VPARAM3 SET DEFAULT '';
+
+
+ALTER TABLE gfb_activity_red_packet_log ALTER COLUMN CREATE_UP SET DEFAULT 0;
+ALTER TABLE gfb_activity_red_packet_log ALTER COLUMN UPDARE_UP SET DEFAULT 0;
+ALTER TABLE gfb_activity_red_packet_log ALTER COLUMN VPARAM1 SET DEFAULT '';
+ALTER TABLE gfb_activity_red_packet_log ALTER COLUMN VPARAM2 SET DEFAULT '';

@@ -5,6 +5,7 @@ import com.gofobao.framework.asset.vo.request.VoRechargeReq;
 import com.gofobao.framework.asset.vo.response.VoPreRechargeResp;
 import com.gofobao.framework.asset.vo.response.VoRechargeBankInfoResp;
 import com.gofobao.framework.asset.vo.response.VoRechargeEntityWrapResp;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.ApiOperation;
@@ -26,7 +27,14 @@ public class RechargeController {
     @Autowired
     private AssetBiz assetBiz ;
 
-    @ApiOperation("充值")
+    @ApiOperation("联机充值")
+    @PostMapping("/asset/rechargeOnline")
+    public ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoRechargeReq voRechargeReq){
+        voRechargeReq.setUserId(userId) ;
+        return assetBiz.rechargeOnline(request, voRechargeReq) ;
+    }
+
+    @ApiOperation("充值 -- 此接口已放弃")
     @PostMapping("/asset/recharge")
     public ResponseEntity<VoHtmlResp> recharge(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoRechargeReq voRechargeReq){
         voRechargeReq.setUserId(userId) ;

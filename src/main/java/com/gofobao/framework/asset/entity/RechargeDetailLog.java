@@ -38,4 +38,5 @@ public class RechargeDetailLog {
     private String mobile ;
     private Date updateTime ;
     private String ip ;
+    private String responseMessage ;
 }

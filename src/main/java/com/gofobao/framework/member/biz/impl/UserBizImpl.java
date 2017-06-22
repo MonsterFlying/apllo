@@ -218,7 +218,7 @@ public class UserBizImpl implements UserBiz{
         voBasicUserInfoResp.setEmail(UserHelper.hideChar(StringUtils.isEmpty(user.getEmail())? " ": user.getEmail(), UserHelper.EMAIL_NUM)) ;
         voBasicUserInfoResp.setEmailState(!StringUtils.isEmpty(user.getEmail()));
         voBasicUserInfoResp.setPhone(UserHelper.hideChar(StringUtils.isEmpty(user.getPhone())? " ": user.getPhone(), UserHelper.PHONE_NUM));
-        voBasicUserInfoResp.setEmailState(!StringUtils.isEmpty(user.getPhone()));
+        voBasicUserInfoResp.setPhoneState(!StringUtils.isEmpty(user.getPhone()));
         voBasicUserInfoResp.setRealname(UserHelper.hideChar(StringUtils.isEmpty(user.getRealname())? " ": user.getRealname(), UserHelper.REALNAME_NUM));
         voBasicUserInfoResp.setRealnameState(!StringUtils.isEmpty(user.getRealname()));
         voBasicUserInfoResp.setIdNo(UserHelper.hideChar(StringUtils.isEmpty(user.getCardId())? " ": user.getCardId(), UserHelper.CARD_ID_NUM)); ;

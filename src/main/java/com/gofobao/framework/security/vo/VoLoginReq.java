@@ -26,9 +26,8 @@ public class VoLoginReq implements Serializable{
     private String password;
 
     @ApiModelProperty(value = "图形验证码" )
-    @NotNull(message = "图形验证码不能为空！")
     private String captcha ;
 
-    @ApiModelProperty(value = "用户来源: pc android h5 ios", required = true)
+    @ApiModelProperty(value = "用户来源: 0:pc 1:android  2:ios 3:h5", required = true)
     private Integer source = 0 ;
 }

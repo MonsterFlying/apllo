@@ -23,6 +23,7 @@ public enum MqTagEnum {
     AUTO_TENDER("AUTO_TENDER"), //自动投标
     NOTICE_PUBLISH("NOTICE_PUBLISH"), // 站内信通知
     RECHARGE("RECHARGE"), // 充值
+    LOGIN("LOGIN"), // 登录
     GIVE_COUPON("GIVE_COUPON"); // 赠送流量券
     private String value;
 

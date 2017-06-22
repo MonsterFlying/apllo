@@ -13,11 +13,11 @@ public class ChannelContant {
 
     public static String getchannel(HttpServletRequest request){
         String requestSource = request.getHeader("requestSource");
-        if(requestSource.equals("0")){
+        if("0".equals(requestSource)){
             return WE_CHAT ;
-        }else if(requestSource.equals("1")){
+        }else if("1".equals(requestSource)){
             return APP ;
-        }else if(requestSource.equals("2")){
+        }else if("2".equals(requestSource)){
             return APP;
         }else{
             return HTML ;

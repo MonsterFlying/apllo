@@ -20,9 +20,10 @@ public interface CashDetailLogBiz {
     /**
      * 提现前缀
      * @param userId
+     * @param httpServletRequest
      * @return
      */
-    ResponseEntity<VoPreCashResp> preCash(Long userId);
+    ResponseEntity<VoPreCashResp> preCash(Long userId, HttpServletRequest httpServletRequest);
 
     /**
      * 提现

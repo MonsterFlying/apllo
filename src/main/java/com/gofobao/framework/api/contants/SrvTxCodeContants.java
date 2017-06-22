@@ -19,6 +19,9 @@ public class SrvTxCodeContants {
     /** 充值 */
     public static final String DIRECT_RECHARGE_PLUS = "directRechargePlus" ;
 
+    /** 金运通充值加强 */
+    public static final String DIRECT_RECHARGE_ONLINE = "directRechargeOnline" ;
+
     /** 提现 */
     public static final String INDIRECT_RECHARGE_PLUS = "indirectRechargePlus" ;
 

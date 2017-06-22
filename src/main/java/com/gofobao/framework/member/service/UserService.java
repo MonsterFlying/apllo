@@ -33,20 +33,6 @@ public interface UserService {
     boolean notExistsByPhone(String phone);
 
     /**
-     * 根据id更新用户
-     * @param users
-     * @return
-     */
-    boolean updUserById(Users users);
-
-    /**
-     * 根据手机号码更新用户
-     * @param users
-     * @return
-     */
-    void update(Users users);
-
-    /**
      * 带锁查询会员
      * @param userId
      * @return
@@ -77,7 +63,7 @@ public interface UserService {
     Users findByInviteCode(String inviteCode);
 
     /**
-     * 保存用户
+     * 保存/更新用户
      * @param users
      * @return
      */

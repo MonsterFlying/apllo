@@ -1,9 +1,13 @@
 package com.gofobao.framework.member.service.impl;
 
+import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.security.entity.JwtUserFactory;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
@@ -19,6 +23,8 @@ import javax.persistence.LockModeType;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 用户实体类
@@ -27,17 +33,32 @@ import java.util.Optional;
 @Service
 @Slf4j
 public class UserServiceImpl implements UserDetailsService, UserService{
+
+    LoadingCache<String, UserDetails> userDetailsLoadingCache = CacheBuilder
+            .newBuilder()
+            .maximumSize(1024 * 10)
+            .expireAfterWrite(30, TimeUnit.MINUTES)
+            .build(new CacheLoader<String, UserDetails>() {
+                @Override
+                public UserDetails load(String username) throws Exception {
+                    Users user  = findByAccount(username) ;
+                    if(!ObjectUtils.isEmpty(user)){
+                        return JwtUserFactory.create(user) ;
+                    }else {
+                        throw new  Exception(String.format("No user found with username '%s'.", username)) ;
+                    }
+                }
+            }) ;
+
     @Autowired
     private UsersRepository userRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Users user = findByAccount(username);
-
-        if (ObjectUtils.isEmpty(user)) {
+        try {
+            return userDetailsLoadingCache.get(username) ;
+        } catch (ExecutionException e) {
             throw new UsernameNotFoundException(String.format("No user found with username '%s'.", username));
-        } else {
-            return JwtUserFactory.create(user);
         }
     }
 
@@ -70,28 +91,6 @@ public class UserServiceImpl implements UserDetailsService, UserService{
         return CollectionUtils.isEmpty(usersList);
     }
 
-    /**
-     * 根据id更新用户
-     * @param users
-     * @return
-     */
-    public boolean updUserById(Users users){
-        if (ObjectUtils.isEmpty(users.getId())){
-            return false;
-        }
-        userRepository.save(users);
-        return true ;
-    }
-
-    /**
-     * 根据手机号码更新用户
-     * @param users
-     * @return
-     */
-    public void update(Users users){
-        userRepository.save(users);
-
-    }
 
     /**
      * 带锁查询会员

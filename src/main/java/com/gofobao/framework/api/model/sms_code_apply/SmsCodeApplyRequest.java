@@ -13,6 +13,10 @@ public class SmsCodeApplyRequest extends JixinBaseRequest {
     private String mobile ;
     /** 业务交易代码*/
     private String srvTxCode ;
+    /** 请求类型*/
+    private String reqType = "1";
+    /** 银行卡*/
+    private String cardNo ;
     /** 请求方保留*/
     private String acqRes ;
 }
