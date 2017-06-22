@@ -200,7 +200,6 @@ public class BorrowProvider {
      * @return
      * @throws Exception
      */
-    @Transactional(rollbackFor = Exception.class)
     public boolean doAgainVerify(Map<String, String> msg) throws Exception {
         boolean bool = false;
         Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get("borrowId")));
@@ -277,6 +276,7 @@ public class BorrowProvider {
      * @param borrow
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> thirdRegisterBorrowAndTender(Borrow borrow) {
         long borrowId = borrow.getId();
         ResponseEntity<VoBaseResp> resp = null;
