@@ -24,6 +24,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -65,20 +66,15 @@ public class AplloApplicationTests {
     }
 
     public static void main(String[] args) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("borrowId", 165206);
 
-        Gson gson = new Gson();
-        String paramStr = gson.toJson(map);
-        System.out.println(paramStr);
 
-        System.out.println(SecurityHelper.getSign(paramStr));
+        System.out.println(new Date().getTime());
     }
 
     @Test
     public void test() {
         /*Map<String,String> map = new HashMap<>();
-        map.put("borrowId","165206");
+        map.put("borrowId","165212");
         try {
             borrowProvider.doFirstVerify(map);
         } catch (Exception e) {
@@ -113,13 +109,13 @@ public class AplloApplicationTests {
         DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
         System.out.println((resp.getTotalItems()));*/
 
-        /*Map<String,String> msg = new HashMap<>();
-        msg.put("borrowId","165208");
+        Map<String,String> msg = new HashMap<>();
+        msg.put("borrowId","165212");
         try {
             borrowProvider.doAgainVerify(msg);
         } catch (Exception e) {
             e.printStackTrace();
-        }*/
+        }
 
         //"userId\":901,\"repaymentId\":168675,\"interestPercent\":0.0,\"isUserOpen\":true
         /*VoRepayReq voRepayReq = new VoRepayReq();
@@ -141,17 +137,17 @@ public class AplloApplicationTests {
         BidApplyQueryResp response = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, request, BidApplyQueryResp.class);
         System.out.println(response);*/
 
-        BatchDetailsQueryReq request = new BatchDetailsQueryReq();
+        /*BatchDetailsQueryReq request = new BatchDetailsQueryReq();
         request.setBatchNo("100000");
         request.setBatchTxDate("20170622");
-        request.setType("0");
+        request.setType("1");
         request.setPageNum("1");
         request.setPageSize("10");
         request.setChannel(ChannelContant.HTML);
         BatchDetailsQueryResp response = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, request, BatchDetailsQueryResp.class);
-        System.out.println(response);
+        System.out.println(response);*/
 
-        /*Borrow borrow = borrowService.findById(165198L);
+        /*Borrow borrow = borrowService.findById(165210L);
         try {
             borrowBiz.notTransferedBorrowAgainVerify(borrow);
         } catch (Exception e) {
