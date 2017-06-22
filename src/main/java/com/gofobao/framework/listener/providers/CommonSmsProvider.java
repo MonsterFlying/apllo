@@ -2,6 +2,7 @@ package com.gofobao.framework.listener.providers;
 
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.core.helper.RandomHelper;
+import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MacthHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.message.entity.SmsEntity;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 
@@ -42,6 +44,7 @@ public class CommonSmsProvider {
     boolean closePhoneSend ;
 
     public static final String TEMPLATE_KEY_SMSCODE = "smscode";
+    public static final String TEMPLATE_KEY_TIMESTAMP = "timestamp";
 
 
     /**
@@ -71,6 +74,7 @@ public class CommonSmsProvider {
         log.info(String.format("验证码: %s", code));
         Map<String, String> params = new HashMap<>() ;
         params.put(TEMPLATE_KEY_SMSCODE, code) ;
+        params.put(TEMPLATE_KEY_TIMESTAMP, DateHelper.dateToString(new Date()));
         params.putAll(body);
 
         String message = replateTemplace(template, params);  // 替换短信模板
@@ -138,6 +142,5 @@ public class CommonSmsProvider {
     public static String replateTemplace(String template, Map<String, String> params) {
         return StringHelper.replateTemplace(template, "{", params, "}");
     }
-
 
 }

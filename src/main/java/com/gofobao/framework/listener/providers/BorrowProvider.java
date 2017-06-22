@@ -16,22 +16,21 @@ import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.MathHelper;
-import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.helper.project.CapitalChangeHelper;
+import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
+import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.lend.entity.Lend;
 import com.gofobao.framework.lend.service.LendService;
 import com.gofobao.framework.member.entity.UserCache;
+import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
+import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
 import com.gofobao.framework.system.biz.StatisticBiz;
 import com.gofobao.framework.system.entity.Statistic;
-import com.gofobao.framework.system.service.StatisticService;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
@@ -44,18 +43,16 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.MessagingException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Zeke on 2017/5/31.
@@ -73,10 +70,6 @@ public class BorrowProvider {
     @Autowired
     private TenderBiz tenderBiz;
     @Autowired
-    private CapitalChangeHelper capitalChangeHelper;
-    @Autowired
-    private MqHelper mqHelper;
-    @Autowired
     private BorrowThirdBiz borrowThirdBiz;
     @Autowired
     private BorrowRepaymentThirdBiz borrowRepaymentThirdBiz;
@@ -90,8 +83,12 @@ public class BorrowProvider {
     private BorrowCollectionService borrowCollectionService;
     @Autowired
     private BorrowRepaymentService borrowRepaymentService;
+
     @Autowired
-    private StatisticBiz statisticBiz;
+    private UserService userService;
+    @Autowired
+    private MqHelper mqHelper;
+
 
     /**
      * 初审
@@ -271,107 +268,7 @@ public class BorrowProvider {
             }
 
         }
-
-        /**
-         * @// TODO: 2017/6/2 复审事件
-         */
-        //如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
-        updateUserCacheByBorrowReview(borrow);
-        //更新网站统计
-        updateStatisticByBorrowReview(borrow);
         return bool;
-    }
-
-    /**
-     * 如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
-     *
-     * @param borrow
-     */
-    private void updateUserCacheByBorrowReview(Borrow borrow) throws Exception {
-        UserCache userCache = userCacheService.findById(borrow.getUserId());
-
-        if (borrow.isTransfer()) {
-            Specification<BorrowCollection> bcs = Specifications
-                    .<BorrowCollection>and()
-                    .eq("status", 0)
-                    .eq("tenderId", borrow.getTenderId())
-                    .build();
-
-            List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
-            if (CollectionUtils.isEmpty(borrowCollectionList)) {
-                return;
-            }
-
-            Integer countInterest = 0;
-            for (BorrowCollection borrowCollection : borrowCollectionList) {
-                countInterest += borrowCollection.getInterest();
-            }
-
-            userCache.setUserId(userCache.getUserId());
-            userCache.setTjWaitCollectionPrincipal(userCache.getTjWaitCollectionPrincipal() - borrow.getMoney());
-            userCache.setTjWaitCollectionInterest(userCache.getTjWaitCollectionInterest() - countInterest);
-            userCacheService.save(userCache);
-        }
-    }
-
-    /**
-     * 更新网站统计
-     *
-     * @param borrow
-     */
-    private void updateStatisticByBorrowReview(Borrow borrow) {
-        Date nowDate = new Date();
-
-        Specification<BorrowRepayment> brs = Specifications
-                .<BorrowRepayment>and()
-                .eq("borrowId", borrow.getId())
-                .build();
-
-        List<BorrowRepayment> repaymentList = borrowRepaymentService.findList(brs);
-        if (CollectionUtils.isEmpty(repaymentList)) {//查询当前借款 还款记录
-            return;
-        }
-
-        Integer repayMoney = 0;
-        Integer principal = 0;
-        for (BorrowRepayment borrowRepayment : repaymentList) {
-            repayMoney += borrowRepayment.getRepayMoney();
-            principal += borrowRepayment.getPrincipal();
-        }
-
-        //全站统计
-        Statistic statistic = new Statistic();
-        Integer borrowMoney = borrow.getMoney();
-
-        statistic.setBorrowItems(1L);
-        statistic.setBorrowTotal((long) borrowMoney);
-        statistic.setWaitRepayTotal((long) repayMoney);
-
-        if (borrow.isTransfer()) {
-            statistic.setLzBorrowTotal((long) borrowMoney);
-        } else if (borrow.getType() == 0) {//0：车贷标；1：净值标；2：秒标；4：渠道标；
-            statistic.setTjBorrowTotal((long) borrowMoney);
-            statistic.setTjWaitRepayPrincipalTotal((long) principal);
-            statistic.setTjWaitRepayTotal((long) repayMoney);
-        } else if (borrow.getType() == 1) {
-            statistic.setJzBorrowTotal((long) borrowMoney);
-            statistic.setJzWaitRepayPrincipalTotal((long) principal);
-            statistic.setJzWaitRepayTotal((long) repayMoney);
-        } else if (borrow.getType() == 2) {
-            statistic.setMbBorrowTotal((long) borrowMoney);
-        } else if (borrow.getType() == 4) {
-            statistic.setQdBorrowTotal((long) borrowMoney);
-            statistic.setQdWaitRepayPrincipalTotal((long) principal);
-            statistic.setQdWaitRepayTotal((long) repayMoney);
-        }
-        if (!ObjectUtils.isEmpty(statistic)) {
-            try {
-                statisticBiz.caculate(statistic);
-            } catch (Exception e) {
-                log.error("borrowProvider updateStatisticByBorrowReview 异常:", e);
-            }
-        }
-
     }
 
     /**
