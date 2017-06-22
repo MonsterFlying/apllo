@@ -17,6 +17,7 @@ import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.constans.MoneyConstans;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
@@ -67,6 +68,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 
@@ -141,18 +143,74 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Override
-    public ResponseEntity<VoViewBorrowInfoWarpRes> info(Long borrowId) {
-        try {
-            BorrowInfoRes borrowInfoRes = borrowService.findByBorrowId(borrowId);
-            VoViewBorrowInfoWarpRes listWarpRes = VoBaseResp.ok("查询成功", VoViewBorrowInfoWarpRes.class);
-            if (ObjectUtils.isEmpty(borrowInfoRes)) {
-                return ResponseEntity.ok(VoBaseResp.ok("", VoViewBorrowInfoWarpRes.class));
-            } else {
-                listWarpRes.setBorrowInfoRes(borrowInfoRes);
-                return ResponseEntity.ok(listWarpRes);
-            }
-        } catch (Exception e) {
+    public ResponseEntity<VoBaseResp> info(Long borrowId) {
+        Borrow borrow = borrowService.findByBorrowId(borrowId);
+        if (ObjectUtils.isEmpty(borrow)) {
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(
+                            VoBaseResp.ERROR,
+                            "非法查询",
+                            VoViewBorrowInfoWarpRes.class));
+        }
 
+        BorrowInfoRes borrowInfoRes = new BorrowInfoRes();
+        try {
+            borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
+            borrowInfoRes.setLowest(StringHelper.formatMon(borrow.getLowest() / 100d));
+            Integer surplusMoney = borrow.getMoney() - borrow.getMoneyYes();
+            borrowInfoRes.setViewSurplusMoney(StringHelper.formatMon(surplusMoney / 100));
+            borrowInfoRes.setHideSurplusMoney(surplusMoney);
+            if (borrow.getType() == BorrowContants.REPAY_FASHION_ONCE) {
+                borrowInfoRes.setTimeLimit(borrow.getTimeLimit() + BorrowContants.DAY);
+            } else {
+                borrowInfoRes.setTimeLimit(borrow.getTimeLimit() + BorrowContants.MONTH);
+            }
+            double principal = (double) 10000 * 100;
+            double apr = NumberHelper.toDouble(StringHelper.toString(borrow.getApr()));
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(principal, apr, borrow.getTimeLimit(), borrow.getSuccessAt());
+            Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
+            Integer earnings = NumberHelper.toInt(calculatorMap.get("earnings"));
+            borrowInfoRes.setEarnings(StringHelper.formatMon(earnings / 100d) + MoneyConstans.RMB);
+            borrowInfoRes.setTenderCount(borrow.getTenderCount() + BorrowContants.TIME);
+            borrowInfoRes.setMoney(StringHelper.formatMon(borrow.getMoney() / 100d));
+            borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
+            borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes() / borrow.getMoney().doubleValue())));
+            Date endAt = DateHelper.addDays(borrow.getReleaseAt(), borrow.getValidDay());//结束时间
+            borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
+            borrowInfoRes.setSurplusSecond(-1L);
+            //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
+            Integer status = borrow.getStatus();
+            if (status == 0) { //待发布
+                status = 1;
+            } else if (status == BorrowContants.BIDDING) {//招标中
+                Date nowDate = new Date(System.currentTimeMillis());
+                if (nowDate.getTime() > endAt.getTime()) {  //当前时间大于满标时间
+                    status = 5; //已过期
+                } else {
+                    status = 3; //招标中
+                    borrowInfoRes.setSurplusSecond((endAt.getTime() - nowDate.getTime()) + 5);
+                }
+            } else if (!ObjectUtils.isEmpty(borrow.getSuccessAt()) && !ObjectUtils.isEmpty(borrow.getCloseAt())) {   //满标时间 结清
+                status = 4; //已完成
+            } else if (status == BorrowContants.PASS && ObjectUtils.isEmpty(borrow.getCloseAt())) {
+                status = 2; //还款中
+            }
+            borrowInfoRes.setType(borrow.getType());
+            if (!StringUtils.isEmpty(borrow.getTenderId())) {
+                borrowInfoRes.setType(5);
+            }
+
+            borrowInfoRes.setPassWord(StringUtils.isEmpty(borrow.getPassword()) ? false : true);
+            Users users = userService.findById(borrow.getUserId());
+            borrowInfoRes.setUserName(!StringUtils.isEmpty(users.getUsername()) ? users.getUsername() : users.getPhone());
+            borrowInfoRes.setIsNovice(borrow.getIsNovice());
+            borrowInfoRes.setStatus(status);
+            borrowInfoRes.setSuccessAt(StringUtils.isEmpty(borrow.getSuccessAt()) ? "" : DateHelper.dateToString(borrow.getSuccessAt()));
+            borrowInfoRes.setBorrowName(borrow.getName());
+            VoViewBorrowInfoWarpRes listWarpRes = VoBaseResp.ok("查询成功", VoViewBorrowInfoWarpRes.class);
+            listWarpRes.setBorrowInfoRes(borrowInfoRes);
+            return ResponseEntity.ok(listWarpRes);
+        } catch (Exception e) {
             log.info("BorrowBizImpl info fail%s", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
@@ -1354,7 +1412,7 @@ public class BorrowBizImpl implements BorrowBiz {
             String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
             return ResponseEntity
                     .badRequest()
-                    .body(VoHtmlResp.error(VoHtmlResp.ERROR,msg,VoHtmlResp.class));
+                    .body(VoHtmlResp.error(VoHtmlResp.ERROR, msg, VoHtmlResp.class));
         }
 
         List<DebtDetail> debtDetailList = GSON.fromJson(response.getSubPacks(), new com.google.common.reflect.TypeToken<List<DebtDetail>>() {
