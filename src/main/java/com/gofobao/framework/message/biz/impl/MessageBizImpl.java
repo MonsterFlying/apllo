@@ -170,7 +170,7 @@ public class MessageBizImpl implements MessageBiz {
         if(!StringUtils.isEmpty(user.getPhone())){
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前账户已经绑定手机！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户已经绑定手机号, 请前往解绑手机操作"));
         }
 
         boolean notExistsState = userService.notExistsByPhone(voAnonSmsReq.getPhone()) ;
@@ -553,6 +553,49 @@ public class MessageBizImpl implements MessageBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍候重试！"));
         }
 
+        return ResponseEntity.ok(VoBaseResp.ok("短信发送成功"));
+    }
+
+    @Override
+    public ResponseEntity<VoBaseResp> sendBindPhone4Switch(HttpServletRequest request, VoAnonSmsReq voAnonSmsReq, Long userId) {
+        // 查询用户是否已经绑定过
+        Users user = userService.findById(userId);
+        if( (ObjectUtils.isEmpty(user) || (user.getIsLock().equals(1)))){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前账户已经被系统锁定。如有疑问，请联系客户！"));
+        }
+
+        if(StringUtils.isEmpty(user.getPhone())){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户还没有绑定手机, 请前往绑定手机操作"));
+        }
+
+        boolean notExistsState = userService.notExistsByPhone(voAnonSmsReq.getPhone()) ;
+
+        if(!notExistsState) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前手机已在平台注册！"));
+        }
+
+        MqConfig config = new MqConfig() ;
+        config.setQueue(MqQueueEnum.RABBITMQ_SMS);
+        config.setTag(MqTagEnum.SMS_BUNDLE);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.PHONE, voAnonSmsReq.getPhone(), MqConfig.IP, request.getRemoteAddr()) ;
+        config.setMsg(body);
+
+        boolean state = apollomqHelper.convertAndSend(config);
+
+        if(!state) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍候重试！"));
+        }
+
+        // 调用MQ 发送注册短信
         return ResponseEntity.ok(VoBaseResp.ok("短信发送成功"));
     }
 }

@@ -89,4 +89,6 @@ public interface MessageBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest httpServletRequest, VoUserSmsReq voUserSmsReq);
+
+    ResponseEntity<VoBaseResp> sendBindPhone4Switch(HttpServletRequest request, VoAnonSmsReq voAnonSmsReq, Long userId);
 }

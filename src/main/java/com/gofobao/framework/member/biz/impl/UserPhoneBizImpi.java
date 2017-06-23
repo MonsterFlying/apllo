@@ -158,4 +158,32 @@ public class UserPhoneBizImpi implements UserPhoneBiz {
         userService.save(users) ;
         return userBiz.getUserInfoResp(users) ;
     }
+
+    @Override
+    public ResponseEntity<VoBaseResp> verfyUnBindPhoneMessage(Long userId, String smsCode) {
+        Users users = userService.findById(userId);
+        if (ObjectUtils.isEmpty(users) || ObjectUtils.isEmpty(users.getPhone())) {
+            ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前登录账号不可用，详情请联系管理员！"));
+        }
+
+        String phone = users.getPhone();
+
+        if(StringUtils.isEmpty(phone)){
+            ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "请先绑定手机!"));
+        }
+
+        boolean bool =  macthHelper.matchAndNoRemove( MqTagEnum.SMS_SWICTH_PHONE.getValue(), phone, smsCode) ;
+        if (!bool) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "原手机验证码错误/或者已过期，请重新发送短信验证码!"));
+        }
+
+
+        return ResponseEntity.ok(VoBaseResp.ok("通过"));
+    }
 }

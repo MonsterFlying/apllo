@@ -187,19 +187,6 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "你的账户没有绑定手机，请先绑定手机！", VoOpenAccountResp.class));
 
-        // 4.判断用户真实姓名
-        if ((!StringUtils.isEmpty(user.getRealname())) && !(voOpenAccountReq.getName().equals(user.getRealname())))
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你的填写真实姓名与系统保存的不一致！", VoOpenAccountResp.class));
-
-        // 5.判断身份证
-        if ((!StringUtils.isEmpty(user.getCardId())) && !(voOpenAccountReq.getIdNo().equals(user.getCardId())))
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你的填写身份证号与系统保存的不一致！", VoOpenAccountResp.class));
-
-
         String logo = null;
         String bankName = null ;
         // 获取银行卡信息
@@ -217,11 +204,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
                 bankName = info.get("bank").getAsString();
                 logo = info.get("logo").getAsString();
             }
-
         } catch (Exception e) {
             log.error("开户查询银行卡异常");
         }
-
 
         // 6 判断银行卡
         DictValue dictValue = null;
@@ -792,5 +777,4 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
         return userThirdAccountService.findByUserId(userThirdAccount.getUserId()) ;
     }
-
 }

@@ -41,7 +41,7 @@ public class CommonEmaiProvider {
     @Autowired
     MacthHelper macthHelper;
 
-    @Value("${gofobao.close-phone-send}")
+    @Value("${gofobao.close-email-send}")
     boolean closeEmailSend;
 
     public static final String TEMPLATE_KEY_SMSCODE = "smscode";
@@ -80,6 +80,9 @@ public class CommonEmaiProvider {
 
         // 获取随机验证码
         String code = RandomHelper.generateNumberCode(6); // 生成验证码
+        if(closeEmailSend){
+            code = "111111" ;
+        }
         log.info(String.format("验证码: %s", code));
         Map<String, String> params = new HashMap<>();
         params.put(TEMPLATE_KEY_SMSCODE, code);
