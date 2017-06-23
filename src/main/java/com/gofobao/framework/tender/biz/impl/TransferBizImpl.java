@@ -48,6 +48,11 @@ public class TransferBizImpl implements TransferBiz {
     @Autowired
     private AssetService assetService;
 
+    /**
+     * 转让中
+     * @param voTransferReq
+     * @return
+     */
     @Override
     public ResponseEntity<VoViewTransferOfWarpRes> tranferOfList(VoTransferReq voTransferReq) {
         try {
@@ -65,6 +70,11 @@ public class TransferBizImpl implements TransferBiz {
         }
     }
 
+    /**
+     * 已转让
+     * @param voTransferReq
+     * @return
+     */
     @Override
     public ResponseEntity<VoViewTransferedWarpRes> transferedlist(VoTransferReq voTransferReq) {
         try {
@@ -82,6 +92,11 @@ public class TransferBizImpl implements TransferBiz {
         }
     }
 
+    /**
+     * 可转让
+     * @param voTransferReq
+     * @return
+     */
     @Override
     public ResponseEntity<VoViewTransferMayWarpRes> transferMayList(VoTransferReq voTransferReq) {
         try {

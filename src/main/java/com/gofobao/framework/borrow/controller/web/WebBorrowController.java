@@ -3,6 +3,7 @@ package com.gofobao.framework.borrow.controller.web;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
+import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowStatisticsWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewVoBorrowDescWarpRes;
@@ -29,7 +30,7 @@ import java.util.Map;
  * Created by Max on 17/5/16.
  */
 
-@RequestMapping("pub/pc/borrow")
+@RequestMapping("")
 @RestController
 @Slf4j
 @Api(description = "首页标接口")
@@ -53,7 +54,7 @@ public class WebBorrowController {
 
 
     @ApiOperation(value = "pc:首页标列表; type:-1：全部 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
-    @GetMapping("pc/v2//{type}/{pageIndex}/{pageSize}")
+    @GetMapping("pub/borrow/pc/v2/{type}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewBorrowListWarpRes> pcList(@PathVariable Integer pageIndex,
                                                           @PathVariable Integer pageSize,
                                                           @PathVariable Integer type) {
@@ -67,14 +68,14 @@ public class WebBorrowController {
 
 
     @ApiOperation("标信息")
-    @GetMapping("pc/v2/info/{borrowId}")
-    public ResponseEntity<VoBaseResp> pcgetByBorrowId(@PathVariable Long borrowId) {
+    @GetMapping("pub/borrow/pc/v2/info/{borrowId}")
+    public ResponseEntity<VoViewBorrowInfoWarpRes> pcgetByBorrowId(@PathVariable Long borrowId) {
         return borrowBiz.info(borrowId);
     }
 
 
     @ApiOperation("pc：标简介")
-    @GetMapping("pc/v2/desc/{borrowId}")
+    @GetMapping("pub/borrow/pc/v2/desc/{borrowId}")
     public ResponseEntity<VoViewVoBorrowDescWarpRes> pcDesc(@PathVariable Long borrowId) {
         return borrowBiz.desc(borrowId);
     }
@@ -82,7 +83,7 @@ public class WebBorrowController {
 
 
     @ApiOperation(value = "pc:标合同")
-    @GetMapping(value = "pc/pub/borrowProtocol/{borrowId}")
+    @GetMapping(value = "pub/borrow/pc/v2/borrowProtocol/{borrowId}")
     public ResponseEntity<String> pcTakeRatesDesc(HttpServletRequest request, @PathVariable Long borrowId) {
         Long userId = 0L;
         String authToken = request.getHeader(this.tokenHeader);
@@ -106,7 +107,7 @@ public class WebBorrowController {
 
 
     @ApiOperation(value = "pc：招标中统计")
-    @GetMapping(value = "pc/v2/statistics")
+    @GetMapping(value = "pub/borrow/pc/v2/statistics")
     public ResponseEntity<VoViewBorrowStatisticsWarpRes> pcStatistics() {
         return borrowBiz.statistics();
     }

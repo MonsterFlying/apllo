@@ -143,7 +143,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Override
-    public ResponseEntity<VoBaseResp> info(Long borrowId) {
+    public ResponseEntity<VoViewBorrowInfoWarpRes> info(Long borrowId) {
         Borrow borrow = borrowService.findByBorrowId(borrowId);
         if (ObjectUtils.isEmpty(borrow)) {
             return ResponseEntity.badRequest()

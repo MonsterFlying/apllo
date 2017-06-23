@@ -23,6 +23,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -71,12 +72,13 @@ public class TransferServiceImpl implements TransferService {
 
         Specification specification = Specifications.<Borrow>and()
                 .in("id", borrowIdArray.toArray())
-                .eq("tenderId", null)
+                .ne("tenderId", null)
                 .build();
         List<Borrow> borrowList = borrowRepository.findAll(specification);
         Map<Long, Borrow> borrowMap = borrowList.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
 
         List<TransferOf> transferOfs = Lists.newArrayList();
+
         tenderList.stream().forEach(p -> {
             TransferOf transferOf = new TransferOf();
             Borrow borrow = borrowMap.get(p.getBorrowId());
@@ -109,7 +111,7 @@ public class TransferServiceImpl implements TransferService {
 
         Specification specification = Specifications.<Borrow>and()
                 .in("id", borrowIdArray.toArray())
-                .eq("tenderId", null)
+                .ne("tenderId", null)
                 .build();
         List<Borrow> borrowList = borrowRepository.findAll(specification);
         Map<Long, Borrow> borrowMap = borrowList.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
@@ -167,7 +169,7 @@ public class TransferServiceImpl implements TransferService {
         if (CollectionUtils.isEmpty(tenderList)) {
             return Collections.EMPTY_LIST;
         }
-
+        tenderList=tenderList.stream().filter(p->!StringUtils.isEmpty(p.getBorrowId())).collect(Collectors.toList());
         //标id集合
         Set<Long> borrowIdArray = tenderList.stream().map(p -> p.getBorrowId()).collect(Collectors.toSet());
 
@@ -220,6 +222,6 @@ public class TransferServiceImpl implements TransferService {
         );
         List<Tender> tenderList = tenderPage.getContent();
 
-        return Optional.ofNullable(tenderList).orElse(Collections.emptyList());
+        return Optional.ofNullable(tenderList.stream().filter(p->!StringUtils.isEmpty(p.getBorrowId())).collect(Collectors.toList())).orElse(Collections.emptyList());
     }
 }
