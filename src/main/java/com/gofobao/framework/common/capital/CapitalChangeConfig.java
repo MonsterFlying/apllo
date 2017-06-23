@@ -54,16 +54,6 @@ public class CapitalChangeConfig {
         cash.setUserCacheChangeRule("add@cashTotal");
         cash.setRemark("提现成功");
         capitalChangeList.add(cash);
-
-        // UnCash("uncash"),
-        //取消提现
-        CapitalChangeConfig uncash = new CapitalChangeConfig();
-        cash.setType(CapitalChangeEnum.Cash);
-        cash.setName("取消提现");
-        cash.setAssetChangeRule("add@noUseMoney");
-        cash.setUserCacheChangeRule("sub@cashTotal");
-        cash.setRemark("取消提现成功");
-        capitalChangeList.add(uncash);
         // 冻结
         CapitalChangeConfig frozen = new CapitalChangeConfig();
         frozen.setType(CapitalChangeEnum.Frozen);

@@ -1,7 +1,6 @@
 package com.gofobao.framework.tender.biz;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.tender.vo.request.VoGoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoTransferReq;
 import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
 import com.gofobao.framework.tender.vo.response.VoGoTenderInfo;

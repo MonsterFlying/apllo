@@ -8,6 +8,7 @@ import com.gofobao.framework.asset.service.RechargeDetailLogService;
 import com.gofobao.framework.asset.vo.response.VoBankListResp;
 import com.gofobao.framework.asset.vo.response.VoBankTypeInfoResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.BankBinHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.OKHttpHelper;
 import com.gofobao.framework.helper.project.UserHelper;
@@ -53,6 +54,9 @@ public class BankAccountBizImpl implements BankAccountBiz{
 
     @Value("${gofobao.javaDomain}")
     String javaDomain ;
+
+    @Autowired
+    BankBinHelper bankBinHelper ;
 
     @Autowired
     DictValueService dictValueServcie ;
@@ -110,36 +114,19 @@ public class BankAccountBizImpl implements BankAccountBiz{
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前银行卡已被使用", VoBankTypeInfoResp.class)) ;
         }
 
-        // 请求支付宝获取银行信息
-        Map<String, String> params = new HashMap<>();
-        params.put("bankcard", account);
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Authorization", String.format("APPCODE %s", aliyunQueryAppcode));
-        String jsonStr = OKHttpHelper.get(aliyunQueryBankUrl, params, headers);
-
-        if (StringUtils.isEmpty(jsonStr)) {
+        BankBinHelper.BankInfo bankInfo = bankBinHelper.find(account);
+        if(ObjectUtils.isEmpty(bankInfo)){
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍候重试", VoBankTypeInfoResp.class)) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查无此卡,如有问题请联系平台客户!", VoBankTypeInfoResp.class)) ;
         }
-
-        JsonObject result = new JsonParser().parse(jsonStr).getAsJsonObject();
-        int status = result.get("status").getAsInt();
-        if (status != 0) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍候重试", VoBankTypeInfoResp.class)) ;
-        }
-
-        JsonObject info = result.get("result").getAsJsonObject();
-        String type = info.get("type").getAsString();
-        if (!"借记卡".equals(type)) {
+        if (!"借记卡".equals(bankInfo.getCardType())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "平台暂不支持信用卡", VoBankTypeInfoResp.class)) ;
         }
-        String bankname = info.get("bank").getAsString();
 
+        String bankname = bankInfo.getBankName() ;
         // 获取银行
         DictValue bank = null;
         try {
@@ -159,7 +146,7 @@ public class BankAccountBizImpl implements BankAccountBiz{
         resp.setTimesLimitMoney(bank.getValue04().split(",")[0]);
         resp.setDayLimitMoney(bank.getValue05().split(",")[0]);
         resp.setMonthLimitMonty(bank.getValue06().split(",")[0]);
-        resp.setBankIcon(info.get("logo").getAsString());
+        resp.setBankIcon( String.format("%s/%s", javaDomain, bank.getValue03()) );
 
         return ResponseEntity.ok(resp) ;
 
