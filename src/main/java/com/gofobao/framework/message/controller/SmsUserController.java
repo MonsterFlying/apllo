@@ -27,9 +27,8 @@ public class SmsUserController {
 
     @ApiOperation("发送银行存管开户短信")
     @PostMapping("/openAccount")
-    public ResponseEntity<VoBaseResp> openAccount(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoUserSmsReq voUserSmsReq){
-        voUserSmsReq.setUserId(userId);
-        ResponseEntity<VoBaseResp> result = messageBiz.openAccount(voUserSmsReq) ;
+    public ResponseEntity<VoBaseResp> openAccount(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoAnonSmsReq voAnonSmsReq){
+        ResponseEntity<VoBaseResp> result = messageBiz.openAccount(userId, voAnonSmsReq) ;
         return result;
     }
 

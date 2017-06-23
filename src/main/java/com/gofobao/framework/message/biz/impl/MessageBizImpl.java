@@ -201,74 +201,6 @@ public class MessageBizImpl implements MessageBiz {
     }
 
     @Override
-    public ResponseEntity<VoBaseResp> openAccount(VoUserSmsReq voUserSmsReq) {
-
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voUserSmsReq.getUserId());
-
-        if(!ObjectUtils.isEmpty(userThirdAccount)){
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你已经开通银行存管，无需再次开通！"));
-        }
-        // 2.判断用户是否存在
-        Users users = userService.findById(voUserSmsReq.getUserId());
-
-        if(ObjectUtils.isEmpty(users)){ // 判断用户是否存在
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户不存在！"));
-        }
-
-        // 3.判断用户是否绑定手机
-        String mobile = users.getPhone() ;
-        if(StringUtils.isEmpty(mobile)){
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户未绑定手机，请绑定手机！"));
-        }
-
-
-        // 4.请求即信发送验证码
-        SmsCodeApplyRequest request = new SmsCodeApplyRequest() ;
-        request.setSrvTxCode(SrvTxCodeContants.ACCOUNT_OPEN_PLUS) ;
-        request.setMobile(mobile) ;
-        request.setChannel(ChannelContant.HTML);
-        SmsCodeApplyResponse body = jixinManager.send(
-                JixinTxCodeEnum.SMS_CODE_APPLY,
-                request,
-                SmsCodeApplyResponse.class);
-
-        if(ObjectUtils.isEmpty(body)){
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前通讯网络不稳定，请稍候重试！"));
-        }
-
-        if(!JixinResultContants.SUCCESS.equals(body.getRetCode())){
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, body.getRetMsg()));
-        }
-
-        // 5.将授权码放入redis中
-        try {
-            redisHelper.put(
-                    String.format("%s_%s", SrvTxCodeContants.ACCOUNT_OPEN_PLUS, mobile),
-                    body.getSrvAuthCode(),
-                    15 * 60);
-
-        } catch (Exception e) {
-            log.error("即信授权码写入redis异常", e);
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍候重试！"));
-        }
-
-        return ResponseEntity.ok(VoBaseResp.ok("短信发送成功"));
-
-    }
-
-    @Override
     public ResponseEntity<VoBaseResp> openAutoTender(VoUserSmsReq voUserSmsReq) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voUserSmsReq.getUserId());
         if(ObjectUtils.isEmpty(userThirdAccount)){
@@ -596,6 +528,62 @@ public class MessageBizImpl implements MessageBiz {
         }
 
         // 调用MQ 发送注册短信
+        return ResponseEntity.ok(VoBaseResp.ok("短信发送成功"));
+    }
+
+    @Override
+    public ResponseEntity<VoBaseResp> openAccount(Long userId, VoAnonSmsReq voAnonSmsReq) {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if(!ObjectUtils.isEmpty(userThirdAccount)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你已经开通银行存管，无需再次开通！"));
+        }
+
+
+        UserThirdAccount userThirdAccountByPhone = userThirdAccountService.findByMobile(voAnonSmsReq.getPhone());
+        if(!ObjectUtils.isEmpty(userThirdAccountByPhone)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "手机已在存管平台开户, 无需开户!"));
+        }
+
+        // 4.请求即信发送验证码
+        SmsCodeApplyRequest request = new SmsCodeApplyRequest() ;
+        request.setSrvTxCode(SrvTxCodeContants.ACCOUNT_OPEN_PLUS) ;
+        request.setMobile(voAnonSmsReq.getPhone()) ;
+        request.setChannel(ChannelContant.HTML);
+        SmsCodeApplyResponse body = jixinManager.send(
+                JixinTxCodeEnum.SMS_CODE_APPLY,
+                request,
+                SmsCodeApplyResponse.class);
+
+        if(ObjectUtils.isEmpty(body)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前通讯网络不稳定，请稍候重试！"));
+        }
+
+        if(!JixinResultContants.SUCCESS.equals(body.getRetCode())){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, body.getRetMsg()));
+        }
+
+        // 5.将授权码放入redis中
+        try {
+            redisHelper.put(
+                    String.format("%s_%s", SrvTxCodeContants.ACCOUNT_OPEN_PLUS, voAnonSmsReq.getPhone()),
+                    body.getSrvAuthCode(),
+                    15 * 60);
+
+        } catch (Exception e) {
+            log.error("即信授权码写入redis异常", e);
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍候重试！"));
+        }
+
         return ResponseEntity.ok(VoBaseResp.ok("短信发送成功"));
     }
 }

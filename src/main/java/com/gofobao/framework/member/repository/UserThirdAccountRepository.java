@@ -11,4 +11,5 @@ import org.springframework.stereotype.Repository;
 public interface UserThirdAccountRepository extends JpaRepository<UserThirdAccount, Long>{
     UserThirdAccount findTopByCardNo(String account);
 
+    UserThirdAccount findTopByMobile(String phone);
 }
