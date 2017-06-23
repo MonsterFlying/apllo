@@ -1,5 +1,6 @@
 package com.gofobao.framework.api.helper;
 
+import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.repsonse.JixinBaseResponse;
 import com.gofobao.framework.api.request.JixinBaseRequest;
 import com.gofobao.framework.common.constans.TypeTokenContants;
@@ -139,6 +140,7 @@ public class JixinManager {
             return null;
         }
 
+        t.setRetMsg(JixinResultContants.getMessage(t.getRetCode())) ;
         return t;
     }
 
@@ -194,6 +196,7 @@ public class JixinManager {
         }
         log.info(String.format("即信响应报文:url=%s body=%s", url, gson.toJson(body)));
 
+        body.setRetMsg(JixinResultContants.getMessage(body.getRetCode())) ;
         // 请求插入数据
         return body;
     }
