@@ -35,7 +35,7 @@ public class WebTransferController {
         return transferBiz.tranferOfList(transferReq);
     }
 
-    @ApiOperation("转让中列表")
+    @ApiOperation("已转让列表")
     @GetMapping("v2/transfered/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewTransferedWarpRes> pcTransferedlist(@PathVariable Integer pageIndex,
                                                                     @PathVariable Integer pageSize,
@@ -46,7 +46,7 @@ public class WebTransferController {
         transferReq.setPageSize(pageSize);
         return transferBiz.transferedlist(transferReq);
     }
-    @ApiOperation("转让中列表")
+    @ApiOperation("可转让列表")
     @GetMapping("v2/transferMay/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewTransferMayWarpRes> pcTransferMayList(@PathVariable Integer pageIndex,
                                                                       @PathVariable Integer pageSize,

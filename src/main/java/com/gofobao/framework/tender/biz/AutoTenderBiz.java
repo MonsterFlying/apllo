@@ -1,6 +1,7 @@
 package com.gofobao.framework.tender.biz;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.tender.vo.request.VoDelAutoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoOpenAutoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoSaveAutoTenderReq;
@@ -54,4 +55,12 @@ public interface AutoTenderBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> delAutoTender(VoDelAutoTenderReq voDelAutoTenderReq);
+
+    /**
+     * 自动投标说明
+     *
+     * @return
+     * @throws Exception
+     */
+    ResponseEntity<VoHtmlResp> autoTenderDesc();
 }
