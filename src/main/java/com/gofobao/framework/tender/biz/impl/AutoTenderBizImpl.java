@@ -1,11 +1,10 @@
 package com.gofobao.framework.tender.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.common.response.CommonRespMsgStatesContants;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.BeanHelper;
-import com.gofobao.framework.helper.MathHelper;
-import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.*;
+import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.tender.biz.AutoTenderBiz;
 import com.gofobao.framework.tender.contants.AutoTenderContants;
 import com.gofobao.framework.tender.contants.BorrowContants;
@@ -20,17 +19,19 @@ import com.gofobao.framework.tender.vo.response.VoViewUserAutoTenderWarpRes;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Base64Utils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.web.bind.annotation.PostMapping;
 
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Zeke on 2017/5/27.
@@ -39,6 +40,8 @@ import java.util.List;
 public class AutoTenderBizImpl implements AutoTenderBiz {
     @Autowired
     private AutoTenderService autoTenderService;
+    @Autowired
+    private ThymeleafHelper thymeleafHelper;
 
     @Override
     public ResponseEntity<VoViewUserAutoTenderWarpRes> list(Long userId) {
@@ -385,5 +388,19 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
         voAutoTenderInfo.setTimelimitLast(autoTender.getTimelimitLast());
 
         return ResponseEntity.ok(voAutoTenderInfo);
+    }
+
+    /**
+     * 自动投标说明
+     *
+     * @return
+     * @throws Exception
+     */
+    public ResponseEntity<VoHtmlResp> autoTenderDesc() {
+        Map<String, Object> paranMap = new HashMap<>();
+        String content = thymeleafHelper.build("tender/autoTender", paranMap);
+        VoHtmlResp resp = VoHtmlResp.ok("获取成功!", VoHtmlResp.class);
+        resp.setHtml(Base64Utils.encodeToString(content.getBytes()));
+        return ResponseEntity.ok(resp);
     }
 }

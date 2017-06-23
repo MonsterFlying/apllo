@@ -37,10 +37,9 @@ public class WebLendController {
 
 
     @RequestMapping(value = "/v2/info/{lendId}", method = RequestMethod.GET)
-    @ApiOperation("出借想起")
+    @ApiOperation("出借详情")
     public ResponseEntity<VoViewLendInfoWarpRes> info(@PathVariable Long lendId,
                                                       @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-
         return lendBiz.info(userId, lendId);
     }
 
