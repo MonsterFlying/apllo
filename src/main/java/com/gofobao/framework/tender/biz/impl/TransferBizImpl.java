@@ -14,11 +14,9 @@ import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferService;
-import com.gofobao.framework.tender.vo.request.VoGoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoTransferReq;
 import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
 import com.gofobao.framework.tender.vo.response.*;
-import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -28,11 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestAttribute;
-import springfox.documentation.annotations.ApiIgnore;
 
 import java.util.Date;
 import java.util.List;
@@ -55,6 +48,11 @@ public class TransferBizImpl implements TransferBiz {
     @Autowired
     private AssetService assetService;
 
+    /**
+     * 转让中
+     * @param voTransferReq
+     * @return
+     */
     @Override
     public ResponseEntity<VoViewTransferOfWarpRes> tranferOfList(VoTransferReq voTransferReq) {
         try {
@@ -72,6 +70,11 @@ public class TransferBizImpl implements TransferBiz {
         }
     }
 
+    /**
+     * 已转让
+     * @param voTransferReq
+     * @return
+     */
     @Override
     public ResponseEntity<VoViewTransferedWarpRes> transferedlist(VoTransferReq voTransferReq) {
         try {
@@ -89,6 +92,11 @@ public class TransferBizImpl implements TransferBiz {
         }
     }
 
+    /**
+     * 可转让
+     * @param voTransferReq
+     * @return
+     */
     @Override
     public ResponseEntity<VoViewTransferMayWarpRes> transferMayList(VoTransferReq voTransferReq) {
         try {

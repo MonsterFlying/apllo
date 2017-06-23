@@ -20,6 +20,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,15 +49,15 @@ public class AssetLogServiceImpl implements AssetLogService {
         Pageable pageable = new PageRequest(voAssetLogReq.getPageIndex()
                 , voAssetLogReq.getPageSize()
                 , sort);
+        Date startTime=DateHelper.stringToDate(voAssetLogReq.getStartTime(),DateHelper.DATE_FORMAT_YMD);
+        Date endTime=DateHelper.stringToDate(voAssetLogReq.getEndTime(),DateHelper.DATE_FORMAT_YMD);
 
         Specification<AssetLog> specification = Specifications.<AssetLog>and()
                 .eq(!StringUtils.isEmpty(voAssetLogReq.getType()), "type", voAssetLogReq.getType())
                 .between("createdAt",
                         new Range<>(
-                                DateHelper.beginOfDate(
-                                        DateHelper.stringToDate(voAssetLogReq.getStartTime())),
-                                DateHelper.endOfDate(
-                                        DateHelper.stringToDate(voAssetLogReq.getEndTime()))))
+                                DateHelper.beginOfDate(startTime),
+                                DateHelper.endOfDate(endTime)))
                 .eq("userId", voAssetLogReq.getUserId())
                 .build();
         Page<AssetLog> assetLogPage = assetLogRepository.findAll(specification, pageable);

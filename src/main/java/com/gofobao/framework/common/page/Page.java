@@ -40,6 +40,9 @@ public class Page extends VoBaseReq{
         if (ObjectUtils.isEmpty(pageSize) || pageSize <= 0) {
             this.pageSize = CommonPageContants.DEFAULT_PAGE_SIZE;
         } else {
+            if(pageSize>50){
+                pageSize=50;
+            }
             this.pageSize = pageSize;
         }
     }
