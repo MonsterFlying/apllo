@@ -48,9 +48,9 @@ jixin: #银行存管
   redPacketAccountId: "6212462040000150021" #红包账户
   handlingChargeAccountId: "6227002154215326514" #电子手续费账户
 gofobao:
-  javaDomain: lang.ngrok.club:8080
-  webDomain: lang.ngrok.club:8080
-  h5Domain: lang.ngrok.club:8080
+  javaDomain: lang.ngrok.club
+  webDomain: lang.ngrok.club
+  h5Domain: lang.ngrok.club
   imageDomain : http://www.gofobao.com
   captcha: false # 全站是否开启图形验证码验证
   close-email-send: true # 关闭邮箱发送
