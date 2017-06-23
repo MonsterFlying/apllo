@@ -29,7 +29,7 @@ public interface LendBiz {
      * @param voCreateLend
      * @return
      */
-    ResponseEntity<VoBaseResp> create(VoCreateLend voCreateLend) throws Exception;
+    ResponseEntity<VoBaseResp> create(VoCreateLend voCreateLend);
 
     /**
      * 结束有草出借
@@ -37,7 +37,7 @@ public interface LendBiz {
      * @param voEndLend
      * @return
      */
-    ResponseEntity<VoBaseResp> end(VoEndLend voEndLend) throws Exception;
+    ResponseEntity<VoBaseResp> end(VoEndLend voEndLend);
 
     /**
      * 有草出借摘草
@@ -45,7 +45,7 @@ public interface LendBiz {
      * @param voLend
      * @return
      */
-    ResponseEntity<VoBaseResp> lend(VoLend voLend) throws Exception;
+    ResponseEntity<VoBaseResp> lend(VoLend voLend);
 
 
 

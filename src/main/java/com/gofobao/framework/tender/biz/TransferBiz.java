@@ -1,8 +1,10 @@
 package com.gofobao.framework.tender.biz;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.tender.vo.request.VoGoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoTransferReq;
 import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
+import com.gofobao.framework.tender.vo.response.VoGoTenderInfo;
 import com.gofobao.framework.tender.vo.response.VoViewTransferMayWarpRes;
 import com.gofobao.framework.tender.vo.response.VoViewTransferOfWarpRes;
 import com.gofobao.framework.tender.vo.response.VoViewTransferedWarpRes;
@@ -28,4 +30,12 @@ public interface TransferBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> transferTender(VoTransferTenderReq voTransferTenderReq);
+
+    /**
+     * 获取立即转让详情
+     *
+     * @param tenderId 投标记录Id
+     * @return
+     */
+    ResponseEntity<VoGoTenderInfo> goTenderInfo(Long tenderId,Long userId);
 }

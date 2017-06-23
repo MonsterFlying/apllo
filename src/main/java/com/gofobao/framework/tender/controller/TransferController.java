@@ -4,8 +4,10 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.TransferBiz;
+import com.gofobao.framework.tender.vo.request.VoGoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoTransferReq;
 import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
+import com.gofobao.framework.tender.vo.response.VoGoTenderInfo;
 import com.gofobao.framework.tender.vo.response.VoViewTransferMayWarpRes;
 import com.gofobao.framework.tender.vo.response.VoViewTransferOfWarpRes;
 import com.gofobao.framework.tender.vo.response.VoViewTransferedWarpRes;
@@ -13,6 +15,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
@@ -67,7 +70,7 @@ public class TransferController {
 
 
     @ApiOperation("债券转让说明")
-    @PostMapping("/v2/transfer/desc")
+    @GetMapping("/v2/transfer/desc")
     public ResponseEntity<String> desc() {
         String content;
         try {
@@ -77,6 +80,7 @@ public class TransferController {
         }
         return ResponseEntity.ok(content);
     }
+
     /**
      * 债权转让
      *
@@ -84,9 +88,21 @@ public class TransferController {
      * @return
      */
     @ApiOperation("债权转让")
-    @GetMapping("v2/tender/transfer")
+    @PostMapping("v2/transfer")
     public ResponseEntity<VoBaseResp> transferTender(@ModelAttribute @Valid VoTransferTenderReq voTransferTenderReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voTransferTenderReq.setUserId(userId);
         return transferBiz.transferTender(voTransferTenderReq);
+    }
+
+    /**
+     * 获取立即转让详情
+     *
+     * @param tenderId 投标记录Id
+     * @return
+     */
+    @ApiOperation("获取立即转让详情")
+    @GetMapping("v2/transfer/info/{tenderId}")
+    public ResponseEntity<VoGoTenderInfo> goTenderInfo(@PathVariable Long tenderId, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return transferBiz.goTenderInfo(tenderId,userId);
     }
 }

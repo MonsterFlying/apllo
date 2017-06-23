@@ -91,6 +91,8 @@ public class BorrowContants {
 
     public static final String TIME = "次";
 
+    public static final String  PERCENT="%";
+
     /**
      * 车贷标
      */

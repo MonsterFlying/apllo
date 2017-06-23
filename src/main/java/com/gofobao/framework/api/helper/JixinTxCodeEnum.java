@@ -200,6 +200,13 @@ public enum JixinTxCodeEnum {
     TRUSTEE_PAY_QUERY(
             "trusteePayQuery",
             "/escrow/p2p/online"
+    ),
+    /**
+     * 受托支付查询
+     */
+    ACCOUNT_QUERY_BY_MOBILE(
+            "accountQueryByMobile",
+            "/escrow/p2p/online"
     );
 
     private String value;

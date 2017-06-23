@@ -22,5 +22,6 @@ public class VoViewLend {
     private String statusStr;
     @ApiModelProperty("进度")
     private Double spend;
-
+    @ApiModelProperty("状态(0:可借,1：结束)")
+    private Integer status;
 }

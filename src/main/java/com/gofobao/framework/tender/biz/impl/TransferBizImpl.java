@@ -7,13 +7,18 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.tender.biz.TransferBiz;
+import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferService;
+import com.gofobao.framework.tender.vo.request.VoGoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoTransferReq;
 import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
 import com.gofobao.framework.tender.vo.response.*;
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -23,6 +28,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
+import springfox.documentation.annotations.ApiIgnore;
 
 import java.util.Date;
 import java.util.List;
@@ -48,12 +58,12 @@ public class TransferBizImpl implements TransferBiz {
     @Override
     public ResponseEntity<VoViewTransferOfWarpRes> tranferOfList(VoTransferReq voTransferReq) {
         try {
-            List<TransferOf> transferOfs= transferService.transferOfList(voTransferReq);
-            VoViewTransferOfWarpRes voViewTransferOfWarpRes= VoBaseResp.ok("查询成功",VoViewTransferOfWarpRes.class);
+            List<TransferOf> transferOfs = transferService.transferOfList(voTransferReq);
+            VoViewTransferOfWarpRes voViewTransferOfWarpRes = VoBaseResp.ok("查询成功", VoViewTransferOfWarpRes.class);
             voViewTransferOfWarpRes.setTransferOfs(transferOfs);
             return ResponseEntity.ok(voViewTransferOfWarpRes);
-        }catch (Exception e){
-            log.info("TransferBizImpl tranferOfList query fail%S",e);
+        } catch (Exception e) {
+            log.info("TransferBizImpl tranferOfList query fail%S", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,
@@ -65,12 +75,12 @@ public class TransferBizImpl implements TransferBiz {
     @Override
     public ResponseEntity<VoViewTransferedWarpRes> transferedlist(VoTransferReq voTransferReq) {
         try {
-            List<Transfered> transfereds= transferService.transferedList(voTransferReq);
-            VoViewTransferedWarpRes voViewTransferOfWarpRes= VoBaseResp.ok("查询成功",VoViewTransferedWarpRes.class);
+            List<Transfered> transfereds = transferService.transferedList(voTransferReq);
+            VoViewTransferedWarpRes voViewTransferOfWarpRes = VoBaseResp.ok("查询成功", VoViewTransferedWarpRes.class);
             voViewTransferOfWarpRes.setTransferedList(transfereds);
             return ResponseEntity.ok(voViewTransferOfWarpRes);
-        }catch (Exception e){
-            log.info("TransferBizImpl transferedlist query fail%S",e);
+        } catch (Exception e) {
+            log.info("TransferBizImpl transferedlist query fail%S", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,
@@ -82,12 +92,12 @@ public class TransferBizImpl implements TransferBiz {
     @Override
     public ResponseEntity<VoViewTransferMayWarpRes> transferMayList(VoTransferReq voTransferReq) {
         try {
-            List<TransferMay> transferOfs= transferService.transferMayList(voTransferReq);
-            VoViewTransferMayWarpRes voViewTransferOfWarpRes= VoBaseResp.ok("查询成功",VoViewTransferMayWarpRes.class);
+            List<TransferMay> transferOfs = transferService.transferMayList(voTransferReq);
+            VoViewTransferMayWarpRes voViewTransferOfWarpRes = VoBaseResp.ok("查询成功", VoViewTransferMayWarpRes.class);
             voViewTransferOfWarpRes.setMayList(transferOfs);
             return ResponseEntity.ok(voViewTransferOfWarpRes);
-        }catch (Exception e){
-            log.info("TransferBizImpl transferMayList query fail%S",e);
+        } catch (Exception e) {
+            log.info("TransferBizImpl transferMayList query fail%S", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,
@@ -129,7 +139,7 @@ public class TransferBizImpl implements TransferBiz {
                 .eq("tenderId", tenderId)
                 .build();
 
-        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "`order`"));
+        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "order"));
         if (CollectionUtils.isEmpty(borrowCollectionList)) {
             return ResponseEntity
                     .badRequest()
@@ -204,5 +214,85 @@ public class TransferBizImpl implements TransferBiz {
         tenderService.updateById(tender);
 
         return ResponseEntity.ok(VoBaseResp.ok("立即转让成功!"));
+    }
+
+    /**
+     * 获取立即转让详情
+     *
+     * @param tenderId 投标记录Id
+     * @return
+     */
+    public ResponseEntity<VoGoTenderInfo> goTenderInfo(Long tenderId, Long userId) {
+
+        if ((ObjectUtils.isEmpty(tenderId)) || (ObjectUtils.isEmpty(userId))) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoGoTenderInfo.error(VoGoTenderInfo.ERROR, "参数缺少!", VoGoTenderInfo.class));
+        }
+        Tender tender = tenderService.findById(tenderId);
+        if (!userId.equals(tender.getUserId())) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoGoTenderInfo.error(VoGoTenderInfo.ERROR, "只有债权持有人才允许转让!", VoGoTenderInfo.class));
+        }
+
+        Specification<BorrowCollection> bcs = Specifications
+                .<BorrowCollection>and()
+                .eq("tenderId", tenderId)
+                .eq("status", 0)
+                .build();
+        List<BorrowCollection> borrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "id"));
+        if (CollectionUtils.isEmpty(borrowCollections)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoGoTenderInfo.error(VoGoTenderInfo.ERROR, "未找到回款记录!", VoGoTenderInfo.class));
+        }
+
+        BorrowCollection borrowCollection = borrowCollections.get(0);
+        Borrow borrow = borrowService.findById(tender.getBorrowId());
+        if (ObjectUtils.isEmpty(borrow)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoGoTenderInfo.error(VoGoTenderInfo.ERROR, "未找到借款记录!", VoGoTenderInfo.class));
+        }
+
+        String repayFashionStr = "";
+        switch (borrow.getRepayFashion()) {
+            case BorrowContants.REPAY_FASHION_AYFQ_NUM:
+                repayFashionStr = "按月分期";
+                break;
+            case BorrowContants.REPAY_FASHION_YCBX_NUM:
+                repayFashionStr = "一次性还本付息";
+                break;
+            case BorrowContants.REPAY_FASHION_XXHB_NUM:
+                repayFashionStr = "先息后本";
+                break;
+            default:
+
+        }
+
+        int money = 0;
+        for (BorrowCollection bean : borrowCollections) {
+            money += bean.getPrincipal();
+        }
+        // 0.4% + 0.08% * (剩余期限-1)  （费率最高上限为1.28%）
+        double rate = 0.004 + 0.0008 * (borrowCollections.size() - 1);
+        rate = Math.min(rate, 0.0128);
+        Double fee = money * rate;
+        int day = DateHelper.diffInDays(borrowCollection.getCollectionAt(), new Date(), false);
+        day = day < 0 ? 0 : day;
+
+        VoGoTenderInfo voGoTenderInfo = VoGoTenderInfo.ok("查询成功!", VoGoTenderInfo.class);
+        voGoTenderInfo.setTenderId(tender.getId());
+        voGoTenderInfo.setApr(StringHelper.formatDouble(borrow.getApr(), 100.0, false));
+        voGoTenderInfo.setBorrowName(borrow.getName());
+        voGoTenderInfo.setNextRepaymentDate(DateHelper.dateToString(borrowCollection.getCollectionAt(), DateHelper.DATE_FORMAT_YMD));
+        voGoTenderInfo.setSurplusDate(String.valueOf(day));
+        voGoTenderInfo.setRepayFashionStr(repayFashionStr);
+        voGoTenderInfo.setTimeLimit(String.valueOf(borrowCollections.size()) + "个月");
+        voGoTenderInfo.setMoney(StringHelper.formatDouble(money, 100.0, true));
+        voGoTenderInfo.setFee(StringHelper.formatDouble(fee, 100.0, true));
+
+        return ResponseEntity.ok(voGoTenderInfo);
     }
 }

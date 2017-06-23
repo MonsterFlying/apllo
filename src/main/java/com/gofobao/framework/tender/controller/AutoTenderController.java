@@ -1,6 +1,7 @@
 package com.gofobao.framework.tender.controller;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.AutoTenderBiz;
 import com.gofobao.framework.tender.vo.request.VoDelAutoTenderReq;
@@ -88,5 +89,17 @@ public class AutoTenderController {
     @PostMapping("/v2/info")
     public ResponseEntity<VoAutoTenderInfo> queryAutoTenderInfo(Long autoTenderId, Long userId) {
         return autoTenderBiz.queryAutoTenderInfo(autoTenderId, userId);
+    }
+
+    /**
+     * 自动投标说明
+     *
+     * @return
+     * @throws Exception
+     */
+    @ApiOperation("更新自动投标规则")
+    @PostMapping("/v2/desc")
+    public ResponseEntity<VoHtmlResp> autoTenderDesc() {
+        return autoTenderBiz.autoTenderDesc();
     }
 }
