@@ -47,7 +47,7 @@ public class BannerServiceImpl implements BannerService {
         } catch (Exception e) {
             return Collections.EMPTY_LIST;
         }
-        return result;
+        return  result;
     }
 
 

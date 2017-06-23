@@ -20,8 +20,9 @@ public class AssetLogController {
     @Autowired
     private AssetBiz assetBiz;
 
-    @RequestMapping(value = "/assetLog/v2/list",method = RequestMethod.POST)
-    public ResponseEntity assetLogResList(@ModelAttribute VoAssetLogReq voAssetLogReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    @RequestMapping(value = "pub/assetLog/v2/list",method = RequestMethod.POST)
+    public ResponseEntity assetLogResList(@ModelAttribute VoAssetLogReq voAssetLogReq/*, @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+        Long userId=901L;
         voAssetLogReq.setUserId(userId);
         return assetBiz.assetLogResList(voAssetLogReq);
     }

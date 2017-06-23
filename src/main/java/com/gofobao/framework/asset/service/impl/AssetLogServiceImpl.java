@@ -51,7 +51,12 @@ public class AssetLogServiceImpl implements AssetLogService {
 
         Specification<AssetLog> specification = Specifications.<AssetLog>and()
                 .eq(!StringUtils.isEmpty(voAssetLogReq.getType()), "type", voAssetLogReq.getType())
-                .between("createdAt", new Range<>(DateHelper.stringToDate(voAssetLogReq.getStartTime()), DateHelper.stringToDate(voAssetLogReq.getEndTime())))
+                .between("createdAt",
+                        new Range<>(
+                                DateHelper.beginOfDate(
+                                        DateHelper.stringToDate(voAssetLogReq.getStartTime())),
+                                DateHelper.endOfDate(
+                                        DateHelper.stringToDate(voAssetLogReq.getEndTime()))))
                 .eq("userId", voAssetLogReq.getUserId())
                 .build();
         Page<AssetLog> assetLogPage = assetLogRepository.findAll(specification, pageable);
@@ -73,20 +78,19 @@ public class AssetLogServiceImpl implements AssetLogService {
                 .between("createdAt", new Range<>(voAssetLogReq.getEndTime(), voAssetLogReq.getEndTime()))
                 .build();
         Page<AssetLog> assetLogPage = assetLogRepository.findAll(specification, new PageRequest(voAssetLogReq.getPageIndex(), voAssetLogReq.getPageSize(), new Sort(Sort.Direction.DESC, "id")));
-        List<AssetLog>assetLogs=assetLogPage.getContent();
+        List<AssetLog> assetLogs = assetLogPage.getContent();
 
-        if(CollectionUtils.isEmpty(assetLogs)) {
+        if (CollectionUtils.isEmpty(assetLogs)) {
             return Collections.EMPTY_LIST;
         }
-        List<AssetLog>logs= Lists.newArrayList();
+        List<AssetLog> logs = Lists.newArrayList();
 
-        assetLogs.stream().forEach(p->{
-
+        assetLogs.stream().forEach(p -> {
 
 
         });
 
-    return  null;
+        return null;
         // return Optional.ofNullable(assetLogPage.getContent()).orElse(Collections.EMPTY_LIST);
     }
 

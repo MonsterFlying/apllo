@@ -1,9 +1,6 @@
 package com.gofobao.framework.security;
 
-import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.security.contants.SecurityContants;
-import com.gofobao.framework.security.entity.JwtUserFactory;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -22,13 +19,11 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.mail.internet.ContentType;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
