@@ -307,7 +307,7 @@ public class AssetBizImpl implements AssetBiz {
         directRechargeOnlineRequest.setIdType(IdTypeContant.ID_CARD);
         directRechargeOnlineRequest.setIdNo(userThirdAccount.getIdNo());
         directRechargeOnlineRequest.setName(users.getRealname());
-        directRechargeOnlineRequest.setMobile(users.getPhone());
+        directRechargeOnlineRequest.setMobile(userThirdAccount.getMobile());
         directRechargeOnlineRequest.setCardNo(userThirdAccount.getCardNo());
         directRechargeOnlineRequest.setCurrency("156");
         directRechargeOnlineRequest.setSmsSeq(smsSeq);
@@ -454,7 +454,7 @@ public class AssetBizImpl implements AssetBiz {
         directRechargePlusRequest.setIdType(IdTypeContant.ID_CARD);
         directRechargePlusRequest.setIdNo(userThirdAccount.getIdNo());
         directRechargePlusRequest.setName(users.getRealname());
-        directRechargePlusRequest.setMobile(users.getPhone());
+        directRechargePlusRequest.setMobile(userThirdAccount.getMobile());
         directRechargePlusRequest.setCardNo(userThirdAccount.getCardNo());
         directRechargePlusRequest.setCurrency("156");
         directRechargePlusRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/asset/recharge/callback"));

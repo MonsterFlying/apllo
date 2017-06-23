@@ -23,4 +23,5 @@ public interface UserThirdAccountService {
 
     UserThirdAccount findTopByCardNo(String account);
 
+    UserThirdAccount findByMobile(String phone);
 }

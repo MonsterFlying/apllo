@@ -16,7 +16,7 @@ ALTER TABLE `gfb_borrow_tender` ADD COLUMN `vparam2` varchar(255) COLLATE utf8_u
 ALTER TABLE `gfb_borrow_tender` ADD COLUMN `vparam3` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
 ALTER TABLE `gfb_borrow_tender` ADD COLUMN `t_user_id` int(11) DEFAULT NULL COMMENT '银行电子账户标 id';
 
-ALTER TABLE `gfb_borrow_collection` ADD COLUMN `borrow_id` int(11) DEFAULT NULL COMMENT '借款id',;
+ALTER TABLE `gfb_borrow_collection` ADD COLUMN `borrow_id` int(11) DEFAULT NULL COMMENT '借款id';
 ALTER TABLE `gfb_borrow_collection` ADD COLUMN `user_id` int(11) DEFAULT NULL COMMENT '投标会员id';
 ALTER TABLE `gfb_borrow_collection` ADD COLUMN `iparam1` int(11) DEFAULT NULL;
 ALTER TABLE `gfb_borrow_collection` ADD COLUMN `iparam2` int(11) DEFAULT NULL;
@@ -62,7 +62,7 @@ CREATE TABLE `gfb_user_third_account` (
   `create_id` int(11) DEFAULT '0',
   `update_id` int(11) DEFAULT '0',
   `del` int(11) DEFAULT NULL COMMENT '0，有效， 1.无效',
-  `auto_tender_order_id` varchar(255) DEFAULT NULL COMMENT '自动投标签约订单号',
+  `auto_tender_order_id` varchar(255) DEFAULT '' COMMENT '自动投标签约订单号',
   `auto_tender_tx_amount` int(12) DEFAULT '0' COMMENT '单笔投标金额的上限',
   `auto_tender_tot_amount` int(12) DEFAULT '0' COMMENT '自动投标总金额上限',
   `auto_transfer_bond_order_id` varchar(255) DEFAULT NULL COMMENT '自动债权转让签约单号',

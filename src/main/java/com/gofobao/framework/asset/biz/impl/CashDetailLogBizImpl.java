@@ -335,7 +335,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         request.setIdType(IdTypeContant.ID_CARD);
         request.setIdNo(users.getCardId());
         request.setName(users.getRealname());
-        request.setMobile(users.getPhone());
+        request.setMobile(userThirdAccount.getMobile());
         request.setCardNo(userThirdAccount.getCardNo());
         request.setAccountId(userThirdAccount.getAccountId());
         request.setTxAmount(StringHelper.formatDouble(new Double((cashMoney - fee) / 100D), false )); //  交易金额
