@@ -36,7 +36,7 @@ public class TenderController {
     @Autowired
     private AutoTenderBiz autoTenderBiz;
 
-    TenderUserReq tenderUserReq=new TenderUserReq();
+    TenderUserReq tenderUserReq = new TenderUserReq();
 
 
     @ApiOperation("投标用户列表")
@@ -62,6 +62,4 @@ public class TenderController {
     public ResponseEntity<VoViewUserAutoTenderWarpRes> tender(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return autoTenderBiz.list(userId);
     }
-
-
 }

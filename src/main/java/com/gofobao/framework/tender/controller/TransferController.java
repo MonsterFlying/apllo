@@ -70,7 +70,7 @@ public class TransferController {
 
 
     @ApiOperation("债券转让说明")
-    @PostMapping("/v2/transfer/desc")
+    @GetMapping("/v2/transfer/desc")
     public ResponseEntity<String> desc() {
         String content;
         try {
@@ -80,6 +80,7 @@ public class TransferController {
         }
         return ResponseEntity.ok(content);
     }
+
     /**
      * 债权转让
      *
@@ -87,7 +88,7 @@ public class TransferController {
      * @return
      */
     @ApiOperation("债权转让")
-    @GetMapping("v2/transfer/transfer")
+    @PostMapping("v2/transfer")
     public ResponseEntity<VoBaseResp> transferTender(@ModelAttribute @Valid VoTransferTenderReq voTransferTenderReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voTransferTenderReq.setUserId(userId);
         return transferBiz.transferTender(voTransferTenderReq);
@@ -96,13 +97,12 @@ public class TransferController {
     /**
      * 获取立即转让详情
      *
-     * @param voGoTenderReq 投标记录Id
+     * @param tenderId 投标记录Id
      * @return
      */
     @ApiOperation("获取立即转让详情")
-    @GetMapping("v2/transfer/info")
-    public ResponseEntity<VoGoTenderInfo> goTenderInfo(@ModelAttribute @Validated VoGoTenderReq voGoTenderReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
-        voGoTenderReq.setUserId(userId);
-        return transferBiz.goTenderInfo(voGoTenderReq);
+    @GetMapping("v2/transfer/info/{tenderId}")
+    public ResponseEntity<VoGoTenderInfo> goTenderInfo(@PathVariable Long tenderId, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return transferBiz.goTenderInfo(tenderId,userId);
     }
 }

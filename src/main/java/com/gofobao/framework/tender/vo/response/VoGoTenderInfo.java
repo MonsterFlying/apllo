@@ -15,13 +15,13 @@ public class VoGoTenderInfo extends VoBaseResp{
     private String borrowName;
 
     @ApiModelProperty("年利率")
-    private Integer apr;
+    private String apr;
 
     @ApiModelProperty("转让期限")
     private String timeLimit;
 
-    @ApiModelProperty("装让本金")
-    private Integer money;
+    @ApiModelProperty("转让本金（元）")
+    private String money;
 
     @ApiModelProperty("下一个还款日期")
     private String nextRepaymentDate;
@@ -29,7 +29,7 @@ public class VoGoTenderInfo extends VoBaseResp{
     @ApiModelProperty("距下一个还款日")
     private String surplusDate;
 
-    @ApiModelProperty("管理费用")
+    @ApiModelProperty("管理费用（元）")
     private String fee;
 
     @ApiModelProperty("还款方式")

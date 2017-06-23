@@ -8,6 +8,7 @@ import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.entity.Tender;
@@ -138,7 +139,7 @@ public class TransferBizImpl implements TransferBiz {
                 .eq("tenderId", tenderId)
                 .build();
 
-        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "`order`"));
+        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "order"));
         if (CollectionUtils.isEmpty(borrowCollectionList)) {
             return ResponseEntity
                     .badRequest()
@@ -218,20 +219,26 @@ public class TransferBizImpl implements TransferBiz {
     /**
      * 获取立即转让详情
      *
-     * @param voGoTenderReq 投标记录Id
+     * @param tenderId 投标记录Id
      * @return
      */
-    public ResponseEntity<VoGoTenderInfo> goTenderInfo(VoGoTenderReq voGoTenderReq) {
-        Tender tender = tenderService.findById(voGoTenderReq.getTenderId());
-        if ((ObjectUtils.isEmpty(tender)) || (!voGoTenderReq.getUserId().equals(tender.getUserId()))) {
+    public ResponseEntity<VoGoTenderInfo> goTenderInfo(Long tenderId, Long userId) {
+
+        if ((ObjectUtils.isEmpty(tenderId)) || (ObjectUtils.isEmpty(userId))) {
             return ResponseEntity
                     .badRequest()
                     .body(VoGoTenderInfo.error(VoGoTenderInfo.ERROR, "参数缺少!", VoGoTenderInfo.class));
         }
+        Tender tender = tenderService.findById(tenderId);
+        if (!userId.equals(tender.getUserId())) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoGoTenderInfo.error(VoGoTenderInfo.ERROR, "只有债权持有人才允许转让!", VoGoTenderInfo.class));
+        }
 
         Specification<BorrowCollection> bcs = Specifications
                 .<BorrowCollection>and()
-                .eq("tenderId", voGoTenderReq.getTenderId())
+                .eq("tenderId", tenderId)
                 .eq("status", 0)
                 .build();
         List<BorrowCollection> borrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "id"));
@@ -277,14 +284,14 @@ public class TransferBizImpl implements TransferBiz {
 
         VoGoTenderInfo voGoTenderInfo = VoGoTenderInfo.ok("查询成功!", VoGoTenderInfo.class);
         voGoTenderInfo.setTenderId(tender.getId());
-        voGoTenderInfo.setApr(new Integer(borrow.getApr()));
+        voGoTenderInfo.setApr(StringHelper.formatDouble(borrow.getApr(), 100.0, false));
         voGoTenderInfo.setBorrowName(borrow.getName());
         voGoTenderInfo.setNextRepaymentDate(DateHelper.dateToString(borrowCollection.getCollectionAt(), DateHelper.DATE_FORMAT_YMD));
         voGoTenderInfo.setSurplusDate(String.valueOf(day));
         voGoTenderInfo.setRepayFashionStr(repayFashionStr);
-        voGoTenderInfo.setTimeLimit(String.valueOf(borrowCollections.size()));
-        voGoTenderInfo.setMoney(money);
-        voGoTenderInfo.setFee(String.valueOf(fee.intValue()));
+        voGoTenderInfo.setTimeLimit(String.valueOf(borrowCollections.size()) + "个月");
+        voGoTenderInfo.setMoney(StringHelper.formatDouble(money, 100.0, true));
+        voGoTenderInfo.setFee(StringHelper.formatDouble(fee, 100.0, true));
 
         return ResponseEntity.ok(voGoTenderInfo);
     }

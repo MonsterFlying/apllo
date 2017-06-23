@@ -34,8 +34,8 @@ public interface TransferBiz {
     /**
      * 获取立即转让详情
      *
-     * @param voGoTenderReq 投标记录Id
+     * @param tenderId 投标记录Id
      * @return
      */
-    ResponseEntity<VoGoTenderInfo> goTenderInfo(VoGoTenderReq voGoTenderReq);
+    ResponseEntity<VoGoTenderInfo> goTenderInfo(Long tenderId,Long userId);
 }
