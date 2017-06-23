@@ -1,20 +1,14 @@
 package com.gofobao.framework;
 
-import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.helper.JixinManager;
-import com.gofobao.framework.api.helper.JixinTxCodeEnum;
-import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
-import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.helper.JixinHelper;
-import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;

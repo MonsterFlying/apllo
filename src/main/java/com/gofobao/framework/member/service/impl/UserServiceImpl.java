@@ -4,9 +4,6 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.security.entity.JwtUserFactory;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
@@ -25,8 +22,6 @@ import javax.persistence.LockModeType;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 用户实体类

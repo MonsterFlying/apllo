@@ -21,6 +21,7 @@ import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.member.service.UserCacheService;
+import com.gofobao.framework.tender.contants.TenderConstans;
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -97,13 +98,13 @@ public class LendServiceImpl implements LendService {
         lendList.stream().forEach(p -> {
             VoViewLend lend = new VoViewLend();
             lend.setLendId(p.getId());
-            lend.setApr(NumberHelper.to2DigitString(p.getApr() / 100));
+            lend.setApr(StringHelper.formatMon(p.getApr() / 100D)+ BorrowContants.PERCENT);
             Users user = usersMap.get(p.getUserId());
             String userName = StringUtils.isEmpty(user.getUsername()) ?
                     UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM) :
                     UserHelper.hideChar(user.getUsername(), UserHelper.USERNAME_NUM);
             lend.setUserName(userName);
-            lend.setMoney(NumberHelper.to2DigitString(p.getMoney() / 100));
+            lend.setMoney(StringHelper.formatMon(p.getMoney() / 100D));
             if (p.getStatus() == LendContants.STATUS_NO) {
                 lend.setStatusStr(LendContants.STATUS_NO_STR);
             } else {
@@ -112,6 +113,7 @@ public class LendServiceImpl implements LendService {
             }
             lend.setSpend(Double.parseDouble(StringHelper.formatMon(p.getMoneyYes()/new Double(p.getMoney()))));
             lend.setLimit(p.getTimeLimit());
+            lend.setStatus(p.getStatus());
             lendListRes.add(lend);
         });
         return Optional.ofNullable(lendListRes).orElse(Collections.EMPTY_LIST);

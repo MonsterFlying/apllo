@@ -21,12 +21,14 @@ public class NoticesController {
     @Autowired
     private NoticesBiz noticesBiz;
 
+    private  VoNoticesReq voNoticesReq = new VoNoticesReq();
+
     @ApiOperation(value="站内信列表")
     @RequestMapping(path = "v2/list/{pageIndex}/{pageSize}", method = RequestMethod.GET)
     public ResponseEntity<VoViewUserNoticesWarpRes> list(@PathVariable Integer pageIndex,
                                                          @PathVariable Integer pageSize,
                                                          @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        VoNoticesReq voNoticesReq = new VoNoticesReq();
+
         voNoticesReq.setUserId(userId);
         voNoticesReq.setPageIndex(pageIndex);
         voNoticesReq.setPageSize(pageSize);
@@ -38,7 +40,7 @@ public class NoticesController {
     @RequestMapping(path = "v2/info/{noticesId}", method = RequestMethod.GET)
     public ResponseEntity<VoViewNoticesInfoWarpRes> list(@PathVariable Long noticesId,
                                                          @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        VoNoticesReq voNoticesReq = new VoNoticesReq();
+
         voNoticesReq.setUserId(userId);
         voNoticesReq.setId(noticesId);
         return noticesBiz.info(voNoticesReq);

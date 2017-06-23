@@ -220,3 +220,6 @@ ALTER TABLE gfb_activity_red_packet_log ALTER COLUMN CREATE_UP SET DEFAULT 0;
 ALTER TABLE gfb_activity_red_packet_log ALTER COLUMN UPDARE_UP SET DEFAULT 0;
 ALTER TABLE gfb_activity_red_packet_log ALTER COLUMN VPARAM1 SET DEFAULT '';
 ALTER TABLE gfb_activity_red_packet_log ALTER COLUMN VPARAM2 SET DEFAULT '';
+
+
+ALTER TABLE gofobao0524.gfb_borrow_tender MODIFY state INT(10) DEFAULT 1 COMMENT '1:投标中； 2:还款中 ;3:已结清';
