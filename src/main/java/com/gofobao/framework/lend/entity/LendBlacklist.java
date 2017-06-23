@@ -22,6 +22,9 @@ public class LendBlacklist {
     @Column(name = "black_user_id")
     private Long blackUserId;
     @Basic
+    @Column(name = "user_id")
+    private Long userId;
+    @Basic
     @Column(name = "created_at")
     private Date createdAt;
 }

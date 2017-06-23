@@ -226,7 +226,7 @@ public class AssetBizImpl implements AssetBiz {
     }
 
     @Override
-    public ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest request, VoRechargeReq voRechargeReq) {
+    public ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest request, VoRechargeReq voRechargeReq) throws Exception {
         Users users = userService.findById(voRechargeReq.getUserId());
         Preconditions.checkNotNull(users, "当前用户不存在");
         if (users.getIsLock()) {
@@ -249,8 +249,10 @@ public class AssetBizImpl implements AssetBiz {
         }
 
 
+        userThirdAccount.setMobile("13662260509");
         String smsSeq = null;
         try {
+
             smsSeq = redisHelper.get(String.format("%s_%s", SrvTxCodeContants.DIRECT_RECHARGE_ONLINE, userThirdAccount.getMobile()), null);
             redisHelper.remove(String.format("%s_%s", SrvTxCodeContants.DIRECT_RECHARGE_ONLINE, userThirdAccount.getMobile()));
         } catch (Exception e) {
@@ -329,6 +331,13 @@ public class AssetBizImpl implements AssetBiz {
             state = 2 ;
         }else{
             state = 1 ;
+            CapitalChangeEntity capitalChangeEntity = new CapitalChangeEntity() ;
+            capitalChangeEntity.setToUserId(userThirdAccount.getUserId());
+            capitalChangeEntity.setUserId(userThirdAccount.getUserId());
+            capitalChangeEntity.setMoney(new Double(voRechargeReq.getMoney() * 100).intValue());
+            capitalChangeEntity.setRemark("充值成功") ;
+            capitalChangeEntity.setType(CapitalChangeEnum.Recharge);
+            capitalChangeHelper.capitalChange(capitalChangeEntity) ;
         }
 
         Date now = new Date();

@@ -479,6 +479,8 @@ public class BorrowBizImpl implements BorrowBiz {
         Date nowDate = new Date();
 
         Borrow borrow = borrowService.findByIdLock(borrowId);
+        Preconditions.checkNotNull(borrow, "借记录不存在!");
+
         if (ObjectUtils.isEmpty(borrow) || ObjectUtils.isEmpty(userId)
                 || (borrow.getStatus() != 0 && borrow.getStatus() != 1)) {
             return ResponseEntity

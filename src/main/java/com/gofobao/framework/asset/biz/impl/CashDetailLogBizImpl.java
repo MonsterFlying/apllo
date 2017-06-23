@@ -210,7 +210,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     private int queryFreeTime(Long userId) {
         ImmutableList<Integer> states = ImmutableList.of(0, 1, 3) ;
         List<CashDetailLog> cashDetailLogs = cashDetailLogService.findByStateInAndUserId(states, userId) ;
-        return CollectionUtils.isEmpty(cashDetailLogs) ? 0 : cashDetailLogs.size() ;
+        return CollectionUtils.isEmpty(cashDetailLogs) ? 10 :  cashDetailLogs.size() > 10 ? 0 : 10 - cashDetailLogs.size() ;
     }
 
     @Override
@@ -351,8 +351,8 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             request.setTxFee( StringHelper.formatDouble( new Double(fee / 100D), false));
         }
 
-        request.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountPasswordUrl(httpServletRequest, userId));  // TODO 待加忘记密码回调
-        request.setRetUrl(String.format("%s/%s", javaDomain, ""));
+        request.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountPasswordUrl(httpServletRequest, userId));
+        request.setRetUrl(String.format("%s/%s/%s", javaDomain, "/pub/cash/show/", request.getTxDate() + request.getTxTime() + request.getSeqNo() ));
         request.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/asset/cash/callback"));
         request.setAcqRes(String.valueOf(userId));
         request.setChannel(ChannelContant.getchannel(httpServletRequest));
@@ -568,6 +568,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String showCash(String seqNo, Model model) {
         CashDetailLog  cashDetailLog  = cashDetailLogService.findTopBySeqNoLock(seqNo) ;
         model.addAttribute("h5Domain", h5Domain) ;

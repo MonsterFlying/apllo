@@ -18,10 +18,7 @@ import com.gofobao.framework.lend.entity.Lend;
 import com.gofobao.framework.lend.entity.LendBlacklist;
 import com.gofobao.framework.lend.service.LendBlackListService;
 import com.gofobao.framework.lend.service.LendService;
-import com.gofobao.framework.lend.vo.request.VoCreateLend;
-import com.gofobao.framework.lend.vo.request.VoEndLend;
-import com.gofobao.framework.lend.vo.request.VoLend;
-import com.gofobao.framework.lend.vo.request.VoUserLendReq;
+import com.gofobao.framework.lend.vo.request.*;
 import com.gofobao.framework.lend.vo.response.*;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.Users;
@@ -29,16 +26,23 @@ import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.expression.spel.SpelNode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -66,6 +70,7 @@ public class LendBizImpl implements LendBiz {
     private BorrowService borrowService;
     @Autowired
     private MqHelper mqHelper;
+
 
     /**
      * 出借列表
@@ -96,8 +101,8 @@ public class LendBizImpl implements LendBiz {
         try {
             VoViewLendInfoWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewLendInfoWarpRes.class);
             LendInfo lends = lendService.info(userId, lendId);
-            if(ObjectUtils.isEmpty(lends)){
-                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"非法请求", VoViewLendInfoWarpRes.class));
+            if (ObjectUtils.isEmpty(lends)) {
+                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非法请求", VoViewLendInfoWarpRes.class));
             }
             warpRes.setLendInfo(lends);
             return ResponseEntity.ok(warpRes);
@@ -131,7 +136,7 @@ public class LendBizImpl implements LendBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> create(VoCreateLend voCreateLend){
+    public ResponseEntity<VoBaseResp> create(VoCreateLend voCreateLend) {
         Integer money = voCreateLend.getMoney();//借款金额（分）
         Integer lowest = voCreateLend.getLowest();
         Integer timeLimit = voCreateLend.getTimeLimit();
@@ -359,5 +364,153 @@ public class LendBizImpl implements LendBiz {
         }
 
         return ResponseEntity.ok(VoBaseResp.ok("摘草成功!"));
+    }
+
+    /**
+     * 获取当前用户黑名单列表
+     *
+     * @param voGetLendBlacklists
+     * @return
+     * @throws Exception
+     */
+    public ResponseEntity<VoViewLendBlacklists> getLendBlacklists(VoGetLendBlacklists voGetLendBlacklists) {
+        return null;
+    }
+
+    /**
+     * 添加有草出借黑名单
+     *
+     * @param voAddLendBlacklist
+     * @return
+     * @throws Exception
+     */
+    public ResponseEntity<VoBaseResp> addLendBlacklist(VoAddLendBlacklist voAddLendBlacklist) {
+        LendBlacklist lendBlacklist = new LendBlacklist();
+        lendBlacklist.setBlackUserId(voAddLendBlacklist.getBlackUserId());
+        lendBlacklist.setUserId(voAddLendBlacklist.getUserId());
+        lendBlacklist.setCreatedAt(new Date());
+        lendBlackListService.save(lendBlacklist);
+        return ResponseEntity.ok(VoBaseResp.ok("有草出借黑名单添加成功!"));
+    }
+
+    /**
+     * 移除有草出借黑名单
+     *
+     * @param voDelLendBlacklist
+     * @return
+     * @throws Exception
+     */
+    public ResponseEntity<VoBaseResp> delLendBlacklist(VoDelLendBlacklist voDelLendBlacklist) {
+        Specification<LendBlacklist> lbs = Specifications
+                .<LendBlacklist>and()
+                .eq("userId", voDelLendBlacklist.getUserId())
+                .eq("blackUserId", voDelLendBlacklist.getBlackUserId())
+                .build();
+        List<LendBlacklist> lendBlacklistList = lendBlackListService.findList(lbs);
+        if (CollectionUtils.isEmpty(lendBlacklistList)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "有草出借黑名单查询失败!"));
+        }
+
+        if (lendBlacklistList.size() == 1) {
+            lendBlackListService.delete(lendBlacklistList.get(0));
+        }
+        return ResponseEntity.ok(VoBaseResp.ok("有草出借黑名单删除成功!"));
+    }
+
+    /**
+     * 获取有草出借借款列表
+     *
+     * @param voGetPickLendList
+     * @return
+     * @throws Exception
+     */
+    public ResponseEntity<VoViewPickLendList> getPickLendList(VoGetPickLendList voGetPickLendList) {
+        List<VoPickLend> voPickLendList = new ArrayList<>();
+        long lendId = voGetPickLendList.getLendId();
+        int pageIndex = voGetPickLendList.getPageIndex();
+        int pageSize = voGetPickLendList.getPageSize();
+        do {
+            Specification<Lend> ls = Specifications
+                    .<Lend>and()
+                    .eq("userId", voGetPickLendList.getUserId())
+                    .eq("id", lendId)
+                    .build();
+
+            List<Lend> lendList = lendService.findList(ls);
+            if (CollectionUtils.isEmpty(lendList)) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoViewPickLendList.error(VoBaseResp.ERROR, "有草出借不存在!", VoViewPickLendList.class));
+            }
+
+            Specification<Borrow> bs = Specifications
+                    .<Borrow>and()
+                    .eq("lendId", lendId)
+                    .build();
+
+            List<Borrow> borrowList = borrowService.findList(bs);
+            if (CollectionUtils.isEmpty(borrowList)) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoViewPickLendList.error(VoBaseResp.ERROR, "借款不存在!", VoViewPickLendList.class));
+            }
+
+            List<Long> borrowUserIds = new ArrayList<>();
+            List<Long> userIds = new ArrayList<>();
+            for (Borrow borrow : borrowList) {
+                borrowUserIds.add(borrow.getUserId());
+            }
+
+            Specification<Users> us = Specifications
+                    .<Users>and()
+                    .in("id", userIds.toArray())
+                    .build();
+
+            List<Users> userList = userService.findList(us);//查询会员
+            if (CollectionUtils.isEmpty(userList)) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoViewPickLendList.error(VoBaseResp.ERROR, "会员记录查询失败!", VoViewPickLendList.class));
+            }
+
+            //查询黑名单
+            Specification<LendBlacklist> lbs = Specifications
+                    .<LendBlacklist>and()
+                    .eq("userId", lendList.get(0).getUserId())
+                    .in("blackUserId", borrowUserIds.toArray())
+                    .build();
+
+            Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(Sort.Direction.ASC));
+            List<LendBlacklist> lendBlacklistList = lendBlackListService.findList(lbs, pageable);
+
+            voPickLendList = GSON.fromJson(GSON.toJson(borrowList), new TypeToken<List<VoPickLend>>() {
+            }.getType());
+
+            for (VoPickLend voPickLend : voPickLendList) {
+                for (LendBlacklist lendBlacklist : lendBlacklistList) {
+                    if (StringHelper.toString(voPickLend.getUserId()).equals(StringHelper.toString(lendBlacklist.getUserId()))) {
+                        voPickLend.setIsBlacklist(true);
+                        break;
+                    } else {
+                        voPickLend.setIsBlacklist(false);
+                    }
+                }
+
+                for (Users user : userList) {
+                    if (StringHelper.toString(voPickLend.getUserId()).equals(StringHelper.toString(user.getId()))) {
+                        voPickLend.setUsername(user.getUsername());
+                        break;
+                    }
+                }
+            }
+        } while (false);
+
+        VoViewPickLendList voViewPickLendList = VoViewPickLendList.ok("查询成功!", VoViewPickLendList.class);
+        voViewPickLendList.setPickList(voPickLendList);
+        voViewPickLendList.setPageIndex(pageIndex);
+        voViewPickLendList.setPageSize(pageSize);
+        return ResponseEntity.ok(voViewPickLendList);
     }
 }

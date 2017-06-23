@@ -123,5 +123,5 @@ public interface AssetBiz {
      * @param voRechargeReq
      * @return
      */
-    ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest request, VoRechargeReq voRechargeReq);
+    ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest request, VoRechargeReq voRechargeReq) throws Exception;
 }

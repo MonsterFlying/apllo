@@ -40,4 +40,6 @@ public interface LendBlackListService {
     List<LendBlacklist> findList(Specification<LendBlacklist> specification, Pageable pageable);
 
     long count(Specification<LendBlacklist> specification);
+
+    void delete(LendBlacklist lendBlacklist);
 }
