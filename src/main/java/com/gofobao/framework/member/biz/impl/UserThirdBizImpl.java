@@ -19,6 +19,7 @@ import com.gofobao.framework.asset.entity.BankAccount;
 import com.gofobao.framework.asset.service.BankAccountService;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.BankBinHelper;
 import com.gofobao.framework.helper.OKHttpHelper;
 import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.helper.ThirdAccountPasswordHelper;
@@ -101,6 +102,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
     @Autowired
     DictItemServcie dictItemServcie ;
 
+    @Autowired
+    BankBinHelper bankBinHelper ;
+
 
     LoadingCache<String, DictValue> bankLimitCache = CacheBuilder
             .newBuilder()
@@ -180,23 +184,24 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "手机已在存管平台开户, 无需开户！", VoOpenAccountResp.class));
         }
 
-        String logo = null;
         String bankName = null ;
         // 获取银行卡信息
         try {
-            String cardNo = voOpenAccountReq.getCardNo() ; // 银行卡
-            Map<String, String> params = new HashMap<>();
-            params.put("bankcard", cardNo);
-            Map<String, String> headers = new HashMap<>();
-            headers.put("Authorization", String.format("APPCODE %s", aliyunQueryAppcode));
-            String jsonStr = OKHttpHelper.get(aliyunQueryBankUrl, params, headers);
-            JsonObject result = new JsonParser().parse(jsonStr).getAsJsonObject();
-            int status = result.get("status").getAsInt();
-            if (status == 0) {
-                JsonObject info = result.get("result").getAsJsonObject();
-                bankName = info.get("bank").getAsString();
-                logo = info.get("logo").getAsString();
+            BankBinHelper.BankInfo bankInfo = bankBinHelper.find(voOpenAccountReq.getCardNo());
+
+            if(ObjectUtils.isEmpty(bankInfo)){
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "查无此银行卡号, 如有问题请联系平台客户!", VoOpenAccountResp.class));
             }
+
+            if(!bankInfo.getCardType().equals("借记卡")){
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "银行卡类型必须为借记卡!", VoOpenAccountResp.class));
+            }
+
+            bankName = bankInfo.getBankName() ;
         } catch (Exception e) {
             log.error("开户查询银行卡异常");
         }

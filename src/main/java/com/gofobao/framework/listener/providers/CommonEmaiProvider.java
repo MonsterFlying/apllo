@@ -111,25 +111,6 @@ public class CommonEmaiProvider {
             }
         }
 
-        // 写入数据库
-        Date nowDate = new Date();
-        SmsEntity smsEntity = new SmsEntity();
-        smsEntity.setIp(ip);
-        smsEntity.setType(tag);
-        smsEntity.setContent(message);
-        smsEntity.setPhone(email);
-        smsEntity.setCreatedAt(nowDate);
-        smsEntity.setStatus(rs ? 0 : 1);
-        smsEntity.setUsername(email);
-        smsEntity.setExt(" ");
-        smsEntity.setId(null);
-        smsEntity.setRrid(" ");
-        smsEntity.setStime(" ");
-        try {
-            smsRepository.save(smsEntity);
-        } catch (Exception e) {
-            log.error("保存数据失败", e);
-        }
         return rs;
     }
 

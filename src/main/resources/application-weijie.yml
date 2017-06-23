@@ -51,9 +51,9 @@ gofobao:
 #  javaDomain: http://max.hk1.mofasuidao.cn
 #  webDomain: http://max.hk1.mofasuidao.cn
 #  h5Domain: http://ng.hk1.mofasuidao.cn
-  javaDomain: http://itissue.3w.dkys.org
-  webDomain: http://itissue.3w.dkys.org
-  h5Domain: http://itissue.3w.dkys.org
+  javaDomain: http://ogmax.ngrok.club
+  webDomain: http://ogmax.ngrok.club
+  h5Domain: http://ogmax.ngrok.club
   imageDomain : http://www.gofobao.com
   captcha: false # 全站是否开启图形验证码验证
   close-email-send: true # 关闭邮箱发送
