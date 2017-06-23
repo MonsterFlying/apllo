@@ -32,11 +32,8 @@ public class VoViewRepaymentDetail {
     @ApiModelProperty("起息时间")
     private String successAt;
 
-    @ApiModelProperty("状态")
-    private String status;
-
-    @ApiModelProperty("状态描述 还款中 已还款")
-    private String statusStr;
+    @ApiModelProperty("还款状态 0未还 1已还,2:招标中")
+    private Integer status;
 
     @ApiModelProperty("应还利息")
     private String receivableInterest;
