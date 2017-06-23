@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
@@ -23,9 +24,8 @@ public class VersionController {
 
     @ApiOperation("版本检查 params: 版本号 versionId:1 ,请求来源  requestSource: 1:Android,2:ios,3:H5")
     @PostMapping("pub/v2/version/check")
-    public ResponseEntity<VoBaseResp> checkVersion(HttpServletRequest request) {
-        Integer terminal = Integer.valueOf(request.getParameter("requestSource"));
-        Integer versionId = Integer.valueOf(request.getParameter("versionId"));
+    public ResponseEntity<VoBaseResp> checkVersion(@RequestHeader("requestSource") Integer terminal,
+                                                   @RequestHeader("versionId") Integer versionId) {
         return sysVersionBiz.list(terminal, versionId);
     }
 
