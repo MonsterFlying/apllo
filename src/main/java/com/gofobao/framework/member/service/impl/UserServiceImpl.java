@@ -10,6 +10,9 @@ import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -63,7 +66,7 @@ public class UserServiceImpl implements UserDetailsService, UserService{
     }
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    public Users findById(Long id){
+    public Users findById(Long id) {
         return userRepository.findOne(id);
     }
 
@@ -77,26 +80,27 @@ public class UserServiceImpl implements UserDetailsService, UserService{
 
     /**
      * 带锁查询会员
+     *
      * @param userId
      * @return
      */
-    public Users findByIdLock(Long userId){
+    public Users findByIdLock(Long userId) {
         return userRepository.findById(userId);
     }
 
     @Override
     public boolean notExistsByUserName(String userName) {
-       List<Users> users = userRepository.findByUsername(userName) ;
-       return CollectionUtils.isEmpty(users) ;
+        List<Users> users = userRepository.findByUsername(userName);
+        return CollectionUtils.isEmpty(users);
     }
 
     @Override
     public Users findByInviteCode(String inviteCode) {
-        List<Users> users = userRepository.findByInviteCode(inviteCode) ;
-        if(CollectionUtils.isEmpty(users)){
-            return null ;
-        }else{
-            return users.get(0) ;
+        List<Users> users = userRepository.findByInviteCode(inviteCode);
+        if (CollectionUtils.isEmpty(users)) {
+            return null;
+        } else {
+            return users.get(0);
         }
 
     }
@@ -108,20 +112,36 @@ public class UserServiceImpl implements UserDetailsService, UserService{
 
     @Override
     public boolean notExistsByEmail(String email) {
-        List<Users> users = userRepository.findByEmail(email) ;
-        return CollectionUtils.isEmpty(users) ;
+        List<Users> users = userRepository.findByEmail(email);
+        return CollectionUtils.isEmpty(users);
     }
 
     /**
      * 检查是否实名
+     *
      * @param users
      * @return
      */
-    public boolean checkRealname(Users users){
-        if (ObjectUtils.isEmpty(users)){
+    public boolean checkRealname(Users users) {
+        if (ObjectUtils.isEmpty(users)) {
             return false;
         }
         return !(ObjectUtils.isEmpty(users.getCardId()) || ObjectUtils.isEmpty(users.getUsername()));
     }
 
+    public List<Users> findList(Specification<Users> specification) {
+        return userRepository.findAll(specification);
+    }
+
+    public List<Users> findList(Specification<Users> specification, Sort sort) {
+        return userRepository.findAll(specification, sort);
+    }
+
+    public List<Users> findList(Specification<Users> specification, Pageable pageable) {
+        return userRepository.findAll(specification, pageable).getContent();
+    }
+
+    public long count(Specification<Users> specification) {
+        return userRepository.count(specification);
+    }
 }

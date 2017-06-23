@@ -28,7 +28,7 @@ import java.util.Map;
  * Created by Max on 17/5/16.
  */
 
-@RequestMapping("/borrow")
+@RequestMapping("pub/pc/borrow")
 @RestController
 @Slf4j
 @Api(description = "首页标接口")
@@ -109,20 +109,5 @@ public class WebBorrowController {
     public ResponseEntity<VoViewBorrowStatisticsWarpRes> pcStatistics() {
         return borrowBiz.statistics();
     }
-
-
-    /**
-     * pc取消借款
-     *
-     * @param voPcCancelThirdBorrow
-     * @return
-     */
-    @PostMapping("/pub/pc/cancelBorrow")
-    @ApiOperation("pc取消借款")
-    public ResponseEntity<VoBaseResp> pcCancelBorrow(@Valid @ModelAttribute VoPcCancelThirdBorrow voPcCancelThirdBorrow) {
-        return borrowBiz.pcCancelBorrow(voPcCancelThirdBorrow);
-    }
-
-
 
 }

@@ -154,6 +154,8 @@ public class LendServiceImpl implements LendService {
         if (ObjectUtils.isEmpty(userCache)) {
             return null;
         }
+
+        lendInfo.setStatus(lend.getStatus());
         Integer useMoney = asset.getUseMoney();
         Integer waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
         Integer payment = asset.getPayment();

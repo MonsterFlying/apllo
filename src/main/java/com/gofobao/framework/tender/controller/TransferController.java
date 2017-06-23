@@ -55,7 +55,7 @@ public class TransferController {
         return transferBiz.transferedlist(transferReq);
     }
 
-    @ApiOperation("转让中列表")
+    @ApiOperation("可转让列表")
     @GetMapping("v2/transferMay/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewTransferMayWarpRes> transferMayList(@PathVariable Integer pageIndex, @PathVariable Integer pageSize, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoTransferReq transferReq = new VoTransferReq();

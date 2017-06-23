@@ -24,14 +24,8 @@ import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.MathHelper;
-import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
-import com.gofobao.framework.helper.project.BorrowHelper;
-import com.gofobao.framework.helper.project.CapitalChangeHelper;
-import com.gofobao.framework.helper.project.SecurityHelper;
+import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.*;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -45,8 +39,10 @@ import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.system.biz.IncrStatisticBiz;
+import com.gofobao.framework.system.biz.StatisticBiz;
 import com.gofobao.framework.system.entity.IncrStatistic;
 import com.gofobao.framework.system.entity.Notices;
+import com.gofobao.framework.system.entity.Statistic;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.AutoTenderService;
@@ -111,6 +107,10 @@ public class BorrowBizImpl implements BorrowBiz {
     private IncrStatisticBiz incrStatisticBiz;
     @Autowired
     private UserService userService;
+    @Autowired
+    private StatisticBiz statisticBiz;
+    @Autowired
+    private ThymeleafHelper thymeleafHelper;
 
     /**
      * 理财首页标列表
@@ -583,6 +583,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @param voPcCancelThirdBorrow
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> pcCancelBorrow(VoPcCancelThirdBorrow voPcCancelThirdBorrow) {
         Date nowDate = new Date();
         String paramStr = voPcCancelThirdBorrow.getParamStr();
@@ -768,6 +769,16 @@ public class BorrowBizImpl implements BorrowBiz {
 
             //生成回款记录
             bool = disposeBorrowCollection(borrow, nowDate);
+
+            // 复审事件
+            //如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
+            updateUserCacheByBorrowReview(borrow);
+            //更新网站统计
+            updateStatisticByBorrowReview(borrow);
+            //借款成功发送通知短信
+            smsNoticeByBorrowReview(borrow);
+            //发送借款协议
+            sendBorrowProtocol(borrow);
         } while (false);
         return bool;
     }
@@ -828,6 +839,16 @@ public class BorrowBizImpl implements BorrowBiz {
 
             //生成回款记录
             bool = disposeBorrowCollection(borrow, transferedBorrowCollections.get(0).getStartAt());
+
+            // 复审事件
+            //如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
+            updateUserCacheByBorrowReview(borrow);
+            //更新网站统计
+            updateStatisticByBorrowReview(borrow);
+            //借款成功发送通知短信
+            smsNoticeByBorrowReview(borrow);
+            //发送借款协议
+            sendBorrowProtocol(borrow);
         } while (false);
         return bool;
     }
@@ -1400,6 +1421,11 @@ public class BorrowBizImpl implements BorrowBiz {
         Long borrowId = NumberHelper.toLong(paramMap.get("borrowId"));
         Borrow borrow = borrowService.findById(borrowId);
         Preconditions.checkNotNull(borrow, "借款不存在!");
+        if (borrow.getStatus() != 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc 登记官方借款 该标已初审", VoHtmlResp.class));
+        }
 
         //检查标的是否登记
         VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
@@ -1436,5 +1462,265 @@ public class BorrowBizImpl implements BorrowBiz {
         VoThirdTrusteePayReq voThirdTrusteePayReq = new VoThirdTrusteePayReq();
         voThirdTrusteePayReq.setBorrowId(borrowId);
         return borrowThirdBiz.thirdTrusteePay(voThirdTrusteePayReq);
+    }
+
+    /**
+     * 发送借款协议
+     *
+     * @param borrow
+     */
+    public void sendBorrowProtocol(Borrow borrow) {
+        List<Tender> tenderList = null;
+        Users borrowUser = null;
+        List<Users> tenderUserList = null;
+        Map<String, Object> borrowMap = null;
+        List<Map<String, Object>> tenderMapList = null;
+        Map<String, Object> calculatorMap = null;
+        String content = null;
+        String username = null;
+
+        if (!ObjectUtils.isEmpty(borrow)) {
+
+            //查询借款信息
+
+            borrowMap = GSON.fromJson(GSON.toJson(borrow), new com.google.common.reflect.TypeToken<Map<String, Object>>() {
+            }.getType());
+            borrowUser = userService.findById(borrow.getUserId());
+            username = borrowUser.getUsername();
+
+            borrowMap.put("username", org.apache.commons.lang3.StringUtils.isEmpty(username) ? borrowUser.getPhone() : username);
+            borrowMap.put("cardId", UserHelper.hideChar(borrowUser.getCardId(), UserHelper.CARD_ID_NUM));
+
+            if (!ObjectUtils.isEmpty(borrow.getSuccessAt())) { //判断是否存在满标时间
+                boolean successAtBool = DateHelper.getMonth(DateHelper.addMonths(borrow.getSuccessAt(), borrow.getTimeLimit())) % 12
+                        !=
+                        (DateHelper.getMonth(borrow.getSuccessAt()) + borrow.getTimeLimit()) % 12;
+
+                String borrowExpireAtStr = null;
+                String monthAsReimbursement = null;//月截止还款日
+                if (borrow.getRepayFashion() == 1) {
+                    borrowExpireAtStr = DateHelper.dateToString(DateHelper.addDays(borrow.getSuccessAt(), borrow.getTimeLimit()), "yyyy-MM-dd");
+                    monthAsReimbursement = borrowExpireAtStr;
+                } else {
+                    if (successAtBool) {
+                        borrowExpireAtStr = DateHelper.dateToString(DateHelper.subDays(DateHelper.addDays(DateHelper.setDays(borrow.getSuccessAt(), borrow.getTimeLimit()), 1), 1), "yyyy-MM-dd HH:mm:ss");
+                    } else {
+                        borrowExpireAtStr = DateHelper.dateToString(DateHelper.addMonths(borrow.getSuccessAt(), borrow.getTimeLimit()), "yyyy-MM-dd");
+                    }
+                    monthAsReimbursement = "每月" + DateHelper.getDay(borrow.getSuccessAt()) + "日";
+                }
+                borrowMap.put("borrowExpireAtStr", borrowExpireAtStr);
+                borrowMap.put("monthAsReimbursement", monthAsReimbursement);
+            }
+
+
+            //使用当前借款计算利息信息
+            BorrowCalculatorHelper borrowCalculatorHelper = null;
+
+            //查询投标信息
+            Specification<Tender> ts = Specifications
+                    .<Tender>and()
+                    .eq("borrowId", borrow.getId())
+                    .build();
+
+            tenderList = tenderService.findList(ts);
+
+            if (!CollectionUtils.isEmpty(tenderList)) {
+                List<Long> tenderUserIds = new ArrayList<>();
+
+                tenderMapList = GSON.fromJson(GSON.toJson(tenderList), new com.google.common.reflect.TypeToken<List<Map<String, Object>>>() {
+                }.getType());
+
+                for (Tender tempTender : tenderList) {
+                    tenderUserIds.add(tempTender.getUserId());
+                }
+
+                Specification<Users> us = Specifications
+                        .<Users>and()
+                        .in("id", tenderUserIds.toArray())
+                        .build();
+
+                tenderUserList = userService.findList(us);
+
+                List<Map<String, Object>> tempTenderMapList = null;
+                Map<String, String> msgMap = new HashMap<>();
+                Users tenderUser = null;
+                for (Map<String, Object> tempTenderMap : tenderMapList) {
+                    tempTenderMapList = new ArrayList<>();
+
+                    for (Users tempTenderUser : tenderUserList) {
+                        if (StringHelper.toString(tempTenderMap.get("userId")).equals(StringHelper.toString(tempTenderUser.getId()))) {
+                            tenderUser = tempTenderUser;
+                            break;
+                        }
+                    }
+
+                    if (ObjectUtils.isEmpty(tenderUser.getEmail())) {
+                        continue;
+                    }
+
+                    borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(tempTenderMap.get("validMoney")), new Double(borrow.getApr()), borrow.getTimeLimit(), null);
+                    calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
+                    tempTenderMap.put("calculatorMap", calculatorMap);
+
+                    username = tenderUser.getUsername();
+                    tempTenderMap.put("username", org.apache.commons.lang3.StringUtils.isEmpty(username) ? tenderUser.getPhone() : username);
+
+                    tempTenderMapList.add(tempTenderMap);
+
+                    //使用thymeleaf模版引擎渲染 借款合同html
+                    Map<String, Object> templateMap = new HashMap<>();
+                    templateMap.put("borrowMap", borrowMap);
+                    templateMap.put("tenderMapList", tempTenderMapList);
+                    templateMap.put("calculatorMap", calculatorMap);
+                    content = thymeleafHelper.build("borrowProtocol", templateMap);
+
+                    // 使用消息队列发送邮件
+                    MqConfig config = new MqConfig();
+                    config.setQueue(MqQueueEnum.RABBITMQ_EMAIL);
+                    config.setTag(MqTagEnum.SEND_BORROW_PROTOCOL_EMAIL);
+                    ImmutableMap<String, String> body = ImmutableMap
+                            .of(MqConfig.EMAIL, tenderUser.getEmail(),
+                                    MqConfig.IP, "127.0.0.1",
+                                    "subject", "广富宝金服借款协议",
+                                    "content", content);
+                    config.setMsg(body);
+                    mqHelper.convertAndSend(config);
+
+                }
+            }
+        }
+    }
+
+    /**
+     * 借款成功发送通知短信
+     *
+     * @param borrow
+     * @throws Exception
+     */
+    private void smsNoticeByBorrowReview(Borrow borrow) throws Exception {
+
+        Users user = userService.findById(borrow.getUserId());
+
+        if ((borrow.getType() == 1) && (!ObjectUtils.isEmpty(borrow.getLendId())) && ((borrow.getApr() / 100) > 1)
+                && ((borrow.getRepayFashion() != 1) || (borrow.getTimeLimit() > 1))) {
+            String phone = user.getPhone();
+
+            if ((ObjectUtils.isEmpty(phone))) {
+
+                long fee = 0;
+                if (borrow.getRepayFashion() == 1) {
+                    fee = Math.round(borrow.getMoney() * 0.12 / 30 * borrow.getTimeLimit());
+                } else {
+                    fee = Math.round(borrow.getMoney() * 0.12 * borrow.getTimeLimit());
+                }
+
+                // 使用消息队列发送短信
+                MqConfig config = new MqConfig();
+                config.setQueue(MqQueueEnum.RABBITMQ_SMS);
+                config.setTag(MqTagEnum.SMS_BORROW_SUCCESS);
+                ImmutableMap<String, String> body = ImmutableMap
+                        .of(MqConfig.PHONE, phone,
+                                MqConfig.IP, "127.0.0.1",
+                                "money", StringHelper.formatDouble(borrow.getMoney(), 100.0, true),
+                                "fee", StringHelper.formatDouble(fee, 100.0, true),
+                                "id", StringHelper.toString(borrow.getId()));
+                config.setMsg(body);
+
+                mqHelper.convertAndSend(config);
+            }
+        }
+    }
+
+    /**
+     * 如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
+     *
+     * @param borrow
+     */
+    private void updateUserCacheByBorrowReview(Borrow borrow) throws Exception {
+        UserCache userCache = userCacheService.findById(borrow.getUserId());
+
+        if (borrow.isTransfer()) {
+            Specification<BorrowCollection> bcs = Specifications
+                    .<BorrowCollection>and()
+                    .eq("status", 0)
+                    .eq("tenderId", borrow.getTenderId())
+                    .build();
+
+            List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
+            if (CollectionUtils.isEmpty(borrowCollectionList)) {
+                return;
+            }
+
+            Integer countInterest = 0;
+            for (BorrowCollection borrowCollection : borrowCollectionList) {
+                countInterest += borrowCollection.getInterest();
+            }
+
+            userCache.setUserId(userCache.getUserId());
+            userCache.setTjWaitCollectionPrincipal(userCache.getTjWaitCollectionPrincipal() - borrow.getMoney());
+            userCache.setTjWaitCollectionInterest(userCache.getTjWaitCollectionInterest() - countInterest);
+            userCacheService.save(userCache);
+        }
+    }
+
+    /**
+     * 更新网站统计
+     *
+     * @param borrow
+     */
+    private void updateStatisticByBorrowReview(Borrow borrow) {
+        Date nowDate = new Date();
+
+        Specification<BorrowRepayment> brs = Specifications
+                .<BorrowRepayment>and()
+                .eq("borrowId", borrow.getId())
+                .build();
+
+        List<BorrowRepayment> repaymentList = borrowRepaymentService.findList(brs);
+        if (CollectionUtils.isEmpty(repaymentList)) {//查询当前借款 还款记录
+            return;
+        }
+
+        Integer repayMoney = 0;
+        Integer principal = 0;
+        for (BorrowRepayment borrowRepayment : repaymentList) {
+            repayMoney += borrowRepayment.getRepayMoney();
+            principal += borrowRepayment.getPrincipal();
+        }
+
+        //全站统计
+        Statistic statistic = new Statistic();
+        Integer borrowMoney = borrow.getMoney();
+
+        statistic.setBorrowItems(1L);
+        statistic.setBorrowTotal((long) borrowMoney);
+        statistic.setWaitRepayTotal((long) repayMoney);
+
+        if (borrow.isTransfer()) {
+            statistic.setLzBorrowTotal((long) borrowMoney);
+        } else if (borrow.getType() == 0) {//0：车贷标；1：净值标；2：秒标；4：渠道标；
+            statistic.setTjBorrowTotal((long) borrowMoney);
+            statistic.setTjWaitRepayPrincipalTotal((long) principal);
+            statistic.setTjWaitRepayTotal((long) repayMoney);
+        } else if (borrow.getType() == 1) {
+            statistic.setJzBorrowTotal((long) borrowMoney);
+            statistic.setJzWaitRepayPrincipalTotal((long) principal);
+            statistic.setJzWaitRepayTotal((long) repayMoney);
+        } else if (borrow.getType() == 2) {
+            statistic.setMbBorrowTotal((long) borrowMoney);
+        } else if (borrow.getType() == 4) {
+            statistic.setQdBorrowTotal((long) borrowMoney);
+            statistic.setQdWaitRepayPrincipalTotal((long) principal);
+            statistic.setQdWaitRepayTotal((long) repayMoney);
+        }
+        if (!ObjectUtils.isEmpty(statistic)) {
+            try {
+                statisticBiz.caculate(statistic);
+            } catch (Exception e) {
+                log.error("borrowProvider updateStatisticByBorrowReview 异常:", e);
+            }
+        }
+
     }
 }

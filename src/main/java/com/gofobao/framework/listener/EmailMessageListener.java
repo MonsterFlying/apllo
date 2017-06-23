@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
+import static com.gofobao.framework.common.rabbitmq.MqTagEnum.SEND_BORROW_PROTOCOL_EMAIL;
 import static com.gofobao.framework.common.rabbitmq.MqTagEnum.SMS_EMAIL_BIND;
 
 /**
@@ -26,30 +27,32 @@ import static com.gofobao.framework.common.rabbitmq.MqTagEnum.SMS_EMAIL_BIND;
 public class EmailMessageListener {
 
     @Autowired
-    CommonEmaiProvider commonEmaiProvider ;
+    CommonEmaiProvider commonEmaiProvider;
 
-    static Gson GSON = new GsonBuilder().create() ;
+    static Gson GSON = new GsonBuilder().create();
 
     @RabbitHandler
     public void process(String message) {
         log.info(String.format("EmailMessageListener process info: %s", message));
         try {
-            Preconditions.checkNotNull(message, "EmailMessageListener process message is empty") ;
+            Preconditions.checkNotNull(message, "EmailMessageListener process message is empty");
             Map<String, Object> body = GSON.fromJson(message, TypeTokenContants.MAP_TOKEN);
-            Preconditions.checkNotNull(body.get(MqConfig.MSG_TAG), "EmailMessageListener process tag is empty ") ;
-            Preconditions.checkNotNull(body.get(MqConfig.MSG_BODY), "EmailMessageListener process body is empty ") ;
+            Preconditions.checkNotNull(body.get(MqConfig.MSG_TAG), "EmailMessageListener process tag is empty ");
+            Preconditions.checkNotNull(body.get(MqConfig.MSG_BODY), "EmailMessageListener process body is empty ");
             String tag = body.get(MqConfig.MSG_TAG).toString();
-            Map<String, String> msg = (Map<String, String>)body.get(MqConfig.MSG_BODY) ;
-            boolean result = false ;
-            if(tag.equals(SMS_EMAIL_BIND.getValue())) {  // 发送邮箱
+            Map<String, String> msg = (Map<String, String>) body.get(MqConfig.MSG_BODY);
+            boolean result = false;
+            if (tag.equals(SMS_EMAIL_BIND.getValue())) {  // 发送邮箱
                 result = commonEmaiProvider.doSendMessageCode(tag, msg);
+            } else if (tag.equals(SEND_BORROW_PROTOCOL_EMAIL.getValue())) {
+                result = commonEmaiProvider.doSendBorrowProtocolEmail(tag, msg);
             }
 
-            if(!result){
+            if (!result) {
                 log.error(String.format("EmailMessageListener process process error: %s", message));
             }
 
-        }catch (Throwable e){
+        } catch (Throwable e) {
             log.error("EmailMessageListener process do exception", e);
         }
     }

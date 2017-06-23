@@ -28,23 +28,26 @@ public class BannerServiceImpl implements BannerService {
     @Override
     public List<IndexBanner> index() {
         Cache<String, List<IndexBanner>> cache2 = CacheBuilder.newBuilder().maximumSize(1000).build();
+
         List<IndexBanner> bannerList = Lists.newArrayList();
+        List<IndexBanner> result;
         try {
-            cache2.get("banner", () -> {
+            result = cache2.get("banner", () -> {
                 List<Banner> banners = bannerRepository.findByStatusAndTerminal(new Byte("1"), 1);
                 banners.stream().forEach(p -> {
                     IndexBanner indexBanner = new IndexBanner();
                     indexBanner.setTitle(p.getTitle());
-                    indexBanner.setImageUrl(imageDomain+p.getImgurl());
+                    indexBanner.setImageUrl(imageDomain + p.getImgurl());
                     indexBanner.setClickUrl(p.getClickurl());
                     bannerList.add(indexBanner);
                 });
                 return bannerList;
+
             });
         } catch (Exception e) {
             return Collections.EMPTY_LIST;
         }
-        return bannerList;
+        return result;
     }
 
 
