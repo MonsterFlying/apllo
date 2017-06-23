@@ -25,11 +25,13 @@ import javax.validation.Valid;
  */
 @Api(description = "出借")
 @RestController
-@RequestMapping("/lend")
+@RequestMapping("pub/lend")
 public class LendController {
 
     @Autowired
     private LendBiz lendBiz;
+
+    private VoUserLendReq voUserLendReq = new VoUserLendReq();
 
     @RequestMapping(value = "/v2/list/{pageIndex}/{pageSize}", method = RequestMethod.GET)
     @ApiOperation("出借列表")
@@ -46,7 +48,6 @@ public class LendController {
     @ApiOperation("出借详情")
     public ResponseEntity<VoViewLendInfoWarpRes> info(@PathVariable Long lendId,
                                                       @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-
         return lendBiz.info(userId, lendId);
     }
 
@@ -56,7 +57,7 @@ public class LendController {
             @PathVariable Integer pageIndex,
             @PathVariable Integer pageSize,
             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        VoUserLendReq voUserLendReq = new VoUserLendReq();
+
         voUserLendReq.setPageSize(pageSize);
         voUserLendReq.setPageIndex(pageIndex);
         voUserLendReq.setUserId(userId);

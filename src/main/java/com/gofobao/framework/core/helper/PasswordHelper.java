@@ -38,13 +38,4 @@ public class PasswordHelper {
         }
         return BCrypt.checkpw(password, origPassword);
     }
-
-    public static void main(String[] args) throws  Exception{
-
-
-
-        String format = String.format("update gfb_users set password = '%s', pay_password= '%s', email = null", encodingPassword("abcd123456"), encodingPassword("123456"));
-        System.err.println(format);
-
-    }
 }

@@ -28,7 +28,7 @@ import java.util.Map;
  * Created by Max on 17/5/16.
  */
 
-@RequestMapping("/borrow")
+@RequestMapping("pub/pc/borrow")
 @RestController
 @Slf4j
 @Api(description = "首页标接口")

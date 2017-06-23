@@ -103,7 +103,7 @@ public interface UserThirdBiz {
      * @param model
      * @return
      */
-    String shwoPassword(Long id, Model model);
+    String showPassword(Long id, Model model);
 
     /**
      * 银行存管协议

@@ -50,14 +50,6 @@ public interface MessageBiz {
 
 
     /**
-     * 发送开户手机短息
-     * @param voUserSmsReq
-     * @return
-     */
-    ResponseEntity<VoBaseResp> openAccount(VoUserSmsReq voUserSmsReq);
-
-
-    /**
      * 开通自动投标协议短信
      * @param voUserSmsReq
      * @return
@@ -91,4 +83,12 @@ public interface MessageBiz {
     ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest httpServletRequest, VoUserSmsReq voUserSmsReq);
 
     ResponseEntity<VoBaseResp> sendBindPhone4Switch(HttpServletRequest request, VoAnonSmsReq voAnonSmsReq, Long userId);
+
+    /**
+     * 发送开户短信
+     * @param userId
+     * @param voAnonSmsReq
+     * @return
+     */
+    ResponseEntity<VoBaseResp> openAccount(Long userId, VoAnonSmsReq voAnonSmsReq);
 }

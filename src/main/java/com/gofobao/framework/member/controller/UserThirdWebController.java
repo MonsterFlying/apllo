@@ -22,7 +22,7 @@ public class UserThirdWebController {
 
     @GetMapping("/pub/password/show/{id}")
     public String shwoPassword(@PathVariable("id") Long id, Model model) {
-        return userThirdBiz.shwoPassword(id, model)  ;
+        return userThirdBiz.showPassword(id, model)  ;
     }
 
 

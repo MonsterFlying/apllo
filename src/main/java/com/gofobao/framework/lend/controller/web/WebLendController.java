@@ -19,11 +19,13 @@ import springfox.documentation.annotations.ApiIgnore;
  */
 @Api(description = "出借")
 @RestController
-@RequestMapping("/lend/pc")
+@RequestMapping("pub/pc/lend")
 public class WebLendController {
 
     @Autowired
     private LendBiz lendBiz;
+
+    private VoUserLendReq voUserLendReq = new VoUserLendReq();
 
     @RequestMapping(value = "/v2/list/{pageIndex}/{pageSize}", method = RequestMethod.GET)
     @ApiOperation("出借列表")
@@ -49,7 +51,7 @@ public class WebLendController {
             @PathVariable Integer pageIndex,
             @PathVariable Integer pageSize,
             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        VoUserLendReq voUserLendReq = new VoUserLendReq();
+
         voUserLendReq.setPageSize(pageSize);
         voUserLendReq.setPageIndex(pageIndex);
         voUserLendReq.setUserId(userId);

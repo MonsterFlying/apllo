@@ -138,14 +138,6 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
 
-        //3. 判断用户是否绑定手机
-        if (StringUtils.isEmpty(user.getPhone())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你的账户没有绑定手机，请先绑定手机！", VoPreOpenAccountResp.class));
-        }
-
-
         // 4.查询银行卡
         List<BankAccount> bankAccountList = bankAccountService.listBankByUserId(userId);
         List<VoBankResp> voBankResps = new ArrayList<>(bankAccountList.size());
@@ -181,11 +173,12 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "你的账户已经开户！", VoOpenAccountResp.class));
 
-        // 3. 判断用户是否绑定手机
-        if (StringUtils.isEmpty(user.getPhone()))
+        UserThirdAccount userThirdAccountbyMobile = userThirdAccountService.findByMobile(voOpenAccountReq.getMobile());
+        if(!ObjectUtils.isEmpty(userThirdAccountbyMobile)){
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你的账户没有绑定手机，请先绑定手机！", VoOpenAccountResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "手机已在存管平台开户, 无需开户！", VoOpenAccountResp.class));
+        }
 
         String logo = null;
         String bankName = null ;
@@ -648,7 +641,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
-    public String shwoPassword(Long id, Model model) {
+    public String showPassword(Long id, Model model) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(id);
         model.addAttribute("h5Domain", h5Domain) ;
         if(ObjectUtils.isEmpty(userThirdAccount)){

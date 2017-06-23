@@ -36,6 +36,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.Date;
@@ -95,6 +96,9 @@ public class LendBizImpl implements LendBiz {
         try {
             VoViewLendInfoWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewLendInfoWarpRes.class);
             LendInfo lends = lendService.info(userId, lendId);
+            if(ObjectUtils.isEmpty(lends)){
+                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"非法请求", VoViewLendInfoWarpRes.class));
+            }
             warpRes.setLendInfo(lends);
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {

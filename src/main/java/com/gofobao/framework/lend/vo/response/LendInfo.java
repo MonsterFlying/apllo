@@ -33,7 +33,8 @@ public class LendInfo {
     @ApiModelProperty("净值额度")
     private String equityLimit;
 
-
+    @ApiModelProperty("状态（0、可借；1、结束）")
+    private Integer status;
 
 
 }
