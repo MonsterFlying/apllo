@@ -50,25 +50,25 @@ public class SmsUserController {
         return result;
     }
 
-    @ApiOperation("发送解绑手机验证码")
-    @PostMapping("/switchPhone")
+    @ApiOperation("更换手机---> 发送解绑手机验证码  第一步")
+    @PostMapping("/switch/phone/unbind")
     public ResponseEntity<VoBaseResp> switchPhone(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,  @Valid @ModelAttribute VoUserSmsReq voUserSmsReq){
         voUserSmsReq.setUserId(userId);
         return messageBiz.sendSwitchPhone(request, voUserSmsReq) ;
     }
 
 
-    @ApiOperation("发送用户绑定手机")
+    @ApiOperation("绑定新手---> 发送用户绑定手机")
     @PostMapping("/bindPhone")
     public ResponseEntity<VoBaseResp> sendBindPhone(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,  @Valid @ModelAttribute VoAnonSmsReq voAnonSmsReq){
         return messageBiz.sendBindPhone(request, voAnonSmsReq, userId) ;
     }
 
 
-    @ApiOperation("发送用户跟换手机号的绑定新手机短信")
-    @PostMapping("/switch/bindPhone")
+    @ApiOperation("更换手机---> 发送绑定新手机短信验证码 ")
+    @PostMapping("/switch/newPhone/bind")
     public ResponseEntity<VoBaseResp> sendBindPhone4Switch(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,  @Valid @ModelAttribute VoAnonSmsReq voAnonSmsReq){
-        return messageBiz.sendBindPhone(request, voAnonSmsReq, userId) ;
+        return messageBiz.sendBindPhone4Switch(request, voAnonSmsReq, userId) ;
     }
 
 }

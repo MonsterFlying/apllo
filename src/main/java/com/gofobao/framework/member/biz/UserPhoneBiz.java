@@ -36,4 +36,5 @@ public interface UserPhoneBiz {
     ResponseEntity<VoBasicUserInfoResp> bindPhone(VoBindPhone voBindPhone, Long userId);
 
 
+    ResponseEntity<VoBaseResp> verfyUnBindPhoneMessage(Long userId, String smsCode);
 }

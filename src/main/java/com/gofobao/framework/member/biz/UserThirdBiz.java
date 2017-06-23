@@ -1,5 +1,6 @@
 package com.gofobao.framework.member.biz;
 
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
@@ -128,5 +129,4 @@ public interface UserThirdBiz {
      * @param userThirdAccount
      */
     UserThirdAccount synCreditQuth(UserThirdAccount userThirdAccount);
-
 }

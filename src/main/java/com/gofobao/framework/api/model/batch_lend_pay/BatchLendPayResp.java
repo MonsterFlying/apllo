@@ -7,9 +7,33 @@ import lombok.Data;
  * Created by Zeke on 2017/6/8.
  */
 @Data
-public class BatchLendPayResp  extends JixinBatchBaseResponse {
+public class BatchLendPayResp extends JixinBatchBaseResponse {
     /**
-     * 接收结果  success接收成功
+     *
      */
-    private String  received;
+    private String batchNo;
+    /**
+     *
+     */
+    private String retNotifyURL;
+    /**
+     *
+     */
+    private String subPacks;
+    /**
+     *
+     */
+    private String txAmount;
+    /**
+     *
+     */
+    private String txCounts;
+    /**
+     *
+     */
+    private String notifyURL;
+    /**
+     *
+     */
+    private String acqRes;
 }

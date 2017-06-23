@@ -62,27 +62,30 @@ public class JixinHelper {
         DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
 
         Date nowDate = new Date();
-        int no = 100000;
+        int noNum = 100000;
 
-        DictValue dictValue = dictValueService.findTopByItemIdAndValue01(dictItem.getId(), "firstCreateAt");
-        if (!ObjectUtils.isEmpty(dictValue)) {
-            Long firstCreateAt = NumberHelper.toLong(StringHelper.toString(dictValue.getValue03()));
+        DictValue createAt = dictValueService.findTopByItemIdAndValue01(dictItem.getId(), "firstCreateAt");
+        DictValue no = null;
+        if (!ObjectUtils.isEmpty(createAt)) {
+            Long firstCreateAt = NumberHelper.toLong(StringHelper.toString(createAt.getValue03()));
             if (DateHelper.beginOfDate(nowDate).getTime() > firstCreateAt) {
                 firstCreateAt = nowDate.getTime();
-                dictValue.setValue03(StringHelper.toString(firstCreateAt));
-                dictValue = dictValueService.findTopByItemIdAndValue01(dictItem.getId(), "no");
-                dictValue.setValue03(StringHelper.toString(no));
-                dictValueService.save(dictValue);
+                createAt.setValue03(StringHelper.toString(firstCreateAt));
+                dictValueService.save(createAt);
+
+                no = dictValueService.findTopByItemIdAndValue01(dictItem.getId(), "no");
+                no.setValue03(StringHelper.toString(noNum));
+                dictValueService.save(no);
             } else {
-                dictValue = dictValueService.findTopByItemIdAndValue01(dictItem.getId(), "no");
-                no = NumberHelper.toInt(StringHelper.toString(dictValue.getValue03())) + 1;
-                dictValue.setValue03(StringHelper.toString(no));
-                dictValueService.save(dictValue);
+                no = dictValueService.findTopByItemIdAndValue01(dictItem.getId(), "no");
+                noNum = NumberHelper.toInt(StringHelper.toString(no.getValue03())) + 1;
+                no.setValue03(StringHelper.toString(noNum));
+                dictValueService.save(no);
             }
         }
 
 
-        return StringHelper.toString(no);
+        return StringHelper.toString(noNum);
     }
 
     /**
@@ -113,6 +116,7 @@ public class JixinHelper {
 
     /**
      * 获取身份证类型
+     *
      * @param type
      * @return
      */

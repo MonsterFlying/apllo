@@ -147,7 +147,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
     }
 
     public BorrowRepayment save(BorrowRepayment borrowRepayment) {
-        return save(borrowRepayment);
+        return borrowRepaymentRepository.save(borrowRepayment);
     }
 
     public BorrowRepayment insert(BorrowRepayment borrowRepayment) {

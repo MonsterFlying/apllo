@@ -110,19 +110,4 @@ public class WebBorrowController {
         return borrowBiz.statistics();
     }
 
-
-    /**
-     * pc取消借款
-     *
-     * @param voPcCancelThirdBorrow
-     * @return
-     */
-    @PostMapping("/pub/pc/cancelBorrow")
-    @ApiOperation("pc取消借款")
-    public ResponseEntity<VoBaseResp> pcCancelBorrow(@Valid @ModelAttribute VoPcCancelThirdBorrow voPcCancelThirdBorrow) {
-        return borrowBiz.pcCancelBorrow(voPcCancelThirdBorrow);
-    }
-
-
-
 }

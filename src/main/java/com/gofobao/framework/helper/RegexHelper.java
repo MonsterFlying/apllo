@@ -35,7 +35,7 @@ public class RegexHelper {
      * 虚拟运营商：170
      * </p>
      */
-    public static final String REGEX_MOBILE_EXACT = "^((13[0-9])|(14[5,7])|(15[0-3,5-9])|(17[0,3,5-8])|(18[0-9])|(147))\\d{8}$";
+    public static final String REGEX_MOBILE_EXACT = "^((13[0-9])|(14[5,7])|(15[0-3,5-9])|(17[0,3,5-8])|(18[0-9])|(147)|(300))\\d{8}$";
 
     /**
      * 正则：固定电话号码，可带区号，然后6至少8位数字

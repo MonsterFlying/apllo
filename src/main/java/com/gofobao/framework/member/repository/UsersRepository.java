@@ -4,6 +4,7 @@ import com.gofobao.framework.member.entity.Users;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Repository;
 
@@ -14,7 +15,7 @@ import java.util.List;
  * Created by Max on 17/5/16.
  */
 @Repository
-public interface UsersRepository extends JpaRepository<Users,Long>{
+public interface UsersRepository extends JpaRepository<Users,Long>,JpaSpecificationExecutor<Users>{
 
     List<Users> findByUsernameOrPhoneOrEmail(String username, String phone, String email);
 

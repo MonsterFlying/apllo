@@ -1,6 +1,10 @@
 package com.gofobao.framework;
 
+import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.helper.JixinManager;
+import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
+import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
@@ -20,6 +24,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -61,20 +66,15 @@ public class AplloApplicationTests {
     }
 
     public static void main(String[] args) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("borrowId", 165206);
 
-        Gson gson = new Gson();
-        String paramStr = gson.toJson(map);
-        System.out.println(paramStr);
 
-        System.out.println(SecurityHelper.getSign(paramStr));
+        System.out.println(new Date().getTime());
     }
 
     @Test
     public void test() {
         /*Map<String,String> map = new HashMap<>();
-        map.put("borrowId","165206");
+        map.put("borrowId","165212");
         try {
             borrowProvider.doFirstVerify(map);
         } catch (Exception e) {
@@ -110,7 +110,7 @@ public class AplloApplicationTests {
         System.out.println((resp.getTotalItems()));*/
 
         Map<String,String> msg = new HashMap<>();
-        msg.put("borrowId","165206");
+        msg.put("borrowId","165212");
         try {
             borrowProvider.doAgainVerify(msg);
         } catch (Exception e) {
@@ -138,16 +138,16 @@ public class AplloApplicationTests {
         System.out.println(response);*/
 
         /*BatchDetailsQueryReq request = new BatchDetailsQueryReq();
-        request.setBatchNo("100002");
-        request.setBatchTxDate("20170619");
-        request.setType("1");
+        request.setBatchNo("100001");
+        request.setBatchTxDate("20170622");
+        request.setType("9");
         request.setPageNum("1");
         request.setPageSize("10");
         request.setChannel(ChannelContant.HTML);
         BatchDetailsQueryResp response = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, request, BatchDetailsQueryResp.class);
         System.out.println(response);*/
 
-        /*Borrow borrow = borrowService.findById(165198L);
+        /*Borrow borrow = borrowService.findById(165210L);
         try {
             borrowBiz.notTransferedBorrowAgainVerify(borrow);
         } catch (Exception e) {

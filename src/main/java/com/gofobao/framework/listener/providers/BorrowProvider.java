@@ -9,20 +9,28 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoCreateThirdBorrowReq;
 import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
+import com.gofobao.framework.collection.entity.BorrowCollection;
+import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.MathHelper;
-import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.helper.project.CapitalChangeHelper;
+import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
+import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.lend.entity.Lend;
 import com.gofobao.framework.lend.service.LendService;
+import com.gofobao.framework.member.entity.UserCache;
+import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.service.UserCacheService;
+import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
+import com.gofobao.framework.system.biz.StatisticBiz;
+import com.gofobao.framework.system.entity.Statistic;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
@@ -35,16 +43,16 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Zeke on 2017/5/31.
@@ -62,10 +70,6 @@ public class BorrowProvider {
     @Autowired
     private TenderBiz tenderBiz;
     @Autowired
-    private CapitalChangeHelper capitalChangeHelper;
-    @Autowired
-    private MqHelper mqHelper;
-    @Autowired
     private BorrowThirdBiz borrowThirdBiz;
     @Autowired
     private BorrowRepaymentThirdBiz borrowRepaymentThirdBiz;
@@ -73,6 +77,18 @@ public class BorrowProvider {
     private TenderThirdBiz tenderThirdBiz;
     @Autowired
     private TenderService tenderService;
+    @Autowired
+    private UserCacheService userCacheService;
+    @Autowired
+    private BorrowCollectionService borrowCollectionService;
+    @Autowired
+    private BorrowRepaymentService borrowRepaymentService;
+
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private MqHelper mqHelper;
+
 
     /**
      * 初审
@@ -227,24 +243,12 @@ public class BorrowProvider {
             }
         } else { //非转让标
 
-            VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
-            voQueryThirdBorrowList.setBorrowId(borrowId);
-            voQueryThirdBorrowList.setUserId(borrow.getUserId());
-            voQueryThirdBorrowList.setPageNum("1");
-            voQueryThirdBorrowList.setPageSize("10");
-            DebtDetailsQueryResp response = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
-
-            List<DebtDetail> debtDetailList = GSON.fromJson(response.getSubPacks(), new TypeToken<List<DebtDetail>>() {
-            }.getType());
-
-            ResponseEntity<VoBaseResp> resp = null;
-            if (debtDetailList.size() < 1) {
-                if (ObjectUtils.isEmpty(borrow.getSuccessAt())) {
-                    borrow.setSuccessAt(new Date());
-                    borrowService.updateById(borrow);
-                }
-                resp = thirdRegisterBorrowAndTender(borrow);
+            if (ObjectUtils.isEmpty(borrow.getSuccessAt())) {
+                borrow.setSuccessAt(new Date());
+                borrowService.updateById(borrow);
             }
+
+            ResponseEntity<VoBaseResp> resp = thirdRegisterBorrowAndTender(borrow);
             if (ObjectUtils.isEmpty(resp)) {
                 //批次放款
                 VoThirdBatchLendRepay voThirdBatchLendRepay = new VoThirdBatchLendRepay();
@@ -264,10 +268,6 @@ public class BorrowProvider {
             }
 
         }
-
-        /**
-         * @// TODO: 2017/6/2 复审事件
-         */
         return bool;
     }
 
@@ -277,18 +277,31 @@ public class BorrowProvider {
      * @param borrow
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> thirdRegisterBorrowAndTender(Borrow borrow) {
         long borrowId = borrow.getId();
         ResponseEntity<VoBaseResp> resp = null;
 
-        //标的登记
-        int type = borrow.getType();
-        if (type != 0 && type != 4) { //判断是否是官标、官标不需要在这里登记标的
-            VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
-            voCreateThirdBorrowReq.setBorrowId(borrowId);
-            resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
-            if (!ObjectUtils.isEmpty(resp)) {
-                return resp;
+        VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
+        voQueryThirdBorrowList.setBorrowId(borrowId);
+        voQueryThirdBorrowList.setUserId(borrow.getUserId());
+        voQueryThirdBorrowList.setPageNum("1");
+        voQueryThirdBorrowList.setPageSize("10");
+        DebtDetailsQueryResp response = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
+
+        List<DebtDetail> debtDetailList = GSON.fromJson(response.getSubPacks(), new TypeToken<List<DebtDetail>>() {
+        }.getType());
+
+        if (debtDetailList.size() < 1) {
+            //标的登记
+            int type = borrow.getType();
+            if (type != 0 && type != 4) { //判断是否是官标、官标不需要在这里登记标的
+                VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
+                voCreateThirdBorrowReq.setBorrowId(borrowId);
+                resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
+                if (!ObjectUtils.isEmpty(resp)) {
+                    return resp;
+                }
             }
         }
 
@@ -297,6 +310,7 @@ public class BorrowProvider {
                 .<Tender>and()
                 .eq("status", 1)
                 .eq("borrowId", borrowId)
+                .eq("isThirdRegister", false)
                 .build();
         List<Tender> tenderList = tenderService.findList(ts);
         for (Tender tender : tenderList) {
@@ -311,6 +325,8 @@ public class BorrowProvider {
                 log.error("tenderId:" + tender.getId() + "msg:" + resp.getBody().getState().getMsg());
                 return resp;
             }
+            tender.setIsThirdRegister(true);
+            tenderService.updateById(tender);
         }
         return null;
     }

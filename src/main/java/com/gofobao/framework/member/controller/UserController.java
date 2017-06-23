@@ -70,4 +70,12 @@ public class UserController {
     public ResponseEntity<VoSignInfoResp> querySigned(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         return userThirdBiz.querySigned(userId) ;
     }
+
+
+
+    @ApiOperation("更换手机下一步短信判断")
+    @GetMapping("/user/phone/switchVerify/{smsCode}")
+    public ResponseEntity<VoBaseResp> verfyUnBindPhoneMessage(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable("smsCode") String smsCode){
+        return userPhoneBiz.verfyUnBindPhoneMessage(userId, smsCode) ;
+    }
 }

@@ -1,6 +1,9 @@
 package com.gofobao.framework.member.service;
 
 import com.gofobao.framework.member.entity.Users;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 
@@ -9,24 +12,27 @@ import java.util.List;
  */
 public interface UserService {
 
-    List<Users> listUser(Users users) ;
+    List<Users> listUser(Users users);
 
     /**
      * 根据账号查找用户信息
+     *
      * @param account
      * @return
      */
-    Users findByAccount(String account) ;
+    Users findByAccount(String account);
 
     /**
      * 根据唯一标示查找用户
+     *
      * @param id
      * @return
      */
-    Users findById(Long id) ;
+    Users findById(Long id);
 
     /**
      * 判断手机是否唯一
+     *
      * @param phone 手机唯一
      * @return
      */
@@ -34,6 +40,7 @@ public interface UserService {
 
     /**
      * 带锁查询会员
+     *
      * @param userId
      * @return
      */
@@ -41,6 +48,7 @@ public interface UserService {
 
     /**
      * 检查是否实名
+     *
      * @param users
      * @return
      */
@@ -49,6 +57,7 @@ public interface UserService {
 
     /**
      * 判断用户名是否存在
+     *
      * @param userName
      * @return
      */
@@ -57,6 +66,7 @@ public interface UserService {
 
     /**
      * 根据推荐吗查找用户
+     *
      * @param inviteCode 推荐码
      * @return
      */
@@ -64,6 +74,7 @@ public interface UserService {
 
     /**
      * 保存/更新用户
+     *
      * @param users
      * @return
      */
@@ -71,9 +82,17 @@ public interface UserService {
 
     /**
      * 检测邮箱不存在
+     *
      * @param email
      * @return
      */
     boolean notExistsByEmail(String email);
 
+    List<Users> findList(Specification<Users> specification);
+
+    List<Users> findList(Specification<Users> specification, Sort sort);
+
+    List<Users> findList(Specification<Users> specification, Pageable pageable);
+
+    long count(Specification<Users> specification);
 }
