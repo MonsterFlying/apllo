@@ -1,4 +1,4 @@
-package com.gofobao.framework.integral.controller;
+package com.gofobao.framework.integral.controller.web;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.ThymeleafHelper;
@@ -23,7 +23,7 @@ import java.util.Map;
 @RestController
 @RequestMapping
 @Api(description = "积分模块")
-public class IntegralController {
+public class WebIntegralController {
 
     @Autowired
     private IntegralBiz integralBiz;
@@ -37,7 +37,7 @@ public class IntegralController {
      * @return
      */
     @ApiOperation("获取积分列表")
-    @PostMapping("pub/integral/list")
+    @PostMapping("pub/pc/integral/list")
     public ResponseEntity<VoBaseResp> list(@Valid @ModelAttribute VoListIntegralReq voListIntegralReq,@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         voListIntegralReq.setUserId(userId);
         return integralBiz.list(voListIntegralReq);
@@ -52,7 +52,7 @@ public class IntegralController {
      * @throws Exception
      */
     @ApiOperation(value = "积分兑换")
-    @PostMapping(value = "pub/integral/doTakeRates")
+    @PostMapping(value = "pub/pc/integral/doTakeRates")
     public ResponseEntity<VoBaseResp> doTakeRates(@Valid @ModelAttribute VoIntegralTakeReq voIntegralTakeReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
         voIntegralTakeReq.setUserId(userId);
         return integralBiz.doTakeRates(voIntegralTakeReq);
@@ -65,7 +65,7 @@ public class IntegralController {
      * @throws Exception
      */
     @ApiOperation(value = "积分折现系数说明")
-    @PostMapping(value = "pub/integral/takeRatesDesc")
+    @PostMapping(value = "pub/pc/integral/takeRatesDesc")
     public ResponseEntity<String> takeRatesDesc() throws Exception {
         Map<String, Object> paranMap = new HashMap<>() ;
         String content = thymeleafHelper.build("integral/takeRateDesc", paranMap) ;
