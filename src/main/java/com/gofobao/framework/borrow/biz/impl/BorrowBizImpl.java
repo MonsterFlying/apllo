@@ -583,6 +583,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @param voPcCancelThirdBorrow
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> pcCancelBorrow(VoPcCancelThirdBorrow voPcCancelThirdBorrow) {
         Date nowDate = new Date();
         String paramStr = voPcCancelThirdBorrow.getParamStr();
@@ -1420,6 +1421,11 @@ public class BorrowBizImpl implements BorrowBiz {
         Long borrowId = NumberHelper.toLong(paramMap.get("borrowId"));
         Borrow borrow = borrowService.findById(borrowId);
         Preconditions.checkNotNull(borrow, "借款不存在!");
+        if (borrow.getStatus() != 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc 登记官方借款 该标已初审", VoHtmlResp.class));
+        }
 
         //检查标的是否登记
         VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();

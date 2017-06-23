@@ -33,6 +33,7 @@ import java.util.Map;
 @Slf4j
 @Api(description = "首页标接口")
 @SuppressWarnings("all")
+@RequestMapping("/borrow")
 public class BorrowController {
 
     @Autowired
@@ -52,7 +53,7 @@ public class BorrowController {
 
 
     @ApiOperation(value = "首页标列表; type:-1：全部 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
-    @GetMapping("borrow/v2/list/{type}/{pageIndex}/{pageSize}")
+    @GetMapping("/v2/list/{type}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewBorrowListWarpRes> borrowList(@PathVariable Integer pageIndex,
                                                               @PathVariable Integer pageSize,
                                                               @PathVariable Integer type) {
@@ -65,20 +66,20 @@ public class BorrowController {
 
 
     @ApiOperation("标信息")
-    @GetMapping("borrow/v2/info/{borrowId}")
+    @GetMapping("/v2/info/{borrowId}")
     public ResponseEntity<VoBaseResp> getByBorrowId(@PathVariable Long borrowId) {
         return borrowBiz.info(borrowId);
     }
 
     @ApiOperation("标简介")
-    @GetMapping("borrow/v2/desc/{borrowId}")
+    @GetMapping("/v2/desc/{borrowId}")
     public ResponseEntity<VoViewVoBorrowDescWarpRes> desc(@PathVariable Long borrowId) {
         return borrowBiz.desc(borrowId);
     }
 
 
     @ApiOperation(value = "标合同")
-    @GetMapping(value = "pub/borrowProtocol/{borrowId}")
+    @GetMapping(value = "/pub/borrowProtocol/{borrowId}")
     public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId, HttpServletRequest request) {
         Long userId = 0L;
         String authToken = request.getHeader(this.tokenHeader);
@@ -106,7 +107,7 @@ public class BorrowController {
      * @param voAddNetWorthBorrow
      * @return
      */
-    @PostMapping("borrow/addNetWorth")
+    @PostMapping("/addNetWorth")
     @ApiOperation("发布净值借款")
     public ResponseEntity<VoBaseResp> addNetWorth(@Valid @ModelAttribute VoAddNetWorthBorrow voAddNetWorthBorrow, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
         voAddNetWorthBorrow.setUserId(userId);
@@ -131,14 +132,14 @@ public class BorrowController {
      * @param voCancelBorrow
      * @return
      */
-    @PostMapping("borrow/cancelBorrow")
+    @PostMapping("/cancelBorrow")
     @ApiOperation("取消借款")
     public ResponseEntity<VoBaseResp> cancelBorrow(@Valid @ModelAttribute VoCancelBorrow voCancelBorrow, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voCancelBorrow.setUserId(userId);
         return borrowBiz.cancelBorrow(voCancelBorrow);
     }
 
-    @PostMapping("borrow/repayAll")
+    @PostMapping("/repayAll")
     @ApiOperation("提前还款")
     public ResponseEntity<VoBaseResp> repayAll(@Valid @ModelAttribute VoRepayAllReq voRepayAllReq) {
         return borrowThirdBiz.thirdBatchRepayAll(voRepayAllReq);
@@ -150,7 +151,7 @@ public class BorrowController {
      * @param voDoAgainVerifyReq
      * @return
      */
-    @PostMapping("borrow/doAgainVerify")
+    @PostMapping("/doAgainVerify")
     @ApiOperation("复审")
     public ResponseEntity<VoBaseResp> doAgainVerify(VoDoAgainVerifyReq voDoAgainVerifyReq) {
         return borrowBiz.doAgainVerify(voDoAgainVerifyReq);
