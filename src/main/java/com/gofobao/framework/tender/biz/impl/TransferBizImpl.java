@@ -197,6 +197,7 @@ public class TransferBizImpl implements TransferBiz {
 
         Specification<Borrow> borrowSpecification = Specifications
                 .<Borrow>and()
+                .eq("userId",userId)
                 .in("status", 0, 1)
                 .build();
 

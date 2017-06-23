@@ -63,4 +63,8 @@ public class LendBlackListServiceImpl implements LendBlackListService {
     public long count(Specification<LendBlacklist> specification) {
         return lendBlackListRepository.count(specification);
     }
+
+    public void delete(LendBlacklist lendBlacklist){
+        lendBlackListRepository.delete(lendBlacklist);
+    }
 }

@@ -9,6 +9,10 @@ import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMob
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileResponse;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
+import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
+import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
+import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
+import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
@@ -78,8 +82,11 @@ public class AplloApplicationTests {
 
     public static void main(String[] args) {
 
-
-        System.out.println(new Date().getTime());
+        Gson gson = new Gson();
+        Map<String,String> map = new HashMap<>();
+        map.put("borrowId","165215");
+        System.out.println(gson.toJson(map));
+        System.out.println(SecurityHelper.getSign( gson.toJson(map)));
     }
 
     public AccountQueryByMobileResponse findAccountByMobile() {
@@ -90,27 +97,40 @@ public class AplloApplicationTests {
         return response;
     }
 
+    public void trusteePay(){
+        TrusteePayQueryReq request = new TrusteePayQueryReq();
+        request.setAccountId("6212462040000200024");
+        request.setProductId("165215");
+        request.setChannel(ChannelContant.HTML);
+        TrusteePayQueryResp response = jixinManager.send(JixinTxCodeEnum.TRUSTEE_PAY_QUERY, request, TrusteePayQueryResp.class);
+        System.out.println(response);
+    }
+
+    public void creditAuthQuery(){
+        CreditAuthQueryRequest request = new CreditAuthQueryRequest();
+        request.setAccountId("6212462040000050015");
+        request.setType("1");
+        request.setChannel(ChannelContant.HTML);
+        CreditAuthQueryResponse response = jixinManager.send(JixinTxCodeEnum.CREDIT_AUTH_QUERY, request, CreditAuthQueryResponse.class);
+        System.out.println(response);
+    }
+
     @Test
     public void test() {
         //根据手机号查询存管账户
-        findAccountByMobile();
+        //findAccountByMobile();
+        //受托支付
+        //trusteePay();
+        //签约查询
+        //creditAuthQuery();
 
-        /*Map<String,String> map = new HashMap<>();
-        map.put("borrowId","165212");
+        Map<String,String> map = new HashMap<>();
+        map.put("borrowId","165215");
         try {
             borrowProvider.doFirstVerify(map);
         } catch (Exception e) {
             e.printStackTrace();
-        }*/
-
-
-
-/*        TrusteePayQueryReq request = new TrusteePayQueryReq();
-        request.setAccountId("6212462040000050015");
-        request.setProductId("165206");
-        request.setChannel(ChannelContant.HTML);
-        TrusteePayQueryResp response = jixinManager.send(JixinTxCodeEnum.TRUSTEE_PAY_QUERY, request, TrusteePayQueryResp.class);
-        System.out.println(response);*/
+        }
 
         /*VoRepayReq voRepayReq = new VoRepayReq();
         voRepayReq.setRepaymentId(168683L);
@@ -134,7 +154,7 @@ public class AplloApplicationTests {
         System.out.println((resp.getTotalItems()));*/
 
         /*Map<String,String> msg = new HashMap<>();
-        msg.put("borrowId","165212");
+        msg.put("borrowId","165213");
         try {
             borrowProvider.doAgainVerify(msg);
         } catch (Exception e) {
