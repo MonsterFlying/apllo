@@ -9,7 +9,7 @@ import com.gofobao.framework.collection.repository.BorrowCollectionRepository;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
-import com.gofobao.framework.collection.vo.response.VoViewOrderDetailRes;
+import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
 import com.gofobao.framework.helper.BeanHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
@@ -68,16 +68,16 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
      * 回款详情
      *
      * @param voOrderDetailReq
-     * @return VoViewOrderDetailRes
+     * @return VoViewOrderDetailResp
      */
     @Override
-    public VoViewOrderDetailRes orderDetail(VoOrderDetailReq voOrderDetailReq) {
+    public VoViewOrderDetailResp orderDetail(VoOrderDetailReq voOrderDetailReq) {
         BorrowCollection borrowCollection = borrowCollectionRepository.findOne(voOrderDetailReq.getCollectionId());
         if (Objects.isNull(borrowCollection)) {
             return null;
         }
         Borrow borrow = borrowRepository.findOne(borrowCollection.getBorrowId().longValue());
-        VoViewOrderDetailRes detailRes = new VoViewOrderDetailRes();
+        VoViewOrderDetailResp detailRes = new VoViewOrderDetailResp();
         detailRes.setOrder(borrowCollection.getOrder() + 1);
         detailRes.setCollectionMoney(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100d));
         detailRes.setLateDays(borrowCollection.getLateDays());

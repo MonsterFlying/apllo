@@ -1,7 +1,7 @@
 package com.gofobao.framework.repayment.service;
 
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
-import com.gofobao.framework.collection.vo.response.VoViewOrderDetailRes;
+import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.vo.request.VoInfoReq;
 import com.gofobao.framework.repayment.vo.response.RepayCollectionLog;
@@ -30,7 +30,7 @@ public interface BorrowRepaymentService {
      * @param voInfoReq
      * @return
      */
-    VoViewOrderDetailRes info(VoInfoReq voInfoReq);
+    VoViewOrderDetailResp info(VoInfoReq voInfoReq);
 
     /**
      * 当月还款天数

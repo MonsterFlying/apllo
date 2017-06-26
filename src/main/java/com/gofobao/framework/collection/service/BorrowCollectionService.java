@@ -3,7 +3,7 @@ package com.gofobao.framework.collection.service;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
-import com.gofobao.framework.collection.vo.response.VoViewOrderDetailRes;
+import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -28,7 +28,7 @@ public interface BorrowCollectionService {
      * 回款详情
      */
 
-    VoViewOrderDetailRes orderDetail(VoOrderDetailReq voOrderDetailReq);
+    VoViewOrderDetailResp orderDetail(VoOrderDetailReq voOrderDetailReq);
 
 
     List<Integer> collectionDay(String date,Long userId);

@@ -4,7 +4,8 @@ import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
-import com.gofobao.framework.collection.vo.response.VoViewOrderDetailRes;
+import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.repayment.contants.RepaymentContants;
@@ -68,11 +69,11 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
      * 还款详情
      *
      * @param voInfoReq
-     * @return VoViewOrderDetailRes
+     * @return VoViewOrderDetailResp
      */
     @Override
-    public VoViewOrderDetailRes info(VoInfoReq voInfoReq) {
-        VoViewOrderDetailRes detailRes = new VoViewOrderDetailRes();
+    public VoViewOrderDetailResp info(VoInfoReq voInfoReq) {
+        VoViewOrderDetailResp detailRes = VoBaseResp.ok("查询成功", VoViewOrderDetailResp.class) ;
         Specification<BorrowRepayment> specification = Specifications.<BorrowRepayment>and()
                 .eq("userId", voInfoReq.getUserId())
                 .eq("id", voInfoReq.getRepaymentId())

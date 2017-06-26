@@ -1,5 +1,6 @@
 package com.gofobao.framework.collection.vo.response;
 
+import com.gofobao.framework.core.vo.VoBaseResp;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -9,7 +10,7 @@ import lombok.Data;
  */
 @Data
 @ApiModel("回款详情")
-public class VoViewOrderDetailRes {
+public class VoViewOrderDetailResp extends VoBaseResp {
     @ApiModelProperty("第几期")
     private Integer order;
 
