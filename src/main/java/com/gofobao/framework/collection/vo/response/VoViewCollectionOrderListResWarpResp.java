@@ -10,6 +10,6 @@ import java.util.List;
  * Created by admin on 2017/6/6.
  */
 @Data
-public class VoViewCollectionOrderListResWarpRes extends VoBaseResp {
-    private List<VoViewCollectionOrderList> listRes=new ArrayList<>();
+public class VoViewCollectionOrderListResWarpResp extends VoBaseResp {
+    private List<VoViewCollectionOrderListWarpResp> listRes = new ArrayList<>();
 }

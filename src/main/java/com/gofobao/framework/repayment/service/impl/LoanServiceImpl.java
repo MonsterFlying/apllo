@@ -276,44 +276,29 @@ public class LoanServiceImpl implements LoanService {
         if (CollectionUtils.isEmpty(repaymentList)) {
             return null;
         }
-        VoViewLoanList voViewLoanList = new VoViewLoanList();
-        Long countId = repaymentList.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_NO).mapToLong(w -> w.getId()).count();
-        List<BorrowRepayment> borrowRepayments = new ArrayList<>(0);
-        String statusStr;
-        if (countId > 0) {  //还款中
-            borrowRepayments = repaymentList.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_NO).collect(Collectors.toList());
-            voViewLoanList.setOrderCount(countId.intValue());
-            statusStr = RepaymentContants.STATUS_NO_STR;
-        } else { //此标已结清
-            borrowRepayments = repaymentList;
-            voViewLoanList.setOrderCount(repaymentList.size());
-            statusStr = RepaymentContants.STATUS_YES_STR;
-        }
-        Integer repayMoney = borrowRepayments.stream().mapToInt(w -> w.getRepayMoney()).sum();
-        voViewLoanList.setSumRepayMoney(StringHelper.formatMon(repayMoney / 100d));  //总金额
+
+        VoViewLoanList voViewLoanList=new VoViewLoanList();
+
+
+        Integer collectionMoney=repaymentList.stream().mapToInt(p->p.getRepayMoney()).sum();
+        Integer countOrder=repaymentList.size();
+
         List<VoLoanInfo> voLoanInfoList=new ArrayList<>();
-        borrowRepayments.stream().forEach(p -> {
-            VoLoanInfo loanInfo = new VoLoanInfo();
-            loanInfo.setOrder(p.getOrder() + 1);
-            loanInfo.setStatusStr(statusStr);
-            loanInfo.setRepayMoney(StringHelper.formatMon(p.getRepayMoney() / 100d));
-            Date repayAt;
-            if (countId > 0) {
-                repayAt = p.getRepayAt();
-                loanInfo.setStatus(RepaymentContants.STATUS_NO);
-            } else {
-                repayAt = p.getRepayAtYes();
-                loanInfo.setStatus(RepaymentContants.STATUS_YES);
-            }
-            loanInfo.setRepayAt(DateHelper.dateToString(repayAt));
-            loanInfo.setLateDays(p.getLateDays());
-            loanInfo.setInterest(StringHelper.formatMon(p.getInterest()/100d));
-            loanInfo.setPrincipal(StringHelper.formatMon(p.getPrincipal()/100d));
-            voLoanInfoList.add(loanInfo);
-
+        repaymentList.stream().forEach(p->{
+            VoLoanInfo voLoanInfo=new VoLoanInfo();
+            voLoanInfo.setOrder(p.getOrder()+1);
+            voLoanInfo.setPrincipal(StringHelper.formatMon(p.getPrincipal()/100d));
+            voLoanInfo.setStatus(p.getStatus());
+            voLoanInfo.setLateDays(p.getLateDays());
+            voLoanInfo.setInterest(StringHelper.formatMon(p.getInterest()/100d));
+            voLoanInfo.setRepayAt(DateHelper.dateToString(p.getRepayAt()));
+            voLoanInfo.setRepayMoney(StringHelper.formatMon(p.getRepayMoney()));
+            voLoanInfo.setStatusStr(p.getStatus()==RepaymentContants.STATUS_YES?RepaymentContants.STATUS_YES_STR:RepaymentContants.STATUS_NO_STR);
+            voLoanInfoList.add(voLoanInfo);
         });
+        voViewLoanList.setSumRepayMoney(StringHelper.formatMon(collectionMoney/100d));
+        voViewLoanList.setOrderCount(countOrder);
         voViewLoanList.setVoLoanInfoList(voLoanInfoList);
-
         return Optional.ofNullable(voViewLoanList).orElse(null);
     }
 }

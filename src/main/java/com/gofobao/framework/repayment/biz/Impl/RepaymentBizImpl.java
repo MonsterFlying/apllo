@@ -110,7 +110,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
     public ResponseEntity<VoViewCollectionDaysWarpRes> days(Long userId, String time) {
         VoViewCollectionDaysWarpRes collectionDayWarpRes = VoBaseResp.ok("查询成功", VoViewCollectionDaysWarpRes.class);
         try {
-            Date date1 = DateHelper.stringToDate(time, "yyyyMM");
             List<Integer> result = borrowRepaymentService.days(userId, time);
             collectionDayWarpRes.setWarpRes(result);
             return ResponseEntity.ok(collectionDayWarpRes);
@@ -128,14 +127,14 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      */
     @Override
-    public ResponseEntity<VoBaseResp> repaymentList(VoCollectionOrderReq voCollectionOrderReq) {
+    public ResponseEntity<VoViewCollectionOrderListWarpResp> repaymentList(VoCollectionOrderReq voCollectionOrderReq) {
         try {
             List<BorrowRepayment> repaymentList = borrowRepaymentService.repaymentList(voCollectionOrderReq);
             if (CollectionUtils.isEmpty(repaymentList)) {
-
-                return ResponseEntity.badRequest().body(
-                        VoBaseResp.error(
-                                VoBaseResp.ERROR, "非法请求", VoViewCollectionOrderListResWarpRes.class));
+                VoViewCollectionOrderListWarpResp response = VoBaseResp.ok("查询成功", VoViewCollectionOrderListWarpResp.class );
+                response.setOrder(0);
+                response.setSumCollectionMoneyYes("0");
+                return ResponseEntity.ok(response) ;
             }
 
             Set<Long> borrowIdSet = repaymentList.stream()
@@ -144,11 +143,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
             List<Borrow> borrowList = borrowRepository.findByIdIn(new ArrayList(borrowIdSet));
             Map<Long, Borrow> borrowMap = borrowList.stream()
-                    .collect(Collectors
-                            .toMap(Borrow::getId, Function.identity()));
+                    .collect(Collectors.toMap(Borrow::getId, Function.identity()));
 
-            List<VoViewCollectionOrderList> orderListRes = new ArrayList<>(0);
-
+            List<VoViewCollectionOrderListWarpResp> orderListRes = new ArrayList<>(0);
             List<VoViewCollectionOrderRes> orderResList = new ArrayList<>();
 
             repaymentList.stream().forEach(p -> {
@@ -162,8 +159,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 orderResList.add(collectionOrderRes);
             });
 
-            VoViewCollectionOrderList collectionOrder = new VoViewCollectionOrderList();
-
+            VoViewCollectionOrderListWarpResp collectionOrder = VoBaseResp.ok("查询成功", VoViewCollectionOrderListWarpResp.class);
             collectionOrder.setOrderResList(orderResList);
             //总数
             collectionOrder.setOrder(orderResList.size());
@@ -174,14 +170,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .sum();
             collectionOrder.setSumCollectionMoneyYes(StringHelper.formatMon(moneyYesSum / 100d));
             orderListRes.add(collectionOrder);
-            VoViewCollectionOrderListResWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewCollectionOrderListResWarpRes.class);
-            warpRes.setListRes(orderListRes);
-
-            return ResponseEntity.ok(warpRes);
+            return ResponseEntity.ok(collectionOrder);
 
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewCollectionOrderListResWarpRes.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewCollectionOrderListWarpResp.class));
         }
     }
 
@@ -192,14 +185,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      */
     @Override
-    public ResponseEntity<VoViewOrderDetailWarpRes> info(VoInfoReq voInfoReq) {
+    public ResponseEntity<VoViewOrderDetailResp> info(VoInfoReq voInfoReq) {
         try {
-            VoViewOrderDetailRes voViewOrderDetailRes = borrowRepaymentService.info(voInfoReq);
-            VoViewOrderDetailWarpRes voViewOrderDetailWarpRes = VoBaseResp.ok("查询成功", VoViewOrderDetailWarpRes.class);
-            voViewOrderDetailWarpRes.setDetailWarpRes(voViewOrderDetailRes);
-            return ResponseEntity.ok(voViewOrderDetailWarpRes);
+            VoViewOrderDetailResp voViewOrderDetailResp = borrowRepaymentService.info(voInfoReq);
+            return ResponseEntity.ok(voViewOrderDetailResp);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewOrderDetailWarpRes.class));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewOrderDetailResp.class));
         }
     }
 

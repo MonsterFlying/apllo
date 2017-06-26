@@ -15,7 +15,7 @@ public class ReturnedMoney {
     private Integer lateDays;
 
     @ApiModelProperty("标状态 1:回款中 2:已结清")
-    private Integer state;
+    private Integer status;
 
     @ApiModelProperty("回款日")
     private String collectionAt;

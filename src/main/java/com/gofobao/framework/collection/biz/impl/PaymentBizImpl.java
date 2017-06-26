@@ -54,7 +54,7 @@ public class PaymentBizImpl implements PaymentBiz {
 
         List<BorrowCollection> borrowCollections = borrowCollectionService.orderList(voCollectionOrderReq);
         if (Collections.isEmpty(borrowCollections)) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非法请求", VoViewCollectionOrderListResWarpRes.class));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非法请求", VoViewCollectionOrderListResWarpResp.class));
         }
         try {
             List<Long> borrowIdArray = borrowCollections.stream().filter(w-> !StringUtils.isEmpty(w.getBorrowId()))
@@ -65,7 +65,7 @@ public class PaymentBizImpl implements PaymentBiz {
                     .stream()
                     .collect(Collectors.toMap(Borrow::getId, Function.identity()));
 
-            VoViewCollectionOrderList voViewCollectionOrderListRes = new VoViewCollectionOrderList();
+            VoViewCollectionOrderListWarpResp voViewCollectionOrderListWarpRespRes = new VoViewCollectionOrderListWarpResp();
             List<VoViewCollectionOrderRes> orderResList = new ArrayList<>();
             borrowCollections.stream().forEach(p -> {
                 VoViewCollectionOrderRes item = new VoViewCollectionOrderRes();
@@ -78,24 +78,24 @@ public class PaymentBizImpl implements PaymentBiz {
                 orderResList.add(item);
             });
             //回款列表
-            voViewCollectionOrderListRes.setOrderResList(orderResList);
+            voViewCollectionOrderListWarpRespRes.setOrderResList(orderResList);
             //总回款期数
-            voViewCollectionOrderListRes.setOrder(orderResList.size());
+            voViewCollectionOrderListWarpRespRes.setOrder(orderResList.size());
             //已回款金额
             Integer sumCollectionMoneyYes = borrowCollections.stream()
                     .filter(p -> p.getStatus() == BorrowCollectionContants.STATUS_YES)
                     .mapToInt(w -> w.getCollectionMoneyYes())
                     .sum();
-            voViewCollectionOrderListRes.setSumCollectionMoneyYes(StringHelper.formatMon(sumCollectionMoneyYes / 100d));
+            voViewCollectionOrderListWarpRespRes.setSumCollectionMoneyYes(StringHelper.formatMon(sumCollectionMoneyYes / 100d));
 
-            VoViewCollectionOrderListResWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewCollectionOrderListResWarpRes.class);
-            List<VoViewCollectionOrderList> orderLists = new ArrayList<>(0);
-            orderLists.add(voViewCollectionOrderListRes);
+            VoViewCollectionOrderListResWarpResp warpRes = VoBaseResp.ok("查询成功", VoViewCollectionOrderListResWarpResp.class);
+            List<VoViewCollectionOrderListWarpResp> orderLists = new ArrayList<>(0);
+            orderLists.add(voViewCollectionOrderListWarpRespRes);
             warpRes.setListRes(orderLists);
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非法请求", VoViewCollectionOrderListResWarpRes.class));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非法请求", VoViewCollectionOrderListResWarpResp.class));
         }
 
     }
@@ -109,7 +109,7 @@ public class PaymentBizImpl implements PaymentBiz {
     @Override
     public ResponseEntity<VoViewOrderDetailWarpRes> orderDetail(VoOrderDetailReq voOrderDetailReq) {
         try {
-            VoViewOrderDetailRes detailRes = borrowCollectionService.orderDetail(voOrderDetailReq);
+            VoViewOrderDetailResp detailRes = borrowCollectionService.orderDetail(voOrderDetailReq);
             VoViewOrderDetailWarpRes resWarpRes = VoBaseResp.ok("查询成功", VoViewOrderDetailWarpRes.class);
             resWarpRes.setDetailWarpRes(detailRes);
             return ResponseEntity.ok(resWarpRes);
