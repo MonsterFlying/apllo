@@ -109,7 +109,7 @@ public class PaymentBizImpl implements PaymentBiz {
     @Override
     public ResponseEntity<VoViewOrderDetailWarpRes> orderDetail(VoOrderDetailReq voOrderDetailReq) {
         try {
-            VoViewOrderDetailRes detailRes = borrowCollectionService.orderDetail(voOrderDetailReq);
+            VoViewOrderDetailResp detailRes = borrowCollectionService.orderDetail(voOrderDetailReq);
             VoViewOrderDetailWarpRes resWarpRes = VoBaseResp.ok("查询成功", VoViewOrderDetailWarpRes.class);
             resWarpRes.setDetailWarpRes(detailRes);
             return ResponseEntity.ok(resWarpRes);

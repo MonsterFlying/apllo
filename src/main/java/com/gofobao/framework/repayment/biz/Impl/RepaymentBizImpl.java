@@ -185,14 +185,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      */
     @Override
-    public ResponseEntity<VoViewOrderDetailWarpRes> info(VoInfoReq voInfoReq) {
+    public ResponseEntity<VoViewOrderDetailResp> info(VoInfoReq voInfoReq) {
         try {
-            VoViewOrderDetailRes voViewOrderDetailRes = borrowRepaymentService.info(voInfoReq);
-            VoViewOrderDetailWarpRes voViewOrderDetailWarpRes = VoBaseResp.ok("查询成功", VoViewOrderDetailWarpRes.class);
-            voViewOrderDetailWarpRes.setDetailWarpRes(voViewOrderDetailRes);
-            return ResponseEntity.ok(voViewOrderDetailWarpRes);
+            VoViewOrderDetailResp voViewOrderDetailResp = borrowRepaymentService.info(voInfoReq);
+            return ResponseEntity.ok(voViewOrderDetailResp);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewOrderDetailWarpRes.class));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewOrderDetailResp.class));
         }
     }
 

@@ -8,5 +8,5 @@ import lombok.Data;
  */
 @Data
 public class VoViewOrderDetailWarpRes extends VoBaseResp {
-    private VoViewOrderDetailRes detailWarpRes =new VoViewOrderDetailRes();
+    private VoViewOrderDetailResp detailWarpRes = new VoViewOrderDetailResp();
 }
