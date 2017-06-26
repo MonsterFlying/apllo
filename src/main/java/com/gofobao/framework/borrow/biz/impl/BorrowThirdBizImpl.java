@@ -154,7 +154,8 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         request.setTxAmount(StringHelper.formatDouble(borrow.getMoney(), 100, false));
         request.setRate(StringHelper.formatDouble(borrow.getApr(), 100, false));
         request.setTxFee("0");
-        request.setBailAccountId(jixinHelper.getBailAccountId(borrowId));
+        String bailAccountId = jixinHelper.getBailAccountId(borrowId);
+        request.setBailAccountId(bailAccountId);
         request.setAcqRes(StringHelper.toString(borrowId));
         request.setChannel(ChannelContant.HTML);
         if (entrustFlag && !ObjectUtils.isEmpty(takeUserThirdAccount)) {
@@ -167,6 +168,9 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
         }
+
+        borrow.setBailAccountId(bailAccountId);
+        borrowService.updateById(borrow);
         return null;
     }
 

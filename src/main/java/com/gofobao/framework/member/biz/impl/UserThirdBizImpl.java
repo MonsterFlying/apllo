@@ -91,17 +91,17 @@ public class UserThirdBizImpl implements UserThirdBiz {
     String aliyunQueryAppcode;
 
     @Autowired
-    ThirdAccountPasswordHelper thirdAccountPasswordHelper ;
+    ThirdAccountPasswordHelper thirdAccountPasswordHelper;
 
 
     @Autowired
-    DictValueService dictValueServcie ;
+    DictValueService dictValueServcie;
 
     @Autowired
-    DictItemServcie dictItemServcie ;
+    DictItemServcie dictItemServcie;
 
     @Autowired
-    BankBinHelper bankBinHelper ;
+    BankBinHelper bankBinHelper;
 
 
     LoadingCache<String, DictValue> bankLimitCache = CacheBuilder
@@ -111,14 +111,14 @@ public class UserThirdBizImpl implements UserThirdBiz {
             .build(new CacheLoader<String, DictValue>() {
                 @Override
                 public DictValue load(String bankName) throws Exception {
-                    DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("PLATFORM_BANK", 0) ;
-                    if(ObjectUtils.isEmpty(dictItem)){
-                        return null ;
+                    DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("PLATFORM_BANK", 0);
+                    if (ObjectUtils.isEmpty(dictItem)) {
+                        return null;
                     }
 
                     return dictValueServcie.findTopByItemIdAndValue02(dictItem.getId(), bankName);
                 }
-            }) ;
+            });
 
 
     @Override
@@ -154,7 +154,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         VoPreOpenAccountResp voPreOpenAccountResp = VoBaseResp.ok("查询成功", VoPreOpenAccountResp.class);
         voPreOpenAccountResp.setMobile(user.getPhone());
         voPreOpenAccountResp.setIdType("01"); //证件类型：身份证
-        voPreOpenAccountResp.setIdNo(ObjectUtils.isEmpty(user.getCardId()) ? "" :  user.getCardId());
+        voPreOpenAccountResp.setIdNo(ObjectUtils.isEmpty(user.getCardId()) ? "" : user.getCardId());
         voPreOpenAccountResp.setName(user.getRealname());
         voPreOpenAccountResp.setBankList(voBankResps);
         return ResponseEntity.ok(voPreOpenAccountResp);
@@ -176,30 +176,30 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "你的账户已经开户！", VoOpenAccountResp.class));
 
         UserThirdAccount userThirdAccountbyMobile = userThirdAccountService.findByMobile(voOpenAccountReq.getMobile());
-        if(!ObjectUtils.isEmpty(userThirdAccountbyMobile)){
+        if (!ObjectUtils.isEmpty(userThirdAccountbyMobile)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "手机已在存管平台开户, 无需开户！", VoOpenAccountResp.class));
         }
 
-        String bankName = null ;
+        String bankName = null;
         // 获取银行卡信息
         try {
             BankBinHelper.BankInfo bankInfo = bankBinHelper.find(voOpenAccountReq.getCardNo());
 
-            if(ObjectUtils.isEmpty(bankInfo)){
+            if (ObjectUtils.isEmpty(bankInfo)) {
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "查无此银行卡号, 如有问题请联系平台客户!", VoOpenAccountResp.class));
             }
 
-            if(!bankInfo.getCardType().equals("借记卡")){
+            if (!bankInfo.getCardType().equals("借记卡")) {
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "银行卡类型必须为借记卡!", VoOpenAccountResp.class));
             }
 
-            bankName = bankInfo.getBankName() ;
+            bankName = bankInfo.getBankName();
         } catch (Exception e) {
             log.error("开户查询银行卡异常");
         }
@@ -211,10 +211,10 @@ public class UserThirdBizImpl implements UserThirdBiz {
         } catch (ExecutionException e) {
             log.error("查询平台支持银行异常", e);
         }
-        if( ObjectUtils.isEmpty(dictValue) ){
+        if (ObjectUtils.isEmpty(dictValue)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, String.format("当前平台不支持%s", bankName), VoOpenAccountResp.class)) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, String.format("当前平台不支持%s", bankName), VoOpenAccountResp.class));
         }
 
         // 7.短信验证码验证
@@ -245,7 +245,6 @@ public class UserThirdBizImpl implements UserThirdBiz {
         request.setChannel(ChannelContant.getchannel(httpServletRequest));
         request.setSmsCode(voOpenAccountReq.getSmsCode());
         request.setCardNo(voOpenAccountReq.getCardNo());
-
 
         AccountOpenPlusResponse response = jixinManager.send(JixinTxCodeEnum.OPEN_ACCOUNT_PLUS, request, AccountOpenPlusResponse.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
@@ -417,13 +416,13 @@ public class UserThirdBizImpl implements UserThirdBiz {
         AutoBidAuthResponse autoBidAuthResponse = jixinManager.callback(request, new TypeToken<AutoBidAuthResponse>() {
         });
 
-        if(ObjectUtils.isEmpty(autoBidAuthResponse)){
+        if (ObjectUtils.isEmpty(autoBidAuthResponse)) {
             return ResponseEntity
                     .badRequest()
                     .body("error");
         }
 
-        if(!JixinResultContants.SUCCESS.equals(autoBidAuthResponse.getRetCode())){
+        if (!JixinResultContants.SUCCESS.equals(autoBidAuthResponse.getRetCode())) {
             log.error("UserThirdBizImpl.autoTenderCallback: 回调出失败");
             return ResponseEntity
                     .badRequest()
@@ -482,10 +481,10 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "请先设置江西银行存管账户交易密码！", VoHtmlResp.class));
         }
 
-        AutoBidAuthRequest autoBidAuthRequest = new AutoBidAuthRequest() ;
+        AutoBidAuthRequest autoBidAuthRequest = new AutoBidAuthRequest();
         autoBidAuthRequest.setAccountId(userThirdAccount.getAccountId());
         autoBidAuthRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
-        autoBidAuthRequest.setTxAmount("999999999") ;
+        autoBidAuthRequest.setTxAmount("999999999");
         autoBidAuthRequest.setTotAmount("999999999");
         autoBidAuthRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountPasswordUrl(httpServletRequest, userId));
         autoBidAuthRequest.setRetUrl(String.format("%s%s%s", javaDomain, "/pub/autoTender/show/", userId));
@@ -536,7 +535,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "请先签约江西银行自动投标协议！", VoHtmlResp.class));
         }
 
-        AutoCreditInvestAuthRequest autoCreditInvestAuthPlusRequest = new AutoCreditInvestAuthRequest() ;
+        AutoCreditInvestAuthRequest autoCreditInvestAuthPlusRequest = new AutoCreditInvestAuthRequest();
         autoCreditInvestAuthPlusRequest.setAccountId(userThirdAccount.getAccountId());
         autoCreditInvestAuthPlusRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
         autoCreditInvestAuthPlusRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountPasswordUrl(httpServletRequest, userId));
@@ -573,13 +572,13 @@ public class UserThirdBizImpl implements UserThirdBiz {
         AutoCreditInvestAuthResponse autoCreditInvestAuthResponse = jixinManager.callback(request, new TypeToken<AutoCreditInvestAuthResponse>() {
         });
 
-        if(ObjectUtils.isEmpty(autoCreditInvestAuthResponse)){
+        if (ObjectUtils.isEmpty(autoCreditInvestAuthResponse)) {
             return ResponseEntity
                     .badRequest()
                     .body("error");
         }
 
-        if(!JixinResultContants.SUCCESS.equals(autoCreditInvestAuthResponse.getRetCode())){
+        if (!JixinResultContants.SUCCESS.equals(autoCreditInvestAuthResponse.getRetCode())) {
             log.error("UserThirdBizImpl.autoTranferCallback: 回调出失败");
             return ResponseEntity
                     .badRequest()
@@ -646,15 +645,15 @@ public class UserThirdBizImpl implements UserThirdBiz {
     @Override
     public String showPassword(Long id, Model model) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(id);
-        model.addAttribute("h5Domain", h5Domain) ;
-        if(ObjectUtils.isEmpty(userThirdAccount)){
-            return "/password/faile" ;
+        model.addAttribute("h5Domain", h5Domain);
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return "/password/faile";
         }
 
-        if(userThirdAccount.getPasswordState() == 1){
-            return "/password/success" ;
-        }else{
-            return "/password/faile" ;
+        if (userThirdAccount.getPasswordState() == 1) {
+            return "/password/success";
+        } else {
+            return "/password/faile";
         }
     }
 
@@ -662,29 +661,29 @@ public class UserThirdBizImpl implements UserThirdBiz {
     public void thirdAccountProtocol(Long userId, Model model) {
         Users users = userService.findById(userId);
         String username = users.getUsername();
-        if(StringUtils.isEmpty(username)){
-            username = users.getPhone() ;
+        if (StringUtils.isEmpty(username)) {
+            username = users.getPhone();
         }
-        if(StringUtils.isEmpty(username)){
-            username = users.getEmail() ;
+        if (StringUtils.isEmpty(username)) {
+            username = users.getEmail();
         }
 
-        model.addAttribute("customerName", username) ;
-        model.addAttribute("playformName",  "深圳市广富宝金融信息服务有限公司") ;
+        model.addAttribute("customerName", username);
+        model.addAttribute("playformName", "深圳市广富宝金融信息服务有限公司");
     }
 
     @Override
     public String showAutoTender(Long id, Model model) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(id);
-        model.addAttribute("h5Domain", h5Domain) ;
-        if(ObjectUtils.isEmpty(userThirdAccount)){
-            return "/autoTender/faile" ;
+        model.addAttribute("h5Domain", h5Domain);
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return "/autoTender/faile";
         }
 
-        if(userThirdAccount.getAutoTenderState() == 1){
-            return "/autoTender/success" ;
-        }else{
-            return "/autoTender/faile" ;
+        if (userThirdAccount.getAutoTenderState() == 1) {
+            return "/autoTender/success";
+        } else {
+            return "/autoTender/faile";
         }
     }
 
@@ -692,29 +691,29 @@ public class UserThirdBizImpl implements UserThirdBiz {
     public String showAutoTranfer(Long id, Model model) {
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(id);
-        model.addAttribute("h5Domain", h5Domain) ;
-        if(ObjectUtils.isEmpty(userThirdAccount)){
-            return "/autoTranfer/faile" ;
+        model.addAttribute("h5Domain", h5Domain);
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return "/autoTranfer/faile";
         }
 
-        if(userThirdAccount.getAutoTransferState() == 1){
-            return "/autoTranfer/success" ;
-        }else{
-            return "/autoTranfer/faile" ;
+        if (userThirdAccount.getAutoTransferState() == 1) {
+            return "/autoTranfer/success";
+        } else {
+            return "/autoTranfer/faile";
         }
     }
 
     @Override
     public ResponseEntity<String> publicPasswordModify(HttpServletRequest httpServletRequest, String encode, String channel) {
         Long userId = thirdAccountPasswordHelper.getUserId(encode);
-        if(userId == null){
-            throw  new RuntimeException("非法请求");
+        if (userId == null) {
+            throw new RuntimeException("非法请求");
         }
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        if(ObjectUtils.isEmpty(userThirdAccount)){
-            throw  new RuntimeException("设置密码");
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            throw new RuntimeException("设置密码");
         }
-        PasswordResetRequest passwordResetRequest = new PasswordResetRequest() ;
+        PasswordResetRequest passwordResetRequest = new PasswordResetRequest();
         passwordResetRequest.setMobile(userThirdAccount.getMobile());
         passwordResetRequest.setChannel(channel);
         passwordResetRequest.setName(userThirdAccount.getName());
@@ -724,53 +723,53 @@ public class UserThirdBizImpl implements UserThirdBiz {
         passwordResetRequest.setAcqRes(String.valueOf(userId));
         passwordResetRequest.setRetUrl(String.format("%s%s/%s", javaDomain, "/pub/password/show", userId));
         passwordResetRequest.setNotifyUrl(String.format("%s%s", javaDomain, "/pub/user/third/modifyOpenAccPwd/callback/2"));
-        String html = jixinManager.getHtml(JixinTxCodeEnum.PASSWORD_RESET, passwordResetRequest) ;
+        String html = jixinManager.getHtml(JixinTxCodeEnum.PASSWORD_RESET, passwordResetRequest);
         return ResponseEntity.ok(html);
     }
 
     @Override
     public UserThirdAccount synCreditQuth(UserThirdAccount userThirdAccount) {
-        if(userThirdAccount.getAutoTenderState() == 0){
-            CreditAuthQueryRequest creditAuthQueryRequest = new CreditAuthQueryRequest() ;
-            creditAuthQueryRequest.setAccountId(userThirdAccount.getAccountId()) ;
-            creditAuthQueryRequest.setType("1") ;
-            creditAuthQueryRequest.setChannel(ChannelContant.APP) ;
+        if (userThirdAccount.getAutoTenderState() == 0) {
+            CreditAuthQueryRequest creditAuthQueryRequest = new CreditAuthQueryRequest();
+            creditAuthQueryRequest.setAccountId(userThirdAccount.getAccountId());
+            creditAuthQueryRequest.setType("1");
+            creditAuthQueryRequest.setChannel(ChannelContant.APP);
             CreditAuthQueryResponse creditAuthQueryResponse = jixinManager
                     .send(JixinTxCodeEnum.CREDIT_AUTH_QUERY, creditAuthQueryRequest, CreditAuthQueryResponse.class);
 
-            if( (!ObjectUtils.isEmpty(creditAuthQueryResponse)) && (creditAuthQueryResponse.getRetCode().equalsIgnoreCase(JixinResultContants.SUCCESS)) ) {
-                if(creditAuthQueryResponse.getState().equalsIgnoreCase("1")){
+            if ((!ObjectUtils.isEmpty(creditAuthQueryResponse)) && (creditAuthQueryResponse.getRetCode().equalsIgnoreCase(JixinResultContants.SUCCESS))) {
+                if (creditAuthQueryResponse.getState().equalsIgnoreCase("1")) {
                     // 同步信息
                     UserThirdAccount dbEntity = userThirdAccountService.findByUserId(userThirdAccount.getUserId());
                     dbEntity.setUpdateAt(new Date());
                     dbEntity.setAutoTenderState(1);
                     dbEntity.setAutoTenderOrderId(creditAuthQueryResponse.getOrderId());
                     dbEntity.setAutoTenderTotAmount(999999999L);
-                    dbEntity.setAutoTenderTxAmount(999999999L );
-                    userThirdAccountService.save(dbEntity) ;
+                    dbEntity.setAutoTenderTxAmount(999999999L);
+                    userThirdAccountService.save(dbEntity);
                 }
             }
         }
 
-        if(userThirdAccount.getAutoTransferState() == 0){
-            CreditAuthQueryRequest creditAuthQueryRequest = new CreditAuthQueryRequest() ;
-            creditAuthQueryRequest.setAccountId(userThirdAccount.getAccountId()) ;
-            creditAuthQueryRequest.setType("2") ;
-            creditAuthQueryRequest.setChannel(ChannelContant.APP) ;
+        if (userThirdAccount.getAutoTransferState() == 0) {
+            CreditAuthQueryRequest creditAuthQueryRequest = new CreditAuthQueryRequest();
+            creditAuthQueryRequest.setAccountId(userThirdAccount.getAccountId());
+            creditAuthQueryRequest.setType("2");
+            creditAuthQueryRequest.setChannel(ChannelContant.APP);
             CreditAuthQueryResponse creditAuthQueryResponse = jixinManager
                     .send(JixinTxCodeEnum.CREDIT_AUTH_QUERY, creditAuthQueryRequest, CreditAuthQueryResponse.class);
-            if( (!ObjectUtils.isEmpty(creditAuthQueryResponse)) && (creditAuthQueryResponse.getRetCode().equalsIgnoreCase(JixinResultContants.SUCCESS))){
-                if(creditAuthQueryResponse.getState().equalsIgnoreCase("1")){
+            if ((!ObjectUtils.isEmpty(creditAuthQueryResponse)) && (creditAuthQueryResponse.getRetCode().equalsIgnoreCase(JixinResultContants.SUCCESS))) {
+                if (creditAuthQueryResponse.getState().equalsIgnoreCase("1")) {
                     // 同步信息
                     UserThirdAccount dbEntity = userThirdAccountService.findByUserId(userThirdAccount.getUserId());
                     dbEntity.setUpdateAt(new Date());
                     dbEntity.setAutoTransferState(1);
                     dbEntity.setAutoTransferBondOrderId(creditAuthQueryResponse.getOrderId());
-                    userThirdAccountService.save(dbEntity) ;
+                    userThirdAccountService.save(dbEntity);
                 }
             }
         }
 
-        return userThirdAccountService.findByUserId(userThirdAccount.getUserId()) ;
+        return userThirdAccountService.findByUserId(userThirdAccount.getUserId());
     }
 }
