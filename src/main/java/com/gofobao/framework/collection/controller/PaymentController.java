@@ -4,6 +4,7 @@ import com.gofobao.framework.collection.biz.PaymentBiz;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
+import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListResWarpResp;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
@@ -27,10 +28,10 @@ public class PaymentController {
 
     @ApiOperation("回款期数列表 time:2017-05-06")
     @GetMapping("/v2/order/list/{time}")
-    public ResponseEntity<VoBaseResp> collectionOrderList(@PathVariable("time") String time,
-                                                          @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoViewCollectionOrderListResWarpResp> collectionOrderList(@PathVariable("time") String time/*,
+                                                          @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
         VoCollectionOrderReq voCollectionOrderReq = new VoCollectionOrderReq();
-        voCollectionOrderReq.setUserId(userId);
+        voCollectionOrderReq.setUserId(901L);
         voCollectionOrderReq.setTime(time);
         return paymentBiz.orderList(voCollectionOrderReq);
     }
@@ -47,8 +48,9 @@ public class PaymentController {
 
     @ApiOperation("当月有回款日期,time：'201705'")
     @GetMapping("/v2/collection/days/{time}")
-    public ResponseEntity<VoViewCollectionDaysWarpRes> days(@PathVariable("time") String time,
-                                                            @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoViewCollectionDaysWarpRes> days(@PathVariable("time") String time/*,
+                                                            @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+        Long userId=901L;
 
         return paymentBiz.collectionDays(time, userId);
     }

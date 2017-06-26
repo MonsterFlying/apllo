@@ -50,7 +50,7 @@ public class PaymentBizImpl implements PaymentBiz {
      * @return
      */
     @Override
-    public ResponseEntity<VoBaseResp> orderList(VoCollectionOrderReq voCollectionOrderReq) {
+    public ResponseEntity<VoViewCollectionOrderListResWarpResp> orderList(VoCollectionOrderReq voCollectionOrderReq) {
 
         List<BorrowCollection> borrowCollections = borrowCollectionService.orderList(voCollectionOrderReq);
         if (Collections.isEmpty(borrowCollections)) {

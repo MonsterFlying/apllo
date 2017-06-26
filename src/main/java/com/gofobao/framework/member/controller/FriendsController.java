@@ -16,6 +16,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Map;
 
 /**
@@ -70,9 +73,43 @@ public class FriendsController {
             System.out.println(new Gson().toJson(resultMaps ));
             content=thymeleafHelper.build("user/friends",resultMaps);
         }catch (Exception e){
+            e.printStackTrace();
             content=thymeleafHelper.build("load_error",null);
         }
         return  ResponseEntity.ok(content);
     }
+
+
+    /**
+     * 获取二维码图片
+     *
+     * @param response
+     */
+    @RequestMapping("/getInviteFriendQRCode")
+    @ApiOperation(value = "获取二维码接口", notes = "获取二维码接口")
+    public void getInviteFriendQRCode(@RequestParam("inviteCode") String inviteCode, HttpServletResponse response) {
+
+        OutputStream out = null;
+        try {
+            out = response.getOutputStream();
+        } catch (Exception e) {
+            log.error(String.format("获取二维码接口：%s", e.getMessage()));
+        }
+        response.setDateHeader("Expires", 0);
+        response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");  // Set standard HTTP/1.1 no-cache headers.
+        response.addHeader("Cache-Control", "post-check=0, pre-check=0"); // Set IE extended HTTP/1.1 no-cache headers (use addHeader).
+        response.setHeader("Pragma", "no-cache");  // Set standard HTTP/1.0 no-cache header.
+        response.setContentType("image/jpeg"); // return a jpeg
+
+        try {
+            InputStream in = FriendsController.class.getResourceAsStream( "/static/img/logo.png");http://192.168.1.235:8000/#/auth/register?_k=bpjq7r.createQRCodeTStream(h5Domain+"/#/auth/register?shareRegisterCode="+inviteCode, in, 50, 50, out);
+            out.flush();
+        } catch (Exception e) {
+            log.error(String.format("获取二维码接口：%s", e.getMessage()));
+        }
+
+
+    }
+
 
 }
