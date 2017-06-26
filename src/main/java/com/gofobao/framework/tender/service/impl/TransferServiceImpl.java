@@ -83,6 +83,9 @@ public class TransferServiceImpl implements TransferService {
         tenders.stream().forEach(p -> {
             TransferOf transferOf = new TransferOf();
             Borrow borrow = borrowMap.get(p.getBorrowId());
+            if(ObjectUtils.isEmpty(borrow)){
+                return;
+            }
             transferOf.setName(borrow.getName());
             transferOf.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
             transferOf.setCreateTime(DateHelper.dateToString(p.getUpdatedAt()));
