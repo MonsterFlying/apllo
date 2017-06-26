@@ -23,6 +23,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -38,6 +40,10 @@ public class LoanServiceImpl implements LoanService {
 
     @Autowired
     private LoanRepository loanRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
 
     /**
      * 还款中列表
@@ -156,10 +162,13 @@ public class LoanServiceImpl implements LoanService {
      * @return
      */
     private List<Borrow> commonQuery(VoLoanListReq voLoanListReq) {
-        Page<Borrow> borrowPage = null;
+        String sql="SELECT b FROM Borrow WHERE 1=1 ";
+        StringBuffer sb=new StringBuffer();
+        Page<Borrow> borrowPage ;
         Sort sort;
         Pageable pageable;
         if (voLoanListReq.getType() == RepaymentContants.REFUND) { //还款中
+
             sort = new Sort(Sort.Direction.DESC, "closeAt");
             pageable = new PageRequest(voLoanListReq.getPageIndex(), voLoanListReq.getPageSize(), sort);
             borrowPage = loanRepository.findByUserIdAndStatusIsAndSuccessAtIsNotNullAndCloseAtIsNullAndTenderIdIsNull(
@@ -215,41 +224,38 @@ public class LoanServiceImpl implements LoanService {
             repayFashion = BorrowContants.REPAY_FASHION_MONTH_STR;
         }
         repaymentDetail.setRepayFashion(repayFashion);
-        if (borrow.getStatus() != BorrowContants.BIDDING) {
+        Integer  interest=0;
+        Integer principal = 0;
+        Integer receivableInterest=0;
+        if (borrow.getStatus() != BorrowContants.PASS) {
             List<BorrowRepayment> borrowRepayments = repaymentRepository.findByBorrowId(borrow.getId());
             //统计还款中
             Long count = borrowRepayments.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_NO).mapToLong(w -> w.getId()).count();
-            String statusStr = "";
-            Integer interest = 0;
-            Integer principal = 0;
             if (count > 0) {
-                statusStr = RepaymentContants.STATUS_NO_STR;
                 interest = borrowRepayments.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_NO).mapToInt(w -> w.getInterest()).sum();
                 principal = borrowRepayments.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_NO).mapToInt(w -> w.getPrincipal()).sum();
+                repaymentDetail.setStatus(RepaymentContants.STATUS_NO);
             } else {   //以还清
-                statusStr = RepaymentContants.STATUS_YES_STR;
                 interest = borrowRepayments.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_YES).mapToInt(w -> w.getInterest()).sum();
                 principal = borrowRepayments.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_YES).mapToInt(w -> w.getPrincipal()).sum();
+                repaymentDetail.setStatus(RepaymentContants.STATUS_YES);
             }
-            repaymentDetail.setInterest(NumberHelper.to2DigitString(interest / 100));
-            repaymentDetail.setPrincipal(NumberHelper.to2DigitString(principal / 100));
-            repaymentDetail.setStatusStr(statusStr);
-
             //预期收益
-            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(borrow.getValidDay() / 100D, borrow.getApr() / 100D, borrow.getTimeLimit(), borrow.getSuccessAt());
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(borrow.getValidDay()), new Double(borrow.getApr()) , borrow.getTimeLimit(), borrow.getSuccessAt());
             Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
-            Integer receivableInterest = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("interest")));
-            repaymentDetail.setReceivableInterest(NumberHelper.to2DigitString(receivableInterest / 100));
-
+            receivableInterest = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("interest")));
         }
-
-
+        if(borrow.getStatus()==BorrowContants.BIDDING){
+            repaymentDetail.setStatus(2);
+        }
+        repaymentDetail.setInterest(StringHelper.formatMon(interest / 100d));
+        repaymentDetail.setPrincipal(StringHelper.formatMon(principal / 100d));
+        repaymentDetail.setReceivableInterest(StringHelper.formatMon(receivableInterest / 100d));
         if (borrow.getTimeLimit() == 1) {
             repaymentDetail.setTimeLimit(borrow.getTimeLimit() + BorrowContants.DAY);
         } else {
             repaymentDetail.setTimeLimit(borrow.getTimeLimit() + BorrowContants.MONTH);
         }
-
         return repaymentDetail;
     }
 

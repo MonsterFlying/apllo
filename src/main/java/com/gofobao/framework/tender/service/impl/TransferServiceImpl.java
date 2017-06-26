@@ -78,8 +78,8 @@ public class TransferServiceImpl implements TransferService {
         Map<Long, Borrow> borrowMap = borrowList.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
 
         List<TransferOf> transferOfs = Lists.newArrayList();
-
-        tenderList.stream().forEach(p -> {
+        List<Tender>tenders=tenderList.stream().filter(p->!StringUtils.isEmpty(p.getBorrowId())).collect(Collectors.toList());
+        tenders.stream().forEach(p -> {
             TransferOf transferOf = new TransferOf();
             Borrow borrow = borrowMap.get(p.getBorrowId());
             transferOf.setName(borrow.getName());
@@ -115,8 +115,9 @@ public class TransferServiceImpl implements TransferService {
                 .build();
         List<Borrow> borrowList = borrowRepository.findAll(specification);
         Map<Long, Borrow> borrowMap = borrowList.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
+        List<Tender>tenders=tenderList.stream().filter(p->!StringUtils.isEmpty(p.getBorrowId())).collect(Collectors.toList());
         List<Transfered> transfereds = Lists.newArrayList();
-        tenderList.stream().forEach(p -> {
+        tenders.stream().forEach(p -> {
             Transfered transfered = new Transfered();
             Borrow borrow = borrowMap.get(p.getBorrowId());
             transfered.setName(borrow.getName());
@@ -222,6 +223,6 @@ public class TransferServiceImpl implements TransferService {
         );
         List<Tender> tenderList = tenderPage.getContent();
 
-        return Optional.ofNullable(tenderList.stream().filter(p->!StringUtils.isEmpty(p.getBorrowId())).collect(Collectors.toList())).orElse(Collections.emptyList());
+        return Optional.ofNullable(tenderList).orElse(Collections.emptyList());
     }
 }
