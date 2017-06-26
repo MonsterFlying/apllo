@@ -44,6 +44,7 @@ public class VoViewRepaymentDetail {
     @ApiModelProperty("已还本金")
     private String principal;
 
-
+    @ApiModelProperty("标id")
+    private Long borrowId;
 
 }
