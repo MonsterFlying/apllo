@@ -3,6 +3,7 @@ package com.gofobao.framework.repayment.controller.web;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
+import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
@@ -49,8 +50,8 @@ public class WebBorrowRepaymentContorller {
 
     @RequestMapping(value = "/v2/info/{repaymentId}", method = RequestMethod.GET)
     @ApiOperation("还款信息")
-    public ResponseEntity<VoViewOrderDetailWarpRes> info(@PathVariable("repaymentId") String repaymentId,
-                                                         @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoViewOrderDetailResp> info(@PathVariable("repaymentId") String repaymentId,
+                                                      @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoInfoReq voInfoReq = new VoInfoReq();
         voInfoReq.setUserId(userId);
         voInfoReq.setRepaymentId(repaymentId);
