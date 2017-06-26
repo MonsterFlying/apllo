@@ -35,7 +35,7 @@ public class VoViewTenderDetail {
     @ApiModelProperty("状态描述")
     private String statusStr;
 
-    @ApiModelProperty("状态")
+    @ApiModelProperty("状态:1:投标中； 2:还款中 ;3:已结清")
     private Integer status;
 
     @ApiModelProperty("应收利息")

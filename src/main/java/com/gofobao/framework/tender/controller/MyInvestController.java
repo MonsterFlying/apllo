@@ -20,13 +20,9 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 public class MyInvestController {
 
-
     @Autowired
     private MyInvestBiz investBiz;
 
-    private VoInvestListReq voInvestListReq = new VoInvestListReq();
-
-    private    VoDetailReq voDetailReq = new VoDetailReq();
     /**
      * 回款中列表
      *
@@ -37,7 +33,6 @@ public class MyInvestController {
     public ResponseEntity<VoViewBackMoneyListWarpRes> backMoneyList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                                     @PathVariable Integer pageIndex,
                                                                     @PathVariable Integer pageSize) {
-
         return commonResult(pageIndex, pageSize, userId,TenderConstans.BACK_MONEY);
     }
 
@@ -61,16 +56,17 @@ public class MyInvestController {
     @ApiOperation("投资详情")
     @GetMapping("/v2/tender/detail/{tenderId}")
     public ResponseEntity<VoViewTenderDetailWarpRes> tenderDetail(@PathVariable Long tenderId, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        VoDetailReq voDetailReq=new VoDetailReq();
         voDetailReq.setUserId(userId);
         voDetailReq.setTenderId(tenderId);
         return investBiz.tenderDetail(voDetailReq);
     }
 
-    @ApiOperation("投资详情")
+    @ApiOperation("回款详情")
     @GetMapping("/v2/tender/collection/{tenderId}")
     public ResponseEntity<VoViewReturnMoneyWarpRes> infoList(@PathVariable Long tenderId,
                                                              @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-
+        VoDetailReq voDetailReq=new VoDetailReq();
         voDetailReq.setUserId(userId);
         voDetailReq.setTenderId(tenderId);
         return investBiz.infoList(voDetailReq);
@@ -78,6 +74,7 @@ public class MyInvestController {
 
     private ResponseEntity commonResult(Integer pageIndex, Integer pageSize, Long userId, Integer type) {
         ResponseEntity responseEntity=null;
+        VoInvestListReq voInvestListReq=new VoInvestListReq();
         voInvestListReq.setUserId(userId);
         voInvestListReq.setPageIndex(pageIndex);
         voInvestListReq.setPageSize(pageSize);

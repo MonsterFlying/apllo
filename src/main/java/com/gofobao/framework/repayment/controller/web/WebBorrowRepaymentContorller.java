@@ -33,15 +33,15 @@ public class WebBorrowRepaymentContorller {
 
     @RequestMapping(value = "/v2/collection/days/{time}", method = RequestMethod.GET)
     @ApiOperation("还款计划列表 time: 201706")
-    public ResponseEntity<VoViewCollectionDaysWarpRes> days(@PathVariable String time/*, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
-        Long userId = 901L;
+    public ResponseEntity<VoViewCollectionDaysWarpRes> days(@PathVariable String time, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+
         return repaymentBiz.days(userId, time);
     }
 
     @RequestMapping(value = "/v2/list/{time}", method = RequestMethod.GET)
     @ApiOperation("还款计划列表 time:2017-05-02")
     public ResponseEntity<VoViewCollectionOrderListWarpResp> listRes(@PathVariable("time") String time,
-                                                                     @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+                                                                       @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoCollectionOrderReq orderReq = new VoCollectionOrderReq();
         orderReq.setTime(time);
         orderReq.setUserId(userId);

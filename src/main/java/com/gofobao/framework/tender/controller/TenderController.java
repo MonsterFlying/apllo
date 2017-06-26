@@ -33,14 +33,13 @@ public class TenderController {
     @Autowired
     private AutoTenderBiz autoTenderBiz;
 
-    TenderUserReq tenderUserReq = new TenderUserReq();
-
 
     @ApiOperation("投标用户列表")
     @GetMapping("/v2/user/list/{pageIndex}/{pageSize}/{borrowId}")
     public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(@PathVariable Integer pageIndex,
                                                                               @PathVariable Integer pageSize,
                                                                               @PathVariable Long borrowId) {
+        TenderUserReq tenderUserReq = new TenderUserReq();
         tenderUserReq.setPageSize(pageSize);
         tenderUserReq.setPageIndex(pageIndex);
         tenderUserReq.setBorrowId(borrowId);
@@ -49,7 +48,8 @@ public class TenderController {
 
     @ApiOperation("借款投标")
     @PostMapping("/v2/create")
-    public ResponseEntity<VoBaseResp> tender(@ModelAttribute @Valid VoCreateTenderReq voCreateTenderReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoBaseResp> tender(@ModelAttribute @Valid VoCreateTenderReq voCreateTenderReq,
+                                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voCreateTenderReq.setUserId(userId);
         return tenderBiz.tender(voCreateTenderReq);
     }
