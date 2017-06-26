@@ -33,14 +33,13 @@ public class TenderController {
     @Autowired
     private AutoTenderBiz autoTenderBiz;
 
-    TenderUserReq tenderUserReq = new TenderUserReq();
-
 
     @ApiOperation("投标用户列表")
     @GetMapping("/v2/user/list/{pageIndex}/{pageSize}/{borrowId}")
     public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(@PathVariable Integer pageIndex,
                                                                               @PathVariable Integer pageSize,
                                                                               @PathVariable Long borrowId) {
+        TenderUserReq tenderUserReq = new TenderUserReq();
         tenderUserReq.setPageSize(pageSize);
         tenderUserReq.setPageIndex(pageIndex);
         tenderUserReq.setBorrowId(borrowId);
