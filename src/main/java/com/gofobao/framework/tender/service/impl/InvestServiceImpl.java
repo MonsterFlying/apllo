@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 import static java.util.stream.Collectors.groupingBy;
 
 /**
-/**
+ * /**
  * Created by admin on 2017/6/1.
  */
 @Slf4j
@@ -150,7 +150,7 @@ public class InvestServiceImpl implements InvestService {
             Integer apr = borrow.getApr();
 
             //预期收益
-            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(validMoney), new Double(apr) , borrow.getTimeLimit(), borrow.getSuccessAt());
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(validMoney), new Double(apr), borrow.getTimeLimit(), borrow.getSuccessAt());
             Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
             Integer earnings = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("earnings")));
 
@@ -249,19 +249,23 @@ public class InvestServiceImpl implements InvestService {
         if (ObjectUtils.isEmpty(tender)) {
             return null;
         }
-        Borrow borrow = borrowRepository.findById(tender.getBorrowId());
+        Borrow borrow = borrowRepository.findOne(tender.getBorrowId());
         item.setCreatedAt(DateHelper.dateToString(tender.getCreatedAt()));
         item.setBorrowName(borrow.getName());
         //状态
         if (tender.getState() == TenderConstans.BIDDING) {
-            item.setStatus(TenderConstans.BIDDING_STR);
+            item.setStatusStr(TenderConstans.BIDDING_STR);
+            item.setSuccessAt("");
         }
         if (tender.getState() == TenderConstans.BACK_MONEY) {
-            item.setStatus(TenderConstans.BACK_MONEY_STR);
+            item.setSuccessAt(DateHelper.dateToString(borrow.getSuccessAt()));
+            item.setStatusStr(TenderConstans.BACK_MONEY_STR);
         }
         if (tender.getState() == TenderConstans.SETTLE) {
-            item.setStatus(TenderConstans.SETTLE_STR);
+            item.setSuccessAt(DateHelper.dateToString(borrow.getSuccessAt()));
+            item.setStatusStr(TenderConstans.SETTLE_STR);
         }
+        item.setStatus(tender.getState());
         item.setMoney(StringHelper.formatMon(tender.getValidMoney() / 100d));
         item.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
         //期限
@@ -272,6 +276,7 @@ public class InvestServiceImpl implements InvestService {
             item.setTimeLimit(borrow.getTimeLimit() + BorrowContants.MONTH);
         }
 
+
         //还款方式
         if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_MONTH) {
             item.setRepayFashion(BorrowContants.REPAY_FASHION_MONTH_STR);
@@ -280,20 +285,24 @@ public class InvestServiceImpl implements InvestService {
             item.setRepayFashion(BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL_STR);
         }
 
+        Integer receivableInterest=0;
+        Integer principal=0;
+        Integer interest=0;
+
         if (tender.getState() == TenderConstans.BACK_MONEY || tender.getState() == TenderConstans.SETTLE) {
             List<BorrowCollection> borrowCollectionList = borrowCollectionRepository.findByTenderId(tender.getId());
             //利息
-            Integer interest = borrowCollectionList.stream()
+             interest = borrowCollectionList.stream()
                     .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
                     .mapToInt(s -> s.getInterest())
                     .sum();
             //本金
-            Integer principal = borrowCollectionList.stream()
+             principal = borrowCollectionList.stream()
                     .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
                     .mapToInt(s -> s.getPrincipal())
                     .sum();
             //应收利息
-            Integer receivableInterest = borrowCollectionList.stream()
+             receivableInterest = borrowCollectionList.stream()
                     .mapToInt(s -> s.getInterest())
                     .sum();
 
