@@ -2,6 +2,7 @@ package com.gofobao.framework.repayment.biz;
 
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
+import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.vo.request.VoAdvanceReq;
@@ -22,7 +23,7 @@ public interface RepaymentBiz {
      * @param voCollectionOrderReq
      * @return
      */
-    ResponseEntity<VoBaseResp> repaymentList(VoCollectionOrderReq voCollectionOrderReq);
+    ResponseEntity<VoViewCollectionOrderListWarpResp> repaymentList(VoCollectionOrderReq voCollectionOrderReq);
 
     /**
      * 还款详情
