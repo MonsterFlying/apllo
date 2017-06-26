@@ -16,7 +16,7 @@ import springfox.documentation.annotations.ApiIgnore;
  * Created by admin on 2017/6/2.
  */
 
-@Api(description="我的借款")
+@Api(description = "我的借款")
 @RestController
 @RequestMapping("pub/loan")
 public class LoanController {
@@ -28,8 +28,8 @@ public class LoanController {
     @ApiOperation("还款中列表")
     @RequestMapping(value = "/v2/refund/list/{pageIndex}/{pageSize}", method = RequestMethod.GET)
     public ResponseEntity<VoViewRefundWrapRes> refundResList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
-                                                    @PathVariable Integer pageIndex,
-                                                    @PathVariable Integer pageSize) {
+                                                             @PathVariable Integer pageIndex,
+                                                             @PathVariable Integer pageSize) {
 
         voLoanListReq.setUserId(userId);
         voLoanListReq.setPageIndex(pageIndex);
@@ -50,19 +50,20 @@ public class LoanController {
 
     @ApiOperation("已结清列表")
     @GetMapping("/v2/settle/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewSettleWarpListRes>  settleList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId ,
-                                                     @PathVariable Integer pageIndex, @PathVariable Integer pageSize) {
+    public ResponseEntity<VoViewSettleWarpListRes> settleList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                                              @PathVariable Integer pageIndex,
+                                                              @PathVariable Integer pageSize) {
         voLoanListReq.setPageIndex(pageIndex);
         voLoanListReq.setPageSize(pageSize);
-        voLoanListReq.setUserId(901L);
+        voLoanListReq.setUserId(userId);
         return loanBiz.settleList(voLoanListReq);
     }
 
 
     @ApiOperation("借款详情")
     @GetMapping("/v2/detail/{borrowId}")
-    public ResponseEntity<VoViewRepaymentDetailWrapRes> detail(@PathVariable("borrowId") Long borrowId,@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-
+    public ResponseEntity<VoViewRepaymentDetailWrapRes> detail(@PathVariable("borrowId") Long borrowId,
+                                                               @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoDetailReq voDetailReq = new VoDetailReq();
         voDetailReq.setUserId(userId);
         voDetailReq.setBorrowId(borrowId);
@@ -72,7 +73,8 @@ public class LoanController {
 
     @ApiOperation("借款详情列表")
     @GetMapping("/v2/repayment/list/{borrowId}")
-    public ResponseEntity<VoViewLoanInfoListWrapRes> repaymentList(@PathVariable("borrowId") Long borrowId,@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoViewLoanInfoListWrapRes> repaymentList(@PathVariable("borrowId") Long borrowId,
+                                                                   @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoDetailReq voDetailReq = new VoDetailReq();
         voDetailReq.setUserId(userId);
         voDetailReq.setBorrowId(borrowId);

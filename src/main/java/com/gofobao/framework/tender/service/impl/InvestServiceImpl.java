@@ -209,6 +209,7 @@ public class InvestServiceImpl implements InvestService {
             voViewSettleRes.setInterest(StringHelper.formatMon(interest / 100d));
             voViewSettleRes.setPrincipal(StringHelper.formatMon(principal / 100d));
             voViewSettleRes.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
+            voViewSettleRes.setTenderId(p.getId());
             voViewSettleResList.add(voViewSettleRes);
         });
         return Optional.ofNullable(voViewSettleResList).orElse(Collections.EMPTY_LIST);
