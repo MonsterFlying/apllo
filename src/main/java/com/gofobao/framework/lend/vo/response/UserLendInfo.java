@@ -26,4 +26,12 @@ public class UserLendInfo {
     @ApiModelProperty("状态描述")
     private String statusStr;
 
+    @ApiModelProperty("状态（0、可借；1、结束）")
+    private Integer status;
+
+    @ApiModelProperty("lendId")
+    private Long lendId;
+
+
+
 }

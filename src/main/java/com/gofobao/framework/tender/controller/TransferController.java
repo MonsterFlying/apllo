@@ -78,7 +78,7 @@ public class TransferController {
     public ResponseEntity<String> desc() {
         String content;
         try {
-            content = thymeleafHelper.build("tender/translate", null);
+            content = thymeleafHelper.build("tender/translate",null);
         } catch (Exception e) {
             content = thymeleafHelper.build("load_error", null);
         }
@@ -93,7 +93,8 @@ public class TransferController {
      */
     @ApiOperation("债权转让")
     @PostMapping("v2/transfer")
-    public ResponseEntity<VoBaseResp> transferTender(@ModelAttribute @Valid VoTransferTenderReq voTransferTenderReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoBaseResp> transferTender(@ModelAttribute @Valid VoTransferTenderReq voTransferTenderReq,
+                                                     @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voTransferTenderReq.setUserId(userId);
         return transferBiz.transferTender(voTransferTenderReq);
     }
@@ -106,7 +107,8 @@ public class TransferController {
      */
     @ApiOperation("获取立即转让详情")
     @GetMapping("v2/transfer/info/{tenderId}")
-    public ResponseEntity<VoGoTenderInfo> goTenderInfo(@PathVariable Long tenderId, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoGoTenderInfo> goTenderInfo(@PathVariable Long tenderId,
+                                                       @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return transferBiz.goTenderInfo(tenderId,userId);
     }
 }

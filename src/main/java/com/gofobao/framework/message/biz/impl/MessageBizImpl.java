@@ -448,7 +448,7 @@ public class MessageBizImpl implements MessageBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "请先初始化江西银行存管账户交易密码！"));
         }
 
-        userThirdAccount.setMobile("13662260509");
+        userThirdAccount.setMobile("13008875126");
         SmsCodeApplyRequest request = new SmsCodeApplyRequest() ;
         request.setSrvTxCode(SrvTxCodeContants.DIRECT_RECHARGE_ONLINE) ;
         request.setMobile(userThirdAccount.getMobile()) ;
