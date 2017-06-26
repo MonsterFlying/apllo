@@ -92,6 +92,7 @@ public class MyInvestBizImpl implements MyInvestBiz {
             voViewReturnMoneyWarpRes.setVoViewReturnedMoney(voViewReturnedMoney);
             return ResponseEntity.ok(voViewReturnMoneyWarpRes);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR,"查询失败", VoViewReturnMoneyWarpRes.class));

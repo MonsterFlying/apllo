@@ -326,12 +326,11 @@ public class InvestServiceImpl implements InvestService {
             return null;
         }
         //回款中
-        Integer status = tender.getStatus() == TenderConstans.BACK_MONEY ? BorrowCollectionContants.STATUS_NO : BorrowCollectionContants.STATUS_YES;
         Specification specification = Specifications.<BorrowCollection>and()
                 .eq("tenderId", tender.getId())
-                .eq("status", status)
+                .eq("userId", voDetailReq.getUserId())
                 .build();
-        List<BorrowCollection> borrowCollectionList = investRepository.findAll(specification);
+        List<BorrowCollection> borrowCollectionList = borrowCollectionRepository.findAll(specification);
         if (CollectionUtils.isEmpty(borrowCollectionList)) {
             return null;
         }
@@ -350,6 +349,7 @@ public class InvestServiceImpl implements InvestService {
             returnedMoney.setOrder(p.getOrder() + 1);
             returnedMoney.setLateDays(p.getLateDays());
             returnedMoney.setCollectionAt(DateHelper.dateToString(p.getCollectionAt()));
+            returnedMoney.setStatus(p.getStatus());
             returnedMonies.add(returnedMoney);
         });
         viewReturnedMoney.setReturnedMonies(returnedMonies);
