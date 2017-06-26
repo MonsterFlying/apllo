@@ -49,7 +49,7 @@ public class BorrowRepaymentContorller {
     }
 
     @RequestMapping(value = "/v2/info/{repaymentId}", method = RequestMethod.GET)
-    @ApiOperation("还款信息")
+    @ApiOperation("还款计划-还款详情")
     public ResponseEntity<VoViewOrderDetailResp> info(@PathVariable("repaymentId") String repaymentId,
                                                       @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoInfoReq voInfoReq = new VoInfoReq();
@@ -58,7 +58,7 @@ public class BorrowRepaymentContorller {
         return repaymentBiz.info(voInfoReq);
     }
 
-    @RequestMapping(value = "pc/v2/logs/{borrowId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/pc/v2/logs/{borrowId}", method = RequestMethod.GET)
     @ApiOperation("还款记录")
     public ResponseEntity<VoViewRepayCollectionLogWarpRes> info(@PathVariable("borrowId") Long borrowId) {
         return repaymentBiz.logs(borrowId);
