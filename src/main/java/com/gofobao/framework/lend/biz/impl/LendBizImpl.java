@@ -260,7 +260,9 @@ public class LendBizImpl implements LendBiz {
 
         UserCache userCache = userCacheService.findById(userId);
         Preconditions.checkNotNull(lend, "用户缓存记录获取失败!");
-        double totalMoney = (asset.getUseMoney() + userCache.getWaitCollectionPrincipal()) * 0.8 - asset.getPayment();  // 用户净值金额
+        Asset userAsset = assetService.findByUserIdLock(userId);
+        Preconditions.checkNotNull(lend, "用户资产记录获取失败!");
+        double totalMoney = (userAsset.getUseMoney() + userCache.getWaitCollectionPrincipal()) * 0.8 - userAsset.getPayment();  // 用户净值金额
         if (money > totalMoney) {
             return ResponseEntity
                     .badRequest()
