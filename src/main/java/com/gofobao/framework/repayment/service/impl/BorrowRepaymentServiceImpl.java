@@ -104,7 +104,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
 
 
     @Override
-    public List<Integer> days(Long userId, String time) {
+    public List<Integer> days(Long userId, String time) {   // TODO 尝试不需要 SQL 来进行处理
         String sql = "SELECT DAY(repay_at) FROM gfb_borrow_repayment " +
                 "where " +
                 "user_id=" + userId + " " +
