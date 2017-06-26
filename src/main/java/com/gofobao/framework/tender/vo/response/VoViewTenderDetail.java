@@ -32,8 +32,11 @@ public class VoViewTenderDetail {
     @ApiModelProperty("起息时间")
     private String successAt;
 
+    @ApiModelProperty("状态描述")
+    private String statusStr;
+
     @ApiModelProperty("状态")
-    private String status;
+    private Integer status;
 
     @ApiModelProperty("应收利息")
     private String receivableInterest;
