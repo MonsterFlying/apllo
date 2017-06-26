@@ -88,7 +88,7 @@ public class TransferServiceImpl implements TransferService {
             transferOf.setCreateTime(DateHelper.dateToString(p.getUpdatedAt()));
             transferOf.setPrincipal(StringHelper.formatMon(borrow.getMoney() / 100d));
             transferOf.setSpend(StringHelper.formatMon(borrow.getMoneyYes() / borrow.getMoney() / 100d));
-            transferOf.setBorrowId(p.getId());
+            transferOf.setBorrowId(p.getBorrowId());
             transferOfs.add(transferOf);
         });
         return Optional.ofNullable(transferOfs).orElse(Collections.EMPTY_LIST);
