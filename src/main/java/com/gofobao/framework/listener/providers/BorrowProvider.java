@@ -160,7 +160,7 @@ public class BorrowProvider {
             } catch (Exception e) {
                 log.error("borrowProvider autoTender send mq exception", e);
             }
-
+            bool = true;
         } while (false);
         return bool;
     }
@@ -200,6 +200,7 @@ public class BorrowProvider {
                     log.error(StringHelper.toString(msg));
                 }
             }
+            bool = true;
         } while (false);
         return bool;
     }

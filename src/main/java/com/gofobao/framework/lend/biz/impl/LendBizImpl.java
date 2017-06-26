@@ -34,7 +34,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.expression.spel.SpelNode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,7 +50,6 @@ import java.util.List;
  */
 @Slf4j
 @Service
-
 public class LendBizImpl implements LendBiz {
 
     final Gson GSON = new Gson();
@@ -137,8 +135,8 @@ public class LendBizImpl implements LendBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> create(VoCreateLend voCreateLend) {
-        Integer money = voCreateLend.getMoney();//借款金额（分）
-        Integer lowest = voCreateLend.getLowest();
+        Double money = voCreateLend.getMoney();//借款金额（分）
+        Double lowest = voCreateLend.getLowest();
         Integer timeLimit = voCreateLend.getTimeLimit();
         Date repayAt = DateHelper.stringToDate(voCreateLend.getRepayAt());
         Date nowDate = new Date();
@@ -183,8 +181,8 @@ public class LendBizImpl implements LendBiz {
         //进行借款的新增
         Lend lend = new Lend();
         lend.setUserId(userId);
-        lend.setMoney(money);
-        lend.setLowest(lowest);
+        lend.setMoney(money.intValue());
+        lend.setLowest(lowest.intValue());
         lend.setApr(apr);
         lend.setTimeLimit(timeLimit);
         lend.setMoneyYes(0);
@@ -239,7 +237,7 @@ public class LendBizImpl implements LendBiz {
     public ResponseEntity<VoBaseResp> lend(VoLend voLend) {
         int rs = 1;
         long userId = voLend.getUserId();
-        int money = voLend.getMoney();
+        Double money = voLend.getMoney();
         long lendId = voLend.getLendId();
 
         Lend lend = lendService.findByIdLock(lendId);
@@ -326,7 +324,7 @@ public class LendBizImpl implements LendBiz {
         tempBorrow.setType(1);
         tempBorrow.setRepayFashion(1);
         tempBorrow.setTimeLimit(lend.getTimeLimit());
-        tempBorrow.setMoney(money);
+        tempBorrow.setMoney(money.intValue());
         tempBorrow.setApr(lend.getApr());
         tempBorrow.setLowest(lend.getLowest());
         tempBorrow.setValidDay(1);
@@ -344,7 +342,7 @@ public class LendBizImpl implements LendBiz {
         tempBorrow.setTenderCount(0);
 
         borrowService.insert(tempBorrow);
-        lend.setMoneyYes(lend.getMoneyYes() + money);
+        lend.setMoneyYes(lend.getMoneyYes() + money.intValue());
         if ((lend.getMoney() - lend.getMoneyYes()) < lend.getLowest()) {
             lend.setStatus(1);
         }
@@ -376,7 +374,32 @@ public class LendBizImpl implements LendBiz {
      * @throws Exception
      */
     public ResponseEntity<VoViewLendBlacklists> getLendBlacklists(VoGetLendBlacklists voGetLendBlacklists) {
-        return null;
+        VoViewLendBlacklists voViewLendBlacklists = new VoViewLendBlacklists();
+        List<VoLendBlacklist> voLendBlacklists = new ArrayList<>();
+        int pageIndex = voGetLendBlacklists.getPageIndex();
+        int pageSize = voGetLendBlacklists.getPageSize();
+        do {
+
+            Specification<LendBlacklist> lbs = Specifications
+                    .<LendBlacklist>and()
+                    .eq("userId", voGetLendBlacklists.getUserId())
+                    .build();
+
+            Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(Sort.Direction.ASC));
+
+            List<LendBlacklist> lendBlacklists = lendBlackListService.findList(lbs, pageable);
+            if (CollectionUtils.isEmpty(lendBlacklists)) {
+                break;
+            }
+
+            voLendBlacklists = GSON.fromJson(GSON.toJson(lendBlacklists), new TypeToken<LendBlacklist>() {
+            }.getType());
+
+        } while (false);
+        voViewLendBlacklists.setBlacklists(voLendBlacklists);
+        voViewLendBlacklists.setPageIndex(pageIndex);
+        voViewLendBlacklists.setPageSize(pageSize);
+        return ResponseEntity.ok(voViewLendBlacklists);
     }
 
     /**

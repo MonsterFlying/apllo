@@ -122,10 +122,10 @@ public class AplloApplicationTests {
         //受托支付
         //trusteePay();
         //签约查询
-        creditAuthQuery();
+        //creditAuthQuery();
 
         /*Map<String,String> map = new HashMap<>();
-        map.put("borrowId","165215");
+        map.put("borrowId","165217");
         try {
             borrowProvider.doFirstVerify(map);
         } catch (Exception e) {
@@ -153,13 +153,13 @@ public class AplloApplicationTests {
         DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
         System.out.println((resp.getTotalItems()));*/
 
-        /*Map<String,String> msg = new HashMap<>();
-        msg.put("borrowId","165213");
+        Map<String,String> msg = new HashMap<>();
+        msg.put("borrowId","165217");
         try {
             borrowProvider.doAgainVerify(msg);
         } catch (Exception e) {
             e.printStackTrace();
-        }*/
+        }
 
         //"userId\":901,\"repaymentId\":168675,\"interestPercent\":0.0,\"isUserOpen\":true
         /*VoRepayReq voRepayReq = new VoRepayReq();

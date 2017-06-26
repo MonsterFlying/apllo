@@ -3,13 +3,8 @@ package com.gofobao.framework.lend.controller;
 import com.gofobao.framework.common.page.Page;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.lend.biz.LendBiz;
-import com.gofobao.framework.lend.vo.request.VoCreateLend;
-import com.gofobao.framework.lend.vo.request.VoEndLend;
-import com.gofobao.framework.lend.vo.request.VoLend;
-import com.gofobao.framework.lend.vo.request.VoUserLendReq;
-import com.gofobao.framework.lend.vo.response.VoViewLendInfoWarpRes;
-import com.gofobao.framework.lend.vo.response.VoViewLendListWarpRes;
-import com.gofobao.framework.lend.vo.response.VoViewUserLendInfoWarpRes;
+import com.gofobao.framework.lend.vo.request.*;
+import com.gofobao.framework.lend.vo.response.*;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -104,4 +99,59 @@ public class LendController {
         return lendBiz.lend(voLend);
     }
 
+    /**
+     * 获取当前用户黑名单列表
+     *
+     * @param voGetLendBlacklists
+     * @return
+     * @throws Exception
+     */
+    @ApiOperation(value = "添加有草出借黑名单", notes = "添加有草出借黑名单")
+    @PostMapping(value = "/addLendBlacklist")
+    public ResponseEntity<VoViewLendBlacklists> getLendBlacklists(@ModelAttribute @Valid VoGetLendBlacklists voGetLendBlacklists, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        voGetLendBlacklists.setUserId(userId);
+        return lendBiz.getLendBlacklists(voGetLendBlacklists);
+    }
+
+    /**
+     * 添加有草出借黑名单
+     *
+     * @param voAddLendBlacklist
+     * @return
+     * @throws Exception
+     */
+    @ApiOperation(value = "添加有草出借黑名单", notes = "添加有草出借黑名单")
+    @PostMapping(value = "/v2/blacklist/add")
+    public ResponseEntity<VoBaseResp> addLendBlacklist(@ModelAttribute @Valid VoAddLendBlacklist voAddLendBlacklist, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        voAddLendBlacklist.setUserId(userId);
+        return lendBiz.addLendBlacklist(voAddLendBlacklist);
+    }
+
+    /**
+     * 移除有草出借黑名单
+     *
+     * @param voDelLendBlacklist
+     * @return
+     * @throws Exception
+     */
+    @ApiOperation(value = "移除有草出借黑名单", notes = "移除有草出借黑名单")
+    @PostMapping(value = "/v2/blacklist/lend")
+    public ResponseEntity<VoBaseResp> delLendBlacklist(@ModelAttribute @Valid VoDelLendBlacklist voDelLendBlacklist, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        voDelLendBlacklist.setUserId(userId);
+        return lendBiz.delLendBlacklist(voDelLendBlacklist);
+    }
+
+    /**
+     * 获取有草出借借款列表
+     *
+     * @param voGetPickLendList
+     * @return
+     * @throws Exception
+     */
+    @PostMapping(value = "/v2/lend/list/pick")
+    @ApiOperation("获取有草出借借款列表")
+    public ResponseEntity<VoViewPickLendList> getPickLendList(@ModelAttribute @Valid VoGetPickLendList voGetPickLendList, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        voGetPickLendList.setUserId(userId);
+        return lendBiz.getPickLendList(voGetPickLendList);
+    }
 }

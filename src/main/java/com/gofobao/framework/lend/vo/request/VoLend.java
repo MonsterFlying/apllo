@@ -1,5 +1,6 @@
 package com.gofobao.framework.lend.vo.request;
 
+import com.gofobao.framework.helper.MathHelper;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -17,7 +18,15 @@ public class VoLend {
     private Long lendId;
     @ApiModelProperty(name = "money", value = "借款金额", dataType = "int", required = true)
     @NotNull(message = "借款金额不能为空!")
-    private Integer money;
+    private Double money;
     @ApiModelProperty(name = "payPassword", value = "支付密码", dataType = "String", required = true)
     private String payPassword;
+
+    public Double getMoney() {
+        return money;
+    }
+
+    public void setMoney(Double money) {
+        this.money = MathHelper.myRound(money * 100.0, 0);
+    }
 }
