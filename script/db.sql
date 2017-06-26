@@ -223,3 +223,16 @@ ALTER TABLE gfb_activity_red_packet_log ALTER COLUMN VPARAM2 SET DEFAULT '';
 
 
 ALTER TABLE gofobao0524.gfb_borrow_tender MODIFY state INT(10) DEFAULT 1 COMMENT '1:投标中； 2:还款中 ;3:已结清';
+
+
+
+ALTER TABLE gfb_borrow_tender ALTER COLUMN iparam1 SET DEFAULT 0;
+ALTER TABLE gfb_borrow_tender ALTER COLUMN iparam2 SET DEFAULT 0;
+ALTER TABLE gfb_borrow_tender ALTER COLUMN iparam3 SET DEFAULT 0;
+ALTER TABLE gfb_borrow_tender ALTER COLUMN vparam1 SET DEFAULT '';
+ALTER TABLE gfb_borrow_tender ALTER COLUMN vparam2 SET DEFAULT '';
+ALTER TABLE gfb_borrow_tender ALTER COLUMN vparam3 SET DEFAULT '';
+ALTER TABLE gfb_borrow_tender ALTER COLUMN t_user_id SET DEFAULT 0;
+ALTER TABLE gfb_borrow_tender ALTER COLUMN state SET DEFAULT 0;
+ALTER TABLE gfb_borrow_tender ALTER COLUMN third_tender_order_id SET DEFAULT '';
+ALTER TABLE gfb_borrow_tender ALTER COLUMN third_transfer_order_id SET DEFAULT '';
