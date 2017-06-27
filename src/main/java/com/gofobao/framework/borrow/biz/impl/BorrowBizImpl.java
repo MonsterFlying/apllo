@@ -299,7 +299,7 @@ public class BorrowBizImpl implements BorrowBiz {
         try {
             return borrowService.contract(borrowId, userId);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.info("BorrowBizImpl contract error", e);
             return null;
         }
     }
@@ -309,7 +309,7 @@ public class BorrowBizImpl implements BorrowBiz {
         try {
             return borrowService.pcContract(borrowId, userId);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.info("BorrowBizImpl pcContract error", e);
             return null;
         }
     }

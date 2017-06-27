@@ -96,7 +96,8 @@ public class BorrowController {
         try {
             content = thymeleafHelper.build("borrowProtocol", paramMaps);
         } catch (Exception e) {
-            e.printStackTrace();
+
+            log.error("BorrowController->takeRatesDesc fail",e);
             content = thymeleafHelper.build("load_error", null);
         }
         return ResponseEntity.ok(content);

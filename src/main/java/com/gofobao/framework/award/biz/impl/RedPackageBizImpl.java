@@ -34,7 +34,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
             warpRes.setResList(redPackageRes);
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("RedPackageBizImpl-->list fail", e);
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewRedPackageWarpRes.class));
@@ -57,7 +57,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
                                 VoViewOpenRedPackageWarpRes.class));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.info("RedPackageBizImpl openRedPackage fail", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,

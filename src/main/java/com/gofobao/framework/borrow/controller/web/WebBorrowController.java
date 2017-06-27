@@ -95,7 +95,7 @@ public class WebBorrowController {
             Map<String, Object> paramMaps = borrowBiz.pcContract(borrowId, userId);
             content = thymeleafHelper.build("borrowProtcol", paramMaps);
         } catch (Exception e) {
-            e.printStackTrace();
+          log.info(" WebBorrowController -> pcTakeRatesDesc  fail",e);
             content = thymeleafHelper.build("load_error", null);
         }
         return ResponseEntity.ok(content);
