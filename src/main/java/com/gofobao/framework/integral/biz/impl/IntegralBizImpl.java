@@ -260,15 +260,6 @@ public class IntegralBizImpl implements IntegralBiz {
         return ResponseEntity.ok(VoBaseResp.ok("积分折现成功!"));
     }
 
-    /**
-     * 积分折现系数说明
-     *
-     * @return
-     * @throws Exception
-     */
-    public ResponseEntity<String> takeRatesDesc() {
-        return null;
-    }
 
 
     /**

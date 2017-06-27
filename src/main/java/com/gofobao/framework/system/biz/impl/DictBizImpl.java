@@ -10,6 +10,7 @@ import com.gofobao.framework.system.vo.response.VoServiceResp;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -26,11 +27,11 @@ import java.util.concurrent.TimeUnit;
 public class DictBizImpl implements DictBiz {
 
     @Autowired
-    DictItemServcie dictItemServcie ;
+    DictItemServcie dictItemServcie;
 
 
     @Autowired
-    DictValueService dictValueService ;
+    DictValueService dictValueService;
 
     LoadingCache<String, List<DictValue>> dictValueCache = CacheBuilder
             .newBuilder()
@@ -40,14 +41,14 @@ public class DictBizImpl implements DictBiz {
                 @Override
                 public List<DictValue> load(String s) throws Exception {
                     DictItem servicePlatform = dictItemServcie.findTopByAliasCodeAndDel(s, 0);
-                    if(ObjectUtils.isEmpty(servicePlatform)){
-                        return null ;
+                    if (ObjectUtils.isEmpty(servicePlatform)) {
+                        return null;
                     }
                     List<DictValue> dictValues = dictValueService.findByItemId(servicePlatform.getId());
-                    if(ObjectUtils.isEmpty(dictValues)){
-                       return null ;
+                    if (ObjectUtils.isEmpty(dictValues)) {
+                        return null;
                     }
-                    return dictValues ;
+                    return dictValues;
                 }
             });
 
@@ -60,9 +61,9 @@ public class DictBizImpl implements DictBiz {
         } catch (ExecutionException e) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "获取服务信息失败", VoServiceResp.class)) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "获取服务信息失败", VoServiceResp.class));
         }
-        VoServiceResp voServiceResp = VoBaseResp.ok("查询成功", VoServiceResp.class) ;
+        VoServiceResp voServiceResp = VoBaseResp.ok("查询成功", VoServiceResp.class);
         dictValues.forEach(bean -> {
                     if (bean.getValue01().equals("servicePhoneHide")) {
                         voServiceResp.setServicePhoneHide(bean.getValue03());
@@ -76,8 +77,11 @@ public class DictBizImpl implements DictBiz {
                         voServiceResp.setServiceEmail(bean.getValue03());
                     } else if (bean.getValue01().equals("wechatCode")) {
                         voServiceResp.setWechatCode(bean.getValue03());
-                    } else{
+                    } else if (bean.getValue01().equals("servicePhoneView")) {
+                        voServiceResp.setServicePhoneView(bean.getValue03());
+                    } else if (bean.getValue01().equals("weiboCode")) {
                         voServiceResp.setWeiboCode(bean.getValue03());
+
                     }
                 }
         );

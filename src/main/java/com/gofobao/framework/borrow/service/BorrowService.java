@@ -5,6 +5,7 @@ import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.response.BorrowStatistics;
 import com.gofobao.framework.borrow.vo.response.VoBorrowDescRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
+import com.gofobao.framework.borrow.vo.response.VoPcBorrowList;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -18,6 +19,8 @@ import java.util.Map;
 public interface BorrowService {
 
     List<VoViewBorrowList> findAll(VoBorrowListReq voBorrowListReq);
+
+    VoPcBorrowList pcFindAll(VoBorrowListReq voBorrowListReq);
 
     Borrow findByBorrowId(Long borrowId);
 

@@ -49,6 +49,7 @@ import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
@@ -135,6 +136,25 @@ public class BorrowBizImpl implements BorrowBiz {
                             VoViewBorrowListWarpRes.class));
         }
     }
+
+    @Override
+    public ResponseEntity<VoPcBorrowListWarpRes> pcFindAll(VoBorrowListReq voBorrowListReq) {
+
+        try {
+            VoPcBorrowList borrowLists = borrowService.pcFindAll(voBorrowListReq);
+            VoPcBorrowListWarpRes listWarpRes = VoBaseResp.ok("查询成功", VoPcBorrowListWarpRes.class);
+            listWarpRes.setLists(Lists.newArrayList(borrowLists));
+            return ResponseEntity.ok(listWarpRes);
+        } catch (Exception e) {
+            log.info("BorrowBizImpl findAll fail%s", e);
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(
+                            VoBaseResp.ERROR,
+                            "查询失败",
+                            VoPcBorrowListWarpRes.class));
+        }
+    }
+
 
     /**
      * 标信息
@@ -1663,7 +1683,7 @@ public class BorrowBizImpl implements BorrowBiz {
             if (borrow.getType() == 0) {
                 userCache.setTjWaitCollectionPrincipal(userCache.getTjWaitCollectionPrincipal() - borrow.getMoney());
                 userCache.setTjWaitCollectionInterest(userCache.getTjWaitCollectionInterest() - countInterest);
-            }else if(borrow.getType() == 4){
+            } else if (borrow.getType() == 4) {
                 userCache.setQdWaitCollectionPrincipal(userCache.getQdWaitCollectionPrincipal() - borrow.getMoney());
                 userCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() - countInterest);
             }

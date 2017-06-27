@@ -24,7 +24,7 @@ import javax.validation.Valid;
  */
 @RestController
 @Api(description = "还款计划")
-@RequestMapping("/pub/repayment")
+@RequestMapping("repayment")
 public class BorrowRepaymentContorller {
 
     @Autowired

@@ -47,4 +47,11 @@ public class VoViewTenderDetail {
     @ApiModelProperty("已收本金")
     private String principal;
 
+    @ApiModelProperty("标ID")
+    private Long borrowId;
+
+    @ApiModelProperty("投标ID")
+    private Long tenderId;
+
+
 }

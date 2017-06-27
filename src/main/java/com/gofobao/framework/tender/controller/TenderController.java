@@ -25,6 +25,7 @@ import javax.validation.Valid;
 @RequestMapping("/tender")
 @RestController
 @Slf4j
+@SuppressWarnings("all")
 public class TenderController {
 
     @Autowired

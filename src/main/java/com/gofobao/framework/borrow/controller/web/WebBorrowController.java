@@ -3,10 +3,7 @@ package com.gofobao.framework.borrow.controller.web;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowStatisticsWarpRes;
-import com.gofobao.framework.borrow.vo.response.VoViewVoBorrowDescWarpRes;
+import com.gofobao.framework.borrow.vo.response.*;
 import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import io.swagger.annotations.Api;
@@ -53,28 +50,28 @@ public class WebBorrowController {
 
 
     @ApiOperation(value = "pc:首页标列表; type:-1：全部 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
-    @GetMapping("pub/borrow/pc/v2/{type}/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewBorrowListWarpRes> pcList(@PathVariable Integer pageIndex,
+    @GetMapping("pub/pc/borrow/list/v2/{type}/{pageIndex}/{pageSize}")
+    public ResponseEntity<VoPcBorrowListWarpRes> pcList(@PathVariable Integer pageIndex,
                                                           @PathVariable Integer pageSize,
                                                           @PathVariable Integer type) {
         VoBorrowListReq voBorrowListReq = new VoBorrowListReq();
         voBorrowListReq.setPageIndex(pageIndex);
         voBorrowListReq.setPageSize(pageSize);
         voBorrowListReq.setType(type);
-        return borrowBiz.findAll(voBorrowListReq);
+        return borrowBiz.pcFindAll(voBorrowListReq);
     }
 
 
 
     @ApiOperation("标信息")
-    @GetMapping("pub/borrow/pc/v2/info/{borrowId}")
+    @GetMapping("pub/pc/borrow/v2/info/{borrowId}")
     public ResponseEntity<VoViewBorrowInfoWarpRes> pcgetByBorrowId(@PathVariable Long borrowId) {
         return borrowBiz.info(borrowId);
     }
 
 
     @ApiOperation("pc：标简介")
-    @GetMapping("pub/borrow/pc/v2/desc/{borrowId}")
+    @GetMapping("pub/pc/borrow/v2/desc/{borrowId}")
     public ResponseEntity<VoViewVoBorrowDescWarpRes> pcDesc(@PathVariable Long borrowId) {
         return borrowBiz.desc(borrowId);
     }
@@ -82,7 +79,7 @@ public class WebBorrowController {
 
 
     @ApiOperation(value = "pc:标合同")
-    @GetMapping(value = "pub/borrow/pc/v2/borrowProtocol/{borrowId}")
+    @GetMapping(value = "pub/pc/borrow/v2/borrowProtocol/{borrowId}")
     public ResponseEntity<String> pcTakeRatesDesc(HttpServletRequest request, @PathVariable Long borrowId) {
         Long userId = 0L;
         String authToken = request.getHeader(this.tokenHeader);
@@ -106,7 +103,7 @@ public class WebBorrowController {
 
 
     @ApiOperation(value = "pc：招标中统计")
-    @GetMapping(value = "pub/borrow/pc/v2/statistics")
+    @GetMapping(value = "pub/pc/borrow/v2/statistics")
     public ResponseEntity<VoViewBorrowStatisticsWarpRes> pcStatistics() {
         return borrowBiz.statistics();
     }
