@@ -15,7 +15,7 @@ import java.util.List;
 public interface TenderService {
 
 
-    Tender insert(Tender tender);
+    Tender save(Tender tender);
 
     boolean updateById(Tender tender);
 

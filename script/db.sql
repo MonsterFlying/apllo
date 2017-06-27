@@ -1,238 +1,374 @@
-ALTER TABLE `gfb_borrow` ADD COLUMN `tx_fee` int(11) DEFAULT NULL COMMENT '借款手续费(选填）';
-ALTER TABLE `gfb_borrow` ADD COLUMN `iparam1` int(11) DEFAULT NULL;
-ALTER TABLE `gfb_borrow` ADD COLUMN `iparam2` int(11) DEFAULT NULL;
-ALTER TABLE `gfb_borrow` ADD COLUMN `iparam3` int(11) DEFAULT NULL;
-ALTER TABLE `gfb_borrow` ADD COLUMN `vparam1` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
-ALTER TABLE `gfb_borrow` ADD COLUMN `vparam2` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
-ALTER TABLE `gfb_borrow` ADD COLUMN `vparam3` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
-ALTER TABLE `gfb_borrow` ADD COLUMN `t_user_id` int(11) DEFAULT NULL COMMENT '银行电子账户标 id';
+ALTER TABLE `gofobao0627`.`gfb_activity_red_packet`
+  MODIFY COLUMN `CREATE_UP` int(11) NULL DEFAULT '0'
+, MODIFY COLUMN `UPDATE_UP` int(11) NULL DEFAULT '0'
+, MODIFY COLUMN `IP` varchar(24) NULL DEFAULT '' COMMENT '领取IP'
+, MODIFY COLUMN `IPARAM1` varchar(50) NULL DEFAULT ''
+, MODIFY COLUMN `IPARAM2` varchar(50) NULL DEFAULT ''
+, MODIFY COLUMN `IPARAM3` varchar(50) NULL DEFAULT ''
+, MODIFY COLUMN `VPARAM1` varchar(255) NULL DEFAULT ''
+, MODIFY COLUMN `VPARAM2` varchar(255) NULL DEFAULT '';
 
-ALTER TABLE `gfb_borrow_tender` ADD COLUMN `auth_code` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT '即信债权授权码';
-ALTER TABLE `gfb_borrow_tender` ADD COLUMN `iparam1` int(11) DEFAULT NULL;
-ALTER TABLE `gfb_borrow_tender` ADD COLUMN `iparam2` int(11) DEFAULT NULL;
-ALTER TABLE `gfb_borrow_tender` ADD COLUMN `iparam3` int(11) DEFAULT NULL;
-ALTER TABLE `gfb_borrow_tender` ADD COLUMN `vparam1` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
-ALTER TABLE `gfb_borrow_tender` ADD COLUMN `vparam2` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
-ALTER TABLE `gfb_borrow_tender` ADD COLUMN `vparam3` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
-ALTER TABLE `gfb_borrow_tender` ADD COLUMN `t_user_id` int(11) DEFAULT NULL COMMENT '银行电子账户标 id';
+ALTER TABLE `gofobao0627`.`gfb_activity_red_packet_log`
+  MODIFY COLUMN `CREATE_UP` int(11) NULL DEFAULT '0'
+, MODIFY COLUMN `UPDARE_UP` int(11) NULL DEFAULT '0'
+, MODIFY COLUMN `VPARAM1` varchar(255) NULL DEFAULT ''
+, MODIFY COLUMN `VPARAM2` varchar(255) NULL DEFAULT '';
 
-ALTER TABLE `gfb_borrow_collection` ADD COLUMN `borrow_id` int(11) DEFAULT NULL COMMENT '借款id';
-ALTER TABLE `gfb_borrow_collection` ADD COLUMN `user_id` int(11) DEFAULT NULL COMMENT '投标会员id';
-ALTER TABLE `gfb_borrow_collection` ADD COLUMN `iparam1` int(11) DEFAULT NULL;
-ALTER TABLE `gfb_borrow_collection` ADD COLUMN `iparam2` int(11) DEFAULT NULL;
-ALTER TABLE `gfb_borrow_collection` ADD COLUMN `iparam3` int(11) DEFAULT NULL;
-ALTER TABLE `gfb_borrow_collection` ADD COLUMN `vparam1` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
-ALTER TABLE `gfb_borrow_collection` ADD COLUMN `vparam2` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
-ALTER TABLE `gfb_borrow_collection` ADD COLUMN `vparam3` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
-ALTER TABLE `gfb_borrow_collection` ADD COLUMN `t_user_id` int(11) DEFAULT NULL COMMENT '银行电子账户标 id';
-
-ALTER TABLE `gfb_borrow_repayment` ADD COLUMN `user_id` int(11) DEFAULT NULL COMMENT '借款人id';
-ALTER TABLE `gfb_borrow_repayment` ADD COLUMN `iparam1` int(11) DEFAULT NULL;
-ALTER TABLE `gfb_borrow_repayment` ADD COLUMN `iparam2` int(11) DEFAULT NULL;
-ALTER TABLE `gfb_borrow_repayment` ADD COLUMN `iparam3` int(11) DEFAULT NULL;
-ALTER TABLE `gfb_borrow_repayment` ADD COLUMN `vparam1` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
-ALTER TABLE `gfb_borrow_repayment` ADD COLUMN `vparam2` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
-ALTER TABLE `gfb_borrow_repayment` ADD COLUMN `vparam3` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
-ALTER TABLE `gfb_borrow_repayment` ADD COLUMN `t_user_id` int(11) DEFAULT NULL COMMENT '银行电子账户标 id';
-
-ALTER TABLE `gfb_lend` ADD COLUMN `iparam1` int(11) DEFAULT NULL;
-ALTER TABLE `gfb_lend` ADD COLUMN `iparam2` int(11) DEFAULT NULL;
-ALTER TABLE `gfb_lend` ADD COLUMN `iparam3` int(11) DEFAULT NULL;
-ALTER TABLE `gfb_lend` ADD COLUMN `vparam1` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
-ALTER TABLE `gfb_lend` ADD COLUMN `vparam2` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
-ALTER TABLE `gfb_lend` ADD COLUMN `vparam3` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL;
-ALTER TABLE `gfb_lend` ADD COLUMN `t_user_id` int(11) DEFAULT NULL COMMENT '银行电子账户标 id';
-
-
-CREATE TABLE `gfb_user_third_account` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `user_id` int(11) DEFAULT '0' COMMENT '用户Id',
-  `account_id` varchar(50) DEFAULT '' COMMENT '电子账户账号',
-  `name` varchar(50) DEFAULT '' COMMENT '真实姓名',
-  `acct_use` int(11) DEFAULT '0' COMMENT '0.普通用户；1.红包账户，2.企业账户',
-  `card_no` varchar(50) DEFAULT '' COMMENT '银行卡',
-  `id_type` int(11) DEFAULT '1' COMMENT '证件类型。 1身份证',
-  `id_no` varchar(50) DEFAULT '' COMMENT '证件号码',
-  `mobile` varchar(50) DEFAULT '' COMMENT '开户手机',
-  `channel` int(11) DEFAULT '0' COMMENT '渠道',
-  `password_state` int(11) DEFAULT '0' COMMENT '初始密码状态（0，未初始化，1.初始化）',
-  `card_no_bind_state` int(11) DEFAULT '1' COMMENT '银行卡绑定状态（0，未绑定，1.已绑定）',
-  `create_at` datetime DEFAULT NULL,
-  `update_at` datetime DEFAULT NULL,
-  `create_id` int(11) DEFAULT '0',
-  `update_id` int(11) DEFAULT '0',
-  `del` int(11) DEFAULT NULL COMMENT '0，有效， 1.无效',
-  `auto_tender_order_id` varchar(255) DEFAULT '' COMMENT '自动投标签约订单号',
-  `auto_tender_tx_amount` int(12) DEFAULT '0' COMMENT '单笔投标金额的上限',
-  `auto_tender_tot_amount` int(12) DEFAULT '0' COMMENT '自动投标总金额上限',
-  `auto_transfer_bond_order_id` varchar(255) DEFAULT NULL COMMENT '自动债权转让签约单号',
+CREATE TABLE `gofobao0627`.`gfb_cash_detail_log` (
+  `id` int(11) NOT NULL auto_increment,
+  `user_id` int(11) NOT NULL DEFAULT '0' COMMENT '用户ID',
+  `third_account_id` varchar(32) NULL DEFAULT '' COMMENT '银行存管账号',
+  `card_no` varchar(32) NULL DEFAULT '' COMMENT '提现卡号',
+  `bank_name` varchar(32) NULL DEFAULT '' COMMENT '提现银行名称',
+  `company_bank_no` varchar(32) NULL DEFAULT '' COMMENT '联行号',
+  `money` int(11) NULL DEFAULT '0' COMMENT '提现金额',
+  `fee` int(11) NULL DEFAULT '0' COMMENT '费用',
+  `verify_user_id` int(11) NULL DEFAULT '0' COMMENT '审核人',
+  `verify_time` datetime NULL COMMENT '审核时间',
+  `verify_remark` varchar(255) NULL DEFAULT '' COMMENT '审核备注',
+  `state` int(11) NULL DEFAULT '0' COMMENT '-1.取消提现.0:申请中,1.系统审核通过,2.系统审核不通过, 3.银行提现成功.4.银行提现失败.',
+  `create_time` datetime NULL COMMENT '提现申请时间',
+  `callback_time` datetime NULL COMMENT '存管回调时间',
+  `cancel_time` datetime NULL COMMENT '取消时间',
+  `ip` varchar(32) NULL DEFAULT '' COMMENT '提现IP',
+  `cash_type` int(11) NULL DEFAULT '0' COMMENT '0:渠道提现,1.人行提现',
+  `seq_no` varchar(32) NULL DEFAULT '',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COMMENT='银行电子账户标';
+) ENGINE=InnoDB;
 
-INSERT INTO `gfb_user_third_account` VALUES ('1', '901', '6212462040000050015', '崔灿', '1', '6222988812340046', '1', '342224198405191617', '18949830519', '2', '0', '1', '2017-05-23 14:15:07', '2017-05-23 14:15:07', '901', null, '0', null, null, null, null);
+ALTER TABLE `gofobao0627`.`gfb_permissions`
+  MODIFY COLUMN `name` varchar(255) NOT NULL
+, MODIFY COLUMN `display_name` varchar(255) NULL
+, MODIFY COLUMN `description` varchar(255) NULL
+, MODIFY COLUMN `created_at` timestamp NULL
+, MODIFY COLUMN `updated_at` timestamp NULL;
 
-# 统计表添加自增字段
-ALTER TABLE gfb_statistic ADD id INT NULL PRIMARY KEY AUTO_INCREMENT;
+ALTER TABLE `gofobao0627`.`gfb_roles`
+  MODIFY COLUMN `name` varchar(255) NOT NULL
+, MODIFY COLUMN `display_name` varchar(255) NULL
+, MODIFY COLUMN `description` varchar(255) NULL
+, MODIFY COLUMN `created_at` timestamp NULL
+, MODIFY COLUMN `updated_at` timestamp NULL;
 
-#修改gfb_user_info默认值
-ALTER TABLE gfb_user_info ALTER COLUMN realname SET DEFAULT '';
-ALTER TABLE gfb_user_info ALTER COLUMN card_pic1 SET DEFAULT '';
-ALTER TABLE gfb_user_info ALTER COLUMN card_pic2 SET DEFAULT '';
-ALTER TABLE gfb_user_info ALTER COLUMN qq SET DEFAULT '';
-ALTER TABLE gfb_user_info ALTER COLUMN graduated_school SET DEFAULT '';
-ALTER TABLE gfb_user_info ALTER COLUMN address SET DEFAULT '';
-ALTER TABLE gfb_user_info ALTER COLUMN birthday_y SET DEFAULT 0;
-ALTER TABLE gfb_user_info ALTER COLUMN birthday_md SET DEFAULT 0;
+ALTER TABLE `gofobao0627`.`gfb_dict_item`
+  DROP COLUMN `IS_DEL`
+, ADD COLUMN `DEL` int(11) NULL DEFAULT '0' COMMENT '是否删除：0.存活，1.删除';
 
-#修改gfb_asset默认值
-ALTER TABLE gfb_asset ALTER COLUMN use_money SET DEFAULT 0;
-ALTER TABLE gfb_asset ALTER COLUMN no_use_money SET DEFAULT 0;
-ALTER TABLE gfb_asset ALTER COLUMN virtual_money SET DEFAULT 0;
-ALTER TABLE gfb_asset ALTER COLUMN collection SET DEFAULT 0;
-ALTER TABLE gfb_asset ALTER COLUMN payment SET DEFAULT 0;
-ALTER TABLE gfb_asset ALTER COLUMN updated_at SET DEFAULT 0;
+ALTER TABLE `gofobao0627`.`gfb_dict_value`
+  DROP COLUMN `IS_DEL`
+, ADD COLUMN `DEL` int(11) NULL DEFAULT '0' COMMENT '是否删除：0.存活，1.删除';
+
+ALTER TABLE `gofobao0627`.`gfb_permission_role`
+  MODIFY COLUMN `permission_id` int(10) unsigned NOT NULL
+, MODIFY COLUMN `role_id` int(10) unsigned NOT NULL;
+
+CREATE TABLE `gofobao0627`.`gfb_recharge_detail_log` (
+  `id` int(11) NOT NULL auto_increment COMMENT '唯一标示',
+  `user_id` int(11) NOT NULL COMMENT '用户ID',
+  `seq_no` varchar(32) NULL DEFAULT '' COMMENT '交易流水号',
+  `create_time` datetime NULL,
+  `callback_time` datetime NULL,
+  `state` int(11) NULL DEFAULT '0' COMMENT '充值状态：0：充值请求。1.充值成功。2.充值失败',
+  `del` int(11) NULL DEFAULT '0' COMMENT '0.有效记录1.无效记录',
+  `recharge_type` int(11) NULL DEFAULT '0' COMMENT '充值类型：0.渠道充值1.线下转账',
+  `card_no` varchar(32) NULL DEFAULT '' COMMENT '卡号',
+  `bank_name` varchar(64) NULL DEFAULT '' COMMENT '充值银行',
+  `money` int(11) NULL DEFAULT '0' COMMENT '充值金额',
+  `recharge_source` int(11) NULL DEFAULT '0' COMMENT '充值来源：0.pc1.html52.android3.ios',
+  `recharge_channel` int(11) NULL DEFAULT '0' COMMENT '充值渠道：0.江西银行（线上）1.其他',
+  `remark` varchar(255) NULL DEFAULT '' COMMENT '备注',
+  `mobile` varchar(32) NULL DEFAULT '' COMMENT '手机',
+  `update_time` datetime NULL COMMENT '更新时间',
+  `ip` varchar(32) NULL DEFAULT '' COMMENT 'ip',
+  `response_message` varchar(2048) NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB;
+
+ALTER TABLE `gofobao0627`.`gfb_users`
+  MODIFY COLUMN `password` varchar(60) NOT NULL DEFAULT '' COMMENT '登录密码（AES-256-CBC）'
+, MODIFY COLUMN `pay_password` varchar(60) NOT NULL DEFAULT '' COMMENT '支付密码（AES-256-CBC）'
+, MODIFY COLUMN `realname` varchar(10) NOT NULL DEFAULT '' COMMENT '真实姓名'
+, MODIFY COLUMN `type` varchar(10) NOT NULL DEFAULT 'borrower' COMMENT '用户类型（manager：管理员；borrower：浏览者；）'
+, ADD COLUMN `avatar_path` varchar(60) NULL DEFAULT '' COMMENT '头像地址';
+
+ALTER TABLE `gofobao0627`.`gfb_role_user`
+  MODIFY COLUMN `user_id` int(10) unsigned NOT NULL
+, MODIFY COLUMN `role_id` int(10) unsigned NOT NULL;
+
+CREATE TABLE `gofobao0627`.`gfb_third_batch_log` (
+  `ID` int(11) NOT NULL auto_increment,
+  `BATCH_NO` varchar(255) NULL,
+  `TYPE` int(11) NULL,
+  `SOURCE_ID` int(11) NULL,
+  `REMARK` varchar(1024) NULL,
+  `IPARAM1` int(11) NULL,
+  `IPARAM2` int(11) NULL,
+  `IPARAM3` int(11) NULL,
+  `VPARAM1` varchar(255) NULL,
+  `VPARAM2` varchar(255) NULL,
+  `VPARAM3` varchar(255) NULL,
+  `CREATE_AT` datetime NULL,
+  `UPDATE_AT` datetime NULL,
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB;
+
+CREATE TABLE `gofobao0627`.`gfb_user_third_account` (
+  `id` int(11) NOT NULL auto_increment,
+  `user_id` int(11) NULL DEFAULT '0' COMMENT '用户Id',
+  `account_id` varchar(50) NULL DEFAULT '' COMMENT '电子账户账号',
+  `name` varchar(50) NULL DEFAULT '' COMMENT '真实姓名',
+  `acct_use` int(11) NULL DEFAULT '0' COMMENT '0.普通用户；1.红包账户，2.企业账户',
+  `card_no` varchar(50) NULL DEFAULT '' COMMENT '银行卡',
+  `id_type` int(11) NULL DEFAULT '1' COMMENT '证件类型。 1身份证',
+  `id_no` varchar(50) NULL DEFAULT '' COMMENT '证件号码',
+  `mobile` varchar(50) NULL DEFAULT '' COMMENT '开户手机',
+  `channel` int(11) NULL DEFAULT '0' COMMENT '渠道',
+  `password_state` int(11) NULL DEFAULT '0' COMMENT '初始密码状态（0，未初始化，1.初始化）',
+  `card_no_bind_state` int(11) NULL DEFAULT '1' COMMENT '银行卡绑定状态（0，未绑定，1.已绑定）',
+  `create_at` datetime NULL,
+  `update_at` datetime NULL,
+  `create_id` int(11) NULL DEFAULT '0',
+  `update_id` int(11) NULL DEFAULT '0',
+  `del` int(11) NULL COMMENT '0，有效， 1.无效',
+  `auto_tender_order_id` varchar(255) NULL COMMENT '自动投标签约订单号',
+  `auto_tender_tx_amount` int(12) NULL DEFAULT '0' COMMENT '单笔投标金额的上限',
+  `auto_tender_tot_amount` int(12) NULL DEFAULT '0' COMMENT '自动投标总金额上限',
+  `auto_transfer_bond_order_id` varchar(255) NULL COMMENT '自动债券转让签约单号',
+  `auto_tender_state` int(11) NULL DEFAULT '0',
+  `auto_transfer_state` int(11) NULL DEFAULT '0',
+  `bank_name` varchar(255) NULL DEFAULT '',
+  `bank_logo` varchar(255) NULL DEFAULT '',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB COMMENT='银行电子账户标';
+
+ALTER TABLE `gofobao0627`.`gfb_lend`
+  ADD COLUMN `iparam1` int(11) NULL
+, ADD COLUMN `iparam2` int(11) NULL
+, ADD COLUMN `iparam3` int(11) NULL
+, ADD COLUMN `vparam1` varchar(255) NULL
+, ADD COLUMN `vparam2` varchar(255) NULL
+, ADD COLUMN `vparam3` varchar(255) NULL
+, ADD COLUMN `t_user_id` int(11) NULL COMMENT '银行电子账户标 id';
+
+ALTER TABLE `gofobao0627`.`gfb_borrow_tender`
+  MODIFY COLUMN `transfer_flag` int(11) NULL DEFAULT '0' COMMENT '转让标识（0：未转让；1：转让中；2：已转让）'
+, MODIFY COLUMN `created_at` datetime NULL COMMENT '创建时间'
+, MODIFY COLUMN `updated_at` datetime NULL COMMENT '更新时间'
+, ADD COLUMN `auth_code` varchar(255) NULL COMMENT '即信债权授权码'
+, ADD COLUMN `iparam1` int(11) NULL DEFAULT '0'
+, ADD COLUMN `iparam2` int(11) NULL DEFAULT '0'
+, ADD COLUMN `iparam3` int(11) NULL DEFAULT '0'
+, ADD COLUMN `vparam1` varchar(255) NULL DEFAULT ''
+, ADD COLUMN `vparam2` varchar(255) NULL DEFAULT ''
+, ADD COLUMN `vparam3` varchar(255) NULL DEFAULT ''
+, ADD COLUMN `t_user_id` int(11) NULL DEFAULT '0' COMMENT '银行电子账户标 id'
+, ADD COLUMN `state` int(10) NULL DEFAULT '0' COMMENT '1:投标中； 2:还款中 ;3:已结清'
+, ADD COLUMN `third_tender_order_id` varchar(255) NULL DEFAULT '' COMMENT '第三方订单号'
+, ADD COLUMN `third_transfer_order_id` varchar(255) NULL DEFAULT '' COMMENT '购买债券转让编号'
+, ADD COLUMN `is_third_register` int(11) NULL DEFAULT '0' COMMENT '是否在存管进行登记 0否 1.是否';
+
+ALTER TABLE `gofobao0627`.`gfb_borrow`
+  ADD COLUMN `tx_fee` int(11) NULL COMMENT '借款手续费(选填）'
+, ADD COLUMN `iparam1` int(11) NULL
+, ADD COLUMN `iparam2` int(11) NULL
+, ADD COLUMN `iparam3` int(11) NULL
+, ADD COLUMN `vparam1` varchar(255) NULL
+, ADD COLUMN `vparam2` varchar(255) NULL
+, ADD COLUMN `vparam3` varchar(255) NULL
+, ADD COLUMN `t_user_id` int(11) NULL COMMENT '银行电子账户标 id'
+, ADD COLUMN `bail_account_id` varchar(255) NULL COMMENT '担保存管账号'
+, ADD COLUMN `take_user_id` int(11) NULL COMMENT '收款人id  目前针对于官标';
+
+ALTER TABLE `gofobao0627`.`gfb_asset`
+  MODIFY COLUMN `use_money` int(11) NOT NULL DEFAULT '0' COMMENT '可用金额(分)'
+, MODIFY COLUMN `no_use_money` int(11) NOT NULL DEFAULT '0' COMMENT '冻结金额(分)'
+, MODIFY COLUMN `virtual_money` int(11) NOT NULL DEFAULT '0' COMMENT '体验金(分)'
+, MODIFY COLUMN `collection` int(11) NOT NULL DEFAULT '0' COMMENT '代收金额(分)'
+, MODIFY COLUMN `payment` int(11) NOT NULL DEFAULT '0' COMMENT '待还金额(分)'
+, MODIFY COLUMN `updated_at` timestamp NULL DEFAULT '0000-00-00 00:00:00' COMMENT '更新时间';
+
+ALTER TABLE `gofobao0627`.`gfb_auto_tender`
+  ADD COLUMN `iparam1` int(11) NULL
+, ADD COLUMN `iparam2` int(11) NULL
+, ADD COLUMN `iparam3` int(11) NULL
+, ADD COLUMN `vparam1` varchar(255) NULL
+, ADD COLUMN `vparam2` varchar(255) NULL
+, ADD COLUMN `vparam3` varchar(255) NULL;
+
+ALTER TABLE `gofobao0627`.`gfb_borrow_collection`
+  MODIFY COLUMN `start_at` datetime NULL COMMENT '理论开始计息时间'
+, MODIFY COLUMN `start_at_yes` datetime NULL COMMENT '实际开始计息时间'
+, MODIFY COLUMN `collection_at` datetime NULL COMMENT '理论结束计息时间'
+, MODIFY COLUMN `collection_at_yes` datetime NULL COMMENT '实际结束计息时间'
+, MODIFY COLUMN `transfer_flag` int(11) NULL DEFAULT '0' COMMENT '转让标识（0：未转让；1：已转让）'
+, MODIFY COLUMN `created_at` datetime NULL COMMENT '创建时间'
+, MODIFY COLUMN `updated_at` datetime NULL COMMENT '更新时间'
+, ADD COLUMN `borrow_id` int(11) NULL COMMENT '借款id'
+, ADD COLUMN `user_id` int(11) NULL COMMENT '投标会员id'
+, ADD COLUMN `iparam1` int(11) NULL
+, ADD COLUMN `iparam2` int(11) NULL
+, ADD COLUMN `iparam3` int(11) NULL
+, ADD COLUMN `vparam1` varchar(255) NULL
+, ADD COLUMN `vparam2` varchar(255) NULL
+, ADD COLUMN `vparam3` varchar(255) NULL
+, ADD COLUMN `t_user_id` int(11) NULL COMMENT '银行电子账户标 id'
+, ADD COLUMN `t_repay_order_id` varchar(255) NULL COMMENT '还款order'
+, ADD COLUMN `t_bail_repay_order_id` varchar(255) NULL COMMENT '垫付订单号'
+, ADD COLUMN `t_bail_auth_code` varchar(255) NULL COMMENT '垫付即信授权码';
+
+ALTER TABLE `gofobao0627`.`gfb_borrow_repayment`
+  ADD COLUMN `user_id` int(11) NULL COMMENT '借款人id'
+, ADD COLUMN `iparam1` int(11) NULL
+, ADD COLUMN `iparam2` int(11) NULL
+, ADD COLUMN `iparam3` int(11) NULL
+, ADD COLUMN `vparam1` varchar(255) NULL
+, ADD COLUMN `vparam2` varchar(255) NULL
+, ADD COLUMN `vparam3` varchar(255) NULL
+, ADD COLUMN `t_user_id` int(11) NULL COMMENT '银行电子账户标 id';
+
+ALTER TABLE `gofobao0627`.`gfb_borrow_virtual_collection`
+  MODIFY COLUMN `status` int(10) NOT NULL DEFAULT '0'
+, MODIFY COLUMN `order` int(10) NOT NULL
+, MODIFY COLUMN `collection_at` datetime NULL
+, MODIFY COLUMN `collection_at_yes` datetime NULL
+, MODIFY COLUMN `created_at` datetime NULL
+, MODIFY COLUMN `updated_at` datetime NULL;
+
+ALTER TABLE `gofobao0627`.`gfb_currency`
+  MODIFY COLUMN `use_currency` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '广富币金额'
+, MODIFY COLUMN `no_use_currency` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '冻结广富币金额';
+
+ALTER TABLE `gofobao0627`.`gfb_integral`
+  MODIFY COLUMN `use_integral` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '用户积分'
+, MODIFY COLUMN `no_use_integral` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '冻结积分';
+
+ALTER TABLE `gofobao0627`.`gfb_notices`
+  MODIFY COLUMN `read` int(11) NOT NULL DEFAULT '0' COMMENT '是否阅读（0、未读；1、已读）';
+
+ALTER TABLE gofobao0627.gfb_statistic ADD id INT NULL PRIMARY KEY AUTO_INCREMENT;
+
+ALTER TABLE `gofobao0627`.`gfb_user_cache`
+  MODIFY COLUMN `income_interest` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '已赚利息'
+, MODIFY COLUMN `income_award` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '已转奖励'
+, MODIFY COLUMN `income_overdue` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '逾期收入'
+, MODIFY COLUMN `income_integral_cash` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '积分折现'
+, MODIFY COLUMN `income_bonus` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '提成收入（推荐人）'
+, MODIFY COLUMN `income_other` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '其他收入'
+, MODIFY COLUMN `wait_collection_principal` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '待收本金'
+, MODIFY COLUMN `wait_collection_interest` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '待收利息'
+, MODIFY COLUMN `tj_wait_collection_principal` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '车贷标代收本金'
+, MODIFY COLUMN `tj_wait_collection_interest` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '车贷标代收利息'
+, MODIFY COLUMN `qd_wait_collection_principal` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '渠道标代收本金'
+, MODIFY COLUMN `qd_wait_collection_interest` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '渠道标代收利息'
+, MODIFY COLUMN `expenditure_interest` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '利息支出'
+, MODIFY COLUMN `expenditure_interest_manage` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '利息管理费支出'
+, MODIFY COLUMN `expenditure_manage` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '账户管理费支出'
+, MODIFY COLUMN `expenditure_fee` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '费用支出'
+, MODIFY COLUMN `expenditure_overdue` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '逾期支出'
+, MODIFY COLUMN `expenditure_other` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '其他支出'
+, MODIFY COLUMN `wait_repay_principal` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '待还本金'
+, MODIFY COLUMN `wait_repay_interest` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '待还利息'
+, MODIFY COLUMN `first_tender_award` smallint(5) unsigned NOT NULL DEFAULT 0 COMMENT '首投奖励'
+, MODIFY COLUMN `award_virtual_money` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '赠送体验金'
+, MODIFY COLUMN `recharge_total` bigint(20) unsigned NOT NULL DEFAULT 0 COMMENT '充值总额'
+, MODIFY COLUMN `yesterday_use_money` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '昨日可用余额'
+, MODIFY COLUMN `cash_total` bigint(20) unsigned NOT NULL DEFAULT 0 COMMENT '提现总额';
+
+ALTER TABLE `gfb_user_info`
+  MODIFY COLUMN `realname` varchar(10) NOT NULL DEFAULT '' COMMENT '用户真实姓名'
+, MODIFY COLUMN `card_pic1` varchar(100) NOT NULL DEFAULT '' COMMENT '身份证图片地址'
+, MODIFY COLUMN `card_pic2` varchar(100) NOT NULL DEFAULT '' COMMENT '身份证图片地址'
+, MODIFY COLUMN `qq` varchar(20) NOT NULL DEFAULT '' COMMENT 'QQ号码'
+, MODIFY COLUMN `graduated_school` varchar(255) NOT NULL DEFAULT '' COMMENT '毕业学校'
+, MODIFY COLUMN `address` varchar(255) NOT NULL DEFAULT '' COMMENT '常住地'
+, MODIFY COLUMN `birthday_y` smallint(4) NOT NULL DEFAULT 0 COMMENT '生日月'
+, MODIFY COLUMN `birthday_md` smallint(4) NOT NULL DEFAULT 0 COMMENT '生日日';
 
 
-#修改gfb_user_cache默认值
-ALTER TABLE gfb_user_cache ALTER COLUMN income_interest SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN income_award SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN income_overdue SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN income_integral_cash SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN income_bonus SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN income_other SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN wait_collection_principal SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN wait_collection_interest SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN tj_wait_collection_principal SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN tj_wait_collection_interest SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN qd_wait_collection_principal SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN qd_wait_collection_interest SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN expenditure_interest SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN expenditure_interest_manage SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN expenditure_manage SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN expenditure_fee SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN expenditure_overdue SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN expenditure_other SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN wait_repay_principal SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN wait_repay_interest SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN tender_tuijian SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN tender_jingzhi SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN tender_miao SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN tender_transfer SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN tender_qudao SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN first_tender_award SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN award_virtual_money SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN recharge_total SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN yesterday_use_money SET DEFAULT 0;
-ALTER TABLE gfb_user_cache ALTER COLUMN cash_total SET DEFAULT 0;
-
-#修改gfb_integral默认值
-ALTER TABLE gfb_integral ALTER COLUMN use_integral SET DEFAULT 0;
-ALTER TABLE gfb_integral ALTER COLUMN no_use_integral SET DEFAULT 0;
-
-#修改gfb_currency默认值
-ALTER TABLE gfb_currency ALTER COLUMN use_currency SET DEFAULT 0;
-ALTER TABLE gfb_currency ALTER COLUMN no_use_currency SET DEFAULT 0;
-
-#修改gfb_users默认值
-ALTER TABLE gfb_users ALTER COLUMN password SET DEFAULT '';
-ALTER TABLE gfb_users ALTER COLUMN pay_password SET DEFAULT '';
-ALTER TABLE gfb_users ALTER COLUMN realname SET DEFAULT '';
-ALTER TABLE gfb_users ALTER COLUMN type SET DEFAULT 'borrower';
-
-#修改数字字典
-ALTER TABLE gfb_dict_item CHANGE IS_DEL DEL INT(11) DEFAULT '0' COMMENT '是否删除：0.存活，1.删除';
-ALTER TABLE gfb_dict_value CHANGE IS_DEL DEL INT(11) DEFAULT '0' COMMENT '是否删除：0.存活，1.删除';
-
-ALTER TABLE gfb_user_third_account ADD auto_tender_state INT DEFAULT 0 NULL;
-ALTER TABLE gfb_user_third_account ADD auto_transfer_state INT DEFAULT 0 NULL;
-
-
-#充值记录（新版）
-CREATE TABLE gfb_recharge_detail_log
-(
-  id INT PRIMARY KEY COMMENT '唯一标示' AUTO_INCREMENT,
-  user_id INT NOT NULL COMMENT '用户ID',
-  seq_no VARCHAR(32) DEFAULT '' COMMENT '交易流水号',
-  create_time DATETIME,
-  callback_time DATETIME,
-  state INT DEFAULT 0 COMMENT '充值状态：0：充值请求。1.充值成功。2.充值失败',
-  del INT DEFAULT 0 COMMENT '0.有效记录 1.无效记录',
-  recharge_type INT DEFAULT 0 COMMENT '充值类型： 0.渠道充值 1.线下转账',
-  card_no VARCHAR(32) DEFAULT '' COMMENT '卡号',
-  bank_name VARCHAR(32) DEFAULT '' COMMENT '充值银行',
-  money INT DEFAULT 0 COMMENT '充值金额',
-  recharge_source INT DEFAULT 0 COMMENT '充值来源： 0.pc 1.html5 2.android 3.ios',
-  recharge_channel INT DEFAULT 0 COMMENT '充值渠道：0.江西银行（线上）1.其他',
-  remark VARCHAR(255) DEFAULT '' COMMENT '备注',
-  mobile VARCHAR(32) DEFAULT '' COMMENT '手机',
-  update_time DATETIME COMMENT '更新时间',
-  ip VARCHAR(32) DEFAULT '' COMMENT 'ip'
-);
-
-#修改第三方存管账户
-ALTER TABLE gfb_user_third_account ADD bank_name VARCHAR(255) DEFAULT '其他' NULL;
-ALTER TABLE gfb_user_third_account ADD bank_logo VARCHAR(255) DEFAULT '' NULL;
-
-
-ALTER TABLE gfb_recharge_detail_log MODIFY bank_name VARCHAR(64) DEFAULT '' COMMENT '充值银行';
-ALTER TABLE gfb_recharge_detail_log CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci;
-
-
-#创建提现表
-create table gfb_cash_detail_log
-(
-	id int auto_increment
-		primary key,
-	user_id int default '0' not null comment '用户ID',
-	third_account_id varchar(32) default '' null comment '银行存管账号',
-	card_no varchar(32) default '' null comment '提现卡号',
-	bank_name varchar(32) default '' null comment '提现银行名称',
-	company_bank_no varchar(32) default '' null comment '联行号',
-	money int default '0' null comment '提现金额',
-	fee int default '0' null comment '费用',
-	verify_user_id int default '0' null comment '审核人',
-	verify_time datetime null comment '审核时间',
-	verify_remark varchar(255) default '' null comment '审核备注',
-	state int default '0' null comment '-1.取消提现.0:申请中,1.系统审核通过,2.系统审核不通过, 3.银行提现成功.4.银行提现失败.',
-	create_time datetime null comment '提现申请时间',
-	callbak_time datetime null comment '存管回调时间',
-	cancel_time datetime null comment '取消时间',
-	ip varchar(32) default '' null comment '提现IP',
-	cash_type int default '0' null comment '0:渠道提现,1.人行提现'
-);
-ALTER TABLE gfb_cash_detail_log ADD seq_no VARCHAR(32) DEFAULT '' NULL;
-ALTER TABLE gfb_cash_detail_log CHANGE callbak_time callback_time DATETIME COMMENT '存管回调时间';
-ALTER TABLE gfb_recharge_detail_log ADD response_message VARCHAR(2048) NULL;
-
-
-ALTER TABLE gfb_activity_red_packet ALTER COLUMN CREATE_UP SET DEFAULT 0;
-ALTER TABLE gfb_activity_red_packet ALTER COLUMN UPDATE_UP SET DEFAULT 0;
-ALTER TABLE gfb_activity_red_packet ALTER COLUMN IP SET DEFAULT '';
-ALTER TABLE gfb_activity_red_packet ALTER COLUMN IPARAM1 SET DEFAULT '';
-ALTER TABLE gfb_activity_red_packet ALTER COLUMN IPARAM2 SET DEFAULT '';
-ALTER TABLE gfb_activity_red_packet ALTER COLUMN IPARAM3 SET DEFAULT '';
-ALTER TABLE gfb_activity_red_packet ALTER COLUMN VPARAM1 SET DEFAULT '';
-ALTER TABLE gfb_activity_red_packet ALTER COLUMN VPARAM2 SET DEFAULT '';
-ALTER TABLE gfb_activity_red_packet ALTER COLUMN VPARAM3 SET DEFAULT '';
-
-
-ALTER TABLE gfb_activity_red_packet_log ALTER COLUMN CREATE_UP SET DEFAULT 0;
-ALTER TABLE gfb_activity_red_packet_log ALTER COLUMN UPDARE_UP SET DEFAULT 0;
-ALTER TABLE gfb_activity_red_packet_log ALTER COLUMN VPARAM1 SET DEFAULT '';
-ALTER TABLE gfb_activity_red_packet_log ALTER COLUMN VPARAM2 SET DEFAULT '';
-
-
-ALTER TABLE gofobao0524.gfb_borrow_tender MODIFY state INT(10) DEFAULT 1 COMMENT '1:投标中； 2:还款中 ;3:已结清';
-
-
-
-ALTER TABLE gfb_borrow_tender ALTER COLUMN iparam1 SET DEFAULT 0;
-ALTER TABLE gfb_borrow_tender ALTER COLUMN iparam2 SET DEFAULT 0;
-ALTER TABLE gfb_borrow_tender ALTER COLUMN iparam3 SET DEFAULT 0;
-ALTER TABLE gfb_borrow_tender ALTER COLUMN vparam1 SET DEFAULT '';
-ALTER TABLE gfb_borrow_tender ALTER COLUMN vparam2 SET DEFAULT '';
-ALTER TABLE gfb_borrow_tender ALTER COLUMN vparam3 SET DEFAULT '';
-ALTER TABLE gfb_borrow_tender ALTER COLUMN t_user_id SET DEFAULT 0;
-ALTER TABLE gfb_borrow_tender ALTER COLUMN state SET DEFAULT 0;
-ALTER TABLE gfb_borrow_tender ALTER COLUMN third_tender_order_id SET DEFAULT '';
-ALTER TABLE gfb_borrow_tender ALTER COLUMN third_transfer_order_id SET DEFAULT '';
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (1, '0', '中国工商银行', '/images/bankLogo/bank_fazhan_icon.png', '5万,50000', '5万,50000', '20万,200000', '2017-03-01 13:02:25', '2017-03-01 13:02:43', 0, 0, 0, '中国工商银行');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (1, '1', '中国银行', '/images/bankLogo/bank_zhongguo_icon.png', '5万,50000', '10万,100000', '20万,200000', '2017-03-01 13:02:27', '2017-03-01 13:02:44', 0, 0, 0, '中国银行');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (1, '2', '中国建设银行', '/images/bankLogo/bank_jianshe_icon.png', '5万,50000', '10万,100000', '20万,200000', '2017-03-01 13:02:27', '2017-03-01 13:02:45', 0, 0, 0, '中国建设银行');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (1, '3', '中国农业银行', '/images/bankLogo/bank_nongye_icon.png', '5万,50000', '10万,100000', '20万,200000', '2017-03-01 13:02:28', '2017-03-01 13:02:46', 0, 0, 0, '中国农业银行');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (1, '4', '交通银行', '/images/bankLogo/bank_jiaotong_icon.png', '5万,50000', '10万,100000', '20万,200000', '2017-03-01 13:02:31', '2017-03-01 13:02:46', 0, 0, 0, '交通银行');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (1, '5', '广东发展银行', '/images/bankLogo/bank_fazhan_icon.png', '5万,50000', '10万,100000', '20万,200000', '2017-03-01 13:02:32', '2017-03-01 13:02:47', 0, 0, 0, '广东发展银行');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (1, '6', '招商银行', '/images/bankLogo/bank_zhaoshang_icon.png', '5万,50000', '5万,50000', '20万,200000', '2017-03-01 13:02:33', '2017-03-01 13:02:48', 0, 0, 0, '招商银行');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (1, '7', '平安银行', '/images/bankLogo/bank_pingan_icon.png', '5万,50000', '5万,50000', '20万,200000', '2017-03-01 13:02:34', '2017-03-01 13:02:49', 0, 0, 0, '平安银行股份有限公司');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (1, '8', '兴业银行', '/images/bankLogo/bank_xingye_icon.png', '5万,50000', '10万,100000', '20万,200000', '2017-03-01 13:02:35', '2017-03-01 13:02:49', 0, 0, 0, '兴业银行');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (1, '9', '中国民生银行', '/images/bankLogo/bank_minsheng_icon.png', '5万,50000', '20万,200000', '20万,200000', '2017-03-01 13:02:36', '2017-03-01 13:02:50', 0, 0, 0, '中国民生银行');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (1, '10', '华夏银行', '/images/bankLogo/bank_huaxia_icon.png', '5万,50000', '20万,200000', '20万,200000', '2017-03-01 13:02:37', '2017-03-01 13:02:51', 0, 0, 0, '华夏银行');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (1, '11', '上海浦东发展银行', '/images/bankLogo/bank_pufa_icon.png', '49000元,49000', '49000元,49000', '20万,200000', '2017-03-01 13:02:38', '2017-03-01 13:02:52', 0, 0, 0, '上海浦发发展银行');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (1, '12', '中信银行', '/images/bankLogo/bank_zhongxing_icon.png', '1万,10000', '2万,20000', '4万,40000', '2017-03-01 13:02:39', '2017-03-01 13:02:53', 0, 0, 0, '中信银行');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (1, '13', '中国光大银行', '/images/bankLogo/bank_guangda_icon.png', '5万,50000', '10万,100000', '20万,200000', '2017-03-01 13:02:40', '2017-03-01 13:02:54', 0, 0, 0, '中国光大银行');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (1, '15', '中国邮政储蓄银行', '/images/bankLogo/bank_youzheng_icon.png', '5万,50000', '20万,200000', '20万,200000', '2017-03-01 13:02:41', '2017-03-01 13:02:54', 0, 0, 0, '中国邮政储蓄银行股份有限公司');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (3, '14', 'annualized', '', '', '', '', null, null, 0, 0, 0, '年化率');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (3, '50', 'startMoney', '', '', '', '', null, null, 0, 0, 0, '起投金额');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (4, 'SERVICE_PLATFORM', '服务平台', '深圳市广富宝金融信息服务有限公司', '', '', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (4, 'REGISTER_NUM', '注册编号', '440301107333144', '', '', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (4, 'BORROW_CONTRACT', '合同内容', '乙方有一定的借款需求，有合理的借款用途；甲方有一定的资金实力，丙方拥有一套成熟的借贷管理服务平台，并基于此平台开展借款咨询及管理服务。现甲乙双方希望丙方为其提供借款与出借咨询、信用评审、出借人推荐等系列借款管理服务，并且委托其提供帐户管理、划扣款、本息管理、进行催收，贷后管理一系列活动。以保证公平的促成此交易。于此，甲、乙、丙三方依照我国有关法律、法规，经协商一致，订立本协议。', '', '', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (5, 'servicePhoneHide', '客服电话', '400-839-6696', '', '', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (5, 'workday', '服务热线', '工作日9：00-20：00', '', '', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (5, 'serviceQQ', '客服QQ', '3808988573、944270204', '', '', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (5, 'serviceEmail', '客服邮箱', 'kefu@gofobao.com', '', '', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (5, 'wechatCode', '微信公众号', 'gofubao、gofobaocom', '', '', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (5, 'weiboCode', '官方微博', '广富宝', '', '', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (5, 'qqGroup', '官方QQ群', '318195664、108655342', '', '', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '0', '50000', '0', '20000', '0.45', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '0', '50000', '20001', '50000', '0.51', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '0', '50000', '50001', '150000', '0.57', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '0', '50000', '150001', '300000', '0.63', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '0', '50000', '300001', '500000', '0.69', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '0', '50000', '500001', '800000', '0.75', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '0', '50000', '800001', '99999999', '0.81', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '50001', '120000', '0', '20000', '0.47', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '50001', '120000', '20001', '50000', '0.53', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '50001', '120000', '50001', '150000', '0.59', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '50001', '120000', '150001', '300000', '0.65', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '50001', '120000', '300001', '500000', '0.71', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '50001', '120000', '500001', '800000', '0.77', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '50001', '120000', '800001', '99999999', '0.83', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '120001', '250000', '0', '20000', '0.49', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '120001', '250000', '20001', '50000', '0.55', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '120001', '250000', '50001', '150000', '0.61', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '120001', '250000', '150001', '300000', '0.67', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '120001', '250000', '300001', '500000', '0.73', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '120001', '250000', '500001', '800000', '0.79', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '120001', '250000', '800001', '99999999', '0.85', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '250001', '400000', '0', '20000', '0.51', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '250001', '400000', '20001', '50000', '0.57', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '250001', '400000', '50001', '150000', '0.63', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '250001', '400000', '150001', '300000', '0.69', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '250001', '400000', '300001', '500000', '0.75', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '250001', '400000', '500001', '800000', '0.81', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '250001', '400000', '800001', '99999999', '0.87', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '400001', '680000', '0', '20000', '0.53', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '400001', '680000', '20001', '50000', '0.59', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '400001', '680000', '50001', '150000', '0.65', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '400001', '680000', '150001', '300000', '0.71', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '400001', '680000', '300001', '500000', '0.77', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '400001', '680000', '500001', '800000', '0.83', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '400001', '680000', '800001', '99999999', '0.89', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '680001', '980000', '0', '20000', '0.55', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '680001', '980000', '20001', '50000', '0.61', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '680001', '980000', '50001', '150000', '0.67', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '680001', '980000', '150001', '300000', '0.73', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '680001', '980000', '300001', '500000', '0.79', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '680001', '980000', '500001', '800000', '0.85', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '680001', '980000', '800001', '99999999', '0.91', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '980001', '1280000', '0', '20000', '0.57', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '980001', '1280000', '20001', '50000', '0.63', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '980001', '1280000', '50001', '150000', '0.69', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '980001', '1280000', '150001', '300000', '0.75', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '980001', '1280000', '300001', '500000', '0.81', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '980001', '1280000', '500001', '800000', '0.87', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '980001', '1280000', '800001', '99999999', '0.93', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '1280001', '99999999', '0', '20000', '0.59', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '1280001', '99999999', '20001', '50000', '0.65', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '1280001', '99999999', '50001', '150000', '0.71', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '1280001', '99999999', '150001', '300000', '0.77', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '1280001', '99999999', '300001', '500000', '0.83', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '1280001', '99999999', '500001', '800000', '0.89', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (6, '1280001', '99999999', '800001', '99999999', '0.95', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (5, 'servicePhoneView', '客服电话', '400-839-6696', '', '', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (7, 'firstCreateAt', '批次编号第一次更新时间', '1498530243166', '', '', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (7, 'no', '批次编号起始值', '100001', '', '', '', null, null, 0, 0, 0, '');
+INSERT INTO gfb_dict_value (ITEM_ID, VALUE01, VALUE02, VALUE03, VALUE04, VALUE05, VALUE06, CREATE_TIME, UPDATE_TIME, CREATE_ID, UPDATE_ID, DEL, NAME) VALUES (7, 'bailAccountId', '担保账户', '6212462040000000036', '', '', '', null, null, 0, 0, 0, '');
