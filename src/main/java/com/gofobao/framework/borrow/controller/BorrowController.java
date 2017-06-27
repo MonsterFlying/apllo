@@ -34,7 +34,6 @@ import java.util.Map;
 @Slf4j
 @Api(description = "首页标接口")
 @SuppressWarnings("all")
-@RequestMapping("/borrow")
 public class BorrowController {
 
     @Autowired
@@ -54,7 +53,7 @@ public class BorrowController {
 
 
     @ApiOperation(value = "首页标列表; type:  -1：全部;   0：车贷标；  1：净值标；  2：秒标；  4：渠道标;  5: 流转标")
-    @GetMapping("/v2/list/{type}/{pageIndex}/{pageSize}")
+    @GetMapping("/borrow/v2/list/{type}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewBorrowListWarpRes> borrowList(@PathVariable Integer pageIndex,
                                                               @PathVariable Integer pageSize,
                                                               @PathVariable Integer type) {
@@ -66,19 +65,23 @@ public class BorrowController {
     }
 
 
+    // TODO 去掉包裹
     @ApiOperation("标信息")
-    @GetMapping("/v2/info/{borrowId}")
+    @GetMapping("/borrow/v2/info/{borrowId}")
     public ResponseEntity<VoViewBorrowInfoWarpRes> getByBorrowId(@PathVariable Long borrowId) {
         return borrowBiz.info(borrowId);
     }
 
+
+    // TODO 去掉包裹
     @ApiOperation("标简介")
-    @GetMapping("/v2/desc/{borrowId}")
+    @GetMapping("/borrow/v2/desc/{borrowId}")
     public ResponseEntity<VoViewVoBorrowDescWarpRes> desc(@PathVariable Long borrowId) {
         return borrowBiz.desc(borrowId);
     }
 
 
+    // TODO 返回改为  ResponseEntity<VoHtmlResp>
     @ApiOperation(value = "标合同")
     @GetMapping(value = "/pub/borrowProtocol/{borrowId}")
     public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId, HttpServletRequest request) {
@@ -91,6 +94,7 @@ public class BorrowController {
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             userId = jwtTokenHelper.getUserIdFromToken(authToken);
         }
+
         String content = "";
         Map<String, Object> paramMaps = borrowBiz.contract(borrowId, userId);
         try {

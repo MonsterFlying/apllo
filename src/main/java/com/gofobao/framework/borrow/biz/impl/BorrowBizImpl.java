@@ -177,14 +177,14 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
             borrowInfoRes.setLowest(StringHelper.formatMon(borrow.getLowest() / 100d));
             Integer surplusMoney = borrow.getMoney() - borrow.getMoneyYes();
-            borrowInfoRes.setViewSurplusMoney(StringHelper.formatMon(surplusMoney / 100));
+            borrowInfoRes.setViewSurplusMoney(StringHelper.formatMon(surplusMoney / 100D));
             borrowInfoRes.setHideSurplusMoney(surplusMoney);
             if (borrow.getType() == BorrowContants.REPAY_FASHION_ONCE) {
                 borrowInfoRes.setTimeLimit(borrow.getTimeLimit() + BorrowContants.DAY);
             } else {
                 borrowInfoRes.setTimeLimit(borrow.getTimeLimit() + BorrowContants.MONTH);
             }
-            double principal = (double) 10000 * 100;
+            double principal = 10000D * 100;
             double apr = NumberHelper.toDouble(StringHelper.toString(borrow.getApr()));
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(principal, apr, borrow.getTimeLimit(), borrow.getSuccessAt());
             Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
@@ -194,7 +194,7 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setMoney(StringHelper.formatMon(borrow.getMoney() / 100d));
             borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
             borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes() / borrow.getMoney().doubleValue())));
-            Date endAt = DateHelper.addDays(borrow.getReleaseAt(), borrow.getValidDay());//结束时间
+            Date endAt = DateHelper.addDays( DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);//结束时间
             borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
             borrowInfoRes.setSurplusSecond(-1L);
             //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
