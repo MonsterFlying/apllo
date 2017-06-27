@@ -14,12 +14,12 @@ public class VoViewOrderDetailResp {
     private Integer order;
 
     @ApiModelProperty("回款日期")
-    private String startAt;
+    private String collectionAt;
 
     @ApiModelProperty("逾期天数")
     private Integer lateDays;
 
-    @ApiModelProperty("应收本金")
+    @ApiModelProperty("应收本息")
     private String collectionMoney;
 
     @ApiModelProperty("已收本金")
