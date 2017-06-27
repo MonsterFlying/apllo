@@ -891,10 +891,11 @@ public class BorrowBizImpl implements BorrowBiz {
             Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
             List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
 
-            BorrowCollection borrowCollection = new BorrowCollection();
+            BorrowCollection borrowCollection = null;
             int collectionMoney = 0;
             int collectionInterest = 0;
             for (int i = 0; i < repayDetailList.size(); i++) {
+                borrowCollection = new BorrowCollection();
                 Map<String, Object> repayDetailMap = repayDetailList.get(i);
                 collectionMoney += new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue();
                 collectionInterest += new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue();
@@ -1551,7 +1552,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     tempTenderMapList = new ArrayList<>();
 
                     for (Users tempTenderUser : tenderUserList) {
-                        if (StringHelper.toString(tempTenderMap.get("userId")).equals(StringHelper.toString(tempTenderUser.getId()))) {
+                        if (NumberHelper.toInt(tempTenderMap.get("userId"))== NumberHelper.toInt(tempTenderUser.getId())) {
                             tenderUser = tempTenderUser;
                             break;
                         }
@@ -1663,7 +1664,7 @@ public class BorrowBizImpl implements BorrowBiz {
             if (borrow.getType() == 0) {
                 userCache.setTjWaitCollectionPrincipal(userCache.getTjWaitCollectionPrincipal() - borrow.getMoney());
                 userCache.setTjWaitCollectionInterest(userCache.getTjWaitCollectionInterest() - countInterest);
-            }else if(borrow.getType() == 4){
+            } else if (borrow.getType() == 4) {
                 userCache.setQdWaitCollectionPrincipal(userCache.getQdWaitCollectionPrincipal() - borrow.getMoney());
                 userCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() - countInterest);
             }

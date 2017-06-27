@@ -193,12 +193,12 @@ public class AplloApplicationTests {
         BatchDetailsQueryResp response = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, request, BatchDetailsQueryResp.class);
         System.out.println(response);*/
 
-        /*Borrow borrow = borrowService.findById(165210L);
+        Borrow borrow = borrowService.findById(165225L);
         try {
             borrowBiz.notTransferedBorrowAgainVerify(borrow);
         } catch (Exception e) {
             e.printStackTrace();
-        }*/
+        }
     }
 
 }
