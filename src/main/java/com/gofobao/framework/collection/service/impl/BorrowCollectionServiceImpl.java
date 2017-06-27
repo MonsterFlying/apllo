@@ -10,10 +10,12 @@ import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.BeanHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.google.common.base.Preconditions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -73,11 +75,9 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
     @Override
     public VoViewOrderDetailResp orderDetail(VoOrderDetailReq voOrderDetailReq) {
         BorrowCollection borrowCollection = borrowCollectionRepository.findOne(voOrderDetailReq.getCollectionId());
-        if (Objects.isNull(borrowCollection)) {
-            return null;
-        }
+        Preconditions.checkNotNull(borrowCollection, "BorrowCollectionSericeImpl.orderDetail: borrowCollecion is empty") ;
         Borrow borrow = borrowRepository.findOne(borrowCollection.getBorrowId().longValue());
-        VoViewOrderDetailResp detailRes = new VoViewOrderDetailResp();
+        VoViewOrderDetailResp detailRes = VoBaseResp.ok("查询成功",  VoViewOrderDetailResp.class);
         detailRes.setOrder(borrowCollection.getOrder() + 1);
         detailRes.setCollectionMoney(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100D));
         detailRes.setLateDays(borrowCollection.getLateDays());

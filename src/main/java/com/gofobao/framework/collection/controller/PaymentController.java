@@ -5,7 +5,7 @@ import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
-import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
+import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -25,7 +25,7 @@ public class PaymentController {
     @Autowired
     private PaymentBiz paymentBiz;
 
-    @ApiOperation("回款期数列表 time:2017-05-06")
+    @ApiOperation("回款明细-回款列表 time:2017-05-06")
     @GetMapping("/v2/order/list/{time}")
     public ResponseEntity<VoViewCollectionOrderListWarpResp> collectionOrderList(@PathVariable("time") String time,
                                                           @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
@@ -35,17 +35,17 @@ public class PaymentController {
         return paymentBiz.orderList(voCollectionOrderReq);
     }
 
-    @ApiOperation("回款详情")
+    @ApiOperation("回款明细-回款详情")
     @GetMapping("/v2/order/detail/{collectionId}")
-    public ResponseEntity<VoViewOrderDetailWarpRes> orderDetail(@PathVariable("collectionId") Long collectionId,
-                                                                @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoViewOrderDetailResp> orderDetail(@PathVariable("collectionId") Long collectionId,
+                                                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoOrderDetailReq voOrderDetailReq = new VoOrderDetailReq();
         voOrderDetailReq.setCollectionId(collectionId);
         voOrderDetailReq.setUserId(userId);
         return paymentBiz.orderDetail(voOrderDetailReq);
     }
 
-    @ApiOperation("当月有回款日期,time：'201705'")
+    @ApiOperation("回款明细-日历控件,time：'201705'")
     @GetMapping("/v2/collection/days/{time}")
     public ResponseEntity<VoViewCollectionDaysWarpRes> days(@PathVariable("time") String time,
                                                             @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
