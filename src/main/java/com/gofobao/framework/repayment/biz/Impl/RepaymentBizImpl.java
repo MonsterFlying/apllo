@@ -42,7 +42,9 @@ import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.*;
 import com.gofobao.framework.repayment.vo.response.RepayCollectionLog;
+import com.gofobao.framework.repayment.vo.response.RepaymentOrderDetail;
 import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
+import com.gofobao.framework.repayment.vo.response.VoViewRepaymentOrderDetailWarpRes;
 import com.gofobao.framework.system.biz.StatisticBiz;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.entity.Statistic;
@@ -151,6 +153,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             repaymentList.stream().forEach(p -> {
                 VoViewCollectionOrderRes collectionOrderRes = new VoViewCollectionOrderRes();
                 Borrow borrow = borrowMap.get(p.getBorrowId());
+                collectionOrderRes.setCollectionId(p.getId());
                 collectionOrderRes.setBorrowName(borrow.getName());
                 collectionOrderRes.setOrder(p.getOrder() + 1);
                 collectionOrderRes.setCollectionMoneyYes(StringHelper.formatMon(p.getRepayMoneyYes() / 100d));
@@ -185,12 +188,14 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      */
     @Override
-    public ResponseEntity<VoViewOrderDetailResp> info(VoInfoReq voInfoReq) {
+    public ResponseEntity<VoViewRepaymentOrderDetailWarpRes> detail(VoInfoReq voInfoReq) {
         try {
-            VoViewOrderDetailResp voViewOrderDetailResp = borrowRepaymentService.info(voInfoReq);
-            return ResponseEntity.ok(voViewOrderDetailResp);
+            RepaymentOrderDetail voViewOrderDetailResp = borrowRepaymentService.detail(voInfoReq);
+            VoViewRepaymentOrderDetailWarpRes warpRes=VoBaseResp.ok("查询成功",VoViewRepaymentOrderDetailWarpRes.class);
+            warpRes.setRepaymentOrderDetail(voViewOrderDetailResp);
+            return ResponseEntity.ok(warpRes);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewOrderDetailResp.class));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewRepaymentOrderDetailWarpRes.class));
         }
     }
 

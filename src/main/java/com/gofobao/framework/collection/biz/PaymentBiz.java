@@ -3,7 +3,7 @@ package com.gofobao.framework.collection.biz;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
-import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListResWarpResp;
+import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
 import org.springframework.http.ResponseEntity;
 
@@ -17,7 +17,7 @@ public interface PaymentBiz {
      * @param voCollectionOrderReq
      * @return
      */
-   ResponseEntity<VoViewCollectionOrderListResWarpResp> orderList(VoCollectionOrderReq voCollectionOrderReq);
+   ResponseEntity<VoViewCollectionOrderListWarpResp> orderList(VoCollectionOrderReq voCollectionOrderReq);
 
     /**
      * 回款详情

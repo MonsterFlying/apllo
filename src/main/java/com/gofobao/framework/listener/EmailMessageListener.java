@@ -33,7 +33,7 @@ public class EmailMessageListener {
 
     @RabbitHandler
     public void process(String message) {
-        log.info(String.format("EmailMessageListener process info: %s", message));
+        log.info(String.format("EmailMessageListener process detail: %s", message));
         try {
             Preconditions.checkNotNull(message, "EmailMessageListener process message is empty");
             Map<String, Object> body = GSON.fromJson(message, TypeTokenContants.MAP_TOKEN);

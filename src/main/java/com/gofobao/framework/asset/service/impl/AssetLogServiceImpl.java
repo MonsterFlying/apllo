@@ -7,6 +7,7 @@ import com.gofobao.framework.asset.service.AssetLogService;
 import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.response.VoViewAssetLogRes;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -19,10 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created by admin on 2017/5/22.
@@ -62,11 +60,18 @@ public class AssetLogServiceImpl implements AssetLogService {
                 .build();
         Page<AssetLog> assetLogPage = assetLogRepository.findAll(specification, pageable);
 
-        Gson gson = new GsonBuilder().setDateFormat(DateHelper.DATE_FORMAT_YMDHMS).create();
-
-        String jsonStr = gson.toJson(assetLogPage.getContent());
-        List<VoViewAssetLogRes> voViewAssetLogRes = gson.fromJson(jsonStr, new TypeToken<List<VoViewAssetLogRes>>() {
-        }.getType());
+        List<AssetLog> assetLogs=assetLogPage.getContent();
+        if(CollectionUtils.isEmpty(assetLogs)){
+            return Collections.EMPTY_LIST;
+        }
+        List<VoViewAssetLogRes> voViewAssetLogRes=Lists.newArrayList();
+        assetLogs.stream().forEach(p->{
+            VoViewAssetLogRes viewAssetLogRes=new VoViewAssetLogRes();
+            viewAssetLogRes.setMoney(StringHelper.formatMon(p.getMoney()/100d));
+            viewAssetLogRes.setType(p.getType());
+            viewAssetLogRes.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
+            voViewAssetLogRes.add(viewAssetLogRes);
+        });
         List<VoViewAssetLogRes> result = Optional.ofNullable(voViewAssetLogRes).orElse(Collections.EMPTY_LIST);
         return result;
     }

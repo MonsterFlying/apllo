@@ -24,5 +24,7 @@ public class VoViewCollectionOrderRes {
     @ApiModelProperty("当前期数")
     private Integer order;
 
+    @ApiModelProperty("期数id")
+    private Long collectionId;
 
 }

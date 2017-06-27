@@ -30,10 +30,10 @@ public class MyInvestController {
      */
     @ApiOperation("回款中列表")
     @GetMapping("/v2/backMoney/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewBackMoneyListWarpRes> backMoneyList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+    public ResponseEntity<VoViewBackMoneyListWarpRes> backMoneyList(/*@RequestAttribute(SecurityContants.USERID_KEY) Long userId,*/
                                                                     @PathVariable Integer pageIndex,
                                                                     @PathVariable Integer pageSize) {
-        return commonResult(pageIndex, pageSize, userId,TenderConstans.BACK_MONEY);
+        return commonResult(pageIndex, pageSize, 901L,TenderConstans.BACK_MONEY);
     }
 
 
@@ -47,10 +47,10 @@ public class MyInvestController {
 
     @ApiOperation("已结清列表")
     @GetMapping("/v2/settle/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewSettleWarpRes> settleList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+    public ResponseEntity<VoViewSettleWarpRes> settleList(/*@RequestAttribute(SecurityContants.USERID_KEY) Long userId,*/
                                                           @PathVariable Integer pageIndex,
                                                           @PathVariable Integer pageSize) {
-        return commonResult(pageIndex, pageSize, userId,TenderConstans.SETTLE);
+        return commonResult(pageIndex, pageSize, 901L,TenderConstans.SETTLE);
     }
 
     @ApiOperation("投资详情")
@@ -64,10 +64,10 @@ public class MyInvestController {
 
     @ApiOperation("回款详情")
     @GetMapping("/v2/tender/collection/{tenderId}")
-    public ResponseEntity<VoViewReturnMoneyWarpRes> infoList(@PathVariable Long tenderId,
-                                                             @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoViewReturnMoneyWarpRes> infoList(@PathVariable Long tenderId/*,
+                                                             @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
         VoDetailReq voDetailReq=new VoDetailReq();
-        voDetailReq.setUserId(userId);
+        voDetailReq.setUserId(901L);
         voDetailReq.setTenderId(tenderId);
         return investBiz.infoList(voDetailReq);
     }

@@ -211,7 +211,7 @@ public class BorrowBizImpl implements BorrowBiz {
             listWarpRes.setBorrowInfoRes(borrowInfoRes);
             return ResponseEntity.ok(listWarpRes);
         } catch (Exception e) {
-            log.info("BorrowBizImpl info fail%s", e);
+            log.info("BorrowBizImpl detail fail%s", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,
