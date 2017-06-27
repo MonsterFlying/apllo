@@ -11,7 +11,7 @@ import java.io.Serializable;
  */
 @Data
 @ApiModel("首页标列表")
-public class VoViewBorrowList implements Serializable {
+public class VoPcBorrow implements Serializable {
     @ApiModelProperty("标ID")
     private Long id;
     @ApiModelProperty("1.待发布 2.还款中 3.招标中 4.已完成 5.其它")

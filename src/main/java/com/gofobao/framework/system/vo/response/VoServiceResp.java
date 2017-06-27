@@ -11,7 +11,7 @@ import lombok.Data;
 @Data
 @ApiModel
 public class VoServiceResp extends VoBaseResp {
-    @ApiModelProperty("客服电话")
+    @ApiModelProperty("隐藏客服电话")
     private String  servicePhoneHide;
 
     @ApiModelProperty("服务热线")
@@ -31,4 +31,9 @@ public class VoServiceResp extends VoBaseResp {
 
     @ApiModelProperty("官方QQ群")
     private String  qqGroup;
+
+    @ApiModelProperty("显示客服电话")
+    private String  servicePhoneView;
+
+
 }

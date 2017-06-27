@@ -54,7 +54,7 @@ public class WebLoanController {
         VoLoanListReq voLoanListReq = new VoLoanListReq();
         voLoanListReq.setPageIndex(pageIndex);
         voLoanListReq.setPageSize(pageSize);
-        voLoanListReq.setUserId(901L);
+        voLoanListReq.setUserId(userId);
         return loanBiz.settleList(voLoanListReq);
     }
 
