@@ -1,5 +1,6 @@
 package com.gofobao.framework.member.controller;
 
+import com.gofobao.framework.helper.QRCodeHelper;
 import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.member.biz.BrokerBounsBiz;
 import com.gofobao.framework.member.vo.request.VoFriendsReq;
@@ -103,6 +104,7 @@ public class FriendsController {
 
         try {
             InputStream in = FriendsController.class.getResourceAsStream( "/static/img/logo.png");http://192.168.1.235:8000/#/auth/register?_k=bpjq7r.createQRCodeTStream(h5Domain+"/#/auth/register?shareRegisterCode="+inviteCode, in, 50, 50, out);
+            QRCodeHelper.createQRCodeTStream(h5Domain+"/#/auth/register?shareRegisterCode="+inviteCode, in, 50, 50, out);
             out.flush();
         } catch (Exception e) {
             log.error(String.format("获取二维码接口：%s", e.getMessage()));

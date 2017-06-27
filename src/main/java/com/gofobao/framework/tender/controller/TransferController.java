@@ -36,12 +36,12 @@ public class TransferController {
 
     @ApiOperation("转让中列表")
     @GetMapping("v2/transferOf/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewTransferOfWarpRes> tranferOfList( @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+    public ResponseEntity<VoViewTransferOfWarpRes> tranferOfList( /*@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,*/
                                                                   @PathVariable Integer pageIndex,
                                                                   @PathVariable Integer pageSize) {
 
         VoTransferReq transferReq = new VoTransferReq();
-        transferReq.setUserId(userId);
+        transferReq.setUserId(901L);
         transferReq.setPageIndex(pageIndex);
         transferReq.setPageSize(pageSize);
         return transferBiz.tranferOfList(transferReq);
