@@ -50,11 +50,11 @@ public class PaymentBizImpl implements PaymentBiz {
      * @return
      */
     @Override
-    public ResponseEntity<VoViewCollectionOrderListResWarpResp> orderList(VoCollectionOrderReq voCollectionOrderReq) {
+    public ResponseEntity<VoViewCollectionOrderListWarpResp> orderList(VoCollectionOrderReq voCollectionOrderReq) {
 
         List<BorrowCollection> borrowCollections = borrowCollectionService.orderList(voCollectionOrderReq);
         if (Collections.isEmpty(borrowCollections)) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非法请求", VoViewCollectionOrderListResWarpResp.class));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非法请求", VoViewCollectionOrderListWarpResp.class));
         }
         try {
             List<Long> borrowIdArray = borrowCollections.stream().filter(w-> !StringUtils.isEmpty(w.getBorrowId()))
@@ -77,25 +77,24 @@ public class PaymentBizImpl implements PaymentBiz {
                 item.setCollectionMoneyYes(StringHelper.formatMon(p.getCollectionMoneyYes() / 100d));
                 orderResList.add(item);
             });
-            //回款列表
-            voViewCollectionOrderListWarpRespRes.setOrderResList(orderResList);
-            //总回款期数
-            voViewCollectionOrderListWarpRespRes.setOrder(orderResList.size());
-            //已回款金额
+
             Integer sumCollectionMoneyYes = borrowCollections.stream()
                     .filter(p -> p.getStatus() == BorrowCollectionContants.STATUS_YES)
                     .mapToInt(w -> w.getCollectionMoneyYes())
                     .sum();
             voViewCollectionOrderListWarpRespRes.setSumCollectionMoneyYes(StringHelper.formatMon(sumCollectionMoneyYes / 100d));
 
-            VoViewCollectionOrderListResWarpResp warpRes = VoBaseResp.ok("查询成功", VoViewCollectionOrderListResWarpResp.class);
-            List<VoViewCollectionOrderListWarpResp> orderLists = new ArrayList<>(0);
-            orderLists.add(voViewCollectionOrderListWarpRespRes);
-            warpRes.setListRes(orderLists);
+            VoViewCollectionOrderListWarpResp warpRes = VoBaseResp.ok("查询成功", VoViewCollectionOrderListWarpResp.class);
+            //总回款期数
+            warpRes.setOrder(orderResList.size());
+            //已回款金额
+            warpRes.setSumCollectionMoneyYes(StringHelper.formatMon(sumCollectionMoneyYes/100d));
+            //回款列表
+            warpRes.setOrderResList(orderResList);
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非法请求", VoViewCollectionOrderListResWarpResp.class));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非法请求", VoViewCollectionOrderListWarpResp.class));
         }
 
     }

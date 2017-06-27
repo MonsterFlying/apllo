@@ -4,9 +4,8 @@ import com.gofobao.framework.collection.biz.PaymentBiz;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
-import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListResWarpResp;
+import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
-import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -28,7 +27,7 @@ public class PaymentController {
 
     @ApiOperation("回款期数列表 time:2017-05-06")
     @GetMapping("/v2/order/list/{time}")
-    public ResponseEntity<VoViewCollectionOrderListResWarpResp> collectionOrderList(@PathVariable("time") String time/*,
+    public ResponseEntity<VoViewCollectionOrderListWarpResp> collectionOrderList(@PathVariable("time") String time/*,
                                                           @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
         VoCollectionOrderReq voCollectionOrderReq = new VoCollectionOrderReq();
         voCollectionOrderReq.setUserId(901L);
