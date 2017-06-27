@@ -88,11 +88,7 @@ public class TenderServiceImpl implements TenderService {
         return Optional.empty().ofNullable(tenderUserResList).orElse(Collections.emptyList());
     }
 
-    public Tender insert(Tender tender) {
-        if (ObjectUtils.isEmpty(tender)) {
-            return null;
-        }
-        tender.setId(null);
+    public Tender save(Tender tender) {
         return tenderRepository.save(tender);
     }
 

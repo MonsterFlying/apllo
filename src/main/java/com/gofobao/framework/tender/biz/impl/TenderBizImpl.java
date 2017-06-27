@@ -111,7 +111,7 @@ public class TenderBizImpl implements TenderBiz {
         borrowTender.setCreatedAt(nowDate);
         borrowTender.setTransferFlag(0);
         borrowTender.setState(1);
-        borrowTender = tenderService.insert(borrowTender);
+        borrowTender = tenderService.save(borrowTender);
 
         //扣除待还
         CapitalChangeEntity entity = new CapitalChangeEntity();

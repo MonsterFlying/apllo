@@ -39,7 +39,7 @@ public class BankAccountController {
 
 
     @GetMapping("/bank/list")
-    @ApiOperation("额度列表")
+    @ApiOperation("银行卡列表")
     public ResponseEntity<VoBankListResp> list(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         return bankAccountBiz.list(userId) ;
     }
