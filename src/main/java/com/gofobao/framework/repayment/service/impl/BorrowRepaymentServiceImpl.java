@@ -5,7 +5,6 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
-import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.repayment.contants.RepaymentContants;
@@ -14,6 +13,7 @@ import com.gofobao.framework.repayment.repository.BorrowRepaymentRepository;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoInfoReq;
 import com.gofobao.framework.repayment.vo.response.RepayCollectionLog;
+import com.gofobao.framework.repayment.vo.response.RepaymentOrderDetail;
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -72,8 +72,8 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
      * @return VoViewOrderDetailResp
      */
     @Override
-    public VoViewOrderDetailResp info(VoInfoReq voInfoReq) {
-        VoViewOrderDetailResp detailRes = VoBaseResp.ok("查询成功", VoViewOrderDetailResp.class) ;
+    public RepaymentOrderDetail detail(VoInfoReq voInfoReq) {
+        RepaymentOrderDetail detailRes = new RepaymentOrderDetail();
         Specification<BorrowRepayment> specification = Specifications.<BorrowRepayment>and()
                 .eq("userId", voInfoReq.getUserId())
                 .eq("id", voInfoReq.getRepaymentId())
@@ -89,17 +89,20 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         if (borrowRepayment.getStatus() == 0) {
             interest = borrowRepayment.getInterest();
             principal = borrowRepayment.getPrincipal();
-            detailRes.setStatus(RepaymentContants.STATUS_NO_STR);
+            detailRes.setRepayAt(DateHelper.dateToString(borrowRepayment.getRepayAt()));
+            detailRes.setStatusStr(RepaymentContants.STATUS_NO_STR);
         } else {
-            detailRes.setStatus(RepaymentContants.STATUS_YES_STR);
+            detailRes.setStatusStr(RepaymentContants.STATUS_YES_STR);
+            detailRes.setRepayAt(DateHelper.dateToString(borrowRepayment.getRepayAtYes()));
         }
+        detailRes.setStatus(borrowRepayment.getStatus());
         detailRes.setInterest(StringHelper.formatMon(interest / 100d));
         detailRes.setPrincipal(StringHelper.formatMon(principal / 100d));
         detailRes.setBorrowName(borrow.getName());
         detailRes.setCollectionMoney(StringHelper.formatMon(borrowRepayment.getRepayMoneyYes() / 100d));
         detailRes.setLateDays(borrowRepayment.getLateDays());
         detailRes.setOrder(borrowRepayment.getOrder() + 1);
-        detailRes.setStartAt(DateHelper.dateToString(borrowRepayment.getRepayAtYes()));
+
         return detailRes;
     }
 

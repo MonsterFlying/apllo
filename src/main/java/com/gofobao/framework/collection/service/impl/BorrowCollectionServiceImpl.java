@@ -79,18 +79,20 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         Borrow borrow = borrowRepository.findOne(borrowCollection.getBorrowId().longValue());
         VoViewOrderDetailResp detailRes = new VoViewOrderDetailResp();
         detailRes.setOrder(borrowCollection.getOrder() + 1);
-        detailRes.setCollectionMoney(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100d));
+        detailRes.setCollectionMoney(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100D));
         detailRes.setLateDays(borrowCollection.getLateDays());
-        detailRes.setStartAt(DateHelper.dateToString(borrowCollection.getStartAtYes()));
         detailRes.setBorrowName(borrow.getName());
         Integer interest = 0;  //利息
         Integer principal = 0;//本金
         if (borrowCollection.getStatus() == BorrowCollectionContants.STATUS_YES) {
             interest = borrowCollection.getInterest();
             principal = borrowCollection.getPrincipal();
-            detailRes.setStatus(BorrowCollectionContants.STATUS_YES_STR);
+            detailRes.setStatusStr(BorrowCollectionContants.STATUS_YES_STR);
+            detailRes.setCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAtYes()));
         } else {
-            detailRes.setStatus(BorrowCollectionContants.STATUS_NO_STR);
+            detailRes.setStatusStr(BorrowCollectionContants.STATUS_NO_STR);
+            detailRes.setCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAt()));
+
         }
         detailRes.setPrincipal(NumberHelper.to2DigitString(interest / 100D));
         detailRes.setInterest(NumberHelper.to2DigitString(principal / 100D));

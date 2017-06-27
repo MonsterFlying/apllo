@@ -1,5 +1,6 @@
 package com.gofobao.framework.repayment.controller;
 
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.biz.LoanBiz;
 import com.gofobao.framework.repayment.contants.RepaymentContants;
 import com.gofobao.framework.repayment.vo.request.VoDetailReq;
@@ -58,6 +59,7 @@ public class LoanController {
         voDetailReq.setBorrowId(borrowId);
         return loanBiz.repaymentDetail(voDetailReq);
     }
+
     @ApiOperation("借款详情列表")
     @GetMapping("/v2/repayment/list/{borrowId}")
     public ResponseEntity<VoViewLoanInfoListWrapRes> repaymentList(@PathVariable("borrowId") Long borrowId,
@@ -67,7 +69,8 @@ public class LoanController {
         voDetailReq.setBorrowId(borrowId);
         return loanBiz.loanList(voDetailReq);
     }
-    public ResponseEntity commonQuery(Integer pageIndex, Integer pageSize, Long userId, Integer type) {
+
+    private ResponseEntity commonQuery(Integer pageIndex, Integer pageSize, Long userId, Integer type) {
         VoLoanListReq voLoanListReq = new VoLoanListReq();
         voLoanListReq.setPageIndex(pageIndex);
         voLoanListReq.setPageSize(pageSize);
@@ -80,6 +83,8 @@ public class LoanController {
             case 3:
                 return loanBiz.settleList(voLoanListReq);
         }
-        return null;
+        return ResponseEntity
+                .badRequest()
+                .body(VoBaseResp.error(VoBaseResp.ERROR, "获取查询异常", VoViewRefundWrapRes.class));
     }
 }

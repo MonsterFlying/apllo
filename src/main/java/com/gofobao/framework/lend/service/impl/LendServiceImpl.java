@@ -183,6 +183,7 @@ public class LendServiceImpl implements LendService {
         List<UserLendInfo> userLendInfos = Lists.newArrayList();
         lendList.stream().forEach(p -> {
             UserLendInfo userLendInfo = new UserLendInfo();
+            userLendInfo.setLendId(p.getId());
             userLendInfo.setApr(StringHelper.formatMon(p.getApr() / 100d));
             userLendInfo.setRepayAt(DateHelper.dateToString(p.getRepayAt()));
             userLendInfo.setLendMoney(StringHelper.formatMon(p.getMoney() / 100d));
@@ -190,6 +191,7 @@ public class LendServiceImpl implements LendService {
             userLendInfo.setSurplusMoney(StringHelper.formatMon(p.getMoney() - p.getMoneyYes() / 100d));
             String statusStr = p.getStatus() == LendContants.STATUS_NO ? LendContants.STATUS_NO_STR : LendContants.STATUS_YES_STR;
             userLendInfo.setStatusStr(statusStr);
+            userLendInfo.setStatus(p.getStatus());
             userLendInfos.add(userLendInfo);
         });
         return Optional.ofNullable(userLendInfos).orElse(Collections.EMPTY_LIST);

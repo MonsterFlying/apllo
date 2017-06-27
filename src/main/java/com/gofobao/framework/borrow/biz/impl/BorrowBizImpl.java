@@ -211,7 +211,7 @@ public class BorrowBizImpl implements BorrowBiz {
             listWarpRes.setBorrowInfoRes(borrowInfoRes);
             return ResponseEntity.ok(listWarpRes);
         } catch (Exception e) {
-            log.info("BorrowBizImpl info fail%s", e);
+            log.info("BorrowBizImpl detail fail%s", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,
@@ -1454,9 +1454,9 @@ public class BorrowBizImpl implements BorrowBiz {
             voCreateThirdBorrowReq.setEntrustFlag(true);
             resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
             if (!ObjectUtils.isEmpty(resp)) {
-                ResponseEntity
+                return ResponseEntity
                         .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR, resp.getBody().getState().getMsg()));
+                        .body(VoHtmlResp.error(VoHtmlResp.ERROR, resp.getBody().getState().getMsg(), VoHtmlResp.class));
             }
         }
 
@@ -1660,8 +1660,13 @@ public class BorrowBizImpl implements BorrowBiz {
             }
 
             userCache.setUserId(userCache.getUserId());
-            userCache.setTjWaitCollectionPrincipal(userCache.getTjWaitCollectionPrincipal() - borrow.getMoney());
-            userCache.setTjWaitCollectionInterest(userCache.getTjWaitCollectionInterest() - countInterest);
+            if (borrow.getType() == 0) {
+                userCache.setTjWaitCollectionPrincipal(userCache.getTjWaitCollectionPrincipal() - borrow.getMoney());
+                userCache.setTjWaitCollectionInterest(userCache.getTjWaitCollectionInterest() - countInterest);
+            }else if(borrow.getType() == 4){
+                userCache.setQdWaitCollectionPrincipal(userCache.getQdWaitCollectionPrincipal() - borrow.getMoney());
+                userCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() - countInterest);
+            }
             userCacheService.save(userCache);
         }
     }

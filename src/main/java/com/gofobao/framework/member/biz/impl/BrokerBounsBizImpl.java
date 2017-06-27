@@ -99,10 +99,9 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
         paramMaps.put("inviteUrl", imageDomain + "/#/auth/register?inviteCode=" + inviteCode);
         paramMaps.put("inviteCode", inviteCode);
         paramMaps.put("invitePhone", user.getPhone());
-        paramMaps.put("QRCodeURL",   imageDomain+"/qrcode/getInviteFriendQRCode?inviteCode=" + inviteCode);
+        paramMaps.put("QRCodeURL",   "http://ci.gofobao.com:9876/qrcode/getInviteFriendQRCode?inviteCode=" + inviteCode);
         paramMaps.put("requestSource", 3);
 
-        //String content = thymeleafHelper.build("friends", paramMaps);
         return paramMaps;
     }
 }

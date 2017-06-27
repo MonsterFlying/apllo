@@ -11,12 +11,14 @@ import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
+import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
@@ -84,7 +86,7 @@ public class AplloApplicationTests {
 
         Gson gson = new Gson();
         Map<String,String> map = new HashMap<>();
-        map.put("borrowId","165215");
+        map.put("borrowId","165225");
         System.out.println(gson.toJson(map));
         System.out.println(SecurityHelper.getSign( gson.toJson(map)));
     }
@@ -99,8 +101,8 @@ public class AplloApplicationTests {
 
     public void trusteePay(){
         TrusteePayQueryReq request = new TrusteePayQueryReq();
-        request.setAccountId("6212462040000200024");
-        request.setProductId("165215");
+        request.setAccountId("6212462040000250045");
+        request.setProductId("165225");
         request.setChannel(ChannelContant.HTML);
         TrusteePayQueryResp response = jixinManager.send(JixinTxCodeEnum.TRUSTEE_PAY_QUERY, request, TrusteePayQueryResp.class);
         System.out.println(response);
@@ -108,7 +110,7 @@ public class AplloApplicationTests {
 
     public void creditAuthQuery(){
         CreditAuthQueryRequest request = new CreditAuthQueryRequest();
-        request.setAccountId("6212462040000050015");
+        request.setAccountId("6212462040000300030");
         request.setType("1");
         request.setChannel(ChannelContant.HTML);
         CreditAuthQueryResponse response = jixinManager.send(JixinTxCodeEnum.CREDIT_AUTH_QUERY, request, CreditAuthQueryResponse.class);
@@ -120,17 +122,17 @@ public class AplloApplicationTests {
         //根据手机号查询存管账户
         //findAccountByMobile();
         //受托支付
-        //trusteePay();
+        /*trusteePay();*/
         //签约查询
         //creditAuthQuery();
 
-        Map<String,String> map = new HashMap<>();
-        map.put("borrowId","165215");
+        /*Map<String,String> map = new HashMap<>();
+        map.put("borrowId","165225");
         try {
             borrowProvider.doFirstVerify(map);
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
 
         /*VoRepayReq voRepayReq = new VoRepayReq();
         voRepayReq.setRepaymentId(168683L);
@@ -154,7 +156,7 @@ public class AplloApplicationTests {
         System.out.println((resp.getTotalItems()));*/
 
         /*Map<String,String> msg = new HashMap<>();
-        msg.put("borrowId","165213");
+        msg.put("borrowId","165225");
         try {
             borrowProvider.doAgainVerify(msg);
         } catch (Exception e) {
@@ -182,8 +184,8 @@ public class AplloApplicationTests {
         System.out.println(response);*/
 
         /*BatchDetailsQueryReq request = new BatchDetailsQueryReq();
-        request.setBatchNo("100001");
-        request.setBatchTxDate("20170622");
+        request.setBatchNo("100000");
+        request.setBatchTxDate("20170627");
         request.setType("9");
         request.setPageNum("1");
         request.setPageSize("10");

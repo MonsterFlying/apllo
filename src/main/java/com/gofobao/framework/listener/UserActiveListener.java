@@ -31,7 +31,7 @@ public class UserActiveListener {
 
     @RabbitHandler
     public void process(String message) {
-        log.info(String.format("UserActiveListener process info: %s", message));
+        log.info(String.format("UserActiveListener process detail: %s", message));
         try {
             Preconditions.checkNotNull(message, "UserActiveListener process message is empty") ;
             Map<String, Object> body = GSON.fromJson(message, TypeTokenContants.MAP_TOKEN);

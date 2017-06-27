@@ -3,13 +3,13 @@ package com.gofobao.framework.repayment.controller;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
-import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoInfoReq;
 import com.gofobao.framework.repayment.vo.request.VoInstantlyRepaymentReq;
 import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
+import com.gofobao.framework.repayment.vo.response.VoViewRepaymentOrderDetailWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -48,14 +48,14 @@ public class BorrowRepaymentContorller {
         return repaymentBiz.repaymentList(orderReq);
     }
 
-    @RequestMapping(value = "/v2/info/{repaymentId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/v2/detail/{repaymentId}", method = RequestMethod.GET)
     @ApiOperation("还款计划-还款详情")
-    public ResponseEntity<VoViewOrderDetailResp> info(@PathVariable("repaymentId") String repaymentId,
-                                                      @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoViewRepaymentOrderDetailWarpRes> info(@PathVariable("repaymentId") String repaymentId,
+                                                                  @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoInfoReq voInfoReq = new VoInfoReq();
         voInfoReq.setUserId(userId);
         voInfoReq.setRepaymentId(repaymentId);
-        return repaymentBiz.info(voInfoReq);
+        return repaymentBiz.detail(voInfoReq);
     }
 
     @RequestMapping(value = "/pc/v2/logs/{borrowId}", method = RequestMethod.GET)
@@ -63,6 +63,7 @@ public class BorrowRepaymentContorller {
     public ResponseEntity<VoViewRepayCollectionLogWarpRes> info(@PathVariable("borrowId") Long borrowId) {
         return repaymentBiz.logs(borrowId);
     }
+
     /**
      * 立即还款
      *

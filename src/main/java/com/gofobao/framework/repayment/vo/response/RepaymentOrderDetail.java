@@ -1,4 +1,4 @@
-package com.gofobao.framework.collection.vo.response;
+package com.gofobao.framework.repayment.vo.response;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -8,24 +8,24 @@ import lombok.Data;
  * Created by admin on 2017/6/1.
  */
 @Data
-@ApiModel("回款详情")
-public class VoViewOrderDetailResp {
+@ApiModel("还款详情")
+public class RepaymentOrderDetail {
     @ApiModelProperty("第几期")
     private Integer order;
 
     @ApiModelProperty("回款日期")
-    private String collectionAt;
+    private String repayAt;
 
     @ApiModelProperty("逾期天数")
     private Integer lateDays;
 
-    @ApiModelProperty("应收本息")
+    @ApiModelProperty("应还本息")
     private String collectionMoney;
 
-    @ApiModelProperty("已收本金")
+    @ApiModelProperty("应还本金")
     private String principal;
 
-    @ApiModelProperty("已收利息")
+    @ApiModelProperty("应还利息")
     private String interest;
 
     @ApiModelProperty("项目名")
@@ -33,5 +33,9 @@ public class VoViewOrderDetailResp {
 
     @ApiModelProperty("状态描述")
     private String statusStr;
+
+    @ApiModelProperty("还款状态 0未还 1已还")
+    private Integer status;
+
 
 }

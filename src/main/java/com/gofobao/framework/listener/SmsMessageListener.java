@@ -30,7 +30,7 @@ public class SmsMessageListener{
 
     @RabbitHandler
     public void process(String message) {
-        log.info(String.format("smsMessageListener process info: %s", message));
+        log.info(String.format("smsMessageListener process detail: %s", message));
         try {
             Preconditions.checkNotNull(message, "SmsMessageListener process message is empty") ;
             Map<String, Object> body = GSON.fromJson(message, TypeTokenContants.MAP_TOKEN);
