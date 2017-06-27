@@ -1,10 +1,10 @@
 package com.gofobao.framework.repayment.service;
 
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
-import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.vo.request.VoInfoReq;
 import com.gofobao.framework.repayment.vo.response.RepayCollectionLog;
+import com.gofobao.framework.repayment.vo.response.RepaymentOrderDetail;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -30,7 +30,7 @@ public interface BorrowRepaymentService {
      * @param voInfoReq
      * @return
      */
-    VoViewOrderDetailResp info(VoInfoReq voInfoReq);
+    RepaymentOrderDetail detail(VoInfoReq voInfoReq);
 
     /**
      * 当月还款天数

@@ -88,9 +88,9 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         if (borrowCollection.getStatus() == BorrowCollectionContants.STATUS_YES) {
             interest = borrowCollection.getInterest();
             principal = borrowCollection.getPrincipal();
-            detailRes.setStatus(BorrowCollectionContants.STATUS_YES_STR);
+            detailRes.setStatusStr(BorrowCollectionContants.STATUS_YES_STR);
         } else {
-            detailRes.setStatus(BorrowCollectionContants.STATUS_NO_STR);
+            detailRes.setStatusStr(BorrowCollectionContants.STATUS_NO_STR);
         }
         detailRes.setPrincipal(NumberHelper.to2DigitString(interest / 100D));
         detailRes.setInterest(NumberHelper.to2DigitString(principal / 100D));

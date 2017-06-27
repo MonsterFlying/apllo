@@ -13,7 +13,7 @@ public class SecurityHelper {
 
     public static boolean checkSign(String sign, String paramStr) {
         if (StringUtils.isEmpty(sign) || StringUtils.isEmpty(paramStr)) {
-            log.info("SecurityHelper info：缺少必填请求参数！");
+            log.info("SecurityHelper detail：缺少必填请求参数！");
             return false;
         }
         return sign.equals(getSign(paramStr));

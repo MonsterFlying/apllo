@@ -29,7 +29,7 @@ public class NoticesMessageListener {
 
     @RabbitHandler
     public void process(String message) {
-        log.info(String.format("NoticMessageListener process info: %s", message));
+        log.info(String.format("NoticMessageListener process detail: %s", message));
         try {
             Preconditions.checkNotNull(message, "NoticMessageListener process message is empty") ;
             Map<String, Object> body = GSON.fromJson(message, TypeTokenContants.MAP_TOKEN);

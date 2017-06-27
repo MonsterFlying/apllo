@@ -74,6 +74,7 @@ public class PaymentBizImpl implements PaymentBiz {
                 VoViewCollectionOrderRes item = new VoViewCollectionOrderRes();
                 Borrow borrow = borrowMap.get(p.getBorrowId());
                 item.setBorrowName(borrow.getName());
+                item.setCollectionId(p.getId());
                 item.setOrder(p.getOrder() + 1);
                 item.setTimeLime(borrow.getTimeLimit());
                 item.setCollectionMoney(StringHelper.formatMon(p.getCollectionMoney() / 100d));

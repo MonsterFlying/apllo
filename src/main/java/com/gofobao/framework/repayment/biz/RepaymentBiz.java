@@ -3,13 +3,13 @@ package com.gofobao.framework.repayment.biz;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
-import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.vo.request.VoAdvanceReq;
 import com.gofobao.framework.repayment.vo.request.VoInfoReq;
 import com.gofobao.framework.repayment.vo.request.VoInstantlyRepaymentReq;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
+import com.gofobao.framework.repayment.vo.response.VoViewRepaymentOrderDetailWarpRes;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -31,7 +31,7 @@ public interface RepaymentBiz {
      * @param voInfoReq
      * @return
      */
-    ResponseEntity<VoViewOrderDetailResp> info(VoInfoReq voInfoReq);
+    ResponseEntity<VoViewRepaymentOrderDetailWarpRes> detail(VoInfoReq voInfoReq);
 
     /**
      * 标还款记录

@@ -105,7 +105,7 @@ public class LendBizImpl implements LendBiz {
             warpRes.setLendInfo(lends);
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {
-            log.info("LendBizImpl info query fail", e);
+            log.info("LendBizImpl detail query fail", e);
             return ResponseEntity.badRequest().body(VoBaseResp.ok("查询失败", VoViewLendInfoWarpRes.class));
         }
     }
@@ -122,7 +122,7 @@ public class LendBizImpl implements LendBiz {
             warpRes.setLendInfos(lends);
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {
-            log.info("LendBizImpl info query fail", e);
+            log.info("LendBizImpl detail query fail", e);
             return ResponseEntity.badRequest().body(VoBaseResp.ok("查询失败", VoViewUserLendInfoWarpRes.class));
         }
     }
