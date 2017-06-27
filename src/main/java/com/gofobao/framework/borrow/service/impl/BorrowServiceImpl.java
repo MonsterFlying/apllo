@@ -102,13 +102,10 @@ public class BorrowServiceImpl implements BorrowService {
                 new Integer(BorrowContants.RECHECK_NO_PASS));
 
         StringBuilder pageSb = new StringBuilder(" SELECT b FROM Borrow b WHERE 1=1 ");
-
         StringBuilder countSb = new StringBuilder(" SELECT COUNT(id) FROM Borrow b WHERE 1=1 ");
         StringBuilder condtionSql = new StringBuilder("");
-        /**
-         *
-         *条件
-         */
+
+        // 条件
         if (type != null) {  // 全部
             if (type == 5) {
                 condtionSql.append(" AND b.tenderId is not null ");
@@ -117,11 +114,8 @@ public class BorrowServiceImpl implements BorrowService {
             }
         }
         condtionSql.append(" AND b.status NOT IN(:statusArray)");
-
-        /**
-         * 排序
-         */
-        if (StringUtils.isEmpty(type)) {
+        // 排序
+        if ("-1".equals(type)) {   // 全部
             condtionSql.append(" ORDER BY FIELD(b.type,0, 4, 1, 2),(b.moneyYes / b.money) DESC, b.id DESC");
         } else {
             if (type == BorrowContants.INDEX_TYPE_CE_DAI) {
@@ -175,7 +169,7 @@ public class BorrowServiceImpl implements BorrowService {
                 status = 1;
             } else if (status == BorrowContants.BIDDING) {//招标中
                 Integer validDay = m.getValidDay();
-                Date endAt = DateHelper.addDays(m.getReleaseAt(), validDay);
+                Date endAt = DateHelper.addDays( DateHelper.beginOfDate(m.getReleaseAt()), validDay + 1);
                 Date nowDate = new Date(System.currentTimeMillis());
                 if (nowDate.getTime() > endAt.getTime()) {  //当前时间大于满标时间
                     status = 5; //已过期
@@ -188,13 +182,12 @@ public class BorrowServiceImpl implements BorrowService {
             } else if (status == BorrowContants.PASS && ObjectUtils.isEmpty(m.getCloseAt())) {
                 status = 2; //还款中
             }
-            //速度
+            //  进度
             if (status == 3) {
                 item.setSpend(Double.parseDouble(StringHelper.formatMon(m.getMoneyYes().doubleValue() / m.getMoney())));
             } else {
                 item.setSpend(0d);
             }
-
 
             Long userId = m.getUserId();
             Users user = usersMap.get(userId);
