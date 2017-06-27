@@ -121,7 +121,6 @@ public class BorrowBizImpl implements BorrowBiz {
      */
     @Override
     public ResponseEntity<VoViewBorrowListWarpRes> findAll(VoBorrowListReq voBorrowListReq) {
-
         try {
             List<VoViewBorrowList> borrowLists = borrowService.findAll(voBorrowListReq);
             VoViewBorrowListWarpRes listWarpRes = VoBaseResp.ok("查询成功", VoViewBorrowListWarpRes.class);

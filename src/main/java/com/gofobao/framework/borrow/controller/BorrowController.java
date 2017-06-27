@@ -53,7 +53,7 @@ public class BorrowController {
     private String prefix;
 
 
-    @ApiOperation(value = "首页标列表; type:-1：全部 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
+    @ApiOperation(value = "首页标列表; type:  -1：全部;   0：车贷标；  1：净值标；  2：秒标；  4：渠道标;  5: 流转标")
     @GetMapping("/v2/list/{type}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewBorrowListWarpRes> borrowList(@PathVariable Integer pageIndex,
                                                               @PathVariable Integer pageSize,
