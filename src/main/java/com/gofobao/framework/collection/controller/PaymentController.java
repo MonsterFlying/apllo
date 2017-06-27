@@ -6,13 +6,14 @@ import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
-import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import springfox.documentation.annotations.ApiIgnore;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Created by admin on 2017/5/31.
@@ -37,11 +38,11 @@ public class PaymentController {
 
     @ApiOperation("回款详情")
     @GetMapping("/v2/order/detail/{collectionId}")
-    public ResponseEntity<VoViewOrderDetailWarpRes> orderDetail(@PathVariable("collectionId") Long collectionId,
-                                                                @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoViewOrderDetailWarpRes> orderDetail(@PathVariable("collectionId") Long collectionId/*,
+                                                                @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
         VoOrderDetailReq voOrderDetailReq = new VoOrderDetailReq();
         voOrderDetailReq.setCollectionId(collectionId);
-        voOrderDetailReq.setUserId(userId);
+        voOrderDetailReq.setUserId(901L);
         return paymentBiz.orderDetail(voOrderDetailReq);
     }
 

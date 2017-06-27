@@ -51,10 +51,14 @@ public class PaymentBizImpl implements PaymentBiz {
      */
     @Override
     public ResponseEntity<VoViewCollectionOrderListWarpResp> orderList(VoCollectionOrderReq voCollectionOrderReq) {
-
+        VoViewCollectionOrderListWarpResp voViewCollectionOrderListWarpRespRes = new VoViewCollectionOrderListWarpResp();
         List<BorrowCollection> borrowCollections = borrowCollectionService.orderList(voCollectionOrderReq);
         if (Collections.isEmpty(borrowCollections)) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非法请求", VoViewCollectionOrderListWarpResp.class));
+            VoViewCollectionOrderListWarpResp error = VoBaseResp.ok("非法请求", VoViewCollectionOrderListWarpResp.class);
+            voViewCollectionOrderListWarpRespRes.setOrder(0);
+            voViewCollectionOrderListWarpRespRes.setSumCollectionMoneyYes("0");
+            voViewCollectionOrderListWarpRespRes.setOrderResList(new ArrayList<>());
+            return ResponseEntity.ok(error);
         }
         try {
             List<Long> borrowIdArray = borrowCollections.stream().filter(w-> !StringUtils.isEmpty(w.getBorrowId()))
@@ -65,7 +69,6 @@ public class PaymentBizImpl implements PaymentBiz {
                     .stream()
                     .collect(Collectors.toMap(Borrow::getId, Function.identity()));
 
-            VoViewCollectionOrderListWarpResp voViewCollectionOrderListWarpRespRes = new VoViewCollectionOrderListWarpResp();
             List<VoViewCollectionOrderRes> orderResList = new ArrayList<>();
             borrowCollections.stream().forEach(p -> {
                 VoViewCollectionOrderRes item = new VoViewCollectionOrderRes();
