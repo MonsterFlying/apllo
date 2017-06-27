@@ -54,7 +54,7 @@ public class BorrowController {
 
 
     @ApiOperation(value = "首页标列表; type:  -1：全部;   0：车贷标；  1：净值标；  2：秒标；  4：渠道标;  5: 流转标")
-    @GetMapping("/borrow/v2/list/{type}/{pageIndex}/{pageSize}")
+    @GetMapping("pub/borrow/v2/list/{type}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewBorrowListWarpRes> borrowList(@PathVariable Integer pageIndex,
                                                               @PathVariable Integer pageSize,
                                                               @PathVariable Integer type) {
@@ -68,7 +68,7 @@ public class BorrowController {
 
     // TODO 去掉包裹
     @ApiOperation("标信息")
-    @GetMapping("/borrow/v2/info/{borrowId}")
+    @GetMapping("pub/borrow/v2/info/{borrowId}")
     public ResponseEntity<BorrowInfoRes> getByBorrowId(@PathVariable Long borrowId) {
         return borrowBiz.info(borrowId);
     }
@@ -76,7 +76,7 @@ public class BorrowController {
 
     // TODO 去掉包裹
     @ApiOperation("标简介")
-    @GetMapping("/borrow/v2/desc/{borrowId}")
+    @GetMapping("pub/borrow/v2/desc/{borrowId}")
     public ResponseEntity<VoViewVoBorrowDescWarpRes> desc(@PathVariable Long borrowId) {
         return borrowBiz.desc(borrowId);
     }
@@ -84,7 +84,7 @@ public class BorrowController {
 
     // TODO 返回改为  ResponseEntity<VoHtmlResp>
     @ApiOperation(value = "标合同")
-    @GetMapping(value = "/pub/borrowProtocol/{borrowId}")
+    @GetMapping(value = "borrow/pub/borrowProtocol/{borrowId}")
     public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId, HttpServletRequest request) {
         Long userId = 0L;
         String authToken = request.getHeader(this.tokenHeader);
