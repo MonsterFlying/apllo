@@ -1660,8 +1660,13 @@ public class BorrowBizImpl implements BorrowBiz {
             }
 
             userCache.setUserId(userCache.getUserId());
-            userCache.setTjWaitCollectionPrincipal(userCache.getTjWaitCollectionPrincipal() - borrow.getMoney());
-            userCache.setTjWaitCollectionInterest(userCache.getTjWaitCollectionInterest() - countInterest);
+            if (borrow.getType() == 0) {
+                userCache.setTjWaitCollectionPrincipal(userCache.getTjWaitCollectionPrincipal() - borrow.getMoney());
+                userCache.setTjWaitCollectionInterest(userCache.getTjWaitCollectionInterest() - countInterest);
+            }else if(borrow.getType() == 4){
+                userCache.setQdWaitCollectionPrincipal(userCache.getQdWaitCollectionPrincipal() - borrow.getMoney());
+                userCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() - countInterest);
+            }
             userCacheService.save(userCache);
         }
     }
