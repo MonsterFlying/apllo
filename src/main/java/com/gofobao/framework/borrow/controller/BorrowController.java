@@ -3,6 +3,7 @@ package com.gofobao.framework.borrow.controller;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.vo.request.*;
+import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewVoBorrowDescWarpRes;
@@ -68,7 +69,7 @@ public class BorrowController {
 
     @ApiOperation("标信息")
     @GetMapping("/v2/info/{borrowId}")
-    public ResponseEntity<VoViewBorrowInfoWarpRes> getByBorrowId(@PathVariable Long borrowId) {
+    public ResponseEntity<BorrowInfoRes> getByBorrowId(@PathVariable Long borrowId) {
         return borrowBiz.info(borrowId);
     }
 

@@ -16,7 +16,7 @@ import springfox.documentation.annotations.ApiIgnore;
  * Created by admin on 2017/6/2.
  */
 
-@Api(description="我的借款")
+@Api(description="pc：我的借款")
 @RestController
 @RequestMapping("/loan/pc")
 public class WebLoanController {

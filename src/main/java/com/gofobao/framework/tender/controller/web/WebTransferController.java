@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/transfer/pc")
-@Api(description = "债券")
+@Api(description = "pc:债券")
 public class WebTransferController {
 
     @Autowired

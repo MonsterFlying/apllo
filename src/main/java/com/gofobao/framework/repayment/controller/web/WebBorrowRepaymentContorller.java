@@ -23,7 +23,7 @@ import javax.validation.Valid;
  * Created by admin on 2017/6/1.
  */
 @RestController
-@Api(description = "还款计划")
+@Api(description = "pc:还款计划")
 @RequestMapping("/repayment/pc")
 public class WebBorrowRepaymentContorller {
 

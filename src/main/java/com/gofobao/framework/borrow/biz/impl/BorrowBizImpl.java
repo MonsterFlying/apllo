@@ -163,17 +163,17 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Override
-    public ResponseEntity<VoViewBorrowInfoWarpRes> info(Long borrowId) {
+    public ResponseEntity<BorrowInfoRes> info(Long borrowId) {
         Borrow borrow = borrowService.findByBorrowId(borrowId);
         if (ObjectUtils.isEmpty(borrow)) {
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,
                             "非法查询",
-                            VoViewBorrowInfoWarpRes.class));
+                            BorrowInfoRes.class));
         }
 
-        BorrowInfoRes borrowInfoRes = new BorrowInfoRes();
+        BorrowInfoRes borrowInfoRes = VoBaseResp.ok("",BorrowInfoRes.class);
         try {
             borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
             borrowInfoRes.setLowest(StringHelper.formatMon(borrow.getLowest() / 100d));
@@ -227,16 +227,15 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setStatus(status);
             borrowInfoRes.setSuccessAt(StringUtils.isEmpty(borrow.getSuccessAt()) ? "" : DateHelper.dateToString(borrow.getSuccessAt()));
             borrowInfoRes.setBorrowName(borrow.getName());
-            VoViewBorrowInfoWarpRes listWarpRes = VoBaseResp.ok("查询成功", VoViewBorrowInfoWarpRes.class);
-            listWarpRes.setBorrowInfoRes(borrowInfoRes);
-            return ResponseEntity.ok(listWarpRes);
+
+            return ResponseEntity.ok(borrowInfoRes);
         } catch (Exception e) {
             log.info("BorrowBizImpl detail fail%s", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,
                             "查询失败",
-                            VoViewBorrowInfoWarpRes.class));
+                            BorrowInfoRes.class));
         }
 
     }

@@ -60,7 +60,7 @@ public class LoanController {
         return loanBiz.repaymentDetail(voDetailReq);
     }
 
-    @ApiOperation("借款详情列表")
+    @ApiOperation("借款期数列表")
     @GetMapping("/v2/repayment/list/{borrowId}")
     public ResponseEntity<VoViewLoanInfoListWrapRes> repaymentList(@PathVariable("borrowId") Long borrowId,
                                                                    @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {

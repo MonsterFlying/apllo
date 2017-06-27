@@ -29,7 +29,7 @@ import java.util.Map;
 @RequestMapping("")
 @RestController
 @Slf4j
-@Api(description = "首页标接口")
+@Api(description = "pc:首页标接口")
 @SuppressWarnings("all")
 public class WebBorrowController {
 
@@ -65,7 +65,7 @@ public class WebBorrowController {
 
     @ApiOperation("标信息")
     @GetMapping("pub/pc/borrow/v2/info/{borrowId}")
-    public ResponseEntity<VoViewBorrowInfoWarpRes> pcgetByBorrowId(@PathVariable Long borrowId) {
+    public ResponseEntity<BorrowInfoRes> pcgetByBorrowId(@PathVariable Long borrowId) {
         return borrowBiz.info(borrowId);
     }
 

@@ -18,7 +18,7 @@ import javax.validation.Valid;
 /**
  * Created by Max on 17/5/16.
  */
-@Api(description = "投标相关接口")
+@Api(description = "pc:投标相关接口")
 @RequestMapping("tender/pc")
 @RestController
 @Slf4j
