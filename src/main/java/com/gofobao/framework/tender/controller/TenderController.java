@@ -35,7 +35,7 @@ public class TenderController {
     private AutoTenderBiz autoTenderBiz;
 
 
-    @ApiOperation("投标用户列表")
+    @ApiOperation("标的详情-投标记录")
     @GetMapping("/v2/user/list/{pageIndex}/{pageSize}/{borrowId}")
     public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(@PathVariable Integer pageIndex,
                                                                               @PathVariable Integer pageSize,
