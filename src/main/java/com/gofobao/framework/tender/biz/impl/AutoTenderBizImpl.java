@@ -134,14 +134,13 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
      * @return
      */
     private ResponseEntity<VoBaseResp> verifySaveAutoTender(VoSaveAutoTenderReq voSaveAutoTenderReq) {
-
         Integer tenderMoney = voSaveAutoTenderReq.getTenderMoney();
         if (ObjectUtils.isEmpty(tenderMoney)) {
             voSaveAutoTenderReq.setMode(0);
-            voSaveAutoTenderReq.setTenderMoney(0d);
+            voSaveAutoTenderReq.setTenderMoney(0D);
         } else {
             voSaveAutoTenderReq.setMode(1);
-            voSaveAutoTenderReq.setTenderMoney(tenderMoney / 100.0);
+            voSaveAutoTenderReq.setTenderMoney(tenderMoney / 100.0D);
         }
 
         Integer mode = voSaveAutoTenderReq.getMode();
