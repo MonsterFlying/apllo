@@ -117,9 +117,10 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
                 .build();
         List<AutoTender> autoTenderList = autoTenderService.findList(atSpecification);
         if (autoTenderList.size() == 1) {
+            AutoTender targetAutoTender = getSaveAutoTender(voSaveAutoTenderReq);
             AutoTender autoTender = autoTenderList.get(0);
             autoTender.setUpdatedAt(new Date());
-            BeanHelper.copyParamter(voSaveAutoTenderReq, autoTender, true);
+            BeanHelper.copyParamter(targetAutoTender, autoTender, true);
             autoTenderService.updateById(autoTender);
         }
 
@@ -134,13 +135,13 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
      */
     private ResponseEntity<VoBaseResp> verifySaveAutoTender(VoSaveAutoTenderReq voSaveAutoTenderReq) {
 
-        Double tenderMoney = voSaveAutoTenderReq.getTenderMoney();
+        Integer tenderMoney = voSaveAutoTenderReq.getTenderMoney();
         if (ObjectUtils.isEmpty(tenderMoney)) {
             voSaveAutoTenderReq.setMode(0);
             voSaveAutoTenderReq.setTenderMoney(0d);
         } else {
             voSaveAutoTenderReq.setMode(1);
-            voSaveAutoTenderReq.setTenderMoney(tenderMoney);
+            voSaveAutoTenderReq.setTenderMoney((double) tenderMoney);
         }
 
         Integer mode = voSaveAutoTenderReq.getMode();
@@ -363,7 +364,8 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
         }
 
         voAutoTenderInfo.setId(autoTender.getId());
-        voAutoTenderInfo.setLowest(NumberHelper.toDouble(autoTender.getLowest()));
+        voAutoTenderInfo.setLowest(StringHelper.formatDouble(autoTender.getLowest(), 100.0, false));
+        voAutoTenderInfo.setShowLowest(StringHelper.formatDouble(autoTender.getLowest(), 100.0, true));
         voAutoTenderInfo.setMode(autoTender.getMode());
         Integer repayFashions = autoTender.getRepayFashions();  // 投标类型
 
@@ -381,9 +383,11 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
             voAutoTenderInfo.setRepayFashions("");
         }
 
-        voAutoTenderInfo.setSaveMoney(NumberHelper.toDouble(autoTender.getSaveMoney()));
+        voAutoTenderInfo.setSaveMoney(StringHelper.formatDouble(autoTender.getSaveMoney(), 100.0, false));
+        voAutoTenderInfo.setShowSaveMoney(StringHelper.formatDouble(autoTender.getSaveMoney(), 100.0, true));
         voAutoTenderInfo.setStatus(autoTender.getStatus());
-        voAutoTenderInfo.setTenderMoney(NumberHelper.toDouble(autoTender.getTenderMoney()));
+        voAutoTenderInfo.setTenderMoney(StringHelper.formatDouble(autoTender.getTenderMoney(), 100.0, false));
+        voAutoTenderInfo.setShowTenderMoney(StringHelper.formatDouble(autoTender.getTenderMoney(), 100.0, true));
         voAutoTenderInfo.setTimelimitType(autoTender.getTimelimitType());
         voAutoTenderInfo.setTimelimitFirst(autoTender.getTimelimitFirst());
         voAutoTenderInfo.setTimelimitLast(autoTender.getTimelimitLast());
@@ -399,7 +403,7 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
      */
     public ResponseEntity<VoHtmlResp> autoTenderDesc() {
         Map<String, Object> paranMap = new HashMap<>();
-        String content = thymeleafHelper.build("tender/autoTender", paranMap);
+        String content = thymeleafHelper.build("autoTender/autoTender", paranMap);
         VoHtmlResp resp = VoHtmlResp.ok("获取成功!", VoHtmlResp.class);
         resp.setHtml(content);
         return ResponseEntity.ok(resp);

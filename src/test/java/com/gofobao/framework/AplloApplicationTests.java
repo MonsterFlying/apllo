@@ -153,7 +153,7 @@ public class AplloApplicationTests {
         //取消批次
         //batchCancel();
         //查询投资人购买债权
-        creditInvestQuery();
+        //creditInvestQuery();
 
         /*Map<String,String> map = new HashMap<>();
         map.put("borrowId","165227");
@@ -213,9 +213,9 @@ public class AplloApplicationTests {
         System.out.println(response);*/
 
         /*BatchDetailsQueryReq request = new BatchDetailsQueryReq();
-        request.setBatchNo("100008");
+        request.setBatchNo("100010");
         request.setBatchTxDate("20170627");
-        request.setType("9");
+        request.setType("0");
         request.setPageNum("1");
         request.setPageSize("10");
         request.setChannel(ChannelContant.HTML);
@@ -228,6 +228,13 @@ public class AplloApplicationTests {
         } catch (Exception e) {
             e.printStackTrace();
         }*/
+
+        Borrow borrow = borrowService.findById(165227L);
+        try {
+            borrowBiz.transferedBorrowAgainVerify(borrow);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }
