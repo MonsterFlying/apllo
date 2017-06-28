@@ -30,6 +30,7 @@ import javax.persistence.Query;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by admin on 2017/6/1.
@@ -106,7 +107,12 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         return detailRes;
     }
 
-
+    /**
+     * 当月有还款日期
+     * @param userId
+     * @param time
+     * @return
+     */
     @Override
     public List<Integer> days(Long userId, String time) {   // TODO 尝试不需要 SQL 来进行处理
         String sql = "SELECT DAY(repay_at) FROM gfb_borrow_repayment " +
@@ -121,6 +127,11 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         return result;
     }
 
+    /**
+     * 标的还款记录
+     * @param borrowId
+     * @return
+     */
     @Override
     public List<RepayCollectionLog> logs(Long borrowId) {
         List<BorrowRepayment> repaymentList = borrowRepaymentRepository.findByBorrowId(borrowId);

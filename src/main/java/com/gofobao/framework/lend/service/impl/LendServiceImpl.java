@@ -129,12 +129,16 @@ public class LendServiceImpl implements LendService {
         LendInfo lendInfo = new LendInfo();
         lendInfo.setApr(StringHelper.formatMon(lend.getApr() / 100d));
         lendInfo.setId(lend.getId());
+        //起投金额
+        lendInfo.setStartMoneyHide(lend.getLowest());
         lendInfo.setStartMoney(StringHelper.formatMon(lend.getLowest() / 100d));
 
         if (lend.getStatus() == LendContants.STATUS_NO) {
             lendInfo.setSurplusMoney(StringHelper.formatMon(lend.getMoney() - lend.getMoneyYes()));
+            lendInfo.setSurplusMoneyHide(lend.getMoney() - lend.getMoneyYes());
         } else {
             lendInfo.setSurplusMoney(StringHelper.formatMon(lend.getMoney()));
+            lendInfo.setSurplusMoneyHide(lend.getMoney() );
         }
         if (lend.getTimeLimit() == BorrowContants.REPAY_FASHION_ONCE) {
             lendInfo.setTimeLimit(lend.getTimeLimit() + BorrowContants.DAY);
@@ -161,6 +165,7 @@ public class LendServiceImpl implements LendService {
         Integer payment = asset.getPayment();
         int netWorthQuota = new Double((useMoney + waitCollectionPrincipal) * 0.8 - payment).intValue();//计算净值额度
         lendInfo.setEquityLimit(StringHelper.formatMon(netWorthQuota / 100d));
+        lendInfo.setEquityLimitHide(netWorthQuota);
         return lendInfo;
     }
 

@@ -5,6 +5,8 @@ import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.response.*;
 import com.gofobao.framework.helper.ThymeleafHelper;
+import com.gofobao.framework.repayment.biz.RepaymentBiz;
+import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -14,10 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
@@ -41,6 +40,9 @@ public class WebBorrowController {
     private BorrowThirdBiz borrowThirdBiz;
 
     @Autowired
+    private RepaymentBiz repaymentBiz;
+
+    @Autowired
     private JwtTokenHelper jwtTokenHelper;
     @Value("${jwt.header}")
     private String tokenHeader;
@@ -50,7 +52,7 @@ public class WebBorrowController {
 
 
     @ApiOperation(value = "pc:首页标列表; type:-1：全部 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
-    @GetMapping("pub/pc/borrow/list/v2/{type}/{pageIndex}/{pageSize}")
+    @GetMapping("pub/pc/borrow/v2/list/{type}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoPcBorrowListWarpRes> pcList(@PathVariable Integer pageIndex,
                                                           @PathVariable Integer pageSize,
                                                           @PathVariable Integer type) {
@@ -99,6 +101,12 @@ public class WebBorrowController {
             content = thymeleafHelper.build("load_error", null);
         }
         return ResponseEntity.ok(content);
+    }
+
+    @RequestMapping(value = "pub/pc/borrow/v2/repayment/logs/{borrowId}", method = RequestMethod.GET)
+    @ApiOperation("还款记录")
+    public ResponseEntity<VoViewRepayCollectionLogWarpRes> info(@PathVariable("borrowId") Long borrowId) {
+        return repaymentBiz.logs(borrowId);
     }
 
 
