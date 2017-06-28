@@ -624,19 +624,6 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "借款状态已发生更改!"));
         }
 
-        boolean bool = false;//债权转让默认不过期
-        if (!ObjectUtils.isEmpty(borrow.getReleaseAt())) {
-            bool = DateHelper.diffInDays(new Date(), borrow.getReleaseAt(), false) >= borrow.getValidDay();//比较借款时间是否过期
-        }
-
-        if (((borrow.getStatus() == 1) && (bool))) {//只有借款标招标
-
-        } else {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "只有借款标招标才能取消借款!"));
-        }
-
         //================================即信取消标的==================================
         //检查标的是否登记
         VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();

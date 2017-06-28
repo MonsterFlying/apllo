@@ -141,7 +141,7 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
             voSaveAutoTenderReq.setTenderMoney(0d);
         } else {
             voSaveAutoTenderReq.setMode(1);
-            voSaveAutoTenderReq.setTenderMoney((double) tenderMoney);
+            voSaveAutoTenderReq.setTenderMoney(tenderMoney / 100.0);
         }
 
         Integer mode = voSaveAutoTenderReq.getMode();
