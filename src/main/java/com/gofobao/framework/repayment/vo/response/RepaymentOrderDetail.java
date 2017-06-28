@@ -14,7 +14,7 @@ public class RepaymentOrderDetail {
     private Integer order;
 
     @ApiModelProperty("回款日期")
-    private String startAt;
+    private String repayAt;
 
     @ApiModelProperty("逾期天数")
     private Integer lateDays;

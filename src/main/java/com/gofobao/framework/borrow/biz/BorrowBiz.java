@@ -2,10 +2,7 @@ package com.gofobao.framework.borrow.biz;
 
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.vo.request.*;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowInfoWarpRes;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowStatisticsWarpRes;
-import com.gofobao.framework.borrow.vo.response.VoViewVoBorrowDescWarpRes;
+import com.gofobao.framework.borrow.vo.response.*;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import org.springframework.http.ResponseEntity;
@@ -48,6 +45,15 @@ public interface BorrowBiz {
      */
     ResponseEntity<VoViewBorrowListWarpRes> findAll(VoBorrowListReq voBorrowListReq);
 
+
+    /**
+     * pc：首页标列表
+     *
+     * @param voBorrowListReq
+     * @return
+     */
+    ResponseEntity<VoPcBorrowListWarpRes> pcFindAll(VoBorrowListReq voBorrowListReq);
+
     /**
      * 非转让标复审
      *
@@ -73,7 +79,7 @@ public interface BorrowBiz {
      * @param borrowId
      * @return
      */
-    ResponseEntity<VoViewBorrowInfoWarpRes> info(Long borrowId);
+    ResponseEntity<BorrowInfoRes> info(Long borrowId);
 
     /**
      * 标简介

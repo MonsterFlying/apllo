@@ -3,7 +3,6 @@ package com.gofobao.framework.repayment.controller.web;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
-import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoInfoReq;
@@ -24,7 +23,7 @@ import javax.validation.Valid;
  * Created by admin on 2017/6/1.
  */
 @RestController
-@Api(description = "还款计划")
+@Api(description = "pc:还款计划")
 @RequestMapping("/repayment/pc")
 public class WebBorrowRepaymentContorller {
 

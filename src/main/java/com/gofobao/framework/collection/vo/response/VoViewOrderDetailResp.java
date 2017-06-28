@@ -1,5 +1,6 @@
 package com.gofobao.framework.collection.vo.response;
 
+import com.gofobao.framework.core.vo.VoBaseResp;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -9,17 +10,17 @@ import lombok.Data;
  */
 @Data
 @ApiModel("回款详情")
-public class VoViewOrderDetailResp {
+public class VoViewOrderDetailResp extends VoBaseResp {
     @ApiModelProperty("第几期")
     private Integer order;
 
     @ApiModelProperty("回款日期")
-    private String startAt;
+    private String collectionAt;
 
     @ApiModelProperty("逾期天数")
     private Integer lateDays;
 
-    @ApiModelProperty("应收本金")
+    @ApiModelProperty("应收本息")
     private String collectionMoney;
 
     @ApiModelProperty("已收本金")

@@ -16,7 +16,7 @@ import springfox.documentation.annotations.ApiIgnore;
  * Created by admin on 2017/6/2.
  */
 
-@Api(description="我的借款")
+@Api(description="pc：我的借款")
 @RestController
 @RequestMapping("/loan/pc")
 public class WebLoanController {
@@ -54,7 +54,7 @@ public class WebLoanController {
         VoLoanListReq voLoanListReq = new VoLoanListReq();
         voLoanListReq.setPageIndex(pageIndex);
         voLoanListReq.setPageSize(pageSize);
-        voLoanListReq.setUserId(901L);
+        voLoanListReq.setUserId(userId);
         return loanBiz.settleList(voLoanListReq);
     }
 

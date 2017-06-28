@@ -79,6 +79,8 @@ public class TenderServiceImpl implements TenderService {
             tenderUserRes.setDate(DateHelper.dateToString(item.getCreatedAt(), DateHelper.DATE_FORMAT_YMDHMS));
             tenderUserRes.setType(item.getIsAuto() ? TenderConstans.AUTO : TenderConstans.MANUAL);
             Users user = usersRepository.findOne(new Long(item.getUserId()));
+
+            // TODO 此处没有考虑到 用户名不存在 手机号不存在 只有邮箱的情况 
             String userName = StringUtils.isEmpty(user.getUsername()) ?
                     UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM) :
                     UserHelper.hideChar(user.getUsername(), UserHelper.USERNAME_NUM);
@@ -88,11 +90,7 @@ public class TenderServiceImpl implements TenderService {
         return Optional.empty().ofNullable(tenderUserResList).orElse(Collections.emptyList());
     }
 
-    public Tender insert(Tender tender) {
-        if (ObjectUtils.isEmpty(tender)) {
-            return null;
-        }
-        tender.setId(null);
+    public Tender save(Tender tender) {
         return tenderRepository.save(tender);
     }
 

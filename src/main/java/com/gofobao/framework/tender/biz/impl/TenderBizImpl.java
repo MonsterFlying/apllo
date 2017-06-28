@@ -111,7 +111,7 @@ public class TenderBizImpl implements TenderBiz {
         borrowTender.setCreatedAt(nowDate);
         borrowTender.setTransferFlag(0);
         borrowTender.setState(1);
-        borrowTender = tenderService.insert(borrowTender);
+        borrowTender = tenderService.save(borrowTender);
 
         //扣除待还
         CapitalChangeEntity entity = new CapitalChangeEntity();
@@ -428,7 +428,9 @@ public class TenderBizImpl implements TenderBiz {
             return ResponseEntity.ok(warpListRes);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoBorrowTenderUserWarpListRes.class));
+            return ResponseEntity.
+                    badRequest().
+                    body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoBorrowTenderUserWarpListRes.class));
         }
     }
 

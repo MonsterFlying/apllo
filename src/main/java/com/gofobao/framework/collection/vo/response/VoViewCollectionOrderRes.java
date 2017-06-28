@@ -1,5 +1,6 @@
 package com.gofobao.framework.collection.vo.response;
 
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -7,6 +8,7 @@ import lombok.Data;
  * Created by admin on 2017/5/31.
  */
 @Data
+@ApiModel
 public class VoViewCollectionOrderRes {
 
     @ApiModelProperty("当回款时 ：待收本息(元); 当还款时: 应还本息")

@@ -13,8 +13,8 @@ import com.gofobao.framework.collection.vo.response.*;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
-import groovy.util.logging.Slf4j;
 import io.jsonwebtoken.lang.Collections;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -30,6 +30,8 @@ import java.util.stream.Collectors;
 /**
  * Created by admin on 2017/6/6.
  */
+
+
 @Service
 @Slf4j
 public class PaymentBizImpl implements PaymentBiz {
@@ -54,7 +56,7 @@ public class PaymentBizImpl implements PaymentBiz {
         VoViewCollectionOrderListWarpResp voViewCollectionOrderListWarpRespRes = new VoViewCollectionOrderListWarpResp();
         List<BorrowCollection> borrowCollections = borrowCollectionService.orderList(voCollectionOrderReq);
         if (Collections.isEmpty(borrowCollections)) {
-            VoViewCollectionOrderListWarpResp error = VoBaseResp.ok("非法请求", VoViewCollectionOrderListWarpResp.class);
+            VoViewCollectionOrderListWarpResp error = VoBaseResp.ok("查询成功", VoViewCollectionOrderListWarpResp.class);
             voViewCollectionOrderListWarpRespRes.setOrder(0);
             voViewCollectionOrderListWarpRespRes.setSumCollectionMoneyYes("0");
             voViewCollectionOrderListWarpRespRes.setOrderResList(new ArrayList<>());
@@ -97,7 +99,6 @@ public class PaymentBizImpl implements PaymentBiz {
             warpRes.setOrderResList(orderResList);
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非法请求", VoViewCollectionOrderListWarpResp.class));
         }
 
@@ -110,14 +111,12 @@ public class PaymentBizImpl implements PaymentBiz {
      * @return
      */
     @Override
-    public ResponseEntity<VoViewOrderDetailWarpRes> orderDetail(VoOrderDetailReq voOrderDetailReq) {
+    public ResponseEntity<VoViewOrderDetailResp> orderDetail(VoOrderDetailReq voOrderDetailReq) {
         try {
             VoViewOrderDetailResp detailRes = borrowCollectionService.orderDetail(voOrderDetailReq);
-            VoViewOrderDetailWarpRes resWarpRes = VoBaseResp.ok("查询成功", VoViewOrderDetailWarpRes.class);
-            resWarpRes.setDetailWarpRes(detailRes);
-            return ResponseEntity.ok(resWarpRes);
+            return ResponseEntity.ok(detailRes);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewOrderDetailWarpRes.class));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewOrderDetailResp.class));
         }
     }
 
@@ -125,7 +124,6 @@ public class PaymentBizImpl implements PaymentBiz {
     public ResponseEntity<VoViewCollectionDaysWarpRes> collectionDays(String date, Long userId) {
         VoViewCollectionDaysWarpRes collectionDayWarpRes = VoBaseResp.ok("查询成功", VoViewCollectionDaysWarpRes.class);
         try {
-            Date date1 = DateHelper.stringToDate(date, "yyyy-MM");
             List<Integer> result = borrowCollectionService.collectionDay(date, userId);
             collectionDayWarpRes.setWarpRes(result);
             return ResponseEntity.ok(collectionDayWarpRes);

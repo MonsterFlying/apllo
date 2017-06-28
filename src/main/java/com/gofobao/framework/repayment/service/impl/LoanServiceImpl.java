@@ -178,7 +178,7 @@ public class LoanServiceImpl implements LoanService {
         } else if (voLoanListReq.getType() == RepaymentContants.BUDING) { //招标中
             sort = new Sort(Sort.Direction.DESC, "releaseAt");
             pageable = new PageRequest(voLoanListReq.getPageIndex(), voLoanListReq.getPageSize(), sort);
-            borrowPage = loanRepository.findByUserIdAndStatusIs(
+            borrowPage = loanRepository.findByUserIdAndStatusIsAndVerifyAtIsNotNull(
                     voLoanListReq.getUserId(),
                     voLoanListReq.getStatus(),
                     pageable);

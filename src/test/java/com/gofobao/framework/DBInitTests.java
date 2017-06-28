@@ -96,40 +96,25 @@ public class DBInitTests {
                         long tenderUserId = tender.getUserId() ;
                         long tenderId = tender.getId() ;
                         tender.setStatus(borrowState);
-                        tenderService.insert(tender) ;
-
+                        tenderService.save(tender) ;
                         // 查询回款记录
 
                         // 查询投标信息
                         Specification<BorrowCollection> borrowCollectionSpecification =  Specifications.<BorrowCollection>and()
                                 .eq("tenderId",  tenderId)
                                 .build();
-
+                        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(borrowCollectionSpecification);
+                        if(!CollectionUtils.isEmpty(borrowCollectionList)){
+                            for(BorrowCollection borrowCollection: borrowCollectionList){
+                                borrowCollection.setUserId(tenderUserId) ;
+                                borrowCollection.setBorrowId(borrowId) ;
+                                borrowCollectionService.save(borrowCollection) ;
+                            }
+                        }
                     }
                 }
-
-
-
-
-
             }
-
-
-
-
-
-
-
-
-
-
-
-
             pageIndex++ ;
         }while (true) ;
-
     }
-
-
-
 }

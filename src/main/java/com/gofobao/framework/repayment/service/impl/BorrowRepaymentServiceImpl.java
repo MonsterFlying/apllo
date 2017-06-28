@@ -89,9 +89,11 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         if (borrowRepayment.getStatus() == 0) {
             interest = borrowRepayment.getInterest();
             principal = borrowRepayment.getPrincipal();
+            detailRes.setRepayAt(DateHelper.dateToString(borrowRepayment.getRepayAt()));
             detailRes.setStatusStr(RepaymentContants.STATUS_NO_STR);
         } else {
             detailRes.setStatusStr(RepaymentContants.STATUS_YES_STR);
+            detailRes.setRepayAt(DateHelper.dateToString(borrowRepayment.getRepayAtYes()));
         }
         detailRes.setStatus(borrowRepayment.getStatus());
         detailRes.setInterest(StringHelper.formatMon(interest / 100d));
@@ -100,7 +102,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         detailRes.setCollectionMoney(StringHelper.formatMon(borrowRepayment.getRepayMoneyYes() / 100d));
         detailRes.setLateDays(borrowRepayment.getLateDays());
         detailRes.setOrder(borrowRepayment.getOrder() + 1);
-        detailRes.setStartAt(DateHelper.dateToString(borrowRepayment.getRepayAt()));
+
         return detailRes;
     }
 

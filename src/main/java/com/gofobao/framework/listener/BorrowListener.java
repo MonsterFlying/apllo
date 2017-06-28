@@ -43,7 +43,7 @@ public class BorrowListener {
         Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
 
         boolean bool = false;
-        if (tag.equals(MqTagEnum.FIRST_VERIFY.getValue())) {  // 用户注册
+        if (tag.equals(MqTagEnum.FIRST_VERIFY.getValue())) {  // 标的初审
             try {
                 bool = borrowProvider.doFirstVerify(msg);
             } catch (Exception e) {
@@ -58,7 +58,7 @@ public class BorrowListener {
                 log.info("初审失败! borrowId：" + borrowId);
                 log.info("====================================================================");
             }
-        } else if (tag.equals(MqTagEnum.AGAIN_VERIFY.getValue())) {
+        } else if (tag.equals(MqTagEnum.AGAIN_VERIFY.getValue())) {  // 复审
             try {
                 bool = borrowProvider.doAgainVerify(msg);
             } catch (Exception e) {

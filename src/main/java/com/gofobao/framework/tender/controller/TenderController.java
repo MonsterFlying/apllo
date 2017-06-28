@@ -25,6 +25,7 @@ import javax.validation.Valid;
 @RequestMapping("/tender")
 @RestController
 @Slf4j
+@SuppressWarnings("all")
 public class TenderController {
 
     @Autowired
@@ -34,7 +35,7 @@ public class TenderController {
     private AutoTenderBiz autoTenderBiz;
 
 
-    @ApiOperation("投标用户列表")
+    @ApiOperation("标的详情-投标记录")
     @GetMapping("/v2/user/list/{pageIndex}/{pageSize}/{borrowId}")
     public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(@PathVariable Integer pageIndex,
                                                                               @PathVariable Integer pageSize,
@@ -54,9 +55,5 @@ public class TenderController {
         return tenderBiz.tender(voCreateTenderReq);
     }
 
-    @ApiOperation("借款投标")
-    @PostMapping("/v2/user/autoTender/list")
-    public ResponseEntity<VoViewUserAutoTenderWarpRes> tender(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        return autoTenderBiz.list(userId);
-    }
+
 }

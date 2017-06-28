@@ -49,6 +49,7 @@ import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
@@ -120,7 +121,6 @@ public class BorrowBizImpl implements BorrowBiz {
      */
     @Override
     public ResponseEntity<VoViewBorrowListWarpRes> findAll(VoBorrowListReq voBorrowListReq) {
-
         try {
             List<VoViewBorrowList> borrowLists = borrowService.findAll(voBorrowListReq);
             VoViewBorrowListWarpRes listWarpRes = VoBaseResp.ok("查询成功", VoViewBorrowListWarpRes.class);
@@ -136,6 +136,25 @@ public class BorrowBizImpl implements BorrowBiz {
         }
     }
 
+    @Override
+    public ResponseEntity<VoPcBorrowListWarpRes> pcFindAll(VoBorrowListReq voBorrowListReq) {
+
+        try {
+            VoPcBorrowList borrowLists = borrowService.pcFindAll(voBorrowListReq);
+            VoPcBorrowListWarpRes listWarpRes = VoBaseResp.ok("查询成功", VoPcBorrowListWarpRes.class);
+            listWarpRes.setLists(Lists.newArrayList(borrowLists));
+            return ResponseEntity.ok(listWarpRes);
+        } catch (Exception e) {
+            log.info("BorrowBizImpl findAll fail%s", e);
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(
+                            VoBaseResp.ERROR,
+                            "查询失败",
+                            VoPcBorrowListWarpRes.class));
+        }
+    }
+
+
     /**
      * 标信息
      *
@@ -143,29 +162,29 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Override
-    public ResponseEntity<VoViewBorrowInfoWarpRes> info(Long borrowId) {
+    public ResponseEntity<BorrowInfoRes> info(Long borrowId) {
         Borrow borrow = borrowService.findByBorrowId(borrowId);
         if (ObjectUtils.isEmpty(borrow)) {
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,
                             "非法查询",
-                            VoViewBorrowInfoWarpRes.class));
+                            BorrowInfoRes.class));
         }
 
-        BorrowInfoRes borrowInfoRes = new BorrowInfoRes();
+        BorrowInfoRes borrowInfoRes = VoBaseResp.ok("",BorrowInfoRes.class);
         try {
             borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
             borrowInfoRes.setLowest(StringHelper.formatMon(borrow.getLowest() / 100d));
             Integer surplusMoney = borrow.getMoney() - borrow.getMoneyYes();
-            borrowInfoRes.setViewSurplusMoney(StringHelper.formatMon(surplusMoney / 100));
+            borrowInfoRes.setViewSurplusMoney(StringHelper.formatMon(surplusMoney / 100D));
             borrowInfoRes.setHideSurplusMoney(surplusMoney);
             if (borrow.getType() == BorrowContants.REPAY_FASHION_ONCE) {
                 borrowInfoRes.setTimeLimit(borrow.getTimeLimit() + BorrowContants.DAY);
             } else {
                 borrowInfoRes.setTimeLimit(borrow.getTimeLimit() + BorrowContants.MONTH);
             }
-            double principal = (double) 10000 * 100;
+            double principal = 10000D * 100;
             double apr = NumberHelper.toDouble(StringHelper.toString(borrow.getApr()));
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(principal, apr, borrow.getTimeLimit(), borrow.getSuccessAt());
             Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
@@ -175,7 +194,7 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setMoney(StringHelper.formatMon(borrow.getMoney() / 100d));
             borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
             borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes() / borrow.getMoney().doubleValue())));
-            Date endAt = DateHelper.addDays(borrow.getReleaseAt(), borrow.getValidDay());//结束时间
+            Date endAt = DateHelper.addDays( DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);//结束时间
             borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
             borrowInfoRes.setSurplusSecond(-1L);
             //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
@@ -207,16 +226,15 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setStatus(status);
             borrowInfoRes.setSuccessAt(StringUtils.isEmpty(borrow.getSuccessAt()) ? "" : DateHelper.dateToString(borrow.getSuccessAt()));
             borrowInfoRes.setBorrowName(borrow.getName());
-            VoViewBorrowInfoWarpRes listWarpRes = VoBaseResp.ok("查询成功", VoViewBorrowInfoWarpRes.class);
-            listWarpRes.setBorrowInfoRes(borrowInfoRes);
-            return ResponseEntity.ok(listWarpRes);
+
+            return ResponseEntity.ok(borrowInfoRes);
         } catch (Exception e) {
             log.info("BorrowBizImpl detail fail%s", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,
                             "查询失败",
-                            VoViewBorrowInfoWarpRes.class));
+                            BorrowInfoRes.class));
         }
 
     }
@@ -279,7 +297,7 @@ public class BorrowBizImpl implements BorrowBiz {
         try {
             return borrowService.contract(borrowId, userId);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.info("BorrowBizImpl contract error", e);
             return null;
         }
     }
@@ -289,7 +307,7 @@ public class BorrowBizImpl implements BorrowBiz {
         try {
             return borrowService.pcContract(borrowId, userId);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.info("BorrowBizImpl pcContract error", e);
             return null;
         }
     }

@@ -3,7 +3,6 @@ package com.gofobao.framework.repayment.controller;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
-import com.gofobao.framework.collection.vo.response.VoViewOrderDetailWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoInfoReq;
@@ -25,7 +24,7 @@ import javax.validation.Valid;
  */
 @RestController
 @Api(description = "还款计划")
-@RequestMapping("/pub/repayment")
+@RequestMapping("repayment")
 public class BorrowRepaymentContorller {
 
     @Autowired
@@ -33,27 +32,27 @@ public class BorrowRepaymentContorller {
 
     @RequestMapping(value = "/v2/collection/days/{time}", method = RequestMethod.GET)
     @ApiOperation("还款计划-日历控件 time: 201706")
-    public ResponseEntity<VoViewCollectionDaysWarpRes> days(@PathVariable String time/*,
-                                                            @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
-        return repaymentBiz.days(901L, time);
+    public ResponseEntity<VoViewCollectionDaysWarpRes> days(@PathVariable String time,
+                                                            @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return repaymentBiz.days(userId, time);
     }
 
     @RequestMapping(value = "/v2/list/{time}", method = RequestMethod.GET)
     @ApiOperation("还款计划-指定某天还款列表  time:2017-05-02")
-    public ResponseEntity<VoViewCollectionOrderListWarpResp> listRes(@PathVariable("time") String time/*,
-                                                                     @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+    public ResponseEntity<VoViewCollectionOrderListWarpResp> listRes(@PathVariable("time") String time,
+                                                                     @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoCollectionOrderReq orderReq = new VoCollectionOrderReq();
         orderReq.setTime(time);
-        orderReq.setUserId(901L);
+        orderReq.setUserId(userId);
         return repaymentBiz.repaymentList(orderReq);
     }
 
     @RequestMapping(value = "/v2/detail/{repaymentId}", method = RequestMethod.GET)
     @ApiOperation("还款计划-还款详情")
-    public ResponseEntity<VoViewRepaymentOrderDetailWarpRes> info(@PathVariable("repaymentId") String repaymentId/*,
-                                                      @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+    public ResponseEntity<VoViewRepaymentOrderDetailWarpRes> info(@PathVariable("repaymentId") String repaymentId,
+                                                                  @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoInfoReq voInfoReq = new VoInfoReq();
-        voInfoReq.setUserId(901L);
+        voInfoReq.setUserId(userId);
         voInfoReq.setRepaymentId(repaymentId);
         return repaymentBiz.detail(voInfoReq);
     }
@@ -63,6 +62,7 @@ public class BorrowRepaymentContorller {
     public ResponseEntity<VoViewRepayCollectionLogWarpRes> info(@PathVariable("borrowId") Long borrowId) {
         return repaymentBiz.logs(borrowId);
     }
+
     /**
      * 立即还款
      *
