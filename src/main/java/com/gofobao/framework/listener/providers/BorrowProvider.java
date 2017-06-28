@@ -121,9 +121,11 @@ public class BorrowProvider {
         boolean bool = false;
         do {
             Date nowDate = DateHelper.subSeconds(new Date(), 10);
-
             Integer borrowType = borrow.getType();
-            if ((!ObjectUtils.isEmpty(borrow.getPassword())) || (borrowType != 0 || borrowType != 1 || borrowType != 4) && borrow.getApr() < 800) {
+
+            // TODO 判断问题 ?
+            if (  (!ObjectUtils.isEmpty(borrow.getPassword()))
+                    || (borrowType != 0 || borrowType != 1 || borrowType != 4)   && borrow.getApr() < 800) {
                 break;
             }
 
@@ -146,11 +148,13 @@ public class BorrowProvider {
                 releaseDate = DateHelper.max(tempDate, releaseDate);
             }
 
+
+            // TODO 为何没有加定时发送
             //触发自动投标队列
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_AUTO_TENDER);
             mqConfig.setTag(MqTagEnum.AUTO_TENDER);
-            //mqConfig.setSendTime(releaseDate);
+            //  mqConfig.setSendTime(releaseDate);
             ImmutableMap<String, String> body = ImmutableMap
                     .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
             mqConfig.setMsg(body);

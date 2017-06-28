@@ -56,6 +56,7 @@ public class AutoTenderProvider {
                 pageIndex++;
                 voFindAutoTenderList.setPageIndex(pageIndex);
                 voFindAutoTenderList.setPageSize(maxSize);
+                voFindAutoTenderList.setBorrowId(borrowId) ;
                 autoTenderList = autoTenderService.findQualifiedAutoTenders(voFindAutoTenderList);
                 if (CollectionUtils.isEmpty(autoTenderList)) {
                     log.info("自动投标MQ：没有匹配到自动投标规则！");

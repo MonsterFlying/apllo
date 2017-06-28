@@ -40,10 +40,7 @@ public class MqHelper {
             long sendTime = config.getSendTime().getTime();
             long nowTime = System.currentTimeMillis();
             delayTime = sendTime - nowTime ;
-            if( delayTime < 0 ){
-                log.error("MqHelper.convertAndSend: sendTime < nowTime ");
-                return false ;
-            }
+            delayTime = delayTime <= 0 ? 0 : delayTime ;
         }
 
         long finalDelayTime = delayTime;
