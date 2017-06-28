@@ -77,14 +77,14 @@ public class LoanController {
         voLoanListReq.setUserId(userId);
         switch (type) {
             case 1:
-                return loanBiz.refundResList(voLoanListReq);
+                return loanBiz.refundResList(voLoanListReq);  //还款中
             case 2:
-                return loanBiz.buddingList(voLoanListReq);
+                return loanBiz.buddingList(voLoanListReq);   //投标中
             case 3:
-                return loanBiz.settleList(voLoanListReq);
+                return loanBiz.settleList(voLoanListReq);  //以结清
         }
         return ResponseEntity
                 .badRequest()
-                .body(VoBaseResp.error(VoBaseResp.ERROR, "获取查询异常", VoViewRefundWrapRes.class));
+                .body(VoBaseResp.error(VoBaseResp.ERROR, "查询异常", VoViewRefundWrapRes.class));
     }
 }
