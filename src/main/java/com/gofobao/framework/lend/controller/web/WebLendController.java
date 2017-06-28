@@ -17,7 +17,7 @@ import springfox.documentation.annotations.ApiIgnore;
 /**
  * Created by admin on 2017/6/6.
  */
-@Api(description = "出借")
+@Api(description = "pc：出借")
 @RestController
 @RequestMapping("pub/pc/lend")
 public class WebLendController {

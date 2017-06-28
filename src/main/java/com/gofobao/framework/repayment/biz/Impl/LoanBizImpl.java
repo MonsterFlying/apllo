@@ -62,6 +62,7 @@ public class LoanBizImpl implements LoanBiz {
             viewSettleWarpListRes.setVoViewSettleRes(voViewSettleRes);
             return ResponseEntity.ok(viewSettleWarpListRes);
         } catch (Exception e) {
+
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "获取查询异常", VoViewSettleWarpListRes.class));
         }
 

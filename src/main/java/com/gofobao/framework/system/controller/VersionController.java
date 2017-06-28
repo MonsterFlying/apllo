@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Created by admin on 2017/6/21.
  */
 @RestController
-@Api("版本检查")
+@Api(description = "版本检查")
 public class VersionController {
 
     @Autowired

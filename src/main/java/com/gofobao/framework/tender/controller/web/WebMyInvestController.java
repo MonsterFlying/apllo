@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
  * Created by admin on 2017/6/1.
  */
 @RequestMapping("/invest/pc")
-@Api(description="我的投资")
+@Api(description="pc：我的投资")
 @RestController
 public class WebMyInvestController {
 

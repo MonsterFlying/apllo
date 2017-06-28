@@ -79,7 +79,7 @@ public interface BorrowBiz {
      * @param borrowId
      * @return
      */
-    ResponseEntity<VoViewBorrowInfoWarpRes> info(Long borrowId);
+    ResponseEntity<BorrowInfoRes> info(Long borrowId);
 
     /**
      * 标简介
