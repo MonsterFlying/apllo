@@ -44,6 +44,11 @@ public class CurrencyController {
     @PostMapping("/currency/convert")
     public ResponseEntity<VoBaseResp> convert(@Valid @ModelAttribute VoConvertCurrencyReq voConvertCurrencyReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voConvertCurrencyReq.setUserId(userId);
-        return currencyBiz.convert(voConvertCurrencyReq);
+        try {
+            return currencyBiz.convert(voConvertCurrencyReq);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"兑换广富币失败!"));
     }
 }

@@ -14,7 +14,8 @@ public interface CurrencyBiz {
 
     /**
      * 兑换广福币
+     *
      * @return
      */
-    ResponseEntity<VoBaseResp> convert(VoConvertCurrencyReq voConvertCurrencyReq);
+    ResponseEntity<VoBaseResp> convert(VoConvertCurrencyReq voConvertCurrencyReq) throws Exception;
 }

@@ -10,17 +10,19 @@ import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.vo.request.VoDelAutoTenderReq;
+import com.gofobao.framework.tender.vo.request.VoGetAutoTenderList;
 import com.gofobao.framework.tender.vo.request.VoOpenAutoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoSaveAutoTenderReq;
-import com.gofobao.framework.tender.vo.response.UserAutoTender;
-import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
-import com.gofobao.framework.tender.vo.response.VoViewUserAutoTenderWarpRes;
+import com.gofobao.framework.tender.vo.response.*;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -28,10 +30,7 @@ import org.springframework.util.Base64Utils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Zeke on 2017/5/27.
@@ -42,6 +41,8 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
     private AutoTenderService autoTenderService;
     @Autowired
     private ThymeleafHelper thymeleafHelper;
+
+    final Gson gson = new GsonBuilder().create();
 
     @Override
     public ResponseEntity<VoViewUserAutoTenderWarpRes> list(Long userId) {
@@ -400,7 +401,47 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
         Map<String, Object> paranMap = new HashMap<>();
         String content = thymeleafHelper.build("tender/autoTender", paranMap);
         VoHtmlResp resp = VoHtmlResp.ok("获取成功!", VoHtmlResp.class);
-        resp.setHtml(Base64Utils.encodeToString(content.getBytes()));
+        resp.setHtml(content);
         return ResponseEntity.ok(resp);
     }
+
+    /**
+     * 获取自动投标列表
+     *
+     * @param voGetAutoTenderList
+     * @return
+     * @throws Exception
+     */
+    public ResponseEntity<VoViewAutoTenderList> getAutoTenderList(VoGetAutoTenderList voGetAutoTenderList) throws Exception {
+        VoViewAutoTenderList voViewAutoTenderList = new VoViewAutoTenderList();
+        List<VoAutoTender> voAutoTenderList = new ArrayList<>();
+        int pageIndex = voGetAutoTenderList.getPageIndex();
+        int pageSize = voGetAutoTenderList.getPageSize();
+        do {
+            Specification<AutoTender> ats = Specifications
+                    .<AutoTender>and()
+                    .eq("userId", voGetAutoTenderList.getUserId())
+                    .build();
+            Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(Sort.Direction.ASC, "autoAt"));
+
+            List<AutoTender> autoTenderList = autoTenderService.findList(ats, pageable);
+            if (CollectionUtils.isEmpty(autoTenderList)) {
+                break;
+            }
+
+            voAutoTenderList = gson.fromJson(gson.toJson(autoTenderList), new TypeToken<List<VoAutoTender>>() {
+            }.getType());
+            if (CollectionUtils.isEmpty(voAutoTenderList)) {
+                break;
+            }
+
+            Date nowDate = new Date();
+            for (VoAutoTender tempVoAutoTender : voAutoTenderList) {
+                tempVoAutoTender.setQueueDays(DateHelper.diffInDays(nowDate, tempVoAutoTender.getAutoAt(), true));
+            }
+        } while (false);
+        voViewAutoTenderList.setAutoTenderList(voAutoTenderList);
+        return ResponseEntity.ok(voViewAutoTenderList);
+    }
+
 }

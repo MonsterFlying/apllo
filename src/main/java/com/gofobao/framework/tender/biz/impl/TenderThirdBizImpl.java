@@ -36,6 +36,7 @@ import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -76,6 +77,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
     private TenderBiz tenderBiz;
     @Autowired
     private ThirdBatchLogService thirdBatchLogService;
+    @Value("${gofobao.webDomain}")
+    private String webDomain;
 
     public ResponseEntity<VoBaseResp> createThirdTender(VoCreateThirdTenderReq voCreateThirdTenderReq) {
         Long userId = voCreateThirdTenderReq.getUserId();
@@ -138,7 +141,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> thirdBatchCreditInvest(VoThirdBatchCreditInvest voThirdBatchCreditInvest) {
+    public ResponseEntity<VoBaseResp> thirdBatchCreditInvest(VoThirdBatchCreditInvest voThirdBatchCreditInvest) throws Exception {
         Date nowDate = new Date();
         Long borrowId = voThirdBatchCreditInvest.getBorrowId();
         if (ObjectUtils.isEmpty(borrowId)) {
@@ -192,10 +195,10 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             creditInvest.setOrderId(transferOrderId);
             creditInvest.setTxAmount(StringHelper.formatDouble(validMoney, 100, false));
             creditInvest.setTxFee("0");
-            creditInvest.setTsfAmount(StringHelper.toString(borrow.getMoney()));
+            creditInvest.setTsfAmount(StringHelper.formatDouble(borrow.getMoney(), 100, false));
             creditInvest.setForAccountId(borrowUserThirdAccount.getAccountId());
             creditInvest.setOrgOrderId(oldTender.getThirdTenderOrderId());
-            creditInvest.setOrgTxAmount(StringHelper.toString(oldTender.getValidMoney()));
+            creditInvest.setOrgTxAmount(StringHelper.formatDouble(oldTender.getValidMoney(), 100, false));
             creditInvest.setProductId(StringHelper.toString(oldTender.getBorrowId()));
             creditInvest.setContOrderId(tenderUserThirdAccount.getAutoTransferBondOrderId());
             creditInvestList.add(creditInvest);
@@ -218,14 +221,16 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         BatchCreditInvestReq request = new BatchCreditInvestReq();
         request.setBatchNo(batchNo);
         request.setTxAmount(StringHelper.formatDouble(sumCount, 100, false));
+        request.setTxCounts(StringHelper.toString(creditInvestList.size()));
         request.setSubPacks(GSON.toJson(creditInvestList));
         request.setAcqRes(StringHelper.toString(borrowId));
         request.setChannel(ChannelContant.HTML);
-        request.setNotifyURL("/pub/tender/v2/third/batch/creditinvest/check");
-        request.setRetNotifyURL("/pub/tender/v2/third/batch/creditinvest/run");
+        request.setNotifyURL(webDomain + "/pub/tender/v2/third/batch/creditinvest/check");
+        request.setRetNotifyURL(webDomain + "/pub/tender/v2/third/batch/creditinvest/run");
         BatchCreditInvestResp response = jixinManager.send(JixinTxCodeEnum.BATCH_CREDIT_INVEST, request, BatchCreditInvestResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "投资人批次购买债权失败!"));
+
+            throw new Exception("投资人批次购买债权失败!:" + response.getRetMsg());
         }
         return null;
     }

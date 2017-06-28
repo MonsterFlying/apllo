@@ -5,6 +5,7 @@ import com.gofobao.framework.tender.contants.AutoTenderContants;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.springframework.util.ObjectUtils;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
@@ -79,7 +80,10 @@ public class VoSaveAutoTenderReq {
     }
 
     public Double getTenderMoney() {
-        return MathHelper.myRound(tenderMoney, 0);
+        if (!ObjectUtils.isEmpty(tenderMoney)) {
+            return MathHelper.myRound(tenderMoney, 0);
+        }
+        return tenderMoney;
     }
 
     public void setTenderMoney(Double tenderMoney) {

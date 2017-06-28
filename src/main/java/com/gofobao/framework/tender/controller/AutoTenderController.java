@@ -5,9 +5,11 @@ import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.AutoTenderBiz;
 import com.gofobao.framework.tender.vo.request.VoDelAutoTenderReq;
+import com.gofobao.framework.tender.vo.request.VoGetAutoTenderList;
 import com.gofobao.framework.tender.vo.request.VoOpenAutoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoSaveAutoTenderReq;
 import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
+import com.gofobao.framework.tender.vo.response.VoViewAutoTenderList;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +64,8 @@ public class AutoTenderController {
      */
     @ApiOperation("创建自动投标规则")
     @PostMapping("/v2/create")
-    public ResponseEntity<VoBaseResp> createAutoTender(@ModelAttribute @Valid VoSaveAutoTenderReq voSaveAutoTenderReq) {
+    public ResponseEntity<VoBaseResp> createAutoTender(@ModelAttribute @Valid VoSaveAutoTenderReq voSaveAutoTenderReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        voSaveAutoTenderReq.setUserId(userId);
         return autoTenderBiz.createAutoTender(voSaveAutoTenderReq);
     }
 
@@ -75,6 +78,7 @@ public class AutoTenderController {
     @ApiOperation("更新自动投标规则")
     @PostMapping("/v2/update")
     public ResponseEntity<VoBaseResp> updateAutoTender(@ModelAttribute @Valid VoSaveAutoTenderReq voSaveAutoTenderReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        voSaveAutoTenderReq.setUserId(userId);
         return autoTenderBiz.updateAutoTender(voSaveAutoTenderReq);
     }
 
@@ -87,7 +91,7 @@ public class AutoTenderController {
      */
     @ApiOperation("更新自动投标规则")
     @PostMapping("/v2/info")
-    public ResponseEntity<VoAutoTenderInfo> queryAutoTenderInfo(Long autoTenderId, Long userId) {
+    public ResponseEntity<VoAutoTenderInfo> queryAutoTenderInfo(@RequestParam("autoTenderId") Long autoTenderId,  @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY)Long userId) {
         return autoTenderBiz.queryAutoTenderInfo(autoTenderId, userId);
     }
 
@@ -98,8 +102,22 @@ public class AutoTenderController {
      * @throws Exception
      */
     @ApiOperation("更新自动投标规则")
-    @PostMapping("/v2/desc")
+    @PostMapping("/pub/v2/desc")
     public ResponseEntity<VoHtmlResp> autoTenderDesc() {
         return autoTenderBiz.autoTenderDesc();
+    }
+
+    /**
+     * 获取自动投标列表
+     *
+     * @param voGetAutoTenderList
+     * @return
+     * @throws Exception
+     */
+    @ApiOperation("获取自动投标列表")
+    @PostMapping("/v2/list")
+    public ResponseEntity<VoViewAutoTenderList> getAutoTenderList(@ModelAttribute @Valid VoGetAutoTenderList voGetAutoTenderList, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
+        voGetAutoTenderList.setUserId(userId);
+        return autoTenderBiz.getAutoTenderList(voGetAutoTenderList);
     }
 }

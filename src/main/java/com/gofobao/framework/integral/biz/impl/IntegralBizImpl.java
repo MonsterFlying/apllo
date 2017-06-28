@@ -254,7 +254,7 @@ public class IntegralBizImpl implements IntegralBiz {
             VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
             if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
                 String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
+                throw new Exception("积分折现异常:"+ msg);
             }
         }
         return ResponseEntity.ok(VoBaseResp.ok("积分折现成功!"));

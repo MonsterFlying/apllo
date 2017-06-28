@@ -18,7 +18,7 @@ public interface TenderThirdBiz {
      * 投资人批次购买债权
      * @return
      */
-    ResponseEntity<VoBaseResp> thirdBatchCreditInvest(VoThirdBatchCreditInvest voThirdBatchCreditInvest);
+    ResponseEntity<VoBaseResp> thirdBatchCreditInvest(VoThirdBatchCreditInvest voThirdBatchCreditInvest) throws Exception;
 
     /**
      * 投资人批次购买债权参数验证回调
