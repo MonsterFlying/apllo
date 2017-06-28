@@ -8,6 +8,7 @@ import com.gofobao.framework.tender.vo.request.VoDelAutoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoOpenAutoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoSaveAutoTenderReq;
 import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
+import com.gofobao.framework.tender.vo.response.VoViewUserAutoTenderWarpRes;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,6 +90,12 @@ public class AutoTenderController {
     @PostMapping("/v2/info")
     public ResponseEntity<VoAutoTenderInfo> queryAutoTenderInfo(Long autoTenderId, Long userId) {
         return autoTenderBiz.queryAutoTenderInfo(autoTenderId, userId);
+    }
+
+    @ApiOperation("用户自动投标列表")
+    @PostMapping("/v2/user/autoTender/list")
+    public ResponseEntity<VoViewUserAutoTenderWarpRes> tender(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return autoTenderBiz.list(userId);
     }
 
     /**
