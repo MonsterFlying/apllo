@@ -89,7 +89,7 @@ public class AutoTenderController {
      * @param userId
      * @return
      */
-    @ApiOperation("查询自动投标说明")
+    @ApiOperation("查询自动投标详情")
     @PostMapping("/autoTender/v2/info")
     public ResponseEntity<VoAutoTenderInfo> queryAutoTenderInfo(@RequestParam("autoTenderId") Long autoTenderId,  @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY)Long userId) {
         return autoTenderBiz.queryAutoTenderInfo(autoTenderId, userId);
