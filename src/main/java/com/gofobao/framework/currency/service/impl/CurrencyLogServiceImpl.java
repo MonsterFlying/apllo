@@ -20,7 +20,7 @@ public class CurrencyLogServiceImpl implements CurrencyLogService {
     private CurrencyLogRepository currencyLogRepository;
 
     public List<CurrencyLog> findListByUserId(Long userId, Pageable pageable){
-        return currencyLogRepository.findByUserId(userId);
+        return currencyLogRepository.findByUserId(userId,pageable);
     }
 
     public boolean insert(CurrencyLog currencyLog){

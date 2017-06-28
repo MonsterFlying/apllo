@@ -121,7 +121,6 @@ public class LoanBizImpl implements LoanBiz {
      */
     @Override
     public ResponseEntity<VoViewLoanInfoListWrapRes> loanList(VoDetailReq voDetailReq) {
-        RespMsg<VoViewLoanList> respMsg = new RespMsg<>();
         try {
             VoViewLoanList voViewLoanList = loanService.loanList(voDetailReq);
             VoViewLoanInfoListWrapRes viewLoanInfoListWrapRes = VoBaseResp.ok("查询成功", VoViewLoanInfoListWrapRes.class);

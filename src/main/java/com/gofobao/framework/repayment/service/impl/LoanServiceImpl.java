@@ -72,13 +72,13 @@ public class LoanServiceImpl implements LoanService {
             voViewRefundRes.setBorrowName(p.getName());
             voViewRefundRes.setOrder(borrowRepaymentList.size());
             voViewRefundRes.setReleaseAt(DateHelper.dateToString(p.getReleaseAt()));
-            voViewRefundRes.setMoney(StringHelper.formatMon(p.getMoneyYes() / 100d));
+            voViewRefundRes.setMoney(StringHelper.formatMon(p.getMoneyYes() / 100D));
             voViewRefundRes.setBorrowId(p.getId());
             Integer interest = borrowRepaymentList.stream().mapToInt(w -> w.getInterest()).sum();  //待还利息
             Integer principal = borrowRepaymentList.stream().mapToInt(w -> w.getPrincipal()).sum();  //待还本金
 
-            voViewRefundRes.setPrincipal(StringHelper.formatMon(principal / 100d));
-            voViewRefundRes.setInterest(StringHelper.formatMon(interest / 100d));
+            voViewRefundRes.setPrincipal(StringHelper.formatMon(principal / 100D));
+            voViewRefundRes.setInterest(StringHelper.formatMon(interest / 100D));
             refundRes.add(voViewRefundRes);
         });
         return Optional.ofNullable(refundRes).orElse(Collections.EMPTY_LIST);
@@ -110,9 +110,9 @@ public class LoanServiceImpl implements LoanService {
             List<BorrowRepayment> borrowRepaymentList = borrowRepaymentMaps.get(p.getId());
             Integer interest = borrowRepaymentList.stream().mapToInt(w -> w.getInterest()).sum();  //待还利息
             Integer principal = borrowRepaymentList.stream().mapToInt(w -> w.getPrincipal()).sum();  //待还本金
-            viewSettleRes.setPrincipal(StringHelper.formatMon(principal / 100d));
-            viewSettleRes.setInterest(StringHelper.formatMon(interest / 100d));
-            viewSettleRes.setMoney(StringHelper.formatMon(p.getMoneyYes() / 100d));
+            viewSettleRes.setPrincipal(StringHelper.formatMon(principal / 100D));
+            viewSettleRes.setInterest(StringHelper.formatMon(interest / 100D));
+            viewSettleRes.setMoney(StringHelper.formatMon(p.getMoneyYes() / 100D));
             viewSettleRes.setBorrowName(p.getName());
             viewSettleRes.setBorrowId(p.getId());
             viewSettleRes.setReleaseAt(DateHelper.dateToString(p.getReleaseAt()));
@@ -141,8 +141,8 @@ public class LoanServiceImpl implements LoanService {
             VoViewBuddingRes budingRes = new VoViewBuddingRes();
             budingRes.setBorrowId(p.getId());
             budingRes.setBorrowName(p.getName());
-            budingRes.setMoney(StringHelper.formatMon(p.getMoney() / 100d));
-            budingRes.setApr(StringHelper.formatMon(p.getApr() / 100d));
+            budingRes.setMoney(StringHelper.formatMon(p.getMoney() / 100D));
+            budingRes.setApr(StringHelper.formatMon(p.getApr() / 100D));
             budingRes.setSpeed(StringHelper.formatMon(p.getMoneyYes() /new Double( p.getMoney())));
             if (p.getRepayFashion() == 1) {
                 budingRes.setTimeLimit(p.getTimeLimit() + BorrowContants.DAY);
@@ -207,8 +207,8 @@ public class LoanServiceImpl implements LoanService {
         }
         VoViewRepaymentDetail repaymentDetail = new VoViewRepaymentDetail();
         repaymentDetail.setBorrowName(borrow.getName());
-        repaymentDetail.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
-        repaymentDetail.setMoney(StringHelper.formatMon(borrow.getMoneyYes() / 100d));
+        repaymentDetail.setApr(StringHelper.formatMon(borrow.getApr() / 100D));
+        repaymentDetail.setMoney(StringHelper.formatMon(borrow.getMoneyYes() / 100D));
         repaymentDetail.setSuccessAt(DateHelper.dateToString(borrow.getSuccessAt()));
         repaymentDetail.setCreatedAt(DateHelper.dateToString(borrow.getCreatedAt()));
         String repayFashion = "";
@@ -248,9 +248,9 @@ public class LoanServiceImpl implements LoanService {
         if(borrow.getStatus()==BorrowContants.BIDDING){
             repaymentDetail.setStatus(2);
         }
-        repaymentDetail.setInterest(StringHelper.formatMon(interest / 100d));
-        repaymentDetail.setPrincipal(StringHelper.formatMon(principal / 100d));
-        repaymentDetail.setReceivableInterest(StringHelper.formatMon(receivableInterest / 100d));
+        repaymentDetail.setInterest(StringHelper.formatMon(interest / 100D));
+        repaymentDetail.setPrincipal(StringHelper.formatMon(principal / 100D));
+        repaymentDetail.setReceivableInterest(StringHelper.formatMon(receivableInterest / 100D));
         if (borrow.getTimeLimit() == 1) {
             repaymentDetail.setTimeLimit(borrow.getTimeLimit() + BorrowContants.DAY);
         } else {
@@ -285,16 +285,16 @@ public class LoanServiceImpl implements LoanService {
         repaymentList.stream().forEach(p->{
             VoLoanInfo voLoanInfo=new VoLoanInfo();
             voLoanInfo.setOrder(p.getOrder()+1);
-            voLoanInfo.setPrincipal(StringHelper.formatMon(p.getPrincipal()/100d));
+            voLoanInfo.setPrincipal(StringHelper.formatMon(p.getPrincipal()/100D));
             voLoanInfo.setStatus(p.getStatus());
             voLoanInfo.setLateDays(p.getLateDays());
-            voLoanInfo.setInterest(StringHelper.formatMon(p.getInterest()/100d));
+            voLoanInfo.setInterest(StringHelper.formatMon(p.getInterest()/100D));
             voLoanInfo.setRepayAt(DateHelper.dateToString(p.getRepayAt()));
-            voLoanInfo.setRepayMoney(StringHelper.formatMon(p.getRepayMoney()));
+            voLoanInfo.setRepayMoney(StringHelper.formatMon(p.getRepayMoney()/100D));
             voLoanInfo.setStatusStr(p.getStatus()==RepaymentContants.STATUS_YES?RepaymentContants.STATUS_YES_STR:RepaymentContants.STATUS_NO_STR);
             voLoanInfoList.add(voLoanInfo);
         });
-        voViewLoanList.setSumRepayMoney(StringHelper.formatMon(collectionMoney/100d));
+        voViewLoanList.setSumRepayMoney(StringHelper.formatMon(collectionMoney/100D));
         voViewLoanList.setOrderCount(countOrder);
         voViewLoanList.setVoLoanInfoList(voLoanInfoList);
         return Optional.ofNullable(voViewLoanList).orElse(null);

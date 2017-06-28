@@ -224,16 +224,17 @@ public class IntegralBizImpl implements IntegralBiz {
         if (!b) {
             throw new Exception("用户资产变更失败!");
         }
-
+        Integer noUseIntegral=integral.getNoUseIntegral() + integer;
+        Integer userInteger1=integral.getUseIntegral() - integer;
         Integral saveIntegral = new Integral();
         saveIntegral.setUserId(userId);
-        saveIntegral.setNoUseIntegral(integral.getNoUseIntegral() + integer);
-        saveIntegral.setUseIntegral(integral.getUseIntegral() - integer);
+        saveIntegral.setNoUseIntegral(noUseIntegral);
+        saveIntegral.setUseIntegral(userInteger1);
         saveIntegral.setUpdatedAt(new Date());
         integralService.updateById(saveIntegral);
         IntegralLog integralLog = new IntegralLog();
-        integralLog.setUseIntegral(integral.getUseIntegral() - integer);
-        integralLog.setNoUseIntegral(integral.getNoUseIntegral() + integer);
+        integralLog.setUseIntegral(userInteger1);
+        integralLog.setNoUseIntegral(noUseIntegral);
         integralLog.setUserId(userId);
         integralLog.setCreatedAt(new Date());
         integralLog.setValue(integer);
