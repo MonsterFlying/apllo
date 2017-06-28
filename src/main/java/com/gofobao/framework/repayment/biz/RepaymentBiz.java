@@ -4,10 +4,7 @@ import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.repayment.vo.request.VoAdvanceReq;
-import com.gofobao.framework.repayment.vo.request.VoInfoReq;
-import com.gofobao.framework.repayment.vo.request.VoInstantlyRepaymentReq;
-import com.gofobao.framework.repayment.vo.request.VoRepayReq;
+import com.gofobao.framework.repayment.vo.request.*;
 import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
 import com.gofobao.framework.repayment.vo.response.VoViewRepaymentOrderDetailWarpRes;
 import org.springframework.http.ResponseEntity;
@@ -77,9 +74,9 @@ public interface RepaymentBiz {
 
     /**
      * 垫付处理
-     * @param voAdvanceReq
+     * @param voAdvanceCall
      * @return
      * @throws Exception
      */
-    ResponseEntity<VoBaseResp> advanceDeal(VoAdvanceReq voAdvanceReq)throws Exception;
+    ResponseEntity<VoBaseResp> advanceDeal(VoAdvanceCall voAdvanceCall)throws Exception;
 }

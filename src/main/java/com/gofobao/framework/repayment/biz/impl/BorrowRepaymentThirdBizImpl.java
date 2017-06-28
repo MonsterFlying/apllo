@@ -663,7 +663,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         int lateInterest = 0;//逾期利息
         Double interestPercent = voBatchBailRepayReq.getInterestPercent();
         Long repaymentId = voBatchBailRepayReq.getRepaymentId();
-        interestPercent = interestPercent == 0 ? 1 : interestPercent;
+        interestPercent = ObjectUtils.isEmpty(interestPercent) ? 1 : interestPercent;
 
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);
         Borrow borrow = borrowService.findById(borrowRepayment.getBorrowId());
@@ -974,11 +974,11 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             long repaymentId = NumberHelper.toLong(batchBailRepayRunResp.getAcqRes());
             ResponseEntity<VoBaseResp> resp = null;
             try {
-                VoAdvanceReq voAdvanceReq = new VoAdvanceReq();
-                voAdvanceReq.setRepaymentId(repaymentId);
-                voAdvanceReq.setBailRepayRunList(GSON.fromJson(GSON.toJson(batchBailRepayRunResp.getSubPacks()), new TypeToken<List<BailRepayRun>>() {
+                VoAdvanceCall voAdvanceCall = new VoAdvanceCall();
+                voAdvanceCall.setRepaymentId(repaymentId);
+                voAdvanceCall.setBailRepayRunList(GSON.fromJson(GSON.toJson(batchBailRepayRunResp.getSubPacks()), new TypeToken<List<BailRepayRun>>() {
                 }.getType()));
-                resp = repaymentBiz.advanceDeal(voAdvanceReq);
+                resp = repaymentBiz.advanceDeal(voAdvanceCall);
             } catch (Exception e) {
                 log.error("垫付异常:", e);
             }
