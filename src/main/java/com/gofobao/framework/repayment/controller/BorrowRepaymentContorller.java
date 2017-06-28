@@ -57,11 +57,6 @@ public class BorrowRepaymentContorller {
         return repaymentBiz.detail(voInfoReq);
     }
 
-    @RequestMapping(value = "/pc/v2/logs/{borrowId}", method = RequestMethod.GET)
-    @ApiOperation("还款记录")
-    public ResponseEntity<VoViewRepayCollectionLogWarpRes> info(@PathVariable("borrowId") Long borrowId) {
-        return repaymentBiz.logs(borrowId);
-    }
 
     /**
      * 立即还款

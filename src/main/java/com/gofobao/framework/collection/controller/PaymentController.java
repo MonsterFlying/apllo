@@ -19,7 +19,7 @@ import springfox.documentation.annotations.ApiIgnore;
  */
 @Api(description = "回款明细")
 @RestController
-@RequestMapping("pub/payment")
+@RequestMapping("payment")
 public class PaymentController {
 
     @Autowired
