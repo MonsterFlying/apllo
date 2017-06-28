@@ -1,7 +1,6 @@
 package com.gofobao.framework.member.controller;
 
 import com.gofobao.framework.borrow.vo.request.VoAdminOpenAccountResp;
-import com.gofobao.framework.borrow.vo.request.VoPcCancelThirdBorrow;
 import com.gofobao.framework.member.biz.UserThirdBiz;
 import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;

@@ -7,7 +7,6 @@ import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.vo.request.TenderUserReq;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
-import com.gofobao.framework.tender.vo.response.VoViewUserAutoTenderWarpRes;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
