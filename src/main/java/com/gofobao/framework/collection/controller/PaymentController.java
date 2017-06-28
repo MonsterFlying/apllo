@@ -28,7 +28,7 @@ public class PaymentController {
     @ApiOperation("回款明细-回款列表 time:2017-05-06")
     @GetMapping("/v2/order/list/{time}")
     public ResponseEntity<VoViewCollectionOrderListWarpResp> collectionOrderList(@PathVariable("time") String time,
-                                                          @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+                                                                                 @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoCollectionOrderReq voCollectionOrderReq = new VoCollectionOrderReq();
         voCollectionOrderReq.setUserId(userId);
         voCollectionOrderReq.setTime(time);
