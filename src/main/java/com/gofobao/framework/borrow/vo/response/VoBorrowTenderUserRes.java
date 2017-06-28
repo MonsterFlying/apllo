@@ -18,9 +18,7 @@ public class VoBorrowTenderUserRes {
 
     @ApiModelProperty("投标类型")
     public String type;
-    @ApiModelProperty("投标金额")
-    public String money;
-    // TODO 修改投标记录
+
     @ApiModelProperty("投标有效金额")
     private String validMoney;
 
