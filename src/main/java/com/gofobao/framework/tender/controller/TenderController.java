@@ -55,9 +55,5 @@ public class TenderController {
         return tenderBiz.tender(voCreateTenderReq);
     }
 
-    @ApiOperation("借款投标")
-    @PostMapping("/v2/user/autoTender/list")
-    public ResponseEntity<VoViewUserAutoTenderWarpRes> tender(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        return autoTenderBiz.list(userId);
-    }
+
 }
