@@ -18,7 +18,7 @@ public interface LoanRepository extends JpaRepository<Borrow,Long>,JpaSpecificat
 
     /**
      * 还款中标列表
-     * userId=? and status=? and successAt!=null and closeAt ==null
+     * userId=? and status=? and successAt!=null and closeAt ==null and tender==null
      * @param userId
      * @param status
      * @return
@@ -28,7 +28,7 @@ public interface LoanRepository extends JpaRepository<Borrow,Long>,JpaSpecificat
 
     /**
      * 已结清标列表
-     * userId=? and status=? and successAt!=null and closeAt !=null
+     * userId=? and status=? and successAt!=null and closeAt !=null and tender==null
      * @param userId
      * @param status
      * @return
@@ -40,6 +40,7 @@ public interface LoanRepository extends JpaRepository<Borrow,Long>,JpaSpecificat
 
     /**
      * 招标中
+     * user=? and status=? verifyAt!=null
      * @param userId
      * @param status
      * @param pageable

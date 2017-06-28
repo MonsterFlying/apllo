@@ -1,6 +1,7 @@
 package com.gofobao.framework.tender.service.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.collection.entity.BorrowCollection;
@@ -69,20 +70,31 @@ public class TransferServiceImpl implements TransferService {
             return Collections.EMPTY_LIST;
         }
         //标id集合
-        Set<Long> borrowIdArray = tenderList.stream().map(p -> p.getBorrowId()).collect(Collectors.toSet());
+        Set<Long> tenderIdArray = tenderList.stream()
+                .map(p -> p.getId())
+                .collect(Collectors.toSet());
 
         Specification specification = Specifications.<Borrow>and()
-                .in("id", borrowIdArray.toArray())
-                .ne("tenderId", null)
+                .in("tenderId", tenderIdArray.toArray())
+                .eq("userId", voTransferReq.getUserId())
+                .eq("status", BorrowContants.BIDDING)
                 .build();
         List<Borrow> borrowList = borrowRepository.findAll(specification);
-        Map<Long, Borrow> borrowMap = borrowList.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
-
+        Map<Long, Borrow> borrowMap = borrowList.stream()
+                .collect(
+                        Collectors.toMap(
+                                Borrow::getTenderId,
+                                Function.identity()));
+        List<Long> tempTenderIdArray = borrowList.stream()
+                .map(p -> p.getTenderId())
+                .collect(Collectors.toList());
         List<TransferOf> transferOfs = Lists.newArrayList();
-        List<Tender> tenders = tenderList.stream().filter(p -> !StringUtils.isEmpty(p.getBorrowId())).collect(Collectors.toList());
+        List<Tender> tenders = tenderList.stream()
+                .filter(p -> tempTenderIdArray.contains(p.getId()))
+                .collect(Collectors.toList());
         tenders.stream().forEach(p -> {
             TransferOf transferOf = new TransferOf();
-            Borrow borrow = borrowMap.get(p.getBorrowId());
+            Borrow borrow = borrowMap.get(p.getId());
             if (ObjectUtils.isEmpty(borrow)) {
                 return;
             }
@@ -91,7 +103,7 @@ public class TransferServiceImpl implements TransferService {
             transferOf.setCreateTime(DateHelper.dateToString(p.getUpdatedAt()));
             transferOf.setPrincipal(StringHelper.formatMon(borrow.getMoney() / 100d));
             transferOf.setSpend(StringHelper.formatMon(borrow.getMoneyYes() / borrow.getMoney() / 100d));
-            transferOf.setBorrowId(p.getBorrowId());
+            transferOf.setBorrowId(borrow.getId());
             transferOfs.add(transferOf);
         });
         return Optional.ofNullable(transferOfs).orElse(Collections.EMPTY_LIST);
@@ -111,19 +123,35 @@ public class TransferServiceImpl implements TransferService {
             return Collections.EMPTY_LIST;
         }
         //标id集合
-        Set<Long> borrowIdArray = tenderList.stream().map(p -> p.getBorrowId()).collect(Collectors.toSet());
+        Set<Long> tenderArray = tenderList.stream()
+                .map(p -> p.getId())
+                .collect(Collectors.toSet());
 
         Specification specification = Specifications.<Borrow>and()
-                .in("id", borrowIdArray.toArray())
-                .ne("tenderId", null)
+                .in("tenderId", tenderArray.toArray())
+                .eq("userId", voTransferReq.getUserId())
+                .eq("status", BorrowContants.PASS)
                 .build();
         List<Borrow> borrowList = borrowRepository.findAll(specification);
-        Map<Long, Borrow> borrowMap = borrowList.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
-        List<Tender> tenders = tenderList.stream().filter(p -> !StringUtils.isEmpty(p.getBorrowId())).collect(Collectors.toList());
+        //转让标集合
+        Map<Long, Borrow> borrowMap = borrowList.stream()
+                .collect(
+                        Collectors.toMap(
+                                Borrow::getTenderId,
+                                Function.identity()));
+
+        List<Long> tempTenderIdArray=borrowList.stream()
+                .map(p -> p.getTenderId())
+                .collect(Collectors.toList());
+        //过滤掉投tender表中id没有的borrow中的tenderId
+        List<Tender>tenders=tenderList.stream()
+                .filter(p ->tempTenderIdArray.contains( p.getId()))
+                .collect(Collectors.toList());
+
         List<Transfered> transfereds = Lists.newArrayList();
         tenders.stream().forEach(p -> {
             Transfered transfered = new Transfered();
-            Borrow borrow = borrowMap.get(p.getBorrowId());
+            Borrow borrow = borrowMap.get(p.getId());
             if (ObjectUtils.isEmpty(borrow)) {
                 return;
             }
@@ -151,23 +179,27 @@ public class TransferServiceImpl implements TransferService {
                 "where " +
                 "t.status=1 " +
                 "AND " +
-                "t.user_id=" + voTransferReq.getUserId() +
-                " AND " +
-                "t.transfer_flag=0 " +
-                "AND  " +
+                "t.user_id=" + voTransferReq.getUserId() + " " +
+                "AND " +
+                "t.transfer_flag=" + TenderConstans.TRANSFER_NO + " " +   //未转让
+                "AND " +
+                "t.state=" + TenderConstans.BACK_MONEY + " " +    //回款中
+                "AND " +
                 "b.tender_id is null " +
                 "AND " +
                 "(b.type=0 OR b.type=4) " +
                 "AND " +
                 "  ( " +
                 " SELECT " +
-                "   SUM(c.principal) " +
+                "SUM(c.principal) " +
                 " FROM " +
-                "  gfb_borrow_collection c " +
+                "gfb_borrow_collection c " +
                 " WHERE " +
-                "  c.tender_id = t.id " +
-                " AND c.transfer_flag = 0 " +
-                " AND c. STATUS = 0 " +
+                "c.tender_id = t.id " +
+                " AND " +
+                "c.transfer_flag = 0 " +
+                " AND " +
+                "c. STATUS = 0 " +
                 ") >= 100000";
         Query sqlQuery = entityManager.createNativeQuery(sql.toString(), Tender.class);
         sqlQuery.setFirstResult(voTransferReq.getPageIndex());
@@ -181,7 +213,6 @@ public class TransferServiceImpl implements TransferService {
         Set<Long> borrowIdArray = tenderList.stream().map(p -> p.getBorrowId()).collect(Collectors.toSet());
         Specification specification = Specifications.<Borrow>and()
                 .in("id", borrowIdArray.toArray())
-                .eq("tenderId", null)
                 .eq("closeAt", null)
                 .build();
         List<Borrow> borrowList = borrowRepository.findAll(specification);

@@ -162,8 +162,6 @@ public class LoanServiceImpl implements LoanService {
      * @return
      */
     private List<Borrow> commonQuery(VoLoanListReq voLoanListReq) {
-        String sql="SELECT b FROM Borrow WHERE 1=1 ";
-        StringBuffer sb=new StringBuffer();
         Page<Borrow> borrowPage ;
         Sort sort;
         Pageable pageable;

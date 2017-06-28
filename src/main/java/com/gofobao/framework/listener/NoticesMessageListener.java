@@ -29,20 +29,20 @@ public class NoticesMessageListener {
 
     @RabbitHandler
     public void process(String message) {
-        log.info(String.format("NoticMessageListener process detail: %s", message));
+        log.info(String.format("NoticesMessageListener process detail: %s", message));
         try {
-            Preconditions.checkNotNull(message, "NoticMessageListener process message is empty") ;
+            Preconditions.checkNotNull(message, "NoticesMessageListener process message is empty") ;
             Map<String, Object> body = GSON.fromJson(message, TypeTokenContants.MAP_TOKEN);
-            Preconditions.checkNotNull(body.get(MqConfig.MSG_TAG), "NoticMessageListener process tag is empty ") ;
-            Preconditions.checkNotNull(body.get(MqConfig.MSG_BODY), "NoticMessageListener process body is empty ") ;
+            Preconditions.checkNotNull(body.get(MqConfig.MSG_TAG), "NoticesMessageListener process tag is empty ") ;
+            Preconditions.checkNotNull(body.get(MqConfig.MSG_BODY), "NoticesMessageListener process body is empty ") ;
             String tag = body.get(MqConfig.MSG_TAG).toString();
             Map<String, String> msg = (Map<String, String>)body.get(MqConfig.MSG_BODY) ;
             boolean result  = noticeMessageProvider.addNoticeMessage(tag, msg);
             if(!result){
-                log.error(String.format("NoticMessageListener process process error: %s", message));
+                log.error(String.format("NoticesMessageListener process process error: %s", message));
             }
         }catch (Throwable e){
-            log.error("NoticMessageListener process do exception", e);
+            log.error("NoticesMessageListener process do exception", e);
         }
 
 
