@@ -118,7 +118,7 @@ public class BorrowServiceImpl implements BorrowService {
         if ("-1".equals(type)) {   // 全部
             condtionSql.append(" ORDER BY FIELD(b.type,0, 4, 1, 2),(b.moneyYes / b.money) DESC, b.id DESC");
         } else {
-            if (type == BorrowContants.INDEX_TYPE_CE_DAI) {
+            if ( ObjectUtils.isEmpty(BorrowContants.INDEX_TYPE_CE_DAI)) {
                 condtionSql.append(" ORDER BY b.status ASC,(b.moneyYes / b.money) DESC, b.successAt DESC,b.id DESC");
             } else {
                 condtionSql.append(" ORDER BY b.status, b.successAt DESC, b.id DESC");

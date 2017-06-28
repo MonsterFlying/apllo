@@ -54,7 +54,7 @@ public class BorrowController {
 
 
     @ApiOperation(value = "首页标列表; type:  -1：全部;   0：车贷标；  1：净值标；  2：秒标；  4：渠道标;  5: 流转标")
-    @GetMapping("pub/borrow/v2/list/{type}/{pageIndex}/{pageSize}")
+    @GetMapping("/pub/borrow/v2/list/{type}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewBorrowListWarpRes> borrowList(@PathVariable Integer pageIndex,
                                                               @PathVariable Integer pageSize,
                                                               @PathVariable Integer type) {
@@ -68,7 +68,7 @@ public class BorrowController {
 
     // TODO 去掉包裹
     @ApiOperation("标信息")
-    @GetMapping("pub/borrow/v2/info/{borrowId}")
+    @GetMapping("/pub/borrow/v2/info/{borrowId}")
     public ResponseEntity<BorrowInfoRes> getByBorrowId(@PathVariable Long borrowId) {
         return borrowBiz.info(borrowId);
     }
@@ -76,7 +76,7 @@ public class BorrowController {
 
     // TODO 去掉包裹
     @ApiOperation("标简介")
-    @GetMapping("pub/borrow/v2/desc/{borrowId}")
+    @GetMapping("/pub/borrow/v2/desc/{borrowId}")
     public ResponseEntity<VoViewVoBorrowDescWarpRes> desc(@PathVariable Long borrowId) {
         return borrowBiz.desc(borrowId);
     }
@@ -84,7 +84,7 @@ public class BorrowController {
 
     // TODO 返回改为  ResponseEntity<VoHtmlResp>
     @ApiOperation(value = "标合同")
-    @GetMapping(value = "borrow/pub/borrowProtocol/{borrowId}")
+    @GetMapping(value = "/borrow/pub/borrowProtocol/{borrowId}")
     public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId, HttpServletRequest request) {
         Long userId = 0L;
         String authToken = request.getHeader(this.tokenHeader);
@@ -114,7 +114,7 @@ public class BorrowController {
      * @param voAddNetWorthBorrow
      * @return
      */
-    @PostMapping("borrow/addNetWorth")
+    @PostMapping("/borrow/addNetWorth")
     @ApiOperation("发布净值借款")
     public ResponseEntity<VoBaseResp> addNetWorth(@Valid @ModelAttribute VoAddNetWorthBorrow voAddNetWorthBorrow, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
         voAddNetWorthBorrow.setUserId(userId);
@@ -127,7 +127,7 @@ public class BorrowController {
      * @param voPcCancelThirdBorrow
      * @return
      */
-    @PostMapping("borrow/pub/pc/cancelBorrow")
+    @PostMapping("/borrow/pub/pc/cancelBorrow")
     @ApiOperation("pc取消借款")
     public ResponseEntity<VoBaseResp> pcCancelBorrow(@Valid @ModelAttribute VoPcCancelThirdBorrow voPcCancelThirdBorrow) {
         return borrowBiz.pcCancelBorrow(voPcCancelThirdBorrow);
@@ -139,14 +139,14 @@ public class BorrowController {
      * @param voCancelBorrow
      * @return
      */
-    @PostMapping("borrow/cancelBorrow")
+    @PostMapping("/borrow/cancelBorrow")
     @ApiOperation("取消借款")
     public ResponseEntity<VoBaseResp> cancelBorrow(@Valid @ModelAttribute VoCancelBorrow voCancelBorrow, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voCancelBorrow.setUserId(userId);
         return borrowBiz.cancelBorrow(voCancelBorrow);
     }
 
-    @PostMapping("/repayAll")
+    @PostMapping("/borrow/repayAll")
     @ApiOperation("提前还款")
     public ResponseEntity<VoBaseResp> repayAll(@Valid @ModelAttribute VoRepayAllReq voRepayAllReq) {
         return borrowThirdBiz.thirdBatchRepayAll(voRepayAllReq);
@@ -158,7 +158,7 @@ public class BorrowController {
      * @param voDoAgainVerifyReq
      * @return
      */
-    @PostMapping("borrow/doAgainVerify")
+    @PostMapping("/borrow/doAgainVerify")
     @ApiOperation("复审")
     public ResponseEntity<VoBaseResp> doAgainVerify(VoDoAgainVerifyReq voDoAgainVerifyReq) {
         return borrowBiz.doAgainVerify(voDoAgainVerifyReq);
@@ -170,7 +170,7 @@ public class BorrowController {
      * @param voRegisterOfficialBorrow
      * @return
      */
-    @PostMapping("borrow/pub/pc/official/register")
+    @PostMapping("/borrow/pub/pc/official/register")
     @ApiOperation("登记官方借款（车贷标、渠道标）")
     public ResponseEntity<VoHtmlResp> registerOfficialBorrow(@ModelAttribute @Valid VoRegisterOfficialBorrow voRegisterOfficialBorrow) {
         return borrowBiz.registerOfficialBorrow(voRegisterOfficialBorrow);
