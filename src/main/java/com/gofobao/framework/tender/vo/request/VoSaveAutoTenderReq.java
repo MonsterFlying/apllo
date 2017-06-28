@@ -98,7 +98,6 @@ public class VoSaveAutoTenderReq {
     }
 
     public void setSaveMoney(Double saveMoney) {
-
         this.saveMoney = (int) MathHelper.myRound(saveMoney * 100.0, 0);
     }
 }

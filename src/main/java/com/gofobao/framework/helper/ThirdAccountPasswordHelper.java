@@ -28,11 +28,11 @@ public class ThirdAccountPasswordHelper {
 
     private static final SymmetricalCoderHelper coder = new SymmetricalCoderHelper();
     /**
-     *  回去找回密码链接
+     *  找回密码链接
      * @param userId
      * @return
      */
-    public String getThirdAcccountPasswordUrl(HttpServletRequest request, Long userId){
+    public String getThirdAcccountResetPasswordUrl(HttpServletRequest request, Long userId){
         try{
             String algorithm = SymmetricalCoderHelper.ALGORITHM_RC4;
             byte[] key = coder.initKey(algorithm) ;
@@ -43,6 +43,29 @@ public class ThirdAccountPasswordHelper {
             String url = String.format("%s%s%s/%s", javaDomain, "/pub/third/password/",  encode, ChannelContant.getchannel(request)) ;
             redisHelper.put(String.format("%s_%s", PREFIX, encode), Base64Utils.encodeToUrlSafeString(key), 10 * 60) ;
             log.info("忘记密码链接" + url);
+            return url ;
+        }catch (Exception e){
+            throw  new RuntimeException("生成找回密码错误") ;
+        }
+    }
+
+
+    /**
+     *  初始化密码链接
+     * @param userId
+     * @return
+     */
+    public String getThirdAcccountInitPasswordUrl(HttpServletRequest request, Long userId){
+        try{
+            String algorithm = SymmetricalCoderHelper.ALGORITHM_RC4;
+            byte[] key = coder.initKey(algorithm) ;
+            String random = RandomHelper.generateNumberCode(12);
+            byte[] data = String.format("%s-%s", random, userId).getBytes("UTF-8");
+            byte[] result = coder.encrypt(algorithm, data, key);
+            String encode = Base64Utils.encodeToUrlSafeString(result);
+            String url = String.format("%s%s%s/%s", javaDomain, "/pub/resetPassword/",  encode, ChannelContant.getchannel(request)) ;
+            redisHelper.put(String.format("%s_%s", PREFIX, encode), Base64Utils.encodeToUrlSafeString(key), 10 * 60) ;
+            log.info("初始化密码链接" + url);
             return url ;
         }catch (Exception e){
             throw  new RuntimeException("生成找回密码错误") ;

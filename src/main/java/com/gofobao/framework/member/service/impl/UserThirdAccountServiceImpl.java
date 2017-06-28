@@ -39,11 +39,30 @@ public class UserThirdAccountServiceImpl implements UserThirdAccountService {
 
     @Override
     public UserThirdAccount findTopByCardNo(String account) {
-        return userThirdAccountRepository.findTopByCardNo(account) ;
+        return userThirdAccountRepository.findTopByCardNoAndDel(account, 0) ;
     }
 
     @Override
     public UserThirdAccount findByMobile(String phone) {
-        return userThirdAccountRepository.findTopByMobile(phone) ;
+        return userThirdAccountRepository.findTopByMobileAndDel(phone, 0) ;
+    }
+
+    @Override
+    public void deleteByUserId(Long userId) {
+        UserThirdAccount userThirdAccount = new UserThirdAccount() ;
+        userThirdAccount.setUserId(userId) ;
+        userThirdAccountRepository.delete(userThirdAccount);
+    }
+
+    @Override
+    public UserThirdAccount findByDelUseid(Long userId) {
+        if (ObjectUtils.isEmpty(userId)){
+            return null;
+        }
+        UserThirdAccount example = new UserThirdAccount();
+        example.setUserId(userId);
+        example.setDel(1);
+        return userThirdAccountRepository.findOne(Example.of(example));
+
     }
 }

@@ -127,7 +127,7 @@ public class BorrowController {
      * @param voPcCancelThirdBorrow
      * @return
      */
-    @PostMapping("/borrow/pub/pc/cancelBorrow")
+    @PostMapping("/pub/borrow/pc/cancelBorrow")
     @ApiOperation("pc取消借款")
     public ResponseEntity<VoBaseResp> pcCancelBorrow(@Valid @ModelAttribute VoPcCancelThirdBorrow voPcCancelThirdBorrow) {
         return borrowBiz.pcCancelBorrow(voPcCancelThirdBorrow);

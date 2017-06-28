@@ -141,7 +141,7 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
             voSaveAutoTenderReq.setTenderMoney(0d);
         } else {
             voSaveAutoTenderReq.setMode(1);
-            voSaveAutoTenderReq.setTenderMoney((double) tenderMoney);
+            voSaveAutoTenderReq.setTenderMoney(tenderMoney / 100.0);
         }
 
         Integer mode = voSaveAutoTenderReq.getMode();
@@ -403,7 +403,7 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
      */
     public ResponseEntity<VoHtmlResp> autoTenderDesc() {
         Map<String, Object> paranMap = new HashMap<>();
-        String content = thymeleafHelper.build("autoTender/autoTender", paranMap);
+        String content = thymeleafHelper.build("/autoTender/autoTender", paranMap);
         VoHtmlResp resp = VoHtmlResp.ok("获取成功!", VoHtmlResp.class);
         resp.setHtml(content);
         return ResponseEntity.ok(resp);
