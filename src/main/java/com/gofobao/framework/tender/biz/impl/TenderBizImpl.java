@@ -213,6 +213,21 @@ public class TenderBizImpl implements TenderBiz {
                 break;
             }
 
+            if (borrow.isTransfer()) {//转让标需要判断是否签约自动转让协议
+                if (ObjectUtils.isEmpty(userThirdAccount.getAutoTransferBondOrderId())) {
+                    log.info("用户投标：当前用户未签自动债权转让协议。");
+                    msg = "当前用户未签自动债权转让协议!";
+                    break;
+                }
+            } else {
+                if (ObjectUtils.isEmpty(userThirdAccount.getAutoTransferBondOrderId())) {
+                    log.info("用户投标：当前用户未签自动投标协议。");
+                    msg = "当前用户未签自动投标协议!";
+                    break;
+                }
+            }
+
+
             if (userThirdAccount.getPasswordState() == 0) {
                 msg = "银行存管:密码未初始化!";
                 break;

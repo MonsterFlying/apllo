@@ -18,7 +18,9 @@ public class VoAutoTenderInfo extends VoBaseResp {
     private Boolean status;
 
     @ApiModelProperty(name = "lowest", value = "最低投标金额 分 不填写默认0", dataType = "int", required = false)
-    private Double lowest = 0d;
+    private String lowest = "0";
+    @ApiModelProperty(name = "showLowest", value = "最低投标金额 分 不填写默认0", dataType = "int", required = false)
+    private String showLowest = "0";
 
     @ApiModelProperty(name = "borrowTypes", value = "投标种类（0：车贷标；4、渠道标；1、净值标；3、转让标） 选中则带上相应数字 用,隔开 0,1,3", dataType = "String", required = true)
     private String borrowTypes;
@@ -36,7 +38,9 @@ public class VoAutoTenderInfo extends VoBaseResp {
     private Integer timelimitLast = 0;
 
     @ApiModelProperty(name = "tenderMoney", value = "最大投标金额(分)  mode = 1 必须填写", dataType = "int", required = false)
-    private Double tenderMoney = 0d;
+    private String tenderMoney = "0";
+    @ApiModelProperty(name = "showTenderMoney", value = "最大投标金额(分)  mode = 1 必须填写", dataType = "int", required = false)
+    private String showTenderMoney = "0";
 
     @ApiModelProperty(name = "repayFashions", value = "返款方式（0、按月分期 2、先息后本 1、一次性还本付息） 选中则带上相应数字 用,隔开 例如 0,1", dataType = "String", required = true)
     private String repayFashions;
@@ -48,24 +52,9 @@ public class VoAutoTenderInfo extends VoBaseResp {
     private Integer aprLast;
 
     @ApiModelProperty(name = "saveMoney", value = "账户保留金额（分） 不填写默认0", dataType = "int", required = false)
-    private Double saveMoney = 0d;
+    private String saveMoney = "0";
 
-    public Double getLowest() {
-        return lowest;
-    }
-
-    public void setLowest(Double lowest) {
-        this.lowest = lowest;
-    }
-
-    public Double getTenderMoney() {
-        return tenderMoney;
-    }
-
-
-    public Double getSaveMoney() {
-        return saveMoney;
-    }
-
+    @ApiModelProperty(name = "showSaveMoney", value = "账户保留金额（分） 不填写默认0", dataType = "int", required = false)
+    private String showSaveMoney = "0";
 
 }

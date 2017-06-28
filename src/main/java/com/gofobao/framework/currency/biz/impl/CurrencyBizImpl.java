@@ -1,5 +1,6 @@
 package com.gofobao.framework.currency.biz.impl;
 
+import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.DesLineFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
@@ -122,7 +123,7 @@ public class CurrencyBizImpl implements CurrencyBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> convert(VoConvertCurrencyReq voConvertCurrencyReq) {
+    public ResponseEntity<VoBaseResp> convert(VoConvertCurrencyReq voConvertCurrencyReq) throws Exception {
         Long userId = voConvertCurrencyReq.getUserId();
         Integer currency = voConvertCurrencyReq.getCurrency();
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
@@ -188,11 +189,12 @@ public class CurrencyBizImpl implements CurrencyBiz {
             voucherPayRequest.setTxAmount(StringHelper.formatDouble(currency , 100,false));
             voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
             voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
+            voucherPayRequest.setChannel(ChannelContant.HTML);
             voucherPayRequest.setDesLine("用户广富币兑换");
             VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
             if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
                 String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
+                throw new Exception("广富币兑换异常："+ msg);
             }
         }
         return ResponseEntity.ok(VoBaseResp.ok("广富币兑换成功!"));

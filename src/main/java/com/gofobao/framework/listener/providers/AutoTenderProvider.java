@@ -53,10 +53,17 @@ public class AutoTenderProvider {
             int autoTenderCount = 0; // 中标item
             boolean bool = false;//是否满标
             do {
+
                 pageIndex++;
+                voFindAutoTenderList.setStatus("1");
+                voFindAutoTenderList.setNotUserId(borrow.getUserId());
+                voFindAutoTenderList.setInRepayFashions(countRepayFashions(new Integer[]{borrow.getRepayFashion()}));
                 voFindAutoTenderList.setPageIndex(pageIndex);
                 voFindAutoTenderList.setPageSize(maxSize);
-                voFindAutoTenderList.setBorrowId(borrowId) ;
+                voFindAutoTenderList.setBorrowId(borrowId);
+                Integer apr = borrow.getApr();
+                voFindAutoTenderList.setLtAprFirst(apr);
+                voFindAutoTenderList.setGtAprLast(apr);
                 autoTenderList = autoTenderService.findQualifiedAutoTenders(voFindAutoTenderList);
                 if (CollectionUtils.isEmpty(autoTenderList)) {
                     log.info("自动投标MQ：没有匹配到自动投标规则！");
@@ -147,4 +154,38 @@ public class AutoTenderProvider {
         borrowService.updateById(borrow);
     }
 
+    /**
+     * 计算RepayFashions
+     *
+     * @param repayFashions borrow表的repayFashion字段
+     * @return
+     */
+    private static String countRepayFashions(Integer[] repayFashions) {
+        StringBuffer condition = new StringBuffer();//拼接条件
+        StringBuffer binary = null;
+        String tempStr = "";
+        char[] binaryChar = null;
+        for (int i = 1, len = MathHelper.pow(2, 3); i < len; i++) {
+            binary = new StringBuffer();
+            binaryChar = new char[3];
+            tempStr = Integer.toBinaryString(i) + "";
+            for (int j = 0; j < 3 - tempStr.length(); j++) {
+                binary.append("0");
+            }
+            binary.append(tempStr).reverse();
+
+            Set<Integer> num = new HashSet<>();
+            binary.getChars(0, binary.length(), binaryChar, 0);
+            for (Integer repayFashion : repayFashions) {
+                if (binaryChar[repayFashion] == '1') {
+                    num.add(i);
+                }
+            }
+
+            for (Integer tempNum : num) {
+                condition.append(tempNum).append(",");
+            }
+        }
+        return condition.substring(0, condition.length() - 1);
+    }
 }

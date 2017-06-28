@@ -53,9 +53,18 @@ public class WebIntegralController {
      */
     @ApiOperation(value = "积分兑换")
     @PostMapping(value = "pub/pc/integral/doTakeRates")
-    public ResponseEntity<VoBaseResp> doTakeRates(@Valid @ModelAttribute VoIntegralTakeReq voIntegralTakeReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
+    public ResponseEntity<VoBaseResp> doTakeRates(@Valid @ModelAttribute VoIntegralTakeReq voIntegralTakeReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+
         voIntegralTakeReq.setUserId(userId);
-        return integralBiz.doTakeRates(voIntegralTakeReq);
+        try {
+            return integralBiz.doTakeRates(voIntegralTakeReq);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ResponseEntity
+                .badRequest()
+                .body(VoBaseResp.error(VoBaseResp.ERROR, "积分折现失败!"));
+
     }
 
     /**

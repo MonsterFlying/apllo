@@ -13,9 +13,13 @@ public class BatchCreditInvestReq extends JixinBaseRequest {
      */
     private String batchNo;
     /**
-     * 本批次所有交易笔数
+     * 本批次所有交易金额汇总
      */
     private String txAmount;
+    /**
+     * 本批次所有交易笔数
+     */
+    private String txCounts;
     /**
      * 后台通知URL，“响应参数”返回到该URL，收到后返回“success”
      对数据合法性检查等的通知

@@ -215,6 +215,20 @@ public enum JixinTxCodeEnum {
     ACCOUNT_QUERY_BY_MOBILE(
             "accountQueryByMobile",
             "/escrow/p2p/online"
+    ),
+    /**
+     * 批次撤销
+     */
+    BATCH_CANCEL(
+            "batchCancel",
+            "/escrow/p2p/online"
+    ),
+    /**
+     * 批次撤销
+     */
+    CREDIT_INVEST_QUERY(
+            "creditInvestQuery",
+            "/escrow/p2p/online"
     );
 
     private String value;

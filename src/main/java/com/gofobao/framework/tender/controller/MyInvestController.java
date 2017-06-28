@@ -1,5 +1,6 @@
 package com.gofobao.framework.tender.controller;
 
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.MyInvestBiz;
 import com.gofobao.framework.tender.contants.TenderConstans;
@@ -33,7 +34,7 @@ public class MyInvestController {
     public ResponseEntity<VoViewBackMoneyListWarpRes> backMoneyList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                                     @PathVariable Integer pageIndex,
                                                                     @PathVariable Integer pageSize) {
-        return commonResult(pageIndex, pageSize, userId,TenderConstans.BACK_MONEY);
+        return commonResult(pageIndex, pageSize, userId, TenderConstans.BACK_MONEY);
     }
 
 
@@ -42,7 +43,7 @@ public class MyInvestController {
     public ResponseEntity<VoViewBiddingListWrapRes> biddingList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                                 @PathVariable Integer pageIndex,
                                                                 @PathVariable Integer pageSize) {
-        return commonResult(pageIndex, pageSize, userId,TenderConstans.BIDDING);
+        return commonResult(pageIndex, pageSize, userId, TenderConstans.BIDDING);
     }
 
     @ApiOperation("已结清列表")
@@ -50,13 +51,13 @@ public class MyInvestController {
     public ResponseEntity<VoViewSettleWarpRes> settleList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                           @PathVariable Integer pageIndex,
                                                           @PathVariable Integer pageSize) {
-        return commonResult(pageIndex, pageSize, userId,TenderConstans.SETTLE);
+        return commonResult(pageIndex, pageSize, userId, TenderConstans.SETTLE);
     }
 
     @ApiOperation("投资详情")
     @GetMapping("/v2/tender/detail/{tenderId}")
     public ResponseEntity<VoViewTenderDetailWarpRes> tenderDetail(@PathVariable Long tenderId, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        VoDetailReq voDetailReq=new VoDetailReq();
+        VoDetailReq voDetailReq = new VoDetailReq();
         voDetailReq.setUserId(userId);
         voDetailReq.setTenderId(tenderId);
         return investBiz.tenderDetail(voDetailReq);
@@ -66,30 +67,26 @@ public class MyInvestController {
     @GetMapping("/v2/tender/collection/{tenderId}")
     public ResponseEntity<VoViewReturnMoneyWarpRes> infoList(@PathVariable Long tenderId,
                                                              @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        VoDetailReq voDetailReq=new VoDetailReq();
+        VoDetailReq voDetailReq = new VoDetailReq();
         voDetailReq.setUserId(userId);
         voDetailReq.setTenderId(tenderId);
         return investBiz.infoList(voDetailReq);
     }
 
     private ResponseEntity commonResult(Integer pageIndex, Integer pageSize, Long userId, Integer type) {
-        ResponseEntity responseEntity=null;
-        VoInvestListReq voInvestListReq=new VoInvestListReq();
+        VoInvestListReq voInvestListReq = new VoInvestListReq();
         voInvestListReq.setUserId(userId);
         voInvestListReq.setPageIndex(pageIndex);
         voInvestListReq.setPageSize(pageSize);
         switch (type) {
             case 1:
-                responseEntity = investBiz.biddingList(voInvestListReq);  //投标中
-                break;
+                return investBiz.biddingList(voInvestListReq);  //投标中
             case 2:
-                responseEntity = investBiz.backMoneyList(voInvestListReq);  //回款中
-                break;
+                return investBiz.backMoneyList(voInvestListReq);  //回款中
             case 3:
-                responseEntity = investBiz.settleList(voInvestListReq);  //已结清
-                break;
+                return investBiz.settleList(voInvestListReq);  //已结清
         }
-        return responseEntity;
+        return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewReturnMoneyWarpRes.class));
     }
 
 

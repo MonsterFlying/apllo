@@ -15,8 +15,14 @@ public class LendInfo {
     @ApiModelProperty("剩余金额")
     private String surplusMoney;
 
+    @ApiModelProperty("剩余金额隐藏")
+    private Integer surplusMoneyHide;
+
     @ApiModelProperty("起借金额")
     private String startMoney;
+
+    @ApiModelProperty("起借金额隐藏")
+    private Integer startMoneyHide;
 
     @ApiModelProperty("年华利率")
     private String apr;
@@ -33,8 +39,12 @@ public class LendInfo {
     @ApiModelProperty("净值额度")
     private String equityLimit;
 
+    @ApiModelProperty("净值额度隐藏")
+    private Integer equityLimitHide;
+
     @ApiModelProperty("状态（0、可借；1、结束）")
     private Integer status;
+
 
 
 }

@@ -1,9 +1,9 @@
 package com.gofobao.framework.asset.biz;
 
-import com.gofobao.framework.asset.entity.AssetLog;
 import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.request.VoRechargeReq;
 import com.gofobao.framework.asset.vo.response.*;
+import com.gofobao.framework.asset.vo.response.pc.VoViewAssetLogsWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import org.springframework.http.ResponseEntity;
@@ -112,7 +112,7 @@ public interface AssetBiz {
      * @param voAssetLogReq
      * @return
      */
-    ResponseEntity<AssetLog> pcLogs(VoAssetLogReq voAssetLogReq);
+    ResponseEntity<VoViewAssetLogsWarpRes> pcAssetLogs(VoAssetLogReq voAssetLogReq);
 
     String rechargeShow(HttpServletRequest request, Model model, String seqNo);
 
