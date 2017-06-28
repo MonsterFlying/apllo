@@ -127,17 +127,17 @@ public class LendServiceImpl implements LendService {
             return null;
         }
         LendInfo lendInfo = new LendInfo();
-        lendInfo.setApr(StringHelper.formatMon(lend.getApr() / 100d));
+        lendInfo.setApr(StringHelper.formatMon(lend.getApr() / 100D));
         lendInfo.setId(lend.getId());
         //起投金额
         lendInfo.setStartMoneyHide(lend.getLowest());
-        lendInfo.setStartMoney(StringHelper.formatMon(lend.getLowest() / 100d));
+        lendInfo.setStartMoney(StringHelper.formatMon(lend.getLowest() / 100D));
 
         if (lend.getStatus() == LendContants.STATUS_NO) {
-            lendInfo.setSurplusMoney(StringHelper.formatMon(lend.getMoney() - lend.getMoneyYes()));
+            lendInfo.setSurplusMoney(StringHelper.formatMon((lend.getMoney() - lend.getMoneyYes())/100D));
             lendInfo.setSurplusMoneyHide(lend.getMoney() - lend.getMoneyYes());
         } else {
-            lendInfo.setSurplusMoney(StringHelper.formatMon(lend.getMoney()));
+            lendInfo.setSurplusMoney(StringHelper.formatMon(lend.getMoney()/100D));
             lendInfo.setSurplusMoneyHide(lend.getMoney() );
         }
         if (lend.getTimeLimit() == BorrowContants.REPAY_FASHION_ONCE) {
@@ -164,7 +164,7 @@ public class LendServiceImpl implements LendService {
         Integer waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
         Integer payment = asset.getPayment();
         int netWorthQuota = new Double((useMoney + waitCollectionPrincipal) * 0.8 - payment).intValue();//计算净值额度
-        lendInfo.setEquityLimit(StringHelper.formatMon(netWorthQuota / 100d));
+        lendInfo.setEquityLimit(StringHelper.formatMon(netWorthQuota / 100D));
         lendInfo.setEquityLimitHide(netWorthQuota);
         return lendInfo;
     }
@@ -189,11 +189,11 @@ public class LendServiceImpl implements LendService {
         lendList.stream().forEach(p -> {
             UserLendInfo userLendInfo = new UserLendInfo();
             userLendInfo.setLendId(p.getId());
-            userLendInfo.setApr(StringHelper.formatMon(p.getApr() / 100d));
+            userLendInfo.setApr(StringHelper.formatMon(p.getApr() / 100D));
             userLendInfo.setRepayAt(DateHelper.dateToString(p.getRepayAt()));
-            userLendInfo.setLendMoney(StringHelper.formatMon(p.getMoney() / 100d));
+            userLendInfo.setLendMoney(StringHelper.formatMon(p.getMoney() / 100D));
             userLendInfo.setTitle(p.getTimeLimit() + BorrowContants.DAY + "," + DateHelper.dateToString(p.getCreatedAt()));
-            userLendInfo.setSurplusMoney(StringHelper.formatMon(p.getMoney() - p.getMoneyYes() / 100d));
+            userLendInfo.setSurplusMoney(StringHelper.formatMon(p.getMoney() - p.getMoneyYes() / 100D));
             String statusStr = p.getStatus() == LendContants.STATUS_NO ? LendContants.STATUS_NO_STR : LendContants.STATUS_YES_STR;
             userLendInfo.setStatusStr(statusStr);
             userLendInfo.setStatus(p.getStatus());
