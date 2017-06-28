@@ -77,43 +77,33 @@ public class AutoTenderServiceImpl implements AutoTenderService {
         if (ObjectUtils.isEmpty(borrowId)) {
             return null;
         }
+
+
         Borrow borrow = borrowService.findById(voFindAutoTenderList.getBorrowId());
 
         StringBuffer sql = new StringBuffer("select t.id AS id,t. STATUS AS status,t.user_id AS userId,t.lowest AS lowest,t.borrow_types AS borrowTypes," +
                 "t.repay_fashions AS repayFashions,t.tender_0 AS tender0,t.tender_1 AS tender1,t.tender_3 AS tender3,t.tender_4 AS tender4,t.`mode` AS mode,t.tender_money AS tenderMoney,t.timelimit_first AS timelimitFirst,t.timelimit_last AS timelimitLast,t.timelimit_type AS timelimitType,t.apr_first AS aprFirst,t.apr_last AS aprLast,t.save_money AS saveMoney,t.`order` AS `order`,t.auto_at AS autoAt,t.created_at AS createdAt," +
                 "t.updated_at AS updatedAt,a.use_money AS useMoney,a.no_use_money AS noUseMoney,a.virtual_money AS virtualMoney,a.collection AS collection,a.payment AS payment " +
                 "from gfb_auto_tender t left join gfb_asset a on t.user_id = a.user_id where 1=1 ");
+
+        Integer type = !ObjectUtils.isEmpty(borrow.getTenderId()) ? 3 : borrow.getType();
+        sql.append("and t.tender_"+type+" = 1");
+
         String status = voFindAutoTenderList.getStatus();
         if (!StringUtils.isEmpty(status)) {
             sql.append("and t.status = ").append(status);
         }
-        String userId = voFindAutoTenderList.getUserId();
+        Long userId = voFindAutoTenderList.getUserId();
         if (!StringUtils.isEmpty(userId)) {
             sql.append("and t.user_id = ").append(userId);
         }
-        String notUserId = voFindAutoTenderList.getNotUserId();
+        Long notUserId = voFindAutoTenderList.getNotUserId();
         if (!StringUtils.isEmpty(notUserId)) {
             sql.append("and t.user_id <> ").append(notUserId);
         }
         String inRepayFashions = voFindAutoTenderList.getInRepayFashions();
         if (!StringUtils.isEmpty(inRepayFashions)) {
             sql.append("and t.repay_fashions in (").append(inRepayFashions).append(")");
-        }
-        String tender0 = voFindAutoTenderList.getTender0();
-        if (!StringUtils.isEmpty(tender0)) {
-            sql.append("and t.tender_0 = ").append(tender0);
-        }
-        String tender1 = voFindAutoTenderList.getTender1();
-        if (!StringUtils.isEmpty(tender1)) {
-            sql.append("and t.tender_1 = ").append(tender1);
-        }
-        String tender3 = voFindAutoTenderList.getTender3();
-        if (!StringUtils.isEmpty(tender3)) {
-            sql.append("and t.tender_3 = ").append(tender3);
-        }
-        String tender4 = voFindAutoTenderList.getTender4();
-        if (!StringUtils.isEmpty(tender4)) {
-            sql.append("and t.tender_4 = ").append(tender4);
         }
         String timelimitType = voFindAutoTenderList.getTimelimitType();
         if (!StringUtils.isEmpty(timelimitType)) {
@@ -127,11 +117,11 @@ public class AutoTenderServiceImpl implements AutoTenderService {
         if (!StringUtils.isEmpty(ltTimelimitFirst)) {
             sql.append("and  t.timelimit_first <= ").append(ltTimelimitFirst);
         }
-        String ltAprFirst = voFindAutoTenderList.getLtAprFirst();
+        Integer ltAprFirst = voFindAutoTenderList.getLtAprFirst();
         if (!StringUtils.isEmpty(ltAprFirst)) {
             sql.append("and t.apr_first <= ").append(ltAprFirst);
         }
-        String gtAprLast = voFindAutoTenderList.getGtAprLast();
+        Integer gtAprLast = voFindAutoTenderList.getGtAprLast();
         if (!StringUtils.isEmpty(gtAprLast)) {
             sql.append("and  t.apr_last >= ").append(gtAprLast);
         }
@@ -149,6 +139,8 @@ public class AutoTenderServiceImpl implements AutoTenderService {
 
         return query.getResultList();
     }
+
+
 
     /**
      * 更新自动投标order

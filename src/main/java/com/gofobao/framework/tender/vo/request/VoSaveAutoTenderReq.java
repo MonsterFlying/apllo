@@ -5,6 +5,7 @@ import com.gofobao.framework.tender.contants.AutoTenderContants;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.springframework.util.ObjectUtils;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
@@ -29,7 +30,7 @@ public class VoSaveAutoTenderReq {
     private Boolean status;
 
     @ApiModelProperty(name = "lowest", value = "最低投标金额 分 不填写默认50", required = false)
-    private Double lowest = 50 * 100d;
+    private Integer lowest = 50 * 100;
 
     @ApiModelProperty(name = "borrowTypes", value = "投标种类（0：车贷标；4、渠道标；1、净值标；3、转让标） 选中则带上相应数字 用,隔开 0,1,3", dataType = "String", required = true)
     @NotNull(message = "投标种类不能为空!")
@@ -50,7 +51,7 @@ public class VoSaveAutoTenderReq {
     private Integer timelimitLast = 0;
 
     @ApiModelProperty(name = "tenderMoney", value = "最大投标金额(分) ", required = false)
-    private Double tenderMoney = null;
+    private Integer tenderMoney = null;
 
     @ApiModelProperty(name = "repayFashions", value = "返款方式（0、按月分期 1、一次性还本付息2、先息后本） 选中则带上相应数字 用,隔开 例如 0,1", dataType = "String", required = true)
     @NotNull(message = "返款方式不能为空!")
@@ -68,29 +69,36 @@ public class VoSaveAutoTenderReq {
     private Integer aprLast;
 
     @ApiModelProperty(name = "saveMoney", value = "账户保留金额（分） 不填写默认0", required = false)
-    private Double saveMoney = 0d;
+    private Integer saveMoney = 0;
 
-    public Double getLowest() {
-        return MathHelper.myRound(lowest, 0);
+    public Integer getLowest() {
+        return (int) MathHelper.myRound(lowest, 0);
     }
 
     public void setLowest(Double lowest) {
-        this.lowest = MathHelper.myRound(lowest * 100.0, 0);
+        this.lowest = (int) MathHelper.myRound(lowest * 100.0, 0);
     }
 
-    public Double getTenderMoney() {
-        return MathHelper.myRound(tenderMoney, 0);
+    public Integer getTenderMoney() {
+        if (!ObjectUtils.isEmpty(tenderMoney)) {
+            return (int) MathHelper.myRound(tenderMoney, 0);
+        }
+        return tenderMoney;
     }
 
     public void setTenderMoney(Double tenderMoney) {
-        this.tenderMoney = MathHelper.myRound(tenderMoney * 100.0, 0);
+        this.tenderMoney = (int) MathHelper.myRound(tenderMoney * 100.0, 0);
     }
 
-    public Double getSaveMoney() {
-        return MathHelper.myRound(saveMoney, 0);
+    public Integer getSaveMoney() {
+        if (!ObjectUtils.isEmpty(saveMoney)) {
+            return (int) MathHelper.myRound(saveMoney, 0);
+        }
+        return saveMoney;
     }
 
     public void setSaveMoney(Double saveMoney) {
-        this.saveMoney = MathHelper.myRound(saveMoney * 100.0, 0);
+
+        this.saveMoney = (int) MathHelper.myRound(saveMoney * 100.0, 0);
     }
 }

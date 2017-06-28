@@ -9,17 +9,13 @@ import lombok.Data;
 @Data
 public class VoFindAutoTenderList extends Page{
     private String status;
-    private String userId;
-    private String notUserId;
+    private Long userId;
+    private Long notUserId;
     private String inRepayFashions;
-    private String tender0;
-    private String tender1;
-    private String tender3;
-    private String tender4;
     private String timelimitType;
     private String gtTimelimitLast;
     private String ltTimelimitFirst;
-    private String ltAprFirst;
-    private String gtAprLast;
+    private Integer ltAprFirst;
+    private Integer gtAprLast;
     private Long borrowId;
 }

@@ -83,7 +83,7 @@ public class TransferServiceImpl implements TransferService {
         tenders.stream().forEach(p -> {
             TransferOf transferOf = new TransferOf();
             Borrow borrow = borrowMap.get(p.getBorrowId());
-            if(ObjectUtils.isEmpty(borrow)){
+            if (ObjectUtils.isEmpty(borrow)) {
                 return;
             }
             transferOf.setName(borrow.getName());
@@ -124,7 +124,7 @@ public class TransferServiceImpl implements TransferService {
         tenders.stream().forEach(p -> {
             Transfered transfered = new Transfered();
             Borrow borrow = borrowMap.get(p.getBorrowId());
-            if(ObjectUtils.isEmpty(borrow)){
+            if (ObjectUtils.isEmpty(borrow)) {
                 return;
             }
             transfered.setName(borrow.getName());
@@ -159,15 +159,16 @@ public class TransferServiceImpl implements TransferService {
                 "AND " +
                 "(b.type=0 OR b.type=4) " +
                 "AND " +
-                "exists (select id from gfb_borrow_collection c " +
-                "where " +
-                "c.tender_id = t.id " +
-                "AND " +
-                "t.transfer_flag = 0  " +
-                "AND " +
-                "c.principal > 100000 " +
-                "AND " +
-                "c.status = 0)";
+                "  ( " +
+                " SELECT " +
+                "   SUM(c.principal) " +
+                " FROM " +
+                "  gfb_borrow_collection c " +
+                " WHERE " +
+                "  c.tender_id = t.id " +
+                " AND c.transfer_flag = 0 " +
+                " AND c. STATUS = 0 " +
+                ") >= 100000";
         Query sqlQuery = entityManager.createNativeQuery(sql.toString(), Tender.class);
         sqlQuery.setFirstResult(voTransferReq.getPageIndex());
         sqlQuery.setMaxResults(voTransferReq.getPageSize());
@@ -187,14 +188,14 @@ public class TransferServiceImpl implements TransferService {
         Map<Long, Borrow> borrowMap = borrowList.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
         //投标ID集合
         List<Long> tenderIdArray = tenderList.stream().map(p -> p.getId()).collect(Collectors.toList());
-        List<BorrowCollection>borrowCollections=borrowCollectionRepository.findByTenderIdIn(tenderIdArray);
-        Map<Long,List<BorrowCollection>>borrowCollectionMaps=borrowCollections.stream().collect(groupingBy(BorrowCollection::getTenderId));
+        List<BorrowCollection> borrowCollections = borrowCollectionRepository.findByTenderIdIn(tenderIdArray);
+        Map<Long, List<BorrowCollection>> borrowCollectionMaps = borrowCollections.stream().collect(groupingBy(BorrowCollection::getTenderId));
 
         List<TransferMay> transferMays = Lists.newArrayList();
         tenderList.stream().forEach(p -> {
             TransferMay transferMay = new TransferMay();
             Borrow borrow = borrowMap.get(p.getBorrowId());
-            if(ObjectUtils.isEmpty(borrow)){
+            if (ObjectUtils.isEmpty(borrow)) {
                 return;
             }
             transferMay.setName(borrow.getName());

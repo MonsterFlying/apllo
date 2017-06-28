@@ -121,16 +121,8 @@ public class BorrowProvider {
         boolean bool = false;
         do {
             Date nowDate = DateHelper.subSeconds(new Date(), 10);
-            Integer borrowType = borrow.getType();
-
-            // TODO 判断问题 ?
-            if (  (!ObjectUtils.isEmpty(borrow.getPassword()))
-                    || (borrowType != 0 || borrowType != 1 || borrowType != 4)   && borrow.getApr() < 800) {
-                break;
-            }
 
             //更新借款状态
-            borrow.setIsLock(true);
             borrow.setStatus(1);
             borrow.setVerifyAt(nowDate);
             Date releaseAt = borrow.getReleaseAt();
@@ -139,30 +131,35 @@ public class BorrowProvider {
             }
             borrowService.updateById(borrow);
 
-            Date releaseDate = borrow.getReleaseAt();
-            //====================================
-            //延时投标
-            //====================================
-            if (borrow.getIsNovice()) {//判断是否是新手标
-                Date tempDate = DateHelper.addHours(DateHelper.beginOfDate(new Date()), 20);
-                releaseDate = DateHelper.max(tempDate, releaseDate);
-            }
+            Integer borrowType = borrow.getType();
+            if ((ObjectUtils.isEmpty(borrow.getPassword())) && (borrowType == 0 || borrowType == 1 || borrowType == 4) && borrow.getApr() > 800) { //判断是否要推送到自动投标队列
+                //更新借款状态
+                borrow.setIsLock(true);
+                borrowService.updateById(borrow);
 
+                Date releaseDate = borrow.getReleaseAt();
+                //====================================
+                //延时投标
+                //====================================
+                if (borrow.getIsNovice()) {//判断是否是新手标
+                    Date tempDate = DateHelper.addHours(DateHelper.beginOfDate(new Date()), 20);
+                    releaseDate = DateHelper.max(tempDate, releaseDate);
+                }
 
-            // TODO 为何没有加定时发送
-            //触发自动投标队列
-            MqConfig mqConfig = new MqConfig();
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_AUTO_TENDER);
-            mqConfig.setTag(MqTagEnum.AUTO_TENDER);
-            //  mqConfig.setSendTime(releaseDate);
-            ImmutableMap<String, String> body = ImmutableMap
-                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-            mqConfig.setMsg(body);
-            try {
-                log.info(String.format("borrowProvider autoTender send mq %s", GSON.toJson(body)));
-                mqHelper.convertAndSend(mqConfig);
-            } catch (Exception e) {
-                log.error("borrowProvider autoTender send mq exception", e);
+                //触发自动投标队列
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_AUTO_TENDER);
+                mqConfig.setTag(MqTagEnum.AUTO_TENDER);
+                //mqConfig.setSendTime(releaseDate);
+                ImmutableMap<String, String> body = ImmutableMap
+                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                mqConfig.setMsg(body);
+                try {
+                    log.info(String.format("borrowProvider autoTender send mq %s", GSON.toJson(body)));
+                    mqHelper.convertAndSend(mqConfig);
+                } catch (Exception e) {
+                    log.error("borrowProvider autoTender send mq exception", e);
+                }
             }
             bool = true;
         } while (false);

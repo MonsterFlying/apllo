@@ -42,7 +42,7 @@ public class CapitalChangeHelper {
 
 
     @Transactional(rollbackFor = Exception.class)
-    public boolean capitalChange(CapitalChangeEntity entity) throws Exception {
+    public boolean  capitalChange(CapitalChangeEntity entity) throws Exception {
         if (entity.getUserId() <= 0) {
             return false;
         }
@@ -74,7 +74,7 @@ public class CapitalChangeHelper {
             capitalChangeConfig.setAssetChangeRule(assetStr);
         }
 
-        long userId = entity.getUserId();
+        Long userId = entity.getUserId();
         Asset asset = assetService.findByUserIdLock(userId);
         UserCache userCache = userCacheService.findByUserIdLock(userId);
 

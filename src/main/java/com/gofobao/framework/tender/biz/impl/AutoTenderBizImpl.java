@@ -10,17 +10,19 @@ import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.vo.request.VoDelAutoTenderReq;
+import com.gofobao.framework.tender.vo.request.VoGetAutoTenderList;
 import com.gofobao.framework.tender.vo.request.VoOpenAutoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoSaveAutoTenderReq;
-import com.gofobao.framework.tender.vo.response.UserAutoTender;
-import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
-import com.gofobao.framework.tender.vo.response.VoViewUserAutoTenderWarpRes;
+import com.gofobao.framework.tender.vo.response.*;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -28,10 +30,7 @@ import org.springframework.util.Base64Utils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Zeke on 2017/5/27.
@@ -42,6 +41,8 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
     private AutoTenderService autoTenderService;
     @Autowired
     private ThymeleafHelper thymeleafHelper;
+
+    final Gson gson = new GsonBuilder().create();
 
     @Override
     public ResponseEntity<VoViewUserAutoTenderWarpRes> list(Long userId) {
@@ -116,9 +117,10 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
                 .build();
         List<AutoTender> autoTenderList = autoTenderService.findList(atSpecification);
         if (autoTenderList.size() == 1) {
+            AutoTender targetAutoTender = getSaveAutoTender(voSaveAutoTenderReq);
             AutoTender autoTender = autoTenderList.get(0);
             autoTender.setUpdatedAt(new Date());
-            BeanHelper.copyParamter(voSaveAutoTenderReq, autoTender, true);
+            BeanHelper.copyParamter(targetAutoTender, autoTender, true);
             autoTenderService.updateById(autoTender);
         }
 
@@ -133,13 +135,13 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
      */
     private ResponseEntity<VoBaseResp> verifySaveAutoTender(VoSaveAutoTenderReq voSaveAutoTenderReq) {
 
-        Double tenderMoney = voSaveAutoTenderReq.getTenderMoney();
+        Integer tenderMoney = voSaveAutoTenderReq.getTenderMoney();
         if (ObjectUtils.isEmpty(tenderMoney)) {
             voSaveAutoTenderReq.setMode(0);
             voSaveAutoTenderReq.setTenderMoney(0d);
         } else {
             voSaveAutoTenderReq.setMode(1);
-            voSaveAutoTenderReq.setTenderMoney(tenderMoney);
+            voSaveAutoTenderReq.setTenderMoney((double) tenderMoney);
         }
 
         Integer mode = voSaveAutoTenderReq.getMode();
@@ -362,7 +364,8 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
         }
 
         voAutoTenderInfo.setId(autoTender.getId());
-        voAutoTenderInfo.setLowest(NumberHelper.toDouble(autoTender.getLowest()));
+        voAutoTenderInfo.setLowest(StringHelper.formatDouble(autoTender.getLowest(), 100.0, false));
+        voAutoTenderInfo.setShowLowest(StringHelper.formatDouble(autoTender.getLowest(), 100.0, true));
         voAutoTenderInfo.setMode(autoTender.getMode());
         Integer repayFashions = autoTender.getRepayFashions();  // 投标类型
 
@@ -380,9 +383,11 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
             voAutoTenderInfo.setRepayFashions("");
         }
 
-        voAutoTenderInfo.setSaveMoney(NumberHelper.toDouble(autoTender.getSaveMoney()));
+        voAutoTenderInfo.setSaveMoney(StringHelper.formatDouble(autoTender.getSaveMoney(), 100.0, false));
+        voAutoTenderInfo.setShowSaveMoney(StringHelper.formatDouble(autoTender.getSaveMoney(), 100.0, true));
         voAutoTenderInfo.setStatus(autoTender.getStatus());
-        voAutoTenderInfo.setTenderMoney(NumberHelper.toDouble(autoTender.getTenderMoney()));
+        voAutoTenderInfo.setTenderMoney(StringHelper.formatDouble(autoTender.getTenderMoney(), 100.0, false));
+        voAutoTenderInfo.setShowTenderMoney(StringHelper.formatDouble(autoTender.getTenderMoney(), 100.0, true));
         voAutoTenderInfo.setTimelimitType(autoTender.getTimelimitType());
         voAutoTenderInfo.setTimelimitFirst(autoTender.getTimelimitFirst());
         voAutoTenderInfo.setTimelimitLast(autoTender.getTimelimitLast());
@@ -398,9 +403,49 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
      */
     public ResponseEntity<VoHtmlResp> autoTenderDesc() {
         Map<String, Object> paranMap = new HashMap<>();
-        String content = thymeleafHelper.build("tender/autoTender", paranMap);
+        String content = thymeleafHelper.build("autoTender/autoTender", paranMap);
         VoHtmlResp resp = VoHtmlResp.ok("获取成功!", VoHtmlResp.class);
-        resp.setHtml(Base64Utils.encodeToString(content.getBytes()));
+        resp.setHtml(content);
         return ResponseEntity.ok(resp);
     }
+
+    /**
+     * 获取自动投标列表
+     *
+     * @param voGetAutoTenderList
+     * @return
+     * @throws Exception
+     */
+    public ResponseEntity<VoViewAutoTenderList> getAutoTenderList(VoGetAutoTenderList voGetAutoTenderList) throws Exception {
+        VoViewAutoTenderList voViewAutoTenderList = new VoViewAutoTenderList();
+        List<VoAutoTender> voAutoTenderList = new ArrayList<>();
+        int pageIndex = voGetAutoTenderList.getPageIndex();
+        int pageSize = voGetAutoTenderList.getPageSize();
+        do {
+            Specification<AutoTender> ats = Specifications
+                    .<AutoTender>and()
+                    .eq("userId", voGetAutoTenderList.getUserId())
+                    .build();
+            Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(Sort.Direction.ASC, "autoAt"));
+
+            List<AutoTender> autoTenderList = autoTenderService.findList(ats, pageable);
+            if (CollectionUtils.isEmpty(autoTenderList)) {
+                break;
+            }
+
+            voAutoTenderList = gson.fromJson(gson.toJson(autoTenderList), new TypeToken<List<VoAutoTender>>() {
+            }.getType());
+            if (CollectionUtils.isEmpty(voAutoTenderList)) {
+                break;
+            }
+
+            Date nowDate = new Date();
+            for (VoAutoTender tempVoAutoTender : voAutoTenderList) {
+                tempVoAutoTender.setQueueDays(DateHelper.diffInDays(nowDate, tempVoAutoTender.getAutoAt(), true));
+            }
+        } while (false);
+        voViewAutoTenderList.setAutoTenderList(voAutoTenderList);
+        return ResponseEntity.ok(voViewAutoTenderList);
+    }
+
 }
