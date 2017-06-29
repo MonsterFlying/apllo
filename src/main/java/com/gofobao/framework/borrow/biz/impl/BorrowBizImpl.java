@@ -520,6 +520,22 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "只有借款标过期或者本人才能取消借款!"));
         }
 
+        //================================即信取消标的==================================
+        ResponseEntity<VoBaseResp> resp = null;
+        String productId = borrow.getProductId();
+        if (!StringUtils.isEmpty(productId)) {
+            VoCancelThirdBorrow voCancelThirdBorrow = new VoCancelThirdBorrow();
+            voCancelThirdBorrow.setProductId(productId);
+            voCancelThirdBorrow.setUserId(borrow.getUserId());
+            voCancelThirdBorrow.setAcqRes(StringHelper.toString(borrowId));
+            voCancelThirdBorrow.setRaiseDate(DateHelper.dateToString(borrow.getReleaseAt(), DateHelper.DATE_FORMAT_YMD_NUM));
+            resp = borrowThirdBiz.cancelThirdBorrow(voCancelThirdBorrow);
+            if (!ObjectUtils.isEmpty(resp)) {
+                return resp;
+            }
+        }
+        //==============================================================================
+
         Specification<Tender> borrowSpecification = Specifications
                 .<Tender>and()
                 .eq("status", 1)
