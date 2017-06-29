@@ -2,25 +2,15 @@ package com.gofobao.framework.award.service.impl;
 
 import com.gofobao.framework.award.contants.RedPacketContants;
 import com.gofobao.framework.award.entity.ActivityRedPacket;
-import com.gofobao.framework.award.entity.ActivityRedPacketLog;
 import com.gofobao.framework.award.repository.RedPackageLogRepository;
 import com.gofobao.framework.award.repository.RedPackageRepository;
 import com.gofobao.framework.award.service.RedPackageService;
 import com.gofobao.framework.award.vo.request.VoOpenRedPackageReq;
 import com.gofobao.framework.award.vo.request.VoRedPackageReq;
-import com.gofobao.framework.award.vo.response.OpenRedPackage;
 import com.gofobao.framework.award.vo.response.RedPackageRes;
-import com.gofobao.framework.common.capital.CapitalChangeEntity;
-import com.gofobao.framework.common.capital.CapitalChangeEnum;
-import com.gofobao.framework.common.constans.TypeTokenContants;
-import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
-import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
-import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.helper.project.CapitalChangeHelper;
-import com.gofobao.framework.system.entity.Notices;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,9 +27,6 @@ import javax.persistence.TypedQuery;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-
-import static com.gofobao.framework.listener.providers.NoticesMessageProvider.GSON;
 
 /**
  * Created by admin on 2017/6/7.
