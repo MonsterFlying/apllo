@@ -10,14 +10,16 @@ import com.gofobao.framework.tender.repository.AutoTenderRepository;
 import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.vo.VoFindAutoTenderList;
 import com.gofobao.framework.tender.vo.response.UserAutoTender;
+import com.gofobao.framework.tender.vo.response.VoFindAutoTender;
 import com.google.common.collect.Lists;
+import org.hibernate.SQLQuery;
+import org.hibernate.transform.Transformers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -73,7 +75,7 @@ public class AutoTenderServiceImpl implements AutoTenderService {
         return true;
     }
 
-    public List<Map<String, Object>> findQualifiedAutoTenders(VoFindAutoTenderList voFindAutoTenderList) {
+    public List<VoFindAutoTender> findQualifiedAutoTenders(VoFindAutoTenderList voFindAutoTenderList) {
         Long borrowId = voFindAutoTenderList.getBorrowId();
         if (ObjectUtils.isEmpty(borrowId)) {
             return null;
@@ -88,46 +90,46 @@ public class AutoTenderServiceImpl implements AutoTenderService {
                 "from gfb_auto_tender t left join gfb_asset a on t.user_id = a.user_id where 1=1 ");
 
         Integer type = !ObjectUtils.isEmpty(borrow.getTenderId()) ? 3 : borrow.getType();
-        sql.append("and t.tender_"+type+" = 1");
+        sql.append(" and t.tender_" + type + " = 1");
 
         String status = voFindAutoTenderList.getStatus();
         if (!StringUtils.isEmpty(status)) {
-            sql.append("and t.status = ").append(status);
+            sql.append(" and t.status = ").append(status);
         }
         Long userId = voFindAutoTenderList.getUserId();
         if (!StringUtils.isEmpty(userId)) {
-            sql.append("and t.user_id = ").append(userId);
+            sql.append(" and t.user_id = ").append(userId);
         }
         Long notUserId = voFindAutoTenderList.getNotUserId();
         if (!StringUtils.isEmpty(notUserId)) {
-            sql.append("and t.user_id <> ").append(notUserId);
+            sql.append(" and t.user_id <> ").append(notUserId);
         }
         String inRepayFashions = voFindAutoTenderList.getInRepayFashions();
         if (!StringUtils.isEmpty(inRepayFashions)) {
-            sql.append("and t.repay_fashions in (").append(inRepayFashions).append(")");
+            sql.append(" and t.repay_fashions in (").append(inRepayFashions).append(")");
         }
         String timelimitType = voFindAutoTenderList.getTimelimitType();
         if (!StringUtils.isEmpty(timelimitType)) {
-            sql.append("and t.timelimit_type = ").append(timelimitType);
+            sql.append(" and t.timelimit_type = ").append(timelimitType);
         }
         String gtTimelimitLast = voFindAutoTenderList.getGtTimelimitLast();
         if (!StringUtils.isEmpty(gtTimelimitLast)) {
-            sql.append("and t.timelimit_last >= ").append(gtTimelimitLast);
+            sql.append(" and t.timelimit_last >= ").append(gtTimelimitLast);
         }
         String ltTimelimitFirst = voFindAutoTenderList.getLtTimelimitFirst();
         if (!StringUtils.isEmpty(ltTimelimitFirst)) {
-            sql.append("and  t.timelimit_first <= ").append(ltTimelimitFirst);
+            sql.append(" and  t.timelimit_first <= ").append(ltTimelimitFirst);
         }
         Integer ltAprFirst = voFindAutoTenderList.getLtAprFirst();
         if (!StringUtils.isEmpty(ltAprFirst)) {
-            sql.append("and t.apr_first <= ").append(ltAprFirst);
+            sql.append(" and t.apr_first <= ").append(ltAprFirst);
         }
         Integer gtAprLast = voFindAutoTenderList.getGtAprLast();
         if (!StringUtils.isEmpty(gtAprLast)) {
-            sql.append("and  t.apr_last >= ").append(gtAprLast);
+            sql.append(" and  t.apr_last >= ").append(gtAprLast);
         }
-        sql.append("and (t.timelimit_type = 0 or ");
-        sql.append("(t.timelimit_type = " + (borrow.getRepayFashion() == 1 ? 2 : 1));
+        sql.append(" and (t.timelimit_type = 0 or ");
+        sql.append(" (t.timelimit_type = " + (borrow.getRepayFashion() == 1 ? 2 : 1));
         sql.append(" and t.timelimit_first <= " + borrow.getTimeLimit());
         sql.append(" and t.timelimit_last >= " + borrow.getTimeLimit() + " ))");
         //排序
@@ -136,11 +138,10 @@ public class AutoTenderServiceImpl implements AutoTenderService {
         Integer pageIndex = voFindAutoTenderList.getPageIndex();
         Integer pageSize = voFindAutoTenderList.getPageSize();
         sql.append(" limit ").append(pageIndex * pageSize).append(",").append(pageSize);
-        Query query = entityManager.createNativeQuery(sql.toString(), Map.class);
-
+        Query query = entityManager.createNativeQuery(sql.toString());
+        query.unwrap(SQLQuery.class).setResultTransformer(Transformers.aliasToBean(VoFindAutoTender.class));
         return query.getResultList();
     }
-
 
 
     /**
@@ -149,8 +150,8 @@ public class AutoTenderServiceImpl implements AutoTenderService {
      * @return
      */
     public boolean updateAutoTenderOrder() {
-        StringBuffer sql = new StringBuffer("UPDATE gfb_auto_tender t1, ( SELECT id, @rownum := @rownum + 1 AS listorder FROM" +
-                " gfb_auto_tender t2, ( SELECT @rownum :=0 )t3  ORDER BY t2.auto_at ASC, t2.order ASC ) t4  SET t1.`order` = t4.listorder WHERE t1.id = t4.id");
+        StringBuffer sql = new StringBuffer("UPDATE gfb_auto_tender t1,(SELECT id,@rownum:=@rownum+1 AS listorder FROM" +
+                " gfb_auto_tender t2, (SELECT @rownum:=0)t3  ORDER BY t2.auto_at ASC, t2.order ASC ) t4  SET t1.`order` = t4.listorder WHERE t1.id = t4.id");
         Query query = entityManager.createNativeQuery(sql.toString());
         return query.executeUpdate() > 0;
     }

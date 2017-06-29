@@ -189,18 +189,18 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         UserThirdAccount tenderUserThirdAccount = null;
         int sumCount = 0;
         int validMoney = 0;
-        String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
         for (Tender tender : tenderList) {
             tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
             validMoney = tender.getValidMoney();
             sumCount += validMoney;
 
+            String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
             creditInvest = new CreditInvest();
             creditInvest.setAccountId(tenderUserThirdAccount.getAccountId());
             creditInvest.setOrderId(transferOrderId);
             creditInvest.setTxAmount(StringHelper.formatDouble(validMoney, 100, false));
             creditInvest.setTxFee("0");
-            creditInvest.setTsfAmount(StringHelper.formatDouble(borrow.getMoney(), 100, false));
+            creditInvest.setTsfAmount(StringHelper.formatDouble(validMoney, 100, false));
             creditInvest.setForAccountId(borrowUserThirdAccount.getAccountId());
             creditInvest.setOrgOrderId(oldTender.getThirdTenderOrderId());
             creditInvest.setOrgTxAmount(StringHelper.formatDouble(oldTender.getValidMoney(), 100, false));

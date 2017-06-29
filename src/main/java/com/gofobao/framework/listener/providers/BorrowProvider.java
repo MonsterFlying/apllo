@@ -280,17 +280,7 @@ public class BorrowProvider {
         ResponseEntity<VoBaseResp> resp = null;
         String productId = borrow.getProductId();
 
-        VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
-        voQueryThirdBorrowList.setProductId(productId);
-        voQueryThirdBorrowList.setUserId(borrow.getUserId());
-        voQueryThirdBorrowList.setPageNum("1");
-        voQueryThirdBorrowList.setPageSize("10");
-        DebtDetailsQueryResp response = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
-
-        List<DebtDetail> debtDetailList = GSON.fromJson(response.getSubPacks(), new TypeToken<List<DebtDetail>>() {
-        }.getType());
-
-        if (debtDetailList.size() < 1) {
+        if (ObjectUtils.isEmpty(productId)) {
             //标的登记
             int type = borrow.getType();
             if (type != 0 && type != 4) { //判断是否是官标、官标不需要在这里登记标的

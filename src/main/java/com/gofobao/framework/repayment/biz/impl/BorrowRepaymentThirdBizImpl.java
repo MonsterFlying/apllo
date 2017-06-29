@@ -646,10 +646,10 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             try {
                 bool = borrowBiz.notTransferedBorrowAgainVerify(borrow);
             } catch (Exception e) {
-                log.error("非流转标复审异常:", e);
+                log.error("即信批次放款异常:", e);
             }
             if (bool) {
-                log.info("非流转标复审成功!");
+                log.info("即信批次放款成功!");
             }
         } else {
             log.info("非流转标复审失败!");
