@@ -629,7 +629,7 @@ public class BorrowBizImpl implements BorrowBiz {
         //检查标的是否登记
         VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
         voQueryThirdBorrowList.setBorrowId(borrowId);
-        voQueryThirdBorrowList.setUserId(borrowId);
+        voQueryThirdBorrowList.setUserId(borrow.getUserId());
         voQueryThirdBorrowList.setPageNum("1");
         voQueryThirdBorrowList.setPageSize("10");
         DebtDetailsQueryResp response = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
