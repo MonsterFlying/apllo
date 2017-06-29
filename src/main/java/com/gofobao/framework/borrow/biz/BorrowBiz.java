@@ -1,6 +1,5 @@
 package com.gofobao.framework.borrow.biz;
 
-import com.gofobao.framework.api.model.batch_credit_invest.CreditInvestRun;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.vo.request.*;
 import com.gofobao.framework.borrow.vo.response.*;
@@ -8,7 +7,6 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import org.springframework.http.ResponseEntity;
 
-import java.util.List;
 import java.util.Map;
 
 /**

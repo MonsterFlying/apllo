@@ -49,7 +49,8 @@ public class VirtualController {
 
     @ApiOperation("体验金投标")
     @PostMapping("virtual/v2/createTender")
-    public ResponseEntity<VoBaseResp> createTender(@ModelAttribute VoVirtualReq voVirtualReq) {
+    public ResponseEntity<VoBaseResp> createTender(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,@ModelAttribute VoVirtualReq voVirtualReq) {
+        voVirtualReq.setUserId(userId);
         return virtualBiz.createTender(voVirtualReq);
     }
 

@@ -127,7 +127,7 @@ public class BorrowServiceImpl implements BorrowService {
         Query pageQuery = entityManager.createQuery(pageSb.append(condtionSql).toString(), Borrow.class);
         pageQuery.setParameter("statusArray", statusArray);
         List<Borrow> borrowLists = pageQuery
-                .setFirstResult(voBorrowListReq.getPageIndex())
+                .setFirstResult(voBorrowListReq.getPageIndex()*voBorrowListReq.getPageSize())
                 .setMaxResults(voBorrowListReq.getPageSize())
                 .getResultList();
 

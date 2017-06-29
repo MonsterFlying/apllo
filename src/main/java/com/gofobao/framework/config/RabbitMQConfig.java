@@ -47,6 +47,13 @@ public class RabbitMQConfig {
         return new Queue(MqQueueEnum.RABBITMQ_USER_ACTIVE.getValue(), true);
     }
 
+    @Bean
+    public Queue redPackageRabbitmq() {
+        return new Queue(MqQueueEnum.RABBITMQ_RED_PACKAGE.getValue(), true);
+    }
+
+
+
 
     @Bean
     DirectExchange delayExchange() {
@@ -88,6 +95,12 @@ public class RabbitMQConfig {
     Binding userActiveRabbitmqBinding(Queue userActiveRabbitmq, Exchange delayExchange) {
         return BindingBuilder.bind(userActiveRabbitmq).to(delayExchange).with(MqQueueEnum.RABBITMQ_USER_ACTIVE.getValue()).noargs();
     }
+
+    @Bean
+    Binding redPackageRabbitmqBinding(Queue redPackageRabbitmq, Exchange delayExchange) {
+        return BindingBuilder.bind(redPackageRabbitmq).to(delayExchange).with(MqQueueEnum.RABBITMQ_RED_PACKAGE.getValue()).noargs();
+    }
+
 
 
 }

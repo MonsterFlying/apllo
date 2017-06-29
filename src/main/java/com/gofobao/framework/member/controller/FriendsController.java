@@ -51,13 +51,13 @@ public class FriendsController {
         return brokerBounsBiz.list(voFriendsReq);
     }
 
-    @ApiOperation("邀请好友列表")
+    @ApiOperation("邀请统计")
     @GetMapping("v2/statistic")
     public ResponseEntity<VoViewInviteAwardStatisticsWarpRes> statistic(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return brokerBounsBiz.statistic(userId);
     }
 
-    @ApiOperation("邀请好友列表")
+    @ApiOperation("邀请好友投标列表")
     @GetMapping("v2/first/tender/list")
     public ResponseEntity<VoViewFriendsTenderInfoWarpRes> firstTenderList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                                           @ModelAttribute VoFriendsReq voFriendsReq) {

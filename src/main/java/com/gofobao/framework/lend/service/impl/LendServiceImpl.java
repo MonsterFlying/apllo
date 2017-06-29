@@ -87,11 +87,13 @@ public class LendServiceImpl implements LendService {
         if (CollectionUtils.isEmpty(lendList)) {
             return Collections.EMPTY_LIST;
         }
-        Set<Long> userIds = lendList.stream().map(w -> w.getUserId()).collect(Collectors.toSet());
+        Set<Long> userIds = lendList.stream()
+                .map(w -> w.getUserId())
+                .collect(Collectors.toSet());
         List<Users> usersList = usersRepository.findByIdIn(new ArrayList(userIds));
 
-        Map<Long, Users> usersMap = usersList.stream().collect(Collectors
-                .toMap(Users::getId, Function.identity()));
+        Map<Long, Users> usersMap = usersList.stream()
+                .collect(Collectors.toMap(Users::getId, Function.identity()));
         List<VoViewLend> lendListRes = Lists.newArrayList();
         lendList.stream().forEach(p -> {
             VoViewLend lend = new VoViewLend();
@@ -148,7 +150,7 @@ public class LendServiceImpl implements LendService {
         lendInfo.setCollectionAt(DateHelper.dateToString(lend.getRepayAt()));
 
         Users users = usersRepository.findOne(userId);
-        lendInfo.setUserName(StringUtils.isEmpty(users.getUsername()) ? users.getPhone() : users.getUsername());
+        lendInfo.setUserName(StringUtils.isEmpty(users.getUsername()) ? UserHelper.hideChar(users.getPhone(),UserHelper.PHONE_NUM): UserHelper.hideChar(users.getUsername(),UserHelper.USERNAME_NUM));
         Asset asset = assetService.findByUserId(userId); //查询会员资产信息
         if (ObjectUtils.isEmpty(asset)) {
             return null;
