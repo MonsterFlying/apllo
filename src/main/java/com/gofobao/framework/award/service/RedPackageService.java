@@ -1,8 +1,8 @@
 package com.gofobao.framework.award.service;
 
+import com.gofobao.framework.award.entity.ActivityRedPacket;
 import com.gofobao.framework.award.vo.request.VoOpenRedPackageReq;
 import com.gofobao.framework.award.vo.request.VoRedPackageReq;
-import com.gofobao.framework.award.vo.response.OpenRedPackage;
 import com.gofobao.framework.award.vo.response.RedPackageRes;
 
 import java.util.List;
@@ -24,5 +24,5 @@ public interface RedPackageService {
      * @param voOpenRedPackageReq
      * @return
      */
-    OpenRedPackage openRedPackage(VoOpenRedPackageReq voOpenRedPackageReq);
+    List<ActivityRedPacket> openRedPackage(VoOpenRedPackageReq voOpenRedPackageReq);
 }

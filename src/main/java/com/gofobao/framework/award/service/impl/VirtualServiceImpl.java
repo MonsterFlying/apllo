@@ -92,8 +92,9 @@ public class VirtualServiceImpl implements VirtualService {
         }
         List<AssetLog> assetLogs = assetLogRepository.findByUserIdAndTypeIs(userId, AssetTypeContants.VIRTUAL_TENDER);
         //可用
-        virtualStatistics.setAvailable(asset.getVirtualMoney() / 100d);
+        virtualStatistics.setAvailable(asset.getVirtualMoney() / 100D);
         //已用
+
         virtualStatistics.setUsed(assetLogs.stream().mapToInt(m -> m.getMoney()).sum() / 100d);
 
         List<VirtualTender> virtualTenders = virtualTenderRepository.findByUserIdAndStatusIs(userId, VirtualTenderContants.VIRTUALTENDERSUCCESS);
@@ -128,7 +129,7 @@ public class VirtualServiceImpl implements VirtualService {
         List<VirtualTenderRes> virtualTenderRes = Lists.newArrayList();
         assetLogs.stream().forEach(p -> {
             VirtualTenderRes item = new VirtualTenderRes();
-            item.setMoney(StringHelper.toString(p.getVirtualMoney() / 100d));
+            item.setMoney(StringHelper.toString(p.getMoney() / 100d));
             item.setRemark(p.getRemark());
             item.setTime(DateHelper.dateToString(p.getCreatedAt()));
             virtualTenderRes.add(item);
@@ -151,6 +152,7 @@ public class VirtualServiceImpl implements VirtualService {
             borrowRes.setApr(StringHelper.toString(p.getApr() / 100));
             borrowRes.setName(p.getName());
             borrowRes.setRepayFashion("一次性还本付息");
+            borrowRes.setTime(DateHelper.dateToString(p.getCreatedAt()));
             virtualBorrowRes.add(borrowRes);
         });
         return Optional.ofNullable(virtualBorrowRes).orElse(Collections.EMPTY_LIST);
@@ -165,11 +167,8 @@ public class VirtualServiceImpl implements VirtualService {
             return false;
         }
         Specification specification = Specifications.<Asset>and()
-                .ge(Objects.nonNull(
-                        borrowVirtual.getLowest()),
-                        "virtualMoney",
-                        borrowVirtual.getLowest())
                 .eq("userId", voVirtualReq.getUserId())
+                .ge("virtualMoney", borrowVirtual.getLowest())
                 .build();
         Asset asset = assetRepository.findOne(specification);
         if (ObjectUtils.isEmpty(asset)) {
@@ -252,7 +251,7 @@ public class VirtualServiceImpl implements VirtualService {
         List<Coupon> couponList = couponRepository.findAll(specification);
         awardStatistics.setCouponCount(couponList.size());
         Asset asset = assetRepository.findOne(userId);
-        awardStatistics.setVirtualMoney(StringHelper.formatMon(asset.getVirtualMoney()));
+        awardStatistics.setVirtualMoney(asset.getVirtualMoney()/100d);
         return awardStatistics;
     }
 }

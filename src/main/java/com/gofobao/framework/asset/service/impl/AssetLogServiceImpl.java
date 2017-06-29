@@ -7,6 +7,7 @@ import com.gofobao.framework.asset.service.AssetLogService;
 import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.response.VoViewAssetLogRes;
 import com.gofobao.framework.asset.vo.response.pc.AssetLogs;
+import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.google.common.collect.Lists;
@@ -50,7 +51,7 @@ public class AssetLogServiceImpl implements AssetLogService {
         assetLogs.stream().forEach(p -> {
             VoViewAssetLogRes viewAssetLogRes = new VoViewAssetLogRes();
             viewAssetLogRes.setMoney(StringHelper.formatMon(p.getMoney() / 100d));
-            viewAssetLogRes.setType(p.getType());
+            viewAssetLogRes.setTypeName(getAssetTypeStr(p.getType()));
             viewAssetLogRes.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
             voViewAssetLogRes.add(viewAssetLogRes);
         });
@@ -108,4 +109,113 @@ public class AssetLogServiceImpl implements AssetLogService {
     public void updateById(AssetLog assetLog) {
         assetLogRepository.save(assetLog);
     }
+
+
+    /**
+     * 获取资产类型字符串
+     *
+     * @return
+     */
+    private static String getAssetTypeStr(String assetType) {
+
+        if (StringUtils.isEmpty(assetType)) {
+            return "";
+        }
+
+        String[] strArr = assetType.split("_");
+        StringBuffer stringBuffer = new StringBuffer();
+        StringBuffer tempBuff = null;
+        for (String str : strArr) {
+            tempBuff = new StringBuffer(str);
+            tempBuff.setCharAt(0, Character.toUpperCase(str.charAt(0)));
+            stringBuffer.append(tempBuff);
+        }
+
+        assetType = stringBuffer.toString();
+        String rs = "";
+        switch (CapitalChangeEnum.valueOf(assetType)) {
+            case Award:
+                rs = "奖励";
+                break;
+            case Bonus:
+                rs = "提成";
+                break;
+            case AwardVirtualMoney:
+                rs = "赠送体验金";
+                break;
+            case Borrow:
+                rs = "借款";
+                break;
+            case Cash:
+                rs = "提现";
+                break;
+            case CollectionAdd:
+                rs = "添加代收";
+                break;
+            case CollectionLower:
+                rs = "扣除待收";
+                break;
+            case Correct:
+                rs = "数据修正";
+                break;
+            case ExpenditureOther:
+                rs = "其他支出";
+                break;
+            case Fee:
+                rs = "费用";
+                break;
+            case Frozen:
+                rs = "冻结资金";
+                break;
+            case IncomeOther:
+                rs = "其他收入";
+                break;
+            case IncomeOverdue:
+                rs = "收到逾期费";
+                break;
+            case IncomeRepayment:
+                rs = "回款";
+                break;
+            case IntegralCash:
+                rs = "积分折现";
+                break;
+            case InterestManager:
+                rs = "利息管理费";
+                break;
+            case Manager:
+                rs = "账户管理费";
+                break;
+            case Overdue:
+                rs = "逾期费";
+                break;
+            case PaymentAdd:
+                rs = "添加待还";
+                break;
+            case PaymentLower:
+                rs = "扣除待还";
+                break;
+            case Recharge:
+                rs = "充值";
+                break;
+            case Repayment:
+                rs = "还款";
+                break;
+            case Tender:
+                rs = "投标";
+                break;
+            case Unfrozen:
+                rs = "解除冻结";
+                break;
+            case RedPackage:
+                rs = "奖励红包";
+                break;
+            case VirtualTender:
+                rs = "投资体验标";
+                break;
+            default:
+        }
+
+        return rs;
+    }
+
 }

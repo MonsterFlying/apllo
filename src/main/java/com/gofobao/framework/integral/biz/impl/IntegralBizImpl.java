@@ -11,6 +11,7 @@ import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -66,6 +67,10 @@ public class IntegralBizImpl implements IntegralBiz {
 
     @Value(value = "${jixin.redPacketAccountId}")
     private String redPacketAccountId; //存管红包账户
+
+    @Autowired
+    private MqHelper mqHelper;
+
 
     private static Map<String, String> integralTypeMap = new HashMap<>();
 
@@ -207,10 +212,11 @@ public class IntegralBizImpl implements IntegralBiz {
         }
 
         Integer collection = asset.getCollection();
-        String takeRatesStr = getTakeRates(collection, useIntegral, integralRule);
+        Integer sumIntegral=useIntegral+integral.getNoUseIntegral();
+        String takeRatesStr = getTakeRates(collection, sumIntegral, integralRule);
         double takeRates = Double.parseDouble(takeRatesStr);//折现系数
         long money = Math.round(takeRates * integer);  // 可兑换金额
-
+        //资金变动
         CapitalChangeEntity capitalChangeEntity = new CapitalChangeEntity();
         capitalChangeEntity.setType(CapitalChangeEnum.IntegralCash);
         capitalChangeEntity.setMoney((int) money);

@@ -10,8 +10,8 @@ public enum MqQueueEnum {
     RABBITMQ_NOTICE(MqQueueEnumContants.RABBITMQ_NOTICE) ,
     RABBITMQ_BORROW(MqQueueEnumContants.RABBITMQ_BORROW) ,
     RABBITMQ_USER_ACTIVE(MqQueueEnumContants.RABBITMQ_USER_ACTIVE) ,
-    RABBITMQ_ACTIVITY(MqQueueEnumContants.RABBITMQ_ACTIVITY) ;
-
+    RABBITMQ_ACTIVITY(MqQueueEnumContants.RABBITMQ_ACTIVITY) ,
+    RABBITMQ_RED_PACKAGE(MqQueueEnumContants.RABBITMQ_RED_PACKAGE)  ;
     private String value ;
 
     MqQueueEnum(String value) {

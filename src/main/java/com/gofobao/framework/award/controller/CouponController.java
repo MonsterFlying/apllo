@@ -49,11 +49,10 @@ public class CouponController {
     }
 
     @ApiOperation("流量劵兑换")
-    @PostMapping("coupon/v2/takeFlow/{userId}/{couponId}")
+    @PostMapping("coupon/v2/takeFlow")
     public ResponseEntity<VoBaseResp> takeFlow(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                @ModelAttribute VoTakeFlowReq takeFlowReq) {
         takeFlowReq.setUserId(userId);
-
         return couponBiz.exchange(takeFlowReq);
     }
 
