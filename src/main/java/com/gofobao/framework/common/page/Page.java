@@ -25,7 +25,7 @@ public class Page extends VoBaseReq{
         if (ObjectUtils.isEmpty(pageIndex) || pageIndex <= 1) {
             this.pageIndex = CommonPageContants.DEFAULT_PAGE_INDEX;
         } else {
-            this.pageIndex = pageIndex;
+            this.pageIndex = pageIndex  - 1 ;
         }
     }
 
@@ -40,7 +40,7 @@ public class Page extends VoBaseReq{
         if (ObjectUtils.isEmpty(pageSize) || pageSize <= 0) {
             this.pageSize = CommonPageContants.DEFAULT_PAGE_SIZE;
         } else {
-            if(pageSize>50){
+            if(pageSize > 50){
                 pageSize=50;
             }
             this.pageSize = pageSize;

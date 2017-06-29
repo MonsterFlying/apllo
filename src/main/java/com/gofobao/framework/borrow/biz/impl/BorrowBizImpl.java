@@ -195,7 +195,7 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setMoney(StringHelper.formatMon(borrow.getMoney() / 100d));
             borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
             borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes() / borrow.getMoney().doubleValue())));
-            Date endAt = DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);//结束时间
+            Date endAt = DateHelper.addDays( DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);//结束时间
             borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
             borrowInfoRes.setSurplusSecond(-1L);
             //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
@@ -621,7 +621,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> pcCancelBorrow(VoPcCancelThirdBorrow voPcCancelThirdBorrow) {
+    public ResponseEntity<VoBaseResp> pcCancelBorrow(VoPcCancelThirdBorrow voPcCancelThirdBorrow) throws Exception {
         Date nowDate = new Date();
         String paramStr = voPcCancelThirdBorrow.getParamStr();
         if (!SecurityHelper.checkSign(voPcCancelThirdBorrow.getSign(), paramStr)) {
@@ -679,11 +679,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 entity.setUserId(tender.getUserId());
                 entity.setMoney(tender.getValidMoney());
                 entity.setRemark("借款 [" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "] 招标失败解除冻结资金。");
-                try {
-                    capitalChangeHelper.capitalChange(entity);
-                } catch (Exception e) {
-                    log.error("borrowBizImpl pcCancelBorrow error", e);
-                }
+                capitalChangeHelper.capitalChange(entity);
 
                 //更新投标记录状态
                 tender.setId(tender.getId());

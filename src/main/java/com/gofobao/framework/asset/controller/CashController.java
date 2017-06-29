@@ -58,6 +58,7 @@ public class CashController {
     @ApiOperation("提现记录")
     @GetMapping("/asset/cash/log/{pageIndex}/{pageSize}")
     public ResponseEntity<VoCashLogWrapResp> log(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable("pageIndex") int pageIndex, @PathVariable("pageSize") int pageSize ){
+        --pageIndex;
         return cashDetailLogBiz.log(userId, pageIndex, pageSize) ;
     }
 
