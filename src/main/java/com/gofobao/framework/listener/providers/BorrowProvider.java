@@ -239,7 +239,6 @@ public class BorrowProvider {
                 log.info("====================================================================");
             }
         } else { //非转让标
-
             if (ObjectUtils.isEmpty(borrow.getSuccessAt())) {
                 borrow.setSuccessAt(new Date());
                 borrowService.updateById(borrow);

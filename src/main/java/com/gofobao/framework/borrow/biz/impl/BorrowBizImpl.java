@@ -1420,7 +1420,13 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoHtmlResp> registerOfficialBorrow(VoRegisterOfficialBorrow voRegisterOfficialBorrow) {
+    public ResponseEntity<VoHtmlResp>
+
+
+
+
+
+    registerOfficialBorrow(VoRegisterOfficialBorrow voRegisterOfficialBorrow) {
         String paramStr = voRegisterOfficialBorrow.getParamStr();
         if (!SecurityHelper.checkSign(voRegisterOfficialBorrow.getSign(), paramStr)) {
             return ResponseEntity
