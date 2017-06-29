@@ -562,8 +562,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
                         }
 
                         accruedInterest = Math.round(interest *
-                                Math.max(DateHelper.diffInDays(startAtYes, endAt, false), 0) /
-                                DateHelper.diffInDays(startAt, collectionAt, false));
+                                Math.max(DateHelper.diffInDays(endAt, startAtYes, false), 0) /
+                                DateHelper.diffInDays(collectionAt, startAt, false));
 
                         if (accruedInterest > 0) {
                             CapitalChangeEntity entity = new CapitalChangeEntity();
@@ -635,8 +635,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     Date endAt = (Date) collectionAt.clone();
 
                     interestLower = Math.round(interest -
-                            interest * Math.max(DateHelper.diffInDays(startAtYes, endAt, false), 0) /
-                                    DateHelper.diffInDays(startAt, collectionAt, false)
+                            interest * Math.max(DateHelper.diffInDays(endAt, startAtYes, false), 0) /
+                                    DateHelper.diffInDays(collectionAt, startAt, false)
                     );
 
                     Long transferUserId = borrow.getUserId();
@@ -831,7 +831,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
         long lateInterest = 0;//逾期利息
         int lateDays = 0;//逾期天数
-        int diffDay = DateHelper.diffInDays(DateHelper.beginOfDate(borrowRepayment.getRepayAt()), DateHelper.beginOfDate(new Date()), false);
+        int diffDay = DateHelper.diffInDays(DateHelper.beginOfDate(new Date()), DateHelper.beginOfDate(borrowRepayment.getRepayAt()), false);
         if (diffDay > 0) {
             lateDays = diffDay;
             int overPrincipal = borrowRepayment.getPrincipal();//剩余未还本金
@@ -904,7 +904,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
         long lateInterest = 0;//逾期利息
         int lateDays = 0;//逾期天数
-        int diffDay = DateHelper.diffInDays(DateHelper.beginOfDate(borrowRepayment.getRepayAt()), DateHelper.beginOfDate(new Date()), false);
+        int diffDay = DateHelper.diffInDays(DateHelper.beginOfDate(new Date()), DateHelper.beginOfDate(borrowRepayment.getRepayAt()), false);
         if (diffDay > 0) {
             lateDays = diffDay;
             int overPrincipal = borrowRepayment.getPrincipal();//剩余未还本金

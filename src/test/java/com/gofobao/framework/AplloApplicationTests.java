@@ -229,12 +229,12 @@ public class AplloApplicationTests {
             e.printStackTrace();
         }*/
 
-        Borrow borrow = borrowService.findById(165227L);
+        /*Borrow borrow = borrowService.findById(165227L);
         try {
             borrowBiz.transferedBorrowAgainVerify(borrow);
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
 }

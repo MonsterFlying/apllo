@@ -5,10 +5,7 @@ import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
-import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestReq;
-import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestResp;
-import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestRunCall;
-import com.gofobao.framework.api.model.batch_credit_invest.CreditInvest;
+import com.gofobao.framework.api.model.batch_credit_invest.*;
 import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyRequest;
 import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyResponse;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
@@ -51,6 +48,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by Zeke on 2017/6/1.
@@ -270,22 +268,23 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      * @return
      */
     public void thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) {
-        BatchCreditInvestRunCall lendRepayRunResp = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
+
+        BatchCreditInvestRunCall creditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
         });
         boolean bool = true;
-        if (ObjectUtils.isEmpty(lendRepayRunResp)) {
+        if (ObjectUtils.isEmpty(creditInvestRunCall)) {
             log.error("=============================即信投资人批次购买债权处理结果回调===========================");
             log.error("请求体为空!");
             bool = false;
         }
 
-        if (!JixinResultContants.SUCCESS.equals(lendRepayRunResp.getRetCode())) {
+        if (!JixinResultContants.SUCCESS.equals(creditInvestRunCall.getRetCode())) {
             log.error("=============================即信投资人批次购买债权处理结果回调===========================");
-            log.error("回调失败! msg:" + lendRepayRunResp.getRetMsg());
+            log.error("回调失败! msg:" + creditInvestRunCall.getRetMsg());
             bool = false;
         }
 
-        int num = NumberHelper.toInt(lendRepayRunResp.getFailCounts());
+        int num = NumberHelper.toInt(creditInvestRunCall.getFailCounts());
         if (num > 0) {
             log.error("=============================即信投资人批次购买债权处理结果回调===========================");
             log.error("即信投资人批次购买债权失败! 一共:" + num + "笔");
@@ -293,8 +292,15 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         }
 
         if (bool) {
-            long borrowId = NumberHelper.toLong(lendRepayRunResp.getAcqRes());
+            long borrowId = NumberHelper.toLong(creditInvestRunCall.getAcqRes());
             Borrow borrow = borrowService.findById(borrowId);
+
+            List<CreditInvestRun> creditInvestRunList = GSON.fromJson(creditInvestRunCall.getSubPacks(), new TypeToken<CreditInvestRun>() {
+            }.getType());
+
+            //保存第三债权转让订单号
+            saveThirdTransferOrderId(creditInvestRunList);
+
             try {
                 bool = borrowBiz.transferedBorrowAgainVerify(borrow);
             } catch (Exception e) {
@@ -314,5 +320,36 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 保存第三债权转让订单号
+     *
+     * @param creditInvestRunList
+     */
+    public void saveThirdTransferOrderId(List<CreditInvestRun> creditInvestRunList) {
+        StringBuffer orderIds = new StringBuffer();
+
+        Optional<List<CreditInvestRun>> creditInvestRunOption = Optional.ofNullable(creditInvestRunList);
+        creditInvestRunOption.ifPresent(list -> creditInvestRunList.forEach(obj -> {
+            orderIds.append(obj.getOrderId()).append(",");
+        }));
+
+        Specification<Tender> ts = Specifications
+                .<Tender>and()
+                .in("thirdTransferOrderId", orderIds.substring(0, orderIds.length() - 1))
+                .build();
+        List<Tender> tenderList = tenderService.findList(ts);
+
+        creditInvestRunOption = Optional.of(creditInvestRunList);
+        Optional<List<Tender>> tenderOptional = Optional.of(tenderList);
+        creditInvestRunOption.ifPresent(list -> creditInvestRunList.forEach(creditInvestRun -> {
+            tenderOptional.ifPresent(list2 -> tenderList.forEach(tender -> {
+                if (creditInvestRun.getOrderId().equals(tender.getThirdTransferOrderId())) {
+                    tender.setAuthCode(creditInvestRun.getAuthCode());
+                }
+            }));
+        }));
+        tenderService.save(tenderList);
     }
 }

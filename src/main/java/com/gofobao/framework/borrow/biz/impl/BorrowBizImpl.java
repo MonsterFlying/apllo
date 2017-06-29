@@ -2,6 +2,7 @@ package com.gofobao.framework.borrow.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.JixinResultContants;
+import com.gofobao.framework.api.model.batch_credit_invest.CreditInvestRun;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetail;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
 import com.gofobao.framework.asset.entity.Asset;
@@ -172,7 +173,7 @@ public class BorrowBizImpl implements BorrowBiz {
                             BorrowInfoRes.class));
         }
 
-        BorrowInfoRes borrowInfoRes = VoBaseResp.ok("",BorrowInfoRes.class);
+        BorrowInfoRes borrowInfoRes = VoBaseResp.ok("", BorrowInfoRes.class);
         try {
             borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
             borrowInfoRes.setLowest(StringHelper.formatMon(borrow.getLowest() / 100d));
@@ -194,7 +195,7 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setMoney(StringHelper.formatMon(borrow.getMoney() / 100d));
             borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
             borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes() / borrow.getMoney().doubleValue())));
-            Date endAt = DateHelper.addDays( DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);//结束时间
+            Date endAt = DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);//结束时间
             borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
             borrowInfoRes.setSurplusSecond(-1L);
             //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
@@ -908,8 +909,8 @@ public class BorrowBizImpl implements BorrowBiz {
                 borrowCollection.setStatus(0);
                 borrowCollection.setOrder(i);
                 borrowCollection.setUserId(tempTender.getUserId());
-                borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))) : borrowDate);
-                borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))) : nowDate);
+                borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : borrowDate);
+                borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : nowDate);
                 borrowCollection.setCollectionAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
                 borrowCollection.setCollectionMoney(new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue());
                 borrowCollection.setPrincipal(new Double(NumberHelper.toDouble(repayDetailMap.get("principal"))).intValue());
@@ -1557,7 +1558,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     tempTenderMapList = new ArrayList<>();
 
                     for (Users tempTenderUser : tenderUserList) {
-                        if (NumberHelper.toInt(tempTenderMap.get("userId"))== NumberHelper.toInt(tempTenderUser.getId())) {
+                        if (NumberHelper.toInt(tempTenderMap.get("userId")) == NumberHelper.toInt(tempTenderUser.getId())) {
                             tenderUser = tempTenderUser;
                             break;
                         }

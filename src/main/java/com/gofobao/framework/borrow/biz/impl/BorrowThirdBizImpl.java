@@ -376,7 +376,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         request.setTxCounts(StringHelper.toString(tempRepayList.size()));
         BatchRepayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_REPAY, request, BatchRepayResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "即信批次还款失败!"));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "即信批次还款失败:" + response.getRetMsg()));
         }
 
         //存在违约金的时候将违约金发放给投资者

@@ -97,7 +97,7 @@ public class AutoTenderProvider {
 
                     useMoney = Integer.parseInt(StringHelper.toString(autoTenderMap.get("useMoney")));
                     money = "1".equals(StringHelper.toString(autoTenderMap.get("mode"))) ? Integer.parseInt(StringHelper.toString(autoTenderMap.get("tenderMoney"))) : useMoney;
-                    money = Math.min(money - Integer.parseInt(StringHelper.toString(autoTenderMap.get("saveMoney"))), useMoney);
+                    money = Math.min(useMoney - Integer.parseInt(StringHelper.toString(autoTenderMap.get("saveMoney"))), money);
                     lowest = Integer.parseInt(StringHelper.toString(autoTenderMap.get("lowest")));
                     if ((money < lowest) || ((borrowMoney - moneyYes) < lowest)) {
                         continue;
