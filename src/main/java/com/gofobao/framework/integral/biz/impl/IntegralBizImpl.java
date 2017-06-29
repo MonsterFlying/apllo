@@ -86,7 +86,7 @@ public class IntegralBizImpl implements IntegralBiz {
      * @param voListIntegralReq
      * @return
      */
-    public ResponseEntity<VoBaseResp> list(VoListIntegralReq voListIntegralReq) {
+    public ResponseEntity<VoListIntegralResp> list(VoListIntegralReq voListIntegralReq) {
         int pageSize = voListIntegralReq.getPageSize();
         int pageIndex = voListIntegralReq.getPageIndex();
         Long userId = voListIntegralReq.getUserId();
@@ -96,14 +96,14 @@ public class IntegralBizImpl implements IntegralBiz {
         if (ObjectUtils.isEmpty(integral)) {
             return ResponseEntity.
                     badRequest().
-                    body(VoListIntegralResp.error(1, ""));
+                    body(VoListIntegralResp.error(VoBaseResp.ERROR, "系统开小差了, 请稍后重试!", VoListIntegralResp.class));
         }
 
         Asset asset = assetService.findByUserId(userId);
         if (ObjectUtils.isEmpty(integral)) {
             return ResponseEntity.
                     badRequest().
-                    body(VoBaseResp.error(VoBaseResp.ERROR, "获取积分列表：会员id：" + userId + "，会员资产记录缺失！"));
+                    body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了, 请稍后重试!", VoListIntegralResp.class));
         }
 
         List<Map<String, String>> integralRule = null;
@@ -125,7 +125,7 @@ public class IntegralBizImpl implements IntegralBiz {
         if (StringUtils.isEmpty(takeRates)) {
             return ResponseEntity.
                     badRequest().
-                    body(VoBaseResp.error(VoBaseResp.ERROR, "获取积分列表：积分折现比率获取失败！"));
+                    body(VoBaseResp.error(VoBaseResp.ERROR, "获取积分列表：积分折现比率获取失败！", VoListIntegralResp.class));
         }
         voListIntegralResp.setTakeRates(takeRates);
 
@@ -140,9 +140,10 @@ public class IntegralBizImpl implements IntegralBiz {
         objIntegralLog.ifPresent(p -> p.forEach(integralLog -> {
             VoIntegral voIntegral = new VoIntegral();
             voIntegral.setId(integralLog.getId());
-            voIntegral.setTotalIntegral(integralLog.getUseIntegral());
+            voIntegral.setTotalIntegral(integralLog.getNoUseIntegral() + integralLog.getUseIntegral());
             voIntegral.setTime(DateHelper.dateToStringYearMouthDay(integralLog.getCreatedAt()));
-            voIntegral.setIntegral(("convert".equalsIgnoreCase(integralLog.getType()) || "_digest".equalsIgnoreCase(integralLog.getType())) ? String.format("-%s", integralLog.getValue()) : String.format("+%s", integralLog.getValue()));
+            voIntegral.setIntegral(("convert".equalsIgnoreCase(integralLog.getType())
+                    || "_digest".equalsIgnoreCase(integralLog.getType())) ? String.format("-%s", integralLog.getValue()) : String.format("+%s", integralLog.getValue()));
             voIntegral.setType(integralLog.getType());
             voIntegral.setTypeName(findIntegralMap(integralLog.getType()));
             voIntegralList.add(voIntegral);
@@ -224,16 +225,17 @@ public class IntegralBizImpl implements IntegralBiz {
         if (!b) {
             throw new Exception("用户资产变更失败!");
         }
-
+        Integer noUseIntegral=integral.getNoUseIntegral() + integer;
+        Integer userInteger1=integral.getUseIntegral() - integer;
         Integral saveIntegral = new Integral();
         saveIntegral.setUserId(userId);
-        saveIntegral.setNoUseIntegral(integral.getNoUseIntegral() + integer);
-        saveIntegral.setUseIntegral(integral.getUseIntegral() - integer);
+        saveIntegral.setNoUseIntegral(noUseIntegral);
+        saveIntegral.setUseIntegral(userInteger1);
         saveIntegral.setUpdatedAt(new Date());
         integralService.updateById(saveIntegral);
         IntegralLog integralLog = new IntegralLog();
-        integralLog.setUseIntegral(integral.getUseIntegral() - integer);
-        integralLog.setNoUseIntegral(integral.getNoUseIntegral() + integer);
+        integralLog.setUseIntegral(userInteger1);
+        integralLog.setNoUseIntegral(noUseIntegral);
         integralLog.setUserId(userId);
         integralLog.setCreatedAt(new Date());
         integralLog.setValue(integer);

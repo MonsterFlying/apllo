@@ -13,6 +13,14 @@ public enum JixinTxCodeEnum {
             "accountOpenPlus",
             "/escrow/p2p/online"),
 
+
+    /**
+     * 开户
+     */
+    OPEN_ACCOUNT(
+            "accountOpen",
+            "/escrow/p2p/page/mobile"),
+
     /**
      * 查询用户资产
      */

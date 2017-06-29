@@ -1,5 +1,6 @@
 package com.gofobao.framework.member.controller;
 
+import com.gofobao.framework.borrow.vo.request.VoAdminOpenAccountResp;
 import com.gofobao.framework.member.biz.UserThirdBiz;
 import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
@@ -47,14 +48,14 @@ public class UserThirdController {
     }
 
 
-    @ApiOperation("存管设置密码回调")
+    @ApiOperation("银行存管页面中的忘记密码")
     @GetMapping("/pub/third/password/{encode}/{channel}")
     public ResponseEntity<String> publicPasswordModify(HttpServletRequest httpServletRequest, @PathVariable("encode") String encode, @PathVariable("channel") String channel) {
         return userThirdBiz.publicPasswordModify(httpServletRequest, encode, channel) ;
     }
 
 
-    @ApiOperation("银行存管密码管理回调")
+    @ApiOperation("银行存管页面中忘记密码回调")
     @PostMapping("/pub/user/third/modifyOpenAccPwd/callback/{type}")
     public ResponseEntity<String> modifyOpenAccPwdCallback(HttpServletRequest request, HttpServletResponse response, @PathVariable Integer type) {
         return userThirdBiz.modifyOpenAccPwdCallback(request, response, type) ;
@@ -83,5 +84,27 @@ public class UserThirdController {
     @PostMapping("/pub/user/third/autoTranfer/callback")
     public ResponseEntity<String> autoTranferCallback(HttpServletRequest request, HttpServletResponse response) {
         return userThirdBiz.autoTranferCallback(request, response) ;
+    }
+
+
+
+    @ApiOperation("后台开户")
+    @PostMapping("/pub/admin/third/openAccout")
+    public ResponseEntity<VoHtmlResp> adminOpenAccount(HttpServletRequest httpServletRequest, @Valid @ModelAttribute VoAdminOpenAccountResp voAdminOpenAccountResp ) {
+        return userThirdBiz.adminOpenAccount(voAdminOpenAccountResp, httpServletRequest) ;
+    }
+
+
+
+    @PostMapping("/pub/admin/third/openAccout/callback/{userId}")
+    public ResponseEntity<String> adminOpenAccountCallback(HttpServletRequest httpServletRequest, @PathVariable("userId") Long userId ) {
+        return userThirdBiz.adminOpenAccountCallback(httpServletRequest, userId) ;
+    }
+
+
+    @ApiOperation("后台调用初始化密码")
+    @GetMapping("/pub/resetPassword/{encode}/{channel}")
+    public ResponseEntity<String> adminPasswordInit(HttpServletRequest httpServletRequest, @PathVariable("encode") String encode, @PathVariable("channel") String channel) {
+        return userThirdBiz.adminPasswordInit(httpServletRequest, encode, channel) ;
     }
 }

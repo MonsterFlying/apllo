@@ -1,5 +1,6 @@
 package com.gofobao.framework.member.biz;
 
+import com.gofobao.framework.borrow.vo.request.VoAdminOpenAccountResp;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
@@ -128,4 +129,42 @@ public interface UserThirdBiz {
      * @param userThirdAccount
      */
     UserThirdAccount synCreditQuth(UserThirdAccount userThirdAccount);
+
+
+    /**
+     * 后台开会流程
+     * @param voAdminOpenAccountResp
+     * @param httpServletRequest
+     * @return
+     */
+    ResponseEntity<VoHtmlResp> adminOpenAccount(VoAdminOpenAccountResp voAdminOpenAccountResp, HttpServletRequest httpServletRequest);
+
+
+    /**
+     * 后台开户回调
+     *
+     * @param httpServletRequest
+     * @param userId
+     * @return
+     */
+    ResponseEntity<String> adminOpenAccountCallback(HttpServletRequest httpServletRequest, Long userId);
+
+    /**
+     * 后台密码初始化回调
+     * @param request
+     * @param response
+     * @param type
+     * @return
+     */
+    ResponseEntity<String> adminPasswordInitCallback(HttpServletRequest request, HttpServletResponse response, Integer type);
+
+
+    /**
+     *  密码初始化
+     * @param httpServletRequest
+     * @param encode
+     * @param channel
+     * @return
+     */
+    ResponseEntity<String> adminPasswordInit(HttpServletRequest httpServletRequest, String encode, String channel);
 }

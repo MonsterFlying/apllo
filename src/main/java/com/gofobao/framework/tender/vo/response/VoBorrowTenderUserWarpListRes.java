@@ -3,7 +3,6 @@ package com.gofobao.framework.tender.vo.response;
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.google.common.collect.Lists;
-import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 

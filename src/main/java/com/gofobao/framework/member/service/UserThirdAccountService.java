@@ -24,4 +24,14 @@ public interface UserThirdAccountService {
     UserThirdAccount findTopByCardNo(String account);
 
     UserThirdAccount findByMobile(String phone);
+
+    void deleteByUserId(Long userId);
+
+
+    /**
+     * 查询已被删除的用户
+     * @param userId
+     * @return
+     */
+    UserThirdAccount findByDelUseid(Long userId);
 }

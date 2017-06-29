@@ -3,6 +3,8 @@ package com.gofobao.framework.member.biz.impl;
 import com.gofobao.framework.api.contants.*;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.account_open.AccountOpenRequest;
+import com.gofobao.framework.api.model.account_open.AccountOpenResponse;
 import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusRequest;
 import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusResponse;
 import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthRequest;
@@ -17,11 +19,14 @@ import com.gofobao.framework.api.model.password_set.PasswordSetRequest;
 import com.gofobao.framework.api.model.password_set.PasswordSetResponse;
 import com.gofobao.framework.asset.entity.BankAccount;
 import com.gofobao.framework.asset.service.BankAccountService;
+import com.gofobao.framework.borrow.vo.request.VoAdminOpenAccountResp;
+import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.BankBinHelper;
 import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.helper.ThirdAccountPasswordHelper;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.biz.UserThirdBiz;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -37,6 +42,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,6 +59,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -486,7 +493,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         autoBidAuthRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
         autoBidAuthRequest.setTxAmount("999999999");
         autoBidAuthRequest.setTotAmount("999999999");
-        autoBidAuthRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountPasswordUrl(httpServletRequest, userId));
+        autoBidAuthRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, userId));
         autoBidAuthRequest.setRetUrl(String.format("%s%s%s", javaDomain, "/pub/autoTender/show/", userId));
         autoBidAuthRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/user/third/autoTender/callback"));
         autoBidAuthRequest.setAcqRes(userId.toString());
@@ -538,7 +545,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         AutoCreditInvestAuthRequest autoCreditInvestAuthPlusRequest = new AutoCreditInvestAuthRequest();
         autoCreditInvestAuthPlusRequest.setAccountId(userThirdAccount.getAccountId());
         autoCreditInvestAuthPlusRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
-        autoCreditInvestAuthPlusRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountPasswordUrl(httpServletRequest, userId));
+        autoCreditInvestAuthPlusRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, userId));
         autoCreditInvestAuthPlusRequest.setRetUrl(String.format("%s%s%s", javaDomain, "/pub/autoTranfer/show/", userId));
         autoCreditInvestAuthPlusRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/user/third/autoTranfer/callback"));
         autoCreditInvestAuthPlusRequest.setAcqRes(userId.toString());
@@ -771,5 +778,224 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
         return userThirdAccountService.findByUserId(userThirdAccount.getUserId());
+    }
+
+
+
+    @Override
+    public ResponseEntity<VoHtmlResp> adminOpenAccount(VoAdminOpenAccountResp voAdminOpenAccountResp, HttpServletRequest httpServletRequest) {
+        if (!SecurityHelper.checkSign(voAdminOpenAccountResp.getSign(), voAdminOpenAccountResp.getOpenAccountBodyInfo())) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "开户请求参数非法", VoHtmlResp.class));
+        }
+
+        // 开户主体信息, phone: 开户手机. name: 用户名称, userId: 用户ID, idNo:身份证号, cardNo: 银行卡号;
+        Map<String, String>  openAccountBodyMap = new Gson().fromJson(voAdminOpenAccountResp.getOpenAccountBodyInfo(), TypeTokenContants.MAP_ALL_STRING_TOKEN) ;
+        String phone = openAccountBodyMap.get("phone");
+        Long userId = Long.parseLong(openAccountBodyMap.get("userId")) ;
+        String realMame = openAccountBodyMap.get("name") ;
+        String idNo = openAccountBodyMap.get("idNo") ;
+        String cardNo = openAccountBodyMap.get("cardNo") ;
+
+
+        // 1.用户用户信息
+        Users user = userService.findById(userId);
+        if (ObjectUtils.isEmpty(user))
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你访问的账户不存在", VoHtmlResp.class));
+        // 2. 判断用户是否已经开过存管账户
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(user.getId());
+        if (!ObjectUtils.isEmpty(userThirdAccount))
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你的账户已经开户！", VoHtmlResp.class));
+
+        UserThirdAccount userThirdAccountbyMobile = userThirdAccountService.findByMobile(phone);
+        if (!ObjectUtils.isEmpty(userThirdAccountbyMobile)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "手机已在存管平台开户, 无需开户！", VoHtmlResp.class));
+        }
+
+        String bankName = null;
+        // 获取银行卡信息
+        try {
+            BankBinHelper.BankInfo bankInfo = bankBinHelper.find(cardNo);
+
+            if (ObjectUtils.isEmpty(bankInfo)) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "查无此银行卡号, 如有问题请联系平台客户!", VoHtmlResp.class));
+            }
+
+            if (!bankInfo.getCardType().equals("借记卡")) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "银行卡类型必须为借记卡!", VoHtmlResp.class));
+            }
+
+            bankName = bankInfo.getBankName();
+        } catch (Exception e) {
+            log.error("开户查询银行卡异常");
+        }
+
+        // 6 判断银行卡
+        DictValue dictValue = null;
+        try {
+            dictValue = bankLimitCache.get(bankName);
+        } catch (ExecutionException e) {
+            log.error("查询平台支持银行异常", e);
+        }
+        if (ObjectUtils.isEmpty(dictValue)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, String.format("当前平台不支持%s", bankName), VoHtmlResp.class));
+        }
+
+
+        // 8.提交开户
+        AccountOpenRequest accountOpenRequest = new AccountOpenRequest();
+        accountOpenRequest.setIdType(IdTypeContant.ID_CARD);
+        accountOpenRequest.setName(realMame);
+        accountOpenRequest.setMobile(phone);
+        accountOpenRequest.setIdNo(idNo);
+        accountOpenRequest.setRetUrl( thirdAccountPasswordHelper.getThirdAcccountInitPasswordUrl(httpServletRequest, userId) ); // 初始化密码
+        accountOpenRequest.setNotifyUrl( String.format("%s%s/%s", javaDomain, "/pub/admin/third/openAccout/callback/", userId) ) ; // 后台通知
+        accountOpenRequest.setAcctUse(AcctUseContant.GENERAL_ACCOUNT);
+        accountOpenRequest.setAcqRes(String.valueOf(user.getId()));
+        accountOpenRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
+        String html = jixinManager.getHtml(JixinTxCodeEnum.OPEN_ACCOUNT, accountOpenRequest);
+        VoHtmlResp voHtmlResp = VoBaseResp.ok("操作成功", VoHtmlResp.class) ;
+        voHtmlResp.setHtml(html);
+
+
+        // 8.保存银行存管账户到用户中
+        UserThirdAccount entity = new UserThirdAccount();
+        Date nowDate = new Date();
+        entity.setUpdateAt(nowDate);
+        entity.setUserId(user.getId());
+        entity.setCreateAt(nowDate);
+        entity.setCreateId(user.getId());
+        entity.setUserId(user.getId());
+        entity.setDel(1);
+        entity.setMobile(phone);
+        entity.setIdType(1);
+        entity.setIdNo(idNo);
+        entity.setCardNo(cardNo);
+        entity.setChannel(Integer.parseInt(ChannelContant.getchannel(httpServletRequest)));
+        entity.setAcctUse(1);
+        entity.setAccountId("");
+        entity.setPasswordState(0);
+        entity.setCardNoBindState(1);
+        entity.setName(realMame);
+        entity.setBankLogo(dictValue.getValue03());
+        entity.setBankName(bankName);
+        userThirdAccountService.save(entity);
+        return ResponseEntity.ok(voHtmlResp);
+    }
+
+    @Override
+    public ResponseEntity<String> adminOpenAccountCallback(HttpServletRequest httpServletRequest, Long userId) {
+        AccountOpenResponse accountOpenResponse = jixinManager.callback(httpServletRequest, new TypeToken<AccountOpenResponse>() {
+        });
+
+        if (ObjectUtils.isEmpty(accountOpenResponse)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("error");
+        }
+
+        if (!JixinResultContants.SUCCESS.equals(accountOpenResponse.getRetCode())) {
+            log.error("UserThirdBizImpl.adminOpenAccountCallback: 回调出失败");
+            // 删除用户数据
+            userThirdAccountService.deleteByUserId(userId) ;
+            return ResponseEntity
+                    .badRequest()
+                    .body("error");
+        }
+
+        Date nowDate = new Date() ;
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByDelUseid(userId);
+        userThirdAccount.setAccountId(accountOpenResponse.getAccountId());
+        userThirdAccount.setUpdateAt(new Date());
+        userThirdAccount.setDel(0) ;
+        userThirdAccountService.save(userThirdAccount) ;
+
+        Users user = userService.findById(userId);
+        user.setRealname(userThirdAccount.getName());
+        user.setCardId(userThirdAccount.getIdNo());
+        user.setUpdatedAt(nowDate);
+        userService.save(user);
+
+        return ResponseEntity.ok("success");
+    }
+
+    @Override
+    public ResponseEntity<String> adminPasswordInitCallback(HttpServletRequest request, HttpServletResponse response, Integer type) {
+        PasswordSetResponse passwordSetResponse = jixinManager.callback(request, new TypeToken<PasswordSetResponse>() {
+        });
+
+        if (ObjectUtils.isEmpty(passwordSetResponse)) {
+            return ResponseEntity.badRequest().body("error");
+        }
+        if (!JixinResultContants.SUCCESS.equals(passwordSetResponse.getRetCode())) {
+            log.error("UserThirdBizImpl.adminPasswordInitCallback: 回调出失败");
+            return ResponseEntity
+                    .badRequest()
+                    .body("error");
+        }
+
+        Long userId = Long.parseLong(passwordSetResponse.getAcqRes());
+
+        if (ObjectUtils.isEmpty(userId)) {
+            log.error("UserThirdBizImpl adminPasswordInitCallback userId is null");
+            return ResponseEntity.badRequest().body("error");
+        }
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            log.error("UserThirdBizImpl adminPasswordInitCallback userThirdAccount is null");
+            return ResponseEntity.badRequest().body("error");
+        }
+
+        if (userThirdAccount.getPasswordState().equals(1)) {
+            return ResponseEntity.ok("success");
+        }
+
+        userThirdAccount.setPasswordState(1);
+        userThirdAccount.setUpdateAt(new Date());
+        Long id = userThirdAccountService.save(userThirdAccount);
+        if (id == 0) {
+            log.error("UserThirdBizImpl adminPasswordInitCallback update userThirdAccount is error");
+            return ResponseEntity.badRequest().body("error");
+        }
+
+        return ResponseEntity.ok("success");
+    }
+
+    @Override
+    public ResponseEntity<String> adminPasswordInit(HttpServletRequest httpServletRequest, String encode, String channel) {
+        Long userId = thirdAccountPasswordHelper.getUserId(encode);
+        if (userId == null) {
+            throw new RuntimeException("adminPasswordInit. 非法请求");
+        }
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            throw new RuntimeException("初始化银行存管密码");
+        }
+        PasswordSetRequest passwordSetRequest = new PasswordSetRequest();
+        passwordSetRequest.setMobile(userThirdAccount.getMobile());
+        passwordSetRequest.setChannel(channel);
+        passwordSetRequest.setName(userThirdAccount.getName());
+        passwordSetRequest.setAccountId(userThirdAccount.getAccountId());
+        passwordSetRequest.setIdType(IdTypeContant.ID_CARD);
+        passwordSetRequest.setIdNo(userThirdAccount.getIdNo());
+        passwordSetRequest.setAcqRes(String.valueOf(userId));
+        passwordSetRequest.setRetUrl(String.format("%s%s/%s", javaDomain, "/pub/password/show", userId));
+        passwordSetRequest.setNotifyUrl(String.format("%s%s", javaDomain, "/pub/user/third/modifyOpenAccPwd/callback/1"));
+        String html = jixinManager.getHtml(JixinTxCodeEnum.PASSWORD_RESET, passwordSetRequest);
+        return ResponseEntity.ok(html);
     }
 }

@@ -34,7 +34,7 @@ public class CouponController {
     @Autowired
     private CouponBiz couponBiz;
 
-    @ApiOperation("流量券列表")
+    @ApiOperation("流量券列表;status状态  0:无效； 1:有效")
     @GetMapping("coupon/v2/list/{status}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewCouponWarpRes> list(@PathVariable Integer status,
                                                     @PathVariable Integer pageIndex,

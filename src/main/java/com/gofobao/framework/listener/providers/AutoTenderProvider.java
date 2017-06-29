@@ -53,7 +53,6 @@ public class AutoTenderProvider {
             int autoTenderCount = 0; // 中标item
             boolean bool = false;//是否满标
             do {
-
                 pageIndex++;
                 voFindAutoTenderList.setStatus("1");
                 voFindAutoTenderList.setNotUserId(borrow.getUserId());
@@ -85,12 +84,12 @@ public class AutoTenderProvider {
                 while (itAutoTender.hasNext()) {//将合格的自动投标  放入消息队列
                     autoTenderMap = itAutoTender.next();
 
-                    if (moneyYes >= borrowMoney || (mostAuto > 0 && moneyYes >= mostAuto)) {
+                    if (moneyYes >= borrowMoney || (mostAuto > 0 && moneyYes >= mostAuto)) {  // 判断是否满标或者 达到自动投标最大额度
                         bool = true;
                         break;
                     }
 
-                    if (tenderUserIds.contains(StringHelper.toString(autoTenderMap.get("userId")))
+                    if (tenderUserIds.contains(StringHelper.toString(autoTenderMap.get("userId")))   // 保证每个用户和每个自动投标规则只能使用一次
                             || autoTenderIds.contains(StringHelper.toString(autoTenderMap.get("id")))) {
                         continue;
                     }

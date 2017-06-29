@@ -351,7 +351,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             request.setTxFee( StringHelper.formatDouble( new Double(fee / 100D), false));
         }
 
-        request.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountPasswordUrl(httpServletRequest, userId));
+        request.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, userId));
         request.setRetUrl(String.format("%s/%s/%s", javaDomain, "/pub/cash/show/", request.getTxDate() + request.getTxTime() + request.getSeqNo() ));
         request.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/asset/cash/callback"));
         request.setAcqRes(String.valueOf(userId));

@@ -5,6 +5,7 @@ import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.integral.biz.IntegralBiz;
 import com.gofobao.framework.integral.vo.request.VoIntegralTakeReq;
 import com.gofobao.framework.integral.vo.request.VoListIntegralReq;
+import com.gofobao.framework.integral.vo.response.VoListIntegralResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -38,7 +39,7 @@ public class IntegralController {
      */
     @ApiOperation("获取积分列表")
     @PostMapping("pub/integral/list")
-    public ResponseEntity<VoBaseResp> list(@Valid @ModelAttribute VoListIntegralReq voListIntegralReq,@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+    public ResponseEntity<VoListIntegralResp> list(@Valid @ModelAttribute VoListIntegralReq voListIntegralReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         voListIntegralReq.setUserId(userId);
         return integralBiz.list(voListIntegralReq);
     }

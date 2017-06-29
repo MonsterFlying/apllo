@@ -10,7 +10,6 @@ import com.gofobao.framework.tender.vo.request.VoOpenAutoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoSaveAutoTenderReq;
 import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
 import com.gofobao.framework.tender.vo.response.VoViewAutoTenderList;
-import com.gofobao.framework.tender.vo.response.VoViewUserAutoTenderWarpRes;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +49,7 @@ public class AutoTenderController {
      * @param voDelAutoTenderReq
      * @return
      */
-    @ApiOperation("开启自动投标")
+    @ApiOperation("删除自动投标")
     @PostMapping("/autoTender/v2/del")
     public ResponseEntity<VoBaseResp> delAutoTender(@ModelAttribute @Valid VoDelAutoTenderReq voDelAutoTenderReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voDelAutoTenderReq.setUserId(userId);
@@ -63,7 +62,7 @@ public class AutoTenderController {
      * @param voSaveAutoTenderReq
      * @return
      */
-    @ApiOperation("创建自动投标规则")
+    @ApiOperation("创建自动投标")
     @PostMapping("/autoTender/v2/create")
     public ResponseEntity<VoBaseResp> createAutoTender(@ModelAttribute @Valid VoSaveAutoTenderReq voSaveAutoTenderReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voSaveAutoTenderReq.setUserId(userId);
@@ -96,11 +95,6 @@ public class AutoTenderController {
         return autoTenderBiz.queryAutoTenderInfo(autoTenderId, userId);
     }
 
-    @ApiOperation("用户自动投标列表")
-    @PostMapping("/autoTender/v2/user/autoTender/list")
-    public ResponseEntity<VoViewUserAutoTenderWarpRes> tender(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        return autoTenderBiz.list(userId);
-    }
 
     /**
      * 自动投标说明

@@ -26,7 +26,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Base64Utils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
@@ -134,14 +133,13 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
      * @return
      */
     private ResponseEntity<VoBaseResp> verifySaveAutoTender(VoSaveAutoTenderReq voSaveAutoTenderReq) {
-
         Integer tenderMoney = voSaveAutoTenderReq.getTenderMoney();
         if (ObjectUtils.isEmpty(tenderMoney)) {
             voSaveAutoTenderReq.setMode(0);
-            voSaveAutoTenderReq.setTenderMoney(0d);
+            voSaveAutoTenderReq.setTenderMoney(0D);
         } else {
             voSaveAutoTenderReq.setMode(1);
-            voSaveAutoTenderReq.setTenderMoney(tenderMoney / 100.0);
+            voSaveAutoTenderReq.setTenderMoney(tenderMoney / 100.0D);
         }
 
         Integer mode = voSaveAutoTenderReq.getMode();
@@ -403,7 +401,7 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
      */
     public ResponseEntity<VoHtmlResp> autoTenderDesc() {
         Map<String, Object> paranMap = new HashMap<>();
-        String content = thymeleafHelper.build("autoTender/autoTender", paranMap);
+        String content = thymeleafHelper.build("/autoTender/autoTender", paranMap);
         VoHtmlResp resp = VoHtmlResp.ok("获取成功!", VoHtmlResp.class);
         resp.setHtml(content);
         return ResponseEntity.ok(resp);
