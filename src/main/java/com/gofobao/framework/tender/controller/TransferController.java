@@ -41,7 +41,7 @@ public class TransferController {
                                                                   @PathVariable Integer pageSize) {
 
         VoTransferReq transferReq = new VoTransferReq();
-        transferReq.setUserId(901L);
+        transferReq.setUserId(userId);
         transferReq.setPageIndex(pageIndex);
         transferReq.setPageSize(pageSize);
         return transferBiz.tranferOfList(transferReq);

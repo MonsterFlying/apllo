@@ -24,7 +24,7 @@ public interface BorrowService {
 
     Borrow findByBorrowId(Long borrowId);
 
-    long countByUserIdAndStatusIn(Long userId,List<Integer> statusList);
+    long countByUserIdAndStatusIn(Long userId, List<Integer> statusList);
 
     boolean insert(Borrow borrow);
 
@@ -36,6 +36,7 @@ public interface BorrowService {
 
     /**
      * 检查是否招标中
+     *
      * @param borrow
      * @return
      */
@@ -43,6 +44,7 @@ public interface BorrowService {
 
     /**
      * 检查是否在发布时间内
+     *
      * @param borrow
      * @return
      */
@@ -50,6 +52,7 @@ public interface BorrowService {
 
     /**
      * 检查招标时间是否有效
+     *
      * @param borrow
      * @return
      */
@@ -57,6 +60,7 @@ public interface BorrowService {
 
     /**
      * 查询列表
+     *
      * @param specification
      * @return
      */
@@ -68,11 +72,12 @@ public interface BorrowService {
      * @param specification
      * @return
      */
-    List<Borrow> findList(Specification<Borrow> specification,Sort sort);
+    List<Borrow> findList(Specification<Borrow> specification, Sort sort);
 
 
     /**
      * 招标统计
+     *
      * @param
      * @return
      */
@@ -84,7 +89,7 @@ public interface BorrowService {
      * @param specification
      * @return
      */
-    List<Borrow> findList(Specification<Borrow> specification,Pageable pageable);
+    List<Borrow> findList(Specification<Borrow> specification, Pageable pageable);
 
     long count(Specification<Borrow> specification);
 
@@ -96,4 +101,5 @@ public interface BorrowService {
 
     Map<String, Object> pcContract(Long borrowId, Long userId);
 
+    Borrow getLastBorrowLock();
 }

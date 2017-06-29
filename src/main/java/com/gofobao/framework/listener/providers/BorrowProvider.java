@@ -278,9 +278,10 @@ public class BorrowProvider {
     public ResponseEntity<VoBaseResp> thirdRegisterBorrowAndTender(Borrow borrow) {
         long borrowId = borrow.getId();
         ResponseEntity<VoBaseResp> resp = null;
+        String productId = borrow.getProductId();
 
         VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
-        voQueryThirdBorrowList.setBorrowId(borrowId);
+        voQueryThirdBorrowList.setProductId(productId);
         voQueryThirdBorrowList.setUserId(borrow.getUserId());
         voQueryThirdBorrowList.setPageNum("1");
         voQueryThirdBorrowList.setPageSize("10");
@@ -315,7 +316,7 @@ public class BorrowProvider {
             voCreateThirdTenderReq.setAcqRes(String.valueOf(tender.getId()));
             voCreateThirdTenderReq.setUserId(tender.getUserId());
             voCreateThirdTenderReq.setTxAmount(StringHelper.formatDouble(tender.getValidMoney(), 100, false));
-            voCreateThirdTenderReq.setProductId(String.valueOf(borrowId));
+            voCreateThirdTenderReq.setProductId(productId);
             voCreateThirdTenderReq.setFrzFlag(FrzFlagContant.FREEZE);
             resp = tenderThirdBiz.createThirdTender(voCreateThirdTenderReq);
             if (!ObjectUtils.isEmpty(resp)) {

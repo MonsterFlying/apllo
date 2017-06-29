@@ -30,6 +30,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -78,10 +79,10 @@ public class AplloApplicationTests {
     public static void main(String[] args) {
 
         Gson gson = new Gson();
-        Map<String,String> map = new HashMap<>();
-        map.put("borrowId","165225");
+        Map<String, String> map = new HashMap<>();
+        map.put("borrowId", "165225");
         System.out.println(gson.toJson(map));
-        System.out.println(SecurityHelper.getSign( gson.toJson(map)));
+        System.out.println(SecurityHelper.getSign(gson.toJson(map)));
     }
 
     public AccountQueryByMobileResponse findAccountByMobile() {
@@ -92,7 +93,7 @@ public class AplloApplicationTests {
         return response;
     }
 
-    public void trusteePay(){
+    public void trusteePay() {
         TrusteePayQueryReq request = new TrusteePayQueryReq();
         request.setAccountId("6212462040000250045");
         request.setProductId("165225");
@@ -101,7 +102,7 @@ public class AplloApplicationTests {
         System.out.println(response);
     }
 
-    public void creditAuthQuery(){
+    public void creditAuthQuery() {
         CreditAuthQueryRequest request = new CreditAuthQueryRequest();
         request.setAccountId("6212462040000300030");
         request.setType("1");
@@ -110,7 +111,7 @@ public class AplloApplicationTests {
         System.out.println(response);
     }
 
-    public void batchCancel(){
+    public void batchCancel() {
         BatchCancelReq request = new BatchCancelReq();
         request.setBatchNo("100002");
         request.setTxAmount("1000.00");
@@ -120,7 +121,7 @@ public class AplloApplicationTests {
         System.out.println(response);
     }
 
-    public void creditInvestQuery(){
+    public void creditInvestQuery() {
         CreditInvestQueryReq request = new CreditInvestQueryReq();
         request.setChannel(ChannelContant.HTML);
         request.setAccountId("6212462040000600025");
@@ -129,8 +130,11 @@ public class AplloApplicationTests {
         CreditInvestQueryResp response = jixinManager.send(JixinTxCodeEnum.CREDIT_INVEST_QUERY, request, CreditInvestQueryResp.class);
         System.out.println(response);
     }
+
     @Test
+    @Transactional(rollbackFor = Exception.class)
     public void test() {
+
         //根据手机号查询存管账户
         //findAccountByMobile();
         //受托支付
@@ -216,12 +220,12 @@ public class AplloApplicationTests {
             e.printStackTrace();
         }*/
 
-        Borrow borrow = borrowService.findById(165227L);
+        /*Borrow borrow = borrowService.findById(165227L);
         try {
             borrowBiz.transferedBorrowAgainVerify(borrow);
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
 }

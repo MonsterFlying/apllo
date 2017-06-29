@@ -53,7 +53,7 @@ public class TenderServiceImpl implements TenderService {
      */
     @Override
     public List<VoBorrowTenderUserRes> findBorrowTenderUser(TenderUserReq tenderUserReq) {
-        Long borrowId=tenderUserReq.getBorrowId();
+        Long borrowId = tenderUserReq.getBorrowId();
         Borrow borrow = borrowRepository.findOne(borrowId);
         if (ObjectUtils.isEmpty(borrow)) {
             return Collections.EMPTY_LIST;
@@ -65,10 +65,10 @@ public class TenderServiceImpl implements TenderService {
 
         ExampleMatcher matcher = ExampleMatcher.matching().withIgnorePaths("isAuto");
         Example<Tender> ex = Example.of(tender, matcher);
-        Page<Tender> tenderPage = tenderRepository.findAll(ex,new PageRequest(tenderUserReq.getPageIndex(),tenderUserReq.getPageSize(),new Sort(Sort.Direction.DESC,"id")));
+        Page<Tender> tenderPage = tenderRepository.findAll(ex, new PageRequest(tenderUserReq.getPageIndex(), tenderUserReq.getPageSize(), new Sort(Sort.Direction.DESC, "id")));
         //Optional<List<Tender>> listOptional = Optional.ofNullable(tenderList);
-        List<Tender> tenderList=tenderPage.getContent();
-        if(CollectionUtils.isEmpty(tenderList)){
+        List<Tender> tenderList = tenderPage.getContent();
+        if (CollectionUtils.isEmpty(tenderList)) {
             return Collections.EMPTY_LIST;
         }
 
@@ -90,6 +90,10 @@ public class TenderServiceImpl implements TenderService {
     }
 
     public Tender save(Tender tender) {
+        return tenderRepository.save(tender);
+    }
+
+    public List<Tender> save(List<Tender> tender) {
         return tenderRepository.save(tender);
     }
 
