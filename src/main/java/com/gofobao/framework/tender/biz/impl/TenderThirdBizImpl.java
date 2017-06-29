@@ -229,7 +229,6 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         request.setRetNotifyURL(webDomain + "/pub/tender/v2/third/batch/creditinvest/run");
         BatchCreditInvestResp response = jixinManager.send(JixinTxCodeEnum.BATCH_CREDIT_INVEST, request, BatchCreditInvestResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
-
             throw new Exception("投资人批次购买债权失败!:" + response.getRetMsg());
         }
         return null;

@@ -28,7 +28,8 @@ public class VoAddNetWorthBorrow {
      */
     @ApiModelProperty(name = "timeLimit", value = "借款期限", dataType = "int", required = true)
     @NotNull(message = "借款期限不能为空!")
-    @Min(value = 0, message = "借款期限参数有误!")
+    @Min(value = 7, message = "借款天数不小于7天!")
+    @Max(value = 92, message = "借款天数不能大于92天!")
     private int timeLimit;
 
     /**

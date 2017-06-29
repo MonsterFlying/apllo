@@ -128,7 +128,7 @@ public class BorrowController {
      */
     @PostMapping("/pub/borrow/pc/cancelBorrow")
     @ApiOperation("pc取消借款")
-    public ResponseEntity<VoBaseResp> pcCancelBorrow(@Valid @ModelAttribute VoPcCancelThirdBorrow voPcCancelThirdBorrow) {
+    public ResponseEntity<VoBaseResp> pcCancelBorrow(@Valid @ModelAttribute VoPcCancelThirdBorrow voPcCancelThirdBorrow) throws Exception {
         return borrowBiz.pcCancelBorrow(voPcCancelThirdBorrow);
     }
 

@@ -56,7 +56,10 @@ public class RechargeController {
 
     @ApiOperation("充值记录")
     @GetMapping("/asset/recharge/log/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoRechargeEntityWrapResp> log(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable("pageIndex") int pageIndex, @PathVariable("pageSize")int pageSize){
+    public ResponseEntity<VoRechargeEntityWrapResp> log(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                                        @PathVariable("pageIndex") int pageIndex,
+                                                        @PathVariable("pageSize")int pageSize){
+        --pageIndex;
         return assetBiz.log(userId, pageIndex, pageSize) ;
     }
 

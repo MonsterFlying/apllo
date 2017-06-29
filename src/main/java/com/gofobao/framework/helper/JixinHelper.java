@@ -58,7 +58,6 @@ public class JixinHelper {
     }
 
     public String getBatchNo() {
-
         DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
 
         Date nowDate = new Date();

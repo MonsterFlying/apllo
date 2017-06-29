@@ -224,7 +224,6 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "借款人未开户!");
-
         if (ObjectUtils.isEmpty(borrowId) && (StringUtils.isEmpty(startDate) || StringUtils.isEmpty(endDate)) && (StringUtils.isEmpty(pageNum) || StringUtils.isEmpty(pageSize))) {
             return debtDetailsQueryResp;
         }
@@ -238,8 +237,8 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         if (!StringUtils.isEmpty(startDate) && !StringUtils.isEmpty(endDate)) {
             request.setEndDate(endDate);
             request.setStartDate(startDate);
-
         }
+
         if (!StringUtils.isEmpty(pageNum) && !StringUtils.isEmpty(pageSize)) {
             request.setPageNum(pageNum);
             request.setPageSize(pageSize);
