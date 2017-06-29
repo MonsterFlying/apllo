@@ -626,21 +626,11 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         //================================即信取消标的==================================
-        //检查标的是否登记
-        VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
-        voQueryThirdBorrowList.setBorrowId(borrowId);
-        voQueryThirdBorrowList.setUserId(borrow.getUserId());
-        voQueryThirdBorrowList.setPageNum("1");
-        voQueryThirdBorrowList.setPageSize("10");
-        DebtDetailsQueryResp response = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
-
-        List<DebtDetail> debtDetailList = GSON.fromJson(response.getSubPacks(), new com.google.common.reflect.TypeToken<List<DebtDetail>>() {
-        }.getType());
-
         ResponseEntity<VoBaseResp> resp = null;
-        if (debtDetailList.size() < 1) {
+        String productId = borrow.getProductId();
+        if (!StringUtils.isEmpty(productId)) {
             VoCancelThirdBorrow voCancelThirdBorrow = new VoCancelThirdBorrow();
-            voCancelThirdBorrow.setBorrowId(borrowId);
+            voCancelThirdBorrow.setProductId(productId);
             voCancelThirdBorrow.setUserId(borrow.getUserId());
             voCancelThirdBorrow.setRaiseDate(DateHelper.dateToString(borrow.getReleaseAt(), DateHelper.DATE_FORMAT_YMD_NUM));
             voCancelThirdBorrow.setAcqRes(StringHelper.toString(borrowId));
@@ -1438,7 +1428,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
         //检查标的是否登记
         VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
-        voQueryThirdBorrowList.setBorrowId(borrowId);
+        voQueryThirdBorrowList.setProductId(borrow.getProductId());
         voQueryThirdBorrowList.setUserId(borrow.getUserId());
         voQueryThirdBorrowList.setPageNum("1");
         voQueryThirdBorrowList.setPageSize("10");

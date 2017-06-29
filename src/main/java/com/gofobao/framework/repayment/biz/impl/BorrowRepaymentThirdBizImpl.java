@@ -414,7 +414,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 repay.setIntAmount(StringHelper.formatDouble(intAmount, 100, false));
                 repay.setTxFeeIn(StringHelper.formatDouble(txFeeIn, 100, false));
                 repay.setTxFeeOut(StringHelper.formatDouble(txFeeOut, 100, false));
-                repay.setProductId(StringHelper.toString(borrow.getId()));
+                repay.setProductId(borrow.getProductId());
                 repay.setAuthCode(tender.getAuthCode());
                 repay.setForAccountId(tenderUserThirdAccount.getAccountId());
                 repayList.add(repay);
@@ -479,7 +479,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             lendPay.setOrderId(JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX));
             lendPay.setForAccountId(takeUserThirdAccount.getAccountId());
             lendPay.setTxAmount(StringHelper.formatDouble(validMoney, 100, false));
-            lendPay.setProductId(StringHelper.toString(borrowId));
+            lendPay.setProductId(borrow.getProductId());
             lendPayList.add(lendPay);
         }
 
@@ -727,7 +727,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         request.setChannel(ChannelContant.HTML);
         request.setBatchNo(batchNo);
         request.setAccountId(borrow.getBailAccountId());
-        request.setProductId(StringHelper.toString(borrowId));
+        request.setProductId(borrow.getProductId());
         request.setTxAmount(StringHelper.formatDouble(txAmount, false));
         request.setTxCounts(StringHelper.toString(bailRepayList.size()));
         request.setNotifyURL(webDomain + "/pub/repayment/v2/third/batch/bailrepay/check");

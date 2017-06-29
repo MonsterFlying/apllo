@@ -174,6 +174,13 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "要转让的投标记录不存在!"));
         }
 
+        Borrow oldBorrow = borrowService.findById(oldTender.getBorrowId());
+        if (ObjectUtils.isEmpty(oldBorrow)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "要转让的投标的借款记录不存在!"));
+        }
+
 
         UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
 
@@ -197,7 +204,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             creditInvest.setForAccountId(borrowUserThirdAccount.getAccountId());
             creditInvest.setOrgOrderId(oldTender.getThirdTenderOrderId());
             creditInvest.setOrgTxAmount(StringHelper.formatDouble(oldTender.getValidMoney(), 100, false));
-            creditInvest.setProductId(StringHelper.toString(oldTender.getBorrowId()));
+            creditInvest.setProductId(oldBorrow.getProductId());
             creditInvest.setContOrderId(tenderUserThirdAccount.getAutoTransferBondOrderId());
             creditInvestList.add(creditInvest);
 
