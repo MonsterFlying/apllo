@@ -68,7 +68,7 @@ public class AplloApplicationTests {
 
     @Test
     public void contextLoads() {
-        Borrow borrow = borrowService.findById(165176L);
+        Borrow borrow = borrowService.findById(169740L);
         try {
             borrowBiz.notTransferedBorrowAgainVerify(borrow);
         } catch (Exception e) {
@@ -80,7 +80,7 @@ public class AplloApplicationTests {
 
         Gson gson = new Gson();
         Map<String, String> map = new HashMap<>();
-        map.put("borrowId", "165225");
+        map.put("borrowId", "169740");
         System.out.println(gson.toJson(map));
         System.out.println(SecurityHelper.getSign(gson.toJson(map)));
     }
