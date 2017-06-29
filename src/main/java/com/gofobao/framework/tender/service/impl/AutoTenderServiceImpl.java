@@ -19,6 +19,7 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -42,6 +43,8 @@ public class AutoTenderServiceImpl implements AutoTenderService {
 
     @PersistenceContext
     private EntityManager entityManager;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     public boolean insert(AutoTender autoTender) {
         if (ObjectUtils.isEmpty(autoTender)) {
@@ -152,8 +155,8 @@ public class AutoTenderServiceImpl implements AutoTenderService {
     public boolean updateAutoTenderOrder() {
         StringBuffer sql = new StringBuffer("UPDATE gfb_auto_tender t1,(SELECT id,@rownum:=@rownum+1 AS listorder FROM" +
                 " gfb_auto_tender t2, (SELECT @rownum:=0)t3  ORDER BY t2.auto_at ASC, t2.order ASC ) t4  SET t1.`order` = t4.listorder WHERE t1.id = t4.id");
-        Query query = entityManager.createNativeQuery(sql.toString());
-        return query.executeUpdate() > 0;
+
+        return jdbcTemplate.update(sql.toString())>1;
     }
 
     /**

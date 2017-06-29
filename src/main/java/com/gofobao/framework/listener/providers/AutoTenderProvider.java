@@ -151,7 +151,6 @@ public class AutoTenderProvider {
         borrow.setIsLock(false);
         borrow.setId(borrowId);
         borrowService.updateById(borrow);
-        throw new Exception("11");
     }
 
     /**
