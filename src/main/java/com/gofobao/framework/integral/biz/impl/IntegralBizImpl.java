@@ -11,10 +11,7 @@ import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
-import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
-import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
-import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -32,7 +29,6 @@ import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.contants.DictAliasCodeContants;
 import com.gofobao.framework.system.service.DictService;
-import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -255,7 +251,6 @@ public class IntegralBizImpl implements IntegralBiz {
         if (ObjectUtils.isEmpty(integralLog)) {
             throw new Exception("积分日志表插入失败!");
         } else {
-
             //调用即信发送红包接口
             VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
             voucherPayRequest.setAccountId(redPacketAccountId);
