@@ -30,14 +30,14 @@ public class WebBorrowRepaymentContorller {
     @Autowired
     private RepaymentBiz repaymentBiz;
 
-    @RequestMapping(value = "/v2/collection/days/{time}", method = RequestMethod.GET)
+    @PostMapping(value = "/v2/collection/days/{time}")
     @ApiOperation("还款计划列表 time: 201706")
     public ResponseEntity<VoViewCollectionDaysWarpRes> days(@PathVariable String time, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
 
         return repaymentBiz.days(userId, time);
     }
 
-    @RequestMapping(value = "/v2/list/{time}", method = RequestMethod.GET)
+    @PostMapping(value = "/v2/list/{time}")
     @ApiOperation("还款计划列表 time:2017-05-02")
     public ResponseEntity<VoViewCollectionOrderListWarpResp> listRes(@PathVariable("time") String time,
                                                                        @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
@@ -47,7 +47,7 @@ public class WebBorrowRepaymentContorller {
         return repaymentBiz.repaymentList(orderReq);
     }
 
-    @RequestMapping(value = "/v2/info/{repaymentId}", method = RequestMethod.GET)
+    @PostMapping(value = "/v2/info/{repaymentId}")
     @ApiOperation("还款信息")
     public ResponseEntity<VoViewRepaymentOrderDetailWarpRes> info(@PathVariable("repaymentId") String repaymentId,
                                                                   @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
@@ -57,7 +57,7 @@ public class WebBorrowRepaymentContorller {
         return repaymentBiz.detail(voInfoReq);
     }
 
-    @RequestMapping(value = "pc/v2/logs/{borrowId}", method = RequestMethod.GET)
+    @PostMapping(value = "pc/v2/logs/{borrowId}")
     @ApiOperation("还款记录")
     public ResponseEntity<VoViewRepayCollectionLogWarpRes> info(@PathVariable("borrowId") Long borrowId) {
         return repaymentBiz.logs(borrowId);
@@ -71,7 +71,7 @@ public class WebBorrowRepaymentContorller {
      * @return 0成功 1失败 2操作不存在 3该借款上一期还未还 4账户余额不足，请先充值
      * @throws Exception
      */
-    @RequestMapping("/v2/instantly")
+    @PostMapping("/v2/instantly")
     @ApiOperation("立即还款")
     public ResponseEntity<VoBaseResp> instantly(@ModelAttribute @Valid VoInstantlyRepaymentReq voInstantlyRepaymentReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
         voInstantlyRepaymentReq.setUserId(userId);

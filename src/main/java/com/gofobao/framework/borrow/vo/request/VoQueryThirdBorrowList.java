@@ -12,7 +12,7 @@ public class VoQueryThirdBorrowList {
     private Long userId;
 
     @ApiModelProperty(value = "标的id", dataType = "String")
-    private Long borrowId;
+    private String productId;
     /**
      * YYYYMMDD，对应募集日 选填
      */

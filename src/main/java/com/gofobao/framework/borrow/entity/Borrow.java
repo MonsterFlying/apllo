@@ -156,6 +156,8 @@ public class Borrow implements Serializable {
     private String bailAccountId;
     private Long takeUserId;
 
+    private String productId;
+
 
     /**
      * 判断是否是转让标

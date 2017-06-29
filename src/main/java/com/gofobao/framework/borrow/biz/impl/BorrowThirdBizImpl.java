@@ -135,9 +135,11 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "借款人未开户!");
 
+        String productId = jixinHelper.generateProductId(borrowId);
+
         DebtRegisterRequest request = new DebtRegisterRequest();
         request.setAccountId(userThirdAccount.getAccountId());
-        request.setProductId(StringHelper.toString(borrowId));
+        request.setProductId(productId);
         request.setProductDesc(borrow.getName());
         request.setRaiseDate(DateHelper.dateToString(borrow.getReleaseAt(), DateHelper.DATE_FORMAT_YMD_NUM));
         request.setRaiseEndDate(DateHelper.dateToString(DateHelper.addDays(borrow.getReleaseAt(), borrow.getValidDay()), DateHelper.DATE_FORMAT_YMD_NUM));
@@ -170,6 +172,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         }
 
         borrow.setBailAccountId(bailAccountId);
+        borrow.setProductId(productId);
         borrowService.updateById(borrow);
         return null;
     }
@@ -182,7 +185,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
      */
     public ResponseEntity<VoBaseResp> cancelThirdBorrow(VoCancelThirdBorrow voCancelThirdBorrow) {
         Long userId = voCancelThirdBorrow.getUserId();
-        Long borrowId = voCancelThirdBorrow.getBorrowId();
+        String productId = voCancelThirdBorrow.getProductId();
         String raiseDate = voCancelThirdBorrow.getRaiseDate();//募集日期
         if (ObjectUtils.isEmpty(raiseDate)) {
             return ResponseEntity
@@ -190,7 +193,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "募集日期不能为空!"));
         }
 
-        if (ObjectUtils.isEmpty(borrowId)) {
+        if (ObjectUtils.isEmpty(productId)) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "borrowId为空"));
         }
 
@@ -200,7 +203,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         DebtRegisterCancelReq request = new DebtRegisterCancelReq();
         request.setChannel(ChannelContant.HTML);
         request.setAccountId(userThirdAccount.getAccountId());
-        request.setProductId(StringHelper.toString(borrowId));
+        request.setProductId(productId);
         request.setRaiseDate(raiseDate);
 
         DebtRegisterCancelResp response = jixinManager.send(JixinTxCodeEnum.DEBT_REGISTER_CANCEL, request, DebtRegisterCancelResp.class);
@@ -216,7 +219,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         DebtDetailsQueryResp debtDetailsQueryResp = null;
 
         Long userId = voQueryThirdBorrowList.getUserId();
-        Long borrowId = voQueryThirdBorrowList.getBorrowId();
+        String productId = voQueryThirdBorrowList.getProductId();
         String startDate = voQueryThirdBorrowList.getStartDate();
         String endDate = voQueryThirdBorrowList.getEndDate();
         String pageNum = voQueryThirdBorrowList.getPageNum();//页码 从1开始
@@ -225,15 +228,15 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "借款人未开户!");
 
-        if (ObjectUtils.isEmpty(borrowId) && (StringUtils.isEmpty(startDate) || StringUtils.isEmpty(endDate)) && (StringUtils.isEmpty(pageNum) || StringUtils.isEmpty(pageSize))) {
+        if (ObjectUtils.isEmpty(productId) && (StringUtils.isEmpty(startDate) || StringUtils.isEmpty(endDate)) && (StringUtils.isEmpty(pageNum) || StringUtils.isEmpty(pageSize))) {
             return debtDetailsQueryResp;
         }
 
         DebtDetailsQueryReq request = new DebtDetailsQueryReq();
         request.setChannel(ChannelContant.HTML);
         request.setAccountId(userThirdAccount.getAccountId());
-        if (!ObjectUtils.isEmpty(borrowId)) {
-            request.setProductId(StringHelper.toString(borrowId));
+        if (!ObjectUtils.isEmpty(productId)) {
+            request.setProductId(productId);
         }
         if (!StringUtils.isEmpty(startDate) && !StringUtils.isEmpty(endDate)) {
             request.setEndDate(endDate);
@@ -376,7 +379,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         request.setTxCounts(StringHelper.toString(tempRepayList.size()));
         BatchRepayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_REPAY, request, BatchRepayResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "即信批次还款失败!"));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "即信批次还款失败:" + response.getRetMsg()));
         }
 
         //存在违约金的时候将违约金发放给投资者
@@ -546,7 +549,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         request.setIdNo(lendUserThirdAccount.getIdNo());
         request.setIdType(JixinHelper.getIdType(lendUserThirdAccount.getIdType()));
         request.setNotifyUrl(webDomain + "/pub/borrow/v2/third/trusteepay/run");
-        request.setProductId(StringHelper.toString(borrowId));
+        request.setProductId(borrow.getProductId());
         request.setReceiptAccountId(takeUserThirdAccount.getAccountId());
         request.setRetUrl("");
         String html = jixinManager.getHtml(JixinTxCodeEnum.TRUSTEE_PAY, request);

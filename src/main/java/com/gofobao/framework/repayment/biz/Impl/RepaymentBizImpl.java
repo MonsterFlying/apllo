@@ -135,10 +135,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
         try {
             List<BorrowRepayment> repaymentList = borrowRepaymentService.repaymentList(voCollectionOrderReq);
             if (CollectionUtils.isEmpty(repaymentList)) {
-                VoViewCollectionOrderListWarpResp response = VoBaseResp.ok("查询成功", VoViewCollectionOrderListWarpResp.class );
+                VoViewCollectionOrderListWarpResp response = VoBaseResp.ok("查询成功", VoViewCollectionOrderListWarpResp.class);
                 response.setOrder(0);
                 response.setSumCollectionMoneyYes("0");
-                return ResponseEntity.ok(response) ;
+                return ResponseEntity.ok(response);
             }
 
             Set<Long> borrowIdSet = repaymentList.stream()
@@ -193,7 +193,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
     public ResponseEntity<VoViewRepaymentOrderDetailWarpRes> detail(VoInfoReq voInfoReq) {
         try {
             RepaymentOrderDetail voViewOrderDetailResp = borrowRepaymentService.detail(voInfoReq);
-            VoViewRepaymentOrderDetailWarpRes warpRes=VoBaseResp.ok("查询成功",VoViewRepaymentOrderDetailWarpRes.class);
+            VoViewRepaymentOrderDetailWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewRepaymentOrderDetailWarpRes.class);
             warpRes.setRepaymentOrderDetail(voViewOrderDetailResp);
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {
@@ -271,6 +271,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         if (borrowRepayment.getOrder() > 0) {
             Specification<BorrowRepayment> brs = Specifications
                     .<BorrowRepayment>and()
+                    .eq("id", repaymentId)
                     .eq("status", 0)
                     .predicate(new LtSpecification<BorrowRepayment>("order", new DataObject(borrowRepayment.getOrder())))
                     .build();
@@ -563,8 +564,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
                         }
 
                         accruedInterest = Math.round(interest *
-                                Math.max(DateHelper.diffInDays(startAtYes, endAt, false), 0) /
-                                DateHelper.diffInDays(startAt, collectionAt, false));
+                                Math.max(DateHelper.diffInDays(endAt, startAtYes, false), 0) /
+                                DateHelper.diffInDays(collectionAt, startAt, false));
 
                         if (accruedInterest > 0) {
                             CapitalChangeEntity entity = new CapitalChangeEntity();
@@ -636,8 +637,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     Date endAt = (Date) collectionAt.clone();
 
                     interestLower = Math.round(interest -
-                            interest * Math.max(DateHelper.diffInDays(startAtYes, endAt, false), 0) /
-                                    DateHelper.diffInDays(startAt, collectionAt, false)
+                            interest * Math.max(DateHelper.diffInDays(endAt, startAtYes, false), 0) /
+                                    DateHelper.diffInDays(collectionAt, startAt, false)
                     );
 
                     Long transferUserId = borrow.getUserId();
@@ -791,11 +792,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
     /**
      * 垫付检查
      *
-     * @param voAdvanceReq
+     * @param repaymentId
      * @return
      */
-    private ResponseEntity<VoBaseResp> advanceCheck(VoAdvanceReq voAdvanceReq) throws Exception {
-        Long repaymentId = voAdvanceReq.getRepaymentId();
+    private ResponseEntity<VoBaseResp> advanceCheck(Long repaymentId) throws Exception {
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);
         Preconditions.checkNotNull(borrowRepayment, "还款记录不存在！");
         if (borrowRepayment.getStatus() != 0) {
@@ -833,7 +833,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
         long lateInterest = 0;//逾期利息
         int lateDays = 0;//逾期天数
-        int diffDay = DateHelper.diffInDays(DateHelper.beginOfDate(borrowRepayment.getRepayAt()), DateHelper.beginOfDate(new Date()), false);
+        int diffDay = DateHelper.diffInDays(DateHelper.beginOfDate(new Date()), DateHelper.beginOfDate(borrowRepayment.getRepayAt()), false);
         if (diffDay > 0) {
             lateDays = diffDay;
             int overPrincipal = borrowRepayment.getPrincipal();//剩余未还本金
@@ -868,8 +868,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param voAdvanceReq
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> advance(VoAdvanceReq voAdvanceReq) throws Exception {
-        ResponseEntity resp = advanceCheck(voAdvanceReq);
+        ResponseEntity resp = advanceCheck(voAdvanceReq.getRepaymentId());
         if (!ObjectUtils.isEmpty(resp)) {
             return resp;
         }
@@ -886,9 +887,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      * @throws Exception
      */
-    public ResponseEntity<VoBaseResp> advanceDeal(VoAdvanceReq voAdvanceReq) throws Exception {
+    public ResponseEntity<VoBaseResp> advanceDeal(VoAdvanceCall voAdvanceReq) throws Exception {
 
-        ResponseEntity resp = advanceCheck(voAdvanceReq);//垫付检查
+        ResponseEntity resp = advanceCheck(voAdvanceReq.getRepaymentId());//垫付检查
         if (!ObjectUtils.isEmpty(resp)) {
             return resp;
         }
@@ -905,7 +906,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
         long lateInterest = 0;//逾期利息
         int lateDays = 0;//逾期天数
-        int diffDay = DateHelper.diffInDays(DateHelper.beginOfDate(borrowRepayment.getRepayAt()), DateHelper.beginOfDate(new Date()), false);
+        int diffDay = DateHelper.diffInDays(DateHelper.beginOfDate(new Date()), DateHelper.beginOfDate(borrowRepayment.getRepayAt()), false);
         if (diffDay > 0) {
             lateDays = diffDay;
             int overPrincipal = borrowRepayment.getPrincipal();//剩余未还本金

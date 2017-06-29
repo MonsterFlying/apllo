@@ -69,7 +69,8 @@ public class AutoTenderServiceImpl implements AutoTenderService {
             BeanHelper.copyParamter(autoTender, temp, true);
             updAutoTenders.add(temp);//更新对象
         }));
-        return CollectionUtils.isEmpty(autoTenderRepository.save(updAutoTenders));
+        autoTenderRepository.save(updAutoTenders);
+        return true;
     }
 
     public List<Map<String, Object>> findQualifiedAutoTenders(VoFindAutoTenderList voFindAutoTenderList) {

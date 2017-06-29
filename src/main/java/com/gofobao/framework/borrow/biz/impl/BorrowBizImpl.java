@@ -2,6 +2,7 @@ package com.gofobao.framework.borrow.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.JixinResultContants;
+import com.gofobao.framework.api.model.batch_credit_invest.CreditInvestRun;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetail;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
 import com.gofobao.framework.asset.entity.Asset;
@@ -172,7 +173,7 @@ public class BorrowBizImpl implements BorrowBiz {
                             BorrowInfoRes.class));
         }
 
-        BorrowInfoRes borrowInfoRes = VoBaseResp.ok("",BorrowInfoRes.class);
+        BorrowInfoRes borrowInfoRes = VoBaseResp.ok("", BorrowInfoRes.class);
         try {
             borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
             borrowInfoRes.setLowest(StringHelper.formatMon(borrow.getLowest() / 100d));
@@ -519,6 +520,22 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "只有借款标过期或者本人才能取消借款!"));
         }
 
+        //================================即信取消标的==================================
+        ResponseEntity<VoBaseResp> resp = null;
+        String productId = borrow.getProductId();
+        if (!StringUtils.isEmpty(productId)) {
+            VoCancelThirdBorrow voCancelThirdBorrow = new VoCancelThirdBorrow();
+            voCancelThirdBorrow.setProductId(productId);
+            voCancelThirdBorrow.setUserId(borrow.getUserId());
+            voCancelThirdBorrow.setAcqRes(StringHelper.toString(borrowId));
+            voCancelThirdBorrow.setRaiseDate(DateHelper.dateToString(borrow.getReleaseAt(), DateHelper.DATE_FORMAT_YMD_NUM));
+            resp = borrowThirdBiz.cancelThirdBorrow(voCancelThirdBorrow);
+            if (!ObjectUtils.isEmpty(resp)) {
+                return resp;
+            }
+        }
+        //==============================================================================
+
         Specification<Tender> borrowSpecification = Specifications
                 .<Tender>and()
                 .eq("status", 1)
@@ -604,7 +621,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> pcCancelBorrow(VoPcCancelThirdBorrow voPcCancelThirdBorrow) {
+    public ResponseEntity<VoBaseResp> pcCancelBorrow(VoPcCancelThirdBorrow voPcCancelThirdBorrow) throws Exception {
         Date nowDate = new Date();
         String paramStr = voPcCancelThirdBorrow.getParamStr();
         if (!SecurityHelper.checkSign(voPcCancelThirdBorrow.getSign(), paramStr)) {
@@ -625,21 +642,11 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         //================================即信取消标的==================================
-        //检查标的是否登记
-        VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
-        voQueryThirdBorrowList.setBorrowId(borrowId);
-        voQueryThirdBorrowList.setUserId(borrowId);
-        voQueryThirdBorrowList.setPageNum("1");
-        voQueryThirdBorrowList.setPageSize("10");
-        DebtDetailsQueryResp response = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
-
-        List<DebtDetail> debtDetailList = GSON.fromJson(response.getSubPacks(), new com.google.common.reflect.TypeToken<List<DebtDetail>>() {
-        }.getType());
-
         ResponseEntity<VoBaseResp> resp = null;
-        if (debtDetailList.size() < 1) {
+        String productId = borrow.getProductId();
+        if (!StringUtils.isEmpty(productId)) {
             VoCancelThirdBorrow voCancelThirdBorrow = new VoCancelThirdBorrow();
-            voCancelThirdBorrow.setBorrowId(borrowId);
+            voCancelThirdBorrow.setProductId(productId);
             voCancelThirdBorrow.setUserId(borrow.getUserId());
             voCancelThirdBorrow.setRaiseDate(DateHelper.dateToString(borrow.getReleaseAt(), DateHelper.DATE_FORMAT_YMD_NUM));
             voCancelThirdBorrow.setAcqRes(StringHelper.toString(borrowId));
@@ -672,11 +679,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 entity.setUserId(tender.getUserId());
                 entity.setMoney(tender.getValidMoney());
                 entity.setRemark("借款 [" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "] 招标失败解除冻结资金。");
-                try {
-                    capitalChangeHelper.capitalChange(entity);
-                } catch (Exception e) {
-                    log.error("borrowBizImpl pcCancelBorrow error", e);
-                }
+                capitalChangeHelper.capitalChange(entity);
 
                 //更新投标记录状态
                 tender.setId(tender.getId());
@@ -908,8 +911,8 @@ public class BorrowBizImpl implements BorrowBiz {
                 borrowCollection.setStatus(0);
                 borrowCollection.setOrder(i);
                 borrowCollection.setUserId(tempTender.getUserId());
-                borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))) : borrowDate);
-                borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))) : nowDate);
+                borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : borrowDate);
+                borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : nowDate);
                 borrowCollection.setCollectionAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
                 borrowCollection.setCollectionMoney(new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue());
                 borrowCollection.setPrincipal(new Double(NumberHelper.toDouble(repayDetailMap.get("principal"))).intValue());
@@ -1437,7 +1440,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
         //检查标的是否登记
         VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
-        voQueryThirdBorrowList.setBorrowId(borrowId);
+        voQueryThirdBorrowList.setProductId(borrow.getProductId());
         voQueryThirdBorrowList.setUserId(borrow.getUserId());
         voQueryThirdBorrowList.setPageNum("1");
         voQueryThirdBorrowList.setPageSize("10");
@@ -1557,7 +1560,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     tempTenderMapList = new ArrayList<>();
 
                     for (Users tempTenderUser : tenderUserList) {
-                        if (NumberHelper.toInt(tempTenderMap.get("userId"))== NumberHelper.toInt(tempTenderUser.getId())) {
+                        if (NumberHelper.toInt(tempTenderMap.get("userId")) == NumberHelper.toInt(tempTenderUser.getId())) {
                             tenderUser = tempTenderUser;
                             break;
                         }

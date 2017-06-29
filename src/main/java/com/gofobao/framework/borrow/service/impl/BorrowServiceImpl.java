@@ -27,18 +27,17 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
+import javax.persistence.*;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -118,7 +117,7 @@ public class BorrowServiceImpl implements BorrowService {
         if ("-1".equals(type)) {   // 全部
             condtionSql.append(" ORDER BY FIELD(b.type,0, 4, 1, 2),(b.moneyYes / b.money) DESC, b.id DESC");
         } else {
-            if ( ObjectUtils.isEmpty(BorrowContants.INDEX_TYPE_CE_DAI)) {
+            if (ObjectUtils.isEmpty(BorrowContants.INDEX_TYPE_CE_DAI)) {
                 condtionSql.append(" ORDER BY b.status ASC,(b.moneyYes / b.money) DESC, b.successAt DESC,b.id DESC");
             } else {
                 condtionSql.append(" ORDER BY b.status, b.successAt DESC, b.id DESC");
@@ -169,7 +168,7 @@ public class BorrowServiceImpl implements BorrowService {
                 status = 1;
             } else if (status == BorrowContants.BIDDING) {//招标中
                 Integer validDay = m.getValidDay();
-                Date endAt = DateHelper.addDays( DateHelper.beginOfDate(m.getReleaseAt()), validDay + 1);
+                Date endAt = DateHelper.addDays(DateHelper.beginOfDate(m.getReleaseAt()), validDay + 1);
                 Date nowDate = new Date(System.currentTimeMillis());
                 if (nowDate.getTime() > endAt.getTime()) {  //当前时间大于满标时间
                     status = 5; //已过期
@@ -281,17 +280,17 @@ public class BorrowServiceImpl implements BorrowService {
             return null;
         }
 
-        List<VoViewBorrowList> borrowListList=commonHandle(borrowLists, voBorrowListReq);
-        VoPcBorrowList warpRes=new VoPcBorrowList();
+        List<VoViewBorrowList> borrowListList = commonHandle(borrowLists, voBorrowListReq);
+        VoPcBorrowList warpRes = new VoPcBorrowList();
         warpRes.setBorrowLists(borrowListList);
-        warpRes.setPageIndex(voBorrowListReq.getPageIndex()+1);
+        warpRes.setPageIndex(voBorrowListReq.getPageIndex() + 1);
         warpRes.setPageSize(voBorrowListReq.getPageSize());
         //总记录数
         Query countQuery = entityManager.createQuery(countSb.append(condtionSql).toString(), Long.class);
         countQuery.setParameter("statusArray", statusArray);
-        Long count =(Long) countQuery.getSingleResult();
+        Long count = (Long) countQuery.getSingleResult();
         warpRes.setTotalCount(count.intValue());
-        return  warpRes;
+        return warpRes;
 
     }
 
@@ -685,5 +684,21 @@ public class BorrowServiceImpl implements BorrowService {
 
     public long count(Specification<Borrow> specification) {
         return borrowRepository.count(specification);
+    }
+
+    /**
+     * 查询最后一条borrow
+     *
+     * @return
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    public Borrow getLastBorrowLock() {
+        Specification<Borrow> bs = Specifications
+                .<Borrow>and()
+                .build();
+
+        Pageable pageable = new PageRequest(0, 1, new Sort(Sort.Direction.DESC, "id"));
+        List<Borrow> borrowList = borrowRepository.findAll(bs, pageable).getContent();
+        return borrowList.get(0);
     }
 }
