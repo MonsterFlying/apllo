@@ -42,22 +42,21 @@ public class CouponServiceImpl implements CouponService {
         sql.append("SELECT coupon FROM Coupon coupon WHERE coupon.userId =:userId");
         String condition = "";
         if (couponReq.getStatus() == CouponContants.STATUS_YES) {
-            condition = " and status=" + CouponContants.VALID;
+            condition = " and (status=" + CouponContants.VALID+")";
         } else if (couponReq.getStatus() == CouponContants.STATUS_NO) {
-            condition = " and status=" + CouponContants.LOCK +
+            condition = " and (status=" + CouponContants.LOCK +
                     " or status=" + CouponContants.LOCK +
                     " or status=" + CouponContants.USED +
-                    " or status=" + CouponContants.FAILURE;
+                    " or status=" + CouponContants.FAILURE+")";
         } else {
             return Collections.EMPTY_LIST;
         }
         sql.append(condition);
         TypedQuery<Coupon> query = entityManager.createQuery(sql.toString(), Coupon.class)
                 .setParameter("userId", couponReq.getUserId())
-                .setFirstResult(couponReq.getPageIndex())
+                .setFirstResult(couponReq.getPageIndex()*couponReq.getPageSize())
                 .setMaxResults(couponReq.getPageSize());
         List<Coupon> couponList = query.getResultList();
-
         if (CollectionUtils.isEmpty(couponList)) {
             return Collections.EMPTY_LIST;
         }
@@ -67,7 +66,7 @@ public class CouponServiceImpl implements CouponService {
             couponRes.setId(p.getId());
             couponRes.setPhone(p.getPhone());
             couponRes.setSizeStr(p.getSize() + "M");
-            couponRes.setExpiryDate(DateHelper.dateToString(p.getStartAt()) + "~" + DateHelper.dateToString(p.getEndAt()));
+            couponRes.setExpiryDate(DateHelper.dateToString(p.getStartAt(),DateHelper.DATE_FORMAT_YMD) + "~" + DateHelper.dateToString(p.getEndAt(),DateHelper.DATE_FORMAT_YMD));
             resList.add(couponRes);
         });
         return Optional.ofNullable(resList).orElse(Collections.EMPTY_LIST);

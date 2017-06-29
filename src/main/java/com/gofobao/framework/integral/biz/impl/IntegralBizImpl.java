@@ -11,6 +11,10 @@ import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -28,6 +32,7 @@ import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.contants.DictAliasCodeContants;
 import com.gofobao.framework.system.service.DictService;
+import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,6 +71,10 @@ public class IntegralBizImpl implements IntegralBiz {
 
     @Value(value = "${jixin.redPacketAccountId}")
     private String redPacketAccountId; //存管红包账户
+
+    @Autowired
+    private MqHelper mqHelper;
+
 
     private static Map<String, String> integralTypeMap = new HashMap<>();
 
@@ -207,10 +216,11 @@ public class IntegralBizImpl implements IntegralBiz {
         }
 
         Integer collection = asset.getCollection();
-        String takeRatesStr = getTakeRates(collection, useIntegral, integralRule);
+        Integer sumIntegral=useIntegral+integral.getNoUseIntegral();
+        String takeRatesStr = getTakeRates(collection, sumIntegral, integralRule);
         double takeRates = Double.parseDouble(takeRatesStr);//折现系数
         long money = Math.round(takeRates * integer);  // 可兑换金额
-
+        //资金变动
         CapitalChangeEntity capitalChangeEntity = new CapitalChangeEntity();
         capitalChangeEntity.setType(CapitalChangeEnum.IntegralCash);
         capitalChangeEntity.setMoney((int) money);
@@ -245,6 +255,7 @@ public class IntegralBizImpl implements IntegralBiz {
         if (ObjectUtils.isEmpty(integralLog)) {
             throw new Exception("积分日志表插入失败!");
         } else {
+
             //调用即信发送红包接口
             VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
             voucherPayRequest.setAccountId(redPacketAccountId);

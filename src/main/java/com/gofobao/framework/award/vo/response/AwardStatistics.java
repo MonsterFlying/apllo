@@ -7,7 +7,7 @@ import lombok.Data;
  */
 @Data
 public class AwardStatistics {
-    private String virtualMoney;
+    private Double virtualMoney;
     private Integer couponCount ;
     private Integer redPackageCount;
 }

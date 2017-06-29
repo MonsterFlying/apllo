@@ -27,5 +27,6 @@ public class VirtualBorrowRes {
     @ApiModelProperty("id")
     private Long id;
 
-
+    @ApiModelProperty("时间")
+    private String time;
 }

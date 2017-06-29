@@ -24,7 +24,13 @@ public enum MqTagEnum {
     NOTICE_PUBLISH("NOTICE_PUBLISH"), // 站内信通知
     RECHARGE("RECHARGE"), // 充值
     LOGIN("LOGIN"), // 登录
-    GIVE_COUPON("GIVE_COUPON"); // 赠送流量券
+    GIVE_COUPON("GIVE_COUPON"), // 赠送流量券
+    INTEGRAL_EXCHANGE("INTEGRAL_EXCHANGE"), //积分兑换
+    GOFOBI_EXCHANGE("GOFOBI_EXCHANGE"),  //广富币兑换
+    NEW_USER_TENDER("NEW_USER_TENDER"), //新用户投标
+    OLD_USER_TENDER("OLD_USER_TENDER"), //老用户投标
+    INVITE_USER_REAL_NAME("INVITE_USER_REAL_NAME"),  //邀请用户实名
+    INVITE_USER_TENDER("INVITE_USER_TENDER"); //邀请用户投资
     private String value;
 
     private MqTagEnum(String value) {
