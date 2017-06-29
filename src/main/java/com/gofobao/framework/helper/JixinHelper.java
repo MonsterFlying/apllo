@@ -57,6 +57,11 @@ public class JixinHelper {
         return prefix + new Date().getTime();
     }
 
+
+    /**
+     *获取6位批次号
+     * @return
+     */
     public String getBatchNo() {
         return DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_HMS_NUM);
     }

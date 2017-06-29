@@ -548,7 +548,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         request.setForgotPwdUrl("");
         request.setIdNo(lendUserThirdAccount.getIdNo());
         request.setIdType(JixinHelper.getIdType(lendUserThirdAccount.getIdType()));
-        request.setNotifyUrl(webDomain + "/pub/borrow/v2/third/trusteepay/run");
+        request.setNotifyUrl(webDomain + "/pub/borrow/v2/third/trusteepay/run" );
         request.setProductId(borrow.getProductId());
         request.setReceiptAccountId(takeUserThirdAccount.getAccountId());
         request.setRetUrl("");
