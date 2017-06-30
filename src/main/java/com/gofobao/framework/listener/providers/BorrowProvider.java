@@ -281,7 +281,7 @@ public class BorrowProvider {
             if (type != 0 && type != 4) { //判断是否是官标、官标不需要在这里登记标的
                 VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
                 voCreateThirdBorrowReq.setBorrowId(borrowId);
-                resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
+                resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq, request);
                 if (!ObjectUtils.isEmpty(resp)) {
                     return resp;
                 }
