@@ -94,9 +94,11 @@ public class RedPackageServiceImpl implements RedPackageService {
                 packageRes.setExpiryDate(DateHelper.dateToString(p.getUpdateDate()));
                 packageRes.setMoney(StringHelper.toString(p.getMoney() / 100D));
             } else {
-                packageRes.setExpiryDate(DateHelper.dateToString(p.getBeginAt()) + "~" + DateHelper.dateToString(p.getBeginAt()));
+                packageRes.setExpiryDate(DateHelper.dateToString(p.getBeginAt(),DateHelper.DATE_FORMAT_YMDHM) + "~" + DateHelper.dateToString(p.getBeginAt(),DateHelper.DATE_FORMAT_YMDHM));
             }
             packageRes.setTitle(p.getActivityName());
+            packageRes.setType(p.getActivityId());
+
             redPackageRes.add(packageRes);
         });
         return redPackageRes;
