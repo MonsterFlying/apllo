@@ -37,6 +37,9 @@ import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchRepay;
+import com.gofobao.framework.scheduler.biz.TaskSchedulerBiz;
+import com.gofobao.framework.scheduler.constants.TaskSchedulerConstants;
+import com.gofobao.framework.scheduler.entity.TaskScheduler;
 import com.gofobao.framework.system.contants.ThirdBatchNoTypeContant;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
@@ -65,9 +68,7 @@ import org.springframework.util.StringUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Zeke on 2017/6/1.
@@ -104,6 +105,9 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     @Autowired
     private ThirdAccountPasswordHelper thirdAccountPasswordHelper ;
 
+    @Autowired
+    TaskSchedulerBiz taskSchedulerBiz ;
+
     @Value("${gofobao.webDomain}")
     private String webDomain;
     @Value("${jixin.redPacketAccountId}")
@@ -133,7 +137,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         Long userId = borrow.getUserId();
         int repayFashion = borrow.getRepayFashion();
 
-        Long takeUserId = borrow.getTakeUserId();
+        Long takeUserId = borrow.getTakeUserId();   // 公司实际收款人
         UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "借款人未开户!");
@@ -548,7 +552,6 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         trusteePayReq.setAccountId(lendUserThirdAccount.getAccountId());
         trusteePayReq.setChannel(ChannelContant.HTML);
         trusteePayReq.setAcqRes(StringHelper.toString(borrowId));
-        trusteePayReq.setForgotPwdUrl("");
         trusteePayReq.setIdNo(lendUserThirdAccount.getIdNo());
         trusteePayReq.setIdType(JixinHelper.getIdType(lendUserThirdAccount.getIdType()));
         trusteePayReq.setNotifyUrl(webDomain + "/pub/borrow/v2/third/trusteepay/run" );
@@ -579,20 +582,17 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     public ResponseEntity<String> thirdTrusteePayCall(HttpServletRequest request, HttpServletResponse response) {
         TrusteePayResp trusteePayResp = jixinManager.callback(request, new TypeToken<TrusteePayResp>() {
         });
-        boolean bool = true;
         if (ObjectUtils.isEmpty(trusteePayResp)) {
-            log.error("=============================即信受托支付回调===========================");
-            log.error("请求体为空!");
-            bool = false;
+            log.error("BorrowThirdBizImpl thirdTrusteePayCall 参数有问题");
+            return ResponseEntity.ok("success");
         }
 
         if (!JixinResultContants.SUCCESS.equals(trusteePayResp.getRetCode())) {
-            log.error("=============================即信受托支付回调==========================");
-            log.error("回调失败! msg:" + trusteePayResp.getRetMsg());
-            bool = false;
+            log.error("BorrowThirdBizImpl thirdTrusteePayCall 验证不通过");
+            return ResponseEntity.ok("success");
         }
-        if (bool) {
-            long borrowId = NumberHelper.toLong(trusteePayResp.getAcqRes());
+        Long borrowId = NumberHelper.toLong(trusteePayResp.getAcqRes());
+        if(trusteePayResp.getState().equals("1")){   // 初审通过
             //初审
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
@@ -602,16 +602,29 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             mqConfig.setMsg(body);
             boolean mqState = false;
             try {
-                log.info(String.format("borrowBizImpl firstVerify send mq %s", GSON.toJson(body)));
+                log.info(String.format("borrowThirdBizImpl firstVerify send mq %s", GSON.toJson(body)));
                 mqState = mqHelper.convertAndSend(mqConfig);
             } catch (Exception e) {
-                log.error("borrowBizImpl firstVerify send mq exception", e);
+                log.error("borrowThirdBizImpl firstVerify send mq exception", e);
             }
 
-            if (!mqState) {
-                return ResponseEntity.ok("初审失败!");
+        }else{ // 等待查询
+            TaskScheduler taskScheduler = new TaskScheduler() ;
+            taskScheduler.setCreateAt(new Date());
+            taskScheduler.setUpdateAt(new Date());
+            taskScheduler.setType(TaskSchedulerConstants.TRUSTEE_PAY_QUERY);
+            Map<String, String> data = new HashMap<>(1) ;
+            data.put("borrowId", borrowId.toString()) ;
+            Gson gson = new Gson();
+            taskScheduler.setTaskData(gson.toJson(data));
+            taskScheduler.setTaskNum(Integer.MAX_VALUE - 2);
+            taskScheduler = taskSchedulerBiz.save(taskScheduler) ;
+            if(ObjectUtils.isEmpty(taskScheduler.getId())){
+                log.error( String.format("添加查询受托支付调度失败 %s",gson.toJson(data)));
             }
+
         }
+
         return ResponseEntity.ok("success");
     }
 }

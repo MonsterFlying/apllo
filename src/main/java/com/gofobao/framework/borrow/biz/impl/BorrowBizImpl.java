@@ -1,6 +1,12 @@
 package com.gofobao.framework.borrow.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.contants.JixinResultContants;
+import com.gofobao.framework.api.helper.JixinManager;
+import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
+import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
@@ -110,6 +116,9 @@ public class BorrowBizImpl implements BorrowBiz {
     private StatisticBiz statisticBiz;
     @Autowired
     private ThymeleafHelper thymeleafHelper;
+
+    @Autowired
+    JixinManager jixinManager ;
 
     /**
      * 理财首页标列表
@@ -1455,6 +1464,44 @@ public class BorrowBizImpl implements BorrowBiz {
         VoThirdTrusteePayReq voThirdTrusteePayReq = new VoThirdTrusteePayReq();
         voThirdTrusteePayReq.setBorrowId(borrowId);
         return borrowThirdBiz.thirdTrusteePay(voThirdTrusteePayReq, request);
+    }
+
+    @Override
+    public boolean doTrusteePay(Long borrowId) {
+        Borrow borrow = borrowService.findByIdLock(borrowId);
+        String productId = borrow.getProductId();
+        Preconditions.checkNotNull(productId, "受托支付记录查询, 当前标的为登记") ;
+        Long userId = borrow.getUserId();
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+
+        TrusteePayQueryReq trusteePayQueryReq = new TrusteePayQueryReq() ;
+        trusteePayQueryReq.setChannel(ChannelContant.HTML) ;
+        trusteePayQueryReq.setAccountId(userThirdAccount.getAccountId());
+        trusteePayQueryReq.setProductId(productId) ;
+        TrusteePayQueryResp trusteePayQueryResp = jixinManager.send(JixinTxCodeEnum.TRUSTEE_PAY_QUERY, trusteePayQueryReq, TrusteePayQueryResp.class);
+        if( (ObjectUtils.isEmpty(trusteePayQueryResp))
+                || (JixinResultContants.SUCCESS.equals(trusteePayQueryResp.getRetCode()))){
+            return false ;
+        }
+
+        if(!trusteePayQueryResp.getState().equals("1")){
+           return false ;
+        }
+
+        // 确认后初审
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
+        mqConfig.setTag(MqTagEnum.FIRST_VERIFY);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            log.info(String.format("borrowBizImpl firstVerify send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Exception e) {
+            log.error("borrowBizImpl firstVerify send mq exception", e);
+        }
+        return true ;
     }
 
     /**
