@@ -103,10 +103,10 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     private MqHelper mqHelper;
 
     @Autowired
-    private ThirdAccountPasswordHelper thirdAccountPasswordHelper ;
+    private ThirdAccountPasswordHelper thirdAccountPasswordHelper;
 
     @Autowired
-    TaskSchedulerBiz taskSchedulerBiz ;
+    TaskSchedulerBiz taskSchedulerBiz;
 
     @Value("${gofobao.webDomain}")
     private String webDomain;
@@ -553,8 +553,8 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         trusteePayReq.setAcqRes(StringHelper.toString(borrowId));
         trusteePayReq.setIdNo(lendUserThirdAccount.getIdNo());
         trusteePayReq.setIdType(JixinHelper.getIdType(lendUserThirdAccount.getIdType()));
-        trusteePayReq.setNotifyUrl(webDomain + "/pub/borrow/v2/third/trusteepay/run" );
-        trusteePayReq.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl( httpServletRequest, borrow.getUserId()));   // 忘记时间
+        trusteePayReq.setNotifyUrl(webDomain + "/pub/borrow/v2/third/trusteepay/run");
+        trusteePayReq.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, borrow.getUserId()));   // 忘记时间
         trusteePayReq.setProductId(borrow.getProductId());
         trusteePayReq.setReceiptAccountId(takeUserThirdAccount.getAccountId());
         trusteePayReq.setRetUrl("");
@@ -568,6 +568,20 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了， 请稍候重试", VoHtmlResp.class));
+        }
+        
+        TaskScheduler taskScheduler = new TaskScheduler();
+        taskScheduler.setCreateAt(new Date());
+        taskScheduler.setUpdateAt(new Date());
+        taskScheduler.setType(TaskSchedulerConstants.TRUSTEE_PAY_QUERY);
+        Map<String, String> data = new HashMap<>(1);
+        data.put("borrowId", String.valueOf(borrowId));
+        Gson gson = new Gson();
+        taskScheduler.setTaskData(gson.toJson(data));
+        taskScheduler.setTaskNum(5);
+        taskScheduler = taskSchedulerBiz.save(taskScheduler);
+        if (ObjectUtils.isEmpty(taskScheduler.getId())) {
+            log.error(String.format("添加查询受托支付调度失败 %s", gson.toJson(data)));
         }
         return ResponseEntity.ok(resp);
     }
@@ -591,7 +605,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             return ResponseEntity.ok("success");
         }
         Long borrowId = NumberHelper.toLong(trusteePayResp.getAcqRes());
-        if(trusteePayResp.getState().equals("1")){   // 初审通过
+        if (trusteePayResp.getState().equals("1")) {   // 初审通过
             //初审
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
@@ -607,19 +621,19 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
                 log.error("borrowThirdBizImpl firstVerify send mq exception", e);
             }
 
-        }else{ // 等待查询
-            TaskScheduler taskScheduler = new TaskScheduler() ;
+        } else { // 等待查询
+            TaskScheduler taskScheduler = new TaskScheduler();
             taskScheduler.setCreateAt(new Date());
             taskScheduler.setUpdateAt(new Date());
             taskScheduler.setType(TaskSchedulerConstants.TRUSTEE_PAY_QUERY);
-            Map<String, String> data = new HashMap<>(1) ;
-            data.put("borrowId", borrowId.toString()) ;
+            Map<String, String> data = new HashMap<>(1);
+            data.put("borrowId", borrowId.toString());
             Gson gson = new Gson();
             taskScheduler.setTaskData(gson.toJson(data));
             taskScheduler.setTaskNum(Integer.MAX_VALUE - 2);
-            taskScheduler = taskSchedulerBiz.save(taskScheduler) ;
-            if(ObjectUtils.isEmpty(taskScheduler.getId())){
-                log.error( String.format("添加查询受托支付调度失败 %s",gson.toJson(data)));
+            taskScheduler = taskSchedulerBiz.save(taskScheduler);
+            if (ObjectUtils.isEmpty(taskScheduler.getId())) {
+                log.error(String.format("添加查询受托支付调度失败 %s", gson.toJson(data)));
             }
 
         }

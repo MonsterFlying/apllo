@@ -11,10 +11,14 @@ import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyResponse;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.common.capital.CapitalChangeEntity;
+import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.JixinHelper;
+import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.contants.ThirdBatchNoTypeContant;
@@ -181,25 +185,35 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "要转让的投标的借款记录不存在!"));
         }
 
+        double transferFeeRate = 0;
+        if ((borrow.getType() == 0) && borrow.isTransfer()) { //转让管理费
+            transferFeeRate = Math.min(0.004 + 0.0008 * (borrow.getTotalOrder() - 1), 0.0128);
+        }
 
         UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
-
         List<CreditInvest> creditInvestList = new ArrayList<>();
         CreditInvest creditInvest = null;
         UserThirdAccount tenderUserThirdAccount = null;
         int sumCount = 0;
         int validMoney = 0;
+        int txFee = 0;
         for (Tender tender : tenderList) {
+            txFee = 0;
+
             tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
-            validMoney = tender.getValidMoney();
+            validMoney = tender.getValidMoney();//投标有效金额
             sumCount += validMoney;
+
+            if ((borrow.getType() == 0) && borrow.isTransfer()) { //转让管理费
+                txFee += (int) MathHelper.myRound(validMoney / borrow.getMoney() * transferFeeRate, 0);
+            }
 
             String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
             creditInvest = new CreditInvest();
             creditInvest.setAccountId(tenderUserThirdAccount.getAccountId());
             creditInvest.setOrderId(transferOrderId);
             creditInvest.setTxAmount(StringHelper.formatDouble(validMoney, 100, false));
-            creditInvest.setTxFee("0");
+            creditInvest.setTxFee(StringHelper.formatDouble(txFee, 100, false));
             creditInvest.setTsfAmount(StringHelper.formatDouble(validMoney, 100, false));
             creditInvest.setForAccountId(borrowUserThirdAccount.getAccountId());
             creditInvest.setOrgOrderId(oldTender.getThirdTenderOrderId());

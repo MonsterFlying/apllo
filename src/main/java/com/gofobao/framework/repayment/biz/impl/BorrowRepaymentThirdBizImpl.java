@@ -322,43 +322,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     Borrow tempBorrow = borrowList.get(0);
                     int tempOrder = order + tempBorrow.getTotalOrder() - borrow.getTotalOrder();
                     int tempLateInterest = tender.getValidMoney() / borrow.getMoney() * lateInterest;
-                    int accruedInterest = 0;
-                    if (tempOrder == 0) {//如果是转让后第一期回款, 则计算转让者首期应计利息
-                        int interest = borrowCollection.getInterest();
-                        Date startAt = DateHelper.beginOfDate((Date) borrowCollection.getStartAt().clone());//获取00点00分00秒
-                        Date collectionAt = DateHelper.beginOfDate((Date) borrowCollection.getCollectionAt().clone());
-                        Date startAtYes = DateHelper.beginOfDate((Date) borrowCollection.getStartAtYes().clone());
-                        Date endAt = DateHelper.beginOfDate((Date) tempBorrow.getSuccessAt().clone());
-
-                        if (endAt.getTime() > collectionAt.getTime()) {
-                            endAt = (Date) collectionAt.clone();
-                        }
-
-                        //债权转让人应收利息
-                        accruedInterest = Math.round(interest *
-                                Math.max(DateHelper.diffInDays(endAt, startAtYes, false), 0) /
-                                DateHelper.diffInDays(collectionAt, startAt, false));
-
-                        if (accruedInterest > 0) {
-                            //债权转让人利息管理费
-                            accruedInterest -= accruedInterest * 0.1;
-                            //通过红包账户发放
-                            //调用即信发放债权转让人应收利息
-                            VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-                            voucherPayRequest.setAccountId(redPacketAccountId);
-                            voucherPayRequest.setTxAmount(StringHelper.formatDouble(accruedInterest, 100, false));
-                            voucherPayRequest.setForAccountId(tenderUserThirdAccount.getAccountId());
-                            voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
-                            voucherPayRequest.setDesLine("发放债权转让人应收利息");
-                            voucherPayRequest.setChannel(ChannelContant.HTML);
-                            voucherPayRequest.setAuthCode(tender.getAuthCode());
-                            VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
-                            if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
-                                String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-                                log.error("BorrowRepaymentThirdBizImpl 调用即信发送发放债权转让人应收利息异常:" + msg);
-                            }
-                        }
-                    }
 
                     //回调
                     receivedRepay(repayList, tempBorrow, borrowAccountId, tempOrder, interestPercent, lateDays, tempLateInterest);
@@ -377,16 +340,12 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     Date startAtYes = DateHelper.beginOfDate((Date) borrowCollection.getStartAtYes().clone());
                     Date endAt = (Date) collectionAt.clone();
 
-                    int num1 = interest * Math.max(DateHelper.diffInDays(endAt, startAtYes, false), 0);
-                    int num2 = DateHelper.diffInDays(collectionAt, startAt, false);
-
-                    /**
-                     * @// TODO: 2017/6/28 转让金额需要单独算入手续费
-                     */
                     interestLower = Math.round(interest -
-                            num1 / num2
+                            interest * Math.max(DateHelper.diffInDays(endAt, startAtYes, false), 0) / DateHelper.diffInDays(collectionAt, startAt, false)
                     );
-                    intAmount -= interestLower;//减去转让方
+
+                    //债权购买人应扣除利息
+                    txFeeIn += interestLower;
                 }
 
                 //利息管理费
@@ -400,11 +359,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     }
                 }
 
-                //逾期收入
+                //借款人逾期罚息
                 if ((lateDays > 0) && (lateInterest > 0)) {
-                    int tempLateInterest = Math.round(tender.getValidMoney() / borrow.getMoney() * lateInterest);
-                    intAmount += tempLateInterest;
-                    txFeeOut += tempLateInterest * 2;
+                    txFeeOut += lateInterest;
                 }
 
                 String orderId = JixinHelper.getOrderId(JixinHelper.REPAY_PREFIX);
@@ -461,21 +418,49 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
         }
 
+        //净值账户管理费
+        double fee = 0;
+        if (borrow.getType() == 1) {
+            double manageFeeRate = 0.0012;
+            if (borrow.getRepayFashion() == 1) {
+                fee = MathHelper.myRound(borrow.getMoney() * manageFeeRate / 30 * borrow.getTimeLimit(), 2);
+            } else {
+                fee = MathHelper.myRound(borrow.getMoney() * manageFeeRate * borrow.getTimeLimit(), 2);
+            }
+        }
+
         List<LendPay> lendPayList = new ArrayList<>();
         LendPay lendPay = null;
         UserThirdAccount tenderUserThirdAccount = null;
         int sumCount = 0;
         int validMoney = 0;
+        int debtFee = 0;
         for (Tender tender : tenderList) {
+            debtFee = 0;
+
             tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
-            validMoney = tender.getValidMoney();
-            sumCount += validMoney;
+            validMoney = tender.getValidMoney();//投标有效金额
+            sumCount += validMoney; //放款总金额
+
+            //添加奖励
+            if (borrow.getAwardType() > 0) {
+                int money = (int) MathHelper.myRound((tender.getValidMoney() / borrow.getMoney()) * borrow.getAward(), 2);
+                if (borrow.getAwardType() == 2) {
+                    money = (int) MathHelper.myRound(tender.getValidMoney() * borrow.getAward() / 100, 2);
+                }
+                debtFee += money;
+            }
+
+            //净值账户管理费
+            if (borrow.getType() == 1) {
+                debtFee += validMoney / borrow.getMoney() * fee;
+            }
 
             lendPay = new LendPay();
             lendPay.setAccountId(tenderUserThirdAccount.getAccountId());
             lendPay.setAuthCode(tender.getAuthCode());
             lendPay.setBidFee("0");
-            lendPay.setDebtFee("0");
+            lendPay.setDebtFee(StringHelper.formatDouble(debtFee, 100, false));
             lendPay.setOrderId(JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX));
             lendPay.setForAccountId(takeUserThirdAccount.getAccountId());
             lendPay.setTxAmount(StringHelper.formatDouble(validMoney, 100, false));
