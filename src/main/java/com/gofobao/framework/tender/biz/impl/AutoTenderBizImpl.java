@@ -415,7 +415,7 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
      * @throws Exception
      */
     public ResponseEntity<VoViewAutoTenderList> getAutoTenderList(VoGetAutoTenderList voGetAutoTenderList) throws Exception {
-        VoViewAutoTenderList voViewAutoTenderList = new VoViewAutoTenderList();
+        VoViewAutoTenderList voViewAutoTenderList =VoBaseResp.ok("查询成功",VoViewAutoTenderList.class);
         List<VoAutoTender> voAutoTenderList = new ArrayList<>();
         int pageIndex = voGetAutoTenderList.getPageIndex();
         int pageSize = voGetAutoTenderList.getPageSize();

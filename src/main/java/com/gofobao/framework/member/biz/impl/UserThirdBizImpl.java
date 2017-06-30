@@ -19,11 +19,17 @@ import com.gofobao.framework.api.model.password_set.PasswordSetRequest;
 import com.gofobao.framework.api.model.password_set.PasswordSetResponse;
 import com.gofobao.framework.asset.entity.BankAccount;
 import com.gofobao.framework.asset.service.BankAccountService;
+import com.gofobao.framework.award.contants.RedPacketContants;
 import com.gofobao.framework.borrow.vo.request.VoAdminOpenAccountResp;
 import com.gofobao.framework.common.constans.TypeTokenContants;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.BankBinHelper;
+import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.helper.ThirdAccountPasswordHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
@@ -56,10 +62,7 @@ import org.springframework.util.StringUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -109,6 +112,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Autowired
     BankBinHelper bankBinHelper;
+
+    @Autowired
+    private MqHelper mqHelper;
 
 
     LoadingCache<String, DictValue> bankLimitCache = CacheBuilder
@@ -290,6 +296,26 @@ public class UserThirdBizImpl implements UserThirdBiz {
         user.setCardId(voOpenAccountReq.getIdNo());
         user.setUpdatedAt(nowDate);
         userService.save(user);
+
+        //=======================
+        // 推送红包活动通道
+        //=======================
+        Map<String, String> paramsMap = new HashMap<>();
+        paramsMap.put("type", RedPacketContants.REGISTER_REDPACKAGE);
+        paramsMap.put("userId", user.getId().toString());
+        paramsMap.put("parentId", user.getParentId().toString());
+        paramsMap.put("time", DateHelper.dateToString(new Date(System.currentTimeMillis())));
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setMsg(paramsMap);
+        mqConfig.setTag(MqTagEnum.INVITE_USER_REAL_NAME);
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
+        try {
+            mqHelper.convertAndSend(mqConfig);
+            log.info("实名赠送红包触发");
+        } catch (Exception e) {
+            log.error(String.format("实名注册红包推送异常：%s", new Gson().toJson(paramsMap)), e);
+        }
+
         VoOpenAccountResp voOpenAccountResp = VoBaseResp.ok("开户成功", VoOpenAccountResp.class);
         voOpenAccountResp.setOpenAccountBankName("江西银行");
         voOpenAccountResp.setAccount(accountId);
@@ -781,7 +807,6 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
 
-
     @Override
     public ResponseEntity<VoHtmlResp> adminOpenAccount(VoAdminOpenAccountResp voAdminOpenAccountResp, HttpServletRequest httpServletRequest) {
         if (!SecurityHelper.checkSign(voAdminOpenAccountResp.getSign(), voAdminOpenAccountResp.getOpenAccountBodyInfo())) {
@@ -791,12 +816,12 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
         // 开户主体信息, phone: 开户手机. name: 用户名称, userId: 用户ID, idNo:身份证号, cardNo: 银行卡号;
-        Map<String, String>  openAccountBodyMap = new Gson().fromJson(voAdminOpenAccountResp.getOpenAccountBodyInfo(), TypeTokenContants.MAP_ALL_STRING_TOKEN) ;
+        Map<String, String> openAccountBodyMap = new Gson().fromJson(voAdminOpenAccountResp.getOpenAccountBodyInfo(), TypeTokenContants.MAP_ALL_STRING_TOKEN);
         String phone = openAccountBodyMap.get("phone");
-        Long userId = Long.parseLong(openAccountBodyMap.get("userId")) ;
-        String realMame = openAccountBodyMap.get("name") ;
-        String idNo = openAccountBodyMap.get("idNo") ;
-        String cardNo = openAccountBodyMap.get("cardNo") ;
+        Long userId = Long.parseLong(openAccountBodyMap.get("userId"));
+        String realMame = openAccountBodyMap.get("name");
+        String idNo = openAccountBodyMap.get("idNo");
+        String cardNo = openAccountBodyMap.get("cardNo");
 
 
         // 1.用户用户信息
@@ -861,13 +886,13 @@ public class UserThirdBizImpl implements UserThirdBiz {
         accountOpenRequest.setName(realMame);
         accountOpenRequest.setMobile(phone);
         accountOpenRequest.setIdNo(idNo);
-        accountOpenRequest.setRetUrl( thirdAccountPasswordHelper.getThirdAcccountInitPasswordUrl(httpServletRequest, userId) ); // 初始化密码
-        accountOpenRequest.setNotifyUrl( String.format("%s%s/%s", javaDomain, "/pub/admin/third/openAccout/callback/", userId) ) ; // 后台通知
+        accountOpenRequest.setRetUrl(thirdAccountPasswordHelper.getThirdAcccountInitPasswordUrl(httpServletRequest, userId)); // 初始化密码
+        accountOpenRequest.setNotifyUrl(String.format("%s%s/%s", javaDomain, "/pub/admin/third/openAccout/callback/", userId)); // 后台通知
         accountOpenRequest.setAcctUse(AcctUseContant.GENERAL_ACCOUNT);
         accountOpenRequest.setAcqRes(String.valueOf(user.getId()));
         accountOpenRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
         String html = jixinManager.getHtml(JixinTxCodeEnum.OPEN_ACCOUNT, accountOpenRequest);
-        VoHtmlResp voHtmlResp = VoBaseResp.ok("操作成功", VoHtmlResp.class) ;
+        VoHtmlResp voHtmlResp = VoBaseResp.ok("操作成功", VoHtmlResp.class);
         voHtmlResp.setHtml(html);
 
 
@@ -910,18 +935,18 @@ public class UserThirdBizImpl implements UserThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(accountOpenResponse.getRetCode())) {
             log.error("UserThirdBizImpl.adminOpenAccountCallback: 回调出失败");
             // 删除用户数据
-            userThirdAccountService.deleteByUserId(userId) ;
+            userThirdAccountService.deleteByUserId(userId);
             return ResponseEntity
                     .badRequest()
                     .body("error");
         }
 
-        Date nowDate = new Date() ;
+        Date nowDate = new Date();
         UserThirdAccount userThirdAccount = userThirdAccountService.findByDelUseid(userId);
         userThirdAccount.setAccountId(accountOpenResponse.getAccountId());
         userThirdAccount.setUpdateAt(new Date());
-        userThirdAccount.setDel(0) ;
-        userThirdAccountService.save(userThirdAccount) ;
+        userThirdAccount.setDel(0);
+        userThirdAccountService.save(userThirdAccount);
 
         Users user = userService.findById(userId);
         user.setRealname(userThirdAccount.getName());
