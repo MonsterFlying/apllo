@@ -11,10 +11,10 @@ import lombok.Data;
 @ApiModel
 public class VoViewCollectionOrderRes {
 
-    @ApiModelProperty("当回款时 ：待收本息(元); 当还款时: 应还本息")
+    @ApiModelProperty("应还本息(元)")
     private String collectionMoney;
 
-    @ApiModelProperty("当回款时 ：已收本息(元); 当还款时: 已还本息(元)")
+    @ApiModelProperty("已还本息(元)")
     private String collectionMoneyYes;
 
     @ApiModelProperty("标名")

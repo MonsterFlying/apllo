@@ -5,7 +5,6 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.service.AutoTenderService;

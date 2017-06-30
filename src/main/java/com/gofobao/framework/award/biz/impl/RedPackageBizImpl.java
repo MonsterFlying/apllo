@@ -128,7 +128,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
                     }
                     //红包更新
                     ActivityRedPacketLog redPacketLog = new ActivityRedPacketLog();
-                    redPacketLog.setUserId(packageReq.getUserId().intValue());
+                    redPacketLog.setUserId(packageReq.getUserId());
                     redPacketLog.setCreateTime(new Date());
                     redPacketLog.setRedPacketId(packageReq.getRedPackageId());
                     redPacketLog.setIparam1(0);
