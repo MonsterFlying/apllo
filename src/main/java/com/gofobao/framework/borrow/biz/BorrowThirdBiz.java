@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletResponse;
  * Created by Zeke on 2017/6/1.
  */
 public interface BorrowThirdBiz {
-    ResponseEntity<VoBaseResp> createThirdBorrow(VoCreateThirdBorrowReq voCreateThirdBorrowReq);
+    ResponseEntity<VoBaseResp> createThirdBorrow(VoCreateThirdBorrowReq voCreateThirdBorrowReq, HttpServletRequest httpServletRequest);
 
     ResponseEntity<VoBaseResp> cancelThirdBorrow(VoCancelThirdBorrow voCancelThirdBorrow);
 
@@ -45,9 +45,10 @@ public interface BorrowThirdBiz {
      * 即信受托支付
      *
      * @param voThirdTrusteePayReq
+     * @param httpServletRequest
      * @return
      */
-    ResponseEntity<VoHtmlResp> thirdTrusteePay(VoThirdTrusteePayReq voThirdTrusteePayReq);
+    ResponseEntity<VoHtmlResp> thirdTrusteePay(VoThirdTrusteePayReq voThirdTrusteePayReq, HttpServletRequest httpServletRequest);
 
     /**
      * 即信受托支付回调

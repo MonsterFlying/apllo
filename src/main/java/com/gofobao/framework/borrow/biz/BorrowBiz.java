@@ -7,6 +7,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import org.springframework.http.ResponseEntity;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 /**
@@ -138,7 +139,8 @@ public interface BorrowBiz {
      * 登记官方借款（车贷标、渠道标）
      *
      * @param voRegisterOfficialBorrow
+     * @param request
      * @return
      */
-    ResponseEntity<VoHtmlResp> registerOfficialBorrow(VoRegisterOfficialBorrow voRegisterOfficialBorrow);
+    ResponseEntity<VoHtmlResp> registerOfficialBorrow(VoRegisterOfficialBorrow voRegisterOfficialBorrow, HttpServletRequest request);
 }

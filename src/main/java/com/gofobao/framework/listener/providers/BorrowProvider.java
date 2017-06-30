@@ -2,13 +2,10 @@ package com.gofobao.framework.listener.providers;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.FrzFlagContant;
-import com.gofobao.framework.api.model.debt_details_query.DebtDetail;
-import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoCreateThirdBorrowReq;
-import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
@@ -34,7 +31,6 @@ import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoThirdBatchCreditInvest;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -285,7 +281,7 @@ public class BorrowProvider {
             if (type != 0 && type != 4) { //判断是否是官标、官标不需要在这里登记标的
                 VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
                 voCreateThirdBorrowReq.setBorrowId(borrowId);
-                resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
+                resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq, request);
                 if (!ObjectUtils.isEmpty(resp)) {
                     return resp;
                 }
