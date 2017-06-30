@@ -41,6 +41,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -281,7 +282,7 @@ public class BorrowProvider {
             if (type != 0 && type != 4) { //判断是否是官标、官标不需要在这里登记标的
                 VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
                 voCreateThirdBorrowReq.setBorrowId(borrowId);
-                resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq, request);
+                resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
                 if (!ObjectUtils.isEmpty(resp)) {
                     return resp;
                 }

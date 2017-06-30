@@ -1452,7 +1452,7 @@ public class BorrowBizImpl implements BorrowBiz {
             VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
             voCreateThirdBorrowReq.setBorrowId(borrowId);
             voCreateThirdBorrowReq.setEntrustFlag(true);
-            resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq, request);
+            resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
             if (!ObjectUtils.isEmpty(resp)) {
                 return ResponseEntity
                         .badRequest()

@@ -117,11 +117,10 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
      * 登记即信标的
      *
      * @param voCreateThirdBorrowReq
-     * @param httpServletRequest
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> createThirdBorrow(VoCreateThirdBorrowReq voCreateThirdBorrowReq, HttpServletRequest httpServletRequest) {
+    public ResponseEntity<VoBaseResp> createThirdBorrow(VoCreateThirdBorrowReq voCreateThirdBorrowReq) {
         Long borrowId = voCreateThirdBorrowReq.getBorrowId();
         boolean entrustFlag = voCreateThirdBorrowReq.getEntrustFlag();
 
@@ -165,7 +164,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         String bailAccountId = jixinHelper.getBailAccountId(borrowId);
         debtRegisterRequest.setBailAccountId(bailAccountId);
         debtRegisterRequest.setAcqRes(StringHelper.toString(borrowId));
-        debtRegisterRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
+        debtRegisterRequest.setChannel(ChannelContant.HTML);
         if (entrustFlag && !ObjectUtils.isEmpty(takeUserThirdAccount)) {
             debtRegisterRequest.setEntrustFlag("1");
             debtRegisterRequest.setReceiptAccountId(takeUserThirdAccount.getAccountId());

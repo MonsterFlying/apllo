@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletResponse;
  * Created by Zeke on 2017/6/1.
  */
 public interface BorrowThirdBiz {
-    ResponseEntity<VoBaseResp> createThirdBorrow(VoCreateThirdBorrowReq voCreateThirdBorrowReq, HttpServletRequest httpServletRequest);
+    ResponseEntity<VoBaseResp> createThirdBorrow(VoCreateThirdBorrowReq voCreateThirdBorrowReq);
 
     ResponseEntity<VoBaseResp> cancelThirdBorrow(VoCancelThirdBorrow voCancelThirdBorrow);
 
