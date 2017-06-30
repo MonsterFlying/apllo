@@ -143,4 +143,12 @@ public interface BorrowBiz {
      * @return
      */
     ResponseEntity<VoHtmlResp> registerOfficialBorrow(VoRegisterOfficialBorrow voRegisterOfficialBorrow, HttpServletRequest request);
+
+
+    /**
+     * 执行受托支付状态查询
+     * @param borrowId
+     * @return
+     */
+    boolean doTrusteePay(Long borrowId);
 }
