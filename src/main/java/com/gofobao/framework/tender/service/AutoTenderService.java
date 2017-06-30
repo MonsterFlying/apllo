@@ -3,6 +3,7 @@ package com.gofobao.framework.tender.service;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.vo.VoFindAutoTenderList;
 import com.gofobao.framework.tender.vo.response.UserAutoTender;
+import com.gofobao.framework.tender.vo.response.VoFindAutoTender;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -22,7 +23,7 @@ public interface AutoTenderService {
 
     boolean updateByExample(AutoTender autoTender, Example<AutoTender> example);
 
-    List<Map<String, Object>> findQualifiedAutoTenders(VoFindAutoTenderList voFindAutoTenderList);
+    List<VoFindAutoTender> findQualifiedAutoTenders(VoFindAutoTenderList voFindAutoTenderList);
 
     boolean updateAutoTenderOrder();
 

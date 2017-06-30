@@ -57,34 +57,13 @@ public class JixinHelper {
         return prefix + new Date().getTime();
     }
 
+
+    /**
+     *获取6位批次号
+     * @return
+     */
     public String getBatchNo() {
-        DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
-
-        Date nowDate = new Date();
-        int noNum = 100000;
-
-        DictValue createAt = dictValueService.findTopByItemIdAndValue01(dictItem.getId(), "firstCreateAt");
-        DictValue no = null;
-        if (!ObjectUtils.isEmpty(createAt)) {
-            Long firstCreateAt = NumberHelper.toLong(StringHelper.toString(createAt.getValue03()));
-            if (DateHelper.beginOfDate(nowDate).getTime() > firstCreateAt) {
-                firstCreateAt = nowDate.getTime();
-                createAt.setValue03(StringHelper.toString(firstCreateAt));
-                dictValueService.save(createAt);
-
-                no = dictValueService.findTopByItemIdAndValue01(dictItem.getId(), "no");
-                no.setValue03(StringHelper.toString(noNum));
-                dictValueService.save(no);
-            } else {
-                no = dictValueService.findTopByItemIdAndValue01(dictItem.getId(), "no");
-                noNum = NumberHelper.toInt(StringHelper.toString(no.getValue03())) + 1;
-                no.setValue03(StringHelper.toString(noNum));
-                dictValueService.save(no);
-            }
-        }
-
-
-        return StringHelper.toString(noNum);
+        return DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_HMS_NUM);
     }
 
     /**

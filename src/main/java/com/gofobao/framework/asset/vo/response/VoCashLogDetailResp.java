@@ -29,6 +29,12 @@ public class VoCashLogDetailResp  extends VoBaseResp{
     @ApiModelProperty("银行处理时间")
     private String bankProcessTime ;
 
+    @ApiModelProperty("提现状态描述")
+    private String statusMsg ;
+
+    @ApiModelProperty("提现状态:  // -1.取消提现.0:申请中,1.系统审核通过, 2.系统审核不通过,  3.银行提现成功. 4.银行提现失败.")
+    private Integer status ;
+
     @ApiModelProperty("真实到账时间")
     private String realCashTime ;
 }

@@ -17,16 +17,7 @@ public class StringHelper {
     public static String toString(Object obj) {
         return ObjectUtils.isEmpty(obj) ? "" : obj.toString();
     }
-
-    public static void main(String[] args) {
-
-        try {
-            System.out.println(formatDouble(123545, 100, false));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
+    
     /**
      * 格式化金额
      *

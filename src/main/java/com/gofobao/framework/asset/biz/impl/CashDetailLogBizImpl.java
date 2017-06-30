@@ -564,6 +564,26 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
         response.setRealCashTime(DateHelper.dateToString(cashTime));
+
+
+        // 状态
+        Integer state = cashDetailLog.getState();
+
+        String stateMsg = null;
+        if("-1".equals(state)){
+            stateMsg = "提现申请已取消"  ;
+        }else if("1".equals(state)){
+            stateMsg = "系统审核通过" ;
+        }else if("2".equals(state)){
+            stateMsg = "系统审核不同通过, 如有问题请联系客服" ;
+        }else if("3".equals(state)){
+            stateMsg = "提现成功" ;
+        }else{
+            stateMsg = "提现失败" ;
+        }
+        response.setStatus(state);
+        response.setStatusMsg(stateMsg) ;
+
         return ResponseEntity.ok(response);
     }
 

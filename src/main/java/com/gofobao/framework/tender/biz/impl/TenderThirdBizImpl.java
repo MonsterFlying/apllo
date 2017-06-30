@@ -189,18 +189,18 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         UserThirdAccount tenderUserThirdAccount = null;
         int sumCount = 0;
         int validMoney = 0;
-        String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
         for (Tender tender : tenderList) {
             tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
             validMoney = tender.getValidMoney();
             sumCount += validMoney;
 
+            String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
             creditInvest = new CreditInvest();
             creditInvest.setAccountId(tenderUserThirdAccount.getAccountId());
             creditInvest.setOrderId(transferOrderId);
             creditInvest.setTxAmount(StringHelper.formatDouble(validMoney, 100, false));
             creditInvest.setTxFee("0");
-            creditInvest.setTsfAmount(StringHelper.formatDouble(borrow.getMoney(), 100, false));
+            creditInvest.setTsfAmount(StringHelper.formatDouble(validMoney, 100, false));
             creditInvest.setForAccountId(borrowUserThirdAccount.getAccountId());
             creditInvest.setOrgOrderId(oldTender.getThirdTenderOrderId());
             creditInvest.setOrgTxAmount(StringHelper.formatDouble(oldTender.getValidMoney(), 100, false));
@@ -236,6 +236,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
             throw new Exception("投资人批次购买债权失败!:" + response.getRetMsg());
         }
+
         return null;
     }
 
@@ -274,9 +275,9 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      * @return
      */
     public void thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) {
-
         BatchCreditInvestRunCall creditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
         });
+
         boolean bool = true;
         if (ObjectUtils.isEmpty(creditInvestRunCall)) {
             log.error("=============================即信投资人批次购买债权处理结果回调===========================");
@@ -300,7 +301,6 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         if (bool) {
             long borrowId = NumberHelper.toLong(creditInvestRunCall.getAcqRes());
             Borrow borrow = borrowService.findById(borrowId);
-
             List<CreditInvestRun> creditInvestRunList = GSON.fromJson(creditInvestRunCall.getSubPacks(), new TypeToken<CreditInvestRun>() {
             }.getType());
 

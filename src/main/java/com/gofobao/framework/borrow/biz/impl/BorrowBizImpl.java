@@ -194,7 +194,7 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setMoney(StringHelper.formatMon(borrow.getMoney() / 100d));
             borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
             borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes() / borrow.getMoney().doubleValue())));
-            Date endAt = DateHelper.addDays( DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);//结束时间
+            Date endAt = DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);//结束时间
             borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
             borrowInfoRes.setSurplusSecond(-1L);
             //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
@@ -1419,7 +1419,13 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoHtmlResp> registerOfficialBorrow(VoRegisterOfficialBorrow voRegisterOfficialBorrow) {
+    public ResponseEntity<VoHtmlResp>
+
+
+
+
+
+    registerOfficialBorrow(VoRegisterOfficialBorrow voRegisterOfficialBorrow) {
         String paramStr = voRegisterOfficialBorrow.getParamStr();
         if (!SecurityHelper.checkSign(voRegisterOfficialBorrow.getSign(), paramStr)) {
             return ResponseEntity
@@ -1437,25 +1443,8 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "pc 登记官方借款 该标已初审", VoHtmlResp.class));
         }
 
-        //检查标的是否登记
-        VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
-        voQueryThirdBorrowList.setProductId(borrow.getProductId());
-        voQueryThirdBorrowList.setUserId(borrow.getUserId());
-        voQueryThirdBorrowList.setPageNum("1");
-        voQueryThirdBorrowList.setPageSize("10");
-        DebtDetailsQueryResp response = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
-        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
-            String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoHtmlResp.error(VoHtmlResp.ERROR, msg, VoHtmlResp.class));
-        }
-
-        List<DebtDetail> debtDetailList = GSON.fromJson(response.getSubPacks(), new com.google.common.reflect.TypeToken<List<DebtDetail>>() {
-        }.getType());
-
         ResponseEntity<VoBaseResp> resp = null;
-        if (debtDetailList.size() < 1) {
+        if (ObjectUtils.isEmpty(borrow.getProductId())) {
             //即信标的登记
             VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
             voCreateThirdBorrowReq.setBorrowId(borrowId);
