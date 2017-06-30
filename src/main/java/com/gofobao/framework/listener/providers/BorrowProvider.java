@@ -277,7 +277,7 @@ public class BorrowProvider {
 
         if (ObjectUtils.isEmpty(productId)) {
             //标的登记
-            int type = borrow.getType();
+    /*        int type = borrow.getType();
             if (type != 0 && type != 4) { //判断是否是官标、官标不需要在这里登记标的
                 VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
                 voCreateThirdBorrowReq.setBorrowId(borrowId);
@@ -285,7 +285,7 @@ public class BorrowProvider {
                 if (!ObjectUtils.isEmpty(resp)) {
                     return resp;
                 }
-            }
+            }*/
         }
 
         //批量投标

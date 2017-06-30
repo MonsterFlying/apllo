@@ -8,10 +8,7 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.response.*;
 import com.gofobao.framework.common.constans.MoneyConstans;
-import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.helper.ThymeleafHelper;
+import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.member.entity.UserAttachment;
@@ -98,7 +95,8 @@ public class BorrowServiceImpl implements BorrowService {
         List statusArray = Lists.newArrayList(
                 new Integer(BorrowContants.CANCEL),
                 new Integer(BorrowContants.NO_PASS),
-                new Integer(BorrowContants.RECHECK_NO_PASS));
+                new Integer(BorrowContants.RECHECK_NO_PASS),
+                new Integer(BorrowContants.PENDING));
 
         StringBuilder pageSb = new StringBuilder(" SELECT b FROM Borrow b WHERE 1=1 ");
         StringBuilder countSb = new StringBuilder(" SELECT COUNT(id) FROM Borrow b WHERE 1=1 ");
@@ -106,13 +104,15 @@ public class BorrowServiceImpl implements BorrowService {
 
         // 条件
         if (type != null) {  // 全部
+
             if (type == 5) {
                 condtionSql.append(" AND b.tenderId is not null ");
             } else {
                 condtionSql.append(" AND b.type=" + type);
             }
+
         }
-        condtionSql.append(" AND b.status NOT IN(:statusArray)");
+        condtionSql.append(" AND b.verifyAt IS Not NULL AND b.status NOT IN(:statusArray)");
         // 排序
         if ("-1".equals(type)) {   // 全部
             condtionSql.append(" ORDER BY FIELD(b.type,0, 4, 1, 2),(b.moneyYes / b.money) DESC, b.id DESC");
@@ -127,7 +127,7 @@ public class BorrowServiceImpl implements BorrowService {
         Query pageQuery = entityManager.createQuery(pageSb.append(condtionSql).toString(), Borrow.class);
         pageQuery.setParameter("statusArray", statusArray);
         List<Borrow> borrowLists = pageQuery
-                .setFirstResult(voBorrowListReq.getPageIndex()*voBorrowListReq.getPageSize())
+                .setFirstResult(voBorrowListReq.getPageIndex() * voBorrowListReq.getPageSize())
                 .setMaxResults(voBorrowListReq.getPageSize())
                 .getResultList();
 
@@ -161,31 +161,35 @@ public class BorrowServiceImpl implements BorrowService {
             } else {
                 item.setTimeLimit(m.getTimeLimit() + BorrowContants.MONTH);
             }
+
+            //待发布时间
             item.setSurplusSecond(-1L);
+            //进度
+            item.setSpend(0d);
+
             //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
             Integer status = m.getStatus();
-            if (status == 0) { //待发布
-                status = 1;
-            } else if (status == BorrowContants.BIDDING) {//招标中
+            Date nowDate = new Date();
+            Date releaseAt = m.getReleaseAt();  //发布时间
+
+            if (status == BorrowContants.BIDDING) {//招标中
                 Integer validDay = m.getValidDay();
                 Date endAt = DateHelper.addDays(DateHelper.beginOfDate(m.getReleaseAt()), validDay + 1);
-                Date nowDate = new Date(System.currentTimeMillis());
-                if (nowDate.getTime() > endAt.getTime()) {  //当前时间大于满标时间
+                //待发布
+                if (releaseAt.getTime() < nowDate.getTime()) {
+                    status = 1;
+                    item.setSurplusSecond((releaseAt.getTime() - nowDate.getTime()) + 5);
+                } else if (nowDate.getTime() > endAt.getTime()||nowDate.getTime()>releaseAt.getTime()) {  //当前时间大于招标有效时间
                     status = 5; //已过期
                 } else {
                     status = 3; //招标中
-                    item.setSurplusSecond((endAt.getTime() - nowDate.getTime()) + 5);
+                    //  进度
+                    item.setSpend(Double.parseDouble(StringHelper.formatMon(m.getMoneyYes().doubleValue() / m.getMoney())));
                 }
             } else if (!ObjectUtils.isEmpty(m.getSuccessAt()) && !ObjectUtils.isEmpty(m.getCloseAt())) {   //满标时间 结清
                 status = 4; //已完成
             } else if (status == BorrowContants.PASS && ObjectUtils.isEmpty(m.getCloseAt())) {
                 status = 2; //还款中
-            }
-            //  进度
-            if (status == 3) {
-                item.setSpend(Double.parseDouble(StringHelper.formatMon(m.getMoneyYes().doubleValue() / m.getMoney())));
-            } else {
-                item.setSpend(0d);
             }
 
             Long userId = m.getUserId();
@@ -272,7 +276,7 @@ public class BorrowServiceImpl implements BorrowService {
         Query pageQuery = entityManager.createQuery(pageSb.append(condtionSql).toString(), Borrow.class);
         pageQuery.setParameter("statusArray", statusArray);
         List<Borrow> borrowLists = pageQuery
-                .setFirstResult(voBorrowListReq.getPageIndex()*voBorrowListReq.getPageSize())
+                .setFirstResult(voBorrowListReq.getPageIndex() * voBorrowListReq.getPageSize())
                 .setMaxResults(voBorrowListReq.getPageSize())
                 .getResultList();
 

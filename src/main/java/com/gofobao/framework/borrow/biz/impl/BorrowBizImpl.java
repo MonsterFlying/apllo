@@ -192,20 +192,28 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setMoney(StringHelper.formatMon(borrow.getMoney() / 100d));
             borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
             borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes() / borrow.getMoney().doubleValue())));
-            Date endAt = DateHelper.addDays( DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);//结束时间
+            //结束时间
+            Date endAt = DateHelper.addDays( DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);
             borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
+            //进度
             borrowInfoRes.setSurplusSecond(-1L);
             //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
             Integer status = borrow.getStatus();
-            if (status == 0) { //待发布
-                status = 1;
-            } else if (status == BorrowContants.BIDDING) {//招标中
-                Date nowDate = new Date(System.currentTimeMillis());
-                if (nowDate.getTime() > endAt.getTime()) {  //当前时间大于满标时间
+            Date nowDate = new Date();
+            Date releaseAt = borrow.getReleaseAt();  //发布时间
+
+            if (status == BorrowContants.BIDDING) {//招标中
+                //待发布
+                if (releaseAt.getTime() < nowDate.getTime()) {
+                    status = 1;
+                    borrowInfoRes.setSurplusSecond((releaseAt.getTime() - nowDate.getTime()) + 5);
+                } else if (nowDate.getTime() > endAt.getTime()||nowDate.getTime()>releaseAt.getTime()) {  //当前时间大于招标有效时间
                     status = 5; //已过期
                 } else {
                     status = 3; //招标中
-                    borrowInfoRes.setSurplusSecond((endAt.getTime() - nowDate.getTime()) + 5);
+                    //  进度
+                    borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes().doubleValue() / borrow.getMoney())));
+
                 }
             } else if (!ObjectUtils.isEmpty(borrow.getSuccessAt()) && !ObjectUtils.isEmpty(borrow.getCloseAt())) {   //满标时间 结清
                 status = 4; //已完成
