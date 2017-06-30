@@ -39,4 +39,8 @@ public class ThirdBatchLogServiceImpl implements ThirdBatchLogService {
     public ThirdBatchLog save(ThirdBatchLog thirdBatchLog) {
         return thirdBatchLogRepository.save(thirdBatchLog);
     }
+
+    public List<ThirdBatchLog> save(List<ThirdBatchLog> thirdBatchLogList) {
+        return thirdBatchLogRepository.save(thirdBatchLogList);
+    }
 }

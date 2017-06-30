@@ -20,4 +20,6 @@ public interface ThirdBatchLogService {
     long count(Specification<ThirdBatchLog> specification);
 
     ThirdBatchLog save(ThirdBatchLog thirdBatchLog);
+
+    List<ThirdBatchLog> save(List<ThirdBatchLog> thirdBatchLogList);
 }
