@@ -1,6 +1,7 @@
 package com.gofobao.framework.member.vo.request;
 
 import com.gofobao.framework.common.page.Page;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 /**
@@ -8,6 +9,7 @@ import lombok.Data;
  */
 @Data
 public class VoFriendsReq extends Page {
+    @ApiModelProperty(hidden = true )
     private Long userId;
 
 }

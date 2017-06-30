@@ -1,5 +1,7 @@
 package com.gofobao.framework.member.controller;
 
+import com.gofobao.framework.award.vo.response.VoViewShareRegiestRes;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.QRCodeHelper;
 import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.member.biz.BrokerBounsBiz;
@@ -27,7 +29,7 @@ import java.util.Map;
  */
 
 @Slf4j
-@RequestMapping("/invite")
+@RequestMapping("")
 @Api(description = "我的邀请")
 @RestController
 public class FriendsController {
@@ -44,40 +46,54 @@ public class FriendsController {
 
 
     @ApiOperation("邀请好友列表")
-    @GetMapping("v2/list")
+    @GetMapping("/invite/v2/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewInviteFriendersWarpRes> list(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
-                                                             @ModelAttribute VoFriendsReq voFriendsReq) {
+                                                             @PathVariable Integer pageIndex,
+                                                             @PathVariable Integer pageSize) {
+        VoFriendsReq voFriendsReq=new VoFriendsReq();
+        voFriendsReq.setPageSize(pageSize);
+        voFriendsReq.setPageIndex(pageIndex);
         voFriendsReq.setUserId(userId);
         return brokerBounsBiz.list(voFriendsReq);
     }
 
     @ApiOperation("邀请统计")
-    @GetMapping("v2/statistic")
+    @GetMapping("/invite/v2/statistic")
     public ResponseEntity<VoViewInviteAwardStatisticsWarpRes> statistic(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return brokerBounsBiz.statistic(userId);
     }
 
     @ApiOperation("邀请好友投标列表")
-    @GetMapping("v2/first/tender/list")
+    @GetMapping("/invite/v2/first/tender/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewFriendsTenderInfoWarpRes> firstTenderList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
-                                                                          @ModelAttribute VoFriendsReq voFriendsReq) {
+                                                                          @PathVariable Integer pageIndex,
+                                                                          @PathVariable Integer pageSize) {
+        VoFriendsReq voFriendsReq=new VoFriendsReq();
+        voFriendsReq.setPageSize(pageSize);
+        voFriendsReq.setPageIndex(pageIndex);
         voFriendsReq.setUserId(userId);
         return brokerBounsBiz.firstTender(voFriendsReq);
     }
 
-    @ApiOperation("分享注册邀请码")
-    @GetMapping("v2/shareRegister")
-    public ResponseEntity<String> shareRegister(/*@RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+    @ApiOperation("邀请好友首页页面")
+    @GetMapping("invite/v2/shareRegister")
+    public ResponseEntity<VoViewShareRegiestRes> shareRegister(/*@RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
         String content;
+        VoViewShareRegiestRes res= VoBaseResp.ok("查询成功",VoViewShareRegiestRes.class);
         try {
             Map<String,Object> resultMaps=brokerBounsBiz.shareRegister(901L);
-            System.out.println(new Gson().toJson(resultMaps ));
+            res.setCodeUrl(resultMaps.get("QRCodeURL").toString());
+            res.setTitle("邀请好友投资,奖励送不停");
+            res.setDesc("新手福利,注册即送1000元投标体验金+加息0.5%-3%");
             content=thymeleafHelper.build("user/friends",resultMaps);
+            res.setHtml(content);
         }catch (Exception e){
             e.printStackTrace();
             content=thymeleafHelper.build("load_error",null);
         }
-        return  ResponseEntity.ok(content);
+        res.setHtml(content);
+
+        return  ResponseEntity.ok(res);
     }
 
 
@@ -86,7 +102,7 @@ public class FriendsController {
      *
      * @param response
      */
-    @RequestMapping("/getInviteFriendQRCode")
+    @RequestMapping(value = "invite/qrcode/getInviteFriendQRCode",method = RequestMethod.GET)
     @ApiOperation(value = "获取二维码接口", notes = "获取二维码接口")
     public void getInviteFriendQRCode(@RequestParam("inviteCode") String inviteCode, HttpServletResponse response) {
 
