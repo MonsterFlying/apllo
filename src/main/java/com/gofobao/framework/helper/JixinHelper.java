@@ -63,8 +63,7 @@ public class JixinHelper {
      * @return
      */
     public String getBatchNo() {
-        Date date = new Date();
-        return DateHelper.dateToString(date, DateHelper.DATE_FORMAT_HMS_NUM) ;
+        return DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_HMS_NUM);
     }
 
     /**

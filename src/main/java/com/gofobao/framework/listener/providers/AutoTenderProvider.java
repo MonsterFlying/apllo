@@ -11,6 +11,7 @@ import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.vo.VoFindAutoTenderList;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
+import com.gofobao.framework.tender.vo.response.VoFindAutoTender;
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +45,7 @@ public class AutoTenderProvider {
             Preconditions.checkNotNull(borrow, "自动投标异常：id为" + borrowId + "借款不存在");
 
             VoFindAutoTenderList voFindAutoTenderList = new VoFindAutoTenderList();
-            List<Map<String, Object>> autoTenderList = null;
+            List<VoFindAutoTender> autoTenderList = null;
 
             //===========================================================
             int num = 0;
@@ -69,50 +70,50 @@ public class AutoTenderProvider {
                     break;
                 }
 
-                Iterator<Map<String, Object>> itAutoTender = autoTenderList.iterator();
-                Map<String, Object> autoTenderMap = null;
+                Iterator<VoFindAutoTender> itAutoTender = autoTenderList.iterator();
+                VoFindAutoTender voFindAutoTender = null;
                 Integer money = 0;
                 Integer lowest = 0;
                 Integer useMoney = 0;
                 Integer borrowMoney = borrow.getMoney();//借款金额（分）
                 Integer moneyYes = borrow.getMoneyYes();
                 Integer mostAuto = borrow.getMostAuto();
-                Set<String> tenderUserIds = new HashSet<>();
-                Set<String> autoTenderIds = new HashSet<>();
+                Set<Long> tenderUserIds = new HashSet<>();
+                Set<Long> autoTenderIds = new HashSet<>();
 
                 AutoTender autoTender = null;
                 while (itAutoTender.hasNext()) {//将合格的自动投标  放入消息队列
-                    autoTenderMap = itAutoTender.next();
+                    voFindAutoTender = itAutoTender.next();
 
                     if (moneyYes >= borrowMoney || (mostAuto > 0 && moneyYes >= mostAuto)) {  // 判断是否满标或者 达到自动投标最大额度
                         bool = true;
                         break;
                     }
 
-                    if (tenderUserIds.contains(StringHelper.toString(autoTenderMap.get("userId")))   // 保证每个用户和每个自动投标规则只能使用一次
-                            || autoTenderIds.contains(StringHelper.toString(autoTenderMap.get("id")))) {
+                    if (tenderUserIds.contains(voFindAutoTender.getUserId())   // 保证每个用户和每个自动投标规则只能使用一次
+                            || autoTenderIds.contains(voFindAutoTender.getId())) {
                         continue;
                     }
 
-                    useMoney = Integer.parseInt(StringHelper.toString(autoTenderMap.get("useMoney")));
-                    money = "1".equals(StringHelper.toString(autoTenderMap.get("mode"))) ? Integer.parseInt(StringHelper.toString(autoTenderMap.get("tenderMoney"))) : useMoney;
-                    money = Math.min(useMoney - Integer.parseInt(StringHelper.toString(autoTenderMap.get("saveMoney"))), money);
-                    lowest = Integer.parseInt(StringHelper.toString(autoTenderMap.get("lowest")));
+                    useMoney = voFindAutoTender.getUseMoney();
+                    money = voFindAutoTender.getMode() == 1 ? voFindAutoTender.getTenderMoney() : useMoney;
+                    money = Math.min(useMoney - voFindAutoTender.getSaveMoney(), money);
+                    lowest = voFindAutoTender.getLowest();
                     if ((money < lowest) || ((borrowMoney - moneyYes) < lowest)) {
                         continue;
                     }
 
                     VoCreateTenderReq voCreateBorrowTender = new VoCreateTenderReq();
                     voCreateBorrowTender.setBorrowId(borrowId);
-                    voCreateBorrowTender.setUserId(NumberHelper.toLong(StringHelper.toString(autoTenderMap.get("userId"))));
+                    voCreateBorrowTender.setUserId((long)voFindAutoTender.getUserId());
                     voCreateBorrowTender.setTenderMoney(MathHelper.myRound(money / 100.0, 2));
-                    voCreateBorrowTender.setAutoOrder(NumberHelper.toInt(autoTenderMap.get("order")));
-                    voCreateBorrowTender.setLowest(MathHelper.myRound(NumberHelper.toInt(StringHelper.toString(autoTenderMap.get("lowest"))) / 100.0, 2));
+                    voCreateBorrowTender.setAutoOrder(voFindAutoTender.getOrder());
+                    voCreateBorrowTender.setLowest(MathHelper.myRound(voFindAutoTender.getLowest() / 100.0, 2));
                     voCreateBorrowTender.setIsAutoTender(true);//自动标识
 
                     Map<String, Object> rs = null;
                     try {
-                        if (!tenderUserIds.contains(StringHelper.toString(autoTenderMap.get("userId"))) && !autoTenderIds.contains(StringHelper.toString(autoTenderMap.get("id")))) {
+                        if (!tenderUserIds.contains(voFindAutoTender.getUserId()) && !autoTenderIds.contains(voFindAutoTender.getId())) {
                             rs = tenderBiz.createTender(voCreateBorrowTender);
                         }
                     } catch (Exception e) {
@@ -128,11 +129,10 @@ public class AutoTenderProvider {
                     Object respMsgState = rs.get("respMsgState");
                     if (ObjectUtils.isEmpty(respMsgState)) {
                         moneyYes += lowest;
-                        autoTenderIds.add(StringHelper.toString(autoTenderMap.get("id")));
-                        tenderUserIds.add(StringHelper.toString(autoTenderMap.get("userId")));
-                        autoTender = new AutoTender();
-                        autoTender.setAutoAt(nowDate);
-                        autoTender.setId(NumberHelper.toLong(StringHelper.toString(autoTenderMap.get("id"))));
+                        autoTenderIds.add((long)voFindAutoTender.getId());
+                        tenderUserIds.add((long)voFindAutoTender.getUserId());
+                        voFindAutoTender.setAutoAt(nowDate);
+                        voFindAutoTender.setId(voFindAutoTender.getId());
                         autoTenderService.updateById(autoTender);
                         autoTenderCount++;
                     }

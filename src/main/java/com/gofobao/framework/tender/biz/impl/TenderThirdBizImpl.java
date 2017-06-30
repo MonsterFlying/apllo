@@ -193,14 +193,14 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
             validMoney = tender.getValidMoney();
             sumCount += validMoney;
+
+            String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
             creditInvest = new CreditInvest();
             creditInvest.setAccountId(tenderUserThirdAccount.getAccountId());
-            String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
             creditInvest.setOrderId(transferOrderId);
             creditInvest.setTxAmount(StringHelper.formatDouble(validMoney, 100, false));
-            //  TODO 需要加入转让费用  转让费率 = 0.4% + 0.08% * (剩余期限-1)  （费率最高上限为1.28%）
             creditInvest.setTxFee("0");
-            creditInvest.setTsfAmount(StringHelper.formatDouble(borrow.getMoney(), 100, false));   // TODO 提现金额应该是 用户购买的金额?
+            creditInvest.setTsfAmount(StringHelper.formatDouble(validMoney, 100, false));
             creditInvest.setForAccountId(borrowUserThirdAccount.getAccountId());
             creditInvest.setOrgOrderId(oldTender.getThirdTenderOrderId());
             creditInvest.setOrgTxAmount(StringHelper.formatDouble(oldTender.getValidMoney(), 100, false));

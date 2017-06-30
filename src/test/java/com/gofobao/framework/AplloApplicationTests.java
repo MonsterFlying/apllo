@@ -68,7 +68,7 @@ public class AplloApplicationTests {
 
     @Test
     public void contextLoads() {
-        Borrow borrow = borrowService.findById(165176L);
+        Borrow borrow = borrowService.findById(169740L);
         try {
             borrowBiz.notTransferedBorrowAgainVerify(borrow);
         } catch (Exception e) {
@@ -80,7 +80,7 @@ public class AplloApplicationTests {
 
         Gson gson = new Gson();
         Map<String, String> map = new HashMap<>();
-        map.put("borrowId", "165225");
+        map.put("borrowId", "169741");
         System.out.println(gson.toJson(map));
         System.out.println(SecurityHelper.getSign(gson.toJson(map)));
     }
@@ -132,7 +132,6 @@ public class AplloApplicationTests {
     }
 
     @Test
-    @Transactional(rollbackFor = Exception.class)
     public void test() {
 
         //根据手机号查询存管账户
@@ -146,13 +145,13 @@ public class AplloApplicationTests {
         //查询投资人购买债权
         //creditInvestQuery();
 
-        /*Map<String,String> map = new HashMap<>();
-        map.put("borrowId","165227");
+        Map<String,String> map = new HashMap<>();
+        map.put("borrowId","169741");
         try {
             borrowProvider.doFirstVerify(map);
         } catch (Exception e) {
             e.printStackTrace();
-        }*/
+        }
 
         /*VoRepayReq voRepayReq = new VoRepayReq();
         voRepayReq.setRepaymentId(168683L);
