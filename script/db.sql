@@ -379,3 +379,18 @@ ALTER TABLE `gfb_auto_tender`
    MODIFY COLUMN `tender_4` int(11) NOT NULL DEFAULT '0',
    MODIFY COLUMN  `apr_first` int(11) unsigned NOT NULL COMMENT '年化率起始值',
    MODIFY COLUMN  `apr_last` int(5) unsigned NOT NULL COMMENT '年化率结束值';
+
+
+CREATE TABLE gfb_task_scheduler
+(
+  id INT PRIMARY KEY COMMENT '唯一标示' AUTO_INCREMENT,
+  type INT DEFAULT 0 COMMENT '调度类型: 0:委托申请状态查询',
+  task_num INT DEFAULT 10 COMMENT '调度次数',
+  state INT DEFAULT 0 COMMENT '0:未成功 1.成功',
+  task_data VARCHAR(1024) DEFAULT '' COMMENT '调度任务数据',
+  del INT DEFAULT 0 COMMENT '是否有效: 0有效 ,1 无效',
+  do_task_num INT DEFAULT 0 COMMENT '已经执行次数',
+  do_task_data VARCHAR(10240) DEFAULT '' COMMENT '每次执行结果累加',
+  create_at DATETIME COMMENT '创建时间',
+  update_at DATETIME COMMENT '修改时间'
+);

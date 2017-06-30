@@ -171,7 +171,7 @@ public class BorrowController {
      */
     @PostMapping("/borrow/pub/pc/official/register")
     @ApiOperation("登记官方借款（车贷标、渠道标）")
-    public ResponseEntity<VoHtmlResp> registerOfficialBorrow(@ModelAttribute @Valid VoRegisterOfficialBorrow voRegisterOfficialBorrow) {
-        return borrowBiz.registerOfficialBorrow(voRegisterOfficialBorrow);
+    public ResponseEntity<VoHtmlResp> registerOfficialBorrow(HttpServletRequest request, @ModelAttribute @Valid VoRegisterOfficialBorrow voRegisterOfficialBorrow) {
+        return borrowBiz.registerOfficialBorrow(voRegisterOfficialBorrow, request);
     }
 }

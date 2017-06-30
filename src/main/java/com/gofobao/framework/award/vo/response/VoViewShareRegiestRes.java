@@ -21,4 +21,9 @@ public class VoViewShareRegiestRes extends VoBaseResp {
 
     @ApiModelProperty("标题")
     private String title;
+
+    @ApiModelProperty("请求链接")
+    private String requestHtmlUrl;
+    @ApiModelProperty("图标")
+    private String icon;
 }

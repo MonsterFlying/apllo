@@ -1,9 +1,12 @@
 package com.gofobao.framework.borrow.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
-import com.gofobao.framework.api.model.debt_details_query.DebtDetail;
-import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
+import com.gofobao.framework.api.helper.JixinManager;
+import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
+import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
@@ -67,6 +70,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 /**
@@ -112,6 +116,9 @@ public class BorrowBizImpl implements BorrowBiz {
     private StatisticBiz statisticBiz;
     @Autowired
     private ThymeleafHelper thymeleafHelper;
+
+    @Autowired
+    JixinManager jixinManager ;
 
     /**
      * 理财首页标列表
@@ -194,7 +201,7 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setMoney(StringHelper.formatMon(borrow.getMoney() / 100d));
             borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
             borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes() / borrow.getMoney().doubleValue())));
-            Date endAt = DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);//结束时间
+            Date endAt = DateHelper.addDays( DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);//结束时间
             borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
             borrowInfoRes.setSurplusSecond(-1L);
             //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
@@ -1416,16 +1423,11 @@ public class BorrowBizImpl implements BorrowBiz {
      * 登记官方借款（车贷标、渠道标）
      *
      * @param voRegisterOfficialBorrow
+     * @param request
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoHtmlResp>
-
-
-
-
-
-    registerOfficialBorrow(VoRegisterOfficialBorrow voRegisterOfficialBorrow) {
+    public ResponseEntity<VoHtmlResp> registerOfficialBorrow(VoRegisterOfficialBorrow voRegisterOfficialBorrow, HttpServletRequest request) {
         String paramStr = voRegisterOfficialBorrow.getParamStr();
         if (!SecurityHelper.checkSign(voRegisterOfficialBorrow.getSign(), paramStr)) {
             return ResponseEntity
@@ -1443,8 +1445,9 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "pc 登记官方借款 该标已初审", VoHtmlResp.class));
         }
 
-        ResponseEntity<VoBaseResp> resp = null;
-        if (ObjectUtils.isEmpty(borrow.getProductId())) {
+        ResponseEntity<VoBaseResp> resp = null ;
+        //检查标的是否登记
+        if(StringUtils.isEmpty(borrow.getProductId())){
             //即信标的登记
             VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
             voCreateThirdBorrowReq.setBorrowId(borrowId);
@@ -1460,7 +1463,45 @@ public class BorrowBizImpl implements BorrowBiz {
         //受托支付
         VoThirdTrusteePayReq voThirdTrusteePayReq = new VoThirdTrusteePayReq();
         voThirdTrusteePayReq.setBorrowId(borrowId);
-        return borrowThirdBiz.thirdTrusteePay(voThirdTrusteePayReq);
+        return borrowThirdBiz.thirdTrusteePay(voThirdTrusteePayReq, request);
+    }
+
+    @Override
+    public boolean doTrusteePay(Long borrowId) {
+        Borrow borrow = borrowService.findByIdLock(borrowId);
+        String productId = borrow.getProductId();
+        Preconditions.checkNotNull(productId, "受托支付记录查询, 当前标的为登记") ;
+        Long userId = borrow.getUserId();
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+
+        TrusteePayQueryReq trusteePayQueryReq = new TrusteePayQueryReq() ;
+        trusteePayQueryReq.setChannel(ChannelContant.HTML) ;
+        trusteePayQueryReq.setAccountId(userThirdAccount.getAccountId());
+        trusteePayQueryReq.setProductId(productId) ;
+        TrusteePayQueryResp trusteePayQueryResp = jixinManager.send(JixinTxCodeEnum.TRUSTEE_PAY_QUERY, trusteePayQueryReq, TrusteePayQueryResp.class);
+        if( (ObjectUtils.isEmpty(trusteePayQueryResp))
+                || (JixinResultContants.SUCCESS.equals(trusteePayQueryResp.getRetCode()))){
+            return false ;
+        }
+
+        if(!trusteePayQueryResp.getState().equals("1")){
+           return false ;
+        }
+
+        // 确认后初审
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
+        mqConfig.setTag(MqTagEnum.FIRST_VERIFY);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            log.info(String.format("borrowBizImpl firstVerify send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Exception e) {
+            log.error("borrowBizImpl firstVerify send mq exception", e);
+        }
+        return true ;
     }
 
     /**

@@ -45,9 +45,10 @@ public interface BorrowThirdBiz {
      * 即信受托支付
      *
      * @param voThirdTrusteePayReq
+     * @param httpServletRequest
      * @return
      */
-    ResponseEntity<VoHtmlResp> thirdTrusteePay(VoThirdTrusteePayReq voThirdTrusteePayReq);
+    ResponseEntity<VoHtmlResp> thirdTrusteePay(VoThirdTrusteePayReq voThirdTrusteePayReq, HttpServletRequest httpServletRequest);
 
     /**
      * 即信受托支付回调

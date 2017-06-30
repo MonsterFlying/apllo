@@ -3,8 +3,8 @@ package com.gofobao.framework.award.entity;
 import lombok.Data;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
 import java.util.Date;
+
 
 /**
  * Created by admin on 2017/5/31.
@@ -37,10 +37,10 @@ public class ActivityRedPacket {
     private Integer money;
     @Basic
     @Column(name = "BEGIN_AT", nullable = true)
-    private Timestamp beginAt;
+    private Date beginAt;
     @Basic
     @Column(name = "END_AT", nullable = true)
-    private Timestamp endAt;
+    private Date endAt;
     @Basic
     @Column(name = "CREATE_TIME", nullable = true)
     private Date createTime;
