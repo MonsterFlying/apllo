@@ -10,7 +10,6 @@ import com.gofobao.framework.member.vo.response.VoViewFriendsTenderInfoWarpRes;
 import com.gofobao.framework.member.vo.response.VoViewInviteAwardStatisticsWarpRes;
 import com.gofobao.framework.member.vo.response.VoViewInviteFriendersWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
-import com.google.gson.Gson;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -44,13 +43,15 @@ public class FriendsController {
     @Value("${gofobao.h5Domain}")
     private String h5Domain;
 
+    @Value("${gofobao.webDomain}")
+    private String webDomain;
 
     @ApiOperation("邀请好友列表")
     @GetMapping("/invite/v2/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewInviteFriendersWarpRes> list(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                              @PathVariable Integer pageIndex,
                                                              @PathVariable Integer pageSize) {
-        VoFriendsReq voFriendsReq=new VoFriendsReq();
+        VoFriendsReq voFriendsReq = new VoFriendsReq();
         voFriendsReq.setPageSize(pageSize);
         voFriendsReq.setPageIndex(pageIndex);
         voFriendsReq.setUserId(userId);
@@ -68,7 +69,7 @@ public class FriendsController {
     public ResponseEntity<VoViewFriendsTenderInfoWarpRes> firstTenderList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                                           @PathVariable Integer pageIndex,
                                                                           @PathVariable Integer pageSize) {
-        VoFriendsReq voFriendsReq=new VoFriendsReq();
+        VoFriendsReq voFriendsReq = new VoFriendsReq();
         voFriendsReq.setPageSize(pageSize);
         voFriendsReq.setPageIndex(pageIndex);
         voFriendsReq.setUserId(userId);
@@ -77,23 +78,25 @@ public class FriendsController {
 
     @ApiOperation("邀请好友首页页面")
     @GetMapping("invite/v2/shareRegister")
-    public ResponseEntity<VoViewShareRegiestRes> shareRegister(/*@RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+    public ResponseEntity<VoViewShareRegiestRes> shareRegister(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         String content;
-        VoViewShareRegiestRes res= VoBaseResp.ok("查询成功",VoViewShareRegiestRes.class);
+        VoViewShareRegiestRes res = VoBaseResp.ok("查询成功", VoViewShareRegiestRes.class);
         try {
-            Map<String,Object> resultMaps=brokerBounsBiz.shareRegister(901L);
+            Map<String, Object> resultMaps = brokerBounsBiz.shareRegister(userId);
             res.setCodeUrl(resultMaps.get("QRCodeURL").toString());
             res.setTitle("邀请好友投资,奖励送不停");
             res.setDesc("新手福利,注册即送1000元投标体验金+加息0.5%-3%");
-            content=thymeleafHelper.build("user/friends",resultMaps);
+            res.setRequestHtmlUrl(h5Domain + "invite/v2/shareRegister");
+            res.setIcon(webDomain + "/images/bankLogo/logo.png");
+            content = thymeleafHelper.build("user/friends", resultMaps);
             res.setHtml(content);
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
-            content=thymeleafHelper.build("load_error",null);
+            content = thymeleafHelper.build("load_error", null);
         }
         res.setHtml(content);
 
-        return  ResponseEntity.ok(res);
+        return ResponseEntity.ok(res);
     }
 
 
@@ -102,7 +105,7 @@ public class FriendsController {
      *
      * @param response
      */
-    @RequestMapping(value = "invite/qrcode/getInviteFriendQRCode",method = RequestMethod.GET)
+    @RequestMapping(value = "invite/qrcode/getInviteFriendQRCode", method = RequestMethod.GET)
     @ApiOperation(value = "获取二维码接口", notes = "获取二维码接口")
     public void getInviteFriendQRCode(@RequestParam("inviteCode") String inviteCode, HttpServletResponse response) {
 
@@ -119,8 +122,10 @@ public class FriendsController {
         response.setContentType("image/jpeg"); // return a jpeg
 
         try {
-            InputStream in = FriendsController.class.getResourceAsStream( "/static/img/logo.png");http://192.168.1.235:8000/#/auth/register?_k=bpjq7r.createQRCodeTStream(h5Domain+"/#/auth/register?shareRegisterCode="+inviteCode, in, 50, 50, out);
-            QRCodeHelper.createQRCodeTStream(h5Domain+"/#/auth/register?shareRegisterCode="+inviteCode, in, 50, 50, out);
+            InputStream in = FriendsController.class.getResourceAsStream("/static/img/logo.png");
+            http:
+//192.168.1.235:8000/#/auth/register?_k=bpjq7r.createQRCodeTStream(h5Domain+"/#/auth/register?shareRegisterCode="+inviteCode, in, 50, 50, out);
+            QRCodeHelper.createQRCodeTStream(h5Domain + "/#/auth/register?shareRegisterCode=" + inviteCode, in, 50, 50, out);
             out.flush();
         } catch (Exception e) {
             log.error(String.format("获取二维码接口：%s", e.getMessage()));
