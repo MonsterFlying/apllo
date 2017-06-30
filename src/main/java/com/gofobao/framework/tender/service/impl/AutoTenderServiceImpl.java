@@ -84,7 +84,6 @@ public class AutoTenderServiceImpl implements AutoTenderService {
             return null;
         }
 
-
         Borrow borrow = borrowService.findById(voFindAutoTenderList.getBorrowId());
 
         StringBuffer sql = new StringBuffer("select t.id AS id,t. STATUS AS status,t.user_id AS userId,t.lowest AS lowest,t.borrow_types AS borrowTypes," +
@@ -155,8 +154,7 @@ public class AutoTenderServiceImpl implements AutoTenderService {
     public boolean updateAutoTenderOrder() {
         StringBuffer sql = new StringBuffer("UPDATE gfb_auto_tender t1,(SELECT id,@rownum:=@rownum+1 AS listorder FROM" +
                 " gfb_auto_tender t2, (SELECT @rownum:=0)t3  ORDER BY t2.auto_at ASC, t2.order ASC ) t4  SET t1.`order` = t4.listorder WHERE t1.id = t4.id");
-
-        return jdbcTemplate.update(sql.toString())>1;
+        return jdbcTemplate.update(sql.toString()) > 1;
     }
 
     /**
