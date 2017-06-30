@@ -131,10 +131,8 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
 
         Long takeUserId = borrow.getTakeUserId();
         UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
-
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "借款人未开户!");
-
         String productId = jixinHelper.generateProductId(borrowId);
 
         DebtRegisterRequest request = new DebtRegisterRequest();
@@ -142,7 +140,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         request.setProductId(productId);
         request.setProductDesc(borrow.getName());
         request.setRaiseDate(DateHelper.dateToString(borrow.getReleaseAt(), DateHelper.DATE_FORMAT_YMD_NUM));
-        request.setRaiseEndDate(DateHelper.dateToString(DateHelper.addDays(borrow.getReleaseAt(), borrow.getValidDay()), DateHelper.DATE_FORMAT_YMD_NUM));
+        request.setRaiseEndDate(DateHelper.dateToString(DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1), DateHelper.DATE_FORMAT_YMD_NUM));
         request.setIntType(StringHelper.toString(repayFashion == 1 ? 0 : 1));
         int duration = 0;
         if (repayFashion != 1) {

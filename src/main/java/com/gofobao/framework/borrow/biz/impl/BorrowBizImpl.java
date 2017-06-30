@@ -1443,30 +1443,13 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "pc 登记官方借款 该标已初审", VoHtmlResp.class));
         }
 
-        //检查标的是否登记
-        VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
-        voQueryThirdBorrowList.setProductId(borrow.getProductId());
-        voQueryThirdBorrowList.setUserId(borrow.getUserId());
-        voQueryThirdBorrowList.setPageNum("1");
-        voQueryThirdBorrowList.setPageSize("10");
-        DebtDetailsQueryResp response = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
-        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
-            String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoHtmlResp.error(VoHtmlResp.ERROR, msg, VoHtmlResp.class));
-        }
 
-        List<DebtDetail> debtDetailList = GSON.fromJson(response.getSubPacks(), new com.google.common.reflect.TypeToken<List<DebtDetail>>() {
-        }.getType());
-
-        ResponseEntity<VoBaseResp> resp = null;
-        if (debtDetailList.size() < 1) {
-            //即信标的登记
+        // 即信标的登记
+        if (StringUtils.isEmpty(borrow.getProductId())) {
             VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
             voCreateThirdBorrowReq.setBorrowId(borrowId);
             voCreateThirdBorrowReq.setEntrustFlag(true);
-            resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
+            ResponseEntity<VoBaseResp> resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
             if (!ObjectUtils.isEmpty(resp)) {
                 return ResponseEntity
                         .badRequest()
