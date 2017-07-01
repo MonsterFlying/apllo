@@ -1,7 +1,14 @@
 package com.gofobao.framework.repayment.biz.Impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.contants.DesLineFlagContant;
+import com.gofobao.framework.api.contants.JixinResultContants;
+import com.gofobao.framework.api.helper.JixinManager;
+import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.batch_bail_repay.BailRepayRun;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.asset.entity.AdvanceLog;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AdvanceLogService;
@@ -36,8 +43,11 @@ import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.helper.project.IntegralChangeHelper;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.entity.UserCache;
+import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserCacheService;
+import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
@@ -57,6 +67,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -108,6 +119,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private AdvanceLogService advanceLogService;
     @Autowired
     private BorrowRepository borrowRepository;
+    @Value("${jixin.redPacketAccountId}")
+    private String redPacketAccountId;
+    @Autowired
+    private UserThirdAccountService userThirdAccountService;
+    @Autowired
+    private JixinManager jixinManager;
 
 
     @Override
@@ -377,7 +394,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
             entity.setMoney(lateInterest);
             entity.setRemark("借款[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]的逾期罚息");
             capitalChangeHelper.capitalChange(entity);
-
         }
 
         if (ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) {
@@ -505,6 +521,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
             for (Tender tender : tenderList) {
 
+                UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
+
                 //获取当前借款的回款记录
                 BorrowCollection borrowCollection = null;
                 for (int i = 0; i < borrowCollectionList.size(); i++) {
@@ -574,6 +592,23 @@ public class RepaymentBizImpl implements RepaymentBiz {
                             entity.setMoney(accruedInterest);
                             entity.setRemark("收到借款标[" + BorrowHelper.getBorrowLink(tempBorrow.getId(), tempBorrow.getName()) + "]转让当期应计利息。");
                             capitalChangeHelper.capitalChange(entity);
+
+                            //通过红包账户发放
+                            //调用即信发放债权转让人应收利息
+                            VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
+                            voucherPayRequest.setAccountId(redPacketAccountId);
+                            voucherPayRequest.setTxAmount(StringHelper.formatDouble(accruedInterest * 0.9, 100, false));//扣除手续费
+                            voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
+                            voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
+                            voucherPayRequest.setDesLine("发放债权转让人应收利息");
+                            voucherPayRequest.setChannel(ChannelContant.HTML);
+                            voucherPayRequest.setAuthCode(tender.getAuthCode());
+                            VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
+                            if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+                                String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+                                log.error("BorrowRepaymentThirdBizImpl 调用即信发送发放债权转让人应收利息异常:" + msg);
+                            }
+
 
                             //利息管理费
                             entity = new CapitalChangeEntity();
@@ -681,12 +716,28 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 //逾期收入
                 if ((lateDays > 0) && (lateInterest > 0)) {
                     int tempLateInterest = Math.round(tender.getValidMoney() / borrow.getMoney() * lateInterest);
+                    String remark = "收到借款标[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]的逾期罚息";
+
+                    //调用即信发送红包接口
+                    VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
+                    voucherPayRequest.setAccountId(redPacketAccountId);
+                    voucherPayRequest.setTxAmount(StringHelper.formatDouble(tempLateInterest, 100, false));
+                    voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
+                    voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
+                    voucherPayRequest.setChannel(ChannelContant.HTML);
+                    voucherPayRequest.setDesLine(remark);
+                    VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
+                    if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+                        String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+                        throw new Exception("逾期收入发送异常：" + msg);
+                    }
+
                     entity = new CapitalChangeEntity();
                     entity.setType(CapitalChangeEnum.IncomeOverdue);
                     entity.setUserId(tender.getUserId());
                     entity.setToUserId(borrow.getUserId());
                     entity.setMoney(tempLateInterest);
-                    entity.setRemark("收到借款标[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]的逾期罚息");
+                    entity.setRemark(remark);
                     capitalChangeHelper.capitalChange(entity);
                 }
 
@@ -870,12 +921,22 @@ public class RepaymentBizImpl implements RepaymentBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> advance(VoAdvanceReq voAdvanceReq) throws Exception {
-        ResponseEntity resp = advanceCheck(voAdvanceReq.getRepaymentId());
+        Date nowDate = new Date();
+        String paramStr = voAdvanceReq.getParamStr();
+        if (!SecurityHelper.checkSign(voAdvanceReq.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc取消借款 签名验证不通过!"));
+        }
+        Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        Long repaymentId = NumberHelper.toLong(paramMap.get("repaymentId"));
+
+        ResponseEntity resp = advanceCheck(repaymentId);
         if (!ObjectUtils.isEmpty(resp)) {
             return resp;
         }
         VoBatchBailRepayReq voBatchBailRepayReq = new VoBatchBailRepayReq();
-        voBatchBailRepayReq.setRepaymentId(voAdvanceReq.getRepaymentId());
+        voBatchBailRepayReq.setRepaymentId(repaymentId);
         voBatchBailRepayReq.setInterestPercent(1d);
         return borrowRepaymentThirdBiz.thirdBatchBailRepay(voBatchBailRepayReq);
     }

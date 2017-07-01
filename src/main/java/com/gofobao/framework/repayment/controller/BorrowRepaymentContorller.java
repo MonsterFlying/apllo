@@ -82,7 +82,7 @@ public class BorrowRepaymentContorller {
      */
     @PostMapping("/repayment/v2/advance")
     @ApiOperation("垫付")
-    public ResponseEntity<VoBaseResp> advance(VoAdvanceReq voAdvanceReq){
+    public ResponseEntity<VoBaseResp> pcAdvance(VoAdvanceReq voAdvanceReq){
         try {
             return repaymentBiz.advance(voAdvanceReq);
         } catch (Exception e) {

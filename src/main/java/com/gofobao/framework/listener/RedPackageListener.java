@@ -1,12 +1,10 @@
 package com.gofobao.framework.listener;
-
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnumContants;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.JacksonHelper;
+import com.gofobao.framework.listener.providers.RedPackageProvider;
 import com.google.common.base.Preconditions;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -25,10 +23,7 @@ import java.util.Map;
 public class RedPackageListener {
 
     @Autowired
-    private RedPackageListener redPackageListener;
-
-    static Gson GSON = new GsonBuilder().create();
-
+    private RedPackageProvider redPackageProvider;
 
     @RabbitHandler
     public void process(String message) {
@@ -39,16 +34,23 @@ public class RedPackageListener {
             Preconditions.checkNotNull(body.get(MqConfig.MSG_TAG));
             Preconditions.checkNotNull(body.get(MqConfig.MSG_BODY));
             String redPackageType = body.get(MqConfig.MSG_TAG).toString(); //红包类型:新用户,积分兑换,广富币对款....
-            Map<String, String> msg = (Map<String, String>) body.get(MqConfig.MSG_BODY);
+            Map<String, Object> msg = (Map<String, Object>) body.get(MqConfig.MSG_BODY);
             do {
-                if (redPackageType.equals(MqTagEnum.INTEGRAL_EXCHANGE)) {  //积分兑换
+                if (redPackageType.equals(MqTagEnum.INVITE_USER_REAL_NAME)) {  //邀请用户开户
+                    redPackageProvider.inviteUserTender(msg);
+                    break;
+                } else if (redPackageType.equals(MqTagEnum.NEW_USER_TENDER)) {  //新用户投标
+                    redPackageProvider.newUserRealName(msg);
+                    break;
+                } else if (redPackageType.equals(MqTagEnum.INVITE_USER_TENDER)) {//邀请用户投资
+                    redPackageProvider.inviteUserTender(msg);
+                    break;
 
+                } else if (redPackageType.equals(MqTagEnum.OLD_USER_TENDER)) { //老用户投资
+                    redPackageProvider.inviteUserTender(msg);
                     break;
                 }
-                if (redPackageType.equals(MqTagEnum.GOFOBI_EXCHANGE)) {//广富币兑换
-
-                    break;
-                }
+                break;
             } while (false);
         } catch (Exception e) {
 

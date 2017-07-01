@@ -1,5 +1,11 @@
 package com.gofobao.framework.tender.biz.impl;
 
+import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.contants.JixinResultContants;
+import com.gofobao.framework.api.helper.JixinManager;
+import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
+import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
@@ -82,6 +88,8 @@ public class TenderBizImpl implements TenderBiz {
     private BorrowCollectionService borrowCollectionService;
     @Autowired
     private UserThirdAccountService userThirdAccountService;
+    @Autowired
+    private JixinManager jixinManager;
 
     public Map<String, Object> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception {
         Map<String, Object> rsMap = null;
@@ -226,7 +234,6 @@ public class TenderBizImpl implements TenderBiz {
                     break;
                 }
             }
-
 
             if (userThirdAccount.getPasswordState() == 0) {
                 msg = "银行存管:密码未初始化!";
@@ -378,7 +385,6 @@ public class TenderBizImpl implements TenderBiz {
                 break;
             }
 
-
             double validMoney = MathHelper.myRound(Math.min(borrow.getMoney() - borrow.getMoneyYes(), tenderMoney), 2);
             if (isAutoTender) {
                 if (borrow.getMostAuto() > 0) {
@@ -400,10 +406,34 @@ public class TenderBizImpl implements TenderBiz {
             Asset asset = assetService.findByUserIdLock(userId);
             Preconditions.checkNotNull(users, "用户资产不存在!");
 
+            BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
+            balanceQueryRequest.setChannel(ChannelContant.HTML);
+            balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
+            BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
+            if ((ObjectUtils.isEmpty(balanceQueryResponse)) || !balanceQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
+                msg = "当前网络不稳定,请稍后重试!";
+                break;
+            }
+
+            //比较存管账户总资产大于等于本地账户
+            //存管账户减去本地冻结判断金额是否大于投标金额
+            double currBal = NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100.0;//账面余额
+            double availBal = NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0;//可用余额  账面余额-可用余额=冻结金额
+            if (currBal < (asset.getUseMoney() + asset.getNoUseMoney())) {
+                msg = "资金账户未同步，请先在个人中心进行资金同步操作!";
+                break;
+            }
+
+            if (asset.getNoUseMoney() < (currBal - availBal)) {
+                msg = "资金账户出问题了，请及时与广富宝金服客服人员联系！";
+                break;
+            }
+
             if (validMoney > asset.getUseMoney()) {
                 msg = "您的账户可用余额不足,请先充值!";
                 break;
             }
+
 
             rsMap.put("validMoney", validMoney);
             rsMap.put("borrow", borrow);

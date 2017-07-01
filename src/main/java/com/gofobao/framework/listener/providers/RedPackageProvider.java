@@ -67,7 +67,7 @@ public class RedPackageProvider {
      * @param resultMaps
      */
     @Transactional(rollbackFor = Exception.class)
-    private void inviteUserTender(Map<String, Object> resultMaps) {
+    public void inviteUserTender(Map<String, Object> resultMaps) {
         if (ObjectUtils.isEmpty(resultMaps)) {
             log.error("邀请别人投资送红包处理参数为空");
             return;
@@ -193,7 +193,7 @@ public class RedPackageProvider {
      * @param resultMaps
      */
     @Transactional(rollbackFor = Exception.class)
-    private void oldUserTender(Map<String, Object> resultMaps) {
+    public void oldUserTender(Map<String, Object> resultMaps) {
         if (ObjectUtils.isEmpty(resultMaps)) {
             log.error("老用户投标红包处理参数为空");
             return;
@@ -304,7 +304,7 @@ public class RedPackageProvider {
      * @param resultMaps
      */
     @Transactional(rollbackFor = Exception.class)
-    private void newUserTender(Map<String, Object> resultMaps) {
+    public void newUserTender(Map<String, Object> resultMaps) {
         if (ObjectUtils.isEmpty(resultMaps)) {
             log.error("新手投标红包处理参数为空");
             return;
@@ -417,7 +417,7 @@ public class RedPackageProvider {
      * @param resultMaps
      */
     @Transactional(rollbackFor = Exception.class)
-    private void newUserRealName(Map<String, Object> resultMaps) {
+    public void newUserRealName(Map<String, Object> resultMaps) {
         if (ObjectUtils.isEmpty(resultMaps)) {
             log.error("实名派送红包处理参数为空");
             return;

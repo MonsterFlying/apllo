@@ -23,6 +23,7 @@ import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
+import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -64,6 +65,8 @@ public class AplloApplicationTests {
     private EntityManager entityManager;
     @Autowired
     private BorrowCollectionService borrowCollectionService;
+    @Autowired
+    private ThirdBatchLogService thirdBatchLogService;
 
     @Test
     public void contextLoads() {
@@ -79,7 +82,7 @@ public class AplloApplicationTests {
 
         Gson gson = new Gson();
         Map<String, String> map = new HashMap<>();
-        map.put("borrowId", "169741");
+        map.put("borrowId", "169746");
         System.out.println(gson.toJson(map));
         System.out.println(SecurityHelper.getSign(gson.toJson(map)));
     }
@@ -95,7 +98,7 @@ public class AplloApplicationTests {
     public void trusteePay() {
         TrusteePayQueryReq request = new TrusteePayQueryReq();
         request.setAccountId("6212462040000250045");
-        request.setProductId("165225");
+        request.setProductId("A69745");
         request.setChannel(ChannelContant.HTML);
         TrusteePayQueryResp response = jixinManager.send(JixinTxCodeEnum.TRUSTEE_PAY_QUERY, request, TrusteePayQueryResp.class);
         System.out.println(response);
@@ -123,7 +126,7 @@ public class AplloApplicationTests {
     public void creditInvestQuery() {
         CreditInvestQueryReq request = new CreditInvestQueryReq();
         request.setChannel(ChannelContant.HTML);
-        request.setAccountId("6212462040000600025");
+        request.setAccountId("6212462040000250045");
         request.setOrgOrderId("GFBLP_1498557194741");
         request.setAcqRes("1");
         CreditInvestQueryResp response = jixinManager.send(JixinTxCodeEnum.CREDIT_INVEST_QUERY, request, CreditInvestQueryResp.class);
@@ -145,7 +148,7 @@ public class AplloApplicationTests {
         //creditInvestQuery();
 
         Map<String,String> map = new HashMap<>();
-        map.put("borrowId","169741");
+        map.put("borrowId","169745");
         try {
             borrowProvider.doFirstVerify(map);
         } catch (Exception e) {
@@ -174,7 +177,7 @@ public class AplloApplicationTests {
         System.out.println((resp.getTotalItems()));*/
 
         /*Map<String,String> msg = new HashMap<>();
-        msg.put("borrowId","165227");
+        msg.put("borrowId","169741");
         try {
             borrowProvider.doAgainVerify(msg);
         } catch (Exception e) {
@@ -202,9 +205,9 @@ public class AplloApplicationTests {
         System.out.println(response);*/
 
         /*BatchDetailsQueryReq request = new BatchDetailsQueryReq();
-        request.setBatchNo("100010");
-        request.setBatchTxDate("20170627");
-        request.setType("0");
+        request.setBatchNo("115714");
+        request.setBatchTxDate("20170630");
+        request.setType("9");
         request.setPageNum("1");
         request.setPageSize("10");
         request.setChannel(ChannelContant.HTML);
