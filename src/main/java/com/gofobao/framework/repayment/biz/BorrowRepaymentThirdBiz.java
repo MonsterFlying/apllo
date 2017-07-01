@@ -73,6 +73,15 @@ public interface BorrowRepaymentThirdBiz {
     ResponseEntity<String> thirdBatchBailRepayCheckCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
+     * 获取即信还款集合
+     *
+     * @param voThirdBatchRepay
+     * @return
+     * @throws Exception
+     */
+    List<Repay> getRepayList(VoThirdBatchRepay voThirdBatchRepay) throws Exception;
+
+    /**
      * 批次担保账户代偿业务处理回调
      */
     ResponseEntity<String> thirdBatchBailRepayRunCall(HttpServletRequest request, HttpServletResponse response);
@@ -99,14 +108,5 @@ public interface BorrowRepaymentThirdBiz {
      * @param response
      */
     ResponseEntity<String> thirdBatchRepayBailRunCall(HttpServletRequest request, HttpServletResponse response);
-
-    /**
-     * 获取即信还款集合
-     *
-     * @param voThirdBatchRepay
-     * @return
-     * @throws Exception
-     */
-    List<Repay> getRepayList(VoThirdBatchRepay voThirdBatchRepay) throws Exception;
 
 }
