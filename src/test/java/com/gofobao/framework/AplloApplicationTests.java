@@ -22,7 +22,6 @@ import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
-import com.gofobao.framework.listener.providers.RedPackageProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;

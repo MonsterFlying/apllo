@@ -13,7 +13,6 @@ import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.repository.TenderRepository;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +28,6 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.security.SecureRandom;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
