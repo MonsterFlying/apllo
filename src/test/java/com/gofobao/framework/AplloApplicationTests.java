@@ -22,6 +22,7 @@ import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
+import com.gofobao.framework.listener.providers.RedPackageProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -130,100 +131,7 @@ public class AplloApplicationTests {
         System.out.println(response);
     }
 
-    @Test
-    public void test() {
-
-        //根据手机号查询存管账户
-        //findAccountByMobile();
-        //受托支付
-        /*trusteePay();*/
-        //签约查询
-        //creditAuthQuery();
-        //取消批次
-        //batchCancel();
-        //查询投资人购买债权
-        //creditInvestQuery();
-
-        Map<String,String> map = new HashMap<>();
-        map.put("borrowId","169741");
-        try {
-            borrowProvider.doFirstVerify(map);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        /*VoRepayReq voRepayReq = new VoRepayReq();
-        voRepayReq.setRepaymentId(168683L);
-        voRepayReq.setUserId(901L);
-        voRepayReq.setIsUserOpen(false);
-        voRepayReq.setInterestPercent(1d);
-        try {
-            repaymentBiz.repay(voRepayReq);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        System.out.println(true + "");*/
-
-        /*VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
-        voQueryThirdBorrowList.setBorrowId(165200L);
-        voQueryThirdBorrowList.setUserId(901L);
-        voQueryThirdBorrowList.setPageNum("1");
-        voQueryThirdBorrowList.setPageSize("10");
-        DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
-        System.out.println((resp.getTotalItems()));*/
-
-        /*Map<String,String> msg = new HashMap<>();
-        msg.put("borrowId","165227");
-        try {
-            borrowProvider.doAgainVerify(msg);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }*/
-
-        //"userId\":901,\"repaymentId\":168675,\"interestPercent\":0.0,\"isUserOpen\":true
-        /*VoRepayReq voRepayReq = new VoRepayReq();
-        voRepayReq.setUserId(901L);
-        voRepayReq.setRepaymentId(168675L);
-        voRepayReq.setInterestPercent(0.0);
-        voRepayReq.setIsUserOpen(false);
-        try {
-            repaymentBiz.repay(voRepayReq);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }*/
 
 
-        /*BidApplyQueryReq request = new BidApplyQueryReq();
-        request.setAccountId("6212462040000600025");
-        request.setChannel(ChannelContant.HTML);
-        request.setOrgOrderId("GFBT_1498530231199");
-        BidApplyQueryResp response = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, request, BidApplyQueryResp.class);
-        System.out.println(response);*/
-
-        /*BatchDetailsQueryReq request = new BatchDetailsQueryReq();
-        request.setBatchNo("100010");
-        request.setBatchTxDate("20170627");
-        request.setType("0");
-        request.setPageNum("1");
-        request.setPageSize("10");
-        request.setChannel(ChannelContant.HTML);
-        BatchDetailsQueryResp response = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, request, BatchDetailsQueryResp.class);
-        System.out.println(response);*/
-
-        /*Borrow borrow = borrowService.findById(165225L);
-        try {
-            borrowBiz.notTransferedBorrowAgainVerify(borrow);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }*/
-
-        /*Borrow borrow = borrowService.findById(165227L);
-        try {
-            borrowBiz.transferedBorrowAgainVerify(borrow);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }*/
-    }
 
 }
