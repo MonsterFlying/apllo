@@ -63,4 +63,10 @@ public class VoBasicUserInfoResp extends VoBaseResp{
 
     @ApiModelProperty("银行密码状态")
     private boolean bankPassworState ;
+
+    @ApiModelProperty("自动投标签约状态")
+    private boolean autoTenderState ;
+
+    @ApiModelProperty("自动债权转让签约状态")
+    private boolean autoTranferState ;
 }

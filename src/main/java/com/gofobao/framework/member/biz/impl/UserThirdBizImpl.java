@@ -47,6 +47,7 @@ import com.gofobao.framework.system.service.DictValueService;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -115,6 +116,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Autowired
     private MqHelper mqHelper;
+    //用户来源
+    private List<Integer> sources = Lists.newArrayList(0, 1, 2,9);
 
 
     LoadingCache<String, DictValue> bankLimitCache = CacheBuilder
@@ -300,20 +303,23 @@ public class UserThirdBizImpl implements UserThirdBiz {
         //=======================
         // 推送红包活动通道
         //=======================
-        Map<String, String> paramsMap = new HashMap<>();
-        paramsMap.put("type", RedPacketContants.REGISTER_REDPACKAGE);
-        paramsMap.put("userId", user.getId().toString());
-        paramsMap.put("parentId", user.getParentId().toString());
-        paramsMap.put("time", DateHelper.dateToString(new Date(System.currentTimeMillis())));
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setMsg(paramsMap);
-        mqConfig.setTag(MqTagEnum.INVITE_USER_REAL_NAME);
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
-        try {
-            mqHelper.convertAndSend(mqConfig);
-            log.info("实名赠送红包触发");
-        } catch (Exception e) {
-            log.error(String.format("实名注册红包推送异常：%s", new Gson().toJson(paramsMap)), e);
+        if (sources.contains(user.getSource())&&user.getParentId()>0) {
+            Map<String, String> paramsMap = new HashMap<>();
+            paramsMap.put("type", RedPacketContants.REGISTER_REDPACKAGE);
+            paramsMap.put("userId", user.getId().toString());
+            paramsMap.put("parentId", user.getParentId().toString());
+            paramsMap.put("time", DateHelper.dateToString(new Date(System.currentTimeMillis())));
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setMsg(paramsMap);
+            mqConfig.setTag(MqTagEnum.INVITE_USER_REAL_NAME);
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
+            try {
+                mqHelper.convertAndSend(mqConfig);
+                log.info("实名赠送红包触发");
+            } catch (Exception e) {
+                log.error(String.format("实名注册红包推送异常：%s", new Gson().toJson(paramsMap)), e);
+            }
+
         }
 
         VoOpenAccountResp voOpenAccountResp = VoBaseResp.ok("开户成功", VoOpenAccountResp.class);
@@ -807,16 +813,17 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
 
+
     @Override
     public ResponseEntity<VoHtmlResp> adminOpenAccount(VoAdminOpenAccountResp voAdminOpenAccountResp, HttpServletRequest httpServletRequest) {
-        if (!SecurityHelper.checkSign(voAdminOpenAccountResp.getSign(), voAdminOpenAccountResp.getOpenAccountBodyInfo())) {
+        if (!SecurityHelper.checkSign(voAdminOpenAccountResp.getSign(), voAdminOpenAccountResp.getParamStr())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "开户请求参数非法", VoHtmlResp.class));
         }
 
         // 开户主体信息, phone: 开户手机. name: 用户名称, userId: 用户ID, idNo:身份证号, cardNo: 银行卡号;
-        Map<String, String> openAccountBodyMap = new Gson().fromJson(voAdminOpenAccountResp.getOpenAccountBodyInfo(), TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        Map<String, String>  openAccountBodyMap = new Gson().fromJson(voAdminOpenAccountResp.getParamStr(), TypeTokenContants.MAP_ALL_STRING_TOKEN) ;
         String phone = openAccountBodyMap.get("phone");
         Long userId = Long.parseLong(openAccountBodyMap.get("userId"));
         String realMame = openAccountBodyMap.get("name");
@@ -892,8 +899,14 @@ public class UserThirdBizImpl implements UserThirdBiz {
         accountOpenRequest.setAcqRes(String.valueOf(user.getId()));
         accountOpenRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
         String html = jixinManager.getHtml(JixinTxCodeEnum.OPEN_ACCOUNT, accountOpenRequest);
-        VoHtmlResp voHtmlResp = VoBaseResp.ok("操作成功", VoHtmlResp.class);
-        voHtmlResp.setHtml(html);
+        VoHtmlResp voHtmlResp = VoBaseResp.ok("操作成功", VoHtmlResp.class) ;
+        try {
+            voHtmlResp.setHtml(Base64Utils.encodeToString(html.getBytes("UTF-8")));
+        } catch (UnsupportedEncodingException e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了, 请稍后重试!", VoHtmlResp.class));
+        }
 
 
         // 8.保存银行存管账户到用户中

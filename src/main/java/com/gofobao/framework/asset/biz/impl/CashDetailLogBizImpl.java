@@ -5,6 +5,9 @@ import com.gofobao.framework.api.contants.IdTypeContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.api.model.with_daw.WithDrawRequest;
@@ -20,6 +23,7 @@ import com.gofobao.framework.asset.vo.request.VoCashReq;
 import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
@@ -32,6 +36,9 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
+import com.gofobao.framework.scheduler.biz.TaskSchedulerBiz;
+import com.gofobao.framework.scheduler.constants.TaskSchedulerConstants;
+import com.gofobao.framework.scheduler.entity.TaskScheduler;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.service.DictItemServcie;
@@ -41,14 +48,17 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -63,10 +73,7 @@ import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.UnsupportedEncodingException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -122,6 +129,10 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
     @Autowired
     DictValueService dictValueService ;
+
+
+    @Autowired
+    TaskSchedulerBiz taskSchedulerBiz ;
 
     LoadingCache<String, DictValue> bankLimitCache = CacheBuilder
             .newBuilder()
@@ -499,6 +510,20 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             entity.setToUserId(userId);
             capitalChangeHelper.capitalChange(entity) ;
             return ResponseEntity.ok("success") ;
+        }else if(JixinResultContants.CASH_RETRY.equals(response.getRetCode())){  // 需要调度同步
+            log.info("提现需要进一步确认");
+            Map<String, String> data = new HashMap<>(2) ;
+            data.put("cashId", cashDetailLog.getId().toString()) ;
+            data.put("userId", userId.toString()) ;
+
+            TaskScheduler taskScheduler = new TaskScheduler() ;
+            taskScheduler.setUpdateAt(new Date());
+            taskScheduler.setCreateAt(new Date());
+            taskScheduler.setType(TaskSchedulerConstants.CASH_FORM);
+            taskScheduler.setTaskNum(Integer.MAX_VALUE - 2);
+            taskScheduler.setTaskData( new Gson().toJson(data) );
+            taskSchedulerBiz.save(taskScheduler) ;
+            return ResponseEntity.ok("success") ;
         }else{  // 交易失败
             log.info(String.format("处理提现失败: 交易流水: %s 返回状态/信息: %s/%s", seqNo, response.getRetCode(), response.getRetMsg()));
             cashDetailLog.setState(4);
@@ -514,6 +539,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             return ResponseEntity.ok("success") ;
         }
     }
+
 
     @Override
     public ResponseEntity<VoCashLogWrapResp> log(Long userId, int pageIndex, int pageSize) {
@@ -602,6 +628,85 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }else {
             return "/cash/faile" ;
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean doBigCashForm(String taskData) throws Exception {
+        Map<String, String> dataMap = new Gson().fromJson(taskData, TypeTokenContants.MAP_ALL_STRING_TOKEN) ;
+        Long cashId = Long.parseLong(dataMap.get("cashId")) ;
+        Long userId = Long.parseLong(dataMap.get("userId")) ;
+        Asset asset = assetService.findByUserIdLock(userId) ;
+        //查询提现状态
+        CashDetailLog cashDetailLog = cashDetailLogService.findById(cashId);
+        if(cashDetailLog.getState().equals(3) || cashDetailLog.getState().equals(4)){
+            return true ;
+        }
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        // 查询存管账户资金状况
+        BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest() ;
+        balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
+        balanceQueryRequest.setChannel(ChannelContant.HTML) ;
+        BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
+        if(ObjectUtils.isEmpty(balanceQueryResponse) || !balanceQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)){
+            log.error("大额提现调度, 查询用户存管金额失败!");
+            return false ;
+        }
+        Double thirdCurrBal = Double.parseDouble(balanceQueryResponse.getCurrBal());   // 存管总额度
+        Double thirdAvailbal = Double.parseDouble(balanceQueryResponse.getAvailBal());   // 存管可用余额
+        Double cashRealMoney=  (cashDetailLog.getMoney() - cashDetailLog.getFee()) / 100D  ; // 提现金额
+        Double useMoney =  asset.getUseMoney() / 100D ;
+        Double total = asset.getTotal() / 100D;
+
+        if((!thirdCurrBal.equals(total)) || (!thirdAvailbal.equals(useMoney + cashRealMoney + cashDetailLog.getFee() / 100D))){
+            return false ;
+        }
+
+        Integer cashType = cashDetailLog.getCashType() ;
+        Date createTime = cashDetailLog.getCreateTime() ;
+        Date startTime = DateHelper.subHours(createTime, 2);
+        Date endTime = DateHelper.addDays(createTime, 2) ;   // T + 2查询时间
+        Date nowDate = new Date() ;
+        endTime = endTime.getTime() < nowDate.getTime() ? nowDate : endTime ;  // 对查询时间进行优化
+        int pageIndex = 1, pageSize = 20 ,realSize = 0;
+        do {
+            AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
+            accountDetailsQueryRequest.setAccountId(userThirdAccount.getAccountId());
+            accountDetailsQueryRequest.setType("9");
+            accountDetailsQueryRequest.setEndDate(DateHelper.dateToString(endTime, DateHelper.DATE_FORMAT_YMD_NUM));
+            accountDetailsQueryRequest.setStartDate(DateHelper.dateToString(startTime, DateHelper.DATE_FORMAT_YMD_NUM));
+            accountDetailsQueryRequest.setTranType("1".equals(cashType) ? "2820" : "2616");
+            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
+            accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
+            AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, accountDetailsQueryRequest, AccountDetailsQueryResponse.class);
+            Preconditions.checkNotNull(accountDetailsQueryResponse, "查询提现状态异常") ;
+            Preconditions.checkArgument(!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()), "查询提现状态异常, 验证不通过");
+            Optional< List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
+            }.getType())) ;
+            List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList()) ;
+            realSize = accountDetailsQueryItems.size() ;
+
+            for(AccountDetailsQueryItem accountDetailsQueryItem: accountDetailsQueryItems){
+                Double txAmount = Double.parseDouble(accountDetailsQueryItem.getTxAmount());  // 交易金额
+                if(cashRealMoney.equals(txAmount)){
+                    cashDetailLog.setState(3);
+                    cashDetailLog.setCallbackTime(new Date());
+                    cashDetailLogService.save(cashDetailLog);
+
+                    // 更改用户资金
+                    CapitalChangeEntity entity = new CapitalChangeEntity() ;
+                    entity.setType(CapitalChangeEnum.Cash);
+                    entity.setMoney(cashDetailLog.getMoney().intValue());
+                    entity.setUserId(userId);
+                    entity.setToUserId(userId);
+                    capitalChangeHelper.capitalChange(entity) ;
+                    return true;
+                }
+            }
+
+        }while (realSize == pageSize) ;
+        return false;
     }
 
 }

@@ -2,10 +2,9 @@ package com.gofobao.framework.listener.providers;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.FrzFlagContant;
-import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
+import com.gofobao.framework.award.contants.RedPacketContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
-import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -17,14 +16,15 @@ import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.lend.entity.Lend;
 import com.gofobao.framework.lend.service.LendService;
+import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.service.UserCacheService;
-import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
-import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
+import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.repository.TenderRepository;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
@@ -44,6 +44,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import static com.google.common.collect.Maps.newHashMap;
+
 /**
  * Created by Zeke on 2017/5/31.
  */
@@ -53,14 +55,11 @@ public class BorrowProvider {
 
     Gson GSON = new GsonBuilder().create();
 
-    @Autowired
-    private BorrowService borrowService;
+
     @Autowired
     private LendService lendService;
     @Autowired
     private TenderBiz tenderBiz;
-    @Autowired
-    private BorrowThirdBiz borrowThirdBiz;
     @Autowired
     private BorrowRepaymentThirdBiz borrowRepaymentThirdBiz;
     @Autowired
@@ -69,16 +68,15 @@ public class BorrowProvider {
     private TenderService tenderService;
     @Autowired
     private UserCacheService userCacheService;
-    @Autowired
-    private BorrowCollectionService borrowCollectionService;
-    @Autowired
-    private BorrowRepaymentService borrowRepaymentService;
 
     @Autowired
-    private UserService userService;
+    private BorrowService borrowService;
+
     @Autowired
     private MqHelper mqHelper;
 
+    @Autowired
+    private TenderRepository tenderRepository;
 
     /**
      * 初审
@@ -252,12 +250,51 @@ public class BorrowProvider {
                 log.info("非转让标发起复审成功！");
                 log.info("====================================================================");
                 bool = true;
+                Specification specification = Specifications.<Tender>and()
+                        .eq("borrowId", borrowId)
+                        .eq("status", TenderConstans.SUCCESS)
+                        .build();
+                List<Tender> tenders = tenderRepository.findAll(specification);
+
+                //======================================
+                // 老用户投标红包
+                //======================================
+                tenders.stream().forEach(p -> {
+                    UserCache userCache = userCacheService.findById(p.getUserId());
+                    Map<String, String> paramsMap = newHashMap();
+                    MqConfig mqConfig = new MqConfig();
+                    // 非新手标  是新手标但是老用投
+                    boolean access = (!borrow.getIsNovice()) || (borrow.getIsNovice() && (userCache.getTenderTuijian() || userCache.getTenderQudao()));
+                    if (access) {
+                        paramsMap.put("type", RedPacketContants.OLD_USER_TENDER_BORROW_REDPACKAGE);
+                        paramsMap.put("tenderId", p.getId().toString());
+                        paramsMap.put("time", DateHelper.dateToString(new Date()));
+
+                        mqConfig.setMsg(paramsMap);
+                        mqConfig.setTag(MqTagEnum.OLD_USER_TENDER);
+                        mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
+                        mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 120));
+                        mqHelper.convertAndSend(mqConfig);
+                    }
+
+                    //======================================
+                    // 推荐用户投资红包
+                    //======================================
+                    paramsMap.clear();
+                    paramsMap.put("type", RedPacketContants.INVITE_USER_TENDER_BORROW_REDPACKAGE);
+                    paramsMap.put("tenderId", p.getId().toString());
+                    paramsMap.put("time", DateHelper.dateToString(new Date()));
+                    mqConfig.setMsg(paramsMap);
+                    mqConfig.setTag(MqTagEnum.INVITE_USER_TENDER);
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
+                    mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 160));
+                    mqHelper.convertAndSend(mqConfig);
+                });
             } else {
                 log.info("====================================================================");
                 log.info("非转让标发起复审失败！ msg:" + resp.getBody().getState().getMsg());
                 log.info("====================================================================");
             }
-
         }
         return bool;
     }

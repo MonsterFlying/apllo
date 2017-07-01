@@ -58,8 +58,8 @@ public class RedPackageProvider {
     private RedPackageLogRepository redPackageLogRepository;
 
     @PersistenceContext
-    private EntityManager entityManager;
-
+    private   EntityManager entityManager;
+    //用户来源
     private List<Integer> sources = Lists.newArrayList(new Integer(0), new Integer(1), new Integer(2), new Integer(9));
     /**
      * 邀请别人投资送红包
@@ -489,7 +489,7 @@ public class RedPackageProvider {
                 getUserName(parent)
         ));
         try {
-            redPackageRepository.save(redPacket);
+            redPackageRepository.saveAndFlush(redPacket);
         } catch (Exception e) {
             log.error(String.format("红包写入数据库失败: %s", gson.toJson(redPacket)));
             return;
@@ -607,9 +607,9 @@ public class RedPackageProvider {
      * @param resultMaps
      * @return
      */
-    public Activity verifyActivityIsactive(Map<String, Object> resultMaps) {
-        String type = (String) resultMaps.get("type");
-        String time = (String) resultMaps.get("time");
+    public  Activity verifyActivityIsactive(Map<String, Object> resultMaps) {
+        String type =  resultMaps.get("type").toString();
+        String time =  resultMaps.get("time").toString();
         Date date = DateHelper.stringToDate(time);
 
         String sql = "SELECT a FROM Activity AS a WHERE a.type=?1 AND a.isOpen=?2 AND a.del=?3 AND (a.beginAt >= ?4 <=a.endAt)";
@@ -626,6 +626,8 @@ public class RedPackageProvider {
 
         return activities.get(0);
     }
+
+
 
 
 }
