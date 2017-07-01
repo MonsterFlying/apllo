@@ -145,9 +145,9 @@ public class BorrowController {
         return borrowBiz.cancelBorrow(voCancelBorrow);
     }
 
-    @PostMapping("/borrow/repayAll")
+    @PostMapping("/borrow/pub/pc/repayAll")
     @ApiOperation("提前还款")
-    public ResponseEntity<VoBaseResp> repayAll(@Valid @ModelAttribute VoRepayAllReq voRepayAllReq) {
+    public ResponseEntity<VoBaseResp> pcRepayAll(@Valid @ModelAttribute VoRepayAllReq voRepayAllReq) {
         return borrowThirdBiz.thirdBatchRepayAll(voRepayAllReq);
     }
 
