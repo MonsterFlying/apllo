@@ -271,7 +271,6 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
      * @return
      */
     public ResponseEntity<VoBaseResp> thirdBatchRepayAll(VoRepayAllReq voRepayAllReq) {
-
         Date nowDate = new Date();
         String paramStr = voRepayAllReq.getParamStr();
         if (!SecurityHelper.checkSign(voRepayAllReq.getSign(), paramStr)) {
@@ -521,9 +520,9 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             try {
                 Long borrowId = NumberHelper.toLong(repayRunResp.getAcqRes());
                 //提前结清操作
-                VoRepayAllReq voRepayAllReq = new VoRepayAllReq();
-                voRepayAllReq.setBorrowId(borrowId);
-                borrowBiz.repayAll(voRepayAllReq);
+                VoRepayAll voRepayAll = new VoRepayAll();
+                voRepayAll.setBorrowId(borrowId);
+                borrowBiz.repayAll(voRepayAll);
             } catch (Exception e) {
                 log.error("提前结清异常:", e);
             }

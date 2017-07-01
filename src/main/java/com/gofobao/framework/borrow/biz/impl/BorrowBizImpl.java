@@ -1227,11 +1227,11 @@ public class BorrowBizImpl implements BorrowBiz {
     /**
      * 检查提前结清参数
      *
-     * @param voRepayAllReq
+     * @param voRepayAll
      * @return
      */
-    public ResponseEntity<VoBaseResp> checkRepayAll(VoRepayAllReq voRepayAllReq) {
-        Long borrowId = voRepayAllReq.getBorrowId();
+    public ResponseEntity<VoBaseResp> checkRepayAll(VoRepayAll voRepayAll) {
+        Long borrowId = voRepayAll.getBorrowId();
         Borrow borrow = borrowService.findByIdLock(borrowId);
         if ((borrow.getStatus() != 3) || (borrow.getType() != 0 && borrow.getType() != 4)) {
             return ResponseEntity
@@ -1255,18 +1255,18 @@ public class BorrowBizImpl implements BorrowBiz {
     /**
      * 提前结清
      *
-     * @param voRepayAllReq
+     * @param voRepayAll
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq) {
+    public ResponseEntity<VoBaseResp> repayAll(VoRepayAll voRepayAll) {
 
-        ResponseEntity resp = checkRepayAll(voRepayAllReq);
+        ResponseEntity resp = checkRepayAll(voRepayAll);
         if (!ObjectUtils.isEmpty(resp)) {
             return resp;
         }
 
-        Long borrowId = voRepayAllReq.getBorrowId();
+        Long borrowId = voRepayAll.getBorrowId();
         Borrow borrow = borrowService.findByIdLock(borrowId);
         Asset borrowAsset = assetService.findByUserId(borrow.getUserId());
         Preconditions.checkNotNull(borrowAsset, "借款人资产记录不存在!");

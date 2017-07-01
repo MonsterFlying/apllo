@@ -43,6 +43,7 @@ import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.helper.project.IntegralChangeHelper;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserCacheService;
@@ -920,12 +921,22 @@ public class RepaymentBizImpl implements RepaymentBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> advance(VoAdvanceReq voAdvanceReq) throws Exception {
-        ResponseEntity resp = advanceCheck(voAdvanceReq.getRepaymentId());
+        Date nowDate = new Date();
+        String paramStr = voAdvanceReq.getParamStr();
+        if (!SecurityHelper.checkSign(voAdvanceReq.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc取消借款 签名验证不通过!"));
+        }
+        Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        Long repaymentId = NumberHelper.toLong(paramMap.get("repaymentId"));
+
+        ResponseEntity resp = advanceCheck(repaymentId);
         if (!ObjectUtils.isEmpty(resp)) {
             return resp;
         }
         VoBatchBailRepayReq voBatchBailRepayReq = new VoBatchBailRepayReq();
-        voBatchBailRepayReq.setRepaymentId(voAdvanceReq.getRepaymentId());
+        voBatchBailRepayReq.setRepaymentId(repaymentId);
         voBatchBailRepayReq.setInterestPercent(1d);
         return borrowRepaymentThirdBiz.thirdBatchBailRepay(voBatchBailRepayReq);
     }
