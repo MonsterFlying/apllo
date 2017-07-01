@@ -101,7 +101,7 @@ public class BorrowController {
             content = thymeleafHelper.build("borrowProtocol", paramMaps);
         } catch (Exception e) {
 
-            log.error("BorrowController->takeRatesDesc fail",e);
+            log.error("BorrowController->takeRatesDesc fail", e);
             content = thymeleafHelper.build("load_error", null);
         }
         return ResponseEntity.ok(content);
@@ -126,7 +126,7 @@ public class BorrowController {
      * @param voPcCancelThirdBorrow
      * @return
      */
-    @PostMapping("/pub/borrow/pc/cancelBorrow")
+    @PostMapping("/borrow/pub/pc/cancelBorrow")
     @ApiOperation("pc取消借款")
     public ResponseEntity<VoBaseResp> pcCancelBorrow(@Valid @ModelAttribute VoPcCancelThirdBorrow voPcCancelThirdBorrow) throws Exception {
         return borrowBiz.pcCancelBorrow(voPcCancelThirdBorrow);
@@ -145,9 +145,9 @@ public class BorrowController {
         return borrowBiz.cancelBorrow(voCancelBorrow);
     }
 
-    @PostMapping("/borrow/repayAll")
+    @PostMapping("/borrow/pub/pc/repayAll")
     @ApiOperation("提前还款")
-    public ResponseEntity<VoBaseResp> repayAll(@Valid @ModelAttribute VoRepayAllReq voRepayAllReq) {
+    public ResponseEntity<VoBaseResp> pcRepayAll(@Valid @ModelAttribute VoRepayAllReq voRepayAllReq) {
         return borrowThirdBiz.thirdBatchRepayAll(voRepayAllReq);
     }
 

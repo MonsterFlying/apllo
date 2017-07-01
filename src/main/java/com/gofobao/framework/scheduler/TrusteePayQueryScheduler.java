@@ -32,6 +32,7 @@ public class TrusteePayQueryScheduler {
 
     @Scheduled(fixedRate = 10 * 60 * 1000)
     public void process() {
+        log.info("委托支付标调动启动");
         // 查询带调度队列
         int pageSize = 40;
         int pageIndex = 0;
@@ -58,7 +59,7 @@ public class TrusteePayQueryScheduler {
                 }
 
                 taskSchedulerBiz.save(p);
-                log.error(String.format("委托支付标信息查询调度使用时间 %s 毫秒", System.currentTimeMillis() - startDate));
+                log.info(String.format("委托支付标信息查询调度使用时间 %s 毫秒", System.currentTimeMillis() - startDate));
             });
         } while (size == pageSize);
 

@@ -24,12 +24,14 @@ import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.*;
+import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
@@ -103,10 +105,10 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     private MqHelper mqHelper;
 
     @Autowired
-    private ThirdAccountPasswordHelper thirdAccountPasswordHelper ;
+    private ThirdAccountPasswordHelper thirdAccountPasswordHelper;
 
     @Autowired
-    TaskSchedulerBiz taskSchedulerBiz ;
+    TaskSchedulerBiz taskSchedulerBiz;
 
     @Value("${gofobao.webDomain}")
     private String webDomain;
@@ -269,9 +271,17 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
      * @return
      */
     public ResponseEntity<VoBaseResp> thirdBatchRepayAll(VoRepayAllReq voRepayAllReq) {
-
         Date nowDate = new Date();
-        Long borrowId = voRepayAllReq.getBorrowId();
+        String paramStr = voRepayAllReq.getParamStr();
+        if (!SecurityHelper.checkSign(voRepayAllReq.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc取消借款 签名验证不通过!"));
+        }
+
+        Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        Long borrowId = NumberHelper.toLong(paramMap.get("borrowId"));
+
         Borrow borrow = borrowService.findByIdLock(borrowId);
         Asset borrowAsset = assetService.findByUserId(borrow.getUserId());
         Preconditions.checkNotNull(borrowAsset, "借款人资产记录不存在!");
@@ -510,9 +520,9 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             try {
                 Long borrowId = NumberHelper.toLong(repayRunResp.getAcqRes());
                 //提前结清操作
-                VoRepayAllReq voRepayAllReq = new VoRepayAllReq();
-                voRepayAllReq.setBorrowId(borrowId);
-                borrowBiz.repayAll(voRepayAllReq);
+                VoRepayAll voRepayAll = new VoRepayAll();
+                voRepayAll.setBorrowId(borrowId);
+                borrowBiz.repayAll(voRepayAll);
             } catch (Exception e) {
                 log.error("提前结清异常:", e);
             }
@@ -553,8 +563,8 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         trusteePayReq.setAcqRes(StringHelper.toString(borrowId));
         trusteePayReq.setIdNo(lendUserThirdAccount.getIdNo());
         trusteePayReq.setIdType(JixinHelper.getIdType(lendUserThirdAccount.getIdType()));
-        trusteePayReq.setNotifyUrl(webDomain + "/pub/borrow/v2/third/trusteepay/run" );
-        trusteePayReq.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl( httpServletRequest, borrow.getUserId()));   // 忘记时间
+        trusteePayReq.setNotifyUrl(webDomain + "/pub/borrow/v2/third/trusteepay/run");
+        trusteePayReq.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, borrow.getUserId()));   // 忘记时间
         trusteePayReq.setProductId(borrow.getProductId());
         trusteePayReq.setReceiptAccountId(takeUserThirdAccount.getAccountId());
         trusteePayReq.setRetUrl("");
@@ -568,6 +578,20 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了， 请稍候重试", VoHtmlResp.class));
+        }
+
+        TaskScheduler taskScheduler = new TaskScheduler();
+        taskScheduler.setCreateAt(new Date());
+        taskScheduler.setUpdateAt(new Date());
+        taskScheduler.setType(TaskSchedulerConstants.TRUSTEE_PAY_QUERY);
+        Map<String, String> data = new HashMap<>(1);
+        data.put("borrowId", String.valueOf(borrowId));
+        Gson gson = new Gson();
+        taskScheduler.setTaskData(gson.toJson(data));
+        taskScheduler.setTaskNum(5);
+        taskScheduler = taskSchedulerBiz.save(taskScheduler);
+        if (ObjectUtils.isEmpty(taskScheduler.getId())) {
+            log.error(String.format("添加查询受托支付调度失败 %s", gson.toJson(data)));
         }
         return ResponseEntity.ok(resp);
     }
@@ -591,7 +615,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             return ResponseEntity.ok("success");
         }
         Long borrowId = NumberHelper.toLong(trusteePayResp.getAcqRes());
-        if(trusteePayResp.getState().equals("1")){   // 初审通过
+        if (trusteePayResp.getState().equals("1")) {   // 初审通过
             //初审
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
@@ -607,19 +631,19 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
                 log.error("borrowThirdBizImpl firstVerify send mq exception", e);
             }
 
-        }else{ // 等待查询
-            TaskScheduler taskScheduler = new TaskScheduler() ;
+        } else { // 等待查询
+            TaskScheduler taskScheduler = new TaskScheduler();
             taskScheduler.setCreateAt(new Date());
             taskScheduler.setUpdateAt(new Date());
             taskScheduler.setType(TaskSchedulerConstants.TRUSTEE_PAY_QUERY);
-            Map<String, String> data = new HashMap<>(1) ;
-            data.put("borrowId", borrowId.toString()) ;
+            Map<String, String> data = new HashMap<>(1);
+            data.put("borrowId", borrowId.toString());
             Gson gson = new Gson();
             taskScheduler.setTaskData(gson.toJson(data));
             taskScheduler.setTaskNum(Integer.MAX_VALUE - 2);
-            taskScheduler = taskSchedulerBiz.save(taskScheduler) ;
-            if(ObjectUtils.isEmpty(taskScheduler.getId())){
-                log.error( String.format("添加查询受托支付调度失败 %s",gson.toJson(data)));
+            taskScheduler = taskSchedulerBiz.save(taskScheduler);
+            if (ObjectUtils.isEmpty(taskScheduler.getId())) {
+                log.error(String.format("添加查询受托支付调度失败 %s", gson.toJson(data)));
             }
 
         }

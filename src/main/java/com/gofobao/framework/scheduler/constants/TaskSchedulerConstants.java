@@ -8,4 +8,10 @@ public class TaskSchedulerConstants {
      * 代付标的查询
      */
     public  static  final Integer TRUSTEE_PAY_QUERY = 0 ;
+
+
+    /**
+     * 提现确认
+     */
+    public  static  final Integer CASH_FORM = 1 ;
 }

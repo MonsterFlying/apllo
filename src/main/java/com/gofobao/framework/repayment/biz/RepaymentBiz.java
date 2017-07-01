@@ -32,10 +32,11 @@ public interface RepaymentBiz {
 
     /**
      * 标还款记录
+     *
      * @param borrowId
      * @return
      */
-    ResponseEntity<VoViewRepayCollectionLogWarpRes>logs(Long borrowId);
+    ResponseEntity<VoViewRepayCollectionLogWarpRes> logs(Long borrowId);
 
     /**
      * 立即还款
@@ -57,11 +58,12 @@ public interface RepaymentBiz {
 
     /**
      * 当前应还款日期
+     *
      * @param userId
      * @param time
      * @return
      */
-    ResponseEntity<VoViewCollectionDaysWarpRes>days(Long userId,String time);
+    ResponseEntity<VoViewCollectionDaysWarpRes> days(Long userId, String time);
 
     /**
      * 垫付
@@ -74,9 +76,10 @@ public interface RepaymentBiz {
 
     /**
      * 垫付处理
+     *
      * @param voAdvanceCall
      * @return
      * @throws Exception
      */
-    ResponseEntity<VoBaseResp> advanceDeal(VoAdvanceCall voAdvanceCall)throws Exception;
+    ResponseEntity<VoBaseResp> advanceDeal(VoAdvanceCall voAdvanceCall) throws Exception;
 }

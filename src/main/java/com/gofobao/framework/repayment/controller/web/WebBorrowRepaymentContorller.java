@@ -33,7 +33,6 @@ public class WebBorrowRepaymentContorller {
     @PostMapping(value = "/v2/collection/days/{time}")
     @ApiOperation("还款计划列表 time: 201706")
     public ResponseEntity<VoViewCollectionDaysWarpRes> days(@PathVariable String time, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-
         return repaymentBiz.days(userId, time);
     }
 

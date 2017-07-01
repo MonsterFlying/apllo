@@ -17,7 +17,7 @@ public class VoAdminOpenAccountResp {
     @NotEmpty(message = "验证参数不能为空")
     private String sign;
 
-    @ApiModelProperty("用户ID")
-    @NotNull(message = "开户主体信息, phone: 开户手机. name: 用户名称, userId: 用户ID, idNo:身份证号, cardNo: 银行卡号;")
-    private String openAccountBodyInfo;
+    @ApiModelProperty("开户主体信息, phone: 开户手机. name: 用户名称, userId: 用户ID, idNo:身份证号, cardNo: 银行卡号")
+    @NotEmpty(message = "信息为空")
+    private String paramStr;
 }

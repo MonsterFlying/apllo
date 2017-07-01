@@ -108,10 +108,10 @@ public interface BorrowBiz {
     /**
      * 提前结清
      *
-     * @param voRepayAllReq
+     * @param voRepayAll
      * @return
      */
-    ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq);
+    ResponseEntity<VoBaseResp> repayAll(VoRepayAll voRepayAll);
 
 
     /**
@@ -130,10 +130,10 @@ public interface BorrowBiz {
     /**
      * 校验提前结清参数
      *
-     * @param voRepayAllReq
+     * @param voRepayAll
      * @return
      */
-    ResponseEntity<VoBaseResp> checkRepayAll(VoRepayAllReq voRepayAllReq);
+    ResponseEntity<VoBaseResp> checkRepayAll(VoRepayAll voRepayAll);
 
     /**
      * 登记官方借款（车贷标、渠道标）
