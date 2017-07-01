@@ -1595,6 +1595,8 @@ public class JixinResultContants {
     /** Batch 成功*/
     public static  final  String BATCH_SUCCESS = "success" ;
 
+    public static final String CASH_RETRY = "CE999028" ;
+
     public static String getMessage(String retCode){
         String message =  result.get(retCode) ;
         Optional<String> rs = Optional.ofNullable(message) ;

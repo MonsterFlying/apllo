@@ -78,4 +78,12 @@ public interface CashDetailLogBiz {
      * @return
      */
     String showCash(String seqNo, Model model);
+
+
+    /**
+     * 提现资金同步
+     * @param taskData
+     * @return
+     */
+    boolean doBigCashForm(String taskData) throws Exception;
 }
