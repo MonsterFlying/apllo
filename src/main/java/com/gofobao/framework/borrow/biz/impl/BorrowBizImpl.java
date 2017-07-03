@@ -221,7 +221,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
             if (status == BorrowContants.BIDDING) {//招标中
                 //待发布
-                if (releaseAt.getTime() < nowDate.getTime()) {
+                if (releaseAt.getTime() >=nowDate.getTime()) {
                     status = 1;
                     borrowInfoRes.setSurplusSecond((releaseAt.getTime() - nowDate.getTime()) + 5);
                 } else if (nowDate.getTime() > endAt.getTime()||nowDate.getTime()>releaseAt.getTime()) {  //当前时间大于招标有效时间
@@ -1379,6 +1379,7 @@ public class BorrowBizImpl implements BorrowBiz {
         int tempPenalty = 0;
         Borrow tempBorrow = null;
         long tenderUserId = 0;
+        UserThirdAccount tenderUserThirdAccount = null;
         do {
             pageable = new PageRequest(pageNum++, pageSize, new Sort(Sort.Direction.ASC));
             tenderList = tenderService.findList(ts, pageable);
@@ -1394,6 +1395,21 @@ public class BorrowBizImpl implements BorrowBiz {
                     List<Borrow> borrowList = borrowService.findList(bs);
                     receivedPenalty(borrowList.get(0), tempPenalty);
                     continue;
+                }
+
+                tenderUserThirdAccount = userThirdAccountService.findByUserId(tenderUserId);
+                //调用即信发送红包接口
+                VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
+                voucherPayRequest.setAccountId(redPacketAccountId);
+                voucherPayRequest.setTxAmount(StringHelper.formatDouble(tempPenalty, 100, false));
+                voucherPayRequest.setForAccountId(tenderUserThirdAccount.getAccountId());
+                voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
+                voucherPayRequest.setDesLine("借款[" + borrow.getName() + "]的违约金");
+                voucherPayRequest.setChannel(ChannelContant.HTML);
+                VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
+                if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+                    String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+                    throw new Exception(msg);
                 }
 
                 CapitalChangeEntity entity = new CapitalChangeEntity();

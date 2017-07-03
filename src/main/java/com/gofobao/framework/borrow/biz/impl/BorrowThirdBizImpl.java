@@ -397,70 +397,9 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "即信批次还款失败:" + response.getRetMsg()));
         }
 
-        //存在违约金的时候将违约金发放给投资者
-        if (penalty > 0) {
-            try {
-                receivedPenalty(borrow, penalty);
-            } catch (Exception e) {
-                log.error("borrowThirdBizImpl thirdBatchRepayAll 发放违约金失败");
-            }
-        }
-
         return null;
     }
 
-    /**
-     * 提前结清给投资者违约金
-     *
-     * @param borrow
-     * @param penalty
-     */
-    private void receivedPenalty(Borrow borrow, int penalty) throws Exception {
-        Specification<Tender> ts = Specifications
-                .<Tender>and()
-                .eq("status", 1)
-                .build();
-        Pageable pageable = null;
-        List<Tender> tenderList = null;
-        int pageNum = 0;
-        int pageSize = 10;
-        int tempPenalty = 0;
-        long tenderUserId = 0;
-        UserThirdAccount tenderUserThirdAccount = null;//投标人银汉存管账户
-        do {
-            pageable = new PageRequest(pageNum++, pageSize, new Sort(Sort.Direction.ASC));
-            tenderList = tenderService.findList(ts, pageable);
-            for (Tender tender : tenderList) {
-                tenderUserId = tender.getUserId();
-                tempPenalty = tender.getValidMoney() / borrow.getMoney() * penalty;
-                if (tender.getTransferFlag() == 2) { //已转让
-                    Specification<Borrow> bs = Specifications
-                            .<Borrow>and()
-                            .eq("tenderId", tender.getId())
-                            .eq("status", 3)
-                            .build();
-                    List<Borrow> borrowList = borrowService.findList(bs);
-                    receivedPenalty(borrowList.get(0), tempPenalty);
-                    continue;
-                }
-
-                tenderUserThirdAccount = userThirdAccountService.findByUserId(tenderUserId);
-                //调用即信发送红包接口
-                VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-                voucherPayRequest.setAccountId(redPacketAccountId);
-                voucherPayRequest.setTxAmount(StringHelper.formatDouble(tempPenalty, 100, false));
-                voucherPayRequest.setForAccountId(tenderUserThirdAccount.getAccountId());
-                voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
-                voucherPayRequest.setDesLine("借款[" + borrow.getName() + "]的违约金");
-                voucherPayRequest.setChannel(ChannelContant.HTML);
-                VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
-                if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
-                    String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-                    throw new Exception(msg);
-                }
-            }
-        } while (tenderList.size() < 10);
-    }
 
     /**
      * 即信批次还款(提前结清)
