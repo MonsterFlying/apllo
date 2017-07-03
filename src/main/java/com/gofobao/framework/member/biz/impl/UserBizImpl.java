@@ -203,11 +203,15 @@ public class UserBizImpl implements UserBiz{
             voBasicUserInfoResp.setBankPassworState(false);
             voBasicUserInfoResp.setBankState(false);
             voBasicUserInfoResp.setBankAccout(" ");
+            voBasicUserInfoResp.setAutoTenderState(false);
+            voBasicUserInfoResp.setAutoTranferState(false);
         }else{
             voBasicUserInfoResp.setThirdAccountState(true);
             voBasicUserInfoResp.setBankPassworState(userThirdAccount.getPasswordState() == 1);
             voBasicUserInfoResp.setBankAccout(UserHelper.hideChar(userThirdAccount.getAccountId(), UserHelper.BANK_ACCOUNT_NUM));
             voBasicUserInfoResp.setBankState(!StringUtils.isEmpty(userThirdAccount.getCardNo())) ;
+            voBasicUserInfoResp.setAutoTenderState(userThirdAccount.getAutoTenderState().equals(1));
+            voBasicUserInfoResp.setAutoTranferState(userThirdAccount.getAutoTransferState().equals(1));
         }
 
 
