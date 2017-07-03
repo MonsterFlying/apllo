@@ -12,8 +12,8 @@ import java.util.List;
  */
 @Data
 public class VoViewUserNoticesWarpRes extends VoBaseResp {
-    @ApiModelProperty("总页数")
-    private int pageCount;
+    @ApiModelProperty("总记录数")
+    private int totalCount;
     @ApiModelProperty("列表")
     private List<UserNotices> notices = Lists.newArrayList();
 }

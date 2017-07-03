@@ -40,6 +40,7 @@ import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.TenderUserReq;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
+import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -92,6 +93,7 @@ public class TenderBizImpl implements TenderBiz {
     private JixinManager jixinManager;
 
     public Map<String, Object> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception {
+
         Map<String, Object> rsMap = null;
         Date nowDate = new Date();
         Long userId = voCreateTenderReq.getUserId();
@@ -167,6 +169,33 @@ public class TenderBizImpl implements TenderBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> tender(VoCreateTenderReq voCreateTenderReq) {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voCreateTenderReq.getUserId());
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoAutoTenderInfo.class));
+        }
+
+        if (userThirdAccount.getPasswordState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoAutoTenderInfo.class));
+        }
+
+        if(userThirdAccount.getAutoTransferState() != 1){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoAutoTenderInfo.class));
+        }
+
+
+        if(userThirdAccount.getAutoTenderState() != 1){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoAutoTenderInfo.class));
+        }
+
+
         Map<String, Object> rsMap = null;
         try {
             rsMap = createTender(voCreateTenderReq);

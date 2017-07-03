@@ -206,9 +206,15 @@ public class MessageBizImpl implements MessageBiz {
         if(ObjectUtils.isEmpty(userThirdAccount)){
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你没有开通银行存管，请先开通银行存管！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你没有开通银行存管，请先开通银行存管！"));
         }
 
+        Integer passwordState = userThirdAccount.getPasswordState();
+        if(passwordState == 0){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请先初始化江西银行存管账户交易密码！"));
+        }
 
         Integer autoTenderState = userThirdAccount.getAutoTenderState();
 
@@ -217,15 +223,6 @@ public class MessageBizImpl implements MessageBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "你已经签署自动投标协议，无需再次签署！"));
         }
-
-
-        Integer passwordState = userThirdAccount.getPasswordState();
-        if(passwordState == 0){
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "请先初始化江西银行存管账户交易密码！"));
-        }
-
         SmsCodeApplyRequest request = new SmsCodeApplyRequest() ;
         request.setSrvTxCode(SrvTxCodeContants.AUTO_BID_AUTH_PLUS) ;
         request.setMobile(userThirdAccount.getMobile()) ;
@@ -271,24 +268,21 @@ public class MessageBizImpl implements MessageBiz {
         if(ObjectUtils.isEmpty(userThirdAccount)){
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你没有开通银行存管，请先开通银行存管！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你没有开通银行存管，请先开通银行存管！"));
         }
-
-
-        Integer autoTransferState = userThirdAccount.getAutoTransferState();
-
-        if(autoTransferState == 1){
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你已经签署自动投标协议，无需再次签署！"));
-        }
-
 
         Integer passwordState = userThirdAccount.getPasswordState();
         if(passwordState == 0){
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "请先初始化江西银行存管账户交易密码！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请先初始化江西银行存管账户交易密码！"));
+        }
+
+        Integer autoTransferState = userThirdAccount.getAutoTransferState();
+        if(autoTransferState == 1){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你已经签署自动投标协议，无需再次签署！"));
         }
 
         SmsCodeApplyRequest request = new SmsCodeApplyRequest() ;
@@ -337,14 +331,14 @@ public class MessageBizImpl implements MessageBiz {
         if(ObjectUtils.isEmpty(userThirdAccount)){
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你没有开通银行存管，请先开通银行存管！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你没有开通银行存管，请先开通银行存管！"));
         }
 
         Integer passwordState = userThirdAccount.getPasswordState();
         if(passwordState == 0){
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "请先初始化江西银行存管账户交易密码！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请先初始化江西银行存管账户交易密码！"));
         }
 
         SmsCodeApplyRequest request = new SmsCodeApplyRequest() ;
@@ -437,7 +431,7 @@ public class MessageBizImpl implements MessageBiz {
             log.error("MessageBizImpl.rechargeOnline 当前用户未开通存管");
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你没有开通银行存管，请先开通银行存管！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你没有开通银行存管，请先开通银行存管！"));
         }
 
         Integer passwordState = userThirdAccount.getPasswordState();
@@ -445,7 +439,7 @@ public class MessageBizImpl implements MessageBiz {
             log.error("MessageBizImpl.rechargeOnline 为未设置交易密码");
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "请先初始化江西银行存管账户交易密码！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请先初始化江西银行存管账户交易密码！"));
         }
 
         userThirdAccount.setMobile("13008875126");

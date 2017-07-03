@@ -10,7 +10,7 @@ import java.util.Date;
 /**
  * Created by Max on 17/6/5.
  */
-@Entity
+@Entity(name = "Notices")
 @Table(name = "gfb_notices")
 @DynamicUpdate
 @DynamicInsert
@@ -36,6 +36,8 @@ public class Notices {
 
     private Date updatedAt;
 
+    @Column(name = "deleted_at")
+    @Basic
     private Date deletedAt;
 
     private String content;

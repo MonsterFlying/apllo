@@ -1,11 +1,17 @@
 package com.gofobao.framework.asset.service.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.asset.entity.CashDetailLog;
 import com.gofobao.framework.asset.repository.CashDetailLogRepository;
 import com.gofobao.framework.asset.service.CashDetailLogService;
+import com.gofobao.framework.asset.vo.request.VoPcCashLogs;
 import com.google.common.collect.ImmutableList;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -24,24 +30,24 @@ public class CashDetailLogServiceImpl implements CashDetailLogService {
 
     @Override
     public List<CashDetailLog> findByStateInAndUserId(ImmutableList<Integer> states, long userId) {
-        return cashDetailLogRepository.findByStateInAndUserId(states, userId) ;
+        return cashDetailLogRepository.findByStateInAndUserId(states, userId);
     }
 
     @Override
     public void save(CashDetailLog cashDetailLog) {
-        cashDetailLogRepository.save(cashDetailLog) ;
+        cashDetailLogRepository.save(cashDetailLog);
     }
 
     @Override
     public CashDetailLog findTopBySeqNoLock(String seqNo) {
-        return cashDetailLogRepository.findTopBySeqNo(seqNo) ;
+        return cashDetailLogRepository.findTopBySeqNo(seqNo);
     }
 
     @Override
     public List<CashDetailLog> findByUserIdAndPage(Long userId, Pageable page) {
         List<CashDetailLog> byUserIdAndPage = cashDetailLogRepository.findByUserId(userId, page);
-        Optional<List<CashDetailLog>> optional = Optional.ofNullable(byUserIdAndPage) ;
-        return optional.orElse(Collections.EMPTY_LIST) ;
+        Optional<List<CashDetailLog>> optional = Optional.ofNullable(byUserIdAndPage);
+        return optional.orElse(Collections.EMPTY_LIST);
     }
 
     @Override
@@ -51,6 +57,23 @@ public class CashDetailLogServiceImpl implements CashDetailLogService {
 
     @Override
     public List<CashDetailLog> findByUserIdAndStateInAndCreateTimeBetween(Long userId, ImmutableList<Integer> stateList, Date startDate, Date endDate) {
-        return cashDetailLogRepository.findByUserIdAndStateInAndCreateTimeBetween(userId, stateList, startDate, endDate) ;
+        return cashDetailLogRepository.findByUserIdAndStateInAndCreateTimeBetween(userId, stateList, startDate, endDate);
+    }
+
+
+    @Override
+    public List<CashDetailLog> pcLogs(VoPcCashLogs voPcCashLogs) {
+        Specification specification = Specifications.<CashDetailLog>and()
+                .eq("userId", voPcCashLogs.getUserId())
+                .eq("status", voPcCashLogs.getStatus())
+                .build();
+        Page<CashDetailLog> cashDetailLogPage=cashDetailLogRepository.findAll(specification,
+                new PageRequest(voPcCashLogs.getPageIndex(),
+                        voPcCashLogs.getPageSize(),
+                        new Sort(Sort.Direction.DESC,"id")));
+
+        cashDetailLogPage.getTotalElements();
+
+        return null;
     }
 }

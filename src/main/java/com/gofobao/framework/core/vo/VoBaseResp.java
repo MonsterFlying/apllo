@@ -35,6 +35,22 @@ public class VoBaseResp implements Serializable {
     public static final long OK = 0;
     public static final long ERROR = 1;
     public static final long RELOGIN = 5;
+    /**
+     * 存管账户开户指令
+     */
+    public static final long ERROR_OPEN_ACCOUNT = -1;
+
+    /**
+     * 初始化密码指令
+     */
+    public static final long ERROR_INIT_BANK_PASSWORD = -2;
+
+    /**
+     * 自动签约指令
+     */
+    public static final long ERROR_CREDIT = -3;
+
+
 
 
     public static VoBaseResp ok(String msg){
