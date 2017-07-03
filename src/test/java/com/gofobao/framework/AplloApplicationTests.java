@@ -7,16 +7,20 @@ import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMob
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileResponse;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
+import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
+import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp;
+import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.helper.JixinHelper;
@@ -80,7 +84,7 @@ public class AplloApplicationTests {
 
         Gson gson = new Gson();
         Map<String, String> map = new HashMap<>();
-        map.put("borrowId", "169755");
+        map.put("borrowId", "169759");
         System.out.println(gson.toJson(map));
         System.out.println(SecurityHelper.getSign(gson.toJson(map)));
     }
@@ -96,7 +100,7 @@ public class AplloApplicationTests {
     public void trusteePay() {
         TrusteePayQueryReq request = new TrusteePayQueryReq();
         request.setAccountId("6212462040000250045");
-        request.setProductId("A69745");
+        request.setProductId("A69757");
         request.setChannel(ChannelContant.HTML);
         TrusteePayQueryResp response = jixinManager.send(JixinTxCodeEnum.TRUSTEE_PAY_QUERY, request, TrusteePayQueryResp.class);
         System.out.println(response);
@@ -145,8 +149,8 @@ public class AplloApplicationTests {
         //查询投资人购买债权
         //creditInvestQuery();
 
-        /*Map<String,String> map = new HashMap<>();
-        map.put("borrowId","169755");
+       /* Map<String,String> map = new HashMap<>();
+        map.put("borrowId","169759");
         try {
             borrowProvider.doFirstVerify(map);
         } catch (Exception e) {
@@ -167,20 +171,20 @@ public class AplloApplicationTests {
         System.out.println(true + "");*/
 
         /*VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
-        voQueryThirdBorrowList.setBorrowId(165200L);
-        voQueryThirdBorrowList.setUserId(901L);
+        voQueryThirdBorrowList.setProductId("A69756");
+        voQueryThirdBorrowList.setUserId(2762L);
         voQueryThirdBorrowList.setPageNum("1");
         voQueryThirdBorrowList.setPageSize("10");
         DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
         System.out.println((resp.getTotalItems()));*/
 
-        Map<String,String> msg = new HashMap<>();
-        msg.put("borrowId","169755");
+        /*Map<String,String> msg = new HashMap<>();
+        msg.put("borrowId","169760");
         try {
             borrowProvider.doAgainVerify(msg);
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
 
         //"userId\":901,\"repaymentId\":168675,\"interestPercent\":0.0,\"isUserOpen\":true
         /*VoRepayReq voRepayReq = new VoRepayReq();
@@ -203,8 +207,8 @@ public class AplloApplicationTests {
         System.out.println(response);*/
 
         /*BatchDetailsQueryReq request = new BatchDetailsQueryReq();
-        request.setBatchNo("115714");
-        request.setBatchTxDate("20170630");
+        request.setBatchNo("192457");
+        request.setBatchTxDate("20170703");
         request.setType("9");
         request.setPageNum("1");
         request.setPageSize("10");

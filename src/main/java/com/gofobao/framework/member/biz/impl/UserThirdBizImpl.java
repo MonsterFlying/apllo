@@ -28,10 +28,7 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.BankBinHelper;
-import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.RedisHelper;
-import com.gofobao.framework.helper.ThirdAccountPasswordHelper;
+import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.biz.UserThirdBiz;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -116,8 +113,12 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Autowired
     private MqHelper mqHelper;
+
+    @Autowired
+    ThymeleafHelper thymeleafHelper;
+
     //用户来源
-    private List<Integer> sources = Lists.newArrayList(0, 1, 2,9);
+    private List<Integer> sources = Lists.newArrayList(0, 1, 2, 9);
 
 
     LoadingCache<String, DictValue> bankLimitCache = CacheBuilder
@@ -179,7 +180,6 @@ public class UserThirdBizImpl implements UserThirdBiz {
     @Override
     public ResponseEntity<VoOpenAccountResp> openAccount(VoOpenAccountReq voOpenAccountReq, Long userId, HttpServletRequest httpServletRequest) {
         // 1.用户用户信息
-
         Users user = userService.findById(userId);
         if (ObjectUtils.isEmpty(user))
             return ResponseEntity
@@ -304,7 +304,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         //=======================
         // 推送红包活动通道
         //=======================
-        if (sources.contains(user.getSource())&&user.getParentId()>0) {
+        if (sources.contains(user.getSource()) && user.getParentId() > 0) {
             Map<String, String> paramsMap = new HashMap<>();
             paramsMap.put("type", RedPacketContants.REGISTER_REDPACKAGE);
             paramsMap.put("userId", user.getId().toString());
@@ -698,6 +698,23 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
+    public String thirdAccountProtocolJson(Long userId) {
+        Users users = userService.findById(userId);
+        String username = users.getUsername();
+        if (StringUtils.isEmpty(username)) {
+            username = users.getPhone();
+        }
+        if (StringUtils.isEmpty(username)) {
+            username = users.getEmail();
+        }
+
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("customerName", username);
+        paramMap.put("playformName", "深圳市广富宝金融信息服务有限公司");
+        return thymeleafHelper.build("thirdAccount/thirdAccountProtocol", paramMap);
+    }
+
+    @Override
     public void thirdAccountProtocol(Long userId, Model model) {
         Users users = userService.findById(userId);
         String username = users.getUsername();
@@ -814,7 +831,6 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
 
-
     @Override
     public ResponseEntity<VoHtmlResp> adminOpenAccount(VoAdminOpenAccountResp voAdminOpenAccountResp, HttpServletRequest httpServletRequest) {
         if (!SecurityHelper.checkSign(voAdminOpenAccountResp.getSign(), voAdminOpenAccountResp.getParamStr())) {
@@ -824,7 +840,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
         // 开户主体信息, phone: 开户手机. name: 用户名称, userId: 用户ID, idNo:身份证号, cardNo: 银行卡号;
-        Map<String, String>  openAccountBodyMap = new Gson().fromJson(voAdminOpenAccountResp.getParamStr(), TypeTokenContants.MAP_ALL_STRING_TOKEN) ;
+        Map<String, String> openAccountBodyMap = new Gson().fromJson(voAdminOpenAccountResp.getParamStr(), TypeTokenContants.MAP_ALL_STRING_TOKEN);
         String phone = openAccountBodyMap.get("phone");
         Long userId = Long.parseLong(openAccountBodyMap.get("userId"));
         String realMame = openAccountBodyMap.get("name");
@@ -900,7 +916,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         accountOpenRequest.setAcqRes(String.valueOf(user.getId()));
         accountOpenRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
         String html = jixinManager.getHtml(JixinTxCodeEnum.OPEN_ACCOUNT, accountOpenRequest);
-        VoHtmlResp voHtmlResp = VoBaseResp.ok("操作成功", VoHtmlResp.class) ;
+        VoHtmlResp voHtmlResp = VoBaseResp.ok("操作成功", VoHtmlResp.class);
         try {
             voHtmlResp.setHtml(Base64Utils.encodeToString(html.getBytes("UTF-8")));
         } catch (UnsupportedEncodingException e) {
