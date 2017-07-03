@@ -91,7 +91,7 @@ public interface BorrowRepaymentThirdBiz {
      *
      * @param voBatchRepayBailReq
      */
-    ResponseEntity<VoBaseResp> thirdBatchRepayBail(VoBatchRepayBailReq voBatchRepayBailReq);
+    ResponseEntity<VoBaseResp> thirdBatchRepayBail(VoBatchRepayBailReq voBatchRepayBailReq) throws Exception;
 
     /**
      * 批次融资人还担保账户垫款参数检查回调

@@ -179,6 +179,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     @Override
     public ResponseEntity<VoOpenAccountResp> openAccount(VoOpenAccountReq voOpenAccountReq, Long userId, HttpServletRequest httpServletRequest) {
         // 1.用户用户信息
+
         Users user = userService.findById(userId);
         if (ObjectUtils.isEmpty(user))
             return ResponseEntity
