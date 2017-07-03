@@ -2,6 +2,7 @@ package com.gofobao.framework.member.controller;
 
 import com.gofobao.framework.asset.vo.request.VoJudgmentAvailableReq;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.member.biz.UserBiz;
 import com.gofobao.framework.member.biz.UserEmailBiz;
 import com.gofobao.framework.member.biz.UserPhoneBiz;
 import com.gofobao.framework.member.biz.UserThirdBiz;
@@ -12,6 +13,7 @@ import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.member.vo.response.VoSignInfoResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.ApiOperation;
+import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,13 +29,18 @@ import javax.validation.Valid;
 public class UserController {
 
     @Autowired
-    private UserPhoneBiz userPhoneBiz;
+    UserPhoneBiz userPhoneBiz;
 
     @Autowired
-    private UserEmailBiz userEmailBiz ;
+    UserEmailBiz userEmailBiz ;
 
     @Autowired
-    private UserThirdBiz userThirdBiz ;
+    UserThirdBiz userThirdBiz ;
+
+    @Autowired
+    UserBiz userBiz ;
+
+
 
     @ApiOperation("更改手机号")
     @PostMapping("/user/phone/switch")
@@ -77,5 +84,13 @@ public class UserController {
     @GetMapping("/user/phone/switchVerify/{smsCode}")
     public ResponseEntity<VoBaseResp> verfyUnBindPhoneMessage(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable("smsCode") String smsCode){
         return userPhoneBiz.verfyUnBindPhoneMessage(userId, smsCode) ;
+    }
+
+
+
+    @ApiOperation("获取用户配置信息")
+    @PostMapping("/user/configInfo")
+    public ResponseEntity<VoBasicUserInfoResp> getUserInfo(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+        return userBiz.userInfo(userId) ;
     }
 }
