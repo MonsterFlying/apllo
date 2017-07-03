@@ -13,4 +13,7 @@ public class VoNoticesReq extends Page {
     private Long userId;
 
     private Long id;
+
+    @ApiModelProperty(hidden = true)
+    private Integer type;
 }

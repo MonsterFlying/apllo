@@ -41,6 +41,7 @@ public class NoticesController {
     public ResponseEntity<VoViewNoticesInfoWarpRes> list(@PathVariable Long noticesId,
                                                          @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoNoticesReq voNoticesReq = new VoNoticesReq();
+        voNoticesReq.setType(0);
         voNoticesReq.setUserId(userId);
         voNoticesReq.setId(noticesId);
         return noticesBiz.info(voNoticesReq);
