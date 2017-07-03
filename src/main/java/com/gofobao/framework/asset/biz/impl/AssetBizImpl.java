@@ -247,13 +247,13 @@ public class AssetBizImpl implements AssetBiz {
         if (ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你还没有开通江西银行存管，请前往开通！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！"));
         }
 
         if (userThirdAccount.getPasswordState() != 1) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "请初始化江西银行存管账户密码！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！"));
         }
 
 
@@ -400,13 +400,13 @@ public class AssetBizImpl implements AssetBiz {
         if (ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你还没有开通江西银行存管，请前往开通！", VoHtmlResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoHtmlResp.class));
         }
 
         if (userThirdAccount.getPasswordState() != 1) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "请初始化江西银行存管账户密码！", VoHtmlResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoHtmlResp.class));
         }
 
 
@@ -627,13 +627,13 @@ public class AssetBizImpl implements AssetBiz {
         if (ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你还没有开通江西银行存管，请前往开通！", VoRechargeBankInfoResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoRechargeBankInfoResp.class));
         }
 
         if (userThirdAccount.getPasswordState() != 1) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "请初始化江西银行存管账户密码！", VoRechargeBankInfoResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoRechargeBankInfoResp.class));
         }
 
         VoRechargeBankInfoResp voRechargeBankInfoResp = VoBaseResp.ok("查询成功!", VoRechargeBankInfoResp.class);
@@ -681,13 +681,13 @@ public class AssetBizImpl implements AssetBiz {
         if (ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你还没有开通江西银行存管，请前往开通！", VoPreRechargeResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoPreRechargeResp.class));
         }
 
         if (userThirdAccount.getPasswordState() != 1) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "请初始化江西银行存管账户密码！", VoPreRechargeResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoPreRechargeResp.class));
         }
 
         VoPreRechargeResp voPreRechargeResp = VoBaseResp.ok("查询成功", VoPreRechargeResp.class);

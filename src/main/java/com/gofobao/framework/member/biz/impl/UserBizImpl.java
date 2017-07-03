@@ -230,6 +230,12 @@ public class UserBizImpl implements UserBiz{
         return ResponseEntity.ok(voBasicUserInfoResp);
     }
 
+    @Override
+    public ResponseEntity<VoBasicUserInfoResp> userInfo(Long userId) {
+        Users user = userService.findById(userId);
+        return getUserInfoResp(user) ;
+    }
+
     /**
      * 注册后续操作
      * @param userId

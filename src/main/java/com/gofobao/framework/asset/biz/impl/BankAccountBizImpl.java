@@ -184,13 +184,13 @@ public class BankAccountBizImpl implements BankAccountBiz{
         if(ObjectUtils.isEmpty(userThirdAccount)){
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "请开通银行存管", VoBankListResp.class)) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你没有开通银行存管，请先开通银行存管！", VoBankListResp.class)) ;
         }
 
         if(userThirdAccount.getPasswordState() == 0){
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "请先初始化密码", VoBankListResp.class)) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请先初始化江西银行存管账户交易密码！", VoBankListResp.class)) ;
         }
 
         VoBankListResp response = VoBaseResp.ok("查询成功", VoBankListResp.class) ;
