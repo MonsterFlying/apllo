@@ -2,6 +2,7 @@ package com.gofobao.framework.system.vo.response;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.google.common.collect.Lists;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.util.List;
@@ -11,5 +12,8 @@ import java.util.List;
  */
 @Data
 public class VoViewUserNoticesWarpRes extends VoBaseResp {
-    private List<UserNotices> notices= Lists.newArrayList();
+    @ApiModelProperty("总页数")
+    private int pageCount;
+    @ApiModelProperty("列表")
+    private List<UserNotices> notices = Lists.newArrayList();
 }
