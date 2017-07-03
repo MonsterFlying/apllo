@@ -1,8 +1,12 @@
 package com.gofobao.framework.tender.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.asset.repository.AssetRepository;
+import com.gofobao.framework.asset.vo.response.VoPreCashResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
+import com.gofobao.framework.member.entity.UserThirdAccount;
+import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.tender.biz.AutoTenderBiz;
 import com.gofobao.framework.tender.contants.AutoTenderContants;
@@ -43,6 +47,9 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
 
     final Gson gson = new GsonBuilder().create();
 
+    @Autowired
+    UserThirdAccountService  userThirdAccountService;
+
     @Override
     public ResponseEntity<VoViewUserAutoTenderWarpRes> list(Long userId) {
         try {
@@ -63,6 +70,32 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
      * @return
      */
     public ResponseEntity<VoBaseResp> createAutoTender(VoSaveAutoTenderReq voSaveAutoTenderReq) {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voSaveAutoTenderReq.getUserId());
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoViewAutoTenderList.class));
+        }
+
+        if (userThirdAccount.getPasswordState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoViewAutoTenderList.class));
+        }
+
+        if(userThirdAccount.getAutoTransferState() != 1){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoViewAutoTenderList.class));
+        }
+
+
+        if(userThirdAccount.getAutoTenderState() != 1){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoViewAutoTenderList.class));
+        }
+
         Long userId = voSaveAutoTenderReq.getUserId();
 
         ResponseEntity resp = verifySaveAutoTender(voSaveAutoTenderReq);
@@ -101,6 +134,33 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
      * @return
      */
     public ResponseEntity<VoBaseResp> updateAutoTender(VoSaveAutoTenderReq voSaveAutoTenderReq) {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voSaveAutoTenderReq.getUserId());
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoViewAutoTenderList.class));
+        }
+
+        if (userThirdAccount.getPasswordState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoViewAutoTenderList.class));
+        }
+
+        if(userThirdAccount.getAutoTransferState() != 1){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoViewAutoTenderList.class));
+        }
+
+
+        if(userThirdAccount.getAutoTenderState() != 1){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoViewAutoTenderList.class));
+        }
+
+
         Long tenderId = voSaveAutoTenderReq.getId();
         Long userId = voSaveAutoTenderReq.getUserId();
 
@@ -263,6 +323,34 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
      * @return
      */
     public ResponseEntity<VoBaseResp> openAutoTender(VoOpenAutoTenderReq voOpenAutoTenderReq) {
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voOpenAutoTenderReq.getUserId());
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoViewAutoTenderList.class));
+        }
+
+        if (userThirdAccount.getPasswordState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoViewAutoTenderList.class));
+        }
+
+        if(userThirdAccount.getAutoTransferState() != 1){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoViewAutoTenderList.class));
+        }
+
+
+        if(userThirdAccount.getAutoTenderState() != 1){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoViewAutoTenderList.class));
+        }
+
+
         Long tenderId = voOpenAutoTenderReq.getTenderId();
         Long userId = voOpenAutoTenderReq.getUserId();
 
@@ -291,6 +379,33 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
      * @return
      */
     public ResponseEntity<VoBaseResp> delAutoTender(VoDelAutoTenderReq voDelAutoTenderReq) {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voDelAutoTenderReq.getUserId());
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoViewAutoTenderList.class));
+        }
+
+        if (userThirdAccount.getPasswordState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoViewAutoTenderList.class));
+        }
+
+        if(userThirdAccount.getAutoTransferState() != 1){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoViewAutoTenderList.class));
+        }
+
+
+        if(userThirdAccount.getAutoTenderState() != 1){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoViewAutoTenderList.class));
+        }
+
+
         Long tenderId = voDelAutoTenderReq.getTenderId();
         Long userId = voDelAutoTenderReq.getUserId();
 
@@ -315,6 +430,33 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
      * @return
      */
     public ResponseEntity<VoAutoTenderInfo> queryAutoTenderInfo(Long autoTenderId, Long userId) {
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoAutoTenderInfo.class));
+        }
+
+        if (userThirdAccount.getPasswordState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoAutoTenderInfo.class));
+        }
+
+        if(userThirdAccount.getAutoTransferState() != 1){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoAutoTenderInfo.class));
+        }
+
+
+        if(userThirdAccount.getAutoTenderState() != 1){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoAutoTenderInfo.class));
+        }
+
         if (ObjectUtils.isEmpty(autoTenderId) || ObjectUtils.isEmpty(userId)) {
             return ResponseEntity
                     .badRequest()
@@ -415,6 +557,33 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
      * @throws Exception
      */
     public ResponseEntity<VoViewAutoTenderList> getAutoTenderList(VoGetAutoTenderList voGetAutoTenderList) throws Exception {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voGetAutoTenderList.getUserId());
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoViewAutoTenderList.class));
+        }
+
+        if (userThirdAccount.getPasswordState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoViewAutoTenderList.class));
+        }
+
+        if(userThirdAccount.getAutoTransferState() != 1){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoViewAutoTenderList.class));
+        }
+
+
+        if(userThirdAccount.getAutoTenderState() != 1){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoViewAutoTenderList.class));
+        }
+
+
         VoViewAutoTenderList voViewAutoTenderList =VoBaseResp.ok("查询成功",VoViewAutoTenderList.class);
         List<VoAutoTender> voAutoTenderList = new ArrayList<>();
         int pageIndex = voGetAutoTenderList.getPageIndex();

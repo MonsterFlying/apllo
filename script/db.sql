@@ -394,3 +394,32 @@ CREATE TABLE gfb_task_scheduler
   create_at DATETIME COMMENT '创建时间',
   update_at DATETIME COMMENT '修改时间'
 );
+
+
+
+CREATE TABLE gfb_asset_change_log
+(
+  id INT PRIMARY KEY COMMENT '自增类型' AUTO_INCREMENT,
+  user_id INT DEFAULT 0 NOT NULL,
+  moeny BIGINT DEFAULT 0 COMMENT '更改金额',
+  type INT DEFAULT 0 COMMENT '资金变动类型',
+  available_money BIGINT DEFAULT 0 COMMENT '可用金额',
+  fee_money BIGINT DEFAULT 0 COMMENT '冻结金额',
+  virtual_money BIGINT DEFAULT 0 COMMENT '体验金',
+  collection_money BIGINT DEFAULT 0 COMMENT '待收金额',
+  payment_money BIGINT DEFAULT 0 COMMENT '待还金额',
+  for_user_id INT DEFAULT 0 COMMENT '对手账户',
+  remark VARCHAR(255) DEFAULT '' COMMENT '备注',
+  synchronize_at DATETIME COMMENT '同步时间',
+  synchronize_state INT DEFAULT 0 COMMENT '同步状态(0. 未同步, 1. 已同步)',
+  jixin_seq_no VARCHAR(255) DEFAULT '' COMMENT '即信资金序列号',
+  jixin_tx_type VARCHAR(255) DEFAULT '' COMMENT '即信交易类型',
+  jixin_tx_time TIME COMMENT '交易时间',
+  jixin_tx_date DATE COMMENT '交易时间',
+  create_at DATETIME COMMENT '创建时间',
+  update_at DATETIME COMMENT '修改时间',
+  ref_id INT DEFAULT 0 COMMENT '引用类型',
+  extend_info VARCHAR(255) DEFAULT '' COMMENT '扩展信息JSON格式'
+);
+
+
