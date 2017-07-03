@@ -938,7 +938,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 }
 
                 //借款人逾期罚息
-/*                if ((lateDays > 0) && (lateInterest > 0)) {
+/*              if ((lateDays > 0) && (lateInterest > 0)) {
                     txFeeOut += lateInterest;
                 }*/
 
@@ -1072,7 +1072,34 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "回款信息不存在！"));
         }
-        //==================================================================================
+
+        //逾期天数
+        int lateInterest = 0;//逾期利息
+        Date nowDateOfBegin = DateHelper.beginOfDate(new Date());
+        Date repayDateOfBegin = DateHelper.beginOfDate(borrowRepayment.getRepayAt());
+        int lateDays = DateHelper.diffInDays(nowDateOfBegin, repayDateOfBegin, false);
+        lateDays = lateDays < 0 ? 0 : lateDays;
+        if (0 < lateDays) {
+            int overPrincipal = borrowRepayment.getPrincipal();//剩余未还本金
+            if (borrowRepayment.getOrder() < (borrow.getTotalOrder() - 1)) {//计算非一次性还本付息 剩余本金
+
+                Specification<BorrowRepayment> brs = Specifications
+                        .<BorrowRepayment>and()
+                        .eq("status", 0)
+                        .eq("borrowId", borrowId)
+                        .build();
+                List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
+                Preconditions.checkNotNull(borrowRepayment, "还款不存在!");
+
+                overPrincipal = 0;
+                for (BorrowRepayment temp : borrowRepaymentList) {
+                    overPrincipal += temp.getPrincipal();
+                }
+            }
+
+            lateInterest = (int) MathHelper.myRound(overPrincipal * 0.004 * lateDays, 2);
+        }
+
         List<RepayBail> repayBailList = new ArrayList<>();
         RepayBail repayBail = null;
         int collectionMoneyYes = 0;
@@ -1096,7 +1123,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             repayBail.setOrderId(JixinHelper.getOrderId(JixinHelper.BAIL_REPAY_PREFIX));
             repayBail.setTxAmount(StringHelper.formatDouble(principal, 100, false));
             repayBail.setIntAmount(StringHelper.formatDouble(collectionMoneyYes - principal, 100, false));
-            repayBail.setTxFeeOut(StringHelper.formatDouble(borrowCollection.getLateInterest(), 100, false));
+            repayBail.setTxFeeOut(StringHelper.formatDouble(tender.getValidMoney() / borrow.getMoney() * lateInterest, 100, false));
             repayBail.setOrgOrderId(tender.getThirdTenderOrderId());
             repayBail.setAuthCode(borrowCollection.getTBailAuthCode());
             repayBailList.add(repayBail);

@@ -921,7 +921,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> advance(VoAdvanceReq voAdvanceReq) throws Exception {
-        Date nowDate = new Date();
         String paramStr = voAdvanceReq.getParamStr();
         if (!SecurityHelper.checkSign(voAdvanceReq.getSign(), paramStr)) {
             return ResponseEntity
