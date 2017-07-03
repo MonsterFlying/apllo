@@ -2,10 +2,12 @@ package com.gofobao.framework.asset.biz;
 
 import com.gofobao.framework.asset.vo.request.VoBankApsReq;
 import com.gofobao.framework.asset.vo.request.VoCashReq;
+import com.gofobao.framework.asset.vo.request.VoPcCashLogs;
 import com.gofobao.framework.asset.vo.response.VoBankApsWrapResp;
 import com.gofobao.framework.asset.vo.response.VoCashLogDetailResp;
 import com.gofobao.framework.asset.vo.response.VoCashLogWrapResp;
 import com.gofobao.framework.asset.vo.response.VoPreCashResp;
+import com.gofobao.framework.asset.vo.response.pc.VoCashLogWarpRes;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
@@ -86,4 +88,12 @@ public interface CashDetailLogBiz {
      * @return
      */
     boolean doBigCashForm(String taskData) throws Exception;
+
+
+    /**
+     * pc： 提现日志
+     * @param cashLogs
+     * @return
+     */
+    ResponseEntity<VoCashLogWarpRes> psLogs(VoPcCashLogs cashLogs);
 }
