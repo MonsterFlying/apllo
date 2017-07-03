@@ -28,7 +28,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint, Se
         // This is invoked when user tries to access a secured REST resource without supplying any credentials
         // We should just send a 401 Unauthorized response because there is no 'login page' to redirect to
         try(PrintWriter printWriter = response.getWriter()) {
-            VoBaseResp error = VoBaseResp.error(VoBaseResp.RELOGIN,"非法访问");
+            VoBaseResp error = VoBaseResp.error(VoBaseResp.RELOGIN,"该操作需要登录才能进行!");
             printWriter.write(GSON.toJson(error));
             printWriter.flush();
         }catch (Exception ex){

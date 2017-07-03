@@ -25,6 +25,11 @@ public interface UserBiz {
 
     ResponseEntity<VoBasicUserInfoResp> getUserInfoResp(Users user);
 
-
+    /**
+     * 获取用户配置详情
+     * @param userId
+     * @return
+     */
+    ResponseEntity<VoBasicUserInfoResp> userInfo(Long userId) ;
 }
 
