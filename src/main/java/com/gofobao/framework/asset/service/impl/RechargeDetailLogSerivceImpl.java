@@ -1,13 +1,16 @@
 package com.gofobao.framework.asset.service.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.repository.RechargeDetailLogRepository;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
+import com.gofobao.framework.asset.vo.request.VoPcRechargeReq;
 import com.google.common.collect.ImmutableList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 
@@ -53,5 +56,12 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService{
         return rechargeDetailLogRepository.findByUserIdAndDelAndStateInAndCreateTimeBetween(userId, 0, stateList, startTime, endTime) ;
     }
 
-
+    @Override
+    public List<RechargeDetailLog> pcLogs(VoPcRechargeReq rechargeReq) {
+      /*  Specification specification= Specifications.<RechargeDetailLog>and()
+                .eq("userId",rechargeReq.getUserId())
+                .eq("userId")
+        rechargeDetailLogRepository.*/
+        return null;
+    }
 }

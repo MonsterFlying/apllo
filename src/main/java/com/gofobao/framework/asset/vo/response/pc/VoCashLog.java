@@ -1,5 +1,6 @@
 package com.gofobao.framework.asset.vo.response.pc;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -7,7 +8,11 @@ import lombok.Data;
  * Created by admin on 2017/7/3.
  */
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class VoCashLog {
+    @ApiModelProperty("ID")
+    private Long id;
+
     @ApiModelProperty("时间")
     private String createTime;
 
@@ -23,6 +28,7 @@ public class VoCashLog {
     @ApiModelProperty("手续费")
     private String serviceCharge;
 
-
+    @ApiModelProperty(hidden = true)
+    private Integer totalCount;
 
 }

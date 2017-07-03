@@ -1,5 +1,6 @@
 package com.gofobao.framework.member.vo.response;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 /**
@@ -7,13 +8,13 @@ import lombok.Data;
  */
 @Data
 public class InviteFriends {
-
+    @ApiModelProperty("时间")
     private String createdAt;
-
+    @ApiModelProperty("等级")
     private Integer leave;
-
+    @ApiModelProperty("比例")
     private String scale;
-
+    @ApiModelProperty("奖励金额")
     private String money;
 
 }

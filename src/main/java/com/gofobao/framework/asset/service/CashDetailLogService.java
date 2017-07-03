@@ -2,6 +2,7 @@ package com.gofobao.framework.asset.service;
 
 import com.gofobao.framework.asset.entity.CashDetailLog;
 import com.gofobao.framework.asset.vo.request.VoPcCashLogs;
+import com.gofobao.framework.asset.vo.response.pc.VoCashLog;
 import com.google.common.collect.ImmutableList;
 import org.springframework.data.domain.Pageable;
 
@@ -40,5 +41,5 @@ public interface CashDetailLogService {
      * @param voPcCashLogs
      * @return
      */
-    List<CashDetailLog>pcLogs(VoPcCashLogs voPcCashLogs);
+    List<VoCashLog> pcLogs(VoPcCashLogs voPcCashLogs);
 }

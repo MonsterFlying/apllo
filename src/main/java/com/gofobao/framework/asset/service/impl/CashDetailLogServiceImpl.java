@@ -5,7 +5,14 @@ import com.gofobao.framework.asset.entity.CashDetailLog;
 import com.gofobao.framework.asset.repository.CashDetailLogRepository;
 import com.gofobao.framework.asset.service.CashDetailLogService;
 import com.gofobao.framework.asset.vo.request.VoPcCashLogs;
+import com.gofobao.framework.asset.vo.response.pc.VoCashLog;
+import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.RedisHelper;
+import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.project.UserHelper;
+import com.gofobao.framework.system.repository.DictValueRepository;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -13,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.util.Collections;
 import java.util.Date;
@@ -27,6 +35,12 @@ public class CashDetailLogServiceImpl implements CashDetailLogService {
 
     @Autowired
     CashDetailLogRepository cashDetailLogRepository;
+
+    @Autowired
+    private RedisHelper redisHelper;
+
+    @Autowired
+    private DictValueRepository dictValueRepository;
 
     @Override
     public List<CashDetailLog> findByStateInAndUserId(ImmutableList<Integer> states, long userId) {
@@ -60,20 +74,47 @@ public class CashDetailLogServiceImpl implements CashDetailLogService {
         return cashDetailLogRepository.findByUserIdAndStateInAndCreateTimeBetween(userId, stateList, startDate, endDate);
     }
 
-
+    /**
+     * 提现记录
+     * @param voPcCashLogs
+     * @return
+     */
     @Override
-    public List<CashDetailLog> pcLogs(VoPcCashLogs voPcCashLogs) {
+    public List<VoCashLog> pcLogs(VoPcCashLogs voPcCashLogs) {
         Specification specification = Specifications.<CashDetailLog>and()
                 .eq("userId", voPcCashLogs.getUserId())
                 .eq("status", voPcCashLogs.getStatus())
                 .build();
-        Page<CashDetailLog> cashDetailLogPage=cashDetailLogRepository.findAll(specification,
+        Page<CashDetailLog> cashDetailLogPage = cashDetailLogRepository.findAll(specification,
                 new PageRequest(voPcCashLogs.getPageIndex(),
                         voPcCashLogs.getPageSize(),
-                        new Sort(Sort.Direction.DESC,"id")));
+                        new Sort(Sort.Direction.DESC, "id")));
 
-        cashDetailLogPage.getTotalElements();
+        List<CashDetailLog> cashDetailLogs = cashDetailLogPage.getContent();
+        if (CollectionUtils.isEmpty(cashDetailLogs)) {
+            return Collections.EMPTY_LIST;
+        }
+        Long totalCount = cashDetailLogPage.getTotalElements();
 
-        return null;
+        final int[] num = {0};
+        List<VoCashLog> logs = Lists.newArrayList();
+        cashDetailLogs.stream().forEach(p -> {
+            VoCashLog cashLog = new VoCashLog();
+            cashLog.setId(p.getId());
+            cashLog.setBankNo(UserHelper.hideChar(p.getCardNo(), UserHelper.BANK_ACCOUNT_NUM));
+            cashLog.setBanKName(p.getBankName());
+            cashLog.setCreateTime(DateHelper.dateToString(p.getCreateTime()));
+            cashLog.setMoney(StringHelper.formatMon(p.getMoney() / 100D));
+            cashLog.setServiceCharge(StringHelper.formatMon(p.getFee() / 100D));
+            if (num[0] == 0) {
+                cashLog.setTotalCount(totalCount.intValue());
+                num[0] = 1;
+            }
+            logs.add(cashLog);
+        });
+
+        return logs;
     }
+
+
 }
