@@ -3,11 +3,16 @@ package com.gofobao.framework.borrow.controller.web;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
+import com.gofobao.framework.borrow.vo.request.VoPcCancelThirdBorrow;
+import com.gofobao.framework.borrow.vo.request.VoRegisterOfficialBorrow;
+import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
 import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
 import com.gofobao.framework.borrow.vo.response.VoPcBorrowListWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowStatisticsWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewVoBorrowDescWarpRes;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.ThymeleafHelper;
+import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
@@ -22,6 +27,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.util.Map;
 
 /**
@@ -57,15 +63,14 @@ public class WebBorrowController {
     @ApiOperation(value = "pc:首页标列表; type:-1：全部 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
     @GetMapping("pub/pc/borrow/v2/list/{type}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoPcBorrowListWarpRes> pcList(@PathVariable Integer pageIndex,
-                                                          @PathVariable Integer pageSize,
-                                                          @PathVariable Integer type) {
+                                                        @PathVariable Integer pageSize,
+                                                        @PathVariable Integer type) {
         VoBorrowListReq voBorrowListReq = new VoBorrowListReq();
         voBorrowListReq.setPageIndex(pageIndex);
         voBorrowListReq.setPageSize(pageSize);
         voBorrowListReq.setType(type);
         return borrowBiz.pcFindAll(voBorrowListReq);
     }
-
 
 
     @ApiOperation("标信息")
@@ -80,7 +85,6 @@ public class WebBorrowController {
     public ResponseEntity<VoViewVoBorrowDescWarpRes> pcDesc(@PathVariable Long borrowId) {
         return borrowBiz.desc(borrowId);
     }
-
 
 
     @ApiOperation(value = "pc:标合同")
@@ -100,7 +104,7 @@ public class WebBorrowController {
             Map<String, Object> paramMaps = borrowBiz.pcContract(borrowId, userId);
             content = thymeleafHelper.build("borrowProtcol", paramMaps);
         } catch (Exception e) {
-          log.info(" WebBorrowController -> pcTakeRatesDesc  fail",e);
+            log.info(" WebBorrowController -> pcTakeRatesDesc  fail", e);
             content = thymeleafHelper.build("load_error", null);
         }
         return ResponseEntity.ok(content);
@@ -119,4 +123,33 @@ public class WebBorrowController {
         return borrowBiz.statistics();
     }
 
+    /**
+     * pc取消借款
+     *
+     * @param voPcCancelThirdBorrow
+     * @return
+     */
+    @PostMapping("/pub/pc/borrow/cancelBorrow")
+    @ApiOperation("pc取消借款")
+    public ResponseEntity<VoBaseResp> pcCancelBorrow(@Valid @ModelAttribute VoPcCancelThirdBorrow voPcCancelThirdBorrow) throws Exception {
+        return borrowBiz.pcCancelBorrow(voPcCancelThirdBorrow);
+    }
+
+    @PostMapping("/pub/pc/borrow/repayAll")
+    @ApiOperation("提前还款")
+    public ResponseEntity<VoBaseResp> pcRepayAll(@Valid @ModelAttribute VoRepayAllReq voRepayAllReq) {
+        return borrowThirdBiz.thirdBatchRepayAll(voRepayAllReq);
+    }
+
+    /**
+     * 登记官方借款（车贷标、渠道标）
+     *
+     * @param voRegisterOfficialBorrow
+     * @return
+     */
+    @PostMapping("/pub/pc/borrow/official/register")
+    @ApiOperation("登记官方借款（车贷标、渠道标）")
+    public ResponseEntity<VoHtmlResp> registerOfficialBorrow(HttpServletRequest request, @ModelAttribute @Valid VoRegisterOfficialBorrow voRegisterOfficialBorrow) {
+        return borrowBiz.registerOfficialBorrow(voRegisterOfficialBorrow, request);
+    }
 }
