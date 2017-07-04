@@ -788,8 +788,9 @@ public class BorrowBizImpl implements BorrowBiz {
             Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
             List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
 
-            BorrowRepayment borrowRepayment = new BorrowRepayment();
+            BorrowRepayment borrowRepayment = null;
             for (int i = 0; i < repayDetailList.size(); i++) {
+                borrowRepayment = new BorrowRepayment();
                 Map<String, Object> repayDetailMap = repayDetailList.get(i);
                 repayMoney += new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue();
                 repayInterest += new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue();

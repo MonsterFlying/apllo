@@ -206,7 +206,7 @@ public class AplloApplicationTests {
         BidApplyQueryResp response = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, request, BidApplyQueryResp.class);
         System.out.println(response);*/
 
-        BatchDetailsQueryReq request = new BatchDetailsQueryReq();
+        /*BatchDetailsQueryReq request = new BatchDetailsQueryReq();
         request.setBatchNo("150922");
         request.setBatchTxDate("20170704");
         request.setType("0");
@@ -214,14 +214,14 @@ public class AplloApplicationTests {
         request.setPageSize("10");
         request.setChannel(ChannelContant.HTML);
         BatchDetailsQueryResp response = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, request, BatchDetailsQueryResp.class);
-        System.out.println(response);
+        System.out.println(response);*/
 
-        /*Borrow borrow = borrowService.findById(165225L);
+        Borrow borrow = borrowService.findById(169767L);
         try {
             borrowBiz.notTransferedBorrowAgainVerify(borrow);
         } catch (Exception e) {
             e.printStackTrace();
-        }*/
+        }
 
         /*Borrow borrow = borrowService.findById(165227L);
         try {
