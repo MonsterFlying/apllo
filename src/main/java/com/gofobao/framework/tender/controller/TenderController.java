@@ -24,7 +24,6 @@ import javax.validation.Valid;
 @RequestMapping("/tender")
 @RestController
 @Slf4j
-@SuppressWarnings("all")
 public class TenderController {
 
     @Autowired
@@ -39,17 +38,17 @@ public class TenderController {
     public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(@PathVariable Integer pageIndex,
                                                                               @PathVariable Integer pageSize,
                                                                               @PathVariable Long borrowId) {
-        TenderUserReq tenderUserReq = new TenderUserReq();
-        tenderUserReq.setPageSize(pageSize);
-        tenderUserReq.setPageIndex(pageIndex);
-        tenderUserReq.setBorrowId(borrowId);
-        return tenderBiz.findBorrowTenderUser(tenderUserReq);
+        TenderUserReq borrowTenderList = new TenderUserReq();
+        borrowTenderList.setPageSize(pageSize);
+        borrowTenderList.setPageIndex(pageIndex);
+        borrowTenderList.setBorrowId(borrowId);
+        return tenderBiz.findBorrowTenderUser(borrowTenderList);
     }
 
     @ApiOperation("借款投标")
     @PostMapping("/v2/create")
     public ResponseEntity<VoBaseResp> tender(@ModelAttribute @Valid VoCreateTenderReq voCreateTenderReq,
-                                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+                                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
         voCreateTenderReq.setUserId(userId);
         return tenderBiz.tender(voCreateTenderReq);
     }
