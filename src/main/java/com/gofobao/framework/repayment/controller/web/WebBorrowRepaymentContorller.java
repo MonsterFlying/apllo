@@ -87,7 +87,7 @@ public class WebBorrowRepaymentContorller {
      * @param voAdvanceReq
      * @return
      */
-    @PostMapping("/repayment/v2/advance")
+    @PostMapping("/v2/advance")
     @ApiOperation("垫付")
     public ResponseEntity<VoBaseResp> pcAdvance(VoAdvanceReq voAdvanceReq) {
         try {
