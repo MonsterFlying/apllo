@@ -120,17 +120,6 @@ public class BorrowController {
         return borrowBiz.addNetWorth(voAddNetWorthBorrow);
     }
 
-    /**
-     * pc取消借款
-     *
-     * @param voPcCancelThirdBorrow
-     * @return
-     */
-    @PostMapping("/borrow/pub/pc/cancelBorrow")
-    @ApiOperation("pc取消借款")
-    public ResponseEntity<VoBaseResp> pcCancelBorrow(@Valid @ModelAttribute VoPcCancelThirdBorrow voPcCancelThirdBorrow) throws Exception {
-        return borrowBiz.pcCancelBorrow(voPcCancelThirdBorrow);
-    }
 
     /**
      * 取消借款
@@ -145,12 +134,6 @@ public class BorrowController {
         return borrowBiz.cancelBorrow(voCancelBorrow);
     }
 
-    @PostMapping("/borrow/pub/pc/repayAll")
-    @ApiOperation("提前还款")
-    public ResponseEntity<VoBaseResp> pcRepayAll(@Valid @ModelAttribute VoRepayAllReq voRepayAllReq) {
-        return borrowThirdBiz.thirdBatchRepayAll(voRepayAllReq);
-    }
-
     /**
      * 复审
      *
@@ -163,15 +146,5 @@ public class BorrowController {
         return borrowBiz.doAgainVerify(voDoAgainVerifyReq);
     }
 
-    /**
-     * 登记官方借款（车贷标、渠道标）
-     *
-     * @param voRegisterOfficialBorrow
-     * @return
-     */
-    @PostMapping("/borrow/pub/pc/official/register")
-    @ApiOperation("登记官方借款（车贷标、渠道标）")
-    public ResponseEntity<VoHtmlResp> registerOfficialBorrow(HttpServletRequest request, @ModelAttribute @Valid VoRegisterOfficialBorrow voRegisterOfficialBorrow) {
-        return borrowBiz.registerOfficialBorrow(voRegisterOfficialBorrow, request);
-    }
+
 }

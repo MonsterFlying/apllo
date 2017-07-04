@@ -59,7 +59,8 @@ public class JixinHelper {
 
 
     /**
-     *获取6位批次号
+     * 获取6位批次号
+     *
      * @return
      */
     public String getBatchNo() {
@@ -117,7 +118,7 @@ public class JixinHelper {
         int index = str.length() - 5;
         String body = str.substring(index, str.length());
         String prefix = str.substring(0, index);
-        return (char) (NumberHelper.toInt(prefix) + 64) + body;
+        return "G" + (char) (NumberHelper.toInt(prefix) + 64) + body;
     }
 
     public static void main(String[] args) {

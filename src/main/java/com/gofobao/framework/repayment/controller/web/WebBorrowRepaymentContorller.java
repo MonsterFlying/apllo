@@ -5,6 +5,7 @@ import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
+import com.gofobao.framework.repayment.vo.request.VoAdvanceReq;
 import com.gofobao.framework.repayment.vo.request.VoInfoReq;
 import com.gofobao.framework.repayment.vo.request.VoInstantlyRepaymentReq;
 import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
@@ -12,6 +13,7 @@ import com.gofobao.framework.repayment.vo.response.VoViewRepaymentOrderDetailWar
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +27,7 @@ import javax.validation.Valid;
 @RestController
 @Api(description = "pc:还款计划")
 @RequestMapping("/repayment/pc")
+@Slf4j
 public class WebBorrowRepaymentContorller {
 
     @Autowired
@@ -39,7 +42,7 @@ public class WebBorrowRepaymentContorller {
     @PostMapping(value = "/v2/list/{time}")
     @ApiOperation("还款计划列表 time:2017-05-02")
     public ResponseEntity<VoViewCollectionOrderListWarpResp> listRes(@PathVariable("time") String time,
-                                                                       @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+                                                                     @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoCollectionOrderReq orderReq = new VoCollectionOrderReq();
         orderReq.setTime(time);
         orderReq.setUserId(userId);
@@ -75,5 +78,25 @@ public class WebBorrowRepaymentContorller {
     public ResponseEntity<VoBaseResp> instantly(@ModelAttribute @Valid VoInstantlyRepaymentReq voInstantlyRepaymentReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
         voInstantlyRepaymentReq.setUserId(userId);
         return repaymentBiz.instantly(voInstantlyRepaymentReq);
+    }
+
+
+    /**
+     * 垫付
+     *
+     * @param voAdvanceReq
+     * @return
+     */
+    @PostMapping("/repayment/v2/advance")
+    @ApiOperation("垫付")
+    public ResponseEntity<VoBaseResp> pcAdvance(VoAdvanceReq voAdvanceReq) {
+        try {
+            return repaymentBiz.advance(voAdvanceReq);
+        } catch (Exception e) {
+            log.error("垫付异常:", e);
+        }
+        return ResponseEntity
+                .badRequest()
+                .body(VoBaseResp.error(VoBaseResp.ERROR, "垫付失败!"));
     }
 }

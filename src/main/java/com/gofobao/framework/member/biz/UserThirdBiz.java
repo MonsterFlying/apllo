@@ -22,6 +22,7 @@ public interface UserThirdBiz {
 
     /**
      * 会员存管开户前置请求
+     *
      * @param userId
      * @return
      */
@@ -29,6 +30,7 @@ public interface UserThirdBiz {
 
     /**
      * 会员开户
+     *
      * @param voOpenAccountReq
      * @param userId
      * @return
@@ -46,6 +48,7 @@ public interface UserThirdBiz {
 
     /**
      * 银行存管密码回调
+     *
      * @param request
      * @param response
      * @param type
@@ -56,6 +59,7 @@ public interface UserThirdBiz {
 
     /**
      * 自动投标回调
+     *
      * @param request
      * @param response
      * @return
@@ -66,7 +70,7 @@ public interface UserThirdBiz {
      * 自动投标签约
      *
      * @param httpServletRequest
-     * @param userId 用户Id
+     * @param userId             用户Id
      * @return
      */
     ResponseEntity<VoHtmlResp> autoTender(HttpServletRequest httpServletRequest, Long userId);
@@ -84,6 +88,7 @@ public interface UserThirdBiz {
 
     /**
      * 自动转让回调
+     *
      * @param request
      * @param response
      * @return
@@ -92,6 +97,7 @@ public interface UserThirdBiz {
 
     /**
      * 查询签约状态
+     *
      * @param userId
      * @return
      */
@@ -99,6 +105,7 @@ public interface UserThirdBiz {
 
     /**
      * 设置密码回调
+     *
      * @param id
      * @param model
      * @return
@@ -107,13 +114,22 @@ public interface UserThirdBiz {
 
     /**
      * 银行存管协议
+     *
      * @param userId
      * @param model
      */
     void thirdAccountProtocol(Long userId, Model model);
 
     /**
+     * 银行存管协议
+     *
+     * @param userId
+     */
+    String thirdAccountProtocolJson(Long userId);
+
+    /**
      * 自动投标签约回调
+     *
      * @param id
      * @param model
      * @return
@@ -125,7 +141,8 @@ public interface UserThirdBiz {
     ResponseEntity<String> publicPasswordModify(HttpServletRequest httpServletRequest, String encode, String channel);
 
     /**
-     *  同步协议状态
+     * 同步协议状态
+     *
      * @param userThirdAccount
      */
     UserThirdAccount synCreditQuth(UserThirdAccount userThirdAccount);
@@ -133,6 +150,7 @@ public interface UserThirdBiz {
 
     /**
      * 后台开会流程
+     *
      * @param voAdminOpenAccountResp
      * @param httpServletRequest
      * @return
@@ -151,6 +169,7 @@ public interface UserThirdBiz {
 
     /**
      * 后台密码初始化回调
+     *
      * @param request
      * @param response
      * @param type
@@ -160,7 +179,8 @@ public interface UserThirdBiz {
 
 
     /**
-     *  密码初始化
+     * 密码初始化
+     *
      * @param httpServletRequest
      * @param encode
      * @param channel

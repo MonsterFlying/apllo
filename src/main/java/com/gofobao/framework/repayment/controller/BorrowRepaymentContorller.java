@@ -74,22 +74,4 @@ public class BorrowRepaymentContorller {
         return repaymentBiz.instantly(voInstantlyRepaymentReq);
     }
 
-    /**
-     * 垫付
-     *
-     * @param voAdvanceReq
-     * @return
-     */
-    @PostMapping("/repayment/v2/advance")
-    @ApiOperation("垫付")
-    public ResponseEntity<VoBaseResp> pcAdvance(VoAdvanceReq voAdvanceReq){
-        try {
-            return repaymentBiz.advance(voAdvanceReq);
-        } catch (Exception e) {
-            log.error("垫付异常:",e);
-        }
-        return ResponseEntity
-                .badRequest()
-                .body(VoBaseResp.error(VoBaseResp.ERROR,"垫付失败!"));
-    }
 }
