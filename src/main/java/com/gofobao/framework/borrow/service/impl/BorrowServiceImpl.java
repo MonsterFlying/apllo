@@ -654,7 +654,7 @@ public class BorrowServiceImpl implements BorrowService {
     public boolean checkValidDay(Borrow borrow) {
         Date nowDate = new Date();
         Date validDate = DateHelper.beginOfDate(DateHelper.addDays(borrow.getReleaseAt(), borrow.getValidDay() + 1));
-        return (nowDate.getTime() < validDate.getTime());
+        return nowDate.getTime() < validDate.getTime();
     }
 
     public Borrow findById(Long borrowId) {
@@ -710,4 +710,6 @@ public class BorrowServiceImpl implements BorrowService {
         List<Borrow> borrowList = borrowRepository.findAll(bs, pageable).getContent();
         return borrowList.get(0);
     }
+
+
 }

@@ -220,7 +220,7 @@ public class TenderBizImpl implements TenderBiz {
      * @param voCreateTenderReq
      * @return
      */
-    public Map<String, Object> checkCreateTender(VoCreateTenderReq voCreateTenderReq) {
+    public Map<String, Object> checkCreateTender(VoCreateTenderReq voCreateTenderReq) throws Exception {
         Map<String, Object> rsMap = new HashMap<>();
         String msg = null;
 
@@ -244,41 +244,6 @@ public class TenderBizImpl implements TenderBiz {
             }
 
             UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-            if (ObjectUtils.isEmpty(userThirdAccount) || ObjectUtils.isEmpty(userThirdAccount.getAccountId())) {
-                log.info("用户投标：当前用户未开户。");
-                msg = "当前用户未开户!";
-                break;
-            }
-
-            if (borrow.isTransfer()) {//转让标需要判断是否签约自动转让协议
-                if (ObjectUtils.isEmpty(userThirdAccount.getAutoTransferBondOrderId())) {
-                    log.info("用户投标：当前用户未签自动债权转让协议。");
-                    msg = "当前用户未签自动债权转让协议!";
-                    break;
-                }
-            } else {
-                if (ObjectUtils.isEmpty(userThirdAccount.getAutoTransferBondOrderId())) {
-                    log.info("用户投标：当前用户未签自动投标协议。");
-                    msg = "当前用户未签自动投标协议!";
-                    break;
-                }
-            }
-
-            if (userThirdAccount.getPasswordState() == 0) {
-                msg = "银行存管:密码未初始化!";
-                break;
-            }
-
-            if (userThirdAccount.getCardNoBindState() == 0) {
-                msg = "银行存管:银行卡未初始化!";
-                break;
-            }
-
-            if (ObjectUtils.isEmpty(userThirdAccount.getAutoTenderOrderId())) {
-                msg = "银行存管：投标未签约!";
-                break;
-            }
-
             if (!borrowService.checkBidding(borrow)) { //检查借款状态是否实在招标中
                 msg = "当前借款不在招标中!";
                 break;
@@ -289,14 +254,10 @@ public class TenderBizImpl implements TenderBiz {
                 break;
             }
 
-            if (!borrowService.checkReleaseAt(borrow)) { //检查借款是否到发布时间
-                msg = "当前借款未到招标时间!";
-                break;
-            }
-
-
+            // ========================================
+            //  触发借款取消程序
+            // ========================================
             if (!borrowService.checkValidDay(borrow)) { //检查是否是有效的招标时间
-                //取消借款
                 VoCancelBorrow voCancelBorrow = new VoCancelBorrow();
                 voCancelBorrow.setBorrowId(borrowId);
                 voCancelBorrow.setUserId(borrow.getUserId());

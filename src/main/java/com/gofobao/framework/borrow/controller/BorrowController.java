@@ -129,7 +129,7 @@ public class BorrowController {
      */
     @PostMapping("/borrow/cancelBorrow")
     @ApiOperation("取消借款")
-    public ResponseEntity<VoBaseResp> cancelBorrow(@Valid @ModelAttribute VoCancelBorrow voCancelBorrow, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoBaseResp> cancelBorrow(@Valid @ModelAttribute VoCancelBorrow voCancelBorrow, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
         voCancelBorrow.setUserId(userId);
         return borrowBiz.cancelBorrow(voCancelBorrow);
     }
