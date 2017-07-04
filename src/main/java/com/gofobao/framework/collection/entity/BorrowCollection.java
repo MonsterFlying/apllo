@@ -112,6 +112,8 @@ public class BorrowCollection {
     @Column(name = "t_bail_repay_order_id")
     private String tBailRepayOrderId;
 
+    private String tRepayBailOrderId;
+
     @Basic
     @Column(name = "t_bail_auth_code")
     private String tBailAuthCode;

@@ -7,4 +7,5 @@ public class ThirdBatchNoTypeContant {
     public static final int BATCH_CREDIT_INVEST = 1;
     public static final int BATCH_LEND_REPAY = 2;
     public static final int BATCH_REPAY = 3;
+    public static final int BAIL_REPAY = 4;
 }

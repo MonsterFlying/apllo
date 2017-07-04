@@ -214,6 +214,7 @@ ALTER TABLE `gofobao0627`.`gfb_borrow_collection`
 , ADD COLUMN `t_user_id` int(11) NULL COMMENT '银行电子账户标 id'
 , ADD COLUMN `t_repay_order_id` varchar(255) NULL COMMENT '还款order'
 , ADD COLUMN `t_bail_repay_order_id` varchar(255) NULL COMMENT '垫付订单号'
+, ADD COLUMN `t_repay_bail_order_id` varchar(255) NULL COMMENT '借款人还垫付订单号'
 , ADD COLUMN `t_bail_auth_code` varchar(255) NULL COMMENT '垫付即信授权码';
 
 ALTER TABLE `gofobao0627`.`gfb_borrow_repayment`

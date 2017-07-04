@@ -680,8 +680,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         thirdBatchLog.setCreateAt(nowDate);
         thirdBatchLog.setUpdateAt(nowDate);
         thirdBatchLog.setSourceId(borrowId);
-        thirdBatchLog.setType(ThirdBatchNoTypeContant.BATCH_REPAY);
-        thirdBatchLog.setRemark("即信批次还款");
+        thirdBatchLog.setType(ThirdBatchNoTypeContant.BAIL_REPAY);
+        thirdBatchLog.setRemark("即信担保人还垫付");
         thirdBatchLogService.save(thirdBatchLog);
 
         BatchBailRepayReq request = new BatchBailRepayReq();
@@ -1183,7 +1183,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
                 repayBails.add(repayBail);
 
-                borrowCollection.setTBailRepayOrderId(orderId);
+                borrowCollection.setTRepayBailOrderId(orderId);
                 borrowCollectionService.updateById(borrowCollection);
             }
         } while (false);
