@@ -30,7 +30,7 @@ spring:
     password: gofobaochina123
     default-encoding: UTF-8
 server:
-  port: 8080
+  port: 9090
 jwt: #JWT 安全配置
   header: Authorization
   secret: WWW.gOf0b@o.c0m@0701
