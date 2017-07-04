@@ -65,6 +65,7 @@ public class AssetLogServiceImpl implements AssetLogService {
         if (CollectionUtils.isEmpty(assetLogs)) {
             return Collections.EMPTY_LIST;
         }
+
         List<AssetLogs> logs = Lists.newArrayList();
         assetLogs.stream().forEach(p -> {
             AssetLogs assetLog = new AssetLogs();

@@ -24,4 +24,6 @@ public class AssetLogs {
     @ApiModelProperty("备注")
     private String remark;
 
+    @ApiModelProperty(hidden = true)
+    private Integer totalCount;
 }

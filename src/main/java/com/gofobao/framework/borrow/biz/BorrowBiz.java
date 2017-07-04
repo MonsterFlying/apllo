@@ -53,7 +53,7 @@ public interface BorrowBiz {
      * @param voBorrowListReq
      * @return
      */
-    ResponseEntity<VoPcBorrowListWarpRes> pcFindAll(VoBorrowListReq voBorrowListReq);
+    ResponseEntity<VoPcBorrowList> pcFindAll(VoBorrowListReq voBorrowListReq);
 
     /**
      * 非转让标复审

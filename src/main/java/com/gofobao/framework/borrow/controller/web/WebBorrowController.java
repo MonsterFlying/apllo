@@ -6,10 +6,7 @@ import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.request.VoPcCancelThirdBorrow;
 import com.gofobao.framework.borrow.vo.request.VoRegisterOfficialBorrow;
 import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
-import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
-import com.gofobao.framework.borrow.vo.response.VoPcBorrowListWarpRes;
-import com.gofobao.framework.borrow.vo.response.VoViewBorrowStatisticsWarpRes;
-import com.gofobao.framework.borrow.vo.response.VoViewVoBorrowDescWarpRes;
+import com.gofobao.framework.borrow.vo.response.*;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
@@ -62,9 +59,9 @@ public class WebBorrowController {
 
     @ApiOperation(value = "pc:首页标列表; type:-1：全部 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
     @GetMapping("pub/pc/borrow/v2/list/{type}/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoPcBorrowListWarpRes> pcList(@PathVariable Integer pageIndex,
-                                                        @PathVariable Integer pageSize,
-                                                        @PathVariable Integer type) {
+    public ResponseEntity<VoPcBorrowList> pcList(@PathVariable Integer pageIndex,
+                                                 @PathVariable Integer pageSize,
+                                                 @PathVariable Integer type) {
         VoBorrowListReq voBorrowListReq = new VoBorrowListReq();
         voBorrowListReq.setPageIndex(pageIndex);
         voBorrowListReq.setPageSize(pageSize);
