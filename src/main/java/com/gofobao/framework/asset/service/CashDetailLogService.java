@@ -1,6 +1,8 @@
 package com.gofobao.framework.asset.service;
 
 import com.gofobao.framework.asset.entity.CashDetailLog;
+import com.gofobao.framework.asset.vo.request.VoPcCashLogs;
+import com.gofobao.framework.asset.vo.response.pc.VoCashLog;
 import com.google.common.collect.ImmutableList;
 import org.springframework.data.domain.Pageable;
 
@@ -33,4 +35,11 @@ public interface CashDetailLogService {
     CashDetailLog findById(Long id) ;
 
     List<CashDetailLog> findByUserIdAndStateInAndCreateTimeBetween(Long userId, ImmutableList<Integer> stateList, Date startDate, Date endDate);
+
+    /**
+     *
+     * @param voPcCashLogs
+     * @return
+     */
+    List<VoCashLog> pcLogs(VoPcCashLogs voPcCashLogs);
 }

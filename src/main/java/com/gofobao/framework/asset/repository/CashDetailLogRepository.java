@@ -4,6 +4,7 @@ import com.gofobao.framework.asset.entity.CashDetailLog;
 import com.google.common.collect.ImmutableList;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Repository;
 
@@ -15,7 +16,7 @@ import java.util.List;
  * Created by Administrator on 2017/6/12 0012.
  */
 @Repository
-public interface CashDetailLogRepository extends JpaRepository<CashDetailLog, Long> {
+public interface CashDetailLogRepository extends JpaRepository<CashDetailLog, Long> ,JpaSpecificationExecutor<CashDetailLog>{
 
     List<CashDetailLog> findByStateInAndUserId(ImmutableList<Integer> states, long userId);
 

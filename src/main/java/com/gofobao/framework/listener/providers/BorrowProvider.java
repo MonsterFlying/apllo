@@ -3,8 +3,10 @@ package com.gofobao.framework.listener.providers;
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.FrzFlagContant;
 import com.gofobao.framework.award.contants.RedPacketContants;
+import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.borrow.vo.request.VoCreateThirdBorrowReq;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -77,6 +79,8 @@ public class BorrowProvider {
 
     @Autowired
     private TenderRepository tenderRepository;
+    @Autowired
+    private BorrowThirdBiz borrowThirdBiz;
 
     /**
      * 初审
@@ -313,7 +317,7 @@ public class BorrowProvider {
 
         if (ObjectUtils.isEmpty(productId)) {
             //标的登记
-    /*        int type = borrow.getType();
+            int type = borrow.getType();
             if (type != 0 && type != 4) { //判断是否是官标、官标不需要在这里登记标的
                 VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
                 voCreateThirdBorrowReq.setBorrowId(borrowId);
@@ -321,7 +325,7 @@ public class BorrowProvider {
                 if (!ObjectUtils.isEmpty(resp)) {
                     return resp;
                 }
-            }*/
+            }
         }
 
         //批量投标

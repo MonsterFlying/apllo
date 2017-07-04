@@ -54,13 +54,13 @@ public class PaymentBizImpl implements PaymentBiz {
      */
     @Override
     public ResponseEntity<VoViewCollectionOrderListWarpResp> orderList(VoCollectionOrderReq voCollectionOrderReq) {
-        VoViewCollectionOrderListWarpResp voViewCollectionOrderListWarpRespRes = new VoViewCollectionOrderListWarpResp();
+        VoViewCollectionOrderListWarpResp warpResp = new VoViewCollectionOrderListWarpResp();
         List<BorrowCollection> borrowCollections = borrowCollectionService.orderList(voCollectionOrderReq);
         if (Collections.isEmpty(borrowCollections)) {
             VoViewCollectionOrderListWarpResp error = VoBaseResp.ok("查询成功", VoViewCollectionOrderListWarpResp.class);
-            voViewCollectionOrderListWarpRespRes.setOrder(0);
-            voViewCollectionOrderListWarpRespRes.setSumCollectionMoneyYes("0");
-            voViewCollectionOrderListWarpRespRes.setOrderResList(new ArrayList<>());
+            error.setOrder(0);
+            error.setSumCollectionMoneyYes("0");
+            error.setOrderResList(new ArrayList<>());
             return ResponseEntity.ok(error);
         }
         try {
@@ -89,7 +89,7 @@ public class PaymentBizImpl implements PaymentBiz {
                     .filter(p -> p.getStatus() == BorrowCollectionContants.STATUS_YES)
                     .mapToInt(w -> w.getCollectionMoneyYes())
                     .sum();
-            voViewCollectionOrderListWarpRespRes.setSumCollectionMoneyYes(StringHelper.formatMon(sumCollectionMoneyYes / 100d));
+            warpResp.setSumCollectionMoneyYes(StringHelper.formatMon(sumCollectionMoneyYes / 100d));
 
             VoViewCollectionOrderListWarpResp warpRes = VoBaseResp.ok("查询成功", VoViewCollectionOrderListWarpResp.class);
             //总回款期数

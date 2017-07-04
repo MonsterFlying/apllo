@@ -8,6 +8,5 @@ import lombok.Data;
 @Data
 public class VoBatchRepayBailReq {
     private Long repaymentId;
-    private Integer lateInterest;
-    private Integer repayMoney;
+    private Double interestPercent;
 }
