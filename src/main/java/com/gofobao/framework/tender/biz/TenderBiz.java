@@ -25,7 +25,7 @@ public interface TenderBiz {
      * @param voCreateTenderReq
      * @return
      */
-    ResponseEntity<VoBaseResp> tender(VoCreateTenderReq voCreateTenderReq);
+    ResponseEntity<VoBaseResp> tender(VoCreateTenderReq voCreateTenderReq) throws Exception;
 
     /**
      * 投标用户
