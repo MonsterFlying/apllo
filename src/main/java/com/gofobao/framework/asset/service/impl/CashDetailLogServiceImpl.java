@@ -4,6 +4,7 @@ import com.gofobao.framework.asset.entity.CashDetailLog;
 import com.gofobao.framework.asset.repository.CashDetailLogRepository;
 import com.gofobao.framework.asset.service.CashDetailLogService;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,7 +25,8 @@ public class CashDetailLogServiceImpl implements CashDetailLogService {
 
     @Override
     public List<CashDetailLog> findByStateInAndUserId(ImmutableList<Integer> states, long userId) {
-        return cashDetailLogRepository.findByStateInAndUserId(states, userId) ;
+        Optional<List<CashDetailLog>> optional = Optional.ofNullable(cashDetailLogRepository.findByStateInAndUserId(states, userId)) ;
+        return optional.orElse(Collections.EMPTY_LIST) ;
     }
 
     @Override
