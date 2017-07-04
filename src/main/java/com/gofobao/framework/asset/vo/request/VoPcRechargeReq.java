@@ -1,5 +1,6 @@
 package com.gofobao.framework.asset.vo.request;
 
+import com.gofobao.framework.common.page.Page;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -7,7 +8,7 @@ import lombok.Data;
  * Created by admin on 2017/7/3.
  */
 @Data
-public class VoPcRechargeReq {
+public class VoPcRechargeReq extends Page{
 
     @ApiModelProperty(hidden = true)
     private Long userId;
