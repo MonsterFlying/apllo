@@ -62,13 +62,13 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService {
     @Override
     public ResponseEntity<VoViewRechargeWarpRes> pcLogs(VoPcRechargeReq rechargeReq) {
         try {
-            Date beginAt = DateHelper.beginOfDate(DateHelper.stringToDate(rechargeReq.getBeginAt(), DateHelper.DATE_FORMAT_YMDHMS));
-            Date endAt = DateHelper.endOfDate(DateHelper.stringToDate(rechargeReq.getBeginAt(), DateHelper.DATE_FORMAT_YMDHMS));
+            Date beginAt = DateHelper.beginOfDate(DateHelper.stringToDate(rechargeReq.getBeginAt(), DateHelper.DATE_FORMAT_YMD));
+            Date endAt = DateHelper.endOfDate(DateHelper.stringToDate(rechargeReq.getEndAt(), DateHelper.DATE_FORMAT_YMD));
 
             Specification specification = Specifications.<RechargeDetailLog>and()
                     .eq("userId", rechargeReq.getUserId())
                     .eq("state", rechargeReq.getState())
-                    .between("createAt", new Range<>(beginAt, endAt))
+                    .between("createTime", new Range<>(beginAt, endAt))
                     .build();
             Page<RechargeDetailLog> logPage = rechargeDetailLogRepository.findAll(specification,
                     new PageRequest(rechargeReq.getPageIndex(),
@@ -97,6 +97,7 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService {
             warpRes.setTotalCount(totalCount.intValue());
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR,
                             "查询失败",

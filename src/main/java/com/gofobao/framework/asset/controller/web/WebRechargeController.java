@@ -1,9 +1,7 @@
 package com.gofobao.framework.asset.controller.web;
 
 import com.gofobao.framework.asset.biz.RechargeLogsBiz;
-import com.gofobao.framework.asset.vo.request.VoPcCashLogs;
 import com.gofobao.framework.asset.vo.request.VoPcRechargeReq;
-import com.gofobao.framework.asset.vo.response.pc.VoCashLogWarpRes;
 import com.gofobao.framework.asset.vo.response.pc.VoViewRechargeWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
@@ -25,11 +23,11 @@ public class WebRechargeController {
     @Autowired
     private RechargeLogsBiz rechargeLogsBiz;
 
-    @ApiOperation("pc:提现日志")
-    @RequestMapping(value = "recharge/pc/v2/list",method = RequestMethod.POST)
-    public ResponseEntity<VoViewRechargeWarpRes> list(/*@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,*/
-                                                       VoPcRechargeReq rechargeReq) {
-        rechargeReq.setUserId(901L);
+    @ApiOperation("pc:充值日志")
+    @RequestMapping(value = "/pub/recharge/pc/v2/list",method = RequestMethod.POST)
+    public ResponseEntity<VoViewRechargeWarpRes> list(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                                      @ModelAttribute VoPcRechargeReq rechargeReq) {
+        rechargeReq.setUserId(userId);
         return rechargeLogsBiz.logs(rechargeReq);
     }
     
