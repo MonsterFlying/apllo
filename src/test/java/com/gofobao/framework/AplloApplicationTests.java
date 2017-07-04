@@ -84,7 +84,7 @@ public class AplloApplicationTests {
 
         Gson gson = new Gson();
         Map<String, String> map = new HashMap<>();
-        map.put("borrowId", "169759");
+        map.put("borrowId", "169761");
         System.out.println(gson.toJson(map));
         System.out.println(SecurityHelper.getSign(gson.toJson(map)));
     }
@@ -100,7 +100,7 @@ public class AplloApplicationTests {
     public void trusteePay() {
         TrusteePayQueryReq request = new TrusteePayQueryReq();
         request.setAccountId("6212462040000250045");
-        request.setProductId("A69757");
+        request.setProductId("GA69761");
         request.setChannel(ChannelContant.HTML);
         TrusteePayQueryResp response = jixinManager.send(JixinTxCodeEnum.TRUSTEE_PAY_QUERY, request, TrusteePayQueryResp.class);
         System.out.println(response);
@@ -141,7 +141,7 @@ public class AplloApplicationTests {
         //根据手机号查询存管账户
         //findAccountByMobile();
         //受托支付
-        //trusteePay();
+        trusteePay();
         //签约查询
         //creditAuthQuery();
         //取消批次
@@ -149,8 +149,8 @@ public class AplloApplicationTests {
         //查询投资人购买债权
         //creditInvestQuery();
 
-       /* Map<String,String> map = new HashMap<>();
-        map.put("borrowId","169759");
+        /*Map<String,String> map = new HashMap<>();
+        map.put("borrowId","169761");
         try {
             borrowProvider.doFirstVerify(map);
         } catch (Exception e) {
