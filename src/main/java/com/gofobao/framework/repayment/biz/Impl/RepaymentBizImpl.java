@@ -975,6 +975,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      * @throws Exception
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> advanceDeal(VoAdvanceCall voAdvanceReq) throws Exception {
 
         ResponseEntity resp = advanceCheck(voAdvanceReq.getRepaymentId());//垫付检查
