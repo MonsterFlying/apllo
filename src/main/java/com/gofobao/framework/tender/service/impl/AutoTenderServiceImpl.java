@@ -142,7 +142,8 @@ public class AutoTenderServiceImpl implements AutoTenderService {
         sql.append(" limit ").append(pageIndex * pageSize).append(",").append(pageSize);
         Query query = entityManager.createNativeQuery(sql.toString());
         query.unwrap(SQLQuery.class).setResultTransformer(Transformers.aliasToBean(VoFindAutoTender.class));
-        Optional<List> resultList = Optional.ofNullable(query.getResultList());
+        List<VoFindAutoTender> voFindAutoTenderLists = query.getResultList();
+        Optional<List> resultList = Optional.ofNullable(voFindAutoTenderLists);
         return resultList.orElse(Collections.EMPTY_LIST);
     }
 

@@ -1466,7 +1466,6 @@ public class BorrowBizImpl implements BorrowBiz {
      * 请求复审
      */
     public ResponseEntity<VoBaseResp> doAgainVerify(VoDoAgainVerifyReq voDoAgainVerifyReq) {
-
         String paramStr = voDoAgainVerifyReq.getParamStr();
         if (!SecurityHelper.checkSign(voDoAgainVerifyReq.getSign(), paramStr)) {
             log.error("BorrowBizImpl doAgainVerify error：签名校验不通过");
@@ -1478,7 +1477,7 @@ public class BorrowBizImpl implements BorrowBiz {
         try {
             flag = borrowProvider.doAgainVerify(paramMap);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("PC 复审异常", e );
         }
         return ResponseEntity.ok(VoBaseResp.ok(StringHelper.toString(flag)));
     }
