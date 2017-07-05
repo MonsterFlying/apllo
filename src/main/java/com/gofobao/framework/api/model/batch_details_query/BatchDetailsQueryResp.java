@@ -27,6 +27,10 @@ public class BatchDetailsQueryResp extends JixinBaseResponse {
     /**
      *
      */
+    private String batchTxCode;
+    /**
+     *
+     */
     private String pageNum;
     /**
      *
