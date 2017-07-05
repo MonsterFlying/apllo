@@ -3,22 +3,24 @@ package com.gofobao.framework.member.service.impl;
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.member.entity.BrokerBouns;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.BrokerBounsRepository;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.member.service.InviteFriendsService;
 import com.gofobao.framework.member.vo.request.VoFriendsReq;
+import com.gofobao.framework.member.vo.request.VoFriendsTenderReq;
 import com.gofobao.framework.member.vo.response.FriendsTenderInfo;
 import com.gofobao.framework.member.vo.response.InviteAwardStatistics;
 import com.gofobao.framework.member.vo.response.InviteFriends;
+import com.gofobao.framework.member.vo.response.pc.PcInviteFriends;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.repository.TenderRepository;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -60,14 +62,51 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
         bounsList.stream().forEach(p -> {
             InviteFriends friends = new InviteFriends();
             friends.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
-            friends.setMoney(NumberHelper.to2DigitString(p.getBounsAward() / 100));
+            friends.setMoney(StringHelper.formatMon(p.getBounsAward() / 100D));
             friends.setLeave(p.getLevel());
-            friends.setScale(NumberHelper.to2DigitString(p.getAwardApr() / 100));
+            friends.setScale(StringHelper.formatMon(p.getAwardApr() / 100D));
+            friends.setWaitPrincipalTotal(StringHelper.formatMon(p.getWaitPrincipalTotal() / 100D));
             friendsList.add(friends);
         });
         return Optional.ofNullable(friendsList).orElse(Collections.EMPTY_LIST);
     }
 
+    @Override
+    public Map<String, Object> pcBrokerBounsList(VoFriendsTenderReq friendsTenderReq) {
+        Map<String, Object> resultMaps = Maps.newHashMap();
+
+        Date beginAt = DateHelper.beginOfDate(DateHelper.stringToDate(friendsTenderReq.getBeginAt(),DateHelper.DATE_FORMAT_YMD));
+        Date endAt = DateHelper.endOfDate(DateHelper.stringToDate(friendsTenderReq.getEndAt(),DateHelper.DATE_FORMAT_YMD));
+        Specification specification = Specifications.<BrokerBouns>and()
+                .eq("userId", friendsTenderReq.getUserId())
+                .between("createdAt", new Range<>(beginAt, endAt))
+                .build();
+        Page<BrokerBouns> bounsPage = brokerBounsRepository.findAll(specification,
+                new PageRequest(friendsTenderReq.getPageIndex(),
+                        friendsTenderReq.getPageSize(),
+                        new Sort("userId")));
+
+        Long totalCount = bounsPage.getTotalElements();
+        List<BrokerBouns> bounsList = bounsPage.getContent();
+
+        resultMaps.put("totalCount", totalCount);
+        if(CollectionUtils.isEmpty(bounsList)){
+            resultMaps.put("bounsList",new ArrayList<>(0));
+            return resultMaps;
+        }
+        List<InviteFriends> brokerBouns= Lists.newArrayList();
+        bounsList.stream().forEach(p->{
+            InviteFriends friends=new InviteFriends();
+            friends.setScale(StringHelper.formatMon(p.getAwardApr()/100D));
+            friends.setWaitPrincipalTotal(StringHelper.formatMon(p.getWaitPrincipalTotal()/100D));
+            friends.setLeave(p.getLevel());
+            friends.setMoney(StringHelper.formatMon(p.getBounsAward()/100D));
+            friends.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
+            brokerBouns.add(friends);
+        });
+        resultMaps.put("bounsList",brokerBouns);
+        return resultMaps;
+    }
 
     @Override
     public InviteAwardStatistics query(Long userId) {
@@ -87,10 +126,10 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
                         p.getCreatedAt().getTime() <= yesterdayEnd && p.getCreatedAt().getTime() >= yesterdayBegin)
                 .collect(Collectors.toList());
 
-        Users users=new Users();
+        Users users = new Users();
         users.setParentId(userId.intValue());
         Example<Users> example = Example.of(users);
-        Long count=usersRepository.count(example);
+        Long count = usersRepository.count(example);
 
         InviteAwardStatistics inviteAwardStatistics = new InviteAwardStatistics();
 
@@ -134,19 +173,77 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
         Map<Long, Tender> tenderMap = tenderList.stream()
                 .collect(Collectors.toMap(Tender::getUserId, a -> a));
 
-        List<FriendsTenderInfo> tenderInfoList=new ArrayList<>();
-        usersList.stream().forEach(p->{
-            FriendsTenderInfo info=new FriendsTenderInfo();
-            info.setUserName(StringUtils.isEmpty(p.getPhone())?p.getUsername():p.getPhone());
+        List<FriendsTenderInfo> tenderInfoList = new ArrayList<>();
+        usersList.stream().forEach(p -> {
+            FriendsTenderInfo info = new FriendsTenderInfo();
+            info.setUserName(StringUtils.isEmpty(p.getPhone()) ? p.getUsername() : p.getPhone());
             info.setRegisterTime(DateHelper.dateToString(p.getCreatedAt()));
-            Tender tender=tenderMap.get(p.getId());
-            if(ObjectUtils.isEmpty(tender)){
+            Tender tender = tenderMap.get(p.getId());
+            if (ObjectUtils.isEmpty(tender)) {
                 info.setFirstTenderTime("---");
-            }else{
+            } else {
                 info.setFirstTenderTime(DateHelper.dateToString(tender.getCreatedAt()));
             }
             tenderInfoList.add(info);
         });
         return Optional.ofNullable(tenderInfoList).orElse(Collections.EMPTY_LIST);
     }
+
+    /**
+     * PC:邀请用户投标记录
+     * @param voFriendsReq
+     * @return
+     */
+    @Override
+    public Map<String, Object> pcInviteUserFirstTender(VoFriendsReq voFriendsReq) {
+
+        Map<String, Object> resultMaps = Maps.newHashMap();
+
+        Specification specification = null;
+        if (voFriendsReq.getType() == 0) {
+            specification = Specifications.<Users>and()
+                    .eq("parentId", voFriendsReq.getUserId())
+                    .build();
+        } else if (voFriendsReq.getType() == 1) {
+            specification = Specifications.<Users>and()
+                    .eq("parentId", voFriendsReq.getUserId())
+                    .between("createdAt", new Range<>( DateHelper.subDays(new Date(),365),new Date()))
+                    .build();
+        }
+        Page<Users> usersPage = usersRepository.findAll(specification,
+                new PageRequest(voFriendsReq.getPageIndex()*voFriendsReq.getPageSize(),
+                        voFriendsReq.getPageSize(),
+                        new Sort("id")));
+        Long totalCount = usersPage.getTotalElements();
+
+        List<Users> usersList = usersPage.getContent();
+        resultMaps.put("totalCount", totalCount.intValue());
+
+        if (CollectionUtils.isEmpty(usersList)) {
+
+            resultMaps.put("userList", new ArrayList<>(0));
+            return resultMaps;
+        }
+        Set<Long> userArray = usersList.stream()
+                .map(p -> p.getId())
+                .collect(Collectors.toSet());
+
+        List<Tender> tenderList = tenderRepository.findUserFirstTender(new ArrayList(userArray));
+
+        Map<Long, Tender> tenderMap = tenderList.stream()
+                .collect(Collectors.toMap(Tender::getUserId, a -> a));
+        List<PcInviteFriends> tenderInfoList = new ArrayList<>();
+        usersList.stream().forEach(p -> {
+            PcInviteFriends info = new PcInviteFriends();
+            info.setUserName(StringUtils.isEmpty(p.getPhone()) ? p.getUsername() : p.getPhone());
+            info.setCreateAt(DateHelper.dateToString(p.getCreatedAt()));
+            Tender tender = tenderMap.get(p.getId());
+            info.setTender(ObjectUtils.isEmpty(tender) ? false : true);
+            info.setRealName(StringUtils.isEmpty(p.getCardId()) ? false : true);
+            tenderInfoList.add(info);
+        });
+        resultMaps.put("userList", tenderInfoList);
+        return resultMaps;
+    }
+
 }

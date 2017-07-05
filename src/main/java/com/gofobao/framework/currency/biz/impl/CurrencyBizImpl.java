@@ -1,5 +1,6 @@
 package com.gofobao.framework.currency.biz.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.DesLineFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
@@ -13,6 +14,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.currency.biz.CurrencyBiz;
 import com.gofobao.framework.currency.entity.Currency;
 import com.gofobao.framework.currency.entity.CurrencyLog;
+import com.gofobao.framework.currency.repository.CurrencyLogRepository;
 import com.gofobao.framework.currency.service.CurrencyLogService;
 import com.gofobao.framework.currency.service.CurrencyService;
 import com.gofobao.framework.currency.vo.request.VoConvertCurrencyReq;
@@ -28,9 +30,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,6 +67,9 @@ public class CurrencyBizImpl implements CurrencyBiz {
     @Autowired
     private JixinManager jixinManager;
 
+    @Autowired
+    private CurrencyLogRepository currencyLogRepository;
+
     @Value(value = "${jixin.redPacketAccountId}")
     private String redPacketAccountId; //存管红包账户
 
@@ -87,9 +94,16 @@ public class CurrencyBizImpl implements CurrencyBiz {
 
         //分页和排序
         Sort sort = new Sort(new Sort.Order(Sort.Direction.DESC, "id"));
+
         Pageable pageable = new PageRequest(pageIndex, pageSize, sort);
 
-        List<CurrencyLog> currencyLogs = currencyLogService.findListByUserId(userId, pageable);
+        Specification specification= Specifications.<Currency>and()
+                .eq("userId",userId)
+                .build();
+        Page<CurrencyLog> logPage=currencyLogRepository.findAll(specification,pageable);
+
+        List<CurrencyLog> currencyLogs =  logPage.getContent();
+
         if (CollectionUtils.isEmpty(currencyLogs)) {
             return ResponseEntity.
                     badRequest().
@@ -112,7 +126,8 @@ public class CurrencyBizImpl implements CurrencyBiz {
             voCurrency.setTypeName(findCurrencyMap(currencyLog.getType()));
             currencyList.add(voCurrency);
         }));
-
+        Long totalCount=logPage.getTotalElements();
+        voListCurrencyResp.setTotalCount(totalCount.intValue());
         voListCurrencyResp.setVoCurrencyList(currencyList);
         return ResponseEntity.ok(voListCurrencyResp);
     }

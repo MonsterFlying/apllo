@@ -43,4 +43,6 @@ public interface AutoTenderService {
      * @return
      */
     int getOrderNum();
+
+
 }

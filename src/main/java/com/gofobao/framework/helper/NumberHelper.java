@@ -99,6 +99,10 @@ public class NumberHelper {
         return NumberUtils.toLong(str, 0L);
     }
 
+    public static long toLong(Object str) {
+        return NumberUtils.toLong(StringHelper.toString(str), 0L);
+    }
+
     /**
      * 将10进制的String安全的转化为long，当str为空或非数字字符串时，返回default值
      */

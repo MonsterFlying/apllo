@@ -206,6 +206,11 @@ public class AssetBizImpl implements AssetBiz {
         try {
             VoViewAssetLogsWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewAssetLogsWarpRes.class);
             List<AssetLogs> resList = assetLogService.pcAssetLogs(voAssetLogReq);
+            warpRes.setTotalCount(0);
+            if(!CollectionUtils.isEmpty(resList)){
+                warpRes.setTotalCount(resList.get(0).getTotalCount());
+                resList.get(0).setTotalCount(null);
+            }
             warpRes.setAssetLogs(resList);
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {

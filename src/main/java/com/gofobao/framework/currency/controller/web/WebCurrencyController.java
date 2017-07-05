@@ -27,7 +27,8 @@ public class WebCurrencyController {
 
     @ApiOperation("pc:获取用户广富币列表")
     @PostMapping("pc/currency/list")
-    public ResponseEntity<VoBaseResp> pcList(@Valid @ModelAttribute VoListCurrencyReq voListCurrencyReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+    public ResponseEntity<VoBaseResp> pcList(@Valid @ModelAttribute VoListCurrencyReq voListCurrencyReq,
+                                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         voListCurrencyReq.setUserId(userId);
         return currencyBiz.list(voListCurrencyReq);
     }
@@ -39,7 +40,8 @@ public class WebCurrencyController {
      */
     @ApiOperation("pc:兑换广富币")
     @PostMapping("pc/currency/convert")
-    public ResponseEntity<VoBaseResp> pcConvert(@Valid @ModelAttribute VoConvertCurrencyReq voConvertCurrencyReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+    public ResponseEntity<VoBaseResp> pcConvert(@Valid @ModelAttribute VoConvertCurrencyReq voConvertCurrencyReq,
+                                                @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         voConvertCurrencyReq.setUserId(userId);
         try {
             return currencyBiz.convert(voConvertCurrencyReq);

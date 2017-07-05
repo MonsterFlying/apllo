@@ -1,14 +1,9 @@
 package com.gofobao.framework.scheduler;
 
-import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.biz.CashDetailLogBiz;
-import com.gofobao.framework.borrow.biz.BorrowBiz;
-import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.scheduler.biz.TaskSchedulerBiz;
 import com.gofobao.framework.scheduler.constants.TaskSchedulerConstants;
 import com.gofobao.framework.scheduler.entity.TaskScheduler;
-import com.google.common.base.Preconditions;
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -16,7 +11,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 提现调度

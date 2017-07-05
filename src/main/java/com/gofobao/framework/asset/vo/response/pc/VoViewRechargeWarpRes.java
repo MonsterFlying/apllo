@@ -15,5 +15,5 @@ public class VoViewRechargeWarpRes extends VoBaseResp{
     private List<RechargeLogs> logs= Lists.newArrayList();
 
     @ApiModelProperty("总记录数")
-    private Integer totalCount;
+    private Integer totalCount=0;
 }

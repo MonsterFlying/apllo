@@ -19,6 +19,7 @@ import com.gofobao.framework.tender.vo.request.ReturnedMoney;
 import com.gofobao.framework.tender.vo.request.VoDetailReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;
 import com.gofobao.framework.tender.vo.response.*;
+import com.google.common.collect.Maps;
 import groovy.util.logging.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -59,12 +60,12 @@ public class InvestServiceImpl implements InvestService {
      * @return
      */
     @Override
-    public List<VoViewBackMoney> backMoneyList(VoInvestListReq voInvestListReq) {
-
-
-        List<Tender> tenderList = commonQuery(voInvestListReq);
+    public Map<String, Object> backMoneyList(VoInvestListReq voInvestListReq) {
+        Map<String,Object>resultMaps=commonQuery(voInvestListReq);
+        List<Tender> tenderList =(List<Tender>) resultMaps.get("tenderList");
         if (CollectionUtils.isEmpty(tenderList)) {
-            return Collections.EMPTY_LIST;
+            resultMaps.put("backMoneyList",new ArrayList<>(0));
+            return resultMaps;
         }
         //投标id 集合
         List<Long> tenderIdArray = tenderList.stream()
@@ -107,7 +108,8 @@ public class InvestServiceImpl implements InvestService {
             voViewBackMoney.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
             backMoneyList.add(voViewBackMoney);
         });
-        return Optional.ofNullable(backMoneyList).orElse(Collections.EMPTY_LIST);
+        resultMaps.put("backMoneyList",backMoneyList);
+        return resultMaps;
     }
 
     /**
@@ -117,11 +119,12 @@ public class InvestServiceImpl implements InvestService {
      * @return
      */
     @Override
-    public List<VoViewBiddingRes> biddingList(VoInvestListReq voInvestListReq) {
-
-        List<Tender> tenderList = commonQuery(voInvestListReq);
+    public Map<String, Object> biddingList(VoInvestListReq voInvestListReq) {
+        Map<String,Object>resultMaps=commonQuery(voInvestListReq);
+        List<Tender> tenderList =(List<Tender>) resultMaps.get("tenderList");
         if (CollectionUtils.isEmpty(tenderList)) {
-            return Collections.EMPTY_LIST;
+            resultMaps.put("biddingResList",new ArrayList<>(0));
+            return resultMaps;
         }
 
         //标ID集合
@@ -161,7 +164,8 @@ public class InvestServiceImpl implements InvestService {
             voViewBiddingRes.setTenderId(p.getId());
             viewBiddingResList.add(voViewBiddingRes);
         });
-        return Optional.ofNullable(viewBiddingResList).orElse(Collections.EMPTY_LIST);
+        resultMaps.put("biddingResList",viewBiddingResList);
+        return resultMaps;
     }
 
     /**
@@ -171,11 +175,13 @@ public class InvestServiceImpl implements InvestService {
      * @return
      */
     @Override
-    public List<VoViewSettleRes> settleList(VoInvestListReq voInvestListReq) {
+    public Map<String, Object> settleList(VoInvestListReq voInvestListReq) {
+        Map<String,Object>resultMaps=commonQuery(voInvestListReq);
+        List<Tender> tenderList =(List<Tender>) resultMaps.get("tenderList");
 
-        List<Tender> tenderList = commonQuery(voInvestListReq);
         if (CollectionUtils.isEmpty(tenderList)) {
-            return Collections.EMPTY_LIST;
+            resultMaps.put("settleResList",new ArrayList<>(0));
+            return resultMaps;
         }
         Set<Long> borrowIds = tenderList.stream()
                 .map(p -> p.getBorrowId())
@@ -212,7 +218,8 @@ public class InvestServiceImpl implements InvestService {
             voViewSettleRes.setTenderId(p.getId());
             voViewSettleResList.add(voViewSettleRes);
         });
-        return Optional.ofNullable(voViewSettleResList).orElse(Collections.EMPTY_LIST);
+        resultMaps.put("settleResList",voViewSettleResList);
+        return resultMaps;
     }
 
     /**
@@ -221,7 +228,7 @@ public class InvestServiceImpl implements InvestService {
      * @param voInvestListReq
      * @return
      */
-    private List<Tender> commonQuery(VoInvestListReq voInvestListReq) {
+    private Map<String,Object> commonQuery(VoInvestListReq voInvestListReq) {
         Specification<Tender> specification = Specifications.<Tender>and()
                 .eq("userId", voInvestListReq.getUserId())
                 .eq("state", voInvestListReq.getType())
@@ -233,7 +240,12 @@ public class InvestServiceImpl implements InvestService {
                         voInvestListReq.getPageSize(),
                         Sort.Direction.DESC, "createdAt"));
         List<Tender> tenderList = tenders.getContent();
-        return Optional.ofNullable(tenderList).orElse(Collections.EMPTY_LIST);
+        Long totalCount=tenders.getTotalElements();
+        Map<String,Object>resultMaps= Maps.newHashMap();
+        resultMaps.put("totalCount",totalCount);
+        resultMaps.put("tenderList",tenderList);
+
+        return resultMaps;
     }
 
     /**

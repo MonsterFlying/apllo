@@ -11,6 +11,7 @@ import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
@@ -19,10 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created by admin on 2017/5/22.
@@ -43,7 +41,9 @@ public class AssetLogServiceImpl implements AssetLogService {
      */
     @Override
     public List<VoViewAssetLogRes> assetLogList(VoAssetLogReq voAssetLogReq) {
-        List<AssetLog> assetLogs = commonQuery(voAssetLogReq);
+
+        Map<String, Object> resultMaps = commonQuery(voAssetLogReq);
+        List<AssetLog> assetLogs = (List<AssetLog>) resultMaps.get("assetLogs");
         if (CollectionUtils.isEmpty(assetLogs)) {
             return Collections.EMPTY_LIST;
         }
@@ -61,10 +61,13 @@ public class AssetLogServiceImpl implements AssetLogService {
 
     @Override
     public List<AssetLogs> pcAssetLogs(VoAssetLogReq voAssetLogReq) {
-        List<AssetLog> assetLogs = commonQuery(voAssetLogReq);
+        Map<String, Object> resultMaps = commonQuery(voAssetLogReq);
+        List<AssetLog> assetLogs = (List<AssetLog>) resultMaps.get("assetLogs");
+        Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
         if (CollectionUtils.isEmpty(assetLogs)) {
             return Collections.EMPTY_LIST;
         }
+        final int[] num = {0};
         List<AssetLogs> logs = Lists.newArrayList();
         assetLogs.stream().forEach(p -> {
             AssetLogs assetLog = new AssetLogs();
@@ -73,20 +76,24 @@ public class AssetLogServiceImpl implements AssetLogService {
             assetLog.setTime(DateHelper.dateToString(p.getCreatedAt()));
             assetLog.setTypeName(p.getType());
             assetLog.setUsableMoney(StringHelper.formatMon(p.getUseMoney() / 100D));
+            if (num[0] == 0) {
+                assetLog.setTotalCount(totalCount);
+                num[0] = 1;
+            }
             logs.add(assetLog);
         });
         return logs;
     }
 
 
-    private List<AssetLog> commonQuery(VoAssetLogReq voAssetLogReq) {
+    private Map<String, Object> commonQuery(VoAssetLogReq voAssetLogReq) {
         Sort sort = new Sort(
                 new Sort.Order(Sort.Direction.DESC, "createdAt"));
         Pageable pageable = new PageRequest(voAssetLogReq.getPageIndex()
                 , voAssetLogReq.getPageSize()
                 , sort);
-        Date startTime = DateHelper.stringToDate(voAssetLogReq.getStartTime(), DateHelper.DATE_FORMAT_YMD);
-        Date endTime = DateHelper.stringToDate(voAssetLogReq.getEndTime(), DateHelper.DATE_FORMAT_YMD);
+        Date startTime = DateHelper.beginOfDate(DateHelper.stringToDate(voAssetLogReq.getStartTime(), DateHelper.DATE_FORMAT_YMD));
+        Date endTime = DateHelper.endOfDate(DateHelper.stringToDate(voAssetLogReq.getEndTime(), DateHelper.DATE_FORMAT_YMD));
 
         Specification<AssetLog> specification = Specifications.<AssetLog>and()
                 .eq(!StringUtils.isEmpty(voAssetLogReq.getType()), "type", voAssetLogReq.getType())
@@ -97,7 +104,15 @@ public class AssetLogServiceImpl implements AssetLogService {
                 .eq("userId", voAssetLogReq.getUserId())
                 .build();
         Page<AssetLog> assetLogPage = assetLogRepository.findAll(specification, pageable);
-        return assetLogPage.getContent();
+
+        Map<String, Object> resultMaps = Maps.newHashMap();
+
+        List<AssetLog> assetLogs = assetLogPage.getContent();
+
+        resultMaps.put("totalCount", assetLogPage.getTotalElements());
+        resultMaps.put("assetLogs", assetLogs);
+
+        return resultMaps;
     }
 
     @Override

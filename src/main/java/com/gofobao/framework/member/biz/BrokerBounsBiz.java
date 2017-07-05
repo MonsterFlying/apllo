@@ -1,9 +1,12 @@
 package com.gofobao.framework.member.biz;
 
 import com.gofobao.framework.member.vo.request.VoFriendsReq;
+import com.gofobao.framework.member.vo.request.VoFriendsTenderReq;
 import com.gofobao.framework.member.vo.response.VoViewFriendsTenderInfoWarpRes;
 import com.gofobao.framework.member.vo.response.VoViewInviteAwardStatisticsWarpRes;
 import com.gofobao.framework.member.vo.response.VoViewInviteFriendersWarpRes;
+import com.gofobao.framework.member.vo.response.pc.VoViewBrokerBounsWarpRes;
+import com.gofobao.framework.member.vo.response.pc.VoViewInviteFriendsWarpRes;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Map;
@@ -14,6 +17,21 @@ import java.util.Map;
 public interface BrokerBounsBiz  {
 
     ResponseEntity<VoViewInviteFriendersWarpRes> list(VoFriendsReq voFriendsReq);
+
+    /**
+     * pc 邀请好友投资记录
+     * @param voFriendsReq
+     * @return
+     */
+    ResponseEntity<VoViewInviteFriendsWarpRes> pcFriendsTender(VoFriendsReq voFriendsReq);
+
+
+    /**
+     * 邀请好友奖励记录
+     * @param voFriendsTenderReq
+     * @return
+     */
+    ResponseEntity<VoViewBrokerBounsWarpRes> pcBrokerBounsList(VoFriendsTenderReq voFriendsTenderReq);
 
 
     ResponseEntity<VoViewInviteAwardStatisticsWarpRes> statistic(Long userId);
