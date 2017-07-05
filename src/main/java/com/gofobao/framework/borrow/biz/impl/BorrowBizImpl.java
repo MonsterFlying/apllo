@@ -1502,6 +1502,21 @@ public class BorrowBizImpl implements BorrowBiz {
         Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         Long borrowId = NumberHelper.toLong(paramMap.get("borrowId"));
         Borrow borrow = borrowService.findById(borrowId);
+
+        Long userId = borrow.getUserId();
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if(ObjectUtils.isEmpty(userThirdAccount)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款人未开通存管账户!", VoHtmlResp.class));
+        }
+
+        if(!userThirdAccount.getPasswordState().equals(1)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款人还未初始化银行交易密码!", VoHtmlResp.class));
+        }
+
         Preconditions.checkNotNull(borrow, "借款不存在!");
         if (borrow.getStatus() != 0) {
             return ResponseEntity

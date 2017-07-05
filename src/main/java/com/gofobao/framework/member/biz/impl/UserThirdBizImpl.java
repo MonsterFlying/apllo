@@ -20,6 +20,7 @@ import com.gofobao.framework.api.model.password_set.PasswordSetResponse;
 import com.gofobao.framework.asset.entity.BankAccount;
 import com.gofobao.framework.asset.service.BankAccountService;
 import com.gofobao.framework.award.contants.RedPacketContants;
+import com.gofobao.framework.borrow.vo.request.VoAdminModifyPasswordResp;
 import com.gofobao.framework.borrow.vo.request.VoAdminOpenAccountResp;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
@@ -341,32 +342,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
         String html = null;
         // 判断用户是密码初始化还是
-        Integer passwordState = userThirdAccount.getPasswordState();
-        if (passwordState.equals(0)) { // 初始化密码
-            PasswordSetRequest passwordSetRequest = new PasswordSetRequest();
-            passwordSetRequest.setMobile(userThirdAccount.getMobile());
-            passwordSetRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
-            passwordSetRequest.setName(userThirdAccount.getName());
-            passwordSetRequest.setAccountId(userThirdAccount.getAccountId());
-            passwordSetRequest.setIdType(IdTypeContant.ID_CARD);
-            passwordSetRequest.setIdNo(userThirdAccount.getIdNo());
-            passwordSetRequest.setAcqRes(String.valueOf(userId));
-            passwordSetRequest.setRetUrl(String.format("%s%s/%s", javaDomain, "/pub/password/show", userId));
-            passwordSetRequest.setNotifyUrl(String.format("%s%s", javaDomain, "/pub/user/third/modifyOpenAccPwd/callback/1"));
-            html = jixinManager.getHtml(JixinTxCodeEnum.PASSWORD_SET, passwordSetRequest);
-        } else { // 重置密码
-            PasswordResetRequest passwordResetRequest = new PasswordResetRequest();
-            passwordResetRequest.setMobile(userThirdAccount.getMobile());
-            passwordResetRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
-            passwordResetRequest.setName(userThirdAccount.getName());
-            passwordResetRequest.setAccountId(userThirdAccount.getAccountId());
-            passwordResetRequest.setIdType(IdTypeContant.ID_CARD);
-            passwordResetRequest.setIdNo(userThirdAccount.getIdNo());
-            passwordResetRequest.setAcqRes(String.valueOf(userId));
-            passwordResetRequest.setRetUrl(String.format("%s%s/%s", javaDomain, "/pub/password/show", userId));
-            passwordResetRequest.setNotifyUrl(String.format("%s%s", javaDomain, "/pub/user/third/modifyOpenAccPwd/callback/2"));
-            html = jixinManager.getHtml(JixinTxCodeEnum.PASSWORD_RESET, passwordResetRequest);
-        }
+        html = generateModifyPasswordHtml(httpServletRequest, userId, userThirdAccount);
 
         if (StringUtils.isEmpty(html)) {
             return ResponseEntity
@@ -1039,8 +1015,10 @@ public class UserThirdBizImpl implements UserThirdBiz {
             throw new RuntimeException("adminPasswordInit. 非法请求");
         }
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+
+        // 提示用户开户不成功
         if (ObjectUtils.isEmpty(userThirdAccount)) {
-            throw new RuntimeException("初始化银行存管密码");
+            return ResponseEntity.ok("开户失败!") ;
         }
         PasswordSetRequest passwordSetRequest = new PasswordSetRequest();
         passwordSetRequest.setMobile(userThirdAccount.getMobile());
@@ -1054,5 +1032,86 @@ public class UserThirdBizImpl implements UserThirdBiz {
         passwordSetRequest.setNotifyUrl(String.format("%s%s", javaDomain, "/pub/user/third/modifyOpenAccPwd/callback/1"));
         String html = jixinManager.getHtml(JixinTxCodeEnum.PASSWORD_SET, passwordSetRequest);
         return ResponseEntity.ok(html);
+    }
+
+    @Override
+    public ResponseEntity<VoHtmlResp> adminModifyOpenAccPwd(HttpServletRequest httpServletRequest, VoAdminModifyPasswordResp voAdminModifyPasswordResp) {
+        if (!SecurityHelper.checkSign(voAdminModifyPasswordResp.getSign(), voAdminModifyPasswordResp.getParamStr())) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "开户请求参数非法", VoHtmlResp.class));
+        }
+
+        // 开户主体信息, phone: 开户手机. name: 用户名称, userId: 用户ID, idNo:身份证号, cardNo: 银行卡号;
+        Map<String, String> passwordMap = new Gson().fromJson(voAdminModifyPasswordResp.getParamStr(), TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        Long userId = Long.parseLong(passwordMap.get("userId"));
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前账户还未实名", VoHtmlResp.class));
+        }
+
+        String html = null;
+        html = generateModifyPasswordHtml(httpServletRequest, userId, userThirdAccount);
+
+
+        if (StringUtils.isEmpty(html)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了， 请稍候重试", VoHtmlResp.class));
+        }
+
+
+        VoHtmlResp voHtmlResp = VoBaseResp.ok("成功", VoHtmlResp.class);
+        try {
+            voHtmlResp.setHtml(Base64Utils.encodeToString(html.getBytes("UTF-8")));
+        } catch (UnsupportedEncodingException e) {
+            log.error("UserThirdBizImpl modifyOpenAccPwd gethtml exceptio", e);
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了， 请稍候重试", VoHtmlResp.class));
+        }
+
+        return ResponseEntity.ok(voHtmlResp);
+    }
+
+    /**
+     *  生成修改密码html
+     * @param httpServletRequest
+     * @param userId
+     * @param userThirdAccount
+     * @return
+     */
+    private String generateModifyPasswordHtml(HttpServletRequest httpServletRequest, Long userId, UserThirdAccount userThirdAccount) {
+        String html;// 判断用户是密码初始化还是
+        Integer passwordState = userThirdAccount.getPasswordState();
+        if (passwordState.equals(0)) { // 初始化密码
+            PasswordSetRequest passwordSetRequest = new PasswordSetRequest();
+            passwordSetRequest.setMobile(userThirdAccount.getMobile());
+            passwordSetRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
+            passwordSetRequest.setName(userThirdAccount.getName());
+            passwordSetRequest.setAccountId(userThirdAccount.getAccountId());
+            passwordSetRequest.setIdType(IdTypeContant.ID_CARD);
+            passwordSetRequest.setIdNo(userThirdAccount.getIdNo());
+            passwordSetRequest.setAcqRes(String.valueOf(userId));
+            passwordSetRequest.setRetUrl(String.format("%s%s/%s", javaDomain, "/pub/password/show", userId));
+            passwordSetRequest.setNotifyUrl(String.format("%s%s", javaDomain, "/pub/user/third/modifyOpenAccPwd/callback/1"));
+            html = jixinManager.getHtml(JixinTxCodeEnum.PASSWORD_SET, passwordSetRequest);
+        } else { // 重置密码
+            PasswordResetRequest passwordResetRequest = new PasswordResetRequest();
+            passwordResetRequest.setMobile(userThirdAccount.getMobile());
+            passwordResetRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
+            passwordResetRequest.setName(userThirdAccount.getName());
+            passwordResetRequest.setAccountId(userThirdAccount.getAccountId());
+            passwordResetRequest.setIdType(IdTypeContant.ID_CARD);
+            passwordResetRequest.setIdNo(userThirdAccount.getIdNo());
+            passwordResetRequest.setAcqRes(String.valueOf(userId));
+            passwordResetRequest.setRetUrl(String.format("%s%s/%s", javaDomain, "/pub/password/show", userId));
+            passwordResetRequest.setNotifyUrl(String.format("%s%s", javaDomain, "/pub/user/third/modifyOpenAccPwd/callback/2"));
+            html = jixinManager.getHtml(JixinTxCodeEnum.PASSWORD_RESET, passwordResetRequest);
+        }
+        return html;
     }
 }

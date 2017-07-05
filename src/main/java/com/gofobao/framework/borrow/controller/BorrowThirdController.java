@@ -5,6 +5,8 @@ import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.method.P;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,7 +40,7 @@ public class BorrowThirdController {
      *
      * @return
      */
-    @RequestMapping("/v2/third/repayall/run")
+    @PostMapping("/v2/third/repayall/run")
     public ResponseEntity<String> thirdBatchRepayAllRunCall(HttpServletRequest request, HttpServletResponse response) {
         return borrowThirdBiz.thirdBatchRepayAllRunCall(request, response);
     }
@@ -49,7 +51,7 @@ public class BorrowThirdController {
      * @param response
      * @return
      */
-    @RequestMapping("/v2/third/trusteepay/run")
+    @PostMapping("/v2/third/trusteepay/run")
     public ResponseEntity<String> thirdTrusteePayCall(HttpServletRequest request, HttpServletResponse response) {
         return borrowThirdBiz.thirdTrusteePayCall(request, response);
     }

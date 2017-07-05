@@ -1,5 +1,6 @@
 package com.gofobao.framework.member.biz;
 
+import com.gofobao.framework.borrow.vo.request.VoAdminModifyPasswordResp;
 import com.gofobao.framework.borrow.vo.request.VoAdminOpenAccountResp;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
@@ -187,4 +188,14 @@ public interface UserThirdBiz {
      * @return
      */
     ResponseEntity<String> adminPasswordInit(HttpServletRequest httpServletRequest, String encode, String channel);
+
+    /**
+     * 后台修改密码
+     *
+     * @param httpServletRequest
+     * @param voAdminModifyPasswordResp
+     * @return
+     */
+    ResponseEntity<VoHtmlResp> adminModifyOpenAccPwd(HttpServletRequest httpServletRequest, VoAdminModifyPasswordResp voAdminModifyPasswordResp);
+
 }

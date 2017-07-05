@@ -1,6 +1,5 @@
 package com.gofobao.framework;
 
-import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
@@ -8,25 +7,28 @@ import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMob
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileResponse;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
-import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
-import com.gofobao.framework.asset.entity.Asset;
-import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
+import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.JixinHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -40,8 +42,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RunWith(SpringRunner.class)
@@ -72,16 +74,19 @@ public class AplloApplicationTests {
     private EntityManager entityManager;
     @Autowired
     private BorrowCollectionService borrowCollectionService;
-    @Autowired
-    private AssetService assetService;
 
     @Test
     public void contextLoads() {
-        Borrow borrow = borrowService.findById(169740L);
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_AUTO_TENDER);
+        mqConfig.setTag(MqTagEnum.AUTO_TENDER);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString("169782"), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
         try {
-            borrowBiz.notTransferedBorrowAgainVerify(borrow);
+            mqHelper.convertAndSend(mqConfig);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("borrowProvider autoTender send mq exception", e);
         }
     }
 
@@ -202,13 +207,6 @@ public class AplloApplicationTests {
         } catch (Exception e) {
             e.printStackTrace();
         }*/
-
-        BatchDetailsQueryReq request = new BatchDetailsQueryReq();
-        request.setBatchNo("");
-        request.setBatchTxDate("");
-        request.setPageSize("10");
-        request.setPageNum("0");
-        request.setType("0");
 
 
         /*BidApplyQueryReq request = new BidApplyQueryReq();
