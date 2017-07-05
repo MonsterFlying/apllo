@@ -6,6 +6,8 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
+import com.gofobao.framework.member.entity.BrokerBouns;
+import com.gofobao.framework.member.service.BrokerBounsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -28,6 +30,8 @@ public class UserBonusScheduler {
     private JdbcTemplate jdbcTemplate;
     @Autowired
     private CapitalChangeHelper capitalChangeHelper;
+    @Autowired
+    private BrokerBounsService brokerBounsService;
 
     /**
      * 理财师提成
@@ -70,24 +74,20 @@ public class UserBonusScheduler {
                     }
 
                     entity = new CapitalChangeEntity();
-                    entity.setUserId(NumberHelper.toInt(map.get("userId")));
-                    entity.setMoney((int)bounsAward);
+                    entity.setUserId(NumberHelper.toInt(map.get("user_id")));
+                    entity.setMoney((int) bounsAward);
                     entity.setType(CapitalChangeEnum.Bonus);
                     entity.setRemark("提成");
                     capitalChangeHelper.capitalChange(entity);
 
-                    /**
-                     * @// TODO: 2017/7/4
-                     */
-                    /*
-                    BrokerBouns::create([
-                    'user_id' => $broker->user_id,
-                    'level' => $level,
-                    'award_apr' => $awardApr * 100,
-                    'wait_principal_total' => $broker->wait_principal_total * .01,
-                    'bouns_award' => $bounsAward
-                ]);
-                     */
+
+                    BrokerBouns brokerBouns = new BrokerBouns();
+                    brokerBouns.setUserId((long) NumberHelper.toInt(map.get("user_id")));
+                    brokerBouns.setLevel(level);
+                    brokerBouns.setAwardApr((int) MathHelper.myRound(awardApr * 100, 0));
+                    brokerBouns.setWaitPrincipalTotal(NumberHelper.toLong(map.get("wait_principal_total")));
+                    brokerBouns.setBounsAward((int) MathHelper.myRound(bounsAward, 0));
+                    brokerBounsService.save(brokerBouns);
                 }
             } while (resultList.size() >= 50);
         } catch (Exception e) {
@@ -134,7 +134,7 @@ public class UserBonusScheduler {
     public void monthProcess() {
         try {
             StringBuffer sql = new StringBuffer("select sum(gfb_asset.collection) - sum(gfb_asset.payment) as sum, " +
-                    "`gfb_ticheng_user`.`user_id` from `gfb_ticheng_user` inner join `gfb_users` on `gfb_ticheng_user`.`user_id`" +
+                    "`gfb_ticheng_user`.`user_id` as userId from `gfb_ticheng_user` inner join `gfb_users` on `gfb_ticheng_user`.`user_id`" +
                     " = `gfb_users`.`parent_id` inner join `gfb_asset` on `gfb_users`.`id` = `gfb_asset`.`user_id` where `gfb_ticheng_user`.`type` = 1 " +
                     "and (`gfb_ticheng_user`.`start_at` is null or `gfb_ticheng_user`.`start_at` < " + DateHelper.dateToString(new Date()) + ") and " +
                     "(`gfb_ticheng_user`.`end_at` is null or `gfb_ticheng_user`.`end_at` > " + DateHelper.dateToString(new Date()) + ") and " +
@@ -151,13 +151,13 @@ public class UserBonusScheduler {
                 for (Map<String, Object> map : resultList) {
                     sum = NumberHelper.toInt(map.get("sum"));
                     if (sum < Math.pow(10, 9)) {
-                        money = (int)MathHelper.myRound(sum / 100 * 0.0002,0);
+                        money = (int) MathHelper.myRound(sum / 100 * 0.0002, 0);
                     } else if (sum > Math.pow(10, 9) && sum <= 5 * Math.pow(10, 9)) {
-                        money = 200 + (int)MathHelper.myRound((sum - Math.pow(10, 9)) / 100 * .0003,0);
+                        money = 200 + (int) MathHelper.myRound((sum - Math.pow(10, 9)) / 100 * .0003, 0);
                     } else if (sum > 5 * Math.pow(10, 9) && sum <= Math.pow(10, 10)) {
-                        money = 1400 + (int)MathHelper.myRound((sum - 5 * Math.pow(10, 9)) / 100 * .0004,0);
+                        money = 1400 + (int) MathHelper.myRound((sum - 5 * Math.pow(10, 9)) / 100 * .0004, 0);
                     } else {
-                        money = 3400 + (int)MathHelper.myRound((sum - Math.pow(10, 10)) / 100 * .0005,0);
+                        money = 3400 + (int) MathHelper.myRound((sum - Math.pow(10, 10)) / 100 * .0005, 0);
                     }
                     entity = new CapitalChangeEntity();
                     entity.setUserId(NumberHelper.toInt(map.get("userId")));
