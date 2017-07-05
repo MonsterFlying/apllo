@@ -212,7 +212,7 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
             borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes() / borrow.getMoney().doubleValue())));
             //结束时间
-            Date endAt = DateHelper.addDays( DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);
+            Date endAt = DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);
             borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
             //进度
             borrowInfoRes.setSurplusSecond(-1L);
@@ -223,7 +223,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
             if (status == BorrowContants.BIDDING) {//招标中
                 //待发布
-                if (releaseAt.getTime() >=nowDate.getTime()) {
+                if (releaseAt.getTime() >= nowDate.getTime()) {
                     status = 1;
                     borrowInfoRes.setSurplusSecond((releaseAt.getTime() - nowDate.getTime()) + 5);
                 } else if (nowDate.getTime() > endAt.getTime()) {  //当前时间大于招标有效时间
@@ -232,7 +232,6 @@ public class BorrowBizImpl implements BorrowBiz {
                     status = 3; //招标中
                     //  进度
                     borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes().doubleValue() / borrow.getMoney())));
-
                 }
             } else if (!ObjectUtils.isEmpty(borrow.getSuccessAt()) && !ObjectUtils.isEmpty(borrow.getCloseAt())) {   //满标时间 结清
                 status = 4; //已完成
@@ -371,14 +370,14 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoAutoTenderInfo.class));
         }
 
-        if(userThirdAccount.getAutoTransferState() != 1){
+        if (userThirdAccount.getAutoTransferState() != 1) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoAutoTenderInfo.class));
         }
 
 
-        if(userThirdAccount.getAutoTenderState() != 1){
+        if (userThirdAccount.getAutoTenderState() != 1) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoAutoTenderInfo.class));
@@ -562,12 +561,12 @@ public class BorrowBizImpl implements BorrowBiz {
             voCancelThirdBorrow.setRaiseDate(DateHelper.dateToString(borrow.getReleaseAt(), DateHelper.DATE_FORMAT_YMD_NUM));
             resp = borrowThirdBiz.cancelThirdBorrow(voCancelThirdBorrow);
             if (!ObjectUtils.isEmpty(resp)) {
-                log.error( String.format("即信取消借款通讯失败或者验证签名失败: %s", new Gson().toJson(voCancelBorrow)));
+                log.error(String.format("即信取消借款通讯失败或者验证签名失败: %s", new Gson().toJson(voCancelBorrow)));
                 return resp;
             }
 
-            if(!JixinResultContants.SUCCESS.equals(resp.getStatusCode())){
-                log.error( String.format("即信取消借款失败: %s", new Gson().toJson(voCancelBorrow)));
+            if (!JixinResultContants.SUCCESS.equals(resp.getStatusCode())) {
+                log.error(String.format("即信取消借款失败: %s", new Gson().toJson(voCancelBorrow)));
                 return resp;
             }
         }
@@ -602,8 +601,8 @@ public class BorrowBizImpl implements BorrowBiz {
         //  发送站内信
         // ======================================
         Notices notices;
-        String content = String.format("你所投资的借款[ %s ]在 %s 已取消", BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()), DateHelper.nextDate(nowDate)) ;
-        for(Long toUserId: userIdSet){
+        String content = String.format("你所投资的借款[ %s ]在 %s 已取消", BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()), DateHelper.nextDate(nowDate));
+        for (Long toUserId : userIdSet) {
             notices = new Notices();
             notices.setFromUserId(1L);
             notices.setUserId(toUserId);
@@ -627,7 +626,7 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         // 债权转让标识取消
-        assertAndDoTranfer(borrow) ;
+        assertAndDoTranfer(borrow);
 
         //更新借款
         borrow.setStatus(5);
@@ -638,6 +637,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
     /**
      * 自动甄别该标是否属于债权转让. 是:自动取消债权转让标识
+     *
      * @param borrow
      * @throws Exception
      */
@@ -753,7 +753,7 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         // 债权转让取消
-        assertAndDoTranfer(borrow) ;
+        assertAndDoTranfer(borrow);
 
         //更新借款
         borrow.setStatus(5);
