@@ -7,7 +7,7 @@ import io.swagger.annotations.ApiModelProperty;
 import org.springframework.util.ObjectUtils;
 
 @ApiModel("分页")
-public class Page extends VoBaseReq{
+public class Page extends VoBaseReq {
 
     @ApiModelProperty(name = "pageIndex", value = "页码（不传默认为1）", dataType = "int", required = false)
     protected Integer pageIndex;
@@ -15,17 +15,14 @@ public class Page extends VoBaseReq{
     protected Integer pageSize;
 
     public Integer getPageIndex() {
-        if (ObjectUtils.isEmpty(pageIndex) || pageIndex <= 1) {
-            this.pageIndex = CommonPageContants.DEFAULT_PAGE_INDEX;
-        }
         return pageIndex;
     }
 
     public void setPageIndex(Integer pageIndex) {
-        if (ObjectUtils.isEmpty(pageIndex) || pageIndex <= 1) {
+        if (ObjectUtils.isEmpty(pageIndex) || pageIndex < 1) {
             this.pageIndex = CommonPageContants.DEFAULT_PAGE_INDEX;
         } else {
-            this.pageIndex = pageIndex  - 1 ;
+            this.pageIndex = pageIndex - 1;
         }
     }
 
@@ -40,8 +37,8 @@ public class Page extends VoBaseReq{
         if (ObjectUtils.isEmpty(pageSize) || pageSize <= 0) {
             this.pageSize = CommonPageContants.DEFAULT_PAGE_SIZE;
         } else {
-            if(pageSize > 50){
-                pageSize=50;
+            if (pageSize > 50) {
+                pageSize = 50;
             }
             this.pageSize = pageSize;
         }
