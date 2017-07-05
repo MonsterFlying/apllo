@@ -907,11 +907,12 @@ public class UserThirdBizImpl implements UserThirdBiz {
         // 8.提交开户
         AccountOpenRequest accountOpenRequest = new AccountOpenRequest();
         accountOpenRequest.setIdType(IdTypeContant.ID_CARD);
+        accountOpenRequest.setIdNo(idNo);
         accountOpenRequest.setName(realMame);
         accountOpenRequest.setMobile(phone);
-        accountOpenRequest.setIdNo(idNo);
+        accountOpenRequest.setCardNo(cardNo);
         accountOpenRequest.setRetUrl(thirdAccountPasswordHelper.getThirdAcccountInitPasswordUrl(httpServletRequest, userId)); // 初始化密码
-        accountOpenRequest.setNotifyUrl(String.format("%s%s/%s", javaDomain, "/pub/admin/third/openAccout/callback/", userId)); // 后台通知
+        accountOpenRequest.setNotifyUrl(String.format("%s%s/%s", javaDomain, "/pub/admin/third/openAccout/callback", userId)); // 后台通知
         accountOpenRequest.setAcctUse(AcctUseContant.GENERAL_ACCOUNT);
         accountOpenRequest.setAcqRes(String.valueOf(user.getId()));
         accountOpenRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
@@ -927,7 +928,10 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
 
         // 8.保存银行存管账户到用户中
-        UserThirdAccount entity = new UserThirdAccount();
+        UserThirdAccount entity = userThirdAccountService.findByDelUseid(userId);  // 防止重复开户
+        if(ObjectUtils.isEmpty(entity)){
+           entity = new UserThirdAccount();
+        }
         Date nowDate = new Date();
         entity.setUpdateAt(nowDate);
         entity.setUserId(user.getId());
@@ -959,7 +963,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         if (ObjectUtils.isEmpty(accountOpenResponse)) {
             return ResponseEntity
                     .badRequest()
-                    .body("error");
+                    .body("success");
         }
 
         if (!JixinResultContants.SUCCESS.equals(accountOpenResponse.getRetCode())) {
@@ -968,7 +972,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             userThirdAccountService.deleteByUserId(userId);
             return ResponseEntity
                     .badRequest()
-                    .body("error");
+                    .body("success");
         }
 
         Date nowDate = new Date();
@@ -997,9 +1001,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
         if (!JixinResultContants.SUCCESS.equals(passwordSetResponse.getRetCode())) {
             log.error("UserThirdBizImpl.adminPasswordInitCallback: 回调出失败");
-            return ResponseEntity
-                    .badRequest()
-                    .body("error");
+            return ResponseEntity.ok("success");
         }
 
         Long userId = Long.parseLong(passwordSetResponse.getAcqRes());
@@ -1050,7 +1052,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         passwordSetRequest.setAcqRes(String.valueOf(userId));
         passwordSetRequest.setRetUrl(String.format("%s%s/%s", javaDomain, "/pub/password/show", userId));
         passwordSetRequest.setNotifyUrl(String.format("%s%s", javaDomain, "/pub/user/third/modifyOpenAccPwd/callback/1"));
-        String html = jixinManager.getHtml(JixinTxCodeEnum.PASSWORD_RESET, passwordSetRequest);
+        String html = jixinManager.getHtml(JixinTxCodeEnum.PASSWORD_SET, passwordSetRequest);
         return ResponseEntity.ok(html);
     }
 }

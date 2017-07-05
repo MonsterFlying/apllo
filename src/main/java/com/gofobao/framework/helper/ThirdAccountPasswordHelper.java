@@ -63,7 +63,7 @@ public class ThirdAccountPasswordHelper {
             byte[] data = String.format("%s-%s", random, userId).getBytes("UTF-8");
             byte[] result = coder.encrypt(algorithm, data, key);
             String encode = Base64Utils.encodeToUrlSafeString(result);
-            String url = String.format("%s%s%s/%s", javaDomain, "/pub/resetPassword/",  encode, ChannelContant.getchannel(request)) ;
+            String url = String.format("%s%s%s/%s", javaDomain, "/pub/initPassword/",  encode, ChannelContant.getchannel(request)) ;
             redisHelper.put(String.format("%s_%s", PREFIX, encode), Base64Utils.encodeToUrlSafeString(key), 10 * 60) ;
             log.info("初始化密码链接" + url);
             return url ;

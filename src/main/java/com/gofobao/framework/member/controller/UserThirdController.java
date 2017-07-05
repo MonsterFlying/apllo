@@ -103,7 +103,7 @@ public class UserThirdController {
 
 
     @ApiOperation("后台调用初始化密码")
-    @GetMapping("/pub/resetPassword/{encode}/{channel}")
+    @GetMapping("/pub/initPassword/{encode}/{channel}")
     public ResponseEntity<String> adminPasswordInit(HttpServletRequest httpServletRequest, @PathVariable("encode") String encode, @PathVariable("channel") String channel) {
         return userThirdBiz.adminPasswordInit(httpServletRequest, encode, channel) ;
     }

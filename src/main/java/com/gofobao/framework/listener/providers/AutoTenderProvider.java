@@ -44,109 +44,106 @@ public class AutoTenderProvider {
     public void autoTender(Map<String, String> msg) throws Exception {
         Date nowDate = new Date();
         Long borrowId = NumberHelper.toLong(msg.get(MqConfig.MSG_BORROW_ID));
-        do {
-            Borrow borrow = borrowService.findByIdLock(borrowId);
-            Preconditions.checkNotNull(borrow, "自动投标异常：id为" + borrowId + "借款不存在");
-            VoFindAutoTenderList voFindAutoTenderList = new VoFindAutoTenderList();
-            List<VoFindAutoTender> autoTenderList = null;
+        Borrow borrow = borrowService.findByIdLock(borrowId);
+        Preconditions.checkNotNull(borrow, "自动投标异常：id为" + borrowId + "借款不存在");
+        VoFindAutoTenderList voFindAutoTenderList = new VoFindAutoTenderList();
+        List<VoFindAutoTender> autoTenderList = null;
 
-            int num = 0;
-            int pageIndex = 0;
-            int maxSize = 50;
-            int autoTenderCount = 0; // 中标item
-            boolean bool = false;//是否满标
-            do {
-                pageIndex++;
-                voFindAutoTenderList.setStatus("1");
-                voFindAutoTenderList.setNotUserId(borrow.getUserId());
-                voFindAutoTenderList.setInRepayFashions( countRepayFashions(new Integer[]{ borrow.getRepayFashion() }) );
-                voFindAutoTenderList.setPageIndex(pageIndex);
-                voFindAutoTenderList.setPageSize(maxSize);
-                voFindAutoTenderList.setBorrowId(borrowId);
-                Integer apr = borrow.getApr();
-                voFindAutoTenderList.setLtAprFirst(apr);
-                voFindAutoTenderList.setGtAprLast(apr);
-                autoTenderList = autoTenderService.findQualifiedAutoTenders(voFindAutoTenderList);  // 查询自动投标队列
-                if (CollectionUtils.isEmpty(autoTenderList)) {
-                    log.info("自动投标MQ：没有匹配到自动投标规则！");
+        int num = 0;
+        int pageIndex = 0;
+        int maxSize = 50;
+        int autoTenderCount = 0; // 中标item
+        boolean bool = false;//是否满标
+        do {
+            pageIndex++;
+            voFindAutoTenderList.setStatus("1");
+            voFindAutoTenderList.setNotUserId(borrow.getUserId());
+            voFindAutoTenderList.setInRepayFashions(countRepayFashions(new Integer[]{borrow.getRepayFashion()}));
+            voFindAutoTenderList.setPageIndex(pageIndex);
+            voFindAutoTenderList.setPageSize(maxSize);
+            voFindAutoTenderList.setBorrowId(borrowId);
+            Integer apr = borrow.getApr();
+            voFindAutoTenderList.setLtAprFirst(apr);
+            voFindAutoTenderList.setGtAprLast(apr);
+            autoTenderList = autoTenderService.findQualifiedAutoTenders(voFindAutoTenderList);  // 查询自动投标队列
+            if (CollectionUtils.isEmpty(autoTenderList)) {
+                log.info("自动投标MQ：没有匹配到自动投标规则！");
+                break;
+            }
+
+            Iterator<VoFindAutoTender> itAutoTender = autoTenderList.iterator();
+            VoFindAutoTender voFindAutoTender = null;
+            Integer money = 0;
+            Integer lowest = 0;
+            Integer useMoney = 0;
+            Integer borrowMoney = borrow.getMoney(); // 借款金额（分）
+            Integer moneyYes = borrow.getMoneyYes();
+            Integer mostAuto = borrow.getMostAuto();
+            Set<Long> tenderUserIds = new HashSet<>();
+            Set<Long> autoTenderIds = new HashSet<>();
+            AutoTender autoTender = null;
+            while (itAutoTender.hasNext()) { // 将合格的自动投标  放入消息队列
+                voFindAutoTender = itAutoTender.next();
+                if ((moneyYes >= borrowMoney) || (mostAuto > 0 && moneyYes >= mostAuto)) {  // 判断是否满标或者 达到自动投标最大额度
+                    bool = true;
                     break;
                 }
 
-                Iterator<VoFindAutoTender> itAutoTender = autoTenderList.iterator();
-                VoFindAutoTender voFindAutoTender = null;
-                Integer money = 0;
-                Integer lowest = 0;
-                Integer useMoney = 0;
-                Integer borrowMoney = borrow.getMoney();//借款金额（分）
-                Integer moneyYes = borrow.getMoneyYes();
-                Integer mostAuto = borrow.getMostAuto();
-                Set<Long> tenderUserIds = new HashSet<>();
-                Set<Long> autoTenderIds = new HashSet<>();
-                AutoTender autoTender = null;
-                while (itAutoTender.hasNext()) {//将合格的自动投标  放入消息队列
-                    voFindAutoTender = itAutoTender.next();
-
-                    if (moneyYes >= borrowMoney || (mostAuto > 0 && moneyYes >= mostAuto)) {  // 判断是否满标或者 达到自动投标最大额度
-                        bool = true;
-                        break;
-                    }
-
-                    if (tenderUserIds.contains(voFindAutoTender.getUserId())   // 保证每个用户 和 每个自动投标规则只能使用一次
-                            || autoTenderIds.contains(voFindAutoTender.getId())) {
-                        continue;
-                    }
-
-                    useMoney = voFindAutoTender.getUseMoney();  // 用户可用金额
-                    // TODO 有待完善
-                    money = voFindAutoTender.getMode().equals(1) ? voFindAutoTender.getTenderMoney() : useMoney;
-                    money = Math.min(useMoney - voFindAutoTender.getSaveMoney(), money);
-                    lowest = voFindAutoTender.getLowest(); // 最小投标金额
-
-                    if ((money < lowest)) {
-                        continue;
-                    }
-
-                    // 标的金额小于 最小投标金额
-                    if( borrowMoney - moneyYes < lowest){
-                        break;
-                    }
-
-                    VoCreateTenderReq voCreateBorrowTender = new VoCreateTenderReq();
-                    voCreateBorrowTender.setBorrowId(borrowId); // 标的
-                    voCreateBorrowTender.setUserId(voFindAutoTender.getUserId()); // 投标用户
-                    voCreateBorrowTender.setTenderMoney(MathHelper.myRound(money / 100.0, 2));  // 投标金额
-                    voCreateBorrowTender.setAutoOrder(voFindAutoTender.getOrder());
-                    voCreateBorrowTender.setLowest(MathHelper.myRound(voFindAutoTender.getLowest() / 100.0, 2));
-                    voCreateBorrowTender.setIsAutoTender(true);//自动标识
-
-                    if (!tenderUserIds.contains(voFindAutoTender.getUserId()) && !autoTenderIds.contains(voFindAutoTender.getId())) {
-                        ResponseEntity<VoBaseResp> response = tenderBiz.createTender(voCreateBorrowTender) ;
-                        if(response.getStatusCode().equals(HttpStatus.OK)){
-                            moneyYes += lowest;
-                            autoTenderIds.add(voFindAutoTender.getId());
-                            tenderUserIds.add(voFindAutoTender.getUserId());
-                            voFindAutoTender.setAutoAt(nowDate);
-                            voFindAutoTender.setId(voFindAutoTender.getId());
-                            autoTenderService.updateById(autoTender);
-                            autoTenderCount++;
-                        }else{
-                            continue;
-                        }
-                    }
+                if (tenderUserIds.contains(voFindAutoTender.getUserId())   // 保证每个用户 和 每个自动投标规则只能使用一次
+                        || autoTenderIds.contains(voFindAutoTender.getId())) {
+                    continue;
                 }
 
-            } while (num < maxSize && !bool);
-            if (autoTenderCount >= 1) {
-                autoTenderService.updateAutoTenderOrder();
-            }
-        } while (false);
+                useMoney = voFindAutoTender.getUseMoney();  // 用户可用金额
+                money = voFindAutoTender.getMode().equals(1) ? voFindAutoTender.getTenderMoney() : useMoney;
+                money = Math.min(useMoney - voFindAutoTender.getSaveMoney(), money);
+                lowest = voFindAutoTender.getLowest(); // 最小投标金额
+                if ((money < lowest)) {
+                    continue;
+                }
 
-        //解除锁定
-        Borrow borrow = borrowService.findById(borrowId);
-        borrow.setUpdatedAt(nowDate);
-        borrow.setIsLock(false);
-        borrow.setId(borrowId);
-        borrowService.updateById(borrow);
+                // 标的金额小于 最小投标金额
+                if (borrowMoney - moneyYes < lowest) {
+                    continue;
+                }
+
+                VoCreateTenderReq voCreateBorrowTender = new VoCreateTenderReq();
+                voCreateBorrowTender.setBorrowId(borrowId); // 标的
+                voCreateBorrowTender.setUserId(voFindAutoTender.getUserId()); // 投标用户
+                voCreateBorrowTender.setTenderMoney(MathHelper.myRound(money / 100.0, 2));  // 投标金额
+                voCreateBorrowTender.setAutoOrder(voFindAutoTender.getOrder());
+                voCreateBorrowTender.setLowest(MathHelper.myRound(voFindAutoTender.getLowest() / 100.0, 2));
+                voCreateBorrowTender.setIsAutoTender(true);//自动标识
+
+                if ((!tenderUserIds.contains(voFindAutoTender.getUserId()))
+                        && (!autoTenderIds.contains(voFindAutoTender.getId()))) {  // 保证自动不能重复
+                    ResponseEntity<VoBaseResp> response = tenderBiz.createTender(voCreateBorrowTender);
+                    if (response.getStatusCode().equals(HttpStatus.OK)) {
+                        moneyYes += lowest;
+                        autoTenderIds.add(voFindAutoTender.getId());
+                        tenderUserIds.add(voFindAutoTender.getUserId());
+                        voFindAutoTender.setAutoAt(nowDate);
+                        voFindAutoTender.setId(voFindAutoTender.getId());
+                        autoTenderService.updateById(autoTender);
+                        autoTenderCount++;
+                    } else {
+                        continue;
+                    }
+                }
+            }
+        } while (num < maxSize && !bool);
+        if (autoTenderCount >= 1) {
+            autoTenderService.updateAutoTenderOrder();
+        }
+
+        // 解除锁定
+        Borrow updateBorrow = borrowService.findById(borrowId);
+        if (!updateBorrow.getMoneyYes().equals(updateBorrow.getMoney())) { // 在自动投标中, 标的未满.马上将其解除.
+            updateBorrow.setUpdatedAt(nowDate);
+            updateBorrow.setIsLock(false);
+            updateBorrow.setId(borrowId);
+            borrowService.updateById(updateBorrow);
+        }
     }
 
     /**

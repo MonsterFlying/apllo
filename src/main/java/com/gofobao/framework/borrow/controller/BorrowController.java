@@ -33,7 +33,6 @@ import java.util.Map;
 @RestController
 @Slf4j
 @Api(description = "首页标接口")
-@SuppressWarnings("all")
 public class BorrowController {
 
     @Autowired
@@ -65,7 +64,6 @@ public class BorrowController {
     }
 
 
-    // TODO 去掉包裹
     @ApiOperation("标信息")
     @GetMapping("/pub/borrow/v2/info/{borrowId}")
     public ResponseEntity<BorrowInfoRes> getByBorrowId(@PathVariable Long borrowId) {
@@ -73,7 +71,6 @@ public class BorrowController {
     }
 
 
-    // TODO 去掉包裹
     @ApiOperation("标简介")
     @GetMapping("/pub/borrow/v2/desc/{borrowId}")
     public ResponseEntity<VoViewVoBorrowDescWarpRes> desc(@PathVariable Long borrowId) {
@@ -81,7 +78,6 @@ public class BorrowController {
     }
 
 
-    // TODO 返回改为  ResponseEntity<VoHtmlResp>
     @ApiOperation(value = "标合同")
     @GetMapping(value = "/borrow/pub/borrowProtocol/{borrowId}")
     public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId, HttpServletRequest request) {
