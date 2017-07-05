@@ -49,9 +49,8 @@ public class UserThirdAccountServiceImpl implements UserThirdAccountService {
 
     @Override
     public void deleteByUserId(Long userId) {
-        UserThirdAccount userThirdAccount = new UserThirdAccount() ;
-        userThirdAccount.setUserId(userId) ;
-        userThirdAccountRepository.delete(userThirdAccount);
+        UserThirdAccount userThirdAccount = findByUserId(userId);
+        userThirdAccountRepository.delete(userThirdAccount.getId());
     }
 
     @Override
