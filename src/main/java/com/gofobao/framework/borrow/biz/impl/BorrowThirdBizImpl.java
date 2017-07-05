@@ -199,32 +199,22 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         Long userId = voCancelThirdBorrow.getUserId();
         String productId = voCancelThirdBorrow.getProductId();
         String raiseDate = voCancelThirdBorrow.getRaiseDate();//募集日期
-        if (ObjectUtils.isEmpty(raiseDate)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "募集日期不能为空!"));
-        }
-
-        if (ObjectUtils.isEmpty(productId)) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "borrowId为空"));
-        }
-
+        Preconditions.checkState(ObjectUtils.isEmpty(raiseDate), "募集日期不能为空!");
+        Preconditions.checkState(ObjectUtils.isEmpty(productId), "当前标的未在即信登记");
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "借款人未开户!");
-
         DebtRegisterCancelReq request = new DebtRegisterCancelReq();
         request.setChannel(ChannelContant.HTML);
         request.setAccountId(userThirdAccount.getAccountId());
         request.setProductId(productId);
         request.setRaiseDate(raiseDate);
-
         DebtRegisterCancelResp response = jixinManager.send(JixinTxCodeEnum.DEBT_REGISTER_CANCEL, request, DebtRegisterCancelResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
             String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
         }
 
-        return null;
+        return ResponseEntity.ok(VoBaseResp.ok("取消借款成功"));
     }
 
     public DebtDetailsQueryResp queryThirdBorrowList(VoQueryThirdBorrowList voQueryThirdBorrowList) {
