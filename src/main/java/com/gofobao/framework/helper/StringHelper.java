@@ -17,7 +17,11 @@ public class StringHelper {
     public static String toString(Object obj) {
         return ObjectUtils.isEmpty(obj) ? "" : obj.toString();
     }
-    
+
+    public static String toString(Object obj, String defaultStr) {
+        return ObjectUtils.isEmpty(obj) ? defaultStr : obj.toString();
+    }
+
     /**
      * 格式化金额
      *

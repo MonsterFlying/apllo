@@ -84,7 +84,7 @@ public class AplloApplicationTests {
 
         Gson gson = new Gson();
         Map<String, String> map = new HashMap<>();
-        map.put("repaymentId", "173795");
+        map.put("repaymentId", "173796");
         System.out.println(gson.toJson(map));
         System.out.println(SecurityHelper.getSign(gson.toJson(map)));
     }

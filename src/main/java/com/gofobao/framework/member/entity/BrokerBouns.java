@@ -31,7 +31,7 @@ public class BrokerBouns {
     private Integer level;
     @Basic
     @Column(name = "award_apr", nullable = false)
-    private Short awardApr;
+    private Integer awardApr;
 
     @Basic
     @Column(name = "wait_principal_total", nullable = false)
