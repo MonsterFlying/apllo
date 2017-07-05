@@ -15,4 +15,6 @@ import javax.persistence.LockModeType;
 public interface AdvanceLogRepository extends JpaRepository<AdvanceLog,Long>,JpaSpecificationExecutor<AdvanceLog>{
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     AdvanceLog findById(Long id);
+
+    AdvanceLog findByRepaymentId(Long repaymentId);
 }

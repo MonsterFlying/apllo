@@ -25,5 +25,9 @@ public interface AdvanceLogService {
 
     List<AdvanceLog> findList(Specification<AdvanceLog> specification, Pageable pageable);
 
+    AdvanceLog findByRepaymentId(Long repaymentId);
+
+    AdvanceLog findByRepaymentIdLock(Long repaymentId);
+
     long count(Specification<AdvanceLog> specification);
 }
