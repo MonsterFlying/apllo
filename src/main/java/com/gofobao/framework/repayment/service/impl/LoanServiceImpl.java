@@ -251,7 +251,7 @@ public class LoanServiceImpl implements LoanService {
         repaymentDetail.setInterest(StringHelper.formatMon(interest / 100D));
         repaymentDetail.setPrincipal(StringHelper.formatMon(principal / 100D));
         repaymentDetail.setReceivableInterest(StringHelper.formatMon(receivableInterest / 100D));
-        if (borrow.getTimeLimit() == 1) {
+        if (borrow.getRepayFashion() == 1) {
             repaymentDetail.setTimeLimit(borrow.getTimeLimit() + BorrowContants.DAY);
         } else {
             repaymentDetail.setTimeLimit(borrow.getTimeLimit() + BorrowContants.MONTH);

@@ -5,8 +5,11 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileRequest;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileResponse;
+import com.gofobao.framework.api.model.batch_bail_repay.BailRepayRun;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
+import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
+import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
@@ -18,22 +21,36 @@ import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
+import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.JixinHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
+import com.gofobao.framework.repayment.vo.request.VoAdvanceCall;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RunWith(SpringRunner.class)
@@ -41,6 +58,8 @@ import java.util.Map;
 @Slf4j
 
 public class AplloApplicationTests {
+
+    final Gson GSON = new GsonBuilder().create();
 
     @Autowired
     MqHelper mqHelper;
@@ -67,11 +86,16 @@ public class AplloApplicationTests {
 
     @Test
     public void contextLoads() {
-        Borrow borrow = borrowService.findById(169740L);
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_AUTO_TENDER);
+        mqConfig.setTag(MqTagEnum.AUTO_TENDER);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString("169782"), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
         try {
-            borrowBiz.notTransferedBorrowAgainVerify(borrow);
+            mqHelper.convertAndSend(mqConfig);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("borrowProvider autoTender send mq exception", e);
         }
     }
 
@@ -130,8 +154,21 @@ public class AplloApplicationTests {
         System.out.println(response);
     }
 
+    private void advanceCall() {
+        VoAdvanceCall voAdvanceCall = new VoAdvanceCall();
+        voAdvanceCall.setRepaymentId(173795L);
+        voAdvanceCall.setBailRepayRunList(GSON.fromJson("[{\"accountId\":\"6212462040000000036\",\"authCode\":\"20160922115236083124\",\"productId\":\"GA69760\",\"orderId\":\"GFBBP_1499221906652\",\"failMsg\":\"交易成功\",\"txState\":\"S\",\"forAccountId\":\"6212462040000200040\",\"txAmount\":\"2021.92\"}]", new TypeToken<List<BailRepayRun>>() {
+        }.getType()));
+        try {
+            repaymentBiz.advanceDeal(voAdvanceCall);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     @Test
     public void test() {
+
 
         //根据手机号查询存管账户
         //findAccountByMobile();
@@ -143,6 +180,8 @@ public class AplloApplicationTests {
         //batchCancel();
         //查询投资人购买债权
         //creditInvestQuery();
+        //垫付回调
+        advanceCall();
 
         /*Map<String,String> map = new HashMap<>();
         map.put("borrowId","169761");
@@ -193,6 +232,15 @@ public class AplloApplicationTests {
             e.printStackTrace();
         }*/
 
+        /*BatchDetailsQueryReq request = new BatchDetailsQueryReq();
+        request.setBatchNo("103146");
+        request.setBatchTxDate("20170705");
+        request.setType("1");
+        request.setPageNum("1");
+        request.setPageSize("10");
+        request.setChannel(ChannelContant.HTML);
+        BatchDetailsQueryResp response = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, request, BatchDetailsQueryResp.class);
+        System.out.println(response);*/
 
         /*BidApplyQueryReq request = new BidApplyQueryReq();
         request.setAccountId("6212462040000600025");

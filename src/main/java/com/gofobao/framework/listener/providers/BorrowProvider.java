@@ -31,11 +31,12 @@ import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoThirdBatchCreditInvest;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.protocol.HTTP;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
@@ -93,22 +94,18 @@ public class BorrowProvider {
      */
     @Transactional(rollbackFor = Exception.class)
     public boolean doFirstVerify(Map<String, String> msg) throws Exception {
-        boolean bool = false;
-        do {
-            Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
-            Borrow borrow = borrowService.findByIdLock(borrowId);
-            if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 0)) {
-                return false;
-            }
+        Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
+        log.info(String.format("触发标的初审: %s", borrowId));
+        Borrow borrow = borrowService.findByIdLock(borrowId);
+        if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 0)) {
+            return false;
+        }
 
-            if (!ObjectUtils.isEmpty(borrow.getLendId())) { //有草出借
-                bool = lendBorrow(borrow);
-            } else { //车贷、渠道、净值、转让 标
-                bool = baseBorrow(borrow);
-            }
-
-        } while (false);
-        return bool;
+        if (!ObjectUtils.isEmpty(borrow.getLendId())) { //有草出借
+            return verifyLendBorrow(borrow);
+        } else {
+            return verifyStandardBorrow(borrow);  // 标准标的初审
+        }
     }
 
     /**
@@ -116,53 +113,47 @@ public class BorrowProvider {
      *
      * @return
      */
-    private boolean baseBorrow(Borrow borrow) {
-        boolean bool = false;
-        do {
-            Date nowDate = DateHelper.subSeconds(new Date(), 10);
+    private boolean verifyStandardBorrow(Borrow borrow) {
+        Date nowDate = DateHelper.subSeconds(new Date(), 10);
+        borrow.setStatus(1);
+        borrow.setVerifyAt(nowDate);
+        Date releaseAt = borrow.getReleaseAt();
+        borrow.setReleaseAt(ObjectUtils.isEmpty(releaseAt) ? nowDate : releaseAt);   // 处理不填写发布时间的请款
+        borrowService.updateById(borrow);    //更新借款状态
 
-            //更新借款状态
-            borrow.setStatus(1);
-            borrow.setVerifyAt(nowDate);
-            Date releaseAt = borrow.getReleaseAt();
-            if (ObjectUtils.isEmpty(releaseAt)) {
-                borrow.setReleaseAt(nowDate);
+        // 自动投标前提:
+        // 1.没有设置标密码
+        // 2.车贷标, 渠道标, 流转表
+        // 3.标的年化率为 800 以上
+        Integer borrowType = borrow.getType();
+        ImmutableList<Integer> autoTenderBorrowType = ImmutableList.of(0, 1, 4);
+        if ((ObjectUtils.isEmpty(borrow.getPassword()))
+                && (autoTenderBorrowType.contains(borrowType)) && borrow.getApr() > 800) {
+            borrow.setIsLock(true);
+            borrowService.updateById(borrow);  // 锁住标的,禁止手动投标
+            if (borrow.getIsNovice()) {   // 对于新手标直接延迟8点后推送
+                Date noviceBorrowStandeReaseAt = DateHelper.addHours(DateHelper.beginOfDate(new Date()), 20);  // 新手标 能进行制动的时间
+                releaseAt = DateHelper.max(noviceBorrowStandeReaseAt, releaseAt);
             }
-            borrowService.updateById(borrow);
 
-            Integer borrowType = borrow.getType();
-            if ((ObjectUtils.isEmpty(borrow.getPassword())) && (borrowType == 0 || borrowType == 1 || borrowType == 4) && borrow.getApr() > 800) { //判断是否要推送到自动投标队列
-                //更新借款状态
-                borrow.setIsLock(true);
-                borrowService.updateById(borrow);
-
-                Date releaseDate = borrow.getReleaseAt();
-                //====================================
-                //延时投标
-                //====================================
-                if (borrow.getIsNovice()) {//判断是否是新手标
-                    Date tempDate = DateHelper.addHours(DateHelper.beginOfDate(new Date()), 20);
-                    releaseDate = DateHelper.max(tempDate, releaseDate);
-                }
-
-                //触发自动投标队列
-                MqConfig mqConfig = new MqConfig();
-                mqConfig.setQueue(MqQueueEnum.RABBITMQ_AUTO_TENDER);
-                mqConfig.setTag(MqTagEnum.AUTO_TENDER);
-                //mqConfig.setSendTime(releaseDate);
-                ImmutableMap<String, String> body = ImmutableMap
-                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-                mqConfig.setMsg(body);
-                try {
-                    log.info(String.format("borrowProvider autoTender send mq %s", GSON.toJson(body)));
-                    mqHelper.convertAndSend(mqConfig);
-                } catch (Exception e) {
-                    log.error("borrowProvider autoTender send mq exception", e);
-                }
+            //触发自动投标队列
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_AUTO_TENDER);
+            mqConfig.setTag(MqTagEnum.AUTO_TENDER);
+            mqConfig.setSendTime(releaseAt);
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("borrowProvider autoTender send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+                return true ;
+            } catch (Exception e) {
+                log.error("borrowProvider autoTender send mq exception", e);
+                return false ;
             }
-            bool = true;
-        } while (false);
-        return bool;
+        }
+        return true;
     }
 
     /**
@@ -172,27 +163,24 @@ public class BorrowProvider {
      * @return
      * @throws Exception
      */
-    private boolean lendBorrow(Borrow borrow) throws Exception {
+    private boolean verifyLendBorrow(Borrow borrow) throws Exception {
         Date nowDate = DateHelper.subSeconds(new Date(), 10);
         borrow.setStatus(1);  //更新借款状态
         borrow.setVerifyAt(nowDate);
         Date releaseAt = borrow.getReleaseAt();
-        if (ObjectUtils.isEmpty(releaseAt)) {
-            borrow.setReleaseAt(nowDate);
-        }
-
-        borrowService.updateById(borrow);
+        borrow.setReleaseAt(ObjectUtils.isArray(releaseAt)? nowDate: releaseAt) ;
+        borrowService.updateById(borrow);   // 更改标的为可投标状态
         Long lendId = borrow.getLendId();
-        if (!ObjectUtils.isEmpty(lendId)) {
-            Lend lend = lendService.findById(lendId);
-            VoCreateTenderReq voCreateTenderReq = new VoCreateTenderReq();
-            voCreateTenderReq.setUserId(lend.getUserId());
-            voCreateTenderReq.setBorrowId(borrow.getId());
-            voCreateTenderReq.setTenderMoney(MathHelper.myRound(borrow.getMoney() / 100.0, 2));
-            ResponseEntity<VoBaseResp> response = tenderBiz.createTender(voCreateTenderReq);
-            return response.getStatusCode().equals(HttpStatus.OK);
-        }
-        return false;
+
+        Preconditions.checkState(ObjectUtils.isArray(lendId), "摘草信息为空");
+        Lend lend = lendService.findById(lendId);
+        VoCreateTenderReq voCreateTenderReq = new VoCreateTenderReq();
+        voCreateTenderReq.setUserId(lend.getUserId());
+        voCreateTenderReq.setBorrowId(borrow.getId());
+        voCreateTenderReq.setTenderMoney(MathHelper.myRound(borrow.getMoney() / 100.0, 2));
+        ResponseEntity<VoBaseResp> response = tenderBiz.createTender(voCreateTenderReq);
+        return response.getStatusCode().equals(HttpStatus.OK);
+
 
     }
 

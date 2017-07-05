@@ -325,14 +325,14 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoAutoTenderInfo.class));
         }
 
-        if(userThirdAccount.getAutoTransferState() != 1){
+        if (userThirdAccount.getAutoTransferState() != 1) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoAutoTenderInfo.class));
         }
 
 
-        if(userThirdAccount.getAutoTenderState() != 1){
+        if (userThirdAccount.getAutoTenderState() != 1) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoAutoTenderInfo.class));
@@ -975,6 +975,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      * @throws Exception
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> advanceDeal(VoAdvanceCall voAdvanceReq) throws Exception {
 
         ResponseEntity resp = advanceCheck(voAdvanceReq.getRepaymentId());//垫付检查
@@ -1058,14 +1059,14 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Pageable pageable = null;
         List<BorrowCollection> borrowCollectionList = null;
         do {
-            pageable = new PageRequest(pageIndex++, maxPageSize, new Sort(Sort.Direction.ASC));
+            pageable = new PageRequest(pageIndex++, maxPageSize, new Sort(Sort.Direction.ASC, "id"));
             borrowCollectionList = borrowCollectionService.findList(bcs, pageable);
             if (CollectionUtils.isEmpty(borrowCollectionList)) {
                 break;
             }
             for (BorrowCollection borrowCollection : borrowCollectionList) {
                 for (BailRepayRun bailRepayRun : bailRepayRunList) {
-                    if (borrowCollection.getTRepayOrderId().equals(bailRepayRun.getOrderId())) {
+                    if (borrowCollection.getTBailRepayOrderId().equals(bailRepayRun.getOrderId())) {
                         borrowCollection.setTBailAuthCode(bailRepayRun.getAuthCode());
                         break;
                     }
