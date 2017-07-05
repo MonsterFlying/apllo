@@ -1,5 +1,6 @@
 package com.gofobao.framework;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
@@ -7,12 +8,15 @@ import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMob
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileResponse;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
+import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
+import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
@@ -29,11 +33,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RunWith(SpringRunner.class)
@@ -64,6 +72,8 @@ public class AplloApplicationTests {
     private EntityManager entityManager;
     @Autowired
     private BorrowCollectionService borrowCollectionService;
+    @Autowired
+    private AssetService assetService;
 
     @Test
     public void contextLoads() {
@@ -192,6 +202,13 @@ public class AplloApplicationTests {
         } catch (Exception e) {
             e.printStackTrace();
         }*/
+
+        BatchDetailsQueryReq request = new BatchDetailsQueryReq();
+        request.setBatchNo("");
+        request.setBatchTxDate("");
+        request.setPageSize("10");
+        request.setPageNum("0");
+        request.setType("0");
 
 
         /*BidApplyQueryReq request = new BidApplyQueryReq();
