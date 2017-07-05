@@ -20,7 +20,7 @@ public interface BorrowBiz {
      * @param voCancelBorrow
      * @return
      */
-    ResponseEntity<VoBaseResp> cancelBorrow(VoCancelBorrow voCancelBorrow);
+    ResponseEntity<VoBaseResp> cancelBorrow(VoCancelBorrow voCancelBorrow) throws Exception;
 
     /**
      * pc取消借款

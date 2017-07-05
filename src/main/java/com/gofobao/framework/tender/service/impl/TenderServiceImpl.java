@@ -105,10 +105,7 @@ public class TenderServiceImpl implements TenderService {
     }
 
     public List<Tender> findList(Specification<Tender> specification) {
-        if (ObjectUtils.isEmpty(specification)) {
-            return null;
-        }
-        return tenderRepository.findAll(specification);
+        return  Optional.ofNullable(tenderRepository.findAll(specification)).orElse(Collections.EMPTY_LIST);
     }
 
     public List<Tender> findList(Specification<Tender> specification, Pageable pageable) {

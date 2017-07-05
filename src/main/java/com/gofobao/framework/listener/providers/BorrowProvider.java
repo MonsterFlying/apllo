@@ -35,8 +35,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.protocol.HTTP;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -171,36 +173,27 @@ public class BorrowProvider {
      * @throws Exception
      */
     private boolean lendBorrow(Borrow borrow) throws Exception {
-        boolean bool = false;
-        do {
-            Date nowDate = DateHelper.subSeconds(new Date(), 10);
+        Date nowDate = DateHelper.subSeconds(new Date(), 10);
+        borrow.setStatus(1);  //更新借款状态
+        borrow.setVerifyAt(nowDate);
+        Date releaseAt = borrow.getReleaseAt();
+        if (ObjectUtils.isEmpty(releaseAt)) {
+            borrow.setReleaseAt(nowDate);
+        }
 
-            //更新借款状态
-            borrow.setStatus(1);
-            borrow.setVerifyAt(nowDate);
-            Date releaseAt = borrow.getReleaseAt();
-            if (ObjectUtils.isEmpty(releaseAt)) {
-                borrow.setReleaseAt(nowDate);
-            }
-            borrowService.updateById(borrow);
+        borrowService.updateById(borrow);
+        Long lendId = borrow.getLendId();
+        if (!ObjectUtils.isEmpty(lendId)) {
+            Lend lend = lendService.findById(lendId);
+            VoCreateTenderReq voCreateTenderReq = new VoCreateTenderReq();
+            voCreateTenderReq.setUserId(lend.getUserId());
+            voCreateTenderReq.setBorrowId(borrow.getId());
+            voCreateTenderReq.setTenderMoney(MathHelper.myRound(borrow.getMoney() / 100.0, 2));
+            ResponseEntity<VoBaseResp> response = tenderBiz.createTender(voCreateTenderReq);
+            return response.getStatusCode().equals(HttpStatus.OK);
+        }
+        return false;
 
-            Long lendId = borrow.getLendId();
-            if (!ObjectUtils.isEmpty(lendId)) {
-                Lend lend = lendService.findById(lendId);
-                VoCreateTenderReq voCreateTenderReq = new VoCreateTenderReq();
-                voCreateTenderReq.setUserId(lend.getUserId());
-                voCreateTenderReq.setBorrowId(borrow.getId());
-                voCreateTenderReq.setTenderMoney(MathHelper.myRound(borrow.getMoney() / 100.0, 2));
-                Map<String, Object> rsMap = tenderBiz.createTender(voCreateTenderReq);
-
-                Object msg = rsMap.get("msg");
-                if (ObjectUtils.isEmpty(msg)) {
-                    log.error(StringHelper.toString(msg));
-                }
-            }
-            bool = true;
-        } while (false);
-        return bool;
     }
 
     /**

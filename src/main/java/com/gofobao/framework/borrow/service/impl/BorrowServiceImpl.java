@@ -126,8 +126,9 @@ public class BorrowServiceImpl implements BorrowService {
 
         Query pageQuery = entityManager.createQuery(pageSb.append(condtionSql).toString(), Borrow.class);
         pageQuery.setParameter("statusArray", statusArray);
+        int firstResult = voBorrowListReq.getPageIndex() * voBorrowListReq.getPageSize();
         List<Borrow> borrowLists = pageQuery
-                .setFirstResult(voBorrowListReq.getPageIndex() * voBorrowListReq.getPageSize())
+                .setFirstResult(firstResult)
                 .setMaxResults(voBorrowListReq.getPageSize())
                 .getResultList();
 
@@ -652,7 +653,7 @@ public class BorrowServiceImpl implements BorrowService {
     public boolean checkValidDay(Borrow borrow) {
         Date nowDate = new Date();
         Date validDate = DateHelper.beginOfDate(DateHelper.addDays(borrow.getReleaseAt(), borrow.getValidDay() + 1));
-        return (nowDate.getTime() < validDate.getTime());
+        return nowDate.getTime() < validDate.getTime();
     }
 
     public Borrow findById(Long borrowId) {
@@ -708,4 +709,6 @@ public class BorrowServiceImpl implements BorrowService {
         List<Borrow> borrowList = borrowRepository.findAll(bs, pageable).getContent();
         return borrowList.get(0);
     }
+
+
 }

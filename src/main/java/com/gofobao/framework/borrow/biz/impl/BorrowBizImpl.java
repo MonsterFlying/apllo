@@ -76,6 +76,7 @@ import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by Zeke on 2017/5/26.
@@ -524,7 +525,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> cancelBorrow(VoCancelBorrow voCancelBorrow) {
+    public ResponseEntity<VoBaseResp> cancelBorrow(VoCancelBorrow voCancelBorrow) throws Exception {
         Long borrowId = voCancelBorrow.getBorrowId();
         Long userId = voCancelBorrow.getUserId();
         Date nowDate = new Date();
@@ -540,12 +541,12 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         boolean bool = false;//债权转让默认不过期
-        if (!ObjectUtils.isEmpty(borrow.getReleaseAt())) {
+        if (!ObjectUtils.isEmpty(borrow.getReleaseAt())) {  //TODO 此处是否考虑 是否 T + 1 形式比较
             bool = DateHelper.diffInDays(new Date(), borrow.getReleaseAt(), false) >= borrow.getValidDay();//比较借款时间是否过期
         }
 
-        if (((borrow.getStatus() == 1) && (bool)) || (StringHelper.toString(borrow.getUserId()).equals(StringHelper.toString(voCancelBorrow.getUserId())))) {//只有借款标过期或者本人才能取消借款
-
+        if (((borrow.getStatus() == 1) && (bool))
+                || (StringHelper.toString(borrow.getUserId()).equals(StringHelper.toString(voCancelBorrow.getUserId())))) {//只有借款标过期或者本人才能取消借款
         } else {
             return ResponseEntity
                     .badRequest()
@@ -563,10 +564,15 @@ public class BorrowBizImpl implements BorrowBiz {
             voCancelThirdBorrow.setRaiseDate(DateHelper.dateToString(borrow.getReleaseAt(), DateHelper.DATE_FORMAT_YMD_NUM));
             resp = borrowThirdBiz.cancelThirdBorrow(voCancelThirdBorrow);
             if (!ObjectUtils.isEmpty(resp)) {
+                log.error( String.format("即信取消借款通讯失败或者验证签名失败: %s", new Gson().toJson(voCancelBorrow)));
+                return resp;
+            }
+
+            if(!JixinResultContants.SUCCESS.equals(resp.getStatusCode())){
+                log.error( String.format("即信取消借款失败: %s", new Gson().toJson(voCancelBorrow)));
                 return resp;
             }
         }
-        //==============================================================================
 
         Specification<Tender> borrowSpecification = Specifications
                 .<Tender>and()
@@ -575,74 +581,76 @@ public class BorrowBizImpl implements BorrowBiz {
                 .build();
 
         List<Tender> tenderList = tenderService.findList(borrowSpecification);
-        Set<Long> tenderUserIds = new HashSet<>();//投标用户id集合
-        if (!CollectionUtils.isEmpty(tenderList)) {
-            Iterator<Tender> itTender = tenderList.iterator();
-            Tender tender = null;
-            Notices notices = null;
-            while (itTender.hasNext()) {
-                notices = new Notices();
-                tender = itTender.next();
+        Set<Long> userIdSet = tenderList.stream().map(p -> p.getUserId()).collect(Collectors.toSet());   // 投标的UserID
 
-                //更新资产记录
-                CapitalChangeEntity entity = new CapitalChangeEntity();
-                entity.setType(CapitalChangeEnum.Unfrozen);
-                entity.setUserId(tender.getUserId());
-                entity.setMoney(tender.getValidMoney());
-                entity.setRemark("借款 [" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "] 招标失败解除冻结资金。");
-                try {
-                    capitalChangeHelper.capitalChange(entity);
-                } catch (Exception e) {
-                    log.error("borrowBizImpl cancelBorrow error", e);
-                }
+        // ======================================
+        //  更改投资记录标识, 并且解冻投资资金
+        // ======================================
+        for (Tender tender : tenderList) {
+            tender.setId(tender.getId());
+            tender.setStatus(2); // 取消状态
+            tender.setUpdatedAt(nowDate);
+            tenderService.save(tender);
 
-                //更新投标记录状态
-                tender.setId(tender.getId());
-                tender.setStatus(2); // 取消状态
-                tender.setUpdatedAt(nowDate);
-                tenderService.updateById(tender);
+            CapitalChangeEntity entity = new CapitalChangeEntity();
+            entity.setType(CapitalChangeEnum.Unfrozen);
+            entity.setUserId(tender.getUserId());
+            entity.setMoney(tender.getValidMoney());
+            entity.setRemark("借款 [" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "] 招标失败解除冻结资金。");
+            capitalChangeHelper.capitalChange(entity);
+        }
 
-                if (!tenderUserIds.contains(tender.getUserId())) {
-                    tenderUserIds.add(tender.getUserId());
-                    notices.setFromUserId(1L);
-                    notices.setUserId(tender.getUserId());
-                    notices.setRead(false);
-                    notices.setName("投资的借款失败");
-                    notices.setContent("你所投资的借款[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]在" + DateHelper.nextDate(nowDate) + "已取消");
-                    notices.setType("system");
-                    notices.setCreatedAt(nowDate);
-                    notices.setUpdatedAt(nowDate);
-
-                    //发送站内信
-                    MqConfig mqConfig = new MqConfig();
-                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
-                    mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
-                    Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
-                    mqConfig.setMsg(body);
-                    try {
-                        log.info(String.format("borrowBizImpl cancelBorrow send mq %s", GSON.toJson(body)));
-                        mqHelper.convertAndSend(mqConfig);
-                    } catch (Exception e) {
-                        log.error("borrowBizImpl cancelBorrow send mq exception", e);
-                    }
-                }
+        // ======================================
+        //  发送站内信
+        // ======================================
+        Notices notices;
+        String content = String.format("你所投资的借款[ %s ]在 %s 已取消", BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()), DateHelper.nextDate(nowDate)) ;
+        for(Long toUserId: userIdSet){
+            notices = new Notices();
+            notices.setFromUserId(1L);
+            notices.setUserId(toUserId);
+            notices.setRead(false);
+            notices.setName("投资的借款失败");
+            notices.setContent(content);
+            notices.setType("system");
+            notices.setCreatedAt(nowDate);
+            notices.setUpdatedAt(nowDate);
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
+            mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
+            Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("borrowBizImpl cancelBorrow send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Exception e) {
+                log.error("borrowBizImpl cancelBorrow send mq exception", e);
             }
         }
 
-        Long tenderId = borrow.getTenderId();
-        if ((borrow.getType() == 0) && (!ObjectUtils.isEmpty(tenderId)) && (tenderId > 0)) {//判断是否是转让标，并将借款状态置为0
-            Tender tender = tenderService.findById(tenderId);
-            tender.setTransferFlag(0);
-            tender.setUpdatedAt(nowDate);
-            tenderService.updateById(tender);
-        }
+        // 债权转让标识取消
+        assertAndDoTranfer(borrow) ;
 
         //更新借款
         borrow.setStatus(5);
         borrow.setUpdatedAt(nowDate);
         borrowService.updateById(borrow);
-
         return ResponseEntity.ok(VoBaseResp.ok("取消借款成功!"));
+    }
+
+    /**
+     * 自动甄别该标是否属于债权转让. 是:自动取消债权转让标识
+     * @param borrow
+     * @throws Exception
+     */
+    public void assertAndDoTranfer(Borrow borrow) throws Exception {
+        Long tenderId = borrow.getTenderId();
+        if ((borrow.getType() == 0) && (!ObjectUtils.isEmpty(tenderId)) && (tenderId > 0)) {
+            Tender tender = tenderService.findById(tenderId);
+            tender.setTransferFlag(0);
+            tender.setUpdatedAt(new Date());
+            tenderService.updateById(tender);
+        }
     }
 
 
@@ -746,13 +754,8 @@ public class BorrowBizImpl implements BorrowBiz {
             }
         }
 
-        Long tenderId = borrow.getTenderId();
-        if ((borrow.getType() == 0) && (!ObjectUtils.isEmpty(tenderId)) && (tenderId > 0)) {//判断是否是转让标，并将借款状态置为0
-            Tender tender = tenderService.findById(tenderId);
-            tender.setTransferFlag(0);
-            tender.setUpdatedAt(nowDate);
-            tenderService.updateById(tender);
-        }
+        // 债权转让取消
+        assertAndDoTranfer(borrow) ;
 
         //更新借款
         borrow.setStatus(5);
@@ -787,8 +790,9 @@ public class BorrowBizImpl implements BorrowBiz {
             Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
             List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
 
-            BorrowRepayment borrowRepayment = new BorrowRepayment();
+            BorrowRepayment borrowRepayment = null;
             for (int i = 0; i < repayDetailList.size(); i++) {
+                borrowRepayment = new BorrowRepayment();
                 Map<String, Object> repayDetailMap = repayDetailList.get(i);
                 repayMoney += new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue();
                 repayInterest += new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue();

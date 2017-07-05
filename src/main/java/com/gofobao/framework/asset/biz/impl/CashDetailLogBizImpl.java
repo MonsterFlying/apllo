@@ -29,10 +29,7 @@ import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.OKHttpHelper;
-import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.helper.ThirdAccountPasswordHelper;
+import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -205,9 +202,12 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         resp.setBankName(userThirdAccount.getBankName());
         resp.setLogo(String.format("%s/%s", javaDomain, userThirdAccount.getBankLogo()));
         resp.setCardNo(userThirdAccount.getCardNo().substring(userThirdAccount.getCardNo().length() - 4));
-        resp.setUseMoneyShow(StringHelper.formatDouble(asset.getUseMoney() / 100D, true));
-        resp.setUseMoney(asset.getUseMoney() / 100D);
-        int time = queryFreeTime(userId);
+
+
+
+        resp.setUseMoneyShow(StringHelper.formatDouble(getRealCashMoney(userId) / 100D, true));
+        resp.setUseMoney(getRealCashMoney(userId)  / 100D);
+        int time = queryFreeTime(userId) ;
         resp.setFreeTime(time);
         return ResponseEntity.ok(resp);
     }
@@ -251,8 +251,8 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
         // 用户可提现余额
         Asset asset = assetService.findByUserIdLock(userId);
-        Integer useMoney = asset.getUseMoney();
-        if (useMoney <= 0) {
+        Long useMoney = getRealCashMoney(userId) ;
+        if(useMoney <= 0){
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "账户余额为0！", VoHtmlResp.class));
@@ -410,7 +410,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             log.error("CashDetailLogBizImpl cash gethtml exceptio", e);
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了， 请稍候重试", VoHtmlResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,  "服务器开小差了， 请稍候重试", VoHtmlResp.class)) ;
         }
 
         return ResponseEntity.ok(voHtmlResp);
@@ -735,5 +735,24 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                             "查询异常",
                             VoCashLogWarpRes.class));
         }
+    }
+
+    /**
+     *  获取提现金额
+     *
+     *  1、如果有未还借款，则 可提现额 = 净值额度 - 正在申请、处理中的提现总额 和 账户可用金额 两者取小值
+     *  2、如果没有未还借款，则 可提现额 = 账户可用金额
+     * @param userId
+     * @return
+     */
+    private Long getRealCashMoney(Long userId){
+        Asset asset = assetService.findByUserIdLock(userId);
+
+        ImmutableList<Integer> stateList = ImmutableList.of(0, 1) ;
+        List<CashDetailLog> cashDetailLogs = cashDetailLogService.findByStateInAndUserId(stateList, userId);
+        long cashingMoney = cashDetailLogs.stream().mapToLong(p -> p.getMoney()).sum();  // 正在提现金额
+        Double money = Math.min((((asset.getUseMoney() + asset.getCollection()) * 0.8 - asset.getPayment()) - cashingMoney), asset.getUseMoney());
+        money = ObjectUtils.isEmpty(money) ? 0 : money ;
+        return asset.getPayment() > 0 ? money.longValue() : asset.getUseMoney() ;
     }
 }

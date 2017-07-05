@@ -81,7 +81,7 @@ public class AutoTenderServiceImpl implements AutoTenderService {
     public List<VoFindAutoTender> findQualifiedAutoTenders(VoFindAutoTenderList voFindAutoTenderList) {
         Long borrowId = voFindAutoTenderList.getBorrowId();
         if (ObjectUtils.isEmpty(borrowId)) {
-            return null;
+            return Collections.EMPTY_LIST;
         }
 
         Borrow borrow = borrowService.findById(voFindAutoTenderList.getBorrowId());
@@ -142,7 +142,7 @@ public class AutoTenderServiceImpl implements AutoTenderService {
         sql.append(" limit ").append(pageIndex * pageSize).append(",").append(pageSize);
         Query query = entityManager.createNativeQuery(sql.toString());
         query.unwrap(SQLQuery.class).setResultTransformer(Transformers.aliasToBean(VoFindAutoTender.class));
-        return query.getResultList();
+        return Optional.ofNullable(query.getResultList()).orElse(Collections.EMPTY_LIST);
     }
 
 

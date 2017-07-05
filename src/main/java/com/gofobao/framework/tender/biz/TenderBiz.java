@@ -18,14 +18,14 @@ public interface TenderBiz {
      * @return
      * @throws Exception
      */
-    Map<String,Object> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception;
+    ResponseEntity<VoBaseResp> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception;
 
     /**
      * 投标
      * @param voCreateTenderReq
      * @return
      */
-    ResponseEntity<VoBaseResp> tender(VoCreateTenderReq voCreateTenderReq);
+    ResponseEntity<VoBaseResp> tender(VoCreateTenderReq voCreateTenderReq) throws Exception;
 
     /**
      * 投标用户

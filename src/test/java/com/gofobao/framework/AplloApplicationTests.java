@@ -79,7 +79,7 @@ public class AplloApplicationTests {
 
         Gson gson = new Gson();
         Map<String, String> map = new HashMap<>();
-        map.put("borrowId", "169761");
+        map.put("repaymentId", "173795");
         System.out.println(gson.toJson(map));
         System.out.println(SecurityHelper.getSign(gson.toJson(map)));
     }
@@ -136,7 +136,7 @@ public class AplloApplicationTests {
         //根据手机号查询存管账户
         //findAccountByMobile();
         //受托支付
-        trusteePay();
+        //trusteePay();
         //签约查询
         //creditAuthQuery();
         //取消批次
@@ -201,17 +201,8 @@ public class AplloApplicationTests {
         BidApplyQueryResp response = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, request, BidApplyQueryResp.class);
         System.out.println(response);*/
 
-        /*BatchDetailsQueryReq request = new BatchDetailsQueryReq();
-        request.setBatchNo("192457");
-        request.setBatchTxDate("20170703");
-        request.setType("9");
-        request.setPageNum("1");
-        request.setPageSize("10");
-        request.setChannel(ChannelContant.HTML);
-        BatchDetailsQueryResp response = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, request, BatchDetailsQueryResp.class);
-        System.out.println(response);*/
 
-        /*Borrow borrow = borrowService.findById(165225L);
+        /*Borrow borrow = borrowService.findById(169767L);
         try {
             borrowBiz.notTransferedBorrowAgainVerify(borrow);
         } catch (Exception e) {
