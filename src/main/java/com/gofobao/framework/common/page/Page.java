@@ -15,14 +15,11 @@ public class Page extends VoBaseReq {
     protected Integer pageSize;
 
     public Integer getPageIndex() {
-        if (ObjectUtils.isEmpty(pageIndex) || pageIndex < 1) {
-            this.pageIndex = CommonPageContants.DEFAULT_PAGE_INDEX;
-        }
         return pageIndex;
     }
 
     public void setPageIndex(Integer pageIndex) {
-        if (ObjectUtils.isEmpty(pageIndex) || pageIndex <= 1) {
+        if (ObjectUtils.isEmpty(pageIndex) || pageIndex < 1) {
             this.pageIndex = CommonPageContants.DEFAULT_PAGE_INDEX;
         } else {
             this.pageIndex = pageIndex - 1;
