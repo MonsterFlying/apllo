@@ -85,7 +85,7 @@ public class AplloApplicationTests {
     private BorrowCollectionService borrowCollectionService;
 
     @Test
-    public void contextLoads() {
+    public void contextLoads() throws InterruptedException {
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_AUTO_TENDER);
         mqConfig.setTag(MqTagEnum.AUTO_TENDER);
@@ -97,6 +97,8 @@ public class AplloApplicationTests {
         } catch (Exception e) {
             log.error("borrowProvider autoTender send mq exception", e);
         }
+
+        Thread.sleep(100000 * 1000);
     }
 
     public static void main(String[] args) {

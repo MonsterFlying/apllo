@@ -130,6 +130,11 @@ public class BorrowBizImpl implements BorrowBiz {
     @Value(value = "${jixin.redPacketAccountId}")
     private String redPacketAccountId; //存管红包账户
 
+    @Value("${gofobao.imageDomain}")
+    private String imageDomain;
+
+
+
     /**
      * 理财首页标列表
      *
@@ -253,7 +258,9 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setStatus(status);
             borrowInfoRes.setSuccessAt(StringUtils.isEmpty(borrow.getSuccessAt()) ? "" : DateHelper.dateToString(borrow.getSuccessAt()));
             borrowInfoRes.setBorrowName(borrow.getName());
-
+            borrowInfoRes.setIsConversion(borrow.getIsConversion());
+            borrowInfoRes.setAvatar(imageDomain + "/data/images/avatar/" + borrow.getUserId() + "_avatar_small.jpg");
+            borrowInfoRes.setReleaseAt(status!=1?DateHelper.dateToString(borrow.getReleaseAt()):"");
             return ResponseEntity.ok(borrowInfoRes);
         } catch (Exception e) {
             log.info("BorrowBizImpl detail fail%s", e);

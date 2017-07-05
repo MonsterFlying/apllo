@@ -101,6 +101,10 @@ public class TenderBizImpl implements TenderBiz {
      * @throws Exception
      */
     public ResponseEntity<VoBaseResp> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voCreateTenderReq.getUserId());
+        if(ObjectUtils.isEmpty(userThirdAccount)){
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "当前用户未开户状态")) ;
+        }
         Users user = userService.findByIdLock(voCreateTenderReq.getUserId());
         Borrow borrow = borrowService.findByIdLock(voCreateTenderReq.getBorrowId());
         Asset asset = assetService.findByUserIdLock(voCreateTenderReq.getUserId());

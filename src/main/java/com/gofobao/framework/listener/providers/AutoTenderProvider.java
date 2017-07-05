@@ -109,7 +109,7 @@ public class AutoTenderProvider {
 
                 VoCreateTenderReq voCreateBorrowTender = new VoCreateTenderReq();
                 voCreateBorrowTender.setBorrowId(borrowId); // 标的
-                voCreateBorrowTender.setUserId(voFindAutoTender.getUserId()); // 投标用户
+                voCreateBorrowTender.setUserId(new Long(voFindAutoTender.getUserId())); // 投标用户
                 voCreateBorrowTender.setTenderMoney(MathHelper.myRound(money / 100.0, 2));  // 投标金额
                 voCreateBorrowTender.setAutoOrder(voFindAutoTender.getOrder());
                 voCreateBorrowTender.setLowest(MathHelper.myRound(voFindAutoTender.getLowest() / 100.0, 2));
@@ -120,8 +120,8 @@ public class AutoTenderProvider {
                     ResponseEntity<VoBaseResp> response = tenderBiz.createTender(voCreateBorrowTender);
                     if (response.getStatusCode().equals(HttpStatus.OK)) {
                         moneyYes += lowest;
-                        autoTenderIds.add(voFindAutoTender.getId());
-                        tenderUserIds.add(voFindAutoTender.getUserId());
+                        autoTenderIds.add(new Long(voFindAutoTender.getId()));
+                        tenderUserIds.add(new Long(voFindAutoTender.getUserId())) ;
                         voFindAutoTender.setAutoAt(nowDate);
                         voFindAutoTender.setId(voFindAutoTender.getId());
                         autoTenderService.updateById(autoTender);
