@@ -1,6 +1,7 @@
 package com.gofobao.framework.asset.entity;
 
 import lombok.Data;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -10,6 +11,7 @@ import java.util.Date;
  */
 @Entity
 @Data
+@DynamicInsert
 @Table(name = "gfb_advance_log")
 public class AdvanceLog {
     @Id

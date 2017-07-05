@@ -424,3 +424,6 @@ CREATE TABLE gfb_asset_change_log
 );
 
 
+ALTER TABLE `gfb_auto_tender`
+  MODIFY COLUMN `repay_money_yes` int(10) unsigned DEFAULT '0' COMMENT '实际还款金额（分）',
+  MODIFY COLUMN `status` int(11) DEFAULT '0' COMMENT '借款用户是否还款状态：0、未还款。1、还款；';
