@@ -195,14 +195,13 @@ public class BorrowProvider {
     public boolean doAgainVerify(Map<String, String> msg) throws Exception {
         boolean bool = false;
         Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get("borrowId")));
-        Borrow borrow = borrowService.findById(borrowId);
+        Borrow borrow = borrowService.findByIdLock(borrowId);
         if (borrow.getStatus() != 1) {
             log.error("复审：借款状态已发生改变！");
             return false;
         }
 
-        if (borrow.isTransfer()) {
-            //批次债券转让
+        if (borrow.isTransfer()) { //批次债券转让
             VoThirdBatchCreditInvest voThirdBatchCreditInvest = new VoThirdBatchCreditInvest();
             voThirdBatchCreditInvest.setBorrowId(borrowId);
             ResponseEntity<VoBaseResp> resp = tenderThirdBiz.thirdBatchCreditInvest(voThirdBatchCreditInvest);
@@ -216,7 +215,7 @@ public class BorrowProvider {
                 log.info("转让标发起复审失败！ msg:" + resp.getBody().getState().getMsg());
                 log.info("====================================================================");
             }
-        } else { //非转让标
+        } else {// 标准标的购买
             if (ObjectUtils.isEmpty(borrow.getSuccessAt())) {
                 borrow.setSuccessAt(new Date());
                 borrowService.updateById(borrow);
