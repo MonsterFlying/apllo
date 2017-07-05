@@ -373,13 +373,13 @@ public class UserThirdBizImpl implements UserThirdBiz {
             });
 
             if (ObjectUtils.isEmpty(passwordSetResponse)) {
-                return ResponseEntity.badRequest().body("error");
+                return ResponseEntity.badRequest().body("success");
             }
             if (!JixinResultContants.SUCCESS.equals(passwordSetResponse.getRetCode())) {
                 log.error("UserThirdBizImpl.modifyOpenAccPwdCallback: 回调出失败");
                 return ResponseEntity
                         .badRequest()
-                        .body("error");
+                        .body("success");
             }
 
             userId = Long.parseLong(passwordSetResponse.getAcqRes());
@@ -388,14 +388,14 @@ public class UserThirdBizImpl implements UserThirdBiz {
             });
 
             if (ObjectUtils.isEmpty(passwordResetResponse)) {
-                return ResponseEntity.badRequest().body("error");
+                return ResponseEntity.badRequest().body("success");
             }
 
             if (!JixinResultContants.SUCCESS.equals(passwordResetResponse.getRetCode())) {
                 log.error("UserThirdBizImpl.modifyOpenAccPwdCallback: 回调出失败");
                 return ResponseEntity
                         .badRequest()
-                        .body("error");
+                        .body("success");
             }
             userId = Long.parseLong(passwordResetResponse.getAcqRes());
         }
@@ -403,13 +403,13 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
         if (ObjectUtils.isEmpty(userId)) {
             log.error("UserThirdBizImpl modifyOpenAccPwdCallback userId is null");
-            return ResponseEntity.badRequest().body("error");
+            return ResponseEntity.badRequest().body("success");
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         if (ObjectUtils.isEmpty(userThirdAccount)) {
             log.error("UserThirdBizImpl modifyOpenAccPwdCallback userThirdAccount is null");
-            return ResponseEntity.badRequest().body("error");
+            return ResponseEntity.badRequest().body("success");
         }
 
         if (userThirdAccount.getPasswordState().equals(1)) {
@@ -421,7 +421,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         Long id = userThirdAccountService.save(userThirdAccount);
         if (id == 0) {
             log.error("UserThirdBizImpl modifyOpenAccPwdCallback update userThirdAccount is error");
-            return ResponseEntity.badRequest().body("error");
+            return ResponseEntity.badRequest().body("success");
         }
 
         return ResponseEntity.ok("success");
@@ -435,14 +435,14 @@ public class UserThirdBizImpl implements UserThirdBiz {
         if (ObjectUtils.isEmpty(autoBidAuthResponse)) {
             return ResponseEntity
                     .badRequest()
-                    .body("error");
+                    .body("success");
         }
 
         if (!JixinResultContants.SUCCESS.equals(autoBidAuthResponse.getRetCode())) {
             log.error("UserThirdBizImpl.autoTenderCallback: 回调出失败");
             return ResponseEntity
                     .badRequest()
-                    .body("error");
+                    .body("success");
         }
 
         Long userId = Long.parseLong(autoBidAuthResponse.getAcqRes());
@@ -450,7 +450,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
         if (ObjectUtils.isEmpty(userId)) {
             log.error("UserThirdBizImpl autoTenderCallback userId is null");
-            return ResponseEntity.badRequest().body("error");
+            return ResponseEntity.badRequest().body("success");
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
@@ -458,7 +458,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             log.error("UserThirdBizImpl autoTenderCallback userThirdAccount is null");
             return ResponseEntity
                     .badRequest()
-                    .body("error");
+                    .body("success");
         }
 
 
@@ -476,7 +476,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             log.error("UserThirdBizImpl autoTenderCallback update userThirdAccount is error");
             return ResponseEntity
                     .badRequest()
-                    .body("error");
+                    .body("success");
         }
 
         return ResponseEntity.ok("success");
@@ -591,21 +591,21 @@ public class UserThirdBizImpl implements UserThirdBiz {
         if (ObjectUtils.isEmpty(autoCreditInvestAuthResponse)) {
             return ResponseEntity
                     .badRequest()
-                    .body("error");
+                    .body("success");
         }
 
         if (!JixinResultContants.SUCCESS.equals(autoCreditInvestAuthResponse.getRetCode())) {
             log.error("UserThirdBizImpl.autoTranferCallback: 回调出失败");
             return ResponseEntity
                     .badRequest()
-                    .body("error");
+                    .body("success");
         }
 
         Long userId = Long.parseLong(autoCreditInvestAuthResponse.getAcqRes());
 
         if (ObjectUtils.isEmpty(userId)) {
             log.error("UserThirdBizImpl autoTranferCallback userId is null");
-            return ResponseEntity.badRequest().body("error");
+            return ResponseEntity.badRequest().body("success");
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
@@ -613,7 +613,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             log.error("UserThirdBizImpl autoTranferCallback userThirdAccount is null");
             return ResponseEntity
                     .badRequest()
-                    .body("error");
+                    .body("success");
         }
 
 
@@ -629,7 +629,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             log.error("UserThirdBizImpl autoTranferCallback update userThirdAccount is error");
             return ResponseEntity
                     .badRequest()
-                    .body("error");
+                    .body("success");
         }
 
         return ResponseEntity.ok("success");
@@ -973,7 +973,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         });
 
         if (ObjectUtils.isEmpty(passwordSetResponse)) {
-            return ResponseEntity.badRequest().body("error");
+            return ResponseEntity.badRequest().body("success");
         }
         if (!JixinResultContants.SUCCESS.equals(passwordSetResponse.getRetCode())) {
             log.error("UserThirdBizImpl.adminPasswordInitCallback: 回调出失败");
@@ -984,13 +984,13 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
         if (ObjectUtils.isEmpty(userId)) {
             log.error("UserThirdBizImpl adminPasswordInitCallback userId is null");
-            return ResponseEntity.badRequest().body("error");
+            return ResponseEntity.badRequest().body("success");
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         if (ObjectUtils.isEmpty(userThirdAccount)) {
             log.error("UserThirdBizImpl adminPasswordInitCallback userThirdAccount is null");
-            return ResponseEntity.badRequest().body("error");
+            return ResponseEntity.badRequest().body("success");
         }
 
         if (userThirdAccount.getPasswordState().equals(1)) {
@@ -1002,7 +1002,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         Long id = userThirdAccountService.save(userThirdAccount);
         if (id == 0) {
             log.error("UserThirdBizImpl adminPasswordInitCallback update userThirdAccount is error");
-            return ResponseEntity.badRequest().body("error");
+            return ResponseEntity.badRequest().body("success");
         }
 
         return ResponseEntity.ok("success");

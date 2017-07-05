@@ -525,25 +525,25 @@ public class AssetBizImpl implements AssetBiz {
         if (ObjectUtils.isEmpty(directRechargePlusResponse)) {
             return ResponseEntity
                     .badRequest()
-                    .body("error");
+                    .body("success");
         }
 
         Long userId = Long.parseLong(directRechargePlusResponse.getAcqRes());
         if (ObjectUtils.isEmpty(userId)) {
             log.error("AssetBizImpl.rechargeCallback:  userId is null");
-            return ResponseEntity.badRequest().body("error");
+            return ResponseEntity.badRequest().body("success");
         }
         Users users = userService.findByIdLock(userId);
         if (ObjectUtils.isEmpty(users)) {
             log.error("AssetBizImpl.rechargeCallback:  userId is null");
-            return ResponseEntity.badRequest().body("error");
+            return ResponseEntity.badRequest().body("success");
         }
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         if (ObjectUtils.isEmpty(userThirdAccount)) {
             log.error("AssetBizImpl.rechargeCallback: userThirdAccount is null");
             return ResponseEntity
                     .badRequest()
-                    .body("error");
+                    .body("success");
         }
 
         // 更改充值记录
@@ -553,7 +553,7 @@ public class AssetBizImpl implements AssetBiz {
             log.error("AssetBizImpl.rechargeCallback: 没有该条充值记录");
             return ResponseEntity
                     .badRequest()
-                    .body("error");
+                    .body("success");
         }
 
         if (JixinResultContants.SUCCESS.equals(directRechargePlusResponse.getRetCode())) {
@@ -565,7 +565,7 @@ public class AssetBizImpl implements AssetBiz {
                 log.error("AssetBizImpl.rechargeCallback: 当前充值不属于该用户");
                 return ResponseEntity
                         .badRequest()
-                        .body("error");
+                        .body("success");
             }
 
             Double money = new Double(directRechargePlusResponse.getTxAmount()) * 100;
@@ -574,7 +574,7 @@ public class AssetBizImpl implements AssetBiz {
                 log.error("AssetBizImpl.rechargeCallback: 充值金额不一致");
                 return ResponseEntity
                         .badRequest()
-                        .body("error");
+                        .body("success");
             }
 
             Date now = new Date();

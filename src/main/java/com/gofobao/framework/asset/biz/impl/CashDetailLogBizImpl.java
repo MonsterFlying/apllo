@@ -476,26 +476,26 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         });
         if (ObjectUtils.isEmpty(response)) {
             log.error("CashDetailDizImpl.cashCallback: 网络异常");
-            return ResponseEntity.ok("failed");
+            return ResponseEntity.ok("success");
         }
 
         Long userId = Long.parseLong(response.getAcqRes());
         if ((ObjectUtils.isEmpty(userId)) || (userId <= 0)) {
             log.error(String.format("CashDetailDizImpl.cashCallback: userId %s", response.getAcqRes()));
-            return ResponseEntity.ok("failed");
+            return ResponseEntity.ok("success");
         }
 
         Users users = userService.findByIdLock(userId);
         if (ObjectUtils.isEmpty(users)) {
             log.error("CashDetailDizImpl.cashCallback: 用户不存在");
-            return ResponseEntity.ok("failed");
+            return ResponseEntity.ok("success");
         }
 
         String seqNo = response.getTxDate() + response.getTxTime() + response.getSeqNo();  // 交易流水
         CashDetailLog cashDetailLog = cashDetailLogService.findTopBySeqNoLock(seqNo);
         if (ObjectUtils.isEmpty(cashDetailLog)) {
             log.error("CashDetailDizImpl.cashCallback: 交易记录不存在");
-            return ResponseEntity.ok("failed");
+            return ResponseEntity.ok("success");
         }
         if (cashDetailLog.getState() == 3) {
             log.error("CashDetailDizImpl.cashCallback: 提现成功重复调用");

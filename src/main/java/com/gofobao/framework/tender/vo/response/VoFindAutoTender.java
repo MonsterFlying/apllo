@@ -9,9 +9,9 @@ import java.util.Date;
  */
 @Data
 public class VoFindAutoTender {
-    private Long id;
+    private Integer id;
     private Boolean status;
-    private Long userId;
+    private Integer userId;
     private Integer lowest;
     private Integer borrowTypes;
     private Integer repayFashions;
