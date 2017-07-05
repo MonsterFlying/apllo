@@ -56,5 +56,7 @@ public class VoViewBorrowList implements Serializable {
     private Long surplusSecond;
     @ApiModelProperty("头像")
     private String avatar;
+    @ApiModelProperty("发布时间")
+    private String releaseAt;
 
 }

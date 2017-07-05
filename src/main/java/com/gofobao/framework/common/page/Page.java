@@ -25,7 +25,7 @@ public class Page extends VoBaseReq{
         if (ObjectUtils.isEmpty(pageIndex) || pageIndex <= 1) {
             this.pageIndex = CommonPageContants.DEFAULT_PAGE_INDEX;
         } else {
-            this.pageIndex = pageIndex  - 1 ;
+            this.pageIndex = pageIndex;
         }
     }
 

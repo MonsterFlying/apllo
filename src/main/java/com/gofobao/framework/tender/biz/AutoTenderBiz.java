@@ -9,6 +9,7 @@ import com.gofobao.framework.tender.vo.request.VoSaveAutoTenderReq;
 import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
 import com.gofobao.framework.tender.vo.response.VoViewAutoTenderList;
 import com.gofobao.framework.tender.vo.response.VoViewUserAutoTenderWarpRes;
+import com.gofobao.framework.tender.vo.response.web.VoViewPcAutoTenderWarpRes;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -73,5 +74,19 @@ public interface AutoTenderBiz {
      * @return
      * @throws Exception
      */
-    public ResponseEntity<VoViewAutoTenderList> getAutoTenderList(VoGetAutoTenderList voGetAutoTenderList) throws Exception;
+     ResponseEntity<VoViewAutoTenderList> getAutoTenderList(VoGetAutoTenderList voGetAutoTenderList) throws Exception;
+
+
+    /**
+     * pc：获取自动投标列表
+     * @param voGetAutoTenderList
+     * @return
+     * @throws Exception
+     */
+    ResponseEntity<VoViewPcAutoTenderWarpRes> pcAutoTenderList(VoGetAutoTenderList voGetAutoTenderList) throws Exception;
+
+
+
+
+
 }

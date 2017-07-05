@@ -5,10 +5,7 @@ import com.gofobao.framework.system.vo.request.VoNoticesReq;
 import com.gofobao.framework.system.vo.request.VoNoticesTranReq;
 import com.gofobao.framework.system.vo.response.NoticesInfo;
 import com.gofobao.framework.system.vo.response.UserNotices;
-import com.gofobao.framework.system.vo.response.VoViewUserNoticesWarpRes;
-import lombok.Data;
 
-import java.util.Date;
 import java.util.List;
 
 /**

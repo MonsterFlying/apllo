@@ -1,10 +1,12 @@
 package com.gofobao.framework.collection.biz;
 
+import com.gofobao.framework.collection.vo.request.OrderListReq;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
+import com.gofobao.framework.collection.vo.response.web.VoViewCollectionListWarpRes;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -20,11 +22,22 @@ public interface PaymentBiz {
    ResponseEntity<VoViewCollectionOrderListWarpResp> orderList(VoCollectionOrderReq voCollectionOrderReq);
 
     /**
+     * pc：回款明细
+     * @param orderListReq
+     * @return
+     */
+    ResponseEntity<VoViewCollectionListWarpRes> pcOrderList(OrderListReq orderListReq);
+
+
+    /**
      * 回款详情
      * @param voOrderDetailReq
      * @return
      */
    ResponseEntity<VoViewOrderDetailResp> orderDetail(VoOrderDetailReq voOrderDetailReq);
+
+
+
 
 
    ResponseEntity<VoViewCollectionDaysWarpRes> collectionDays(String date, Long userId);

@@ -207,6 +207,7 @@ public class BorrowServiceImpl implements BorrowService {
             } else {
                 item.setIsFlow(false);
             }
+            item.setReleaseAt(DateHelper.dateToString(m.getReleaseAt()));
             item.setStatus(status);
             item.setRepayFashion(m.getRepayFashion());
             item.setIsContinued(m.getIsContinued());
@@ -246,32 +247,29 @@ public class BorrowServiceImpl implements BorrowService {
         List statusArray = Lists.newArrayList(
                 new Integer(BorrowContants.CANCEL),
                 new Integer(BorrowContants.NO_PASS),
-                new Integer(BorrowContants.RECHECK_NO_PASS));
+                new Integer(BorrowContants.RECHECK_NO_PASS),
+                new Integer(BorrowContants.PENDING));
 
         StringBuilder pageSb = new StringBuilder(" SELECT b FROM Borrow b WHERE 1=1 ");
-
         StringBuilder countSb = new StringBuilder(" SELECT COUNT(id) FROM Borrow b WHERE 1=1 ");
         StringBuilder condtionSql = new StringBuilder("");
-        /**
-         *
-         *条件
-         */
+
+        // 条件
         if (type != null) {  // 全部
+
             if (type == 5) {
                 condtionSql.append(" AND b.tenderId is not null ");
             } else {
                 condtionSql.append(" AND b.type=" + type);
             }
-        }
-        condtionSql.append(" AND b.status NOT IN(:statusArray)");
 
-        /**
-         * 排序
-         */
-        if (StringUtils.isEmpty(type)) {
+        }
+        condtionSql.append(" AND b.verifyAt IS Not NULL AND b.status NOT IN(:statusArray)");
+        // 排序
+        if ("-1".equals(type)) {   // 全部
             condtionSql.append(" ORDER BY FIELD(b.type,0, 4, 1, 2),(b.moneyYes / b.money) DESC, b.id DESC");
         } else {
-            if (type == BorrowContants.INDEX_TYPE_CE_DAI) {
+            if (ObjectUtils.isEmpty(BorrowContants.INDEX_TYPE_CE_DAI)) {
                 condtionSql.append(" ORDER BY b.status ASC,(b.moneyYes / b.money) DESC, b.successAt DESC,b.id DESC");
             } else {
                 condtionSql.append(" ORDER BY b.status, b.successAt DESC, b.id DESC");

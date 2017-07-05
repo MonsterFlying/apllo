@@ -14,6 +14,13 @@ public interface CouponBiz {
     ResponseEntity<VoViewCouponWarpRes> list(VoCouponReq voCouponReq);
 
     /**
+     * pc流量券列表
+     * @param voCouponReq
+     * @return
+     */
+    ResponseEntity<VoViewCouponWarpRes> pcList(VoCouponReq voCouponReq);
+
+    /**
      * 流量券兑换
      *takeFlowReq
      * @return
@@ -29,4 +36,6 @@ public interface CouponBiz {
      * @throws Exception
      */
     String takeFlowCallBack(String key) throws Exception ;
+
+
 }

@@ -19,7 +19,7 @@ public class VoPcBorrowList extends VoBaseResp{
     private Integer pageSize;
 
     @ApiModelProperty("总记录数")
-    private Integer totalCount;
+    private Integer totalCount=0;
 
     @ApiModelProperty("集合")
     private List<VoViewBorrowList> borrowLists;

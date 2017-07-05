@@ -7,6 +7,7 @@ import com.gofobao.framework.collection.contants.BorrowCollectionContants;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.repository.BorrowCollectionRepository;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
+import com.gofobao.framework.collection.vo.request.OrderListReq;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
@@ -29,10 +30,7 @@ import org.springframework.util.ObjectUtils;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created by admin on 2017/5/31.
@@ -57,16 +55,28 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
      */
     @Override
     public List<BorrowCollection> orderList(VoCollectionOrderReq voCollectionOrderReq) {
-        Date date = DateHelper.stringToDate(voCollectionOrderReq.getTime(),DateHelper.DATE_FORMAT_YMD);
+        Date date = DateHelper.stringToDate(voCollectionOrderReq.getTime(), DateHelper.DATE_FORMAT_YMD);
 
         Specification<BorrowCollection> specification = Specifications.<BorrowCollection>and()
                 .eq("userId", voCollectionOrderReq.getUserId())
                 .between("collectionAt", new Range<>(date, DateHelper.endOfDate(date)))
                 .eq("transferFlag", BorrowCollectionContants.TRANSFER_FLAG_NO)
-                .ne("borrowId",null)
+                .ne("borrowId", null)
                 .build();
         List<BorrowCollection> borrowCollections = borrowCollectionRepository.findAll(specification);
         return Optional.ofNullable(borrowCollections).orElse(Collections.EMPTY_LIST);
+    }
+
+    @Override
+    public Map<String, Object> pcOrderList(OrderListReq orderListReq) {
+        String sql = "select b.collectionAt,sum(b.collectionMoney),sum(b.principal),sum(b.interest),count(b.id) from BorrowCollection AS b where b.userId=:userId  GROUP BY date_format(b.collectionAt,'%Y%y%d') ";
+        Query query =  entityManager.createQuery(sql);
+        query.setParameter("userId",orderListReq.getUserId());
+        query.setFirstResult(orderListReq.getPageIndex()*orderListReq.getPageSize());
+        query.setMaxResults(orderListReq.getPageSize());
+        query.getResultList();
+
+        return null;
     }
 
     /**
@@ -78,9 +88,9 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
     @Override
     public VoViewOrderDetailResp orderDetail(VoOrderDetailReq voOrderDetailReq) {
         BorrowCollection borrowCollection = borrowCollectionRepository.findOne(voOrderDetailReq.getCollectionId());
-        Preconditions.checkNotNull(borrowCollection, "BorrowCollectionSericeImpl.orderDetail: borrowCollecion is empty") ;
+        Preconditions.checkNotNull(borrowCollection, "BorrowCollectionSericeImpl.orderDetail: borrowCollecion is empty");
         Borrow borrow = borrowRepository.findOne(borrowCollection.getBorrowId().longValue());
-        VoViewOrderDetailResp detailRes = VoBaseResp.ok("查询成功",  VoViewOrderDetailResp.class);
+        VoViewOrderDetailResp detailRes = VoBaseResp.ok("查询成功", VoViewOrderDetailResp.class);
         detailRes.setOrder(borrowCollection.getOrder() + 1);
         detailRes.setCollectionMoney(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100D));
         detailRes.setLateDays(borrowCollection.getLateDays());

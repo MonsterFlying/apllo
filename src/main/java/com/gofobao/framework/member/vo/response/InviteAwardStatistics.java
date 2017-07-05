@@ -7,8 +7,8 @@ import lombok.Data;
  */
 @Data
 public class InviteAwardStatistics {
-    private String sumAward;
-    private String yesterdayAward;
-    public Integer countNum;
+    private String sumAward="0";
+    private String yesterdayAward="0";
+    public Integer countNum=0;
 
 }

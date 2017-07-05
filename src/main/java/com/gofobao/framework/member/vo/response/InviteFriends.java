@@ -16,5 +16,8 @@ public class InviteFriends {
     private String scale;
     @ApiModelProperty("奖励金额")
     private String money;
+    @ApiModelProperty("总待收本金")
+    private String waitPrincipalTotal;
+
 
 }

@@ -2,13 +2,15 @@ package com.gofobao.framework.borrow.controller;
 
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
-import com.gofobao.framework.borrow.vo.request.*;
+import com.gofobao.framework.borrow.vo.request.VoAddNetWorthBorrow;
+import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
+import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
+import com.gofobao.framework.borrow.vo.request.VoDoAgainVerifyReq;
 import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewVoBorrowDescWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.ThymeleafHelper;
-import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import io.swagger.annotations.Api;

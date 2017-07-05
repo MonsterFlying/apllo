@@ -156,9 +156,35 @@ public class CouponBizImpl implements CouponBiz {
     }
 
 
+    /**
+     * pc 流量券列表
+     *
+     * @param voCouponReq
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoViewCouponWarpRes> pcList(VoCouponReq voCouponReq) {
+        try {
+            Map<String, Object> resultMaps = couponService.pcList(voCouponReq);
+            VoViewCouponWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewCouponWarpRes.class);
+            warpRes.setTotalCount(Integer.valueOf(resultMaps.get("totalCount").toString()));
+            warpRes.setCouponList((List<CouponRes>) resultMaps.get("couponResList"));
+            return ResponseEntity.ok(warpRes);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp
+                            .error(VoBaseResp.ERROR, "查询失败", VoViewCouponWarpRes.class));
+        }
+
+
+    }
+
+
     public ResponseEntity<VoBaseResp> exchange(VoTakeFlowReq takeFlowReq) {
 
-        List<Coupon> couponList = couponService.takeFlow(takeFlowReq.getUserId(),takeFlowReq.getCouponId());
+        List<Coupon> couponList = couponService.takeFlow(takeFlowReq.getUserId(), takeFlowReq.getCouponId());
         if (CollectionUtils.isEmpty(couponList)) {
             VoBaseResp.error(VoBaseResp.ERROR, "");
         }
@@ -227,7 +253,6 @@ public class CouponBizImpl implements CouponBiz {
         return ResponseEntity.ok(VoBaseResp.ok(response.getRedirectUrl()));
     }
 
-
     @Override
     @Transactional
     public String takeFlowCallBack(String key) throws Exception {
@@ -247,7 +272,7 @@ public class CouponBizImpl implements CouponBiz {
             return ReturnResponse.FAILUE.toXml();
         }
         for (Item item : body) {
-            Integer couponId =  Integer.valueOf(item.getOrderId().substring(8));
+            Integer couponId = Integer.valueOf(item.getOrderId().substring(8));
             List<Coupon> coupons = couponRepository.findById(couponId);
             if (ObjectUtils.isEmpty(coupons)) {
                 return ReturnResponse.FAILUE.toXml();

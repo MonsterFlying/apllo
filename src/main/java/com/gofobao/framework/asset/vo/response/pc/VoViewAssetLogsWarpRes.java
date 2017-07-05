@@ -14,5 +14,5 @@ import java.util.List;
 @ApiModel
 public class VoViewAssetLogsWarpRes extends VoBaseResp{
     private List<AssetLogs> assetLogs= Lists.newArrayList();
-    private Integer totalCount;
+    private Integer totalCount=0;
 }

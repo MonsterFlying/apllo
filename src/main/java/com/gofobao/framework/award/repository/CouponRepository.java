@@ -13,8 +13,18 @@ import java.util.List;
  * Created by admin on 2017/6/7.
  */
 @Repository
-public interface CouponRepository  extends JpaRepository<Coupon,Long>,JpaSpecificationExecutor<Coupon> {
+public interface CouponRepository extends JpaRepository<Coupon, Long>, JpaSpecificationExecutor<Coupon> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<Coupon> findById(Integer id);
+
+    /**
+     * pc:流量券列表
+     *
+     * @param userId
+     * @param status
+     * @return
+     */
+    List<Coupon> findByUserIdAndStatus(Long userId, Integer status);
+
 }

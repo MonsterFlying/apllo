@@ -16,5 +16,5 @@ public class VoCashLogWarpRes extends VoBaseResp{
     private List<VoCashLog> logs= Lists.newArrayList();
 
     @ApiModelProperty("总记录数")
-    private Integer totalCount;
+    private Integer totalCount=0;
 }

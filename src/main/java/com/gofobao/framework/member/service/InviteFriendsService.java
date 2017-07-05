@@ -1,11 +1,13 @@
 package com.gofobao.framework.member.service;
 
 import com.gofobao.framework.member.vo.request.VoFriendsReq;
+import com.gofobao.framework.member.vo.request.VoFriendsTenderReq;
 import com.gofobao.framework.member.vo.response.FriendsTenderInfo;
 import com.gofobao.framework.member.vo.response.InviteAwardStatistics;
 import com.gofobao.framework.member.vo.response.InviteFriends;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by admin on 2017/6/6.
@@ -17,6 +19,9 @@ public interface InviteFriendsService {
      * @return
      */
     List<InviteFriends> list(VoFriendsReq voFriendsReq);
+
+
+    Map<String, Object> pcBrokerBounsList(VoFriendsTenderReq friendsTenderReq);
 
     /**
      * 邀请奖励统计
@@ -33,5 +38,12 @@ public interface InviteFriendsService {
      */
     List<FriendsTenderInfo> inviteUserFirstTender(VoFriendsReq voFriendsReq);
 
+
+    /**
+     * pc:邀请用户
+     * @param voFriendsReq
+     * @return
+     */
+    Map<String, Object> pcInviteUserFirstTender(VoFriendsReq voFriendsReq);
 
 }
