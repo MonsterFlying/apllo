@@ -7,7 +7,7 @@ import lombok.Data;
  * Created by admin on 2017/5/31.
  */
 @Data
-public class VoCollectionOrderReq {
+public class VoCollectionOrderReq  {
 
     private Long userId;
 

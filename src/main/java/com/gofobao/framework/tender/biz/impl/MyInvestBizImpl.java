@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by admin on 2017/6/6.
@@ -29,9 +30,12 @@ public class MyInvestBizImpl implements MyInvestBiz {
     public ResponseEntity<VoViewBackMoneyListWarpRes> backMoneyList(VoInvestListReq voInvestListReq) {
         voInvestListReq.setType(TenderConstans.BACK_MONEY);
         try {
-            List<VoViewBackMoney> backMoneyList = investService.backMoneyList(voInvestListReq);
+            Map<String,Object>resultMaps=investService.backMoneyList(voInvestListReq);
+            Integer totalCount=Integer.valueOf(resultMaps.get("totalCount").toString());
+            List<VoViewBackMoney> backMoneyList=(List<VoViewBackMoney>) resultMaps.get("backMoneyList");
             VoViewBackMoneyListWarpRes voViewBackMoneyListWarpRes = VoBaseResp.ok("查询成功", VoViewBackMoneyListWarpRes.class);
             voViewBackMoneyListWarpRes.setVoViewBackMonies(backMoneyList);
+            voViewBackMoneyListWarpRes.setTotalCount(totalCount);
             return ResponseEntity.ok(voViewBackMoneyListWarpRes);
         } catch (Exception e) {
             return ResponseEntity
@@ -43,11 +47,14 @@ public class MyInvestBizImpl implements MyInvestBiz {
     @Override
     public ResponseEntity<VoViewBiddingListWrapRes> biddingList(VoInvestListReq voInvestListReq) {
         voInvestListReq.setType(TenderConstans.BIDDING);
-        try {
-            List<VoViewBiddingRes> viewBiddingRes = investService.biddingList(voInvestListReq);
-            VoViewBiddingListWrapRes voViewBuddingResListWrapRes = VoBaseResp.ok("查询成功", VoViewBiddingListWrapRes.class);
-            voViewBuddingResListWrapRes.setVoViewBiddingRes(viewBiddingRes);
-            return ResponseEntity.ok(voViewBuddingResListWrapRes);
+        try{
+            Map<String,Object>resultMaps=investService.biddingList(voInvestListReq);
+            Integer totalCount=Integer.valueOf(resultMaps.get("totalCount").toString());
+            List<VoViewBiddingRes> biddingRes=( List<VoViewBiddingRes>) resultMaps.get("biddingResList");
+            VoViewBiddingListWrapRes wrapResRes=VoBaseResp.ok("查询成功",VoViewBiddingListWrapRes.class);
+            wrapResRes.setVoViewBiddingRes(biddingRes);
+            wrapResRes.setTotalCount(totalCount);
+            return ResponseEntity.ok(wrapResRes);
         } catch (Exception e) {
             return ResponseEntity
                     .badRequest()
@@ -59,9 +66,13 @@ public class MyInvestBizImpl implements MyInvestBiz {
     public ResponseEntity<VoViewSettleWarpRes> settleList(VoInvestListReq voInvestListReq) {
         voInvestListReq.setType(TenderConstans.SETTLE);
         try {
-            List<VoViewSettleRes> viewBiddingRes = investService.settleList(voInvestListReq);
+            Map<String,Object>resultMaps=investService.settleList(voInvestListReq);
+            Integer totalCount=Integer.valueOf(resultMaps.get("totalCount").toString());
+            List<VoViewSettleRes> settleList=( List<VoViewSettleRes>) resultMaps.get("settleResList");
+
             VoViewSettleWarpRes viewSettleWarpRes = VoBaseResp.ok("查询成功", VoViewSettleWarpRes.class);
-            viewSettleWarpRes.setVoViewSettleRes(viewBiddingRes);
+            viewSettleWarpRes.setTotalCount(totalCount);
+            viewSettleWarpRes.setVoViewSettleRes(settleList);
             return ResponseEntity.ok(viewSettleWarpRes);
         } catch (Exception e) {
             return ResponseEntity

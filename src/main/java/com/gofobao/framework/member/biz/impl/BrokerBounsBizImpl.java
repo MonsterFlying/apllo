@@ -7,7 +7,11 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.member.service.InviteFriendsService;
 import com.gofobao.framework.member.vo.request.VoFriendsReq;
+import com.gofobao.framework.member.vo.request.VoFriendsTenderReq;
 import com.gofobao.framework.member.vo.response.*;
+import com.gofobao.framework.member.vo.response.pc.PcInviteFriends;
+import com.gofobao.framework.member.vo.response.pc.VoViewBrokerBounsWarpRes;
+import com.gofobao.framework.member.vo.response.pc.VoViewInviteFriendsWarpRes;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,6 +52,29 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {
             return ResponseEntity.ok(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewInviteFriendersWarpRes.class));
+        }
+    }
+
+    /**
+     * pc:邀请好友
+     *
+     * @param voFriendsReq
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoViewInviteFriendsWarpRes> pcFriendsTender(VoFriendsReq voFriendsReq) {
+        try {
+            Map<String, Object> resultMaps = inviteFriendsService.pcInviteUserFirstTender(voFriendsReq);
+            Integer totalCount = Integer.parseInt(resultMaps.get("totalCount").toString());
+            List<PcInviteFriends> friendsList = (List<PcInviteFriends>) resultMaps.get("userList");
+            VoViewInviteFriendsWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewInviteFriendsWarpRes.class);
+            warpRes.setTotalCount(totalCount);
+            warpRes.setFriendsList(friendsList);
+            return ResponseEntity.ok(warpRes);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询异常", VoViewInviteFriendsWarpRes.class));
         }
     }
 
@@ -95,12 +122,33 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
     public Map<String, Object> shareRegister(Long userId) {
         Map<String, Object> paramMaps = new HashMap<>();
         Users user = usersRepository.findOne(userId);
-        String inviteCode=user.getInviteCode();
+        String inviteCode = user.getInviteCode();
         paramMaps.put("inviteUrl", webDomain + "/#/auth/register?inviteCode=" + inviteCode);
         paramMaps.put("inviteCode", inviteCode);
         paramMaps.put("invitePhone", user.getPhone());
-        paramMaps.put("QRCodeURL",   webDomain+"/invite/qrcode/getInviteFriendQRCode?inviteCode=" + inviteCode);
+        paramMaps.put("QRCodeURL", webDomain + "/invite/qrcode/getInviteFriendQRCode?inviteCode=" + inviteCode);
         paramMaps.put("requestSource", 3);
         return paramMaps;
+    }
+
+    /**
+     * PC
+     * @param voFriendsTenderReq
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoViewBrokerBounsWarpRes> pcBrokerBounsList(VoFriendsTenderReq voFriendsTenderReq) {
+        try {
+            VoViewBrokerBounsWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewBrokerBounsWarpRes.class);
+            Map<String, Object> resultMaps = inviteFriendsService.pcBrokerBounsList(voFriendsTenderReq);
+            Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
+            List<InviteFriends> friendsList = (List<InviteFriends>) resultMaps.get("bounsList");
+            warpRes.setTotalCount(totalCount);
+            warpRes.setFriendsList(friendsList);
+            return ResponseEntity.ok(warpRes);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询异常", VoViewBrokerBounsWarpRes.class));
+        }
     }
 }

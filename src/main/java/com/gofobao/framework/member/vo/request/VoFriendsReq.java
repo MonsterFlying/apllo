@@ -12,4 +12,7 @@ public class VoFriendsReq extends Page {
     @ApiModelProperty(hidden = true )
     private Long userId;
 
+    @ApiModelProperty(hidden = true)
+    private Integer type;
+
 }

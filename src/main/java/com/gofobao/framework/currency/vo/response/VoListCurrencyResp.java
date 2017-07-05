@@ -12,7 +12,9 @@ import java.util.List;
  */
 @ApiModel
 @Data
-public class VoListCurrencyResp extends VoBaseResp{
+public class VoListCurrencyResp extends VoBaseResp {
+
+
     /**
      * 总广福币
      */
@@ -31,9 +33,15 @@ public class VoListCurrencyResp extends VoBaseResp{
     @ApiModelProperty("已用广福币")
     private Integer invalidCurrency;
 
+
+    @ApiModelProperty("总记录数")
+    private Integer totalCount = 0;
+
     /**
      * 广福币列表
      */
     @ApiModelProperty("广福币列表")
     private List<VoCurrency> voCurrencyList;
+
 }
+

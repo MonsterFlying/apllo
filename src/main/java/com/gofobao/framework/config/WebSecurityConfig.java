@@ -91,6 +91,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(
                         "/virtual/**")
                 .permitAll()
+                .antMatchers(
+                        "/autoTender/**")
+                .permitAll()
 
                 .antMatchers(
                         "/award/**")
@@ -130,6 +133,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
                 .antMatchers(
                         "/invite/**")
+                .permitAll()
+                .antMatchers(
+                        "/invest/**")
                 .permitAll()
 
                 .antMatchers(

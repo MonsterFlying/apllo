@@ -56,7 +56,6 @@ import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
@@ -154,12 +153,15 @@ public class BorrowBizImpl implements BorrowBiz {
     }
 
     @Override
-    public ResponseEntity<VoPcBorrowListWarpRes> pcFindAll(VoBorrowListReq voBorrowListReq) {
+    public ResponseEntity<VoPcBorrowList> pcFindAll(VoBorrowListReq voBorrowListReq) {
 
         try {
             VoPcBorrowList borrowLists = borrowService.pcFindAll(voBorrowListReq);
-            VoPcBorrowListWarpRes listWarpRes = VoBaseResp.ok("查询成功", VoPcBorrowListWarpRes.class);
-            listWarpRes.setLists(Lists.newArrayList(borrowLists));
+            VoPcBorrowList listWarpRes = VoBaseResp.ok("查询成功", VoPcBorrowList.class);
+            listWarpRes.setBorrowLists(borrowLists.getBorrowLists());
+            listWarpRes.setTotalCount(borrowLists.getTotalCount());
+            listWarpRes.setPageIndex(borrowLists.getPageIndex());
+            listWarpRes.setPageSize(borrowLists.getPageSize());
             return ResponseEntity.ok(listWarpRes);
         } catch (Exception e) {
             log.info("BorrowBizImpl findAll fail%s", e);
@@ -167,7 +169,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,
                             "查询失败",
-                            VoPcBorrowListWarpRes.class));
+                            VoPcBorrowList.class));
         }
     }
 

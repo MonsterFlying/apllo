@@ -1,6 +1,7 @@
 package com.gofobao.framework.collection.service;
 
 import com.gofobao.framework.collection.entity.BorrowCollection;
+import com.gofobao.framework.collection.vo.request.OrderListReq;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
@@ -9,6 +10,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by admin on 2017/5/31.
@@ -22,6 +24,13 @@ public interface BorrowCollectionService {
      * @return
      */
     List<BorrowCollection> orderList(VoCollectionOrderReq voCollectionOrderReq);
+
+    /**
+     * pc:回款列表
+     * @param listReq
+     * @return
+     */
+    Map<String, Object> pcOrderList(OrderListReq listReq);
 
 
     /**

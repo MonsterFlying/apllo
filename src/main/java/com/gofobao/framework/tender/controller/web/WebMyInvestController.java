@@ -22,14 +22,13 @@ public class WebMyInvestController {
     @Autowired
     private MyInvestBiz investBiz;
 
-
     /**
      * pc：回款中列表
      *
      * @returnz
      */
     @ApiOperation("pc:回款中列表")
-    @GetMapping("pc/v2/backMoney/list/{pageIndex}/{pageSize}")
+    @GetMapping("v2/backMoney/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewBackMoneyListWarpRes> pcBackMoneyList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                                     @PathVariable Integer pageIndex,
                                                                     @PathVariable Integer pageSize) {
@@ -39,7 +38,7 @@ public class WebMyInvestController {
 
 
     @ApiOperation("pc:投标中列表")
-    @GetMapping("pc/v2/bidding/list/{pageIndex}/{pageSize}")
+    @GetMapping("v2/bidding/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewBiddingListWrapRes> pcBiddingList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                                 @PathVariable Integer pageIndex,
                                                                 @PathVariable Integer pageSize) {
@@ -47,7 +46,7 @@ public class WebMyInvestController {
     }
 
     @ApiOperation("pc:已结清列表")
-    @GetMapping("pc/v2/settle/list/{pageIndex}/{pageSize}")
+    @GetMapping("v2/settle/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewSettleWarpRes> pcSettleList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                           @PathVariable Integer pageIndex,
                                                           @PathVariable Integer pageSize) {
@@ -55,8 +54,8 @@ public class WebMyInvestController {
     }
 
 
-    @ApiOperation("投资详情")
-    @GetMapping("/v2/tender/detail/{tenderId}")
+    @ApiOperation("pc:投资详情")
+    @GetMapping("v2/tender/detail/{tenderId}")
     public ResponseEntity<VoViewTenderDetailWarpRes> pcTenderDetail(@PathVariable Long tenderId, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoDetailReq voDetailReq = new VoDetailReq();
         voDetailReq.setUserId(userId);
@@ -64,7 +63,7 @@ public class WebMyInvestController {
         return investBiz.tenderDetail(voDetailReq);
     }
 
-    @ApiOperation("投资详情")
+    @ApiOperation("pc:投资详情列表")
     @GetMapping("/v2/tender/collection/{tenderId}")
     public ResponseEntity<VoViewReturnMoneyWarpRes> pcInfoList(@PathVariable Long tenderId,
                                                              @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {

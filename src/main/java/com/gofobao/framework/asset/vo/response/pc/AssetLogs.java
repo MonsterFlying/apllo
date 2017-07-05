@@ -1,5 +1,6 @@
 package com.gofobao.framework.asset.vo.response.pc;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -7,6 +8,7 @@ import lombok.Data;
  * Created by admin on 2017/6/16.
  */
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class AssetLogs {
 
     @ApiModelProperty("时间")
@@ -24,4 +26,6 @@ public class AssetLogs {
     @ApiModelProperty("备注")
     private String remark;
 
+    @ApiModelProperty(hidden = true)
+    private Integer totalCount;
 }
