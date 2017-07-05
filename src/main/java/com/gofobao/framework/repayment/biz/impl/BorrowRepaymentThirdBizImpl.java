@@ -114,6 +114,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             //批次融资人还担保账户垫款
             VoBatchRepayBailReq voBatchRepayBailReq = new VoBatchRepayBailReq();
             voBatchRepayBailReq.setRepaymentId(repaymentId);
+            voBatchRepayBailReq.setInterestPercent(voBatchRepayBailReq.getInterestPercent());
+            voBatchRepayBailReq.setUserId(voBatchRepayBailReq.getUserId());
+            voBatchRepayBailReq.setIsUserOpen(voBatchRepayBailReq.getIsUserOpen());
             return thirdBatchRepayBail(voBatchRepayBailReq);
         }
 
@@ -1007,11 +1010,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             txAmount += NumberHelper.toDouble(bailRepay.getTxAmount());
         }
 
-        Map<String, Object> acqRes = new HashMap<>();
-        acqRes.put("repaymentId", repaymentId);
-        acqRes.put("repayMoney", borrowRepayment.getRepayMoney());
-        acqRes.put("lateInterest", lateInterest);
-
         //记录日志
         String batchNo = jixinHelper.getBatchNo();
         ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
@@ -1025,12 +1023,12 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
         BatchRepayBailReq request = new BatchRepayBailReq();
         request.setBatchNo(batchNo);
-        request.setTxAmount(StringHelper.formatDouble(txAmount,  false));
+        request.setTxAmount(StringHelper.formatDouble(txAmount, false));
         request.setSubPacks(GSON.toJson(repayBails));
         request.setTxCounts(StringHelper.toString(repayBails.size()));
         request.setNotifyURL(webDomain + "/pub/repayment/v2/third/batch/repaybail/check");
         request.setRetNotifyURL(webDomain + "/pub/repayment/v2/third/batch/repaybail/run");
-        request.setAcqRes(GSON.toJson(acqRes));
+        request.setAcqRes(GSON.toJson(voBatchRepayBailReq));
         request.setChannel(ChannelContant.HTML);
         BatchRepayBailResp response = jixinManager.send(JixinTxCodeEnum.BATCH_REPAY_BAIL, request, BatchRepayBailResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
@@ -1236,42 +1234,21 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
         if (bool) {
             try {
-                Map<String, Object> acqRes = GSON.fromJson(batchRepayBailRunResp.getAcqRes(), new TypeToken<Map<String, Object>>() {
-                }.getType());
-                long repaymentId = (long) NumberHelper.toDouble(StringHelper.toString(acqRes.get("repaymentId")));
-                BorrowRepayment borrowRepayment = borrowRepaymentService.findById(repaymentId);
-                if (borrowRepayment.getStatus() != 0) {
-                    log.info("立即还款：该笔借款已归还");
-                    return ResponseEntity.ok("success");
+                if (bool) {
+                    ResponseEntity<VoBaseResp> resp = null;
+                    try {
+                        VoRepayReq voRepayReq = GSON.fromJson(batchRepayBailRunResp.getAcqRes(), new TypeToken<VoRepayReq>() {
+                        }.getType());
+                        resp = repaymentBiz.repay(voRepayReq);
+                    } catch (Exception e) {
+                        log.error("批次融资人还担保账户垫款异常:", e);
+                    }
+                    if (ObjectUtils.isEmpty(resp)) {
+                        log.info("批次融资人还担保账户垫款成功!");
+                    }
+                } else {
+                    log.info("批次融资人还担保账户垫款失败!");
                 }
-
-                Preconditions.checkNotNull(borrowRepayment, "还款记录不存在!");
-                Borrow borrow = borrowService.findById(borrowRepayment.getBorrowId());
-                Preconditions.checkNotNull(borrow, "借款记录不存在!");
-
-                int repayMoney = NumberHelper.toInt(StringHelper.toString(acqRes.get("repayMoney")));
-                int lateInterest = NumberHelper.toInt(StringHelper.toString(acqRes.get("lateInterest")));
-
-                //调用垫付逻辑
-                AdvanceLog advanceLog = advanceLogService.findByRepaymentId(repaymentId);
-                Preconditions.checkNotNull(advanceLog, "垫付记录不存在!请联系客服");
-
-                CapitalChangeEntity entity = new CapitalChangeEntity();
-                entity.setType(CapitalChangeEnum.IncomeOther);
-                entity.setUserId(advanceLog.getUserId());
-                entity.setMoney(repayMoney + lateInterest);
-                entity.setRemark("收到客户对借款[" + BorrowHelper.getBorrowLink(borrowRepayment.getBorrowId(), borrow.getName()) + "]第" + (borrowRepayment.getOrder() + 1) + "期垫付的还款");
-                capitalChangeHelper.capitalChange(entity);
-
-                //
-                advanceLog.setStatus(1);
-                advanceLog.setRepayAtYes(new Date());
-                advanceLog.setRepayMoneyYes(repayMoney + lateInterest);
-                advanceLogService.updateById(advanceLog);
-
-
-
-
             } catch (Exception e) {
                 log.error("borrowRepaymentThirdBizImpl 资产变更异常：", e);
             }
