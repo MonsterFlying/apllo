@@ -158,7 +158,7 @@ public class AplloApplicationTests {
 
     private void advanceCall() {
         VoAdvanceCall voAdvanceCall = new VoAdvanceCall();
-        voAdvanceCall.setRepaymentId(169760L);
+        voAdvanceCall.setRepaymentId(173795L);
         voAdvanceCall.setBailRepayRunList(GSON.fromJson("[{\"accountId\":\"6212462040000000036\",\"authCode\":\"20160922115236083124\",\"productId\":\"GA69760\",\"orderId\":\"GFBBP_1499221906652\",\"failMsg\":\"交易成功\",\"txState\":\"S\",\"forAccountId\":\"6212462040000200040\",\"txAmount\":\"2021.92\"}]", new TypeToken<List<BailRepayRun>>() {
         }.getType()));
         try {

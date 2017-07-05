@@ -2,6 +2,7 @@ package com.gofobao.framework.collection.service;
 
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.vo.request.OrderListReq;
+import com.gofobao.framework.collection.vo.request.VoCollectionListReq;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
@@ -40,7 +41,19 @@ public interface BorrowCollectionService {
     VoViewOrderDetailResp orderDetail(VoOrderDetailReq voOrderDetailReq);
 
 
+
+
+
     List<Integer> collectionDay(String date,Long userId);
+
+    /**
+     *
+     * @param collectionListReq
+     * @return
+     */
+    Map<String, Object> pcCollectionsByDay(VoCollectionListReq collectionListReq);
+
+
 
 
     List<BorrowCollection> findList(Specification<BorrowCollection> specification, Pageable pageable);

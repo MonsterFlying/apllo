@@ -8,7 +8,7 @@ import lombok.Data;
  * Created by admin on 2017/6/9.
  */
 @Data
-public class   BorrowInfoRes extends VoBaseResp {
+public class BorrowInfoRes extends VoBaseResp {
 
     @ApiModelProperty("每万元收益")
     private String earnings;
@@ -58,6 +58,9 @@ public class   BorrowInfoRes extends VoBaseResp {
     @ApiModelProperty("标类型 type: 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
     private Integer type;
 
+    @ApiModelProperty("赎楼标识")
+    private Boolean isConversion;
+
     @ApiModelProperty("账号名")
     private String userName;
 
@@ -66,5 +69,11 @@ public class   BorrowInfoRes extends VoBaseResp {
 
     @ApiModelProperty("是否需要密码")
     private boolean isPassWord;
+
+    @ApiModelProperty("发布时间")
+    private String releaseAt;
+
+    @ApiModelProperty("头像")
+    private String avatar;
 
 }
