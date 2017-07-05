@@ -226,7 +226,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 if (releaseAt.getTime() >=nowDate.getTime()) {
                     status = 1;
                     borrowInfoRes.setSurplusSecond((releaseAt.getTime() - nowDate.getTime()) + 5);
-                } else if (nowDate.getTime() > endAt.getTime()||nowDate.getTime()>releaseAt.getTime()) {  //当前时间大于招标有效时间
+                } else if (nowDate.getTime() > endAt.getTime()) {  //当前时间大于招标有效时间
                     status = 5; //已过期
                 } else {
                     status = 3; //招标中
