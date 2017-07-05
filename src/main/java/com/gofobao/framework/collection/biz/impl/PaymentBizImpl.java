@@ -8,14 +8,17 @@ import com.gofobao.framework.collection.contants.BorrowCollectionContants;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.collection.vo.request.OrderListReq;
+import com.gofobao.framework.collection.vo.request.VoCollectionListReq;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderRes;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
+import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.collection.vo.response.web.CollectionList;
 import com.gofobao.framework.collection.vo.response.web.VoViewCollectionListWarpRes;
+import com.gofobao.framework.collection.vo.response.web.VoViewCollectionWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.StringHelper;
 import io.jsonwebtoken.lang.Collections;
@@ -119,8 +122,8 @@ public class PaymentBizImpl implements PaymentBiz {
         try {
             Map<String, Object> resultMaps = borrowCollectionService.pcOrderList(orderListReq);
             Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
-            List<CollectionList> borrowCollections = (List<CollectionList>) resultMaps.get("borrowCollections");
-            VoViewCollectionListWarpRes warpRes = VoBaseResp.ok("", VoViewCollectionListWarpRes.class);
+            List<CollectionList> borrowCollections = (List<CollectionList>) resultMaps.get("orderList");
+            VoViewCollectionListWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewCollectionListWarpRes.class);
             warpRes.setLists(borrowCollections);
             warpRes.setTotalCount(totalCount);
             return ResponseEntity.ok(warpRes);
@@ -130,6 +133,32 @@ public class PaymentBizImpl implements PaymentBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR,
                             "非法请求",
                             VoViewCollectionListWarpRes.class));
+
+        }
+    }
+
+
+    /**
+     *pc: 回款详情
+     * @param listReq
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoViewCollectionWarpRes> pcOrderDetail(VoCollectionListReq listReq) {
+        try {
+            Map<String, Object> resultMaps = borrowCollectionService.pcCollectionsByDay(listReq);
+            Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
+            List<Collection> borrowCollections = (List<Collection>) resultMaps.get("collectionList");
+            VoViewCollectionWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewCollectionWarpRes.class);
+            warpRes.setTotalCount(totalCount);
+            warpRes.setCollections(borrowCollections);
+            return ResponseEntity.ok(warpRes);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,
+                            "非法请求",
+                            VoViewCollectionWarpRes.class));
 
         }
     }

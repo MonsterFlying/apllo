@@ -215,8 +215,7 @@ public class BorrowServiceImpl implements BorrowService {
             item.setIsConversion(m.getIsConversion());
             item.setIsVouch(m.getIsVouch());
             item.setTenderCount(m.getTenderCount());
-            item.setAvatar(imageDomain + "/data/images/avatar/" + userId + "_avatar_small.jpg");
-            //   item.setPageCount(count.intValue());
+            item.setAvatar(imageDomain + "/data/images/avatar/" + userId + "_avatar_middle.jpg");
             listResList.add(item);
         });
 

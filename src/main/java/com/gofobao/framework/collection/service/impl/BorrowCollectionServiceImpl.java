@@ -7,21 +7,20 @@ import com.gofobao.framework.collection.contants.BorrowCollectionContants;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.repository.BorrowCollectionRepository;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
-import com.gofobao.framework.collection.vo.request.OrderListReq;
-import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
-import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
+import com.gofobao.framework.collection.vo.request.*;
+import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
+import com.gofobao.framework.collection.vo.response.web.CollectionList;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.BeanHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Range;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -31,6 +30,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created by admin on 2017/5/31.
@@ -67,16 +68,99 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         return Optional.ofNullable(borrowCollections).orElse(Collections.EMPTY_LIST);
     }
 
+    /**
+     * PC:回款列表
+     *
+     * @param orderListReq
+     * @return
+     */
     @Override
     public Map<String, Object> pcOrderList(OrderListReq orderListReq) {
-        String sql = "select b.collectionAt,sum(b.collectionMoney),sum(b.principal),sum(b.interest),count(b.id) from BorrowCollection AS b where b.userId=:userId  GROUP BY date_format(b.collectionAt,'%Y%y%d') ";
-        Query query =  entityManager.createQuery(sql);
-        query.setParameter("userId",orderListReq.getUserId());
-        query.setFirstResult(orderListReq.getPageIndex()*orderListReq.getPageSize());
+        Map<String, Object> resultMaps = Maps.newHashMap();
+        //总记录数
+        String totalSql = "select count(b.id) from BorrowCollection AS b where b.userId=:userId and status=0  GROUP BY date_format(b.collectionAt,'%Y%y%d') ";
+        Query totalEm = entityManager.createQuery(totalSql, Long.class);
+        totalEm.setParameter("userId", orderListReq.getUserId());
+        List<Long> totalResult = totalEm.getResultList();
+        Integer totalCount = totalResult.size();
+        resultMaps.put("totalCount", totalCount);
+        //分页
+        String sql = "select b.collectionAt,sum(b.collectionMoney),sum(b.principal),sum(b.interest),count(b.id) from BorrowCollection AS b where b.userId=:userId  and status=0 GROUP BY date_format(b.collectionAt,'%Y%y%d') ORDER BY  b.collectionAt ASC";
+        Query query = entityManager.createQuery(sql);
+        query.setParameter("userId", orderListReq.getUserId());
+        query.setFirstResult(orderListReq.getPageIndex() * orderListReq.getPageSize());
         query.setMaxResults(orderListReq.getPageSize());
-        query.getResultList();
+        List resultList = query.getResultList();
+        if (CollectionUtils.isEmpty(resultList)) {
+            resultMaps.put("orderList", new ArrayList<>());
+            return resultMaps;
+        }
+        List<CollectionList> collectionLists = Lists.newArrayList();
+        //装配结果集
+        resultList.stream().forEach(p -> {
+            CollectionList item = new CollectionList();
+            Object[] objects = (Object[]) p;
+            item.setCreateTime(DateHelper.dateToString((Date) objects[0]));
+            item.setCollectionMoney(StringHelper.formatMon((Long) objects[1] / 100D));
+            item.setPrincipal(StringHelper.formatMon((Long) objects[2] / 100D));
+            item.setInterest(StringHelper.formatMon((Long) objects[3] / 100D));
+            item.setOrderCount((Long) objects[4]);
+            collectionLists.add(item);
+        });
+        resultMaps.put("orderList", collectionLists);
+        return resultMaps;
+    }
 
-        return null;
+
+    @Override
+    public Map<String, Object> pcCollectionsByDay(VoCollectionListReq listReq) {
+
+        Map<String, Object> resultMaps = Maps.newHashMap();
+
+        Date beginAt = DateHelper.beginOfDate(DateHelper.stringToDate(listReq.getTime(), DateHelper.DATE_FORMAT_YMD));
+        Date endAt = DateHelper.endOfDate(DateHelper.stringToDate(listReq.getTime(), DateHelper.DATE_FORMAT_YMD));
+
+        Specification specification = Specifications.<BorrowCollection>and()
+                .eq("userId", listReq.getUserId())
+                .eq("status", BorrowCollectionContants.STATUS_NO)
+                .between("collectionAt", new Range<>(beginAt, endAt))
+                .build();
+        Page<BorrowCollection> collectionPage = borrowCollectionRepository.findAll(specification,
+                new PageRequest(listReq.getPageIndex(),
+                        listReq.getPageSize(),
+                        new Sort("collectionAt")
+                ));
+
+        Long totalCount = collectionPage.getTotalElements();
+        List<BorrowCollection> borrowCollections = collectionPage.getContent();
+        resultMaps.put("totalCount", totalCount);
+
+        if (CollectionUtils.isEmpty(borrowCollections)) {
+            resultMaps.put("collectionList", new ArrayList<>());
+            return resultMaps;
+        }
+        List<Collection> collectionList = Lists.newArrayList();
+        Set<Long> borrowIds = borrowCollections.stream().map(p -> p.getBorrowId()).collect(Collectors.toSet());
+        List<Borrow> borrowList = borrowRepository.findByIdIn(new ArrayList<>(borrowIds));
+        Map<Long, Borrow> borrowMaps = borrowList.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
+
+
+        borrowCollections.stream().forEach(p -> {
+            Collection collection = new Collection();
+            Borrow borrow = borrowMaps.get(p.getBorrowId());
+            collection.setBorrowName(borrow.getName());
+            collection.setInterest(StringHelper.formatMon(p.getInterest()/100D));
+            collection.setPrincipal(StringHelper.formatMon(p.getPrincipal()/100D));
+            collection.setCollectionAt(DateHelper.dateToString(p.getCollectionAt()));
+            collection.setOrder(p.getOrder()+1);
+            collection.setTimeLimit(borrow.getTimeLimit());
+            if(borrow.getStatus()==0||borrow.getStatus()==4){ //官标
+                    collection.setEarnings(StringHelper.formatMon((p.getCollectionMoney()*0.9)/100D));
+            }
+            collectionList.add(collection);
+        });
+        resultMaps.put("collectionList",collectionList);
+        return resultMaps;
     }
 
     /**

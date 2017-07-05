@@ -22,5 +22,5 @@ public class CollectionList {
     private String interest;
 
     @ApiModelProperty("笔数")
-    private String orderCount;
+    private Long orderCount;
 }

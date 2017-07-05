@@ -2,12 +2,14 @@ package com.gofobao.framework.collection.controller.web;
 
 import com.gofobao.framework.collection.biz.PaymentBiz;
 import com.gofobao.framework.collection.vo.request.OrderListReq;
+import com.gofobao.framework.collection.vo.request.VoCollectionListReq;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
 import com.gofobao.framework.collection.vo.response.web.VoViewCollectionListWarpRes;
+import com.gofobao.framework.collection.vo.response.web.VoViewCollectionWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -27,27 +29,17 @@ public class WebPaymentController {
     @Autowired
     private PaymentBiz paymentBiz;
 
-    @ApiOperation("回款明细-回款列表 time:2017-05-06")
-    @GetMapping("/v2/order/list/{time}")
-    public ResponseEntity<VoViewCollectionOrderListWarpResp> collectionOrderList(@PathVariable("time") String time,
-                                                                                 @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        VoCollectionOrderReq voCollectionOrderReq = new VoCollectionOrderReq();
-        voCollectionOrderReq.setUserId(userId);
-        voCollectionOrderReq.setTime(time);
-        return paymentBiz.orderList(voCollectionOrderReq);
+    @ApiOperation("回款明细-回款详情 time:2017-05-06")
+    @GetMapping("/v2/collection/list")
+    public ResponseEntity<VoViewCollectionWarpRes> collectionOrderList(VoCollectionListReq collectionListReq/*,
+                                                                                 @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+        collectionListReq.setUserId(901L);
+        return paymentBiz.pcOrderDetail(collectionListReq);
     }
 
-    @ApiOperation("回款明细-回款详情")
-    @GetMapping("/v2/order/detail/{collectionId}")
-    public ResponseEntity<VoViewOrderDetailResp> orderDetail(@PathVariable("collectionId") Long collectionId/*,
-                                                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
-        VoOrderDetailReq voOrderDetailReq = new VoOrderDetailReq();
-        voOrderDetailReq.setCollectionId(collectionId);
-        voOrderDetailReq.setUserId(901L);
-        return paymentBiz.orderDetail(voOrderDetailReq);
-    }
+
     @ApiOperation("回款明细")
-    @GetMapping("/v2/day/collection/{pageIndex}/{pageSize}")
+    @GetMapping("/v2/days/collection/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewCollectionListWarpRes> orderDetail(@PathVariable("pageIndex") Integer pageIndex,
                                                              @PathVariable("pageSize") Integer pageSize/*,
                                                              @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
