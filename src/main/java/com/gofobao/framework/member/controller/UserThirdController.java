@@ -1,5 +1,6 @@
 package com.gofobao.framework.member.controller;
 
+import com.gofobao.framework.borrow.vo.request.VoAdminModifyPasswordResp;
 import com.gofobao.framework.borrow.vo.request.VoAdminOpenAccountResp;
 import com.gofobao.framework.member.biz.UserThirdBiz;
 import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
@@ -106,5 +107,11 @@ public class UserThirdController {
     @GetMapping("/pub/initPassword/{encode}/{channel}")
     public ResponseEntity<String> adminPasswordInit(HttpServletRequest httpServletRequest, @PathVariable("encode") String encode, @PathVariable("channel") String channel) {
         return userThirdBiz.adminPasswordInit(httpServletRequest, encode, channel) ;
+    }
+
+    @ApiOperation("后台修改借款人银行密码")
+    @PostMapping("/pub/admin/third/modifyOpenAccPwd")
+    public ResponseEntity<VoHtmlResp> adminModifyOpenAccPwd(HttpServletRequest httpServletRequest, @Valid @ModelAttribute VoAdminModifyPasswordResp voAdminModifyPasswordResp ) {
+        return userThirdBiz.adminModifyOpenAccPwd(httpServletRequest, voAdminModifyPasswordResp) ;
     }
 }
