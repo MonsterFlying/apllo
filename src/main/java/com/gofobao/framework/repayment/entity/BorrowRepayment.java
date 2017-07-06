@@ -9,7 +9,7 @@ import java.util.Date;
 /**
  * Created by Zeke on 2017/5/26.
  */
-@Entity
+@Entity(name = "BorrowRepayment")
 @Data
 @Table(name = "gfb_borrow_repayment")
 @DynamicInsert

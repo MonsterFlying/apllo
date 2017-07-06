@@ -14,6 +14,7 @@ import com.gofobao.framework.repayment.service.LoanService;
 import com.gofobao.framework.repayment.vo.request.VoDetailReq;
 import com.gofobao.framework.repayment.vo.request.VoLoanListReq;
 import com.gofobao.framework.repayment.vo.response.*;
+import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,7 +26,10 @@ import org.springframework.util.ObjectUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.groupingBy;
@@ -52,11 +56,16 @@ public class LoanServiceImpl implements LoanService {
      * @return
      */
     @Override
-    public List<VoViewRefundRes> refundResList(VoLoanListReq voLoanListReq) {
+    public Map<String, Object> refundResList(VoLoanListReq voLoanListReq) {
+        Map<String,Object>resultMaps=Maps.newHashMap();
 
-        List<Borrow> borrowList = commonQuery(voLoanListReq);
+        Map<String,Object> borrowsMaps = commonQuery(voLoanListReq);
+        List<Borrow>borrowList=(List<Borrow>) borrowsMaps.get("borrows");
+        //总记录数
+        resultMaps.put("totalCount",borrowsMaps.get("totalCount"));
         if (CollectionUtils.isEmpty(borrowList)) {
-            return Collections.EMPTY_LIST;
+            resultMaps.put("refundResList",new ArrayList<>());
+            return resultMaps;
         }
         List<Long> borrowIds = borrowList.stream()
                 .map(s -> s.getId())
@@ -81,7 +90,8 @@ public class LoanServiceImpl implements LoanService {
             voViewRefundRes.setInterest(StringHelper.formatMon(interest / 100D));
             refundRes.add(voViewRefundRes);
         });
-        return Optional.ofNullable(refundRes).orElse(Collections.EMPTY_LIST);
+        resultMaps.put("refundResList",refundRes);
+        return resultMaps;
     }
 
     /**
@@ -91,11 +101,17 @@ public class LoanServiceImpl implements LoanService {
      * @return
      */
     @Override
-    public List<VoViewSettleRes> settleList(VoLoanListReq voLoanListReq) {
+    public Map<String, Object> settleList(VoLoanListReq voLoanListReq) {
+        Map<String,Object>resultMap=Maps.newHashMap();
 
-        List<Borrow> borrowList = commonQuery(voLoanListReq);
+        Map<String,Object> borrowsMaps = commonQuery(voLoanListReq);
+        resultMap.put("totalCount",borrowsMaps.get("totalCount"));
+
+
+        List<Borrow>borrowList=(List<Borrow>) borrowsMaps.get("borrows");
         if (CollectionUtils.isEmpty(borrowList)) {
-            return Collections.EMPTY_LIST;
+            resultMap.put("settleList",new ArrayList<>());
+            return resultMap;
         }
         List<Long> borrowIds = borrowList.stream()
                 .map(s -> s.getId())
@@ -119,7 +135,9 @@ public class LoanServiceImpl implements LoanService {
             viewSettleRes.setCloseAt(DateHelper.dateToString(p.getCloseAt()));
             resArrayList.add(viewSettleRes);
         });
-        return Optional.ofNullable(resArrayList).orElse(Collections.EMPTY_LIST);
+        resultMap.put("settleList",resArrayList);
+
+        return resultMap;
 
     }
 
@@ -130,11 +148,17 @@ public class LoanServiceImpl implements LoanService {
      * @return
      */
     @Override
-    public List<VoViewBuddingRes> buddingList(VoLoanListReq voLoanListReq) {
+    public Map<String, Object> buddingList(VoLoanListReq voLoanListReq) {
+        Map<String,Object>resultMaps=Maps.newHashMap();
 
-        List<Borrow> borrowList = commonQuery(voLoanListReq);
+        Map<String,Object> borrowsMaps = commonQuery(voLoanListReq);
+        List<Borrow>borrowList=(List<Borrow>) borrowsMaps.get("borrows");
+
+
+        resultMaps.put("totalCount",borrowsMaps.get("totalCount"));
         if (CollectionUtils.isEmpty(borrowList)) {
-            return Collections.EMPTY_LIST;
+            resultMaps.put("buddingList",new ArrayList<>());
+            return resultMaps;
         }
         List<VoViewBuddingRes> budingResList = new ArrayList<>();
         borrowList.stream().forEach(p -> {
@@ -143,7 +167,7 @@ public class LoanServiceImpl implements LoanService {
             budingRes.setBorrowName(p.getName());
             budingRes.setMoney(StringHelper.formatMon(p.getMoney() / 100D));
             budingRes.setApr(StringHelper.formatMon(p.getApr() / 100D));
-            budingRes.setSpeed(StringHelper.formatMon(p.getMoneyYes() /new Double( p.getMoney())));
+            budingRes.setSpeed(StringHelper.formatMon(p.getMoneyYes() / new Double(p.getMoney())));
             if (p.getRepayFashion() == 1) {
                 budingRes.setTimeLimit(p.getTimeLimit() + BorrowContants.DAY);
             } else {
@@ -151,7 +175,8 @@ public class LoanServiceImpl implements LoanService {
             }
             budingResList.add(budingRes);
         });
-        return Optional.ofNullable(budingResList).orElse(Collections.EMPTY_LIST);
+        resultMaps.put("buddingList",budingResList);
+        return resultMaps;
     }
 
 
@@ -161,10 +186,13 @@ public class LoanServiceImpl implements LoanService {
      * @param voLoanListReq
      * @return
      */
-    private List<Borrow> commonQuery(VoLoanListReq voLoanListReq) {
-        Page<Borrow> borrowPage ;
+    private Map<String, Object> commonQuery(VoLoanListReq voLoanListReq) {
+        Map<String, Object> resultMaps = Maps.newHashMap();
+
+        Page<Borrow> borrowPage;
         Sort sort;
         Pageable pageable;
+
         if (voLoanListReq.getType() == RepaymentContants.REFUND) { //还款中
 
             sort = new Sort(Sort.Direction.DESC, "closeAt");
@@ -181,14 +209,22 @@ public class LoanServiceImpl implements LoanService {
                     voLoanListReq.getStatus(),
                     pageable);
         } else {
-            sort = new Sort(Sort.Direction.DESC, "successAt");
+            sort = new Sort(Sort.Direction.DESC, "successAt");  //已结清
             pageable = new PageRequest(voLoanListReq.getPageIndex(), voLoanListReq.getPageSize(), sort);
             borrowPage = loanRepository.findByUserIdAndStatusIsAndSuccessAtIsNotNullAndCloseAtIsNotNullAndTenderIdIsNull(
                     voLoanListReq.getUserId(),
                     voLoanListReq.getStatus(),
                     pageable);
         }
-        return Optional.ofNullable(borrowPage.getContent()).orElse(Collections.EMPTY_LIST);
+        Long totalCount = borrowPage.getTotalElements();
+        resultMaps.put("totalCount", totalCount);
+        List<Borrow> borrowList = borrowPage.getContent();
+        if (CollectionUtils.isEmpty(borrowList)) {
+            resultMaps.put("borrows", new ArrayList<>());
+        } else {
+            resultMaps.put("borrows", borrowList);
+        }
+        return resultMaps;
 
     }
 
@@ -222,9 +258,9 @@ public class LoanServiceImpl implements LoanService {
             repayFashion = BorrowContants.REPAY_FASHION_MONTH_STR;
         }
         repaymentDetail.setRepayFashion(repayFashion);
-        Integer  interest=0;
+        Integer interest = 0;
         Integer principal = 0;
-        Integer receivableInterest=0;
+        Integer receivableInterest = 0;
         if (borrow.getStatus() == BorrowContants.PASS) {
             List<BorrowRepayment> borrowRepayments = repaymentRepository.findByBorrowId(borrow.getId());
             //统计还款中
@@ -239,13 +275,13 @@ public class LoanServiceImpl implements LoanService {
                 repaymentDetail.setStatus(RepaymentContants.STATUS_YES);
             }
             //预期收益
-            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(borrow.getValidDay()), new Double(borrow.getApr()) , borrow.getTimeLimit(), borrow.getSuccessAt());
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(borrow.getValidDay()), new Double(borrow.getApr()), borrow.getTimeLimit(), borrow.getSuccessAt());
             Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
             receivableInterest = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("interest")));
 
         }
         repaymentDetail.setBorrowId(borrow.getId());
-        if(borrow.getStatus()==BorrowContants.BIDDING){
+        if (borrow.getStatus() == BorrowContants.BIDDING) {
             repaymentDetail.setStatus(2);
         }
         repaymentDetail.setInterest(StringHelper.formatMon(interest / 100D));
@@ -275,26 +311,26 @@ public class LoanServiceImpl implements LoanService {
             return null;
         }
 
-        VoViewLoanList voViewLoanList=new VoViewLoanList();
+        VoViewLoanList voViewLoanList = new VoViewLoanList();
 
 
-        Integer collectionMoney=repaymentList.stream().mapToInt(p->p.getRepayMoney()).sum();
-        Integer countOrder=repaymentList.size();
+        Integer collectionMoney = repaymentList.stream().mapToInt(p -> p.getRepayMoney()).sum();
+        Integer countOrder = repaymentList.size();
 
-        List<VoLoanInfo> voLoanInfoList=new ArrayList<>();
-        repaymentList.stream().forEach(p->{
-            VoLoanInfo voLoanInfo=new VoLoanInfo();
-            voLoanInfo.setOrder(p.getOrder()+1);
-            voLoanInfo.setPrincipal(StringHelper.formatMon(p.getPrincipal()/100D));
+        List<VoLoanInfo> voLoanInfoList = new ArrayList<>();
+        repaymentList.stream().forEach(p -> {
+            VoLoanInfo voLoanInfo = new VoLoanInfo();
+            voLoanInfo.setOrder(p.getOrder() + 1);
+            voLoanInfo.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
             voLoanInfo.setStatus(p.getStatus());
             voLoanInfo.setLateDays(p.getLateDays());
-            voLoanInfo.setInterest(StringHelper.formatMon(p.getInterest()/100D));
+            voLoanInfo.setInterest(StringHelper.formatMon(p.getInterest() / 100D));
             voLoanInfo.setRepayAt(DateHelper.dateToString(p.getRepayAt()));
-            voLoanInfo.setRepayMoney(StringHelper.formatMon(p.getRepayMoney()/100D));
-            voLoanInfo.setStatusStr(p.getStatus()==RepaymentContants.STATUS_YES?RepaymentContants.STATUS_YES_STR:RepaymentContants.STATUS_NO_STR);
+            voLoanInfo.setRepayMoney(StringHelper.formatMon(p.getRepayMoney() / 100D));
+            voLoanInfo.setStatusStr(p.getStatus() == RepaymentContants.STATUS_YES ? RepaymentContants.STATUS_YES_STR : RepaymentContants.STATUS_NO_STR);
             voLoanInfoList.add(voLoanInfo);
         });
-        voViewLoanList.setSumRepayMoney(StringHelper.formatMon(collectionMoney/100D));
+        voViewLoanList.setSumRepayMoney(StringHelper.formatMon(collectionMoney / 100D));
         voViewLoanList.setOrderCount(countOrder);
         voViewLoanList.setVoLoanInfoList(voLoanInfoList);
         return Optional.ofNullable(voViewLoanList).orElse(null);

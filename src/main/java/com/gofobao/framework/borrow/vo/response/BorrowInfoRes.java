@@ -46,9 +46,6 @@ public class BorrowInfoRes extends VoBaseResp {
     @ApiModelProperty("满标时间")
     private String successAt;
 
-    @ApiModelProperty("新手标标识")
-    private Boolean isNovice;
-
     @ApiModelProperty("状态 1.待发布 2.还款中 3.招标中 4.已完成 5.其它")
     private Integer status;
 
@@ -58,8 +55,29 @@ public class BorrowInfoRes extends VoBaseResp {
     @ApiModelProperty("标类型 type: 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
     private Integer type;
 
+    @ApiModelProperty("锁定状态；0：未锁定；1：已锁定（不能手动投标）")
+    private Boolean lockStatus;
+
+    @ApiModelProperty("担保标识")
+    private Boolean isVouch;
+
+    @ApiModelProperty("抵押标识")
+    private Boolean isMortgage;
+
+    @ApiModelProperty("质押标识")
+    private Boolean isImpawn;
+
+    @ApiModelProperty("续贷标识")
+    private Boolean isContinued;
+
     @ApiModelProperty("赎楼标识")
     private Boolean isConversion;
+
+    @ApiModelProperty("新手标识")
+    private Boolean isNovice;
+
+    @ApiModelProperty("流转标标识")
+    private Boolean isFlow;
 
     @ApiModelProperty("账号名")
     private String userName;

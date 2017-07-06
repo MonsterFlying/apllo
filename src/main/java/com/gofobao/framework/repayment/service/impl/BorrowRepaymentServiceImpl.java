@@ -3,6 +3,7 @@ package com.gofobao.framework.repayment.service.impl;
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
+import com.gofobao.framework.collection.vo.request.VoCollectionListReq;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -11,24 +12,27 @@ import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.repository.BorrowRepaymentRepository;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoInfoReq;
+import com.gofobao.framework.repayment.vo.request.VoOrderListReq;
 import com.gofobao.framework.repayment.vo.response.RepayCollectionLog;
 import com.gofobao.framework.repayment.vo.response.RepaymentOrderDetail;
+import com.gofobao.framework.repayment.vo.response.pc.VoCollection;
+import com.gofobao.framework.repayment.vo.response.pc.VoOrdersList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Range;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created by admin on 2017/6/1.
@@ -54,7 +58,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
      */
     @Override
     public List<BorrowRepayment> repaymentList(VoCollectionOrderReq voCollectionOrderReq) {
-        Date date = DateHelper.beginOfDate(DateHelper.stringToDate(voCollectionOrderReq.getTime(),DateHelper.DATE_FORMAT_YMD));
+        Date date = DateHelper.beginOfDate(DateHelper.stringToDate(voCollectionOrderReq.getTime(), DateHelper.DATE_FORMAT_YMD));
         Specification<BorrowRepayment> specification = Specifications.<BorrowRepayment>and()
                 .eq("userId", voCollectionOrderReq.getUserId())
                 .between("repayAt", new Range<>(date, DateHelper.endOfDate(date)))
@@ -63,6 +67,100 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
 
     }
 
+    /**
+     * pc:还款计划
+     *
+     * @param orderListReq
+     * @return
+     */
+    @Override
+    public Map<String, Object> pcOrderList(VoOrderListReq orderListReq) {
+        Map<String, Object> resultMaps = Maps.newHashMap();
+        //总记录数
+        String totalSql = "select count(b.id) from BorrowRepayment AS b where b.userId=:userId and b.status=0  GROUP BY date_format(b.repayAt,'%Y-%m-%d') ";
+        Query nativeQuery = entityManager.createQuery(totalSql, Long.class);
+        nativeQuery.setParameter("userId", orderListReq.getUserId());
+        List<Long> totalCount = nativeQuery.getResultList();
+        resultMaps.put("totalCount", totalCount.size());
+
+        //分页
+        String sql = "select date_format(b.repayAt,'%Y-%m-%d'), SUM (b.repayMoney),SUM(b.principal),SUM(b.interest),COUNT(b.id) FROM BorrowRepayment b where b.userId=:userId and b.status=0 GROUP BY date_format(b.repayAt,'%Y-%m-%d') ORDER BY  b.repayAt ASC";
+        Query query = entityManager.createQuery(sql);
+        query.setFirstResult(orderListReq.getPageIndex() * orderListReq.getPageSize());
+        query.setMaxResults(orderListReq.getPageSize());
+        query.setParameter("userId", orderListReq.getUserId());
+        List resultList = query.getResultList();
+        if (CollectionUtils.isEmpty(resultList)) {
+            resultMaps.put("orderList", new ArrayList<>());
+            return resultMaps;
+        }
+        List<VoOrdersList> ordersLists = Lists.newArrayList();
+        //装配结果集
+        resultList.stream().forEach(p -> {
+            VoOrdersList item = new VoOrdersList();
+            Object[] objects = (Object[]) p;
+            item.setTime((String) objects[0]);
+            item.setCollectionMoney(StringHelper.formatMon((Long) objects[1] / 100D));
+            item.setPrincipal(StringHelper.formatMon((Long) objects[2] / 100D));
+            item.setInterest(StringHelper.formatMon((Long) objects[3] / 100D));
+            item.setOrderCount((Long) objects[4]);
+            ordersLists.add(item);
+        });
+        resultMaps.put("orderList", ordersLists);
+        return resultMaps;
+    }
+
+
+    /**
+     * pc：还款详情
+     *
+     * @param orderReq
+     * @return
+     */
+    @Override
+    public Map<String, Object> collectionList(VoCollectionListReq orderReq) {
+        Map<String, Object> resultMaps = Maps.newHashMap();
+
+        String time = orderReq.getTime();
+        Date beginAt = DateHelper.beginOfDate(DateHelper.stringToDate(time, DateHelper.DATE_FORMAT_YMD));
+        Date endAt = DateHelper.endOfDate(DateHelper.stringToDate(time, DateHelper.DATE_FORMAT_YMD));
+
+        Specification specification = Specifications.<BorrowRepayment>and()
+                .eq("userId", orderReq.getUserId())
+                .between("repayAt", new Range<>(beginAt, endAt))
+                .eq("status", RepaymentContants.STATUS_NO)
+                .build();
+        Page<BorrowRepayment> borrowRepaymentPage = borrowRepaymentRepository.findAll(specification, new PageRequest(orderReq.getPageIndex(), orderReq.getPageSize(), new Sort(Sort.Direction.ASC, "repayAt")));
+        Long totalCount = borrowRepaymentPage.getTotalElements();
+        resultMaps.put("totalCount", totalCount);
+
+        List<BorrowRepayment> repaymentList = borrowRepaymentPage.getContent();
+        if (CollectionUtils.isEmpty(repaymentList)) {
+            resultMaps.put("repaymentList", new ArrayList<>());
+            return resultMaps;
+        }
+        //标集合
+        Set<Long> borrowIds = repaymentList.stream().map(p -> p.getBorrowId()).collect(Collectors.toSet());
+        List<Borrow> borrowList = borrowRepository.findByIdIn(new ArrayList<>(borrowIds));
+        Map<Long, Borrow> borrowMap = borrowList.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
+        //装配结果集
+        List<VoCollection> collections = Lists.newArrayList();
+        repaymentList.stream().forEach(p -> {
+            VoCollection collection = new VoCollection();
+            collection.setOrder(p.getOrder() + 1);
+            Borrow borrow = borrowMap.get(p.getBorrowId());
+            collection.setTimeLimit(borrow.getTimeLimit());
+            collection.setLend(!StringUtils.isEmpty(borrow.getLendId())? true : false);
+            collection.setRepayAt(!StringUtils.isEmpty(borrow.getLendId()) ? DateHelper.dateToString(p.getRepayAt(), DateHelper.DATE_FORMAT_YMD) : DateHelper.dateToString(p.getRepayAt()));
+            collection.setRepaymentId(p.getId());
+            collection.setBorrowName(borrow.getName());
+            collection.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
+            collection.setInterest(StringHelper.formatMon(p.getInterest() / 100D));
+            collections.add(collection);
+        });
+        resultMaps.put("repaymentList", collections);
+        return resultMaps;
+    }
 
     /**
      * 还款详情
@@ -107,6 +205,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
 
     /**
      * 当月有还款日期
+     *
      * @param userId
      * @param time
      * @return
@@ -127,6 +226,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
 
     /**
      * 标的还款记录
+     *
      * @param borrowId
      * @return
      */

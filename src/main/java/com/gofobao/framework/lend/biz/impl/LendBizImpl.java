@@ -47,6 +47,7 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by admin on 2017/6/6.
@@ -86,8 +87,11 @@ public class LendBizImpl implements LendBiz {
     public ResponseEntity<VoViewLendListWarpRes> list(Page page) {
         try {
             VoViewLendListWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewLendListWarpRes.class);
-            List<VoViewLend> lends = lendService.list(page);
+            Map<String,Object> resultMaps = lendService.list(page);
+            Integer totalCount=Integer.valueOf(resultMaps.get("totalCount").toString());
+            List<VoViewLend>  lends=(List<VoViewLend>) resultMaps.get("lends");
             warpRes.setVoViewLends(lends);
+            warpRes.setTotalCount(totalCount);
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {
             log.info("LendBizImpl list query fail", e);
