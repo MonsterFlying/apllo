@@ -1526,7 +1526,7 @@ public class BorrowBizImpl implements BorrowBiz {
             voCreateThirdBorrowReq.setBorrowId(borrowId);
             voCreateThirdBorrowReq.setEntrustFlag(true);
             resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
-            if (!ObjectUtils.isEmpty(resp)) {
+            if (resp.getBody().getState().getCode() == 1) { //创建状态为失败时返回错误提示
                 return ResponseEntity
                         .badRequest()
                         .body(VoHtmlResp.error(VoHtmlResp.ERROR, resp.getBody().getState().getMsg(), VoHtmlResp.class));
