@@ -709,7 +709,6 @@ public class BorrowBizImpl implements BorrowBiz {
         // ======================================
         VoCancelThirdTenderReq voCancelThirdTenderReq = null;
         for (Tender tender : tenderList) {
-            tender.setId(tender.getId());
             tender.setUpdatedAt(nowDate);
             tender.setStatus(2);
             tenderService.save(tender);
@@ -722,7 +721,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 voCancelThirdTenderReq.setTenderId(tender.getId());
                 ResponseEntity<VoBaseResp> resp = tenderThirdBiz.cancelThirdTender(voCancelThirdTenderReq);
                 if (!resp.getStatusCode().equals(HttpStatus.OK)) {
-                    throw new Exception("borrowBizImpl cancelBorrow:" + resp.getBody().getState().getMsg());
+                    throw new Exception("borrowBizImpl pcCancelBorrow:" + resp.getBody().getState().getMsg());
                 }
             }
 

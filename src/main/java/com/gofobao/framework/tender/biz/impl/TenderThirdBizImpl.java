@@ -386,8 +386,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         Preconditions.checkNotNull(tender, "tenderThirdBizImpl cancelThirdTender: tender为空!");
         UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
         Preconditions.checkNotNull(tenderUserThirdAccount, "tenderThirdBizImpl cancelThirdTender: 投资人未开户!");
-        Borrow borrow = borrowService.findById(tenderId);
-        Preconditions.checkNotNull(borrow, "tenderThirdBizImpl cancelThirdTender: tender为空!");
+        Borrow borrow = borrowService.findById(tender.getBorrowId());
+        Preconditions.checkNotNull(borrow, "tenderThirdBizImpl cancelThirdTender: borrow为空!");
 
         String orderId = JixinHelper.getOrderId(JixinHelper.TENDER_CANCEL_PREFIX);
         BidCancelReq request = new BidCancelReq();
