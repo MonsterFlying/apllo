@@ -1578,6 +1578,7 @@ public class BorrowBizImpl implements BorrowBiz {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean doTrusteePay(Long borrowId) {
         Borrow borrow = borrowService.findByIdLock(borrowId);
         String productId = borrow.getProductId();
