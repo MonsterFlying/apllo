@@ -98,7 +98,7 @@ public class BorrowProvider {
         log.info(String.format("触发标的初审: %s", borrowId));
         Borrow borrow = borrowService.findByIdLock(borrowId);
         if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 0)) {
-            return false;
+            return true;
         }
 
         if (!ObjectUtils.isEmpty(borrow.getLendId())) {
