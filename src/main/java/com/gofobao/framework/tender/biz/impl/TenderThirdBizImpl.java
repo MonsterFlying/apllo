@@ -8,6 +8,8 @@ import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.batch_credit_invest.*;
 import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyRequest;
 import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyResponse;
+import com.gofobao.framework.api.model.bid_cancel.BidCancelReq;
+import com.gofobao.framework.api.model.bid_cancel.BidCancelResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
@@ -25,6 +27,7 @@ import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
+import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoThirdBatchCreditInvest;
 import com.google.common.base.Preconditions;
@@ -368,5 +371,41 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             }));
         }));
         tenderService.save(tenderList);
+    }
+
+    /**
+     * 取消即信投标申请
+     *
+     * @param voCancelThirdTenderReq
+     * @return
+     */
+    public ResponseEntity<VoBaseResp> cancelThirdTender(VoCancelThirdTenderReq voCancelThirdTenderReq) {
+        Long tenderId = voCancelThirdTenderReq.getTenderId();
+        Preconditions.checkNotNull(tenderId, "tenderThirdBizImpl cancelThirdTender: tenderId为空!");
+        Tender tender = tenderService.findById(tenderId);
+        Preconditions.checkNotNull(tender, "tenderThirdBizImpl cancelThirdTender: tender为空!");
+        UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
+        Preconditions.checkNotNull(tenderUserThirdAccount, "tenderThirdBizImpl cancelThirdTender: 投资人未开户!");
+        Borrow borrow = borrowService.findById(tenderId);
+        Preconditions.checkNotNull(borrow, "tenderThirdBizImpl cancelThirdTender: tender为空!");
+
+        String orderId = JixinHelper.getOrderId(JixinHelper.TENDER_CANCEL_PREFIX);
+        BidCancelReq request = new BidCancelReq();
+        request.setAccountId(tenderUserThirdAccount.getAccountId());
+        request.setTxAmount(StringHelper.formatDouble(tender.getValidMoney(), 100, false));
+        request.setChannel(ChannelContant.HTML);
+        request.setOrderId(orderId);
+        request.setOrgOrderId(tender.getThirdTenderOrderId());
+        request.setProductId(borrow.getProductId());
+        request.setAcqRes(StringHelper.toString(tenderId));
+        BidCancelResp response = jixinManager.send(JixinTxCodeEnum.BID_CANCEL, request, BidCancelResp.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+            String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
+        }
+
+        tender.setThirdTenderCancelOrderId(orderId);
+        tenderService.save(tender);
+        return ResponseEntity.ok(VoBaseResp.ok("取消成功!"));
     }
 }

@@ -143,7 +143,7 @@ public class TenderBizImpl implements TenderBiz {
                 VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
                 voCreateThirdBorrowReq.setBorrowId(borrow.getId());
                 resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
-                if (resp.getBody().getState().getCode() == 1) { //创建状态为失败时返回错误提示
+                if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) { //创建状态为失败时返回错误提示
                     return resp;
                 }
             }

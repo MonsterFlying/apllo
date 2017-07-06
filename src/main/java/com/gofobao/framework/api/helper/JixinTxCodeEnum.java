@@ -229,6 +229,13 @@ public enum JixinTxCodeEnum {
     CREDIT_INVEST_QUERY(
             "creditInvestQuery",
             "/escrow/p2p/online"
+    ),
+    /**
+     * 批次撤销
+     */
+    BID_CANCEL(
+            "bidCancel",
+            "/escrow/p2p/online"
     );
 
     private String value;
