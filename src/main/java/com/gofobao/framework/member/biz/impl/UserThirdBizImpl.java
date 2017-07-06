@@ -663,13 +663,13 @@ public class UserThirdBizImpl implements UserThirdBiz {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(id);
         model.addAttribute("h5Domain", h5Domain);
         if (ObjectUtils.isEmpty(userThirdAccount)) {
-            return "/password/faile";
+            return "password/faile";
         }
 
         if (userThirdAccount.getPasswordState() == 1) {
-            return "/password/success";
+            return "password/success";
         } else {
-            return "/password/faile";
+            return "password/faile";
         }
     }
 
@@ -710,13 +710,13 @@ public class UserThirdBizImpl implements UserThirdBiz {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(id);
         model.addAttribute("h5Domain", h5Domain);
         if (ObjectUtils.isEmpty(userThirdAccount)) {
-            return "/autoTender/faile";
+            return "autoTender/faile";
         }
 
         if (userThirdAccount.getAutoTenderState() == 1) {
-            return "/autoTender/success";
+            return "autoTender/success";
         } else {
-            return "/autoTender/faile";
+            return "autoTender/faile";
         }
     }
 
@@ -726,13 +726,13 @@ public class UserThirdBizImpl implements UserThirdBiz {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(id);
         model.addAttribute("h5Domain", h5Domain);
         if (ObjectUtils.isEmpty(userThirdAccount)) {
-            return "/autoTranfer/faile";
+            return "autoTranfer/faile";
         }
 
         if (userThirdAccount.getAutoTransferState() == 1) {
-            return "/autoTranfer/success";
+            return "autoTranfer/success";
         } else {
-            return "/autoTranfer/faile";
+            return "autoTranfer/faile";
         }
     }
 

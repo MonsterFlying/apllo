@@ -230,13 +230,13 @@ public class AssetBizImpl implements AssetBiz {
         RechargeDetailLog rechargeDetailLog = rechargeDetailLogService.findTopBySeqNo(seqNo);
         model.addAttribute("h5Domain", h5Domain);
         if (ObjectUtils.isEmpty(rechargeDetailLog)) {
-            return "/recharge/faile";
+            return "recharge/faile";
         } else if (rechargeDetailLog.getState() == 0) {
-            return "/recharge/loading";
+            return "recharge/loading";
         } else if (rechargeDetailLog.getState() == 1) {
-            return "/recharge/success";
+            return "recharge/success";
         } else {
-            return "/recharge/faile";
+            return "recharge/faile";
         }
     }
 
