@@ -14,4 +14,6 @@ import java.util.List;
 @Repository
 public interface TaskSchedulerRepository extends JpaRepository<TaskScheduler, Long>{
     List<TaskScheduler> findByTypeAndDel(int type, int del, Pageable pageable);
+
+    List<TaskScheduler> findByTypeAndTaskData(Integer type, String taskData);
 }

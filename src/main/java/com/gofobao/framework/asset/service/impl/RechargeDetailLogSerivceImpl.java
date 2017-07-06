@@ -31,8 +31,8 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService {
     RechargeDetailLogRepository rechargeDetailLogRepository;
 
     @Override
-    public void save(RechargeDetailLog rechargeDetailLog) {
-        rechargeDetailLogRepository.save(rechargeDetailLog);
+    public RechargeDetailLog save(RechargeDetailLog rechargeDetailLog) {
+        return rechargeDetailLogRepository.save(rechargeDetailLog);
     }
 
     @Override

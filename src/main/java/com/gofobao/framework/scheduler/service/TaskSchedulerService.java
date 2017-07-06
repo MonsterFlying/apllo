@@ -13,4 +13,6 @@ public interface TaskSchedulerService {
     List<TaskScheduler> findByType(int type, Pageable pageable);
 
     TaskScheduler save(TaskScheduler taskScheduler);
+
+    List<TaskScheduler> findByTypeAndTaskData(Integer type, String taskData);
 }

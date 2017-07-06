@@ -34,4 +34,11 @@ public interface BankAccountBiz {
      * @return
      */
     ResponseEntity<VoBankListResp> list(Long userId);
+
+    /**
+     * 获取当天充值额度
+     * @param userId
+     * @return
+     */
+    int getCashCredit4Day(Long userId);
 }
