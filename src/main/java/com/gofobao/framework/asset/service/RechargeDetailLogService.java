@@ -14,7 +14,7 @@ import java.util.List;
  */
 public interface RechargeDetailLogService {
 
-    void save(RechargeDetailLog rechargeDetailLog);
+    RechargeDetailLog save(RechargeDetailLog rechargeDetailLog);
 
     RechargeDetailLog findTopBySeqNo(String seqNo);
 

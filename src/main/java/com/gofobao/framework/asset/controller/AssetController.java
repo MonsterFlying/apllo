@@ -8,6 +8,7 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.annotations.ApiIgnore;
@@ -18,7 +19,6 @@ import springfox.documentation.annotations.ApiIgnore;
 @Api(description = "资金模块")
 @RestController
 public class AssetController {
-
     @Autowired
     private AssetBiz assetBiz;
 
@@ -26,6 +26,13 @@ public class AssetController {
     @GetMapping("/asset/v2/info")
     public ResponseEntity<VoUserAssetInfoResp> userAAssessetInfo(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return assetBiz.userAssetInfo(userId);
+    }
+
+
+    @ApiOperation("资金同步问题")
+    @PostMapping("/asset/v2/synOnLineRecharge")
+    public ResponseEntity<VoUserAssetInfoResp> synOnLineRecharge(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
+        return assetBiz.synOnLineRecharge(userId) ;
     }
 
 

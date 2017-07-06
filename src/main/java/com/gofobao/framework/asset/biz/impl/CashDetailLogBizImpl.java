@@ -253,14 +253,12 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
         // 用户可提现余额
-        Asset asset = assetService.findByUserIdLock(userId);
         Long useMoney = getRealCashMoney(userId) ;
         if(useMoney <= 0){
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "账户余额为0！", VoHtmlResp.class));
         }
-
         if ((voCashReq.getCashMoney() >= 200000) && (StringUtils.isEmpty(voCashReq.getBankAps()))) {
             return ResponseEntity
                     .badRequest()
@@ -275,45 +273,14 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
 
-        // 判断提现额度剩余
-        double[] cashCredit = bankAccountBiz.getCashCredit(userId);
-        // 判断单笔额度
-        double oneTimes = cashCredit[0];
-        if (voCashReq.getCashMoney() > oneTimes) {
+        // 判断当天提现次数
+        int cashTime = bankAccountBiz.getCashCredit4Day( userId ) ;
+
+        if(cashTime >= 10){
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR,
-                            String.format("%s每笔最大提现额度为%s元",
-                                    userThirdAccount.getBankName(),
-                                    StringHelper.formatDouble(oneTimes, true)),
-                            VoHtmlResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "对不起, 发起用户！", VoHtmlResp.class));
         }
-
-        // 判断当天额度
-        double dayTimes = cashCredit[1];
-        if ((dayTimes <= 0) || (dayTimes - voCashReq.getCashMoney() < 0)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR,
-                            String.format("今天你在%s的剩余提现额度%s",
-                                    userThirdAccount.getBankName(),
-                                    StringHelper.formatDouble(dayTimes < 0 ? 0 : dayTimes, true)),
-                            VoHtmlResp.class));
-        }
-
-        // 判断每月额度
-        double mouthTimes = cashCredit[2];
-        if ((mouthTimes <= 0) || (mouthTimes - voCashReq.getCashMoney() < 0)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR,
-                            String.format("当月你在%s的剩余提现额度%s元",
-                                    userThirdAccount.getBankName(),
-                                    StringHelper.formatDouble(mouthTimes < 0 ? 0 : mouthTimes, true)),
-                            VoHtmlResp.class));
-        }
-
-
         boolean bigCashState = false; // 人行通道?
         if ((voCashReq.getCashMoney() >= 200000) && (!StringUtils.isEmpty(voCashReq.getBankAps()))) {
             bigCashState = true;

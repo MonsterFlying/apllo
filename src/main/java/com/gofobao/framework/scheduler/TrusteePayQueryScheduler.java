@@ -62,9 +62,6 @@ public class TrusteePayQueryScheduler {
                 log.info(String.format("委托支付标信息查询调度使用时间 %s 毫秒", System.currentTimeMillis() - startDate));
             });
         } while (size == pageSize);
-
-
-        // 调用查询
     }
 
 }
