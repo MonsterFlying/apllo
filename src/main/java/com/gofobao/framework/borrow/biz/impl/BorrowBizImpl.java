@@ -1598,7 +1598,7 @@ public class BorrowBizImpl implements BorrowBiz {
         trusteePayQueryReq.setProductId(productId);
         TrusteePayQueryResp trusteePayQueryResp = jixinManager.send(JixinTxCodeEnum.TRUSTEE_PAY_QUERY, trusteePayQueryReq, TrusteePayQueryResp.class);
         if ((ObjectUtils.isEmpty(trusteePayQueryResp))
-                || (JixinResultContants.SUCCESS.equals(trusteePayQueryResp.getRetCode()))) {
+                || !(JixinResultContants.SUCCESS.equals(trusteePayQueryResp.getRetCode()))) {
             return false;
         }
 
