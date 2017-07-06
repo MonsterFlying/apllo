@@ -79,7 +79,7 @@ public class AplloApplicationTests {
     private BorrowCollectionService borrowCollectionService;
 
     @Test
-    public void contextLoads() {
+    public void contextLoads() throws InterruptedException {
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_AUTO_TENDER);
         mqConfig.setTag(MqTagEnum.AUTO_TENDER);
@@ -91,6 +91,8 @@ public class AplloApplicationTests {
         } catch (Exception e) {
             log.error("borrowProvider autoTender send mq exception", e);
         }
+
+        Thread.sleep(100000 * 1000);
     }
 
     public static void main(String[] args) {
@@ -175,7 +177,7 @@ public class AplloApplicationTests {
         //查询投资人购买债权
         //creditInvestQuery();
         //垫付回调
-        advanceCall();
+        //advanceCall();
 
         /*Map<String,String> map = new HashMap<>();
         map.put("borrowId","169761");
@@ -226,7 +228,7 @@ public class AplloApplicationTests {
             e.printStackTrace();
         }*/
 
-        /*BatchDetailsQueryReq request = new BatchDetailsQueryReq();
+        BatchDetailsQueryReq request = new BatchDetailsQueryReq();
         request.setBatchNo("103146");
         request.setBatchTxDate("20170705");
         request.setType("1");
@@ -234,7 +236,7 @@ public class AplloApplicationTests {
         request.setPageSize("10");
         request.setChannel(ChannelContant.HTML);
         BatchDetailsQueryResp response = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, request, BatchDetailsQueryResp.class);
-        System.out.println(response);*/
+        System.out.println(response);
 
         /*BidApplyQueryReq request = new BidApplyQueryReq();
         request.setAccountId("6212462040000600025");

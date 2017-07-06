@@ -21,6 +21,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -143,8 +144,11 @@ public class AutoTenderServiceImpl implements AutoTenderService {
         Query query = entityManager.createNativeQuery(sql.toString());
         query.unwrap(SQLQuery.class).setResultTransformer(Transformers.aliasToBean(VoFindAutoTender.class));
         List<VoFindAutoTender> voFindAutoTenderLists = query.getResultList();
-        Optional<List> resultList = Optional.ofNullable(voFindAutoTenderLists);
-        return resultList.orElse(Collections.EMPTY_LIST);
+        if(CollectionUtils.isEmpty(voFindAutoTenderLists)) {
+            return new ArrayList<>(0);
+        }else{
+            return voFindAutoTenderLists ;
+        }
     }
 
 

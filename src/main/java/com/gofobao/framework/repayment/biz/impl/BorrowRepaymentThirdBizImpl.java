@@ -111,13 +111,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         if (ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) {
             repayList = getRepayList(voThirdBatchRepay);
         } else {
-            /**
-             * @// TODO: 2017/7/1
-             * 垫付时借款人没有收取  颠覆人管理费用
-             * 还垫付需要连贯起来
-             *
-             * //借款人逾期罚息
-             */
             //批次融资人还担保账户垫款
             VoBatchRepayBailReq voBatchRepayBailReq = new VoBatchRepayBailReq();
             voBatchRepayBailReq.setRepaymentId(repaymentId);
@@ -998,7 +991,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         }
 
         List<RepayBail> repayBails = null;
-        if (ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) {
+        if (!ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) {
             repayBails = new ArrayList<>();
             receivedRepayBail(repayBails, borrow, borrowUserThirdAccount.getAccountId(), borrowRepayment.getOrder(), interestPercent, lateInterest);
         }
@@ -1032,7 +1025,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
         BatchRepayBailReq request = new BatchRepayBailReq();
         request.setBatchNo(batchNo);
-        request.setTxAmount(StringHelper.formatDouble(txAmount, 100, false));
+        request.setTxAmount(StringHelper.formatDouble(txAmount,  false));
         request.setSubPacks(GSON.toJson(repayBails));
         request.setTxCounts(StringHelper.toString(repayBails.size()));
         request.setNotifyURL(webDomain + "/pub/repayment/v2/third/batch/repaybail/check");
@@ -1096,7 +1089,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             Specification<BorrowCollection> bcs = Specifications
                     .<BorrowCollection>and()
                     .in("tenderId", tenderIds.toArray())
-                    .eq("status", 0)
+                    .eq("status", 1)
                     .eq("order", order)
                     .build();
 
@@ -1169,7 +1162,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     txFeeOut += lateInterest;
                 }
 
-                txAmount = principal + intAmount;
+                txAmount = principal + intAmount + txFeeOut;
 
                 String orderId = JixinHelper.getOrderId(JixinHelper.BAIL_REPAY_PREFIX);
                 repayBail.setOrderId(orderId);
@@ -1245,7 +1238,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             try {
                 Map<String, Object> acqRes = GSON.fromJson(batchRepayBailRunResp.getAcqRes(), new TypeToken<Map<String, Object>>() {
                 }.getType());
-                long repaymentId = NumberHelper.toLong(StringHelper.toString(acqRes.get("repaymentId")));
+                long repaymentId = (long) NumberHelper.toDouble(StringHelper.toString(acqRes.get("repaymentId")));
                 BorrowRepayment borrowRepayment = borrowRepaymentService.findById(repaymentId);
                 if (borrowRepayment.getStatus() != 0) {
                     log.info("立即还款：该笔借款已归还");
@@ -1260,7 +1253,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 int lateInterest = NumberHelper.toInt(StringHelper.toString(acqRes.get("lateInterest")));
 
                 //调用垫付逻辑
-                AdvanceLog advanceLog = advanceLogService.findById(repaymentId);
+                AdvanceLog advanceLog = advanceLogService.findByRepaymentId(repaymentId);
                 Preconditions.checkNotNull(advanceLog, "垫付记录不存在!请联系客服");
 
                 CapitalChangeEntity entity = new CapitalChangeEntity();
@@ -1275,6 +1268,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 advanceLog.setRepayAtYes(new Date());
                 advanceLog.setRepayMoneyYes(repayMoney + lateInterest);
                 advanceLogService.updateById(advanceLog);
+
+
+
 
             } catch (Exception e) {
                 log.error("borrowRepaymentThirdBizImpl 资产变更异常：", e);

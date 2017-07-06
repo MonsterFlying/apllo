@@ -7,9 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
+import javax.persistence.LockModeType;
 import java.util.List;
 
 /**
@@ -41,6 +43,16 @@ public class AdvanceLogServiceImpl implements AdvanceLogService{
     public AdvanceLog findById(Long id){
         return advanceLogRepository.findOne(id);
     }
+
+    public AdvanceLog findByRepaymentId(Long repaymentId){
+        return advanceLogRepository.findByRepaymentId(repaymentId);
+    }
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    public AdvanceLog findByRepaymentIdLock(Long repaymentId){
+        return advanceLogRepository.findByRepaymentId(repaymentId);
+    }
+
 
     public AdvanceLog findByIdLock(Long id){
         return advanceLogRepository.findById(id);

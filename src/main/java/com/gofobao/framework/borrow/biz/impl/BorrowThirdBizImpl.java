@@ -199,8 +199,8 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         Long userId = voCancelThirdBorrow.getUserId();
         String productId = voCancelThirdBorrow.getProductId();
         String raiseDate = voCancelThirdBorrow.getRaiseDate();//募集日期
-        Preconditions.checkState(ObjectUtils.isEmpty(raiseDate), "募集日期不能为空!");
-        Preconditions.checkState(ObjectUtils.isEmpty(productId), "当前标的未在即信登记");
+        Preconditions.checkArgument(!StringUtils.isEmpty(raiseDate), "募集日期不能为空!");
+        Preconditions.checkArgument(!StringUtils.isEmpty(productId), "当前标的未在即信登记");
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "借款人未开户!");
         DebtRegisterCancelReq request = new DebtRegisterCancelReq();
