@@ -25,7 +25,7 @@ public interface BorrowThirdBiz {
      * @param voRepayAllReq
      * @return
      */
-    ResponseEntity<VoBaseResp> thirdBatchRepayAll(VoRepayAllReq voRepayAllReq);
+    ResponseEntity<VoBaseResp> thirdBatchRepayAll(VoRepayAllReq voRepayAllReq) throws Exception;
 
     /**
      * 即信批次还款(提前结清)

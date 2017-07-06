@@ -138,7 +138,12 @@ public class WebBorrowController {
     @PostMapping("/pub/pc/borrow/repayAll")
     @ApiOperation("提前还款")
     public ResponseEntity<VoBaseResp> pcRepayAll(@Valid @ModelAttribute VoRepayAllReq voRepayAllReq) {
-        return borrowThirdBiz.thirdBatchRepayAll(voRepayAllReq);
+        try {
+            return borrowThirdBiz.thirdBatchRepayAll(voRepayAllReq);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "提前还款失败！"));
+        }
     }
 
     /**
