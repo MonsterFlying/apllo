@@ -1253,8 +1253,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 log.error("borrowRepaymentThirdBizImpl 资产变更异常：", e);
             }
         }
-
         return ResponseEntity.ok("success");
-
     }
 }
