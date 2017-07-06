@@ -474,7 +474,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         if (ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) {
             receivedReapy(borrow, borrowRepayment.getOrder(), interestPercent, lateDays, lateInterest / 2, false);
         } else {
-            AdvanceLog advanceLog = advanceLogService.findById(repaymentId);
+            AdvanceLog advanceLog = advanceLogService.findByRepaymentId(repaymentId);
             Preconditions.checkNotNull(advanceLog, "垫付记录不存在!请联系客服");
 
             entity = new CapitalChangeEntity();

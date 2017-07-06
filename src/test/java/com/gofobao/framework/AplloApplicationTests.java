@@ -29,6 +29,7 @@ import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoAdvanceCall;
+import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -96,12 +97,13 @@ public class AplloApplicationTests {
     }
 
     public static void main(String[] args) {
-
         Gson gson = new Gson();
-        Map<String, String> map = new HashMap<>();
-        map.put("repaymentId", "173796");
-        System.out.println(gson.toJson(map));
-        System.out.println(SecurityHelper.getSign(gson.toJson(map)));
+        VoRepayReq voRepayReq = new VoRepayReq();
+        voRepayReq.setUserId(2762L);
+        voRepayReq.setRepaymentId(173795L);
+        voRepayReq.setInterestPercent(0d);
+        voRepayReq.setIsUserOpen(true);
+        System.out.println(gson.toJson(voRepayReq));
     }
 
     public AccountQueryByMobileResponse findAccountByMobile() {
