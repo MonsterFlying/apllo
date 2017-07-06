@@ -1,4 +1,4 @@
-package com.gofobao.framework.lend.vo.response;
+package com.gofobao.framework.repayment.vo.response.pc;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.google.common.collect.Lists;
@@ -8,12 +8,13 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * Created by admin on 2017/6/6.
+ * Created by admin on 2017/7/6.
  */
 @Data
-public class VoViewLendListWarpRes extends VoBaseResp {
-    private List<VoViewLend> voViewLends= Lists.newArrayList();
+public class VoViewCollectionWarpRes extends VoBaseResp{
     @ApiModelProperty("总记录数")
     private Integer totalCount=0;
+
+    private List<VoCollection> voCollections= Lists.newArrayList();
 
 }

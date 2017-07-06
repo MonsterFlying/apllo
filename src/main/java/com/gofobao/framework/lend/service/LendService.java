@@ -5,12 +5,12 @@ import com.gofobao.framework.lend.entity.Lend;
 import com.gofobao.framework.lend.vo.request.VoUserLendReq;
 import com.gofobao.framework.lend.vo.response.LendInfo;
 import com.gofobao.framework.lend.vo.response.UserLendInfo;
-import com.gofobao.framework.lend.vo.response.VoViewLend;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Zeke on 2017/6/1.
@@ -24,7 +24,7 @@ public interface LendService {
 
     Lend findById(Long id);
 
-    List<VoViewLend> list(Page page);
+    Map<String, Object> list(Page page);
 
 
     /**

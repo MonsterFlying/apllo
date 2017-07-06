@@ -16,4 +16,6 @@ import java.util.List;
 public class VoViewRefundWrapRes extends VoBaseResp{
     @ApiModelProperty("还款中列表")
     private List<VoViewRefundRes> list =  Lists.newArrayList() ;
+    @ApiModelProperty("总记录数")
+    private Integer totalCount=0;
 }

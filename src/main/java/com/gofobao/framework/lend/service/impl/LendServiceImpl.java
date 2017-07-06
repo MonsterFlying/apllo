@@ -21,6 +21,7 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -76,16 +77,21 @@ public class LendServiceImpl implements LendService {
     }
 
     @Override
-    public List<VoViewLend> list(Page page) {
+    public Map<String, Object> list(Page page) {
+        Map<String, Object> resultMaps = Maps.newHashMap();
+
         org.springframework.data.domain.Page<Lend> lends = lendRepository.findAll(
                 new PageRequest(
                         page.getPageIndex(),
                         page.getPageSize(),
                         new Sort(Sort.Direction.DESC, "createdAt")));
-
         List<Lend> lendList = lends.getContent();
+        Long totalCount = lends.getTotalElements();
+
+        resultMaps.put("totalCount", totalCount);
         if (CollectionUtils.isEmpty(lendList)) {
-            return Collections.EMPTY_LIST;
+            resultMaps.put("lends", lendList);
+            return resultMaps;
         }
         Set<Long> userIds = lendList.stream()
                 .map(w -> w.getUserId())
@@ -98,7 +104,7 @@ public class LendServiceImpl implements LendService {
         lendList.stream().forEach(p -> {
             VoViewLend lend = new VoViewLend();
             lend.setLendId(p.getId());
-            lend.setApr(StringHelper.formatMon(p.getApr() / 100D)+ BorrowContants.PERCENT);
+            lend.setApr(StringHelper.formatMon(p.getApr() / 100D) + BorrowContants.PERCENT);
             Users user = usersMap.get(p.getUserId());
             String userName = StringUtils.isEmpty(user.getUsername()) ?
                     UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM) :
@@ -111,12 +117,13 @@ public class LendServiceImpl implements LendService {
                 lend.setSpend(1d);
                 lend.setStatusStr(LendContants.STATUS_YES_STR);
             }
-            lend.setSpend(Double.parseDouble(StringHelper.formatMon(p.getMoneyYes()/new Double(p.getMoney()))));
+            lend.setSpend(Double.parseDouble(StringHelper.formatMon(p.getMoneyYes() / new Double(p.getMoney()))));
             lend.setLimit(p.getTimeLimit());
             lend.setStatus(p.getStatus());
             lendListRes.add(lend);
         });
-        return Optional.ofNullable(lendListRes).orElse(Collections.EMPTY_LIST);
+        resultMaps.put("lends",lendListRes);
+        return resultMaps;
     }
 
     @Override
@@ -136,11 +143,11 @@ public class LendServiceImpl implements LendService {
         lendInfo.setStartMoney(StringHelper.formatMon(lend.getLowest() / 100D));
 
         if (lend.getStatus() == LendContants.STATUS_NO) {
-            lendInfo.setSurplusMoney(StringHelper.formatMon((lend.getMoney() - lend.getMoneyYes())/100D));
+            lendInfo.setSurplusMoney(StringHelper.formatMon((lend.getMoney() - lend.getMoneyYes()) / 100D));
             lendInfo.setSurplusMoneyHide(lend.getMoney() - lend.getMoneyYes());
         } else {
-            lendInfo.setSurplusMoney(StringHelper.formatMon(lend.getMoney()/100D));
-            lendInfo.setSurplusMoneyHide(lend.getMoney() );
+            lendInfo.setSurplusMoney(StringHelper.formatMon(lend.getMoney() / 100D));
+            lendInfo.setSurplusMoneyHide(lend.getMoney());
         }
         if (lend.getTimeLimit() == BorrowContants.REPAY_FASHION_ONCE) {
             lendInfo.setTimeLimit(lend.getTimeLimit() + BorrowContants.DAY);
@@ -150,7 +157,7 @@ public class LendServiceImpl implements LendService {
         lendInfo.setCollectionAt(DateHelper.dateToString(lend.getRepayAt()));
 
         Users users = usersRepository.findOne(userId);
-        lendInfo.setUserName(StringUtils.isEmpty(users.getUsername()) ? UserHelper.hideChar(users.getPhone(),UserHelper.PHONE_NUM): UserHelper.hideChar(users.getUsername(),UserHelper.USERNAME_NUM));
+        lendInfo.setUserName(StringUtils.isEmpty(users.getUsername()) ? UserHelper.hideChar(users.getPhone(), UserHelper.PHONE_NUM) : UserHelper.hideChar(users.getUsername(), UserHelper.USERNAME_NUM));
         Asset asset = assetService.findByUserId(userId); //查询会员资产信息
         if (ObjectUtils.isEmpty(asset)) {
             return null;

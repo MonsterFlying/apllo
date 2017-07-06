@@ -15,5 +15,5 @@ public class VoViewBuddingResListWrapRes extends VoBaseResp {
     private List<VoViewBuddingRes> viewBuddingResList = Lists.newArrayList();
 
     @ApiModelProperty("总记录数")
-    private Integer totalCount;
+    private Integer totalCount=0;
 }

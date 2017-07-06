@@ -1,7 +1,6 @@
 package com.gofobao.framework.repayment.biz.Impl;
 
 import com.gofobao.framework.borrow.contants.BorrowContants;
-import com.gofobao.framework.common.response.RespMsg;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.biz.LoanBiz;
 import com.gofobao.framework.repayment.contants.RepaymentContants;
@@ -14,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by admin on 2017/6/5.
@@ -34,9 +34,12 @@ public class LoanBizImpl implements LoanBiz {
         voLoanListReq.setType(RepaymentContants.REFUND);
         voLoanListReq.setStatus(BorrowContants.PASS);
         try {
-            List<VoViewRefundRes> voViewRefundRes = loanService.refundResList(voLoanListReq);
-            VoViewRefundWrapRes voViewRefundWrapRes = VoBaseResp.ok("成功", VoViewRefundWrapRes.class);
+            Map<String, Object> resultMaps = loanService.refundResList(voLoanListReq);
+            Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
+            List<VoViewRefundRes> voViewRefundRes = (List<VoViewRefundRes>) resultMaps.get("refundResList");
+            VoViewRefundWrapRes voViewRefundWrapRes = VoBaseResp.ok("查询成功", VoViewRefundWrapRes.class);
             voViewRefundWrapRes.setList(voViewRefundRes);
+            voViewRefundWrapRes.setTotalCount(totalCount);
             return ResponseEntity.ok(voViewRefundWrapRes);
         } catch (Exception e) {
             return ResponseEntity
@@ -57,9 +60,14 @@ public class LoanBizImpl implements LoanBiz {
         voLoanListReq.setType(RepaymentContants.CLOSE);
         voLoanListReq.setStatus(BorrowContants.PASS);
         try {
-            List<VoViewSettleRes> voViewSettleRes = loanService.settleList(voLoanListReq);
-            VoViewSettleWarpListRes viewSettleWarpListRes = VoBaseResp.ok("成功", VoViewSettleWarpListRes.class);
+
+            Map<String, Object> resultMaps = loanService.settleList(voLoanListReq);
+            List<VoViewSettleRes> voViewSettleRes = (List<VoViewSettleRes>) resultMaps.get("settleList");
+            Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
+
+            VoViewSettleWarpListRes viewSettleWarpListRes = VoBaseResp.ok("查询成功", VoViewSettleWarpListRes.class);
             viewSettleWarpListRes.setVoViewSettleRes(voViewSettleRes);
+            viewSettleWarpListRes.setTotalCount(totalCount);
             return ResponseEntity.ok(viewSettleWarpListRes);
         } catch (Exception e) {
 
@@ -78,11 +86,15 @@ public class LoanBizImpl implements LoanBiz {
     public ResponseEntity<VoViewBuddingResListWrapRes> buddingList(VoLoanListReq voLoanListReq) {
         voLoanListReq.setType(RepaymentContants.BUDING);
         voLoanListReq.setStatus(RepaymentContants.BUDING);
-        RespMsg<List<VoViewBuddingRes>> respMsg = new RespMsg<>();
         try {
-            List<VoViewBuddingRes> viewBiddingRes = loanService.buddingList(voLoanListReq);
-            VoViewBuddingResListWrapRes voViewBudingResListWrapRes = VoBaseResp.ok("成功", VoViewBuddingResListWrapRes.class);
+
+            Map<String, Object> resultMaps = loanService.buddingList(voLoanListReq);
+            List<VoViewBuddingRes> viewBiddingRes = (List<VoViewBuddingRes>) resultMaps.get("buddingList");
+            Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
+
+            VoViewBuddingResListWrapRes voViewBudingResListWrapRes = VoBaseResp.ok("查询成功", VoViewBuddingResListWrapRes.class);
             voViewBudingResListWrapRes.setViewBuddingResList(viewBiddingRes);
+            voViewBudingResListWrapRes.setTotalCount(totalCount);
             return ResponseEntity.ok(voViewBudingResListWrapRes);
         } catch (Exception e) {
             return ResponseEntity
@@ -95,6 +107,7 @@ public class LoanBizImpl implements LoanBiz {
 
     /**
      * 借款详情
+     *
      * @param voDetailReq
      * @return
      */
@@ -102,7 +115,7 @@ public class LoanBizImpl implements LoanBiz {
     public ResponseEntity<VoViewRepaymentDetailWrapRes> repaymentDetail(VoDetailReq voDetailReq) {
         try {
             VoViewRepaymentDetail viewRepaymentDetail = loanService.repaymentDetail(voDetailReq);
-            VoViewRepaymentDetailWrapRes viewRepaymentDetailWrapRes=VoBaseResp.ok("查询成功",VoViewRepaymentDetailWrapRes.class);
+            VoViewRepaymentDetailWrapRes viewRepaymentDetailWrapRes = VoBaseResp.ok("查询成功", VoViewRepaymentDetailWrapRes.class);
             viewRepaymentDetailWrapRes.setViewRepaymentDetail(viewRepaymentDetail);
             return ResponseEntity.ok(viewRepaymentDetailWrapRes);
 
@@ -116,6 +129,7 @@ public class LoanBizImpl implements LoanBiz {
 
     /**
      * 还款列表
+     *
      * @param voDetailReq
      * @return
      */

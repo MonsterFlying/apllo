@@ -6,8 +6,6 @@ import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
 import org.springframework.http.ResponseEntity;
 
-import java.util.Map;
-
 /**
  * Created by Zeke on 2017/5/31.
  */

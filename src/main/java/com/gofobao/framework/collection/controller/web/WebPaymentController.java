@@ -3,20 +3,16 @@ package com.gofobao.framework.collection.controller.web;
 import com.gofobao.framework.collection.biz.PaymentBiz;
 import com.gofobao.framework.collection.vo.request.OrderListReq;
 import com.gofobao.framework.collection.vo.request.VoCollectionListReq;
-import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
-import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
-import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
-import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
-import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
 import com.gofobao.framework.collection.vo.response.web.VoViewCollectionListWarpRes;
 import com.gofobao.framework.collection.vo.response.web.VoViewCollectionWarpRes;
-import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import springfox.documentation.annotations.ApiIgnore;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Created by admin on 2017/5/31.
