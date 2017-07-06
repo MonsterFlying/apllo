@@ -163,10 +163,10 @@ public class TenderBizImpl implements TenderBiz {
             voCreateThirdTenderReq.setAcqRes(String.valueOf(borrowTender.getId()));
             voCreateThirdTenderReq.setUserId(borrowTender.getUserId());
             voCreateThirdTenderReq.setTxAmount(StringHelper.formatDouble(borrowTender.getValidMoney(), 100, false));
-            voCreateThirdTenderReq.setProductId(productId);
+            voCreateThirdTenderReq.setProductId(borrow.getProductId());
             voCreateThirdTenderReq.setFrzFlag(FrzFlagContant.FREEZE);
             resp = tenderThirdBiz.createThirdTender(voCreateThirdTenderReq);
-            if (!ObjectUtils.isEmpty(resp)) {
+            if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) {
                 String msg = "tenderBizImpl createTender: tenderId->" + borrowTender.getId() + "msg->" + resp.getBody().getState().getMsg();
                 log.error(msg);
                 throw new Exception(msg);

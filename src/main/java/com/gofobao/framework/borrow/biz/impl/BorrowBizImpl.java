@@ -70,6 +70,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.messaging.MessagingException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -126,6 +127,8 @@ public class BorrowBizImpl implements BorrowBiz {
     private ThymeleafHelper thymeleafHelper;
     @Autowired
     private TenderThirdBiz tenderThirdBiz;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     JixinManager jixinManager;
@@ -785,14 +788,18 @@ public class BorrowBizImpl implements BorrowBiz {
         //================================即信取消标的==================================
         String productId = borrow.getProductId();
         if (!StringUtils.isEmpty(productId)) {
-            VoCancelThirdBorrow voCancelThirdBorrow = new VoCancelThirdBorrow();
-            voCancelThirdBorrow.setProductId(productId);
-            voCancelThirdBorrow.setUserId(borrow.getUserId());
-            voCancelThirdBorrow.setRaiseDate(DateHelper.dateToString(borrow.getReleaseAt(), DateHelper.DATE_FORMAT_YMD_NUM));
-            voCancelThirdBorrow.setAcqRes(StringHelper.toString(borrow.getId()));
-            ResponseEntity<VoBaseResp> resp = borrowThirdBiz.cancelThirdBorrow(voCancelThirdBorrow);
-            if (!resp.getStatusCode().equals(HttpStatus.OK)) {
-                throw new Exception("borrowBizImpl cancelThirdBorrow:" + resp.getBody().getState().getMsg());
+
+            Map<String, Object> map = jdbcTemplate.queryForMap("select count(id) as count from gfb_borrow_tender where borrow_id = " + borrow.getId() + " and third_tender_order_id is not null");
+            if (NumberHelper.toInt(map.get("count")) <= 0) {
+                VoCancelThirdBorrow voCancelThirdBorrow = new VoCancelThirdBorrow();
+                voCancelThirdBorrow.setProductId(productId);
+                voCancelThirdBorrow.setUserId(borrow.getUserId());
+                voCancelThirdBorrow.setRaiseDate(DateHelper.dateToString(borrow.getReleaseAt(), DateHelper.DATE_FORMAT_YMD_NUM));
+                voCancelThirdBorrow.setAcqRes(StringHelper.toString(borrow.getId()));
+                ResponseEntity<VoBaseResp> resp = borrowThirdBiz.cancelThirdBorrow(voCancelThirdBorrow);
+                if (!resp.getStatusCode().equals(HttpStatus.OK)) {
+                    throw new Exception("borrowBizImpl cancelThirdBorrow:" + resp.getBody().getState().getMsg());
+                }
             }
         }
     }
