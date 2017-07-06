@@ -228,16 +228,6 @@ public class AplloApplicationTests {
             e.printStackTrace();
         }*/
 
-        BatchDetailsQueryReq request = new BatchDetailsQueryReq();
-        request.setBatchNo("103146");
-        request.setBatchTxDate("20170705");
-        request.setType("1");
-        request.setPageNum("1");
-        request.setPageSize("10");
-        request.setChannel(ChannelContant.HTML);
-        BatchDetailsQueryResp response = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, request, BatchDetailsQueryResp.class);
-        System.out.println(response);
-
         /*BidApplyQueryReq request = new BidApplyQueryReq();
         request.setAccountId("6212462040000600025");
         request.setChannel(ChannelContant.HTML);

@@ -32,7 +32,7 @@ public class WebBorrowRepaymentContorller {
     private RepaymentBiz repaymentBiz;
 
     @GetMapping(value = "/v2/collection/days")
-    @ApiOperation("还款计划列表 time: 201706")
+    @ApiOperation("还款计划列表 ")
     public ResponseEntity<VoViewOrderListWarpRes> days( VoOrderListReq listReq,
                                                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
 
