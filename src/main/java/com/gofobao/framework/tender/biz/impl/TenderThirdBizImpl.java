@@ -132,7 +132,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         updTender.setTUserId(userThirdAccount.getId());
         updTender.setThirdTenderOrderId(orderId);
         tenderService.updateById(updTender);
-        return null;
+
+        return ResponseEntity.ok(VoBaseResp.ok("投标成功!"));
     }
 
 
