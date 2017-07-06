@@ -380,6 +380,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      * @param voCancelThirdTenderReq
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> cancelThirdTender(VoCancelThirdTenderReq voCancelThirdTenderReq) {
         Long tenderId = voCancelThirdTenderReq.getTenderId();
         Preconditions.checkNotNull(tenderId, "tenderThirdBizImpl cancelThirdTender: tenderId为空!");
@@ -387,7 +388,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         Preconditions.checkNotNull(tender, "tenderThirdBizImpl cancelThirdTender: tender为空!");
         UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
         Preconditions.checkNotNull(tenderUserThirdAccount, "tenderThirdBizImpl cancelThirdTender: 投资人未开户!");
-        Borrow borrow = borrowService.findById(tenderId);
+        Borrow borrow = borrowService.findById(tender.getBorrowId());
         Preconditions.checkNotNull(borrow, "tenderThirdBizImpl cancelThirdTender: tender为空!");
 
         String orderId = JixinHelper.getOrderId(JixinHelper.TENDER_CANCEL_PREFIX);

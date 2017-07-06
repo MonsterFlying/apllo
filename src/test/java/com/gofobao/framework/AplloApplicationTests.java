@@ -1,5 +1,6 @@
 package com.gofobao.framework;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
@@ -30,6 +31,8 @@ import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoAdvanceCall;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
+import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -39,10 +42,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -78,6 +84,10 @@ public class AplloApplicationTests {
     private EntityManager entityManager;
     @Autowired
     private BorrowCollectionService borrowCollectionService;
+    @Autowired
+    private TenderService tenderService;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Test
     public void contextLoads() throws InterruptedException {
@@ -167,6 +177,8 @@ public class AplloApplicationTests {
     @Test
     public void test() {
 
+        Map<String,Object> map = jdbcTemplate.queryForMap("select count(id) as count from gfb_borrow_tender where borrow_id = 169794 and third_tender_order_id is not null");
+        System.out.println(map.get("count"));
 
         //根据手机号查询存管账户
         //findAccountByMobile();
