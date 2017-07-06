@@ -21,7 +21,7 @@ public class BankAccountWebController {
     @GetMapping("/pub/bank/desc")
     String index(Model model) {
         bankAccountBiz.showDesc(model) ;
-        return "/bank/banklist";
+        return "bank/banklist";
     }
 
 }

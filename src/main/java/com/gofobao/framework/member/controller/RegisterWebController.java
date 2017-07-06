@@ -13,7 +13,7 @@ public class RegisterWebController {
     @ApiOperation("用户注册协议")
     @GetMapping("/pub/register/protocol")
     public String registerProtocol(){
-        return "/register/registerProtocol" ;
+        return "register/registerProtocol" ;
     }
 
 }
