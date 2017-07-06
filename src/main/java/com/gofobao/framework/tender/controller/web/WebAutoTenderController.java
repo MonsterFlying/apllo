@@ -1,15 +1,12 @@
 package com.gofobao.framework.tender.controller.web;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.AutoTenderBiz;
 import com.gofobao.framework.tender.vo.request.VoDelAutoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoGetAutoTenderList;
 import com.gofobao.framework.tender.vo.request.VoOpenAutoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoSaveAutoTenderReq;
-import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
-import com.gofobao.framework.tender.vo.response.VoViewAutoTenderList;
 import com.gofobao.framework.tender.vo.response.web.VoViewPcAutoTenderWarpRes;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

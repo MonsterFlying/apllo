@@ -1,5 +1,6 @@
 package com.gofobao.framework.repayment.biz;
 
+import com.gofobao.framework.collection.vo.request.VoCollectionListReq;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
@@ -7,6 +8,8 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.vo.request.*;
 import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
 import com.gofobao.framework.repayment.vo.response.VoViewRepaymentOrderDetailWarpRes;
+import com.gofobao.framework.repayment.vo.response.pc.VoViewCollectionWarpRes;
+import com.gofobao.framework.repayment.vo.response.pc.VoViewOrderListWarpRes;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -23,6 +26,14 @@ public interface RepaymentBiz {
     ResponseEntity<VoViewCollectionOrderListWarpResp> repaymentList(VoCollectionOrderReq voCollectionOrderReq);
 
     /**
+     *PC：还款计划列表
+     * @param listReq
+     * @return
+     */
+    ResponseEntity<VoViewOrderListWarpRes> pcRepaymentList(VoOrderListReq listReq);
+
+
+    /**
      * 还款详情
      *
      * @param voInfoReq
@@ -30,6 +41,12 @@ public interface RepaymentBiz {
      */
     ResponseEntity<VoViewRepaymentOrderDetailWarpRes> detail(VoInfoReq voInfoReq);
 
+    /**
+     * pc：未还款详情列表
+     * @param collectionListReq
+     * @return
+     */
+    ResponseEntity<VoViewCollectionWarpRes>orderList(VoCollectionListReq collectionListReq);
     /**
      * 标还款记录
      *

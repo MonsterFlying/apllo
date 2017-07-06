@@ -25,11 +25,11 @@ public class WebLoanController {
 
     @ApiOperation("还款中列表")
     @RequestMapping(value = "/v2/refund/list/{pageIndex}/{pageSize}", method = RequestMethod.GET)
-    public ResponseEntity<VoViewRefundWrapRes> refundResList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+    public ResponseEntity<VoViewRefundWrapRes> refundResList(/*@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,*/
                                                     @PathVariable Integer pageIndex,
                                                     @PathVariable Integer pageSize) {
         VoLoanListReq voLoanListReq = new VoLoanListReq();
-        voLoanListReq.setUserId(userId);
+        voLoanListReq.setUserId(901L);
         voLoanListReq.setPageIndex(pageIndex);
         voLoanListReq.setPageSize(pageSize);
         return loanBiz.refundResList(voLoanListReq);
@@ -37,24 +37,24 @@ public class WebLoanController {
 
     @ApiOperation("投标中列表")
     @GetMapping("/v2/budding/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewBuddingResListWrapRes> buddingList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+    public ResponseEntity<VoViewBuddingResListWrapRes> buddingList(/*@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,*/
                                                                    @PathVariable Integer pageIndex,
                                                                    @PathVariable Integer pageSize) {
         VoLoanListReq voLoanListReq = new VoLoanListReq();
         voLoanListReq.setPageIndex(pageIndex);
         voLoanListReq.setPageSize(pageSize);
-        voLoanListReq.setUserId(userId);
+        voLoanListReq.setUserId(901L);
         return loanBiz.buddingList(voLoanListReq);
     }
 
     @ApiOperation("已结清列表")
     @GetMapping("/v2/settle/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewSettleWarpListRes>  settleList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId ,
+    public ResponseEntity<VoViewSettleWarpListRes>  settleList(/*@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId ,*/
                                                      @PathVariable Integer pageIndex, @PathVariable Integer pageSize) {
         VoLoanListReq voLoanListReq = new VoLoanListReq();
         voLoanListReq.setPageIndex(pageIndex);
         voLoanListReq.setPageSize(pageSize);
-        voLoanListReq.setUserId(userId);
+        voLoanListReq.setUserId(901L);
         return loanBiz.settleList(voLoanListReq);
     }
 

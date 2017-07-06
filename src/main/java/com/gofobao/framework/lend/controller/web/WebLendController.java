@@ -28,7 +28,7 @@ public class WebLendController {
     private VoUserLendReq voUserLendReq = new VoUserLendReq();
 
     @RequestMapping(value = "/v2/list/{pageIndex}/{pageSize}", method = RequestMethod.GET)
-    @ApiOperation("出借列表")
+    @ApiOperation("pc：出借列表")
     public ResponseEntity<VoViewLendListWarpRes> list(@PathVariable Integer pageIndex,
                                                       @PathVariable Integer pageSize) {
         Page page = new Page();
@@ -39,14 +39,14 @@ public class WebLendController {
 
 
     @RequestMapping(value = "/v2/info/{lendId}", method = RequestMethod.GET)
-    @ApiOperation("出借详情")
+    @ApiOperation("pc：出借详情")
     public ResponseEntity<VoViewLendInfoWarpRes> info(@PathVariable Long lendId,
                                                       @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return lendBiz.info(userId, lendId);
     }
 
     @RequestMapping(value = "/v2/list/byUser/{pageIndex}/{pageSize}", method = RequestMethod.GET)
-    @ApiOperation("我的出借列表")
+    @ApiOperation("pc：我的出借列表")
     public ResponseEntity<VoViewUserLendInfoWarpRes> byUser(
             @PathVariable Integer pageIndex,
             @PathVariable Integer pageSize,

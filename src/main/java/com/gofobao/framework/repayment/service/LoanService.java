@@ -2,9 +2,10 @@ package com.gofobao.framework.repayment.service;
 
 import com.gofobao.framework.repayment.vo.request.VoDetailReq;
 import com.gofobao.framework.repayment.vo.request.VoLoanListReq;
-import com.gofobao.framework.repayment.vo.response.*;
+import com.gofobao.framework.repayment.vo.response.VoViewLoanList;
+import com.gofobao.framework.repayment.vo.response.VoViewRepaymentDetail;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * Created by admin on 2017/6/2.
@@ -16,7 +17,7 @@ public interface LoanService {
      * @param voLoanListReq
      * @return
      */
-    List<VoViewRefundRes> refundResList(VoLoanListReq voLoanListReq);
+    Map<String, Object> refundResList(VoLoanListReq voLoanListReq);
 
 
     /**
@@ -24,7 +25,7 @@ public interface LoanService {
      * @param voLoanListReq
      * @return
      */
-    List<VoViewSettleRes> settleList(VoLoanListReq voLoanListReq);
+    Map<String, Object> settleList(VoLoanListReq voLoanListReq);
 
 
     /**
@@ -32,7 +33,7 @@ public interface LoanService {
      * @param voLoanListReq
      * @return
      */
-    List<VoViewBuddingRes> buddingList(VoLoanListReq voLoanListReq);
+    Map<String, Object> buddingList(VoLoanListReq voLoanListReq);
 
 
     /**

@@ -1,15 +1,13 @@
 package com.gofobao.framework.repayment.controller.web;
 
-import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
-import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
-import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
+import com.gofobao.framework.collection.vo.request.VoCollectionListReq;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoAdvanceReq;
-import com.gofobao.framework.repayment.vo.request.VoInfoReq;
 import com.gofobao.framework.repayment.vo.request.VoInstantlyRepaymentReq;
-import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
-import com.gofobao.framework.repayment.vo.response.VoViewRepaymentOrderDetailWarpRes;
+import com.gofobao.framework.repayment.vo.request.VoOrderListReq;
+import com.gofobao.framework.repayment.vo.response.pc.VoViewCollectionWarpRes;
+import com.gofobao.framework.repayment.vo.response.pc.VoViewOrderListWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -33,36 +31,21 @@ public class WebBorrowRepaymentContorller {
     @Autowired
     private RepaymentBiz repaymentBiz;
 
-    @PostMapping(value = "/v2/collection/days/{time}")
-    @ApiOperation("还款计划列表 time: 201706")
-    public ResponseEntity<VoViewCollectionDaysWarpRes> days(@PathVariable String time, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        return repaymentBiz.days(userId, time);
+    @GetMapping(value = "/v2/collection/days")
+    @ApiOperation("还款计划列表 ")
+    public ResponseEntity<VoViewOrderListWarpRes> days( VoOrderListReq listReq,
+                                                            @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+
+        listReq.setUserId(userId);
+        return repaymentBiz.pcRepaymentList(listReq);
     }
 
-    @PostMapping(value = "/v2/list/{time}")
+    @PostMapping(value = "/v2/order/list")
     @ApiOperation("还款计划列表 time:2017-05-02")
-    public ResponseEntity<VoViewCollectionOrderListWarpResp> listRes(@PathVariable("time") String time,
+    public ResponseEntity<VoViewCollectionWarpRes> listRes(VoCollectionListReq voCollectionListReq,
                                                                      @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        VoCollectionOrderReq orderReq = new VoCollectionOrderReq();
-        orderReq.setTime(time);
-        orderReq.setUserId(userId);
-        return repaymentBiz.repaymentList(orderReq);
-    }
-
-    @PostMapping(value = "/v2/info/{repaymentId}")
-    @ApiOperation("还款信息")
-    public ResponseEntity<VoViewRepaymentOrderDetailWarpRes> info(@PathVariable("repaymentId") String repaymentId,
-                                                                  @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        VoInfoReq voInfoReq = new VoInfoReq();
-        voInfoReq.setUserId(userId);
-        voInfoReq.setRepaymentId(repaymentId);
-        return repaymentBiz.detail(voInfoReq);
-    }
-
-    @PostMapping(value = "pc/v2/logs/{borrowId}")
-    @ApiOperation("还款记录")
-    public ResponseEntity<VoViewRepayCollectionLogWarpRes> info(@PathVariable("borrowId") Long borrowId) {
-        return repaymentBiz.logs(borrowId);
+        voCollectionListReq.setUserId(userId);
+        return repaymentBiz.orderList(voCollectionListReq);
     }
 
 
@@ -75,7 +58,8 @@ public class WebBorrowRepaymentContorller {
      */
     @PostMapping("/v2/instantly")
     @ApiOperation("立即还款")
-    public ResponseEntity<VoBaseResp> instantly(@ModelAttribute @Valid VoInstantlyRepaymentReq voInstantlyRepaymentReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
+    public ResponseEntity<VoBaseResp> instantly(@ModelAttribute @Valid VoInstantlyRepaymentReq voInstantlyRepaymentReq,
+                                                @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
         voInstantlyRepaymentReq.setUserId(userId);
         return repaymentBiz.instantly(voInstantlyRepaymentReq);
     }

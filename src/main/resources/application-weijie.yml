@@ -48,8 +48,8 @@ jixin: #银行存管
   redPacketAccountId: "6212461270000000444" #红包账户
   handlingChargeAccountId: "6212461270000000360" #电子手续费账户
 gofobao:
-  javaDomain: http://max.hk1.mofasuidao.cn
-  webDomain: http://max.hk1.mofasuidao.cn
+  javaDomain: http://yu.hk1.mofasuidao.cn
+  webDomain: http://yu.hk1.mofasuidao.cn
   h5Domain: http://ng.hk1.mofasuidao.cn
 #  javaDomain: http://ogmax.ngrok.club
 #  webDomain: http://ogmax.ngrok.club
