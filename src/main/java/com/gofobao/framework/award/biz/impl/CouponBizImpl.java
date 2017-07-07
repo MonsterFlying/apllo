@@ -146,7 +146,7 @@ public class CouponBizImpl implements CouponBiz {
             VoViewCouponWarpRes voViewCouponWarpRes = VoBaseResp.ok("查询成功", VoViewCouponWarpRes.class);
             voViewCouponWarpRes.setCouponList(resList);
             return ResponseEntity.ok(voViewCouponWarpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             return ResponseEntity
                     .badRequest()
@@ -170,7 +170,7 @@ public class CouponBizImpl implements CouponBiz {
             warpRes.setTotalCount(Integer.valueOf(resultMaps.get("totalCount").toString()));
             warpRes.setCouponList((List<CouponRes>) resultMaps.get("couponResList"));
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             return ResponseEntity
                     .badRequest()
@@ -244,7 +244,7 @@ public class CouponBizImpl implements CouponBiz {
 
         try {
             couponRepository.save(coupon);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.badRequest()
                     .body(
                             VoBaseResp.error(
@@ -297,7 +297,7 @@ public class CouponBizImpl implements CouponBiz {
                 couponRepository.save(coupon);
                 return ReturnResponse.SUCCESS.toXml();
 
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 return ReturnResponse.FAILUE.toXml();
             }
 
@@ -415,7 +415,7 @@ class TrafResult {
         TrafResult trafResult = null;
         try {
             trafResult = (TrafResult) xstream.fromXML(msg);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             logger.error(String.format("流量券强转失败：%s", msg), e);
         }
         return trafResult;

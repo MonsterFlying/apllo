@@ -48,7 +48,7 @@ public class JwtTokenHelper implements Serializable {
         try {
             final Claims claims = getClaimsFromToken(token);
             username = claims.getSubject();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             username = null;
         }
         return username;
@@ -59,7 +59,7 @@ public class JwtTokenHelper implements Serializable {
         try {
             final Claims claims = getClaimsFromToken(token);
             created = new Date((Long) claims.get(CLAIM_KEY_CREATED));
-        } catch (Exception e) {
+        } catch (Throwable e) {
             created = null;
         }
         return created;
@@ -70,7 +70,7 @@ public class JwtTokenHelper implements Serializable {
         try {
             final Claims claims = getClaimsFromToken(token);
             userId = Long.parseLong(claims.get(CLAIM_KEY_ID).toString());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             userId = null;
         }
         return userId;
@@ -81,7 +81,7 @@ public class JwtTokenHelper implements Serializable {
         try {
             final Claims claims = getClaimsFromToken(token);
             expiration = claims.getExpiration();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             expiration = null;
         }
         return expiration;
@@ -92,7 +92,7 @@ public class JwtTokenHelper implements Serializable {
         try {
             final Claims claims = getClaimsFromToken(token);
             audience = (String) claims.get(CLAIM_KEY_AUDIENCE);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             audience = null;
         }
         return audience;
@@ -105,7 +105,7 @@ public class JwtTokenHelper implements Serializable {
                     .setSigningKey(secret)
                     .parseClaimsJws(token)
                     .getBody();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             claims = null;
         }
         return claims;
@@ -160,7 +160,7 @@ public class JwtTokenHelper implements Serializable {
                 .compact();
         try {
             redisHelper.put(String.format("JWT_TOKEN_%S", claims.get(CLAIM_KEY_ID).toString()), token, expiration.intValue());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("JwtTokenHelper.generateToken exception", e);
         }
         return token;
@@ -178,7 +178,7 @@ public class JwtTokenHelper implements Serializable {
             final Claims claims = getClaimsFromToken(token);
             claims.put(CLAIM_KEY_CREATED, new Date());
             refreshedToken = generateToken(claims);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             refreshedToken = null;
         }
         return refreshedToken;

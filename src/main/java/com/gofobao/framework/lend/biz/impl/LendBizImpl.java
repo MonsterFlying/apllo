@@ -93,7 +93,7 @@ public class LendBizImpl implements LendBiz {
             warpRes.setVoViewLends(lends);
             warpRes.setTotalCount(totalCount);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("LendBizImpl list query fail", e);
             return ResponseEntity.badRequest().body(VoBaseResp.ok("查询失败", VoViewLendListWarpRes.class));
         }
@@ -114,7 +114,7 @@ public class LendBizImpl implements LendBiz {
             }
             warpRes.setLendInfo(lends);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("LendBizImpl detail query fail", e);
             return ResponseEntity.badRequest().body(VoBaseResp.ok("查询失败", VoViewLendInfoWarpRes.class));
         }
@@ -131,7 +131,7 @@ public class LendBizImpl implements LendBiz {
             List<UserLendInfo> lends = lendService.queryUser(voUserLendReq);
             warpRes.setLendInfos(lends);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("LendBizImpl detail query fail", e);
             return ResponseEntity.badRequest().body(VoBaseResp.ok("查询失败", VoViewUserLendInfoWarpRes.class));
         }
@@ -395,7 +395,7 @@ public class LendBizImpl implements LendBiz {
         try {
             log.info(String.format("borrowBizImpl firstVerify send mq %s", GSON.toJson(body)));
             mqHelper.convertAndSend(mqConfig);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("borrowBizImpl firstVerify send mq exception", e);
         }
 

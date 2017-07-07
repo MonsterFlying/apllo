@@ -215,7 +215,7 @@ public class JixinManager {
                     return true;
                 }
             });
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             log.error("即信通讯工具：初始化https失败", ex);
         }
     }

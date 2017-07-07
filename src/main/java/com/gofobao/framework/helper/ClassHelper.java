@@ -211,7 +211,7 @@ public class ClassHelper {
                 if (equivalentMethod.getAnnotation(annotationType) != null) {
                     return true;
                 }
-            } catch (NoSuchMethodException ex) {
+            } catch (Throwable ex) {
                 // Skip this interface - it doesn't have the method...
             }
         }
@@ -260,7 +260,7 @@ public class ClassHelper {
                 Field field = superClass.getDeclaredField(fieldName);
                 ClassHelper.makeAccessible(field);
                 return field;
-            } catch (NoSuchFieldException e) {// NOSONAR
+            } catch (Throwable e) {// NOSONAR
                 // Field不在当前类定义,继续向上转型
             }
         }
@@ -292,7 +292,7 @@ public class ClassHelper {
                 Method method = searchType.getDeclaredMethod(methodName, theParameterTypes);
                 ClassHelper.makeAccessible(method);
                 return method;
-            } catch (NoSuchMethodException e) {
+            } catch (Throwable e) {
                 // Method不在当前类定义,继续向上转型
                 System.out.println(e);
             }
@@ -489,7 +489,7 @@ public class ClassHelper {
                     PropertyDescriptor pd = null;
                     try {
                         pd = new PropertyDescriptor(fieldName, clazz);
-                    } catch (IntrospectionException e) {
+                    } catch (Throwable e) {
                         e.printStackTrace();
                     }
 
@@ -501,9 +501,7 @@ public class ClassHelper {
                     Method readMethod = pd.getReadMethod();
                     try {
                         return  readMethod.invoke(target) ;
-                    } catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                    } catch (InvocationTargetException e) {
+                    } catch (Throwable e) {
                         e.printStackTrace();
                     }
 

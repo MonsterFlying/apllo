@@ -66,7 +66,7 @@ public class MethodInvokerHelper {
     public <T> T invoke(final Object obj, Object... args) {
         try {
             return (T) method.invoke(obj, args);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             return null;
         }

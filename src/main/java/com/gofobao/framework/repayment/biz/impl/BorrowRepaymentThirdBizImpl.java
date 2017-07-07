@@ -577,7 +577,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 VoRepayReq voRepayReq = GSON.fromJson(repayRunResp.getAcqRes(), new TypeToken<VoRepayReq>() {
                 }.getType());
                 resp = repaymentBiz.repay(voRepayReq);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.error("还款异常:", e);
             }
             if (ObjectUtils.isEmpty(resp)) {
@@ -649,7 +649,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
             try {
                 bool = borrowBiz.notTransferedBorrowAgainVerify(borrow);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.error("即信批次放款异常:", e);
             }
             if (bool) {
@@ -973,7 +973,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 voAdvanceCall.setBailRepayRunList(GSON.fromJson(GSON.toJson(batchBailRepayRunResp.getSubPacks()), new TypeToken<List<BailRepayRun>>() {
                 }.getType()));
                 resp = repaymentBiz.advanceDeal(voAdvanceCall);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.error("垫付异常:", e);
             }
             if (ObjectUtils.isEmpty(resp)) {
@@ -1289,7 +1289,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                         VoRepayReq voRepayReq = GSON.fromJson(batchRepayBailRunResp.getAcqRes(), new TypeToken<VoRepayReq>() {
                         }.getType());
                         resp = repaymentBiz.repay(voRepayReq);
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
                         log.error("批次融资人还担保账户垫款异常:", e);
                     }
                     if (ObjectUtils.isEmpty(resp)) {
@@ -1298,7 +1298,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 } else {
                     log.info("批次融资人还担保账户垫款失败!");
                 }
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.error("borrowRepaymentThirdBizImpl 资产变更异常：", e);
             }
         }

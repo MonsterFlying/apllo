@@ -50,7 +50,7 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
             VoViewInviteFriendersWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewInviteFriendersWarpRes.class);
             warpRes.setFriendsList(inviteFriendsList);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.ok(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewInviteFriendersWarpRes.class));
         }
     }
@@ -71,7 +71,7 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
             warpRes.setTotalCount(totalCount);
             warpRes.setFriendsList(friendsList);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询异常", VoViewInviteFriendsWarpRes.class));
@@ -91,7 +91,7 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
             VoViewInviteAwardStatisticsWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewInviteAwardStatisticsWarpRes.class);
             warpRes.setInviteAwardStatistics(statistics);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.ok(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewInviteAwardStatisticsWarpRes.class));
         }
     }
@@ -107,7 +107,7 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
             VoViewFriendsTenderInfoWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewFriendsTenderInfoWarpRes.class);
             warpRes.setFrindsTenderInfo(tenderInfoList);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.ok(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewFriendsTenderInfoWarpRes.class));
         }
     }
@@ -146,7 +146,7 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
             warpRes.setTotalCount(totalCount);
             warpRes.setFriendsList(friendsList);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询异常", VoViewBrokerBounsWarpRes.class));
         }

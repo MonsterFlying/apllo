@@ -184,7 +184,7 @@ public class VirtualServiceImpl implements VirtualService {
         virtualTender.setMoney(asset.getVirtualMoney());
         try {
             virtualTenderRepository.save(virtualTender);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("tenderCreate list  virtualTenderRepository.save  fail", e);
             return false;
         }
@@ -212,7 +212,7 @@ public class VirtualServiceImpl implements VirtualService {
         virtualCollection.setCreatedAt(date);
         try {
             virtualCollectionRepository.save(virtualCollection);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("tenderCreate list  virtualCollectionRepository.save  fail", e);
             return false;
         }
@@ -228,7 +228,7 @@ public class VirtualServiceImpl implements VirtualService {
         boolean flag = true;
         try {
             flag = capitalChangeHelper.capitalChange(capitalChangeEntity);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             log.info(" VirtualServiceImpl tenderCreate capitalChangeHelper.capitalChange fail", e);
         }

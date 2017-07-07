@@ -79,7 +79,7 @@ public class SmsConfigServiceImpl implements SmsConfigService {
         Map<String, String> smsConfigmap = null;
         try {
             smsConfigmap = smsConfigCaceh.get(1);
-        } catch (ExecutionException e) {
+        } catch (Throwable e) {
             log.error("SmsConfigServiceImpl installSMSServer sms provider is empty ");
             return null ;
         }

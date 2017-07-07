@@ -44,7 +44,7 @@ public class CaptchaBizImpl implements CaptchaBiz {
             String contect = Base64.getEncoder().encodeToString(os.toByteArray());
             VoCaptchaImageResp response = new VoCaptchaImageResp(contect, uuid.toString());
             return ResponseEntity.ok(response) ;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("CaptchaBizImpl drawImageByAnon excption :", e);
             return ResponseEntity.badRequest().body(null);
         }

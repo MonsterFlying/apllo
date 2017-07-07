@@ -37,7 +37,7 @@ public class MyInvestBizImpl implements MyInvestBiz {
             voViewBackMoneyListWarpRes.setVoViewBackMonies(backMoneyList);
             voViewBackMoneyListWarpRes.setTotalCount(totalCount);
             return ResponseEntity.ok(voViewBackMoneyListWarpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR,"查询失败", VoViewBackMoneyListWarpRes.class));
@@ -55,7 +55,7 @@ public class MyInvestBizImpl implements MyInvestBiz {
             wrapResRes.setVoViewBiddingRes(biddingRes);
             wrapResRes.setTotalCount(totalCount);
             return ResponseEntity.ok(wrapResRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR,"查询失败", VoViewBiddingListWrapRes.class));
@@ -74,7 +74,7 @@ public class MyInvestBizImpl implements MyInvestBiz {
             viewSettleWarpRes.setTotalCount(totalCount);
             viewSettleWarpRes.setVoViewSettleRes(settleList);
             return ResponseEntity.ok(viewSettleWarpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR,"查询失败", VoViewSettleWarpRes.class));
@@ -88,7 +88,7 @@ public class MyInvestBizImpl implements MyInvestBiz {
             VoViewTenderDetailWarpRes voViewTenderDetailWarpRes = VoBaseResp.ok("查询成功", VoViewTenderDetailWarpRes.class);
             voViewTenderDetailWarpRes.setVoViewTenderDetail(viewTenderDetail);
             return ResponseEntity.ok(voViewTenderDetailWarpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR,"查询失败", VoViewTenderDetailWarpRes.class));
@@ -102,7 +102,7 @@ public class MyInvestBizImpl implements MyInvestBiz {
             VoViewReturnMoneyWarpRes voViewReturnMoneyWarpRes = VoBaseResp.ok("", VoViewReturnMoneyWarpRes.class);
             voViewReturnMoneyWarpRes.setVoViewReturnedMoney(voViewReturnedMoney);
             return ResponseEntity.ok(voViewReturnMoneyWarpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             return ResponseEntity
                     .badRequest()

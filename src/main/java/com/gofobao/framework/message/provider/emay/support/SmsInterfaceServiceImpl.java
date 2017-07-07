@@ -67,7 +67,7 @@ public class SmsInterfaceServiceImpl implements SmsInterfaceService {
         // 发送短信
         try {
             ret = SDKHttpClient.sendSMS(url, params);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             if (logger.isErrorEnabled()) {
                 logger.error("亿美短信发送失败：" + e.getMessage());
             }

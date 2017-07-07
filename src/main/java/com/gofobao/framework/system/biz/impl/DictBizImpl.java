@@ -57,7 +57,7 @@ public class DictBizImpl implements DictBiz {
         List<DictValue> dictValues = null;
         try {
             dictValues = dictValueCache.get("ABOUT_CODE");
-        } catch (ExecutionException e) {
+        } catch (Throwable e) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "获取服务信息失败", VoServiceResp.class));

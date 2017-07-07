@@ -143,7 +143,7 @@ public class RedPackageServiceImpl implements RedPackageService {
             --looper;
             try {
                 Thread.sleep(3000);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 break;
             }
         }

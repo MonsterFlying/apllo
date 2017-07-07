@@ -89,7 +89,7 @@ public class UserBonusScheduler {
                     brokerBounsService.save(brokerBouns);
                 }
             } while (resultList.size() >= 50);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("UserBonusScheduler brokerProcess error:", e);
         }
     }
@@ -122,7 +122,7 @@ public class UserBonusScheduler {
                     capitalChangeHelper.capitalChange(entity);
                 }
             } while (resultList.size() >= 50);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("UserBonusScheduler dayProcess error:", e);
         }
     }
@@ -166,7 +166,7 @@ public class UserBonusScheduler {
                     capitalChangeHelper.capitalChange(entity);
                 }
             } while (resultList.size() >= 50);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("UserBonusScheduler monthProcess error:", e);
         }
     }

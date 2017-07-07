@@ -39,10 +39,8 @@ public class ActivityListener {
         if (tag.equals(MqTagEnum.GIVE_COUPON.getValue())) { //赠送流量券
             try {
                 activityProvider.TenderGiveTrafficCoupon(msg);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.error("赠送流量券异常：", e);
-            } catch (Throwable throwable){
-                log.error("赠送流量券异常:", throwable);
             }
         } else {
             log.error("ActivityListener error：未匹配到tag" + tag);

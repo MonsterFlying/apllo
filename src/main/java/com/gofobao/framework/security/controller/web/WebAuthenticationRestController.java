@@ -73,7 +73,7 @@ public class WebAuthenticationRestController {
                             voLoginReq.getPassword()
                     )
             );
-        } catch (AuthenticationException e) {
+        } catch (Throwable e) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "账户/密码错误", VoBasicUserInfoResp.class)) ;

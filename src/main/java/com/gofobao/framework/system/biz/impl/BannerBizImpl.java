@@ -27,7 +27,7 @@ public class BannerBizImpl implements BannerBiz {
             List<IndexBanner> bannerList = bannerService.index();
             warpRes.setBannerList(bannerList);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewIndexBannerWarpRes.class));
         }

@@ -84,7 +84,7 @@ public class CouponController {
                     writer.flush();
                     writer.close();
                 }
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.error("流量对调错误", e);
             }
         }

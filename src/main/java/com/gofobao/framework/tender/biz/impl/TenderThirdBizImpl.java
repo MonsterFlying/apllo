@@ -284,7 +284,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             PrintWriter out = response.getWriter();
             out.print("success");
             out.flush();
-        } catch (IOException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
     }
@@ -385,7 +385,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
                             entity.setRemark("借款 [" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "] 招标失败解除冻结资金。");
                             try {
                                 capitalChangeHelper.capitalChange(entity);
-                            } catch (Exception e) {
+                            } catch (Throwable e) {
                                 log.error("tenderThirdBizImpl thirdBatchCreditInvestRunCall error：", e);
                             }
 
@@ -414,7 +414,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
 
             try {
                 bool = borrowBiz.transferedBorrowAgainVerify(borrow);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.error("非流转标复审异常:", e);
             }
         }
@@ -431,7 +431,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             out.print("success");
             out.flush();
         } catch (
-                IOException e)
+                Throwable e)
 
         {
             e.printStackTrace();

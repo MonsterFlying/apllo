@@ -14,7 +14,7 @@ public class ApolloPasswordEncoder implements PasswordEncoder {
         log.info(String.format("Spring security passwordEncoder encode %s", charSequence.toString()));
         try {
             return charSequence.toString();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw new RuntimeException(e) ;
         }
     }
@@ -23,7 +23,7 @@ public class ApolloPasswordEncoder implements PasswordEncoder {
     public boolean matches(CharSequence charSequence, String s) {
         try {
             return PasswordHelper.verifyPassword(s, charSequence.toString());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return false ;
         }
     }

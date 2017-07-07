@@ -46,8 +46,6 @@ public class BorrowListener {
         if (tag.equals(MqTagEnum.FIRST_VERIFY.getValue())) {  // 标的初审
             try {
                 bool = borrowProvider.doFirstVerify(msg);
-            } catch (Exception e) {
-                log.error("初审异常:", e);
             } catch (Throwable throwable){
                 log.error("初审异常:", throwable);
             }
@@ -63,8 +61,6 @@ public class BorrowListener {
         } else if (tag.equals(MqTagEnum.AGAIN_VERIFY.getValue())) {  // 复审
             try {
                 bool = borrowProvider.doAgainVerify(msg);
-            } catch (Exception e) {
-                log.error("复审异常:", e);
             } catch (Throwable throwable){
                 log.error("复审异常:", throwable);
             }

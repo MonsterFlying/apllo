@@ -60,7 +60,7 @@ public class TransferBizImpl implements TransferBiz {
             VoViewTransferOfWarpRes voViewTransferOfWarpRes = VoBaseResp.ok("查询成功", VoViewTransferOfWarpRes.class);
             voViewTransferOfWarpRes.setTransferOfs(transferOfs);
             return ResponseEntity.ok(voViewTransferOfWarpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("TransferBizImpl tranferOfList query fail%S", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
@@ -82,7 +82,7 @@ public class TransferBizImpl implements TransferBiz {
             VoViewTransferedWarpRes voViewTransferOfWarpRes = VoBaseResp.ok("查询成功", VoViewTransferedWarpRes.class);
             voViewTransferOfWarpRes.setTransferedList(transfereds);
             return ResponseEntity.ok(voViewTransferOfWarpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("TransferBizImpl transferedlist query fail%S", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
@@ -104,7 +104,7 @@ public class TransferBizImpl implements TransferBiz {
             VoViewTransferMayWarpRes voViewTransferOfWarpRes = VoBaseResp.ok("查询成功", VoViewTransferMayWarpRes.class);
             voViewTransferOfWarpRes.setMayList(transferOfs);
             return ResponseEntity.ok(voViewTransferOfWarpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("TransferBizImpl transferMayList query fail%S", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(

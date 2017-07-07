@@ -218,7 +218,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             }
 
             bankName = bankInfo.getBankName();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("开户查询银行卡异常");
         }
 
@@ -226,7 +226,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         DictValue dictValue = null;
         try {
             dictValue = bankLimitCache.get(bankName);
-        } catch (ExecutionException e) {
+        } catch (Throwable e) {
             log.error("查询平台支持银行异常", e);
         }
         if (ObjectUtils.isEmpty(dictValue)) {
@@ -240,7 +240,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         try {
             srvTxCode = redisHelper.get(String.format("%s_%s", SrvTxCodeContants.ACCOUNT_OPEN_PLUS, voOpenAccountReq.getMobile()), null);
             redisHelper.remove(String.format("%s_%s", SrvTxCodeContants.ACCOUNT_OPEN_PLUS, voOpenAccountReq.getMobile()));
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("UserThirdBizImpl openAccount get redis exception ", e);
         }
 
@@ -318,7 +318,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             try {
                 mqHelper.convertAndSend(mqConfig);
                 log.info("实名赠送红包触发");
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.error(String.format("实名注册红包推送异常：%s", new Gson().toJson(paramsMap)), e);
             }
 
@@ -354,7 +354,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         VoHtmlResp voHtmlResp = VoBaseResp.ok("成功", VoHtmlResp.class);
         try {
             voHtmlResp.setHtml(Base64Utils.encodeToString(html.getBytes("UTF-8")));
-        } catch (UnsupportedEncodingException e) {
+        } catch (Throwable e) {
             log.error("UserThirdBizImpl modifyOpenAccPwd gethtml exceptio", e);
             return ResponseEntity
                     .badRequest()
@@ -511,7 +511,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
         try {
             html = jixinManager.getHtml(JixinTxCodeEnum.AUTO_BID_AUTH, autoBidAuthRequest);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("UserThirdBizImpl autoTender get redis exception ", e);
             return ResponseEntity
                     .badRequest()
@@ -521,7 +521,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         VoHtmlResp resp = VoBaseResp.ok("请求成功", VoHtmlResp.class);
         try {
             resp.setHtml(Base64Utils.encodeToString(html.getBytes("UTF-8")));
-        } catch (UnsupportedEncodingException e) {
+        } catch (Throwable e) {
             log.error("UserThirdBizImpl autoTender gethtml exceptio", e);
             return ResponseEntity
                     .badRequest()
@@ -564,7 +564,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         String html = null;
         try {
             html = jixinManager.getHtml(JixinTxCodeEnum.AUTO_CREDIT_INVEST_AUTH, autoCreditInvestAuthPlusRequest);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("UserThirdBizImpl autoTranfter get redis exception ", e);
             return ResponseEntity
                     .badRequest()
@@ -574,7 +574,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         VoHtmlResp resp = VoBaseResp.ok("请求成功", VoHtmlResp.class);
         try {
             resp.setHtml(Base64Utils.encodeToString(html.getBytes("UTF-8")));
-        } catch (UnsupportedEncodingException e) {
+        } catch (Throwable e) {
             log.error("UserThirdBizImpl autoTender autoTranfter exception", e);
             return ResponseEntity
                     .badRequest()
@@ -862,7 +862,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             }
 
             bankName = bankInfo.getBankName();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("开户查询银行卡异常");
         }
 
@@ -870,7 +870,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         DictValue dictValue = null;
         try {
             dictValue = bankLimitCache.get(bankName);
-        } catch (ExecutionException e) {
+        } catch (Throwable e) {
             log.error("查询平台支持银行异常", e);
         }
         if (ObjectUtils.isEmpty(dictValue)) {
@@ -896,7 +896,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         VoHtmlResp voHtmlResp = VoBaseResp.ok("操作成功", VoHtmlResp.class);
         try {
             voHtmlResp.setHtml(Base64Utils.encodeToString(html.getBytes("UTF-8")));
-        } catch (UnsupportedEncodingException e) {
+        } catch (Throwable e) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了, 请稍后重试!", VoHtmlResp.class));
@@ -1067,7 +1067,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         VoHtmlResp voHtmlResp = VoBaseResp.ok("成功", VoHtmlResp.class);
         try {
             voHtmlResp.setHtml(Base64Utils.encodeToString(html.getBytes("UTF-8")));
-        } catch (UnsupportedEncodingException e) {
+        } catch (Throwable e) {
             log.error("UserThirdBizImpl modifyOpenAccPwd gethtml exceptio", e);
             return ResponseEntity
                     .badRequest()

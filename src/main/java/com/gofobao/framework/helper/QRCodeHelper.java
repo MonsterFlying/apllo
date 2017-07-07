@@ -127,7 +127,7 @@ public class QRCodeHelper {
         BitMatrix bitMatrix = null;
         try {
             bitMatrix = new MultiFormatWriter().encode(content, BarcodeFormat.QR_CODE, width, height, hints);
-        } catch (WriterException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         // 生成二维码

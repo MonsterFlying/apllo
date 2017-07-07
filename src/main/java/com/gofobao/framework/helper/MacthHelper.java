@@ -33,7 +33,7 @@ public class MacthHelper {
                 return false;
             }
             return smsCode.equalsIgnoreCase(redisSmsCode);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("SmsHelper match exception", e);
         }
         return false;
@@ -54,7 +54,7 @@ public class MacthHelper {
                 return false;
             }
             return smsCode.equalsIgnoreCase(redisSmsCode);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("SmsHelper match exception", e);
         }
         return false;
@@ -66,7 +66,7 @@ public class MacthHelper {
             String redisKey = String.format("%s%s",tag, phone);
             redisHelper.put(redisKey, smsCode, 15 * 60);
             return true;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("SmsHelper add exception", e);
         }
         return false;

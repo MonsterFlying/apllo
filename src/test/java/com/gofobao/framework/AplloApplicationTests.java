@@ -99,7 +99,7 @@ public class AplloApplicationTests {
         mqConfig.setMsg(body);
         try {
             mqHelper.convertAndSend(mqConfig);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("borrowProvider autoTender send mq exception", e);
         }
 
@@ -169,7 +169,7 @@ public class AplloApplicationTests {
         }.getType()));
         try {
             repaymentBiz.advanceDeal(voAdvanceCall);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
     }
@@ -197,7 +197,7 @@ public class AplloApplicationTests {
         map.put("borrowId","169761");
         try {
             borrowProvider.doFirstVerify(map);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }*/
 
@@ -208,7 +208,7 @@ public class AplloApplicationTests {
         voRepayReq.setInterestPercent(1d);
         try {
             repaymentBiz.repay(voRepayReq);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
 
@@ -226,7 +226,7 @@ public class AplloApplicationTests {
         msg.put("borrowId","169760");
         try {
             borrowProvider.doAgainVerify(msg);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }*/
 
@@ -238,7 +238,7 @@ public class AplloApplicationTests {
         voRepayReq.setIsUserOpen(false);
         try {
             repaymentBiz.repay(voRepayReq);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }*/
 
@@ -253,14 +253,14 @@ public class AplloApplicationTests {
         /*Borrow borrow = borrowService.findById(169767L);
         try {
             borrowBiz.notTransferedBorrowAgainVerify(borrow);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }*/
 
         /*Borrow borrow = borrowService.findById(165227L);
         try {
             borrowBiz.transferedBorrowAgainVerify(borrow);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }*/
     }

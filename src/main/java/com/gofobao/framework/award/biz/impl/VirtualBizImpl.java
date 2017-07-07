@@ -29,7 +29,7 @@ public class VirtualBizImpl implements VirtualBiz {
             VoViewVirtualStatisticsWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewVirtualStatisticsWarpRes.class);
             warpRes.setVirtualStatistics(virtualStatistics);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("VirtualBiz query fail%s", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
@@ -46,7 +46,7 @@ public class VirtualBizImpl implements VirtualBiz {
             VoViewVirtualTenderResWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewVirtualTenderResWarpRes.class);
             warpRes.setResList(resList);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("VirtualBiz userTenderList fail%s", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
@@ -63,7 +63,7 @@ public class VirtualBizImpl implements VirtualBiz {
             VoViewVirtualBorrowResWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewVirtualBorrowResWarpRes.class);
             warpRes.setResList(resList);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("VirtualBiz list fail%s", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
@@ -83,7 +83,7 @@ public class VirtualBizImpl implements VirtualBiz {
                 return ResponseEntity.badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "投标失败"));
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("VirtualBizImpl createTender fail", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "投标失败"));
@@ -102,7 +102,7 @@ public class VirtualBizImpl implements VirtualBiz {
             AwardStatistics awardStatistics = virtualService.query(userId);
             warpRes.setAwardStatistics(awardStatistics);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.badRequest()
                     .body(
                         VoBaseResp.error(

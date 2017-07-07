@@ -89,7 +89,7 @@ public class JixinHelper {
             try {
                 DictValue dictValue = jixinCache.get("bailAccountId");
                 return dictValue.getValue03();
-            } catch (ExecutionException e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
         }

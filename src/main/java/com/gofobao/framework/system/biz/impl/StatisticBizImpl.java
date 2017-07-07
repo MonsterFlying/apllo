@@ -65,7 +65,7 @@ public class StatisticBizImpl implements StatisticBiz {
                 indexStatistics.setDueTotal(statistic.getWaitRepayTotal());
                 redisHelper.put("indexStatistic",gson.toJson(indexStatistics));
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
         }
         VoViewIndexStatisticsWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewIndexStatisticsWarpRes.class);
         warpRes.setIndexStatistics(indexStatistics);
