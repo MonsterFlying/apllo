@@ -6,6 +6,9 @@ import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.batch_credit_invest.*;
+import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
+import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
+import com.gofobao.framework.api.model.batch_details_query.DetailsQueryResp;
 import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyRequest;
 import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyResponse;
 import com.gofobao.framework.api.model.bid_cancel.BidCancelReq;
@@ -13,11 +16,15 @@ import com.gofobao.framework.api.model.bid_cancel.BidCancelResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.common.capital.CapitalChangeEntity;
+import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.project.BorrowHelper;
+import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.contants.ThirdBatchNoTypeContant;
@@ -39,6 +46,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,10 +57,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created by Zeke on 2017/6/1.
@@ -76,9 +81,10 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
     @Autowired
     private JixinHelper jixinHelper;
     @Autowired
-    private TenderBiz tenderBiz;
-    @Autowired
     private ThirdBatchLogService thirdBatchLogService;
+    @Autowired
+    private CapitalChangeHelper capitalChangeHelper;
+
     @Value("${gofobao.webDomain}")
     private String webDomain;
 
@@ -309,6 +315,91 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         if (num > 0) {
             log.error("=============================即信投资人批次购买债权处理结果回调===========================");
             log.error("即信投资人批次购买债权失败! 一共:" + num + "笔");
+
+            Date nowDate = new Date();
+
+            //1.查询批次交易明细
+            BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
+            batchDetailsQueryReq.setBatchNo(creditInvestRunCall.getBatchNo());
+            batchDetailsQueryReq.setBatchTxDate(creditInvestRunCall.getTxDate());
+            batchDetailsQueryReq.setType("2");
+            batchDetailsQueryReq.setPageNum("1");
+            batchDetailsQueryReq.setPageSize("10");
+            batchDetailsQueryReq.setChannel(ChannelContant.HTML);
+            BatchDetailsQueryResp batchDetailsQueryResp = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, batchDetailsQueryReq, BatchDetailsQueryResp.class);
+            if ((ObjectUtils.isEmpty(batchDetailsQueryResp)) || (!JixinResultContants.SUCCESS.equals(batchDetailsQueryResp.getRetCode()))) {
+                log.error(ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : batchDetailsQueryResp.getRetMsg());
+            }
+
+            //2.筛选失败批次
+            List<String> productIds = new ArrayList<>(); //即信标的集合
+            List<String> thirdTransferOrderIds = new ArrayList<>(); //转让标orderId
+            List<DetailsQueryResp> detailsQueryRespList = GSON.fromJson(batchDetailsQueryResp.getSubPacks(), new TypeToken<DetailsQueryResp>() {
+            }.getType());
+
+            Optional<List<DetailsQueryResp>> detailsQueryRespOptional = Optional.of(detailsQueryRespList);
+            detailsQueryRespOptional.ifPresent(list -> detailsQueryRespList.forEach(obj -> {
+                productIds.add(obj.getProductId());
+                thirdTransferOrderIds.add(obj.getOrderId());
+            }));
+
+            //3.与本地失败投标做匹配，并提出tender
+            List<Long> borrowIds = new ArrayList<>();
+            Specification<Borrow> bs = Specifications
+                    .<Borrow>and()
+                    .in("productId", productIds.toArray())
+                    .build();
+            List<Borrow> borrowList = borrowService.findList(bs);
+            Optional<List<Borrow>> borrowOptional = Optional.of(borrowList);
+            borrowOptional.ifPresent(list -> borrowList.forEach(obj -> {
+                borrowIds.add(obj.getId());
+            }));
+
+            Specification<Tender> ts = Specifications
+                    .<Tender>and()
+                    .in("thirdTransferOrderId", thirdTransferOrderIds.toArray())
+                    .in("borrowId", borrowIds.toArray())
+                    .build();
+            List<Tender> tenderList = tenderService.findList(ts);
+
+
+            //4.本地资金进行资金解封操作
+            int failAmount = 0;//失败金额
+            Set<Long> borrowIdSet = new HashSet<>();
+            for (Borrow borrow : borrowList) {
+                failAmount = 0;
+                if (!borrowIdSet.contains(borrow.getId())) {
+                    for (Tender tender : tenderList) {
+                        if (StringHelper.toString(borrow.getId()).equals(StringHelper.toString(tender.getBorrowId()))) {
+                            failAmount += tender.getValidMoney(); //失败金额
+
+                            //对冻结资金进行回滚
+                            tender.setId(tender.getId());
+                            tender.setStatus(2); // 取消状态
+                            tender.setUpdatedAt(nowDate);
+
+                            CapitalChangeEntity entity = new CapitalChangeEntity();
+                            entity.setType(CapitalChangeEnum.Unfrozen);
+                            entity.setUserId(tender.getUserId());
+                            entity.setMoney(tender.getValidMoney());
+                            entity.setRemark("借款 [" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "] 招标失败解除冻结资金。");
+                            try {
+                                capitalChangeHelper.capitalChange(entity);
+                            } catch (Exception e) {
+                                log.error("tenderThirdBizImpl thirdBatchCreditInvestRunCall error：", e);
+                            }
+
+                            //可以加上同步资金操作
+                        }
+                    }
+                    borrow.setMoneyYes(borrow.getMoneyYes() - failAmount);
+                }
+            }
+            borrowService.save(borrowList);
+            tenderService.save(tenderList);
+
+            log.error("已对无效投标进行撤回！");
+
             bool = false;
         }
 
@@ -333,13 +424,19 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             log.info("非流转标复审失败!");
         }
 
-        try {
+        try
+
+        {
             PrintWriter out = response.getWriter();
             out.print("success");
             out.flush();
-        } catch (IOException e) {
+        } catch (
+                IOException e)
+
+        {
             e.printStackTrace();
         }
+
     }
 
     /**

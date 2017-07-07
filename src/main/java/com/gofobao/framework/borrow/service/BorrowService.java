@@ -34,6 +34,10 @@ public interface BorrowService {
 
     Borrow findById(Long borrowId);
 
+    public Borrow save(Borrow borrow);
+
+    public List<Borrow> save(List<Borrow> borrowList);
+
     /**
      * 检查是否招标中
      *

@@ -177,7 +177,7 @@ public class BorrowServiceImpl implements BorrowService {
                 Integer validDay = m.getValidDay();
                 Date endAt = DateHelper.addDays(DateHelper.beginOfDate(m.getReleaseAt()), validDay + 1);
                 //待发布
-                if (releaseAt.getTime() >=nowDate.getTime()) {
+                if (releaseAt.getTime() >= nowDate.getTime()) {
                     status = 1;
                     item.setSurplusSecond((releaseAt.getTime() - nowDate.getTime()) + 5);
                 } else if (nowDate.getTime() >= endAt.getTime()) {  //当前时间大于招标有效时间
@@ -185,7 +185,7 @@ public class BorrowServiceImpl implements BorrowService {
                 } else {
                     try {
                         System.out.println(JacksonHelper.obj2json(m));
-                    }catch (Exception e){
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                     status = 3; //招标中
@@ -612,6 +612,14 @@ public class BorrowServiceImpl implements BorrowService {
         return !ObjectUtils.isEmpty(borrowRepository.save(borrow));
     }
 
+    public Borrow save(Borrow borrow){
+        return borrowRepository.save(borrow);
+    }
+
+    public List<Borrow> save(List<Borrow> borrowList){
+        return borrowRepository.save(borrowList);
+    }
+
     public Borrow findByIdLock(Long borrowId) {
         return borrowRepository.findById(borrowId);
     }
@@ -709,5 +717,7 @@ public class BorrowServiceImpl implements BorrowService {
         return borrowList.get(0);
     }
 
-
+    public Borrow getBorrowByProductId(String productId) {
+        return borrowRepository.findByProductId(productId);
+    }
 }

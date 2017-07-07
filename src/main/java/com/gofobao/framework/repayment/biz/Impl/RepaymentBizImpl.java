@@ -915,7 +915,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         voThirdBatchRepay.setInterestPercent(0d);
         voThirdBatchRepay.setIsUserOpen(true);
         // ====================================
-        //
+        // 调用第三方还款操作
         // ====================================
         return borrowRepaymentThirdBiz.thirdBatchRepay(voThirdBatchRepay);
     }
