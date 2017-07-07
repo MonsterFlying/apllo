@@ -76,7 +76,7 @@ public class WebBorrowRepaymentContorller {
     public ResponseEntity<VoBaseResp> pcAdvance(VoAdvanceReq voAdvanceReq) {
         try {
             return repaymentBiz.advance(voAdvanceReq);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("垫付异常:", e);
         }
         return ResponseEntity

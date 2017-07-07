@@ -53,8 +53,8 @@ public class RedPackageListener {
                 }
                 break;
             } while (false);
-        } catch (Exception e) {
-
+        }  catch (Throwable throwable){
+            log.error("发送红包异常:", throwable);
         }
     }
 

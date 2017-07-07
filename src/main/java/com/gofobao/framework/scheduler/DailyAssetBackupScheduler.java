@@ -38,7 +38,7 @@ public class DailyAssetBackupScheduler {
                     "t1.no_use_money = t2.no_use_money, t1.virtual_money = t2.virtual_money, t1.collection = t2.collection, t1.payment = t2.payment, t1.updated_at = t2.updated_at " +
                     "WHERE t1.user_id = t2.user_id AND t1.updated_at >= \'").append(DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMDHMS)).append("\'");
             jdbcTemplate.update(sql.toString());
-        } catch (DataAccessException e) {
+        } catch (Throwable e) {
             log.error("DailyAssetBackup error:", e);
         }
     }

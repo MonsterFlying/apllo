@@ -148,7 +148,7 @@ public class BorrowProvider {
                 log.info(String.format("borrowProvider autoTender send mq %s", GSON.toJson(body)));
                 mqHelper.convertAndSend(mqConfig);
                 return true;
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.error("borrowProvider autoTender send mq exception", e);
                 return false;
             }

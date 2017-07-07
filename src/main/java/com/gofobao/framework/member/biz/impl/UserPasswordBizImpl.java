@@ -53,7 +53,7 @@ public class UserPasswordBizImpl implements UserPasswordBiz {
         boolean bool = false;
         try {
             bool = PasswordHelper.verifyPassword(users.getPassword(), voModifyPasswordReq.getOldPassword());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("UserPasswordBizImpl modifyPassword check modifyPassword error:", e);
         }
 
@@ -66,7 +66,7 @@ public class UserPasswordBizImpl implements UserPasswordBiz {
         users.setUpdatedAt(new Date());
         try {
             users.setPassword(PasswordHelper.encodingPassword(voModifyPasswordReq.getNewPassword())) ;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("UserPasswordBizImpl modifyPassword check modifyPassword error:", e);
             return ResponseEntity
                     .badRequest()
@@ -105,7 +105,7 @@ public class UserPasswordBizImpl implements UserPasswordBiz {
         String encoPassword = null;
         try {
             encoPassword = PasswordHelper.encodingPassword(voFindPasswordReq.getPassword());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("UserPasswordBizImpl findPassword password_reset encoding error:", e);
             return ResponseEntity
                     .badRequest()

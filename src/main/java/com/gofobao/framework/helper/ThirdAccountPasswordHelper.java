@@ -44,7 +44,7 @@ public class ThirdAccountPasswordHelper {
             redisHelper.put(String.format("%s_%s", PREFIX, encode), Base64Utils.encodeToUrlSafeString(key), 10 * 60) ;
             log.info("忘记密码链接" + url);
             return url ;
-        }catch (Exception e){
+        }catch (Throwable e){
             throw  new RuntimeException("生成找回密码错误") ;
         }
     }
@@ -67,7 +67,7 @@ public class ThirdAccountPasswordHelper {
             redisHelper.put(String.format("%s_%s", PREFIX, encode), Base64Utils.encodeToUrlSafeString(key), 10 * 60) ;
             log.info("初始化密码链接" + url);
             return url ;
-        }catch (Exception e){
+        }catch (Throwable e){
             throw  new RuntimeException("生成找回密码错误") ;
         }
     }
@@ -97,7 +97,7 @@ public class ThirdAccountPasswordHelper {
                 return null ;
             }
             return Long.parseLong(decode.split("-")[1]);
-        }catch (Exception e){
+        }catch (Throwable e){
             throw  new RuntimeException("找回密码获取USERID异常") ;
         }
     }

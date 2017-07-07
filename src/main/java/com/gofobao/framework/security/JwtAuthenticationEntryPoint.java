@@ -31,7 +31,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint, Se
             VoBaseResp error = VoBaseResp.error(VoBaseResp.RELOGIN,"该操作需要登录才能进行!");
             printWriter.write(GSON.toJson(error));
             printWriter.flush();
-        }catch (Exception ex){
+        }catch (Throwable ex){
             log.error("非法访问") ;
         }
     }

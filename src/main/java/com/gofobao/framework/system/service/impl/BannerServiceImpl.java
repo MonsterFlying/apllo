@@ -44,7 +44,7 @@ public class BannerServiceImpl implements BannerService {
                 return bannerList;
 
             });
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return Collections.EMPTY_LIST;
         }
         return  result;

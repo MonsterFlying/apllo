@@ -16,7 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 @Slf4j
 public class RestExceptionController {
     @ExceptionHandler(value = {Exception.class})
-    public ResponseEntity<VoBaseResp> restExceptionHandler(HttpServletRequest request, Exception e) throws Exception {
+    public ResponseEntity<VoBaseResp> restExceptionHandler(HttpServletRequest request, Throwable e) throws Exception {
         VoBaseResp voBaseResp = VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了, 麻烦轻声提醒一下客户!" ) ;
         log.error("全局参数检测异常", e);
         return ResponseEntity

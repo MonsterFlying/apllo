@@ -189,7 +189,7 @@ public class CurrencyBizImpl implements CurrencyBiz {
         boolean flag = false;
         try {
             flag = capitalChangeHelper.capitalChange(capitalChangeEntity);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("兑换广富币异常:", e);
         }
 

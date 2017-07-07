@@ -398,7 +398,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         VoHtmlResp voHtmlResp = VoBaseResp.ok("成功", VoHtmlResp.class);
         try {
             voHtmlResp.setHtml(Base64Utils.encodeToString(html.getBytes("UTF-8")));
-        } catch (UnsupportedEncodingException e) {
+        } catch (Throwable e) {
             log.error("CashDetailLogBizImpl cash gethtml exceptio", e);
             return ResponseEntity
                     .badRequest()
@@ -440,7 +440,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         String jsonStr = null;
         try {
             jsonStr = OKHttpHelper.get(aliyunQueryBankapsUrl, params, headers);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("CashDetailLogBizImpl.bankAps   银行联行查询异常");
             return ResponseEntity
                     .badRequest()
@@ -721,7 +721,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             }
             warpRes.setLogs(logList);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,

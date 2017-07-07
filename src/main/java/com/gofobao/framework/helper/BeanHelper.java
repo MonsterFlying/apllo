@@ -56,7 +56,7 @@ public class BeanHelper {
                     }
                 }
             }
-        } catch (IllegalAccessException e) {
+        } catch (Throwable e) {
             log.error("BeanHelper error:", e);
         }
     }

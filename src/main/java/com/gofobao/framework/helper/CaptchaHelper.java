@@ -38,7 +38,7 @@ public class CaptchaHelper {
             }
 
             return captcha.equalsIgnoreCase(redisCaptcha);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("CaptchaHelper match exception", e);
         }
 
@@ -56,7 +56,7 @@ public class CaptchaHelper {
         try {
             redisHelper.put(String.format("%s%s", REDIS_CAPTCHA_PREFIX_KEY, key), captcha, 15 * 60);
             return true;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("CaptchaHelper add exception", e);
         }
         return false;

@@ -92,7 +92,7 @@ public class FriendsController {
             res.setIcon(webDomain + "/images/bankLogo/logo.png");
             content = thymeleafHelper.build("user/friends", resultMaps);
             res.setHtml(content);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             content = thymeleafHelper.build("load_error", null);
         }
@@ -114,7 +114,7 @@ public class FriendsController {
         OutputStream out = null;
         try {
             out = response.getOutputStream();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error(String.format("获取二维码接口：%s", e.getMessage()));
         }
         response.setDateHeader("Expires", 0);
@@ -129,7 +129,7 @@ public class FriendsController {
 //192.168.1.235:8000/#/auth/register?_k=bpjq7r.createQRCodeTStream(h5Domain+"/#/auth/register?shareRegisterCode="+inviteCode, in, 50, 50, out);
             QRCodeHelper.createQRCodeTStream(h5Domain + "/#/auth/register?shareRegisterCode=" + inviteCode, in, 50, 50, out);
             out.flush();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error(String.format("获取二维码接口：%s", e.getMessage()));
         }
 

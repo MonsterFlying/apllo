@@ -128,7 +128,7 @@ public class BankAccountBizImpl implements BankAccountBiz{
         DictValue bank = null;
         try {
             bank = bankLimitCache.get(bankname);
-        } catch (ExecutionException e) {
+        } catch (Throwable e) {
             log.error("BankAccountBizImpl.findTypeInfo: bank type is exists ");
         }
         if(ObjectUtils.isEmpty(bank)){
@@ -311,7 +311,7 @@ public class BankAccountBizImpl implements BankAccountBiz{
         DictValue bank = null;
         try {
             bank = bankLimitCache.get(bankName);
-        } catch (ExecutionException e) {
+        } catch (Throwable e) {
             log.error("BankAccountBizImpl.findTypeInfo: bank type is exists ");
         }
         double [] money = {Double.parseDouble(bank.getValue04().split(",")[1]),

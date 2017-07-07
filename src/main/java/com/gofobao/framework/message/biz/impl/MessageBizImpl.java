@@ -252,7 +252,7 @@ public class MessageBizImpl implements MessageBiz {
                     body.getSrvAuthCode(),
                     15 * 60);
 
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("即信授权码写入redis异常", e);
             return ResponseEntity
                     .badRequest()
@@ -314,7 +314,7 @@ public class MessageBizImpl implements MessageBiz {
                     body.getSrvAuthCode(),
                     15 * 60);
 
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("即信授权码写入redis异常", e);
             return ResponseEntity
                     .badRequest()
@@ -369,7 +369,7 @@ public class MessageBizImpl implements MessageBiz {
                     body.getSrvAuthCode(),
                     15 * 60);
 
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("即信授权码写入redis异常", e);
             return ResponseEntity
                     .badRequest()
@@ -473,7 +473,7 @@ public class MessageBizImpl implements MessageBiz {
                     body.getSmsSeq(),
                     15 * 60);
 
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("即信授权码写入redis异常", e);
             return ResponseEntity
                     .badRequest()
@@ -572,7 +572,7 @@ public class MessageBizImpl implements MessageBiz {
                     body.getSrvAuthCode(),
                     15 * 60);
 
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("即信授权码写入redis异常", e);
             return ResponseEntity
                     .badRequest()

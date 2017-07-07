@@ -85,7 +85,7 @@ public class NoticesBizImpl implements NoticesBiz {
             }
             warpRes.setNotices(userNotices);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.badRequest()
                     .body(
                             VoBaseResp.error(
@@ -120,7 +120,7 @@ public class NoticesBizImpl implements NoticesBiz {
             }
             warpRes.setNoticesInfo(noticesService.info(voNoticesReq));
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.badRequest()
                     .body(
                             VoBaseResp.error(
@@ -148,7 +148,7 @@ public class NoticesBizImpl implements NoticesBiz {
                         .body(VoBaseResp.error(
                                 VoBaseResp.ERROR,
                                 "删除失败"));
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,
@@ -173,7 +173,7 @@ public class NoticesBizImpl implements NoticesBiz {
                         .body(VoBaseResp.error(
                                 VoBaseResp.ERROR,
                                 "更新失败"));
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,

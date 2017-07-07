@@ -103,7 +103,7 @@ public class WebBorrowController {
         try {
             Map<String, Object> paramMaps = borrowBiz.pcContract(borrowId, userId);
             content = thymeleafHelper.build("borrowProtcol", paramMaps);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info(" WebBorrowController -> pcTakeRatesDesc  fail", e);
             content = thymeleafHelper.build("load_error", null);
         }
@@ -140,7 +140,7 @@ public class WebBorrowController {
     public ResponseEntity<VoBaseResp> pcRepayAll(@Valid @ModelAttribute VoRepayAllReq voRepayAllReq) {
         try {
             return borrowThirdBiz.thirdBatchRepayAll(voRepayAllReq);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "提前还款失败！"));
         }

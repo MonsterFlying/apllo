@@ -185,7 +185,7 @@ public class BorrowServiceImpl implements BorrowService {
                 } else {
                     try {
                         System.out.println(JacksonHelper.obj2json(m));
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
                         e.printStackTrace();
                     }
                     status = 3; //招标中

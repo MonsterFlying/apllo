@@ -95,7 +95,7 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService {
             warpRes.setLogs(logs);
             warpRes.setTotalCount(totalCount.intValue());
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR,

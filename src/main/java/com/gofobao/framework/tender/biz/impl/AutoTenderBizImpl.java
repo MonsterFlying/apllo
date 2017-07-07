@@ -57,7 +57,7 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
             List<UserAutoTender> autoTenderList = autoTenderService.list(userId);
             warpRes.setTenderList(autoTenderList);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "", VoViewUserAutoTenderWarpRes.class));
         }
 

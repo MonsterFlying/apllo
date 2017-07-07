@@ -60,6 +60,7 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -195,7 +196,7 @@ public class AssetBizImpl implements AssetBiz {
             VoViewAssetLogWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewAssetLogWarpRes.class);
             warpRes.setResList(resList);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询成功", VoViewAssetLogWarpRes.class));
         }
@@ -218,7 +219,7 @@ public class AssetBizImpl implements AssetBiz {
             }
             warpRes.setAssetLogs(resList);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败,请稍后再试", VoViewAssetLogsWarpRes.class));
         }
@@ -270,7 +271,7 @@ public class AssetBizImpl implements AssetBiz {
 
             smsSeq = redisHelper.get(String.format("%s_%s", SrvTxCodeContants.DIRECT_RECHARGE_ONLINE, userThirdAccount.getMobile()), null);
             redisHelper.remove(String.format("%s_%s", SrvTxCodeContants.DIRECT_RECHARGE_ONLINE, userThirdAccount.getMobile()));
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("UserThirdBizImpl rechargeOnline get redis exception ", e);
         }
 
@@ -544,7 +545,7 @@ public class AssetBizImpl implements AssetBiz {
         try {
             srvTxCode = redisHelper.get(String.format("%s_%s", SrvTxCodeContants.DIRECT_RECHARGE_PLUS, userThirdAccount.getMobile()), null);
             redisHelper.remove(String.format("%s_%s", SrvTxCodeContants.DIRECT_RECHARGE_PLUS, userThirdAccount.getMobile()));
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("UserThirdBizImpl autoTender get redis exception ", e);
         }
 
@@ -634,7 +635,7 @@ public class AssetBizImpl implements AssetBiz {
         rechargeDetailLogService.save(rechargeDetailLog);
         try {
             resp.setHtml(Base64Utils.encodeToString(html.getBytes("UTF-8")));
-        } catch (UnsupportedEncodingException e) {
+        } catch (Throwable e) {
             log.error("UserThirdBizImpl modifyOpenAccPwd gethtml exceptio", e);
             return ResponseEntity
                     .badRequest()
@@ -827,7 +828,7 @@ public class AssetBizImpl implements AssetBiz {
         DictValue bank = null;
         try {
             bank = bankLimitCache.get(userThirdAccount.getBankName());
-        } catch (ExecutionException e) {
+        } catch (Throwable e) {
             log.error("AssetBizImpl.preRecharge: bank type is exists ");
         }
 
