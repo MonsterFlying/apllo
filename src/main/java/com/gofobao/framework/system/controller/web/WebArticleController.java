@@ -7,7 +7,6 @@ import com.gofobao.framework.system.vo.request.VoArticleReq;
 import com.gofobao.framework.system.vo.response.VoViewArticleInfoWarpRes;
 import com.gofobao.framework.system.vo.response.VoViewArticleWarpRes;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -42,7 +41,7 @@ public class WebArticleController {
 
     @ApiOperation("关于我们")
     @GetMapping("aboutWe/{tag}")
-    private ResponseEntity<VoViewArticleInfoWarpRes> aboutWe(@PathVariable("tag") String tag) {
+    public ResponseEntity<VoViewArticleInfoWarpRes> aboutWe(@PathVariable("tag") String tag) {
         VoViewArticleInfoWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewArticleInfoWarpRes.class);
         String html = thymeleafHelper.build("aboutWe/pc/" + tag, null);
         warpRes.setHtml(html);
