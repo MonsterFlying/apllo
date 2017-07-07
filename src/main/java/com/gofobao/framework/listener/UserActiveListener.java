@@ -53,6 +53,8 @@ public class UserActiveListener {
             }
         }catch (Exception e){
             log.error("UserActiveListener process do exception", e);
+        } catch (Throwable throwable){
+            log.error("UserActiveListener process do exception:", throwable);
         }
 
     }

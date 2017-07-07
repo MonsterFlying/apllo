@@ -48,10 +48,13 @@ public class JixinHelper {
             });
 
     public static final String TENDER_PREFIX = "GFBT_";
-    public static final String LEND_REPAY_PREFIX = "GFBLP_";
-    public static final String REPAY_PREFIX = "GFBP_";
-    public static final String REPAY_BAIL_PREFIX = "GFBBP_";
-    public static final String BAIL_REPAY_PREFIX = "GFBPB_";
+    public static final String LEND_REPAY_PREFIX = "GFBLR_";
+    public static final String REPAY_PREFIX = "GFBR_";
+    public static final String REPAY_BAIL_PREFIX = "GFBRB_";
+    public static final String BAIL_REPAY_PREFIX = "GFBBR_";
+    public static final String TENDER_CANCEL_PREFIX = "GFBTC_";
+    public static final String BALANCE_FREEZE_PREFIX = "GFBBF_";
+
 
     public static String getOrderId(String prefix) {
         return prefix + new Date().getTime();

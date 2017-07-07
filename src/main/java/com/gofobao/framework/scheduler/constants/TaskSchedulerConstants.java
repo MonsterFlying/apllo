@@ -11,7 +11,12 @@ public class TaskSchedulerConstants {
 
 
     /**
-     * 提现确认
+     * 大额提现确定
      */
     public  static  final Integer CASH_FORM = 1 ;
+
+    /**
+     *  提现取消确认
+     */
+    public  static  final Integer CASH_CANCEL = 2 ;
 }

@@ -96,4 +96,11 @@ public interface CashDetailLogBiz {
      * @return
      */
     ResponseEntity<VoCashLogWarpRes> psLogs(VoPcCashLogs cashLogs);
+
+    /**
+     * 操作取消提现
+     * @param taskData
+     * @return
+     */
+    boolean doCancelCash(String taskData);
 }

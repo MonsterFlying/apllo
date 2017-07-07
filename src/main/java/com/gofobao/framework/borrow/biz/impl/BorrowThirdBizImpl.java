@@ -5,6 +5,8 @@ import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeReq;
+import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.batch_repay.*;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryReq;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
@@ -174,10 +176,10 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
         }
 
-        if(!JixinResultContants.SUCCESS.equals(response.getRetCode())){
-            if(response.getRetCode().equals("JX900122")){  // 查看是否重复登记
-                borrow.setProductId(response.getProductId()) ;
-            }else{
+        if (!JixinResultContants.SUCCESS.equals(response.getRetCode())) {
+            if (response.getRetCode().equals("JX900122")) {  // 查看是否重复登记
+                borrow.setProductId(response.getProductId());
+            } else {
                 String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
                 return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
             }
@@ -186,7 +188,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         borrow.setBailAccountId(bailAccountId);
         borrow.setProductId(productId);
         borrowService.updateById(borrow);
-        return null;
+        return ResponseEntity.ok(VoBaseResp.ok("创建标的成功!"));
     }
 
     /**
@@ -265,7 +267,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
      * @param voRepayAllReq
      * @return
      */
-    public ResponseEntity<VoBaseResp> thirdBatchRepayAll(VoRepayAllReq voRepayAllReq) {
+    public ResponseEntity<VoBaseResp> thirdBatchRepayAll(VoRepayAllReq voRepayAllReq) throws Exception{
         Date nowDate = new Date();
         String paramStr = voRepayAllReq.getParamStr();
         if (!SecurityHelper.checkSign(voRepayAllReq.getSign(), paramStr)) {
@@ -278,6 +280,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         Long borrowId = NumberHelper.toLong(paramMap.get("borrowId"));
 
         Borrow borrow = borrowService.findByIdLock(borrowId);
+        UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
         Asset borrowAsset = assetService.findByUserId(borrow.getUserId());
         Preconditions.checkNotNull(borrowAsset, "借款人资产记录不存在!");
 
@@ -378,6 +381,20 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         thirdBatchLog.setRemark("即信批次还款");
         thirdBatchLogService.save(thirdBatchLog);
 
+        //====================================================================
+        //冻结借款人账户资金
+        //====================================================================
+        String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);
+        BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
+        balanceFreezeReq.setAccountId(borrowUserThirdAccount.getAccountId());
+        balanceFreezeReq.setTxAmount(StringHelper.formatDouble(sumTxAmount, false));
+        balanceFreezeReq.setOrderId(orderId);
+        balanceFreezeReq.setChannel(ChannelContant.HTML);
+        BatchDetailsQueryResp batchDetailsQueryResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BatchDetailsQueryResp.class);
+        if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(batchDetailsQueryResp.getRetCode()))) {
+            throw new Exception("即信批次还款冻结资金失败：" + batchDetailsQueryResp.getRetMsg());
+        }
+
         BatchRepayReq request = new BatchRepayReq();
         request.setBatchNo(batchNo);
         request.setTxAmount(StringHelper.formatDouble(sumTxAmount, false));
@@ -389,7 +406,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         request.setTxCounts(StringHelper.toString(tempRepayList.size()));
         BatchRepayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_REPAY, request, BatchRepayResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "即信批次还款失败:" + response.getRetMsg()));
+            throw new Exception("即信批次还款冻结资金失败：" + batchDetailsQueryResp.getRetMsg());
         }
 
         return null;
@@ -492,19 +509,19 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         Preconditions.checkNotNull(takeUserThirdAccount, "borrowThirdBizImpl thirdTrusteePay：收款人不存在!");
 
         // 判断是否已经签署受托支付
-        TrusteePayQueryReq trusteePayQueryReq = new TrusteePayQueryReq() ;
-        trusteePayQueryReq.setChannel(ChannelContant.HTML) ;
+        TrusteePayQueryReq trusteePayQueryReq = new TrusteePayQueryReq();
+        trusteePayQueryReq.setChannel(ChannelContant.HTML);
         trusteePayQueryReq.setProductId(borrow.getProductId());
-        trusteePayQueryReq.setAccountId(lendUserThirdAccount.getAccountId()) ;
+        trusteePayQueryReq.setAccountId(lendUserThirdAccount.getAccountId());
         TrusteePayQueryResp trusteePayQueryResp = jixinManager.send(JixinTxCodeEnum.TRUSTEE_PAY_QUERY, trusteePayQueryReq, TrusteePayQueryResp.class);
-        if(ObjectUtils.isEmpty(trusteePayQueryResp)){
+        if (ObjectUtils.isEmpty(trusteePayQueryResp)) {
             log.error("查询委托状态失败");
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了， 请稍候重试", VoHtmlResp.class));
         }
 
-        if(trusteePayQueryResp.getState().equals("0")){
+        if (trusteePayQueryResp.getState().equals("0")) {
             TrusteePayReq trusteePayReq = new TrusteePayReq();
             trusteePayReq.setAccountId(lendUserThirdAccount.getAccountId());
             trusteePayReq.setChannel(ChannelContant.HTML);
@@ -543,8 +560,8 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             }
 
             return ResponseEntity.ok(resp);
-        }else{
-            if( (JixinResultContants.SUCCESS.equals(trusteePayQueryResp.getRetCode())) ){
+        } else {
+            if ((JixinResultContants.SUCCESS.equals(trusteePayQueryResp.getRetCode()))) {
                 // 主动触发 审核
                 MqConfig mqConfig = new MqConfig();
                 mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
@@ -557,14 +574,12 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "已经申请委托支付, 如有疑问请联系客服!", VoHtmlResp.class));
-            }else{
+            } else {
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了， 请稍候重试", VoHtmlResp.class));
             }
         }
-
-
 
 
     }
@@ -584,7 +599,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         }
 
         if (!JixinResultContants.SUCCESS.equals(trusteePayResp.getRetCode())) {
-            log.error( String.format("BorrowThirdBizImpl thirdTrusteePayCall 受托支付回调失败: %s", trusteePayResp.getRetMsg()));
+            log.error(String.format("BorrowThirdBizImpl thirdTrusteePayCall 受托支付回调失败: %s", trusteePayResp.getRetMsg()));
             return ResponseEntity.ok("success");
         }
         Long borrowId = NumberHelper.toLong(trusteePayResp.getAcqRes());

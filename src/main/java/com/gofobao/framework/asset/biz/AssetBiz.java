@@ -124,4 +124,13 @@ public interface AssetBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest request, VoRechargeReq voRechargeReq) throws Exception;
+
+
+    /**
+     * 资金同步
+     * @param userId
+     * @return
+     */
+    ResponseEntity<VoUserAssetInfoResp> synOnLineRecharge(Long userId) throws Exception;
+
 }

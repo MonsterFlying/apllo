@@ -201,6 +201,19 @@ public class BankAccountBizImpl implements BankAccountBiz{
         return ResponseEntity.ok(response) ;
     }
 
+    @Override
+    public int getCashCredit4Day(Long userId) {
+        Date endDate = new Date() ;
+        Date startDate = DateHelper.beginOfDate(endDate);
+        ImmutableList<Integer> stateList = ImmutableList.of(0, 1) ; // 充值成功和申请充值中的
+        List<RechargeDetailLog> rechargeDetailLogs = rechargeDetailLogService.findByUserIdAndDelAndStateInAndCreateTimeBetween(userId, 0, stateList, startDate, endDate);
+        if(CollectionUtils.isEmpty(rechargeDetailLogs)){
+            return 0 ;
+        }
+
+        return rechargeDetailLogs.size();
+    }
+
 
     /**
      * 充值额度说明

@@ -98,13 +98,13 @@ public class BorrowProvider {
         log.info(String.format("触发标的初审: %s", borrowId));
         Borrow borrow = borrowService.findByIdLock(borrowId);
         if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 0)) {
-            return false;
+            return true;
         }
 
-        if (!ObjectUtils.isEmpty(borrow.getLendId())) { //有草出借
-            return verifyLendBorrow(borrow);
+        if (!ObjectUtils.isEmpty(borrow.getLendId())) {
+            return verifyLendBorrow(borrow);      //有草出借初审
         } else {
-            return verifyStandardBorrow(borrow);  // 标准标的初审
+            return verifyStandardBorrow(borrow);  //标准标的初审
         }
     }
 
@@ -147,10 +147,10 @@ public class BorrowProvider {
             try {
                 log.info(String.format("borrowProvider autoTender send mq %s", GSON.toJson(body)));
                 mqHelper.convertAndSend(mqConfig);
-                return true ;
+                return true;
             } catch (Exception e) {
                 log.error("borrowProvider autoTender send mq exception", e);
-                return false ;
+                return false;
             }
         }
         return true;
@@ -168,7 +168,7 @@ public class BorrowProvider {
         borrow.setStatus(1);  //更新借款状态
         borrow.setVerifyAt(nowDate);
         Date releaseAt = borrow.getReleaseAt();
-        borrow.setReleaseAt(ObjectUtils.isArray(releaseAt)? nowDate: releaseAt) ;
+        borrow.setReleaseAt(ObjectUtils.isArray(releaseAt) ? nowDate : releaseAt);
         borrowService.updateById(borrow);   // 更改标的为可投标状态
         Long lendId = borrow.getLendId();
 
@@ -215,19 +215,16 @@ public class BorrowProvider {
                 log.info("转让标发起复审失败！ msg:" + resp.getBody().getState().getMsg());
                 log.info("====================================================================");
             }
-        } else {// 标准标的购买
+        } else {  // 标准标的购买
             if (ObjectUtils.isEmpty(borrow.getSuccessAt())) {
                 borrow.setSuccessAt(new Date());
                 borrowService.updateById(borrow);
             }
 
-            ResponseEntity<VoBaseResp> resp = thirdRegisterBorrowAndTender(borrow);
-            if (ObjectUtils.isEmpty(resp)) {
-                //批次放款
-                VoThirdBatchLendRepay voThirdBatchLendRepay = new VoThirdBatchLendRepay();
-                voThirdBatchLendRepay.setBorrowId(borrowId);
-                resp = borrowRepaymentThirdBiz.thirdBatchLendRepay(voThirdBatchLendRepay);
-            }
+            //批次放款
+            VoThirdBatchLendRepay voThirdBatchLendRepay = new VoThirdBatchLendRepay();
+            voThirdBatchLendRepay.setBorrowId(borrowId);
+            ResponseEntity<VoBaseResp> resp = borrowRepaymentThirdBiz.thirdBatchLendRepay(voThirdBatchLendRepay);
 
             if (ObjectUtils.isEmpty(resp)) {
                 log.info("====================================================================");
@@ -281,56 +278,5 @@ public class BorrowProvider {
             }
         }
         return bool;
-    }
-
-    /**
-     * 第三方等级标的与债权
-     *
-     * @param borrow
-     * @return
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> thirdRegisterBorrowAndTender(Borrow borrow) {
-        long borrowId = borrow.getId();
-        ResponseEntity<VoBaseResp> resp = null;
-        String productId = borrow.getProductId();
-
-        if (ObjectUtils.isEmpty(productId)) {
-            //标的登记
-            int type = borrow.getType();
-            if (type != 0 && type != 4) { //判断是否是官标、官标不需要在这里登记标的
-                VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
-                voCreateThirdBorrowReq.setBorrowId(borrowId);
-                resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
-                if (!ObjectUtils.isEmpty(resp)) {
-                    return resp;
-                }
-            }
-        }
-
-        //批量投标
-        Specification<Tender> ts = Specifications
-                .<Tender>and()
-                .eq("status", 1)
-                .eq("borrowId", borrowId)
-                .eq("isThirdRegister", false)
-                .build();
-        List<Tender> tenderList = tenderService.findList(ts);
-        for (Tender tender : tenderList) {
-            VoCreateThirdTenderReq voCreateThirdTenderReq = new VoCreateThirdTenderReq();
-            voCreateThirdTenderReq.setAcqRes(String.valueOf(tender.getId()));
-            voCreateThirdTenderReq.setUserId(tender.getUserId());
-            voCreateThirdTenderReq.setTxAmount(StringHelper.formatDouble(tender.getValidMoney(), 100, false));
-            voCreateThirdTenderReq.setProductId(productId);
-            voCreateThirdTenderReq.setFrzFlag(FrzFlagContant.FREEZE);
-            resp = tenderThirdBiz.createThirdTender(voCreateThirdTenderReq);
-            if (!ObjectUtils.isEmpty(resp)) {
-                log.error("tenderId:" + tender.getId() + "msg:" + resp.getBody().getState().getMsg());
-                return resp;
-            }
-            tender.setIsThirdRegister(true);
-            tenderService.updateById(tender);
-        }
-        return null;
     }
 }

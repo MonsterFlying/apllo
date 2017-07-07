@@ -381,6 +381,8 @@ ALTER TABLE `gfb_auto_tender`
    MODIFY COLUMN  `apr_first` int(11) unsigned NOT NULL COMMENT '年化率起始值',
    MODIFY COLUMN  `apr_last` int(5) unsigned NOT NULL COMMENT '年化率结束值';
 
+ALTER TABLE `gfb_auto_tender`
+   MODIFY COLUMN `third_tender_cancel_order_id` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT '第三方取消投标订单号';
 
 CREATE TABLE gfb_task_scheduler
 (

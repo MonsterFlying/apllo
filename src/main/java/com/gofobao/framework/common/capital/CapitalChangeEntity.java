@@ -37,6 +37,7 @@ public class CapitalChangeEntity {
      * 利息
      */
     private int interest;
+
     /**
      * 变动类型
      */

@@ -28,7 +28,7 @@ public class TaskSchedulerBizImpl implements TaskSchedulerBiz {
 
     @Override
     public TaskScheduler save(TaskScheduler taskScheduler) {
-
+        List<TaskScheduler> taskSchedulers = taskSchedulerService.findByTypeAndTaskData(taskScheduler.getType(), taskScheduler.getTaskData()) ;
         return taskSchedulerService.save(taskScheduler) ;
     }
 }

@@ -1,6 +1,8 @@
 package com.gofobao.framework.scheduler.entity;
 
 import lombok.Data;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -15,6 +17,8 @@ import java.util.Date;
 @Data
 @Entity
 @Table(name = "gfb_task_scheduler")
+@DynamicInsert
+@DynamicUpdate
 public class TaskScheduler {
     @Id
     @GeneratedValue

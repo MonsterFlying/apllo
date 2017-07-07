@@ -229,6 +229,27 @@ public enum JixinTxCodeEnum {
     CREDIT_INVEST_QUERY(
             "creditInvestQuery",
             "/escrow/p2p/online"
+    ),
+    /**
+     * 撤销投标申请
+     */
+    BID_CANCEL(
+            "bidCancel",
+            "/escrow/p2p/online"
+    ),
+    /**
+     * 还款冻结解冻
+     */
+    BALANCE_UN_FREEZE(
+            "balanceUnfreeze",
+            "/escrow/p2p/online"
+    ),
+    /**
+     * 还款冻结申请
+     */
+    BALANCE_FREEZE(
+            "balanceFreeze",
+            "/escrow/p2p/online"
     );
 
     private String value;

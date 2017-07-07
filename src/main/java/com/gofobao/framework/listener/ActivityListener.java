@@ -41,6 +41,8 @@ public class ActivityListener {
                 activityProvider.TenderGiveTrafficCoupon(msg);
             } catch (Exception e) {
                 log.error("赠送流量券异常：", e);
+            } catch (Throwable throwable){
+                log.error("赠送流量券异常:", throwable);
             }
         } else {
             log.error("ActivityListener error：未匹配到tag" + tag);

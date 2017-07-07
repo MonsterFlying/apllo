@@ -30,4 +30,9 @@ public class TaskSchedulerServiceImpl implements TaskSchedulerService {
     public TaskScheduler save(TaskScheduler taskScheduler) {
         return taskSchedulerRepository.save(taskScheduler);
     }
+
+    @Override
+    public List<TaskScheduler> findByTypeAndTaskData(Integer type, String taskData) {
+        return taskSchedulerRepository.findByTypeAndTaskData(type, taskData) ;
+    }
 }

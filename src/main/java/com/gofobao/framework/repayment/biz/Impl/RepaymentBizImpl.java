@@ -294,9 +294,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Double interestPercent = voRepayReq.getInterestPercent();
         Long userId = voRepayReq.getUserId();
         Long repaymentId = voRepayReq.getRepaymentId();
-
         interestPercent = interestPercent == 0 ? 1 : interestPercent;
-
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);
         Preconditions.checkNotNull(borrowRepayment, "还款不存在!");
         if (borrowRepayment.getStatus() != 0) {
@@ -308,12 +306,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Borrow borrow = borrowService.findById(borrowRepayment.getBorrowId());
         int borrowType = borrow.getType();//借款type
         Long borrowUserId = borrow.getUserId();
-
-        Asset borrowUserAsset = assetService.findByUserId(borrowUserId);
+        Asset borrowUserAsset = assetService.findByUserIdLock(borrowUserId);
         Preconditions.checkNotNull(borrowRepayment, "用户资产查询失败!");
-
-
-        if ((!ObjectUtils.isEmpty(userId)) && (!StringHelper.toString(borrowUserId).equals(StringHelper.toString(userId)))) {   // 存在userId时 判断是否是当前用户
+        if ((!ObjectUtils.isEmpty(userId))
+                && (!StringHelper.toString(borrowUserId).equals(StringHelper.toString(userId)))) {   // 存在userId时 判断是否是当前用户
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("操作用户不是借款用户!")));
@@ -322,7 +318,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         int repayInterest = (int) (borrowRepayment.getInterest() * interestPercent);//还款利息
         int repayMoney = borrowRepayment.getPrincipal() + repayInterest;//还款金额
 
-        if (borrowType == 2) {
+        if (borrowType == 2) { // 秒表处理
             if (borrowUserAsset.getNoUseMoney() < (borrowRepayment.getRepayMoney() + lateInterest)) {
                 return ResponseEntity
                         .badRequest()
@@ -478,7 +474,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         if (ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) {
             receivedReapy(borrow, borrowRepayment.getOrder(), interestPercent, lateDays, lateInterest / 2, false);
         } else {
-            AdvanceLog advanceLog = advanceLogService.findById(repaymentId);
+            AdvanceLog advanceLog = advanceLogService.findByRepaymentId(repaymentId);
             Preconditions.checkNotNull(advanceLog, "垫付记录不存在!请联系客服");
 
             entity = new CapitalChangeEntity();
@@ -903,19 +899,24 @@ public class RepaymentBizImpl implements RepaymentBiz {
         voRepayReq.setRepaymentId(voInstantlyRepayment.getRepaymentId());
         voRepayReq.setInterestPercent(0d);
         voRepayReq.setIsUserOpen(true);
-        //校验还款
+        // ====================================
+        //  1. 平台可用用金额
+        //  2. 存管账户是否够用
+        //  3. 冻结还款
+        //  4. 还款
+        // ===================================
         ResponseEntity<VoBaseResp> resp = checkRepay(voRepayReq);
         if (!ObjectUtils.isEmpty(resp)) {
             return resp;
         }
-
-        //调用即信还款
         VoThirdBatchRepay voThirdBatchRepay = new VoThirdBatchRepay();
         voThirdBatchRepay.setUserId(voInstantlyRepayment.getUserId());
         voThirdBatchRepay.setRepaymentId(voInstantlyRepayment.getRepaymentId());
         voThirdBatchRepay.setInterestPercent(0d);
         voThirdBatchRepay.setIsUserOpen(true);
-
+        // ====================================
+        // 调用第三方还款操作
+        // ====================================
         return borrowRepaymentThirdBiz.thirdBatchRepay(voThirdBatchRepay);
     }
 
