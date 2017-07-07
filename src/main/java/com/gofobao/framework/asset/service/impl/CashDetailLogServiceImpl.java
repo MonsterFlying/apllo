@@ -71,7 +71,7 @@ public class CashDetailLogServiceImpl implements CashDetailLogService {
 
     @Override
     public List<CashDetailLog> findByUserIdAndStateInAndCreateTimeBetween(Long userId, ImmutableList<Integer> stateList, Date startDate, Date endDate) {
-        return cashDetailLogRepository.findByUserIdAndStateInAndCreateTimeBetween(userId, stateList, startDate, endDate);
+        return Optional.ofNullable(cashDetailLogRepository.findByUserIdAndStateInAndCreateTimeBetween(userId, stateList, startDate, endDate)).orElse(Collections.EMPTY_LIST) ;
     }
 
     /**
