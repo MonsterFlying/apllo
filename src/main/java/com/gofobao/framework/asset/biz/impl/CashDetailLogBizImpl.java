@@ -259,6 +259,14 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "账户余额为0！", VoHtmlResp.class));
         }
+
+        // 对于大于5万小于20万直接返回失败
+        if(voCashReq.getCashMoney() > 50000 || voCashReq.getCashMoney() < 20 * 10000){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "快捷提现为小于等于5万", VoHtmlResp.class));
+        }
+
         if ((voCashReq.getCashMoney() >= 200000) && (StringUtils.isEmpty(voCashReq.getBankAps()))) {
             return ResponseEntity
                     .badRequest()
@@ -371,6 +379,18 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             entity.setToUserId(userId);
             entity.setRemark("提现冻结资金");
             capitalChangeHelper.capitalChange(entity);
+
+            // 写入调度
+            Map<String, String> data = new HashMap<>(2);
+            data.put("cashId", cashDetailLog.getId().toString());
+            data.put("userId", userId.toString());
+            TaskScheduler taskScheduler = new TaskScheduler();
+            taskScheduler.setUpdateAt(new Date());
+            taskScheduler.setCreateAt(new Date());
+            taskScheduler.setType(TaskSchedulerConstants.CASH_CANCEL);
+            taskScheduler.setTaskNum(Integer.MAX_VALUE - 2);
+            taskScheduler.setTaskData(new Gson().toJson(data));
+            taskSchedulerBiz.save(taskScheduler);
         }
 
         VoHtmlResp voHtmlResp = VoBaseResp.ok("成功", VoHtmlResp.class);
@@ -382,6 +402,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR,  "服务器开小差了， 请稍候重试", VoHtmlResp.class)) ;
         }
+
 
         return ResponseEntity.ok(voHtmlResp);
     }
@@ -705,6 +726,34 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                             "查询异常",
                             VoCashLogWarpRes.class));
         }
+    }
+
+    @Override
+    public boolean doCancelCash(String taskData) {
+        Map<String, String> dataMap = new Gson().fromJson(taskData, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        Long cashId = Long.parseLong(dataMap.get("cashId"));
+        Long userId = Long.parseLong(dataMap.get("userId"));
+        CashDetailLog cashDetailLog = cashDetailLogService.findById(cashId);
+        if(!cashDetailLog.getState().equals(1)) {
+            return true ;
+        }
+
+        // 查看时间是否超过2个小时
+        Date createTime = cashDetailLog.getCreateTime();
+        Date before2Time = DateHelper.subHours(new Date(), 2) ; // 前两个小时用户
+        if(createTime.getTime() > before2Time.getTime()){
+            return false ;
+        }
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        // 根据提现类型查询用户数据
+        Integer cashType = cashDetailLog.getCashType();
+        Date startTime = DateHelper.subHours(createTime, 2);
+        Date endTime = DateHelper.addDays(createTime, 2);   // T + 2查询时间
+        Date nowDate = new Date();
+        endTime = endTime.getTime() < nowDate.getTime() ? nowDate : endTime;  // 对查询时间进行优化
+        int pageIndex = 1, pageSize = 20, realSize = 0;
+        return false;
     }
 
     /**
