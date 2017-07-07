@@ -154,7 +154,7 @@ public class BorrowBizImpl implements BorrowBiz {
             VoViewBorrowListWarpRes listWarpRes = VoBaseResp.ok("查询成功", VoViewBorrowListWarpRes.class);
             listWarpRes.setVoViewBorrowLists(borrowLists);
             return ResponseEntity.ok(listWarpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("BorrowBizImpl findAll fail%s", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
@@ -175,7 +175,7 @@ public class BorrowBizImpl implements BorrowBiz {
             listWarpRes.setPageIndex(borrowLists.getPageIndex());
             listWarpRes.setPageSize(borrowLists.getPageSize());
             return ResponseEntity.ok(listWarpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("BorrowBizImpl findAll fail%s", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
@@ -274,7 +274,7 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setAvatar(imageDomain + "/data/images/avatar/" + borrow.getUserId() + "_avatar_small.jpg");
             borrowInfoRes.setReleaseAt(status != 1 ? DateHelper.dateToString(borrow.getReleaseAt()) : "");
             return ResponseEntity.ok(borrowInfoRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("BorrowBizImpl detail fail%s", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
@@ -298,7 +298,7 @@ public class BorrowBizImpl implements BorrowBiz {
             VoBorrowDescRes voBorrowDescRes = borrowService.desc(borrowId);
             borrowDescWarpRes.setVoBorrowDescRes(voBorrowDescRes);
             return ResponseEntity.ok(borrowDescWarpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("BorrowBizImpl desc fail%s", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
@@ -321,7 +321,7 @@ public class BorrowBizImpl implements BorrowBiz {
             List<BorrowStatistics> voBorrowDescRes = borrowService.statistics();
             warpRes.setStatisticsList(voBorrowDescRes);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("BorrowBizImpl desc fail%s", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
@@ -342,7 +342,7 @@ public class BorrowBizImpl implements BorrowBiz {
     public Map<String, Object> contract(Long borrowId, Long userId) {
         try {
             return borrowService.contract(borrowId, userId);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("BorrowBizImpl contract error", e);
             return null;
         }
@@ -352,7 +352,7 @@ public class BorrowBizImpl implements BorrowBiz {
     public Map<String, Object> pcContract(Long borrowId, Long userId) {
         try {
             return borrowService.pcContract(borrowId, userId);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("BorrowBizImpl pcContract error", e);
             return null;
         }
@@ -458,7 +458,7 @@ public class BorrowBizImpl implements BorrowBiz {
         Long borrowId = null;
         try {
             borrowId = insertBorrow(voAddNetWorthBorrow, userId);  // 插入标
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("新增借款异常：", e);
         }
 
@@ -480,7 +480,7 @@ public class BorrowBizImpl implements BorrowBiz {
         try {
             log.info(String.format("borrowBizImpl firstVerify send mq %s", GSON.toJson(body)));
             mqState = mqHelper.convertAndSend(mqConfig);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("borrowBizImpl firstVerify send mq exception", e);
         }
 
@@ -639,7 +639,7 @@ public class BorrowBizImpl implements BorrowBiz {
             try {
                 log.info(String.format("borrowBizImpl cancelBorrow send mq %s", GSON.toJson(body)));
                 mqHelper.convertAndSend(mqConfig);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.error("borrowBizImpl cancelBorrow send mq exception", e);
             }
         }
@@ -764,7 +764,7 @@ public class BorrowBizImpl implements BorrowBiz {
             try {
                 log.info(String.format("borrowBizImpl pcCancelBorrow send mq %s", GSON.toJson(body)));
                 mqHelper.convertAndSend(mqConfig);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.error("borrowBizImpl pcCancelBorrow send mq exception", e);
             }
         }
@@ -1073,7 +1073,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 try {
                     log.info(String.format("borrowProvider doAgainVerify send mq %s", GSON.toJson(body)));
                     mqHelper.convertAndSend(mqConfig);
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     log.error("borrowProvider doAgainVerify send mq exception", e);
                 }
 
@@ -1204,7 +1204,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 try {
                     log.info(String.format("borrowBizImpl firstVerify send mq %s", GSON.toJson(body)));
                     mqState = mqHelper.convertAndSend(mqConfig);
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     log.error("borrowBizImpl firstVerify send mq exception", e);
                 }
                 if (!mqState) {
@@ -1261,7 +1261,7 @@ public class BorrowBizImpl implements BorrowBiz {
             if (!ObjectUtils.isEmpty(incrStatistic)) {
                 incrStatisticBiz.caculate(incrStatistic);
             }
-        } catch (MessagingException e) {
+        } catch (Throwable e) {
             log.error(String.format("投标成功统计错误：%s", e.getMessage()));
         }
 
@@ -1390,7 +1390,7 @@ public class BorrowBizImpl implements BorrowBiz {
         for (VoRepayReq tempVoRepayReq : voRepayReqList) {
             try {
                 repaymentBiz.repay(tempVoRepayReq);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.error("提前结清异常：", e);
             }
         }
@@ -1404,7 +1404,7 @@ public class BorrowBizImpl implements BorrowBiz {
             try {
                 capitalChangeHelper.capitalChange(entity);
                 receivedPenalty(borrow, penalty);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.error("BorrowBizImpl 异常:", e);
             }
         }
@@ -1493,7 +1493,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     try {
                         log.info(String.format("borrowProvider doAgainVerify send mq %s", GSON.toJson(body)));
                         mqHelper.convertAndSend(mqConfig);
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
                         log.error("borrowProvider doAgainVerify send mq exception", e);
                     }
                 }
@@ -1515,7 +1515,7 @@ public class BorrowBizImpl implements BorrowBiz {
         boolean flag = false;
         try {
             flag = borrowProvider.doAgainVerify(paramMap);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("PC 复审异常", e);
         }
         return ResponseEntity.ok(VoBaseResp.ok(StringHelper.toString(flag)));
@@ -1616,7 +1616,7 @@ public class BorrowBizImpl implements BorrowBiz {
         try {
             log.info(String.format("borrowBizImpl firstVerify send mq %s", GSON.toJson(body)));
             mqHelper.convertAndSend(mqConfig);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("borrowBizImpl firstVerify send mq exception", e);
         }
         return true;
@@ -1880,7 +1880,7 @@ public class BorrowBizImpl implements BorrowBiz {
         if (!ObjectUtils.isEmpty(statistic)) {
             try {
                 statisticBiz.caculate(statistic);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.error("borrowProvider updateStatisticByBorrowReview 异常:", e);
             }
         }

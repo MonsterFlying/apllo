@@ -47,7 +47,7 @@ public class OKHttpHelper {
                 SSLContext sslContext = SSLContext.getInstance("TLS");
                 sslContext.init(null, new TrustManager[] { trustManager }, null);
                 sslSocketFactory = sslContext.getSocketFactory();
-            } catch (GeneralSecurityException e) {
+            } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
 
@@ -88,7 +88,7 @@ public class OKHttpHelper {
                 return null ;
             }
             return response.body().string() ;
-        } catch (IOException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             logger.error(String.format("Ok http helper 工具类：http post JSON 请求异常: %s", e.getMessage()));
             return null ;
@@ -120,7 +120,7 @@ public class OKHttpHelper {
             }
 
             return response.body().string() ;
-        } catch (IOException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             logger.error(String.format("Ok http helper 工具类：http get 请求异常: %s", e.getMessage()));
             return null ;
@@ -180,7 +180,7 @@ public class OKHttpHelper {
             }
 
             return response.body().string() ;
-        } catch (IOException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             logger.error(String.format("Ok http helper 工具类：http post 请求异常: %s", e.getMessage()));
             return null ;

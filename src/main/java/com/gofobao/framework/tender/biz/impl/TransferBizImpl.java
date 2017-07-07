@@ -66,7 +66,7 @@ public class TransferBizImpl implements TransferBiz {
             voViewTransferOfWarpRes.setTransferOfs(transferOfs);
             voViewTransferOfWarpRes.setTotalCount(totalCount);
             return ResponseEntity.ok(voViewTransferOfWarpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("TransferBizImpl tranferOfList query fail%S", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
@@ -91,7 +91,7 @@ public class TransferBizImpl implements TransferBiz {
             voViewTransferOfWarpRes.setTransferedList(transfereds);
             voViewTransferOfWarpRes.setTotalCount(totalCount);
             return ResponseEntity.ok(voViewTransferOfWarpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("TransferBizImpl transferedlist query fail%S", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
@@ -116,7 +116,7 @@ public class TransferBizImpl implements TransferBiz {
             voViewTransferOfWarpRes.setMayList(transferOfs);
             voViewTransferOfWarpRes.setTotalCount(totalCount);
             return ResponseEntity.ok(voViewTransferOfWarpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("TransferBizImpl transferMayList query fail%S", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(

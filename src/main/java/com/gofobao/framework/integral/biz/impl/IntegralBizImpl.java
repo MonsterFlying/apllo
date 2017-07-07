@@ -114,7 +114,7 @@ public class IntegralBizImpl implements IntegralBiz {
         List<Map<String, String>> integralRule = null;
         try {
             integralRule = dictService.queryDictList(DictAliasCodeContants.INTEGRAL_RULE);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
 
@@ -207,7 +207,7 @@ public class IntegralBizImpl implements IntegralBiz {
         List<Map<String, String>> integralRule = null;
         try {
             integralRule = dictService.queryDictList(DictAliasCodeContants.INTEGRAL_RULE);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
 
@@ -225,7 +225,7 @@ public class IntegralBizImpl implements IntegralBiz {
         boolean b = false;
         try {
             b = capitalChangeHelper.capitalChange(capitalChangeEntity);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         if (!b) {

@@ -86,7 +86,7 @@ public class CapitalChangeRulePaser {
             Object value = null;
             try {
                 value = MethodInvokerHelper.createGetter(target.getClass(), false, opFieldName).invoke(target);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 logger.error(String.format("反射获取getter方法失败"), e.getMessage());
                 return false;
             }
@@ -113,7 +113,7 @@ public class CapitalChangeRulePaser {
                     MethodInvokerHelper.createSetter(target.getClass(), opFieldName, false, value.getClass()).invoke(target, shortMoney);
                 }
 
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 logger.error(String.format("反射获取setter方法失败"), e.getMessage());
                 return false;
             }

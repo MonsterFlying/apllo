@@ -113,7 +113,6 @@ public class NoticesBizImpl implements NoticesBiz {
             voNoticesTranReq.setNoticesIds(Lists.newArrayList(voNoticesReq.getId()));
             Boolean falg = noticesService.update(voNoticesTranReq);
             if (!falg) {
-
                 return ResponseEntity.badRequest()
                         .body(
                                 VoBaseResp.error(
@@ -124,7 +123,6 @@ public class NoticesBizImpl implements NoticesBiz {
             warpRes.setNoticesInfo(noticesService.info(voNoticesReq));
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.badRequest()
                     .body(
                             VoBaseResp.error(
@@ -134,7 +132,6 @@ public class NoticesBizImpl implements NoticesBiz {
         }
 
     }
-
 
     /**
      * 批量删除
@@ -178,8 +175,7 @@ public class NoticesBizImpl implements NoticesBiz {
                         .body(VoBaseResp.error(
                                 VoBaseResp.ERROR,
                                 "更新失败"));
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Throwable e) {
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,

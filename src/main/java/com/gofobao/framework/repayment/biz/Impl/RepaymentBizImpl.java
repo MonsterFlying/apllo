@@ -140,7 +140,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             List<Integer> result = borrowRepaymentService.days(userId, time);
             collectionDayWarpRes.setWarpRes(result);
             return ResponseEntity.ok(collectionDayWarpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewCollectionDaysWarpRes.class));
 
@@ -200,7 +200,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             orderListRes.add(collectionOrder);
             return ResponseEntity.ok(collectionOrder);
 
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewCollectionOrderListWarpResp.class));
         }
@@ -222,7 +222,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             warpRes.setTotalCount(totalCount);
             warpRes.setOrdersLists(orderList);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewOrderListWarpRes.class));
@@ -242,7 +242,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             VoViewRepaymentOrderDetailWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewRepaymentOrderDetailWarpRes.class);
             warpRes.setRepaymentOrderDetail(voViewOrderDetailResp);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewRepaymentOrderDetailWarpRes.class));
         }
     }
@@ -265,7 +265,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             warpRes.setTotalCount(totalCount);
             warpRes.setVoCollections(repaymentList);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewCollectionWarpRes.class));
         }
@@ -278,7 +278,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             VoViewRepayCollectionLogWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewRepayCollectionLogWarpRes.class);
             warpRes.setCollectionLogs(logList);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewRepayCollectionLogWarpRes.class));
         }
     }
@@ -445,7 +445,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
         try {
             capitalChangeHelper.capitalChange(entity);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("立即还款异常:", e);
         }
 
@@ -458,7 +458,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         entity.setRemark("还款成功扣除待还");
         try {
             capitalChangeHelper.capitalChange(entity);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("立即还款异常:", e);
         }
 
@@ -525,7 +525,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if (!ObjectUtils.isEmpty(statistic)) {
                 statisticBiz.caculate(statistic);
             }
-        } catch (MessagingException e) {
+        } catch (Throwable e) {
             log.error(String.format("立即还款统计错误：", e));
         }
         return ResponseEntity.ok(VoBaseResp.ok("立即还款成功!"));
@@ -845,7 +845,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     try {
                         log.info(String.format("borrowProvider doAgainVerify send mq %s", GSON.toJson(body)));
                         mqHelper.convertAndSend(mqConfig);
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
                         log.error("borrowProvider doAgainVerify send mq exception", e);
                     }
                 }

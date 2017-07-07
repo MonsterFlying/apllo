@@ -78,7 +78,7 @@ JwtAuthenticationTokenBeforeFilter extends OncePerRequestFilter {
             UserDetails userDetails = null;
             try {
                 userDetails = userDetailsLoadingCache.get(username);
-            } catch (ExecutionException e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
 
@@ -88,14 +88,14 @@ JwtAuthenticationTokenBeforeFilter extends OncePerRequestFilter {
 //                //  判断用户TOKEN是否过期
 //                try {
 //                    jwtTokenHelper.validateSign(authToken) ;
-//                } catch (Exception e) {
+//                } catch (Throwable e) {
 //                    response.setContentType("application/json");
 //                    response.setCharacterEncoding("UTF-8");
 //                    try(PrintWriter printWriter = response.getWriter()) {
 //                        VoBaseResp error = VoBaseResp.error(VoBaseResp.RELOGIN, e.getMessage());
 //                        printWriter.write(GSON.toJson(error));
 //                        printWriter.flush();
-//                    }catch (Exception ex){
+//                    }catch (Throwable ex){
 //                        logger.error("权限验证异常") ;
 //                    }
 //                    return;

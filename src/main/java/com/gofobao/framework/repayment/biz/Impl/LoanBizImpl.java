@@ -41,7 +41,7 @@ public class LoanBizImpl implements LoanBiz {
             voViewRefundWrapRes.setList(voViewRefundRes);
             voViewRefundWrapRes.setTotalCount(totalCount);
             return ResponseEntity.ok(voViewRefundWrapRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "获取查询异常", VoViewRefundWrapRes.class));
@@ -69,7 +69,7 @@ public class LoanBizImpl implements LoanBiz {
             viewSettleWarpListRes.setVoViewSettleRes(voViewSettleRes);
             viewSettleWarpListRes.setTotalCount(totalCount);
             return ResponseEntity.ok(viewSettleWarpListRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
 
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "获取查询异常", VoViewSettleWarpListRes.class));
         }
@@ -96,7 +96,7 @@ public class LoanBizImpl implements LoanBiz {
             voViewBudingResListWrapRes.setViewBuddingResList(viewBiddingRes);
             voViewBudingResListWrapRes.setTotalCount(totalCount);
             return ResponseEntity.ok(voViewBudingResListWrapRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "获取查询异常", VoViewBuddingResListWrapRes.class));
@@ -119,7 +119,7 @@ public class LoanBizImpl implements LoanBiz {
             viewRepaymentDetailWrapRes.setViewRepaymentDetail(viewRepaymentDetail);
             return ResponseEntity.ok(viewRepaymentDetailWrapRes);
 
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "获取查询异常", VoViewRepaymentDetailWrapRes.class));
@@ -141,7 +141,7 @@ public class LoanBizImpl implements LoanBiz {
             viewLoanInfoListWrapRes.setVoLoanInfoList(voViewLoanList);
 
             return ResponseEntity.ok(viewLoanInfoListWrapRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "获取查询异常", VoViewLoanInfoListWrapRes.class));

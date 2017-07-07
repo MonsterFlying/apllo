@@ -86,7 +86,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
             VoViewRedPackageWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewRedPackageWarpRes.class);
             warpRes.setResList(redPackageRes);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("RedPackageBizImpl-->list fail", e);
             return ResponseEntity
                     .badRequest()
@@ -175,7 +175,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
                     try {
                         log.info(String.format("RedPackageServiceImpl openRedPackage send mq %s", GSON.toJson(body)));
                         mqHelper.convertAndSend(mqConfig);
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
                         log.error("RedPackageServiceImpl openRedPackage send mq exception", e);
                     }
                     openRedPackage.setFlag(true);
@@ -186,7 +186,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
                             "money:" + money + ", " +
                             "nowTime:" + DateHelper.dateToString(new Date()) + "}");
 
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     //日志记录
                     log.info("打开红包失败: {redPackageId:" + redPacket.getId() + "," +
                             "userId:" + redPacket.getUserId() + "," +
@@ -210,7 +210,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
                                 "打开红包失败",
                                 VoViewOpenRedPackageWarpRes.class));
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("RedPackageBizImpl openRedPackage fail", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(

@@ -48,7 +48,7 @@ public class CurrencyController {
         voConvertCurrencyReq.setUserId(userId);
         try {
             return currencyBiz.convert(voConvertCurrencyReq);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"兑换广富币失败!"));

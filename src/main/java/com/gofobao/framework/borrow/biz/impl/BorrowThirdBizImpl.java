@@ -353,7 +353,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         for (VoThirdBatchRepay tempVoRepayReq : voThirdBatchRepayList) {
             try {
                 tempRepayList.addAll(borrowRepaymentThirdBiz.getRepayList(tempVoRepayReq));
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.error("提前结清异常：", e);
             }
         }
@@ -474,7 +474,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
                 VoRepayAll voRepayAll = new VoRepayAll();
                 voRepayAll.setBorrowId(borrowId);
                 borrowBiz.repayAll(voRepayAll);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.error("提前结清异常:", e);
             }
             if (ObjectUtils.isEmpty(resp)) {
@@ -538,7 +538,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             VoHtmlResp resp = VoBaseResp.ok("请求成功", VoHtmlResp.class);
             try {
                 resp.setHtml(Base64Utils.encodeToString(html.getBytes("UTF-8")));
-            } catch (UnsupportedEncodingException e) {
+            } catch (Throwable e) {
                 log.error("UserThirdBizImpl autoTender gethtml exceptio", e);
                 return ResponseEntity
                         .badRequest()

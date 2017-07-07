@@ -534,7 +534,7 @@ public class DateHelper {
         dateFormat = new SimpleDateFormat(format);
         try {
             return dateFormat.parse(dateStr);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return null;
         }
     }
@@ -550,7 +550,7 @@ public class DateHelper {
         dateFormat = new SimpleDateFormat(DATE_FORMAT_YMDHMS);
         try {
             return dateFormat.parse(dateStr);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return null;
         }
     }
@@ -586,7 +586,7 @@ public class DateHelper {
         dateFormat = new SimpleDateFormat(DATE_FORMAT_YMD_NUM);
         try {
             return dateFormat.format(nowDate);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return null;
         }
     }
@@ -601,7 +601,7 @@ public class DateHelper {
         dateFormat = new SimpleDateFormat(DATE_FORMAT_HMS_NUM);
         try {
             return dateFormat.format(nowDate);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return null;
         }
     }
@@ -615,7 +615,7 @@ public class DateHelper {
         dateFormat = new SimpleDateFormat(DATE_FORMAT_YMDHMS_NUM);
         try {
             return dateFormat.format(nowDate);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return null;
         }
     }

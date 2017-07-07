@@ -21,7 +21,7 @@ public class SDKHttpClient {
         String rs = "";
         try {
             response = OKHttpHelper.get(url, params, null);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             logger.error(String.format("请求发送出现异常: %s", e.getMessage()));
             return rs;
         }
@@ -39,7 +39,7 @@ public class SDKHttpClient {
         Document document = null;
         try {
             document = DocumentHelper.parseText(response);
-        } catch (DocumentException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             result = "-250";
         }

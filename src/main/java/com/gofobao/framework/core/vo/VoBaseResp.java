@@ -64,7 +64,7 @@ public class VoBaseResp implements Serializable {
         T t = null;
         try {
             t = clazz.newInstance();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("VoBaseResp ok init exception" , e);
             throw new RuntimeException(e) ;
         }
@@ -84,7 +84,7 @@ public class VoBaseResp implements Serializable {
         T t = null;
         try {
             t = clazz.newInstance();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("VoBaseResp error init exception" , e);
             throw new RuntimeException(e) ;
         }

@@ -95,7 +95,7 @@ public class CommonEmaiProvider {
             }
 
             rs = true;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("CommonEmaiProvider doSendMessageCode send message error", e);
             return false;
         }
@@ -104,7 +104,7 @@ public class CommonEmaiProvider {
         if (rs) {
             try {
                 macthHelper.add(tag, email, code);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.error("CommonEmaiProvider doSendMessageCode put redis error", e);
                 return false;
             }
@@ -130,7 +130,7 @@ public class CommonEmaiProvider {
         try {
             mailSender.send(message);
             return true;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("CommonEmaiProvider.sendSimpleEmail exception", e);
             return false;
         }
@@ -169,7 +169,7 @@ public class CommonEmaiProvider {
             messageHelper.setText(text, isHtml);
             mailSender.send(message);
             return true;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("邮件发送失败:", e);
             log.error("参数:toEmail-->" + toEmail + ",subject-->" + subject + "text-->" + text + ",isHtml-->" + isHtml);
             return false;
@@ -211,7 +211,7 @@ public class CommonEmaiProvider {
         smsEntity.setStime(" ");
         try {
             smsRepository.save(smsEntity);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("保存数据失败", e);
         }
         return true;

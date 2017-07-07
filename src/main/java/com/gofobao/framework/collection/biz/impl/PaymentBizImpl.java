@@ -105,7 +105,7 @@ public class PaymentBizImpl implements PaymentBiz {
             //回款列表
             warpRes.setOrderResList(orderResList);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非法请求", VoViewCollectionOrderListWarpResp.class));
         }
 
@@ -127,7 +127,7 @@ public class PaymentBizImpl implements PaymentBiz {
             warpRes.setLists(borrowCollections);
             warpRes.setTotalCount(totalCount);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR,
@@ -153,7 +153,7 @@ public class PaymentBizImpl implements PaymentBiz {
             warpRes.setTotalCount(totalCount);
             warpRes.setCollections(borrowCollections);
             return ResponseEntity.ok(warpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR,
@@ -174,7 +174,7 @@ public class PaymentBizImpl implements PaymentBiz {
         try {
             VoViewOrderDetailResp detailRes = borrowCollectionService.orderDetail(voOrderDetailReq);
             return ResponseEntity.ok(detailRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewOrderDetailResp.class));
         }
     }
@@ -186,7 +186,7 @@ public class PaymentBizImpl implements PaymentBiz {
             List<Integer> result = borrowCollectionService.collectionDay(date, userId);
             collectionDayWarpRes.setWarpRes(result);
             return ResponseEntity.ok(collectionDayWarpRes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewCollectionDaysWarpRes.class));
 

@@ -93,7 +93,7 @@ public class CommonSmsProvider {
             }
 
             rs = true ;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("CommonSmsProvider doSendMessageCode send message error", e);
             return false;
         }
@@ -102,7 +102,7 @@ public class CommonSmsProvider {
         if(rs){
             try {
                 macthHelper.add(tag, phone, code) ;
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.error("CommonSmsProvider doSendMessageCode put redis error", e);
                 return false;
             }
@@ -124,7 +124,7 @@ public class CommonSmsProvider {
         smsEntity.setStime(" ");
         try {
             smsRepository.save(smsEntity);
-        }catch (Exception e){
+        }catch (Throwable e){
             log.error("保存数据失败", e);
         }
         return rs ;

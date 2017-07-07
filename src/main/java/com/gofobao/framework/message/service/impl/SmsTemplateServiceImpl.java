@@ -58,7 +58,7 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
     public String findSmsTemplate(String alias) {
         try {
             return smsTemplateCache.get(alias) ;
-        } catch (ExecutionException e) {
+        } catch (Throwable e) {
             log.error("SmsTemplateServiceImpl findSmsTemplate alias is not exists");
         }
 

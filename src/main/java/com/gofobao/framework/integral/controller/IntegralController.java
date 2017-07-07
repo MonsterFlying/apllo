@@ -58,7 +58,7 @@ public class IntegralController {
         voIntegralTakeReq.setUserId(userId);
         try {
             return integralBiz.doTakeRates(voIntegralTakeReq);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         return ResponseEntity

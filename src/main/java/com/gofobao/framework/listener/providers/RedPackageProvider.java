@@ -267,7 +267,7 @@ public class RedPackageProvider {
         ));
         try {
             redPackageRepository.save(redPacket);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error(String.format("红包写入数据库失败: %s", gson.toJson(redPacket)));
             return;
         }
@@ -284,7 +284,7 @@ public class RedPackageProvider {
         redPacketLog.setVparam2("");
         try {
             redPackageLogRepository.save(redPacketLog);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error(String.format("红包日志写入数据库失败: %s", gson.toJson(redPacketLog)));
             return;
         }
@@ -379,7 +379,7 @@ public class RedPackageProvider {
         ));
         try {
             redPackageRepository.save(redPacket);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error(String.format("红包写入数据库失败: %s", gson.toJson(redPacket)));
             return;
 
@@ -398,7 +398,7 @@ public class RedPackageProvider {
         redPacketLog.setVparam2("");
         try {
             redPackageLogRepository.saveAndFlush(redPacketLog);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error(String.format("红包日志写入数据库失败: %s", gson.toJson(redPacketLog)));
             return;
         }
@@ -490,7 +490,7 @@ public class RedPackageProvider {
         ));
         try {
             redPackageRepository.saveAndFlush(redPacket);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error(String.format("红包写入数据库失败: %s", gson.toJson(redPacket)));
             return;
         }
@@ -507,7 +507,7 @@ public class RedPackageProvider {
         redPacketLog.setVparam2("");
         try {
             redPackageLogRepository.save(redPacketLog);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error(String.format("红包日志写入数据库失败: %s", gson.toJson(redPacketLog)));
             return;
 

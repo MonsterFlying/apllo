@@ -97,7 +97,7 @@ public class BorrowController {
         Map<String, Object> paramMaps = borrowBiz.contract(borrowId, userId);
         try {
             content = thymeleafHelper.build("borrowProtocol", paramMaps);
-        } catch (Exception e) {
+        } catch (Throwable e) {
 
             log.error("BorrowController->takeRatesDesc fail", e);
             content = thymeleafHelper.build("load_error", null);

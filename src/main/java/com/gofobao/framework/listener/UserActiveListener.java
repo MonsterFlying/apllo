@@ -51,10 +51,8 @@ public class UserActiveListener {
             if(!result){
                 log.error(String.format("UserActiveListener process process error: %s", message));
             }
-        }catch (Exception e){
+        }catch (Throwable e){
             log.error("UserActiveListener process do exception", e);
-        } catch (Throwable throwable){
-            log.error("UserActiveListener process do exception:", throwable);
         }
 
     }

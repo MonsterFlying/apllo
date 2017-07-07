@@ -172,7 +172,7 @@ public class UserBizImpl implements UserBiz{
         try {
             log.info(String.format("userBizImpl register send mq %s", GSON.toJson(body)));
             mqState = mqHelper.convertAndSend(mqConfig) ;
-        }catch (Exception e){
+        }catch (Throwable e){
             log.error("userBizImpl register send mq exception", e);
             throw new Exception(e) ;
         }

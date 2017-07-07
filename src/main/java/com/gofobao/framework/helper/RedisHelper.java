@@ -44,7 +44,7 @@ public class RedisHelper {
         }
         try {
             stringRedisTemplate.opsForValue().set(key, value, expire, TimeUnit.SECONDS);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw e;
         }
     }
@@ -63,7 +63,7 @@ public class RedisHelper {
 
         try {
             stringRedisTemplate.opsForValue().set(key, value);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw e;
         }
     }
@@ -84,7 +84,7 @@ public class RedisHelper {
         try {
             String value = stringRedisTemplate.opsForValue().get(key);
             return value == null ? defaultValue : value.toString();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw e;
         }
     }
@@ -103,7 +103,7 @@ public class RedisHelper {
 
         try {
             stringRedisTemplate.delete(key);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw e;
         }
     }
@@ -123,7 +123,7 @@ public class RedisHelper {
 
         try {
             return stringRedisTemplate.hasKey(key);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw e;
         }
     }

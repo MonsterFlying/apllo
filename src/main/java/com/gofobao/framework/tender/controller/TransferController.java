@@ -79,7 +79,7 @@ public class TransferController {
         String content;
         try {
             content = thymeleafHelper.build("tender/translate",null);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             content = thymeleafHelper.build("load_error", null);
         }
         return ResponseEntity.ok(content);

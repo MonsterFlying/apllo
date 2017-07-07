@@ -68,7 +68,7 @@ public class CertHelper {
         try (InputStream is = new FileInputStream(keyFile)) {
             keyStore = KeyStore.getInstance("PKCS12");
             keyStore.load(is, pwds);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("加载即信公私钥异常", e);
             return;
         }
@@ -93,7 +93,7 @@ public class CertHelper {
             this.privateKey = (PrivateKey) keyStore.getKey(keyAliases, pwds);
             this.publicKey = keyStore.getCertificate(keyAliases).getPublicKey();
             log.info("即信公私钥初始成功");
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("初始化即信公钥私钥异常", e);
             throw new RuntimeException(e);
         }
@@ -105,7 +105,7 @@ public class CertHelper {
             Certificate certificate = factory.generateCertificate(is);
             verifyPublicKey = certificate.getPublicKey() ;
             log.info("即信验证参数公私钥初始成功");
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("即信验证参数公钥异常", e);
             return;
         }
@@ -129,7 +129,7 @@ public class CertHelper {
             byte[] signData = signature.sign();
             sign = Base64Utils.encodeToString(signData);
             log.info(String.format("以签名字符串: %s", sign));
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("即信加密异常", e);
             return null;
         }
@@ -155,7 +155,7 @@ public class CertHelper {
             signature.initVerify(verifyPublicKey);
             signature.update(unSignBytes);
             return signature.verify(signBytes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("即信验签异常", e);
             return false;
         }

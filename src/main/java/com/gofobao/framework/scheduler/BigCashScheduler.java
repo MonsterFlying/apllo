@@ -51,7 +51,7 @@ public class BigCashScheduler {
 
                     taskSchedulerBiz.save(p);
                     log.info(String.format("提现确认查询调度使用时间 %s 毫秒", System.currentTimeMillis() - startDate));
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     log.error("查询自己调度失败", e);
                 }
             });

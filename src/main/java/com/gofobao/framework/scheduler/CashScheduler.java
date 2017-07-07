@@ -51,7 +51,7 @@ public class CashScheduler {
 
                     taskSchedulerBiz.save(p);
                     log.info(String.format("委托支付标信息查询调度使用时间 %s 毫秒", System.currentTimeMillis() - startDate));
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     log.error("查询自己调度失败", e);
                 }
             });
