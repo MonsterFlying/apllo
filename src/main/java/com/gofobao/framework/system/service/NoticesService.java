@@ -32,6 +32,12 @@ public interface NoticesService {
      */
     NoticesInfo info(VoNoticesReq voNoticesReq);
 
+    /**
+     * 未读消息数
+     * @param userId
+     * @return
+     */
+    Long unread(Long userId);
 
     /**
      *  批量删除

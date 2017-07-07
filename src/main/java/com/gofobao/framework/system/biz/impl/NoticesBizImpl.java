@@ -8,6 +8,7 @@ import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.service.NoticesService;
 import com.gofobao.framework.system.vo.request.VoNoticesReq;
 import com.gofobao.framework.system.vo.request.VoNoticesTranReq;
+import com.gofobao.framework.system.vo.response.UnReadMsgNumWarpRes;
 import com.gofobao.framework.system.vo.response.UserNotices;
 import com.gofobao.framework.system.vo.response.VoViewNoticesInfoWarpRes;
 import com.gofobao.framework.system.vo.response.VoViewUserNoticesWarpRes;
@@ -101,16 +102,18 @@ public class NoticesBizImpl implements NoticesBiz {
      * @param voNoticesReq
      * @return
      */
+    @Transactional
     @Override
     public ResponseEntity<VoViewNoticesInfoWarpRes> info(VoNoticesReq voNoticesReq) {
-
         try {
             VoViewNoticesInfoWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewNoticesInfoWarpRes.class);
             VoNoticesTranReq voNoticesTranReq = new VoNoticesTranReq();
+
             voNoticesTranReq.setUserId(voNoticesReq.getUserId());
             voNoticesTranReq.setNoticesIds(Lists.newArrayList(voNoticesReq.getId()));
             Boolean falg = noticesService.update(voNoticesTranReq);
             if (!falg) {
+
                 return ResponseEntity.badRequest()
                         .body(
                                 VoBaseResp.error(
@@ -121,6 +124,7 @@ public class NoticesBizImpl implements NoticesBiz {
             warpRes.setNoticesInfo(noticesService.info(voNoticesReq));
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest()
                     .body(
                             VoBaseResp.error(
@@ -130,6 +134,7 @@ public class NoticesBizImpl implements NoticesBiz {
         }
 
     }
+
 
     /**
      * 批量删除
@@ -174,10 +179,28 @@ public class NoticesBizImpl implements NoticesBiz {
                                 VoBaseResp.ERROR,
                                 "更新失败"));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,
                             "更新失败"));
+        }
+
+    }
+
+    @Override
+    public ResponseEntity<UnReadMsgNumWarpRes> unRead(Long userId) {
+        try {
+            UnReadMsgNumWarpRes warpRes = VoBaseResp.ok("查询成功", UnReadMsgNumWarpRes.class);
+            warpRes.setNum(noticesService.unread(userId));
+            return ResponseEntity.ok(warpRes);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(
+                            VoBaseResp.error(
+                                    VoBaseResp.ERROR,
+                                    "查询失败",
+                                    UnReadMsgNumWarpRes.class));
         }
 
     }

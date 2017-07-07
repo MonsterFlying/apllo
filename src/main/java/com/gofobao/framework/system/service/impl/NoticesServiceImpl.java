@@ -99,6 +99,21 @@ public class NoticesServiceImpl implements NoticesService {
         return noticesInfo;
     }
 
+    /**
+     * 未读消息数量
+     * @param userId
+     * @return
+     */
+    @Override
+    public Long unread(Long userId) {
+        Specification specification=Specifications.<Notices>and()
+                .eq("userId",userId)
+                .eq("deletedAt",null)
+                .eq("read",false)
+                .build();
+       return noticesRepository.count(specification);
+    }
+
     @Transactional
     @Override
     public boolean delete(VoNoticesTranReq voNoticesTranReq) {

@@ -4,6 +4,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.vo.request.VoNoticesReq;
 import com.gofobao.framework.system.vo.request.VoNoticesTranReq;
+import com.gofobao.framework.system.vo.response.UnReadMsgNumWarpRes;
 import com.gofobao.framework.system.vo.response.VoViewNoticesInfoWarpRes;
 import com.gofobao.framework.system.vo.response.VoViewUserNoticesWarpRes;
 import org.springframework.http.ResponseEntity;
@@ -49,5 +50,13 @@ public interface NoticesBiz {
      * @return
      */
     ResponseEntity<VoBaseResp>update(VoNoticesTranReq voNoticesTranReq);
+
+
+    /**
+     * 未读消息数量
+     * @param userId
+     * @return
+     */
+    ResponseEntity<UnReadMsgNumWarpRes> unRead(Long userId  );
 
 }

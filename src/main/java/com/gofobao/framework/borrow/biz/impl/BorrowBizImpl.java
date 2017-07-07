@@ -233,7 +233,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 //待发布
                 if (releaseAt.getTime() >= nowDate.getTime()) {
                     status = 1;
-                    borrowInfoRes.setSurplusSecond((releaseAt.getTime() - nowDate.getTime()) + 5);
+                    borrowInfoRes.setSurplusSecond((releaseAt.getTime() - nowDate.getTime())/1000 + 5);
                 } else if (nowDate.getTime() > endAt.getTime()) {  //当前时间大于招标有效时间
                     status = 5; //已过期
                 } else {
@@ -1546,6 +1546,7 @@ public class BorrowBizImpl implements BorrowBiz {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean doTrusteePay(Long borrowId) {
         Borrow borrow = borrowService.findByIdLock(borrowId);
         String productId = borrow.getProductId();

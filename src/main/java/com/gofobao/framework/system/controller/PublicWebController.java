@@ -13,7 +13,7 @@ public class PublicWebController {
     @ApiOperation("关于我们")
     @GetMapping("/pub/aboutMe")
     public String aboutMe() {
-        return "aboutMe/about" ;
+        return "aboutWe/about" ;
     }
 
 

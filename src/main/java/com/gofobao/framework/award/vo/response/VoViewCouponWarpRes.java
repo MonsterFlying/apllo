@@ -1,4 +1,4 @@
-package com.gofobao.framework.award.vo;
+package com.gofobao.framework.award.vo.response;
 
 import com.gofobao.framework.award.vo.response.CouponRes;
 import com.gofobao.framework.core.vo.VoBaseResp;

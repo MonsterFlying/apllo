@@ -5,7 +5,7 @@ import com.gofobao.framework.award.contants.CouponContants;
 import com.gofobao.framework.award.entity.Coupon;
 import com.gofobao.framework.award.repository.CouponRepository;
 import com.gofobao.framework.award.service.CouponService;
-import com.gofobao.framework.award.vo.VoViewCouponWarpRes;
+import com.gofobao.framework.award.vo.response.VoViewCouponWarpRes;
 import com.gofobao.framework.award.vo.request.VoCouponReq;
 import com.gofobao.framework.award.vo.request.VoTakeFlowReq;
 import com.gofobao.framework.award.vo.response.CouponRes;

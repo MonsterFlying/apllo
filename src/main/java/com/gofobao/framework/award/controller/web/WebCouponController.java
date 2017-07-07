@@ -1,7 +1,7 @@
 package com.gofobao.framework.award.controller.web;
 
 import com.gofobao.framework.award.biz.CouponBiz;
-import com.gofobao.framework.award.vo.VoViewCouponWarpRes;
+import com.gofobao.framework.award.vo.response.VoViewCouponWarpRes;
 import com.gofobao.framework.award.vo.request.VoCouponReq;
 import com.gofobao.framework.award.vo.request.VoTakeFlowReq;
 import com.gofobao.framework.core.vo.VoBaseResp;

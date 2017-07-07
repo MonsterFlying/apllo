@@ -17,6 +17,8 @@ import com.gofobao.framework.tender.service.TransferService;
 import com.gofobao.framework.tender.vo.request.VoTransferReq;
 import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
 import com.gofobao.framework.tender.vo.response.*;
+import com.gofobao.framework.tender.vo.response.web.TransferBuy;
+import com.gofobao.framework.tender.vo.response.web.VoViewTransferBuyWarpRes;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -29,6 +31,7 @@ import org.springframework.util.ObjectUtils;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by admin on 2017/6/12.
@@ -56,9 +59,12 @@ public class TransferBizImpl implements TransferBiz {
     @Override
     public ResponseEntity<VoViewTransferOfWarpRes> tranferOfList(VoTransferReq voTransferReq) {
         try {
-            List<TransferOf> transferOfs = transferService.transferOfList(voTransferReq);
+            Map<String,Object>resultMaps=transferService.transferOfList(voTransferReq);
+            List<TransferOf> transferOfs =(List<TransferOf>) resultMaps.get("transferOfList");
+            Integer totalCount=Integer.valueOf(resultMaps.get("totalCount").toString());
             VoViewTransferOfWarpRes voViewTransferOfWarpRes = VoBaseResp.ok("查询成功", VoViewTransferOfWarpRes.class);
             voViewTransferOfWarpRes.setTransferOfs(transferOfs);
+            voViewTransferOfWarpRes.setTotalCount(totalCount);
             return ResponseEntity.ok(voViewTransferOfWarpRes);
         } catch (Exception e) {
             log.info("TransferBizImpl tranferOfList query fail%S", e);
@@ -78,9 +84,12 @@ public class TransferBizImpl implements TransferBiz {
     @Override
     public ResponseEntity<VoViewTransferedWarpRes> transferedlist(VoTransferReq voTransferReq) {
         try {
-            List<Transfered> transfereds = transferService.transferedList(voTransferReq);
+            Map<String,Object>resultMaps=transferService.transferedList(voTransferReq);
+            List<Transfered> transfereds =(List<Transfered>) resultMaps.get("transferedList");
+            Integer totalCount=Integer.valueOf(resultMaps.get("totalCount").toString());
             VoViewTransferedWarpRes voViewTransferOfWarpRes = VoBaseResp.ok("查询成功", VoViewTransferedWarpRes.class);
             voViewTransferOfWarpRes.setTransferedList(transfereds);
+            voViewTransferOfWarpRes.setTotalCount(totalCount);
             return ResponseEntity.ok(voViewTransferOfWarpRes);
         } catch (Exception e) {
             log.info("TransferBizImpl transferedlist query fail%S", e);
@@ -100,9 +109,12 @@ public class TransferBizImpl implements TransferBiz {
     @Override
     public ResponseEntity<VoViewTransferMayWarpRes> transferMayList(VoTransferReq voTransferReq) {
         try {
-            List<TransferMay> transferOfs = transferService.transferMayList(voTransferReq);
+            Map<String,Object>resultMaps=transferService.transferMayList(voTransferReq);
+            List<TransferMay> transferOfs =(List<TransferMay>) resultMaps.get("transferMayList");
+            Integer totalCount=Integer.valueOf(resultMaps.get("totalCount").toString());
             VoViewTransferMayWarpRes voViewTransferOfWarpRes = VoBaseResp.ok("查询成功", VoViewTransferMayWarpRes.class);
             voViewTransferOfWarpRes.setMayList(transferOfs);
+            voViewTransferOfWarpRes.setTotalCount(totalCount);
             return ResponseEntity.ok(voViewTransferOfWarpRes);
         } catch (Exception e) {
             log.info("TransferBizImpl transferMayList query fail%S", e);
@@ -111,6 +123,31 @@ public class TransferBizImpl implements TransferBiz {
                             VoBaseResp.ERROR,
                             "查询失败",
                             VoViewTransferMayWarpRes.class));
+        }
+    }
+
+    /**
+     * 已购买
+     * @param voTransferReq
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoViewTransferBuyWarpRes> tranferBuyList(VoTransferReq voTransferReq) {
+        try {
+            Map<String,Object>resultMaps=transferService.transferBuyList(voTransferReq);
+            List<TransferBuy> transferOfs =(List<TransferBuy>) resultMaps.get("transferBuys");
+            Integer totalCount=Integer.valueOf(resultMaps.get("totalCount").toString());
+            VoViewTransferBuyWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewTransferBuyWarpRes.class);
+            warpRes.setTransferBuys(transferOfs);
+            warpRes.setTotalCount(totalCount);
+            return ResponseEntity.ok(warpRes);
+        } catch (Exception e) {
+            log.info("TransferBizImpl transferMayList query fail%S", e);
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(
+                            VoBaseResp.ERROR,
+                            "查询失败",
+                            VoViewTransferBuyWarpRes.class));
         }
     }
 

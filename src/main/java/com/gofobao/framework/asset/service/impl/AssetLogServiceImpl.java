@@ -74,7 +74,7 @@ public class AssetLogServiceImpl implements AssetLogService {
             assetLog.setOperationMoney(StringHelper.formatMon(p.getCollection() / 100D));
             assetLog.setRemark(p.getRemark());
             assetLog.setTime(DateHelper.dateToString(p.getCreatedAt()));
-            assetLog.setTypeName(p.getType());
+            assetLog.setTypeName(getAssetTypeStr(p.getType()));
             assetLog.setUsableMoney(StringHelper.formatMon(p.getUseMoney() / 100D));
             if (num[0] == 0) {
                 assetLog.setTotalCount(totalCount);

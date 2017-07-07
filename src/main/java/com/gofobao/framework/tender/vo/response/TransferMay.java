@@ -22,6 +22,6 @@ public class TransferMay {
     private String nextCollectionAt;
     @ApiModelProperty("投标ID")
     private Long tenderId;
-
-
+    @ApiModelProperty("标id")
+    private Long borrowId;
 }
