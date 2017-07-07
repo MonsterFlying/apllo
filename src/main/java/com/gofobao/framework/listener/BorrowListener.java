@@ -48,6 +48,8 @@ public class BorrowListener {
                 bool = borrowProvider.doFirstVerify(msg);
             } catch (Exception e) {
                 log.error("初审异常:", e);
+            } catch (Throwable throwable){
+                log.error("初审异常:", throwable);
             }
             if (bool) {
                 log.info("===========================BorrowListener===========================");
@@ -63,6 +65,8 @@ public class BorrowListener {
                 bool = borrowProvider.doAgainVerify(msg);
             } catch (Exception e) {
                 log.error("复审异常:", e);
+            } catch (Throwable throwable){
+                log.error("复审异常:", throwable);
             }
 
             if (bool) {

@@ -47,7 +47,9 @@ public class AutoTenderMessageListener {
                 log.info("自动投标成功! borrowId：" + borrowId);
                 log.info("========================================================================");
             } catch (Exception e) {
-                log.error("初审异常:", e);
+                log.error("自动投标异常:", e);
+            } catch (Throwable throwable){
+                log.error("自动投标异常:", throwable);
             }
         } else {
             log.error("AutoTenderListener 未找到对应的type");
