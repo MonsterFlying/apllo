@@ -57,7 +57,9 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.type.descriptor.java.DataHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -737,22 +739,59 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         if(!cashDetailLog.getState().equals(1)) {
             return true ;
         }
-
+        Date nowDate = new Date() ;
         // 查看时间是否超过2个小时
         Date createTime = cashDetailLog.getCreateTime();
-        Date before2Time = DateHelper.subHours(new Date(), 2) ; // 前两个小时用户
-        if(createTime.getTime() > before2Time.getTime()){
-            return false ;
+        Integer cashType = cashDetailLog.getCashType();
+        if(cashType.equals(0)){ // 普通提现  检查必须是2个小时之后的
+            Date before2Time = DateHelper.subHours(nowDate, 2) ; // 前两个小时用户
+            if(createTime.getTime() > before2Time.getTime()){
+                return false ;
+            }
+        }else{  // 大额提现 T + 1  确认
+            Date before2Time = DateHelper.subHours(nowDate, 25) ;
+            if(createTime.getTime() > before2Time.getTime()){
+                return false ;
+            }
         }
 
+        // 此段时间内的充值提现记录
+        ImmutableList<Integer> stateList = ImmutableList.of(1, 3);
+        List<CashDetailLog> cashDetailLogs = cashDetailLogService.findByUserIdAndStateInAndCreateTimeBetween(userId,
+                stateList,
+                createTime,
+                nowDate);
+
+
+
+        List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>(cashDetailLogs.size()) ;
+        // 普通提现两个小时后确认提现
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        // 根据提现类型查询用户数据
-        Integer cashType = cashDetailLog.getCashType();
-        Date startTime = DateHelper.subHours(createTime, 2);
-        Date endTime = DateHelper.addDays(createTime, 2);   // T + 2查询时间
-        Date nowDate = new Date();
-        endTime = endTime.getTime() < nowDate.getTime() ? nowDate : endTime;  // 对查询时间进行优化
-        int pageIndex = 1, pageSize = 20, realSize = 0;
+        int pageIndex = 1, pageSize = 30, realSize ;
+        do {
+            AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
+            accountDetailsQueryRequest.setAccountId(userThirdAccount.getAccountId());
+            accountDetailsQueryRequest.setType("9");
+            accountDetailsQueryRequest.setEndDate(DateHelper.dateToString(createTime, DateHelper.DATE_FORMAT_YMD_NUM));
+            accountDetailsQueryRequest.setStartDate(DateHelper.dateToString(nowDate, DateHelper.DATE_FORMAT_YMD_NUM));
+            accountDetailsQueryRequest.setTranType(cashType.equals(1) ? "2820" : "2616");
+            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
+            accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
+            AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, accountDetailsQueryRequest, AccountDetailsQueryResponse.class);
+            Preconditions.checkNotNull(accountDetailsQueryResponse, "查询提现状态异常");
+            Preconditions.checkArgument(!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()), "查询提现状态异常, 验证不通过");
+            Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
+            }.getType()));
+
+            List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
+            if(CollectionUtils.isEmpty(accountDetailsQueryItems)){
+                break;
+            }
+            accountDetailsQueryItemList.addAll(accountDetailsQueryItems) ;
+            realSize = accountDetailsQueryItems.size();
+        }while (pageIndex == realSize) ;
+
+        // 识别过程
         return false;
     }
 
