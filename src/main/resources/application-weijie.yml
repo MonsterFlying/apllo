@@ -29,6 +29,8 @@ spring:
     username: service@gofobao.com
     password: gofobaochina123
     default-encoding: UTF-8
+  thymeleaf:
+    mode: LEGACYHTML5
 server:
   port: 8080
 jwt: #JWT 安全配置
