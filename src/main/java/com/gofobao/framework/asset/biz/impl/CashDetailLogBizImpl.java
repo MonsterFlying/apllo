@@ -615,14 +615,14 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         CashDetailLog cashDetailLog = cashDetailLogService.findTopBySeqNoLock(seqNo);
         model.addAttribute("h5Domain", h5Domain);
         if (ObjectUtils.isEmpty(cashDetailLog)) {
-            return "/cash/faile";
+            return "cash/faile";
         }
         if (cashDetailLog.getState().equals(1)) {
-            return "/cash/loading";
+            return "cash/loading";
         } else if (cashDetailLog.getState().equals(3)) {
-            return "/cash/success";
+            return "cash/success";
         } else {
-            return "/cash/faile";
+            return "cash/faile";
         }
     }
 
