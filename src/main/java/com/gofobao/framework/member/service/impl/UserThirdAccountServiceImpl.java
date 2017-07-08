@@ -8,6 +8,8 @@ import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
+import java.util.List;
+
 /**
  * Created by Max on 17/5/22.
  */
@@ -63,5 +65,10 @@ public class UserThirdAccountServiceImpl implements UserThirdAccountService {
         example.setDel(1);
         return userThirdAccountRepository.findOne(Example.of(example));
 
+    }
+
+    @Override
+    public List<UserThirdAccount> findByAll() {
+        return userThirdAccountRepository.findAll();
     }
 }

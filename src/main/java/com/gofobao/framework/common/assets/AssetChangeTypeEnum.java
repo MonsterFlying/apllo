@@ -8,22 +8,22 @@ public enum AssetChangeTypeEnum {
     /**
      * 提现支出
      */
-    expenditureCash(2, "2616", 12, "4616"),
+    expenditureCash(2, "2616"),
 
     /**
      * 投标支出
      */
-    expenditureTender(3, "2780", 13, "4780"),
+    expenditureTender(3, "2780"),
 
     /**
      * 到期还款支出
      */
-    expenditureRepayment(4, "2781", 14, "4781"),
+    expenditureRepayment(4, "2781"),
 
     /**
      * 代偿还款支出
      */
-    expenditureReplacementRepayment(5, "2788", 15, "4788"),
+    expenditureReplacementRepayment(5, "2788"),
 
     /**
      * 批量债权转让-购买债权 支出
@@ -104,7 +104,56 @@ public enum AssetChangeTypeEnum {
     /**
      * 手续费的入账
      */
-    incomefee(20, "7722");
+    incomefee(20, "7722"),
+
+    /**
+     * 提现手续费转入, 针对于企业账户
+     */
+    incomeCashFee(21, "7724"),
+
+
+    /**
+     * 债权转让手续费转入
+     */
+    incomeTranferFee(22, "7725"),
+
+    /**
+     * 资金分红
+     */
+    incomeBonus(23, "7777"),
+
+    /**
+     * 借款
+     */
+    incomeLoan(24, "7780"),
+
+
+    /**
+     * 到期还款
+     */
+    incomeRepayment(25, "7781"),
+
+    /**
+     * 账户批量充值
+     */
+    incomeBatchRecharge(26, "7782"),
+
+    /**
+     * 债权转让资金转入(批量债转文件)
+     */
+    incomeBatchTranfer(28, "7785") ,
+
+
+    /**
+     *  代偿还款到期收益
+     */
+    incomeCompensatory(29, "7788");
+
+
+
+
+
+
 
 
 
@@ -131,33 +180,13 @@ public enum AssetChangeTypeEnum {
      */
     private String jixinTxType ;
 
-    /**
-     * 费用类型
-     */
-    private int feeType ;
-
-    /**
-     * 即信资金 费用变动类型
-     */
-    private String jixinTxType4Fee ;
 
     AssetChangeTypeEnum(int type, String jixinTxType) {
         this.type = type;
         this.jixinTxType = jixinTxType;
     }
-
-    AssetChangeTypeEnum(int type, String jixinTxType, int feeType, String jixinTxType4Fee) {
-        this.type = type;
-        this.jixinTxType = jixinTxType;
-        this.feeType = feeType;
-        this.jixinTxType4Fee = jixinTxType4Fee;
-    }
-
     public int getType() {
         return type;
     }
 
-    public String getJixinTxType() {
-        return jixinTxType;
-    }
 }

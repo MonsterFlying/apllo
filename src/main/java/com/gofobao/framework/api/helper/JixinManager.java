@@ -1,5 +1,6 @@
 package com.gofobao.framework.api.helper;
 
+import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.repsonse.JixinBaseResponse;
 import com.gofobao.framework.api.request.JixinBaseRequest;
@@ -70,6 +71,9 @@ public class JixinManager {
             req.setTxDate(DateHelper.getDate());
         }
 
+        if(StringUtils.isEmpty(req.getChannel())){
+            req.setChannel(ChannelContant.HTML);
+        }
         req.setTxCode(txCodeEnum.getValue());
         String url = prefixUrl + txCodeEnum.getUrl();
         String json = gson.toJson(req);
@@ -161,6 +165,10 @@ public class JixinManager {
 
         if (StringUtils.isEmpty(req.getTxDate())) {
             req.setTxDate(DateHelper.getDate());
+        }
+
+        if(StringUtils.isEmpty(req.getChannel())){
+            req.setChannel(ChannelContant.HTML);
         }
 
         req.setTxCode(txCodeEnum.getValue());
