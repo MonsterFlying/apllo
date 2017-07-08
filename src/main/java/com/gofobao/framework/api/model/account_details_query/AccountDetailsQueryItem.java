@@ -16,6 +16,7 @@ public class AccountDetailsQueryItem {
     private String tranType ;
     private String txAmount ;
     private String orFlag ;
+    private String txFlag;
     private String describe ;
     private String currency ;
     private String currBal ;

@@ -20,4 +20,9 @@ public class Transfered {
     @ApiModelProperty("转让费用")
     private String cost;
 
+    @ApiModelProperty("标id")
+    private String borrowId;
+
+
+
 }

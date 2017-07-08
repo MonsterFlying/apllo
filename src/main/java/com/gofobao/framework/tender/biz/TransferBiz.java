@@ -7,6 +7,7 @@ import com.gofobao.framework.tender.vo.response.VoGoTenderInfo;
 import com.gofobao.framework.tender.vo.response.VoViewTransferMayWarpRes;
 import com.gofobao.framework.tender.vo.response.VoViewTransferOfWarpRes;
 import com.gofobao.framework.tender.vo.response.VoViewTransferedWarpRes;
+import com.gofobao.framework.tender.vo.response.web.VoViewTransferBuyWarpRes;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -22,6 +23,8 @@ public interface TransferBiz {
 
 
     ResponseEntity<VoViewTransferMayWarpRes>transferMayList(VoTransferReq voTransferReq);
+
+    ResponseEntity<VoViewTransferBuyWarpRes>tranferBuyList(VoTransferReq voTransferReq);
 
     /**
      * 债权转让

@@ -1,11 +1,8 @@
 package com.gofobao.framework.tender.service;
 
 import com.gofobao.framework.tender.vo.request.VoTransferReq;
-import com.gofobao.framework.tender.vo.response.TransferMay;
-import com.gofobao.framework.tender.vo.response.TransferOf;
-import com.gofobao.framework.tender.vo.response.Transfered;
 
-import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -14,11 +11,13 @@ import java.util.List;
 
 public interface TransferService {
 
-    List<TransferOf> transferOfList(VoTransferReq voTransferReq);
+    Map<String, Object> transferOfList(VoTransferReq voTransferReq);
 
 
-    List<Transfered> transferedList(VoTransferReq voTransferReq);
+    Map<String, Object> transferedList(VoTransferReq voTransferReq);
 
-    List<TransferMay> transferMayList(VoTransferReq voTransferReq);
+    Map<String, Object> transferMayList(VoTransferReq voTransferReq);
+
+    Map<String,Object> transferBuyList(VoTransferReq voTransferReq);
 
 }

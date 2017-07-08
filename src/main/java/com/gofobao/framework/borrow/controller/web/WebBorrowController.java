@@ -2,10 +2,7 @@ package com.gofobao.framework.borrow.controller.web;
 
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
-import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
-import com.gofobao.framework.borrow.vo.request.VoPcCancelThirdBorrow;
-import com.gofobao.framework.borrow.vo.request.VoRegisterOfficialBorrow;
-import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
+import com.gofobao.framework.borrow.vo.request.*;
 import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
 import com.gofobao.framework.borrow.vo.response.VoPcBorrowList;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowStatisticsWarpRes;
@@ -15,6 +12,7 @@ import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
+import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -25,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -135,6 +134,22 @@ public class WebBorrowController {
         return borrowBiz.pcCancelBorrow(voPcCancelThirdBorrow);
     }
 
+
+    /**
+     *pc 新增净值借款
+     *
+     * @param voAddNetWorthBorrow
+     * @return
+     */
+    @PostMapping("/borrow/pc/addNetWorth")
+    @ApiOperation("发布净值借款")
+    public ResponseEntity<VoBaseResp> addNetWorth(@Valid @ModelAttribute VoAddNetWorthBorrow voAddNetWorthBorrow, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
+        voAddNetWorthBorrow.setUserId(userId);
+        return borrowBiz.addNetWorth(voAddNetWorthBorrow);
+    }
+
+
+
     @PostMapping("/pub/pc/borrow/repayAll")
     @ApiOperation("提前还款")
     public ResponseEntity<VoBaseResp> pcRepayAll(@Valid @ModelAttribute VoRepayAllReq voRepayAllReq) {
@@ -157,4 +172,8 @@ public class WebBorrowController {
     public ResponseEntity<VoHtmlResp> registerOfficialBorrow(HttpServletRequest request, @ModelAttribute @Valid VoRegisterOfficialBorrow voRegisterOfficialBorrow) {
         return borrowBiz.registerOfficialBorrow(voRegisterOfficialBorrow, request);
     }
+
+
+
+
 }

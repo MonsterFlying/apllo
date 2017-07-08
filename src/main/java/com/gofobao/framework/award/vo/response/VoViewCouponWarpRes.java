@@ -1,6 +1,5 @@
-package com.gofobao.framework.award.vo;
+package com.gofobao.framework.award.vo.response;
 
-import com.gofobao.framework.award.vo.response.CouponRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.google.common.collect.Lists;
 import io.swagger.annotations.ApiModelProperty;

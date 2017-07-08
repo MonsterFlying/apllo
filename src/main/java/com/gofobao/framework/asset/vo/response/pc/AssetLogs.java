@@ -28,4 +28,6 @@ public class AssetLogs {
 
     @ApiModelProperty(hidden = true)
     private Integer totalCount;
+
+
 }
