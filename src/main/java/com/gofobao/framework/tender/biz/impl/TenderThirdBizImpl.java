@@ -19,10 +19,7 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.JixinHelper;
-import com.gofobao.framework.helper.MathHelper;
-import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -294,7 +291,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      *
      * @return
      */
-    public void thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) {
+    public void thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
         BatchCreditInvestRunCall creditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
         });
 
@@ -311,17 +308,36 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             bool = false;
         }
 
+        Long borrowId = NumberHelper.toLong(creditInvestRunCall.getAcqRes());//获取borrowid
         int num = NumberHelper.toInt(creditInvestRunCall.getFailCounts());
-        if (num > 0) {
+        String batchNo = creditInvestRunCall.getBatchNo();//批次号
+        do {
+            if (num <= 0) {
+                break;
+            }
+            bool = false;
+
             log.error("=============================即信投资人批次购买债权处理结果回调===========================");
             log.error("即信投资人批次购买债权失败! 一共:" + num + "笔");
 
             Date nowDate = new Date();
 
+            //0.查询gfb_third_batch_log标获取批次发送时间
+            Specification<ThirdBatchLog> tbls = Specifications
+                    .<ThirdBatchLog>and()
+                    .eq("sourceId", borrowId)
+                    .eq("batchNo", batchNo)
+                    .build();
+            List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls);
+            if (CollectionUtils.isEmpty(thirdBatchLogList)) {
+                log.error("债权转让回撤：thirdBatchLog记录不存在！");
+                break;
+            }
+
             //1.查询批次交易明细
             BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
             batchDetailsQueryReq.setBatchNo(creditInvestRunCall.getBatchNo());
-            batchDetailsQueryReq.setBatchTxDate(creditInvestRunCall.getTxDate());
+            batchDetailsQueryReq.setBatchTxDate(DateHelper.dateToString(thirdBatchLogList.get(0).getCreateAt(), DateHelper.DATE_FORMAT_YMD_NUM));
             batchDetailsQueryReq.setType("2");
             batchDetailsQueryReq.setPageNum("1");
             batchDetailsQueryReq.setPageSize("10");
@@ -329,45 +345,56 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             BatchDetailsQueryResp batchDetailsQueryResp = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, batchDetailsQueryReq, BatchDetailsQueryResp.class);
             if ((ObjectUtils.isEmpty(batchDetailsQueryResp)) || (!JixinResultContants.SUCCESS.equals(batchDetailsQueryResp.getRetCode()))) {
                 log.error(ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : batchDetailsQueryResp.getRetMsg());
+                break;
             }
 
             //2.筛选失败批次
-            List<String> productIds = new ArrayList<>(); //即信标的集合
             List<String> thirdTransferOrderIds = new ArrayList<>(); //转让标orderId
-            List<DetailsQueryResp> detailsQueryRespList = GSON.fromJson(batchDetailsQueryResp.getSubPacks(), new TypeToken<DetailsQueryResp>() {
+            List<DetailsQueryResp> detailsQueryRespList = GSON.fromJson(batchDetailsQueryResp.getSubPacks(), new TypeToken<List<DetailsQueryResp>>() {
             }.getType());
+            if (CollectionUtils.isEmpty(detailsQueryRespList)) {
+                log.info("================================================================================");
+                log.info("债权转让批次查询：查询未发现失败批次！");
+                log.info("================================================================================");
+            }
 
             Optional<List<DetailsQueryResp>> detailsQueryRespOptional = Optional.of(detailsQueryRespList);
             detailsQueryRespOptional.ifPresent(list -> detailsQueryRespList.forEach(obj -> {
-                productIds.add(obj.getProductId());
-                thirdTransferOrderIds.add(obj.getOrderId());
+                if ("F".equalsIgnoreCase(obj.getTxState())) {
+                    thirdTransferOrderIds.add(obj.getOrderId());
+                }
             }));
 
-            //3.与本地失败投标做匹配，并提出tender
-            List<Long> borrowIds = new ArrayList<>();
-            Specification<Borrow> bs = Specifications
-                    .<Borrow>and()
-                    .in("productId", productIds.toArray())
-                    .build();
-            List<Borrow> borrowList = borrowService.findList(bs);
-            Optional<List<Borrow>> borrowOptional = Optional.of(borrowList);
-            borrowOptional.ifPresent(list -> borrowList.forEach(obj -> {
-                borrowIds.add(obj.getId());
-            }));
+            if (CollectionUtils.isEmpty(thirdTransferOrderIds)) {
+                log.info("================================================================================");
+                log.info("债权转让批次查询：查询未发现失败批次！");
+                log.info("================================================================================");
+            }
 
+            List<Long> borrowIdList = new ArrayList<>();
             Specification<Tender> ts = Specifications
                     .<Tender>and()
                     .in("thirdTransferOrderId", thirdTransferOrderIds.toArray())
-                    .in("borrowId", borrowIds.toArray())
                     .build();
             List<Tender> tenderList = tenderService.findList(ts);
+            for (Tender tender : tenderList) {
+                borrowIdList.add(tender.getBorrowId());
+            }
 
+            //3.与本地失败投标做匹配，并提出tender
+            Specification<Borrow> bs = Specifications
+                    .<Borrow>and()
+                    .in("id", borrowIdList.toArray())
+                    .build();
+            List<Borrow> borrowList = borrowService.findList(bs);
 
             //4.本地资金进行资金解封操作
             int failAmount = 0;//失败金额
+            int failNum = 0;//失败次数
             Set<Long> borrowIdSet = new HashSet<>();
             for (Borrow borrow : borrowList) {
                 failAmount = 0;
+                failNum = 0;
                 if (!borrowIdSet.contains(borrow.getId())) {
                     for (Tender tender : tenderList) {
                         if (StringHelper.toString(borrow.getId()).equals(StringHelper.toString(tender.getBorrowId()))) {
@@ -382,7 +409,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
                             entity.setType(CapitalChangeEnum.Unfrozen);
                             entity.setUserId(tender.getUserId());
                             entity.setMoney(tender.getValidMoney());
-                            entity.setRemark("借款 [" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "] 招标失败解除冻结资金。");
+                            entity.setRemark("借款 [" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "] 投标与存管通信失败，解除冻结资金。");
                             try {
                                 capitalChangeHelper.capitalChange(entity);
                             } catch (Throwable e) {
@@ -392,6 +419,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
                             //可以加上同步资金操作
                         }
                     }
+                    borrow.setTenderCount(borrow.getTenderCount() - failNum);
                     borrow.setMoneyYes(borrow.getMoneyYes() - failAmount);
                 }
             }
@@ -399,14 +427,11 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             tenderService.save(tenderList);
 
             log.error("已对无效投标进行撤回！");
+        } while (false);
 
-            bool = false;
-        }
-
-        if (bool) {
-            long borrowId = NumberHelper.toLong(creditInvestRunCall.getAcqRes());
+        if (bool && !ObjectUtils.isEmpty(borrowId)) {
             Borrow borrow = borrowService.findById(borrowId);
-            List<CreditInvestRun> creditInvestRunList = GSON.fromJson(creditInvestRunCall.getSubPacks(), new TypeToken<CreditInvestRun>() {
+            List<CreditInvestRun> creditInvestRunList = GSON.fromJson(creditInvestRunCall.getSubPacks(), new TypeToken<List<CreditInvestRun>>() {
             }.getType());
 
             //保存第三债权转让订单号
@@ -424,16 +449,11 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             log.info("非流转标复审失败!");
         }
 
-        try
-
-        {
+        try {
             PrintWriter out = response.getWriter();
             out.print("success");
             out.flush();
-        } catch (
-                Throwable e)
-
-        {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
 
@@ -445,16 +465,16 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      * @param creditInvestRunList
      */
     public void saveThirdTransferOrderId(List<CreditInvestRun> creditInvestRunList) {
-        StringBuffer orderIds = new StringBuffer();
+        List<String> orderIds = new ArrayList<>();
 
         Optional<List<CreditInvestRun>> creditInvestRunOption = Optional.ofNullable(creditInvestRunList);
         creditInvestRunOption.ifPresent(list -> creditInvestRunList.forEach(obj -> {
-            orderIds.append(obj.getOrderId()).append(",");
+            orderIds.add(obj.getOrderId());
         }));
 
         Specification<Tender> ts = Specifications
                 .<Tender>and()
-                .in("thirdTransferOrderId", orderIds.substring(0, orderIds.length() - 1))
+                .in("thirdTransferOrderId", orderIds.toArray())
                 .build();
         List<Tender> tenderList = tenderService.findList(ts);
 

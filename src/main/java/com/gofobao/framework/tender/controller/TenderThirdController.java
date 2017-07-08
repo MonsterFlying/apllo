@@ -30,7 +30,11 @@ public class TenderThirdController {
     @ApiOperation("投资人批次购买债权运行回调")
     @RequestMapping("/v2/third/batch/creditinvest/run")
     public void thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) {
-        tenderThirdBiz.thirdBatchCreditInvestRunCall(request, response);
+        try {
+            tenderThirdBiz.thirdBatchCreditInvestRunCall(request, response);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
