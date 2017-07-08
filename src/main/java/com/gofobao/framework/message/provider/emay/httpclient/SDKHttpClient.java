@@ -4,7 +4,6 @@ package com.gofobao.framework.message.provider.emay.httpclient;
 import com.gofobao.framework.helper.OKHttpHelper;
 import org.apache.log4j.Logger;
 import org.dom4j.Document;
-import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.springframework.util.StringUtils;

@@ -1,7 +1,6 @@
 package com.gofobao.framework.api.model.bid_cancel;
 
 import com.gofobao.framework.api.request.JixinBaseRequest;
-import com.gofobao.framework.core.vo.VoBaseReq;
 import lombok.Data;
 
 /**

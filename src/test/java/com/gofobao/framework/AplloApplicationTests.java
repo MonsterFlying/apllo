@@ -1,13 +1,8 @@
 package com.gofobao.framework;
 
-import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
-import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileRequest;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileResponse;
 import com.gofobao.framework.api.model.batch_bail_repay.BailRepayRun;
@@ -30,18 +25,12 @@ import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
-import com.gofobao.framework.member.entity.UserThirdAccount;
-import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoAdvanceCall;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
-import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -50,15 +39,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.util.CollectionUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -73,9 +61,6 @@ public class AplloApplicationTests {
 
     @Autowired
     private JixinHelper jixinHelper;
-
-    @Autowired
-    private UserThirdAccountService userThirdAccountService ;
 
     @Autowired
     private BorrowBiz borrowBiz;
@@ -100,54 +85,19 @@ public class AplloApplicationTests {
 
     @Test
     public void contextLoads() throws InterruptedException {
-
-
-        List<UserThirdAccount> UserThirdAccounts = userThirdAccountService.findByAll() ;
-        List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>() ;
-        UserThirdAccount redpack  = new UserThirdAccount() ;
-        redpack.setAccountId("6212461270000000444");
-        UserThirdAccounts.add(redpack) ;
-        UserThirdAccount fee = new UserThirdAccount() ;
-        fee.setAccountId("6212461270000000360");
-        UserThirdAccounts.add(fee) ;
-        for(UserThirdAccount userThirdAccount : UserThirdAccounts){
-            int pageIndex = 1, pageSize = 30, realSize ;
-
-
-            Date nowDate = DateHelper.stringToDate("2016-09-22 23:59:59") ;
-            Date startDate = DateHelper.subDays( nowDate, 30) ;
-
-            do {
-                AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
-                accountDetailsQueryRequest.setAccountId(userThirdAccount.getAccountId());
-                accountDetailsQueryRequest.setType("0");
-                accountDetailsQueryRequest.setEndDate(DateHelper.dateToString(nowDate, DateHelper.DATE_FORMAT_YMD_NUM));
-                accountDetailsQueryRequest.setStartDate(DateHelper.dateToString(startDate, DateHelper.DATE_FORMAT_YMD_NUM));
-                // accountDetailsQueryRequest.setTranType("2616"); // cashType.equals(1) ? "2820" :
-                accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
-                accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
-                accountDetailsQueryRequest.setChannel(ChannelContant.HTML);
-                AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, accountDetailsQueryRequest, AccountDetailsQueryResponse.class);
-                Preconditions.checkNotNull(accountDetailsQueryResponse, "查询提现状态异常");
-                Preconditions.checkArgument(JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()), "查询提现状态异常, 验证不通过");
-                Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
-                }.getType()));
-
-                List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
-                if(CollectionUtils.isEmpty(accountDetailsQueryItems)){
-                    break;
-                }
-
-                accountDetailsQueryItemList.addAll(accountDetailsQueryItems) ;
-                realSize = accountDetailsQueryItems.size();
-                log.error(String.format("size %s", realSize) );
-                pageIndex ++ ;
-            }while (pageSize == realSize) ;
-        }
-        for(AccountDetailsQueryItem item : accountDetailsQueryItemList  ){
-            System.err.println(new Gson().toJson(item));
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_AUTO_TENDER);
+        mqConfig.setTag(MqTagEnum.AUTO_TENDER);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString("169782"), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("borrowProvider autoTender send mq exception", e);
         }
 
+        Thread.sleep(100000 * 1000);
     }
 
     public static void main(String[] args) {

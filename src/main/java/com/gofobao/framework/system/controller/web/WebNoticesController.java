@@ -5,6 +5,7 @@ import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.system.biz.NoticesBiz;
 import com.gofobao.framework.system.vo.request.VoNoticesReq;
 import com.gofobao.framework.system.vo.request.VoNoticesTranReq;
+import com.gofobao.framework.system.vo.response.UnReadMsgNumWarpRes;
 import com.gofobao.framework.system.vo.response.VoViewNoticesInfoWarpRes;
 import com.gofobao.framework.system.vo.response.VoViewUserNoticesWarpRes;
 import io.swagger.annotations.Api;
@@ -27,7 +28,7 @@ public class WebNoticesController {
     private NoticesBiz noticesBiz;
 
     @ApiOperation("站内信列表")
-    @RequestMapping("/list/{pageIndex}/{pageSize}")
+    @RequestMapping(value = "/list/{pageIndex}/{pageSize}",method = RequestMethod.GET)
     public ResponseEntity<VoViewUserNoticesWarpRes> pcList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                            @PathVariable("pageIndex") Integer pageIndex,
                                                            @PathVariable("pageSize") Integer pageSize) {
@@ -40,18 +41,19 @@ public class WebNoticesController {
 
 
     @ApiOperation("站内信内容")
-    @RequestMapping(path = "v2/info/{noticesId}", method = RequestMethod.GET)
-    public ResponseEntity<VoViewNoticesInfoWarpRes> list(@PathVariable Long noticesId,
+    @RequestMapping(path = "/info/{noticesId}", method = RequestMethod.GET)
+    public ResponseEntity<VoViewNoticesInfoWarpRes> pcInfo(@PathVariable Long noticesId,
                                                          @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoNoticesReq voNoticesReq = new VoNoticesReq();
         voNoticesReq.setUserId(userId);
         voNoticesReq.setId(noticesId);
+        voNoticesReq.setType(1);
         return noticesBiz.info(voNoticesReq);
     }
 
     @ApiOperation("批量删除")
-    @RequestMapping("/delete")
-    public ResponseEntity<VoBaseResp> delete(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+    @RequestMapping(value = "/delete",method = RequestMethod.POST)
+    public ResponseEntity<VoBaseResp> pcDelete(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                              VoNoticesTranReq voNoticesTranReq) {
         voNoticesTranReq.setUserId(userId);
         return noticesBiz.delete(voNoticesTranReq);
@@ -59,11 +61,17 @@ public class WebNoticesController {
     }
 
     @ApiModelProperty("标记已读")
-    @RequestMapping("/update")
-    public ResponseEntity<VoBaseResp> update(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+    @RequestMapping(value = "/update",method = RequestMethod.POST)
+    public ResponseEntity<VoBaseResp> pcUpdate(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                              VoNoticesTranReq voNoticesTranReq) {
         voNoticesTranReq.setUserId(userId);
         return noticesBiz.update(voNoticesTranReq);
+    }
+    @ApiModelProperty("未读数量")
+    @PostMapping(value = "/unRead")
+    public ResponseEntity<UnReadMsgNumWarpRes> pcUnRead(@RequestAttribute(SecurityContants.USERID_KEY) Long userId
+                                            ) {
+        return noticesBiz.unRead( userId);
     }
 
 

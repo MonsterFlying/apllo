@@ -8,7 +8,10 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.response.*;
 import com.gofobao.framework.common.constans.MoneyConstans;
-import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.member.entity.UserAttachment;
@@ -179,15 +182,10 @@ public class BorrowServiceImpl implements BorrowService {
                 //待发布
                 if (releaseAt.getTime() >= nowDate.getTime()) {
                     status = 1;
-                    item.setSurplusSecond((releaseAt.getTime() - nowDate.getTime()) + 5);
+                    item.setSurplusSecond((releaseAt.getTime() - nowDate.getTime())/1000 + 5);
                 } else if (nowDate.getTime() >= endAt.getTime()) {  //当前时间大于招标有效时间
                     status = 5; //已过期
                 } else {
-                    try {
-                        System.out.println(JacksonHelper.obj2json(m));
-                    } catch (Throwable e) {
-                        e.printStackTrace();
-                    }
                     status = 3; //招标中
                     //  进度
                     item.setSpend(Double.parseDouble(StringHelper.formatMon(m.getMoneyYes().doubleValue() / m.getMoney())));

@@ -71,7 +71,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.messaging.MessagingException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -239,7 +238,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 //待发布
                 if (releaseAt.getTime() >= nowDate.getTime()) {
                     status = 1;
-                    borrowInfoRes.setSurplusSecond((releaseAt.getTime() - nowDate.getTime()) + 5);
+                    borrowInfoRes.setSurplusSecond((releaseAt.getTime() - nowDate.getTime())/1000 + 5);
                 } else if (nowDate.getTime() > endAt.getTime()) {  //当前时间大于招标有效时间
                     status = 5; //已过期
                 } else {
