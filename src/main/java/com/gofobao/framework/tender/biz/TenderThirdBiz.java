@@ -33,5 +33,5 @@ public interface TenderThirdBiz {
      * 投资人批次购买债权参数运行回调
      * @return
      */
-    void thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response);
+    void thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception;
 }

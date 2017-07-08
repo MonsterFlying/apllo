@@ -1,6 +1,7 @@
 package com.gofobao.framework;
 
 import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileRequest;
@@ -8,6 +9,8 @@ import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMob
 import com.gofobao.framework.api.model.batch_bail_repay.BailRepayRun;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
+import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
+import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
@@ -41,6 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.util.ObjectUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -171,8 +175,6 @@ public class AplloApplicationTests {
     @Test
     public void test() {
 
-        Map<String,Object> map = jdbcTemplate.queryForMap("select count(id) as count from gfb_borrow_tender where borrow_id = 169794 and third_tender_order_id is not null");
-        System.out.println(map.get("count"));
 
         //根据手机号查询存管账户
         //findAccountByMobile();
@@ -187,14 +189,14 @@ public class AplloApplicationTests {
         //垫付回调
         //advanceCall();
 
-        /*Map<String,String> map = new HashMap<>();
-        map.put("borrowId","169761");
+       /* Map<String,String> map = new HashMap<>();
+        map.put("borrowId","169811");
         try {
             borrowProvider.doFirstVerify(map);
         } catch (Throwable e) {
             e.printStackTrace();
-        }*/
-
+        }
+*/
         /*VoRepayReq voRepayReq = new VoRepayReq();
         voRepayReq.setRepaymentId(168683L);
         voRepayReq.setUserId(901L);
@@ -217,12 +219,24 @@ public class AplloApplicationTests {
         System.out.println((resp.getTotalItems()));*/
 
         /*Map<String,String> msg = new HashMap<>();
-        msg.put("borrowId","169760");
+        msg.put("borrowId","169803");
         try {
             borrowProvider.doAgainVerify(msg);
         } catch (Throwable e) {
             e.printStackTrace();
         }*/
+
+        BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
+        batchDetailsQueryReq.setBatchNo("155018");
+        batchDetailsQueryReq.setBatchTxDate("20170707");
+        batchDetailsQueryReq.setType("0");
+        batchDetailsQueryReq.setPageNum("1");
+        batchDetailsQueryReq.setPageSize("10");
+        batchDetailsQueryReq.setChannel(ChannelContant.HTML);
+        BatchDetailsQueryResp batchDetailsQueryResp = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, batchDetailsQueryReq, BatchDetailsQueryResp.class);
+        if ((ObjectUtils.isEmpty(batchDetailsQueryResp)) || (!JixinResultContants.SUCCESS.equals(batchDetailsQueryResp.getRetCode()))) {
+            log.error(ObjectUtils.isEmpty(batchDetailsQueryResp) ? "当前网络不稳定，请稍候重试" : batchDetailsQueryResp.getRetMsg());
+        }
 
         //"userId\":901,\"repaymentId\":168675,\"interestPercent\":0.0,\"isUserOpen\":true
         /*VoRepayReq voRepayReq = new VoRepayReq();
