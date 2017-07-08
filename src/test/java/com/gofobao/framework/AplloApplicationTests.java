@@ -28,6 +28,7 @@ import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoAdvanceCall;
@@ -49,6 +50,7 @@ import org.springframework.util.ObjectUtils;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -106,12 +108,10 @@ public class AplloApplicationTests {
 
     public static void main(String[] args) {
         Gson gson = new Gson();
-        VoRepayReq voRepayReq = new VoRepayReq();
-        voRepayReq.setUserId(2762L);
-        voRepayReq.setRepaymentId(173795L);
-        voRepayReq.setInterestPercent(0d);
-        voRepayReq.setIsUserOpen(true);
-        System.out.println(gson.toJson(voRepayReq));
+        Map<String, String> map = new HashMap<>();
+        map.put("repaymentId", "169812");
+        System.out.println(gson.toJson(map));
+        System.out.println(SecurityHelper.getSign(gson.toJson(map)));
     }
 
     public AccountQueryByMobileResponse findAccountByMobile() {
