@@ -91,9 +91,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     @Value("${gofobao.webDomain}")
     private String webDomain;
 
-    @Value(value = "${jixin.redPacketAccountId}")
-    private String redPacketAccountId; //存管红包账户
-
     /**
      * 即信批次还款
      *

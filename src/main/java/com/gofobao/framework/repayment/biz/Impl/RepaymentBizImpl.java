@@ -27,6 +27,7 @@ import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWar
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderRes;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.constans.JixinContants;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.data.DataObject;
 import com.gofobao.framework.common.data.LtSpecification;
@@ -63,12 +64,19 @@ import com.gofobao.framework.repayment.vo.response.pc.VoOrdersList;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewCollectionWarpRes;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewOrderListWarpRes;
 import com.gofobao.framework.system.biz.StatisticBiz;
+import com.gofobao.framework.system.entity.DictItem;
+import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.entity.Statistic;
+import com.gofobao.framework.system.service.DictItemServcie;
+import com.gofobao.framework.system.service.DictValueService;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
 import com.google.common.base.Preconditions;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -85,6 +93,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -124,8 +133,28 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private AdvanceLogService advanceLogService;
     @Autowired
     private BorrowRepository borrowRepository;
-    @Value("${jixin.redPacketAccountId}")
-    private String redPacketAccountId;
+
+    @Autowired
+    private DictItemServcie dictItemServcie;
+
+    @Autowired
+    private DictValueService dictValueService;
+
+    LoadingCache<String, DictValue> jixinCache = CacheBuilder
+            .newBuilder()
+            .expireAfterWrite(60, TimeUnit.MINUTES)
+            .maximumSize(1024)
+            .build(new CacheLoader<String, DictValue>() {
+                @Override
+                public DictValue load(String bankName) throws Exception {
+                    DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
+                    if (ObjectUtils.isEmpty(dictItem)) {
+                        return null;
+                    }
+
+                    return dictValueService.findTopByItemIdAndValue02(dictItem.getId(), bankName);
+                }
+            });
     @Autowired
     private UserThirdAccountService userThirdAccountService;
     @Autowired
@@ -669,8 +698,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
                             //通过红包账户发放
                             //调用即信发放债权转让人应收利息
+                            //查询红包账户
+                            DictValue dictValue =  jixinCache.get(JixinContants.RED_PACKET_USER_ID);
+                            UserThirdAccount redPacketAccount =  userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
+
                             VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-                            voucherPayRequest.setAccountId(redPacketAccountId);
+                            voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
                             voucherPayRequest.setTxAmount(StringHelper.formatDouble(accruedInterest * 0.9, 100, false));//扣除手续费
                             voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
                             voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
@@ -793,8 +826,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     String remark = "收到借款标[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]的逾期罚息";
 
                     //调用即信发送红包接口
+                    //查询红包账户
+                    DictValue dictValue =  jixinCache.get(JixinContants.RED_PACKET_USER_ID);
+                    UserThirdAccount redPacketAccount =  userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
+
                     VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-                    voucherPayRequest.setAccountId(redPacketAccountId);
+                    voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
                     voucherPayRequest.setTxAmount(StringHelper.formatDouble(tempLateInterest, 100, false));
                     voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
                     voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);

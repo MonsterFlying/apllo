@@ -45,8 +45,6 @@ jixin: #银行存管
   version: 10 #版本号
   instCode: "00960001" #机构代码
   bankCode: "30050000" #交易机构代码
-  redPacketAccountId: "6212461270000000444" #红包账户
-  handlingChargeAccountId: "6212461270000000360" #电子手续费账户
 gofobao:
   javaDomain: http://max.hk1.mofasuidao.cn
   webDomain: http://max.hk1.mofasuidao.cn
