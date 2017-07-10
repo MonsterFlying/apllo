@@ -410,7 +410,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> repay(VoRepayReq voRepayReq) throws Exception {
+    public ResponseEntity<VoBaseResp> repayDeal(VoRepayReq voRepayReq) throws Exception {
 
 
         ResponseEntity resp = checkRepay(voRepayReq);
@@ -543,10 +543,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
             mqConfig.setMsg(body);
             try {
-                log.info(String.format("repaymentBizImpl repay send mq %s", GSON.toJson(body)));
+                log.info(String.format("repaymentBizImpl repayDeal send mq %s", GSON.toJson(body)));
                 mqHelper.convertAndSend(mqConfig);
             } catch (Throwable e) {
-                log.error("repaymentBizImpl repay send mq exception", e);
+                log.error("repaymentBizImpl repayDeal send mq exception", e);
             }
         }
 
@@ -942,17 +942,13 @@ public class RepaymentBizImpl implements RepaymentBiz {
     /**
      * 立即还款
      *
-     * @param voInstantlyRepayment
+     * @param voRepayReq
      * @return
      * @throws Exception
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> instantly(VoInstantlyRepaymentReq voInstantlyRepayment) throws Exception {
-        VoRepayReq voRepayReq = new VoRepayReq();
-        voRepayReq.setUserId(voInstantlyRepayment.getUserId());
-        voRepayReq.setRepaymentId(voInstantlyRepayment.getRepaymentId());
-        voRepayReq.setInterestPercent(0d);
-        voRepayReq.setIsUserOpen(true);
+    public ResponseEntity<VoBaseResp> repay(VoRepayReq voRepayReq) throws Exception {
+
         // ====================================
         //  1. 平台可用用金额
         //  2. 存管账户是否够用
@@ -964,8 +960,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
             return resp;
         }
         VoThirdBatchRepay voThirdBatchRepay = new VoThirdBatchRepay();
-        voThirdBatchRepay.setUserId(voInstantlyRepayment.getUserId());
-        voThirdBatchRepay.setRepaymentId(voInstantlyRepayment.getRepaymentId());
+        voThirdBatchRepay.setUserId(voRepayReq.getUserId());
+        voThirdBatchRepay.setRepaymentId(voRepayReq.getRepaymentId());
         voThirdBatchRepay.setInterestPercent(0d);
         voThirdBatchRepay.setIsUserOpen(true);
         // ====================================

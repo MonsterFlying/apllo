@@ -208,7 +208,7 @@ public class AplloApplicationTests {
         voRepayReq.setIsUserOpen(false);
         voRepayReq.setInterestPercent(1d);
         try {
-            repaymentBiz.repay(voRepayReq);
+            repaymentBiz.repayDeal(voRepayReq);
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -258,7 +258,7 @@ public class AplloApplicationTests {
         voRepayReq.setInterestPercent(0.0);
         voRepayReq.setIsUserOpen(false);
         try {
-            repaymentBiz.repay(voRepayReq);
+            repaymentBiz.repayDeal(voRepayReq);
         } catch (Throwable e) {
             e.printStackTrace();
         }*/

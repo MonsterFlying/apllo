@@ -212,4 +212,12 @@ public class AutoTenderServiceImpl implements AutoTenderService {
     public void delete(long id) {
         autoTenderRepository.delete(id);
     }
+
+    public void delete(AutoTender autoTender){
+        autoTenderRepository.delete(autoTender);
+    }
+
+    public void delete(List<AutoTender> autoTenderList){
+        autoTenderRepository.delete(autoTenderList);
+    }
 }

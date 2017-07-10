@@ -49,7 +49,7 @@ public class BorrowCancelScheduler {
             pageable = new PageRequest(pageIndex++, pageSize, new Sort(Sort.Direction.ASC, "id"));
             borrowList = borrowService.findList(bs, pageable);
             for (Borrow borrow : borrowList) {
-                if (DateHelper.diffInDays(new Date(), DateHelper.endOfDate(borrow.getReleaseAt()), false) < borrow.getValidDay()) {
+                if (DateHelper.diffInDays(DateHelper.beginOfDate(new Date()), DateHelper.endOfDate(borrow.getReleaseAt()), false) < borrow.getValidDay()) {
                     continue;
                 }
                 // 流标
@@ -59,7 +59,7 @@ public class BorrowCancelScheduler {
                 try {
                     borrowBiz.cancelBorrow(voCancelBorrow);
                 } catch (Exception e) {
-                    log.error("borrowCancelScheduler 取消借款异常：",e);
+                    log.error("borrowCancelScheduler 取消借款异常：", e);
                 }
             }
         } while (borrowList.size() >= pageSize);

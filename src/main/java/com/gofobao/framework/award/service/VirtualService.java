@@ -5,6 +5,10 @@ import com.gofobao.framework.award.vo.response.AwardStatistics;
 import com.gofobao.framework.award.vo.response.VirtualBorrowRes;
 import com.gofobao.framework.award.vo.response.VirtualStatistics;
 import com.gofobao.framework.award.vo.response.VirtualTenderRes;
+import com.gofobao.framework.collection.entity.VirtualCollection;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 
@@ -43,4 +47,16 @@ public interface VirtualService {
      * @return
      */
     AwardStatistics query(Long userId);
+
+    VirtualCollection save(VirtualCollection virtualCollection);
+
+    List<VirtualCollection> save(List<VirtualCollection> virtualCollectionList);
+
+    List<VirtualCollection> findList(Specification<VirtualCollection> specification);
+
+    List<VirtualCollection> findList(Specification<VirtualCollection> specification, Sort sort);
+
+    List<VirtualCollection> findList(Specification<VirtualCollection> specification, Pageable pageable);
+
+    long count(Specification<VirtualCollection> specification);
 }
