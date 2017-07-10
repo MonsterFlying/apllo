@@ -101,7 +101,6 @@ public class CreditProvider {
                     throw new Exception(massage);
                 }
             }
-
         } while (false);
         return false;
     }

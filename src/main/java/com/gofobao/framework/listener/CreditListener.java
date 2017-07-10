@@ -42,9 +42,10 @@ public class CreditListener {
         Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
 
         boolean bool = false;
-        if (tag.equals(MqTagEnum.FIRST_VERIFY.getValue())) {  // 标的初审
+        if (tag.equals(MqTagEnum.END_CREDIT.getValue())) {  // 标的初审
             try {
-            } catch (Throwable throwable){
+                creditProvider.endThirdCredit(msg);
+            } catch (Throwable throwable) {
                 log.error("结束存管债权异常:", throwable);
             }
             if (bool) {

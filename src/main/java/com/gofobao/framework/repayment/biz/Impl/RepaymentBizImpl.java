@@ -7,7 +7,6 @@ import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.batch_bail_repay.BailRepayRun;
-import com.gofobao.framework.api.model.credit_end.CreditEndReq;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.asset.entity.AdvanceLog;
@@ -78,11 +77,11 @@ import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -532,6 +531,25 @@ public class RepaymentBizImpl implements RepaymentBiz {
         borrow.setUpdatedAt(nowDate);
         borrowService.updateById(borrow);
 
+        //====================================================================
+        //结束债权：最后一期还款时
+        //====================================================================
+        if (borrow.getTotalOrder() == (borrowRepayment.getOrder() + 1)) {
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
+            mqConfig.setTag(MqTagEnum.END_CREDIT);
+            mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("repaymentBizImpl repay send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("repaymentBizImpl repay send mq exception", e);
+            }
+        }
+
         //更新统计数据
         try {
             Statistic statistic = new Statistic();
@@ -785,7 +803,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     );
 
                     Long transferUserId = borrow.getUserId();
-
                     entity = new CapitalChangeEntity();
                     entity.setType(CapitalChangeEnum.ExpenditureOther);
                     entity.setUserId(tender.getUserId());
