@@ -39,8 +39,6 @@ import java.util.Map;
 @Slf4j
 public class RedPackageProvider {
 
-    @Value("${jixin.redPacketAccountId}")
-    private String redPacketAccountId;
     @Autowired
     CommonSmsProvider commonSmsProvider;
     @Autowired

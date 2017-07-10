@@ -2,6 +2,8 @@ package com.gofobao.framework.member.service;
 
 import com.gofobao.framework.member.entity.UserThirdAccount;
 
+import java.util.List;
+
 /**
  * Created by Max on 17/5/22.
  */
@@ -34,4 +36,8 @@ public interface UserThirdAccountService {
      * @return
      */
     UserThirdAccount findByDelUseid(Long userId);
+
+    List<UserThirdAccount> findByAll();
+
+
 }

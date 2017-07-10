@@ -3,6 +3,8 @@ package com.gofobao.framework.helper;
 import com.gofobao.framework.api.contants.IdTypeContant;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.member.entity.UserThirdAccount;
+import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.service.DictItemServcie;
@@ -29,6 +31,8 @@ public class JixinHelper {
     private DictValueService dictValueService;
     @Autowired
     private BorrowService borrowService;
+    @Autowired
+    private UserThirdAccountService userThirdAccountService;
 
     LoadingCache<String, DictValue> jixinCache = CacheBuilder
             .newBuilder()
@@ -86,8 +90,9 @@ public class JixinHelper {
             return bailAccountId;
         } else {
             try {
-                DictValue dictValue = jixinCache.get("bailAccountId");
-                return dictValue.getValue03();
+                DictValue dictValue = jixinCache.get("bailUserId");
+                UserThirdAccount bailAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
+                return bailAccount.getAccountId();
             } catch (Throwable e) {
                 e.printStackTrace();
             }

@@ -22,6 +22,7 @@ import com.gofobao.framework.award.vo.response.VoViewOpenRedPackageWarpRes;
 import com.gofobao.framework.award.vo.response.VoViewRedPackageWarpRes;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.constans.JixinContants;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
@@ -29,11 +30,19 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.system.entity.DictItem;
+import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.entity.Notices;
+import com.gofobao.framework.system.service.DictItemServcie;
+import com.gofobao.framework.system.service.DictValueService;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,6 +54,7 @@ import org.springframework.util.ObjectUtils;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.gofobao.framework.listener.providers.NoticesMessageProvider.GSON;
 
@@ -73,8 +83,27 @@ public class RedPackageBizImpl implements RedPackageBiz {
     @Autowired
     private UserThirdAccountService userThirdAccountService;
 
-    @Value("${jixin.redPacketAccountId}")
-    private String redPacketAccountId;
+    @Autowired
+    private DictItemServcie dictItemServcie;
+
+    @Autowired
+    private DictValueService dictValueService;
+
+    LoadingCache<String, DictValue> jixinCache = CacheBuilder
+            .newBuilder()
+            .expireAfterWrite(60, TimeUnit.MINUTES)
+            .maximumSize(1024)
+            .build(new CacheLoader<String, DictValue>() {
+                @Override
+                public DictValue load(String bankName) throws Exception {
+                    DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
+                    if (ObjectUtils.isEmpty(dictItem)) {
+                        return null;
+                    }
+
+                    return dictValueService.findTopByItemIdAndValue02(dictItem.getId(), bankName);
+                }
+            });
 
     @Autowired
     private JixinManager jixinManager;
@@ -138,10 +167,15 @@ public class RedPackageBizImpl implements RedPackageBiz {
                     redPacket.setUpdateDate(new Date());
                     redPackageRepository.save(redPacket);
                     double money = redPacket.getMoney() / 100d;
+
+                    //查询红包账户
+                    DictValue dictValue =  jixinCache.get(JixinContants.RED_PACKET_USER_ID);
+                    UserThirdAccount redPacketAccount =  userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
+
                     //请求即信红包
                     UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(redPacket.getUserId());
                     VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-                    voucherPayRequest.setAccountId(redPacketAccountId);
+                    voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
                     voucherPayRequest.setTxAmount(StringHelper.formatDouble(redPacket.getMoney(), 100, false));
                     voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
                     voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);

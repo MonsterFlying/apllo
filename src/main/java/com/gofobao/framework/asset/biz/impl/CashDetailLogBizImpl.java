@@ -260,7 +260,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
         // 对于大于5万小于20万直接返回失败
-        if(voCashReq.getCashMoney() > 50000 || voCashReq.getCashMoney() < 20 * 10000){
+        if(voCashReq.getCashMoney() > 50000 && voCashReq.getCashMoney() < 20 * 10000){
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "快捷提现为小于等于5万", VoHtmlResp.class));
@@ -615,14 +615,14 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         CashDetailLog cashDetailLog = cashDetailLogService.findTopBySeqNoLock(seqNo);
         model.addAttribute("h5Domain", h5Domain);
         if (ObjectUtils.isEmpty(cashDetailLog)) {
-            return "/cash/faile";
+            return "cash/faile";
         }
         if (cashDetailLog.getState().equals(1)) {
-            return "/cash/loading";
+            return "cash/loading";
         } else if (cashDetailLog.getState().equals(3)) {
-            return "/cash/success";
+            return "cash/success";
         } else {
-            return "/cash/faile";
+            return "cash/faile";
         }
     }
 
@@ -764,11 +764,13 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>(cashDetailLogs.size()) ;
         // 普通提现两个小时后确认提现
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        int pageIndex = 1, pageSize = 30, realSize ;
+        int pageIndex = 0, pageSize = 30, realSize ;
         do {
+            pageIndex++ ;
             AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
             accountDetailsQueryRequest.setAccountId(userThirdAccount.getAccountId());
             accountDetailsQueryRequest.setType("9");
+            accountDetailsQueryRequest.setChannel(ChannelContant.HTML);
             accountDetailsQueryRequest.setEndDate(DateHelper.dateToString(createTime, DateHelper.DATE_FORMAT_YMD_NUM));
             accountDetailsQueryRequest.setStartDate(DateHelper.dateToString(nowDate, DateHelper.DATE_FORMAT_YMD_NUM));
             accountDetailsQueryRequest.setTranType(cashType.equals(1) ? "2820" : "2616");
