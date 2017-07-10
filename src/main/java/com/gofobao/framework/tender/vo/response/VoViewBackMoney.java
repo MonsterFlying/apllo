@@ -26,6 +26,9 @@ public class VoViewBackMoney {
     @ApiModelProperty("待收本金")
     private String principal;
 
+    @ApiModelProperty("待收本息")
+    private String collectionMoney;
+
     @ApiModelProperty("待收期数")
     private Integer order;
 

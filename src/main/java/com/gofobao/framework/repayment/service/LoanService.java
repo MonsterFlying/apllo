@@ -2,6 +2,7 @@ package com.gofobao.framework.repayment.service;
 
 import com.gofobao.framework.repayment.vo.request.VoDetailReq;
 import com.gofobao.framework.repayment.vo.request.VoLoanListReq;
+import com.gofobao.framework.repayment.vo.request.VoStatisticsReq;
 import com.gofobao.framework.repayment.vo.response.VoViewLoanList;
 import com.gofobao.framework.repayment.vo.response.VoViewRepaymentDetail;
 
@@ -51,5 +52,11 @@ public interface LoanService {
      */
     VoViewLoanList loanList(VoDetailReq voDetailReq);
 
+    /**
+     * PC :借款统计
+     * @param voStatisticsReq
+     * @return
+     */
+    Map<String,Object> statistics(VoStatisticsReq voStatisticsReq);
 
 }

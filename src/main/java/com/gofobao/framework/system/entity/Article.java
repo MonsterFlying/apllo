@@ -32,7 +32,7 @@ public class Article {
     @Column(name = "content", nullable = false, length = -1)
     private String content;
     @Basic
-    @Column(name = "order", nullable = false)
+    @Column(name = "timeLimit", nullable = false)
     private Integer order;
     @Basic
     @Column(name = "created_at", nullable = true)

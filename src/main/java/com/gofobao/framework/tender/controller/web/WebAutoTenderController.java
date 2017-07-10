@@ -7,6 +7,7 @@ import com.gofobao.framework.tender.vo.request.VoDelAutoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoGetAutoTenderList;
 import com.gofobao.framework.tender.vo.request.VoOpenAutoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoSaveAutoTenderReq;
+import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
 import com.gofobao.framework.tender.vo.response.web.VoViewPcAutoTenderWarpRes;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -38,7 +39,7 @@ public class WebAutoTenderController {
     @PostMapping("/autoTender/pc/v2/list")
     public ResponseEntity<VoViewPcAutoTenderWarpRes> autoTenderList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
         VoGetAutoTenderList autoTender = new VoGetAutoTenderList();
-        autoTender.setUserId(901L);
+        autoTender.setUserId(userId);
         return autoTenderBiz.pcAutoTenderList(autoTender);
     }
 
@@ -97,4 +98,20 @@ public class WebAutoTenderController {
         voSaveAutoTenderReq.setUserId(userId);
         return autoTenderBiz.createAutoTender(voSaveAutoTenderReq);
     }
+
+
+    /**
+     * 查询自动投标详情
+     *
+     * @param autoTenderId
+     * @param userId
+     * @return
+     */
+    @ApiOperation("查询自动投标详情")
+    @PostMapping("/autoTender/pc/v2/info")
+    public ResponseEntity<VoAutoTenderInfo> queryAutoTenderInfo(@RequestParam("autoTenderId") Long autoTenderId, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY)Long userId) {
+        return autoTenderBiz.queryAutoTenderInfo(autoTenderId, userId);
+    }
+
+
 }

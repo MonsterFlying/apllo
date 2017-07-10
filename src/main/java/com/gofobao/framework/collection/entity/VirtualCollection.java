@@ -22,7 +22,7 @@ public class VirtualCollection {
     @Column(name = "status")
     private Integer status;
     @Basic
-    @Column(name = "`order`")
+    @Column(name = "`timeLimit`")
     private Integer order;
     @Basic
     @Column(name = "tender_id")

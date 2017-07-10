@@ -278,7 +278,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     .<BorrowCollection>and()
                     .in("tenderId", tenderIds.toArray())
                     .eq("status", 0)
-                    .eq("order", order)
+                    .eq("timeLimit", order)
                     .build();
 
             List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
@@ -801,7 +801,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     .<BorrowCollection>and()
                     .in("tenderId", tenderIds.toArray())
                     .eq("status", 0)
-                    .eq("order", order)
+                    .eq("timeLimit", order)
                     .build();
 
             List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
@@ -1133,7 +1133,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     .<BorrowCollection>and()
                     .in("tenderId", tenderIds.toArray())
                     .eq("status", 1)
-                    .eq("order", order)
+                    .eq("timeLimit", order)
                     .build();
 
             List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);

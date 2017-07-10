@@ -32,4 +32,8 @@ public class VoViewBiddingRes {
     @ApiModelProperty("tenderId")
     private Long tenderId;
 
+    @ApiModelProperty("进度")
+    private Double spend;
+
+
 }

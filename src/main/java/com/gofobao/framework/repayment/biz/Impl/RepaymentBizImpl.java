@@ -337,7 +337,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .<BorrowRepayment>and()
                     .eq("id", repaymentId)
                     .eq("status", 0)
-                    .predicate(new LtSpecification<BorrowRepayment>("order", new DataObject(borrowRepayment.getOrder())))
+                    .predicate(new LtSpecification<BorrowRepayment>("timeLimit", new DataObject(borrowRepayment.getOrder())))
                     .build();
             borrowRepaymentList = borrowRepaymentService.findList(brs);
 
@@ -585,7 +585,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .<BorrowCollection>and()
                     .in("tenderId", tenderIds.toArray())
                     .eq("status", 0)
-                    .eq("order", order)
+                    .eq("timeLimit", order)
                     .build();
 
             List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
@@ -951,7 +951,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             brs = Specifications
                     .<BorrowRepayment>and()
                     .eq("borrowId", borrowRepayment.getBorrowId())
-                    .predicate(new LtSpecification("order", new DataObject(order)))
+                    .predicate(new LtSpecification("timeLimit", new DataObject(order)))
                     .eq("status", 0)
                     .build();
             if (borrowRepaymentService.count(brs) > 0) {

@@ -31,7 +31,7 @@ public class Banner {
     @Column(name = "clickurl", nullable = false, length = 100)
     private String clickurl;
     @Basic
-    @Column(name = "order", nullable = false)
+    @Column(name = "timeLimit", nullable = false)
     private Integer order;
     @Basic
     @Column(name = "created_at", nullable = true)
