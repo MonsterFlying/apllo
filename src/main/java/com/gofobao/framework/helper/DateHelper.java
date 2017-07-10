@@ -74,6 +74,28 @@ public class DateHelper {
         return days;
     }
 
+    /**
+     * 创建时间
+     *
+     * @param year   年
+     * @param month  月
+     * @param day    日
+     * @param hour   时
+     * @param minute 分
+     * @param second 秒
+     * @return
+     */
+    public static Date createDate(int year, int month, int day, int hour, int minute, int second) {
+        Date tempDate = new Date();
+        tempDate = DateHelper.setYears(tempDate, year);
+        tempDate = DateHelper.setMonths(tempDate, month - 1);
+        tempDate = DateHelper.setDays(tempDate, day);
+        tempDate = DateHelper.setHours(tempDate, hour);
+        tempDate = DateHelper.setMinutes(tempDate, minute);
+        tempDate = DateHelper.setSeconds(tempDate, second);
+        return tempDate;
+    }
+
 
     /**
      * 判断日期是否在范围内，包含相等的日期
@@ -94,6 +116,15 @@ public class DateHelper {
         return DateUtils.addYears(date, amount);
     }
 
+    /**
+     * 减一年
+     * @param date
+     * @param amount
+     * @return
+     */
+    public static Date subYears(final Date date, int amount) {
+        return DateUtils.addYears(date, -amount);
+    }
 
     /**
      * 加一月
@@ -579,10 +610,11 @@ public class DateHelper {
 
     /**
      * 获取天（yyyyMMdd））
+     *
      * @return
      */
     public static String getDate() {
-        Date nowDate = new Date() ;
+        Date nowDate = new Date();
         dateFormat = new SimpleDateFormat(DATE_FORMAT_YMD_NUM);
         try {
             return dateFormat.format(nowDate);
@@ -594,10 +626,11 @@ public class DateHelper {
 
     /**
      * 获取时间(HHmmss)
+     *
      * @return
      */
     public static String getTime() {
-        Date nowDate = new Date() ;
+        Date nowDate = new Date();
         dateFormat = new SimpleDateFormat(DATE_FORMAT_HMS_NUM);
         try {
             return dateFormat.format(nowDate);
@@ -608,10 +641,11 @@ public class DateHelper {
 
     /**
      * 获取时间(yyyyMMddHHmmss)
+     *
      * @return
      */
     public static String getDateTime() {
-        Date nowDate = new Date() ;
+        Date nowDate = new Date();
         dateFormat = new SimpleDateFormat(DATE_FORMAT_YMDHMS_NUM);
         try {
             return dateFormat.format(nowDate);

@@ -23,6 +23,7 @@ import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.constans.JixinContants;
 import com.gofobao.framework.common.constans.MoneyConstans;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
@@ -46,9 +47,9 @@ import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.system.biz.IncrStatisticBiz;
 import com.gofobao.framework.system.biz.StatisticBiz;
-import com.gofobao.framework.system.entity.IncrStatistic;
-import com.gofobao.framework.system.entity.Notices;
-import com.gofobao.framework.system.entity.Statistic;
+import com.gofobao.framework.system.entity.*;
+import com.gofobao.framework.system.service.DictItemServcie;
+import com.gofobao.framework.system.service.DictValueService;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.entity.Tender;
@@ -57,6 +58,9 @@ import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
 import com.google.common.base.Preconditions;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -79,6 +83,7 @@ import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -133,8 +138,27 @@ public class BorrowBizImpl implements BorrowBiz {
     JixinManager jixinManager;
 
 
-    @Value(value = "${jixin.redPacketAccountId}")
-    private String redPacketAccountId; //存管红包账户
+    @Autowired
+    private DictItemServcie dictItemServcie;
+
+    @Autowired
+    private DictValueService dictValueService;
+
+    LoadingCache<String, DictValue> jixinCache = CacheBuilder
+            .newBuilder()
+            .expireAfterWrite(60, TimeUnit.MINUTES)
+            .maximumSize(1024)
+            .build(new CacheLoader<String, DictValue>() {
+                @Override
+                public DictValue load(String bankName) throws Exception {
+                    DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
+                    if (ObjectUtils.isEmpty(dictItem)) {
+                        return null;
+                    }
+
+                    return dictValueService.findTopByItemIdAndValue02(dictItem.getId(), bankName);
+                }
+            });
 
     @Value("${gofobao.imageDomain}")
     private String imageDomain;
@@ -903,7 +927,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     .eq("transferFlag", 1)
                     .build();
 
-            transferedBorrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "order"));
+            transferedBorrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "timeLimit"));
 
             Integer collectionMoney = 0;
             Integer collectionInterest = 0;
@@ -1029,9 +1053,13 @@ public class BorrowBizImpl implements BorrowBiz {
 
                 String remark = "借款标[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]的奖励";
 
+                //查询红包账户
+                DictValue dictValue =  jixinCache.get(JixinContants.RED_PACKET_USER_ID);
+                UserThirdAccount redPacketAccount =  userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
+
                 //通过红包的形式发送奖励
                 VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-                voucherPayRequest.setAccountId(redPacketAccountId);
+                voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
                 voucherPayRequest.setTxAmount(StringHelper.formatDouble(money, 100, false));
                 voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
                 voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
@@ -1388,7 +1416,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
         for (VoRepayReq tempVoRepayReq : voRepayReqList) {
             try {
-                repaymentBiz.repay(tempVoRepayReq);
+                repaymentBiz.repayDeal(tempVoRepayReq);
             } catch (Throwable e) {
                 log.error("提前结清异常：", e);
             }
@@ -1449,10 +1477,14 @@ public class BorrowBizImpl implements BorrowBiz {
                     continue;
                 }
 
+                //查询红包账户
+                DictValue dictValue =  jixinCache.get(JixinContants.RED_PACKET_USER_ID);
+                UserThirdAccount redPacketAccount =  userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
+
                 tenderUserThirdAccount = userThirdAccountService.findByUserId(tenderUserId);
                 //调用即信发送红包接口
                 VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-                voucherPayRequest.setAccountId(redPacketAccountId);
+                voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
                 voucherPayRequest.setTxAmount(StringHelper.formatDouble(tempPenalty, 100, false));
                 voucherPayRequest.setForAccountId(tenderUserThirdAccount.getAccountId());
                 voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);

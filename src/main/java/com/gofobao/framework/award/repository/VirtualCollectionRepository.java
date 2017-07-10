@@ -12,6 +12,6 @@ import java.util.List;
  */
 @Repository
 public interface VirtualCollectionRepository extends JpaRepository<VirtualCollection, Long>, JpaSpecificationExecutor<VirtualCollection> {
-    List<VirtualCollection> findByTenderIdInAndStatusIs(List<Integer>tenderIdArray, Integer status);
+    List<VirtualCollection> findByTenderIdInAndStatusIs(List<Long>tenderIdArray, Integer status);
 
 }

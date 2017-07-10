@@ -56,22 +56,22 @@ public interface RepaymentBiz {
     ResponseEntity<VoViewRepayCollectionLogWarpRes> logs(Long borrowId);
 
     /**
-     * 立即还款
-     *
-     * @param voInstantlyRepayment
-     * @return
-     * @throws Exception
-     */
-    ResponseEntity<VoBaseResp> instantly(VoInstantlyRepaymentReq voInstantlyRepayment) throws Exception;
-
-    /**
-     * 还款
+     * 发起还款
      *
      * @param voRepayReq
      * @return
      * @throws Exception
      */
     ResponseEntity<VoBaseResp> repay(VoRepayReq voRepayReq) throws Exception;
+
+    /**
+     * 还款处理
+     *
+     * @param voRepayReq
+     * @return
+     * @throws Exception
+     */
+    ResponseEntity<VoBaseResp> repayDeal(VoRepayReq voRepayReq) throws Exception;
 
     /**
      * 当前应还款日期

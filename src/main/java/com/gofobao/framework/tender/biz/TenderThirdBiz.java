@@ -34,4 +34,5 @@ public interface TenderThirdBiz {
      * @return
      */
     void thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception;
+
 }

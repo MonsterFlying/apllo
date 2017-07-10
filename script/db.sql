@@ -229,7 +229,7 @@ ALTER TABLE `gofobao0627`.`gfb_borrow_repayment`
 
 ALTER TABLE `gofobao0627`.`gfb_borrow_virtual_collection`
   MODIFY COLUMN `status` int(10) NOT NULL DEFAULT '0'
-, MODIFY COLUMN `order` int(10) NOT NULL
+, MODIFY COLUMN `timeLimit` int(10) NOT NULL
 , MODIFY COLUMN `collection_at` datetime NULL
 , MODIFY COLUMN `collection_at_yes` datetime NULL
 , MODIFY COLUMN `created_at` datetime NULL

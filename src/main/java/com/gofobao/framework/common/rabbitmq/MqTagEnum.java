@@ -28,7 +28,9 @@ public enum MqTagEnum {
     NEW_USER_TENDER("NEW_USER_TENDER"), //新用户投标
     OLD_USER_TENDER("OLD_USER_TENDER"), //老用户投标
     INVITE_USER_REAL_NAME("INVITE_USER_REAL_NAME"),  //邀请用户实名
-    INVITE_USER_TENDER("INVITE_USER_TENDER"); //邀请用户投资
+    INVITE_USER_TENDER("INVITE_USER_TENDER"), //邀请用户投资
+    END_CREDIT("END_CREDIT");//结束债权
+
     private String value;
 
     private MqTagEnum(String value) {

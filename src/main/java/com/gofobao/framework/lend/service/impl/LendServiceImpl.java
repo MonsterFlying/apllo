@@ -122,7 +122,7 @@ public class LendServiceImpl implements LendService {
             lend.setStatus(p.getStatus());
             lendListRes.add(lend);
         });
-        resultMaps.put("lends",lendListRes);
+        resultMaps.put("lends", lendListRes);
         return resultMaps;
     }
 
@@ -243,5 +243,13 @@ public class LendServiceImpl implements LendService {
 
     public long count(Specification<Lend> specification) {
         return lendRepository.count(specification);
+    }
+
+    public Lend save(Lend lend) {
+        return lendRepository.save(lend);
+    }
+
+    public List<Lend> save(List<Lend> lendList) {
+        return lendRepository.save(lendList);
     }
 }

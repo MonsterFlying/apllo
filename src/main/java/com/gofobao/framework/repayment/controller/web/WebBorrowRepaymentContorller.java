@@ -6,6 +6,7 @@ import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoAdvanceReq;
 import com.gofobao.framework.repayment.vo.request.VoInstantlyRepaymentReq;
 import com.gofobao.framework.repayment.vo.request.VoOrderListReq;
+import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewCollectionWarpRes;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewOrderListWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
@@ -58,10 +59,13 @@ public class WebBorrowRepaymentContorller {
      */
     @PostMapping("/v2/instantly")
     @ApiOperation("立即还款")
-    public ResponseEntity<VoBaseResp> instantly(@ModelAttribute @Valid VoInstantlyRepaymentReq voInstantlyRepaymentReq,
-                                                @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
-        voInstantlyRepaymentReq.setUserId(userId);
-        return repaymentBiz.instantly(voInstantlyRepaymentReq);
+    public ResponseEntity<VoBaseResp> instantly(@ModelAttribute @Valid VoInstantlyRepaymentReq voInstantlyRepaymentReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
+        VoRepayReq voRepayReq = new VoRepayReq();
+        voRepayReq.setRepaymentId(voInstantlyRepaymentReq.getRepaymentId());
+        voRepayReq.setUserId(userId);
+        voRepayReq.setInterestPercent(0d);
+        voRepayReq.setIsUserOpen(true);
+        return repaymentBiz.repay(voRepayReq);
     }
 
 

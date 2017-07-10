@@ -1,5 +1,6 @@
 package com.gofobao.framework;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
@@ -19,8 +20,11 @@ import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
+import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
+import com.gofobao.framework.common.data.DataObject;
+import com.gofobao.framework.common.data.LeSpecification;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -28,6 +32,7 @@ import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoAdvanceCall;
@@ -42,6 +47,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.ObjectUtils;
@@ -49,6 +55,7 @@ import org.springframework.util.ObjectUtils;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -106,12 +113,10 @@ public class AplloApplicationTests {
 
     public static void main(String[] args) {
         Gson gson = new Gson();
-        VoRepayReq voRepayReq = new VoRepayReq();
-        voRepayReq.setUserId(2762L);
-        voRepayReq.setRepaymentId(173795L);
-        voRepayReq.setInterestPercent(0d);
-        voRepayReq.setIsUserOpen(true);
-        System.out.println(gson.toJson(voRepayReq));
+        Map<String, String> map = new HashMap<>();
+        map.put("repaymentId", "169812");
+        System.out.println(gson.toJson(map));
+        System.out.println(SecurityHelper.getSign(gson.toJson(map)));
     }
 
     public AccountQueryByMobileResponse findAccountByMobile() {
@@ -203,7 +208,7 @@ public class AplloApplicationTests {
         voRepayReq.setIsUserOpen(false);
         voRepayReq.setInterestPercent(1d);
         try {
-            repaymentBiz.repay(voRepayReq);
+            repaymentBiz.repayDeal(voRepayReq);
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -227,8 +232,8 @@ public class AplloApplicationTests {
         }*/
 
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("155018");
-        batchDetailsQueryReq.setBatchTxDate("20170707");
+        batchDetailsQueryReq.setBatchNo("160729");
+        batchDetailsQueryReq.setBatchTxDate("20170708");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -238,6 +243,14 @@ public class AplloApplicationTests {
             log.error(ObjectUtils.isEmpty(batchDetailsQueryResp) ? "当前网络不稳定，请稍候重试" : batchDetailsQueryResp.getRetMsg());
         }
 
+        /*Specification<Borrow> bs = Specifications
+                .<Borrow>and()
+                .eq("status",1)
+                .predicate(new LeSpecification("releaseAt",new DataObject(DateHelper.beginOfDate(DateHelper.subDays(new Date(),1)))))
+                .build();
+        List<Borrow> borrowList = borrowService.findList(bs);
+        System.out.println(borrowList);*/
+
         //"userId\":901,\"repaymentId\":168675,\"interestPercent\":0.0,\"isUserOpen\":true
         /*VoRepayReq voRepayReq = new VoRepayReq();
         voRepayReq.setUserId(901L);
@@ -245,7 +258,7 @@ public class AplloApplicationTests {
         voRepayReq.setInterestPercent(0.0);
         voRepayReq.setIsUserOpen(false);
         try {
-            repaymentBiz.repay(voRepayReq);
+            repaymentBiz.repayDeal(voRepayReq);
         } catch (Throwable e) {
             e.printStackTrace();
         }*/

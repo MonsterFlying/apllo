@@ -62,4 +62,8 @@ public interface LendService {
 
 
     long count(Specification<Lend> specification);
+
+    Lend save(Lend lend);
+
+    List<Lend> save(List<Lend> lendList);
 }

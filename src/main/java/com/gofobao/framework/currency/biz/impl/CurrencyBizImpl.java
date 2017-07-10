@@ -10,6 +10,7 @@ import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.constans.JixinContants;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.currency.biz.CurrencyBiz;
 import com.gofobao.framework.currency.entity.Currency;
@@ -22,10 +23,18 @@ import com.gofobao.framework.currency.vo.request.VoListCurrencyReq;
 import com.gofobao.framework.currency.vo.response.VoCurrency;
 import com.gofobao.framework.currency.vo.response.VoListCurrencyResp;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.system.entity.DictItem;
+import com.gofobao.framework.system.entity.DictValue;
+import com.gofobao.framework.system.service.DictItemServcie;
+import com.gofobao.framework.system.service.DictValueService;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +51,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -69,9 +79,27 @@ public class CurrencyBizImpl implements CurrencyBiz {
 
     @Autowired
     private CurrencyLogRepository currencyLogRepository;
+    @Autowired
+    private DictItemServcie dictItemServcie;
 
-    @Value(value = "${jixin.redPacketAccountId}")
-    private String redPacketAccountId; //存管红包账户
+    @Autowired
+    private DictValueService dictValueService;
+
+    LoadingCache<String, DictValue> jixinCache = CacheBuilder
+            .newBuilder()
+            .expireAfterWrite(60, TimeUnit.MINUTES)
+            .maximumSize(1024)
+            .build(new CacheLoader<String, DictValue>() {
+                @Override
+                public DictValue load(String bankName) throws Exception {
+                    DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
+                    if (ObjectUtils.isEmpty(dictItem)) {
+                        return null;
+                    }
+
+                    return dictValueService.findTopByItemIdAndValue02(dictItem.getId(), bankName);
+                }
+            });
 
     private static Map<String, String> currencyTypeMap = new HashMap<>();
 
@@ -198,9 +226,13 @@ public class CurrencyBizImpl implements CurrencyBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "广富币兑换失败!"));
         } else {
+            //查询红包账户
+            DictValue dictValue =  jixinCache.get(JixinContants.RED_PACKET_USER_ID);
+            UserThirdAccount redPacketAccount =  userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
+
             //调用即信发送红包接口
             VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-            voucherPayRequest.setAccountId(redPacketAccountId);
+            voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
             voucherPayRequest.setTxAmount(StringHelper.formatDouble(currency , 100,false));
             voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
             voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);

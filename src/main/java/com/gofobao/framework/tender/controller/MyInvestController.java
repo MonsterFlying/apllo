@@ -74,6 +74,7 @@ public class MyInvestController {
     }
 
     private ResponseEntity commonResult(Integer pageIndex, Integer pageSize, Long userId, Integer type) {
+
         VoInvestListReq voInvestListReq = new VoInvestListReq();
         voInvestListReq.setUserId(userId);
         voInvestListReq.setPageIndex(pageIndex);

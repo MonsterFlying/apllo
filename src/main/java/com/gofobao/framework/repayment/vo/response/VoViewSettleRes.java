@@ -18,11 +18,14 @@ public class VoViewSettleRes {
     @ApiModelProperty("发布时间")
     private String releaseAt;
 
-    @ApiModelProperty("待还利息")
+    @ApiModelProperty("已还利息")
     private String interest;
 
-    @ApiModelProperty("待还本金")
+    @ApiModelProperty("已还本金")
     private String principal;
+
+    @ApiModelProperty("还款总额")
+    private String collectionMoneyYes;
 
     @ApiModelProperty("借款金额")
     private String money;
@@ -33,5 +36,6 @@ public class VoViewSettleRes {
     @ApiModelProperty("结清时间")
     private String closeAt;
 
-
+    @ApiModelProperty("期限")
+    private String timeLimit;
 }

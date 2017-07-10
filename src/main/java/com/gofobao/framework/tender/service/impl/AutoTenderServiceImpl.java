@@ -88,7 +88,7 @@ public class AutoTenderServiceImpl implements AutoTenderService {
         Borrow borrow = borrowService.findById(voFindAutoTenderList.getBorrowId());
 
         StringBuffer sql = new StringBuffer("select t.id AS id,t. STATUS AS status,t.user_id AS userId,t.lowest AS lowest,t.borrow_types AS borrowTypes," +
-                "t.repay_fashions AS repayFashions,t.tender_0 AS tender0,t.tender_1 AS tender1,t.tender_3 AS tender3,t.tender_4 AS tender4,t.`mode` AS mode,t.tender_money AS tenderMoney,t.timelimit_first AS timelimitFirst,t.timelimit_last AS timelimitLast,t.timelimit_type AS timelimitType,t.apr_first AS aprFirst,t.apr_last AS aprLast,t.save_money AS saveMoney,t.`order` AS `order`,t.auto_at AS autoAt,t.created_at AS createdAt," +
+                "t.repay_fashions AS repayFashions,t.tender_0 AS tender0,t.tender_1 AS tender1,t.tender_3 AS tender3,t.tender_4 AS tender4,t.`mode` AS mode,t.tender_money AS tenderMoney,t.timelimit_first AS timelimitFirst,t.timelimit_last AS timelimitLast,t.timelimit_type AS timelimitType,t.apr_first AS aprFirst,t.apr_last AS aprLast,t.save_money AS saveMoney,t.`timeLimit` AS `timeLimit`,t.auto_at AS autoAt,t.created_at AS createdAt," +
                 "t.updated_at AS updatedAt,a.use_money AS useMoney,a.no_use_money AS noUseMoney,a.virtual_money AS virtualMoney,a.collection AS collection,a.payment AS payment " +
                 "from gfb_auto_tender t left join gfb_asset a on t.user_id = a.user_id where 1=1 ");
 
@@ -136,7 +136,7 @@ public class AutoTenderServiceImpl implements AutoTenderService {
         sql.append(" and t.timelimit_first <= " + borrow.getTimeLimit());
         sql.append(" and t.timelimit_last >= " + borrow.getTimeLimit() + " ))");
         //排序
-        sql.append(" order by t.`order`");
+        sql.append(" timeLimit by t.`timeLimit`");
         //分页
         Integer pageIndex = voFindAutoTenderList.getPageIndex();
         Integer pageSize = voFindAutoTenderList.getPageSize();
@@ -159,7 +159,7 @@ public class AutoTenderServiceImpl implements AutoTenderService {
      */
     public boolean updateAutoTenderOrder() {
         StringBuffer sql = new StringBuffer("UPDATE gfb_auto_tender t1,(SELECT id,@rownum:=@rownum+1 AS listorder FROM" +
-                " gfb_auto_tender t2, (SELECT @rownum:=0)t3  ORDER BY t2.auto_at ASC, t2.order ASC ) t4  SET t1.`order` = t4.listorder WHERE t1.id = t4.id");
+                " gfb_auto_tender t2, (SELECT @rownum:=0)t3  ORDER BY t2.auto_at ASC, t2.timeLimit ASC ) t4  SET t1.`timeLimit` = t4.listorder WHERE t1.id = t4.id");
         return jdbcTemplate.update(sql.toString()) > 1;
     }
 
@@ -169,7 +169,7 @@ public class AutoTenderServiceImpl implements AutoTenderService {
      * @return
      */
     public int getOrderNum() {
-        StringBuffer sql = new StringBuffer("select MAX(`order`) FROM gfb_auto_tender");
+        StringBuffer sql = new StringBuffer("select MAX(`timeLimit`) FROM gfb_auto_tender");
         Query query = entityManager.createNativeQuery(sql.toString());
         return NumberHelper.toInt(query.getResultList().get(0));
     }
@@ -211,5 +211,13 @@ public class AutoTenderServiceImpl implements AutoTenderService {
 
     public void delete(long id) {
         autoTenderRepository.delete(id);
+    }
+
+    public void delete(AutoTender autoTender){
+        autoTenderRepository.delete(autoTender);
+    }
+
+    public void delete(List<AutoTender> autoTenderList){
+        autoTenderRepository.delete(autoTenderList);
     }
 }

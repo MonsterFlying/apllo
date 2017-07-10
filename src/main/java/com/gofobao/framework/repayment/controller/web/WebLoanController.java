@@ -3,7 +3,9 @@ package com.gofobao.framework.repayment.controller.web;
 import com.gofobao.framework.repayment.biz.LoanBiz;
 import com.gofobao.framework.repayment.vo.request.VoDetailReq;
 import com.gofobao.framework.repayment.vo.request.VoLoanListReq;
+import com.gofobao.framework.repayment.vo.request.VoStatisticsReq;
 import com.gofobao.framework.repayment.vo.response.*;
+import com.gofobao.framework.repayment.vo.response.pc.VoViewLoanStatisticsWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -25,11 +27,11 @@ public class WebLoanController {
 
     @ApiOperation("还款中列表")
     @RequestMapping(value = "/v2/refund/list/{pageIndex}/{pageSize}", method = RequestMethod.GET)
-    public ResponseEntity<VoViewRefundWrapRes> refundResList(/*@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,*/
+    public ResponseEntity<VoViewRefundWrapRes> refundResList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                     @PathVariable Integer pageIndex,
                                                     @PathVariable Integer pageSize) {
         VoLoanListReq voLoanListReq = new VoLoanListReq();
-        voLoanListReq.setUserId(901L);
+        voLoanListReq.setUserId(userId);
         voLoanListReq.setPageIndex(pageIndex);
         voLoanListReq.setPageSize(pageSize);
         return loanBiz.refundResList(voLoanListReq);
@@ -37,24 +39,24 @@ public class WebLoanController {
 
     @ApiOperation("投标中列表")
     @GetMapping("/v2/budding/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewBuddingResListWrapRes> buddingList(/*@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,*/
+    public ResponseEntity<VoViewBuddingResListWrapRes> buddingList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                                    @PathVariable Integer pageIndex,
                                                                    @PathVariable Integer pageSize) {
         VoLoanListReq voLoanListReq = new VoLoanListReq();
         voLoanListReq.setPageIndex(pageIndex);
         voLoanListReq.setPageSize(pageSize);
-        voLoanListReq.setUserId(901L);
+        voLoanListReq.setUserId(userId);
         return loanBiz.buddingList(voLoanListReq);
     }
 
     @ApiOperation("已结清列表")
     @GetMapping("/v2/settle/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewSettleWarpListRes>  settleList(/*@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId ,*/
+    public ResponseEntity<VoViewSettleWarpListRes>  settleList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId ,
                                                      @PathVariable Integer pageIndex, @PathVariable Integer pageSize) {
         VoLoanListReq voLoanListReq = new VoLoanListReq();
         voLoanListReq.setPageIndex(pageIndex);
         voLoanListReq.setPageSize(pageSize);
-        voLoanListReq.setUserId(901L);
+        voLoanListReq.setUserId(userId);
         return loanBiz.settleList(voLoanListReq);
     }
 
@@ -78,4 +80,13 @@ public class WebLoanController {
         voDetailReq.setBorrowId(borrowId);
         return loanBiz.loanList(voDetailReq);
     }
+
+    @ApiOperation("平台借款统计")
+    @GetMapping("v2/pc/statistics")
+    public ResponseEntity<VoViewLoanStatisticsWarpRes> statistics(/*@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,*/
+                                                                  VoStatisticsReq statisticsReq){
+        statisticsReq.setUserId(901L);
+        return loanBiz.repaymentStatistics(statisticsReq);
+    }
+
 }

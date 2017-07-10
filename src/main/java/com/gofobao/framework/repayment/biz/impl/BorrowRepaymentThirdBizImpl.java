@@ -91,9 +91,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     @Value("${gofobao.webDomain}")
     private String webDomain;
 
-    @Value(value = "${jixin.redPacketAccountId}")
-    private String redPacketAccountId; //存管红包账户
-
     /**
      * 即信批次还款
      *
@@ -160,8 +157,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         BatchRepayReq request = new BatchRepayReq();
         request.setBatchNo(batchNo);
         request.setTxAmount(StringHelper.formatDouble(txAmount, false));
-        request.setRetNotifyURL(webDomain + "/pub/repayment/v2/third/batch/repay/run");
-        request.setNotifyURL(webDomain + "/pub/repayment/v2/third/batch/repay/check");
+        request.setRetNotifyURL(webDomain + "/pub/repayment/v2/third/batch/repayDeal/run");
+        request.setNotifyURL(webDomain + "/pub/repayment/v2/third/batch/repayDeal/check");
         request.setAcqRes(GSON.toJson(voThirdBatchRepay));
         request.setSubPacks(GSON.toJson(repayList));
         request.setChannel(ChannelContant.HTML);
@@ -278,7 +275,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     .<BorrowCollection>and()
                     .in("tenderId", tenderIds.toArray())
                     .eq("status", 0)
-                    .eq("order", order)
+                    .eq("timeLimit", order)
                     .build();
 
             List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
@@ -572,7 +569,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             try {
                 VoRepayReq voRepayReq = GSON.fromJson(repayRunResp.getAcqRes(), new TypeToken<VoRepayReq>() {
                 }.getType());
-                resp = repaymentBiz.repay(voRepayReq);
+                resp = repaymentBiz.repayDeal(voRepayReq);
             } catch (Throwable e) {
                 log.error("还款异常:", e);
             }
@@ -801,7 +798,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     .<BorrowCollection>and()
                     .in("tenderId", tenderIds.toArray())
                     .eq("status", 0)
-                    .eq("order", order)
+                    .eq("timeLimit", order)
                     .build();
 
             List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
@@ -1133,7 +1130,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     .<BorrowCollection>and()
                     .in("tenderId", tenderIds.toArray())
                     .eq("status", 1)
-                    .eq("order", order)
+                    .eq("timeLimit", order)
                     .build();
 
             List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
@@ -1284,7 +1281,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     try {
                         VoRepayReq voRepayReq = GSON.fromJson(batchRepayBailRunResp.getAcqRes(), new TypeToken<VoRepayReq>() {
                         }.getType());
-                        resp = repaymentBiz.repay(voRepayReq);
+                        resp = repaymentBiz.repayDeal(voRepayReq);
                     } catch (Throwable e) {
                         log.error("批次融资人还担保账户垫款异常:", e);
                     }

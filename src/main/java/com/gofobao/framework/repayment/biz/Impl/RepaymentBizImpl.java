@@ -27,6 +27,7 @@ import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWar
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderRes;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.constans.JixinContants;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.data.DataObject;
 import com.gofobao.framework.common.data.LtSpecification;
@@ -63,17 +64,24 @@ import com.gofobao.framework.repayment.vo.response.pc.VoOrdersList;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewCollectionWarpRes;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewOrderListWarpRes;
 import com.gofobao.framework.system.biz.StatisticBiz;
+import com.gofobao.framework.system.entity.DictItem;
+import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.entity.Statistic;
+import com.gofobao.framework.system.service.DictItemServcie;
+import com.gofobao.framework.system.service.DictValueService;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
 import com.google.common.base.Preconditions;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -85,6 +93,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -124,8 +133,28 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private AdvanceLogService advanceLogService;
     @Autowired
     private BorrowRepository borrowRepository;
-    @Value("${jixin.redPacketAccountId}")
-    private String redPacketAccountId;
+
+    @Autowired
+    private DictItemServcie dictItemServcie;
+
+    @Autowired
+    private DictValueService dictValueService;
+
+    LoadingCache<String, DictValue> jixinCache = CacheBuilder
+            .newBuilder()
+            .expireAfterWrite(60, TimeUnit.MINUTES)
+            .maximumSize(1024)
+            .build(new CacheLoader<String, DictValue>() {
+                @Override
+                public DictValue load(String bankName) throws Exception {
+                    DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
+                    if (ObjectUtils.isEmpty(dictItem)) {
+                        return null;
+                    }
+
+                    return dictValueService.findTopByItemIdAndValue02(dictItem.getId(), bankName);
+                }
+            });
     @Autowired
     private UserThirdAccountService userThirdAccountService;
     @Autowired
@@ -314,6 +343,30 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("操作用户不是借款用户!")));
         }
 
+        //===================================================================
+        //检查还款账户是否完成存管操作  与  完成必需操作
+        //===================================================================
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if (userThirdAccount.getPasswordState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoAutoTenderInfo.class));
+        }
+
+        if (userThirdAccount.getAutoTransferState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoAutoTenderInfo.class));
+        }
+
+
+        if (userThirdAccount.getAutoTenderState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoAutoTenderInfo.class));
+        }
+
+
         int repayInterest = (int) (borrowRepayment.getInterest() * interestPercent);//还款利息
         int repayMoney = borrowRepayment.getPrincipal() + repayInterest;//还款金额
 
@@ -337,7 +390,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .<BorrowRepayment>and()
                     .eq("id", repaymentId)
                     .eq("status", 0)
-                    .predicate(new LtSpecification<BorrowRepayment>("order", new DataObject(borrowRepayment.getOrder())))
+                    .predicate(new LtSpecification<BorrowRepayment>("timeLimit", new DataObject(borrowRepayment.getOrder())))
                     .build();
             borrowRepaymentList = borrowRepaymentService.findList(brs);
 
@@ -357,32 +410,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> repay(VoRepayReq voRepayReq) throws Exception {
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voRepayReq.getUserId());
-        if (ObjectUtils.isEmpty(userThirdAccount)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoAutoTenderInfo.class));
-        }
-
-        if (userThirdAccount.getPasswordState() != 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoAutoTenderInfo.class));
-        }
-
-        if (userThirdAccount.getAutoTransferState() != 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoAutoTenderInfo.class));
-        }
-
-
-        if (userThirdAccount.getAutoTenderState() != 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoAutoTenderInfo.class));
-        }
+    public ResponseEntity<VoBaseResp> repayDeal(VoRepayReq voRepayReq) throws Exception {
 
 
         ResponseEntity resp = checkRepay(voRepayReq);
@@ -393,10 +421,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
         int lateInterest = 0;//逾期利息
         Double interestPercent = voRepayReq.getInterestPercent();
         Long repaymentId = voRepayReq.getRepaymentId();
-        Boolean isUserOpen = voRepayReq.getIsUserOpen();
-        interestPercent = interestPercent == 0 ? 1 : interestPercent;
-        BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);
-        Borrow borrow = borrowService.findById(borrowRepayment.getBorrowId());
+        Boolean isUserOpen = voRepayReq.getIsUserOpen();//是否是用户主动还款
+        interestPercent = interestPercent == 0 ? 1 : interestPercent;//回款 利息百分比
+        BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);//还款记录
+        Borrow borrow = borrowService.findById(borrowRepayment.getBorrowId());//借款记录
+
         Long borrowId = borrow.getId();//借款ID
         int borrowType = borrow.getType();//借款type
         Long borrowUserId = borrow.getUserId();
@@ -502,6 +531,25 @@ public class RepaymentBizImpl implements RepaymentBiz {
         borrow.setUpdatedAt(nowDate);
         borrowService.updateById(borrow);
 
+        //====================================================================
+        //结束债权：最后一期还款时
+        //====================================================================
+        if (borrow.getTotalOrder() == (borrowRepayment.getOrder() + 1)) {
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
+            mqConfig.setTag(MqTagEnum.END_CREDIT);
+            mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("repaymentBizImpl repayDeal send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("repaymentBizImpl repayDeal send mq exception", e);
+            }
+        }
+
         //更新统计数据
         try {
             Statistic statistic = new Statistic();
@@ -585,7 +633,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .<BorrowCollection>and()
                     .in("tenderId", tenderIds.toArray())
                     .eq("status", 0)
-                    .eq("order", order)
+                    .eq("timeLimit", order)
                     .build();
 
             List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
@@ -669,8 +717,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
                             //通过红包账户发放
                             //调用即信发放债权转让人应收利息
+                            //查询红包账户
+                            DictValue dictValue = jixinCache.get(JixinContants.RED_PACKET_USER_ID);
+                            UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
+
                             VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-                            voucherPayRequest.setAccountId(redPacketAccountId);
+                            voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
                             voucherPayRequest.setTxAmount(StringHelper.formatDouble(accruedInterest * 0.9, 100, false));//扣除手续费
                             voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
                             voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
@@ -751,7 +803,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     );
 
                     Long transferUserId = borrow.getUserId();
-
                     entity = new CapitalChangeEntity();
                     entity.setType(CapitalChangeEnum.ExpenditureOther);
                     entity.setUserId(tender.getUserId());
@@ -793,8 +844,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     String remark = "收到借款标[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]的逾期罚息";
 
                     //调用即信发送红包接口
+                    //查询红包账户
+                    DictValue dictValue = jixinCache.get(JixinContants.RED_PACKET_USER_ID);
+                    UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
+
                     VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-                    voucherPayRequest.setAccountId(redPacketAccountId);
+                    voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
                     voucherPayRequest.setTxAmount(StringHelper.formatDouble(tempLateInterest, 100, false));
                     voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
                     voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
@@ -887,17 +942,13 @@ public class RepaymentBizImpl implements RepaymentBiz {
     /**
      * 立即还款
      *
-     * @param voInstantlyRepayment
+     * @param voRepayReq
      * @return
      * @throws Exception
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> instantly(VoInstantlyRepaymentReq voInstantlyRepayment) throws Exception {
-        VoRepayReq voRepayReq = new VoRepayReq();
-        voRepayReq.setUserId(voInstantlyRepayment.getUserId());
-        voRepayReq.setRepaymentId(voInstantlyRepayment.getRepaymentId());
-        voRepayReq.setInterestPercent(0d);
-        voRepayReq.setIsUserOpen(true);
+    public ResponseEntity<VoBaseResp> repay(VoRepayReq voRepayReq) throws Exception {
+
         // ====================================
         //  1. 平台可用用金额
         //  2. 存管账户是否够用
@@ -909,8 +960,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
             return resp;
         }
         VoThirdBatchRepay voThirdBatchRepay = new VoThirdBatchRepay();
-        voThirdBatchRepay.setUserId(voInstantlyRepayment.getUserId());
-        voThirdBatchRepay.setRepaymentId(voInstantlyRepayment.getRepaymentId());
+        voThirdBatchRepay.setUserId(voRepayReq.getUserId());
+        voThirdBatchRepay.setRepaymentId(voRepayReq.getRepaymentId());
         voThirdBatchRepay.setInterestPercent(0d);
         voThirdBatchRepay.setIsUserOpen(true);
         // ====================================
@@ -951,7 +1002,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             brs = Specifications
                     .<BorrowRepayment>and()
                     .eq("borrowId", borrowRepayment.getBorrowId())
-                    .predicate(new LtSpecification("order", new DataObject(order)))
+                    .predicate(new LtSpecification("timeLimit", new DataObject(order)))
                     .eq("status", 0)
                     .build();
             if (borrowRepaymentService.count(brs) > 0) {

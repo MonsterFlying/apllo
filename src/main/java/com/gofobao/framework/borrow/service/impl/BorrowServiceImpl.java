@@ -117,7 +117,8 @@ public class BorrowServiceImpl implements BorrowService {
         }
         condtionSql.append(" AND b.verifyAt IS Not NULL AND b.status NOT IN(:statusArray)");
         // 排序
-        if ("-1".equals(type)) {   // 全部
+        if (type == null) {   // 全部
+            statusArray.add(3);
             condtionSql.append(" ORDER BY FIELD(b.type,0, 4, 1, 2),(b.moneyYes / b.money) DESC, b.id DESC");
         } else {
             if (ObjectUtils.isEmpty(BorrowContants.INDEX_TYPE_CE_DAI)) {
@@ -182,13 +183,17 @@ public class BorrowServiceImpl implements BorrowService {
                 //待发布
                 if (releaseAt.getTime() >= nowDate.getTime()) {
                     status = 1;
-                    item.setSurplusSecond((releaseAt.getTime() - nowDate.getTime())/1000 + 5);
+                    item.setSurplusSecond((releaseAt.getTime() - nowDate.getTime()) / 1000 + 5);
                 } else if (nowDate.getTime() >= endAt.getTime()) {  //当前时间大于招标有效时间
                     status = 5; //已过期
                 } else {
                     status = 3; //招标中
                     //  进度
-                    item.setSpend(Double.parseDouble(StringHelper.formatMon(m.getMoneyYes().doubleValue() / m.getMoney())));
+                    double spend = Double.parseDouble(StringHelper.formatMon(m.getMoneyYes().doubleValue() / m.getMoney()));
+                    if (spend == 1) {
+                        status = 6;
+                    }
+                    item.setSpend(spend);
                 }
             } else if (!ObjectUtils.isEmpty(m.getSuccessAt()) && !ObjectUtils.isEmpty(m.getCloseAt())) {   //满标时间 结清
                 status = 4; //已完成
@@ -610,11 +615,11 @@ public class BorrowServiceImpl implements BorrowService {
         return !ObjectUtils.isEmpty(borrowRepository.save(borrow));
     }
 
-    public Borrow save(Borrow borrow){
+    public Borrow save(Borrow borrow) {
         return borrowRepository.save(borrow);
     }
 
-    public List<Borrow> save(List<Borrow> borrowList){
+    public List<Borrow> save(List<Borrow> borrowList) {
         return borrowRepository.save(borrowList);
     }
 

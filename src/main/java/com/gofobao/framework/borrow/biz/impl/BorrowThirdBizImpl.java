@@ -109,8 +109,6 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
 
-    @Value("${jixin.redPacketAccountId}")
-    private String redPacketAccountId;
 
     /**
      * 登记即信标的
