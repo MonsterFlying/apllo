@@ -52,7 +52,7 @@ public class CreditProvider {
     @Autowired
     private JixinManager jixinManager;
 
-    public boolean endThirdCredit(Map<String, String> msg) throws Exception{
+    public boolean endThirdCredit(Map<String, String> msg) throws Exception {
         do {
             Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
             Borrow borrow = borrowService.findById(borrowId);
@@ -83,11 +83,12 @@ public class CreditProvider {
             UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
             Preconditions.checkNotNull(borrow, "creditProvider endThirdCredit: 借款不能为空!");
 
-            Optional<List<Tender>> tenderOpetional = Optional.of(tenderList);
-            tenderOpetional.ifPresent(tenders -> tenderList.forEach(tender -> {
-                UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
+            UserThirdAccount tenderUserThirdAccount = null;
+            CreditEndReq creditEndReq = null;
+            for (Tender tender : tenderList) {
+                tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
+                creditEndReq = new CreditEndReq();
 
-                CreditEndReq creditEndReq = new CreditEndReq();
                 creditEndReq.setAccountId(borrowUserThirdAccount.getAccountId());
                 creditEndReq.setChannel(ChannelContant.HTML);
                 creditEndReq.setForAccountId(tenderUserThirdAccount.getAccountId());
@@ -97,13 +98,9 @@ public class CreditProvider {
                 CreditEndResp creditEndResp = jixinManager.send(JixinTxCodeEnum.CREDIT_END, creditEndReq, CreditEndResp.class);
                 if ((ObjectUtils.isEmpty(creditEndResp)) || (!JixinResultContants.SUCCESS.equals(creditEndResp.getRetCode()))) {
                     String massage = ObjectUtils.isEmpty(creditEndResp) ? "当前网络不稳定，请稍候重试" : creditEndResp.getRetMsg();
-                    try {
-                        throw new Exception(massage);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                    throw new Exception(massage);
                 }
-            }));
+            }
 
         } while (false);
         return false;
