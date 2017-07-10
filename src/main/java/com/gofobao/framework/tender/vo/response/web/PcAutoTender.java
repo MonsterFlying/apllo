@@ -9,8 +9,11 @@ import lombok.Data;
 @Data
 public class PcAutoTender {
 
-    @ApiModelProperty("排名")
+    @ApiModelProperty("id")
     private Long id;
+
+    @ApiModelProperty("排名")
+    private Integer order;
 
     @ApiModelProperty("投标额度 ：0、余额； 1、固定金额")
     private Integer amount;
@@ -25,7 +28,7 @@ public class PcAutoTender {
     private String scope;
 
     @ApiModelProperty("投标种类（0：车贷标；4、渠道标；1、净值标；3、转让标）")
-    private Integer borrowTypes;
+    private String borrowTypes;
 
     @ApiModelProperty("排队天数")
     private Integer queueDays;

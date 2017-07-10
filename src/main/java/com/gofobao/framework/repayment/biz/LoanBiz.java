@@ -2,7 +2,9 @@ package com.gofobao.framework.repayment.biz;
 
 import com.gofobao.framework.repayment.vo.request.VoDetailReq;
 import com.gofobao.framework.repayment.vo.request.VoLoanListReq;
+import com.gofobao.framework.repayment.vo.request.VoStatisticsReq;
 import com.gofobao.framework.repayment.vo.response.*;
+import com.gofobao.framework.repayment.vo.response.pc.VoViewLoanStatisticsWarpRes;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -53,5 +55,11 @@ public interface LoanBiz {
     ResponseEntity<VoViewLoanInfoListWrapRes> loanList(VoDetailReq voDetailReq);
 
 
+    /**
+     * 借款统计
+     * @param voStatisticsReq
+     * @return
+     */
+    ResponseEntity<VoViewLoanStatisticsWarpRes>repaymentStatistics(VoStatisticsReq voStatisticsReq);
 
 }

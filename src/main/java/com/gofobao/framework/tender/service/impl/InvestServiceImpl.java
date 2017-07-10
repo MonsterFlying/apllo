@@ -61,10 +61,10 @@ public class InvestServiceImpl implements InvestService {
      */
     @Override
     public Map<String, Object> backMoneyList(VoInvestListReq voInvestListReq) {
-        Map<String,Object>resultMaps=commonQuery(voInvestListReq);
-        List<Tender> tenderList =(List<Tender>) resultMaps.get("tenderList");
+        Map<String, Object> resultMaps = commonQuery(voInvestListReq);
+        List<Tender> tenderList = (List<Tender>) resultMaps.get("tenderList");
         if (CollectionUtils.isEmpty(tenderList)) {
-            resultMaps.put("backMoneyList",new ArrayList<>(0));
+            resultMaps.put("backMoneyList", new ArrayList<>(0));
             return resultMaps;
         }
         //投标id 集合
@@ -92,23 +92,31 @@ public class InvestServiceImpl implements InvestService {
             VoViewBackMoney voViewBackMoney = new VoViewBackMoney();
             voViewBackMoney.setMoney(StringHelper.formatMon(p.getValidMoney() / 100D));
             List<BorrowCollection> borrowCollectionList = borrowCollectionMap.get(p.getId());
-            Long count = borrowCollectionList.stream().filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_NO).count();
-            voViewBackMoney.setOrder(count.intValue());
             Borrow borrow = borrowMap.get(p.getBorrowId());
             voViewBackMoney.setBorrowName(borrow.getName());
-            Integer principal = borrowCollectionList.stream()
+            List<BorrowCollection> tempCollection = borrowCollectionList.stream()
                     .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_NO)
+                    .collect(Collectors.toList());
+            Long count = borrowCollectionList.stream().map(s -> s.getId()).count();
+            voViewBackMoney.setOrder(count.intValue());
+            //待收本金
+            Integer principal = tempCollection.stream()
                     .mapToInt(s -> s.getPrincipal()).sum();
-            Integer interest = borrowCollectionList.stream()
-                    .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_NO)
+            //待收利息
+            Integer interest = tempCollection.stream()
                     .mapToInt(s -> s.getInterest()).sum();
+            //待收本息
+            Integer collectionMoney = tempCollection.stream()
+                    .mapToInt(w -> w.getCollectionMoney()).sum();
+
+            voViewBackMoney.setCollectionMoney(StringHelper.formatMon(collectionMoney / 100D));
             voViewBackMoney.setInterest(StringHelper.formatMon(interest / 100D));
             voViewBackMoney.setPrincipal(StringHelper.formatMon(principal / 100D));
             voViewBackMoney.setTenderId(p.getId());
             voViewBackMoney.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
             backMoneyList.add(voViewBackMoney);
         });
-        resultMaps.put("backMoneyList",backMoneyList);
+        resultMaps.put("backMoneyList", backMoneyList);
         return resultMaps;
     }
 
@@ -120,10 +128,10 @@ public class InvestServiceImpl implements InvestService {
      */
     @Override
     public Map<String, Object> biddingList(VoInvestListReq voInvestListReq) {
-        Map<String,Object>resultMaps=commonQuery(voInvestListReq);
-        List<Tender> tenderList =(List<Tender>) resultMaps.get("tenderList");
+        Map<String, Object> resultMaps = commonQuery(voInvestListReq);
+        List<Tender> tenderList = (List<Tender>) resultMaps.get("tenderList");
         if (CollectionUtils.isEmpty(tenderList)) {
-            resultMaps.put("biddingResList",new ArrayList<>(0));
+            resultMaps.put("biddingResList", new ArrayList<>(0));
             return resultMaps;
         }
 
@@ -142,6 +150,8 @@ public class InvestServiceImpl implements InvestService {
             VoViewBiddingRes voViewBiddingRes = new VoViewBiddingRes();
             Borrow borrow = borrowMap.get(p.getBorrowId());
             voViewBiddingRes.setTenderId(p.getId());
+            Double aDouble = borrow.getValidDay().doubleValue() / borrow.getMoney().doubleValue();
+            voViewBiddingRes.setSpend(new Double(StringHelper.formatDouble(aDouble, false)));
             voViewBiddingRes.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
             Integer timeLimit = borrow.getTimeLimit();
             if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE) {
@@ -162,9 +172,10 @@ public class InvestServiceImpl implements InvestService {
             voViewBiddingRes.setMoney(StringHelper.formatMon(validMoney / 100D));
             voViewBiddingRes.setBorrowName(borrow.getName());
             voViewBiddingRes.setTenderId(p.getId());
+
             viewBiddingResList.add(voViewBiddingRes);
         });
-        resultMaps.put("biddingResList",viewBiddingResList);
+        resultMaps.put("biddingResList", viewBiddingResList);
         return resultMaps;
     }
 
@@ -176,11 +187,11 @@ public class InvestServiceImpl implements InvestService {
      */
     @Override
     public Map<String, Object> settleList(VoInvestListReq voInvestListReq) {
-        Map<String,Object>resultMaps=commonQuery(voInvestListReq);
-        List<Tender> tenderList =(List<Tender>) resultMaps.get("tenderList");
+        Map<String, Object> resultMaps = commonQuery(voInvestListReq);
+        List<Tender> tenderList = (List<Tender>) resultMaps.get("tenderList");
 
         if (CollectionUtils.isEmpty(tenderList)) {
-            resultMaps.put("settleResList",new ArrayList<>(0));
+            resultMaps.put("settleResList", new ArrayList<>(0));
             return resultMaps;
         }
         Set<Long> borrowIds = tenderList.stream()
@@ -206,19 +217,24 @@ public class InvestServiceImpl implements InvestService {
             voViewSettleRes.setMoney(StringHelper.formatMon(p.getValidMoney() / 100D));
             voViewSettleRes.setCloseAt(DateHelper.dateToString(borrow.getCloseAt()));
             List<BorrowCollection> borrowCollectionList = borrowCollectionMaps.get(p.getId());
-            Integer principal = borrowCollectionList.stream()
+            List<BorrowCollection> borrowCollections1 = borrowCollectionList.stream()
                     .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
-                    .mapToInt(s -> s.getPrincipal()).sum();
-            Integer interest = borrowCollectionList.stream()
-                    .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
+                    .collect(Collectors.toList());
+            Integer interest = borrowCollections1.stream()
                     .mapToInt(s -> s.getInterest()).sum();
+            Integer principal = borrowCollections1.stream().
+                    mapToInt(s -> s.getPrincipal()).sum();
+            Integer collectionMoneyYes = borrowCollections1.stream()
+                    .mapToInt(s -> s.getCollectionMoneyYes()).sum();
             voViewSettleRes.setInterest(StringHelper.formatMon(interest / 100D));
             voViewSettleRes.setPrincipal(StringHelper.formatMon(principal / 100D));
             voViewSettleRes.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
+            voViewSettleRes.setCollectionMoneyYes(StringHelper.formatMon(collectionMoneyYes / 100D));
             voViewSettleRes.setTenderId(p.getId());
+            voViewSettleRes.setRemark("正常结清");
             voViewSettleResList.add(voViewSettleRes);
         });
-        resultMaps.put("settleResList",voViewSettleResList);
+        resultMaps.put("settleResList", voViewSettleResList);
         return resultMaps;
     }
 
@@ -228,7 +244,7 @@ public class InvestServiceImpl implements InvestService {
      * @param voInvestListReq
      * @return
      */
-    private Map<String,Object> commonQuery(VoInvestListReq voInvestListReq) {
+    private Map<String, Object> commonQuery(VoInvestListReq voInvestListReq) {
         Specification<Tender> specification = Specifications.<Tender>and()
                 .eq("userId", voInvestListReq.getUserId())
                 .eq("state", voInvestListReq.getType())
@@ -240,10 +256,10 @@ public class InvestServiceImpl implements InvestService {
                         voInvestListReq.getPageSize(),
                         Sort.Direction.DESC, "createdAt"));
         List<Tender> tenderList = tenders.getContent();
-        Long totalCount=tenders.getTotalElements();
-        Map<String,Object>resultMaps= Maps.newHashMap();
-        resultMaps.put("totalCount",totalCount);
-        resultMaps.put("tenderList",tenderList);
+        Long totalCount = tenders.getTotalElements();
+        Map<String, Object> resultMaps = Maps.newHashMap();
+        resultMaps.put("totalCount", totalCount);
+        resultMaps.put("tenderList", tenderList);
 
         return resultMaps;
     }
@@ -298,24 +314,24 @@ public class InvestServiceImpl implements InvestService {
             item.setRepayFashion(BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL_STR);
         }
 
-        Integer receivableInterest=0;
-        Integer principal=0;
-        Integer interest=0;
+        Integer receivableInterest = 0;
+        Integer principal = 0;
+        Integer interest = 0;
 
         if (tender.getState() == TenderConstans.BACK_MONEY || tender.getState() == TenderConstans.SETTLE) {
             List<BorrowCollection> borrowCollectionList = borrowCollectionRepository.findByTenderId(tender.getId());
             //利息
-             interest = borrowCollectionList.stream()
+            interest = borrowCollectionList.stream()
                     .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
                     .mapToInt(s -> s.getInterest())
                     .sum();
             //本金
-             principal = borrowCollectionList.stream()
+            principal = borrowCollectionList.stream()
                     .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
                     .mapToInt(s -> s.getPrincipal())
                     .sum();
             //应收利息
-             receivableInterest = borrowCollectionList.stream()
+            receivableInterest = borrowCollectionList.stream()
                     .mapToInt(s -> s.getInterest())
                     .sum();
 

@@ -667,7 +667,32 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
                 autoTender.setIsOpen(w.getStatus());
                 autoTender.setScope(StringHelper.formatMon(w.getTimelimitFirst() / 100D) + "~" + StringHelper.formatMon(w.getTimelimitLast() / 100D));
                 autoTender.setQueueDays(DateHelper.diffInDays(new Date(), w.getAutoAt(), true));
-                autoTender.setBorrowTypes(w.getBorrowTypes());
+
+
+                StringBuffer borrowTypes = new StringBuffer();
+                //标的类型
+                if (w.getTender0() == 1) {
+                    borrowTypes.append(",0");
+                }
+
+                if (w.getTender1() == 1) {
+                    borrowTypes.append(",1");
+                }
+
+                if (w.getTender3() == 1) {
+                    borrowTypes.append(",3");
+                }
+
+                if (w.getTender4() == 1) {
+                    borrowTypes.append(",4");
+                }
+
+                if (!StringUtils.isEmpty(borrowTypes)) {
+                    autoTender.setBorrowTypes(borrowTypes.toString().substring(1));
+                } else {
+                    autoTender.setBorrowTypes("");
+                }
+                autoTender.setOrder(w.getOrder());
                 autoTender.setLowest(StringHelper.formatMon(w.getLowest() / 100D));
                 pcAutoTenders.add(autoTender);
             });

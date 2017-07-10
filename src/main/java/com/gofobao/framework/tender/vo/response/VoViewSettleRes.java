@@ -31,4 +31,9 @@ public class VoViewSettleRes {
 
     @ApiModelProperty("已收利息")
     private String interest;
+
+    @ApiModelProperty("shi实收本息")
+    private String collectionMoneyYes;
+    @ApiModelProperty("备注")
+    private String remark;
 }

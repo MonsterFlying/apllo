@@ -927,7 +927,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     .eq("transferFlag", 1)
                     .build();
 
-            transferedBorrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "order"));
+            transferedBorrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "timeLimit"));
 
             Integer collectionMoney = 0;
             Integer collectionInterest = 0;

@@ -7,7 +7,10 @@ import com.gofobao.framework.repayment.contants.RepaymentContants;
 import com.gofobao.framework.repayment.service.LoanService;
 import com.gofobao.framework.repayment.vo.request.VoDetailReq;
 import com.gofobao.framework.repayment.vo.request.VoLoanListReq;
+import com.gofobao.framework.repayment.vo.request.VoStatisticsReq;
 import com.gofobao.framework.repayment.vo.response.*;
+import com.gofobao.framework.repayment.vo.response.pc.LoanStatistics;
+import com.gofobao.framework.repayment.vo.response.pc.VoViewLoanStatisticsWarpRes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -145,6 +148,24 @@ public class LoanBizImpl implements LoanBiz {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "获取查询异常", VoViewLoanInfoListWrapRes.class));
+        }
+    }
+
+    @Override
+    public ResponseEntity<VoViewLoanStatisticsWarpRes> repaymentStatistics(VoStatisticsReq voStatisticsReq) {
+        try {
+            Map<String, Object> resultMaps = loanService.statistics(voStatisticsReq);
+            Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
+            List<LoanStatistics> borrowRepayments = (List<LoanStatistics>) resultMaps.get("repayments");
+            VoViewLoanStatisticsWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewLoanStatisticsWarpRes.class);
+            warpRes.setTotalCount(totalCount);
+            warpRes.setStatisticss(borrowRepayments);
+            return ResponseEntity.ok(warpRes);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "获取查询异常", VoViewLoanStatisticsWarpRes.class));
         }
     }
 }

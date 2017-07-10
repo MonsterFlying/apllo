@@ -33,4 +33,7 @@ public class VoViewRefundRes {
     @ApiModelProperty("标ID")
     private Long borrowId;
 
+    @ApiModelProperty("借款期限")
+    private String timeLimit;
+
 }
