@@ -18,26 +18,20 @@ public class Asset {
     @Column(name = "user_id")
     //@GeneratedValue
     private Long userId;
-    @Basic
-    @Column(name = "use_money")
-    private Integer useMoney;
-    @Basic
-    @Column(name = "no_use_money")
-    private Integer noUseMoney;
-    @Basic
-    @Column(name = "virtual_money")
-    private Integer virtualMoney;
-    @Basic
-    @Column(name = "collection")
-    private Integer collection;
-    @Basic
-    @Column(name = "payment")
-    private Integer payment;
-    @Basic
-    @Column(name = "updated_at")
+
+    private Long useMoney;
+
+    private Long noUseMoney;
+
+    private Long virtualMoney;
+
+    private Long collection;
+
+    private Long payment;
+
     private Date updatedAt;
 
-    public int getTotal() {
+    public long getTotal() {
         return this.useMoney + this.noUseMoney + this.collection;
     }
 }

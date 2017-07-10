@@ -22,103 +22,72 @@ public class UserCache {
     @Column(name = "user_id")
     // @GeneratedValue
     private Long userId;
-    @Basic
-    @Column(name = "income_interest")
-    private Integer incomeInterest;
-    @Basic
-    @Column(name = "income_award")
-    private Integer incomeAward;
-    @Basic
-    @Column(name = "income_overdue")
-    private Integer incomeOverdue;
-    @Basic
-    @Column(name = "income_integral_cash")
-    private Integer incomeIntegralCash;
-    @Basic
-    @Column(name = "income_bonus")
-    private Integer incomeBonus;
-    @Basic
-    @Column(name = "income_other")
-    private Integer incomeOther;
-    @Basic
-    @Column(name = "wait_collection_principal")
-    private Integer waitCollectionPrincipal;
-    @Basic
-    @Column(name = "wait_collection_interest")
-    private Integer waitCollectionInterest;
-    @Basic
-    @Column(name = "tj_wait_collection_principal")
-    private Integer tjWaitCollectionPrincipal;
-    @Basic
-    @Column(name = "tj_wait_collection_interest")
-    private Integer tjWaitCollectionInterest;
-    @Basic
-    @Column(name = "qd_wait_collection_principal")
-    private Integer qdWaitCollectionPrincipal;
-    @Basic
-    @Column(name = "qd_wait_collection_interest")
-    private Integer qdWaitCollectionInterest;
-    @Basic
-    @Column(name = "expenditure_interest")
-    private Integer expenditureInterest;
-    @Basic
-    @Column(name = "expenditure_interest_manage")
-    private Integer expenditureInterestManage;
-    @Basic
-    @Column(name = "expenditure_manage")
-    private Integer expenditureManage;
-    @Basic
-    @Column(name = "expenditure_fee")
-    private Integer expenditureFee;
-    @Basic
-    @Column(name = "expenditure_overdue")
-    private Integer expenditureOverdue;
-    @Basic
-    @Column(name = "expenditure_other")
-    private Integer expenditureOther;
-    @Basic
-    @Column(name = "wait_repay_principal")
-    private Integer waitRepayPrincipal;
-    @Basic
-    @Column(name = "wait_repay_interest")
-    private Integer waitRepayInterest;
-    @Basic
-    @Column(name = "tender_tuijian")
+
+    private Long incomeInterest;
+
+    private Long incomeAward;
+
+    private Long incomeOverdue;
+
+    private Long incomeIntegralCash;
+
+    private Long incomeBonus;
+
+    private Long incomeOther;
+
+    private Long waitCollectionPrincipal;
+
+    private Long waitCollectionInterest;
+
+    private Long tjWaitCollectionPrincipal;
+
+    private Long tjWaitCollectionInterest;
+
+    private Long qdWaitCollectionPrincipal;
+
+    private Long qdWaitCollectionInterest;
+
+    private Long expenditureInterest;
+
+    private Long expenditureInterestManage;
+
+    private Long expenditureManage;
+
+    private Long expenditureFee;
+
+    private Long expenditureOverdue;
+
+    private Long expenditureOther;
+
+    private Long waitRepayPrincipal;
+
+    private Long waitRepayInterest;
+
     private Boolean tenderTuijian;
-    @Basic
-    @Column(name = "tender_jingzhi")
+
     private Boolean tenderJingzhi;
-    @Basic
-    @Column(name = "tender_miao")
+
     private Boolean tenderMiao;
-    @Basic
-    @Column(name = "tender_transfer")
+
     private Boolean tenderTransfer;
-    @Basic
-    @Column(name = "tender_qudao")
+
     private Boolean tenderQudao;
-    @Basic
-    @Column(name = "first_tender_award")
-    private Integer firstTenderAward;
-    @Basic
-    @Column(name = "award_virtual_money")
-    private Integer awardVirtualMoney;
-    @Basic
-    @Column(name = "recharge_total")
+
+    private Long firstTenderAward;
+
+    private Long awardVirtualMoney;
+
     private Long rechargeTotal;
-    @Basic
-    @Column(name = "updated_at")
+
     private Date updatedAt;
-    @Basic
-    @Column(name = "yesterday_use_money")
-    private Integer yesterdayUseMoney;
-    @Basic
-    @Column(name = "cash_total")
+
+    private Long yesterdayUseMoney;
+
     private Long cashTotal;
 
 
 
-    public int getIncomeTotal(){
+    public long getIncomeTotal(){
         return this.incomeInterest
                 + this.incomeAward
                 + this.incomeOverdue

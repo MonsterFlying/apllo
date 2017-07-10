@@ -36,31 +36,31 @@ public class AssetLog {
 
     @Basic
     @Column(name = "money")
-    private Integer money;
+    private Long money;
 
 
     @Basic
     @Column(name = "use_money")
-    private Integer useMoney;
+    private Long useMoney;
 
 
     @Basic
     @Column(name = "no_use_money")
-    private Integer noUseMoney;
+    private Long noUseMoney;
 
 
     @Basic
     @Column(name = "virtual_money")
-    private Integer virtualMoney;
+    private Long virtualMoney;
 
 
     @Basic
     @Column(name = "collection")
-    private Integer collection;
+    private Long collection;
 
     @Basic
     @Column(name = "payment")
-    private Integer payment;
+    private Long payment;
 
     @Basic
     @Column(name = "to_user_id")

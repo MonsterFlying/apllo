@@ -169,9 +169,9 @@ public class LendServiceImpl implements LendService {
         }
 
         lendInfo.setStatus(lend.getStatus());
-        Integer useMoney = asset.getUseMoney();
-        Integer waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
-        Integer payment = asset.getPayment();
+        Long useMoney = asset.getUseMoney();
+        Long waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
+        Long payment = asset.getPayment();
         int netWorthQuota = new Double((useMoney + waitCollectionPrincipal) * 0.8 - payment).intValue();//计算净值额度
         lendInfo.setEquityLimit(StringHelper.formatMon(netWorthQuota / 100D));
         lendInfo.setEquityLimitHide(netWorthQuota);
