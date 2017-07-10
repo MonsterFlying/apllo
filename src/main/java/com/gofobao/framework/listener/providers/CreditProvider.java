@@ -52,7 +52,7 @@ public class CreditProvider {
     @Autowired
     private JixinManager jixinManager;
 
-    public boolean endThirdCredit(Map<String, String> msg) throws Exception {
+    public boolean endThirdCredit(Map<String, String> msg) throws Exception{
         do {
             Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
             Borrow borrow = borrowService.findById(borrowId);
@@ -97,7 +97,11 @@ public class CreditProvider {
                 CreditEndResp creditEndResp = jixinManager.send(JixinTxCodeEnum.CREDIT_END, creditEndReq, CreditEndResp.class);
                 if ((ObjectUtils.isEmpty(creditEndResp)) || (!JixinResultContants.SUCCESS.equals(creditEndResp.getRetCode()))) {
                     String massage = ObjectUtils.isEmpty(creditEndResp) ? "当前网络不稳定，请稍候重试" : creditEndResp.getRetMsg();
-                    throw new Exception(massage);
+                    try {
+                        throw new Exception(massage);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }));
 
