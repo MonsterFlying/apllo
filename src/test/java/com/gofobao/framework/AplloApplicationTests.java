@@ -1,5 +1,6 @@
 package com.gofobao.framework;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
@@ -19,8 +20,11 @@ import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
+import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
+import com.gofobao.framework.common.data.DataObject;
+import com.gofobao.framework.common.data.LeSpecification;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -43,6 +47,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.ObjectUtils;
@@ -227,8 +232,8 @@ public class AplloApplicationTests {
         }*/
 
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("155018");
-        batchDetailsQueryReq.setBatchTxDate("20170707");
+        batchDetailsQueryReq.setBatchNo("160729");
+        batchDetailsQueryReq.setBatchTxDate("20170708");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -237,6 +242,14 @@ public class AplloApplicationTests {
         if ((ObjectUtils.isEmpty(batchDetailsQueryResp)) || (!JixinResultContants.SUCCESS.equals(batchDetailsQueryResp.getRetCode()))) {
             log.error(ObjectUtils.isEmpty(batchDetailsQueryResp) ? "当前网络不稳定，请稍候重试" : batchDetailsQueryResp.getRetMsg());
         }
+
+        /*Specification<Borrow> bs = Specifications
+                .<Borrow>and()
+                .eq("status",1)
+                .predicate(new LeSpecification("releaseAt",new DataObject(DateHelper.beginOfDate(DateHelper.subDays(new Date(),1)))))
+                .build();
+        List<Borrow> borrowList = borrowService.findList(bs);
+        System.out.println(borrowList);*/
 
         //"userId\":901,\"repaymentId\":168675,\"interestPercent\":0.0,\"isUserOpen\":true
         /*VoRepayReq voRepayReq = new VoRepayReq();

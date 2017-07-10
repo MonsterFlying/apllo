@@ -7,6 +7,7 @@ import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.batch_bail_repay.BailRepayRun;
+import com.gofobao.framework.api.model.credit_end.CreditEndReq;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.asset.entity.AdvanceLog;
@@ -343,6 +344,30 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("操作用户不是借款用户!")));
         }
 
+        //===================================================================
+        //检查还款账户是否完成存管操作  与  完成必需操作
+        //===================================================================
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if (userThirdAccount.getPasswordState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoAutoTenderInfo.class));
+        }
+
+        if (userThirdAccount.getAutoTransferState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoAutoTenderInfo.class));
+        }
+
+
+        if (userThirdAccount.getAutoTenderState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoAutoTenderInfo.class));
+        }
+
+
         int repayInterest = (int) (borrowRepayment.getInterest() * interestPercent);//还款利息
         int repayMoney = borrowRepayment.getPrincipal() + repayInterest;//还款金额
 
@@ -387,31 +412,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> repay(VoRepayReq voRepayReq) throws Exception {
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voRepayReq.getUserId());
-        if (ObjectUtils.isEmpty(userThirdAccount)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoAutoTenderInfo.class));
-        }
-
-        if (userThirdAccount.getPasswordState() != 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoAutoTenderInfo.class));
-        }
-
-        if (userThirdAccount.getAutoTransferState() != 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoAutoTenderInfo.class));
-        }
-
-
-        if (userThirdAccount.getAutoTenderState() != 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoAutoTenderInfo.class));
-        }
 
 
         ResponseEntity resp = checkRepay(voRepayReq);
@@ -422,10 +422,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
         int lateInterest = 0;//逾期利息
         Double interestPercent = voRepayReq.getInterestPercent();
         Long repaymentId = voRepayReq.getRepaymentId();
-        Boolean isUserOpen = voRepayReq.getIsUserOpen();
-        interestPercent = interestPercent == 0 ? 1 : interestPercent;
-        BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);
-        Borrow borrow = borrowService.findById(borrowRepayment.getBorrowId());
+        Boolean isUserOpen = voRepayReq.getIsUserOpen();//是否是用户主动还款
+        interestPercent = interestPercent == 0 ? 1 : interestPercent;//回款 利息百分比
+        BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);//还款记录
+        Borrow borrow = borrowService.findById(borrowRepayment.getBorrowId());//借款记录
+
         Long borrowId = borrow.getId();//借款ID
         int borrowType = borrow.getType();//借款type
         Long borrowUserId = borrow.getUserId();
@@ -699,8 +700,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
                             //通过红包账户发放
                             //调用即信发放债权转让人应收利息
                             //查询红包账户
-                            DictValue dictValue =  jixinCache.get(JixinContants.RED_PACKET_USER_ID);
-                            UserThirdAccount redPacketAccount =  userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
+                            DictValue dictValue = jixinCache.get(JixinContants.RED_PACKET_USER_ID);
+                            UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
 
                             VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
                             voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
@@ -827,8 +828,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
                     //调用即信发送红包接口
                     //查询红包账户
-                    DictValue dictValue =  jixinCache.get(JixinContants.RED_PACKET_USER_ID);
-                    UserThirdAccount redPacketAccount =  userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
+                    DictValue dictValue = jixinCache.get(JixinContants.RED_PACKET_USER_ID);
+                    UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
 
                     VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
                     voucherPayRequest.setAccountId(redPacketAccount.getAccountId());

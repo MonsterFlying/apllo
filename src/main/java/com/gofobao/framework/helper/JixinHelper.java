@@ -57,6 +57,7 @@ public class JixinHelper {
     public static final String BAIL_REPAY_PREFIX = "GFBBR_";
     public static final String TENDER_CANCEL_PREFIX = "GFBTC_";
     public static final String BALANCE_FREEZE_PREFIX = "GFBBF_";
+    public static final String END_CREDIT_PREFIX = "GFBEC_";
 
 
     public static String getOrderId(String prefix) {
