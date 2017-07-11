@@ -106,4 +106,6 @@ public interface BorrowService {
     Map<String, Object> pcContract(Long borrowId, Long userId);
 
     Borrow getLastBorrowLock();
+
+    Borrow flushSave(Borrow borrow);
 }

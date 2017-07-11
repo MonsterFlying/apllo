@@ -22,7 +22,7 @@ public class BorrowCollection {
     @Column(name = "status")
     private Integer status;
     @Basic
-    @Column(name = "`timeLimit`")
+    @Column(name = "`order`")
     private Integer order;
 
     @Basic
