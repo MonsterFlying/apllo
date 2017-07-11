@@ -250,7 +250,13 @@ public enum JixinTxCodeEnum {
     BALANCE_FREEZE(
             "balanceFreeze",
             "/escrow/p2p/online"
+    ),
+
+    CREDIT_END(
+            "creditEnd",
+            "/escrow/p2p/online"
     );
+
 
     private String value;
     private String url;

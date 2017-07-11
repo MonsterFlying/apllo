@@ -1416,7 +1416,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
         for (VoRepayReq tempVoRepayReq : voRepayReqList) {
             try {
-                repaymentBiz.repay(tempVoRepayReq);
+                repaymentBiz.repayDeal(tempVoRepayReq);
             } catch (Throwable e) {
                 log.error("提前结清异常：", e);
             }

@@ -165,10 +165,10 @@ public class AssetBizImpl implements AssetBiz {
             return null;
         }
 
-        Integer useMoney = asset.getUseMoney();
-        Integer waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
-        Integer payment = asset.getPayment();
-        int netWorthQuota = new Double((useMoney + waitCollectionPrincipal) * 0.8 - payment).intValue();//计算净值额度
+        Long useMoney = asset.getUseMoney();
+        Long waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
+        Long payment = asset.getPayment();
+        long netWorthQuota = new Double((useMoney + waitCollectionPrincipal) * 0.8 - payment).longValue();//计算净值额度
 
         VoUserAssetInfoResp voUserAssetInfoResp = VoBaseResp.ok("成功", VoUserAssetInfoResp.class);
         voUserAssetInfoResp.setUseMoney(useMoney);
@@ -876,13 +876,13 @@ public class AssetBizImpl implements AssetBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoAccruedMoneyResp.class));
         }
 
-        Integer incomeBonus = userCache.getIncomeBonus();
-        Integer incomeOverdue = userCache.getIncomeOverdue();
-        Integer incomeInterest = userCache.getIncomeInterest();
-        Integer incomeAward = userCache.getIncomeAward();
-        Integer incomeIntegralCash = userCache.getIncomeIntegralCash();
-        Integer incomeOther = userCache.getIncomeOther();
-        Integer totalIncome = incomeBonus + incomeOverdue + incomeInterest + incomeAward + incomeIntegralCash + incomeOther;
+        Long incomeBonus = userCache.getIncomeBonus();
+        Long incomeOverdue = userCache.getIncomeOverdue();
+        Long incomeInterest = userCache.getIncomeInterest();
+        Long incomeAward = userCache.getIncomeAward();
+        Long incomeIntegralCash = userCache.getIncomeIntegralCash();
+        Long incomeOther = userCache.getIncomeOther();
+        Long totalIncome = incomeBonus + incomeOverdue + incomeInterest + incomeAward + incomeIntegralCash + incomeOther;
         VoAccruedMoneyResp response = VoBaseResp.ok("查询成功", VoAccruedMoneyResp.class);
         response.setIncomeBonus(StringHelper.formatMon(incomeBonus / 100D));
         response.setIncomeAward(StringHelper.formatMon(incomeAward / 100D));
@@ -905,9 +905,9 @@ public class AssetBizImpl implements AssetBiz {
         }
 
         VoAvailableAssetInfoResp resp = VoBaseResp.ok("查询成功", VoAvailableAssetInfoResp.class);
-        Integer noUserMoney = asset.getNoUseMoney();
-        Integer userMoney = asset.getUseMoney();
-        Integer total = (asset.getNoUseMoney() + asset.getUseMoney());
+        Long noUserMoney = asset.getNoUseMoney();
+        Long userMoney = asset.getUseMoney();
+        Long total = (asset.getNoUseMoney() + asset.getUseMoney());
 
         resp.setNoUseMoney(noUserMoney);
         resp.setViewNoUseMoney(StringHelper.formatMon(noUserMoney / 100d));
@@ -929,10 +929,10 @@ public class AssetBizImpl implements AssetBiz {
 
         VoCollectionResp response = VoBaseResp.ok("查询成功", VoCollectionResp.class);
 
-        Integer waitCollectionInterest = userCache.getWaitCollectionInterest();
+        Long waitCollectionInterest = userCache.getWaitCollectionInterest();
 
-        Integer waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
-        Integer waitCollectionTotal = userCache.getWaitCollectionPrincipal() + userCache.getWaitCollectionInterest();
+        Long waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
+        Long waitCollectionTotal = userCache.getWaitCollectionPrincipal() + userCache.getWaitCollectionInterest();
         response.setHideInterest(waitCollectionInterest);
         response.setInterest(StringHelper.formatMon(waitCollectionInterest / 100d));
 

@@ -17,7 +17,7 @@ public class VirtualCollection {
     @Id
     @GeneratedValue(strategy =GenerationType.IDENTITY)
     @Column(name = "id")
-    private Integer id;
+    private Long id;
     @Basic
     @Column(name = "status")
     private Integer status;
@@ -26,7 +26,7 @@ public class VirtualCollection {
     private Integer order;
     @Basic
     @Column(name = "tender_id")
-    private Integer tenderId;
+    private Long tenderId;
     @Basic
     @Column(name = "collection_at")
     private Date collectionAt;

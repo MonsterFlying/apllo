@@ -32,6 +32,8 @@ import com.gofobao.framework.tender.entity.VirtualTender;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -95,14 +97,14 @@ public class VirtualServiceImpl implements VirtualService {
         virtualStatistics.setAvailable(asset.getVirtualMoney() / 100D);
         //已用
 
-        virtualStatistics.setUsed(assetLogs.stream().mapToInt(m -> m.getMoney()).sum() / 100d);
+        virtualStatistics.setUsed(assetLogs.stream().mapToLong(m -> m.getMoney()).sum() / 100d);
 
         List<VirtualTender> virtualTenders = virtualTenderRepository.findByUserIdAndStatusIs(userId, VirtualTenderContants.VIRTUALTENDERSUCCESS);
         if (CollectionUtils.isEmpty(virtualTenders)) {
             virtualStatistics.setEarnings(0d);
             return virtualStatistics;
         }
-        List<Integer> tenderIdArray = virtualTenders.stream().map(p -> p.getId()).collect(Collectors.toList());
+        List<Long> tenderIdArray = virtualTenders.stream().map(p -> p.getId()).collect(Collectors.toList());
         List<VirtualCollection> virtualCollections = virtualCollectionRepository.findByTenderIdInAndStatusIs(tenderIdArray, VirtualTenderContants.VIRTUALTENDERSUCCESS);
         if (CollectionUtils.isEmpty(virtualCollections)) {
             virtualStatistics.setEarnings(0d);
@@ -178,7 +180,7 @@ public class VirtualServiceImpl implements VirtualService {
         VirtualTender virtualTender = new VirtualTender();
         virtualTender.setUserId(asset.getUserId());
         virtualTender.setStatus(VirtualTenderContants.VIRTUALTENDERSUCCESS);
-        virtualTender.setBorrowId(voVirtualReq.getId().intValue());
+        virtualTender.setBorrowId(voVirtualReq.getId());
         virtualTender.setCreatedAt(date);
         virtualTender.setUpdatedAt(date);
         virtualTender.setMoney(asset.getVirtualMoney());
@@ -217,7 +219,7 @@ public class VirtualServiceImpl implements VirtualService {
             return false;
         }
         //=========================================
-        //=资金变动
+        //资金变动
         //=========================================
         CapitalChangeEntity capitalChangeEntity = new CapitalChangeEntity();
         capitalChangeEntity.setType(CapitalChangeEnum.VirtualTender);
@@ -253,5 +255,29 @@ public class VirtualServiceImpl implements VirtualService {
         Asset asset = assetRepository.findOne(userId);
         awardStatistics.setVirtualMoney(asset.getVirtualMoney()/100d);
         return awardStatistics;
+    }
+
+    public VirtualCollection save(VirtualCollection virtualCollection){
+        return virtualCollectionRepository.save(virtualCollection);
+    }
+
+    public List<VirtualCollection> save(List<VirtualCollection> virtualCollectionList){
+        return virtualCollectionRepository.save(virtualCollectionList);
+    }
+
+    public List<VirtualCollection> findList(Specification<VirtualCollection> specification){
+        return virtualCollectionRepository.findAll(specification);
+    }
+
+    public List<VirtualCollection> findList(Specification<VirtualCollection> specification, Sort sort){
+        return virtualCollectionRepository.findAll(specification,sort);
+    }
+
+    public List<VirtualCollection> findList(Specification<VirtualCollection> specification, Pageable pageable){
+        return virtualCollectionRepository.findAll(specification,pageable).getContent();
+    }
+
+    public long count(Specification<VirtualCollection> specification){
+        return virtualCollectionRepository.count(specification);
     }
 }

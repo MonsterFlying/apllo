@@ -10,15 +10,15 @@ import lombok.Data;
 @Data
 public class VoUserAssetInfoResp extends VoBaseResp{
     @ApiModelProperty("会员可用资金")
-    private Integer useMoney;
+    private Long useMoney;
     @ApiModelProperty("会员冻结资金")
-    private Integer noUseMoney;
+    private Long noUseMoney;
     @ApiModelProperty("会员体验金")
-    private Integer virtualMoney;
+    private Long virtualMoney;
     @ApiModelProperty("待收金额")
-    private Integer collection;
+    private Long collection;
     @ApiModelProperty("待还金额")
-    private Integer payment;
+    private Long payment;
     @ApiModelProperty("净值额度")
-    private Integer netWorthQuota;
+    private Long netWorthQuota;
 }

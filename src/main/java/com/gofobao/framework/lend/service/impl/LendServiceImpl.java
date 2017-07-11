@@ -122,7 +122,7 @@ public class LendServiceImpl implements LendService {
             lend.setStatus(p.getStatus());
             lendListRes.add(lend);
         });
-        resultMaps.put("lends",lendListRes);
+        resultMaps.put("lends", lendListRes);
         return resultMaps;
     }
 
@@ -169,9 +169,9 @@ public class LendServiceImpl implements LendService {
         }
 
         lendInfo.setStatus(lend.getStatus());
-        Integer useMoney = asset.getUseMoney();
-        Integer waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
-        Integer payment = asset.getPayment();
+        Long useMoney = asset.getUseMoney();
+        Long waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
+        Long payment = asset.getPayment();
         int netWorthQuota = new Double((useMoney + waitCollectionPrincipal) * 0.8 - payment).intValue();//计算净值额度
         lendInfo.setEquityLimit(StringHelper.formatMon(netWorthQuota / 100D));
         lendInfo.setEquityLimitHide(netWorthQuota);
@@ -243,5 +243,13 @@ public class LendServiceImpl implements LendService {
 
     public long count(Specification<Lend> specification) {
         return lendRepository.count(specification);
+    }
+
+    public Lend save(Lend lend) {
+        return lendRepository.save(lend);
+    }
+
+    public List<Lend> save(List<Lend> lendList) {
+        return lendRepository.save(lendList);
     }
 }

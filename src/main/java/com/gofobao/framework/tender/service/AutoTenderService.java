@@ -44,5 +44,8 @@ public interface AutoTenderService {
      */
     int getOrderNum();
 
+    void delete(AutoTender autoTender);
+
+    void delete(List<AutoTender> autoTenderList);
 
 }

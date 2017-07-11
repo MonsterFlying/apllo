@@ -147,7 +147,7 @@ public class IntegralBizImpl implements IntegralBiz {
             e.printStackTrace();
         }
 
-        Integer collection = asset.getCollection();//代收金额
+        Long collection = asset.getCollection();//代收金额
         Integer totalIntegral = integral.getUseIntegral() + integral.getNoUseIntegral();//总积分
 
         VoListIntegralResp voListIntegralResp = VoBaseResp.ok("查询成功", VoListIntegralResp.class);
@@ -240,7 +240,7 @@ public class IntegralBizImpl implements IntegralBiz {
             e.printStackTrace();
         }
 
-        Integer collection = asset.getCollection();
+        Long collection = asset.getCollection();
         Integer sumIntegral=useIntegral+integral.getNoUseIntegral();
         String takeRatesStr = getTakeRates(collection, sumIntegral, integralRule);
         double takeRates = Double.parseDouble(takeRatesStr);//折现系数
@@ -321,7 +321,7 @@ public class IntegralBizImpl implements IntegralBiz {
      * @param integral 总积分
      * @return
      */
-    private String getTakeRates(Integer money, Integer integral, List<Map<String, String>> maps) {
+    private String getTakeRates(Long money, Integer integral, List<Map<String, String>> maps) {
         money = money / 100;
 
         Integer moneyMin = 0;

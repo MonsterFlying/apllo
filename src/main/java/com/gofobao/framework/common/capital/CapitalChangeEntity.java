@@ -21,12 +21,12 @@ public class CapitalChangeEntity {
     /**
      * 操作总金额
      */
-    private int money;
+    private long money;
 
     /**
      * 本金
      */
-    private int principal;
+    private long principal;
 
     /**
      * 资产操作

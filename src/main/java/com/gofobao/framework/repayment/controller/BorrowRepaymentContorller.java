@@ -7,6 +7,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoInfoReq;
 import com.gofobao.framework.repayment.vo.request.VoInstantlyRepaymentReq;
+import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.repayment.vo.response.VoViewRepaymentOrderDetailWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
@@ -69,8 +70,12 @@ public class BorrowRepaymentContorller {
     @PostMapping("/repayment/v2/instantly")
     @ApiOperation("立即还款")
     public ResponseEntity<VoBaseResp> instantly(@ModelAttribute @Valid VoInstantlyRepaymentReq voInstantlyRepaymentReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
-        voInstantlyRepaymentReq.setUserId(userId);
-        return repaymentBiz.instantly(voInstantlyRepaymentReq);
+        VoRepayReq voRepayReq = new VoRepayReq();
+        voRepayReq.setRepaymentId(voInstantlyRepaymentReq.getRepaymentId());
+        voRepayReq.setUserId(userId);
+        voRepayReq.setInterestPercent(0d);
+        voRepayReq.setIsUserOpen(true);
+        return repaymentBiz.repay(voRepayReq);
     }
 
 }

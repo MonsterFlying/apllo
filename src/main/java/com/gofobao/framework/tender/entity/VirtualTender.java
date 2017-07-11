@@ -22,19 +22,19 @@ public class VirtualTender {
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue
-    private Integer id;
+    private Long id;
     @Basic
     @Column(name = "user_id", nullable = false)
     private Long userId;
     @Basic
     @Column(name = "borrow_id", nullable = false)
-    private Integer borrowId;
+    private Long borrowId;
     @Basic
     @Column(name = "status", nullable = false)
     private Integer status;
     @Basic
     @Column(name = "money", nullable = false)
-    private Integer money;
+    private Long money;
     @Basic
     @Column(name = "created_at", nullable = true)
     private Date createdAt;

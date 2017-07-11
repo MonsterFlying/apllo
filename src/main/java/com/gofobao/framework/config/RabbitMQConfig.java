@@ -52,6 +52,11 @@ public class RabbitMQConfig {
         return new Queue(MqQueueEnum.RABBITMQ_RED_PACKAGE.getValue(), true);
     }
 
+    @Bean
+    public Queue creditRabbitmq() {
+        return new Queue(MqQueueEnum.RABBITMQ_CREDIT.getValue(), true);
+    }
+
 
 
 
