@@ -50,7 +50,7 @@ public class CapitalChangeConfig {
         CapitalChangeConfig cash = new CapitalChangeConfig();
         cash.setType(CapitalChangeEnum.Cash);
         cash.setName("提现");
-        cash.setAssetChangeRule("sub@noUseMoney");
+        cash.setAssetChangeRule("sub@useMoney");
         cash.setUserCacheChangeRule("add@cashTotal");
         cash.setRemark("提现成功");
         capitalChangeList.add(cash);

@@ -1,6 +1,5 @@
 package com.gofobao.framework;
 
-import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
@@ -20,11 +19,11 @@ import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
-import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
-import com.gofobao.framework.common.data.DataObject;
-import com.gofobao.framework.common.data.LeSpecification;
+import com.gofobao.framework.common.assets.AssetsChangeEnum;
+import com.gofobao.framework.common.assets.AssetsChangeEntity;
+import com.gofobao.framework.common.assets.AssetsChangeHelper;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -36,7 +35,6 @@ import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoAdvanceCall;
-import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
@@ -47,7 +45,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.ObjectUtils;
@@ -93,6 +90,32 @@ public class AplloApplicationTests {
     private TenderService tenderService;
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private AssetsChangeHelper assetsChangeHelper ;
+
+
+    @Test
+    public void testAssetsChange() throws Exception{
+
+        AssetsChangeEntity freeze = new AssetsChangeEntity() ;
+        freeze.setMoney(100 * 100 - 2 * 100) ;
+        freeze.setFee(2 * 100) ;
+        freeze.setType(AssetsChangeEnum.Frozen);
+        freeze.setUserId(41258);
+        freeze.setToUserId(0);
+        freeze.setRefId(12);
+        assetsChangeHelper.execute(freeze);
+        AssetsChangeEntity cash = new AssetsChangeEntity() ;
+        cash.setMoney(100 * 100 - 2 * 100) ;
+        cash.setFee(2 * 100) ;
+        cash.setType(AssetsChangeEnum.SmallCash);
+        cash.setUserId(41258);
+        cash.setToUserId(0);
+        cash.setRefId(12);
+        assetsChangeHelper.execute(cash);
+    }
+
 
     @Test
     public void contextLoads() throws InterruptedException {
