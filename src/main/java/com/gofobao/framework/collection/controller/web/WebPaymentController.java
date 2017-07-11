@@ -27,9 +27,9 @@ public class WebPaymentController {
 
     @ApiOperation("回款明细-回款详情 time:2017-05-06")
     @GetMapping("/v2/collection/list")
-    public ResponseEntity<VoViewCollectionWarpRes> collectionOrderList(VoCollectionListReq collectionListReq/*,
-                                                                                 @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
-        collectionListReq.setUserId(901L);
+    public ResponseEntity<VoViewCollectionWarpRes> collectionOrderList(VoCollectionListReq collectionListReq,
+                                                                                 @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        collectionListReq.setUserId(userId);
         return paymentBiz.pcOrderDetail(collectionListReq);
     }
 
@@ -37,10 +37,10 @@ public class WebPaymentController {
     @ApiOperation("回款明细")
     @GetMapping("/v2/days/collection/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewCollectionListWarpRes> orderDetail(@PathVariable("pageIndex") Integer pageIndex,
-                                                             @PathVariable("pageSize") Integer pageSize/*,
-                                                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+                                                             @PathVariable("pageSize") Integer pageSize,
+                                                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         OrderListReq orderListReq=new OrderListReq();
-        orderListReq.setUserId(901L);
+        orderListReq.setUserId(userId);
         orderListReq.setPageIndex(pageIndex);
         orderListReq.setPageSize(pageSize);
         return paymentBiz.pcOrderList(orderListReq);

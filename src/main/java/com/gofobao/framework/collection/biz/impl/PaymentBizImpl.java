@@ -216,6 +216,7 @@ public class PaymentBizImpl implements PaymentBiz {
 
         Specification<BorrowCollection> bcs = Specifications
                 .<BorrowCollection>and()
+                .eq("userId",userId)
                 .between("collectionAt", new Range<>(DateHelper.beginOfDate(date), DateHelper.endOfDate(date)))
                 .eq("status", 0)
                 .build();
