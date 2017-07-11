@@ -3,6 +3,8 @@ package com.gofobao.framework.system.vo.response;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 /**
  * Created by admin on 2017/6/14.
  */
@@ -15,7 +17,19 @@ public class IndexStatistics {
     @ApiModelProperty("待收总额")
     private Long dueTotal;
 
-/*    @ApiModelProperty("安全运营天数")
-    private String securityDays;*/
+    @ApiModelProperty("注册人数")
+    private BigDecimal registerTotal;
+
+    @ApiModelProperty("为用户赚取收益")
+    private Long earnings;
+
+    @ApiModelProperty("实现成功贷款（笔）")
+    private Long borrowTotal;
+
+    @ApiModelProperty("今日成交额")
+    private Integer todayDueTotal;
+
+    @ApiModelProperty("昨日成交额")
+    private Integer yesterdayDueTotal;
 
 }

@@ -1,11 +1,16 @@
 package com.gofobao.framework.repayment.service.impl;
 
+import com.gofobao.framework.award.entity.Coupon;
 import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
+import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
+import com.gofobao.framework.helper.project.UserHelper;
+import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.repayment.contants.RepaymentContants;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.repository.BorrowRepaymentRepository;
@@ -15,6 +20,8 @@ import com.gofobao.framework.repayment.vo.request.VoDetailReq;
 import com.gofobao.framework.repayment.vo.request.VoLoanListReq;
 import com.gofobao.framework.repayment.vo.request.VoStatisticsReq;
 import com.gofobao.framework.repayment.vo.response.*;
+import com.gofobao.framework.repayment.vo.response.pc.LoanStatistics;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -24,12 +31,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.groupingBy;
@@ -48,6 +57,9 @@ public class LoanServiceImpl implements LoanService {
     @PersistenceContext
     private EntityManager entityManager;
 
+
+    @Autowired
+    private UsersRepository usersRepository;
     /**
      * 还款中列表
      *
@@ -314,11 +326,11 @@ public class LoanServiceImpl implements LoanService {
     public VoViewLoanList loanList(VoDetailReq voDetailReq) {
         Borrow borrow = loanRepository.findOne(voDetailReq.getBorrowId());
         if (ObjectUtils.isEmpty(borrow) || !borrow.getUserId().equals(voDetailReq.getUserId())) {
-            return null;
+            return new VoViewLoanList();
         }
         List<BorrowRepayment> repaymentList = repaymentRepository.findByBorrowId(borrow.getId());
         if (CollectionUtils.isEmpty(repaymentList)) {
-            return null;
+            return new VoViewLoanList();
         }
 
         VoViewLoanList voViewLoanList = new VoViewLoanList();
@@ -346,33 +358,67 @@ public class LoanServiceImpl implements LoanService {
         return Optional.ofNullable(voViewLoanList).orElse(null);
     }
 
+    /**
+     * 平台借款统计
+     * @param voStatisticsReq
+     * @return
+     */
     @Override
     public Map<String, Object> statistics(VoStatisticsReq voStatisticsReq) {
         Date nowDate=new Date();
         String type=voStatisticsReq.getType();
-        String sql = "SELECT b FROM borrowRepayment AS b where";
-        if (type.equals("gt7days")) { //一周内
-           String beginAt =DateHelper.dateToString(DateHelper.subDays(nowDate,7));
-            sql += " b.repayAt BETWEEN '"+DateHelper.dateToString(nowDate)+"' AND "+beginAt;
-        } else if (type.equals("lt30days")) {//30天内有逾期未还
-            String beginAt =DateHelper.dateToString(DateHelper.subDays(nowDate,30));
-            sql += " b.repayAt BETWEEN '"+DateHelper.dateToString(nowDate)+"' AND "+beginAt+"AND status=0 AND b.lateDays>0";
-        } else if (type.equals("gt30days")) {    //30天以上有逾期未还
-            String beginAt =DateHelper.dateToString(DateHelper.subDays(nowDate,30));
-            sql += " b.repayAt < "+beginAt+" AND status=0 AND b.lateDays>0";
-        } else if (type.equals("lateRepay")) {//逾期已归还
-            sql += " b.status=1 and b.lateDays>0";
-        }
-        Query query=entityManager.createQuery(sql);
 
+        String endAt=DateHelper.dateToString(DateHelper.endOfDate(nowDate));
+        String sql = "SELECT b FROM BorrowRepayment AS b where ";
+        String totalSql="SELECT COUNT(b.id) FROM BorrowRepayment AS b where ";
+        String condition="";
+        if (type.equals("gt7days")) { //一周内
+           String beginAt =DateHelper.dateToString(DateHelper.beginOfDate(DateHelper.subDays(nowDate,7)));
+            condition += "b.repayAt  BETWEEN '"+beginAt+"' AND '"+DateHelper.dateToString(DateHelper.endOfDate(nowDate))+"'";
+        } else if (type.equals("lt30days")) {//30天内有逾期未还
+            String beginAt =DateHelper.dateToString(DateHelper.beginOfDate(DateHelper.subDays(nowDate,30)));
+            condition += "b.repayAt BETWEEN '"+beginAt+"' AND '"+endAt+"' AND b.status=0 AND b.lateDays>0";
+        } else if (type.equals("gt30days")) {    //30天以上有逾期未还
+            String beginAt =DateHelper.dateToString(DateHelper.endOfDate(DateHelper.subDays(nowDate,30)));
+            condition += "b.repayAt < '"+beginAt+"' AND b.status=0 AND b.lateDays>0";
+        } else if (type.equals("lateRepay")) {//逾期已归还
+            condition += "b.status=1 and b.lateDays>0";
+        }
+        String orderBy="  ORDER BY b.repayAt DESC";
+        condition+=orderBy;
+
+        Map<String,Object> resultMaps=Maps.newHashMap();
+        //总记录数
+        Long totalList=entityManager.createQuery(totalSql+condition,Long.class).getSingleResult();
+        resultMaps.put("totalCount",totalList);
+
+        //分页
+        TypedQuery  query=entityManager.createQuery(sql+condition,BorrowRepayment.class);
         query.setMaxResults(voStatisticsReq.getPageSize());
         query.setFirstResult(voStatisticsReq.getPageIndex());
         List<BorrowRepayment> borrowRepayments=query.getResultList();
 
-        Map resultMaps=Maps.newHashMap();
-        resultMaps.put("totalCount",0);
-        resultMaps.put("repayments",null);
+        if(CollectionUtils.isEmpty(borrowRepayments)){
+            resultMaps.put("repayments",new ArrayList<>(0));
+            return  resultMaps;
+        }
 
+        Set<Long> userIds=borrowRepayments.stream().map(p->p.getUserId()).collect(Collectors.toSet());
+        List<Users> users=usersRepository.findByIdIn(new ArrayList(userIds));
+        Map<Long,Users>usersMap=users.stream().collect(Collectors.toMap(Users::getId, Function.identity()));
+        //结果集装配
+        List<LoanStatistics> statisticss= Lists.newArrayList();
+        borrowRepayments.stream().forEach(p->{
+            LoanStatistics loanStatistics=new LoanStatistics();
+            loanStatistics.setId(p.getId());
+            Users user=usersMap.get(p.getUserId());
+            loanStatistics.setUserName(StringUtils.isEmpty(user.getUsername())?user.getPhone():user.getUsername());
+            loanStatistics.setCollectionAt(DateHelper.dateToString(p.getRepayAt()));
+            loanStatistics.setCollectionMoney(StringHelper.formatMon(p.getRepayMoney()/100D));
+            loanStatistics.setRemark(!StringUtils.isEmpty(p.getRepayAtYes())?DateHelper.dateToString(p.getRepayAtYes())+" 已还款":"");
+            statisticss.add(loanStatistics);
+        });
+        resultMaps.put("repayments",statisticss);
         return resultMaps;
     }
 }

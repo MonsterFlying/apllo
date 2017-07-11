@@ -63,7 +63,8 @@ public class WebLoanController {
 
     @ApiOperation("借款详情")
     @GetMapping("/v2/detail/{borrowId}")
-    public ResponseEntity<VoViewRepaymentDetailWrapRes> detail(@PathVariable("borrowId") Long borrowId,@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoViewRepaymentDetailWrapRes> detail(@PathVariable("borrowId") Long borrowId,
+                                                               @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
 
         VoDetailReq voDetailReq = new VoDetailReq();
         voDetailReq.setUserId(userId);
@@ -74,7 +75,8 @@ public class WebLoanController {
 
     @ApiOperation("借款详情列表")
     @GetMapping("/v2/repayment/list/{borrowId}")
-    public ResponseEntity<VoViewLoanInfoListWrapRes> repaymentList(@PathVariable("borrowId") Long borrowId,@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoViewLoanInfoListWrapRes> repaymentList(@PathVariable("borrowId") Long borrowId,
+                                                                   @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoDetailReq voDetailReq = new VoDetailReq();
         voDetailReq.setUserId(userId);
         voDetailReq.setBorrowId(borrowId);

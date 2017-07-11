@@ -12,7 +12,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityManager;
 import javax.persistence.LockModeType;
+import javax.persistence.Query;
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -58,12 +61,25 @@ public class IncrStatisticServiceImpl implements IncrStatisticService{
                 incrStatistic = incrStatisticRepository.save(newIncrStatistic) ;
             }
         }
-
         return incrStatistic;
     }
 
     @Override
     public IncrStatistic save(IncrStatistic dbIncrStatistic) {
         return incrStatisticRepository.save(dbIncrStatistic) ;
+    }
+
+    @Autowired
+    private EntityManager entityManager;
+
+    /**
+     * 注册人数统计
+     * @return
+     */
+    @Override
+    public BigDecimal registerTotal() {
+        String sql="SELECT SUM(i.register_count) from gfb_incr_statistic as i";
+        Query query=entityManager.createNativeQuery(sql);
+      return (BigDecimal) query.getSingleResult();
     }
 }

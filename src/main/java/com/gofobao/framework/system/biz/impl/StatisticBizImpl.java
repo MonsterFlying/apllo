@@ -5,9 +5,11 @@ import com.gofobao.framework.helper.MultiCaculateHelper;
 import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.system.biz.StatisticBiz;
 import com.gofobao.framework.system.entity.Statistic;
+import com.gofobao.framework.system.service.IncrStatisticService;
 import com.gofobao.framework.system.service.StatisticService;
 import com.gofobao.framework.system.vo.response.IndexStatistics;
 import com.gofobao.framework.system.vo.response.VoViewIndexStatisticsWarpRes;
+import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +19,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Created by Max on 17/6/2.
@@ -30,6 +34,12 @@ public class StatisticBizImpl implements StatisticBiz {
 
     @Autowired
     private RedisHelper redisHelper;
+
+    @Autowired
+    private TenderService tenderService;
+
+    @Autowired
+    private IncrStatisticService incrStatisticService;
 
     private static final Gson GSON = new Gson();
 
@@ -48,6 +58,7 @@ public class StatisticBizImpl implements StatisticBiz {
 
     /**
      * 首页查询
+     *
      * @return
      */
     @Override
@@ -63,10 +74,24 @@ public class StatisticBizImpl implements StatisticBiz {
                 Long borrowTotal = statistic.getBorrowTotal();
                 indexStatistics.setTransactionsTotal(borrowTotal);
                 indexStatistics.setDueTotal(statistic.getWaitRepayTotal());
-                redisHelper.put("indexStatistic",gson.toJson(indexStatistics));
+                indexStatistics.setBorrowTotal(statistic.getBorrowTotal());
+                indexStatistics.setEarnings(statistic.getUserIncomeTotal());
+                indexStatistics.setYesterdayDueTotal(0);
+                //注册人数
+                BigDecimal registerTotal = incrStatisticService.registerTotal();
+                indexStatistics.setRegisterTotal(registerTotal);
+
+                Map<String, Integer> tenderStatistic = tenderService.statistic();
+                //昨日成交
+                indexStatistics.setYesterdayDueTotal(tenderStatistic.get("yesterdayTender"));
+                //今日成功
+                indexStatistics.setTodayDueTotal(tenderStatistic.get("todayTender"));
+                redisHelper.put("indexStatistic", gson.toJson(indexStatistics));
             }
         } catch (Throwable e) {
+            e.printStackTrace();
         }
+
         VoViewIndexStatisticsWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewIndexStatisticsWarpRes.class);
         warpRes.setIndexStatistics(indexStatistics);
         return ResponseEntity.ok(warpRes);
