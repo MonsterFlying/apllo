@@ -502,13 +502,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         response.setCashTime(DateHelper.dateToString(cashDetailLog.getCreateTime()));
         response.setFee(StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true));
         response.setRealCashMoney(StringHelper.formatDouble((cashDetailLog.getMoney() - cashDetailLog.getFee()) / 100D, true));
-        Date cashTime = null;
-        if (cashDetailLog.getState() == 1) {
-            cashTime = DateHelper.addHours(cashDetailLog.getCreateTime(), 2);
-        } else {
-            cashTime = cashDetailLog.getCallbackTime();
-        }
-
+        Date cashTime = cashDetailLog.getState() == 4 ?  DateHelper.addHours(cashDetailLog.getCreateTime(), 2) : cashDetailLog.getCallbackTime();
         response.setRealCashTime(DateHelper.dateToString(cashTime));
 
 
