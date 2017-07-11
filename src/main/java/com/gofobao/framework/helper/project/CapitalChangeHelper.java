@@ -80,7 +80,7 @@ public class CapitalChangeHelper {
 
         // 更新昨日资产
         Date zeroDate = DateHelper.beginOfDate(new Date());
-        int yesterdayMoney = 0; //  昨日资产
+        long yesterdayMoney = 0; //  昨日资产
         if (asset.getUpdatedAt().getTime() < zeroDate.getTime()) { //  写入昨日资产
             YesterdayAsset yesterdayAsset = yesterdayAssetService.findByUserId(userId);
             boolean isInsert = false;
@@ -138,7 +138,7 @@ public class CapitalChangeHelper {
 
             userCache.setUpdatedAt(new Date());
             if (yesterdayMoney != 0) {
-                userCache.setYesterdayUseMoney(yesterdayMoney > 0 ? yesterdayMoney : 0);
+                userCache.setYesterdayUseMoney(yesterdayMoney > 0L ? yesterdayMoney : 0L);
             }
             userCacheService.updateById(userCache);
         } else {

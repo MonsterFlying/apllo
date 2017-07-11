@@ -1,16 +1,11 @@
 package com.gofobao.framework.asset.biz.impl;
 
 import com.gofobao.framework.asset.biz.AssetChangeLogBiz;
-import com.gofobao.framework.asset.service.AssetChangeLogService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 /**
- * Created by Administrator on 2017/7/7 0007.
+ * Created by Administrator on 2017/7/8 0008.
  */
-@Component
+@Service
 public class AssetChangeLogBizImpl implements AssetChangeLogBiz {
-
-    @Autowired
-    AssetChangeLogService assetChangeLogService ;
 }

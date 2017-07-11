@@ -399,33 +399,90 @@ CREATE TABLE gfb_task_scheduler
 );
 
 
-
-CREATE TABLE gfb_asset_change_log
+# 资金变动标
+CREATE TABLE gfb_assets_change_log
 (
-  id INT PRIMARY KEY COMMENT '自增类型' AUTO_INCREMENT,
-  user_id INT DEFAULT 0 NOT NULL,
-  moeny BIGINT DEFAULT 0 COMMENT '更改金额',
-  type INT DEFAULT 0 COMMENT '资金变动类型',
-  available_money BIGINT DEFAULT 0 COMMENT '可用金额',
-  fee_money BIGINT DEFAULT 0 COMMENT '冻结金额',
-  virtual_money BIGINT DEFAULT 0 COMMENT '体验金',
-  collection_money BIGINT DEFAULT 0 COMMENT '待收金额',
-  payment_money BIGINT DEFAULT 0 COMMENT '待还金额',
-  for_user_id INT DEFAULT 0 COMMENT '对手账户',
-  remark VARCHAR(255) DEFAULT '' COMMENT '备注',
-  synchronize_at DATETIME COMMENT '同步时间',
-  synchronize_state INT DEFAULT 0 COMMENT '同步状态(0. 未同步, 1. 已同步)',
-  jixin_seq_no VARCHAR(255) DEFAULT '' COMMENT '即信资金序列号',
-  jixin_tx_type VARCHAR(255) DEFAULT '' COMMENT '即信交易类型',
-  jixin_tx_time TIME COMMENT '交易时间',
-  jixin_tx_date DATE COMMENT '交易时间',
-  create_at DATETIME COMMENT '创建时间',
-  update_at DATETIME COMMENT '修改时间',
-  ref_id INT DEFAULT 0 COMMENT '引用类型',
-  extend_info VARCHAR(255) DEFAULT '' COMMENT '扩展信息JSON格式'
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT DEFAULT 0 COMMENT '用户id',
+  account_id VARCHAR(32) DEFAULT '' COMMENT '电子账户',
+  money BIGINT DEFAULT 0 COMMENT '变动金额',
+  use_money BIGINT DEFAULT 0 COMMENT '可用金额',
+  no_use_money BIGINT DEFAULT 0 COMMENT '冻结金额',
+  virtual_moeny BIGINT DEFAULT 0 COMMENT '虚拟体验经',
+  collecton BIGINT DEFAULT 0 COMMENT '待收金额',
+  payment BIGINT DEFAULT 0 COMMENT '待收金额',
+  asset_change_type INT DEFAULT 0 COMMENT '资金变动类型',
+  del INT DEFAULT 0 COMMENT '有效状态',
+  syn_state INT DEFAULT 0 COMMENT '同步状态',
+  create_at DATETIME,
+  syn_time DATETIME,
+  update_at DATETIME COMMENT '同步时间'
 );
 
 
+CREATE TABLE  gfb_assets_change_log_item
+(
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  assets_change_log_id INT DEFAULT 0 COMMENT '资产变动Id',
+  user_id INT DEFAULT 0 COMMENT '用户Id',
+  account_id VARCHAR(32) DEFAULT '' COMMENT '电子账户',
+  to_user_id INT DEFAULT 0 COMMENT '对手用户Id',
+  to_user_account_id VARCHAR(32) DEFAULT '' COMMENT '对手电子账户',
+  money BIGINT DEFAULT 0 COMMENT '操作金额',
+  tx_flag VARCHAR(3) DEFAULT '+' COMMENT '状态表示: + / -',
+  curr_money BIGINT DEFAULT 0 COMMENT '当前金额',
+  ref_id INT DEFAULT 0 COMMENT '产生交易的类型',
+  third_syn_state INT DEFAULT 0 COMMENT '同步状态',
+  third_tx_type VARCHAR(32) DEFAULT '' COMMENT '存管系统返回的状态',
+  third_reponse VARCHAR(255) DEFAULT '' COMMENT '存管系统返回的交易数据',
+  third_seq_no VARCHAR(32) DEFAULT '' COMMENT '交易流水号',
+  create_at DATETIME COMMENT '创建时间',
+  update_at DATETIME COMMENT '修改时间',
+  asset_chang_type INT DEFAULT 0 COMMENT '交易类型',
+  remark VARCHAR(255) DEFAULT '' COMMENT '交易类型',
+  del INT DEFAULT 0 COMMENT '有效状态'
+);
+
+
+#修改资金为bigint 类型
+ALTER TABLE gfb_asset MODIFY use_money BIGINT NOT NULL DEFAULT '0' COMMENT '可用金额(分)';
+ALTER TABLE gfb_asset MODIFY no_use_money BIGINT NOT NULL DEFAULT '0' COMMENT '冻结金额(分)';
+ALTER TABLE gfb_asset MODIFY virtual_money BIGINT NOT NULL DEFAULT '0' COMMENT '体验金(分)';
+ALTER TABLE gfb_asset MODIFY collection BIGINT NOT NULL DEFAULT '0' COMMENT '代收金额(分)';
+ALTER TABLE gfb_asset MODIFY payment BIGINT NOT NULL DEFAULT '0' COMMENT '待还金额(分)';
+
+#修改yestoday
+ALTER TABLE gfb_yesterday_asset MODIFY use_money BIGINT NOT NULL COMMENT '可用金额（分）';
+ALTER TABLE gfb_yesterday_asset MODIFY no_use_money BIGINT NOT NULL COMMENT '冻结金额（分）';
+ALTER TABLE gfb_yesterday_asset MODIFY virtual_money BIGINT NOT NULL COMMENT '体验金（分）';
+ALTER TABLE gfb_yesterday_asset MODIFY collection BIGINT NOT NULL COMMENT '代收金额（分）';
+ALTER TABLE gfb_yesterday_asset MODIFY payment BIGINT NOT NULL COMMENT '待还金额（分）';
+
+
+ALTER TABLE gfb_user_cache MODIFY income_interest BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '已赚利息';
+ALTER TABLE gfb_user_cache MODIFY income_award BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '已转奖励';
+ALTER TABLE gfb_user_cache MODIFY income_overdue BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '逾期收入';
+ALTER TABLE gfb_user_cache MODIFY income_integral_cash BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '积分折现';
+ALTER TABLE gfb_user_cache MODIFY income_bonus BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '提成收入（推荐人）';
+ALTER TABLE gfb_user_cache MODIFY income_other BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '其他收入';
+ALTER TABLE gfb_user_cache MODIFY wait_collection_principal BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '待收本金';
+ALTER TABLE gfb_user_cache MODIFY wait_collection_interest BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '待收利息';
+ALTER TABLE gfb_user_cache MODIFY tj_wait_collection_principal BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '车贷标代收本金';
+ALTER TABLE gfb_user_cache MODIFY tj_wait_collection_interest BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '车贷标代收利息';
+ALTER TABLE gfb_user_cache MODIFY qd_wait_collection_principal BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '渠道标代收本金';
+ALTER TABLE gfb_user_cache MODIFY qd_wait_collection_interest BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '渠道标代收利息';
+ALTER TABLE gfb_user_cache MODIFY expenditure_interest BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '利息支出';
+ALTER TABLE gfb_user_cache MODIFY expenditure_interest_manage BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '利息管理费支出';
+ALTER TABLE gfb_user_cache MODIFY expenditure_manage BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '账户管理费支出';
+ALTER TABLE gfb_user_cache MODIFY expenditure_fee BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '费用支出';
+ALTER TABLE gfb_user_cache MODIFY expenditure_overdue BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '逾期支出';
+ALTER TABLE gfb_user_cache MODIFY expenditure_other BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '其他支出';
+ALTER TABLE gfb_user_cache MODIFY wait_repay_principal BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '待还本金';
+ALTER TABLE gfb_user_cache MODIFY wait_repay_interest BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '待还利息';
+ALTER TABLE gfb_user_cache MODIFY award_virtual_money BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '赠送体验金';
+ALTER TABLE gfb_user_cache MODIFY yesterday_use_money BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '昨日可用余额';
+ALTER TABLE gfb_assets_change_log CHANGE collecton collection BIGINT(20) DEFAULT '0' COMMENT '待收金额';
+ALTER TABLE gfb_assets_change_log CHANGE virtual_moeny virtual_money BIGINT(20) DEFAULT '0' COMMENT '虚拟体验经';
 ALTER TABLE `gfb_auto_tender`
   MODIFY COLUMN `repay_money_yes` int(10) unsigned DEFAULT '0' COMMENT '实际还款金额（分）',
   MODIFY COLUMN `status` int(11) DEFAULT '0' COMMENT '借款用户是否还款状态：0、未还款。1、还款；';

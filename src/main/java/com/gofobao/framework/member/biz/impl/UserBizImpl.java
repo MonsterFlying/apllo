@@ -252,12 +252,12 @@ public class UserBizImpl implements UserBiz{
         }
 
         Asset asset = new Asset() ;
-        asset.setCollection(0);
-        asset.setNoUseMoney(0);
-        asset.setPayment(0);
+        asset.setCollection(0L);
+        asset.setNoUseMoney(0L);
+        asset.setPayment(0L);
         asset.setUpdatedAt(now);
-        asset.setUseMoney(0);
-        asset.setVirtualMoney(0);
+        asset.setUseMoney(0L);
+        asset.setVirtualMoney(0L);
         asset.setUserId(userId);
         asset = assetService.save(asset) ;
         if(ObjectUtils.isEmpty(asset)){

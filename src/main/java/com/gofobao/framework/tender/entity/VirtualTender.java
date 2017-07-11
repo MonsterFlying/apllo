@@ -34,7 +34,7 @@ public class VirtualTender {
     private Integer status;
     @Basic
     @Column(name = "money", nullable = false)
-    private Integer money;
+    private Long money;
     @Basic
     @Column(name = "created_at", nullable = true)
     private Date createdAt;

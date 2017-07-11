@@ -97,7 +97,7 @@ public class VirtualServiceImpl implements VirtualService {
         virtualStatistics.setAvailable(asset.getVirtualMoney() / 100D);
         //已用
 
-        virtualStatistics.setUsed(assetLogs.stream().mapToInt(m -> m.getMoney()).sum() / 100d);
+        virtualStatistics.setUsed(assetLogs.stream().mapToLong(m -> m.getMoney()).sum() / 100d);
 
         List<VirtualTender> virtualTenders = virtualTenderRepository.findByUserIdAndStatusIs(userId, VirtualTenderContants.VIRTUALTENDERSUCCESS);
         if (CollectionUtils.isEmpty(virtualTenders)) {

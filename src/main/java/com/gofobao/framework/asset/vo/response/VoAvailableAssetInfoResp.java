@@ -12,17 +12,17 @@ import lombok.Data;
 @ApiModel("账户余额")
 public class VoAvailableAssetInfoResp extends VoBaseResp {
     @ApiModelProperty("可用余额")
-    private Integer useMoney;
+    private Long useMoney;
     @ApiModelProperty("显示可用余额")
     private String viewUseMoney;
 
     @ApiModelProperty("冻结金额")
-    private Integer noUseMoney;
+    private Long noUseMoney;
     @ApiModelProperty("显示冻结金额")
     private String viewNoUseMoney;
 
     @ApiModelProperty("总额")
-    private Integer total;
+    private Long total;
     @ApiModelProperty("显示总额")
     private String viwTotal;
 }

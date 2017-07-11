@@ -24,7 +24,7 @@ public class CapitalChangeRulePaser {
      * @param interest  利息
      * @return 解析是否成功
      */
-    public static boolean paser(Object target, String rule, int principal, int interest) {
+    public static boolean paser(Object target, String rule, long principal, long interest) {
         if ((target == null)
                 || (StringUtils.isEmpty(rule))
                 || (principal < 0)
@@ -38,7 +38,7 @@ public class CapitalChangeRulePaser {
         String opFieldName = null; // 操作字段名称
         String area = null;
         String[] temp = null;
-        Integer money = 0;
+        Long money = 0L;
         for (String subRule : rules) {
             area = "all"; // 作用域
             if (StringUtils.isEmpty(subRule)) {
