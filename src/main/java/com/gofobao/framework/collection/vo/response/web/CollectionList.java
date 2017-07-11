@@ -23,4 +23,7 @@ public class CollectionList {
 
     @ApiModelProperty("笔数")
     private Long orderCount;
+
+    @ApiModelProperty("回款")
+    private Long collectionId;
 }

@@ -19,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -41,6 +42,7 @@ public class CollectionVirtualScheduler {
     @Autowired
     private CapitalChangeHelper capitalChangeHelper;
 
+    @Scheduled(cron = "0 00 22 * * ? ")
     public void process() {
         do {
             if (NumberHelper.toInt(DateHelper.dateToString(new Date(), "HH")) < 20) {

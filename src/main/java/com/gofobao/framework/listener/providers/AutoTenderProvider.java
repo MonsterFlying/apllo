@@ -46,7 +46,7 @@ public class AutoTenderProvider {
         Borrow borrow = borrowService.findByIdLock(borrowId);
         Preconditions.checkNotNull(borrow, "自动投标异常：id为" + borrowId + "借款不存在");
         VoFindAutoTenderList voFindAutoTenderList = new VoFindAutoTenderList();
-        List<VoFindAutoTender> autoTenderList = null;
+        List<Map<String,Object>> autoTenderList = null;
 
         int num = 0;
         int pageIndex = 0;
@@ -70,8 +70,8 @@ public class AutoTenderProvider {
                 break;
             }
 
-            Iterator<VoFindAutoTender> itAutoTender = autoTenderList.iterator();
-            VoFindAutoTender voFindAutoTender = null;
+            Iterator<Map<String,Object>> itAutoTender = autoTenderList.iterator();
+            Map<String,Object> voFindAutoTender = null;
             Integer money = 0;
             Integer lowest = 0;
             Integer useMoney = 0;
@@ -88,15 +88,15 @@ public class AutoTenderProvider {
                     break;
                 }
 
-                if (tenderUserIds.contains(voFindAutoTender.getUserId())   // 保证每个用户 和 每个自动投标规则只能使用一次
-                        || autoTenderIds.contains(voFindAutoTender.getId())) {
+                if (tenderUserIds.contains(NumberHelper.toLong(voFindAutoTender.get("userId")))   // 保证每个用户 和 每个自动投标规则只能使用一次
+                        || autoTenderIds.contains(NumberHelper.toLong(voFindAutoTender.get("id")))) {
                     continue;
                 }
 
-                useMoney = voFindAutoTender.getUseMoney();  // 用户可用金额
-                money = voFindAutoTender.getMode().equals(1) ? voFindAutoTender.getTenderMoney() : useMoney;
-                money = Math.min(useMoney - voFindAutoTender.getSaveMoney(), money);
-                lowest = voFindAutoTender.getLowest(); // 最小投标金额
+                useMoney = NumberHelper.toInt(voFindAutoTender.get("useMoney"));  // 用户可用金额
+                money = String.valueOf(voFindAutoTender.get("mode")).equals("1") ? NumberHelper.toInt(voFindAutoTender.get("tenderMoney")) : useMoney;
+                money = Math.min(useMoney - NumberHelper.toInt(voFindAutoTender.get("saveMoney")), money);
+                lowest = NumberHelper.toInt(voFindAutoTender.get("lowest")); // 最小投标金额
                 if ((money < lowest)) {
                     continue;
                 }
@@ -108,21 +108,20 @@ public class AutoTenderProvider {
 
                 VoCreateTenderReq voCreateBorrowTender = new VoCreateTenderReq();
                 voCreateBorrowTender.setBorrowId(borrowId); // 标的
-                voCreateBorrowTender.setUserId(new Long(voFindAutoTender.getUserId())); // 投标用户
+                voCreateBorrowTender.setUserId(NumberHelper.toLong(voFindAutoTender.get("userId"))); // 投标用户
                 voCreateBorrowTender.setTenderMoney(MathHelper.myRound(money / 100.0, 2));  // 投标金额
-                voCreateBorrowTender.setAutoOrder(voFindAutoTender.getOrder());
-                voCreateBorrowTender.setLowest(MathHelper.myRound(voFindAutoTender.getLowest() / 100.0, 2));
+                voCreateBorrowTender.setAutoOrder(NumberHelper.toInt(voFindAutoTender.get("order")));
+                voCreateBorrowTender.setLowest(MathHelper.myRound(NumberHelper.toInt(voFindAutoTender.get("lowest")) / 100.0, 2));
                 voCreateBorrowTender.setIsAutoTender(true);//自动标识
 
-                if ((!tenderUserIds.contains(voFindAutoTender.getUserId()))
-                        && (!autoTenderIds.contains(voFindAutoTender.getId()))) {  // 保证自动不能重复
+                if ((!tenderUserIds.contains(NumberHelper.toLong(voFindAutoTender.get("userId"))))
+                        && (!autoTenderIds.contains(NumberHelper.toLong(voFindAutoTender.get("id"))))) {  // 保证自动不能重复
                     ResponseEntity<VoBaseResp> response = tenderBiz.createTender(voCreateBorrowTender);
                     if (response.getStatusCode().equals(HttpStatus.OK)) {
                         moneyYes += lowest;
-                        autoTenderIds.add(new Long(voFindAutoTender.getId()));
-                        tenderUserIds.add(new Long(voFindAutoTender.getUserId())) ;
-                        voFindAutoTender.setAutoAt(nowDate);
-                        voFindAutoTender.setId(voFindAutoTender.getId());
+                        autoTenderIds.add(NumberHelper.toLong(voFindAutoTender.get("id")));
+                        tenderUserIds.add(NumberHelper.toLong(voFindAutoTender.get("userId"))) ;
+                        autoTender.setAutoAt(nowDate);
                         autoTenderService.updateById(autoTender);
                         autoTenderCount++;
                     } else {

@@ -2,14 +2,18 @@ package com.gofobao.framework.scheduler;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.borrow.entity.Borrow;
+import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.vo.request.VoAdvanceReq;
 import com.gofobao.framework.system.service.BannerService;
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.EntityManager;
@@ -23,13 +27,16 @@ import java.util.List;
  */
 @Component
 @Slf4j
-public class BorrowAdvance {
+public class BorrowAdvanceScheduler {
 
     @Autowired
     private EntityManager entityManager;
     @Autowired
-    private BannerService bannerService;
+    private BorrowService borrowService;
+    @Autowired
+    private RepaymentBiz repaymentBiz;
 
+    @Scheduled(cron = "0 55 23 * * ? ")
     public void process() {
         List<BorrowRepayment> borrowRepaymentList = null;
         List<Borrow> borrowList = null;
@@ -57,9 +64,20 @@ public class BorrowAdvance {
                     .<Borrow>and()
                     .in("id", borrowIds.toArray())
                     .build();
-
+            borrowList = borrowService.findList(bs);
 
             for (BorrowRepayment borrowRepayment : borrowRepaymentList) {
+                for (Borrow borrow : borrowList){
+                    if (String.valueOf(borrowRepayment.getBorrowId()).equals(String.valueOf(borrow.getId()))){
+                        VoAdvanceReq voAdvanceReq = new VoAdvanceReq();
+                        voAdvanceReq.setRepaymentId(borrowRepayment.getId());
+                        try {
+                            repaymentBiz.advance(voAdvanceReq);
+                        } catch (Exception e) {
+                            log.error("borrowAdvanceScheduler error:",e);
+                        }
+                    }
+                }
             }
         } while (borrowRepaymentList.size() >= pageSize);
     }

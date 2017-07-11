@@ -322,7 +322,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Double interestPercent = voRepayReq.getInterestPercent();
         Long userId = voRepayReq.getUserId();
         Long repaymentId = voRepayReq.getRepaymentId();
-        interestPercent = interestPercent == 0 ? 1 : interestPercent;
+        interestPercent = (ObjectUtils.isEmpty(interestPercent) || interestPercent == 0) ? 1 : interestPercent;
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);
         Preconditions.checkNotNull(borrowRepayment, "还款不存在!");
         if (borrowRepayment.getStatus() != 0) {
@@ -347,6 +347,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //检查还款账户是否完成存管操作  与  完成必需操作
         //===================================================================
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "还款会员未开户！", VoAutoTenderInfo.class));
+        }
+
         if (userThirdAccount.getPasswordState() != 1) {
             return ResponseEntity
                     .badRequest()
@@ -971,6 +977,32 @@ public class RepaymentBizImpl implements RepaymentBiz {
     }
 
     /**
+     * 立即还款
+     *
+     * @param voPcInstantlyRepaymentReq
+     * @return
+     * @throws Exception
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoBaseResp> pcRepay(VoPcInstantlyRepaymentReq voPcInstantlyRepaymentReq) throws Exception {
+
+        String paramStr = voPcInstantlyRepaymentReq.getParamStr();
+        if (!SecurityHelper.checkSign(voPcInstantlyRepaymentReq.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc取消借款 签名验证不通过!"));
+        }
+        Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        Long repaymentId = NumberHelper.toLong(paramMap.get("repaymentId"));
+        BorrowRepayment borrowRepayment = borrowRepaymentService.findById(repaymentId);
+
+        VoRepayReq voRepayReq = new VoRepayReq();
+        voRepayReq.setRepaymentId(repaymentId);
+        voRepayReq.setUserId(borrowRepayment.getUserId());
+        return repay(voRepayReq);
+    }
+
+    /**
      * 垫付检查
      *
      * @param repaymentId
@@ -1044,15 +1076,14 @@ public class RepaymentBizImpl implements RepaymentBiz {
     }
 
     /**
-     * 垫付
-     *
-     * @param voAdvanceReq
+     * pc垫付
+     * @param voPcAdvanceReq
      * @return
+     * @throws Exception
      */
-    @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> advance(VoAdvanceReq voAdvanceReq) throws Exception {
-        String paramStr = voAdvanceReq.getParamStr();
-        if (!SecurityHelper.checkSign(voAdvanceReq.getSign(), paramStr)) {
+    public ResponseEntity<VoBaseResp> pcAdvance(VoPcAdvanceReq voPcAdvanceReq) throws Exception {
+        String paramStr = voPcAdvanceReq.getParamStr();
+        if (!SecurityHelper.checkSign(voPcAdvanceReq.getSign(), paramStr)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "pc取消借款 签名验证不通过!"));
@@ -1060,13 +1091,27 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         Long repaymentId = NumberHelper.toLong(paramMap.get("repaymentId"));
 
+        VoAdvanceReq voAdvanceReq = new VoAdvanceReq();
+        voAdvanceReq.setRepaymentId(repaymentId);
+        return advance(voAdvanceReq);
+    }
+
+    /**
+     * 垫付
+     *
+     * @param voAdvanceReq
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoBaseResp> advance(VoAdvanceReq voAdvanceReq) throws Exception {
+        Long repaymentId = voAdvanceReq.getRepaymentId();
+
         ResponseEntity resp = advanceCheck(repaymentId);
         if (!ObjectUtils.isEmpty(resp)) {
             return resp;
         }
         VoBatchBailRepayReq voBatchBailRepayReq = new VoBatchBailRepayReq();
         voBatchBailRepayReq.setRepaymentId(repaymentId);
-        voBatchBailRepayReq.setInterestPercent(1d);
         return borrowRepaymentThirdBiz.thirdBatchBailRepay(voBatchBailRepayReq);
     }
 

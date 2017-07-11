@@ -31,9 +31,9 @@ public class VoFindAutoTender {
     private Date autoAt;
     private Date createdAt;
     private Date updatedAt;
-    private Integer useMoney;
-    private Integer noUseMoney;
-    private Integer virtualMoney;
-    private Integer collection;
-    private Integer payment;
+    private Long useMoney;
+    private Long noUseMoney;
+    private Long virtualMoney;
+    private Long collection;
+    private Long payment;
 }

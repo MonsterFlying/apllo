@@ -1,5 +1,6 @@
 package com.gofobao.framework.collection.biz.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.borrow.service.BorrowService;
@@ -15,20 +16,24 @@ import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderRes;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
-import com.gofobao.framework.collection.vo.response.web.Collection;
-import com.gofobao.framework.collection.vo.response.web.CollectionList;
-import com.gofobao.framework.collection.vo.response.web.VoViewCollectionListWarpRes;
-import com.gofobao.framework.collection.vo.response.web.VoViewCollectionWarpRes;
+import com.gofobao.framework.collection.vo.response.web.*;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.StringHelper;
 import io.jsonwebtoken.lang.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Range;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -139,7 +144,8 @@ public class PaymentBizImpl implements PaymentBiz {
 
 
     /**
-     *pc: 回款详情
+     * pc: 回款详情
+     *
      * @param listReq
      * @return
      */
@@ -191,5 +197,64 @@ public class PaymentBizImpl implements PaymentBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewCollectionDaysWarpRes.class));
 
         }
+    }
+
+
+    /**
+     * 根据时间查询回款列表
+     *
+     * @param dateStr
+     * @param userId
+     * @return
+     */
+    public ResponseEntity<VoCollectionListByDays> collectionListByDays(String dateStr, Long userId) {
+
+        Date date = DateHelper.stringToDate(dateStr,DateHelper.DATE_FORMAT_YMD);
+
+        VoCollectionListByDays voCollectionListByDays = VoCollectionListByDays.ok("查询成功!",VoCollectionListByDays.class);
+        List<CollectionDetail> collectionDetailList = new ArrayList<>();
+
+        Specification<BorrowCollection> bcs = Specifications
+                .<BorrowCollection>and()
+                .between("collectionAt", new Range<>(DateHelper.beginOfDate(date), DateHelper.endOfDate(date)))
+                .eq("status", 0)
+                .build();
+        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
+        List<Long> borrowIds = new ArrayList<>();
+        if (CollectionUtils.isEmpty(borrowCollectionList)){
+            return ResponseEntity.ok(voCollectionListByDays);
+        }
+
+        for (BorrowCollection borrowCollection : borrowCollectionList){
+            borrowIds.add(borrowCollection.getBorrowId());
+        }
+
+        Specification<Borrow> bs = Specifications
+                .<Borrow>and()
+                .in("id",borrowIds.toArray())
+                .build();
+        List<Borrow> borrowList = borrowService.findList(bs);
+
+        CollectionDetail collectionDetail = null;
+        for (BorrowCollection borrowCollection : borrowCollectionList){
+            for (Borrow borrow : borrowList){
+                if (String.valueOf(borrowCollection.getBorrowId()).equals(String.valueOf(borrow.getId()))) {
+                    collectionDetail = new CollectionDetail();
+                    collectionDetail.setName(borrow.getName());
+                    collectionDetail.setCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAt(),DateHelper.DATE_FORMAT_YMD));
+                    collectionDetail.setPrincipal(StringHelper.formatDouble(borrowCollection.getPrincipal(),100,false));
+                    int money = borrowCollection.getInterest();
+                    if (borrow.getType() == 0 || borrow.getType() == 4){
+                        money -= (int)MathHelper.myRound(borrowCollection.getInterest() * 0.9,0);
+                    }
+                    collectionDetail.setEarnings(StringHelper.formatDouble(money,100,false));
+                    collectionDetail.setInterest(StringHelper.formatDouble(borrowCollection.getInterest(),100,false));
+                    collectionDetail.setOrderStr(borrowCollection.getOrder()+1 +"/"+borrow.getTotalOrder());
+                    collectionDetailList.add(collectionDetail);
+                }
+            }
+        }
+        voCollectionListByDays.setCollectionDetailList(collectionDetailList);
+        return ResponseEntity.ok(voCollectionListByDays);
     }
 }
