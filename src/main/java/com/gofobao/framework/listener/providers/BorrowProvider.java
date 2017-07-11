@@ -169,7 +169,6 @@ public class BorrowProvider {
         borrowService.updateById(borrow);   // 更改标的为可投标状态
         Long lendId = borrow.getLendId();
 
-        Preconditions.checkState(ObjectUtils.isArray(lendId), "摘草信息为空");
         Lend lend = lendService.findById(lendId);
         VoCreateTenderReq voCreateTenderReq = new VoCreateTenderReq();
         voCreateTenderReq.setUserId(lend.getUserId());

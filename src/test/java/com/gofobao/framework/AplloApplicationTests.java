@@ -232,8 +232,8 @@ public class AplloApplicationTests {
         }*/
 
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("160729");
-        batchDetailsQueryReq.setBatchTxDate("20170708");
+        batchDetailsQueryReq.setBatchNo("095518");
+        batchDetailsQueryReq.setBatchTxDate("20170711");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
