@@ -162,7 +162,6 @@ public class LoanBizImpl implements LoanBiz {
             warpRes.setStatisticss(borrowRepayments);
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "获取查询异常", VoViewLoanStatisticsWarpRes.class));

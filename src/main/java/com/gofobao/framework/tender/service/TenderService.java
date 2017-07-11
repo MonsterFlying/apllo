@@ -8,6 +8,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by admin on 2017/5/19.
@@ -43,4 +44,9 @@ public interface TenderService {
 
     Tender findByAuthCode(String authCode);
 
+    /**
+     * 昨日 今日 成交统计
+     * @return
+     */
+    Map<String, Integer> statistic();
 }
