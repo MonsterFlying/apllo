@@ -15,7 +15,19 @@ public class IndexStatistics {
     @ApiModelProperty("待收总额")
     private Long dueTotal;
 
-/*    @ApiModelProperty("安全运营天数")
-    private String securityDays;*/
+    @ApiModelProperty("注册人数")
+    private Integer userNum;
+
+    @ApiModelProperty("为用户赚取收益")
+    private Long earnings;
+
+    @ApiModelProperty("实现成功贷款（笔）")
+    private Long order;
+
+    @ApiModelProperty("今日成交额")
+    private Integer todayDueTotal;
+
+    @ApiModelProperty("昨日成交额")
+    private Integer yesterdayDueTotal;
 
 }

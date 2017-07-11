@@ -38,6 +38,8 @@ public class MyInvestBizImpl implements MyInvestBiz {
             voViewBackMoneyListWarpRes.setTotalCount(totalCount);
             return ResponseEntity.ok(voViewBackMoneyListWarpRes);
         } catch (Throwable e) {
+
+            e.printStackTrace();
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR,"查询失败", VoViewBackMoneyListWarpRes.class));

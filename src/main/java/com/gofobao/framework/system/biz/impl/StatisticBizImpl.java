@@ -63,6 +63,7 @@ public class StatisticBizImpl implements StatisticBiz {
                 Long borrowTotal = statistic.getBorrowTotal();
                 indexStatistics.setTransactionsTotal(borrowTotal);
                 indexStatistics.setDueTotal(statistic.getWaitRepayTotal());
+
                 redisHelper.put("indexStatistic",gson.toJson(indexStatistics));
             }
         } catch (Throwable e) {

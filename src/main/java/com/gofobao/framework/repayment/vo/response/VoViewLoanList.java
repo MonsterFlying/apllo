@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -15,12 +16,12 @@ import java.util.List;
 public class VoViewLoanList {
 
     @ApiModelProperty("总期数")
-    private Integer orderCount;
+    private Integer orderCount=0;
 
     @ApiModelProperty("应还本息")
-    private String sumRepayMoney;
+    private String sumRepayMoney="0";
 
     @ApiModelProperty("借款列表")
-    private List<VoLoanInfo> voLoanInfoList;
+    private List<VoLoanInfo> voLoanInfoList=new ArrayList<>();
 
 }
