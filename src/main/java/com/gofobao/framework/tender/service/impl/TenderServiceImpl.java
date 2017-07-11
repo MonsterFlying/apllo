@@ -17,6 +17,7 @@ import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.repository.TenderRepository;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.TenderUserReq;
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
@@ -154,5 +155,27 @@ public class TenderServiceImpl implements TenderService {
 
     public Tender findByAuthCode(String authCode) {
         return tenderRepository.findByAuthCode(authCode);
+    }
+
+    @Override
+    public Map<String, Integer> statistic() {
+        Date todayAt=new Date();
+        Date yesterdayAt=DateHelper.addDays(todayAt,1);
+        Specification todaySpecificati=Specifications.<Tender>and()
+                .between("createdAt",new Range<>(DateHelper.beginOfDate(todayAt),DateHelper.endOfDate(todayAt)))
+                .eq("status",TenderConstans.SUCCESS)
+                .build();
+        Specification yesterdaySpecificati=Specifications.<Tender>and()
+                .between("createdAt",new Range<>(DateHelper.beginOfDate(yesterdayAt),DateHelper.endOfDate(yesterdayAt)))
+                .eq("status",TenderConstans.SUCCESS)
+                .build();
+        List<Tender> todayTender=tenderRepository.findAll(todaySpecificati);
+        List<Tender> yesterdayTender=tenderRepository.findAll(yesterdaySpecificati);
+
+        Map<String,Integer> statistic= Maps.newHashMap();
+        statistic.put("todayTender",CollectionUtils.isEmpty(todayTender)?0:todayTender.stream().mapToInt(p->p.getValidMoney()).sum());
+        statistic.put("yesterdayTender",CollectionUtils.isEmpty(yesterdayTender)?0:yesterdayTender.stream().mapToInt(p->p.getValidMoney()).sum());
+
+        return statistic;
     }
 }
