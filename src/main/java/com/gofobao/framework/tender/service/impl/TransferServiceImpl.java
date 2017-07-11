@@ -258,6 +258,7 @@ public class TransferServiceImpl implements TransferService {
             transferMay.setInterest(StringHelper.formatMon(interestSum / 100d));
             transferMay.setPrincipal(StringHelper.formatMon(principalSum / 100d));
             transferMay.setOrder(borrowCollectionList1.size());
+            transferMay.setBorrowId(borrow.getId());
             BorrowCollection borrowCollection = borrowCollectionList1.get(0);
             transferMay.setNextCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAt()));
             transferMays.add(transferMay);
