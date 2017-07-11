@@ -287,7 +287,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
         // 计算提现费用
         long fee = 0L;
-        if (freeTime > 10) {  // 收费
+        if (freeTime <= 0) {  // 收费
             fee = 200L;
         }
 
