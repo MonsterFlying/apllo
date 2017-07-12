@@ -59,7 +59,6 @@ public class RechargeController {
     public ResponseEntity<VoRechargeEntityWrapResp> log(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                         @PathVariable("pageIndex") int pageIndex,
                                                         @PathVariable("pageSize")int pageSize){
-        --pageIndex;
         return assetBiz.log(userId, pageIndex, pageSize) ;
     }
 

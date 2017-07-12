@@ -8,6 +8,7 @@ import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.service.AutoTenderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.util.CollectionUtils;
 
 import java.util.Date;
@@ -23,6 +24,7 @@ public class AutoTenderClearScheduler {
     @Autowired
     private AutoTenderService autoTenderService;
 
+    @Scheduled(cron = "0 4 0 * * ? ")
     public void process() {
         do {
 

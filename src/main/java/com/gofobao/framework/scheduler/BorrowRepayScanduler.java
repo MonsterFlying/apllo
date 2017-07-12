@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -38,7 +39,17 @@ public class BorrowRepayScanduler {
     @Autowired
     private RepaymentBiz repaymentBiz;
 
+    @Scheduled(cron = "0 50 23 * * ? ")
     public void process() {
+        borrowRepay();
+    }
+
+    @Scheduled(cron = "0 00 23 * * ? ")
+    public void process01() {
+        borrowRepay();
+    }
+
+    private void borrowRepay(){
         Specification<BorrowRepayment> brs = Specifications
                 .<BorrowRepayment>and()
                 .eq("status",0)

@@ -166,10 +166,9 @@ public class BorrowProvider {
         borrow.setVerifyAt(nowDate);
         Date releaseAt = borrow.getReleaseAt();
         borrow.setReleaseAt(ObjectUtils.isArray(releaseAt) ? nowDate : releaseAt);
-        borrowService.updateById(borrow);   // 更改标的为可投标状态
+        borrowService.save(borrow);   // 更改标的为可投标状态
         Long lendId = borrow.getLendId();
 
-        Preconditions.checkState(ObjectUtils.isArray(lendId), "摘草信息为空");
         Lend lend = lendService.findById(lendId);
         VoCreateTenderReq voCreateTenderReq = new VoCreateTenderReq();
         voCreateTenderReq.setUserId(lend.getUserId());
@@ -177,9 +176,8 @@ public class BorrowProvider {
         voCreateTenderReq.setTenderMoney(MathHelper.myRound(borrow.getMoney() / 100.0, 2));
         ResponseEntity<VoBaseResp> response = tenderBiz.createTender(voCreateTenderReq);
         return response.getStatusCode().equals(HttpStatus.OK);
-
-
     }
+
 
     /**
      * 复审

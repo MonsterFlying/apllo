@@ -9,6 +9,7 @@ import com.gofobao.framework.lend.service.LendService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.transaction.Transactional;
@@ -27,7 +28,7 @@ public class LendScheduler {
     @Autowired
     private LendService lendService;
 
-    @Transactional(rollbackOn = Exception.class)
+    @Scheduled(cron = "0 3 0 * * ? ")
     public void process() {
         Specification<Lend> ls = Specifications
                 .<Lend>and()

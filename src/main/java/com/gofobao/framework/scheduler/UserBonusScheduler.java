@@ -11,6 +11,7 @@ import com.gofobao.framework.member.service.BrokerBounsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,8 +36,8 @@ public class UserBonusScheduler {
     /**
      * 理财师提成
      */
-    //@Scheduled(fixedRate = 20 * 60 * 1000)
     @Transactional(rollbackFor = Exception.class)
+    @Scheduled(cron = "0 1 0 * * ? ")
     public void brokerProcess() {
         try {
             Date validDate = DateHelper.createDate(2016, 8, 14, 0, 0, 0);
@@ -101,6 +102,7 @@ public class UserBonusScheduler {
     /**
      * 天提成
      */
+    @Scheduled(cron = "0 30 23 * * ? ")
     public void dayProcess() {
         try {
             StringBuffer sql = new StringBuffer("select sum(gfb_asset.collection) - sum(gfb_asset.payment) as sum, `gfb_ticheng_user`.`user_id` as userId" +
@@ -134,6 +136,7 @@ public class UserBonusScheduler {
     /**
      * 月提成
      */
+    @Scheduled(cron = "0 35 23 1 * ? ")
     public void monthProcess() {
         try {
             StringBuffer sql = new StringBuffer("select sum(gfb_asset.collection) - sum(gfb_asset.payment) as sum, " +

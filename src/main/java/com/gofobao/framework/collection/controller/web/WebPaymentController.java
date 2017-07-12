@@ -3,16 +3,16 @@ package com.gofobao.framework.collection.controller.web;
 import com.gofobao.framework.collection.biz.PaymentBiz;
 import com.gofobao.framework.collection.vo.request.OrderListReq;
 import com.gofobao.framework.collection.vo.request.VoCollectionListReq;
+import com.gofobao.framework.collection.vo.response.web.VoCollectionListByDays;
 import com.gofobao.framework.collection.vo.response.web.VoViewCollectionListWarpRes;
 import com.gofobao.framework.collection.vo.response.web.VoViewCollectionWarpRes;
+import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 /**
  * Created by admin on 2017/5/31.
@@ -27,9 +27,9 @@ public class WebPaymentController {
 
     @ApiOperation("回款明细-回款详情 time:2017-05-06")
     @GetMapping("/v2/collection/list")
-    public ResponseEntity<VoViewCollectionWarpRes> collectionOrderList(VoCollectionListReq collectionListReq/*,
-                                                                                 @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
-        collectionListReq.setUserId(901L);
+    public ResponseEntity<VoViewCollectionWarpRes> collectionOrderList(VoCollectionListReq collectionListReq,
+                                                                                 @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        collectionListReq.setUserId(userId);
         return paymentBiz.pcOrderDetail(collectionListReq);
     }
 
@@ -37,13 +37,26 @@ public class WebPaymentController {
     @ApiOperation("回款明细")
     @GetMapping("/v2/days/collection/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewCollectionListWarpRes> orderDetail(@PathVariable("pageIndex") Integer pageIndex,
-                                                             @PathVariable("pageSize") Integer pageSize/*,
-                                                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+                                                             @PathVariable("pageSize") Integer pageSize,
+                                                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         OrderListReq orderListReq=new OrderListReq();
-        orderListReq.setUserId(901L);
+        orderListReq.setUserId(userId);
         orderListReq.setPageIndex(pageIndex);
         orderListReq.setPageSize(pageSize);
         return paymentBiz.pcOrderList(orderListReq);
+    }
+
+    /**
+     * 根据时间查询回款列表
+     *
+     * @param date
+     * @param userId
+     * @return
+     */
+    @ApiOperation("根据时间查询回款列表")
+    @GetMapping("/v2/days/collection/list/{date}")
+    public ResponseEntity<VoCollectionListByDays> collectionListByDays(@PathVariable("date") String date,@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+        return paymentBiz.collectionListByDays(date,userId);
     }
 
 

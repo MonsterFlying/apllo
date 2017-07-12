@@ -33,20 +33,28 @@ public class BorrowListener {
 
     @RabbitHandler
     public void process(String message) {
-        Preconditions.checkNotNull(message, "BorrowListener process message is empty");
-        Map<String, Object> body = gson.fromJson(message, TypeTokenContants.MAP_TOKEN);
-        Preconditions.checkNotNull(body.get(MqConfig.MSG_TAG), "BorrowListener process tag is empty ");
-        Preconditions.checkNotNull(body.get(MqConfig.MSG_BODY), "BorrowListener process body is empty ");
-        String tag = body.get(MqConfig.MSG_TAG).toString();
-        Map<String, String> msg = (Map<String, String>) body.get(MqConfig.MSG_BODY);
+        Map<String, Object> body = null;
+        String tag = null;
+        Map<String, String> msg = null;
+        Long borrowId = null;
+        try {
+            Preconditions.checkNotNull(message, "BorrowListener process message is empty");
+            body = gson.fromJson(message, TypeTokenContants.MAP_TOKEN);
+            Preconditions.checkNotNull(body.get(MqConfig.MSG_TAG), "BorrowListener process tag is empty ");
+            Preconditions.checkNotNull(body.get(MqConfig.MSG_BODY), "BorrowListener process body is empty ");
+            tag = body.get(MqConfig.MSG_TAG).toString();
+            msg = (Map<String, String>) body.get(MqConfig.MSG_BODY);
 
-        Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
+            borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
+        } catch (Throwable throwable) {
+            log.error("borrowListener param error：", throwable);
+        }
 
         boolean bool = false;
         if (tag.equals(MqTagEnum.FIRST_VERIFY.getValue())) {  // 标的初审
             try {
                 bool = borrowProvider.doFirstVerify(msg);
-            } catch (Throwable throwable){
+            } catch (Throwable throwable) {
                 log.error("初审异常:", throwable);
             }
             if (bool) {
@@ -61,7 +69,7 @@ public class BorrowListener {
         } else if (tag.equals(MqTagEnum.AGAIN_VERIFY.getValue())) {  // 复审
             try {
                 bool = borrowProvider.doAgainVerify(msg);
-            } catch (Throwable throwable){
+            } catch (Throwable throwable) {
                 log.error("复审异常:", throwable);
             }
 
@@ -77,5 +85,6 @@ public class BorrowListener {
         } else {
             log.error("BorrowListener 未找到对应的type");
         }
+
     }
 }

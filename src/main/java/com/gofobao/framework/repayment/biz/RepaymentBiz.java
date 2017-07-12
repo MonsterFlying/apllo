@@ -99,4 +99,20 @@ public interface RepaymentBiz {
      * @throws Exception
      */
     ResponseEntity<VoBaseResp> advanceDeal(VoAdvanceCall voAdvanceCall) throws Exception;
+
+    /**
+     * pc 垫付
+     * @param voPcAdvanceReq
+     * @return
+     * @throws Exception
+     */
+    ResponseEntity<VoBaseResp> pcAdvance(VoPcAdvanceReq voPcAdvanceReq) throws Exception;
+
+    /**
+     * pc 立即还款
+     * @param voPcInstantlyRepaymentReq
+     * @return
+     * @throws Exception
+     */
+    ResponseEntity<VoBaseResp> pcRepay(VoPcInstantlyRepaymentReq voPcInstantlyRepaymentReq) throws Exception;
 }

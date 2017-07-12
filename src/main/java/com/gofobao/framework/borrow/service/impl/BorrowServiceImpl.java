@@ -33,6 +33,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -722,5 +724,10 @@ public class BorrowServiceImpl implements BorrowService {
 
     public Borrow getBorrowByProductId(String productId) {
         return borrowRepository.findByProductId(productId);
+    }
+
+    @Transactional(rollbackFor = Exception.class,propagation = Propagation.NOT_SUPPORTED)
+    public Borrow flushSave(Borrow borrow){
+        return borrowRepository.save(borrow);
     }
 }

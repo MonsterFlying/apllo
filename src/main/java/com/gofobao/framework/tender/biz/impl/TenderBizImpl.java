@@ -339,7 +339,7 @@ public class TenderBizImpl implements TenderBiz {
             releaseAt = borrow.getReleaseAt();
         }
 
-        if (releaseAt.getTime() > nowDate.getTime()) {
+        if (ObjectUtils.isEmpty(borrow.getLendId()) && (releaseAt.getTime() > nowDate.getTime())) {
             errerMessage.add("当前标的未到发布时间!");
             return false;
         }
@@ -347,12 +347,15 @@ public class TenderBizImpl implements TenderBiz {
         Date endDate = DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);
         if (endDate.getTime() < nowDate.getTime()) {
             // 流标
+            log.info("==========================================");
+            log.info( String.format("标的流标操作: %s", GSON.toJson(borrow)));
+            log.info("==========================================");
             VoCancelBorrow voCancelBorrow = new VoCancelBorrow();
             voCancelBorrow.setBorrowId(borrow.getId());
             voCancelBorrow.setUserId(borrow.getUserId());
             ResponseEntity<VoBaseResp> voBaseRespResponseEntity = borrowBiz.cancelBorrow(voCancelBorrow);
             if (voBaseRespResponseEntity.getStatusCode().equals(HttpStatus.OK)) {
-                errerMessage.add("已过招标时间");
+                errerMessage.add("当前标的已经超过招标时间");
             } else {
                 errerMessage.add(voBaseRespResponseEntity.getBody().getState().getMsg());
             }

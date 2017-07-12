@@ -75,6 +75,7 @@ import org.springframework.util.StringUtils;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 /**
  * Created by Administrator on 2017/6/12 0012.
@@ -206,10 +207,9 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         resp.setCardNo(userThirdAccount.getCardNo().substring(userThirdAccount.getCardNo().length() - 4));
 
 
-
         resp.setUseMoneyShow(StringHelper.formatDouble(getRealCashMoney(userId) / 100D, true));
-        resp.setUseMoney(getRealCashMoney(userId)  / 100D);
-        int time = queryFreeTime(userId) ;
+        resp.setUseMoney(getRealCashMoney(userId) / 100D);
+        int time = queryFreeTime(userId);
         resp.setFreeTime(time);
         return ResponseEntity.ok(resp);
     }
@@ -252,101 +252,65 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
         // 用户可提现余额
-        Long useMoney = getRealCashMoney(userId) ;
-        if(useMoney <= 0){
+        Long useMoney = getRealCashMoney(userId);
+        if (useMoney <= 0) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "账户余额为0！", VoHtmlResp.class));
         }
 
         // 对于大于5万小于20万直接返回失败
-        if(voCashReq.getCashMoney() > 50000 && voCashReq.getCashMoney() < 20 * 10000){
+        if (voCashReq.getCashMoney() > 50000 || voCashReq.getCashMoney() <= 0) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "快捷提现为小于等于5万", VoHtmlResp.class));
-        }
-
-        if ((voCashReq.getCashMoney() >= 200000) && (StringUtils.isEmpty(voCashReq.getBankAps()))) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "提现金额大于20万,请走人行通道！", VoHtmlResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "快捷提现金额不能大于5万", VoHtmlResp.class));
         }
 
         // 判断提现金额
-        if (useMoney < voCashReq.getCashMoney() * 100) {
+        if ( useMoney < voCashReq.getCashMoney() * 100 ) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "提现金额大于账户可用余额！", VoHtmlResp.class));
         }
 
-
         // 判断当天提现次数
-        int cashTime = bankAccountBiz.getCashCredit4Day( userId ) ;
-
-        if(cashTime >= 10){
+        int cashTimes = bankAccountBiz.getCashCredit4Day(userId);
+        if (cashTimes > 10) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "对不起, 发起用户！", VoHtmlResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "对不起, 当天提现次数大于10次!", VoHtmlResp.class));
         }
-        boolean bigCashState = false; // 人行通道?
-        if ((voCashReq.getCashMoney() >= 200000) && (!StringUtils.isEmpty(voCashReq.getBankAps()))) {
-            bigCashState = true;
-        }
-
         Date nowDate = new Date();
-
-        if (bigCashState) {
-            Date zeroDate = DateHelper.beginOfDate(nowDate);
-            Date startDate = DateHelper.addHours(zeroDate, 9);
-            Date endDate = DateHelper.addMinutes(zeroDate, 60 * 16 + 45);
-
-            if ((startDate.getTime() > zeroDate.getTime()) || (endDate.getTime() < nowDate.getTime())) {
-                return ResponseEntity
-                        .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR, "江西银行的大额度提现通道开放时间:09:00-16:45(仅限工作日),建议进行实时提现,提到提现效率.", VoHtmlResp.class));
-            }
-        }
-
-
         double cashMoney = voCashReq.getCashMoney() * 100;  // 提现金额
         // 免费体现次数
         int freeTime = queryFreeTime(userId);
+
         // 计算提现费用
         long fee = 0L;
-        if (freeTime > 10) {  // 收费
+        if (freeTime <= 0) {  // 收费
             fee = 200L;
         }
 
-        WithDrawRequest request = new WithDrawRequest();
-        request.setSeqNo(RandomHelper.generateNumberCode(6));
-        request.setTxTime(DateHelper.getTime());
-        request.setTxDate(DateHelper.getDate());
-        request.setIdType(IdTypeContant.ID_CARD);
-        request.setIdNo(users.getCardId());
-        request.setName(users.getRealname());
-        request.setMobile(userThirdAccount.getMobile());
-        request.setCardNo(userThirdAccount.getCardNo());
-        request.setAccountId(userThirdAccount.getAccountId());
-        request.setTxAmount(StringHelper.formatDouble(new Double((cashMoney - fee) / 100D), false)); //  交易金额
-        if (bigCashState) {
-            request.setRouteCode("2");
-            request.setCardBankCnaps(voCashReq.getBankAps());
-        } else {
-            request.setRouteCode("0");
-        }
-        if (fee == 0) {  // 费用
-            request.setTxFee("0");
-        } else {
-            request.setTxFee(StringHelper.formatDouble(new Double(fee / 100D), false));
-        }
-
-        request.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, userId));
-        request.setRetUrl(String.format("%s/%s/%s", javaDomain, "/pub/cash/show/", request.getTxDate() + request.getTxTime() + request.getSeqNo()));
-        request.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/asset/cash/callback"));
-        request.setAcqRes(String.valueOf(userId));
-        request.setChannel(ChannelContant.getchannel(httpServletRequest));
+        WithDrawRequest withDrawRequest = new WithDrawRequest();
+        withDrawRequest.setSeqNo(RandomHelper.generateNumberCode(6));
+        withDrawRequest.setTxTime(DateHelper.getTime());
+        withDrawRequest.setTxDate(DateHelper.getDate());
+        withDrawRequest.setIdType(IdTypeContant.ID_CARD);
+        withDrawRequest.setIdNo(users.getCardId());
+        withDrawRequest.setName(users.getRealname());
+        withDrawRequest.setMobile(userThirdAccount.getMobile());
+        withDrawRequest.setCardNo(userThirdAccount.getCardNo());
+        withDrawRequest.setAccountId(userThirdAccount.getAccountId());
+        withDrawRequest.setTxAmount(StringHelper.formatDouble(new Double((cashMoney - fee) / 100D), false)); //  交易金额
+        withDrawRequest.setRouteCode("0");
+        withDrawRequest.setTxFee(StringHelper.formatDouble(new Double(fee / 100D), false)) ;
+        withDrawRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, userId));
+        withDrawRequest.setRetUrl(String.format("%s/%s/%s", javaDomain, "/pub/cash/show/", withDrawRequest.getTxDate() + withDrawRequest.getTxTime() + withDrawRequest.getSeqNo()));
+        withDrawRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/asset/cash/callback"));
+        withDrawRequest.setAcqRes(String.valueOf(userId));
+        withDrawRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
         // 生成提现表单
-        String html = jixinManager.getHtml(JixinTxCodeEnum.WITH_DRAW, request);
+        String html = jixinManager.getHtml(JixinTxCodeEnum.WITH_DRAW, withDrawRequest);
         if (StringUtils.isEmpty(html)) {
             log.error("CashDetailLogBizImpl.cash 生成表单 ");
             return ResponseEntity
@@ -358,38 +322,18 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             cashDetailLog.setThirdAccountId(userThirdAccount.getAccountId());
             cashDetailLog.setBankName(userThirdAccount.getBankName());
             cashDetailLog.setCardNo(userThirdAccount.getCardNo());
-            cashDetailLog.setCashType(bigCashState ? 1 : 0);
+            cashDetailLog.setCashType(0);
             cashDetailLog.setCompanyBankNo(voCashReq.getBankAps());
             cashDetailLog.setFee(fee);
             cashDetailLog.setCreateTime(nowDate);
             cashDetailLog.setMoney(new Double(cashMoney).longValue());
-            cashDetailLog.setSeqNo(request.getTxDate() + request.getTxTime() + request.getSeqNo());
-            cashDetailLog.setState(1);  //  审核成功
+            cashDetailLog.setSeqNo(withDrawRequest.getTxDate() + withDrawRequest.getTxTime() + withDrawRequest.getSeqNo());
+            cashDetailLog.setState(4);  //  提现成功
             cashDetailLog.setVerifyTime(nowDate);
             cashDetailLog.setVerifyUserId(0L);
             cashDetailLog.setUserId(userId);
             cashDetailLog.setVerifyRemark("系统自动审核通过");
             cashDetailLogService.save(cashDetailLog);
-            // 冻结金额
-            CapitalChangeEntity entity = new CapitalChangeEntity();
-            entity.setType(CapitalChangeEnum.Frozen);
-            entity.setMoney(new Double(cashMoney).intValue());
-            entity.setUserId(userId);
-            entity.setToUserId(userId);
-            entity.setRemark("提现冻结资金");
-            capitalChangeHelper.capitalChange(entity);
-
-            // 写入调度
-            Map<String, String> data = new HashMap<>(2);
-            data.put("cashId", cashDetailLog.getId().toString());
-            data.put("userId", userId.toString());
-            TaskScheduler taskScheduler = new TaskScheduler();
-            taskScheduler.setUpdateAt(new Date());
-            taskScheduler.setCreateAt(new Date());
-            taskScheduler.setType(TaskSchedulerConstants.CASH_CANCEL);
-            taskScheduler.setTaskNum(Integer.MAX_VALUE - 2);
-            taskScheduler.setTaskData(new Gson().toJson(data));
-            taskSchedulerBiz.save(taskScheduler);
         }
 
         VoHtmlResp voHtmlResp = VoBaseResp.ok("成功", VoHtmlResp.class);
@@ -399,9 +343,8 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             log.error("CashDetailLogBizImpl cash gethtml exceptio", e);
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR,  "服务器开小差了， 请稍候重试", VoHtmlResp.class)) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了， 请稍候重试", VoHtmlResp.class));
         }
-
 
         return ResponseEntity.ok(voHtmlResp);
     }
@@ -492,7 +435,8 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             return ResponseEntity.ok("success");
         }
 
-        if (JixinResultContants.SUCCESS.equals(response.getRetCode())) { // 交易成功
+        if ((JixinResultContants.SUCCESS.equals(response.getRetCode())) || (JixinResultContants.CASH_RETRY.equals(response.getRetCode()))) { // 交易成功
+            log.info(String.format("提现成功: 交易流水: %s 返回状态/信息: %s/%s", seqNo, response.getRetCode(), response.getRetMsg()));
             // 更改用户提现记录
             cashDetailLog.setState(3);
             cashDetailLog.setCallbackTime(new Date());
@@ -506,32 +450,12 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             entity.setToUserId(userId);
             capitalChangeHelper.capitalChange(entity);
             return ResponseEntity.ok("success");
-        } else if (JixinResultContants.CASH_RETRY.equals(response.getRetCode())) {  // 需要调度同步
-            log.info("提现需要进一步确认");
-            Map<String, String> data = new HashMap<>(2);
-            data.put("cashId", cashDetailLog.getId().toString());
-            data.put("userId", userId.toString());
-
-            TaskScheduler taskScheduler = new TaskScheduler();
-            taskScheduler.setUpdateAt(new Date());
-            taskScheduler.setCreateAt(new Date());
-            taskScheduler.setType(TaskSchedulerConstants.CASH_FORM);
-            taskScheduler.setTaskNum(Integer.MAX_VALUE - 2);
-            taskScheduler.setTaskData(new Gson().toJson(data));
-            taskSchedulerBiz.save(taskScheduler);
-            return ResponseEntity.ok("success");
         } else {  // 交易失败
             log.info(String.format("处理提现失败: 交易流水: %s 返回状态/信息: %s/%s", seqNo, response.getRetCode(), response.getRetMsg()));
             cashDetailLog.setState(4);
             cashDetailLog.setCallbackTime(new Date());
             cashDetailLog.setVerifyRemark(response.getRetMsg());
             cashDetailLogService.save(cashDetailLog);
-            CapitalChangeEntity entity = new CapitalChangeEntity();
-            entity.setType(CapitalChangeEnum.Unfrozen);
-            entity.setMoney(cashDetailLog.getMoney().intValue());
-            entity.setUserId(userId);
-            entity.setToUserId(userId);
-            capitalChangeHelper.capitalChange(entity);  // 借去冻结资金
             return ResponseEntity.ok("success");
         }
     }
@@ -578,13 +502,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         response.setCashTime(DateHelper.dateToString(cashDetailLog.getCreateTime()));
         response.setFee(StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true));
         response.setRealCashMoney(StringHelper.formatDouble((cashDetailLog.getMoney() - cashDetailLog.getFee()) / 100D, true));
-        Date cashTime = null;
-        if (cashDetailLog.getState() == 1) {
-            cashTime = DateHelper.addHours(cashDetailLog.getCreateTime(), 2);
-        } else {
-            cashTime = cashDetailLog.getCallbackTime();
-        }
-
+        Date cashTime = cashDetailLog.getState() == 4 ?  DateHelper.addHours(cashDetailLog.getCreateTime(), 2) : cashDetailLog.getCallbackTime();
         response.setRealCashTime(DateHelper.dateToString(cashTime));
 
 
@@ -627,86 +545,6 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public boolean doBigCashForm(String taskData) throws Exception {
-        Map<String, String> dataMap = new Gson().fromJson(taskData, TypeTokenContants.MAP_ALL_STRING_TOKEN);
-        Long cashId = Long.parseLong(dataMap.get("cashId"));
-        Long userId = Long.parseLong(dataMap.get("userId"));
-        Asset asset = assetService.findByUserIdLock(userId);
-        //查询提现状态
-        CashDetailLog cashDetailLog = cashDetailLogService.findById(cashId);
-        if (cashDetailLog.getState().equals(3) || cashDetailLog.getState().equals(4)) {
-            return true;
-        }
-
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        // 查询存管账户资金状况
-        BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
-        balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
-        balanceQueryRequest.setChannel(ChannelContant.HTML);
-        BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
-        if (ObjectUtils.isEmpty(balanceQueryResponse) || !balanceQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
-            log.error("大额提现调度, 查询用户存管金额失败!");
-            return false;
-        }
-        Double thirdCurrBal = Double.parseDouble(balanceQueryResponse.getCurrBal());   // 存管总额度
-        Double thirdAvailbal = Double.parseDouble(balanceQueryResponse.getAvailBal());   // 存管可用余额
-        Double cashRealMoney = (cashDetailLog.getMoney() - cashDetailLog.getFee()) / 100D; // 提现金额
-        Double useMoney = asset.getUseMoney() / 100D;
-        Double total = asset.getTotal() / 100D;
-
-        if ((!thirdCurrBal.equals(total)) || (!thirdAvailbal.equals(useMoney + cashRealMoney + cashDetailLog.getFee() / 100D))) {
-            return false;
-        }
-
-        Integer cashType = cashDetailLog.getCashType();
-        Date createTime = cashDetailLog.getCreateTime();
-        Date startTime = DateHelper.subHours(createTime, 2);
-        Date endTime = DateHelper.addDays(createTime, 2);   // T + 2查询时间
-        Date nowDate = new Date();
-        endTime = endTime.getTime() < nowDate.getTime() ? nowDate : endTime;  // 对查询时间进行优化
-        int pageIndex = 1, pageSize = 20, realSize = 0;
-        do {
-            AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
-            accountDetailsQueryRequest.setAccountId(userThirdAccount.getAccountId());
-            accountDetailsQueryRequest.setType("9");
-            accountDetailsQueryRequest.setEndDate(DateHelper.dateToString(endTime, DateHelper.DATE_FORMAT_YMD_NUM));
-            accountDetailsQueryRequest.setStartDate(DateHelper.dateToString(startTime, DateHelper.DATE_FORMAT_YMD_NUM));
-            accountDetailsQueryRequest.setTranType("1".equals(cashType) ? "2820" : "2616");
-            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
-            accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
-            AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, accountDetailsQueryRequest, AccountDetailsQueryResponse.class);
-            Preconditions.checkNotNull(accountDetailsQueryResponse, "查询提现状态异常");
-            Preconditions.checkArgument(!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()), "查询提现状态异常, 验证不通过");
-            Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
-            }.getType()));
-            List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
-            realSize = accountDetailsQueryItems.size();
-
-            for (AccountDetailsQueryItem accountDetailsQueryItem : accountDetailsQueryItems) {
-                Double txAmount = Double.parseDouble(accountDetailsQueryItem.getTxAmount());  // 交易金额
-                if (cashRealMoney.equals(txAmount)) {
-                    cashDetailLog.setState(3);
-                    cashDetailLog.setCallbackTime(new Date());
-                    cashDetailLogService.save(cashDetailLog);
-
-                    // 更改用户资金
-                    CapitalChangeEntity entity = new CapitalChangeEntity();
-                    entity.setType(CapitalChangeEnum.Cash);
-                    entity.setMoney(cashDetailLog.getMoney().intValue());
-                    entity.setUserId(userId);
-                    entity.setToUserId(userId);
-                    capitalChangeHelper.capitalChange(entity);
-                    return true;
-                }
-            }
-
-        } while (realSize == pageSize);
-        return false;
-    }
-
-
-    @Override
     public ResponseEntity<VoCashLogWarpRes> psLogs(VoPcCashLogs cashLogs) {
         try {
             List<VoCashLog> logList = cashDetailLogService.pcLogs(cashLogs);
@@ -727,89 +565,23 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
     }
 
-    @Override
-    public boolean doCancelCash(String taskData) {
-        Map<String, String> dataMap = new Gson().fromJson(taskData, TypeTokenContants.MAP_ALL_STRING_TOKEN);
-        Long cashId = Long.parseLong(dataMap.get("cashId"));
-        Long userId = Long.parseLong(dataMap.get("userId"));
-        CashDetailLog cashDetailLog = cashDetailLogService.findById(cashId);
-        if(!cashDetailLog.getState().equals(1)) {
-            return true ;
-        }
-        Date nowDate = new Date() ;
-        // 查看时间是否超过2个小时
-        Date createTime = cashDetailLog.getCreateTime();
-        Integer cashType = cashDetailLog.getCashType();
-        if(cashType.equals(0)){ // 普通提现  检查必须是2个小时之后的
-            Date before2Time = DateHelper.subHours(nowDate, 2) ; // 前两个小时用户
-            if(createTime.getTime() > before2Time.getTime()){
-                return false ;
-            }
-        }else{  // 大额提现 T + 1  确认
-            Date before2Time = DateHelper.subHours(nowDate, 25) ;
-            if(createTime.getTime() > before2Time.getTime()){
-                return false ;
-            }
-        }
-
-        // 此段时间内的充值提现记录
-        ImmutableList<Integer> stateList = ImmutableList.of(1, 3);
-        List<CashDetailLog> cashDetailLogs = cashDetailLogService.findByUserIdAndStateInAndCreateTimeBetween(userId,
-                stateList,
-                createTime,
-                nowDate);
-
-
-
-        List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>(cashDetailLogs.size()) ;
-        // 普通提现两个小时后确认提现
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        int pageIndex = 0, pageSize = 30, realSize ;
-        do {
-            pageIndex++ ;
-            AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
-            accountDetailsQueryRequest.setAccountId(userThirdAccount.getAccountId());
-            accountDetailsQueryRequest.setType("9");
-            accountDetailsQueryRequest.setChannel(ChannelContant.HTML);
-            accountDetailsQueryRequest.setEndDate(DateHelper.dateToString(createTime, DateHelper.DATE_FORMAT_YMD_NUM));
-            accountDetailsQueryRequest.setStartDate(DateHelper.dateToString(nowDate, DateHelper.DATE_FORMAT_YMD_NUM));
-            accountDetailsQueryRequest.setTranType(cashType.equals(1) ? "2820" : "2616");
-            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
-            accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
-            AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, accountDetailsQueryRequest, AccountDetailsQueryResponse.class);
-            Preconditions.checkNotNull(accountDetailsQueryResponse, "查询提现状态异常");
-            Preconditions.checkArgument(!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()), "查询提现状态异常, 验证不通过");
-            Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
-            }.getType()));
-
-            List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
-            if(CollectionUtils.isEmpty(accountDetailsQueryItems)){
-                break;
-            }
-            accountDetailsQueryItemList.addAll(accountDetailsQueryItems) ;
-            realSize = accountDetailsQueryItems.size();
-        }while (pageIndex == realSize) ;
-
-        // 识别过程
-        return false;
-    }
 
     /**
-     *  获取提现金额
+     * 获取提现金额
+     * <p>
+     * 1、如果有未还借款，则 可提现额 = 净值额度 - 正在申请、处理中的提现总额 和 账户可用金额 两者取小值
+     * 2、如果没有未还借款，则 可提现额 = 账户可用金额
      *
-     *  1、如果有未还借款，则 可提现额 = 净值额度 - 正在申请、处理中的提现总额 和 账户可用金额 两者取小值
-     *  2、如果没有未还借款，则 可提现额 = 账户可用金额
      * @param userId
      * @return
      */
-    private Long getRealCashMoney(Long userId){
+    private Long getRealCashMoney(Long userId) {
         Asset asset = assetService.findByUserIdLock(userId);
-
-        ImmutableList<Integer> stateList = ImmutableList.of(0, 1) ;
+        ImmutableList<Integer> stateList = ImmutableList.of(0, 1);
         List<CashDetailLog> cashDetailLogs = cashDetailLogService.findByStateInAndUserId(stateList, userId);
         long cashingMoney = cashDetailLogs.stream().mapToLong(p -> p.getMoney()).sum();  // 正在提现金额
         Double money = Math.min((((asset.getUseMoney() + asset.getCollection()) * 0.8 - asset.getPayment()) - cashingMoney), asset.getUseMoney());
-        money = ObjectUtils.isEmpty(money) ? 0 : money ;
-        return asset.getPayment() > 0 ? money.longValue() : asset.getUseMoney() ;
+        money = ObjectUtils.isEmpty(money) ? 0 : money;
+        return asset.getPayment() > 0 ? money.longValue() : asset.getUseMoney();
     }
 }

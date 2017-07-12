@@ -1,5 +1,7 @@
 package com.gofobao.framework.common.assets;
 
+import com.gofobao.framework.common.capital.CapitalChangeConfig;
+import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -11,7 +13,7 @@ import java.util.List;
 @Data
 public class AssetsChangeConfig {
     /**  资金变动类型 */
-    private AssetChangeEnum type;
+    private AssetsChangeEnum type;
 
     /**  资金变动名称 */
     private String name;
@@ -34,7 +36,7 @@ public class AssetsChangeConfig {
     static {
         // 在线充值
         AssetsChangeConfig onLineRecharge =  new AssetsChangeConfig() ;
-        onLineRecharge.setType(AssetChangeEnum.OnlineRecharge) ;
+        onLineRecharge.setType(AssetsChangeEnum.OnlineRecharge) ;
         onLineRecharge.setName("在线充值") ;
         onLineRecharge.setAssetChangeRule("add@useMoney");
         onLineRecharge.setUserCacheChangeRule("add@rechargeTotal");
@@ -43,7 +45,7 @@ public class AssetsChangeConfig {
 
         // 线下转账
         AssetsChangeConfig offLineRecharge =  new AssetsChangeConfig() ;
-        offLineRecharge.setType(AssetChangeEnum.offlineRecharge) ;
+        offLineRecharge.setType(AssetsChangeEnum.offlineRecharge) ;
         offLineRecharge.setName("线下转账充值") ;
         offLineRecharge.setAssetChangeRule("add@useMoney");
         offLineRecharge.setUserCacheChangeRule("add@rechargeTotal");
@@ -52,15 +54,59 @@ public class AssetsChangeConfig {
 
         // 银联提现
         AssetsChangeConfig smallCash =  new AssetsChangeConfig() ;
-        smallCash.setType(AssetChangeEnum.SmallCash) ;
+        smallCash.setType(AssetsChangeEnum.SmallCash) ;
         smallCash.setName("银联通道提现") ;
         smallCash.setAssetChangeRule("sub@noUseMoney");
         smallCash.setUserCacheChangeRule("add@cashTotal,add@expenditureFee#fee");
         smallCash.setRemark("提现成功") ;
-        assetChangeList.add(offLineRecharge) ;
+        assetChangeList.add(smallCash) ;
+
+        // 人行提现
+        AssetsChangeConfig bigCash =  new AssetsChangeConfig() ;
+        bigCash.setType(AssetsChangeEnum.SmallCash) ;
+        bigCash.setName("人行通道提现") ;
+        bigCash.setAssetChangeRule("sub@noUseMoney");
+        bigCash.setUserCacheChangeRule("add@cashTotal,add@expenditureFee#fee");
+        bigCash.setRemark("提现成功") ;
+        assetChangeList.add(bigCash) ;
+
+        // 冻结资金
+        AssetsChangeConfig freeze =  new AssetsChangeConfig() ;
+        freeze.setType(AssetsChangeEnum.Frozen) ;
+        freeze.setName("冻结资金") ;
+        freeze.setAssetChangeRule("sub@useMoney,add@noUseMoney");
+        freeze.setRemark("冻结资金") ;
+        assetChangeList.add(freeze) ;
+
+        // 解冻资金
+        AssetsChangeConfig unfreeze =  new AssetsChangeConfig() ;
+        unfreeze.setType(AssetsChangeEnum.Unfrozen) ;
+        unfreeze.setName("解冻资金") ;
+        unfreeze.setAssetChangeRule("add@useMoney,sub@noUseMoney");
+        unfreeze.setRemark("解冻资金") ;
+        assetChangeList.add(unfreeze) ;
+
+        // 正常还款
+        AssetsChangeConfig repayment = new AssetsChangeConfig();
+        repayment.setType(AssetsChangeEnum.Repayment);
+        repayment.setName("还款");
+        repayment.setAssetChangeRule("sub@useMoney");
+        repayment.setUserCacheChangeRule("add@expenditureInterest#interest");
+        repayment.setRemark("还款");
+        assetChangeList.add(repayment);
+
+        // 扣除待还
+        AssetsChangeConfig paymentLower = new AssetsChangeConfig();
+        paymentLower.setType(AssetsChangeEnum.PaymentLower);
+        paymentLower.setName("扣除待还");
+        paymentLower.setAssetChangeRule("sub@payment");
+        paymentLower.setUserCacheChangeRule("sub@waitRepayPrincipal#principal,sub@waitRepayInterest#interest");
+        paymentLower.setRemark("扣除待还");
+        assetChangeList.add(paymentLower);
+
     }
 
-    public static AssetsChangeConfig findAssetConfig(AssetChangeEnum type) {
+    public static AssetsChangeConfig findAssetConfig(AssetsChangeEnum type) {
         List<AssetsChangeConfig> capitalChangeList = assetChangeList;
         for (AssetsChangeConfig config : capitalChangeList) {
             if ( (config.getType()!= null) && (config.getType().equals(type))) {

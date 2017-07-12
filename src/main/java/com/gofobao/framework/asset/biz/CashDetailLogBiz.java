@@ -81,26 +81,10 @@ public interface CashDetailLogBiz {
      */
     String showCash(String seqNo, Model model);
 
-
-    /**
-     * 提现资金同步
-     * @param taskData
-     * @return
-     */
-    boolean doBigCashForm(String taskData) throws Exception;
-
-
     /**
      * pc： 提现日志
      * @param cashLogs
      * @return
      */
     ResponseEntity<VoCashLogWarpRes> psLogs(VoPcCashLogs cashLogs);
-
-    /**
-     * 操作取消提现
-     * @param taskData
-     * @return
-     */
-    boolean doCancelCash(String taskData);
 }

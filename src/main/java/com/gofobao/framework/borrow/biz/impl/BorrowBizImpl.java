@@ -583,8 +583,9 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         boolean bool = false;//债权转让默认不过期
-        if (!ObjectUtils.isEmpty(borrow.getReleaseAt())) {  //TODO 此处是否考虑 是否 T + 1 形式比较
-            bool = DateHelper.diffInDays(new Date(), borrow.getReleaseAt(), false) >= borrow.getValidDay();//比较借款时间是否过期
+        if (!ObjectUtils.isEmpty(borrow.getReleaseAt())) {
+            Date limitDate = DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);
+            bool =  limitDate.getTime() < nowDate.getTime() ;
         }
 
         if (((borrow.getStatus() == 1) && (bool))
@@ -621,7 +622,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 voCancelThirdTenderReq = new VoCancelThirdTenderReq();
                 voCancelThirdTenderReq.setTenderId(tender.getId());
                 ResponseEntity<VoBaseResp> resp = tenderThirdBiz.cancelThirdTender(voCancelThirdTenderReq);
-                if (!resp.getStatusCode().equals(HttpStatus.OK)) {
+                if ( !resp.getStatusCode().equals(HttpStatus.OK) ) {
                     throw new Exception("borrowBizImpl cancelBorrow:" + resp.getBody().getState().getMsg());
                 }
             }
@@ -823,6 +824,9 @@ public class BorrowBizImpl implements BorrowBiz {
                 if (!resp.getStatusCode().equals(HttpStatus.OK)) {
                     throw new Exception("borrowBizImpl cancelThirdBorrow:" + resp.getBody().getState().getMsg());
                 }
+            }else{
+                log.error("当前标定中还存在未取消投标申请记录");
+                throw new Exception("borrowBizImpl cancelThirdBorrow: 当前标定中还存在未取消投标申请记录");
             }
         }
     }

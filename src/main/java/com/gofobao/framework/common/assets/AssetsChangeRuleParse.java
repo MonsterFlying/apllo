@@ -93,8 +93,7 @@ public class AssetsChangeRuleParse {
                     money = fee ;
                     break;
                 default:
-                        Preconditions.checkArgument(area != 4,
-                                "AssetsChangeRuleParse.parse money exception");
+                        throw new Exception("AssetsChangeRuleParse.parse op exception") ;
             }
 
             // 反射操作
@@ -103,7 +102,7 @@ public class AssetsChangeRuleParse {
                 Preconditions.checkArgument(area != 4,
                         "AssetsChangeRuleParse.parse field type is null long");
             }
-            long value = (Long)principal;
+            long value = (Long)property;
             switch (op){
                 case "add":
                     money = value + money ;
