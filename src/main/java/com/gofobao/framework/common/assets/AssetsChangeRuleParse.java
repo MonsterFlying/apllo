@@ -2,13 +2,8 @@ package com.gofobao.framework.common.assets;
 
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.beanutils.MethodUtils;
 import org.apache.commons.beanutils.PropertyUtils;
-import org.springframework.beans.PropertyAccessorUtils;
 import org.springframework.util.StringUtils;
-
-import java.lang.reflect.Method;
 
 /**
  * 资金变动规则解析

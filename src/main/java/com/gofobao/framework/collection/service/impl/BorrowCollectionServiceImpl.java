@@ -206,8 +206,6 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         String sql = "SELECT DAY(collection_at) FROM gfb_borrow_collection " +
                 "where " +
                 "user_id=" + userId + " " +
-                "and " +
-                "`status`=0 " +
                 "and   date_format(collection_at,'%Y%m') =" + date +
                 " GROUP BY  day(collection_at)";
         Query query = entityManager.createNativeQuery(sql);

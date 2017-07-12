@@ -85,9 +85,9 @@ public class WebLoanController {
 
     @ApiOperation("平台借款统计")
     @GetMapping("v2/pc/statistics")
-    public ResponseEntity<VoViewLoanStatisticsWarpRes> statistics(/*@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,*/
+    public ResponseEntity<VoViewLoanStatisticsWarpRes> statistics(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                                   VoStatisticsReq statisticsReq){
-        statisticsReq.setUserId(901L);
+        statisticsReq.setUserId(userId);
         return loanBiz.repaymentStatistics(statisticsReq);
     }
 

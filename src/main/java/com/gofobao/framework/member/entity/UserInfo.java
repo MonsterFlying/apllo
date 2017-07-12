@@ -1,5 +1,6 @@
 package com.gofobao.framework.member.entity;
 
+import com.gofobao.framework.member.vo.response.pc.UserInfoExt;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,7 +18,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @DynamicInsert
-public class UserInfo {
+public class UserInfo extends UserInfoExt {
     @Id
     @Column(name = "user_id")
     // @GeneratedValue

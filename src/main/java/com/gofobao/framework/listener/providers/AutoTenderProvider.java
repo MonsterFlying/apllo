@@ -11,7 +11,6 @@ import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.vo.VoFindAutoTenderList;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
-import com.gofobao.framework.tender.vo.response.VoFindAutoTender;
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,11 +71,11 @@ public class AutoTenderProvider {
 
             Iterator<Map<String,Object>> itAutoTender = autoTenderList.iterator();
             Map<String,Object> voFindAutoTender = null;
-            Integer money = 0;
-            Integer lowest = 0;
-            Integer useMoney = 0;
+            long money = 0;
+            long lowest = 0;
+            long useMoney = 0;
             Integer borrowMoney = borrow.getMoney(); // 借款金额（分）
-            Integer moneyYes = borrow.getMoneyYes();
+            long moneyYes = borrow.getMoneyYes();
             Integer mostAuto = borrow.getMostAuto();
             Set<Long> tenderUserIds = new HashSet<>();
             Set<Long> autoTenderIds = new HashSet<>();
@@ -93,10 +92,10 @@ public class AutoTenderProvider {
                     continue;
                 }
 
-                useMoney = NumberHelper.toInt(voFindAutoTender.get("useMoney"));  // 用户可用金额
+                useMoney = NumberHelper.toLong(voFindAutoTender.get("useMoney"));  // 用户可用金额
                 money = String.valueOf(voFindAutoTender.get("mode")).equals("1") ? NumberHelper.toInt(voFindAutoTender.get("tenderMoney")) : useMoney;
                 money = Math.min(useMoney - NumberHelper.toInt(voFindAutoTender.get("saveMoney")), money);
-                lowest = NumberHelper.toInt(voFindAutoTender.get("lowest")); // 最小投标金额
+                lowest = NumberHelper.toLong(voFindAutoTender.get("lowest")); // 最小投标金额
                 if ((money < lowest)) {
                     continue;
                 }

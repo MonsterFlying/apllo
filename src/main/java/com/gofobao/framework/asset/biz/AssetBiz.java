@@ -6,6 +6,7 @@ import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.asset.vo.response.pc.VoViewAssetLogsWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
+import com.gofobao.framework.member.vo.response.pc.ExpenditureDetail;
 import com.gofobao.framework.member.vo.response.pc.IncomeEarnedDetail;
 import com.gofobao.framework.member.vo.response.pc.VoViewAssetStatisticWarpRes;
 import org.springframework.http.ResponseEntity;
@@ -149,4 +150,12 @@ public interface AssetBiz {
      * @return
      */
     ResponseEntity<IncomeEarnedDetail> pcIncomeEarned(Long userId);
+
+    /**
+     * 支出统计
+     * @param userId
+     * @return
+     */
+    ResponseEntity<ExpenditureDetail>pcExpenditureDetail(Long userId);
+
 }

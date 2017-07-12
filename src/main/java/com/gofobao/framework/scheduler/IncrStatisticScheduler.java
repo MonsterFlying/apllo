@@ -2,7 +2,6 @@ package com.gofobao.framework.scheduler;
 
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.system.biz.IncrStatisticBiz;
 import com.gofobao.framework.system.entity.IncrStatistic;
 import com.gofobao.framework.system.entity.Statistic;
 import com.gofobao.framework.system.service.IncrStatisticService;
