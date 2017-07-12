@@ -330,6 +330,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
                 }
                 lateInterest = new Double(overPrincipal * 0.004 * lateDays).intValue();
             }
+            //累加金额用于判断还款账余额是否充足
             repaymentTotal += borrowRepayment.getPrincipal() + borrowRepayment.getInterest() * interestPercent + lateInterest;
             tempVoThirdBatchRepay = new VoThirdBatchRepay();
             tempVoThirdBatchRepay.setInterestPercent(interestPercent);
@@ -339,7 +340,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             voThirdBatchRepayList.add(tempVoThirdBatchRepay);
         }
 
-        int repayMoney = repaymentTotal; //repaymentTotal + penalty;  官标由平台托管借款  目前实现不收取违约金
+        int repayMoney = repaymentTotal; //repaymentTotal + penalty;  官标还款由平台操作还款  目前暂时不实现收取违约金
         if (borrowAsset.getUseMoney() < (repayMoney)) {
             return ResponseEntity
                     .badRequest()
