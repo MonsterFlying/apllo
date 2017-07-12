@@ -11,7 +11,6 @@ import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.vo.VoFindAutoTenderList;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
-import com.gofobao.framework.tender.vo.response.VoFindAutoTender;
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

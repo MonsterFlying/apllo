@@ -1,7 +1,10 @@
 package com.gofobao.framework.asset.controller.web;
 
 import com.gofobao.framework.asset.biz.AssetBiz;
-import com.gofobao.framework.asset.vo.response.*;
+import com.gofobao.framework.asset.vo.response.VoAccruedMoneyResp;
+import com.gofobao.framework.asset.vo.response.VoAssetIndexResp;
+import com.gofobao.framework.asset.vo.response.VoCollectionResp;
+import com.gofobao.framework.asset.vo.response.VoUserAssetInfoResp;
 import com.gofobao.framework.member.vo.response.pc.ExpenditureDetail;
 import com.gofobao.framework.member.vo.response.pc.IncomeEarnedDetail;
 import com.gofobao.framework.member.vo.response.pc.VoViewAssetStatisticWarpRes;

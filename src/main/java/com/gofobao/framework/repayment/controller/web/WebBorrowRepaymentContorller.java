@@ -1,12 +1,11 @@
 package com.gofobao.framework.repayment.controller.web;
 
 import com.gofobao.framework.collection.vo.request.VoCollectionListReq;
-import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
-import com.gofobao.framework.repayment.vo.request.*;
+import com.gofobao.framework.repayment.vo.request.VoOrderListReq;
+import com.gofobao.framework.repayment.vo.request.VoPcAdvanceReq;
+import com.gofobao.framework.repayment.vo.request.VoPcInstantlyRepaymentReq;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewCollectionWarpRes;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewOrderListWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
@@ -19,8 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.validation.Valid;
-import java.util.Date;
-import java.util.Map;
 
 /**
  * Created by admin on 2017/6/1.

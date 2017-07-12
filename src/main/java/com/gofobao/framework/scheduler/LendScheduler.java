@@ -12,8 +12,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import javax.transaction.Transactional;
-import java.beans.Transient;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;

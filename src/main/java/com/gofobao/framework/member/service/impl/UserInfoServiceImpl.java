@@ -3,7 +3,6 @@ package com.gofobao.framework.member.service.impl;
 import com.gofobao.framework.member.entity.UserInfo;
 import com.gofobao.framework.member.repository.UserInfoRepository;
 import com.gofobao.framework.member.service.UserInfoService;
-import com.gofobao.framework.member.vo.response.pc.UserInfoExt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
