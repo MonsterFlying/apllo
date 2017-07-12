@@ -162,7 +162,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         debtRegisterRequest.setBailAccountId(bailAccountId);
         debtRegisterRequest.setAcqRes(StringHelper.toString(borrowId));
         debtRegisterRequest.setChannel(ChannelContant.HTML);
-        if (entrustFlag && !ObjectUtils.isEmpty(takeUserThirdAccount)) {
+        if (entrustFlag && !ObjectUtils.isEmpty(takeUserThirdAccount)) { //判断是否是受托支付标的
             debtRegisterRequest.setEntrustFlag("1");
             debtRegisterRequest.setReceiptAccountId(takeUserThirdAccount.getAccountId());
         }

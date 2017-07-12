@@ -16,7 +16,7 @@ public class BorrowVerifyContants {
     /**
      * 借款期限日最小值
      */
-    public static final int DAY_MIN = 1;
+    public static final int DAY_MIN = 7;
 
     /**
      * 借款期限日最大值
