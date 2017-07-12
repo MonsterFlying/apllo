@@ -2,6 +2,7 @@ package com.gofobao.framework.asset.biz;
 
 import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.request.VoRechargeReq;
+import com.gofobao.framework.asset.vo.request.VoSynAssetsRep;
 import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.asset.vo.response.pc.VoViewAssetLogsWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
@@ -133,7 +134,7 @@ public interface AssetBiz {
      * @param userId
      * @return
      */
-    ResponseEntity<VoUserAssetInfoResp> synOnLineRecharge(Long userId) throws Exception;
+    ResponseEntity<VoUserAssetInfoResp> synOffLineRecharge(Long userId) throws Exception;
 
 
     /**
@@ -149,4 +150,13 @@ public interface AssetBiz {
      * @return
      */
     ResponseEntity<IncomeEarnedDetail> pcIncomeEarned(Long userId);
+
+
+    /**
+     *  后台资金同步
+     * @param voSynAssetsRep
+     * @return
+     */
+    ResponseEntity<VoUserAssetInfoResp> adminSynOffLineRecharge(VoSynAssetsRep voSynAssetsRep) throws Exception;
+
 }

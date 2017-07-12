@@ -21,11 +21,13 @@ import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
 import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.request.VoRechargeReq;
+import com.gofobao.framework.asset.vo.request.VoSynAssetsRep;
 import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.asset.vo.response.pc.AssetLogs;
 import com.gofobao.framework.asset.vo.response.pc.VoViewAssetLogsWarpRes;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -37,6 +39,7 @@ import com.gofobao.framework.helper.IpHelper;
 import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -73,10 +76,7 @@ import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -395,7 +395,7 @@ public class AssetBizImpl implements AssetBiz {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoUserAssetInfoResp> synOnLineRecharge(Long userId) throws Exception {
+    public ResponseEntity<VoUserAssetInfoResp> synOffLineRecharge(Long userId) throws Exception {
         Users users = userService.findByIdLock(userId);
         if (users.getIsLock()) {
             return ResponseEntity
@@ -1107,4 +1107,21 @@ public class AssetBizImpl implements AssetBiz {
        return userCacheService.incomeEarned(userId);
 
     }
+
+    @Override
+    public ResponseEntity<VoUserAssetInfoResp> adminSynOffLineRecharge(VoSynAssetsRep voSynAssetsRep) throws Exception {
+        String paramStr = voSynAssetsRep.getParamStr();
+        if (!SecurityHelper.checkSign(voSynAssetsRep.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc 签名验证不通过", VoUserAssetInfoResp.class));
+        }
+
+        Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        Long userId = Long.parseLong(paramMap.get("userid")) ;
+        return synOffLineRecharge(userId);
+    }
+
+
+
 }

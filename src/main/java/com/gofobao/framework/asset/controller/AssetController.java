@@ -1,16 +1,14 @@
 package com.gofobao.framework.asset.controller;
 
 import com.gofobao.framework.asset.biz.AssetBiz;
+import com.gofobao.framework.asset.vo.request.VoSynAssetsRep;
 import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestAttribute;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
 /**
@@ -30,9 +28,16 @@ public class AssetController {
 
 
     @ApiOperation("资金同步问题")
-    @PostMapping("/asset/v2/synOnLineRecharge")
-    public ResponseEntity<VoUserAssetInfoResp> synOnLineRecharge(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
-        return assetBiz.synOnLineRecharge(userId) ;
+    @PostMapping("/asset/v2/synOffLineRecharge")
+    public ResponseEntity<VoUserAssetInfoResp> synOffLineRecharge(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
+        return assetBiz.synOffLineRecharge(userId) ;
+    }
+
+
+    @ApiOperation("资金同步问题")
+    @PostMapping("/pub/asset/v2/adminSynOffLineRecharge")
+    public ResponseEntity<VoUserAssetInfoResp> adminSynOffLineRecharge(@ModelAttribute VoSynAssetsRep voSynAssetsRep) throws Exception {
+        return assetBiz.adminSynOffLineRecharge(voSynAssetsRep) ;
     }
 
 

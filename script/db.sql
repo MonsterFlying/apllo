@@ -485,6 +485,11 @@ ALTER TABLE gfb_assets_change_log CHANGE collecton collection BIGINT(20) DEFAULT
 ALTER TABLE gfb_assets_change_log CHANGE virtual_moeny virtual_money BIGINT(20) DEFAULT '0' COMMENT '虚拟体验经';
 ALTER TABLE gfb_assets_change_log ADD remark VARCHAR(225) DEFAULT '' NULL;
 
+##增加推送标识
+ALTER TABLE gfb_users ADD push_state INT DEFAULT 1 NULL;
+ALTER TABLE gfb_users ADD push_id VARCHAR(255) DEFAULT '' NULL;
+ALTER TABLE gfb_users ADD platform INT DEFAULT -1 NULL;
+ALTER TABLE gfb_users ADD ip VARCHAR(255) DEFAULT '' NULL;
 
 
 

@@ -10,10 +10,7 @@ import com.gofobao.framework.core.helper.PasswordHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.currency.entity.Currency;
 import com.gofobao.framework.currency.service.CurrencyService;
-import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.GenerateInviteCodeHelper;
-import com.gofobao.framework.helper.MacthHelper;
-import com.gofobao.framework.helper.RedisHelper;
+import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.integral.entity.Integral;
 import com.gofobao.framework.integral.service.IntegralService;
@@ -23,19 +20,27 @@ import com.gofobao.framework.member.enums.RegisterSourceEnum;
 import com.gofobao.framework.member.service.*;
 import com.gofobao.framework.member.vo.request.VoRegisterReq;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
+import com.gofobao.framework.security.helper.JwtTokenHelper;
+import com.gofobao.framework.security.vo.VoLoginReq;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Date;
+import java.util.UUID;
 
 /**
  * Created by Zeke on 2017/5/19.
@@ -69,8 +74,6 @@ public class UserBizImpl implements UserBiz{
     @Autowired
     VipService vipService ;
 
-    @Autowired
-    MqHelper mqHelper ;
 
     @Autowired
     RedisHelper redisHelper ;
@@ -78,8 +81,24 @@ public class UserBizImpl implements UserBiz{
     @Autowired
     MacthHelper macthHelper;
 
+
+    @Value("${jwt.header}")
+    String tokenHeader;
+
+    @Value("${jwt.prefix}")
+    String prefix ;
+
     @Value("${gofobao.imageDomain}")
     String imageDomain ;
+
+    @Autowired
+    AuthenticationManager authenticationManager;
+
+    @Autowired
+    JwtTokenHelper jwtTokenHelper;
+
+    @Autowired
+    MqHelper mqHelper ;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -226,13 +245,71 @@ public class UserBizImpl implements UserBiz{
         voBasicUserInfoResp.setRealname(UserHelper.hideChar(StringUtils.isEmpty(user.getRealname())? " ": user.getRealname(), UserHelper.REALNAME_NUM));
         voBasicUserInfoResp.setRealnameState(!StringUtils.isEmpty(user.getRealname()));
         voBasicUserInfoResp.setIdNo(UserHelper.hideChar(StringUtils.isEmpty(user.getCardId())? " ": user.getCardId(), UserHelper.CARD_ID_NUM)); ;
-        voBasicUserInfoResp.setIdNoState(!StringUtils.isEmpty(user.getCardId()));
+        voBasicUserInfoResp.setIdNoState(!StringUtils.isEmpty(user.getCardId())) ;
+        voBasicUserInfoResp.setAlias(user.getPushId()) ;
         return ResponseEntity.ok(voBasicUserInfoResp);
     }
 
     @Override
     public ResponseEntity<VoBasicUserInfoResp> userInfo(Long userId) {
         Users user = userService.findById(userId);
+        return getUserInfoResp(user) ;
+    }
+
+    @Override
+    public ResponseEntity<VoBasicUserInfoResp> login(HttpServletRequest httpServletRequest, HttpServletResponse response, VoLoginReq voLoginReq) {
+        // Perform the security
+        final Authentication authentication ;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            voLoginReq.getAccount(),
+                            voLoginReq.getPassword()
+                    )
+            );
+        } catch (Throwable e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "账户/密码错误", VoBasicUserInfoResp.class)) ;
+        }
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        // Reload password_reset post-security so we can generate captchaToken
+        Users user = findByAccount(voLoginReq.getAccount());
+
+        // 保存登录信息
+        if(ObjectUtils.isEmpty(user)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "账户/密码错误", VoBasicUserInfoResp.class));
+        }
+
+        if(user.getIsLock()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "账户已被系统冻结，如有问题请联系客服！", VoBasicUserInfoResp.class));
+        }
+
+        String username = user.getUsername();
+        if(StringUtils.isEmpty(username)) username = user.getPhone() ;
+        if(StringUtils.isEmpty(username)) username = user.getEmail() ;
+        user.setUsername(username);
+
+        final String token = jwtTokenHelper.generateToken(user, voLoginReq.getSource());
+        response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
+        user.setPlatform( voLoginReq.getSource() );
+        user.setPushId(UUID.randomUUID().toString());  // 设置唯一标识
+        user.setIp(IpHelper.getIpAddress(httpServletRequest)); // 设置ip
+        userService.save(user) ;   // 记录登录信息
+
+        // 触发登录队列
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setTag(MqTagEnum.LOGIN);
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+        mqConfig.setSendTime(DateHelper.addSeconds(new Date(), 10));
+        ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_USER_ID, user.getId().toString());
+        mqConfig.setMsg(body);
+        mqHelper.convertAndSend(mqConfig);
+
         return getUserInfoResp(user) ;
     }
 

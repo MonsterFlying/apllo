@@ -1,6 +1,7 @@
 package com.gofobao.framework.asset.controller;
 
 import com.gofobao.framework.asset.biz.CashDetailLogBiz;
+import com.gofobao.framework.asset.vo.request.VoAdminCashReq;
 import com.gofobao.framework.asset.vo.request.VoBankApsReq;
 import com.gofobao.framework.asset.vo.request.VoCashReq;
 import com.gofobao.framework.asset.vo.response.VoBankApsWrapResp;
@@ -42,6 +43,12 @@ public class CashController {
     @PostMapping("/asset/cash")
     public ResponseEntity<VoHtmlResp> cash(HttpServletRequest httpServletRequest,  @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoCashReq voCashReq) throws Exception{
         return cashDetailLogBiz.cash(httpServletRequest, userId, voCashReq) ;
+    }
+
+    @ApiOperation("提现")
+    @PostMapping("/pub/asset/cash")
+    public ResponseEntity<VoHtmlResp> adminWebCash(HttpServletRequest httpServletRequest, @Valid @ModelAttribute VoAdminCashReq voAdminCashReq) throws Exception{
+        return cashDetailLogBiz.adminWebCash(httpServletRequest, voAdminCashReq) ;
     }
 
     @PostMapping("/pub/asset/cash/callback")
