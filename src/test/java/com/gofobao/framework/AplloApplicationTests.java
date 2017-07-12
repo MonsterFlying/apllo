@@ -295,12 +295,6 @@ public class AplloApplicationTests {
         System.out.println(response);*/
 
 
-        Borrow borrow = borrowService.findById(169813L);
-        try {
-            borrowBiz.notTransferedBorrowAgainVerify(borrow);
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
 
         /*Borrow borrow = borrowService.findById(165227L);
         try {
