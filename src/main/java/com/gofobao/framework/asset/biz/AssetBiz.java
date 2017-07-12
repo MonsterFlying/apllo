@@ -135,7 +135,7 @@ public interface AssetBiz {
      * @param userId
      * @return
      */
-    ResponseEntity<VoUserAssetInfoResp> synOnLineRecharge(Long userId) throws Exception;
+    ResponseEntity<VoUserAssetInfoResp> synOffLineRecharge(Long userId) throws Exception;
 
 
     /**

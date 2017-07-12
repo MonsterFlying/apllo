@@ -24,6 +24,7 @@ import com.gofobao.framework.asset.vo.response.pc.VoCashLog;
 import com.gofobao.framework.asset.vo.response.pc.VoCashLogWarpRes;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
