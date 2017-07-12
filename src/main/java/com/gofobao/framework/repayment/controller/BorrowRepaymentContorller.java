@@ -41,11 +41,11 @@ public class BorrowRepaymentContorller {
 
     @RequestMapping(value = "/repayment/v2/list/{time}", method = RequestMethod.GET)
     @ApiOperation("还款计划-指定某天还款列表  time:2017-05-02")
-    public ResponseEntity<VoViewCollectionOrderListWarpResp> listRes(@PathVariable("time") String time/*,
-                                                                     @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+    public ResponseEntity<VoViewCollectionOrderListWarpResp> listRes(@PathVariable("time") String time,
+                                                                     @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoCollectionOrderReq orderReq = new VoCollectionOrderReq();
         orderReq.setTime(time);
-        orderReq.setUserId(901L);
+        orderReq.setUserId(userId);
         return repaymentBiz.repaymentList(orderReq);
     }
 
@@ -72,7 +72,8 @@ public class BorrowRepaymentContorller {
      */
     @PostMapping("/repayment/v2/instantly")
     @ApiOperation("立即还款")
-    public ResponseEntity<VoBaseResp> instantly(@ModelAttribute @Valid VoInstantlyRepaymentReq voInstantlyRepaymentReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
+    public ResponseEntity<VoBaseResp> instantly(@ModelAttribute @Valid VoInstantlyRepaymentReq voInstantlyRepaymentReq,
+                                                @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
         VoRepayReq voRepayReq = new VoRepayReq();
         voRepayReq.setRepaymentId(voInstantlyRepaymentReq.getRepaymentId());
         voRepayReq.setUserId(userId);

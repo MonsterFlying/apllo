@@ -55,7 +55,8 @@ public class WebPaymentController {
      */
     @ApiOperation("根据时间查询回款列表")
     @GetMapping("/v2/days/collection/list/{date}")
-    public ResponseEntity<VoCollectionListByDays> collectionListByDays(@PathVariable("date") String date,@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+    public ResponseEntity<VoCollectionListByDays> collectionListByDays(@PathVariable("date") String date,
+                                                                       @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         return paymentBiz.collectionListByDays(date,userId);
     }
 

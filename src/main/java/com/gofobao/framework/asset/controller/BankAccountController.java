@@ -25,7 +25,8 @@ public class BankAccountController {
 
     @GetMapping("/bank/typeinfo/{account}")
     @ApiOperation("根据银行卡获取银行卡基础信息和限额")
-    public ResponseEntity<VoBankTypeInfoResp> findTypeInfo(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable("account") String account){
+    public ResponseEntity<VoBankTypeInfoResp> findTypeInfo(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                                           @PathVariable("account") String account){
         return bankAccountBiz.findTypeInfo(userId, account) ;
     }
 

@@ -73,8 +73,8 @@ public class WebAssetController {
 
     @ApiOperation("总支出明细统计")
     @GetMapping("/asset/pc/v2/expenditureDetail")
-    public ResponseEntity<ExpenditureDetail> expenditureDetail(/*@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
-        return assetBiz.pcExpenditureDetail(901L);
+    public ResponseEntity<ExpenditureDetail> expenditureDetail(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return assetBiz.pcExpenditureDetail(userId);
     }
 
 }
