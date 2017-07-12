@@ -772,7 +772,7 @@ public class AssetBizImpl implements AssetBiz {
 
     @Override
     public ResponseEntity<VoRechargeEntityWrapResp> log(Long userId, int pageIndex, int pageSize) {
-        pageIndex = pageIndex <=0 ? 0 : pageIndex - 1 ;
+        pageIndex = pageIndex <= 1 ? 0 : pageIndex - 1 ;
         pageSize = pageSize < 0 ? 10 : pageSize;
         List<RechargeDetailLog> logs = rechargeDetailLogService.log(userId, pageIndex, pageSize);
         List<VoRechargeEntityResp> voRechargeEntityRespList = new ArrayList<>(logs.size());
