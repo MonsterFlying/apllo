@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -33,7 +34,7 @@ public class BorrowCancelScheduler {
     @Autowired
     private BorrowBiz borrowBiz;
 
-    //@Scheduled(fixedRate = 10 * 60 * 1000)
+    @Scheduled(cron = "0 2 0 * * ? ")
     public void process() {
         Specification<Borrow> bs = Specifications
                 .<Borrow>and()

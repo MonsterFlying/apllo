@@ -1,6 +1,7 @@
 package com.gofobao.framework.member.service;
 
 import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.vo.response.pc.AssetStatistic;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -95,4 +96,5 @@ public interface UserService {
     List<Users> findList(Specification<Users> specification, Pageable pageable);
 
     long count(Specification<Users> specification);
+
 }

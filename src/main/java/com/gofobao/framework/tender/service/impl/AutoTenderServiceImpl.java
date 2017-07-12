@@ -42,10 +42,12 @@ public class AutoTenderServiceImpl implements AutoTenderService {
     @Autowired
     private AutoTenderRepository autoTenderRepository;
 
-    @PersistenceContext
-    private EntityManager entityManager;
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
 
     public boolean insert(AutoTender autoTender) {
         if (ObjectUtils.isEmpty(autoTender)) {
@@ -79,7 +81,7 @@ public class AutoTenderServiceImpl implements AutoTenderService {
         return true;
     }
 
-    public List<VoFindAutoTender> findQualifiedAutoTenders(VoFindAutoTenderList voFindAutoTenderList) {
+    public List<Map<String,Object>> findQualifiedAutoTenders(VoFindAutoTenderList voFindAutoTenderList) {
         Long borrowId = voFindAutoTenderList.getBorrowId();
         if (ObjectUtils.isEmpty(borrowId)) {
             return Collections.EMPTY_LIST;
@@ -141,13 +143,11 @@ public class AutoTenderServiceImpl implements AutoTenderService {
         Integer pageIndex = voFindAutoTenderList.getPageIndex();
         Integer pageSize = voFindAutoTenderList.getPageSize();
         sql.append(" limit ").append(pageIndex * pageSize).append(",").append(pageSize);
-        Query query = entityManager.createNativeQuery(sql.toString());
-        query.unwrap(SQLQuery.class).setResultTransformer(Transformers.aliasToBean(VoFindAutoTender.class)) ;
-        List<VoFindAutoTender> voFindAutoTenderLists = query.getResultList();
-        if(CollectionUtils.isEmpty(voFindAutoTenderLists)) {
+        List<Map<String,Object>> resultList = jdbcTemplate.queryForList(sql.toString());
+        if(CollectionUtils.isEmpty(resultList)) {
             return new ArrayList<>(0);
         }else{
-            return voFindAutoTenderLists ;
+            return resultList ;
         }
     }
 

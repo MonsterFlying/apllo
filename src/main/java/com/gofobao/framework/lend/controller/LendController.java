@@ -106,7 +106,7 @@ public class LendController {
      * @return
      * @throws Exception
      */
-    @ApiOperation(value = "添加有草出借黑名单", notes = "添加有草出借黑名单")
+    @ApiOperation(value = "获取当前用户黑名单列表", notes = "获取当前用户黑名单列表")
     @PostMapping(value = "/addLendBlacklist")
     public ResponseEntity<VoViewLendBlacklists> getLendBlacklists(@ModelAttribute @Valid VoGetLendBlacklists voGetLendBlacklists, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voGetLendBlacklists.setUserId(userId);

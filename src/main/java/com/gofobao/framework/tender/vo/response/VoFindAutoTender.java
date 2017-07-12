@@ -2,7 +2,6 @@ package com.gofobao.framework.tender.vo.response;
 
 import lombok.Data;
 
-import java.math.BigInteger;
 import java.util.Date;
 
 /**
@@ -32,9 +31,9 @@ public class VoFindAutoTender {
     private Date autoAt;
     private Date createdAt;
     private Date updatedAt;
-    private BigInteger useMoney;
-    private BigInteger  noUseMoney;
-    private BigInteger  virtualMoney;
-    private BigInteger  collection;
-    private BigInteger  payment;
+    private Long useMoney;
+    private Long noUseMoney;
+    private Long virtualMoney;
+    private Long collection;
+    private Long payment;
 }

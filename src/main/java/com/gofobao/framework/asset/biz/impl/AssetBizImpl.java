@@ -44,6 +44,9 @@ import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
+import com.gofobao.framework.member.vo.response.pc.AssetStatistic;
+import com.gofobao.framework.member.vo.response.pc.IncomeEarnedDetail;
+import com.gofobao.framework.member.vo.response.pc.VoViewAssetStatisticWarpRes;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.service.DictItemServcie;
@@ -200,6 +203,7 @@ public class AssetBizImpl implements AssetBiz {
 
     /**
      * pc: 资金流水
+     *
      * @param voAssetLogReq
      * @return
      */
@@ -209,7 +213,7 @@ public class AssetBizImpl implements AssetBiz {
             VoViewAssetLogsWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewAssetLogsWarpRes.class);
             List<AssetLogs> resList = assetLogService.pcAssetLogs(voAssetLogReq);
             warpRes.setTotalCount(0);
-            if(!CollectionUtils.isEmpty(resList)){
+            if (!CollectionUtils.isEmpty(resList)) {
                 warpRes.setTotalCount(resList.get(0).getTotalCount());
                 resList.get(0).setTotalCount(null);
             }
@@ -393,7 +397,7 @@ public class AssetBizImpl implements AssetBiz {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoUserAssetInfoResp> synOnLineRecharge(Long userId) throws Exception {
         Users users = userService.findByIdLock(userId);
-        if(users.getIsLock()){
+        if (users.getIsLock()) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户已被系统锁定, 如有疑问请联系客服!", VoUserAssetInfoResp.class));
@@ -401,7 +405,7 @@ public class AssetBizImpl implements AssetBiz {
 
         // 判断开户状态
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        if(ObjectUtils.isEmpty(userThirdAccount)){
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoUserAssetInfoResp.class));
         }
 
@@ -432,15 +436,15 @@ public class AssetBizImpl implements AssetBiz {
 
 
         // 查询当天充值记录
-        int pageSize = 20, pageIndex = 1, realSize =  0;
+        int pageSize = 20, pageIndex = 1, realSize = 0;
         String accountId = userThirdAccount.getAccountId();  // 存管账户ID
-        Date nowDate = new Date() ;
+        Date nowDate = new Date();
         do {
             AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
-            accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize)) ;
-            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex)) ;
-            accountDetailsQueryRequest.setStartDate(DateHelper.getDate()) ; // 查询当天数据
-            accountDetailsQueryRequest.setEndDate(DateHelper.getDate()) ;
+            accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
+            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
+            accountDetailsQueryRequest.setStartDate(DateHelper.getDate()); // 查询当天数据
+            accountDetailsQueryRequest.setEndDate(DateHelper.getDate());
             accountDetailsQueryRequest.setType("9");
             accountDetailsQueryRequest.setTranType("7820"); //  线下转账
             accountDetailsQueryRequest.setAccountId(accountId);
@@ -449,15 +453,15 @@ public class AssetBizImpl implements AssetBiz {
                     accountDetailsQueryRequest,
                     AccountDetailsQueryResponse.class);
 
-            if( (ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode())) ){
-                String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg() ;
+            if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
+                String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, msg, VoUserAssetInfoResp.class));
             }
 
             String subPacks = accountDetailsQueryResponse.getSubPacks();
-            if(StringUtils.isEmpty(subPacks)){
+            if (StringUtils.isEmpty(subPacks)) {
                 break;
             }
 
@@ -466,18 +470,18 @@ public class AssetBizImpl implements AssetBiz {
             List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
             realSize = accountDetailsQueryItems.size();
 
-            String seqNo ;
-            for(AccountDetailsQueryItem accountDetailsQueryItem: accountDetailsQueryItems){   // 同步系统充值
-                seqNo = String.format("%s%s%s", accountDetailsQueryItem.getInpDate(), accountDetailsQueryItem.getInpTime(), accountDetailsQueryItem.getTraceNo() ) ;
+            String seqNo;
+            for (AccountDetailsQueryItem accountDetailsQueryItem : accountDetailsQueryItems) {   // 同步系统充值
+                seqNo = String.format("%s%s%s", accountDetailsQueryItem.getInpDate(), accountDetailsQueryItem.getInpTime(), accountDetailsQueryItem.getTraceNo());
                 RechargeDetailLog rechargeDetailLog = rechargeDetailLogService.findTopBySeqNo(seqNo);
-                if(!ObjectUtils.isEmpty(rechargeDetailLog)){
+                if (!ObjectUtils.isEmpty(rechargeDetailLog)) {
                     continue;
                 }
-                Double money = new Double(accountDetailsQueryItem.getTxAmount()) * 100 ;
+                Double money = new Double(accountDetailsQueryItem.getTxAmount()) * 100;
 
                 // 根据对手
                 // 插入该条记录
-                rechargeDetailLog = new RechargeDetailLog() ;
+                rechargeDetailLog = new RechargeDetailLog();
                 rechargeDetailLog.setUserId(users.getId());
                 rechargeDetailLog.setBankName(userThirdAccount.getBankName());
                 rechargeDetailLog.setCallbackTime(nowDate);
@@ -485,7 +489,7 @@ public class AssetBizImpl implements AssetBiz {
                 rechargeDetailLog.setUpdateTime(nowDate);
                 rechargeDetailLog.setCardNo(userThirdAccount.getCardNo());
                 rechargeDetailLog.setDel(0);
-                rechargeDetailLog.setState(1) ; // 充值成功
+                rechargeDetailLog.setState(1); // 充值成功
                 rechargeDetailLog.setMoney(money.longValue());
                 rechargeDetailLog.setRechargeChannel(1);  // 其他渠道
                 rechargeDetailLog.setRechargeType(1); // 线下充值
@@ -509,7 +513,7 @@ public class AssetBizImpl implements AssetBiz {
                 mqConfig.setMsg(body);
                 mqHelper.convertAndSend(mqConfig);
             }
-        }while (realSize == pageSize) ;
+        } while (realSize == pageSize);
         return userAssetInfo(userId);
     }
 
@@ -1075,5 +1079,32 @@ public class AssetBizImpl implements AssetBiz {
         return response;
     }
 
+    /**
+     * 账户总额统计
+     * @param userId
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoViewAssetStatisticWarpRes> pcAccountStatstic(Long userId) {
+        try {
+            VoViewAssetStatisticWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewAssetStatisticWarpRes.class);
+            AssetStatistic assetStatistic = userCacheService.assetStatistic(userId);
+            warpRes.setAssetStatistic(assetStatistic);
+            return ResponseEntity.ok(warpRes);
+        } catch (Exception e) {
+            e.printStackTrace();
 
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,
+                            "查询异常,请稍后在试",
+                            VoViewAssetStatisticWarpRes.class));
+        }
+    }
+
+    @Override
+    public ResponseEntity<IncomeEarnedDetail> pcIncomeEarned(Long userId) {
+
+       return userCacheService.incomeEarned(userId);
+
+    }
 }

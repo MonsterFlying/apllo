@@ -7,6 +7,7 @@ import com.gofobao.framework.collection.vo.request.VoOrderDetailReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
+import com.gofobao.framework.collection.vo.response.web.VoCollectionListByDays;
 import com.gofobao.framework.collection.vo.response.web.VoViewCollectionListWarpRes;
 import com.gofobao.framework.collection.vo.response.web.VoViewCollectionWarpRes;
 import org.springframework.http.ResponseEntity;
@@ -50,5 +51,13 @@ public interface PaymentBiz {
 
 
     ResponseEntity<VoViewCollectionDaysWarpRes> collectionDays(String date, Long userId);
+
+    /**
+     * 根据时间查询回款列表
+     * @param date
+     * @param userId
+     * @return
+     */
+    ResponseEntity<VoCollectionListByDays> collectionListByDays(String date, Long userId);
 
 }

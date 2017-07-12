@@ -247,16 +247,16 @@ public class AplloApplicationTests {
         System.out.println((resp.getTotalItems()));*/
 
         /*Map<String,String> msg = new HashMap<>();
-        msg.put("borrowId","169803");
+        msg.put("borrowId","169820");
         try {
             borrowProvider.doAgainVerify(msg);
         } catch (Throwable e) {
             e.printStackTrace();
         }*/
 
-        BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("160729");
-        batchDetailsQueryReq.setBatchTxDate("20170708");
+        /*BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
+        batchDetailsQueryReq.setBatchNo("093859");
+        batchDetailsQueryReq.setBatchTxDate("20170711");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -264,7 +264,7 @@ public class AplloApplicationTests {
         BatchDetailsQueryResp batchDetailsQueryResp = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, batchDetailsQueryReq, BatchDetailsQueryResp.class);
         if ((ObjectUtils.isEmpty(batchDetailsQueryResp)) || (!JixinResultContants.SUCCESS.equals(batchDetailsQueryResp.getRetCode()))) {
             log.error(ObjectUtils.isEmpty(batchDetailsQueryResp) ? "当前网络不稳定，请稍候重试" : batchDetailsQueryResp.getRetMsg());
-        }
+        }*/
 
         /*Specification<Borrow> bs = Specifications
                 .<Borrow>and()
@@ -294,12 +294,6 @@ public class AplloApplicationTests {
         System.out.println(response);*/
 
 
-        /*Borrow borrow = borrowService.findById(169767L);
-        try {
-            borrowBiz.notTransferedBorrowAgainVerify(borrow);
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }*/
 
         /*Borrow borrow = borrowService.findById(165227L);
         try {
