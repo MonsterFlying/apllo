@@ -75,8 +75,6 @@ public class UserBizImpl implements UserBiz {
     @Autowired
     VipService vipService;
 
-    @Autowired
-    MqHelper mqHelper;
 
     @Autowired
     RedisHelper redisHelper;
