@@ -58,7 +58,7 @@ public class BorrowCancelScheduler {
                 try {
                     borrowBiz.cancelBorrow(voCancelBorrow);
                 } catch (Exception e) {
-                    log.error("borrowCancelScheduler 取消借款异常：", e);
+                    log.error("borrowCancelScheduler 借款：" + borrow.getId() + " 取消借款异常：", e);
                 }
             }
         } while (borrowList.size() >= pageSize);

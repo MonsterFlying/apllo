@@ -33,8 +33,8 @@ public class NoticesServiceImpl implements NoticesService {
     private NoticesRepository noticesRepository;
 
     @Override
-    public void save(Notices notices) {
-        noticesRepository.save(notices);
+    public Notices save(Notices notices) {
+        return noticesRepository.save(notices);
     }
 
     @Override

@@ -15,6 +15,7 @@ import com.gofobao.framework.asset.entity.CashDetailLog;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.CashDetailLogService;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
+import com.gofobao.framework.asset.vo.request.VoAdminCashReq;
 import com.gofobao.framework.asset.vo.request.VoBankApsReq;
 import com.gofobao.framework.asset.vo.request.VoCashReq;
 import com.gofobao.framework.asset.vo.request.VoPcCashLogs;
@@ -30,6 +31,7 @@ import com.gofobao.framework.helper.OKHttpHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.ThirdAccountPasswordHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
@@ -558,6 +560,23 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                             "查询异常",
                             VoCashLogWarpRes.class));
         }
+    }
+
+    @Override
+    public ResponseEntity<VoHtmlResp> adminWebCash(HttpServletRequest httpServletRequest, VoAdminCashReq voAdminCashReq) throws Exception {
+        String paramStr = voAdminCashReq.getParamStr();
+        if (!SecurityHelper.checkSign(voAdminCashReq.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc 登记官方借款 签名验证不通过", VoHtmlResp.class));
+        }
+
+        Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        Long userId = Long.parseLong(paramMap.get("userId")) ;
+        double money = Double.parseDouble(paramMap.get("money")) ;
+        VoCashReq voCashReq = new VoCashReq() ;
+        voCashReq.setCashMoney(money) ;
+        return cash(httpServletRequest, userId, voCashReq) ;
     }
 
 

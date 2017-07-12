@@ -5,9 +5,11 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.vo.request.VoRegisterReq;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.member.vo.response.pc.UserInfoExt;
+import com.gofobao.framework.security.vo.VoLoginReq;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Created by Zeke on 2017/5/19.
@@ -40,5 +42,15 @@ public interface UserBiz {
      */
     ResponseEntity<UserInfoExt>pcUserInfo(Long userId);
 
+
+    /**
+     * 登录
+     *
+     * @param httpServletRequest
+     * @param response
+     * @param voLoginReq
+     * @return
+     */
+    ResponseEntity<VoBasicUserInfoResp> login(HttpServletRequest httpServletRequest, HttpServletResponse response, VoLoginReq voLoginReq);
 }
 

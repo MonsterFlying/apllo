@@ -69,4 +69,7 @@ public class VoBasicUserInfoResp extends VoBaseResp{
 
     @ApiModelProperty("自动债权转让签约状态")
     private boolean autoTranferState ;
+
+    @ApiModelProperty("极光推送唯一标识")
+    private String  alias ;
 }

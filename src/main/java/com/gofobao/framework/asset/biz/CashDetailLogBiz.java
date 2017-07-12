@@ -1,5 +1,6 @@
 package com.gofobao.framework.asset.biz;
 
+import com.gofobao.framework.asset.vo.request.VoAdminCashReq;
 import com.gofobao.framework.asset.vo.request.VoBankApsReq;
 import com.gofobao.framework.asset.vo.request.VoCashReq;
 import com.gofobao.framework.asset.vo.request.VoPcCashLogs;
@@ -87,4 +88,13 @@ public interface CashDetailLogBiz {
      * @return
      */
     ResponseEntity<VoCashLogWarpRes> psLogs(VoPcCashLogs cashLogs);
+
+    /**
+     * 后台提现
+     * @param httpServletRequest
+     * @param voAdminCashReq
+     * @return
+     */
+    ResponseEntity<VoHtmlResp> adminWebCash(HttpServletRequest httpServletRequest, VoAdminCashReq voAdminCashReq) throws Exception;
+
 }

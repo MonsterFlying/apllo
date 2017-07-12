@@ -159,7 +159,7 @@ public class IncrStatisticScheduler {
         Long jzSumRepayment = 0l;
         Long jzSumRepaymentPrincipal = 0l;
         Statistic statistic = statisticService.findLast();
-        if (ObjectUtils.isEmpty(statistic)) {
+        if (!ObjectUtils.isEmpty(statistic)) {
             tjSumRepayment = statistic.getTjWaitRepayTotal();
             tjSumRepaymentPrincipal = statistic.getTjWaitRepayPrincipalTotal();
             qdSumRepayment = statistic.getQdWaitRepayTotal();

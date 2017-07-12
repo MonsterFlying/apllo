@@ -262,7 +262,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 //待发布
                 if (releaseAt.getTime() >= nowDate.getTime()) {
                     status = 1;
-                    borrowInfoRes.setSurplusSecond((releaseAt.getTime() - nowDate.getTime())/1000 + 5);
+                    borrowInfoRes.setSurplusSecond((releaseAt.getTime() - nowDate.getTime()) / 1000 + 5);
                 } else if (nowDate.getTime() > endAt.getTime()) {  //当前时间大于招标有效时间
                     status = 5; //已过期
                 } else {
@@ -586,7 +586,7 @@ public class BorrowBizImpl implements BorrowBiz {
         boolean bool = false;//债权转让默认不过期
         if (!ObjectUtils.isEmpty(borrow.getReleaseAt())) {
             Date limitDate = DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);
-            bool =  limitDate.getTime() < nowDate.getTime() ;
+            bool = limitDate.getTime() < nowDate.getTime();
         }
 
         if (((borrow.getStatus() == 1) && (bool))
@@ -623,7 +623,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 voCancelThirdTenderReq = new VoCancelThirdTenderReq();
                 voCancelThirdTenderReq.setTenderId(tender.getId());
                 ResponseEntity<VoBaseResp> resp = tenderThirdBiz.cancelThirdTender(voCancelThirdTenderReq);
-                if ( !resp.getStatusCode().equals(HttpStatus.OK) ) {
+                if (!resp.getStatusCode().equals(HttpStatus.OK)) {
                     throw new Exception("borrowBizImpl cancelBorrow:" + resp.getBody().getState().getMsg());
                 }
             }
@@ -814,7 +814,7 @@ public class BorrowBizImpl implements BorrowBiz {
         String productId = borrow.getProductId();
         if (!StringUtils.isEmpty(productId)) {
 
-            Map<String, Object> map = jdbcTemplate.queryForMap("select count(id) as count from gfb_borrow_tender where borrow_id = " + borrow.getId() + " and third_tender_order_id is not null");
+            Map<String, Object> map = jdbcTemplate.queryForMap("select count(id) as count from gfb_borrow_tender where borrow_id = " + borrow.getId() + " and third_tender_order_id is not null AND third_tender_cancel_order_id is NULL ");
             if (NumberHelper.toInt(map.get("count")) <= 0) {
                 VoCancelThirdBorrow voCancelThirdBorrow = new VoCancelThirdBorrow();
                 voCancelThirdBorrow.setProductId(productId);
@@ -825,7 +825,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 if (!resp.getStatusCode().equals(HttpStatus.OK)) {
                     throw new Exception("borrowBizImpl cancelThirdBorrow:" + resp.getBody().getState().getMsg());
                 }
-            }else{
+            } else {
                 log.error("当前标定中还存在未取消投标申请记录");
                 throw new Exception("borrowBizImpl cancelThirdBorrow: 当前标定中还存在未取消投标申请记录");
             }
@@ -852,6 +852,7 @@ public class BorrowBizImpl implements BorrowBiz {
             int repayMoney = 0;
             int repayInterest = 0;
 
+            //调用利息计算器得出借款每期应还信息
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(StringHelper.toString(borrow.getMoney())),
                     NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrow.getSuccessAt());
             Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
@@ -932,7 +933,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     .eq("transferFlag", 1)
                     .build();
 
-            transferedBorrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "timeLimit"));
+            transferedBorrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "order"));
 
             Integer collectionMoney = 0;
             Integer collectionInterest = 0;
@@ -1059,8 +1060,8 @@ public class BorrowBizImpl implements BorrowBiz {
                 String remark = "借款标[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]的奖励";
 
                 //查询红包账户
-                DictValue dictValue =  jixinCache.get(JixinContants.RED_PACKET_USER_ID);
-                UserThirdAccount redPacketAccount =  userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
+                DictValue dictValue = jixinCache.get(JixinContants.RED_PACKET_USER_ID);
+                UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
 
                 //通过红包的形式发送奖励
                 VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
@@ -1402,6 +1403,8 @@ public class BorrowBizImpl implements BorrowBiz {
                     overPrincipal += borrowRepaymentList.get(j).getPrincipal();
                 }
                 lateInterest = new Double(overPrincipal * 0.004 * lateDays).intValue();
+            }else {
+                lateInterest = 0;
             }
             repaymentTotal += borrowRepayment.getPrincipal() + borrowRepayment.getInterest() * interestPercent + lateInterest;
             voRepayReq = new VoRepayReq();
@@ -1483,8 +1486,8 @@ public class BorrowBizImpl implements BorrowBiz {
                 }
 
                 //查询红包账户
-                DictValue dictValue =  jixinCache.get(JixinContants.RED_PACKET_USER_ID);
-                UserThirdAccount redPacketAccount =  userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
+                DictValue dictValue = jixinCache.get(JixinContants.RED_PACKET_USER_ID);
+                UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
 
                 tenderUserThirdAccount = userThirdAccountService.findByUserId(tenderUserId);
                 //调用即信发送红包接口

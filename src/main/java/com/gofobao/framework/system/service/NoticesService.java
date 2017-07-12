@@ -13,7 +13,7 @@ import java.util.List;
  */
 public interface NoticesService {
 
-    void save(Notices notices);
+    Notices save(Notices notices);
 
 
     /**

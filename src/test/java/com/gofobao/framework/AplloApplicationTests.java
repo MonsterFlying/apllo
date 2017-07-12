@@ -1,6 +1,8 @@
 package com.gofobao.framework;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileRequest;
@@ -8,30 +10,57 @@ import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMob
 import com.gofobao.framework.api.model.batch_bail_repay.BailRepayRun;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
+import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
+import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
+import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
+import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp;
+import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
+import com.gofobao.framework.award.service.VirtualService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
+import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
+import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
+import com.gofobao.framework.collection.entity.VirtualCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
-import com.gofobao.framework.common.assets.AssetsChangeEntity;
 import com.gofobao.framework.common.assets.AssetsChangeEnum;
+import com.gofobao.framework.common.assets.AssetsChangeEntity;
 import com.gofobao.framework.common.assets.AssetsChangeHelper;
+import com.gofobao.framework.common.capital.CapitalChangeEntity;
+import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.data.DataObject;
+import com.gofobao.framework.common.data.LeSpecification;
+import com.gofobao.framework.common.data.LtSpecification;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
-import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.JixinHelper;
-import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
+import com.gofobao.framework.lend.entity.Lend;
+import com.gofobao.framework.lend.service.LendService;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoAdvanceCall;
+import com.gofobao.framework.repayment.vo.request.VoAdvanceReq;
+import com.gofobao.framework.repayment.vo.request.VoRepayReq;
+import com.gofobao.framework.system.entity.IncrStatistic;
+import com.gofobao.framework.system.entity.Statistic;
+import com.gofobao.framework.system.service.IncrStatisticService;
+import com.gofobao.framework.system.service.StatisticService;
+import com.gofobao.framework.tender.entity.AutoTender;
+import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
@@ -42,15 +71,20 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.persistence.Query;
+import java.util.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -86,25 +120,37 @@ public class AplloApplicationTests {
     private TenderService tenderService;
     @Autowired
     private JdbcTemplate jdbcTemplate;
-
     @Autowired
-    private AssetsChangeHelper assetsChangeHelper ;
-
+    private AutoTenderService autoTenderService;
+    @Autowired
+    private AssetsChangeHelper assetsChangeHelper;
+    @Autowired
+    private BorrowRepaymentService borrowRepaymentService;
+    @Autowired
+    private VirtualService virtualService;
+    @Autowired
+    private CapitalChangeHelper capitalChangeHelper;
+    @Autowired
+    private StatisticService statisticService;
+    @Autowired
+    private IncrStatisticService incrStatisticService;
+    @Autowired
+    private LendService lendService;
 
     @Test
-    public void testAssetsChange() throws Exception{
+    public void testAssetsChange() throws Exception {
 
-        AssetsChangeEntity freeze = new AssetsChangeEntity() ;
-        freeze.setMoney(100 * 100 - 2 * 100) ;
-        freeze.setFee(2 * 100) ;
+        AssetsChangeEntity freeze = new AssetsChangeEntity();
+        freeze.setMoney(100 * 100 - 2 * 100);
+        freeze.setFee(2 * 100);
         freeze.setType(AssetsChangeEnum.Frozen);
         freeze.setUserId(41258);
         freeze.setToUserId(0);
         freeze.setRefId(12);
         assetsChangeHelper.execute(freeze);
-        AssetsChangeEntity cash = new AssetsChangeEntity() ;
-        cash.setMoney(100 * 100 - 2 * 100) ;
-        cash.setFee(2 * 100) ;
+        AssetsChangeEntity cash = new AssetsChangeEntity();
+        cash.setMoney(100 * 100 - 2 * 100);
+        cash.setFee(2 * 100);
         cash.setType(AssetsChangeEnum.SmallCash);
         cash.setUserId(41258);
         cash.setToUserId(0);
@@ -196,8 +242,87 @@ public class AplloApplicationTests {
         }
     }
 
+    private void doFirstVerify() {
+        Map<String, String> map = new HashMap<>();
+        map.put("borrowId", "169811");
+        try {
+            borrowProvider.doFirstVerify(map);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void repayDeal() {
+        VoRepayReq voRepayReq = new VoRepayReq();
+        voRepayReq.setRepaymentId(168683L);
+        voRepayReq.setUserId(901L);
+        voRepayReq.setIsUserOpen(false);
+        voRepayReq.setInterestPercent(1d);
+        try {
+            repaymentBiz.repayDeal(voRepayReq);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void findThirdBorrowList() {
+        VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
+        voQueryThirdBorrowList.setProductId("A69756");
+        voQueryThirdBorrowList.setUserId(2762L);
+        voQueryThirdBorrowList.setPageNum("1");
+        voQueryThirdBorrowList.setPageSize("10");
+        DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
+        System.out.println((resp.getTotalItems()));
+
+
+    }
+
+    private void doAgainVerify() {
+        Map<String, String> msg = new HashMap<>();
+        msg.put("borrowId", "169820");
+        try {
+            borrowProvider.doAgainVerify(msg);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void batchDetailsQuery() {
+        BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
+        batchDetailsQueryReq.setBatchNo("093859");
+        batchDetailsQueryReq.setBatchTxDate("20170711");
+        batchDetailsQueryReq.setType("0");
+        batchDetailsQueryReq.setPageNum("1");
+        batchDetailsQueryReq.setPageSize("10");
+        batchDetailsQueryReq.setChannel(ChannelContant.HTML);
+        BatchDetailsQueryResp batchDetailsQueryResp = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, batchDetailsQueryReq, BatchDetailsQueryResp.class);
+        if ((ObjectUtils.isEmpty(batchDetailsQueryResp)) || (!JixinResultContants.SUCCESS.equals(batchDetailsQueryResp.getRetCode()))) {
+            log.error(ObjectUtils.isEmpty(batchDetailsQueryResp) ? "当前网络不稳定，请稍候重试" : batchDetailsQueryResp.getRetMsg());
+        }
+    }
+
+    private void bidApplyQuery() {
+        BidApplyQueryReq request = new BidApplyQueryReq();
+        request.setAccountId("6212462040000600025");
+        request.setChannel(ChannelContant.HTML);
+        request.setOrgOrderId("GFBT_1498530231199");
+        BidApplyQueryResp response = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, request, BidApplyQueryResp.class);
+        System.out.println(response);
+
+    }
+
+    private void transferedBorrowAgainVerify() {
+        Borrow borrow = borrowService.findById(165227L);
+        try {
+            borrowBiz.transferedBorrowAgainVerify(borrow);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
+
     @Test
     public void test() {
+
 
 
         //根据手机号查询存管账户
@@ -212,91 +337,20 @@ public class AplloApplicationTests {
         //creditInvestQuery();
         //垫付回调
         //advanceCall();
-
-       /* Map<String,String> map = new HashMap<>();
-        map.put("borrowId","169811");
-        try {
-            borrowProvider.doFirstVerify(map);
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-*/
-        /*VoRepayReq voRepayReq = new VoRepayReq();
-        voRepayReq.setRepaymentId(168683L);
-        voRepayReq.setUserId(901L);
-        voRepayReq.setIsUserOpen(false);
-        voRepayReq.setInterestPercent(1d);
-        try {
-            repaymentBiz.repayDeal(voRepayReq);
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-
-        System.out.println(true + "");*/
-
-        /*VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
-        voQueryThirdBorrowList.setProductId("A69756");
-        voQueryThirdBorrowList.setUserId(2762L);
-        voQueryThirdBorrowList.setPageNum("1");
-        voQueryThirdBorrowList.setPageSize("10");
-        DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
-        System.out.println((resp.getTotalItems()));*/
-
-        /*Map<String,String> msg = new HashMap<>();
-        msg.put("borrowId","169820");
-        try {
-            borrowProvider.doAgainVerify(msg);
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }*/
-
-        /*BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("093859");
-        batchDetailsQueryReq.setBatchTxDate("20170711");
-        batchDetailsQueryReq.setType("0");
-        batchDetailsQueryReq.setPageNum("1");
-        batchDetailsQueryReq.setPageSize("10");
-        batchDetailsQueryReq.setChannel(ChannelContant.HTML);
-        BatchDetailsQueryResp batchDetailsQueryResp = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, batchDetailsQueryReq, BatchDetailsQueryResp.class);
-        if ((ObjectUtils.isEmpty(batchDetailsQueryResp)) || (!JixinResultContants.SUCCESS.equals(batchDetailsQueryResp.getRetCode()))) {
-            log.error(ObjectUtils.isEmpty(batchDetailsQueryResp) ? "当前网络不稳定，请稍候重试" : batchDetailsQueryResp.getRetMsg());
-        }*/
-
-        /*Specification<Borrow> bs = Specifications
-                .<Borrow>and()
-                .eq("status",1)
-                .predicate(new LeSpecification("releaseAt",new DataObject(DateHelper.beginOfDate(DateHelper.subDays(new Date(),1)))))
-                .build();
-        List<Borrow> borrowList = borrowService.findList(bs);
-        System.out.println(borrowList);*/
-
-        //"userId\":901,\"repaymentId\":168675,\"interestPercent\":0.0,\"isUserOpen\":true
-        /*VoRepayReq voRepayReq = new VoRepayReq();
-        voRepayReq.setUserId(901L);
-        voRepayReq.setRepaymentId(168675L);
-        voRepayReq.setInterestPercent(0.0);
-        voRepayReq.setIsUserOpen(false);
-        try {
-            repaymentBiz.repayDeal(voRepayReq);
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }*/
-
-        /*BidApplyQueryReq request = new BidApplyQueryReq();
-        request.setAccountId("6212462040000600025");
-        request.setChannel(ChannelContant.HTML);
-        request.setOrgOrderId("GFBT_1498530231199");
-        BidApplyQueryResp response = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, request, BidApplyQueryResp.class);
-        System.out.println(response);*/
-
-
-
-        /*Borrow borrow = borrowService.findById(165227L);
-        try {
-            borrowBiz.transferedBorrowAgainVerify(borrow);
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }*/
+        //初审
+        //doFirstVerify();
+        //还款处理
+        //repayDeal();
+        //查询标的集合
+        //findThirdBorrowList();
+        //复审
+        //doAgainVerify();
+        //批次详情查询
+        //batchDetailsQuery();
+        //查询投标申请
+        //bidApplyQuery();
+        //转让标复审回调
+        //transferedBorrowAgainVerify();
     }
 
 }

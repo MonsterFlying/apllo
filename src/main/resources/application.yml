@@ -63,6 +63,9 @@ gofobao:
     url: http://xc.aipipi.mobi/trafgatewate/apply.do
     id: 10
     key: 1b5e8124fe
+  jiguang:
+    AppKey: ce7616b0fc76f923a1b53b30
+    MasterSecre : d4b742ae7cc3e4be1d6a95c3
 logging:
   file: /Users/Max/logs/logback.log
   pattern:

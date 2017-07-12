@@ -95,7 +95,7 @@ public class CapitalChangeRulePaser {
                     money = NumberHelper.toInt(StringHelper.toString(value)) + money;
                     break;
                 case "sub":
-                    money = NumberHelper.toInt(StringHelper.toString(value)) - money;
+                    money = (NumberHelper.toInt(StringHelper.toString(value)) - money) < 0 ? 0l : NumberHelper.toInt(StringHelper.toString(value));
                     break;
                 default:
                     return false;

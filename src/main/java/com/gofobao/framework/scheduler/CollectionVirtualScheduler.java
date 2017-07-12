@@ -20,6 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -44,12 +45,10 @@ public class CollectionVirtualScheduler {
     @Scheduled(cron = "0 00 22 * * ? ")
     public void process() {
         do {
-            if (NumberHelper.toInt(DateHelper.dateToString(new Date(), "HH")) < 20) {
-                break;
-            }
 
             Specification<VirtualCollection> vcs = Specifications
                     .<VirtualCollection>and()
+                    .eq("status", 0)
                     .predicate(new LeSpecification("collectionAt", new DataObject(DateHelper.endOfDate(new Date()))))
                     .build();
 
@@ -68,6 +67,10 @@ public class CollectionVirtualScheduler {
                 virtualCollectionList = virtualService.findList(vcs, pageable);
                 for (VirtualCollection virtualCollection : virtualCollectionList) {
                     tenderIds.add(virtualCollection.getTenderId());
+                }
+
+                if (CollectionUtils.isEmpty(tenderIds)){
+                    break;
                 }
 
                 ts = Specifications

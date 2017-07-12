@@ -1,5 +1,16 @@
 package com.gofobao.framework.system.biz.impl;
 
+import cn.jiguang.common.ClientConfig;
+import cn.jpush.api.JPushClient;
+import cn.jpush.api.push.model.Message;
+import cn.jpush.api.push.model.Options;
+import cn.jpush.api.push.model.Platform;
+import cn.jpush.api.push.model.PushPayload;
+import cn.jpush.api.push.model.audience.Audience;
+import cn.jpush.api.push.model.notification.AndroidNotification;
+import cn.jpush.api.push.model.notification.IosNotification;
+import cn.jpush.api.push.model.notification.Notification;
+import cn.jpush.api.push.model.notification.PlatformNotification;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
@@ -13,17 +24,22 @@ import com.gofobao.framework.system.vo.response.UserNotices;
 import com.gofobao.framework.system.vo.response.VoViewNoticesInfoWarpRes;
 import com.gofobao.framework.system.vo.response.VoViewUserNoticesWarpRes;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.Date;
 import java.util.List;
+
+import static cn.jpush.api.push.model.notification.PlatformNotification.ALERT;
 
 /**
  * Created by Max on 17/6/5.
@@ -38,12 +54,14 @@ public class NoticesBizImpl implements NoticesBiz {
     @Autowired
     UserService userService;
 
+    @Autowired
+    JPushClient jPushClient;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean save(Notices notices) {
         Preconditions.checkNotNull(notices, "NoticesBizImpl.save: notices is empty");
         Preconditions.checkNotNull(notices.getUserId(), "NoticesBizImpl.save: userId is empty");
-
         Users users = userService.findByIdLock(notices.getUserId());
         if (ObjectUtils.isEmpty(users)) {
             log.error("NoticesBizImpl.save: userId find null");
@@ -59,12 +77,48 @@ public class NoticesBizImpl implements NoticesBiz {
             notices.setUpdatedAt(now);
         }
 
-        noticesService.save(notices);
+        notices = noticesService.save(notices);
         Integer noticeCount = users.getNoticeCount();
         noticeCount = noticeCount <= 0 ? 0 : noticeCount;
         users.setNoticeCount(noticeCount + 1);
         users.setUpdatedAt(now);
         userService.save(users);
+
+        // ========================================
+        // 发送推送
+        // ========================================
+        ImmutableList<Integer> platforms = ImmutableList.of(1, 2);
+        if ((users.getPushState() == 1)
+                && (!StringUtils.isEmpty(users.getPushId()))
+                && (platforms.contains(users.getPlatform()))) {
+            PlatformNotification platformNotification;
+            if (users.getPlatform().equals(1)) {
+                platformNotification = AndroidNotification.newBuilder()
+                        .setAlert(ALERT)
+                        .addExtra("from", "广富宝金服")
+                        .build();
+            } else {
+                platformNotification = IosNotification.newBuilder()
+                        .setAlert(ALERT)
+                        .setBadge(users.getNoticeCount())
+                        .setSound("happy")
+                        .addExtra("from", "广富宝金服")
+                        .build();
+            }
+
+            PushPayload.newBuilder()
+                    .setPlatform(users.getPlatform().equals(1) ? Platform.android() : Platform.ios())
+                    .setAudience(Audience.alias(users.getPushId()))
+                    .setNotification(Notification.newBuilder()
+                            .addPlatformNotification(platformNotification)
+                            .build())
+                    .setMessage(Message.content(notices.getContent()))
+                    .setOptions(Options.newBuilder()
+                            .setApnsProduction(true)
+                            .build())
+                    .build();
+        }
+
         return true;
     }
 
