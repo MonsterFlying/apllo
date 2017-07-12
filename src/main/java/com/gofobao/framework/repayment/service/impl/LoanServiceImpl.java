@@ -394,7 +394,7 @@ public class LoanServiceImpl implements LoanService {
 
         //分页
         TypedQuery  query=entityManager.createQuery(sql+condition,BorrowRepayment.class);
-        query.setMaxResults(voStatisticsReq.getPageSize());
+        query.setMaxResults(voStatisticsReq.getPageSize()*voStatisticsReq.getPageIndex());
         query.setFirstResult(voStatisticsReq.getPageIndex());
         List<BorrowRepayment> borrowRepayments=query.getResultList();
 

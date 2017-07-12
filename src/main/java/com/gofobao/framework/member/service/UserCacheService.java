@@ -2,6 +2,7 @@ package com.gofobao.framework.member.service;
 
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.vo.response.pc.AssetStatistic;
+import com.gofobao.framework.member.vo.response.pc.ExpenditureDetail;
 import com.gofobao.framework.member.vo.response.pc.IncomeEarnedDetail;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -51,4 +52,12 @@ public interface UserCacheService {
      * @return
      */
     ResponseEntity<IncomeEarnedDetail> incomeEarned(Long userId);
+
+    /**
+     * 已支出明细统计
+     * @param userId
+     * @return
+     */
+    ResponseEntity<ExpenditureDetail>expenditureDetail(Long userId);
+
 }

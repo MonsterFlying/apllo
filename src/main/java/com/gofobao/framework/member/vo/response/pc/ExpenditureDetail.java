@@ -1,5 +1,6 @@
 package com.gofobao.framework.member.vo.response.pc;
 
+import com.gofobao.framework.core.vo.VoBaseResp;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -7,7 +8,7 @@ import lombok.Data;
  * Created by admin on 2017/7/12.
  */
 @Data
-public class ExpenditureDetail {
+public class ExpenditureDetail extends VoBaseResp {
 
     @ApiModelProperty("已支出总额")
     private String  ExpenditureTotal;
@@ -38,9 +39,6 @@ public class ExpenditureDetail {
 
     @ApiModelProperty("待付利息管理费")
     private String  waitExpendInterestManageFee;
-
-
-
 
 
 }

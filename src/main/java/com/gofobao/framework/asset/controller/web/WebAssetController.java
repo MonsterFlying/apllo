@@ -2,6 +2,7 @@ package com.gofobao.framework.asset.controller.web;
 
 import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.vo.response.*;
+import com.gofobao.framework.member.vo.response.pc.ExpenditureDetail;
 import com.gofobao.framework.member.vo.response.pc.IncomeEarnedDetail;
 import com.gofobao.framework.member.vo.response.pc.VoViewAssetStatisticWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
@@ -58,13 +59,19 @@ public class WebAssetController {
 
     @ApiOperation("账户总额统计")
     @GetMapping("/asset/pc/v2/accountTotal")
-    public ResponseEntity<VoViewAssetStatisticWarpRes> accountTotal(/*@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
-        return assetBiz.pcAccountStatstic(901L);
+    public ResponseEntity<VoViewAssetStatisticWarpRes> accountTotal(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return assetBiz.pcAccountStatstic(userId);
     }
     @ApiOperation("总收益统计詳情")
     @GetMapping("/asset/pc/v2/incomeEarnedTotal")
-    public ResponseEntity<IncomeEarnedDetail> incomeEarnedTotal(/*@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
-        return assetBiz.pcIncomeEarned(901L);
+    public ResponseEntity<IncomeEarnedDetail> incomeEarnedTotal(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return assetBiz.pcIncomeEarned(userId);
+    }
+
+    @ApiOperation("总支出明细统计")
+    @GetMapping("/asset/pc/v2/expenditureDetail")
+    public ResponseEntity<ExpenditureDetail> expenditureDetail(/*@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+        return assetBiz.pcExpenditureDetail(901L);
     }
 
 }
