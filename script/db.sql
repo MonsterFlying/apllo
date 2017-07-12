@@ -483,6 +483,12 @@ ALTER TABLE gfb_user_cache MODIFY award_virtual_money BIGINT UNSIGNED NOT NULL D
 ALTER TABLE gfb_user_cache MODIFY yesterday_use_money BIGINT UNSIGNED NOT NULL DEFAULT '0' COMMENT '昨日可用余额';
 ALTER TABLE gfb_assets_change_log CHANGE collecton collection BIGINT(20) DEFAULT '0' COMMENT '待收金额';
 ALTER TABLE gfb_assets_change_log CHANGE virtual_moeny virtual_money BIGINT(20) DEFAULT '0' COMMENT '虚拟体验经';
+ALTER TABLE gfb_assets_change_log ADD remark VARCHAR(225) DEFAULT '' NULL;
+
+
+
+
+
 ALTER TABLE `gfb_auto_tender`
   MODIFY COLUMN `repay_money_yes` int(10) unsigned DEFAULT '0' COMMENT '实际还款金额（分）',
   MODIFY COLUMN `status` int(11) DEFAULT '0' COMMENT '借款用户是否还款状态：0、未还款。1、还款；';

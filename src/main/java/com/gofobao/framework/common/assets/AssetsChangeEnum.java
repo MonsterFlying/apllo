@@ -4,7 +4,7 @@ package com.gofobao.framework.common.assets;
  * 资金变动类型
  * Created by Max on 17/3/10.
  */
-public enum AssetChangeEnum {
+public enum AssetsChangeEnum {
     /**
      * 线上充值
      */
@@ -51,7 +51,6 @@ public enum AssetChangeEnum {
      */
     Award(9, "7833"),
 
-
     /**
      * 借款
      */
@@ -62,11 +61,10 @@ public enum AssetChangeEnum {
      */
     PaymentAdd(11, ""),
 
-
     /**
-     * 还款
+     * 正常还款
      */
-    Repayment(12, "2781"),
+    Repayment(12, "2781", 102, "2781"),
 
     /**
      * 扣除待还
@@ -88,13 +86,13 @@ public enum AssetChangeEnum {
     private int feeType = 0 ;
     private String feeTxType = "" ;
 
-    AssetChangeEnum(int type, String txType) {
+    AssetsChangeEnum(int type, String txType) {
         this.type = type;
         this.txType = txType;
     }
 
     /** */
-    AssetChangeEnum(int type, String txType, int feeType, String feeTxType) {
+    AssetsChangeEnum(int type, String txType, int feeType, String feeTxType) {
         this.type = type;
         this.txType = txType;
         this.feeType = feeType;

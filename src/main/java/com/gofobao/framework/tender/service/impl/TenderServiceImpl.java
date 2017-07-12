@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -32,7 +33,7 @@ import java.util.*;
 /**
  * Created by admin on 2017/5/19.
  */
-@Component
+@Service
 @Slf4j
 public class TenderServiceImpl implements TenderService {
 

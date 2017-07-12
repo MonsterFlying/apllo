@@ -204,7 +204,7 @@ public class BankAccountBizImpl implements BankAccountBiz{
     public int getCashCredit4Day(Long userId) {
         Date endDate = new Date() ;
         Date startDate = DateHelper.beginOfDate(endDate);
-        ImmutableList<Integer> stateList = ImmutableList.of(0, 1) ; // 充值成功和申请充值中的
+        ImmutableList<Integer> stateList = ImmutableList.of(3) ; // 充值成功
         List<RechargeDetailLog> rechargeDetailLogs = rechargeDetailLogService.findByUserIdAndDelAndStateInAndCreateTimeBetween(userId, 0, stateList, startDate, endDate);
         if(CollectionUtils.isEmpty(rechargeDetailLogs)){
             return 0 ;

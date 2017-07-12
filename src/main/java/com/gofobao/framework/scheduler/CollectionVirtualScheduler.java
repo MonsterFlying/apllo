@@ -12,7 +12,6 @@ import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
-import com.sun.deploy.security.CachedCertificatesHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -21,8 +20,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -37,8 +34,10 @@ public class CollectionVirtualScheduler {
 
     @Autowired
     private VirtualService virtualService;
+
     @Autowired
     private TenderService tenderService;
+
     @Autowired
     private CapitalChangeHelper capitalChangeHelper;
 

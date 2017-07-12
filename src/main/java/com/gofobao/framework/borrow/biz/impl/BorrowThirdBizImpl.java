@@ -129,7 +129,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
 
         Borrow borrow = borrowService.findById(borrowId);
         Preconditions.checkNotNull(borrow, "借款记录不存在！");
-
+        borrow.setReleaseAt(ObjectUtils.isEmpty(borrow.getReleaseAt()) ? new Date() :  borrow.getReleaseAt());
         Long userId = borrow.getUserId();
         int repayFashion = borrow.getRepayFashion();
 

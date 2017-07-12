@@ -37,8 +37,6 @@ import java.util.concurrent.TimeUnit;
  */
 @Component
 public class AssetsChangeHelper {
-
-
     @Autowired
     UserService userService;
 
@@ -77,30 +75,25 @@ public class AssetsChangeHelper {
                         return null ;
                     }
 
-                    DictValue dictValue = dictValueService.findTopByItemIdAndValue02(dictItem.getId(), jixinParamStr);
-                    return ObjectUtils.isEmpty(dictValue) ? null : Long.parseLong(dictValue.getValue02()) ;
+                    DictValue dictValue = dictValueService.findTopByItemIdAndValue01(dictItem.getId(), jixinParamStr);
+                    return ObjectUtils.isEmpty(dictValue) ? null : Long.parseLong(dictValue.getValue03()) ;
                 }
             }) ;
 
     @Transactional(rollbackFor = Exception.class)
-    void execute(AssetEntity entity) throws Exception {
+    public void execute(AssetsChangeEntity entity) throws Exception {
         Preconditions.checkNotNull(entity,
                 "AssetsChangeHelper.execute assetEntity is null ");
-        Preconditions.checkArgument(entity.getUserId() > 0,
-                "AssetsChangeHelper.execute userId  <= 0");
         Preconditions.checkArgument(entity.getUserId() > 0,
                 "AssetsChangeHelper.execute userId  <= 0");
         Preconditions.checkNotNull(entity.getType(),
                 "AssetsChangeHelper.execute type is null");
 
         if (entity.getMoney() <= 0) {
-            entity.setMoney(entity.getPrincipal() + entity.getInterest() + entity.getFee());
+            entity.setMoney(entity.getPrincipal() + entity.getInterest() );
         }
-        Preconditions.checkArgument(entity.getUserId() > 0,
-                "AssetsChangeHelper.execute moeny  <= 0");
-
         if (entity.getPrincipal() <= 0) {
-            entity.setPrincipal(entity.getMoney() - entity.getInterest() - entity.getFee());
+            entity.setPrincipal(entity.getMoney() - entity.getInterest());
         }
         AssetsChangeConfig assetsChangeConfig = AssetsChangeConfig.findAssetConfig(entity.getType());
         Preconditions.checkNotNull(assetsChangeConfig,
@@ -120,7 +113,24 @@ public class AssetsChangeHelper {
 
         Date nowDate = new Date();
         Date zeroDate = DateHelper.beginOfDate(nowDate);
-        long yesterdayMoney = 0L; // 昨日资产
+        // ==================================================================
+        //  获取昨日资产
+        // ==================================================================
+        long yesterdayMoney = getYesterdayMoney(entity, userId, asset, nowDate, zeroDate);
+
+        // ==================================================================
+        //  资金变动
+        // ==================================================================
+        updateAsset(entity, assetsChangeConfig, userId, asset, userThirdAccount, nowDate);
+
+        //==================================================================
+        // 用户缓存资金变动
+        //==================================================================
+        updateUsesCache(entity, assetsChangeConfig, userCache, nowDate, yesterdayMoney);
+    }
+
+    private long getYesterdayMoney(AssetsChangeEntity entity, long userId, Asset asset, Date nowDate, Date zeroDate) {
+        long yesterdayMoney =  0 ;
         if (asset.getUpdatedAt().getTime() < zeroDate.getTime()) {  // 写入昨日资产
             YesterdayAsset yesterdayAsset = yesterdayAssetService.findByUserId(userId);
             boolean initState = false;
@@ -129,7 +139,7 @@ public class AssetsChangeHelper {
                 initState = true;
             }
 
-            yesterdayMoney = asset.getUseMoney();
+            yesterdayMoney =  asset.getUseMoney();
             yesterdayAsset.setUseMoney(asset.getUseMoney());
             yesterdayAsset.setNoUseMoney(asset.getNoUseMoney());
             yesterdayAsset.setUseMoney(asset.getUseMoney());
@@ -145,27 +155,21 @@ public class AssetsChangeHelper {
                 yesterdayAssetService.update(yesterdayAsset);
             }
         }
-
-        // ==================================================================
-        //  资金变动
-        // ==================================================================
-        updateAsset(entity, assetsChangeConfig, userId, asset, userThirdAccount, nowDate);
-
-        //==================================================================
-        // 用户缓存资金变动
-        //==================================================================
-        updateUsesCache(entity, assetsChangeConfig, asset, userCache, nowDate, yesterdayMoney);
+        return yesterdayMoney;
     }
 
-    private void updateAsset(AssetEntity entity, AssetsChangeConfig assetsChangeConfig, long userId, Asset asset, UserThirdAccount userThirdAccount, Date nowDate) throws Exception {
+    private void updateAsset(AssetsChangeEntity entity, AssetsChangeConfig assetsChangeConfig, long userId, Asset asset, UserThirdAccount userThirdAccount, Date nowDate) throws Exception {
         if (!StringUtils.isEmpty(assetsChangeConfig.getAssetChangeRule())) {
+            String assetChangeRule  = (StringUtils.isEmpty(entity.getAssetChangeRule())) ?  assetsChangeConfig.getAssetChangeRule() : entity.getAssetChangeRule() ;
+
             AssetsChangeRuleParse.parse(asset,
-                    assetsChangeConfig.getAssetChangeRule(),
+                    assetChangeRule,
                     entity.getPrincipal(),
                     entity.getInterest(),
                     entity.getFee());
+
             // 插入资金变换记录
-            AssetsChangeLog changeLog = insetAssetChangeLog(assetsChangeConfig, userId, asset, userThirdAccount, nowDate);
+            AssetsChangeLog changeLog = insetAssetChangeLog(assetsChangeConfig, userId, asset, userThirdAccount, nowDate, entity.getRemark());
             // 插入资金变动详细记录
             insertAssetChangeLogItem(entity, asset, userThirdAccount, nowDate, changeLog);
             asset.setUpdatedAt(nowDate);
@@ -173,7 +177,7 @@ public class AssetsChangeHelper {
         }
     }
 
-    private void insertAssetChangeLogItem(AssetEntity entity, Asset asset, UserThirdAccount userThirdAccount, Date nowDate, AssetsChangeLog changeLog) {
+    private void insertAssetChangeLogItem(AssetsChangeEntity entity, Asset asset, UserThirdAccount userThirdAccount, Date nowDate, AssetsChangeLog changeLog) throws  Exception{
         Long changeLogId = changeLog.getId();
         // 记录日志详细
         AssetsChangeLogItem changeLogItem = new AssetsChangeLogItem();
@@ -199,7 +203,8 @@ public class AssetsChangeHelper {
         // 处理手续费
         if ((entity.getType().getFeeType() > 0) && (entity.getFee() >= 0)) {
             // 获取企业收费账户ID
-            Long handlingChargeUserId  = jixinConfigCache.getIfPresent("handlingChargeUserId");
+            Long handlingChargeUserId  = null;
+            handlingChargeUserId = jixinConfigCache.get("handlingChargeUserId");
             Preconditions.checkNotNull(handlingChargeUserId, "AssetsChangeHelper.execute handlingChargeUserId is null") ;
             UserThirdAccount handlingChargeUser = userThirdAccountService.findByUserId(handlingChargeUserId);
             Preconditions.checkNotNull(handlingChargeUser, "AssetsChangeHelper.execute handlingChargeUser is null") ;
@@ -220,11 +225,11 @@ public class AssetsChangeHelper {
         }
     }
 
-    private AssetsChangeLog insetAssetChangeLog(AssetsChangeConfig assetsChangeConfig, long userId, Asset asset, UserThirdAccount userThirdAccount, Date nowDate) {
+    private AssetsChangeLog insetAssetChangeLog(AssetsChangeConfig assetsChangeConfig, long userId, Asset asset, UserThirdAccount userThirdAccount, Date nowDate, String remark) {
         // 记录日志
         AssetsChangeLog changeLog = new AssetsChangeLog();
         changeLog.setUpdateAt(nowDate);
-        changeLog.setCreateat(nowDate);
+        changeLog.setCreateAt(nowDate);
         changeLog.setUseMoney(asset.getUseMoney());
         changeLog.setNoUseMoney(asset.getNoUseMoney());
         changeLog.setCollection(asset.getCollection());
@@ -235,6 +240,7 @@ public class AssetsChangeHelper {
         changeLog.setAssetChangeType(assetsChangeConfig.getType().getType());
         changeLog.setMoney(asset.getUseMoney() + asset.getNoUseMoney());
         changeLog.setSynState(0); // 未同步
+        changeLog.setRemark(StringUtils.isEmpty(remark)? assetsChangeConfig.getRemark() : remark);
         changeLog = assetsChangeLogService.save(changeLog);
         return changeLog;
     }
@@ -244,15 +250,14 @@ public class AssetsChangeHelper {
      *
      * @param entity
      * @param assetsChangeConfig
-     * @param asset
      * @param userCache
      * @param nowDate
      * @param yesterdayMoney
      * @throws Exception
      */
-    private void updateUsesCache(AssetEntity entity, AssetsChangeConfig assetsChangeConfig, Asset asset, UserCache userCache, Date nowDate, long yesterdayMoney) throws Exception {
+    private void updateUsesCache(AssetsChangeEntity entity, AssetsChangeConfig assetsChangeConfig, UserCache userCache, Date nowDate, long yesterdayMoney) throws Exception {
         if (!StringUtils.isEmpty(assetsChangeConfig.getUserCacheChangeRule())) {
-            AssetsChangeRuleParse.parse(asset,
+            AssetsChangeRuleParse.parse(userCache,
                     assetsChangeConfig.getUserCacheChangeRule(),
                     entity.getPrincipal(),
                     entity.getInterest(),

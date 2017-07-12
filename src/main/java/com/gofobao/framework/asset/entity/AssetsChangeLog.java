@@ -35,7 +35,8 @@ public class AssetsChangeLog {
     private Integer assetChangeType  ;
     private Integer del  ;
     private Integer synState  ;
-    private Date createat  ;
+    private Date createAt  ;
     private Date synTime  ;
     private Date updateAt  ;
+    private String remark ;
 }
