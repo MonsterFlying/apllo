@@ -6,6 +6,8 @@ import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.asset.vo.response.pc.VoViewAssetLogsWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
+import com.gofobao.framework.member.vo.response.pc.IncomeEarnedDetail;
+import com.gofobao.framework.member.vo.response.pc.VoViewAssetStatisticWarpRes;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 
@@ -133,4 +135,18 @@ public interface AssetBiz {
      */
     ResponseEntity<VoUserAssetInfoResp> synOnLineRecharge(Long userId) throws Exception;
 
+
+    /**
+     * 账户总额統計
+     * @param userId
+     * @return
+     */
+    ResponseEntity<VoViewAssetStatisticWarpRes>pcAccountStatstic(Long userId);
+
+    /**
+     * 已賺收益統計
+     * @param userId
+     * @return
+     */
+    ResponseEntity<IncomeEarnedDetail> pcIncomeEarned(Long userId);
 }
