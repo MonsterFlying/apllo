@@ -45,15 +45,17 @@ public class BorrowAdvanceScheduler {
         int pageIndex = 0;
         int pageSize = 50;
 
-        StringBuffer sql = new StringBuffer("select * from gfb_borrow_repayment where ");
-        sql.append(" repay_at < " + DateHelper.dateToString(DateHelper.beginOfDate(DateHelper.subDays(new Date(), 1))));
-        sql.append(" and advance_at_yes is null ");
-        sql.append(" order by id");
+        StringBuffer sql = new StringBuffer("select br.* from gfb_borrow_repayment br left join gfb_borrow b  on br.borrow_id = b.id  where ");
+        sql.append(" br.status = 0 ");
+        sql.append(" and b.type = 1");
+        sql.append(" and br.repay_at < '" + DateHelper.dateToString(DateHelper.beginOfDate(DateHelper.subDays(new Date(), 1))));
+        sql.append("' and br.advance_at_yes is null ");
+        sql.append(" order by br.id");
 
         do {
             borrowIds = new ArrayList<>();
             Query query = entityManager.createNativeQuery(sql.toString(), BorrowRepayment.class);
-            query.setFirstResult(pageIndex++);
+            query.setFirstResult(pageIndex++  * pageSize);
             query.setMaxResults(pageSize);
             borrowRepaymentList = query.getResultList();
             for (BorrowRepayment borrowRepayment : borrowRepaymentList) {

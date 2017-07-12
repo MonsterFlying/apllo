@@ -61,6 +61,7 @@ public class Borrow implements Serializable {
 
     private String description;
 
+    @Column(name = "`use`")
     private Integer use;
 
     private String password;

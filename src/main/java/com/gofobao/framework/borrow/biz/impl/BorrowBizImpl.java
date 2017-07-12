@@ -813,7 +813,7 @@ public class BorrowBizImpl implements BorrowBiz {
         String productId = borrow.getProductId();
         if (!StringUtils.isEmpty(productId)) {
 
-            Map<String, Object> map = jdbcTemplate.queryForMap("select count(id) as count from gfb_borrow_tender where borrow_id = " + borrow.getId() + " and third_tender_order_id is not null");
+            Map<String, Object> map = jdbcTemplate.queryForMap("select count(id) as count from gfb_borrow_tender where borrow_id = " + borrow.getId() + " and third_tender_order_id is not null AND third_tender_cancel_order_id is NULL ");
             if (NumberHelper.toInt(map.get("count")) <= 0) {
                 VoCancelThirdBorrow voCancelThirdBorrow = new VoCancelThirdBorrow();
                 voCancelThirdBorrow.setProductId(productId);
@@ -932,7 +932,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     .eq("transferFlag", 1)
                     .build();
 
-            transferedBorrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "timeLimit"));
+            transferedBorrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "order"));
 
             Integer collectionMoney = 0;
             Integer collectionInterest = 0;

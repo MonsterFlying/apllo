@@ -9,6 +9,7 @@ import com.gofobao.framework.tender.service.AutoTenderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.util.Date;
@@ -17,6 +18,7 @@ import java.util.List;
 /**
  * Created by Zeke on 2017/7/10.
  */
+@Component
 public class AutoTenderClearScheduler {
 
     public static final int EXPIRE_DAY = 100;//一百天后过期
