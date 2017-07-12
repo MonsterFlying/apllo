@@ -44,7 +44,8 @@ public class CurrencyController {
      */
     @ApiOperation("兑换广富币")
     @PostMapping("/currency/convert")
-    public ResponseEntity<VoBaseResp> convert(@Valid @ModelAttribute VoConvertCurrencyReq voConvertCurrencyReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoBaseResp> convert(@Valid @ModelAttribute VoConvertCurrencyReq voConvertCurrencyReq,
+                                              @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voConvertCurrencyReq.setUserId(userId);
         try {
             return currencyBiz.convert(voConvertCurrencyReq);

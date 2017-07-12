@@ -39,7 +39,8 @@ public class WebIntegralController {
      */
     @ApiOperation("获取积分列表")
     @PostMapping("pub/pc/integral/list")
-    public ResponseEntity<VoListIntegralResp> list(@Valid @ModelAttribute VoListIntegralReq voListIntegralReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+    public ResponseEntity<VoListIntegralResp> list(@Valid @ModelAttribute VoListIntegralReq voListIntegralReq,
+                                                   @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         voListIntegralReq.setUserId(userId);
         return integralBiz.list(voListIntegralReq);
     }
@@ -54,7 +55,8 @@ public class WebIntegralController {
      */
     @ApiOperation(value = "积分兑换")
     @PostMapping(value = "pub/pc/integral/doTakeRates")
-    public ResponseEntity<VoBaseResp> doTakeRates(@Valid @ModelAttribute VoIntegralTakeReq voIntegralTakeReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoBaseResp> doTakeRates(@Valid @ModelAttribute VoIntegralTakeReq voIntegralTakeReq,
+                                                  @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
 
         voIntegralTakeReq.setUserId(userId);
         try {

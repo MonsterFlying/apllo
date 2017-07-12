@@ -33,7 +33,8 @@ public class PasswordController {
      */
     @ApiOperation("用户修改密码")
     @PostMapping("/user/password/modify")
-    public ResponseEntity<VoBaseResp> modifyPassword(@Valid @ModelAttribute VoModifyPasswordReq voModifyPasswordReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoBaseResp> modifyPassword(@Valid @ModelAttribute VoModifyPasswordReq voModifyPasswordReq,
+                                                     @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return userPasswordBiz.modifyPassword(userId, voModifyPasswordReq);
     }
 
