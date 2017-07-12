@@ -1402,6 +1402,8 @@ public class BorrowBizImpl implements BorrowBiz {
                     overPrincipal += borrowRepaymentList.get(j).getPrincipal();
                 }
                 lateInterest = new Double(overPrincipal * 0.004 * lateDays).intValue();
+            }else {
+                lateInterest = 0;
             }
             repaymentTotal += borrowRepayment.getPrincipal() + borrowRepayment.getInterest() * interestPercent + lateInterest;
             voRepayReq = new VoRepayReq();
