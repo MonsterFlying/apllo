@@ -72,9 +72,9 @@ public class AutoTenderProvider {
 
             Iterator<VoFindAutoTender> itAutoTender = autoTenderList.iterator();
             VoFindAutoTender voFindAutoTender = null;
-            Integer money = 0;
+            Long money = 0L;
             Integer lowest = 0;
-            Integer useMoney = 0;
+            Long useMoney = 0L;
             Integer borrowMoney = borrow.getMoney(); // 借款金额（分）
             Integer moneyYes = borrow.getMoneyYes();
             Integer mostAuto = borrow.getMostAuto();
@@ -93,7 +93,7 @@ public class AutoTenderProvider {
                     continue;
                 }
 
-                useMoney = voFindAutoTender.getUseMoney();  // 用户可用金额
+                useMoney = voFindAutoTender.getUseMoney().longValue();  // 用户可用金额
                 money = voFindAutoTender.getMode().equals(1) ? voFindAutoTender.getTenderMoney() : useMoney;
                 money = Math.min(useMoney - voFindAutoTender.getSaveMoney(), money);
                 lowest = voFindAutoTender.getLowest(); // 最小投标金额
