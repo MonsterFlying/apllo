@@ -58,6 +58,13 @@ gofobao:
   aliyun-bankinfo-url: http://jisuyhkgsd.market.alicloudapi.com/bankcard/query
   aliyun-bankaps-url: http://cnaps.market.alicloudapi.com/lianzhuo/querybankaps
   aliyun-bankinfo-appcode: 1fa8442456704a4686d950b099c188b9 #阿里云api管理中的appcode
+  flowConfig: #易蜂享
+    url: http://xc.aipipi.mobi/trafgatewate/apply.do
+    id: 10
+    key: 1b5e8124fe
+  jiguang:
+    AppKey: ce7616b0fc76f923a1b53b30
+    MasterSecre : d4b742ae7cc3e4be1d6a95c3
 logging:
   file: /Users/Max/logs/logback.log
   pattern:
