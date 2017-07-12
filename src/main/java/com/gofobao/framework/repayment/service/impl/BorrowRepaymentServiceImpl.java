@@ -215,8 +215,6 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         String sql = "SELECT DAY(repay_at) FROM gfb_borrow_repayment " +
                 "where " +
                 "user_id=" + userId + " " +
-                "and " +
-                "`status`=0 " +
                 "and   date_format(repay_at,'%Y%m') =" + time +
                 " GROUP BY  day(repay_at)";
         Query query = entityManager.createNativeQuery(sql);

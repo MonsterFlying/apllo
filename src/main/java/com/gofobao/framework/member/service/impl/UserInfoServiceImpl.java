@@ -20,4 +20,9 @@ public class UserInfoServiceImpl implements UserInfoService {
     public UserInfo save(UserInfo userInfo) {
         return userInfoRepository.save(userInfo);
     }
+
+    @Override
+    public UserInfo info(Long userId) {
+        return   userInfoRepository.findOne(userId);
+    }
 }

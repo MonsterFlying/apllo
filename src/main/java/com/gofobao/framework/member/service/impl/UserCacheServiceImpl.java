@@ -7,10 +7,7 @@ import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.repository.UserCacheRepository;
 import com.gofobao.framework.member.service.UserCacheService;
-import com.gofobao.framework.member.vo.response.pc.AssetStatistic;
-import com.gofobao.framework.member.vo.response.pc.IncomeEarnedDetail;
-import com.gofobao.framework.member.vo.response.pc.NetProceedsDetails;
-import com.gofobao.framework.member.vo.response.pc.PaymentDetails;
+import com.gofobao.framework.member.vo.response.pc.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -151,7 +148,7 @@ public class UserCacheServiceImpl implements UserCacheService {
         /**
          * 待付支出总额
          */
-        Long sumWaitExpend = tjWaitCollectionInterest + qdWaitCollectionInterest;
+        Double sumWaitExpend = (tjWaitCollectionInterest + qdWaitCollectionInterest) * 0.1;
 
         /**
          * 未实现收入总额
@@ -163,7 +160,7 @@ public class UserCacheServiceImpl implements UserCacheService {
          * 未实现净收益总额 = 未实现收入总额 - 待付支出总额
          * @return array
          */
-        Long noNetProceeds = collectionInterest - sumWaitExpend;
+        Double noNetProceeds = new Double(collectionInterest) - sumWaitExpend;
         statistic.setNoNetProceeds(StringHelper.formatMon(noNetProceeds / 100D));
 
 
@@ -171,7 +168,7 @@ public class UserCacheServiceImpl implements UserCacheService {
          * 总净收益 = 已实现净收益总额 + 未实现净收益总额
          * @return float
          */
-        Long sumJingshou = netIncomeTotal + noNetProceeds;
+        Double sumJingshou = netIncomeTotal + noNetProceeds;
         statistic.setSumNetProceeds(StringHelper.formatMon(sumJingshou / 100D));
 
 
@@ -179,7 +176,7 @@ public class UserCacheServiceImpl implements UserCacheService {
         int netWorthQuota = new Double((asset.getUseMoney() + waitCollectionPrincipal) * 0.8 - collection).intValue();//计算净值额度
         statistic.setNetWorthLimit(StringHelper.formatMon(netWorthQuota / 100D));
 
-        Long assetTotal = netWorthQuota + sumJingshou + noNetProceeds + userMoney + payment + collection + noUseMoney + netIncomeTotal;
+        Double assetTotal = netWorthQuota + sumJingshou + noNetProceeds + userMoney + payment + collection + noUseMoney + netIncomeTotal;
 
         statistic.setAssetTotal(StringHelper.formatMon(assetTotal / 100D));
 
@@ -192,14 +189,15 @@ public class UserCacheServiceImpl implements UserCacheService {
     }
 
     /**
-     *总收益统计
+     * 总收益统计
+     *
      * @param userId
      * @return
      */
     @Override
     public ResponseEntity<IncomeEarnedDetail> incomeEarned(Long userId) {
 
-        IncomeEarnedDetail incomeEarnedDetail= VoBaseResp.ok("查詢成功",IncomeEarnedDetail.class);
+        IncomeEarnedDetail incomeEarnedDetail = VoBaseResp.ok("查詢成功", IncomeEarnedDetail.class);
 
         UserCache userCache = userCacheRepository.findOne(userId);
         Long incomeTotal = userCache.getIncomeTotal();  //总
@@ -208,19 +206,63 @@ public class UserCacheServiceImpl implements UserCacheService {
         Long incomeInterest = userCache.getIncomeInterest();
         Long incomeAward = userCache.getIncomeAward();
         Long incomeBonus = userCache.getIncomeBonus();
-        Long incomeIntegralCash=userCache.getIncomeIntegralCash();
-        Long waitCollectionInterest=userCache.getWaitCollectionInterest();
+        Long incomeIntegralCash = userCache.getIncomeIntegralCash();
+        Long waitCollectionInterest = userCache.getWaitCollectionInterest();
 
-        incomeEarnedDetail.setIncomeAward(StringHelper.formatMon(incomeAward/100D));
-        incomeEarnedDetail.setIncomeBonus(StringHelper.formatMon(incomeBonus/100D));
-        incomeEarnedDetail.setIncomeIntegralCash(StringHelper.formatMon(incomeIntegralCash/100D));
-        incomeEarnedDetail.setIncomeInterest(StringHelper.formatMon(incomeInterest/100D));
-        incomeEarnedDetail.setIncomeOther(StringHelper.formatMon(incomeOther/100D));
-        incomeEarnedDetail.setIncomeOverdue(StringHelper.formatMon(incomeOverdue/100D));
-        incomeEarnedDetail.setIncomeEarned(StringHelper.formatMon((waitCollectionInterest+incomeTotal)/100D));
-        incomeEarnedDetail.setWaitCollectionInterest(StringHelper.formatMon(waitCollectionInterest/100D));
-        incomeEarnedDetail.setWaitIncomeInterest(StringHelper.formatMon(waitCollectionInterest/100D));
+        incomeEarnedDetail.setIncomeAward(StringHelper.formatMon(incomeAward / 100D));
+        incomeEarnedDetail.setIncomeBonus(StringHelper.formatMon(incomeBonus / 100D));
+        incomeEarnedDetail.setIncomeIntegralCash(StringHelper.formatMon(incomeIntegralCash / 100D));
+        incomeEarnedDetail.setIncomeInterest(StringHelper.formatMon(incomeInterest / 100D));
+        incomeEarnedDetail.setIncomeOther(StringHelper.formatMon(incomeOther / 100D));
+        incomeEarnedDetail.setIncomeOverdue(StringHelper.formatMon(incomeOverdue / 100D));
+        incomeEarnedDetail.setIncomeEarned(StringHelper.formatMon((waitCollectionInterest + incomeTotal) / 100D));
+        incomeEarnedDetail.setWaitCollectionInterest(StringHelper.formatMon(waitCollectionInterest / 100D));
+        incomeEarnedDetail.setWaitIncomeInterest(StringHelper.formatMon(waitCollectionInterest / 100D));
 
         return ResponseEntity.ok(incomeEarnedDetail);
+    }
+
+    /**
+     * 支出统计
+     *
+     * @param userId
+     * @return
+     */
+    @Override
+    public ResponseEntity<ExpenditureDetail> expenditureDetail(Long userId) {
+        ExpenditureDetail expenditureDetail = VoBaseResp.ok("查詢成功", ExpenditureDetail.class);
+
+        UserCache userCache = userCacheRepository.findOne(userId);
+        Long expenditureInterestManage = userCache.getExpenditureInterestManage();
+        Long expenditureInterest = userCache.getExpenditureInterest();
+        Long expenditureFee = userCache.getExpenditureFee();
+        Long expenditureManage = userCache.getExpenditureManage();
+        Long expenditureOther = userCache.getExpenditureOther();
+        Long expenditureOverdue = userCache.getExpenditureOverdue();
+        Long interest = userCache.getWaitCollectionInterest();
+        Double waitExpenditureInterestManage = (userCache.getTjWaitCollectionInterest() + userCache.getQdWaitCollectionInterest()) * 0.1;
+        //已付利息管理费
+        expenditureDetail.setInterestManageFee(StringHelper.formatMon(expenditureInterestManage / 100D));
+        //其他支出
+        expenditureDetail.setOtherFee(StringHelper.formatMon(expenditureOther / 100D));
+        //账户管理费
+        expenditureDetail.setAccountMangeFee(StringHelper.formatMon(expenditureManage / 100D));
+        //已还利息
+        expenditureDetail.setPaymentInterest(StringHelper.formatMon(expenditureInterest / 100D));
+        //费用
+        expenditureDetail.setFee(StringHelper.formatMon(expenditureFee / 100D));
+        //逾期罚息
+        expenditureDetail.setOverdueFee(StringHelper.formatMon(expenditureOverdue / 100D));
+        //待付利息
+        expenditureDetail.setWaitExpendInterest(StringHelper.formatMon(interest / 100D));
+        //待付利息管理费
+        expenditureDetail.setWaitExpendInterestManageFee(StringHelper.formatMon(waitExpenditureInterestManage / 100D));
+        //待付支出
+        expenditureDetail.setWaitExpendTotal(StringHelper.formatMon((waitExpenditureInterestManage + interest) / 100D));
+        //已支出总额
+        expenditureDetail.setExpenditureTotal(StringHelper.formatMon( userCache.getIncomeTotal()/100D));
+
+        return ResponseEntity.ok(expenditureDetail);
+
     }
 }

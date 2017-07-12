@@ -8,4 +8,11 @@ import com.gofobao.framework.member.entity.UserInfo;
 public interface UserInfoService {
 
     UserInfo save(UserInfo userInfo);
+
+    /**
+     * 用户扩展信息
+     * @param userId
+     * @return
+     */
+    UserInfo info(Long userId);
 }

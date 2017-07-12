@@ -1,14 +1,11 @@
 package com.gofobao.framework.repayment.service.impl;
 
-import com.gofobao.framework.award.entity.Coupon;
 import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
-import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
-import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.repayment.contants.RepaymentContants;
@@ -35,7 +32,6 @@ import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import java.util.*;
 import java.util.function.Function;
@@ -394,7 +390,7 @@ public class LoanServiceImpl implements LoanService {
 
         //分页
         TypedQuery  query=entityManager.createQuery(sql+condition,BorrowRepayment.class);
-        query.setMaxResults(voStatisticsReq.getPageSize());
+        query.setMaxResults(voStatisticsReq.getPageSize()*voStatisticsReq.getPageIndex());
         query.setFirstResult(voStatisticsReq.getPageIndex());
         List<BorrowRepayment> borrowRepayments=query.getResultList();
 

@@ -48,6 +48,7 @@ import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.member.vo.response.pc.AssetStatistic;
+import com.gofobao.framework.member.vo.response.pc.ExpenditureDetail;
 import com.gofobao.framework.member.vo.response.pc.IncomeEarnedDetail;
 import com.gofobao.framework.member.vo.response.pc.VoViewAssetStatisticWarpRes;
 import com.gofobao.framework.system.entity.DictItem;
@@ -1103,9 +1104,17 @@ public class AssetBizImpl implements AssetBiz {
 
     @Override
     public ResponseEntity<IncomeEarnedDetail> pcIncomeEarned(Long userId) {
-
        return userCacheService.incomeEarned(userId);
+    }
 
+    /**
+     * 支出统计
+     * @param userId
+     * @return
+     */
+    @Override
+    public ResponseEntity<ExpenditureDetail> pcExpenditureDetail(Long userId) {
+        return userCacheService.expenditureDetail(userId);
     }
 
     @Override

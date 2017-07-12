@@ -1,7 +1,6 @@
 package com.gofobao.framework.collection.vo.response.web;
 
 import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 /**
