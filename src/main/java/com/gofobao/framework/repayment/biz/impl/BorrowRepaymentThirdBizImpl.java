@@ -799,7 +799,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     .<BorrowCollection>and()
                     .in("tenderId", tenderIds.toArray())
                     .eq("status", 0)
-                    .eq("timeLimit", order)
+                    .eq("order", order)
                     .build();
 
             List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
@@ -821,6 +821,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 principal = 0;
 
                 tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());//投标人银行存管账户
+                Preconditions.checkNotNull(tenderUserThirdAccount,"投资人存管账户未开户!");
                 BorrowCollection borrowCollection = null;//当前借款的回款记录
                 for (int i = 0; i < borrowCollectionList.size(); i++) {
                     borrowCollection = borrowCollectionList.get(i);
@@ -1131,7 +1132,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     .<BorrowCollection>and()
                     .in("tenderId", tenderIds.toArray())
                     .eq("status", 1)
-                    .eq("timeLimit", order)
+                    .eq("order", order)
                     .build();
 
             List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);

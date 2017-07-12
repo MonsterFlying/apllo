@@ -58,7 +58,7 @@ public class UserBonusScheduler {
             CapitalChangeEntity entity = null;
             List<Map<String, Object>> resultList = null;
             do {
-                sql.append(" limit " + (pageIndex - 1) * pageSize + "," + pageIndex * pageSize);
+                sql.append(" limit " + (pageIndex++ - 1) * pageSize + "," + pageIndex * pageSize);
                 resultList = jdbcTemplate.queryForList(sql.toString());
                 for (Map<String, Object> map : resultList) {
                     level = 1;
@@ -107,16 +107,17 @@ public class UserBonusScheduler {
         try {
             StringBuffer sql = new StringBuffer("select sum(gfb_asset.collection) - sum(gfb_asset.payment) as sum, `gfb_ticheng_user`.`user_id` as userId" +
                     " from `gfb_ticheng_user` inner join `gfb_users` on `gfb_ticheng_user`.`user_id` = `gfb_users`.`parent_id` inner join `gfb_asset`" +
-                    " on `gfb_users`.`id` = `gfb_asset`.`user_id` where `gfb_ticheng_user`.`type` = ? and (`gfb_ticheng_user`.`start_at` is null or " +
-                    "`gfb_ticheng_user`.`start_at` < " + DateHelper.dateToString(new Date()) + ") and (`gfb_ticheng_user`.`end_at` is null or `gfb_ticheng_user`.`end_at` > " + DateHelper.dateToString(new Date()) + ") " +
-                    "group by `gfb_ticheng_user`.`user_id` having `sum` >= " + Math.ceil(365 / 0.005));
+                    " on `gfb_users`.`id` = `gfb_asset`.`user_id` where `gfb_ticheng_user`.`type` = 0 and (`gfb_ticheng_user`.`start_at` is null or " +
+                    " `gfb_ticheng_user`.`start_at` < '" + DateHelper.dateToString(new Date()) + "') and (`gfb_ticheng_user`.`end_at` is null or " +
+                    " `gfb_ticheng_user`.`end_at` > '" + DateHelper.dateToString(new Date()) + "') " +
+                    " group by `gfb_ticheng_user`.`user_id` having `sum` >= " + Math.ceil(365 / 0.005));
             int pageIndex = 1;
             int pageSize = 50;
             int money = 0;
             CapitalChangeEntity entity = null;
             List<Map<String, Object>> resultList = null;
             do {
-                sql.append(" limit " + (pageIndex - 1) * pageSize + "," + pageIndex * pageSize);
+                sql.append(" limit " + (pageIndex++ - 1) * pageSize + "," + pageIndex * pageSize);
                 resultList = jdbcTemplate.queryForList(sql.toString());
                 for (Map<String, Object> map : resultList) {
                     money = (int) MathHelper.myRound(NumberHelper.toInt(map.get("sum")) / 100 * 0.005 / 365, 0);
@@ -142,9 +143,9 @@ public class UserBonusScheduler {
             StringBuffer sql = new StringBuffer("select sum(gfb_asset.collection) - sum(gfb_asset.payment) as sum, " +
                     "`gfb_ticheng_user`.`user_id` as userId from `gfb_ticheng_user` inner join `gfb_users` on `gfb_ticheng_user`.`user_id`" +
                     " = `gfb_users`.`parent_id` inner join `gfb_asset` on `gfb_users`.`id` = `gfb_asset`.`user_id` where `gfb_ticheng_user`.`type` = 1 " +
-                    "and (`gfb_ticheng_user`.`start_at` is null or `gfb_ticheng_user`.`start_at` < " + DateHelper.dateToString(new Date()) + ") and " +
-                    "(`gfb_ticheng_user`.`end_at` is null or `gfb_ticheng_user`.`end_at` > " + DateHelper.dateToString(new Date()) + ") and " +
-                    "`gfb_users`.`created_at` < 2016-08-14 00:00:00 group by `gfb_ticheng_user`.`user_id` having `sum` >= " + Math.ceil(1 / .0002));
+                    "and (`gfb_ticheng_user`.`start_at` is null or `gfb_ticheng_user`.`start_at` < '" + DateHelper.dateToString(new Date()) + "') and " +
+                    "(`gfb_ticheng_user`.`end_at` is null or `gfb_ticheng_user`.`end_at` > '" + DateHelper.dateToString(new Date()) + "') and " +
+                    "`gfb_users`.`created_at` < '2016-08-14 00:00:00' group by `gfb_ticheng_user`.`user_id` having `sum` >= " + Math.ceil(1 / .0002));
             int pageIndex = 1;
             int pageSize = 50;
             int money = 0;
@@ -152,7 +153,7 @@ public class UserBonusScheduler {
             CapitalChangeEntity entity = null;
             List<Map<String, Object>> resultList = null;
             do {
-                sql.append(" limit " + (pageIndex - 1) * pageSize + "," + pageIndex * pageSize);
+                sql.append(" limit " + (pageIndex++ - 1) * pageSize + "," + pageIndex * pageSize);
                 resultList = jdbcTemplate.queryForList(sql.toString());
                 for (Map<String, Object> map : resultList) {
                     sum = NumberHelper.toInt(map.get("sum"));

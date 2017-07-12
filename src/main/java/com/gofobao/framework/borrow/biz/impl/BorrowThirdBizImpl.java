@@ -129,7 +129,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
 
         Borrow borrow = borrowService.findById(borrowId);
         Preconditions.checkNotNull(borrow, "借款记录不存在！");
-        borrow.setReleaseAt(ObjectUtils.isEmpty(borrow.getReleaseAt()) ? new Date() :  borrow.getReleaseAt());
+        borrow.setReleaseAt(ObjectUtils.isEmpty(borrow.getReleaseAt()) ? new Date() : borrow.getReleaseAt());
         Long userId = borrow.getUserId();
         int repayFashion = borrow.getRepayFashion();
 
@@ -264,7 +264,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
      * @param voRepayAllReq
      * @return
      */
-    public ResponseEntity<VoBaseResp> thirdBatchRepayAll(VoRepayAllReq voRepayAllReq) throws Exception{
+    public ResponseEntity<VoBaseResp> thirdBatchRepayAll(VoRepayAllReq voRepayAllReq) throws Exception {
         Date nowDate = new Date();
         String paramStr = voRepayAllReq.getParamStr();
         if (!SecurityHelper.checkSign(voRepayAllReq.getSign(), paramStr)) {
@@ -329,7 +329,10 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
                     overPrincipal += borrowRepaymentList.get(j).getPrincipal();
                 }
                 lateInterest = new Double(overPrincipal * 0.004 * lateDays).intValue();
+            } else {
+                lateInterest = 0;
             }
+            //累加金额用于判断还款账余额是否充足
             repaymentTotal += borrowRepayment.getPrincipal() + borrowRepayment.getInterest() * interestPercent + lateInterest;
             tempVoThirdBatchRepay = new VoThirdBatchRepay();
             tempVoThirdBatchRepay.setInterestPercent(interestPercent);   // 赔偿利息
@@ -339,8 +342,8 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             voThirdBatchRepayList.add(tempVoThirdBatchRepay);
         }
 
-        int repayMoney = repaymentTotal; //repaymentTotal + penalty;  官标由平台托管借款  目前实现不收取违约金
-        if (borrowAsset.getUseMoney() < repayMoney) {   // TODO 需要添加请求即信查询
+        int repayMoney = repaymentTotal + penalty;
+        if (borrowAsset.getUseMoney() < (repayMoney)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "结清总共需要还款 " + repayMoney + " 元，您的账户余额不足，请先充值!！"));
@@ -358,7 +361,10 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         }
 
         double sumTxAmount = 0;
+        double partPenalty = penalty / tempRepayList.size();
         for (Repay tempRepay : tempRepayList) {
+            //给每期回款分摊违约金
+            tempRepay.setTxFeeOut(StringHelper.formatDouble(NumberHelper.toDouble(tempRepay.getTxFeeOut()) + partPenalty / 100.0, false));
             sumTxAmount += NumberHelper.toDouble(tempRepay.getTxAmount());
         }
 

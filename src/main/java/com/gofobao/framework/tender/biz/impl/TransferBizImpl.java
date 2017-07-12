@@ -184,7 +184,7 @@ public class TransferBizImpl implements TransferBiz {
                 .eq("tenderId", tenderId)
                 .build();
 
-        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "timeLimit"));
+        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "order"));
         if (CollectionUtils.isEmpty(borrowCollectionList)) {
             return ResponseEntity
                     .badRequest()
