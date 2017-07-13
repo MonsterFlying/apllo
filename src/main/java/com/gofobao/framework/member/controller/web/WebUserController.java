@@ -11,6 +11,7 @@ import com.gofobao.framework.member.vo.request.VoBindPhone;
 import com.gofobao.framework.member.vo.request.VoBindSwitchPhoneReq;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.member.vo.response.VoSignInfoResp;
+import com.gofobao.framework.member.vo.response.pc.UserInfoExt;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,4 +94,12 @@ public class WebUserController {
     public ResponseEntity<VoBasicUserInfoResp> getUserInfo(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         return userBiz.userInfo(userId) ;
     }
+
+
+    @ApiOperation("用戶扩展信息")
+    @PostMapping("/user/pc/userInfoExt")
+    public ResponseEntity<UserInfoExt> userExt(/*@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/){
+        return userBiz.pcUserInfo(901L);
+    }
+
 }
