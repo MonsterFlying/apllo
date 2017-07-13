@@ -96,7 +96,7 @@ public class CurrencyBizImpl implements CurrencyBiz {
                         return null;
                     }
 
-                    return dictValueService.findTopByItemIdAndValue02(dictItem.getId(), bankName);
+                    return dictValueService.findTopByItemIdAndValue01(dictItem.getId(), bankName);
                 }
             });
 
@@ -130,12 +130,6 @@ public class CurrencyBizImpl implements CurrencyBiz {
         Page<CurrencyLog> logPage=currencyLogRepository.findAll(specification,pageable);
 
         List<CurrencyLog> currencyLogs =  logPage.getContent();
-
-        if (CollectionUtils.isEmpty(currencyLogs)) {
-            return ResponseEntity.
-                    badRequest().
-                    body(VoBaseResp.error(VoBaseResp.ERROR, "获取广富币列表失败!"));
-        }
 
         VoListCurrencyResp voListCurrencyResp = VoBaseResp.ok("查询成功!", VoListCurrencyResp.class);
         voListCurrencyResp.setAvailableCurrency(currency.getUseCurrency());
