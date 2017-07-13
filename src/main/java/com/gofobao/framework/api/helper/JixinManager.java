@@ -8,6 +8,7 @@ import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.system.biz.impl.JixinTxLogBizImpl;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +53,9 @@ public class JixinManager {
     @Value("${jixin.bankCode}")
     String bankCode;
 
+    @Autowired
+    JixinTxLogBizImpl jixinTxLogBiz ;
+
     public <T extends JixinBaseRequest> String getHtml(JixinTxCodeEnum txCodeEnum, T req) {
         checkNotNull(req, "请求体为null");
         // 前期初始化
@@ -82,7 +86,7 @@ public class JixinManager {
         String unSign = StringHelper.mergeMap(params);
         String sign = certHelper.doSign(unSign);
         params.put("sign", sign);
-
+        jixinTxLogBiz.saveRequest(txCodeEnum, params);
         log.info("=============================================");
         log.info(String.format("[%s] 报文流水：%s%s%s", txCodeEnum.getName() , req.getTxDate(), req.getTxTime(), req.getSeqNo()));
         log.info("=============================================");
@@ -141,6 +145,7 @@ public class JixinManager {
         // 验证参数
         Map<String, String> param = gson.fromJson(bgData, new TypeToken<Map<String, String>>() {
         }.getType());
+        jixinTxLogBiz.saveResponse(param);
         String unsige = StringHelper.mergeMap(param);
         boolean result = certHelper.verify(unsige, param.get("sign"));
         if (!result) {
@@ -187,6 +192,7 @@ public class JixinManager {
         log.info(String.format("[%s]报文流水：%s%s%s", txCodeEnum.getName(), req.getTxDate(), req.getTxTime(), req.getSeqNo()));
         log.info("=============================================");
         log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));
+        jixinTxLogBiz.saveRequest(txCodeEnum, params) ;
         initHttps();
         HttpEntity entity = getHttpEntity(params);
         RestTemplate restTemplate = new RestTemplate();
@@ -203,6 +209,7 @@ public class JixinManager {
         // 验证参数
         String bodyJson = gson.toJson(body);
         Map<String, String> unverifyParams = gson.fromJson(bodyJson, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        jixinTxLogBiz.saveResponse(unverifyParams);
         String unsige = StringHelper.mergeMap(unverifyParams);
         boolean result = certHelper.verify(unsige, unverifyParams.get("sign"));
         if (!result) {

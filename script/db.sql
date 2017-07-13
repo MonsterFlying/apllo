@@ -491,7 +491,17 @@ ALTER TABLE gfb_users ADD push_id VARCHAR(255) DEFAULT '' NULL;
 ALTER TABLE gfb_users ADD platform INT DEFAULT -1 NULL;
 ALTER TABLE gfb_users ADD ip VARCHAR(255) DEFAULT '' NULL;
 
-
+# 创建记录标
+CREATE TABLE gfb_jixin_tx_log
+(
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  seqNo VARCHAR(225) DEFAULT '',
+  body VARCHAR(10240) DEFAULT '' COMMENT '请求体或者响应体',
+  create_at DATETIME,
+  tx_type VARCHAR(225) DEFAULT '' COMMENT '交易类型',
+  tx_type_desc VARCHAR(255) DEFAULT '' COMMENT '交易类型描述',
+  type INT DEFAULT 0 COMMENT '日志类型: 0: 请求 1.响应'
+);
 
 
 ALTER TABLE `gfb_auto_tender`
