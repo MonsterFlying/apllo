@@ -16,4 +16,6 @@ public class VoViewAssetLogRes {
         private String  createdAt;
         @ApiModelProperty("金额")
         private String money;
+        @ApiModelProperty("显示金额")
+        private String showMoney;
 }
