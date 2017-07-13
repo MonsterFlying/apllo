@@ -968,7 +968,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> repay(VoRepayReq voRepayReq) throws Exception {
-
         // ====================================
         //  1. 平台可用用金额
         //  2. 存管账户是否够用
