@@ -309,6 +309,16 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             bool = false;
         }
 
+        //=============================================
+        // 保存第三债权转让订单号
+        //=============================================
+        List<CreditInvestRun> creditInvestRunList = GSON.fromJson(creditInvestRunCall.getSubPacks(), new TypeToken<List<CreditInvestRun>>() {
+        }.getType());
+        saveThirdTransferOrderId(creditInvestRunList);
+
+        //========================================
+        // 处理失败批次
+        //========================================
         Long borrowId = NumberHelper.toLong(creditInvestRunCall.getAcqRes());//获取borrowid
         int num = NumberHelper.toInt(creditInvestRunCall.getFailCounts());
         String batchNo = creditInvestRunCall.getBatchNo();//批次号
@@ -437,9 +447,6 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
                     }
                     borrow.setTenderCount(borrow.getTenderCount() - failNum);
                     borrow.setMoneyYes(borrow.getMoneyYes() - failAmount);
-                    /**
-                     * @// TODO: 2017/7/13 再次复审时  需要单独把未转让的进行批次操作
-                     */
                 }
             }
             borrowService.save(borrowList);
@@ -450,12 +457,6 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
 
         if (bool && !ObjectUtils.isEmpty(borrowId)) {
             Borrow borrow = borrowService.findById(borrowId);
-            List<CreditInvestRun> creditInvestRunList = GSON.fromJson(creditInvestRunCall.getSubPacks(), new TypeToken<List<CreditInvestRun>>() {
-            }.getType());
-
-            //保存第三债权转让订单号
-            saveThirdTransferOrderId(creditInvestRunList);
-
             try {
                 bool = borrowBiz.transferBorrowAgainVerify(borrow);
             } catch (Throwable e) {
@@ -479,7 +480,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
     }
 
     /**
-     * 保存第三债权转让订单号
+     * 保存第三债权转让授权号
      *
      * @param creditInvestRunList
      */
