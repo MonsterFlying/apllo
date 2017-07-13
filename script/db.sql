@@ -165,9 +165,11 @@ ALTER TABLE `gofobao0627`.`gfb_borrow_tender`
 , ADD COLUMN `state` int(10) NULL DEFAULT '0' COMMENT '1:投标中； 2:还款中 ;3:已结清'
 , ADD COLUMN `third_tender_order_id` varchar(255) NULL DEFAULT '' COMMENT '第三方订单号'
 , ADD COLUMN `third_transfer_order_id` varchar(255) NULL DEFAULT '' COMMENT '购买债券转让编号'
+, ADD COLUMN `third_lend_pay_order_id` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL
 , ADD COLUMN `is_third_register` int(11) NULL DEFAULT '0' COMMENT '是否在存管进行登记 0否 1.是否'
-, ADD COLUMN `third_transfer_flag` int(11) DEFAULT '0' COMMENT '当借款是转让标时，这个标是否与存管通信 0否 1是'
-, ADD COLUMN `transfer_auth_code` varchar(255) DEFAULT NULL COMMENT '即信债权转让授权码';
+, ADD COLUMN  `third_transfer_flag` int(11) DEFAULT '0' COMMENT '当投标记录是转让标投标时，标识是否购买债权， 0否 1是'
+, ADD COLUMN `third_tender_flag` int(11) DEFAULT '0' COMMENT '当投标记录是非转让标投标时，标识是否放款， 0否 1是'
+, ADD COLUMN `transfer_auth_code` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL COMMENT '即信债权转让授权码';
 
 ALTER TABLE `gofobao0627`.`gfb_borrow`
   ADD COLUMN `tx_fee` int(11) NULL COMMENT '借款手续费(选填）'
