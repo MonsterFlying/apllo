@@ -30,7 +30,9 @@ spring:
     password: gofobaochina123
     default-encoding: UTF-8
   thymeleaf:
-      mode: LEGACYHTML5
+    mode: LEGACYHTML5
+  profiles:
+    active: def
 server:
   port: 8080
 jwt: #JWT 安全配置
