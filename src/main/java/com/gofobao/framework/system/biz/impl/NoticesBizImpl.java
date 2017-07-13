@@ -111,9 +111,6 @@ public class NoticesBizImpl implements NoticesBiz {
                             .addPlatformNotification(platformNotification)
                             .build())
                     .setMessage(Message.content(notices.getContent()))
-                    .setOptions(Options.newBuilder()
-                            .setApnsProduction(true)
-                            .build())
                     .build();
         }
 
