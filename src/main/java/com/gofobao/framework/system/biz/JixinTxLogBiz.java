@@ -18,7 +18,6 @@ public interface JixinTxLogBiz {
 
     /**
      * 保存响应体
-     * @param jixinTxCodeEnum
      * @param response
      */
     void saveResponse(Map<String, String> response)  ;

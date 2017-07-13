@@ -19,6 +19,7 @@ import com.gofobao.framework.member.entity.*;
 import com.gofobao.framework.member.enums.RegisterSourceEnum;
 import com.gofobao.framework.member.service.*;
 import com.gofobao.framework.member.vo.request.VoRegisterReq;
+import com.gofobao.framework.member.vo.request.VoUserInfoUpdateReq;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.member.vo.response.pc.UserInfoExt;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
@@ -40,6 +41,7 @@ import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 
@@ -87,7 +89,7 @@ public class UserBizImpl implements UserBiz {
     String tokenHeader;
 
     @Value("${jwt.prefix}")
-    String prefix ;
+    String prefix;
 
     @Value("${gofobao.imageDomain}")
     String imageDomain;
@@ -99,7 +101,7 @@ public class UserBizImpl implements UserBiz {
     JwtTokenHelper jwtTokenHelper;
 
     @Autowired
-    MqHelper mqHelper ;
+    MqHelper mqHelper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -245,9 +247,10 @@ public class UserBizImpl implements UserBiz {
         voBasicUserInfoResp.setPhoneState(!StringUtils.isEmpty(user.getPhone()));
         voBasicUserInfoResp.setRealname(UserHelper.hideChar(StringUtils.isEmpty(user.getRealname()) ? " " : user.getRealname(), UserHelper.REALNAME_NUM));
         voBasicUserInfoResp.setRealnameState(!StringUtils.isEmpty(user.getRealname()));
-        voBasicUserInfoResp.setIdNo(UserHelper.hideChar(StringUtils.isEmpty(user.getCardId())? " ": user.getCardId(), UserHelper.CARD_ID_NUM)); ;
-        voBasicUserInfoResp.setIdNoState(!StringUtils.isEmpty(user.getCardId())) ;
-        voBasicUserInfoResp.setAlias(user.getPushId()) ;
+        voBasicUserInfoResp.setIdNo(UserHelper.hideChar(StringUtils.isEmpty(user.getCardId()) ? " " : user.getCardId(), UserHelper.CARD_ID_NUM));
+        ;
+        voBasicUserInfoResp.setIdNoState(!StringUtils.isEmpty(user.getCardId()));
+        voBasicUserInfoResp.setAlias(user.getPushId());
         return ResponseEntity.ok(voBasicUserInfoResp);
     }
 
@@ -260,7 +263,7 @@ public class UserBizImpl implements UserBiz {
     @Override
     public ResponseEntity<VoBasicUserInfoResp> login(HttpServletRequest httpServletRequest, HttpServletResponse response, VoLoginReq voLoginReq) {
         // Perform the security
-        final Authentication authentication ;
+        final Authentication authentication;
         try {
             authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -271,36 +274,36 @@ public class UserBizImpl implements UserBiz {
         } catch (Throwable e) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "账户/密码错误", VoBasicUserInfoResp.class)) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "账户/密码错误", VoBasicUserInfoResp.class));
         }
         SecurityContextHolder.getContext().setAuthentication(authentication);
         // Reload password_reset post-security so we can generate captchaToken
         Users user = findByAccount(voLoginReq.getAccount());
 
         // 保存登录信息
-        if(ObjectUtils.isEmpty(user)){
+        if (ObjectUtils.isEmpty(user)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "账户/密码错误", VoBasicUserInfoResp.class));
         }
 
-        if(user.getIsLock()) {
+        if (user.getIsLock()) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "账户已被系统冻结，如有问题请联系客服！", VoBasicUserInfoResp.class));
         }
 
         String username = user.getUsername();
-        if(StringUtils.isEmpty(username)) username = user.getPhone() ;
-        if(StringUtils.isEmpty(username)) username = user.getEmail() ;
+        if (StringUtils.isEmpty(username)) username = user.getPhone();
+        if (StringUtils.isEmpty(username)) username = user.getEmail();
         user.setUsername(username);
 
         final String token = jwtTokenHelper.generateToken(user, voLoginReq.getSource());
         response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
-        user.setPlatform( voLoginReq.getSource() );
+        user.setPlatform(voLoginReq.getSource());
         user.setPushId(UUID.randomUUID().toString());  // 设置唯一标识
         user.setIp(IpHelper.getIpAddress(httpServletRequest)); // 设置ip
-        userService.save(user) ;   // 记录登录信息
+        userService.save(user);   // 记录登录信息
 
         // 触发登录队列
         MqConfig mqConfig = new MqConfig();
@@ -311,7 +314,7 @@ public class UserBizImpl implements UserBiz {
         mqConfig.setMsg(body);
         mqHelper.convertAndSend(mqConfig);
 
-        return getUserInfoResp(user) ;
+        return getUserInfoResp(user);
     }
 
     /**
@@ -369,6 +372,7 @@ public class UserBizImpl implements UserBiz {
 
     /**
      * 用户扩展信息
+     *
      * @param userId
      * @return
      */
@@ -377,13 +381,59 @@ public class UserBizImpl implements UserBiz {
         UserInfoExt userInfoExt = VoBaseResp.ok("查询成功", UserInfoExt.class);
         UserInfo userInfo = userInfoService.info(userId);
         userInfoExt.setAddress(userInfo.getAddress());
-        userInfoExt.setBir(DateHelper.dateToString(userInfo.getBirthday(),DateHelper.DATE_FORMAT_YMD));
+        userInfoExt.setBir(DateHelper.dateToString(userInfo.getBirthday(), DateHelper.DATE_FORMAT_YMD));
         userInfoExt.setQq(userInfo.getQq());
-        userInfoExt.setIncome(StringHelper.formatMon(userInfo.getIndustry()/100D));
-        userInfoExt.setEducationalHistory(userInfo.getGraduatedSchool());
+        userInfoExt.setGraduation(userInfo.getGraduation());
+        userInfoExt.setEducation(userInfo.getEducation());
         userInfoExt.setMaritalStatus(userInfo.getMarital());
-        userInfoExt.setSchool(StringUtils.isEmpty(userInfo.getSchool())?"":userInfo.getSchool());
+        userInfoExt.setSchool(StringUtils.isEmpty(userInfo.getSchool()) ? "" : userInfo.getSchool());
         userInfoExt.setSex(userInfo.getSex());
         return ResponseEntity.ok(userInfoExt);
+    }
+
+    @Override
+    public ResponseEntity<VoBaseResp> pcUserInfoUpdate(VoUserInfoUpdateReq infoUpdateReq) {
+        try {
+            UserInfo userInfo = userInfoService.info(infoUpdateReq.getUserId());
+            if (ObjectUtils.isEmpty(userInfo)) {
+                return ResponseEntity.badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR,
+                                "非法请求"));
+            }
+            if (!ObjectUtils.isEmpty(infoUpdateReq.getBirthday())) {
+                Date birthday = infoUpdateReq.getBirthday();
+                SimpleDateFormat yyyy = new SimpleDateFormat("yyyy");
+                SimpleDateFormat md = new SimpleDateFormat("Md");
+                userInfo.setBirthdayMd(Integer.valueOf(md.format(birthday).toString()));
+                userInfo.setBirthdayY(Integer.valueOf(yyyy.format(birthday).toString()));
+            }
+            userInfo.setEducation(infoUpdateReq.getEducation());
+            if(!StringUtils.isEmpty(infoUpdateReq.getQq())){
+                userInfo.setQq(infoUpdateReq.getQq());
+            }
+            userInfo.setGraduation(infoUpdateReq.getGraduation());
+            if(!StringUtils.isEmpty(infoUpdateReq.getAddress())){
+                userInfo.setAddress(infoUpdateReq.getAddress());
+            }
+            userInfo.setSex(infoUpdateReq.getSex());
+
+            if(!StringUtils.isEmpty(infoUpdateReq.getGraduatedSchool())){
+                userInfo.setGraduatedSchool(infoUpdateReq.getGraduatedSchool());
+            }
+            userInfo.setMarital(infoUpdateReq.getMarital());
+
+            UserInfo userInfo1 = userInfoService.update(userInfo);
+            if (ObjectUtils.isEmpty(userInfo1))
+                return ResponseEntity.badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR,
+                                "更新失败，请稍候再试！"));
+            else
+                return ResponseEntity.ok(VoBaseResp.ok("更新成功"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,
+                            "更新失败，请稍候再试！"));
+        }
     }
 }
