@@ -32,4 +32,11 @@ public class IndexStatistics {
     @ApiModelProperty("昨日成交额")
     private Integer yesterdayDueTotal;
 
+    @ApiModelProperty("起头金额(元)")
+    private Integer startMoney;
+
+    @ApiModelProperty("年化率")
+    private Integer apr;
+
+
 }
