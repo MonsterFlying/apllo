@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -62,6 +63,8 @@ public class UserInfo extends UserInfoExt {
 
     @Basic
     @Column(name = "birthday")
+    @Temporal(TemporalType.DATE)
+    @DateTimeFormat( pattern = "yyyy-MM-dd" )
     private Date birthday ;
 
     @Basic

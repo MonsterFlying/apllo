@@ -2,13 +2,16 @@ package com.gofobao.framework.member.controller.web;
 
 import com.gofobao.framework.asset.vo.request.VoJudgmentAvailableReq;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.member.biz.UserBiz;
 import com.gofobao.framework.member.biz.UserEmailBiz;
 import com.gofobao.framework.member.biz.UserPhoneBiz;
 import com.gofobao.framework.member.biz.UserThirdBiz;
+import com.gofobao.framework.member.entity.UserInfo;
 import com.gofobao.framework.member.vo.request.VoBindEmailReq;
 import com.gofobao.framework.member.vo.request.VoBindPhone;
 import com.gofobao.framework.member.vo.request.VoBindSwitchPhoneReq;
+import com.gofobao.framework.member.vo.request.VoUserInfoUpdateReq;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.member.vo.response.VoSignInfoResp;
 import com.gofobao.framework.member.vo.response.pc.UserInfoExt;
@@ -20,6 +23,8 @@ import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.validation.Valid;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Created by Max on 17/5/16.
@@ -101,5 +106,14 @@ public class WebUserController {
     public ResponseEntity<UserInfoExt> userExt(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         return userBiz.pcUserInfo(userId);
     }
+
+    @ApiOperation("用戶扩展修改")
+    @PostMapping("/user/pc/userInfoExt/update")
+    public ResponseEntity<VoBaseResp> userInfoUpdate(/*@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,*/
+                                      @ModelAttribute VoUserInfoUpdateReq VoUserInfoUpdateReq){
+        VoUserInfoUpdateReq.setUserId(901L);
+        return userBiz.pcUserInfoUpdate(VoUserInfoUpdateReq);
+    }
+
 
 }

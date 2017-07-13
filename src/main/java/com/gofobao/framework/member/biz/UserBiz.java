@@ -1,8 +1,10 @@
 package com.gofobao.framework.member.biz;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.member.entity.UserInfo;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.vo.request.VoRegisterReq;
+import com.gofobao.framework.member.vo.request.VoUserInfoUpdateReq;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.member.vo.response.pc.UserInfoExt;
 import com.gofobao.framework.security.vo.VoLoginReq;
@@ -41,6 +43,13 @@ public interface UserBiz {
      * @return
      */
     ResponseEntity<UserInfoExt>pcUserInfo(Long userId);
+
+    /**
+     * 用户资料更新
+     * @param infoUpdateReq
+     * @return
+     */
+    ResponseEntity<VoBaseResp>pcUserInfoUpdate(VoUserInfoUpdateReq infoUpdateReq);
 
 
     /**
