@@ -140,6 +140,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(
                         "/invest/**")
                 .permitAll()
+                .antMatchers(
+                        "/smmSetting/**")
+                .permitAll()
 
                 .antMatchers(
                         "/pub/**")

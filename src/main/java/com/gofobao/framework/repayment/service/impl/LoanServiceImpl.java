@@ -56,6 +56,7 @@ public class LoanServiceImpl implements LoanService {
 
     @Autowired
     private UsersRepository usersRepository;
+
     /**
      * 还款中列表
      *
@@ -186,6 +187,8 @@ public class LoanServiceImpl implements LoanService {
             budingRes.setMoney(StringHelper.formatMon(p.getMoney() / 100D));
             budingRes.setApr(StringHelper.formatMon(p.getApr() / 100D));
             budingRes.setSpeed(StringHelper.formatMon(p.getMoneyYes() / new Double(p.getMoney())));
+            double speed = p.getMoneyYes() / new Double(p.getMoney());
+            budingRes.setCancel(speed != 1d);
             if (p.getRepayFashion() == 1) {
                 budingRes.setTimeLimit(p.getTimeLimit() + BorrowContants.DAY);
             } else {
@@ -356,65 +359,66 @@ public class LoanServiceImpl implements LoanService {
 
     /**
      * 平台借款统计
+     *
      * @param voStatisticsReq
      * @return
      */
     @Override
     public Map<String, Object> statistics(VoStatisticsReq voStatisticsReq) {
-        Date nowDate=new Date();
-        String type=voStatisticsReq.getType();
+        Date nowDate = new Date();
+        String type = voStatisticsReq.getType();
 
-        String endAt=DateHelper.dateToString(DateHelper.endOfDate(nowDate));
+        String endAt = DateHelper.dateToString(DateHelper.endOfDate(nowDate));
         String sql = "SELECT b FROM BorrowRepayment AS b where ";
-        String totalSql="SELECT COUNT(b.id) FROM BorrowRepayment AS b where ";
-        String condition="";
+        String totalSql = "SELECT COUNT(b.id) FROM BorrowRepayment AS b where ";
+        String condition = "";
         if (type.equals("gt7days")) { //一周内
-           String beginAt =DateHelper.dateToString(DateHelper.beginOfDate(DateHelper.subDays(nowDate,7)));
-            condition += "b.repayAt  BETWEEN '"+beginAt+"' AND '"+DateHelper.dateToString(DateHelper.endOfDate(nowDate))+"'";
+            String beginAt = DateHelper.dateToString(DateHelper.beginOfDate(DateHelper.subDays(nowDate, 7)));
+            condition += "b.repayAt  BETWEEN '" + beginAt + "' AND '" + DateHelper.dateToString(DateHelper.endOfDate(nowDate)) + "'";
         } else if (type.equals("lt30days")) {//30天内有逾期未还
-            String beginAt =DateHelper.dateToString(DateHelper.beginOfDate(DateHelper.subDays(nowDate,30)));
-            condition += "b.repayAt BETWEEN '"+beginAt+"' AND '"+endAt+"' AND b.status=0 AND b.lateDays>0";
+            String beginAt = DateHelper.dateToString(DateHelper.beginOfDate(DateHelper.subDays(nowDate, 30)));
+            condition += "b.repayAt BETWEEN '" + beginAt + "' AND '" + endAt + "' AND b.status=0 AND b.lateDays>0";
         } else if (type.equals("gt30days")) {    //30天以上有逾期未还
-            String beginAt =DateHelper.dateToString(DateHelper.endOfDate(DateHelper.subDays(nowDate,30)));
-            condition += "b.repayAt < '"+beginAt+"' AND b.status=0 AND b.lateDays>0";
+            String beginAt = DateHelper.dateToString(DateHelper.endOfDate(DateHelper.subDays(nowDate, 30)));
+            condition += "b.repayAt < '" + beginAt + "' AND b.status=0 AND b.lateDays>0";
         } else if (type.equals("lateRepay")) {//逾期已归还
             condition += "b.status=1 and b.lateDays>0";
         }
-        String orderBy="  ORDER BY b.repayAt DESC";
-        condition+=orderBy;
+        String orderBy = "  ORDER BY b.repayAt DESC";
+        condition += orderBy;
 
-        Map<String,Object> resultMaps=Maps.newHashMap();
+        Map<String, Object> resultMaps = Maps.newHashMap();
         //总记录数
-        Long totalList=entityManager.createQuery(totalSql+condition,Long.class).getSingleResult();
-        resultMaps.put("totalCount",totalList);
+        Long totalList = entityManager.createQuery(totalSql + condition, Long.class).getSingleResult();
+        resultMaps.put("totalCount", totalList);
 
         //分页
-        TypedQuery  query=entityManager.createQuery(sql+condition,BorrowRepayment.class);
-        query.setMaxResults(voStatisticsReq.getPageSize()*voStatisticsReq.getPageIndex());
+        TypedQuery query = entityManager.createQuery(sql + condition, BorrowRepayment.class);
+        query.setMaxResults(voStatisticsReq.getPageSize() * voStatisticsReq.getPageIndex());
         query.setFirstResult(voStatisticsReq.getPageIndex());
-        List<BorrowRepayment> borrowRepayments=query.getResultList();
+        List<BorrowRepayment> borrowRepayments = query.getResultList();
 
-        if(CollectionUtils.isEmpty(borrowRepayments)){
-            resultMaps.put("repayments",new ArrayList<>(0));
-            return  resultMaps;
+        if (CollectionUtils.isEmpty(borrowRepayments)) {
+            resultMaps.put("repayments", new ArrayList<>(0));
+            return resultMaps;
         }
 
-        Set<Long> userIds=borrowRepayments.stream().map(p->p.getUserId()).collect(Collectors.toSet());
-        List<Users> users=usersRepository.findByIdIn(new ArrayList(userIds));
-        Map<Long,Users>usersMap=users.stream().collect(Collectors.toMap(Users::getId, Function.identity()));
+        Set<Long> userIds = borrowRepayments.stream().map(p -> p.getUserId()).collect(Collectors.toSet());
+        List<Users> users = usersRepository.findByIdIn(new ArrayList(userIds));
+        Map<Long, Users> usersMap = users.stream().collect(Collectors.toMap(Users::getId, Function.identity()));
         //结果集装配
-        List<LoanStatistics> statisticss= Lists.newArrayList();
-        borrowRepayments.stream().forEach(p->{
-            LoanStatistics loanStatistics=new LoanStatistics();
+        List<LoanStatistics> statisticss = Lists.newArrayList();
+        borrowRepayments.stream().forEach(p -> {
+            LoanStatistics loanStatistics = new LoanStatistics();
             loanStatistics.setId(p.getId());
-            Users user=usersMap.get(p.getUserId());
-            loanStatistics.setUserName(StringUtils.isEmpty(user.getUsername())?user.getPhone():user.getUsername());
+            Users user = usersMap.get(p.getUserId());
+            loanStatistics.setUserName(StringUtils.isEmpty(user.getUsername()) ? user.getPhone() : user.getUsername());
             loanStatistics.setCollectionAt(DateHelper.dateToString(p.getRepayAt()));
-            loanStatistics.setCollectionMoney(StringHelper.formatMon(p.getRepayMoney()/100D));
-            loanStatistics.setRemark(!StringUtils.isEmpty(p.getRepayAtYes())?DateHelper.dateToString(p.getRepayAtYes())+" 已还款":"");
+            loanStatistics.setCollectionMoney(StringHelper.formatMon(p.getRepayMoney() / 100D));
+            loanStatistics.setRemark(!StringUtils.isEmpty(p.getRepayAtYes()) ? DateHelper.dateToString(p.getRepayAtYes()) + " 已还款" : "");
             statisticss.add(loanStatistics);
         });
-        resultMaps.put("repayments",statisticss);
+        resultMaps.put("repayments", statisticss);
         return resultMaps;
     }
 }

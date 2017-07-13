@@ -165,7 +165,8 @@ ALTER TABLE `gofobao0627`.`gfb_borrow_tender`
 , ADD COLUMN `state` int(10) NULL DEFAULT '0' COMMENT '1:投标中； 2:还款中 ;3:已结清'
 , ADD COLUMN `third_tender_order_id` varchar(255) NULL DEFAULT '' COMMENT '第三方订单号'
 , ADD COLUMN `third_transfer_order_id` varchar(255) NULL DEFAULT '' COMMENT '购买债券转让编号'
-, ADD COLUMN `is_third_register` int(11) NULL DEFAULT '0' COMMENT '是否在存管进行登记 0否 1.是否';
+, ADD COLUMN `is_third_register` int(11) NULL DEFAULT '0' COMMENT '是否在存管进行登记 0否 1.是否'
+, ADD COLUMN `third_transfer_flag` int(11) DEFAULT '0' COMMENT '当借款是转让标时，这个标是否与存管通信 0否 1是';
 
 ALTER TABLE `gofobao0627`.`gfb_borrow`
   ADD COLUMN `tx_fee` int(11) NULL COMMENT '借款手续费(选填）'
@@ -177,7 +178,8 @@ ALTER TABLE `gofobao0627`.`gfb_borrow`
 , ADD COLUMN `vparam3` varchar(255) NULL
 , ADD COLUMN `t_user_id` int(11) NULL COMMENT '银行电子账户标 id'
 , ADD COLUMN `bail_account_id` varchar(255) NULL COMMENT '担保存管账号'
-, ADD COLUMN `take_user_id` int(11) NULL COMMENT '收款人id  目前针对于官标';
+, ADD COLUMN `take_user_id` int(11) NULL COMMENT '收款人id  目前针对于官标'
+, ADD COLUMN `third_transfer_flag` int(11) DEFAULT '0' COMMENT '当借款是转让标时，这个标是否与存管通信， 0否 1是';
 
 ALTER TABLE `gofobao0627`.`gfb_asset`
   MODIFY COLUMN `use_money` int(11) NOT NULL DEFAULT '0' COMMENT '可用金额(分)'

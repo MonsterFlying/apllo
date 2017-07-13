@@ -209,7 +209,7 @@ public class BorrowProvider {
                 log.info("转让标发起复审失败！ msg:" + resp.getBody().getState().getMsg());
                 log.info("====================================================================");
             }
-        } else {  // 标准标的购买
+        } else {  // 批次标准标的放款
             if (ObjectUtils.isEmpty(borrow.getSuccessAt())) {
                 borrow.setSuccessAt(new Date());
                 borrowService.updateById(borrow);

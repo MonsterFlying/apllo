@@ -200,6 +200,10 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         for (Tender tender : tenderList) {
             txFee = 0;
 
+            if (tender.getThirdTransferFlag()) {//判断标的是否已在存管转让
+                continue;
+            }
+
             tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
             validMoney = tender.getValidMoney();//投标有效金额
             sumCount += validMoney;
@@ -346,7 +350,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             }
 
             //2.筛选失败批次
-            List<String> thirdTransferOrderIds = new ArrayList<>(); //转让标orderId
+            List<String> failureThirdTransferOrderIds = new ArrayList<>(); //转让标orderId
+            List<String> successThirdTransferOrderIds = new ArrayList<>(); //转让标orderId
             List<DetailsQueryResp> detailsQueryRespList = GSON.fromJson(batchDetailsQueryResp.getSubPacks(), new TypeToken<List<DetailsQueryResp>>() {
             }.getType());
             if (CollectionUtils.isEmpty(detailsQueryRespList)) {
@@ -358,25 +363,39 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             Optional<List<DetailsQueryResp>> detailsQueryRespOptional = Optional.of(detailsQueryRespList);
             detailsQueryRespOptional.ifPresent(list -> detailsQueryRespList.forEach(obj -> {
                 if ("F".equalsIgnoreCase(obj.getTxState())) {
-                    thirdTransferOrderIds.add(obj.getOrderId());
+                    failureThirdTransferOrderIds.add(obj.getOrderId());
+                } else {
+                    successThirdTransferOrderIds.add(obj.getOrderId());
                 }
             }));
 
-            if (CollectionUtils.isEmpty(thirdTransferOrderIds)) {
+            if (CollectionUtils.isEmpty(failureThirdTransferOrderIds)) {
                 log.info("================================================================================");
                 log.info("债权转让批次查询：查询未发现失败批次！");
                 log.info("================================================================================");
             }
 
+            //失败批次对应债权
             List<Long> borrowIdList = new ArrayList<>();
             Specification<Tender> ts = Specifications
                     .<Tender>and()
-                    .in("thirdTransferOrderId", thirdTransferOrderIds.toArray())
+                    .in("thirdTransferOrderId", failureThirdTransferOrderIds.toArray())
                     .build();
-            List<Tender> tenderList = tenderService.findList(ts);
-            for (Tender tender : tenderList) {
+            List<Tender> failureTenderList = tenderService.findList(ts);
+            for (Tender tender : failureTenderList) {
                 borrowIdList.add(tender.getBorrowId());
             }
+
+            //成功批次对应债权
+            ts = Specifications
+                    .<Tender>and()
+                    .in("thirdTransferOrderId", successThirdTransferOrderIds.toArray())
+                    .build();
+            List<Tender> successTenderList = tenderService.findList(ts);
+            for (Tender tender : successTenderList) {
+                tender.setThirdTransferFlag(true);
+            }
+            tenderService.save(successTenderList);
 
             //3.与本地失败投标做匹配，并提出tender
             Specification<Borrow> bs = Specifications
@@ -393,7 +412,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
                 failAmount = 0;
                 failNum = 0;
                 if (!borrowIdSet.contains(borrow.getId())) {
-                    for (Tender tender : tenderList) {
+                    for (Tender tender : successTenderList) {
                         if (StringHelper.toString(borrow.getId()).equals(StringHelper.toString(tender.getBorrowId()))) {
                             failAmount += tender.getValidMoney(); //失败金额
 
@@ -418,10 +437,13 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
                     }
                     borrow.setTenderCount(borrow.getTenderCount() - failNum);
                     borrow.setMoneyYes(borrow.getMoneyYes() - failAmount);
+                    /**
+                     * @// TODO: 2017/7/13 再次复审时  需要单独把未转让的进行批次操作
+                     */
                 }
             }
             borrowService.save(borrowList);
-            tenderService.save(tenderList);
+            tenderService.save(successTenderList);
 
             log.error("已对无效投标进行撤回！");
         } while (false);
@@ -435,7 +457,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             saveThirdTransferOrderId(creditInvestRunList);
 
             try {
-                bool = borrowBiz.transferedBorrowAgainVerify(borrow);
+                bool = borrowBiz.transferBorrowAgainVerify(borrow);
             } catch (Throwable e) {
                 log.error("非流转标复审异常:", e);
             }

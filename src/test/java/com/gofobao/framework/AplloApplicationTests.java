@@ -1,6 +1,5 @@
 package com.gofobao.framework;
 
-import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
@@ -21,47 +20,25 @@ import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
-import com.gofobao.framework.award.service.VirtualService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
-import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
-import com.gofobao.framework.collection.entity.VirtualCollection;
-import com.gofobao.framework.collection.service.BorrowCollectionService;
-import com.gofobao.framework.common.assets.AssetsChangeEnum;
 import com.gofobao.framework.common.assets.AssetsChangeEntity;
+import com.gofobao.framework.common.assets.AssetsChangeEnum;
 import com.gofobao.framework.common.assets.AssetsChangeHelper;
-import com.gofobao.framework.common.capital.CapitalChangeEntity;
-import com.gofobao.framework.common.capital.CapitalChangeEnum;
-import com.gofobao.framework.common.data.DataObject;
-import com.gofobao.framework.common.data.LeSpecification;
-import com.gofobao.framework.common.data.LtSpecification;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
-import com.gofobao.framework.helper.*;
-import com.gofobao.framework.helper.project.CapitalChangeHelper;
+import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
-import com.gofobao.framework.lend.entity.Lend;
-import com.gofobao.framework.lend.service.LendService;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
-import com.gofobao.framework.repayment.entity.BorrowRepayment;
-import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoAdvanceCall;
-import com.gofobao.framework.repayment.vo.request.VoAdvanceReq;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
-import com.gofobao.framework.system.entity.IncrStatistic;
-import com.gofobao.framework.system.entity.Statistic;
-import com.gofobao.framework.system.service.IncrStatisticService;
-import com.gofobao.framework.system.service.StatisticService;
-import com.gofobao.framework.tender.entity.AutoTender;
-import com.gofobao.framework.tender.entity.Tender;
-import com.gofobao.framework.tender.service.AutoTenderService;
-import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -71,20 +48,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -98,9 +68,6 @@ public class AplloApplicationTests {
     MqHelper mqHelper;
 
     @Autowired
-    private JixinHelper jixinHelper;
-
-    @Autowired
     private BorrowBiz borrowBiz;
     @Autowired
     private BorrowService borrowService;
@@ -112,30 +79,9 @@ public class AplloApplicationTests {
     private BorrowThirdBiz borrowThirdBiz;
     @Autowired
     private RepaymentBiz repaymentBiz;
-    @PersistenceContext
-    private EntityManager entityManager;
-    @Autowired
-    private BorrowCollectionService borrowCollectionService;
-    @Autowired
-    private TenderService tenderService;
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-    @Autowired
-    private AutoTenderService autoTenderService;
     @Autowired
     private AssetsChangeHelper assetsChangeHelper;
-    @Autowired
-    private BorrowRepaymentService borrowRepaymentService;
-    @Autowired
-    private VirtualService virtualService;
-    @Autowired
-    private CapitalChangeHelper capitalChangeHelper;
-    @Autowired
-    private StatisticService statisticService;
-    @Autowired
-    private IncrStatisticService incrStatisticService;
-    @Autowired
-    private LendService lendService;
+
 
     @Test
     public void testAssetsChange() throws Exception {
@@ -311,10 +257,10 @@ public class AplloApplicationTests {
 
     }
 
-    private void transferedBorrowAgainVerify() {
+    private void transferBorrowAgainVerify() {
         Borrow borrow = borrowService.findById(165227L);
         try {
-            borrowBiz.transferedBorrowAgainVerify(borrow);
+            borrowBiz.transferBorrowAgainVerify(borrow);
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -346,11 +292,11 @@ public class AplloApplicationTests {
         //复审
         //doAgainVerify();
         //批次详情查询
-        //batchDetailsQuery();
+        batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调
-        //transferedBorrowAgainVerify();
+        //transferBorrowAgainVerify();
     }
 
 }
