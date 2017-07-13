@@ -151,6 +151,10 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         for (Tender tender : tenderList) {
             debtFee = 0;
 
+            if (tender.getThirdTenderFlag()) {
+                continue;
+            }
+
             tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
             validMoney = tender.getValidMoney();//投标有效金额
             sumCount += validMoney; //放款总金额
@@ -446,10 +450,13 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                         if (StringHelper.toString(borrow.getId()).equals(StringHelper.toString(tender.getBorrowId()))) {
                             failAmount += tender.getValidMoney(); //失败金额
 
+                            //================================================
+                            //撤销投标申请
+                            //================================================
                             VoCancelThirdTenderReq voCancelThirdTenderReq = new VoCancelThirdTenderReq();
                             voCancelThirdTenderReq.setTenderId(tender.getId());
                             resp = tenderThirdBiz.cancelThirdTender(voCancelThirdTenderReq);
-                            if (resp.getBody().getState().getCode() == VoBaseResp.ERROR){
+                            if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) {
                                 return ResponseEntity.ok("error");
                             }
 
@@ -594,7 +601,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 principal = 0;
 
                 tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());//投标人银行存管账户
-                Preconditions.checkNotNull(tenderUserThirdAccount,"投资人存管账户未开户!");
+                Preconditions.checkNotNull(tenderUserThirdAccount, "投资人存管账户未开户!");
                 BorrowCollection borrowCollection = null;//当前借款的回款记录
                 for (int i = 0; i < borrowCollectionList.size(); i++) {
                     borrowCollection = borrowCollectionList.get(i);
@@ -958,7 +965,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 txFeeOut = 0;
 
                 tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());//投标人银行存管账户
-                Preconditions.checkNotNull(tenderUserThirdAccount,"投标人未开户!");
+                Preconditions.checkNotNull(tenderUserThirdAccount, "投标人未开户!");
                 BorrowCollection borrowCollection = null;//当前借款的回款记录
                 for (int i = 0; i < borrowCollectionList.size(); i++) {
                     borrowCollection = borrowCollectionList.get(i);
