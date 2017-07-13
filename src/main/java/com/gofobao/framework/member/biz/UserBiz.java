@@ -52,5 +52,8 @@ public interface UserBiz {
      * @return
      */
     ResponseEntity<VoBasicUserInfoResp> login(HttpServletRequest httpServletRequest, HttpServletResponse response, VoLoginReq voLoginReq);
+
+
+
 }
 

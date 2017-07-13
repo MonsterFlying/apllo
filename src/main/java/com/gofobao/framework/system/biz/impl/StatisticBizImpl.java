@@ -4,7 +4,12 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.MultiCaculateHelper;
 import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.system.biz.StatisticBiz;
+import com.gofobao.framework.system.contants.DictAliasCodeContants;
+import com.gofobao.framework.system.entity.DictItem;
+import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.entity.Statistic;
+import com.gofobao.framework.system.service.DictItemServcie;
+import com.gofobao.framework.system.service.DictValueService;
 import com.gofobao.framework.system.service.IncrStatisticService;
 import com.gofobao.framework.system.service.StatisticService;
 import com.gofobao.framework.system.vo.response.IndexStatistics;
@@ -21,7 +26,10 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created by Max on 17/6/2.
@@ -37,6 +45,11 @@ public class StatisticBizImpl implements StatisticBiz {
 
     @Autowired
     private TenderService tenderService;
+    @Autowired
+    private DictValueService dictValueService;
+
+    @Autowired
+    private DictItemServcie dictItemServcie;
 
     @Autowired
     private IncrStatisticService incrStatisticService;
@@ -80,6 +93,13 @@ public class StatisticBizImpl implements StatisticBiz {
                 //注册人数
                 BigDecimal registerTotal = incrStatisticService.registerTotal();
                 indexStatistics.setRegisterTotal(registerTotal);
+                //起头金额&年华利率
+
+                DictItem dictItem=dictItemServcie.findTopByAliasCodeAndDel(DictAliasCodeContants.INDEX_CONFIG,0);
+                List<DictValue> dictValue=dictValueService.findByItemId(dictItem.getId());
+                Map<String,String> dictValueMap=dictValue.stream().collect(Collectors.toMap(DictValue::getValue02, DictValue::getValue01));
+                indexStatistics.setApr(Integer.valueOf(dictValueMap.get("annualized").toString()));
+                indexStatistics.setStartMoney(Integer.valueOf(dictValueMap.get("startMoney").toString()));
 
                 Map<String, Integer> tenderStatistic = tenderService.statistic();
                 //昨日成交

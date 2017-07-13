@@ -367,14 +367,23 @@ public class UserBizImpl implements UserBiz {
         return true;
     }
 
+    /**
+     * 用户扩展信息
+     * @param userId
+     * @return
+     */
     @Override
     public ResponseEntity<UserInfoExt> pcUserInfo(Long userId) {
         UserInfoExt userInfoExt = VoBaseResp.ok("查询成功", UserInfoExt.class);
         UserInfo userInfo = userInfoService.info(userId);
         userInfoExt.setAddress(userInfo.getAddress());
-        userInfoExt.setBir(DateHelper.dateToString(userInfo.getBirthday()));
+        userInfoExt.setBir(DateHelper.dateToString(userInfo.getBirthday(),DateHelper.DATE_FORMAT_YMD));
         userInfoExt.setQq(userInfo.getQq());
-        userInfoExt.setIncome(userInfo.getIncome());
-        return null;
+        userInfoExt.setIncome(StringHelper.formatMon(userInfo.getIndustry()/100D));
+        userInfoExt.setEducationalHistory(userInfo.getGraduatedSchool());
+        userInfoExt.setMaritalStatus(userInfo.getMarital());
+        userInfoExt.setSchool(StringUtils.isEmpty(userInfo.getSchool())?"":userInfo.getSchool());
+        userInfoExt.setSex(userInfo.getSex());
+        return ResponseEntity.ok(userInfoExt);
     }
 }

@@ -84,7 +84,7 @@ public class JixinManager {
         params.put("sign", sign);
 
         log.info("=============================================");
-        log.info(String.format("报文流水：%s%s%s", req.getTxDate(), req.getTxTime(), req.getSeqNo()));
+        log.info(String.format("[%s] 报文流水：%s%s%s", txCodeEnum.getName() , req.getTxDate(), req.getTxTime(), req.getSeqNo()));
         log.info("=============================================");
         log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));
         return genFormHtml(params, url);
@@ -143,10 +143,10 @@ public class JixinManager {
         }.getType());
         String unsige = StringHelper.mergeMap(param);
         boolean result = certHelper.verify(unsige, param.get("sign"));
-        /*if (!result) {
+        if (!result) {
             log.error("验签失败", bgData);
             return null;
-        }*/
+        }
 
         t.setRetMsg(JixinResultContants.getMessage(t.getRetCode())) ;
         return t;
@@ -184,7 +184,7 @@ public class JixinManager {
         String sign = certHelper.doSign(unSign);
         params.put("sign", sign);
         log.info("=============================================");
-        log.info(String.format("报文流水：%s%s%s", req.getTxDate(), req.getTxTime(), req.getSeqNo()));
+        log.info(String.format("[%s]报文流水：%s%s%s", txCodeEnum.getName(), req.getTxDate(), req.getTxTime(), req.getSeqNo()));
         log.info("=============================================");
         log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));
         initHttps();

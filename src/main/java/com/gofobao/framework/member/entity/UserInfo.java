@@ -58,7 +58,7 @@ public class UserInfo extends UserInfoExt {
 
     @Basic
     @Column(name = "sex")
-    private boolean sex ;
+    private Integer sex ;
 
     @Basic
     @Column(name = "birthday")

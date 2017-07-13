@@ -144,6 +144,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(
                         "/pub/**")
                 .permitAll()
+                .antMatchers(
+                        "/user/**")
+                .permitAll()
 
                 .antMatchers( //放行swagger-ui
                         "/swagger-resources/**", "/v2/**","/webjars/springfox-swagger-ui/**"
