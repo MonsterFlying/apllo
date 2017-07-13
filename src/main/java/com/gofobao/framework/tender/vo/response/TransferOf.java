@@ -22,7 +22,7 @@ public class TransferOf {
     private String spend;
     @ApiModelProperty("标ID")
     private Long borrowId;
-
-
+    @ApiModelProperty("是否可以取消债权转让")
+    private Boolean cancel;
 
 }

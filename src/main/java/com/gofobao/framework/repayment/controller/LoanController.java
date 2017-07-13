@@ -81,7 +81,7 @@ public class LoanController {
             case 2:
                 return loanBiz.buddingList(voLoanListReq);   //投标中
             case 3:
-                return loanBiz.settleList(voLoanListReq);  //以结清
+                return loanBiz.settleList(voLoanListReq);  //已结清
         }
         return ResponseEntity
                 .badRequest()

@@ -116,6 +116,8 @@ public class Borrow implements Serializable {
 
     private String productId;
 
+    private Boolean thirdTransferFlag;
+
 
     /**
      * 判断是否是转让标
