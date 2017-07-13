@@ -42,13 +42,9 @@ public class BorrowController {
     @Autowired
     private ThymeleafHelper thymeleafHelper;
     @Autowired
-    private BorrowThirdBiz borrowThirdBiz;
-
-    @Autowired
     private JwtTokenHelper jwtTokenHelper;
     @Value("${jwt.header}")
     private String tokenHeader;
-
     @Value("${jwt.prefix}")
     private String prefix;
 

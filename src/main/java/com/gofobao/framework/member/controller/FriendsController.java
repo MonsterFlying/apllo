@@ -124,10 +124,10 @@ public class FriendsController {
         response.setContentType("image/jpeg"); // return a jpeg
 
         try {
-            InputStream in = FriendsController.class.getResourceAsStream("/static/img/logo.png");
+            InputStream in = FriendsController.class.getResourceAsStream("/static/images/shareLogo/logo.png");
             http:
 //192.168.1.235:8000/#/auth/register?_k=bpjq7r.createQRCodeTStream(h5Domain+"/#/auth/register?shareRegisterCode="+inviteCode, in, 50, 50, out);
-            QRCodeHelper.createQRCodeTStream(h5Domain + "/#/auth/register?shareRegisterCode=" + inviteCode, in, 50, 50, out);
+            QRCodeHelper.createQRCodeTStream(h5Domain + "/#/auth/register?shareRegisterCode=" + inviteCode, in, 100, 100, out);
             out.flush();
         } catch (Throwable e) {
             log.error(String.format("获取二维码接口：%s", e.getMessage()));

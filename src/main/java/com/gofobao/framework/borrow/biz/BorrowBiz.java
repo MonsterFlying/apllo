@@ -62,7 +62,7 @@ public interface BorrowBiz {
      * @return
      * @throws Exception
      */
-    boolean notTransferedBorrowAgainVerify(Borrow borrow) throws Exception;
+    boolean notTransferBorrowAgainVerify(Borrow borrow) throws Exception;
 
     /**
      * 转让标复审
@@ -71,7 +71,7 @@ public interface BorrowBiz {
      * @return
      * @throws Exception
      */
-    boolean transferedBorrowAgainVerify(Borrow borrow) throws Exception;
+    boolean transferBorrowAgainVerify(Borrow borrow) throws Exception;
 
 
     /**

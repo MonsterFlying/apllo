@@ -457,7 +457,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             saveThirdTransferOrderId(creditInvestRunList);
 
             try {
-                bool = borrowBiz.transferedBorrowAgainVerify(borrow);
+                bool = borrowBiz.transferBorrowAgainVerify(borrow);
             } catch (Throwable e) {
                 log.error("非流转标复审异常:", e);
             }
