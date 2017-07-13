@@ -82,39 +82,40 @@ public class NoticesBizImpl implements NoticesBiz {
         users.setUpdatedAt(now);
         userService.save(users);
 
-        // ========================================
-        // 发送推送
-        // ========================================
-        ImmutableList<Integer> platforms = ImmutableList.of(1, 2);
-        if ((users.getPushState() == 1)
-                && (!StringUtils.isEmpty(users.getPushId()))
-                && (platforms.contains(users.getPlatform()))) {
-            PlatformNotification platformNotification;
-            if (users.getPlatform().equals(1)) {
-                platformNotification = AndroidNotification.newBuilder()
-                        .setAlert(ALERT)
-                        .addExtra("from", "广富宝金服")
-                        .build();
-            } else {
-                platformNotification = IosNotification.newBuilder()
-                        .setAlert(ALERT)
-                        .setBadge(users.getNoticeCount())
-                        .setSound("happy")
-                        .addExtra("from", "广富宝金服")
+        try {
+            // ========================================
+            // 发送推送
+            // ========================================
+            ImmutableList<Integer> platforms = ImmutableList.of(1, 2);
+            if ((users.getPushState() == 1)
+                    && (!StringUtils.isEmpty(users.getPushId()))
+                    && (platforms.contains(users.getPlatform()))) {
+                PlatformNotification platformNotification;
+                if (users.getPlatform().equals(1)) {
+                    platformNotification = AndroidNotification.newBuilder()
+                            .setAlert(ALERT)
+                            .addExtra("from", "广富宝金服")
+                            .build();
+                } else {
+                    platformNotification = IosNotification.newBuilder()
+                            .setAlert(ALERT)
+                            .setBadge(users.getNoticeCount())
+                            .setSound("happy")
+                            .addExtra("from", "广富宝金服")
+                            .build();
+                }
+
+                PushPayload.newBuilder()
+                        .setPlatform(users.getPlatform().equals(1) ? Platform.android() : Platform.ios())
+                        .setAudience(Audience.alias(users.getPushId()))
+                        .setNotification(Notification.newBuilder()
+                                .addPlatformNotification(platformNotification)
+                                .build())
+                        .setMessage(Message.content(notices.getContent()))
                         .build();
             }
-
-            PushPayload.newBuilder()
-                    .setPlatform(users.getPlatform().equals(1) ? Platform.android() : Platform.ios())
-                    .setAudience(Audience.alias(users.getPushId()))
-                    .setNotification(Notification.newBuilder()
-                            .addPlatformNotification(platformNotification)
-                            .build())
-                    .setMessage(Message.content(notices.getContent()))
-                    .setOptions(Options.newBuilder()
-                            .setApnsProduction(true)
-                            .build())
-                    .build();
+        }catch (Exception e){
+            log.error("极光推送发送失败", e);
         }
 
         return true;
