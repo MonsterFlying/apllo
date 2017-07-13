@@ -31,6 +31,8 @@ spring:
     default-encoding: UTF-8
   thymeleaf:
     mode: LEGACYHTML5
+  profiles:
+    active: pro
 server:
   port: 10101
 jwt: #JWT 安全配置
