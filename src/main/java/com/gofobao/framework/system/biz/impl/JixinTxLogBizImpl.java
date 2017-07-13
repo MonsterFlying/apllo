@@ -32,7 +32,7 @@ public class JixinTxLogBizImpl implements JixinTxLogBiz {
             JixinTxLog jixinTxLog = new JixinTxLog();
             jixinTxLog.setTxType(jixinTxCodeEnum.getValue());
             jixinTxLog.setTxTypeDesc(jixinTxCodeEnum.getName());
-            jixinTxLog.setSeqNo(String.format("%s%s%s", request.get("txDate"), request.get("txTime"), request.get("txCode")));
+            jixinTxLog.setSeqNo(String.format("%s%s%s", request.get("txDate"), request.get("txTime"), request.get("seqNo")));
             jixinTxLog.setCreateAt(new Date());
             jixinTxLog.setType(0);
             jixinTxLog.setBody(gson.toJson(request));
@@ -59,7 +59,7 @@ public class JixinTxLogBizImpl implements JixinTxLogBiz {
             JixinTxLog jixinTxLog = new JixinTxLog();
             jixinTxLog.setTxType(jixinTxCodeEnum.getValue());
             jixinTxLog.setTxTypeDesc(jixinTxCodeEnum.getName());
-            jixinTxLog.setSeqNo(String.format("%s%s%s", response.get("txDate"), response.get("txTime"), response.get("txCode")));
+            jixinTxLog.setSeqNo(String.format("%s%s%s", response.get("txDate"), response.get("txTime"), response.get("seqNo")));
             jixinTxLog.setCreateAt(new Date());
             jixinTxLog.setType(1);
             jixinTxLog.setBody(gson.toJson(response));

@@ -22,6 +22,7 @@ public class JixinTxLog {
     @Id
     @GeneratedValue
     private Long id;
+
     private String seqNo  ;
     private String body  ;
     private Date createAt  ;
