@@ -37,13 +37,13 @@ public class CapitalChangeRulePaser {
         }
 
         String[] rules = rule.split(",");
-        String op = null;// 操作数
-        String opFieldName = null; // 操作字段名称
-        String area = null;
-        String[] temp = null;
-        Long money = 0L;
+
         for (String subRule : rules) {
-            area = "all"; // 作用域
+            String op;// 操作数
+            String opFieldName; // 操作字段名称
+            String area  = "all"; // 作用域
+            String[] temp;
+            long money = 0;
             if (StringUtils.isEmpty(subRule)) {
                 logger.error(String.format("资金变动规则：%s为空", subRule));
                 return false;
