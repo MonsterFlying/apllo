@@ -110,7 +110,9 @@ public class TransferServiceImpl implements TransferService {
             transferOf.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
             transferOf.setCreateTime(DateHelper.dateToString(p.getUpdatedAt()));
             transferOf.setPrincipal(StringHelper.formatMon(borrow.getMoney() / 100d));
-            transferOf.setSpend(StringHelper.formatMon(borrow.getMoneyYes() / borrow.getMoney() / 100d));
+            double spend = (double) borrow.getMoneyYes() / (double) borrow.getMoney();
+            transferOf.setSpend(StringHelper.formatMon(spend));
+            transferOf.setCancel(spend != 1d && !borrow.getThirdTransferFlag());
             transferOf.setBorrowId(borrow.getId());
             transferOfs.add(transferOf);
         });
@@ -284,7 +286,7 @@ public class TransferServiceImpl implements TransferService {
                 "(b.type=0 OR b.type=4) ORDER BY t.created_at  DESC ";
 
         //总记录数
-        Query query = entityManager.createNativeQuery(sql,Tender.class);
+        Query query = entityManager.createNativeQuery(sql, Tender.class);
         Integer totalCount = query.getResultList().size();
         resultMaps.put("totalCount", totalCount);
 

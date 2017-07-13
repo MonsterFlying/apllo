@@ -418,6 +418,9 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
                     }
                     borrow.setTenderCount(borrow.getTenderCount() - failNum);
                     borrow.setMoneyYes(borrow.getMoneyYes() - failAmount);
+                    /**
+                     * @// TODO: 2017/7/13 再次复审时  需要单独把未转让的进行批次操作
+                     */
                 }
             }
             borrowService.save(borrowList);

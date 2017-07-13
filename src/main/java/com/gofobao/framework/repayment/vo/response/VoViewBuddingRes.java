@@ -3,6 +3,7 @@ package com.gofobao.framework.repayment.vo.response;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Created by admin on 2017/6/2.
@@ -30,5 +31,7 @@ public class VoViewBuddingRes {
     @ApiModelProperty("年化率")
     private String apr;
 
+    @ApiModelProperty("是否可以取消借款")
+    private Boolean cancel;
 
 }
