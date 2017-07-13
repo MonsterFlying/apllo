@@ -98,8 +98,8 @@ public class WebUserController {
 
     @ApiOperation("用戶扩展信息")
     @PostMapping("/user/pc/userInfoExt")
-    public ResponseEntity<UserInfoExt> userExt(/*@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/){
-        return userBiz.pcUserInfo(901L);
+    public ResponseEntity<UserInfoExt> userExt(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+        return userBiz.pcUserInfo(userId);
     }
 
 }
