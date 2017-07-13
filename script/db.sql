@@ -497,7 +497,7 @@ ALTER TABLE gfb_users ADD ip VARCHAR(255) DEFAULT '' NULL;
 CREATE TABLE gfb_jixin_tx_log
 (
   id INT PRIMARY KEY AUTO_INCREMENT,
-  seqNo VARCHAR(225) DEFAULT '',
+  seq_no VARCHAR(225) DEFAULT '',
   body VARCHAR(10240) DEFAULT '' COMMENT '请求体或者响应体',
   create_at DATETIME,
   tx_type VARCHAR(225) DEFAULT '' COMMENT '交易类型',
