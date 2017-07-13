@@ -92,7 +92,7 @@ public class IntegralBizImpl implements IntegralBiz {
                         return null;
                     }
 
-                    return dictValueService.findTopByItemIdAndValue02(dictItem.getId(), bankName);
+                    return dictValueService.findTopByItemIdAndValue01(dictItem.getId(), bankName);
                 }
             });
 

@@ -152,7 +152,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                         return null;
                     }
 
-                    return dictValueService.findTopByItemIdAndValue02(dictItem.getId(), bankName);
+                    return dictValueService.findTopByItemIdAndValue01(dictItem.getId(), bankName);
                 }
             });
     @Autowired
