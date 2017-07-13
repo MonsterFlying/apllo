@@ -15,4 +15,12 @@ public interface UserInfoService {
      * @return
      */
     UserInfo info(Long userId);
+
+
+    /**
+     * 用户资料更改
+     * @param userInfo
+     * @return
+     */
+    UserInfo update(UserInfo userInfo);
 }

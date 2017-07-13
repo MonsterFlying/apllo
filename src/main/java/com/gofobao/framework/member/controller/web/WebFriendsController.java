@@ -1,5 +1,7 @@
 package com.gofobao.framework.member.controller.web;
 
+import com.gofobao.framework.award.vo.response.VoViewShareRegiestRes;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.biz.BrokerBounsBiz;
 import com.gofobao.framework.member.vo.request.VoFriendsReq;
 import com.gofobao.framework.member.vo.request.VoFriendsTenderReq;
@@ -12,7 +14,10 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 /**
  * Created by admin on 2017/7/4.
@@ -46,14 +51,26 @@ public class WebFriendsController {
     public ResponseEntity<VoViewInviteAwardStatisticsWarpRes> statistic(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return brokerBounsBiz.statistic(userId);
     }
+
     @ApiOperation("邀请统计")
     @PostMapping("/invite/pc/v2/brokerBouns/list")
     public ResponseEntity<VoViewBrokerBounsWarpRes> statistic(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
-                                                                        VoFriendsTenderReq friendsTenderReq) {
+                                                              VoFriendsTenderReq friendsTenderReq) {
         friendsTenderReq.setUserId(userId);
         return brokerBounsBiz.pcBrokerBounsList(friendsTenderReq);
     }
 
 
+    @ApiOperation("邀请好友首页页面")
+    @GetMapping("invite/pc/v2/shareRegister")
+    public ResponseEntity shareRegister(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        try {
+            Map<String, Object> resultMaps = brokerBounsBiz.shareRegister(userId);
+            return ResponseEntity.ok(resultMaps);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败"));
+        }
+    }
 
 }
