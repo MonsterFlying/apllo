@@ -31,7 +31,8 @@ public class AssetLogServiceImpl implements AssetLogService {
 
     @Autowired
     private AssetLogRepository assetLogRepository;
-
+    private static Set<String> subList = new HashSet<>(Arrays.asList("cash", "tender", "manager", "fee", "repayment", "overdue", "interest_manager", "virtual_tender", "expenditure_other"));
+    private static Set<String> addList = new HashSet<>(Arrays.asList("recharge", "award", "borrow", "income_repayment", "income_overdue", "integral_cash", "bonus", "award_virtual_money", "income_other", "red_package"));
 
     /**
      * 资金流水
@@ -53,6 +54,8 @@ public class AssetLogServiceImpl implements AssetLogService {
             viewAssetLogRes.setMoney(StringHelper.formatMon(p.getMoney() / 100d));
             viewAssetLogRes.setTypeName(getAssetTypeStr(p.getType()));
             viewAssetLogRes.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
+            String type = p.getType();
+            viewAssetLogRes.setShowMoney((subList.contains(type) ? ("-") : (addList.contains(type) ? "+" : "")) + StringHelper.formatDouble(p.getMoney(), 100,true));
             voViewAssetLogRes.add(viewAssetLogRes);
         });
         List<VoViewAssetLogRes> result = Optional.ofNullable(voViewAssetLogRes).orElse(Collections.EMPTY_LIST);

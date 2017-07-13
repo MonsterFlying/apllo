@@ -670,7 +670,7 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         // 债权转让标识取消
-        assertAndDoTranfer(borrow);
+        assertAndDoTransfer(borrow);
 
         //更新借款
         borrow.setStatus(5);
@@ -685,7 +685,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @param borrow
      * @throws Exception
      */
-    public void assertAndDoTranfer(Borrow borrow) throws Exception {
+    public void assertAndDoTransfer(Borrow borrow) throws Exception {
         Long tenderId = borrow.getTenderId();
         if ((borrow.getType() == 0) && (!ObjectUtils.isEmpty(tenderId)) && (tenderId > 0)) {
             Tender tender = tenderService.findById(tenderId);
@@ -795,7 +795,7 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         // 债权转让标识取消
-        assertAndDoTranfer(borrow);
+        assertAndDoTransfer(borrow);
 
         //更新借款
         borrow.setStatus(5);
@@ -840,7 +840,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Exception.class)
-    public boolean notTransferedBorrowAgainVerify(Borrow borrow) throws Exception {
+    public boolean notTransferBorrowAgainVerify(Borrow borrow) throws Exception {
         boolean bool = false;
         do {
 
@@ -903,7 +903,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public boolean transferedBorrowAgainVerify(Borrow borrow) throws Exception {
+    public boolean transferBorrowAgainVerify(Borrow borrow) throws Exception {
         boolean bool = false;
         do {
             if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1)

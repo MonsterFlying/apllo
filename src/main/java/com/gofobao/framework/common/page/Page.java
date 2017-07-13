@@ -15,6 +15,9 @@ public class Page extends VoBaseReq {
     protected Integer pageSize;
 
     public Integer getPageIndex() {
+        if (ObjectUtils.isEmpty(pageIndex)) {
+            pageIndex = CommonPageContants.DEFAULT_PAGE_INDEX;
+        }
         return pageIndex - 1;
     }
 

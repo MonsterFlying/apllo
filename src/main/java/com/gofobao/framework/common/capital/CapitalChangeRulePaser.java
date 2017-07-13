@@ -4,9 +4,12 @@ package com.gofobao.framework.common.capital;
 import com.gofobao.framework.helper.MethodInvokerHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
+import org.apache.commons.beanutils.PropertyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
+
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * 资金规则解析
@@ -24,7 +27,7 @@ public class CapitalChangeRulePaser {
      * @param interest  利息
      * @return 解析是否成功
      */
-    public static boolean paser(Object target, String rule, long principal, long interest) {
+    public static boolean paser(Object target, String rule, long principal, long interest) throws Exception {
         if ((target == null)
                 || (StringUtils.isEmpty(rule))
                 || (principal < 0)
@@ -34,13 +37,13 @@ public class CapitalChangeRulePaser {
         }
 
         String[] rules = rule.split(",");
-        String op = null;// 操作数
-        String opFieldName = null; // 操作字段名称
-        String area = null;
-        String[] temp = null;
-        Long money = 0L;
+
         for (String subRule : rules) {
-            area = "all"; // 作用域
+            String op;// 操作数
+            String opFieldName; // 操作字段名称
+            String area  = "all"; // 作用域
+            String[] temp;
+            long money = 0;
             if (StringUtils.isEmpty(subRule)) {
                 logger.error(String.format("资金变动规则：%s为空", subRule));
                 return false;
@@ -83,41 +86,34 @@ public class CapitalChangeRulePaser {
                     return false;
             }
 
-            Object value = null;
+            Object value;
             try {
-                value = MethodInvokerHelper.createGetter(target.getClass(), false, opFieldName).invoke(target);
+                value = PropertyUtils.getProperty(target, opFieldName);
             } catch (Throwable e) {
                 logger.error(String.format("反射获取getter方法失败"), e.getMessage());
-                return false;
+                throw new Exception(e) ;
             }
+
+            if( !(value instanceof  Long) ){
+                throw new Exception("操作类型不是Long") ;
+            }
+
             switch (op) {
                 case "add":
-                    money = NumberHelper.toInt(StringHelper.toString(value)) + money;
+                    money = (long)value + money;
                     break;
                 case "sub":
-                    money = (NumberHelper.toInt(StringHelper.toString(value)) - money) < 0 ? 0l : NumberHelper.toInt(StringHelper.toString(value));
+                    money = (long)value - money ;
                     break;
                 default:
                     return false;
             }
 
-
-            try {
-                if ((value.getClass() == Long.class)) {
-                    long longMoney = money.longValue();
-                    MethodInvokerHelper.createSetter(target.getClass(), opFieldName, false, value.getClass()).invoke(target, longMoney);
-                } else if (value.getClass() == Integer.class) {
-                    MethodInvokerHelper.createSetter(target.getClass(), opFieldName, false, value.getClass()).invoke(target, money);
-                } else if (value.getClass() == Short.class) {
-                    short shortMoney = money.shortValue();
-                    MethodInvokerHelper.createSetter(target.getClass(), opFieldName, false, value.getClass()).invoke(target, shortMoney);
-                }
-
-            } catch (Throwable e) {
-                logger.error(String.format("反射获取setter方法失败"), e.getMessage());
-                return false;
+            if(money < 0){
+                throw new Exception("资金表动后数字小于零") ;
             }
 
+            PropertyUtils.setProperty(target, opFieldName, money);
         }
 
         return true;

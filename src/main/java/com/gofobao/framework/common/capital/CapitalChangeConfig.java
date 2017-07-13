@@ -50,7 +50,7 @@ public class CapitalChangeConfig {
         CapitalChangeConfig cash = new CapitalChangeConfig();
         cash.setType(CapitalChangeEnum.Cash);
         cash.setName("提现");
-        cash.setAssetChangeRule("sub@useMoney");
+        cash.setAssetChangeRule("sub@useMoney");  // 直接扣除可用
         cash.setUserCacheChangeRule("add@cashTotal");
         cash.setRemark("提现成功");
         capitalChangeList.add(cash);
@@ -62,7 +62,7 @@ public class CapitalChangeConfig {
         frozen.setUserCacheChangeRule(null);
         frozen.setRemark("冻结资金");
         capitalChangeList.add(frozen);
-        //解除资金冻结
+        // 解冻
         CapitalChangeConfig unfrozen = new CapitalChangeConfig();
         unfrozen.setType(CapitalChangeEnum.Unfrozen);
         unfrozen.setName("解除资金冻结");

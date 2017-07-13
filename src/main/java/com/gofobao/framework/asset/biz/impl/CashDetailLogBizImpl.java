@@ -434,12 +434,10 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
         if ((JixinResultContants.SUCCESS.equals(response.getRetCode())) || (JixinResultContants.CASH_RETRY.equals(response.getRetCode()))) { // 交易成功
-            log.info(String.format("提现成功: 交易流水: %s 返回状态/信息: %s/%s", seqNo, response.getRetCode(), response.getRetMsg()));
             // 更改用户提现记录
             cashDetailLog.setState(3);
             cashDetailLog.setCallbackTime(new Date());
             cashDetailLogService.save(cashDetailLog);
-
             // 更改用户资金
             CapitalChangeEntity entity = new CapitalChangeEntity();
             entity.setType(CapitalChangeEnum.Cash);
@@ -447,6 +445,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             entity.setUserId(userId);
             entity.setToUserId(userId);
             capitalChangeHelper.capitalChange(entity);
+            log.info(String.format("提现成功: 交易流水: %s 返回状态/信息: %s/%s", seqNo, response.getRetCode(), response.getRetMsg()));
             return ResponseEntity.ok("success");
         } else {  // 交易失败
             log.info(String.format("处理提现失败: 交易流水: %s 返回状态/信息: %s/%s", seqNo, response.getRetCode(), response.getRetMsg()));

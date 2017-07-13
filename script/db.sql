@@ -165,7 +165,8 @@ ALTER TABLE `gofobao0627`.`gfb_borrow_tender`
 , ADD COLUMN `state` int(10) NULL DEFAULT '0' COMMENT '1:投标中； 2:还款中 ;3:已结清'
 , ADD COLUMN `third_tender_order_id` varchar(255) NULL DEFAULT '' COMMENT '第三方订单号'
 , ADD COLUMN `third_transfer_order_id` varchar(255) NULL DEFAULT '' COMMENT '购买债券转让编号'
-, ADD COLUMN `is_third_register` int(11) NULL DEFAULT '0' COMMENT '是否在存管进行登记 0否 1.是否';
+, ADD COLUMN `is_third_register` int(11) NULL DEFAULT '0' COMMENT '是否在存管进行登记 0否 1.是否'
+, ADD COLUMN `third_transfer_flag` int(11) DEFAULT '0' COMMENT '当借款是转让标时，这个标是否与存管通信 0否 1是';
 
 ALTER TABLE `gofobao0627`.`gfb_borrow`
   ADD COLUMN `tx_fee` int(11) NULL COMMENT '借款手续费(选填）'
@@ -492,7 +493,17 @@ ALTER TABLE gfb_users ADD push_id VARCHAR(255) DEFAULT '' NULL;
 ALTER TABLE gfb_users ADD platform INT DEFAULT -1 NULL;
 ALTER TABLE gfb_users ADD ip VARCHAR(255) DEFAULT '' NULL;
 
-
+# 创建记录标
+CREATE TABLE gfb_jixin_tx_log
+(
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  seq_no VARCHAR(225) DEFAULT '',
+  body VARCHAR(10240) DEFAULT '' COMMENT '请求体或者响应体',
+  create_at DATETIME,
+  tx_type VARCHAR(225) DEFAULT '' COMMENT '交易类型',
+  tx_type_desc VARCHAR(255) DEFAULT '' COMMENT '交易类型描述',
+  type INT DEFAULT 0 COMMENT '日志类型: 0: 请求 1.响应'
+);
 
 
 ALTER TABLE `gfb_auto_tender`
