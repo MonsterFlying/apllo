@@ -35,8 +35,10 @@ import com.gofobao.framework.repayment.vo.request.*;
 import com.gofobao.framework.system.contants.ThirdBatchNoTypeContant;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
+import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
+import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -88,6 +90,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     private ThirdBatchLogService thirdBatchLogService;
     @Autowired
     private CapitalChangeHelper capitalChangeHelper;
+    @Autowired
+    private TenderThirdBiz tenderThirdBiz;
 
     @Value("${gofobao.webDomain}")
     private String webDomain;
@@ -165,17 +169,22 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 debtFee += validMoney / borrow.getMoney() * fee;
             }
 
+            String lendPayOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
+
             lendPay = new LendPay();
             lendPay.setAccountId(tenderUserThirdAccount.getAccountId());
             lendPay.setAuthCode(tender.getAuthCode());
             lendPay.setBidFee("0");
             lendPay.setDebtFee(StringHelper.formatDouble(debtFee, 100, false));
-            lendPay.setOrderId(JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX));
+            lendPay.setOrderId(lendPayOrderId);
             lendPay.setForAccountId(takeUserThirdAccount.getAccountId());
             lendPay.setTxAmount(StringHelper.formatDouble(validMoney, 100, false));
             lendPay.setProductId(borrow.getProductId());
             lendPayList.add(lendPay);
+
+            tender.setThirdLendPayOrderId(lendPayOrderId);
         }
+        tenderService.save(tenderList);
 
         //记录日志
         String batchNo = jixinHelper.getBatchNo();
@@ -326,6 +335,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             bool = false;
         }
 
+        //===============================================================
+        //处理批次放款失败批次
+        //===============================================================
         Long borrowId = NumberHelper.toLong(lendRepayRunResp.getAcqRes());//获取borrowid
         int num = NumberHelper.toInt(lendRepayRunResp.getFailCounts());
         String batchNo = lendRepayRunResp.getBatchNo();//批次号
@@ -367,8 +379,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             }
 
             //2.筛选失败批次
-            List<String> failureThirdTransferOrderIds = new ArrayList<>(); //转让标orderId
-            List<String> successThirdTransferOrderIds = new ArrayList<>(); //转让标orderId
+            List<String> failureThirdLendPayOrderIds = new ArrayList<>(); //转让标orderId
+            List<String> successThirdLendPayOrderIds = new ArrayList<>(); //转让标orderId
             List<DetailsQueryResp> detailsQueryRespList = GSON.fromJson(batchDetailsQueryResp.getSubPacks(), new TypeToken<List<DetailsQueryResp>>() {
             }.getType());
             if (CollectionUtils.isEmpty(detailsQueryRespList)) {
@@ -380,13 +392,13 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             Optional<List<DetailsQueryResp>> detailsQueryRespOptional = Optional.of(detailsQueryRespList);
             detailsQueryRespOptional.ifPresent(list -> detailsQueryRespList.forEach(obj -> {
                 if ("F".equalsIgnoreCase(obj.getTxState())) {
-                    failureThirdTransferOrderIds.add(obj.getOrderId());
+                    failureThirdLendPayOrderIds.add(obj.getOrderId());
                 } else {
-                    successThirdTransferOrderIds.add(obj.getOrderId());
+                    successThirdLendPayOrderIds.add(obj.getOrderId());
                 }
             }));
 
-            if (CollectionUtils.isEmpty(failureThirdTransferOrderIds)) {
+            if (CollectionUtils.isEmpty(failureThirdLendPayOrderIds)) {
                 log.info("================================================================================");
                 log.info("即信批次放款处理查询：查询未发现失败批次！");
                 log.info("================================================================================");
@@ -396,7 +408,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             List<Long> borrowIdList = new ArrayList<>();
             Specification<Tender> ts = Specifications
                     .<Tender>and()
-                    .in("thirdTransferOrderId", failureThirdTransferOrderIds.toArray())
+                    .in("thirdLendPayOrderId", failureThirdLendPayOrderIds.toArray())
                     .build();
             List<Tender> failureTenderList = tenderService.findList(ts);
             for (Tender tender : failureTenderList) {
@@ -406,11 +418,11 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             //成功批次对应债权
             ts = Specifications
                     .<Tender>and()
-                    .in("thirdTransferOrderId", successThirdTransferOrderIds.toArray())
+                    .in("thirdLendPayOrderId", successThirdLendPayOrderIds.toArray())
                     .build();
             List<Tender> successTenderList = tenderService.findList(ts);
             for (Tender tender : successTenderList) {
-                tender.setThirdTransferFlag(true);
+                tender.setThirdTenderFlag(true);
             }
             tenderService.save(successTenderList);
 
@@ -425,6 +437,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             int failAmount = 0;//失败金额
             int failNum = 0;//失败次数
             Set<Long> borrowIdSet = new HashSet<>();
+            ResponseEntity<VoBaseResp> resp = null;
             for (Borrow borrow : borrowList) {
                 failAmount = 0;
                 failNum = 0;
@@ -432,6 +445,13 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     for (Tender tender : successTenderList) {
                         if (StringHelper.toString(borrow.getId()).equals(StringHelper.toString(tender.getBorrowId()))) {
                             failAmount += tender.getValidMoney(); //失败金额
+
+                            VoCancelThirdTenderReq voCancelThirdTenderReq = new VoCancelThirdTenderReq();
+                            voCancelThirdTenderReq.setTenderId(tender.getId());
+                            resp = tenderThirdBiz.cancelThirdTender(voCancelThirdTenderReq);
+                            if (resp.getBody().getState().getCode() == VoBaseResp.ERROR){
+                                return ResponseEntity.ok("error");
+                            }
 
                             //对冻结资金进行回滚
                             tender.setId(tender.getId());

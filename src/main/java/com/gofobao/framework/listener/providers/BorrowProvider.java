@@ -66,20 +66,13 @@ public class BorrowProvider {
     @Autowired
     private TenderThirdBiz tenderThirdBiz;
     @Autowired
-    private TenderService tenderService;
-    @Autowired
     private UserCacheService userCacheService;
-
     @Autowired
     private BorrowService borrowService;
-
     @Autowired
     private MqHelper mqHelper;
-
     @Autowired
     private TenderRepository tenderRepository;
-    @Autowired
-    private BorrowThirdBiz borrowThirdBiz;
 
     /**
      * 初审

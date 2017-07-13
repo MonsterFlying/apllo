@@ -310,11 +310,11 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         }
 
         //=============================================
-        // 保存第三债权转让订单号
+        // 保存第三债权转让授权码
         //=============================================
         List<CreditInvestRun> creditInvestRunList = GSON.fromJson(creditInvestRunCall.getSubPacks(), new TypeToken<List<CreditInvestRun>>() {
         }.getType());
-        saveThirdTransferOrderId(creditInvestRunList);
+        saveThirdTransferAuthCode(creditInvestRunList);
 
         //========================================
         // 处理失败批次
@@ -484,7 +484,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      *
      * @param creditInvestRunList
      */
-    public void saveThirdTransferOrderId(List<CreditInvestRun> creditInvestRunList) {
+    public void saveThirdTransferAuthCode(List<CreditInvestRun> creditInvestRunList) {
         List<String> orderIds = new ArrayList<>();
 
         Optional<List<CreditInvestRun>> creditInvestRunOption = Optional.ofNullable(creditInvestRunList);
@@ -503,7 +503,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         creditInvestRunOption.ifPresent(list -> creditInvestRunList.forEach(creditInvestRun -> {
             tenderOptional.ifPresent(list2 -> tenderList.forEach(tender -> {
                 if (creditInvestRun.getOrderId().equals(tender.getThirdTransferOrderId())) {
-                    tender.setAuthCode(creditInvestRun.getAuthCode());
+                    tender.setTransferAuthCode(creditInvestRun.getAuthCode());
                 }
             }));
         }));

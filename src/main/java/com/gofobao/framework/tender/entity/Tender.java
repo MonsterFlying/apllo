@@ -67,7 +67,10 @@ public class Tender {
     @Column(name = "third_transfer_order_id")
     private String thirdTransferOrderId;
     private String thirdTenderCancelOrderId;
+    private String transferAuthCode;
+    private String thirdLendPayOrderId;
     private Boolean thirdTransferFlag;
+    private Boolean thirdTenderFlag;
     /**
      * 是否在存管进行登记 0否 1.是否
      */
