@@ -109,9 +109,9 @@ public class WebUserController {
 
     @ApiOperation("用戶扩展修改")
     @PostMapping("/user/pc/userInfoExt/update")
-    public ResponseEntity<VoBaseResp> userInfoUpdate(/*@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,*/
+    public ResponseEntity<VoBaseResp> userInfoUpdate(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                       @ModelAttribute VoUserInfoUpdateReq VoUserInfoUpdateReq){
-        VoUserInfoUpdateReq.setUserId(901L);
+        VoUserInfoUpdateReq.setUserId(userId);
         return userBiz.pcUserInfoUpdate(VoUserInfoUpdateReq);
     }
 
