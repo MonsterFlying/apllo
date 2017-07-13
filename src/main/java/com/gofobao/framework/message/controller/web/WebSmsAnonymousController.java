@@ -2,6 +2,7 @@ package com.gofobao.framework.message.controller.web;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.message.biz.MessageBiz;
+import com.gofobao.framework.message.biz.SmsNoticeSettingsBiz;
 import com.gofobao.framework.message.vo.request.VoAnonSmsReq;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -26,7 +27,8 @@ public class WebSmsAnonymousController {
 
     @Autowired
     private MessageBiz messageBiz ;
-
+    @Autowired
+    private SmsNoticeSettingsBiz smsNoticeSettingsBiz;
 
     @ApiOperation("pc：发送注册短信验证码")
     @PostMapping("pc/v2/sms/register")

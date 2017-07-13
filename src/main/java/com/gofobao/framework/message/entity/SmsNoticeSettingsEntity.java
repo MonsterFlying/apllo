@@ -21,11 +21,11 @@ public class SmsNoticeSettingsEntity implements Serializable{
     @Id
     @GeneratedValue
     @Column(name = "user_id")
-    private int userId ;
+    private Integer userId ;
     @Basic
     @Column(name = "received_repay")
-    private byte receivedRepay;
+    private boolean receivedRepay;
     @Basic
     @Column(name = "borrow_success")
-    private byte borrowSuccess;
+    private boolean borrowSuccess;
 }
