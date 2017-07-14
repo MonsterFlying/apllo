@@ -46,9 +46,6 @@ public class VoCreateTenderReq extends VoBaseReq {
     @ApiModelProperty(hidden = true)
     private String requestSource;
 
-    @ApiModelProperty(hidden = true)
-    /*有草出借初审时间*/
-    private Date lendReleaseAt;
 
     public Double getTenderMoney() {
         return MathHelper.myRound(tenderMoney, 0);
