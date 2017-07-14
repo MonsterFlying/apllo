@@ -200,7 +200,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         for (Tender tender : tenderList) {
             txFee = 0;
 
-            if (tender.getThirdTransferFlag()) {//判断标的是否已在存管转让
+            if (!ObjectUtils.isEmpty(tender.getThirdTransferFlag()) && tender.getThirdTransferFlag()) {//判断标的是否已在存管转让
                 continue;
             }
 

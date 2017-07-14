@@ -288,7 +288,7 @@ public class TenderBizImpl implements TenderBiz {
             return false;
         }
 
-        // 查询存管系统资金问题
+        // 查询存管系统资金
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(user.getId());
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);

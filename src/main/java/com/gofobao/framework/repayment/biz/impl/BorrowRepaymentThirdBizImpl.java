@@ -151,7 +151,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         for (Tender tender : tenderList) {
             debtFee = 0;
 
-            if (tender.getThirdTenderFlag()) {
+            if (!ObjectUtils.isEmpty(tender.getThirdTenderFlag()) && tender.getThirdTenderFlag()) {
                 continue;
             }
 

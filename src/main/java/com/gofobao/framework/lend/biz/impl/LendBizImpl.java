@@ -421,7 +421,7 @@ public class LendBizImpl implements LendBiz {
                     .eq("userId", voGetLendBlacklists.getUserId())
                     .build();
 
-            Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(Sort.Direction.ASC));
+            Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(Sort.Direction.ASC,"id"));
 
             List<LendBlacklist> lendBlacklists = lendBlackListService.findList(lbs, pageable);
             if (CollectionUtils.isEmpty(lendBlacklists)) {
