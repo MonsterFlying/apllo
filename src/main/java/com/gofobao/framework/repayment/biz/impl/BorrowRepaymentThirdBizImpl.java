@@ -243,7 +243,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("回调失败! msg:" + repayCheckResp.getRetMsg());
         } else {
             log.info("=============================即信批次放款检验参数回调===========================");
-            log.info("即信批次还款检验参数成功!");
+            log.info("回调成功!");
             //更新批次状态
             VoThirdBatchRepay voThirdBatchRepay = GSON.fromJson(GSON.toJson(repayCheckResp.getAcqRes()), VoThirdBatchRepay.class);
             thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), voThirdBatchRepay.getRepaymentId());
@@ -318,7 +318,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         } else {
 
             log.info("=============================即信批次放款检验参数回调===========================");
-            log.info("即信批次放款检验参数成功!");
+            log.info("回调成功!");
             //更新批次状态
             thirdBatchLogBiz.updateBatchLogState(lendRepayCheckResp.getBatchNo(), NumberHelper.toLong(lendRepayCheckResp.getAcqRes()));
         }
@@ -717,7 +717,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("=============================批次担保账户代偿参数检查回调===========================");
             log.error("回调失败! msg:" + batchBailRepayCheckResp.getRetMsg());
         } else {
-            log.error("=============================批次担保账户代偿参数成功===========================");
+            log.info("=============================批次担保账户代偿参数成功回调===========================");
+            log.info("回调成功!");
             //更新批次状态
             thirdBatchLogBiz.updateBatchLogState(batchBailRepayCheckResp.getBatchNo(), NumberHelper.toLong(batchBailRepayCheckResp.getAcqRes()));
         }
@@ -743,8 +744,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("回调失败! msg:" + batchBailRepayRunResp.getRetMsg());
             bool = false;
         } else {
-            //更新批次状态
-            //thirdBatchLogBiz.updateBatchLogState(batchBailRepayCheckResp.getBatchNo(), NumberHelper.toLong(batchBailRepayCheckResp.getAcqRes()));
+            log.error("=============================批次担保账户代偿业务处理回调===========================");
+            log.error("回调成功!");
         }
 
         int num = NumberHelper.toInt(batchBailRepayRunResp.getFailCounts());
@@ -797,7 +798,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("回调失败! msg:" + batchRepayBailCheckResp.getRetMsg());
         } else {
             log.error("=============================批次融资人还担保账户垫款参数检查成功===========================");
-
+            //更新批次状态
+            VoBatchRepayBailReq voBatchRepayBailReq = GSON.fromJson(batchRepayBailCheckResp.getAcqRes(), VoBatchRepayBailReq.class);
+            thirdBatchLogBiz.updateBatchLogState(batchRepayBailCheckResp.getBatchNo(), voBatchRepayBailReq.getRepaymentId());
         }
 
         return ResponseEntity.ok("success");
@@ -826,9 +829,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         } else {
             log.error("=============================批次融资人还担保账户垫款业务处理回调===========================");
             log.info("回调成功!");
-            //更新批次状态
-            VoBatchRepayBailReq voBatchRepayBailReq = GSON.fromJson(batchRepayBailRunResp.getAcqRes(), VoBatchRepayBailReq.class);
-            thirdBatchLogBiz.updateBatchLogState(batchRepayBailRunResp.getBatchNo(), voBatchRepayBailReq.getRepaymentId());
         }
 
         int num = NumberHelper.toInt(batchRepayBailRunResp.getFailCounts());

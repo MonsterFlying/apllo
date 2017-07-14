@@ -281,7 +281,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             log.error("回调失败! msg:" + lendRepayRunResp.getRetMsg());
         }else {
             log.error("=============================即信投资人批次购买债权参数验证回调===========================");
-            log.error("即信投资人批次购买债权参数成功");
+            log.error("回调成功!");
             //更新批次状态
             thirdBatchLogBiz.updateBatchLogState(lendRepayRunResp.getBatchNo(),NumberHelper.toLong(lendRepayRunResp.getAcqRes()));
         }
