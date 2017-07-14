@@ -189,10 +189,8 @@ public class AplloApplicationTests {
     }
 
     private void doFirstVerify() {
-        Map<String, String> map = new HashMap<>();
-        map.put("borrowId", "169850");
         try {
-            borrowProvider.doFirstVerify(map);
+            borrowBiz.doFirstVerify(169850L);
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -235,8 +233,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("093859");
-        batchDetailsQueryReq.setBatchTxDate("20170711");
+        batchDetailsQueryReq.setBatchNo("103733");
+        batchDetailsQueryReq.setBatchTxDate("20170714");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -284,7 +282,7 @@ public class AplloApplicationTests {
         //垫付回调
         //advanceCall();
         //初审
-        doFirstVerify();
+        //doFirstVerify();
         //还款处理
         //repayDeal();
         //查询标的集合
@@ -292,7 +290,7 @@ public class AplloApplicationTests {
         //复审
         //doAgainVerify();
         //批次详情查询
-        //batchDetailsQuery();
+        batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调
