@@ -36,7 +36,6 @@ public class RabbitMQConfig {
         return new Queue(MqQueueEnum.RABBITMQ_ACTIVITY.getValue(), true);
     }
 
-
     @Bean
     public Queue noticeRabbitmq() {
         return new Queue(MqQueueEnum.RABBITMQ_NOTICE.getValue(), true);
@@ -105,7 +104,10 @@ public class RabbitMQConfig {
     Binding redPackageRabbitmqBinding(Queue redPackageRabbitmq, Exchange delayExchange) {
         return BindingBuilder.bind(redPackageRabbitmq).to(delayExchange).with(MqQueueEnum.RABBITMQ_RED_PACKAGE.getValue()).noargs();
     }
-
+    @Bean
+    Binding creditRabbitmqBinding(Queue creditRabbitmq, Exchange delayExchange) {
+        return BindingBuilder.bind(creditRabbitmq).to(delayExchange).with(MqQueueEnum.RABBITMQ_CREDIT.getValue()).noargs();
+    }
 
 
 }

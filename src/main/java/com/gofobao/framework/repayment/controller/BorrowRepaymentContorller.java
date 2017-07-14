@@ -49,10 +49,7 @@ public class BorrowRepaymentContorller {
         return repaymentBiz.repaymentList(orderReq);
     }
 
-    @RequestMapping(value = "/repayment/v2/detail/{repaymentId}" +
-            "" +
-            "" +
-            "", method = RequestMethod.GET)
+    @RequestMapping(value = "/repayment/v2/detail/{repaymentId}", method = RequestMethod.GET)
     @ApiOperation("还款计划-还款详情")
     public ResponseEntity<VoViewRepaymentOrderDetailWarpRes> info(@PathVariable("repaymentId") String repaymentId,
                                                                   @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {

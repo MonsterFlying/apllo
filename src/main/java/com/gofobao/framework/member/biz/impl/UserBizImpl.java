@@ -301,7 +301,7 @@ public class UserBizImpl implements UserBiz {
         final String token = jwtTokenHelper.generateToken(user, voLoginReq.getSource());
         response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
         user.setPlatform(voLoginReq.getSource());
-        user.setPushId(UUID.randomUUID().toString());  // 设置唯一标识
+        user.setPushId(UUID.randomUUID().toString().replace("-", ""));  // 设置唯一标识
         user.setIp(IpHelper.getIpAddress(httpServletRequest)); // 设置ip
         userService.save(user);   // 记录登录信息
 

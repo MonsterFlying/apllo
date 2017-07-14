@@ -4,8 +4,10 @@ import com.gofobao.framework.core.vo.VoBaseReq;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 /**
  * Created by Administrator on 2017/6/13 0013.
@@ -15,7 +17,8 @@ import javax.validation.constraints.Min;
 public class VoCashReq extends VoBaseReq{
     @ApiModelProperty("提现金额(元)")
     @Min(value = 1)
-    private double cashMoney ;
+    @NotNull( message = "提现金额不能为空")
+    private Double cashMoney ;
 
     @ApiModelProperty("联行号,当提现金额大于20万,必须使用人行通道提现")
     private String bankAps ;

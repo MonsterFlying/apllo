@@ -126,7 +126,7 @@ public class AplloApplicationTests {
     public static void main(String[] args) {
         Gson gson = new Gson();
         Map<String, String> map = new HashMap<>();
-        map.put("repaymentId", "169812");
+        map.put("repaymentId", "173810");
         System.out.println(gson.toJson(map));
         System.out.println(SecurityHelper.getSign(gson.toJson(map)));
     }
@@ -190,10 +190,8 @@ public class AplloApplicationTests {
     }
 
     private void doFirstVerify() {
-        Map<String, String> map = new HashMap<>();
-        map.put("borrowId", "169811");
         try {
-            borrowProvider.doFirstVerify(map);
+            borrowBiz.doFirstVerify(169850L);
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -236,8 +234,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("093859");
-        batchDetailsQueryReq.setBatchTxDate("20170711");
+        batchDetailsQueryReq.setBatchNo("103733");
+        batchDetailsQueryReq.setBatchTxDate("20170714");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");

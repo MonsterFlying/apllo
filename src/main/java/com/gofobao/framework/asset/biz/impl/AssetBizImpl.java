@@ -248,13 +248,14 @@ public class AssetBizImpl implements AssetBiz {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest request, VoRechargeReq voRechargeReq) throws Exception {
-        Users users = userService.findById(voRechargeReq.getUserId());
+        Users users = userService.findByIdLock(voRechargeReq.getUserId());
         Preconditions.checkNotNull(users, "当前用户不存在");
         if (users.getIsLock()) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！"));
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voRechargeReq.getUserId());
@@ -339,7 +340,6 @@ public class AssetBizImpl implements AssetBiz {
         directRechargeOnlineRequest.setAcqRes(users.getId().toString());
         directRechargeOnlineRequest.setChannel(ChannelContant.getchannel(request));
         directRechargeOnlineRequest.setTxAmount(voRechargeReq.getMoney().toString());
-        VoHtmlResp resp = VoBaseResp.ok("成功", VoHtmlResp.class);
         DirectRechargeOnlineResponse directRechargeOnlineResponse = jixinManager.send(JixinTxCodeEnum.DIRECT_RECHARGE_ONLINE, directRechargeOnlineRequest, DirectRechargeOnlineResponse.class);
         if (ObjectUtils.isEmpty(directRechargeOnlineResponse)) {
             return ResponseEntity
@@ -347,11 +347,12 @@ public class AssetBizImpl implements AssetBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前网络不稳定, 请稍后重试!"));
         }
         Gson gson = new Gson();
-        Integer state = 0;
+        int state;
         if (!directRechargeOnlineResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
             log.error(String.format("请求即信联机充值异常: %s", gson.toJson(directRechargeOnlineResponse)));
             state = 2;
         } else {
+            log.info(String.format("充值成功: %s", gson.toJson(directRechargeOnlineResponse)));
             state = 1;
             CapitalChangeEntity capitalChangeEntity = new CapitalChangeEntity();
             capitalChangeEntity.setToUserId(userThirdAccount.getUserId());
@@ -390,7 +391,7 @@ public class AssetBizImpl implements AssetBiz {
             ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
             mqConfig.setMsg(body);
             mqHelper.convertAndSend(mqConfig);
-
+            log.info("触发充值记录调度");
             return ResponseEntity.ok(VoBaseResp.ok("充值成功"));
         } else {
             return ResponseEntity
@@ -530,7 +531,7 @@ public class AssetBizImpl implements AssetBiz {
         if (users.getIsLock()) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoHtmlResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoHtmlResp.class));
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voRechargeReq.getUserId());
@@ -735,6 +736,7 @@ public class AssetBizImpl implements AssetBiz {
             ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
             mqConfig.setMsg(body);
             mqHelper.convertAndSend(mqConfig);
+            log.info("触发短信充值");
             return ResponseEntity.ok("success");
         } else {  // 充值失败
             if (rechargeDetailLog.getState() == 2) {
@@ -757,7 +759,7 @@ public class AssetBizImpl implements AssetBiz {
         if (users.getIsLock()) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoRechargeBankInfoResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoRechargeBankInfoResp.class));
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
@@ -835,7 +837,7 @@ public class AssetBizImpl implements AssetBiz {
         if (users.getIsLock()) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoPreRechargeResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoPreRechargeResp.class));
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
@@ -907,7 +909,7 @@ public class AssetBizImpl implements AssetBiz {
         if (ObjectUtils.isEmpty(userCache)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoAccruedMoneyResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoAccruedMoneyResp.class));
         }
 
         Long incomeBonus = userCache.getIncomeBonus();
@@ -935,7 +937,7 @@ public class AssetBizImpl implements AssetBiz {
         if (ObjectUtils.isEmpty(asset)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoAvailableAssetInfoResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoAvailableAssetInfoResp.class));
         }
 
         VoAvailableAssetInfoResp resp = VoBaseResp.ok("查询成功", VoAvailableAssetInfoResp.class);
@@ -958,7 +960,7 @@ public class AssetBizImpl implements AssetBiz {
         if (ObjectUtils.isEmpty(userCache)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoCollectionResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoCollectionResp.class));
         }
 
         VoCollectionResp response = VoBaseResp.ok("查询成功", VoCollectionResp.class);
@@ -1147,6 +1149,7 @@ public class AssetBizImpl implements AssetBiz {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoUserAssetInfoResp> adminSynOffLineRecharge(VoSynAssetsRep voSynAssetsRep) throws Exception {
         String paramStr = voSynAssetsRep.getParamStr();
         if (!SecurityHelper.checkSign(voSynAssetsRep.getSign(), paramStr)) {
@@ -1155,8 +1158,9 @@ public class AssetBizImpl implements AssetBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "pc 签名验证不通过", VoUserAssetInfoResp.class));
         }
 
+        log.info(String.format("资金同步: %s", paramStr)) ;
         Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
-        Long userId = Long.parseLong(paramMap.get("userid")) ;
+        Long userId = Long.parseLong(paramMap.get("userId")) ;
         return synOffLineRecharge(userId);
     }
 

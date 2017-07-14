@@ -7,7 +7,9 @@ import com.gofobao.framework.system.service.JixinTxLogService;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import java.util.Date;
 import java.util.Map;
@@ -20,6 +22,10 @@ import java.util.Map;
 @Slf4j
 public class JixinTxLogBizImpl implements JixinTxLogBiz {
 
+    @Value("${gofobao.close-jixin-log}")
+    private boolean closeState;
+
+
     Gson gson = new Gson();
 
     @Autowired
@@ -28,6 +34,9 @@ public class JixinTxLogBizImpl implements JixinTxLogBiz {
 
     @Override
     public void saveRequest(JixinTxCodeEnum jixinTxCodeEnum, Map<String, String> request) {
+        if(closeState){
+           return;
+        }
         try {
             JixinTxLog jixinTxLog = new JixinTxLog();
             jixinTxLog.setTxType(jixinTxCodeEnum.getValue());
@@ -45,15 +54,21 @@ public class JixinTxLogBizImpl implements JixinTxLogBiz {
 
     @Override
     public void saveResponse(Map<String, String> response) {
+        if(closeState){
+            return;
+        }
         try {
             String txCode = response.get("txCode");
-            String txDes = null ;
             JixinTxCodeEnum jixinTxCodeEnum = null ;
             JixinTxCodeEnum[] values = JixinTxCodeEnum.values();
             for(JixinTxCodeEnum bean : values){
                 if(bean.getValue().equals(txCode)){
                     jixinTxCodeEnum = bean;
                 }
+            }
+            if(ObjectUtils.isEmpty(jixinTxCodeEnum)){
+                log.error(String.format("txCode: %s 不存在", txCode));
+                return  ;
             }
 
             JixinTxLog jixinTxLog = new JixinTxLog();
