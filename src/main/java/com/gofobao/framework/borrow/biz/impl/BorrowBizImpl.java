@@ -33,6 +33,8 @@ import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.*;
+import com.gofobao.framework.lend.entity.Lend;
+import com.gofobao.framework.lend.service.LendService;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -50,17 +52,20 @@ import com.gofobao.framework.system.biz.StatisticBiz;
 import com.gofobao.framework.system.entity.*;
 import com.gofobao.framework.system.service.DictItemServcie;
 import com.gofobao.framework.system.service.DictValueService;
+import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
+import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -133,6 +138,10 @@ public class BorrowBizImpl implements BorrowBiz {
     private TenderThirdBiz tenderThirdBiz;
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    @Autowired
+    private LendService lendService;
+    @Autowired
+    private TenderBiz tenderBiz;
 
     @Autowired
     JixinManager jixinManager;
@@ -1403,7 +1412,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     overPrincipal += borrowRepaymentList.get(j).getPrincipal();
                 }
                 lateInterest = new Double(overPrincipal * 0.004 * lateDays).intValue();
-            }else {
+            } else {
                 lateInterest = 0;
             }
             repaymentTotal += borrowRepayment.getPrincipal() + borrowRepayment.getInterest() * interestPercent + lateInterest;
@@ -1617,9 +1626,13 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         //受托支付
-        VoThirdTrusteePayReq voThirdTrusteePayReq = new VoThirdTrusteePayReq();
-        voThirdTrusteePayReq.setBorrowId(borrowId);
-        return borrowThirdBiz.thirdTrusteePay(voThirdTrusteePayReq, request);
+        if (!ObjectUtils.isEmpty(borrow.getTakeUserId())) {
+            VoThirdTrusteePayReq voThirdTrusteePayReq = new VoThirdTrusteePayReq();
+            voThirdTrusteePayReq.setBorrowId(borrowId);
+            return borrowThirdBiz.thirdTrusteePay(voThirdTrusteePayReq, request);
+        } else {
+            return ResponseEntity.ok(VoBaseResp.ok("初审成功", VoHtmlResp.class));
+        }
     }
 
     @Override
@@ -1923,6 +1936,128 @@ public class BorrowBizImpl implements BorrowBiz {
                 log.error("borrowProvider updateStatisticByBorrowReview 异常:", e);
             }
         }
+    }
 
+    /**
+     * 初审
+     *
+     * @param borrowId
+     * @return
+     * @throws Exception
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public boolean doFirstVerify(Long borrowId) throws Exception {
+
+        log.info(String.format("触发标的初审: %s", borrowId));
+        Borrow borrow = borrowService.findByIdLock(borrowId);
+        if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 0)) {
+            return false;
+        }
+
+        if (!ObjectUtils.isEmpty(borrow.getLendId())) {
+            return verifyLendBorrow(borrow);      //有草出借初审
+        } else {
+            return verifyStandardBorrow(borrow);  //标准标的初审
+        }
+
+    }
+
+
+    /**
+     * 车贷标、净值标、渠道标、转让标初审
+     *
+     * @return
+     */
+
+    private boolean verifyStandardBorrow(Borrow borrow) {
+        Date nowDate = DateHelper.subSeconds(new Date(), 10);
+        borrow.setStatus(1);
+        borrow.setVerifyAt(nowDate);
+        Date releaseAt = borrow.getReleaseAt();
+        borrow.setReleaseAt(ObjectUtils.isEmpty(releaseAt) ? nowDate : releaseAt);   // 处理不填写发布时间的请款
+        borrowService.updateById(borrow);    //更新借款状态
+
+        // 自动投标前提:
+        // 1.没有设置标密码
+        // 2.车贷标, 渠道标, 流转表
+        // 3.标的年化率为 800 以上
+        Integer borrowType = borrow.getType();
+        ImmutableList<Integer> autoTenderBorrowType = ImmutableList.of(0, 1, 4);
+        if ((ObjectUtils.isEmpty(borrow.getPassword()))
+                && (autoTenderBorrowType.contains(borrowType)) && borrow.getApr() > 800) {
+            borrow.setIsLock(true);
+            borrowService.updateById(borrow);  // 锁住标的,禁止手动投标
+            if (borrow.getIsNovice()) {   // 对于新手标直接延迟8点后推送
+                Date noviceBorrowStandeReaseAt = DateHelper.addHours(DateHelper.beginOfDate(new Date()), 20);  // 新手标 能进行制动的时间
+                releaseAt = DateHelper.max(noviceBorrowStandeReaseAt, releaseAt);
+            }
+
+            //触发自动投标队列
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_AUTO_TENDER);
+            mqConfig.setTag(MqTagEnum.AUTO_TENDER);
+            mqConfig.setSendTime(releaseAt);
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("borrowProvider autoTender send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+                return true;
+            } catch (Throwable e) {
+                log.error("borrowProvider autoTender send mq exception", e);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 摘草 生成借款 初审
+     *
+     * @param borrow
+     * @return
+     * @throws Exception
+     */
+    private boolean verifyLendBorrow(Borrow borrow) throws Exception {
+        Date nowDate = DateHelper.subSeconds(new Date(), 10);
+        borrow.setStatus(1);  //更新借款状态
+        borrow.setVerifyAt(nowDate);
+        Date releaseAt = borrow.getReleaseAt();
+        borrow.setReleaseAt(ObjectUtils.isEmpty(releaseAt) ? nowDate : releaseAt);
+        borrowService.save(borrow);   // 更改标的为可投标状态
+        Long lendId = borrow.getLendId();
+
+        Lend lend = lendService.findById(lendId);
+        VoCreateTenderReq voCreateTenderReq = new VoCreateTenderReq();
+        voCreateTenderReq.setUserId(lend.getUserId());
+        voCreateTenderReq.setBorrowId(borrow.getId());
+        voCreateTenderReq.setTenderMoney(MathHelper.myRound(borrow.getMoney() / 100.0, 2));
+        ResponseEntity<VoBaseResp> response = tenderBiz.createTender(voCreateTenderReq);
+        return response.getStatusCode().equals(HttpStatus.OK);
+    }
+
+    /**
+     * pc初审
+     * @param voPcDoFirstVerity
+     * @return
+     */
+    public ResponseEntity<VoBaseResp> pcFirstVerify(VoPcDoFirstVerity voPcDoFirstVerity) throws Exception{
+        String paramStr = voPcDoFirstVerity.getParamStr();
+        if (!SecurityHelper.checkSign(voPcDoFirstVerity.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc去初审 签名验证不通过!"));
+        }
+
+        Map<String, String> paramMap = new Gson().fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        Long borrowId = NumberHelper.toLong(paramMap.get("borrowId"));
+        if (doFirstVerify(borrowId)){
+            return ResponseEntity.ok(VoBaseResp.ok("初审成功!"));
+        }else {
+            return ResponseEntity.
+                    badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"初审失败!"));
+        }
     }
 }

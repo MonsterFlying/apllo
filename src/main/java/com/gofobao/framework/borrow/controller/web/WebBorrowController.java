@@ -123,7 +123,7 @@ public class WebBorrowController {
     }
 
     /**
-     *  pc 取消借款
+     * pc 取消借款
      *
      * @param voPcCancelThirdBorrow
      * @return
@@ -149,7 +149,6 @@ public class WebBorrowController {
     }
 
 
-
     @PostMapping("/pub/pc/borrow/repayAll")
     @ApiOperation("提前还款")
     public ResponseEntity<VoBaseResp> pcRepayAll(@Valid @ModelAttribute VoRepayAllReq voRepayAllReq) {
@@ -168,24 +167,23 @@ public class WebBorrowController {
      * @return
      */
     @PostMapping("/pub/pc/borrow/official/register")
-    @ApiOperation("登记官方借款（车贷标、渠道标）")
+    @ApiOperation("登记官方借款（车贷标、渠道标、转让标）")
     public ResponseEntity<VoHtmlResp> registerOfficialBorrow(HttpServletRequest request, @ModelAttribute @Valid VoRegisterOfficialBorrow voRegisterOfficialBorrow) {
         return borrowBiz.registerOfficialBorrow(voRegisterOfficialBorrow, request);
     }
 
 
     /**
-     * 取消借款
+     * 初审
      *
-     * @param voCancelBorrow
+     * @param voPcDoFirstVerity
      * @return
+     * @throws Exception
      */
-    @PostMapping("/pc/borrow/cancelBorrow")
-    @ApiOperation("取消借款")
-    public ResponseEntity<VoBaseResp> cancelBorrow(@Valid @ModelAttribute VoCancelBorrow voCancelBorrow, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
-        voCancelBorrow.setUserId(userId);
-        return borrowBiz.cancelBorrow(voCancelBorrow);
+    @PostMapping("/borrow/pc/verify/first")
+    @ApiOperation("pc初审")
+    public ResponseEntity<VoBaseResp> pcFirstVerify(@ModelAttribute VoPcDoFirstVerity voPcDoFirstVerity) throws Exception {
+        return borrowBiz.pcFirstVerify(voPcDoFirstVerity);
     }
-
 
 }
