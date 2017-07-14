@@ -855,8 +855,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         Borrow borrow = borrowService.findById(borrowRepayment.getBorrowId());
         UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
 
-        int repayInterest = (int) (borrowRepayment.getInterest() * interestPercent);//还款利息
-        int repayMoney = borrowRepayment.getPrincipal() + repayInterest;//还款金额
         Long borrowId = borrow.getId();//借款ID
 
         //逾期天数
@@ -866,7 +864,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         lateDays = lateDays < 0 ? 0 : lateDays;
         if (0 < lateDays) {
             int overPrincipal = borrowRepayment.getPrincipal();
-            if (borrowRepayment.getOrder() < (borrow.getTotalOrder() - 1)) {
+            if (borrowRepayment.getOrder() < (borrow.getTotalOrder() - 1)) { //
                 Specification<BorrowRepayment> brs = Specifications
                         .<BorrowRepayment>and()
                         .eq("borrowId", borrowId)
