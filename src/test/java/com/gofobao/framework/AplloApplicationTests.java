@@ -226,7 +226,7 @@ public class AplloApplicationTests {
 
     private void doAgainVerify() {
         Map<String, String> msg = new HashMap<>();
-        msg.put("borrowId", "169854");
+        msg.put("borrowId", "169857");
         try {
             borrowProvider.doAgainVerify(msg);
         } catch (Throwable e) {
@@ -236,7 +236,7 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("091750");
+        batchDetailsQueryReq.setBatchNo("150530");
         batchDetailsQueryReq.setBatchTxDate("20170714");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
@@ -306,7 +306,7 @@ public class AplloApplicationTests {
         //查询标的集合
         //findThirdBorrowList();
         //复审
-        //doAgainVerify();
+        doAgainVerify();
         //批次详情查询
         //batchDetailsQuery();
         //查询投标申请

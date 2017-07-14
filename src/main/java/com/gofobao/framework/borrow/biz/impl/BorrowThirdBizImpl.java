@@ -43,6 +43,7 @@ import com.gofobao.framework.repayment.vo.request.VoThirdBatchRepay;
 import com.gofobao.framework.scheduler.biz.TaskSchedulerBiz;
 import com.gofobao.framework.scheduler.constants.TaskSchedulerConstants;
 import com.gofobao.framework.scheduler.entity.TaskScheduler;
+import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchNoTypeContant;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
@@ -99,7 +100,8 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     private BorrowBiz borrowBiz;
     @Autowired
     private MqHelper mqHelper;
-
+    @Autowired
+    private ThirdBatchLogBiz thirdBatchLogBiz;
     @Autowired
     private ThirdAccountPasswordHelper thirdAccountPasswordHelper;
 
@@ -431,6 +433,8 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         } else {
             log.info("=============================(提前结清)即信批次放款检验参数回调===========================");
             log.info("即信批次还款检验参数成功!");
+            //更新批次状态
+            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(),NumberHelper.toLong(repayCheckResp.getAcqRes()));
         }
 
         return ResponseEntity.ok("success");

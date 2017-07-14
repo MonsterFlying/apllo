@@ -43,4 +43,8 @@ public class ThirdBatchLogServiceImpl implements ThirdBatchLogService {
     public List<ThirdBatchLog> save(List<ThirdBatchLog> thirdBatchLogList) {
         return thirdBatchLogRepository.save(thirdBatchLogList);
     }
+
+    public ThirdBatchLog findByBatchNoAndSourceId(String batchNo, Long sourceId) {
+        return thirdBatchLogRepository.findByBatchNoAndSourceId(batchNo, sourceId);
+    }
 }

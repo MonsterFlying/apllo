@@ -22,4 +22,6 @@ public interface ThirdBatchLogService {
     ThirdBatchLog save(ThirdBatchLog thirdBatchLog);
 
     List<ThirdBatchLog> save(List<ThirdBatchLog> thirdBatchLogList);
+
+    ThirdBatchLog findByBatchNoAndSourceId(String batchNo, Long sourceId);
 }
