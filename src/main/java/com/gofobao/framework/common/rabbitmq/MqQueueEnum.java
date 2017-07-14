@@ -12,7 +12,7 @@ public enum MqQueueEnum {
     RABBITMQ_USER_ACTIVE(MqQueueEnumContants.RABBITMQ_USER_ACTIVE) ,
     RABBITMQ_ACTIVITY(MqQueueEnumContants.RABBITMQ_ACTIVITY) ,
     RABBITMQ_RED_PACKAGE(MqQueueEnumContants.RABBITMQ_RED_PACKAGE)  ,
-    RABBITMQ_CREDIT(MqQueueEnumContants.RABBITMQ_CREDIT)  ;
+    RABBITMQ_CREDIT(MqQueueEnumContants.RABBITMQ_CREDIT);
     private String value ;
 
     MqQueueEnum(String value) {

@@ -125,7 +125,7 @@ public class AplloApplicationTests {
     public static void main(String[] args) {
         Gson gson = new Gson();
         Map<String, String> map = new HashMap<>();
-        map.put("repaymentId", "169812");
+        map.put("repaymentId", "173810");
         System.out.println(gson.toJson(map));
         System.out.println(SecurityHelper.getSign(gson.toJson(map)));
     }
@@ -190,7 +190,7 @@ public class AplloApplicationTests {
 
     private void doFirstVerify() {
         Map<String, String> map = new HashMap<>();
-        map.put("borrowId", "169811");
+        map.put("borrowId", "169850");
         try {
             borrowProvider.doFirstVerify(map);
         } catch (Throwable e) {
@@ -284,7 +284,7 @@ public class AplloApplicationTests {
         //垫付回调
         //advanceCall();
         //初审
-        //doFirstVerify();
+        doFirstVerify();
         //还款处理
         //repayDeal();
         //查询标的集合
@@ -292,7 +292,7 @@ public class AplloApplicationTests {
         //复审
         //doAgainVerify();
         //批次详情查询
-        batchDetailsQuery();
+        //batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调

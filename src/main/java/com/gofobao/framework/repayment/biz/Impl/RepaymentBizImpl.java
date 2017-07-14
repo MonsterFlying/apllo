@@ -1232,6 +1232,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param repaymentId
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     private ResponseEntity<VoBaseResp> advanceCheck(Long repaymentId) throws Exception {
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);
         Preconditions.checkNotNull(borrowRepayment, "还款记录不存在！");

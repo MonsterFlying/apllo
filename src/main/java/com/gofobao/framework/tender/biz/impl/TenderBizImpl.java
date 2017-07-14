@@ -53,6 +53,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
@@ -339,16 +340,20 @@ public class TenderBizImpl implements TenderBiz {
             releaseAt = borrow.getReleaseAt();
         }
 
+        if (!ObjectUtils.isEmpty(borrow.getLendId())) {
+            releaseAt = voCreateTenderReq.getLendReleaseAt();
+        }
+
         if (ObjectUtils.isEmpty(borrow.getLendId()) && (releaseAt.getTime() > nowDate.getTime())) {
             errerMessage.add("当前标的未到发布时间!");
             return false;
         }
 
-        Date endDate = DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);
+        Date endDate = DateHelper.addDays(DateHelper.beginOfDate(releaseAt), borrow.getValidDay() + 1);
         if (endDate.getTime() < nowDate.getTime()) {
             // 流标
             log.info("==========================================");
-            log.info( String.format("标的流标操作: %s", GSON.toJson(borrow)));
+            log.info(String.format("标的流标操作: %s", GSON.toJson(borrow)));
             log.info("==========================================");
             VoCancelBorrow voCancelBorrow = new VoCancelBorrow();
             voCancelBorrow.setBorrowId(borrow.getId());

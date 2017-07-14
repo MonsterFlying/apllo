@@ -66,20 +66,13 @@ public class BorrowProvider {
     @Autowired
     private TenderThirdBiz tenderThirdBiz;
     @Autowired
-    private TenderService tenderService;
-    @Autowired
     private UserCacheService userCacheService;
-
     @Autowired
     private BorrowService borrowService;
-
     @Autowired
     private MqHelper mqHelper;
-
     @Autowired
     private TenderRepository tenderRepository;
-    @Autowired
-    private BorrowThirdBiz borrowThirdBiz;
 
     /**
      * 初审
@@ -173,6 +166,7 @@ public class BorrowProvider {
         voCreateTenderReq.setUserId(lend.getUserId());
         voCreateTenderReq.setBorrowId(borrow.getId());
         voCreateTenderReq.setTenderMoney(MathHelper.myRound(borrow.getMoney() / 100.0, 2));
+        voCreateTenderReq.setLendReleaseAt(releaseAt);
         ResponseEntity<VoBaseResp> response = tenderBiz.createTender(voCreateTenderReq);
         return response.getStatusCode().equals(HttpStatus.OK);
     }
@@ -239,7 +233,7 @@ public class BorrowProvider {
                     Map<String, String> paramsMap = newHashMap();
                     MqConfig mqConfig = new MqConfig();
                     // 非新手标  是新手标但是老用投
-                    boolean access = (!borrow.getIsNovice()) || (borrow.getIsNovice() && (userCache.getTenderTuijian() || userCache.getTenderQudao()));
+                    /*boolean access = (!borrow.getIsNovice()) || (borrow.getIsNovice() && (userCache.getTenderTuijian() || userCache.getTenderQudao()));
                     if (access) {
                         paramsMap.put("type", RedPacketContants.OLD_USER_TENDER_BORROW_REDPACKAGE);
                         paramsMap.put("tenderId", p.getId().toString());
@@ -263,7 +257,7 @@ public class BorrowProvider {
                     mqConfig.setTag(MqTagEnum.INVITE_USER_TENDER);
                     mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
                     mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 160));
-                    mqHelper.convertAndSend(mqConfig);
+                    mqHelper.convertAndSend(mqConfig);*/
                 });
             } else {
                 log.info("====================================================================");
