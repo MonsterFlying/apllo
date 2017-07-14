@@ -80,4 +80,5 @@ logging:
 #    guru.springframework.controllers: DEBUG
 #    org.hibernate: DEBUG
 #    com.gofobao: DEBUG
-    root: INFO
+    root: DEBUG
+debug: true
