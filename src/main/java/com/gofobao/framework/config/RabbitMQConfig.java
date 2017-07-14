@@ -36,7 +36,6 @@ public class RabbitMQConfig {
         return new Queue(MqQueueEnum.RABBITMQ_ACTIVITY.getValue(), true);
     }
 
-
     @Bean
     public Queue noticeRabbitmq() {
         return new Queue(MqQueueEnum.RABBITMQ_NOTICE.getValue(), true);

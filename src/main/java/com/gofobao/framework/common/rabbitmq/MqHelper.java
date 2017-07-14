@@ -40,7 +40,7 @@ public class MqHelper {
             long sendTime = config.getSendTime().getTime();
             long nowTime = System.currentTimeMillis();
             delayTime = sendTime - nowTime ;
-            delayTime = delayTime <= 0 ? 10 : delayTime ;
+            delayTime = delayTime <= 0 ? 0 : delayTime ;
         }
 
         long finalDelayTime = delayTime;

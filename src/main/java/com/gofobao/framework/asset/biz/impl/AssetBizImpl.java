@@ -249,7 +249,7 @@ public class AssetBizImpl implements AssetBiz {
         if (users.getIsLock()) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！"));
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voRechargeReq.getUserId());
@@ -525,7 +525,7 @@ public class AssetBizImpl implements AssetBiz {
         if (users.getIsLock()) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoHtmlResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoHtmlResp.class));
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voRechargeReq.getUserId());
@@ -753,7 +753,7 @@ public class AssetBizImpl implements AssetBiz {
         if (users.getIsLock()) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoRechargeBankInfoResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoRechargeBankInfoResp.class));
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
@@ -807,7 +807,7 @@ public class AssetBizImpl implements AssetBiz {
         if (users.getIsLock()) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoPreRechargeResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoPreRechargeResp.class));
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
@@ -879,7 +879,7 @@ public class AssetBizImpl implements AssetBiz {
         if (ObjectUtils.isEmpty(userCache)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoAccruedMoneyResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoAccruedMoneyResp.class));
         }
 
         Long incomeBonus = userCache.getIncomeBonus();
@@ -907,7 +907,7 @@ public class AssetBizImpl implements AssetBiz {
         if (ObjectUtils.isEmpty(asset)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoAvailableAssetInfoResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoAvailableAssetInfoResp.class));
         }
 
         VoAvailableAssetInfoResp resp = VoBaseResp.ok("查询成功", VoAvailableAssetInfoResp.class);
@@ -930,7 +930,7 @@ public class AssetBizImpl implements AssetBiz {
         if (ObjectUtils.isEmpty(userCache)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoCollectionResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoCollectionResp.class));
         }
 
         VoCollectionResp response = VoBaseResp.ok("查询成功", VoCollectionResp.class);
