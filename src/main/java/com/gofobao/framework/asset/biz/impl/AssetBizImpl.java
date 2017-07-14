@@ -243,8 +243,9 @@ public class AssetBizImpl implements AssetBiz {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest request, VoRechargeReq voRechargeReq) throws Exception {
-        Users users = userService.findById(voRechargeReq.getUserId());
+        Users users = userService.findByIdLock(voRechargeReq.getUserId());
         Preconditions.checkNotNull(users, "当前用户不存在");
         if (users.getIsLock()) {
             return ResponseEntity
