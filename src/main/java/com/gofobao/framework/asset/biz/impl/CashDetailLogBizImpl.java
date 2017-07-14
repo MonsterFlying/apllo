@@ -158,7 +158,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         if (users.getIsLock()) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoPreCashResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoPreCashResp.class));
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
@@ -233,7 +233,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         if (users.getIsLock()) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoHtmlResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoHtmlResp.class));
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
@@ -354,7 +354,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         if (users.getIsLock()) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客户！", VoBankApsWrapResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoBankApsWrapResp.class));
         }
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         if (ObjectUtils.isEmpty(userThirdAccount)) {
