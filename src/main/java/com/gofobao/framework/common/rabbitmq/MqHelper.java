@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -43,9 +44,9 @@ public class MqHelper {
         Long delayTime = 0L ;
         if(!ObjectUtils.isEmpty(config.getSendTime()) ){
             long sendTime = config.getSendTime().getTime();
-            long nowTime = System.currentTimeMillis();
+            long nowTime = new Date().getTime();
             delayTime = sendTime - nowTime ;
-            log.error("===========================%s - %s - %s", sendTime, nowTime, delayTime);
+            log.error(String.format("===========================%s - %s - %s", sendTime, nowTime, delayTime));
             delayTime = delayTime <= 0 ? 0 : delayTime ;
         }
 
