@@ -1,6 +1,7 @@
 package com.gofobao.framework.system.biz.impl;
 
 import cn.jpush.api.JPushClient;
+import cn.jpush.api.push.PushResult;
 import cn.jpush.api.push.model.Message;
 import cn.jpush.api.push.model.Options;
 import cn.jpush.api.push.model.Platform;
@@ -25,6 +26,7 @@ import com.gofobao.framework.system.vo.response.VoViewUserNoticesWarpRes;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -83,9 +85,6 @@ public class NoticesBizImpl implements NoticesBiz {
         userService.save(users);
 
         try {
-            // ========================================
-            // 发送推送
-            // ========================================
             ImmutableList<Integer> platforms = ImmutableList.of(1, 2);
             if ((users.getPushState() == 1)
                     && (!StringUtils.isEmpty(users.getPushId()))
@@ -105,7 +104,7 @@ public class NoticesBizImpl implements NoticesBiz {
                             .build();
                 }
 
-                PushPayload.newBuilder()
+                PushPayload payload  = PushPayload.newBuilder()
                         .setPlatform(users.getPlatform().equals(1) ? Platform.android() : Platform.ios())
                         .setAudience(Audience.alias(users.getPushId()))
                         .setNotification(Notification.newBuilder()
@@ -113,6 +112,9 @@ public class NoticesBizImpl implements NoticesBiz {
                                 .build())
                         .setMessage(Message.content(notices.getContent()))
                         .build();
+
+                PushResult pushResult = jPushClient.sendPush(payload);
+                log.info(String.format("极光发送结果: %s", new Gson().toJson(pushResult)));
             }
         }catch (Exception e){
             log.error("极光推送发送失败", e);
