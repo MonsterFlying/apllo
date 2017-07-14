@@ -181,6 +181,7 @@ public class WebBorrowController {
      * @throws Exception
      */
     @PostMapping("/borrow/pc/verify/first")
+    @ApiOperation("pc初审")
     public ResponseEntity<VoBaseResp> pcFirstVerify(@ModelAttribute VoPcDoFirstVerity voPcDoFirstVerity) throws Exception {
         return borrowBiz.pcFirstVerify(voPcDoFirstVerity);
     }
