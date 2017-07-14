@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import java.util.Date;
 import java.util.Map;
@@ -58,13 +59,16 @@ public class JixinTxLogBizImpl implements JixinTxLogBiz {
         }
         try {
             String txCode = response.get("txCode");
-            String txDes = null ;
             JixinTxCodeEnum jixinTxCodeEnum = null ;
             JixinTxCodeEnum[] values = JixinTxCodeEnum.values();
             for(JixinTxCodeEnum bean : values){
                 if(bean.getValue().equals(txCode)){
                     jixinTxCodeEnum = bean;
                 }
+            }
+            if(ObjectUtils.isEmpty(jixinTxCodeEnum)){
+                log.error(String.format("txCode: %s 不存在", txCode));
+                return  ;
             }
 
             JixinTxLog jixinTxLog = new JixinTxLog();

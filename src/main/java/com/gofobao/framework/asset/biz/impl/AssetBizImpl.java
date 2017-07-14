@@ -730,6 +730,7 @@ public class AssetBizImpl implements AssetBiz {
             ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
             mqConfig.setMsg(body);
             mqHelper.convertAndSend(mqConfig);
+            log.info("触发短信充值");
             return ResponseEntity.ok("success");
         } else {  // 充值失败
             if (rechargeDetailLog.getState() == 2) {
@@ -1118,6 +1119,7 @@ public class AssetBizImpl implements AssetBiz {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoUserAssetInfoResp> adminSynOffLineRecharge(VoSynAssetsRep voSynAssetsRep) throws Exception {
         String paramStr = voSynAssetsRep.getParamStr();
         if (!SecurityHelper.checkSign(voSynAssetsRep.getSign(), paramStr)) {
@@ -1126,8 +1128,9 @@ public class AssetBizImpl implements AssetBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "pc 签名验证不通过", VoUserAssetInfoResp.class));
         }
 
+        log.info(String.format("资金同步: %s", paramStr)) ;
         Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
-        Long userId = Long.parseLong(paramMap.get("userid")) ;
+        Long userId = Long.parseLong(paramMap.get("userId")) ;
         return synOffLineRecharge(userId);
     }
 
