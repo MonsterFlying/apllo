@@ -340,8 +340,8 @@ public class TenderBizImpl implements TenderBiz {
             releaseAt = borrow.getReleaseAt();
         }
 
-        if (ObjectUtils.isEmpty(borrow.getLendId())){
-
+        if (!ObjectUtils.isEmpty(borrow.getLendId())) {
+            releaseAt = voCreateTenderReq.getLendReleaseAt();
         }
 
         if (ObjectUtils.isEmpty(borrow.getLendId()) && (releaseAt.getTime() > nowDate.getTime())) {
@@ -349,11 +349,11 @@ public class TenderBizImpl implements TenderBiz {
             return false;
         }
 
-        Date endDate = DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);
+        Date endDate = DateHelper.addDays(DateHelper.beginOfDate(releaseAt), borrow.getValidDay() + 1);
         if (endDate.getTime() < nowDate.getTime()) {
             // 流标
             log.info("==========================================");
-            log.info( String.format("标的流标操作: %s", GSON.toJson(borrow)));
+            log.info(String.format("标的流标操作: %s", GSON.toJson(borrow)));
             log.info("==========================================");
             VoCancelBorrow voCancelBorrow = new VoCancelBorrow();
             voCancelBorrow.setBorrowId(borrow.getId());
