@@ -1,5 +1,6 @@
 package com.gofobao.framework.integral.biz.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.DesLineFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
@@ -27,6 +28,7 @@ import com.gofobao.framework.integral.vo.request.VoIntegralTakeReq;
 import com.gofobao.framework.integral.vo.request.VoListIntegralReq;
 import com.gofobao.framework.integral.vo.response.VoIntegral;
 import com.gofobao.framework.integral.vo.response.VoListIntegralResp;
+import com.gofobao.framework.integral.vo.response.pc.VoViewIntegralWarpRes;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.contants.DictAliasCodeContants;
@@ -44,9 +46,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
@@ -167,7 +171,6 @@ public class IntegralBizImpl implements IntegralBiz {
         //分页和排序
         Sort sort = new Sort(new Sort.Order(Sort.Direction.DESC, "id"));
         Pageable pageable = new PageRequest(pageIndex, pageSize, sort);
-
         List<IntegralLog> integralLogList = integralLogService.findListByUserId(userId, pageable);
         Optional<List<IntegralLog>> objIntegralLog = Optional.ofNullable(integralLogList);
         objIntegralLog.ifPresent(p -> p.forEach(integralLog -> {
@@ -182,8 +185,43 @@ public class IntegralBizImpl implements IntegralBiz {
             voIntegralList.add(voIntegral);
         }));
 
+        voListIntegralResp.setCollectionMoney(StringHelper.formatMon(asset.getCollection()/100D));
         voListIntegralResp.setVoIntegralList(voIntegralList);
         return ResponseEntity.ok(voListIntegralResp);
+    }
+
+    @Override
+    public ResponseEntity<VoViewIntegralWarpRes> pcIntegralList(VoListIntegralReq integralReq) {
+        try {
+            VoViewIntegralWarpRes warpRes=VoBaseResp.ok("查询成功",VoViewIntegralWarpRes.class);
+
+            Map<String,Object>resultMaps=integralLogService.pcIntegralList(integralReq);
+            Integer totalCount=Integer.valueOf(resultMaps.get("totalCount").toString());
+            warpRes.setTotalCount(totalCount);
+            List<IntegralLog>integralLogs=(List<IntegralLog>) resultMaps.get("integralLogs");
+            List<VoIntegral> voIntegralList = new ArrayList<>();
+            if(!CollectionUtils.isEmpty(integralLogs)){
+                integralLogs.stream().forEach(p->{
+                    VoIntegral voIntegral = new VoIntegral();
+                    voIntegral.setId(p.getId());
+                    voIntegral.setTotalIntegral(p.getNoUseIntegral() + p.getUseIntegral());
+                    voIntegral.setTime(DateHelper.dateToStringYearMouthDay(p.getCreatedAt()));
+                    voIntegral.setIntegral(("convert".equalsIgnoreCase(p.getType())
+                            || "_digest".equalsIgnoreCase(p.getType())) ? String.format("-%s", p.getValue()) : String.format("+%s", p.getValue()));
+                    voIntegral.setType(p.getType());
+                    voIntegral.setTypeName(findIntegralMap(p.getType()));
+                    voIntegralList.add(voIntegral);
+                });
+            }
+            warpRes.setIntegrals(voIntegralList);
+            return ResponseEntity.ok(warpRes);
+        }catch (Exception e){
+            return ResponseEntity.
+                    badRequest().
+                    body(VoBaseResp.error(VoBaseResp.ERROR,
+                            "查询异常,稍后再试",
+                            VoViewIntegralWarpRes.class));
+        }
     }
 
     /**

@@ -31,4 +31,11 @@ public interface AssetLogService {
      */
     List<AssetLogs> pcAssetLogs(VoAssetLogReq voAssetLogReq);
 
+
+    /**
+     * pc：资金流水导出到excel
+     * @param voAssetLogReq
+     * @return
+     */
+    List<AssetLog> pcToExcel(VoAssetLogReq voAssetLogReq);
 }

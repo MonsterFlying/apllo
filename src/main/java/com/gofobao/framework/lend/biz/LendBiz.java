@@ -44,6 +44,15 @@ public interface LendBiz {
 
 
     /**
+     *
+     * @param userId
+     * @param lendId
+     * @return
+     */
+    ResponseEntity<VoViewLendInfoListWarpRes> infoList(Long userId, Long lendId);
+
+
+    /**
      * 获取当前用户黑名单列表
      *
      * @param voGetLendBlacklists
@@ -78,5 +87,9 @@ public interface LendBiz {
      * @throws Exception
      */
     ResponseEntity<VoViewPickLendList> getPickLendList(VoGetPickLendList voGetPickLendList);
+
+
+
+
 
 }

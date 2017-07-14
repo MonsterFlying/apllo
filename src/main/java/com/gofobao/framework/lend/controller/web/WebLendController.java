@@ -7,10 +7,7 @@ import com.gofobao.framework.lend.vo.request.VoAddLendBlacklist;
 import com.gofobao.framework.lend.vo.request.VoDelLendBlacklist;
 import com.gofobao.framework.lend.vo.request.VoGetLendBlacklists;
 import com.gofobao.framework.lend.vo.request.VoUserLendReq;
-import com.gofobao.framework.lend.vo.response.VoViewLendBlacklists;
-import com.gofobao.framework.lend.vo.response.VoViewLendInfoWarpRes;
-import com.gofobao.framework.lend.vo.response.VoViewLendListWarpRes;
-import com.gofobao.framework.lend.vo.response.VoViewUserLendInfoWarpRes;
+import com.gofobao.framework.lend.vo.response.*;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -51,6 +48,14 @@ public class WebLendController {
                                                       @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return lendBiz.info(userId, lendId);
     }
+
+    @RequestMapping(value = "/v2/info/list/{lendId}", method = RequestMethod.GET)
+    @ApiOperation("pc：出借详情列表")
+    public ResponseEntity<VoViewLendInfoListWarpRes> infoList(@PathVariable Long lendId/*,
+                                                      @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+        return lendBiz.infoList(30L, lendId);
+    }
+
 
     @RequestMapping(value = "/v2/list/byUser/{pageIndex}/{pageSize}", method = RequestMethod.GET)
     @ApiOperation("pc：我的出借列表")

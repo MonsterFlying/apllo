@@ -22,4 +22,7 @@ public class VoBankListResp extends VoBaseResp{
 
     @ApiModelProperty("银行卡名称")
     private String bankCard ;
+
+    @ApiModelProperty("预留手机号")
+    private String mobile;
 }

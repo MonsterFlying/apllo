@@ -28,6 +28,7 @@ import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
 import com.gofobao.framework.common.assets.AssetsChangeEntity;
 import com.gofobao.framework.common.assets.AssetsChangeEnum;
 import com.gofobao.framework.common.assets.AssetsChangeHelper;
+import com.gofobao.framework.common.jxl.ExcelUtil;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -264,37 +265,12 @@ public class AplloApplicationTests {
         }
     }
 
+
+
     @Test
     public void test() {
 
 
-
-        //根据手机号查询存管账户
-        //findAccountByMobile();
-        //受托支付
-        //trusteePay();
-        //签约查询
-        //creditAuthQuery();
-        //取消批次
-        //batchCancel();
-        //查询投资人购买债权
-        //creditInvestQuery();
-        //垫付回调
-        //advanceCall();
-        //初审
-        //doFirstVerify();
-        //还款处理
-        //repayDeal();
-        //查询标的集合
-        //findThirdBorrowList();
-        //复审
-        //doAgainVerify();
-        //批次详情查询
-        batchDetailsQuery();
-        //查询投标申请
-        //bidApplyQuery();
-        //转让标复审回调
-        //transferBorrowAgainVerify();
     }
 
 }

@@ -30,7 +30,7 @@ import java.util.*;
 public class AssetLogServiceImpl implements AssetLogService {
 
     @Autowired
-    private AssetLogRepository assetLogRepository;
+    private    AssetLogRepository assetLogRepository;
     private static Set<String> subList = new HashSet<>(Arrays.asList("cash", "tender", "manager", "fee", "repayment", "overdue", "interest_manager", "virtual_tender", "expenditure_other"));
     private static Set<String> addList = new HashSet<>(Arrays.asList("recharge", "award", "borrow", "income_repayment", "income_overdue", "integral_cash", "bonus", "award_virtual_money", "income_other", "red_package"));
 
@@ -74,7 +74,7 @@ public class AssetLogServiceImpl implements AssetLogService {
         List<AssetLogs> logs = Lists.newArrayList();
         assetLogs.stream().forEach(p -> {
             AssetLogs assetLog = new AssetLogs();
-            assetLog.setOperationMoney(StringHelper.formatMon(p.getCollection() / 100D));
+            assetLog.setOperationMoney(StringHelper.formatMon(p.getMoney() / 100D));
             assetLog.setRemark(p.getRemark());
             assetLog.setTime(DateHelper.dateToString(p.getCreatedAt()));
             assetLog.setTypeName(getAssetTypeStr(p.getType()));
@@ -116,6 +116,32 @@ public class AssetLogServiceImpl implements AssetLogService {
         resultMaps.put("assetLogs", assetLogs);
 
         return resultMaps;
+    }
+
+    /**
+     * pc：资金流水导出到excel
+     * @param voAssetLogReq
+     * @return
+     */
+    @Override
+    public List<AssetLog> pcToExcel(VoAssetLogReq voAssetLogReq) {
+
+        Sort sort = new Sort(
+                new Sort.Order(Sort.Direction.DESC, "createdAt"));
+
+        Date startTime = DateHelper.beginOfDate(DateHelper.stringToDate(voAssetLogReq.getStartTime(), DateHelper.DATE_FORMAT_YMD));
+        Date endTime = DateHelper.endOfDate(DateHelper.stringToDate(voAssetLogReq.getEndTime(), DateHelper.DATE_FORMAT_YMD));
+
+        Specification<AssetLog> specification = Specifications.<AssetLog>and()
+                .eq(!StringUtils.isEmpty(voAssetLogReq.getType()), "type", voAssetLogReq.getType())
+                .between("createdAt",
+                        new Range<>(
+                                DateHelper.beginOfDate(startTime),
+                                DateHelper.endOfDate(endTime)))
+                .eq("userId", voAssetLogReq.getUserId())
+                .build();
+
+        return assetLogRepository.findAll(specification, sort);
     }
 
     @Override
