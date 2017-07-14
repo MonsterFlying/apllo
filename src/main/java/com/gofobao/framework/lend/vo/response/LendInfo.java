@@ -33,6 +33,9 @@ public class LendInfo {
     @ApiModelProperty("还款时间")
     private String collectionAt;
 
+    @ApiModelProperty("还款时间")
+    private String  repayAtYes;
+
     @ApiModelProperty("id")
     private Long id;
 
@@ -44,6 +47,9 @@ public class LendInfo {
 
     @ApiModelProperty("状态（0、可借；1、结束）")
     private Integer status;
+
+
+
 
 
 

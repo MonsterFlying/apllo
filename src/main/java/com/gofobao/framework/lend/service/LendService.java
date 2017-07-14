@@ -4,7 +4,7 @@ import com.gofobao.framework.common.page.Page;
 import com.gofobao.framework.lend.entity.Lend;
 import com.gofobao.framework.lend.vo.request.VoUserLendReq;
 import com.gofobao.framework.lend.vo.response.LendInfo;
-import com.gofobao.framework.lend.vo.response.UserLendInfo;
+import com.gofobao.framework.lend.vo.response.LendInfoList;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -58,7 +58,16 @@ public interface LendService {
      */
     LendInfo info(Long userId,Long lendId);
 
-    List<UserLendInfo>queryUser(VoUserLendReq voUserLendReq);
+    /**
+     * pc；用户出借详情列表
+     * @param userId
+     * @param lendId
+     * @return
+     */
+    List<LendInfoList> infoList(Long userId, Long lendId);
+
+
+    Map<String, Object> queryUser(VoUserLendReq voUserLendReq);
 
 
     long count(Specification<Lend> specification);

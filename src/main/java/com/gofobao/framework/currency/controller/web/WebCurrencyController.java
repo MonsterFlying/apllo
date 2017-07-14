@@ -4,6 +4,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.currency.biz.CurrencyBiz;
 import com.gofobao.framework.currency.vo.request.VoConvertCurrencyReq;
 import com.gofobao.framework.currency.vo.request.VoListCurrencyReq;
+import com.gofobao.framework.currency.vo.response.VoListCurrencyResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -27,7 +28,7 @@ public class WebCurrencyController {
 
     @ApiOperation("pc:获取用户广富币列表")
     @PostMapping("pc/currency/list")
-    public ResponseEntity<VoBaseResp> pcList(@Valid @ModelAttribute VoListCurrencyReq voListCurrencyReq,
+    public ResponseEntity<VoListCurrencyResp> pcList(@Valid @ModelAttribute VoListCurrencyReq voListCurrencyReq,
                                              @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         voListCurrencyReq.setUserId(userId);
         return currencyBiz.list(voListCurrencyReq);

@@ -107,7 +107,7 @@ public class CurrencyBizImpl implements CurrencyBiz {
         currencyTypeMap.put("convert", "兑换");
     }
 
-    public ResponseEntity<VoBaseResp> list(VoListCurrencyReq voListCurrencyReq) {
+    public ResponseEntity<VoListCurrencyResp> list(VoListCurrencyReq voListCurrencyReq) {
         int pageSize = voListCurrencyReq.getPageSize();
         int pageIndex = voListCurrencyReq.getPageIndex();
         Long userId = voListCurrencyReq.getUserId();

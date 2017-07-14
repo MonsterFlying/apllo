@@ -197,6 +197,7 @@ public class BankAccountBizImpl implements BankAccountBiz{
         response.setBankLogo(String.format("%s/%s", javaDomain, userThirdAccount.getBankLogo())) ;
         response.setBankName(userThirdAccount.getBankName());
         response.setBankType("储蓄卡");
+        response.setMobile(UserHelper.hideChar(userThirdAccount.getMobile(),UserHelper.PHONE_NUM));
         return ResponseEntity.ok(response) ;
     }
 

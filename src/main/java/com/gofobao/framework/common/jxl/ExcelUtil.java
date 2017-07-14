@@ -134,7 +134,7 @@ public class ExcelUtil {
     ) throws ExcelException{
 
         //设置默认文件名为当前时间：年月日时分秒
-        String fileName=new SimpleDateFormat("yyyyMMddhhmmss").format(new Date()).toString();
+        String fileName=sheetName+new SimpleDateFormat("yyyyMMddhhmmss").format(new Date());
 
         //设置response头信息
         response.reset();

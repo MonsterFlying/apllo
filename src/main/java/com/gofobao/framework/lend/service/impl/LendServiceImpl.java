@@ -4,22 +4,29 @@ import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.contants.BorrowContants;
+import com.gofobao.framework.borrow.entity.Borrow;
+import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.common.page.Page;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.lend.contants.LendContants;
 import com.gofobao.framework.lend.entity.Lend;
+import com.gofobao.framework.lend.entity.LendBlacklist;
+import com.gofobao.framework.lend.repository.LendBlacklistRepository;
 import com.gofobao.framework.lend.repository.LendRepository;
 import com.gofobao.framework.lend.service.LendService;
 import com.gofobao.framework.lend.vo.request.VoUserLendReq;
 import com.gofobao.framework.lend.vo.response.LendInfo;
+import com.gofobao.framework.lend.vo.response.LendInfoList;
 import com.gofobao.framework.lend.vo.response.UserLendInfo;
 import com.gofobao.framework.lend.vo.response.VoViewLend;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.member.service.UserCacheService;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.repository.BorrowRepaymentRepository;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +53,16 @@ public class LendServiceImpl implements LendService {
 
     @Autowired
     private AssetService assetService;
+
+    @Autowired
+    private BorrowRepository borrowRepository;
+
+    @Autowired
+    private BorrowRepaymentRepository borrowRepaymentRepository;
+
+
+    @Autowired
+    private LendBlacklistRepository blacklistRepository;
 
     @Autowired
     private UserCacheService userCacheService;
@@ -117,6 +134,8 @@ public class LendServiceImpl implements LendService {
                 lend.setSpend(1d);
                 lend.setStatusStr(LendContants.STATUS_YES_STR);
             }
+            lend.setReleaseAt(DateHelper.dateToString(p.getCreatedAt()));
+            lend.setCollectionAt(DateHelper.dateToString(p.getRepayAt()));
             lend.setSpend(Double.parseDouble(StringHelper.formatMon(p.getMoneyYes() / new Double(p.getMoney()))));
             lend.setLimit(p.getTimeLimit());
             lend.setStatus(p.getStatus());
@@ -167,7 +186,7 @@ public class LendServiceImpl implements LendService {
         if (ObjectUtils.isEmpty(userCache)) {
             return null;
         }
-
+        lendInfo.setRepayAtYes(StringUtils.isEmpty(lend.getRepayAt()) ? "----" : DateHelper.dateToString(lend.getRepayAt()));
         lendInfo.setStatus(lend.getStatus());
         Long useMoney = asset.getUseMoney();
         Long waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
@@ -180,19 +199,64 @@ public class LendServiceImpl implements LendService {
 
 
     @Override
-    public List<UserLendInfo> queryUser(VoUserLendReq voUserLendReq) {
+    public List<LendInfoList> infoList(Long userId, Long lendId) {
+        Specification lendSpecification=Specifications.<Lend>and()
+                .eq("id",lendId)
+                .eq("userId",userId)
+                .build();
+        Lend lend=lendRepository.findOne(lendSpecification);
+        if(ObjectUtils.isEmpty(lend)){
+            return Collections.EMPTY_LIST;
+        }
+        Specification borrowSpecification = Specifications.<Borrow>and()
+                .eq("lendId", lendId)
+                .build();
+        Borrow borrow = borrowRepository.findOne(borrowSpecification);
+
+        if (ObjectUtils.isEmpty(borrow)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<LendBlacklist>blacklists=blacklistRepository.findByUserId(userId);
+        Map<Long,LendBlacklist> blacklistMap=blacklists.stream().collect(Collectors.toMap(LendBlacklist::getBlackUserId,Function.identity()));
+        List<BorrowRepayment> borrowRepayments = borrowRepaymentRepository.findByBorrowId(borrow.getId());
+        List<Long> userIds = borrowRepayments.stream().map(p -> p.getUserId()).collect(Collectors.toList());
+        List<Users> users = usersRepository.findByIdIn(new ArrayList(userIds));
+        Map<Long, Users> usersMap = users.stream().collect(Collectors.toMap(Users::getId, Function.identity()));
+        List<LendInfoList> lendInfos = Lists.newArrayList();
+        borrowRepayments.stream().forEach(p -> {
+            LendInfoList lendInfo = new LendInfoList();
+            Users tempUser = usersMap.get(p.getUserId());
+            lendInfo.setToUserBackList(ObjectUtils.isEmpty(blacklistMap.get(p.getUserId()))?false:true);
+            lendInfo.setUserName(StringUtils.isEmpty(tempUser.getUsername()) ? tempUser.getPhone() : tempUser.getUsername());
+            lendInfo.setUserId(tempUser.getId());
+            lendInfo.setApr(StringHelper.formatMon(borrow.getApr()/100D));
+            lendInfo.setMoney(StringHelper.formatMon(p.getRepayMoney()/100D));
+            lendInfo.setRepaymentId(p.getId());
+            lendInfo.setRepayAtYes(ObjectUtils.isEmpty(p.getRepayAtYes())?"":DateHelper.dateToString(p.getRepayAtYes()));
+            lendInfo.setRepayAt(DateHelper.dateToString(p.getRepayAt()));
+            lendInfo.setTimeLimit(lend.getTimeLimit());
+            lendInfos.add(lendInfo);
+        });
+        return lendInfos;
+    }
+
+    @Override
+    public Map<String, Object> queryUser(VoUserLendReq voUserLendReq) {
+        Map<String, Object> resultMaps=Maps.newHashMap();
         Specification specification = Specifications.<Lend>and()
                 .eq("userId", voUserLendReq.getUserId())
                 .build();
-
         org.springframework.data.domain.Page lendPage = lendRepository.findAll(specification,
                 new PageRequest(
                         voUserLendReq.getPageIndex(),
                         voUserLendReq.getPageSize(),
                         new Sort(Sort.Direction.DESC, "id")));
         List<Lend> lendList = lendPage.getContent();
+        Long totalCount=lendPage.getTotalElements();
+        resultMaps.put("totalCount",totalCount);
         if (CollectionUtils.isEmpty(lendList)) {
-            return Collections.EMPTY_LIST;
+            resultMaps.put("lendList",new ArrayList<>(0));
+            return resultMaps;
         }
         List<UserLendInfo> userLendInfos = Lists.newArrayList();
         lendList.stream().forEach(p -> {
@@ -206,9 +270,13 @@ public class LendServiceImpl implements LendService {
             String statusStr = p.getStatus() == LendContants.STATUS_NO ? LendContants.STATUS_NO_STR : LendContants.STATUS_YES_STR;
             userLendInfo.setStatusStr(statusStr);
             userLendInfo.setStatus(p.getStatus());
+            userLendInfo.setTimeLimit(p.getTimeLimit());
+            userLendInfo.setCollectionAt(DateHelper.dateToString(p.getRepayAt()));
             userLendInfos.add(userLendInfo);
         });
-        return Optional.ofNullable(userLendInfos).orElse(Collections.EMPTY_LIST);
+
+        resultMaps.put("lendList",userLendInfos);
+        return resultMaps;
     }
 
     /**

@@ -16,4 +16,7 @@ public interface BorrowCollectionRepository extends  JpaRepository<BorrowCollect
         List<BorrowCollection>findByTenderId(Long tenderId);
 
         List<BorrowCollection> findByTenderIdIn(List<Long> tenderId);
+
+
+        List<BorrowCollection>findByBorrowId(List<Long> borrowIds);
 }

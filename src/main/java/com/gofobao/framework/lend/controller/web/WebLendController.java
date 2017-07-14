@@ -7,10 +7,7 @@ import com.gofobao.framework.lend.vo.request.VoAddLendBlacklist;
 import com.gofobao.framework.lend.vo.request.VoDelLendBlacklist;
 import com.gofobao.framework.lend.vo.request.VoGetLendBlacklists;
 import com.gofobao.framework.lend.vo.request.VoUserLendReq;
-import com.gofobao.framework.lend.vo.response.VoViewLendBlacklists;
-import com.gofobao.framework.lend.vo.response.VoViewLendInfoWarpRes;
-import com.gofobao.framework.lend.vo.response.VoViewLendListWarpRes;
-import com.gofobao.framework.lend.vo.response.VoViewUserLendInfoWarpRes;
+import com.gofobao.framework.lend.vo.response.*;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -52,13 +49,19 @@ public class WebLendController {
         return lendBiz.info(userId, lendId);
     }
 
+    @RequestMapping(value = "/v2/info/list/{lendId}", method = RequestMethod.GET)
+    @ApiOperation("pc：出借详情列表")
+    public ResponseEntity<VoViewLendInfoListWarpRes> infoList(@PathVariable Long lendId ,
+                                                      @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return lendBiz.infoList(userId, lendId);
+    }
+
     @RequestMapping(value = "/v2/list/byUser/{pageIndex}/{pageSize}", method = RequestMethod.GET)
     @ApiOperation("pc：我的出借列表")
     public ResponseEntity<VoViewUserLendInfoWarpRes> byUser(
             @PathVariable Integer pageIndex,
             @PathVariable Integer pageSize,
             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-
         voUserLendReq.setPageSize(pageSize);
         voUserLendReq.setPageIndex(pageIndex);
         voUserLendReq.setUserId(userId);
@@ -103,7 +106,7 @@ public class WebLendController {
      * @throws Exception
      */
     @ApiOperation(value = "移除有草出借黑名单", notes = "移除有草出借黑名单")
-    @PostMapping(value = "/v2/blacklist/lend")
+    @PostMapping(value = "/v2/blacklist/remove")
     public ResponseEntity<VoBaseResp> delLendBlacklist(@ModelAttribute @Valid VoDelLendBlacklist voDelLendBlacklist,
                                                        @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voDelLendBlacklist.setUserId(userId);

@@ -7,11 +7,10 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * Created by admin on 2017/6/13.
+ * Created by admin on 2017/7/14.
  */
 @Data
-public class VoViewUserLendInfoWarpRes extends VoBaseResp{
-    private List<UserLendInfo> lendInfos= Lists.newArrayList();
+public class VoViewLendInfoListWarpRes extends VoBaseResp {
 
-    private Integer totalCount=0;
+    private List<LendInfoList> listList= Lists.newArrayList();
 }

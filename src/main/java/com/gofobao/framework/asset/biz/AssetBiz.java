@@ -118,6 +118,14 @@ public interface AssetBiz {
      */
     ResponseEntity<VoViewAssetLogsWarpRes> pcAssetLogs(VoAssetLogReq voAssetLogReq);
 
+    /**
+     * pc:流水导出
+     * @param voAssetLogReq
+     */
+    void pcToExcel(VoAssetLogReq voAssetLogReq,HttpServletResponse response);
+
+
+
     String rechargeShow(HttpServletRequest request, Model model, String seqNo);
 
 
