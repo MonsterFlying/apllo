@@ -1,4 +1,4 @@
-package com.gofobao.framework.repayment.biz.impl;
+package com.gofobao.framework.repayment.biz.Impl;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
