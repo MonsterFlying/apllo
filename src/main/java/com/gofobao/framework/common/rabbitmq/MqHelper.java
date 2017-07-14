@@ -6,13 +6,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageDeliveryMode;
 import org.springframework.amqp.core.MessagePostProcessor;
+import org.springframework.amqp.rabbit.support.CorrelationData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Created by Max on 17/5/26.
@@ -35,7 +38,7 @@ public class MqHelper {
         body.put(MqConfig.MSG_TAG, config.getTag().getValue()) ;
         String json = GSON.toJson(body);
 
-        long delayTime = 0 ;
+        Long delayTime = 0L ;
         if(!ObjectUtils.isEmpty(config.getSendTime()) ){
             long sendTime = config.getSendTime().getTime();
             long nowTime = System.currentTimeMillis();
@@ -43,14 +46,16 @@ public class MqHelper {
             delayTime = delayTime <= 0 ? 0 : delayTime ;
         }
 
-        long finalDelayTime = delayTime;
-        amqpTemplate.convertAndSend( MqExchangeContants.DELAY_EXCHANGE, config.getQueue().getValue(), json,  new MessagePostProcessor() {
+        int finalDelayTime = delayTime.intValue();
+        MessagePostProcessor messagePostProcessor = new MessagePostProcessor() {
             @Override
             public Message postProcessMessage(Message message) throws AmqpException {
-                message.getMessageProperties().setHeader("x-delay", finalDelayTime);
+                message.getMessageProperties().setDelay(finalDelayTime);
+                message.getMessageProperties().setDeliveryMode(MessageDeliveryMode.PERSISTENT);
                 return message;
             }
-        });
+        };
+        amqpTemplate.convertAndSend( MqExchangeContants.DELAY_EXCHANGE, config.getQueue().getValue(), json, messagePostProcessor );
         return true ;
     }
 

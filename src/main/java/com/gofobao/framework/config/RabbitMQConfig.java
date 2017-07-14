@@ -6,9 +6,6 @@ import org.springframework.amqp.core.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Created by Max on 17/5/26.
  */
@@ -64,10 +61,8 @@ public class RabbitMQConfig {
 
     @Bean
     DirectExchange delayExchange() {
-        Map<String, Object> args = new HashMap<>();
-        args.put("x-delayed-type", "direct");
-        DirectExchange directExchange = new DirectExchange(MqExchangeContants.DELAY_EXCHANGE, true, false, args);
-        // directExchange.setDelayed(true);
+        DirectExchange directExchange = new DirectExchange(MqExchangeContants.DELAY_EXCHANGE, true, false);
+        directExchange.setDelayed(true);
         return directExchange;
     }
 
