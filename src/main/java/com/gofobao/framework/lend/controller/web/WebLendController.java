@@ -51,11 +51,10 @@ public class WebLendController {
 
     @RequestMapping(value = "/v2/info/list/{lendId}", method = RequestMethod.GET)
     @ApiOperation("pc：出借详情列表")
-    public ResponseEntity<VoViewLendInfoListWarpRes> infoList(@PathVariable Long lendId/*,
-                                                      @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
-        return lendBiz.infoList(30L, lendId);
+    public ResponseEntity<VoViewLendInfoListWarpRes> infoList(@PathVariable Long lendId ,
+                                                      @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return lendBiz.infoList(userId, lendId);
     }
-
 
     @RequestMapping(value = "/v2/list/byUser/{pageIndex}/{pageSize}", method = RequestMethod.GET)
     @ApiOperation("pc：我的出借列表")
@@ -63,7 +62,6 @@ public class WebLendController {
             @PathVariable Integer pageIndex,
             @PathVariable Integer pageSize,
             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-
         voUserLendReq.setPageSize(pageSize);
         voUserLendReq.setPageIndex(pageIndex);
         voUserLendReq.setUserId(userId);

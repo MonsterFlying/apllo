@@ -3,6 +3,7 @@ package com.gofobao.framework.currency.biz;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.currency.vo.request.VoConvertCurrencyReq;
 import com.gofobao.framework.currency.vo.request.VoListCurrencyReq;
+import com.gofobao.framework.currency.vo.response.VoListCurrencyResp;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -10,7 +11,7 @@ import org.springframework.http.ResponseEntity;
  */
 public interface CurrencyBiz {
 
-    ResponseEntity<VoBaseResp> list(VoListCurrencyReq voListCurrencyReq);
+    ResponseEntity<VoListCurrencyResp> list(VoListCurrencyReq voListCurrencyReq);
 
     /**
      * 兑换广福币

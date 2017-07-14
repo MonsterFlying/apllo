@@ -39,5 +39,9 @@ public class LendInfoList {
     @ApiModelProperty("用戶ID")
     private Long userId;
 
+    @ApiModelProperty("是否被拉黑")
+    private Boolean toUserBackList;
+
+
 
 }

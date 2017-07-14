@@ -12,6 +12,8 @@ import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.lend.contants.LendContants;
 import com.gofobao.framework.lend.entity.Lend;
+import com.gofobao.framework.lend.entity.LendBlacklist;
+import com.gofobao.framework.lend.repository.LendBlacklistRepository;
 import com.gofobao.framework.lend.repository.LendRepository;
 import com.gofobao.framework.lend.service.LendService;
 import com.gofobao.framework.lend.vo.request.VoUserLendReq;
@@ -58,6 +60,9 @@ public class LendServiceImpl implements LendService {
     @Autowired
     private BorrowRepaymentRepository borrowRepaymentRepository;
 
+
+    @Autowired
+    private LendBlacklistRepository blacklistRepository;
 
     @Autowired
     private UserCacheService userCacheService;
@@ -211,6 +216,8 @@ public class LendServiceImpl implements LendService {
         if (ObjectUtils.isEmpty(borrow)) {
             return Collections.EMPTY_LIST;
         }
+        List<LendBlacklist>blacklists=blacklistRepository.findByUserId(userId);
+        Map<Long,LendBlacklist> blacklistMap=blacklists.stream().collect(Collectors.toMap(LendBlacklist::getBlackUserId,Function.identity()));
         List<BorrowRepayment> borrowRepayments = borrowRepaymentRepository.findByBorrowId(borrow.getId());
         List<Long> userIds = borrowRepayments.stream().map(p -> p.getUserId()).collect(Collectors.toList());
         List<Users> users = usersRepository.findByIdIn(new ArrayList(userIds));
@@ -219,6 +226,7 @@ public class LendServiceImpl implements LendService {
         borrowRepayments.stream().forEach(p -> {
             LendInfoList lendInfo = new LendInfoList();
             Users tempUser = usersMap.get(p.getUserId());
+            lendInfo.setToUserBackList(ObjectUtils.isEmpty(blacklistMap.get(p.getUserId()))?false:true);
             lendInfo.setUserName(StringUtils.isEmpty(tempUser.getUsername()) ? tempUser.getPhone() : tempUser.getUsername());
             lendInfo.setUserId(tempUser.getId());
             lendInfo.setApr(StringHelper.formatMon(borrow.getApr()/100D));
@@ -233,7 +241,8 @@ public class LendServiceImpl implements LendService {
     }
 
     @Override
-    public List<UserLendInfo> queryUser(VoUserLendReq voUserLendReq) {
+    public Map<String, Object> queryUser(VoUserLendReq voUserLendReq) {
+        Map<String, Object> resultMaps=Maps.newHashMap();
         Specification specification = Specifications.<Lend>and()
                 .eq("userId", voUserLendReq.getUserId())
                 .build();
@@ -243,8 +252,11 @@ public class LendServiceImpl implements LendService {
                         voUserLendReq.getPageSize(),
                         new Sort(Sort.Direction.DESC, "id")));
         List<Lend> lendList = lendPage.getContent();
+        Long totalCount=lendPage.getTotalElements();
+        resultMaps.put("totalCount",totalCount);
         if (CollectionUtils.isEmpty(lendList)) {
-            return Collections.EMPTY_LIST;
+            resultMaps.put("lendList",new ArrayList<>(0));
+            return resultMaps;
         }
         List<UserLendInfo> userLendInfos = Lists.newArrayList();
         lendList.stream().forEach(p -> {
@@ -258,9 +270,13 @@ public class LendServiceImpl implements LendService {
             String statusStr = p.getStatus() == LendContants.STATUS_NO ? LendContants.STATUS_NO_STR : LendContants.STATUS_YES_STR;
             userLendInfo.setStatusStr(statusStr);
             userLendInfo.setStatus(p.getStatus());
+            userLendInfo.setTimeLimit(p.getTimeLimit());
+            userLendInfo.setCollectionAt(DateHelper.dateToString(p.getRepayAt()));
             userLendInfos.add(userLendInfo);
         });
-        return Optional.ofNullable(userLendInfos).orElse(Collections.EMPTY_LIST);
+
+        resultMaps.put("lendList",userLendInfos);
+        return resultMaps;
     }
 
     /**

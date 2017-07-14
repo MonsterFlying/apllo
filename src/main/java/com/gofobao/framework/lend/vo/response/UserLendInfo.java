@@ -32,6 +32,11 @@ public class UserLendInfo {
     @ApiModelProperty("lendId")
     private Long lendId;
 
+    @ApiModelProperty("期限(天)")
+    private Integer timeLimit;
+
+    @ApiModelProperty("还款时间")
+    private String collectionAt;
 
 
 }
