@@ -8,6 +8,8 @@ import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageDeliveryMode;
 import org.springframework.amqp.core.MessagePostProcessor;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.support.CorrelationData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -23,9 +25,9 @@ import java.util.UUID;
 @Component
 @Slf4j
 public class MqHelper {
-
     @Autowired
-    private AmqpTemplate amqpTemplate ;
+    private RabbitTemplate rabbitTemplate ;
+
 
     private final static Gson GSON = new Gson() ;
 
@@ -55,7 +57,7 @@ public class MqHelper {
                 return message;
             }
         };
-        amqpTemplate.convertAndSend( MqExchangeContants.DELAY_EXCHANGE, config.getQueue().getValue(), json, messagePostProcessor );
+        rabbitTemplate.convertAndSend( MqExchangeContants.DELAY_EXCHANGE, config.getQueue().getValue(), json, messagePostProcessor );
         return true ;
     }
 
