@@ -1119,6 +1119,7 @@ public class AssetBizImpl implements AssetBiz {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoUserAssetInfoResp> adminSynOffLineRecharge(VoSynAssetsRep voSynAssetsRep) throws Exception {
         String paramStr = voSynAssetsRep.getParamStr();
         if (!SecurityHelper.checkSign(voSynAssetsRep.getSign(), paramStr)) {
