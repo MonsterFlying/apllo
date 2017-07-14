@@ -24,4 +24,9 @@ public class VoViewLend {
     private Double spend;
     @ApiModelProperty("状态(0:可借,1：结束)")
     private Integer status;
+    @ApiModelProperty("还款时间")
+    private String collectionAt;
+    @ApiModelProperty("发布时间")
+    private String releaseAt;
+
 }

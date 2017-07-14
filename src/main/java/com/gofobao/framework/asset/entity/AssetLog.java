@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -71,6 +72,7 @@ public class AssetLog {
     private String remark;
 
     @Basic
+    @DateTimeFormat(pattern = "")
     @Column(name = "created_at")
     private Date createdAt;
 

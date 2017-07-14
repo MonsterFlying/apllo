@@ -120,6 +120,23 @@ public class LendBizImpl implements LendBiz {
         }
     }
 
+    @Override
+    public ResponseEntity<VoViewLendInfoListWarpRes> infoList(Long userId, Long lendId) {
+
+        try {
+            VoViewLendInfoListWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewLendInfoListWarpRes.class);
+            List<LendInfoList> lends = lendService.infoList(userId, lendId);
+      /*      if (ObjectUtils.isEmpty(lends)) {
+                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非法请求", VoViewLendInfoListWarpRes.class));
+            }*/
+            warpRes.setListList(lends);
+            return ResponseEntity.ok(warpRes);
+        } catch (Throwable e) {
+            log.info("LendBizImpl detail query fail", e);
+            return ResponseEntity.badRequest().body(VoBaseResp.ok("查询失败", VoViewLendInfoListWarpRes.class));
+        }
+    }
+
     /**
      * @param voUserLendReq
      * @return

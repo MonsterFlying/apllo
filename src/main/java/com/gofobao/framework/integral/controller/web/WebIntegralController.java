@@ -6,6 +6,7 @@ import com.gofobao.framework.integral.biz.IntegralBiz;
 import com.gofobao.framework.integral.vo.request.VoIntegralTakeReq;
 import com.gofobao.framework.integral.vo.request.VoListIntegralReq;
 import com.gofobao.framework.integral.vo.response.VoListIntegralResp;
+import com.gofobao.framework.integral.vo.response.pc.VoViewIntegralWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -37,13 +38,28 @@ public class WebIntegralController {
      * @param voListIntegralReq
      * @return
      */
-    @ApiOperation("获取积分列表")
-    @PostMapping("pub/pc/integral/list")
+    @ApiOperation("获取积分统计")
+    @PostMapping("pub/pc/integral/statistics")
     public ResponseEntity<VoListIntegralResp> list(@Valid @ModelAttribute VoListIntegralReq voListIntegralReq,
                                                    @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         voListIntegralReq.setUserId(userId);
         return integralBiz.list(voListIntegralReq);
     }
+
+    /**
+     * 获取积分列表
+     *
+     * @param voListIntegralReq
+     * @return
+     */
+    @ApiOperation("获取积分列表")
+    @PostMapping("pub/pc/integral/list")
+    public ResponseEntity<VoViewIntegralWarpRes> pcList(@Valid @ModelAttribute VoListIntegralReq voListIntegralReq,
+                                                   @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+        voListIntegralReq.setUserId(userId);
+        return integralBiz.pcIntegralList(voListIntegralReq);
+    }
+
 
     /**
      * 积分兑换

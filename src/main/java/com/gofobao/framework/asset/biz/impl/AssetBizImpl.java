@@ -15,10 +15,12 @@ import com.gofobao.framework.api.model.direct_recharge_plus.DirectRechargePlusRe
 import com.gofobao.framework.api.model.direct_recharge_plus.DirectRechargePlusResponse;
 import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.entity.AssetLog;
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.AssetLogService;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
+import com.gofobao.framework.asset.service.impl.AssetLogServiceImpl;
 import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.request.VoRechargeReq;
 import com.gofobao.framework.asset.vo.request.VoSynAssetsRep;
@@ -28,6 +30,8 @@ import com.gofobao.framework.asset.vo.response.pc.VoViewAssetLogsWarpRes;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
+import com.gofobao.framework.common.jxl.ExcelException;
+import com.gofobao.framework.common.jxl.ExcelUtil;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -61,6 +65,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -797,6 +802,30 @@ public class AssetBizImpl implements AssetBiz {
         VoRechargeEntityWrapResp resp = VoBaseResp.ok("查询成功", VoRechargeEntityWrapResp.class);
         resp.getList().addAll(voRechargeEntityRespList);
         return ResponseEntity.ok(resp);
+    }
+
+    /**
+     * PC:资金流水导出到excel
+     * @param voAssetLogReq
+     * @param response
+     */
+    @Override
+    public void pcToExcel(VoAssetLogReq voAssetLogReq,HttpServletResponse response) {
+        List<AssetLog>assetLogs=assetLogService.pcToExcel(voAssetLogReq);
+        if(!CollectionUtils.isEmpty(assetLogs)){
+            LinkedHashMap<String,String>paramMaps= Maps.newLinkedHashMap();
+            paramMaps.put("createdAt","时间");
+            paramMaps.put("type","交易类型");
+            paramMaps.put("money","操作金额（分）");
+            paramMaps.put("useMoney","可用金额（分）");
+            paramMaps.put("remark","备注");
+            try {
+                ExcelUtil.listToExcel(assetLogs,paramMaps,"资金流水",response);
+            } catch (ExcelException e) {
+                e.printStackTrace();
+            }
+
+        }
     }
 
     @Override

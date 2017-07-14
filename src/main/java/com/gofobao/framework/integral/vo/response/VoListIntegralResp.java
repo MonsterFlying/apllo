@@ -38,6 +38,12 @@ public class VoListIntegralResp extends VoBaseResp{
     private String takeRates;
 
     /**
+     * 待收金额
+     */
+    private String  collectionMoney="0";
+
+
+    /**
      * 积分列表
      */
     private List<VoIntegral> voIntegralList;
