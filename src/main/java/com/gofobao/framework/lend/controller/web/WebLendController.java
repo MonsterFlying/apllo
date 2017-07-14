@@ -106,7 +106,7 @@ public class WebLendController {
      * @throws Exception
      */
     @ApiOperation(value = "移除有草出借黑名单", notes = "移除有草出借黑名单")
-    @PostMapping(value = "/v2/blacklist/lend")
+    @PostMapping(value = "/v2/blacklist/remove")
     public ResponseEntity<VoBaseResp> delLendBlacklist(@ModelAttribute @Valid VoDelLendBlacklist voDelLendBlacklist,
                                                        @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voDelLendBlacklist.setUserId(userId);
