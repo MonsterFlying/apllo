@@ -340,10 +340,6 @@ public class TenderBizImpl implements TenderBiz {
             releaseAt = borrow.getReleaseAt();
         }
 
-        if (!ObjectUtils.isEmpty(borrow.getLendId())) {
-            releaseAt = voCreateTenderReq.getLendReleaseAt();
-        }
-
         if (ObjectUtils.isEmpty(borrow.getLendId()) && (releaseAt.getTime() > nowDate.getTime())) {
             errerMessage.add("当前标的未到发布时间!");
             return false;
