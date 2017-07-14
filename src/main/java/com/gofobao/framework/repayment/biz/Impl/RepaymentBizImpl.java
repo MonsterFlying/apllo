@@ -326,7 +326,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
     }
 
     /**
-     * 校验还款
+     * 前置判断
      *
      * @param voRepayReq
      * @return
@@ -387,7 +387,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
 
 
-        int repayInterest = (int) (borrowRepayment.getInterest() * interestPercent);//还款利息
+        int repayInterest = (int) (borrowRepayment.getInterest() * interestPercent); //还款利息
         int repayMoney = borrowRepayment.getPrincipal() + repayInterest;//还款金额
 
         if (borrowType == 2) { // 秒表处理
@@ -995,10 +995,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Preconditions.checkNotNull(borrowUserThirdAccount, "借款人未开户!");
 
         List<Repay> repayList = null;
-        if (ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) {
+        if (ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) {  // 正常还款
             repayList = borrowRepaymentThirdBiz.getRepayList(voThirdBatchRepay);
-        } else {
-            //批次融资人还担保账户垫款
+        } else {  //批次融资人还担保账户垫款
             VoBatchRepayBailReq voBatchRepayBailReq = new VoBatchRepayBailReq();
             voBatchRepayBailReq.setRepaymentId(repaymentId);
             voBatchRepayBailReq.setInterestPercent(voBatchRepayBailReq.getInterestPercent());
