@@ -56,11 +56,6 @@ public class BorrowProvider {
 
     Gson GSON = new GsonBuilder().create();
 
-
-    @Autowired
-    private LendService lendService;
-    @Autowired
-    private TenderBiz tenderBiz;
     @Autowired
     private BorrowRepaymentThirdBiz borrowRepaymentThirdBiz;
     @Autowired
@@ -73,102 +68,6 @@ public class BorrowProvider {
     private MqHelper mqHelper;
     @Autowired
     private TenderRepository tenderRepository;
-
-    /**
-     * 初审
-     *
-     * @param msg
-     * @return
-     * @throws Exception
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public boolean doFirstVerify(Map<String, String> msg) throws Exception {
-        Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
-        log.info(String.format("触发标的初审: %s", borrowId));
-        Borrow borrow = borrowService.findByIdLock(borrowId);
-        if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 0)) {
-            return true;
-        }
-
-        if (!ObjectUtils.isEmpty(borrow.getLendId())) {
-            return verifyLendBorrow(borrow);      //有草出借初审
-        } else {
-            return verifyStandardBorrow(borrow);  //标准标的初审
-        }
-    }
-
-    /**
-     * 车贷标、净值标、渠道标、转让标初审
-     *
-     * @return
-     */
-    private boolean verifyStandardBorrow(Borrow borrow) {
-        Date nowDate = DateHelper.subSeconds(new Date(), 10);
-        borrow.setStatus(1);
-        borrow.setVerifyAt(nowDate);
-        Date releaseAt = borrow.getReleaseAt();
-        borrow.setReleaseAt(ObjectUtils.isEmpty(releaseAt) ? nowDate : releaseAt);   // 处理不填写发布时间的请款
-        borrowService.updateById(borrow);    //更新借款状态
-
-        // 自动投标前提:
-        // 1.没有设置标密码
-        // 2.车贷标, 渠道标, 流转表
-        // 3.标的年化率为 800 以上
-        Integer borrowType = borrow.getType();
-        ImmutableList<Integer> autoTenderBorrowType = ImmutableList.of(0, 1, 4);
-        if ((ObjectUtils.isEmpty(borrow.getPassword()))
-                && (autoTenderBorrowType.contains(borrowType)) && borrow.getApr() > 800) {
-            borrow.setIsLock(true);
-            borrowService.updateById(borrow);  // 锁住标的,禁止手动投标
-            if (borrow.getIsNovice()) {   // 对于新手标直接延迟8点后推送
-                Date noviceBorrowStandeReaseAt = DateHelper.addHours(DateHelper.beginOfDate(new Date()), 20);  // 新手标 能进行制动的时间
-                releaseAt = DateHelper.max(noviceBorrowStandeReaseAt, releaseAt);
-            }
-
-            //触发自动投标队列
-            MqConfig mqConfig = new MqConfig();
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_AUTO_TENDER);
-            mqConfig.setTag(MqTagEnum.AUTO_TENDER);
-            mqConfig.setSendTime(releaseAt);
-            ImmutableMap<String, String> body = ImmutableMap
-                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-            mqConfig.setMsg(body);
-            try {
-                log.info(String.format("borrowProvider autoTender send mq %s", GSON.toJson(body)));
-                mqHelper.convertAndSend(mqConfig);
-                return true;
-            } catch (Throwable e) {
-                log.error("borrowProvider autoTender send mq exception", e);
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * 摘草 生成借款 初审
-     *
-     * @param borrow
-     * @return
-     * @throws Exception
-     */
-    private boolean verifyLendBorrow(Borrow borrow) throws Exception {
-        Date nowDate = DateHelper.subSeconds(new Date(), 10);
-        borrow.setStatus(1);  //更新借款状态
-        borrow.setVerifyAt(nowDate);
-        Date releaseAt = borrow.getReleaseAt();
-        borrow.setReleaseAt(ObjectUtils.isEmpty(releaseAt) ? nowDate : releaseAt);
-        borrowService.save(borrow);   // 更改标的为可投标状态
-        Long lendId = borrow.getLendId();
-
-        Lend lend = lendService.findById(lendId);
-        VoCreateTenderReq voCreateTenderReq = new VoCreateTenderReq();
-        voCreateTenderReq.setUserId(lend.getUserId());
-        voCreateTenderReq.setBorrowId(borrow.getId());
-        voCreateTenderReq.setTenderMoney(MathHelper.myRound(borrow.getMoney() / 100.0, 2));
-        ResponseEntity<VoBaseResp> response = tenderBiz.createTender(voCreateTenderReq);
-        return response.getStatusCode().equals(HttpStatus.OK);
-    }
 
 
     /**

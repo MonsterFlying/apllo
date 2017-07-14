@@ -151,4 +151,19 @@ public interface BorrowBiz {
      * @return
      */
     boolean doTrusteePay(Long borrowId);
+
+    /**
+     * 初审
+     * @param borrowId
+     * @return
+     * @throws Exception
+     */
+    boolean doFirstVerify(Long borrowId) throws Exception;
+
+    /**
+     * pc初审
+     * @param voPcDoFirstVerity
+     * @return
+     */
+    ResponseEntity<VoBaseResp> pcFirstVerify(VoPcDoFirstVerity voPcDoFirstVerity) throws Exception;
 }

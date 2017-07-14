@@ -1,5 +1,6 @@
 package com.gofobao.framework.listener;
 
+import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnumContants;
@@ -30,6 +31,8 @@ public class BorrowListener {
 
     @Autowired
     private BorrowProvider borrowProvider;
+    @Autowired
+    private BorrowBiz borrowBiz;
 
     @RabbitHandler
     public void process(String message) {
@@ -52,7 +55,7 @@ public class BorrowListener {
             boolean bool = false;
             if (tag.equals(MqTagEnum.FIRST_VERIFY.getValue())) {  // 标的初审
                 try {
-                    bool = borrowProvider.doFirstVerify(msg);
+                    bool = borrowBiz.doFirstVerify(borrowId);
                 } catch (Throwable throwable) {
                     log.error("初审异常:", throwable);
                 }
