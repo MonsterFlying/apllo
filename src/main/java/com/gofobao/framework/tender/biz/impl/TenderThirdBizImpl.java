@@ -24,6 +24,7 @@ import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchNoTypeContant;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
@@ -78,6 +79,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
     private ThirdBatchLogService thirdBatchLogService;
     @Autowired
     private CapitalChangeHelper capitalChangeHelper;
+    @Autowired
+    private ThirdBatchLogBiz thirdBatchLogBiz;
 
     @Value("${gofobao.webDomain}")
     private String webDomain;
@@ -200,7 +203,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         for (Tender tender : tenderList) {
             txFee = 0;
 
-            if (tender.getThirdTransferFlag()) {//判断标的是否已在存管转让
+            if (!ObjectUtils.isEmpty(tender.getThirdTransferFlag()) && tender.getThirdTransferFlag()) {//判断标的是否已在存管转让
                 continue;
             }
 
@@ -276,6 +279,11 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(lendRepayRunResp.getRetCode())) {
             log.error("=============================即信投资人批次购买债权参数验证回调===========================");
             log.error("回调失败! msg:" + lendRepayRunResp.getRetMsg());
+        }else {
+            log.error("=============================即信投资人批次购买债权参数验证回调===========================");
+            log.error("即信投资人批次购买债权参数成功");
+            //更新批次状态
+            thirdBatchLogBiz.updateBatchLogState(lendRepayRunResp.getBatchNo(),NumberHelper.toLong(lendRepayRunResp.getAcqRes()));
         }
 
         try {

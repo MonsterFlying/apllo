@@ -4,6 +4,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.currency.biz.CurrencyBiz;
 import com.gofobao.framework.currency.vo.request.VoConvertCurrencyReq;
 import com.gofobao.framework.currency.vo.request.VoListCurrencyReq;
+import com.gofobao.framework.currency.vo.response.VoListCurrencyResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -27,13 +28,13 @@ public class CurrencyController {
 
     @ApiOperation("获取用户广富币列表")
     @GetMapping("pub/currency/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoBaseResp> list(@PathVariable Integer pageIndex,
-                                           @PathVariable Integer pageSize,
-                                           @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoListCurrencyResp> list(@PathVariable Integer pageIndex,
+                                           @PathVariable Integer pageSize/*,
+                                           @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
         VoListCurrencyReq voListCurrencyReq = new VoListCurrencyReq();
         voListCurrencyReq.setPageIndex(pageIndex);
         voListCurrencyReq.setPageSize(pageSize);
-        voListCurrencyReq.setUserId(userId);
+        voListCurrencyReq.setUserId(901L);
         return currencyBiz.list(voListCurrencyReq);
     }
 

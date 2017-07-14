@@ -2042,6 +2042,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @param voPcDoFirstVerity
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> pcFirstVerify(VoPcDoFirstVerity voPcDoFirstVerity) throws Exception{
         String paramStr = voPcDoFirstVerity.getParamStr();
         if (!SecurityHelper.checkSign(voPcDoFirstVerity.getSign(), paramStr)) {

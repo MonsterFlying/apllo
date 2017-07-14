@@ -110,7 +110,7 @@ public class LendController {
      * @throws Exception
      */
     @ApiOperation(value = "获取当前用户黑名单列表", notes = "获取当前用户黑名单列表")
-    @PostMapping(value = "/addLendBlacklist")
+    @PostMapping(value = "/userLendBlacklist")
     public ResponseEntity<VoViewLendBlacklists> getLendBlacklists(@ModelAttribute @Valid VoGetLendBlacklists voGetLendBlacklists,
                                                                   @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voGetLendBlacklists.setUserId(userId);
@@ -140,7 +140,7 @@ public class LendController {
      * @throws Exception
      */
     @ApiOperation(value = "移除有草出借黑名单", notes = "移除有草出借黑名单")
-    @PostMapping(value = "/v2/blacklist/lend")
+    @PostMapping(value = "/v2/blacklist/remove")
     public ResponseEntity<VoBaseResp> delLendBlacklist(@ModelAttribute @Valid VoDelLendBlacklist voDelLendBlacklist,
                                                        @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voDelLendBlacklist.setUserId(userId);

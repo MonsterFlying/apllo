@@ -12,4 +12,6 @@ import java.util.List;
 @Data
 public class VoViewUserLendInfoWarpRes extends VoBaseResp{
     private List<UserLendInfo> lendInfos= Lists.newArrayList();
+
+    private Integer totalCount=0;
 }

@@ -126,9 +126,7 @@ public class LendBizImpl implements LendBiz {
         try {
             VoViewLendInfoListWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewLendInfoListWarpRes.class);
             List<LendInfoList> lends = lendService.infoList(userId, lendId);
-      /*      if (ObjectUtils.isEmpty(lends)) {
-                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非法请求", VoViewLendInfoListWarpRes.class));
-            }*/
+
             warpRes.setListList(lends);
             return ResponseEntity.ok(warpRes);
         } catch (Throwable e) {
@@ -145,7 +143,10 @@ public class LendBizImpl implements LendBiz {
     public ResponseEntity<VoViewUserLendInfoWarpRes> byUserId(VoUserLendReq voUserLendReq) {
         try {
             VoViewUserLendInfoWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewUserLendInfoWarpRes.class);
-            List<UserLendInfo> lends = lendService.queryUser(voUserLendReq);
+            Map<String,Object>resultMaps=lendService.queryUser(voUserLendReq);
+            List<UserLendInfo> lends =(List<UserLendInfo>) resultMaps.get("lendList");
+            Integer totalCount=Integer.valueOf(resultMaps.get("totalCount").toString());
+            warpRes.setTotalCount(totalCount);
             warpRes.setLendInfos(lends);
             return ResponseEntity.ok(warpRes);
         } catch (Throwable e) {
@@ -438,7 +439,7 @@ public class LendBizImpl implements LendBiz {
                     .eq("userId", voGetLendBlacklists.getUserId())
                     .build();
 
-            Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(Sort.Direction.ASC));
+            Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(Sort.Direction.ASC,"id"));
 
             List<LendBlacklist> lendBlacklists = lendBlackListService.findList(lbs, pageable);
             if (CollectionUtils.isEmpty(lendBlacklists)) {

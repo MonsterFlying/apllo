@@ -1,6 +1,7 @@
 package com.gofobao.framework.currency.vo.response;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.google.common.collect.Lists;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -41,7 +42,7 @@ public class VoListCurrencyResp extends VoBaseResp {
      * 广福币列表
      */
     @ApiModelProperty("广福币列表")
-    private List<VoCurrency> voCurrencyList;
+    private List<VoCurrency> voCurrencyList= Lists.newArrayList();
 
 }
 

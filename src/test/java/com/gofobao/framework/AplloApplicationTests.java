@@ -4,8 +4,11 @@ import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileRequest;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileResponse;
+import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
+import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.api.model.batch_bail_repay.BailRepayRun;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
@@ -28,7 +31,6 @@ import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
 import com.gofobao.framework.common.assets.AssetsChangeEntity;
 import com.gofobao.framework.common.assets.AssetsChangeEnum;
 import com.gofobao.framework.common.assets.AssetsChangeHelper;
-import com.gofobao.framework.common.jxl.ExcelUtil;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -170,7 +172,7 @@ public class AplloApplicationTests {
     public void creditInvestQuery() {
         CreditInvestQueryReq request = new CreditInvestQueryReq();
         request.setChannel(ChannelContant.HTML);
-        request.setAccountId("6212462040000250045");
+        request.setAccountId("6212462040000550055");
         request.setOrgOrderId("GFBLP_1498557194741");
         request.setAcqRes("1");
         CreditInvestQueryResp response = jixinManager.send(JixinTxCodeEnum.CREDIT_INVEST_QUERY, request, CreditInvestQueryResp.class);
@@ -191,7 +193,7 @@ public class AplloApplicationTests {
 
     private void doFirstVerify() {
         try {
-            borrowBiz.doFirstVerify(169850L);
+            borrowBiz.doFirstVerify(169853L);
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -224,7 +226,7 @@ public class AplloApplicationTests {
 
     private void doAgainVerify() {
         Map<String, String> msg = new HashMap<>();
-        msg.put("borrowId", "169820");
+        msg.put("borrowId", "169857");
         try {
             borrowProvider.doAgainVerify(msg);
         } catch (Throwable e) {
@@ -234,7 +236,7 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("103733");
+        batchDetailsQueryReq.setBatchNo("150530");
         batchDetailsQueryReq.setBatchTxDate("20170714");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
@@ -265,12 +267,54 @@ public class AplloApplicationTests {
         }
     }
 
-
+    private void noTransferBorrowAgainVerify() {
+        Borrow borrow = borrowService.findById(169849L);
+        try {
+            borrowBiz.notTransferBorrowAgainVerify(borrow);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
 
     @Test
     public void test() {
 
 
+
+        /*BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
+        balanceQueryRequest.setChannel(ChannelContant.HTML);
+        balanceQueryRequest.setAccountId("6212462040000550055");
+        BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
+        System.out.println(balanceQueryResponse);*/
+
+        //根据手机号查询存管账户
+        //findAccountByMobile();
+        //受托支付
+        //trusteePay();
+        //签约查询
+        //creditAuthQuery();
+        //取消批次
+        //batchCancel();
+        //查询投资人购买债权
+        //creditInvestQuery();
+        //垫付回调
+        //advanceCall();
+        //初审
+        //doFirstVerify();
+        //还款处理
+        //repayDeal();
+        //查询标的集合
+        //findThirdBorrowList();
+        //复审
+        doAgainVerify();
+        //批次详情查询
+        //batchDetailsQuery();
+        //查询投标申请
+        //bidApplyQuery();
+        //转让标复审回调
+        //transferBorrowAgainVerify();
+        //非转让标复审问题
+        //noTransferBorrowAgainVerify();
     }
 
 }

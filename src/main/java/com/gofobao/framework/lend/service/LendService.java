@@ -5,7 +5,6 @@ import com.gofobao.framework.lend.entity.Lend;
 import com.gofobao.framework.lend.vo.request.VoUserLendReq;
 import com.gofobao.framework.lend.vo.response.LendInfo;
 import com.gofobao.framework.lend.vo.response.LendInfoList;
-import com.gofobao.framework.lend.vo.response.UserLendInfo;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -68,7 +67,7 @@ public interface LendService {
     List<LendInfoList> infoList(Long userId, Long lendId);
 
 
-    List<UserLendInfo>queryUser(VoUserLendReq voUserLendReq);
+    Map<String, Object> queryUser(VoUserLendReq voUserLendReq);
 
 
     long count(Specification<Lend> specification);
