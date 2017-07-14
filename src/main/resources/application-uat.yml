@@ -76,9 +76,8 @@ logging:
   pattern:
     console: "%d %-5level %logger : %msg%n"
   level:
-#    org.springframework.web: DEBUG
-#    guru.springframework.controllers: DEBUG
-#    org.hibernate: DEBUG
-#    com.gofobao: DEBUG
+    org.springframework.web: DEBUG
+    guru.springframework.controllers: DEBUG
+    org.hibernate: DEBUG
+    com.gofobao: DEBUG
     root: DEBUG
-debug: true
