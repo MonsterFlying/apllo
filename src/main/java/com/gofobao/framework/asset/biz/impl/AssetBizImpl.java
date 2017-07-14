@@ -334,7 +334,6 @@ public class AssetBizImpl implements AssetBiz {
         directRechargeOnlineRequest.setAcqRes(users.getId().toString());
         directRechargeOnlineRequest.setChannel(ChannelContant.getchannel(request));
         directRechargeOnlineRequest.setTxAmount(voRechargeReq.getMoney().toString());
-        VoHtmlResp resp = VoBaseResp.ok("成功", VoHtmlResp.class);
         DirectRechargeOnlineResponse directRechargeOnlineResponse = jixinManager.send(JixinTxCodeEnum.DIRECT_RECHARGE_ONLINE, directRechargeOnlineRequest, DirectRechargeOnlineResponse.class);
         if (ObjectUtils.isEmpty(directRechargeOnlineResponse)) {
             return ResponseEntity
@@ -342,11 +341,12 @@ public class AssetBizImpl implements AssetBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前网络不稳定, 请稍后重试!"));
         }
         Gson gson = new Gson();
-        Integer state = 0;
+        int state;
         if (!directRechargeOnlineResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
             log.error(String.format("请求即信联机充值异常: %s", gson.toJson(directRechargeOnlineResponse)));
             state = 2;
         } else {
+            log.info(String.format("充值成功: %s", gson.toJson(directRechargeOnlineResponse)));
             state = 1;
             CapitalChangeEntity capitalChangeEntity = new CapitalChangeEntity();
             capitalChangeEntity.setToUserId(userThirdAccount.getUserId());
@@ -385,7 +385,7 @@ public class AssetBizImpl implements AssetBiz {
             ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
             mqConfig.setMsg(body);
             mqHelper.convertAndSend(mqConfig);
-
+            log.info("触发充值记录调度");
             return ResponseEntity.ok(VoBaseResp.ok("充值成功"));
         } else {
             return ResponseEntity
