@@ -81,6 +81,7 @@ public class AutoTenderProvider {
             Set<Long> autoTenderIds = new HashSet<>();
             AutoTender autoTender = null;
             while (itAutoTender.hasNext()) { // 将合格的自动投标  放入消息队列
+                autoTender = new AutoTender() ;
                 voFindAutoTender = itAutoTender.next();
                 if ((moneyYes >= borrowMoney) || (mostAuto > 0 && moneyYes >= mostAuto)) {  // 判断是否满标或者 达到自动投标最大额度
                     bool = true;

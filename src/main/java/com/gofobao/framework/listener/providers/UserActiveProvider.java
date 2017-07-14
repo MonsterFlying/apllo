@@ -50,8 +50,7 @@ public class UserActiveProvider {
     @Autowired
     UserThirdAccountService userThirdAccountService  ;
 
-    @Autowired
-    JixinManager jixinManager ;
+
 
 
     /**
