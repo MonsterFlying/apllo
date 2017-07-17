@@ -951,6 +951,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 tender.setState(3);
                 tenderService.updateById(tender);
 
+                /**
+                 * @// TODO: 2017/7/17  
+                 */
+                
                 //收到车贷标回款扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
                 //updateUserCacheByReceivedRepay(borrowCollection, tender, borrow);
                 //项目回款短信通知

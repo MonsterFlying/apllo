@@ -5,9 +5,10 @@ import com.gofobao.framework.api.model.batch_repay.Repay;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.vo.request.VoBatchBailRepayReq;
-import com.gofobao.framework.repayment.vo.request.VoBatchRepayBailReq;
+import com.gofobao.framework.repayment.vo.request.VoBuildThirdRepayReq;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchRepay;
+import com.gofobao.framework.repayment.vo.response.VoBuildThirdRepayResp;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
@@ -111,4 +112,12 @@ public interface BorrowRepaymentThirdBiz {
      * @throws Exception
      */
     List<BailRepay> getBailRepayList(VoBatchBailRepayReq voBatchBailRepayReq) throws Exception;
+
+    /**
+     * 构建存管还款项
+     * @param voBuildThirdRepayReq
+     * @return
+     * @throws Exception
+     */
+    VoBuildThirdRepayResp buildThirdRepay(VoBuildThirdRepayReq voBuildThirdRepayReq) throws Exception;
 }
