@@ -32,6 +32,7 @@ import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.*;
+import com.gofobao.framework.repayment.vo.response.VoBuildThirdRepayResp;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchNoTypeContant;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
@@ -1089,5 +1090,16 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 borrowCollectionService.updateById(borrowCollection);
             }
         } while (false);
+    }
+
+    /**
+     * 构建存管还款项
+     * @param voBuildThirdRepayReq
+     * @return
+     * @throws Exception
+     */
+    public VoBuildThirdRepayResp buildThirdRepay(VoBuildThirdRepayReq voBuildThirdRepayReq) throws Exception{
+        VoBuildThirdRepayResp resp = new VoBuildThirdRepayResp();
+        return null;
     }
 }

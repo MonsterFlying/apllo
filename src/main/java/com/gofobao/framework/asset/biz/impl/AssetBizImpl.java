@@ -331,7 +331,7 @@ public class AssetBizImpl implements AssetBiz {
         directRechargeOnlineRequest.setAccountId(userThirdAccount.getAccountId());
         directRechargeOnlineRequest.setIdType(IdTypeContant.ID_CARD);
         directRechargeOnlineRequest.setIdNo(userThirdAccount.getIdNo());
-        directRechargeOnlineRequest.setName(users.getRealname());
+        directRechargeOnlineRequest.setName(userThirdAccount.getName());
         directRechargeOnlineRequest.setMobile(userThirdAccount.getMobile());
         directRechargeOnlineRequest.setCardNo(userThirdAccount.getCardNo());
         directRechargeOnlineRequest.setCurrency("156");

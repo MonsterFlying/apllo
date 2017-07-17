@@ -239,7 +239,7 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("155020");
+        batchDetailsQueryReq.setBatchNo("150052");
         batchDetailsQueryReq.setBatchTxDate("20170714");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
@@ -285,14 +285,6 @@ public class AplloApplicationTests {
     @Test
     public void test() {
 
-        Map<String, String> params = new Gson().fromJson("{ \"subPacks\":\"[{\\\"accountId\\\":\\\"6212462040000450041\\\",\\\"authCode\\\":\\\"20161003154447211469\\\",\\\"productId\\\":\\\"GA69857\\\",\\\"orderId\\\":\\\"GFBLR_1500018620571\\\",\\\"forAccountId\\\":\\\"6212462040000300030\\\",\\\"txAmount\\\":\\\"2000\\\",\\\"bidFee\\\":\\\"0\\\",\\\"debtFee\\\":\\\"0\\\"},{\\\"bidFee\\\":\\\"0\\\",\\\"debtFee\\\":\\\"0\\\",\\\"accountId\\\":\\\"6212462040000950032\\\",\\\"authCode\\\":\\\"20161003154539211476\\\",\\\"productId\\\":\\\"GA69857\\\",\\\"orderId\\\":\\\"GFBLR_1500018620587\\\",\\\"forAccountId\\\":\\\"6212462040000300030\\\",\\\"txAmount\\\":\\\"1000\\\"}]\", \"bankCode\":\"30050000\",\"batchNo\":\"155020\",\"seqNo\":\"935061\",\"txTime\":\"155020\",\"channel\":\"000002\",\"retNotifyURL\":\"http://lang.hk1.mofasuidao.cn/pub/repayment/v2/third/batch/lendrepay/run\",\"version\":\"10\",\"txAmount\":\"3000.00\",\"txCounts\":\"2\",\"notifyURL\":\"http://lang.hk1.mofasuidao.cn/pub/repayment/v2/third/batch/lendrepay/check\",\"instCode\":\"00960001\",\"acqRes\":\"169857\",\"txCode\":\"batchLendPay\",\"txDate\":\"20170714\"}", new TypeToken<Map<String, String>>() {
-        }.getType());
-        String unSign = StringHelper.mergeMap(params);
-        String sign = certHelper.doSign(unSign);
-        params.put("sign", sign);
-        log.info("=============================================");
-        log.info(String.format("[%s]报文流水：%s%s%s", "batchLendPay", "req.getTxDate()"," req.getTxTime()","req.getSeqNo()"));
-        log.info(String.format("即信请求报文: url=%s body=%s", "", gson.toJson(params)));
 
         /*BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
@@ -321,7 +313,7 @@ public class AplloApplicationTests {
         //复审
         //doAgainVerify();
         //批次详情查询
-        //batchDetailsQuery();
+        batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调

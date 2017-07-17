@@ -1083,7 +1083,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
                 if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
                     String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-                    throw new Exception("广富币兑换异常：" + msg);
+                    throw new Exception("发放投资奖励异常：" + msg);
                 }
 
                 entity = new CapitalChangeEntity();
@@ -1134,9 +1134,10 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         //借款入账
+        //判断借款是否是受托支付：如果是受托支付则把款给收款人
         entity = new CapitalChangeEntity();
         entity.setType(CapitalChangeEnum.Borrow);
-        entity.setUserId(borrow.getUserId());
+        entity.setUserId(ObjectUtils.isEmpty(borrow.getTakeUserId()) ? borrow.getUserId() : borrow.getTakeUserId());
         entity.setMoney(borrow.getMoney());
         entity.setRemark("通过[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]借到的款");
 
@@ -2039,11 +2040,12 @@ public class BorrowBizImpl implements BorrowBiz {
 
     /**
      * pc初审
+     *
      * @param voPcDoFirstVerity
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> pcFirstVerify(VoPcDoFirstVerity voPcDoFirstVerity) throws Exception{
+    public ResponseEntity<VoBaseResp> pcFirstVerify(VoPcDoFirstVerity voPcDoFirstVerity) throws Exception {
         String paramStr = voPcDoFirstVerity.getParamStr();
         if (!SecurityHelper.checkSign(voPcDoFirstVerity.getSign(), paramStr)) {
             return ResponseEntity
@@ -2053,12 +2055,12 @@ public class BorrowBizImpl implements BorrowBiz {
 
         Map<String, String> paramMap = new Gson().fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         Long borrowId = NumberHelper.toLong(paramMap.get("borrowId"));
-        if (doFirstVerify(borrowId)){
+        if (doFirstVerify(borrowId)) {
             return ResponseEntity.ok(VoBaseResp.ok("初审成功!"));
-        }else {
+        } else {
             return ResponseEntity.
                     badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR,"初审失败!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "初审失败!"));
         }
     }
 }
