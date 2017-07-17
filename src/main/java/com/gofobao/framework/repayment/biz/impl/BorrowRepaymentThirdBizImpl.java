@@ -1092,14 +1092,4 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         } while (false);
     }
 
-    /**
-     * 构建存管还款项
-     * @param voBuildThirdRepayReq
-     * @return
-     * @throws Exception
-     */
-    public VoBuildThirdRepayResp buildThirdRepay(VoBuildThirdRepayReq voBuildThirdRepayReq) throws Exception{
-        VoBuildThirdRepayResp resp = new VoBuildThirdRepayResp();
-        return null;
-    }
 }

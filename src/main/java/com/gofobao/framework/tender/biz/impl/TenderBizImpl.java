@@ -103,7 +103,6 @@ public class TenderBizImpl implements TenderBiz {
      * @return
      * @throws Exception
      */
-    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voCreateTenderReq.getUserId());
         if (ObjectUtils.isEmpty(userThirdAccount)) {
@@ -183,9 +182,7 @@ public class TenderBizImpl implements TenderBiz {
         entity.setToUserId(borrow.getUserId());
         entity.setMoney(borrowTender.getValidMoney());
         entity.setRemark("投标冻结资金");
-        if (!capitalChangeHelper.capitalChange(entity)) {
-            throw new Exception("资金操作失败！");
-        }
+        capitalChangeHelper.capitalChange(entity);
 
         borrow.setMoneyYes(borrow.getMoneyYes() + validateMoney);
         borrow.setTenderCount((borrow.getTenderCount() + 1));

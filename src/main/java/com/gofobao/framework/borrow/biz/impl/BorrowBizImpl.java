@@ -398,7 +398,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow) {
+    public ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow) throws Exception{
         Long userId = voAddNetWorthBorrow.getUserId();
         String releaseAtStr = voAddNetWorthBorrow.getReleaseAt();
         Integer money = (int) voAddNetWorthBorrow.getMoney();
@@ -492,7 +492,9 @@ public class BorrowBizImpl implements BorrowBiz {
         try {
             borrowId = insertBorrow(voAddNetWorthBorrow, userId);  // 插入标
         } catch (Throwable e) {
+
             log.error("新增借款异常：", e);
+            throw new Exception(e) ;
         }
 
         if (borrowId <= 0) {
@@ -1226,7 +1228,7 @@ public class BorrowBizImpl implements BorrowBiz {
         log.debug("-------updateUserCacheByTenderSuccess---" + GSON.toJson(borrow) + "-------");
         log.debug("------------------");
         log.debug("-------updateUserCacheByTenderSuccess---" + GSON.toJson(tender) + "-------");
-        if ((borrow.getType() == 0 || borrow.getType() == 4) && (!borrow.isTransfer())
+        if ((!borrow.isTransfer())
                 && (!userCache.getTenderTuijian()) && (!userCache.getTenderQudao())) {
             //首次投资推荐标满2000元赠送流量
             Set<Integer> tempSet = new HashSet<>();

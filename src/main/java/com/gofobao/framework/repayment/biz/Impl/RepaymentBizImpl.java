@@ -7,6 +7,7 @@ import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeReq;
+import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeResp;
 import com.gofobao.framework.api.model.batch_bail_repay.BailRepay;
 import com.gofobao.framework.api.model.batch_bail_repay.BailRepayRun;
 import com.gofobao.framework.api.model.batch_bail_repay.BatchBailRepayReq;
@@ -63,10 +64,7 @@ import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.*;
-import com.gofobao.framework.repayment.vo.response.RepayCollectionLog;
-import com.gofobao.framework.repayment.vo.response.RepaymentOrderDetail;
-import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
-import com.gofobao.framework.repayment.vo.response.VoViewRepaymentOrderDetailWarpRes;
+import com.gofobao.framework.repayment.vo.response.*;
 import com.gofobao.framework.repayment.vo.response.pc.VoCollection;
 import com.gofobao.framework.repayment.vo.response.pc.VoOrdersList;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewCollectionWarpRes;
@@ -336,7 +334,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      */
     private ResponseEntity<VoBaseResp> checkRepay(VoRepayReq voRepayReq) {
-        int lateInterest = 0;//逾期利息
+        int lateInterest = 0;// 逾期利息
         Double interestPercent = voRepayReq.getInterestPercent();
         Long userId = voRepayReq.getUserId();
         Long repaymentId = voRepayReq.getRepaymentId();
@@ -952,9 +950,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 tenderService.updateById(tender);
 
                 /**
-                 * @// TODO: 2017/7/17  
+                 * @// TODO: 2017/7/17
                  */
-                
+
                 //收到车贷标回款扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
                 //updateUserCacheByReceivedRepay(borrowCollection, tender, borrow);
                 //项目回款短信通知
@@ -1045,9 +1043,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
         balanceFreezeReq.setTxAmount(StringHelper.formatDouble(txAmount, false));
         balanceFreezeReq.setOrderId(orderId);
         balanceFreezeReq.setChannel(ChannelContant.HTML);
-        BatchDetailsQueryResp batchDetailsQueryResp = jixinManager.send(JixinTxCodeEnum.BATCH_REPAY, balanceFreezeReq, BatchDetailsQueryResp.class);
-        if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(batchDetailsQueryResp.getRetCode()))) {
-            throw new Exception("即信批次还款冻结资金失败：" + batchDetailsQueryResp.getRetMsg());
+        BalanceFreezeResp balanceFreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BalanceFreezeResp.class);
+        if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceFreezeResp.getRetCode()))) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, balanceFreezeResp.getRetMsg()));
         }
 
         BatchRepayReq request = new BatchRepayReq();
@@ -1061,7 +1061,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
         request.setTxCounts(StringHelper.toString(repayList.size()));
         BatchRepayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_REPAY, request, BatchRepayResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
-            throw new Exception("即信批次还款失败：" + response.getRetMsg());
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, balanceFreezeResp.getRetMsg()));
         }
         return ResponseEntity.ok(VoBaseResp.ok("还款成功"));
     }
@@ -1389,9 +1391,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
         balanceFreezeReq.setTxAmount(StringHelper.formatDouble(txAmount, false));
         balanceFreezeReq.setOrderId(orderId);
         balanceFreezeReq.setChannel(ChannelContant.HTML);
-        BatchDetailsQueryResp batchDetailsQueryResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BatchDetailsQueryResp.class);
-        if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(batchDetailsQueryResp.getRetCode()))) {
-            throw new Exception("即信批次还款冻结资金失败：" + batchDetailsQueryResp.getRetMsg());
+        BalanceFreezeResp balanceFreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BalanceFreezeResp.class);
+        if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceFreezeResp.getRetCode()))) {
+            throw new Exception("即信批次还款冻结资金失败：" + balanceFreezeResp.getRetMsg());
         }
 
         BatchBailRepayReq request = new BatchBailRepayReq();
@@ -1599,9 +1601,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
         balanceFreezeReq.setTxAmount(StringHelper.formatDouble(txAmount, false));
         balanceFreezeReq.setOrderId(orderId);
         balanceFreezeReq.setChannel(ChannelContant.HTML);
-        BatchDetailsQueryResp batchDetailsQueryResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BatchDetailsQueryResp.class);
-        if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(batchDetailsQueryResp.getRetCode()))) {
-            throw new Exception("即信批次还款冻结资金失败：" + batchDetailsQueryResp.getRetMsg());
+        BalanceFreezeResp balanceFreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BalanceFreezeResp.class);
+        if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceFreezeResp.getRetCode()))) {
+            throw new Exception("即信批次还款冻结资金失败：" + balanceFreezeResp.getRetMsg());
         }
 
 
@@ -1621,4 +1623,17 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
         return ResponseEntity.ok(VoBaseResp.ok("批次融资人还担保账户垫款成功!"));
     }
+
+    /**
+     * 构建存管还款项
+     *
+     * @param voBuildThirdRepayReq
+     * @return
+     * @throws Exception
+     */
+    public VoBuildThirdRepayResp buildThirdRepay(VoBuildThirdRepayReq voBuildThirdRepayReq) throws Exception {
+        VoBuildThirdRepayResp resp = new VoBuildThirdRepayResp();
+        return null;
+    }
+
 }

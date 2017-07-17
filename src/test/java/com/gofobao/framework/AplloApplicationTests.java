@@ -229,7 +229,7 @@ public class AplloApplicationTests {
 
     private void doAgainVerify() {
         Map<String, String> msg = new HashMap<>();
-        msg.put("borrowId", "169857");
+        msg.put("borrowId", "169858");
         try {
             borrowProvider.doAgainVerify(msg);
         } catch (Throwable e) {
@@ -262,7 +262,7 @@ public class AplloApplicationTests {
     }
 
     private void transferBorrowAgainVerify() {
-        Borrow borrow = borrowService.findById(165227L);
+        Borrow borrow = borrowService.findById(169858L);
         try {
             borrowBiz.transferBorrowAgainVerify(borrow);
         } catch (Throwable e) {
@@ -311,13 +311,13 @@ public class AplloApplicationTests {
         //查询标的集合
         //findThirdBorrowList();
         //复审
-        //doAgainVerify();
+        doAgainVerify();
         //批次详情查询
-        batchDetailsQuery();
+        //batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调
-        //transferBorrowAgainVerify();
+        //ransferBorrowAgainVerify();
         //非转让标复审问题
         //noTransferBorrowAgainVerify();
     }

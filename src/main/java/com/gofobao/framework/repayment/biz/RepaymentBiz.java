@@ -6,6 +6,7 @@ import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.vo.request.*;
+import com.gofobao.framework.repayment.vo.response.VoBuildThirdRepayResp;
 import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
 import com.gofobao.framework.repayment.vo.response.VoViewRepaymentOrderDetailWarpRes;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewCollectionWarpRes;
@@ -26,7 +27,8 @@ public interface RepaymentBiz {
     ResponseEntity<VoViewCollectionOrderListWarpResp> repaymentList(VoCollectionOrderReq voCollectionOrderReq);
 
     /**
-     *PC：还款计划列表
+     * PC：还款计划列表
+     *
      * @param listReq
      * @return
      */
@@ -43,10 +45,12 @@ public interface RepaymentBiz {
 
     /**
      * pc：未还款详情列表
+     *
      * @param collectionListReq
      * @return
      */
-    ResponseEntity<VoViewCollectionWarpRes>orderList(VoCollectionListReq collectionListReq);
+    ResponseEntity<VoViewCollectionWarpRes> orderList(VoCollectionListReq collectionListReq);
+
     /**
      * 标还款记录
      *
@@ -102,6 +106,7 @@ public interface RepaymentBiz {
 
     /**
      * pc 垫付
+     *
      * @param voPcAdvanceReq
      * @return
      * @throws Exception
@@ -110,9 +115,19 @@ public interface RepaymentBiz {
 
     /**
      * pc 立即还款
+     *
      * @param voPcInstantlyRepaymentReq
      * @return
      * @throws Exception
      */
     ResponseEntity<VoBaseResp> pcRepay(VoPcInstantlyRepaymentReq voPcInstantlyRepaymentReq) throws Exception;
+
+    /**
+     * 构建存管还款项
+     *
+     * @param voBuildThirdRepayReq
+     * @return
+     * @throws Exception
+     */
+    VoBuildThirdRepayResp buildThirdRepay(VoBuildThirdRepayReq voBuildThirdRepayReq) throws Exception;
 }

@@ -113,11 +113,4 @@ public interface BorrowRepaymentThirdBiz {
      */
     List<BailRepay> getBailRepayList(VoBatchBailRepayReq voBatchBailRepayReq) throws Exception;
 
-    /**
-     * 构建存管还款项
-     * @param voBuildThirdRepayReq
-     * @return
-     * @throws Exception
-     */
-    VoBuildThirdRepayResp buildThirdRepay(VoBuildThirdRepayReq voBuildThirdRepayReq) throws Exception;
 }
