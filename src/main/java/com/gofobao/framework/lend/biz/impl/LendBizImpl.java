@@ -13,9 +13,11 @@ import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.lend.biz.LendBiz;
 import com.gofobao.framework.lend.entity.Lend;
 import com.gofobao.framework.lend.entity.LendBlacklist;
+import com.gofobao.framework.lend.repository.LendBlacklistRepository;
 import com.gofobao.framework.lend.service.LendBlackListService;
 import com.gofobao.framework.lend.service.LendService;
 import com.gofobao.framework.lend.vo.request.*;
@@ -23,6 +25,7 @@ import com.gofobao.framework.lend.vo.response.*;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
@@ -72,10 +75,13 @@ public class LendBizImpl implements LendBiz {
     private BorrowService borrowService;
     @Autowired
     private MqHelper mqHelper;
-
+    @Autowired
+    private UsersRepository usersRepository;
     @Autowired
     private UserThirdAccountService userThirdAccountService;
 
+    @Autowired
+    private LendBlacklistRepository lendBlacklistRepository;
 
     /**
      * 出借列表
@@ -87,9 +93,9 @@ public class LendBizImpl implements LendBiz {
     public ResponseEntity<VoViewLendListWarpRes> list(Page page) {
         try {
             VoViewLendListWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewLendListWarpRes.class);
-            Map<String,Object> resultMaps = lendService.list(page);
-            Integer totalCount=Integer.valueOf(resultMaps.get("totalCount").toString());
-            List<VoViewLend>  lends=(List<VoViewLend>) resultMaps.get("lends");
+            Map<String, Object> resultMaps = lendService.list(page);
+            Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
+            List<VoViewLend> lends = (List<VoViewLend>) resultMaps.get("lends");
             warpRes.setVoViewLends(lends);
             warpRes.setTotalCount(totalCount);
             return ResponseEntity.ok(warpRes);
@@ -143,9 +149,9 @@ public class LendBizImpl implements LendBiz {
     public ResponseEntity<VoViewUserLendInfoWarpRes> byUserId(VoUserLendReq voUserLendReq) {
         try {
             VoViewUserLendInfoWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewUserLendInfoWarpRes.class);
-            Map<String,Object>resultMaps=lendService.queryUser(voUserLendReq);
-            List<UserLendInfo> lends =(List<UserLendInfo>) resultMaps.get("lendList");
-            Integer totalCount=Integer.valueOf(resultMaps.get("totalCount").toString());
+            Map<String, Object> resultMaps = lendService.queryUser(voUserLendReq);
+            List<UserLendInfo> lends = (List<UserLendInfo>) resultMaps.get("lendList");
+            Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
             warpRes.setTotalCount(totalCount);
             warpRes.setLendInfos(lends);
             return ResponseEntity.ok(warpRes);
@@ -276,14 +282,14 @@ public class LendBizImpl implements LendBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoAutoTenderInfo.class));
         }
 
-        if(userThirdAccount.getAutoTransferState() != 1){
+        if (userThirdAccount.getAutoTransferState() != 1) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoAutoTenderInfo.class));
         }
 
 
-        if(userThirdAccount.getAutoTenderState() != 1){
+        if (userThirdAccount.getAutoTenderState() != 1) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoAutoTenderInfo.class));
@@ -432,6 +438,7 @@ public class LendBizImpl implements LendBiz {
         List<VoLendBlacklist> voLendBlacklists = new ArrayList<>();
         int pageIndex = voGetLendBlacklists.getPageIndex();
         int pageSize = voGetLendBlacklists.getPageSize();
+        Long totalCount = 0L;
         do {
 
             Specification<LendBlacklist> lbs = Specifications
@@ -439,20 +446,30 @@ public class LendBizImpl implements LendBiz {
                     .eq("userId", voGetLendBlacklists.getUserId())
                     .build();
 
-            Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(Sort.Direction.ASC,"id"));
+            Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(Sort.Direction.ASC, "id"));
 
-            List<LendBlacklist> lendBlacklists = lendBlackListService.findList(lbs, pageable);
+            Map<String, Object> resultMaps = lendBlackListService.findList(lbs, pageable);
+            List<LendBlacklist> lendBlacklists = (List<LendBlacklist>) resultMaps.get("blacklist");
+            totalCount = Long.valueOf(resultMaps.get("totalCount").toString());
+
             if (CollectionUtils.isEmpty(lendBlacklists)) {
                 break;
             }
 
-            voLendBlacklists = GSON.fromJson(GSON.toJson(lendBlacklists), new TypeToken<LendBlacklist>() {
-            }.getType());
+            lendBlacklists.stream().forEach(p -> {
+                VoLendBlacklist blacklist = new VoLendBlacklist();
+                Users user = usersRepository.findOne(p.getUserId());
+                blacklist.setCreateAt(DateHelper.dateToString(p.getCreatedAt()));
+                blacklist.setUsername(StringUtils.isEmpty(user.getUsername()) ? UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM) : user.getUsername());
+                blacklist.setBlackUserId(p.getBlackUserId());
+                voLendBlacklists.add(blacklist);
+            });
 
         } while (false);
         voViewLendBlacklists.setBlacklists(voLendBlacklists);
         voViewLendBlacklists.setPageIndex(pageIndex);
         voViewLendBlacklists.setPageSize(pageSize);
+        voViewLendBlacklists.setTotalCount(totalCount.intValue());
         return ResponseEntity.ok(voViewLendBlacklists);
     }
 
@@ -465,6 +482,16 @@ public class LendBizImpl implements LendBiz {
      */
     public ResponseEntity<VoBaseResp> addLendBlacklist(VoAddLendBlacklist voAddLendBlacklist) {
         LendBlacklist lendBlacklist = new LendBlacklist();
+
+        Specification specification = Specifications.<LendBlacklist>and()
+                .eq("blackUserId", voAddLendBlacklist.getBlackUserId())
+                .eq("userId", voAddLendBlacklist.getUserId())
+                .build();
+        LendBlacklist lendBlacklist1 = lendBlacklistRepository.findOne(specification);
+        if(!ObjectUtils.isEmpty(lendBlacklist1)){
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,"該用戶已被拉黑過啦"));
+        }
         lendBlacklist.setBlackUserId(voAddLendBlacklist.getBlackUserId());
         lendBlacklist.setUserId(voAddLendBlacklist.getUserId());
         lendBlacklist.setCreatedAt(new Date());
@@ -562,8 +589,9 @@ public class LendBizImpl implements LendBiz {
                     .build();
 
             Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(Sort.Direction.ASC));
-            List<LendBlacklist> lendBlacklistList = lendBlackListService.findList(lbs, pageable);
+            Map<String, Object> resultMaps = lendBlackListService.findList(lbs, pageable);
 
+            List<LendBlacklist> lendBlacklistList = (List<LendBlacklist>) resultMaps.get("blacklist");
             voPickLendList = GSON.fromJson(GSON.toJson(borrowList), new TypeToken<List<VoPickLend>>() {
             }.getType());
 

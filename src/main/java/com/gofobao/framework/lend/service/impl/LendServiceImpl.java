@@ -211,11 +211,12 @@ public class LendServiceImpl implements LendService {
         Specification borrowSpecification = Specifications.<Borrow>and()
                 .eq("lendId", lendId)
                 .build();
-        Borrow borrow = borrowRepository.findOne(borrowSpecification);
+        List<Borrow> borrows = borrowRepository.findAll(borrowSpecification);
 
-        if (ObjectUtils.isEmpty(borrow)) {
+        if (ObjectUtils.isEmpty(borrows)) {
             return Collections.EMPTY_LIST;
         }
+        Borrow borrow=borrows.get(0);
         List<LendBlacklist>blacklists=blacklistRepository.findByUserId(userId);
         Map<Long,LendBlacklist> blacklistMap=blacklists.stream().collect(Collectors.toMap(LendBlacklist::getBlackUserId,Function.identity()));
         List<BorrowRepayment> borrowRepayments = borrowRepaymentRepository.findByBorrowId(borrow.getId());
