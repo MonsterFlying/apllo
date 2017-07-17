@@ -99,6 +99,11 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     @Value("${gofobao.webDomain}")
     private String webDomain;
 
+    @Value("${gofobao.javaDomain}")
+    private String javaDomain;
+
+
+
     /**
      * 即信批次放款  （满标后调用）
      *
@@ -207,8 +212,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         BatchLendPayReq request = new BatchLendPayReq();
         request.setBatchNo(batchNo);
         request.setAcqRes(StringHelper.toString(borrowId));//存放borrowId 标id
-        request.setNotifyURL(webDomain + "/pub/repayment/v2/third/batch/lendrepay/check");
-        request.setRetNotifyURL(webDomain + "/pub/repayment/v2/third/batch/lendrepay/run");
+        request.setNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/lendrepay/check");
+        request.setRetNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/lendrepay/run");
         request.setTxAmount(StringHelper.formatDouble(sumCount, 100, false));
         request.setTxCounts(StringHelper.toString(lendPayList.size()));
         request.setSubPacks(GSON.toJson(lendPayList));

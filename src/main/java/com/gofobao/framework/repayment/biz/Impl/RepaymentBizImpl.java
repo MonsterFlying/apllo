@@ -154,6 +154,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
     @Value("${gofobao.webDomain}")
     private String webDomain;
 
+    @Value("${gofobao.javaDomain}")
+    private String javaDomain;
+
+
     LoadingCache<String, DictValue> jixinCache = CacheBuilder
             .newBuilder()
             .expireAfterWrite(60, TimeUnit.MINUTES)
@@ -1045,8 +1049,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
         BatchRepayReq request = new BatchRepayReq();
         request.setBatchNo(batchNo);
         request.setTxAmount(StringHelper.formatDouble(txAmount, false));
-        request.setRetNotifyURL(webDomain + "/pub/repayment/v2/third/batch/repayDeal/run");
-        request.setNotifyURL(webDomain + "/pub/repayment/v2/third/batch/repayDeal/check");
+        request.setRetNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/repayDeal/run");
+        request.setNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/repayDeal/check");
         request.setAcqRes(GSON.toJson(voThirdBatchRepay));
         request.setSubPacks(GSON.toJson(repayList));
         request.setChannel(ChannelContant.HTML);
@@ -1393,8 +1397,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
         request.setProductId(borrow.getProductId());
         request.setTxAmount(StringHelper.formatDouble(txAmount, false));
         request.setTxCounts(StringHelper.toString(bailRepayList.size()));
-        request.setNotifyURL(webDomain + "/pub/repayment/v2/third/batch/bailrepay/check");
-        request.setRetNotifyURL(webDomain + "/pub/repayment/v2/third/batch/bailrepay/run");
+        request.setNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/bailrepay/check");
+        request.setRetNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/bailrepay/run");
         request.setAcqRes(StringHelper.toString(repaymentId));
         request.setSubPacks(GSON.toJson(bailRepayList));
         BatchBailRepayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_BAIL_REPAY, request, BatchBailRepayResp.class);
@@ -1602,8 +1606,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
         request.setTxAmount(StringHelper.formatDouble(txAmount, false));
         request.setSubPacks(GSON.toJson(repayBails));
         request.setTxCounts(StringHelper.toString(repayBails.size()));
-        request.setNotifyURL(webDomain + "/pub/repayment/v2/third/batch/repaybail/check");
-        request.setRetNotifyURL(webDomain + "/pub/repayment/v2/third/batch/repaybail/run");
+        request.setNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/repaybail/check");
+        request.setRetNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/repaybail/run");
         request.setAcqRes(GSON.toJson(voBatchRepayBailReq));
         request.setChannel(ChannelContant.HTML);
         BatchRepayBailResp response = jixinManager.send(JixinTxCodeEnum.BATCH_REPAY_BAIL, request, BatchRepayBailResp.class);
