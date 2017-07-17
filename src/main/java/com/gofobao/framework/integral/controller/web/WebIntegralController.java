@@ -45,7 +45,6 @@ public class WebIntegralController {
         voListIntegralReq.setUserId(userId);
         return integralBiz.list(voListIntegralReq);
     }
-
     /**
      * 获取积分列表
      *
@@ -73,7 +72,6 @@ public class WebIntegralController {
     @PostMapping(value = "pub/pc/integral/doTakeRates")
     public ResponseEntity<VoBaseResp> doTakeRates(@Valid @ModelAttribute VoIntegralTakeReq voIntegralTakeReq,
                                                   @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-
         voIntegralTakeReq.setUserId(userId);
         try {
             return integralBiz.doTakeRates(voIntegralTakeReq);

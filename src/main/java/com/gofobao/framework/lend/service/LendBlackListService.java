@@ -6,6 +6,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Zeke on 2017/6/9.
@@ -37,7 +38,7 @@ public interface LendBlackListService {
      * @param specification
      * @return
      */
-    List<LendBlacklist> findList(Specification<LendBlacklist> specification, Pageable pageable);
+    Map<String, Object> findList(Specification<LendBlacklist> specification, Pageable pageable);
 
     long count(Specification<LendBlacklist> specification);
 

@@ -17,6 +17,17 @@ public class VoViewLendBlacklists {
     @ApiModelProperty("本页内容数")
     private Integer pageSize;
 
+    @ApiModelProperty("总记录数")
+    private Integer totalCount = 0;
+
+    public Integer getTotalCount() {
+        return totalCount;
+    }
+
+    public void setTotalCount(Integer totalCount) {
+        this.totalCount = totalCount;
+    }
+
     public List<VoLendBlacklist> getBlacklists() {
         return blacklists;
     }
