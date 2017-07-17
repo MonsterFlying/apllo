@@ -103,7 +103,6 @@ public class TenderBizImpl implements TenderBiz {
      * @return
      * @throws Exception
      */
-    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voCreateTenderReq.getUserId());
         if (ObjectUtils.isEmpty(userThirdAccount)) {

@@ -336,7 +336,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      */
     private ResponseEntity<VoBaseResp> checkRepay(VoRepayReq voRepayReq) {
-        int lateInterest = 0;//逾期利息
+        int lateInterest = 0;// 逾期利息
         Double interestPercent = voRepayReq.getInterestPercent();
         Long userId = voRepayReq.getUserId();
         Long repaymentId = voRepayReq.getRepaymentId();
