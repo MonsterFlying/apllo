@@ -952,7 +952,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 tenderService.updateById(tender);
 
                 /**
-                 * @// TODO: 2017/7/17  
+                 * @// TODO: 2017/7/17
                  */
                 
                 //收到车贷标回款扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
@@ -1045,7 +1045,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         balanceFreezeReq.setTxAmount(StringHelper.formatDouble(txAmount, false));
         balanceFreezeReq.setOrderId(orderId);
         balanceFreezeReq.setChannel(ChannelContant.HTML);
-        BatchDetailsQueryResp batchDetailsQueryResp = jixinManager.send(JixinTxCodeEnum.BATCH_REPAY, balanceFreezeReq, BatchDetailsQueryResp.class);
+        BatchDetailsQueryResp batchDetailsQueryResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BatchDetailsQueryResp.class);
         if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(batchDetailsQueryResp.getRetCode()))) {
             throw new Exception("即信批次还款冻结资金失败：" + batchDetailsQueryResp.getRetMsg());
         }
