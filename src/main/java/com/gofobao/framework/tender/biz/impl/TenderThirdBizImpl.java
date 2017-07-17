@@ -85,6 +85,9 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
     @Value("${gofobao.webDomain}")
     private String webDomain;
 
+    @Value("${gofobao.javaDomain}")
+    private String javaDomain;
+
     public ResponseEntity<VoBaseResp> createThirdTender(VoCreateThirdTenderReq voCreateThirdTenderReq) {
         Long userId = voCreateThirdTenderReq.getUserId();
         String txAmount = voCreateThirdTenderReq.getTxAmount();
@@ -251,8 +254,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         request.setSubPacks(GSON.toJson(creditInvestList));
         request.setAcqRes(StringHelper.toString(borrowId));
         request.setChannel(ChannelContant.HTML);
-        request.setNotifyURL(webDomain + "/pub/tender/v2/third/batch/creditinvest/check");
-        request.setRetNotifyURL(webDomain + "/pub/tender/v2/third/batch/creditinvest/run");
+        request.setNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditinvest/check");
+        request.setRetNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditinvest/run");
         BatchCreditInvestResp response = jixinManager.send(JixinTxCodeEnum.BATCH_CREDIT_INVEST, request, BatchCreditInvestResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
             throw new Exception("投资人批次购买债权失败!:" + response.getRetMsg());
