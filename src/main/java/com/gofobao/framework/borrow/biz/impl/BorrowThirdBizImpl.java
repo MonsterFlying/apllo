@@ -432,7 +432,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             log.error("回调失败! msg:" + repayCheckResp.getRetMsg());
         } else {
             log.info("=============================(提前结清)即信批次放款检验参数回调===========================");
-            log.info("即信批次还款检验参数成功!");
+            log.info("回调成功!");
             //更新批次状态
             thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(),NumberHelper.toLong(repayCheckResp.getAcqRes()));
         }

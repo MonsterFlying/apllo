@@ -85,6 +85,9 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
     @Value("${gofobao.webDomain}")
     private String webDomain;
 
+    @Value("${gofobao.javaDomain}")
+    private String javaDomain;
+
     public ResponseEntity<VoBaseResp> createThirdTender(VoCreateThirdTenderReq voCreateThirdTenderReq) {
         Long userId = voCreateThirdTenderReq.getUserId();
         String txAmount = voCreateThirdTenderReq.getTxAmount();
@@ -251,8 +254,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         request.setSubPacks(GSON.toJson(creditInvestList));
         request.setAcqRes(StringHelper.toString(borrowId));
         request.setChannel(ChannelContant.HTML);
-        request.setNotifyURL(webDomain + "/pub/tender/v2/third/batch/creditinvest/check");
-        request.setRetNotifyURL(webDomain + "/pub/tender/v2/third/batch/creditinvest/run");
+        request.setNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditinvest/check");
+        request.setRetNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditinvest/run");
         BatchCreditInvestResp response = jixinManager.send(JixinTxCodeEnum.BATCH_CREDIT_INVEST, request, BatchCreditInvestResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
             throw new Exception("投资人批次购买债权失败!:" + response.getRetMsg());
@@ -281,7 +284,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             log.error("回调失败! msg:" + lendRepayRunResp.getRetMsg());
         }else {
             log.error("=============================即信投资人批次购买债权参数验证回调===========================");
-            log.error("即信投资人批次购买债权参数成功");
+            log.error("回调成功!");
             //更新批次状态
             thirdBatchLogBiz.updateBatchLogState(lendRepayRunResp.getBatchNo(),NumberHelper.toLong(lendRepayRunResp.getAcqRes()));
         }
