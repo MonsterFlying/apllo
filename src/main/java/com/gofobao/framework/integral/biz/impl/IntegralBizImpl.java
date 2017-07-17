@@ -43,6 +43,7 @@ import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -80,6 +81,9 @@ public class IntegralBizImpl implements IntegralBiz {
 
     @Autowired
     private DictItemServcie dictItemServcie;
+
+    @Value("${gofobao.javaDomain}")
+    private  String javaDomain;
 
     @Autowired
     private DictValueService dictValueService;
@@ -124,6 +128,7 @@ public class IntegralBizImpl implements IntegralBiz {
      * @return
      */
     public ResponseEntity<VoListIntegralResp> list(VoListIntegralReq voListIntegralReq) {
+
         int pageSize = voListIntegralReq.getPageSize();
         int pageIndex = voListIntegralReq.getPageIndex();
         Long userId = voListIntegralReq.getUserId();
@@ -165,30 +170,39 @@ public class IntegralBizImpl implements IntegralBiz {
                     body(VoBaseResp.error(VoBaseResp.ERROR, "获取积分列表：积分折现比率获取失败！", VoListIntegralResp.class));
         }
         voListIntegralResp.setTakeRates(takeRates);
-
-        List<VoIntegral> voIntegralList = new ArrayList<>();
-
-        //分页和排序
-        Sort sort = new Sort(new Sort.Order(Sort.Direction.DESC, "id"));
-        Pageable pageable = new PageRequest(pageIndex, pageSize, sort);
-        List<IntegralLog> integralLogList = integralLogService.findListByUserId(userId, pageable);
-        Optional<List<IntegralLog>> objIntegralLog = Optional.ofNullable(integralLogList);
-        objIntegralLog.ifPresent(p -> p.forEach(integralLog -> {
-            VoIntegral voIntegral = new VoIntegral();
-            voIntegral.setId(integralLog.getId());
-            voIntegral.setTotalIntegral(integralLog.getNoUseIntegral() + integralLog.getUseIntegral());
-            voIntegral.setTime(DateHelper.dateToStringYearMouthDay(integralLog.getCreatedAt()));
-            voIntegral.setIntegral(("convert".equalsIgnoreCase(integralLog.getType())
-                    || "_digest".equalsIgnoreCase(integralLog.getType())) ? String.format("-%s", integralLog.getValue()) : String.format("+%s", integralLog.getValue()));
-            voIntegral.setType(integralLog.getType());
-            voIntegral.setTypeName(findIntegralMap(integralLog.getType()));
-            voIntegralList.add(voIntegral);
-        }));
-
+        //APP请求需要返回积分列表
+        if(voListIntegralReq.getType()==0) {
+            List<VoIntegral> voIntegralList = new ArrayList<>();
+            //分页和排序
+            Sort sort = new Sort(new Sort.Order(Sort.Direction.DESC, "id"));
+            Pageable pageable = new PageRequest(pageIndex, pageSize, sort);
+            List<IntegralLog> integralLogList = integralLogService.findListByUserId(userId, pageable);
+            Optional<List<IntegralLog>> objIntegralLog = Optional.ofNullable(integralLogList);
+            objIntegralLog.ifPresent(p -> p.forEach(integralLog -> {
+                VoIntegral voIntegral = new VoIntegral();
+                voIntegral.setId(integralLog.getId());
+                voIntegral.setTotalIntegral(integralLog.getNoUseIntegral() + integralLog.getUseIntegral());
+                voIntegral.setTime(DateHelper.dateToStringYearMouthDay(integralLog.getCreatedAt()));
+                voIntegral.setIntegral(("convert".equalsIgnoreCase(integralLog.getType())
+                        || "_digest".equalsIgnoreCase(integralLog.getType())) ? String.format("-%s", integralLog.getValue()) : String.format("+%s", integralLog.getValue()));
+                voIntegral.setType(integralLog.getType());
+                voIntegral.setTypeName(findIntegralMap(integralLog.getType()));
+                voIntegralList.add(voIntegral);
+            }));
+            voListIntegralResp.setVoIntegralList(voIntegralList);
+        }
+        voListIntegralResp.setDescImage(javaDomain+"/static/images/integral/desc.png");
         voListIntegralResp.setCollectionMoney(StringHelper.formatMon(asset.getCollection()/100D));
-        voListIntegralResp.setVoIntegralList(voIntegralList);
+
         return ResponseEntity.ok(voListIntegralResp);
     }
+
+
+
+
+
+
+
 
     @Override
     public ResponseEntity<VoViewIntegralWarpRes> pcIntegralList(VoListIntegralReq integralReq) {

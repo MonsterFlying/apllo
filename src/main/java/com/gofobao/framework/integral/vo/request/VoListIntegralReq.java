@@ -15,4 +15,8 @@ public class VoListIntegralReq extends Page{
     @ApiModelProperty(hidden = true)
     @JsonIgnore
     private Long userId;
+
+
+    @ApiModelProperty
+    private Integer type;
 }
