@@ -41,6 +41,8 @@ public class IntegralController {
     @PostMapping("pub/integral/list")
     public ResponseEntity<VoListIntegralResp> list(@Valid @ModelAttribute VoListIntegralReq voListIntegralReq,
                                                    @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+        //app 请求
+        voListIntegralReq.setType(0);
         voListIntegralReq.setUserId(userId);
         return integralBiz.list(voListIntegralReq);
     }
