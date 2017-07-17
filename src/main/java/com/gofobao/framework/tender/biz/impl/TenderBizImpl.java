@@ -182,9 +182,7 @@ public class TenderBizImpl implements TenderBiz {
         entity.setToUserId(borrow.getUserId());
         entity.setMoney(borrowTender.getValidMoney());
         entity.setRemark("投标冻结资金");
-        if (!capitalChangeHelper.capitalChange(entity)) {
-            throw new Exception("资金操作失败！");
-        }
+        capitalChangeHelper.capitalChange(entity);
 
         borrow.setMoneyYes(borrow.getMoneyYes() + validateMoney);
         borrow.setTenderCount((borrow.getTenderCount() + 1));

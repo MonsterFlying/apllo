@@ -87,7 +87,7 @@ public class BorrowProvider {
             return false;
         }
 
-        if (borrow.isTransfer()) { //批次债券转让
+        if (borrow.isTransfer()) { // 批次债券转让
             VoThirdBatchCreditInvest voThirdBatchCreditInvest = new VoThirdBatchCreditInvest();
             voThirdBatchCreditInvest.setBorrowId(borrowId);
             ResponseEntity<VoBaseResp> resp = tenderThirdBiz.thirdBatchCreditInvest(voThirdBatchCreditInvest);
@@ -131,7 +131,7 @@ public class BorrowProvider {
                     Map<String, String> paramsMap = newHashMap();
                     MqConfig mqConfig = new MqConfig();
                     // 非新手标  是新手标但是老用投
-                    /*boolean access = (!borrow.getIsNovice()) || (borrow.getIsNovice() && (userCache.getTenderTuijian() || userCache.getTenderQudao()));
+                    boolean access = (!borrow.getIsNovice()) || (borrow.getIsNovice() && (userCache.getTenderTuijian() || userCache.getTenderQudao()));
                     if (access) {
                         paramsMap.put("type", RedPacketContants.OLD_USER_TENDER_BORROW_REDPACKAGE);
                         paramsMap.put("tenderId", p.getId().toString());
@@ -155,7 +155,7 @@ public class BorrowProvider {
                     mqConfig.setTag(MqTagEnum.INVITE_USER_TENDER);
                     mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
                     mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 160));
-                    mqHelper.convertAndSend(mqConfig);*/
+                    mqHelper.convertAndSend(mqConfig);
                 });
             } else {
                 log.info("====================================================================");
