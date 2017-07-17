@@ -201,8 +201,9 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         CreditInvest creditInvest = null;
         UserThirdAccount tenderUserThirdAccount = null;
         int sumCount = 0;
-        int validMoney = 0;
-        int txFee = 0;
+        double validMoney = 0;
+        double txFee = 0;
+        double transferFee = borrow.getMoney() * transferFeeRate;//转让管理费
         for (Tender tender : tenderList) {
             txFee = 0;
 
@@ -215,7 +216,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             sumCount += validMoney;
 
             if (borrow.isTransfer()) { //转让管理费
-                txFee += (int) MathHelper.myRound(((double) validMoney / borrow.getMoney()) * ((double)borrow.getMoney() * transferFeeRate), 0);
+                txFee += (int) MathHelper.myRound(( validMoney / (double)borrow.getMoney()) * transferFee, 0);
             }
 
             String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
