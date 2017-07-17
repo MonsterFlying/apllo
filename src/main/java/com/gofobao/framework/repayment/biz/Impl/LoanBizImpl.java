@@ -65,11 +65,11 @@ public class LoanBizImpl implements LoanBiz {
         try {
 
             Map<String, Object> resultMaps = loanService.settleList(voLoanListReq);
-            List<VoViewSettleRes> voViewSettleRes = (List<VoViewSettleRes>) resultMaps.get("settleList");
+            List<VoViewSettleRespc> voViewSettleRes = (List<VoViewSettleRespc>) resultMaps.get("settleList");
             Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
 
             VoViewSettleWarpListRes viewSettleWarpListRes = VoBaseResp.ok("查询成功", VoViewSettleWarpListRes.class);
-            viewSettleWarpListRes.setVoViewSettleRes(voViewSettleRes);
+            viewSettleWarpListRes.setSettleRes(voViewSettleRes);
             viewSettleWarpListRes.setTotalCount(totalCount);
             return ResponseEntity.ok(viewSettleWarpListRes);
         } catch (Throwable e) {

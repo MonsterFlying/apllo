@@ -85,6 +85,7 @@ public class LoanServiceImpl implements LoanService {
         List<VoViewRefundRes> refundRes = new ArrayList<>();
         borrowList.stream().forEach(p -> {
             VoViewRefundRes voViewRefundRes = new VoViewRefundRes();
+            voViewRefundRes.setApr(StringHelper.formatMon(p.getApr()/100D));
             List<BorrowRepayment> borrowRepaymentList = borrowRepaymentMaps.get(p.getId());
             voViewRefundRes.setBorrowName(p.getName());
             voViewRefundRes.setReleaseAt(DateHelper.dateToString(p.getReleaseAt()));
@@ -132,9 +133,9 @@ public class LoanServiceImpl implements LoanService {
         Map<Long, List<BorrowRepayment>> borrowRepaymentMaps = borrowRepayments.stream()
                 .collect(groupingBy(BorrowRepayment::getBorrowId));
 
-        List<VoViewSettleRes> resArrayList = new ArrayList<>();
+        List<VoViewSettleRespc> resArrayList = new ArrayList<>();
         borrowList.stream().forEach(p -> {
-            VoViewSettleRes viewSettleRes = new VoViewSettleRes();
+            VoViewSettleRespc viewSettleRes = new VoViewSettleRespc();
             List<BorrowRepayment> borrowRepaymentList = borrowRepaymentMaps.get(p.getId());
             Integer interest = borrowRepaymentList.stream().mapToInt(w -> w.getInterest()).sum();  //待还利息
             Integer principal = borrowRepaymentList.stream().mapToInt(w -> w.getPrincipal()).sum();  //待还本金
@@ -144,6 +145,7 @@ public class LoanServiceImpl implements LoanService {
             viewSettleRes.setMoney(StringHelper.formatMon(p.getMoneyYes() / 100D));
             viewSettleRes.setBorrowName(p.getName());
             viewSettleRes.setBorrowId(p.getId());
+            viewSettleRes.setApr(StringHelper.formatMon(p.getApr()/100D));
             viewSettleRes.setCollectionMoneyYes(StringHelper.formatMon(collectionMoneyYes / 100D));
             viewSettleRes.setReleaseAt(DateHelper.dateToString(p.getReleaseAt()));
             viewSettleRes.setCloseAt(DateHelper.dateToString(p.getCloseAt()));

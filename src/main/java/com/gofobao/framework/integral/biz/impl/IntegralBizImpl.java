@@ -82,8 +82,9 @@ public class IntegralBizImpl implements IntegralBiz {
     @Autowired
     private DictItemServcie dictItemServcie;
 
-    @Value("${gofobao.javaDomain}")
-    private  String javaDomain;
+    @Value("${gofobao.webDomain}")
+    private String webDomain;
+
 
     @Autowired
     private DictValueService dictValueService;
@@ -191,16 +192,11 @@ public class IntegralBizImpl implements IntegralBiz {
             }));
             voListIntegralResp.setVoIntegralList(voIntegralList);
         }
-        voListIntegralResp.setDescImage(javaDomain+"/static/images/integral/desc.png");
+        voListIntegralResp.setDescImage(webDomain+"/images/integral/desc.png");
         voListIntegralResp.setCollectionMoney(StringHelper.formatMon(asset.getCollection()/100D));
 
         return ResponseEntity.ok(voListIntegralResp);
     }
-
-
-
-
-
 
 
 
@@ -224,7 +220,10 @@ public class IntegralBizImpl implements IntegralBiz {
                             || "_digest".equalsIgnoreCase(p.getType())) ? String.format("-%s", p.getValue()) : String.format("+%s", p.getValue()));
                     voIntegral.setType(p.getType());
                     voIntegral.setTypeName(findIntegralMap(p.getType()));
+                    voIntegral.setUsedIntegral(p.getNoUseIntegral());
+                    voIntegral.setUseIntegral(p.getUseIntegral());
                     voIntegralList.add(voIntegral);
+
                 });
             }
             warpRes.setIntegrals(voIntegralList);

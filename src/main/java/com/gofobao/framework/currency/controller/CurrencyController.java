@@ -29,12 +29,12 @@ public class CurrencyController {
     @ApiOperation("获取用户广富币列表")
     @GetMapping("pub/currency/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoListCurrencyResp> list(@PathVariable Integer pageIndex,
-                                           @PathVariable Integer pageSize/*,
-                                           @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+                                           @PathVariable Integer pageSize,
+                                           @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoListCurrencyReq voListCurrencyReq = new VoListCurrencyReq();
         voListCurrencyReq.setPageIndex(pageIndex);
         voListCurrencyReq.setPageSize(pageSize);
-        voListCurrencyReq.setUserId(901L);
+        voListCurrencyReq.setUserId(userId);
         return currencyBiz.list(voListCurrencyReq);
     }
 

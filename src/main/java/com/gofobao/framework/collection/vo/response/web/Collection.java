@@ -27,7 +27,7 @@ public class Collection {
     private String interest;
 
 
-    @ApiModelProperty("标名")
+    @ApiModelProperty("预期收益")
     private String earnings;
 
     @ApiModelProperty("还款时间")

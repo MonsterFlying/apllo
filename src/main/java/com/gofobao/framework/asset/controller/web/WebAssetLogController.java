@@ -50,9 +50,9 @@ private AssetLogRepository assetRepository;
 
     @ApiOperation("资金流水导出")
     @RequestMapping(value = "pub/assetLog/pc/v2/toExcel", method = RequestMethod.GET)
-    public void pcAssetLogToExcel(HttpServletResponse response, @ModelAttribute VoAssetLogReq voAssetLogReq/*,
-                                            @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
-        voAssetLogReq.setUserId(901L);
+    public void pcAssetLogToExcel(HttpServletResponse response, @ModelAttribute VoAssetLogReq voAssetLogReq,
+                                            @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        voAssetLogReq.setUserId(userId);
         assetBiz.pcToExcel(voAssetLogReq,response);
 
     }

@@ -14,5 +14,6 @@ public class VoViewCollectionWarpRes  extends VoBaseResp{
 
     private List<Collection> collections= Lists.newArrayList();
 
+
     private Integer totalCount=0;
 }
