@@ -2,6 +2,7 @@ package com.gofobao.framework.repayment.vo.response;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.google.common.collect.Lists;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -12,8 +13,9 @@ import java.util.List;
  */
 @Data
 public class VoViewSettleWarpListRes  extends VoBaseResp {
-     List<VoViewSettleRes> voViewSettleRes= Lists.newArrayList();
+     @ApiModelProperty()
+     List<VoViewSettleRespc> settleRes = Lists.newArrayList();
 
-     @ApiModelProperty("总记录数")
-   private Integer totalCount=0;
+     @ApiModelProperty()
+     private Integer totalCount=0;
 }

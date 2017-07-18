@@ -1,6 +1,7 @@
 package com.gofobao.framework.member.service.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.common.constans.MoneyConstans;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -15,6 +16,7 @@ import com.gofobao.framework.member.vo.response.FriendsTenderInfo;
 import com.gofobao.framework.member.vo.response.InviteAwardStatistics;
 import com.gofobao.framework.member.vo.response.InviteFriends;
 import com.gofobao.framework.member.vo.response.pc.PcInviteFriends;
+import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.repository.TenderRepository;
 import com.google.common.collect.Lists;
@@ -113,7 +115,7 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
         Specification<BrokerBouns> specification = Specifications.<BrokerBouns>and()
                 .eq("userId", userId)
                 .build();
-        List<BrokerBouns> brokerBounss = brokerBounsRepository.findAll(specification);
+        List<BrokerBouns> brokerBounss = brokerBounsRepository.findAll(specification,new Sort(Sort.Direction.DESC,"id"));
         if (CollectionUtils.isEmpty(brokerBounss)) {
             return new InviteAwardStatistics();
         }
@@ -141,10 +143,18 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
         } else {
             Integer yesterdayBounsAward = yesterdayBroker.stream().mapToInt(w -> w.getBounsAward()).sum();
             inviteAwardStatistics.setYesterdayAward(NumberHelper.to2DigitString(yesterdayBounsAward / 100));
+            inviteAwardStatistics.setApr( StringHelper.formatMon(brokerBounss.get(0).getAwardApr()/100D));
+            inviteAwardStatistics.setWaitPrincipalTotal(StringHelper.formatMon(brokerBounss.get(0).getWaitPrincipalTotal()/100D)+ MoneyConstans.PERCENT);
         }
         //总奖励
-        Integer sumAward = brokerBounss.stream().mapToInt(w -> w.getBounsAward()).sum();
-        inviteAwardStatistics.setSumAward(NumberHelper.to2DigitString(sumAward / 100));
+        if(!CollectionUtils.isEmpty(brokerBounss)){
+            Integer sumAward = brokerBounss.stream().mapToInt(w -> w.getBounsAward()).sum();
+            inviteAwardStatistics.setSumAward(NumberHelper.to2DigitString(sumAward / 100));
+        }
+
+        Users users1=usersRepository.getOne(userId);
+        inviteAwardStatistics.setInviteCode1(users1.getInviteCode());
+        inviteAwardStatistics.setInviteCode2(StringUtils.isEmpty(users1.getPhone())?"": users1.getPhone());
 
         return inviteAwardStatistics;
     }

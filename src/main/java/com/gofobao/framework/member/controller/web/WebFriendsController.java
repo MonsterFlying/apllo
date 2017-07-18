@@ -50,7 +50,7 @@ public class WebFriendsController {
         return brokerBounsBiz.statistic(userId);
     }
 
-    @ApiOperation("邀请统计")
+    @ApiOperation("邀请统计--列表")
     @PostMapping("/invite/pc/v2/brokerBouns/list")
     public ResponseEntity<VoViewBrokerBounsWarpRes> statistic(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                               VoFriendsTenderReq friendsTenderReq) {

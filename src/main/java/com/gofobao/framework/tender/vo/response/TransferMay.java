@@ -7,7 +7,7 @@ import lombok.Data;
 /**
  * Created by admin on 2017/6/12.
  */
-@ApiModel("可转让")
+@ApiModel(description ="可转让")
 @Data
 public class TransferMay {
     @ApiModelProperty("标名")

@@ -31,11 +31,15 @@ public class WebBorrowRepaymentContorller {
     @Autowired
     private RepaymentBiz repaymentBiz;
 
-    @GetMapping(value = "/v2/collection/days")
+    @GetMapping(value = "/v2/collection/days/{pageIndex}/{pageSize}")
     @ApiOperation("还款计划列表 ")
-    public ResponseEntity<VoViewOrderListWarpRes> days( VoOrderListReq listReq,
+    public ResponseEntity<VoViewOrderListWarpRes> days(@PathVariable("pageIndex")Integer pageIndex,
+                                                       @PathVariable("pageSize")Integer pageSize,
                                                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
 
+        VoOrderListReq listReq=new VoOrderListReq();
+        listReq.setPageIndex(pageIndex);
+        listReq.setPageSize(pageSize);
         listReq.setUserId(userId);
         return repaymentBiz.pcRepaymentList(listReq);
     }

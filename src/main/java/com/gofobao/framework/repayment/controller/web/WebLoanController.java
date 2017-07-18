@@ -49,10 +49,11 @@ public class WebLoanController {
         return loanBiz.buddingList(voLoanListReq);
     }
 
-    @ApiOperation("已结清列表")
+    @ApiOperation("已结清列表----")
     @GetMapping("/v2/settle/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewSettleWarpListRes>  settleList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId ,
-                                                     @PathVariable Integer pageIndex, @PathVariable Integer pageSize) {
+                                                               @PathVariable Integer pageIndex,
+                                                               @PathVariable Integer pageSize) {
         VoLoanListReq voLoanListReq = new VoLoanListReq();
         voLoanListReq.setPageIndex(pageIndex);
         voLoanListReq.setPageSize(pageSize);

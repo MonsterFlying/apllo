@@ -36,4 +36,8 @@ public class VoViewRefundRes {
     @ApiModelProperty("借款期限")
     private String timeLimit;
 
+    @ApiModelProperty("年利率")
+    private String apr;
+
+
 }

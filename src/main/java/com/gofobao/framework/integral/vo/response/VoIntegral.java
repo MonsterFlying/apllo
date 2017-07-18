@@ -38,6 +38,21 @@ public class VoIntegral {
     @ApiModelProperty(value = "总积分")
     private Integer totalIntegral;
 
+
+    /**
+     * 已用积分
+     */
+    @ApiModelProperty(value = "已用积分")
+    private Integer usedIntegral;
+
+
+    /**
+     * 可用积分
+     */
+    @ApiModelProperty(value = "可用积分")
+    private Integer useIntegral;
+
+
     /**
      * 时间
      */
