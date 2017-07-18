@@ -111,7 +111,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * @param voThirdBatchLendRepay
      * @return
      */
-    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> thirdBatchLendRepay(VoThirdBatchLendRepay voThirdBatchLendRepay) throws Exception {
         Date nowDate = new Date();
         Long borrowId = voThirdBatchLendRepay.getBorrowId();
@@ -134,7 +133,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         }
 
         Borrow borrow = borrowService.findById(borrowId);
-        UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());//收款人存管账户记录
+        UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());// 收款人存管账户记录
         Long takeUserId = borrow.getTakeUserId();
         if (!ObjectUtils.isEmpty(takeUserId)) {
             takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
@@ -152,15 +151,12 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         }
 
         List<LendPay> lendPayList = new ArrayList<>();
-        LendPay lendPay = null;
-        UserThirdAccount tenderUserThirdAccount = null;
-        int sumCount = 0;
-        int validMoney = 0;
-        int debtFee = 0;
+        LendPay lendPay;
+        UserThirdAccount tenderUserThirdAccount;
+        double sumCount = 0, validMoney, debtFee;
         for (Tender tender : tenderList) {
             debtFee = 0;
-
-            if (!ObjectUtils.isEmpty(tender.getThirdTenderFlag()) && tender.getThirdTenderFlag()) {
+            if (Boolean.TRUE.equals(tender.getThirdTenderFlag())) {
                 continue;
             }
 
@@ -179,7 +175,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
             //净值账户管理费
             if (borrow.getType() == 1) {
-                debtFee += validMoney / borrow.getMoney() * fee;
+                debtFee += MathHelper.myRound(validMoney / new Double(borrow.getMoney()) * fee, 2);
             }
 
             String lendPayOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
@@ -366,9 +362,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 break;
             }
             bool = false;
-
-            log.error("=============================即信批次放款处理结果回调===========================");
-            log.error("即信批次放款处理结果失败! 一共:" + num + "笔");
+            log.info("=============================即信批次放款处理结果回调===========================");
+            log.info("即信批次放款处理结果失败! 一共:" + num + "笔");
 
             Date nowDate = new Date();
 
@@ -399,8 +394,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             }
 
             //2.筛选失败批次
-            List<String> failureThirdLendPayOrderIds = new ArrayList<>(); //转让标orderId
-            List<String> successThirdLendPayOrderIds = new ArrayList<>(); //转让标orderId
+            List<String> failureThirdLendPayOrderIds = new ArrayList<>(); // 失败转让标orderId
+            List<String> successThirdLendPayOrderIds = new ArrayList<>(); // 成功转让标orderId
             List<DetailsQueryResp> detailsQueryRespList = GSON.fromJson(batchDetailsQueryResp.getSubPacks(), new TypeToken<List<DetailsQueryResp>>() {
             }.getType());
             if (CollectionUtils.isEmpty(detailsQueryRespList)) {
@@ -411,7 +406,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
             Optional<List<DetailsQueryResp>> detailsQueryRespOptional = Optional.of(detailsQueryRespList);
             detailsQueryRespOptional.ifPresent(list -> detailsQueryRespList.forEach(obj -> {
-                if ("F".equalsIgnoreCase(obj.getTxState())) {
+                if ("F".equalsIgnoreCase(obj.getTxState())) {  // 此处处理有问题
                     failureThirdLendPayOrderIds.add(obj.getOrderId());
                 } else {
                     successThirdLendPayOrderIds.add(obj.getOrderId());

@@ -3,9 +3,7 @@ package com.gofobao.framework.repayment.controller.web;
 import com.gofobao.framework.collection.vo.request.VoCollectionListReq;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
-import com.gofobao.framework.repayment.vo.request.VoOrderListReq;
-import com.gofobao.framework.repayment.vo.request.VoPcAdvanceReq;
-import com.gofobao.framework.repayment.vo.request.VoPcInstantlyRepaymentReq;
+import com.gofobao.framework.repayment.vo.request.*;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewCollectionWarpRes;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewOrderListWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
@@ -31,11 +29,15 @@ public class WebBorrowRepaymentContorller {
     @Autowired
     private RepaymentBiz repaymentBiz;
 
-    @GetMapping(value = "/v2/collection/days")
+    @GetMapping(value = "/v2/collection/days/{pageIndex}/{pageSize}")
     @ApiOperation("还款计划列表 ")
-    public ResponseEntity<VoViewOrderListWarpRes> days( VoOrderListReq listReq,
-                                                            @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoViewOrderListWarpRes> days(@PathVariable("pageIndex")Integer pageIndex,
+                                                       @PathVariable("pageSize")Integer pageSize,
+                                                       @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
 
+        VoOrderListReq listReq=new VoOrderListReq();
+        listReq.setPageIndex(pageIndex);
+        listReq.setPageSize(pageSize);
         listReq.setUserId(userId);
         return repaymentBiz.pcRepaymentList(listReq);
     }
@@ -52,14 +54,20 @@ public class WebBorrowRepaymentContorller {
     /**
      * 立即还款
      *
-     * @param voPcInstantlyRepaymentReq
+     * @param voInstantlyRepaymentReq
      * @return 0成功 1失败 2操作不存在 3该借款上一期还未还 4账户余额不足，请先充值
      * @throws Exception
      */
-    @PostMapping("/v2/instantly")
+    @PostMapping("/repayment/pc/v2/instantly")
     @ApiOperation("立即还款")
-    public ResponseEntity<VoBaseResp> pcInstantly(@ModelAttribute @Valid VoPcInstantlyRepaymentReq voPcInstantlyRepaymentReq) throws Exception {
-        return repaymentBiz.pcRepay(voPcInstantlyRepaymentReq);
+    public ResponseEntity<VoBaseResp> instantly(@ModelAttribute @Valid VoInstantlyRepaymentReq voInstantlyRepaymentReq,
+                                                @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
+        VoRepayReq voRepayReq = new VoRepayReq();
+        voRepayReq.setRepaymentId(voInstantlyRepaymentReq.getRepaymentId());
+        voRepayReq.setUserId(userId);
+        voRepayReq.setInterestPercent(0d);
+        voRepayReq.setIsUserOpen(true);
+        return repaymentBiz.repay(voRepayReq);
     }
 
 

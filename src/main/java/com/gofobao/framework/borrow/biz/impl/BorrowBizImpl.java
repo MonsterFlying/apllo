@@ -398,7 +398,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow) {
+    public ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow) throws Exception{
         Long userId = voAddNetWorthBorrow.getUserId();
         String releaseAtStr = voAddNetWorthBorrow.getReleaseAt();
         Integer money = (int) voAddNetWorthBorrow.getMoney();
@@ -492,7 +492,9 @@ public class BorrowBizImpl implements BorrowBiz {
         try {
             borrowId = insertBorrow(voAddNetWorthBorrow, userId);  // 插入标
         } catch (Throwable e) {
+
             log.error("新增借款异常：", e);
+            throw new Exception(e) ;
         }
 
         if (borrowId <= 0) {

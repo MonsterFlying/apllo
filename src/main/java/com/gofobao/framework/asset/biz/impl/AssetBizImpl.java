@@ -387,7 +387,7 @@ public class AssetBizImpl implements AssetBiz {
             MqConfig mqConfig = new MqConfig();
             mqConfig.setTag(MqTagEnum.RECHARGE);
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
-            mqConfig.setSendTime(DateHelper.addSeconds(now, 60));
+            mqConfig.setSendTime(DateHelper.addSeconds(now, 10));
             ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
             mqConfig.setMsg(body);
             mqHelper.convertAndSend(mqConfig);

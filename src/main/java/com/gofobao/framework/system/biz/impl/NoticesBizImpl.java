@@ -7,6 +7,7 @@ import cn.jpush.api.push.model.Options;
 import cn.jpush.api.push.model.Platform;
 import cn.jpush.api.push.model.PushPayload;
 import cn.jpush.api.push.model.audience.Audience;
+import cn.jpush.api.push.model.audience.AudienceTarget;
 import cn.jpush.api.push.model.notification.AndroidNotification;
 import cn.jpush.api.push.model.notification.IosNotification;
 import cn.jpush.api.push.model.notification.Notification;
@@ -29,6 +30,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,6 +58,9 @@ public class NoticesBizImpl implements NoticesBiz {
 
     @Autowired
     JPushClient jPushClient;
+
+    @Value("${gofobao.dev}")
+    boolean dev ;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -90,30 +95,50 @@ public class NoticesBizImpl implements NoticesBiz {
                     && (!StringUtils.isEmpty(users.getPushId()))
                     && (platforms.contains(users.getPlatform()))) {
                 PlatformNotification platformNotification;
+                String msg = notices.getContent() ;
+                PushResult pushResult = null;
+
                 if (users.getPlatform().equals(1)) {
                     platformNotification = AndroidNotification.newBuilder()
-                            .setAlert(ALERT)
+                            .setAlert(msg)
+                            .setTitle(notices.getName())
                             .addExtra("from", "广富宝金服")
                             .build();
+
+                    PushPayload payload  = PushPayload.newBuilder()
+                            .setPlatform(users.getPlatform().equals(1) ? Platform.android() : Platform.ios())
+                            .setAudience(Audience.newBuilder()
+                                    .addAudienceTarget(AudienceTarget.alias(users.getPushId()))
+                                    .build())
+                            .setNotification(Notification.newBuilder()
+                                    .addPlatformNotification(platformNotification)
+                                    .build())
+                            .build();
+                    pushResult = jPushClient.sendPush(payload);
                 } else {
                     platformNotification = IosNotification.newBuilder()
-                            .setAlert(ALERT)
+                            .setAlert(msg)
                             .setBadge(users.getNoticeCount())
                             .setSound("happy")
                             .addExtra("from", "广富宝金服")
                             .build();
+
+                    PushPayload payload  = PushPayload.newBuilder()
+                            .setPlatform(users.getPlatform().equals(1) ? Platform.android() : Platform.ios())
+                            .setAudience(Audience.newBuilder()
+                                    .addAudienceTarget(AudienceTarget.alias(users.getPushId()))
+                                    .build())
+                            .setNotification(Notification.newBuilder()
+                                    .addPlatformNotification(platformNotification)
+                                    .build())
+                            .setOptions(Options.newBuilder()
+                                    .setApnsProduction(!dev)
+                                    .build())
+                            .build();
+
+                    pushResult = jPushClient.sendPush(payload);
                 }
 
-                PushPayload payload  = PushPayload.newBuilder()
-                        .setPlatform(users.getPlatform().equals(1) ? Platform.android() : Platform.ios())
-                        .setAudience(Audience.alias(users.getPushId()))
-                        .setNotification(Notification.newBuilder()
-                                .addPlatformNotification(platformNotification)
-                                .build())
-                        .setMessage(Message.content(notices.getContent()))
-                        .build();
-
-                PushResult pushResult = jPushClient.sendPush(payload);
                 log.info(String.format("极光发送结果: %s", new Gson().toJson(pushResult)));
             }
         }catch (Exception e){

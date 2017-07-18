@@ -9,8 +9,8 @@ import lombok.Data;
  */
 
 @Data
-@ApiModel("已结清")
-public class VoViewSettleRes {
+@ApiModel
+public class VoViewSettleRespc {
 
     @ApiModelProperty("标名")
     private String borrowName;
@@ -38,4 +38,7 @@ public class VoViewSettleRes {
 
     @ApiModelProperty("期限")
     private String timeLimit;
+
+    @ApiModelProperty("年利率")
+    private String apr;
 }

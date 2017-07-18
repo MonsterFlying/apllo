@@ -72,4 +72,14 @@ public class VoBasicUserInfoResp extends VoBaseResp{
 
     @ApiModelProperty("极光推送唯一标识")
     private String  alias ;
+
+    @ApiModelProperty("注册时间")
+    private String  registerAt ;
+
+    @ApiModelProperty("投资积分")
+    private Long  tenderIntegral ;
+
+
+
+
 }

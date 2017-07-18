@@ -66,9 +66,6 @@ public class UserBizImpl implements UserBiz {
     UserCacheService userCacheService;
 
     @Autowired
-    IntegralService integralService;
-
-    @Autowired
     CurrencyService currencyService;
 
     @Autowired
@@ -102,6 +99,10 @@ public class UserBizImpl implements UserBiz {
 
     @Autowired
     MqHelper mqHelper;
+
+    @Autowired
+    private IntegralService integralService;
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -248,7 +249,9 @@ public class UserBizImpl implements UserBiz {
         voBasicUserInfoResp.setRealname(UserHelper.hideChar(StringUtils.isEmpty(user.getRealname()) ? " " : user.getRealname(), UserHelper.REALNAME_NUM));
         voBasicUserInfoResp.setRealnameState(!StringUtils.isEmpty(user.getRealname()));
         voBasicUserInfoResp.setIdNo(UserHelper.hideChar(StringUtils.isEmpty(user.getCardId()) ? " " : user.getCardId(), UserHelper.CARD_ID_NUM));
-        ;
+        voBasicUserInfoResp.setRegisterAt(DateHelper.dateToString(user.getCreatedAt()));
+        Integral integral=integralService.findByUserId(user.getId());
+        voBasicUserInfoResp.setTenderIntegral(new Long(integral.getUseIntegral()+integral.getNoUseIntegral()));
         voBasicUserInfoResp.setIdNoState(!StringUtils.isEmpty(user.getCardId()));
         voBasicUserInfoResp.setAlias(user.getPushId());
         return ResponseEntity.ok(voBasicUserInfoResp);

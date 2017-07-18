@@ -12,11 +12,11 @@ public class InviteFriends {
     private String createdAt;
     @ApiModelProperty("等级")
     private Integer leave;
-    @ApiModelProperty("比例")
+    @ApiModelProperty("奖励年利率")
     private String scale;
-    @ApiModelProperty("奖励金额")
+    @ApiModelProperty("提成奖励")
     private String money;
-    @ApiModelProperty("总待收本金")
+    @ApiModelProperty("计算提成的总待收本金")
     private String waitPrincipalTotal;
 
 
