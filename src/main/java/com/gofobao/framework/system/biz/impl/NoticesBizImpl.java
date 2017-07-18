@@ -13,6 +13,7 @@ import cn.jpush.api.push.model.notification.IosNotification;
 import cn.jpush.api.push.model.notification.Notification;
 import cn.jpush.api.push.model.notification.PlatformNotification;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.HtmlHelper;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.system.biz.NoticesBiz;
@@ -95,8 +96,8 @@ public class NoticesBizImpl implements NoticesBiz {
                     && (!StringUtils.isEmpty(users.getPushId()))
                     && (platforms.contains(users.getPlatform()))) {
                 PlatformNotification platformNotification;
-                String msg = notices.getContent() ;
-                PushResult pushResult = null;
+                String msg = HtmlHelper.filterHtml(notices.getContent()) ;
+                PushResult pushResult;
 
                 if (users.getPlatform().equals(1)) {
                     platformNotification = AndroidNotification.newBuilder()
