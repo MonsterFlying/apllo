@@ -10,9 +10,16 @@ import com.gofobao.framework.common.capital.CapitalChangeConfig;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.capital.CapitalChangeRulePaser;
+import com.gofobao.framework.common.constans.TypeTokenContants;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.service.UserCacheService;
+import com.google.common.collect.ImmutableMap;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,25 +28,28 @@ import org.springframework.util.StringUtils;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 资金变动帮助类
  * Created by Max on 17/3/10.
  */
 @Component
+@Slf4j
 public class CapitalChangeHelper {
     @Autowired
-    private AssetService assetService;
+    AssetService assetService;
 
     @Autowired
-    private AssetLogService assetLogService;
+    AssetLogService assetLogService;
 
     @Autowired
-    private UserCacheService userCacheService;
+    UserCacheService userCacheService;
 
     @Autowired
-    private YesterdayAssetService yesterdayAssetService;
+    YesterdayAssetService yesterdayAssetService;
 
+    @Transactional(rollbackFor = Exception.class)
     public boolean  capitalChange(CapitalChangeEntity entity) throws Exception {
         if (entity.getUserId() <= 0) {
             return false;
@@ -145,7 +155,6 @@ public class CapitalChangeHelper {
             }
            userCacheService.updateById(userCache);
         }
-
         return true;
     }
 

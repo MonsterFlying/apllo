@@ -25,6 +25,10 @@ import com.gofobao.framework.asset.vo.response.pc.VoCashLogWarpRes;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
@@ -41,6 +45,7 @@ import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.scheduler.biz.TaskSchedulerBiz;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
+import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.service.DictItemServcie;
 import com.gofobao.framework.system.service.DictValueService;
 import com.google.common.base.Preconditions;
@@ -148,6 +153,9 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                     return dictValueService.findTopByItemIdAndValue02(dictItem.getId(), bankName);
                 }
             });
+
+    @Autowired
+    MqHelper mqHelper;
 
 
     @Override
@@ -265,7 +273,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
         // 判断提现金额
-        if ( useMoney < voCashReq.getCashMoney() * 100 ) {
+        if (useMoney < voCashReq.getCashMoney() * 100) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "提现金额大于账户可用余额！", VoHtmlResp.class));
@@ -301,7 +309,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         withDrawRequest.setAccountId(userThirdAccount.getAccountId());
         withDrawRequest.setTxAmount(StringHelper.formatDouble(new Double((cashMoney - fee) / 100D), false)); //  交易金额
         withDrawRequest.setRouteCode("0");
-        withDrawRequest.setTxFee(StringHelper.formatDouble(new Double(fee / 100D), false)) ;
+        withDrawRequest.setTxFee(StringHelper.formatDouble(new Double(fee / 100D), false));
         withDrawRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, userId));
         withDrawRequest.setRetUrl(String.format("%s/%s/%s", javaDomain, "/pub/cash/show/", withDrawRequest.getTxDate() + withDrawRequest.getTxTime() + withDrawRequest.getSeqNo()));
         withDrawRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/asset/cash/callback"));
@@ -433,10 +441,13 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             return ResponseEntity.ok("success");
         }
 
+        String titel = "";
+        String content = "";
+        Date nowDate = new Date();
         if ((JixinResultContants.SUCCESS.equals(response.getRetCode())) || (JixinResultContants.CASH_RETRY.equals(response.getRetCode()))) { // 交易成功
             // 更改用户提现记录
             cashDetailLog.setState(3);
-            cashDetailLog.setCallbackTime(new Date());
+            cashDetailLog.setCallbackTime(nowDate);
             cashDetailLogService.save(cashDetailLog);
             // 更改用户资金
             CapitalChangeEntity entity = new CapitalChangeEntity();
@@ -446,15 +457,44 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             entity.setToUserId(userId);
             capitalChangeHelper.capitalChange(entity);
             log.info(String.format("提现成功: 交易流水: %s 返回状态/信息: %s/%s", seqNo, response.getRetCode(), response.getRetMsg()));
-            return ResponseEntity.ok("success");
+
+            titel = "提现成功";
+            content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 处理成功! 如有疑问请致电客服.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
+                    StringHelper.formatDouble(cashDetailLog.getMoney(), true)) ;
+
         } else {  // 交易失败
+            titel = "提现失败" ;
+            content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 处理失败! 如有疑问请致电客服.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
+                    StringHelper.formatDouble(cashDetailLog.getMoney(), true)) ;
             log.info(String.format("处理提现失败: 交易流水: %s 返回状态/信息: %s/%s", seqNo, response.getRetCode(), response.getRetMsg()));
             cashDetailLog.setState(4);
             cashDetailLog.setCallbackTime(new Date());
             cashDetailLog.setVerifyRemark(response.getRetMsg());
             cashDetailLogService.save(cashDetailLog);
-            return ResponseEntity.ok("success");
         }
+
+        try {
+            Notices notices = new Notices();
+            notices.setFromUserId(1L);
+            notices.setUserId(userId);
+            notices.setRead(false);
+            notices.setName(titel);
+            notices.setContent(content);
+            notices.setType("system");
+            notices.setCreatedAt(nowDate);
+            notices.setUpdatedAt(nowDate);
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
+            mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
+            Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
+            mqConfig.setMsg(body);
+            log.info(String.format("CashDetailLogBizImpl cashCallback send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("CashDetailLogBizImpl cashCallback send mq exception", e);
+        }
+
+        return ResponseEntity.ok("success");
     }
 
 
@@ -499,7 +539,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         response.setCashTime(DateHelper.dateToString(cashDetailLog.getCreateTime()));
         response.setFee(StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true));
         response.setRealCashMoney(StringHelper.formatDouble((cashDetailLog.getMoney() - cashDetailLog.getFee()) / 100D, true));
-        Date cashTime = cashDetailLog.getState() == 4 ?  DateHelper.addHours(cashDetailLog.getCreateTime(), 2) : cashDetailLog.getCallbackTime();
+        Date cashTime = cashDetailLog.getState() == 4 ? DateHelper.addHours(cashDetailLog.getCreateTime(), 2) : cashDetailLog.getCallbackTime();
         response.setRealCashTime(DateHelper.dateToString(cashTime));
 
 
@@ -572,11 +612,11 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
         Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
-        Long userId = Long.parseLong(paramMap.get("userId")) ;
-        double money = Double.parseDouble(paramMap.get("money")) ;
-        VoCashReq voCashReq = new VoCashReq() ;
-        voCashReq.setCashMoney(money) ;
-        return cash(httpServletRequest, userId, voCashReq) ;
+        Long userId = Long.parseLong(paramMap.get("userId"));
+        double money = Double.parseDouble(paramMap.get("money"));
+        VoCashReq voCashReq = new VoCashReq();
+        voCashReq.setCashMoney(money);
+        return cash(httpServletRequest, userId, voCashReq);
     }
 
 
