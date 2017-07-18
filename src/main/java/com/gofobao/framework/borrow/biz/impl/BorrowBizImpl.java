@@ -1041,6 +1041,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 borrowCollection.setCollectionMoneyYes(0);
                 borrowCollection.setLateDays(0);
                 borrowCollection.setLateInterest(0);
+                borrowCollection.setBorrowId(borrowId);
                 borrowCollectionService.insert(borrowCollection);
             }
 

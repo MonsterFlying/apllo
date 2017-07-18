@@ -41,7 +41,7 @@ public class NoticesMessageListener {
             Map<String, String> msg = (Map<String, String>)body.get(MqConfig.MSG_BODY) ;
             boolean result = false ;
             if(msg.equals(NOTICE_PUBLISH.getValue())){
-                noticeMessageProvider.addNoticeMessage(tag, msg);
+                result = noticeMessageProvider.addNoticeMessage(tag, msg);
             }
 
             if(!result){
