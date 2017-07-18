@@ -60,12 +60,13 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
      * @param sourceId
      * @return
      */
-    public boolean checkBatchOftenSubmit(String sourceId) {
+    public boolean checkBatchOftenSubmit(String sourceId, int ... type) {
         //查询最后一条提交的批次
         Specification<ThirdBatchLog> tbls = Specifications
                 .<ThirdBatchLog>and()
                 .eq("sourceId", sourceId)
                 .in("state", 0, 1)
+                .eq("type", type)
                 .build();
         Pageable pageable = new PageRequest(0, 1, new Sort(Sort.Direction.DESC, "id"));
         List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls, pageable);

@@ -410,8 +410,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
 
         //判断提交还款批次是否多次重复提交
-        boolean flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(repaymentId));
-        if (flag){
+        boolean flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(repaymentId), ThirdBatchNoTypeContant.REPAY_BAIL, ThirdBatchNoTypeContant.BATCH_REPAY);
+        if (flag) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("还款处理中，请勿重复点击!")));
@@ -1292,8 +1292,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
 
         //判断提交还款批次是否多次重复提交
-        boolean flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(repaymentId));
-        if (flag){
+        boolean flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(repaymentId), ThirdBatchNoTypeContant.BAIL_REPAY);
+        if (flag) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("垫付处理中，请勿重复点击!")));

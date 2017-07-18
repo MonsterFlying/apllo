@@ -285,7 +285,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         Preconditions.checkNotNull(borrowAsset, "借款人资产记录不存在!");
 
         //判断提交还款批次是否多次重复提交
-        boolean flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(borrowId));
+        boolean flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(borrowId),ThirdBatchNoTypeContant.BATCH_REPAY);
         if (flag){
             return ResponseEntity
                     .badRequest()

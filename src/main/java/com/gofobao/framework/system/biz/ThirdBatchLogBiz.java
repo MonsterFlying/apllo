@@ -17,5 +17,5 @@ public interface ThirdBatchLogBiz {
      * @param sourceId
      * @return
      */
-    boolean checkBatchOftenSubmit(String sourceId);
+    boolean checkBatchOftenSubmit(String sourceId,int ... type);
 }
