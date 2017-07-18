@@ -28,7 +28,7 @@ public class ThirdBatchLog {
     private String vparam1;
     private String vparam2;
     private String vparam3;
-    private Boolean state;
+    private Integer state;
     private Date createAt;
     private Date updateAt;
 }

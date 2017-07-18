@@ -70,6 +70,7 @@ import com.gofobao.framework.repayment.vo.response.pc.VoOrdersList;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewCollectionWarpRes;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewOrderListWarpRes;
 import com.gofobao.framework.system.biz.StatisticBiz;
+import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchNoTypeContant;
 import com.gofobao.framework.system.entity.*;
 import com.gofobao.framework.system.service.DictItemServcie;
@@ -142,6 +143,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private DictItemServcie dictItemServcie;
     @Autowired
     private ThirdBatchLogService thirdBatchLogService;
+    @Autowired
+    private ThirdBatchLogBiz thirdBatchLogBiz;
     @Autowired
     private JixinHelper jixinHelper;
     @Autowired
@@ -405,6 +408,15 @@ public class RepaymentBizImpl implements RepaymentBiz {
                         .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("账户余额不足，请先充值!")));
             }
         }
+
+        //判断提交还款批次是否多次重复提交
+        boolean flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(repaymentId), ThirdBatchNoTypeContant.REPAY_BAIL, ThirdBatchNoTypeContant.BATCH_REPAY);
+        if (flag) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("还款处理中，请勿重复点击!")));
+        }
+
 
         List<BorrowRepayment> borrowRepaymentList = null;
         if (borrowRepayment.getOrder() > 0) {
@@ -1279,6 +1291,14 @@ public class RepaymentBizImpl implements RepaymentBiz {
             }
         }
 
+        //判断提交还款批次是否多次重复提交
+        boolean flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(repaymentId), ThirdBatchNoTypeContant.BAIL_REPAY);
+        if (flag) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("垫付处理中，请勿重复点击!")));
+        }
+
         long lateInterest = 0;//逾期利息
         int lateDays = 0;//逾期天数
         int diffDay = DateHelper.diffInDays(DateHelper.beginOfDate(new Date()), DateHelper.beginOfDate(borrowRepayment.getRepayAt()), false);
@@ -1633,6 +1653,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      */
     public VoBuildThirdRepayResp buildThirdRepay(VoBuildThirdRepayReq voBuildThirdRepayReq) throws Exception {
         VoBuildThirdRepayResp resp = new VoBuildThirdRepayResp();
+
         return null;
     }
 

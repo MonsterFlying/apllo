@@ -940,6 +940,7 @@ public class BorrowBizImpl implements BorrowBiz {
             //======================================================================
             //扣除转让待收
             bcs = Specifications.<BorrowCollection>and()
+                    .eq("tenderId",tenderId)
                     .eq("status", 0)
                     .eq("transferFlag", 1)
                     .build();
