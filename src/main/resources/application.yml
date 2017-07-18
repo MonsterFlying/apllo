@@ -50,6 +50,7 @@ jixin: #银行存管
   instCode: "00960001" #机构代码
   bankCode: "30050000" #交易机构代码
 gofobao:
+  dev: true # 开发环境
   javaDomain: http://wangg.hk1.mofasuidao.cn
   webDomain: http://wangg.hk1.mofasuidao.cn
   h5Domain:  http://wangg.hk1.mofasuidao.cn
