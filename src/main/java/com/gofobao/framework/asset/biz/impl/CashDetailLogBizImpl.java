@@ -460,7 +460,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
             titel = "提现成功";
             content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 处理成功! 如有疑问请致电客服.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
-                    StringHelper.formatDouble(cashDetailLog.getMoney(), true)) ;
+                    StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true)) ;
 
         } else {  // 交易失败
             titel = "提现失败" ;
