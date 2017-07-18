@@ -41,13 +41,16 @@ public class WebCashController {
 
     @ApiOperation("提现")
     @PostMapping("/asset/pc/v2/cash")
-    public ResponseEntity<VoHtmlResp> cash(HttpServletRequest httpServletRequest, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoCashReq voCashReq) throws Exception{
+    public ResponseEntity<VoHtmlResp> cash(HttpServletRequest httpServletRequest,
+                                           @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                           @Valid @ModelAttribute VoCashReq voCashReq) throws Exception{
         return cashDetailLogBiz.cash(httpServletRequest, userId, voCashReq) ;
     }
 
     @ApiOperation("提现前期请求")
     @GetMapping("/asset/pc/v2/cash/show")
-    public ResponseEntity<VoPreCashResp> preCash(HttpServletRequest httpServletRequest, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+    public ResponseEntity<VoPreCashResp> preCash(HttpServletRequest httpServletRequest,
+                                                 @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         return cashDetailLogBiz.preCash(userId, httpServletRequest) ;
     }
 
