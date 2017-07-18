@@ -126,37 +126,41 @@ public class BorrowProvider {
                 //======================================
                 // 老用户投标红包
                 //======================================
-                tenders.stream().forEach(p -> {
-                    UserCache userCache = userCacheService.findById(p.getUserId());
-                    Map<String, String> paramsMap = newHashMap();
-                    MqConfig mqConfig = new MqConfig();
-                    // 非新手标  是新手标但是老用投
-                    boolean access = (!borrow.getIsNovice()) || (borrow.getIsNovice() && (userCache.getTenderTuijian() || userCache.getTenderQudao()));
-                    if (access) {
-                        paramsMap.put("type", RedPacketContants.OLD_USER_TENDER_BORROW_REDPACKAGE);
+                try {
+                    tenders.stream().forEach(p -> {
+                        UserCache userCache = userCacheService.findById(p.getUserId());
+                        Map<String, String> paramsMap = newHashMap();
+                        MqConfig mqConfig = new MqConfig();
+                        // 非新手标  是新手标但是老用投
+                        boolean access = (!borrow.getIsNovice()) || (borrow.getIsNovice() && (userCache.getTenderTuijian() || userCache.getTenderQudao()));
+                        if (access) {
+                            paramsMap.put("type", RedPacketContants.OLD_USER_TENDER_BORROW_REDPACKAGE);
+                            paramsMap.put("tenderId", p.getId().toString());
+                            paramsMap.put("time", DateHelper.dateToString(new Date()));
+
+                            mqConfig.setMsg(paramsMap);
+                            mqConfig.setTag(MqTagEnum.OLD_USER_TENDER);
+                            mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
+                            mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 120));
+                            mqHelper.convertAndSend(mqConfig);
+                        }
+
+                        //======================================
+                        // 推荐用户投资红包
+                        //======================================
+                        paramsMap.clear();
+                        paramsMap.put("type", RedPacketContants.INVITE_USER_TENDER_BORROW_REDPACKAGE);
                         paramsMap.put("tenderId", p.getId().toString());
                         paramsMap.put("time", DateHelper.dateToString(new Date()));
-
                         mqConfig.setMsg(paramsMap);
-                        mqConfig.setTag(MqTagEnum.OLD_USER_TENDER);
+                        mqConfig.setTag(MqTagEnum.INVITE_USER_TENDER);
                         mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
-                        mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 120));
+                        mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 160));
                         mqHelper.convertAndSend(mqConfig);
-                    }
-
-                    //======================================
-                    // 推荐用户投资红包
-                    //======================================
-                    paramsMap.clear();
-                    paramsMap.put("type", RedPacketContants.INVITE_USER_TENDER_BORROW_REDPACKAGE);
-                    paramsMap.put("tenderId", p.getId().toString());
-                    paramsMap.put("time", DateHelper.dateToString(new Date()));
-                    mqConfig.setMsg(paramsMap);
-                    mqConfig.setTag(MqTagEnum.INVITE_USER_TENDER);
-                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
-                    mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 160));
-                    mqHelper.convertAndSend(mqConfig);
-                });
+                    });
+                }catch (Exception e){
+                    log.error("派发红包失败");
+                }
             } else {
                 log.info("====================================================================");
                 log.info("非转让标发起复审失败！ msg:" + resp.getBody().getState().getMsg());
