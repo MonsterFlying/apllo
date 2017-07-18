@@ -83,7 +83,7 @@ public class CashDetailLogServiceImpl implements CashDetailLogService {
     public List<VoCashLog> pcLogs(VoPcCashLogs voPcCashLogs) {
         Specification specification = Specifications.<CashDetailLog>and()
                 .eq("userId", voPcCashLogs.getUserId())
-                .eq("status", voPcCashLogs.getStatus())
+                .eq("state", voPcCashLogs.getStatus())
                 .build();
         Page<CashDetailLog> cashDetailLogPage = cashDetailLogRepository.findAll(specification,
                 new PageRequest(voPcCashLogs.getPageIndex(),

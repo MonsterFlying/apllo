@@ -547,13 +547,14 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             List<VoCashLog> logList = cashDetailLogService.pcLogs(cashLogs);
             VoCashLogWarpRes warpRes = VoBaseResp.ok("查询成功", VoCashLogWarpRes.class);
             warpRes.setTotalCount(0);
-            if (CollectionUtils.isEmpty(logList)) {
+            if (!CollectionUtils.isEmpty(logList)) {
                 warpRes.setTotalCount(logList.get(0).getTotalCount());
                 logList.get(0).setTotalCount(null);
             }
             warpRes.setLogs(logList);
             return ResponseEntity.ok(warpRes);
         } catch (Throwable e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,
