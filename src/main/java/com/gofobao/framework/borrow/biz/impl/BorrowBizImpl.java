@@ -398,7 +398,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow) throws Exception{
+    public ResponseEntity<VoBaseResp> addNetWorth(VoAddNetWorthBorrow voAddNetWorthBorrow) throws Exception {
         Long userId = voAddNetWorthBorrow.getUserId();
         String releaseAtStr = voAddNetWorthBorrow.getReleaseAt();
         Integer money = (int) voAddNetWorthBorrow.getMoney();
@@ -494,7 +494,7 @@ public class BorrowBizImpl implements BorrowBiz {
         } catch (Throwable e) {
 
             log.error("新增借款异常：", e);
-            throw new Exception(e) ;
+            throw new Exception(e);
         }
 
         if (borrowId <= 0) {
@@ -850,62 +850,65 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      * @throws Exception
      */
-    @Transactional(rollbackFor = Exception.class)
     public boolean notTransferBorrowAgainVerify(Borrow borrow) throws Exception {
-        boolean bool = false;
-        do {
 
-            if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1)
-                    || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
-                break;
-            }
-            Date nowDate = new Date();
-            int repayMoney = 0;
-            int repayInterest = 0;
+        if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1)
+                || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
+            return false;
+        }
 
-            //调用利息计算器得出借款每期应还信息
-            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(StringHelper.toString(borrow.getMoney())),
-                    NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrow.getSuccessAt());
-            Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
-            List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
+        Date nowDate = new Date();
+        // 生成还款记录
+        disposeBorrowRepay(borrow, nowDate);
+        //生成回款记录
+        boolean generateState = disposeBorrowCollection(borrow, nowDate);
+        if(!generateState){
+            return false;
+        }
 
-            BorrowRepayment borrowRepayment = null;
-            for (int i = 0; i < repayDetailList.size(); i++) {
-                borrowRepayment = new BorrowRepayment();
-                Map<String, Object> repayDetailMap = repayDetailList.get(i);
-                repayMoney += new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue();
-                repayInterest += new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue();
-                borrowRepayment.setBorrowId(borrow.getId());
-                borrowRepayment.setStatus(0);
-                borrowRepayment.setOrder(i);
-                borrowRepayment.setRepayAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
-                borrowRepayment.setRepayMoney(new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue());
-                borrowRepayment.setPrincipal(new Double(NumberHelper.toDouble(repayDetailMap.get("principal"))).intValue());
-                borrowRepayment.setInterest(new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue());
-                borrowRepayment.setRepayMoneyYes(0);
-                borrowRepayment.setCreatedAt(nowDate);
-                borrowRepayment.setUpdatedAt(nowDate);
-                borrowRepayment.setAdvanceMoneyYes(0);
-                borrowRepayment.setLateDays(0);
-                borrowRepayment.setLateInterest(0);
-                borrowRepayment.setUserId(borrow.getUserId());
-                borrowRepaymentService.save(borrowRepayment);
-            }
+        // 复审事件
+        //如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
+        updateUserCacheByBorrowReview(borrow);
+        //更新网站统计
+        updateStatisticByBorrowReview(borrow);
+        //借款成功发送通知短信
+        smsNoticeByBorrowReview(borrow);
+        //发送借款协议
+        sendBorrowProtocol(borrow);
+        return true;
+    }
 
-            //生成回款记录
-            bool = disposeBorrowCollection(borrow, nowDate);
-
-            // 复审事件
-            //如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
-            updateUserCacheByBorrowReview(borrow);
-            //更新网站统计
-            updateStatisticByBorrowReview(borrow);
-            //借款成功发送通知短信
-            smsNoticeByBorrowReview(borrow);
-            //发送借款协议
-            sendBorrowProtocol(borrow);
-        } while (false);
-        return bool;
+    /**
+     * 生成还款记录
+     * @param borrow
+     * @param nowDate
+     */
+    private void disposeBorrowRepay(Borrow borrow, Date nowDate) {
+        // 调用利息计算器得出借款每期应还信息
+        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(StringHelper.toString(borrow.getMoney())),
+                NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrow.getSuccessAt());
+        Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
+        List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
+        BorrowRepayment borrowRepayment = null;
+        for (int i = 0; i < repayDetailList.size(); i++) {
+            borrowRepayment = new BorrowRepayment();
+            Map<String, Object> repayDetailMap = repayDetailList.get(i);
+            borrowRepayment.setBorrowId(borrow.getId());
+            borrowRepayment.setStatus(0);
+            borrowRepayment.setOrder(i);
+            borrowRepayment.setRepayAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
+            borrowRepayment.setRepayMoney(new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue());
+            borrowRepayment.setPrincipal(new Double(NumberHelper.toDouble(repayDetailMap.get("principal"))).intValue());
+            borrowRepayment.setInterest(new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue());
+            borrowRepayment.setRepayMoneyYes(0);
+            borrowRepayment.setCreatedAt(nowDate);
+            borrowRepayment.setUpdatedAt(nowDate);
+            borrowRepayment.setAdvanceMoneyYes(0);
+            borrowRepayment.setLateDays(0);
+            borrowRepayment.setLateInterest(0);
+            borrowRepayment.setUserId(borrow.getUserId());
+            borrowRepaymentService.save(borrowRepayment);
+        }
     }
 
     /**
@@ -940,7 +943,7 @@ public class BorrowBizImpl implements BorrowBiz {
             //======================================================================
             //扣除转让待收
             bcs = Specifications.<BorrowCollection>and()
-                    .eq("tenderId",tenderId)
+                    .eq("tenderId", tenderId)
                     .eq("status", 0)
                     .eq("transferFlag", 1)
                     .build();
@@ -1008,9 +1011,9 @@ public class BorrowBizImpl implements BorrowBiz {
             return false;
         }
 
-        for (Tender tempTender : tenderList) {
+        for (Tender tender : tenderList) {
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
-                    NumberHelper.toDouble(StringHelper.toString(tempTender.getValidMoney())),
+                    NumberHelper.toDouble(StringHelper.toString(tender.getValidMoney())),
                     NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrowDate);
             Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
             List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
@@ -1023,10 +1026,10 @@ public class BorrowBizImpl implements BorrowBiz {
                 Map<String, Object> repayDetailMap = repayDetailList.get(i);
                 collectionMoney += new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue();
                 collectionInterest += new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue();
-                borrowCollection.setTenderId(tempTender.getId());
+                borrowCollection.setTenderId(tender.getId());
                 borrowCollection.setStatus(0);
                 borrowCollection.setOrder(i);
-                borrowCollection.setUserId(tempTender.getUserId());
+                borrowCollection.setUserId(tender.getUserId());
                 borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : borrowDate);
                 borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : nowDate);
                 borrowCollection.setCollectionAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
@@ -1044,16 +1047,16 @@ public class BorrowBizImpl implements BorrowBiz {
             //扣除冻结
             entity = new CapitalChangeEntity();
             entity.setType(CapitalChangeEnum.Tender);
-            entity.setUserId(tempTender.getUserId());
+            entity.setUserId(tender.getUserId());
             entity.setToUserId(borrow.getUserId());
-            entity.setMoney(tempTender.getValidMoney());
+            entity.setMoney(tender.getValidMoney());
             entity.setRemark("成功投资[" + BorrowHelper.getBorrowLink(borrowId, borrow.getName()) + "]");
             capitalChangeHelper.capitalChange(entity);
 
             //添加待收
             entity = new CapitalChangeEntity();
             entity.setType(CapitalChangeEnum.CollectionAdd);
-            entity.setUserId(tempTender.getUserId());
+            entity.setUserId(tender.getUserId());
             entity.setToUserId(borrow.getUserId());
             entity.setMoney(collectionMoney);
             entity.setInterest(collectionInterest);
@@ -1062,11 +1065,11 @@ public class BorrowBizImpl implements BorrowBiz {
 
             //添加奖励
             if (borrow.getAwardType() > 0) {
-                UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(tempTender.getUserId());
+                UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
 
-                int money = (int) MathHelper.myRound((tempTender.getValidMoney() / borrow.getMoney()) * borrow.getAward(), 2);
+                int money = (int) MathHelper.myRound((tender.getValidMoney() / borrow.getMoney()) * borrow.getAward(), 2);
                 if (borrow.getAwardType() == 2) {
-                    money = (int) MathHelper.myRound(tempTender.getValidMoney() * borrow.getAward() / 100, 2);
+                    money = (int) MathHelper.myRound(tender.getValidMoney() * borrow.getAward() / 100, 2);
                 }
 
                 String remark = "借款标[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]的奖励";
@@ -1091,17 +1094,17 @@ public class BorrowBizImpl implements BorrowBiz {
 
                 entity = new CapitalChangeEntity();
                 entity.setType(CapitalChangeEnum.Award);
-                entity.setUserId(tempTender.getUserId());
+                entity.setUserId(tender.getUserId());
                 entity.setToUserId(borrow.getUserId());
                 entity.setMoney(money);
                 entity.setRemark(remark);
                 capitalChangeHelper.capitalChange(entity);
             }
 
-            if (!tenderUserIds.contains(tempTender.getUserId())) {
+            if (!tenderUserIds.contains(tender.getUserId())) {
                 Notices notices = new Notices();
                 notices.setFromUserId(1L);
-                notices.setUserId(tempTender.getUserId());
+                notices.setUserId(tender.getUserId());
                 notices.setRead(false);
                 notices.setName("投资的借款满标审核通过");
                 notices.setContent("您所投资的借款[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]在 " + DateHelper.dateToString(nowDate) + " 已满标审核通过");
@@ -1123,8 +1126,8 @@ public class BorrowBizImpl implements BorrowBiz {
                 }
 
                 //更新投标状态
-                tempTender.setState(2);
-                tenderService.updateById(tempTender);
+                tender.setState(2);
+                tenderService.updateById(tender);
             }
 
             //触发投标成功事件
@@ -1132,8 +1135,7 @@ public class BorrowBizImpl implements BorrowBiz {
             //投资车贷标成功添加 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
             //更新 投过相应标种 标识
             //=============================================================
-            updateUserCacheByTenderSuccess(tempTender, borrow, repayDetailList);
-
+            updateUserCacheByTenderSuccess(tender, borrow, repayDetailList);
         }
 
         //借款入账
