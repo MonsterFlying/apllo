@@ -40,8 +40,6 @@ public class CapitalChangeHelper {
     @Autowired
     private YesterdayAssetService yesterdayAssetService;
 
-
-    @Transactional(rollbackFor = Exception.class)
     public boolean  capitalChange(CapitalChangeEntity entity) throws Exception {
         if (entity.getUserId() <= 0) {
             return false;

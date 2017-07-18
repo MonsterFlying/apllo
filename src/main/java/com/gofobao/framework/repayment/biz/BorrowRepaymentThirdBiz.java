@@ -53,7 +53,7 @@ public interface BorrowRepaymentThirdBiz {
      *
      * @return
      */
-    ResponseEntity<String> thirdBatchLendRepayRunCall(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> thirdBatchLendRepayRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception;
 
     /**
      * 批次担保账户代偿参数检查回调
