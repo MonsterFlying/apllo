@@ -291,6 +291,11 @@ public enum JixinTxCodeEnum {
             "creditEnd",
             "/escrow/p2p/online",
             "债权结束"
+    ),
+    BATCH_QUERY(
+            "batchQuery",
+            "/escrow/p2p/online",
+            "查询批次状态"
     );
 
 

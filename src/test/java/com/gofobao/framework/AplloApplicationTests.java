@@ -6,6 +6,7 @@ import com.gofobao.framework.api.helper.CertHelper;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileRequest;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
@@ -15,6 +16,8 @@ import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
+import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
+import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
@@ -217,8 +220,8 @@ public class AplloApplicationTests {
 
     private void findThirdBorrowList() {
         VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
-        voQueryThirdBorrowList.setProductId("A69756");
-        voQueryThirdBorrowList.setUserId(2762L);
+        voQueryThirdBorrowList.setProductId("GA69857");
+        voQueryThirdBorrowList.setUserId(37231L);
         voQueryThirdBorrowList.setPageNum("1");
         voQueryThirdBorrowList.setPageSize("10");
         DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
@@ -239,8 +242,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("150052");
-        batchDetailsQueryReq.setBatchTxDate("20170714");
+        batchDetailsQueryReq.setBatchNo("193807");
+        batchDetailsQueryReq.setBatchTxDate("20170717");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -262,7 +265,7 @@ public class AplloApplicationTests {
     }
 
     private void transferBorrowAgainVerify() {
-        Borrow borrow = borrowService.findById(169858L);
+        Borrow borrow = borrowService.findById(169860L);
         try {
             borrowBiz.transferBorrowAgainVerify(borrow);
         } catch (Throwable e) {
@@ -271,7 +274,7 @@ public class AplloApplicationTests {
     }
 
     private void noTransferBorrowAgainVerify() {
-        Borrow borrow = borrowService.findById(169849L);
+        Borrow borrow = borrowService.findById(169864L);
         try {
             borrowBiz.notTransferBorrowAgainVerify(borrow);
         } catch (Throwable e) {
@@ -285,8 +288,26 @@ public class AplloApplicationTests {
     @Test
     public void test() {
 
+        /*BatchQueryReq req = new BatchQueryReq();
+        req.setChannel(ChannelContant.HTML);
+        req.setBatchNo("104028");
+        req.setBatchTxDate("20170718");
+        BatchQueryResp resp = jixinManager.send(JixinTxCodeEnum.BATCH_QUERY,req,BatchQueryResp.class);
+        System.out.println(resp);*/
 
-        /*BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
+        /*AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
+        request.setAccountId("6212462040000550055");
+        request.setStartDate("20161002");
+        request.setEndDate("20171003");
+        request.setChannel(ChannelContant.HTML);
+        request.setType("0"); // 转入
+        //request.setTranType("7820"); // 线下转账的
+        request.setPageSize(String.valueOf(1));
+        request.setPageNum(String.valueOf(10));
+        AccountDetailsQueryResponse response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, request, AccountDetailsQueryResponse.class);
+        System.out.println(response);
+
+        BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
         balanceQueryRequest.setAccountId("6212462040000550055");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
@@ -311,13 +332,13 @@ public class AplloApplicationTests {
         //查询标的集合
         //findThirdBorrowList();
         //复审
-        doAgainVerify();
+        //doAgainVerify();
         //批次详情查询
         //batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调
-        //ransferBorrowAgainVerify();
+        //transferBorrowAgainVerify();
         //非转让标复审问题
         //noTransferBorrowAgainVerify();
     }
