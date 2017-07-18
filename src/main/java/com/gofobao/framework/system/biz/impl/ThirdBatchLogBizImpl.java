@@ -60,13 +60,13 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
      * @param sourceId
      * @return
      */
-    public boolean checkBatchOftenSubmit(String sourceId, int ... type) {
+    public boolean checkBatchOftenSubmit(String sourceId, Integer ... type) {
         //查询最后一条提交的批次
         Specification<ThirdBatchLog> tbls = Specifications
                 .<ThirdBatchLog>and()
                 .eq("sourceId", sourceId)
                 .in("state", 0, 1)
-                .eq("type", type)
+                .in("type", type)
                 .build();
         Pageable pageable = new PageRequest(0, 1, new Sort(Sort.Direction.DESC, "id"));
         List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls, pageable);
@@ -83,6 +83,7 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
         BatchQueryResp resp = jixinManager.send(JixinTxCodeEnum.BATCH_QUERY, req, BatchQueryResp.class);
         if ((ObjectUtils.isEmpty(resp)) || (!JixinResultContants.SUCCESS.equals(resp.getRetCode()))) {
             log.error(ObjectUtils.isEmpty(resp) ? "当前网络不稳定，请稍候重试" : resp.getRetMsg());
+            //修改批次日志状态
             return true;
         }
 
