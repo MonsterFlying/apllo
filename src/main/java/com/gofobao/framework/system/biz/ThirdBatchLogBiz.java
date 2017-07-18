@@ -10,5 +10,12 @@ public interface ThirdBatchLogBiz {
      * @param batchNo
      * @return
      */
-    boolean updateBatchLogState(String batchNo,Long sourceId);
+    boolean updateBatchLogState(String batchNo,Long sourceId,int state);
+
+    /**
+     * 更据sourceId检查批次是否频繁提交
+     * @param sourceId
+     * @return
+     */
+    boolean checkBatchOftenSubmit(String sourceId);
 }

@@ -284,6 +284,14 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         Asset borrowAsset = assetService.findByUserId(borrow.getUserId());
         Preconditions.checkNotNull(borrowAsset, "借款人资产记录不存在!");
 
+        //判断提交还款批次是否多次重复提交
+        boolean flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(borrowId));
+        if (flag){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("还款处理中，请勿重复点击!")));
+        }
+
         int repaymentTotal = 0;
         List<VoThirdBatchRepay> voThirdBatchRepayList = new ArrayList<>();
         int penalty = 0;
@@ -377,7 +385,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         thirdBatchLog.setBatchNo(batchNo);
         thirdBatchLog.setCreateAt(nowDate);
         thirdBatchLog.setUpdateAt(nowDate);
-        thirdBatchLog.setSourceId(borrowRepayment.getId());
+        thirdBatchLog.setSourceId(borrowRepayment.getBorrowId());
         thirdBatchLog.setType(ThirdBatchNoTypeContant.BATCH_REPAY);
         thirdBatchLog.setRemark("即信批次还款");
         thirdBatchLogService.save(thirdBatchLog);
@@ -431,11 +439,12 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(repayCheckResp.getRetCode())) {
             log.error("=============================(提前结清)即信批次还款检验参数回调===========================");
             log.error("回调失败! msg:" + repayCheckResp.getRetMsg());
+            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(),NumberHelper.toLong(repayCheckResp.getAcqRes()),2);
         } else {
             log.info("=============================(提前结清)即信批次放款检验参数回调===========================");
             log.info("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(),NumberHelper.toLong(repayCheckResp.getAcqRes()));
+            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(),NumberHelper.toLong(repayCheckResp.getAcqRes()),1);
         }
 
         return ResponseEntity.ok("success");

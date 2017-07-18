@@ -317,6 +317,26 @@ public class DateHelper {
         return get(date, Calendar.DATE);
     }
 
+    /**
+     * 根据日期获取小时
+     *
+     * @param date
+     * @return
+     */
+    public static int getDate(final Date date) {
+        return get(date, Calendar.DATE);
+    }
+
+    /**
+     * 根据日期获取分钟
+     *
+     * @param date
+     * @return
+     */
+    public static int getMinute(final Date date) {
+        return get(date, Calendar.MINUTE);
+    }
+
 
     private static int get(final Date date, int field) {
         Validate.notNull(date, "The date must not be null");

@@ -16,6 +16,8 @@ import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
+import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
+import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
@@ -240,7 +242,7 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("114505");
+        batchDetailsQueryReq.setBatchNo("193807");
         batchDetailsQueryReq.setBatchTxDate("20170717");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
@@ -272,7 +274,7 @@ public class AplloApplicationTests {
     }
 
     private void noTransferBorrowAgainVerify() {
-        Borrow borrow = borrowService.findById(169849L);
+        Borrow borrow = borrowService.findById(169864L);
         try {
             borrowBiz.notTransferBorrowAgainVerify(borrow);
         } catch (Throwable e) {
@@ -286,8 +288,15 @@ public class AplloApplicationTests {
     @Test
     public void test() {
 
+        /*BatchQueryReq req = new BatchQueryReq();
+        req.setChannel(ChannelContant.HTML);
+        req.setBatchNo("104028");
+        req.setBatchTxDate("20170718");
+        BatchQueryResp resp = jixinManager.send(JixinTxCodeEnum.BATCH_QUERY,req,BatchQueryResp.class);
+        System.out.println(resp);*/
+
         /*AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
-        request.setAccountId("6212462040000950032");
+        request.setAccountId("6212462040000550055");
         request.setStartDate("20161002");
         request.setEndDate("20171003");
         request.setChannel(ChannelContant.HTML);
@@ -296,11 +305,11 @@ public class AplloApplicationTests {
         request.setPageSize(String.valueOf(1));
         request.setPageNum(String.valueOf(10));
         AccountDetailsQueryResponse response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, request, AccountDetailsQueryResponse.class);
-        System.out.println(response);*/
+        System.out.println(response);
 
-        /*BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
+        BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId("6212462040000200040");
+        balanceQueryRequest.setAccountId("6212462040000550055");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         System.out.println(balanceQueryResponse);*/
 
@@ -329,7 +338,7 @@ public class AplloApplicationTests {
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调
-        transferBorrowAgainVerify();
+        //transferBorrowAgainVerify();
         //非转让标复审问题
         //noTransferBorrowAgainVerify();
     }
