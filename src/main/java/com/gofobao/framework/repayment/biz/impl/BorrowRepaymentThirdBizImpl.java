@@ -386,7 +386,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             BatchDetailsQueryResp batchDetailsQueryResp = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, batchDetailsQueryReq, BatchDetailsQueryResp.class);
             if ((ObjectUtils.isEmpty(batchDetailsQueryResp)) || (!JixinResultContants.SUCCESS.equals(batchDetailsQueryResp.getRetCode()))) {
                 log.error(ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : batchDetailsQueryResp.getRetMsg());
-                break;
+                return ResponseEntity.ok("error");
             }
 
             //2.筛选失败批次
