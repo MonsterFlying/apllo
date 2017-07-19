@@ -12,7 +12,7 @@ public class VoPcCashLogs extends Page {
     @ApiModelProperty("用户id")
     private Long userId;
 
-    @ApiModelProperty("提现状态（0待处理；4处理中；1已成功；2已失败；3已取消）")
+    @ApiModelProperty("-1.取消提现.0:申请中,1.系统审核通过,2.系统审核不通过, 3.银行提现成功.4.银行提现失败")
     private Integer status;
 
 }

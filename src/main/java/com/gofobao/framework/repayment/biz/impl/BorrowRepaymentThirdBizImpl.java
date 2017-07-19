@@ -41,6 +41,7 @@ import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -56,7 +57,11 @@ import org.springframework.util.ObjectUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
+
+import static com.gofobao.framework.helper.DateHelper.isBetween;
 
 /**
  * Created by Zeke on 2017/6/8.
@@ -857,7 +862,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
         Long borrowId = borrow.getId();//借款ID
 
-        //逾期天数
+        // 逾期天数
         Date nowDateOfBegin = DateHelper.beginOfDate(new Date());
         Date repayDateOfBegin = DateHelper.beginOfDate(borrowRepayment.getRepayAt());
         int lateDays = DateHelper.diffInDays(nowDateOfBegin, repayDateOfBegin, false);
@@ -882,187 +887,165 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         }
 
         List<Repay> repayList = new ArrayList<>();
-        if (ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) {
-            repayList = new ArrayList<>();
-            receivedRepay(repayList, borrow, borrowUserThirdAccount.getAccountId(), borrowRepayment.getOrder(), interestPercent, lateDays, lateInterest);
-        }
+        receivedRepay(repayList, borrow, borrowUserThirdAccount.getAccountId(), borrowRepayment.getOrder(), interestPercent, lateDays, lateInterest / 2);
         return repayList;
     }
 
     /**
      * 获取存管 收到还款 数据集合
      *
-     * @param borrow
-     * @param order
-     * @param interestPercent
+     * @param repayList       还款集合
+     * @param borrow          标的
+     * @param order           还款期数
+     * @param interestPercent 利息比例
      * @param borrowAccountId 借款方即信存管账户id
-     * @param lateDays
-     * @param lateInterest
+     * @param lateDays        逾期天数
+     * @param lateInterest    逾期利息
      * @return
      * @throws Exception
      */
     public void receivedRepay(List<Repay> repayList, Borrow borrow, String borrowAccountId, int order, double interestPercent, int lateDays, int lateInterest) throws Exception {
-        do {
-            //===================================还款校验==========================================
-            if (ObjectUtils.isEmpty(borrow)) {
-                break;
-            }
+        Long borrowId = borrow.getId();
+        Specification<Tender> specification = Specifications
+                .<Tender>and()
+                .eq("status", 1)
+                .eq("borrowId", borrowId)
+                .build();
 
-            Long borrowId = borrow.getId();
-            Specification<Tender> specification = Specifications
-                    .<Tender>and()
-                    .eq("status", 1)
-                    .eq("borrowId", borrowId)
-                    .build();
+        List<Tender> tenderList = tenderService.findList(specification);
+        Preconditions.checkNotNull(tenderList, "立即还款: 投标记录为空!");
+        Set<Long> userIds = tenderList.stream().map(p -> p.getUserId()).collect(Collectors.toSet());
+        List<Long> tenderIds = tenderList.stream().map(p -> p.getId()).collect(Collectors.toList());
+        Specification<UserCache> ucs = Specifications
+                .<UserCache>and()
+                .in("userId", userIds.toArray())
+                .build();
 
-            List<Tender> tenderList = tenderService.findList(specification);
-            if (CollectionUtils.isEmpty(tenderList)) {
-                break;
-            }
+        List<UserCache> userCacheList = userCacheService.findList(ucs);
+        Preconditions.checkNotNull(userCacheList, "立即还款: 查询用户缓存为空!");
+        Specification<BorrowCollection> bcs = Specifications
+                .<BorrowCollection>and()
+                .in("tenderId", tenderIds.toArray())
+                .eq("status", 0)
+                .eq("order", order)
+                .build();
 
-            List<Long> userIds = new ArrayList<>();
-            List<Long> tenderIds = new ArrayList<>();
-            for (Tender tender : tenderList) {
-                userIds.add(tender.getUserId());
-                tenderIds.add(tender.getId());
-            }
+        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
+        Map<Long, BorrowCollection> borrowCollectionMap = borrowCollectionList
+                .stream()
+                .collect(Collectors.toMap(BorrowCollection::getTenderId,
+                        Function.identity()));
+        Preconditions.checkNotNull(borrowCollectionList, "立即还款: 查询还款记录为空!");
 
-            Specification<UserCache> ucs = Specifications
-                    .<UserCache>and()
-                    .in("userId", userIds.toArray())
-                    .build();
+        UserThirdAccount tenderUserThirdAccount;
+        Repay repay;
+        int txFeeIn = 0;    // 投资方手续费 利息管理费
+        int txAmount = 0;   // 融资人实际付出金额 = 交易金额 + 交易利息 + 还款手续费
+        int intAmount = 0;  // 交易利息
+        int txFeeOut = 0;   // 借款方手续费  逾期利息
+        for (Tender tender : tenderList) {
+            repay = new Repay();
+            txFeeIn = 0;
+            txFeeOut = 0;
 
-            List<UserCache> userCacheList = userCacheService.findList(ucs);
-            if (CollectionUtils.isEmpty(userCacheList)) {
-                break;
-            }
+            tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId()); // 投标人银行存管账户
+            Preconditions.checkNotNull(tenderUserThirdAccount, "投标人未开户!");
+            BorrowCollection borrowCollection = borrowCollectionMap.get(tender.getId());  // 还款计划
+            Preconditions.checkNotNull(borrowCollection, "立即还款: 根据投标记录查询还款记录查询为空");
+            if (tender.getTransferFlag() == 1) {   //转让中
+                Specification<Borrow> bs = Specifications
+                        .<Borrow>and()
+                        .eq("tenderId", tender.getId())
+                        .in("status", 0, 1)
+                        .build();
 
-            Specification<BorrowCollection> bcs = Specifications
-                    .<BorrowCollection>and()
-                    .in("tenderId", tenderIds.toArray())
-                    .eq("status", 0)
-                    .eq("order", order)
-                    .build();
+                List<Borrow> borrowList = borrowService.findList(bs);
 
-            List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
-            if (CollectionUtils.isEmpty(borrowCollectionList)) {
-                break;
-            }
-            //==================================================================================
-            UserThirdAccount tenderUserThirdAccount = null;
-            Repay repay = null;
-            int txFeeIn = 0;//投资方手续费  利息管理费
-            int txAmount = 0;//融资人实际付出金额=交易金额+交易利息+还款手续费
-            int intAmount = 0;//交易利息
-            int txFeeOut = 0;//借款方手续费  逾期利息
-            for (Tender tender : tenderList) {
-                repay = new Repay();
-                txFeeIn = 0;
-                txAmount = 0;
-                intAmount = 0;
-                txFeeOut = 0;
-
-                tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());//投标人银行存管账户
-                Preconditions.checkNotNull(tenderUserThirdAccount, "投标人未开户!");
-                BorrowCollection borrowCollection = null;//当前借款的回款记录
-                for (int i = 0; i < borrowCollectionList.size(); i++) {
-                    borrowCollection = borrowCollectionList.get(i);
-                    if (StringHelper.toString(tender.getId()).equals(StringHelper.toString(borrowCollection.getTenderId()))) {
-                        break;
-                    }
-                    borrowCollection = null;
+                // TODO 标的 撤销
+                if (CollectionUtils.isEmpty(borrowList)) {
                     continue;
                 }
+            }
 
-                /**
-                 *@// TODO: 2017/7/18
-                 */
-                if (tender.getTransferFlag() == 1) {//转让中
-                    Specification<Borrow> bs = Specifications
-                            .<Borrow>and()
-                            .eq("tenderId", tender.getId())
-                            .in("status", 0, 1)
-                            .build();
+            if (tender.getTransferFlag() == 2) { //已转让
+                Specification<Borrow> bs = Specifications
+                        .<Borrow>and()
+                        .eq("tenderId", tender.getId())
+                        .eq("status", 3)
+                        .build() ;
+                List<Borrow> borrowList = borrowService.findList(bs) ;
+                Preconditions.checkNotNull(borrowList, "查询转让标的为空") ;
+                Borrow tempBorrow = borrowList.get(0) ;
 
-                    List<Borrow> borrowList = borrowService.findList(bs);
-                    if (CollectionUtils.isEmpty(borrowList)) {
-                        continue;
-                    }
+                int tempOrder = order + tempBorrow.getTotalOrder() - borrow.getTotalOrder();
+                int tempLateInterest = tender.getValidMoney() / borrow.getMoney() * lateInterest;  // 逾期收入
+                receivedRepay(repayList, tempBorrow, borrowAccountId, tempOrder, interestPercent, lateDays, tempLateInterest); //递归处理
+                continue;
+            }
+
+            intAmount = new Double(borrowCollection.getInterest() * interestPercent).intValue();  // 本期还款利息
+            txAmount = borrowCollection.getPrincipal() + intAmount;  // 本期还款金额
+
+            // 此处代码说明
+            // 还款计划:2.1号, 3.1号, 4.1号. 5.1号, 6.1号;
+            // 其中2.1号, 3.1号 已经还款, 当在3.15 发生债权转让
+            // 其中3.1 - 3.15 的利息本应该属于原出借人所有.因为存管平台的限制;
+            // 导致部分利息被规划到新的债权承接人手里.跟平台业务不符合, 所以使用一下方案:
+            // 还款时: 直接使用手续费形式扣除新承接人的该部分利息.然后通过红包形式返还给原债权出借人该部分利息
+            int interestLower = 0;  // 应扣除利息
+            if (borrow.isTransfer()) {
+                int interest = borrowCollection.getInterest();
+                Date startAt = DateHelper.beginOfDate( borrowCollection.getStartAt());
+                Date collectionAt = DateHelper.beginOfDate( borrowCollection.getCollectionAt());
+                Date startAtYes = DateHelper.beginOfDate(borrowCollection.getStartAtYes()) ;
+                interestLower = Math.round(interest -
+                        interest * Math.max(DateHelper.diffInDays(collectionAt, startAtYes, false), 0)
+                                / DateHelper.diffInDays(collectionAt, startAt, false)
+                );
+
+                //  债权购买人应扣除利息
+                txFeeIn += interestLower;  // 收款人利息
+            }
+
+            //  平台收取出借用户利息管理费为: 利息的百分之十;
+            //  特殊注意: 其中有部分用户不需要收取手续费(在2015年签署股东写).有效期(2015. 12 - 2017.12.25)
+            if (((borrow.getType() == 0) || (borrow.getType() == 4)) && intAmount > interestLower) {
+                ImmutableSet<Long> stockholder = ImmutableSet.of(2480L, 1753L, 1699L,
+                        3966L, 1413L, 1857L,
+                        183L, 2327L, 2432L,
+                        2470L, 2552L, 2739L,
+                        3939L, 893L, 608L,
+                        1216L);
+
+                boolean between = isBetween(new Date(), DateHelper.stringToDate("2015-12-25 00:00:00"),
+                        DateHelper.stringToDate("2017-12-25 23:59:59"));
+                if ((stockholder.contains(tender.getUserId())) && (between)) {
+                    txFeeIn += 0 ;
+                }else {
+                    txFeeIn += new Double(MathHelper.myRound((intAmount - interestLower) * 0.1, 2)).intValue() ;
                 }
-
-                if (tender.getTransferFlag() == 2) { //已转让
-                    Specification<Borrow> bs = Specifications
-                            .<Borrow>and()
-                            .eq("tenderId", tender.getId())
-                            .eq("status", 3)
-                            .build();
-
-                    List<Borrow> borrowList = borrowService.findList(bs);
-                    if (CollectionUtils.isEmpty(borrowList)) {
-                        continue;
-                    }
-
-                    Borrow tempBorrow = borrowList.get(0);
-                    int tempOrder = order + tempBorrow.getTotalOrder() - borrow.getTotalOrder();
-                    int tempLateInterest = tender.getValidMoney() / borrow.getMoney() * lateInterest;
-
-                    //回调
-                    receivedRepay(repayList, tempBorrow, borrowAccountId, tempOrder, interestPercent, lateDays, tempLateInterest);
-                    continue;
-                }
-
-                intAmount = (int) (borrowCollection.getInterest() * interestPercent);
-                txAmount = borrowCollection.getPrincipal() + intAmount;
-
-                //收到客户对借款还款
-                int interestLower = 0;//应扣除利息
-                if (borrow.isTransfer()) {
-                    int interest = borrowCollection.getInterest();
-                    Date startAt = DateHelper.beginOfDate((Date) borrowCollection.getStartAt().clone());
-                    Date collectionAt = DateHelper.beginOfDate((Date) borrowCollection.getCollectionAt().clone());
-                    Date startAtYes = DateHelper.beginOfDate((Date) borrowCollection.getStartAtYes().clone());
-                    Date endAt = (Date) collectionAt.clone();
-
-                    interestLower = Math.round(interest -
-                            interest * Math.max(DateHelper.diffInDays(endAt, startAtYes, false), 0) / DateHelper.diffInDays(collectionAt, startAt, false)
-                    );
-
-                    //债权购买人应扣除利息
-                    txFeeIn += interestLower;
-                }
-
-                //利息管理费
-                if (((borrow.getType() == 0) || (borrow.getType() == 4)) && intAmount > interestLower) {
-                    /**
-                     * '2480 : 好人好梦',1753 : 红运当头',1699 : tasklist',3966 : 苗苗606',1413 : ljc_201',1857 : fanjunle',183 : 54435410',2327 : 栗子',2432 : 高翠西'2470 : sadfsaag',2552 : sadfsaag1',2739 : sadfsaag3',3939 : TinsonCheung',893 : kobayashi',608 : 0211',1216 : zqc9988'
-                     */
-                    Set<String> stockholder = new HashSet<>(Arrays.asList("2480", "1753", "1699", "3966", "1413", "1857", "183", "2327", "2432", "2470", "2552", "2739", "3939", "893", "608", "1216"));
-                    if (!stockholder.contains(tender.getUserId())) {
-                        txFeeIn += (int) MathHelper.myRound((intAmount - interestLower) * 0.1, 2);
-                    }
-                }
+            }
 
                 //借款人逾期罚息
                 if ((lateDays > 0) && (lateInterest > 0)) {
                     txFeeOut += tender.getValidMoney().doubleValue() / borrow.getMoney().doubleValue() * lateInterest;
                 }
 
-                String orderId = JixinHelper.getOrderId(JixinHelper.REPAY_PREFIX);
-                repay.setAccountId(borrowAccountId);
-                repay.setOrderId(orderId);
-                repay.setTxAmount(StringHelper.formatDouble(txAmount + txFeeIn, 100, false));
-                repay.setIntAmount(StringHelper.formatDouble(intAmount, 100, false));
-                repay.setTxFeeIn(StringHelper.formatDouble(txFeeIn, 100, false));
-                repay.setTxFeeOut(StringHelper.formatDouble(txFeeOut, 100, false));
-                repay.setProductId(borrow.getProductId());
-                repay.setAuthCode(tender.getAuthCode());
-                repay.setForAccountId(tenderUserThirdAccount.getAccountId());
-                repayList.add(repay);
+            String orderId = JixinHelper.getOrderId(JixinHelper.REPAY_PREFIX);
+            repay.setAccountId(borrowAccountId);
+            repay.setOrderId(orderId);
+            repay.setTxAmount(StringHelper.formatDouble(txAmount + txFeeIn, 100, false));
+            repay.setIntAmount(StringHelper.formatDouble(intAmount, 100, false));
+            repay.setTxFeeIn(StringHelper.formatDouble(txFeeIn, 100, false));
+            repay.setTxFeeOut(StringHelper.formatDouble(txFeeOut, 100, false));
+            repay.setProductId(borrow.getProductId());
+            repay.setAuthCode(tender.getAuthCode());
+            repay.setForAccountId(tenderUserThirdAccount.getAccountId());
+            repayList.add(repay);
 
-                borrowCollection.setTRepayOrderId(orderId);
-                borrowCollectionService.updateById(borrowCollection);
-            }
-        } while (false);
+            borrowCollection.setTRepayOrderId(orderId);
+            borrowCollectionService.updateById(borrowCollection);
+        }
     }
 
 }

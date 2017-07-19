@@ -22,6 +22,7 @@ public enum MqTagEnum {
     AGAIN_VERIFY("AGAIN_VERIFY"), //复审
     AUTO_TENDER("AUTO_TENDER"), //自动投标
     NOTICE_PUBLISH("NOTICE_PUBLISH"), // 站内信通知
+    NOTICE_PUSH("NOTICE_PUSH"), // 资金变动
     RECHARGE("RECHARGE"), // 充值
     LOGIN("LOGIN"), // 登录
     GIVE_COUPON("GIVE_COUPON"), // 赠送流量券
