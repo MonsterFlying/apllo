@@ -1064,12 +1064,12 @@ public class BorrowBizImpl implements BorrowBiz {
             if (borrow.getAwardType() > 0) {
                 UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(tempTender.getUserId());
 
-                int money = (int) MathHelper.myRound((tempTender.getValidMoney() / borrow.getMoney()) * borrow.getAward(), 2);
+                int money = (int) MathHelper.myRound(((double)tempTender.getValidMoney() / (double)borrow.getMoney()) * borrow.getAward(), 2);
                 if (borrow.getAwardType() == 2) {
-                    money = (int) MathHelper.myRound(tempTender.getValidMoney() * borrow.getAward() / 100, 2);
+                    money = (int) MathHelper.myRound((double)tempTender.getValidMoney() * borrow.getAward() / 100, 2);
                 }
 
-                String remark = "借款标[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]的奖励";
+                String remark = "借款标‘" + borrow.getName() + "’的奖励";
 
                 //查询红包账户
                 DictValue dictValue = jixinCache.get(JixinContants.RED_PACKET_USER_ID);
@@ -1122,7 +1122,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     log.error("borrowProvider doAgainVerify send mq exception", e);
                 }
 
-                //更新投标状态
+                //更新投标状态 为还款中
                 tempTender.setState(2);
                 tenderService.updateById(tempTender);
             }
@@ -1486,7 +1486,7 @@ public class BorrowBizImpl implements BorrowBiz {
             tenderList = tenderService.findList(ts, pageable);
             for (Tender tender : tenderList) {
                 tenderUserId = tender.getUserId();
-                tempPenalty = tender.getValidMoney() / borrow.getMoney() * penalty;
+                tempPenalty = (int)MathHelper.myRound((double)tender.getValidMoney() / (double)borrow.getMoney() * penalty,0);
                 if (tender.getTransferFlag() == 2) { //已转让
                     Specification<Borrow> bs = Specifications
                             .<Borrow>and()
@@ -1509,7 +1509,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 voucherPayRequest.setTxAmount(StringHelper.formatDouble(tempPenalty, 100, false));
                 voucherPayRequest.setForAccountId(tenderUserThirdAccount.getAccountId());
                 voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
-                voucherPayRequest.setDesLine("借款[" + borrow.getName() + "]的违约金");
+                voucherPayRequest.setDesLine("借款'" + borrow.getName() + "'的违约金");
                 voucherPayRequest.setChannel(ChannelContant.HTML);
                 VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
                 if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
