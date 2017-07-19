@@ -15,6 +15,7 @@ import com.gofobao.framework.api.model.batch_repay_bail.*;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
@@ -960,11 +961,14 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                         .build();
 
                 List<Borrow> borrowList = borrowService.findList(bs);
+                if (!CollectionUtils.isEmpty(borrowList)) {
+                    VoCancelBorrow voCancelBorrow = new VoCancelBorrow();
+                    voCancelBorrow.setBorrowId(borrowList.get(0).getId());
+                    //取消当前借款
+                    borrowBiz.cancelBorrow(voCancelBorrow);
 
-                // TODO 标的 撤销
-                if (CollectionUtils.isEmpty(borrowList)) {
-                    continue;
                 }
+                tender.setTransferFlag(0);//设置转让标识
             }
 
             if (tender.getTransferFlag() == 2) { //已转让
@@ -972,10 +976,10 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                         .<Borrow>and()
                         .eq("tenderId", tender.getId())
                         .eq("status", 3)
-                        .build() ;
-                List<Borrow> borrowList = borrowService.findList(bs) ;
-                Preconditions.checkNotNull(borrowList, "查询转让标的为空") ;
-                Borrow tempBorrow = borrowList.get(0) ;
+                        .build();
+                List<Borrow> borrowList = borrowService.findList(bs);
+                Preconditions.checkNotNull(borrowList, "查询转让标的为空");
+                Borrow tempBorrow = borrowList.get(0);
 
                 int tempOrder = order + tempBorrow.getTotalOrder() - borrow.getTotalOrder();
                 int tempLateInterest = tender.getValidMoney() / borrow.getMoney() * lateInterest;  // 逾期收入
@@ -995,9 +999,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             int interestLower = 0;  // 应扣除利息
             if (borrow.isTransfer()) {
                 int interest = borrowCollection.getInterest();
-                Date startAt = DateHelper.beginOfDate( borrowCollection.getStartAt());
-                Date collectionAt = DateHelper.beginOfDate( borrowCollection.getCollectionAt());
-                Date startAtYes = DateHelper.beginOfDate(borrowCollection.getStartAtYes()) ;
+                Date startAt = DateHelper.beginOfDate(borrowCollection.getStartAt());
+                Date collectionAt = DateHelper.beginOfDate(borrowCollection.getCollectionAt());
+                Date startAtYes = DateHelper.beginOfDate(borrowCollection.getStartAtYes());
                 interestLower = Math.round(interest -
                         interest * Math.max(DateHelper.diffInDays(collectionAt, startAtYes, false), 0)
                                 / DateHelper.diffInDays(collectionAt, startAt, false)
@@ -1020,16 +1024,16 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 boolean between = isBetween(new Date(), DateHelper.stringToDate("2015-12-25 00:00:00"),
                         DateHelper.stringToDate("2017-12-25 23:59:59"));
                 if ((stockholder.contains(tender.getUserId())) && (between)) {
-                    txFeeIn += 0 ;
-                }else {
-                    txFeeIn += new Double(MathHelper.myRound((intAmount - interestLower) * 0.1, 2)).intValue() ;
+                    txFeeIn += 0;
+                } else {
+                    txFeeIn += new Double(MathHelper.myRound((intAmount - interestLower) * 0.1, 2)).intValue();
                 }
             }
 
-                //借款人逾期罚息
-                if ((lateDays > 0) && (lateInterest > 0)) {
-                    txFeeOut += tender.getValidMoney().doubleValue() / borrow.getMoney().doubleValue() * lateInterest;
-                }
+            //借款人逾期罚息
+            if ((lateDays > 0) && (lateInterest > 0)) {
+                txFeeOut += tender.getValidMoney().doubleValue() / borrow.getMoney().doubleValue() * lateInterest;
+            }
 
             String orderId = JixinHelper.getOrderId(JixinHelper.REPAY_PREFIX);
             repay.setAccountId(borrowAccountId);
@@ -1045,6 +1049,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
             borrowCollection.setTRepayOrderId(orderId);
             borrowCollectionService.updateById(borrowCollection);
+
+            //更新投标
+            tenderService.updateById(tender);
         }
     }
 
