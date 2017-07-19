@@ -918,7 +918,7 @@ public class BorrowBizImpl implements BorrowBiz {
      *
      * @return
      */
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Throwable.class)
     public boolean transferBorrowAgainVerify(Borrow borrow) throws Exception {
         boolean bool = false;
         do {
