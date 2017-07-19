@@ -850,6 +850,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      * @throws Exception
      */
+    @Transactional(rollbackFor = Throwable.class)
     public boolean notTransferBorrowAgainVerify(Borrow borrow) throws Exception {
 
         if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1)
@@ -862,7 +863,7 @@ public class BorrowBizImpl implements BorrowBiz {
         disposeBorrowRepay(borrow, nowDate);
         //生成回款记录
         boolean generateState = disposeBorrowCollection(borrow, nowDate);
-        if(!generateState){
+        if (!generateState) {
             return false;
         }
 
@@ -880,6 +881,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
     /**
      * 生成还款记录
+     *
      * @param borrow
      * @param nowDate
      */
@@ -1489,7 +1491,7 @@ public class BorrowBizImpl implements BorrowBiz {
             tenderList = tenderService.findList(ts, pageable);
             for (Tender tender : tenderList) {
                 tenderUserId = tender.getUserId();
-                tempPenalty = (int)MathHelper.myRound(tender.getValidMoney().doubleValue() / borrow.getMoney().doubleValue() * penalty,0);
+                tempPenalty = (int) MathHelper.myRound(tender.getValidMoney().doubleValue() / borrow.getMoney().doubleValue() * penalty, 0);
                 if (tender.getTransferFlag() == 2) { //已转让
                     Specification<Borrow> bs = Specifications
                             .<Borrow>and()
