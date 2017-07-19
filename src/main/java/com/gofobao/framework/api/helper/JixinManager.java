@@ -147,11 +147,11 @@ public class JixinManager {
         }.getType());
         jixinTxLogBiz.saveResponse(param);
         String unsige = StringHelper.mergeMap(param);
-        boolean result = certHelper.verify(unsige, param.get("sign"));
+        /*boolean result = certHelper.verify(unsige, param.get("sign"));
         if (!result) {
             log.error("验签失败", bgData);
             return null;
-        }
+        }*/
 
         t.setRetMsg(JixinResultContants.getMessage(t.getRetCode())) ;
         return t;

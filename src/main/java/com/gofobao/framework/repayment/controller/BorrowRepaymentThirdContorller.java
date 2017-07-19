@@ -34,13 +34,13 @@ public class BorrowRepaymentThirdContorller {
         return borrowRepaymentThirdBiz.thirdBatchLendRepayRunCall(request, response);
     }
 
-    @RequestMapping("/v2/third/batch/repay/check")
+    @RequestMapping("/v2/third/batch/repayDeal/check")
     @ApiOperation("批次还款参数检查通知")
     public ResponseEntity<String> thirdBatchRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
         return borrowRepaymentThirdBiz.thirdBatchRepayCheckCall(request, response);
     }
 
-    @RequestMapping("/v2/third/batch/repay/run")
+    @RequestMapping("/v2/third/batch/repayDeal/run")
     @ApiOperation("批次还款参数检查通知")
     public ResponseEntity<String> thirdBatchRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
         return borrowRepaymentThirdBiz.thirdBatchRepayRunCall(request, response);
