@@ -45,7 +45,7 @@ public class CashController {
         return cashDetailLogBiz.cash(httpServletRequest, userId, voCashReq) ;
     }
 
-    @ApiOperation("提现")
+    @ApiOperation("企业后台提现")
     @PostMapping("/pub/asset/cash")
     public ResponseEntity<VoHtmlResp> adminWebCash(HttpServletRequest httpServletRequest, @Valid @ModelAttribute VoAdminCashReq voAdminCashReq) throws Exception{
         return cashDetailLogBiz.adminWebCash(httpServletRequest, voAdminCashReq) ;

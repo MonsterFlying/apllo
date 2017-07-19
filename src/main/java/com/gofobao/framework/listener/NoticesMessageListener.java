@@ -15,6 +15,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
+import static com.gofobao.framework.common.rabbitmq.MqTagEnum.NOTICE_PUBLISH;
+
 /**
  * Created by Max on 17/5/17.
  */
@@ -37,7 +39,11 @@ public class NoticesMessageListener {
             Preconditions.checkNotNull(body.get(MqConfig.MSG_BODY), "NoticesMessageListener process body is empty ") ;
             String tag = body.get(MqConfig.MSG_TAG).toString();
             Map<String, String> msg = (Map<String, String>)body.get(MqConfig.MSG_BODY) ;
-            boolean result  = noticeMessageProvider.addNoticeMessage(tag, msg);
+            boolean result = false ;
+            if(msg.equals(NOTICE_PUBLISH.getValue())){
+                result = noticeMessageProvider.addNoticeMessage(tag, msg);
+            }
+
             if(!result){
                 log.error(String.format("NoticesMessageListener process process error: %s", message));
             }

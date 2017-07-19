@@ -56,8 +56,10 @@ public class RabbitMQConfig {
         return new Queue(MqQueueEnum.RABBITMQ_CREDIT.getValue(), true);
     }
 
-
-
+    @Bean
+    public Queue thirdBatchRabbitmq() {
+        return new Queue(MqQueueEnum.RABBITMQ_THIRD_BATCH.getValue(), true);
+    }
 
     @Bean
     DirectExchange delayExchange() {

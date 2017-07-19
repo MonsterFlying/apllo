@@ -207,8 +207,8 @@ public class AplloApplicationTests {
 
     private void repayDeal() {
         VoRepayReq voRepayReq = new VoRepayReq();
-        voRepayReq.setRepaymentId(168683L);
-        voRepayReq.setUserId(901L);
+        voRepayReq.setRepaymentId(173823L);
+        voRepayReq.setUserId(37243L);
         voRepayReq.setIsUserOpen(false);
         voRepayReq.setInterestPercent(1d);
         try {
@@ -242,8 +242,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("193807");
-        batchDetailsQueryReq.setBatchTxDate("20170717");
+        batchDetailsQueryReq.setBatchNo("101601");
+        batchDetailsQueryReq.setBatchTxDate("20170719");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -274,7 +274,7 @@ public class AplloApplicationTests {
     }
 
     private void noTransferBorrowAgainVerify() {
-        Borrow borrow = borrowService.findById(169864L);
+        Borrow borrow = borrowService.findById(169881L);
         try {
             borrowBiz.notTransferBorrowAgainVerify(borrow);
         } catch (Throwable e) {
@@ -290,26 +290,26 @@ public class AplloApplicationTests {
 
         /*BatchQueryReq req = new BatchQueryReq();
         req.setChannel(ChannelContant.HTML);
-        req.setBatchNo("104028");
+        req.setBatchNo("173607");
         req.setBatchTxDate("20170718");
         BatchQueryResp resp = jixinManager.send(JixinTxCodeEnum.BATCH_QUERY,req,BatchQueryResp.class);
-        System.out.println(resp);*/
-
+        System.out.println(resp);
+*/
         /*AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
-        request.setAccountId("6212462040000550055");
+        request.setAccountId("6212462040000950032");
         request.setStartDate("20161002");
         request.setEndDate("20171003");
         request.setChannel(ChannelContant.HTML);
         request.setType("0"); // 转入
         //request.setTranType("7820"); // 线下转账的
-        request.setPageSize(String.valueOf(1));
-        request.setPageNum(String.valueOf(10));
+        request.setPageSize(String.valueOf(10));
+        request.setPageNum(String.valueOf(1));
         AccountDetailsQueryResponse response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, request, AccountDetailsQueryResponse.class);
         System.out.println(response);
 
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId("6212462040000550055");
+        balanceQueryRequest.setAccountId("6212462040000950032");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         System.out.println(balanceQueryResponse);*/
 
@@ -334,7 +334,7 @@ public class AplloApplicationTests {
         //复审
         //doAgainVerify();
         //批次详情查询
-        //batchDetailsQuery();
+        batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调
