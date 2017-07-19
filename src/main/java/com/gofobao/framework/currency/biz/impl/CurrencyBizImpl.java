@@ -144,6 +144,7 @@ public class CurrencyBizImpl implements CurrencyBiz {
             voCurrency.setCurrency("convert".equalsIgnoreCase(currencyLog.getType()) ? String.format("-%s", currencyLog.getValue()) : String.format("+%s", currencyLog.getValue()));
             voCurrency.setType(currencyLog.getType());
             voCurrency.setTypeName(findCurrencyMap(currencyLog.getType()));
+            voCurrency.setNoCurrency(currencyLog.getNoUseCurrency());
             currencyList.add(voCurrency);
         }));
         Long totalCount=logPage.getTotalElements();

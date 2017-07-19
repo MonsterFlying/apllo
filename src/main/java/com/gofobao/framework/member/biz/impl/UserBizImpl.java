@@ -21,10 +21,14 @@ import com.gofobao.framework.member.service.*;
 import com.gofobao.framework.member.vo.request.VoRegisterReq;
 import com.gofobao.framework.member.vo.request.VoUserInfoUpdateReq;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
+import com.gofobao.framework.member.vo.response.pc.ServiceUser;
 import com.gofobao.framework.member.vo.response.pc.UserInfoExt;
+import com.gofobao.framework.member.vo.response.pc.VipInfoRes;
+import com.gofobao.framework.member.vo.response.pc.VoViewServiceUserListWarpRes;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.gofobao.framework.security.vo.VoLoginReq;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,8 +46,11 @@ import org.springframework.util.StringUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Created by Zeke on 2017/5/19.
@@ -250,8 +257,8 @@ public class UserBizImpl implements UserBiz {
         voBasicUserInfoResp.setRealnameState(!StringUtils.isEmpty(user.getRealname()));
         voBasicUserInfoResp.setIdNo(UserHelper.hideChar(StringUtils.isEmpty(user.getCardId()) ? " " : user.getCardId(), UserHelper.CARD_ID_NUM));
         voBasicUserInfoResp.setRegisterAt(DateHelper.dateToString(user.getCreatedAt()));
-        Integral integral=integralService.findByUserId(user.getId());
-        voBasicUserInfoResp.setTenderIntegral(new Long(integral.getUseIntegral()+integral.getNoUseIntegral()));
+        Integral integral = integralService.findByUserId(user.getId());
+        voBasicUserInfoResp.setTenderIntegral(new Long(integral.getUseIntegral() + integral.getNoUseIntegral()));
         voBasicUserInfoResp.setIdNoState(!StringUtils.isEmpty(user.getCardId()));
         voBasicUserInfoResp.setAlias(user.getPushId());
         return ResponseEntity.ok(voBasicUserInfoResp);
@@ -304,7 +311,7 @@ public class UserBizImpl implements UserBiz {
         final String token = jwtTokenHelper.generateToken(user, voLoginReq.getSource());
         response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
         user.setPlatform(voLoginReq.getSource());
-        if(StringUtils.isEmpty(user.getPushId())){   // 产生一次永久保存
+        if (StringUtils.isEmpty(user.getPushId())) {   // 产生一次永久保存
             user.setPushId(UUID.randomUUID().toString().replace("-", ""));  // 设置唯一标识
         }
         user.setIp(IpHelper.getIpAddress(httpServletRequest)); // 设置ip
@@ -413,16 +420,16 @@ public class UserBizImpl implements UserBiz {
                 userInfo.setBirthdayY(Integer.valueOf(yyyy.format(birthday).toString()));
             }
             userInfo.setEducation(infoUpdateReq.getEducation());
-            if(!StringUtils.isEmpty(infoUpdateReq.getQq())){
+            if (!StringUtils.isEmpty(infoUpdateReq.getQq())) {
                 userInfo.setQq(infoUpdateReq.getQq());
             }
             userInfo.setGraduation(infoUpdateReq.getGraduation());
-            if(!StringUtils.isEmpty(infoUpdateReq.getAddress())){
+            if (!StringUtils.isEmpty(infoUpdateReq.getAddress())) {
                 userInfo.setAddress(infoUpdateReq.getAddress());
             }
             userInfo.setSex(infoUpdateReq.getSex());
 
-            if(!StringUtils.isEmpty(infoUpdateReq.getGraduatedSchool())){
+            if (!StringUtils.isEmpty(infoUpdateReq.getGraduatedSchool())) {
                 userInfo.setGraduatedSchool(infoUpdateReq.getGraduatedSchool());
             }
             userInfo.setMarital(infoUpdateReq.getMarital());
@@ -440,5 +447,59 @@ public class UserBizImpl implements UserBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR,
                             "更新失败，请稍候再试！"));
         }
+    }
+
+    @Override
+    public ResponseEntity<VoBaseResp> saveVip(Vip vip) {
+        Boolean flag = vipService.save(vip);
+
+        List<Users> users = userService.serviceUser();
+        boolean isContains = users.stream().map(p -> p.getId()).collect(Collectors.toList()).contains(vip.getKefuId());
+        if (!isContains) {
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,
+                            "非法请求"));
+        }
+        if (flag)
+            return ResponseEntity.ok(VoBaseResp.ok("更新成功"));
+        else
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,
+                            "更新失败，请稍候再试！"));
+    }
+
+    @Override
+    public ResponseEntity<VoViewServiceUserListWarpRes> serviceUserList() {
+
+        try {
+            VoViewServiceUserListWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewServiceUserListWarpRes.class);
+            List<Users> user = userService.serviceUser();
+            List<ServiceUser> serviceUsers = new ArrayList<>(user.size());
+            user.stream().forEach(p -> {
+                ServiceUser serviceUser = new ServiceUser();
+                serviceUser.setUserName(p.getUsername());
+                serviceUser.setUserId(p.getId());
+                serviceUsers.add(serviceUser);
+            });
+            warpRes.setServiceUsers(serviceUsers);
+            return ResponseEntity.ok(warpRes);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR,
+                            "查询异常！",
+                            VoViewServiceUserListWarpRes.class));
+        }
+    }
+
+
+    @Override
+    public ResponseEntity<VipInfoRes> vipInfo(Long userId) {
+        Vip vip = vipService.findTopByUserIdAndStatus(userId, 1);
+        VipInfoRes vipInfoRes =VoBaseResp.ok("查询成功",VipInfoRes.class);
+        vipInfoRes.setEndAt(DateHelper.dateToString(vip.getExpireAt()));
+        Users user = userService.findById(vip.getUserId());
+        vipInfoRes.setServiceUserName(user.getUsername());
+        return ResponseEntity.ok(vipInfoRes);
     }
 }

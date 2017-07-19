@@ -7,4 +7,7 @@ import com.gofobao.framework.member.entity.Vip;
  */
 public interface VipService {
     Vip findTopByUserIdAndStatus(Long userId, int status);
+
+    Boolean save(Vip vip);
+
 }
