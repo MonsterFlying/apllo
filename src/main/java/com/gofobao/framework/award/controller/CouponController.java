@@ -3,6 +3,7 @@ package com.gofobao.framework.award.controller;
 import com.gofobao.framework.award.biz.CouponBiz;
 import com.gofobao.framework.award.vo.request.VoCouponReq;
 import com.gofobao.framework.award.vo.request.VoTakeFlowReq;
+import com.gofobao.framework.award.vo.response.CouponTackeRes;
 import com.gofobao.framework.award.vo.response.VoViewCouponWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
@@ -50,8 +51,8 @@ public class CouponController {
 
     @ApiOperation("流量劵兑换")
     @PostMapping("coupon/v2/takeFlow")
-    public ResponseEntity<VoBaseResp> takeFlow(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
-                                               @ModelAttribute VoTakeFlowReq takeFlowReq) {
+    public ResponseEntity<CouponTackeRes> takeFlow(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                                   @ModelAttribute VoTakeFlowReq takeFlowReq) {
         takeFlowReq.setUserId(userId);
         return couponBiz.exchange(takeFlowReq);
     }
