@@ -42,6 +42,7 @@ public class Users implements Serializable{
 
     private String type;
 
+    @Column(name = "`branch`")
     private Integer branch;
 
     private Integer noticeCount;

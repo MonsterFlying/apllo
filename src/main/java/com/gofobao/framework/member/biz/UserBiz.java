@@ -3,10 +3,13 @@ package com.gofobao.framework.member.biz;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.entity.UserInfo;
 import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.entity.Vip;
 import com.gofobao.framework.member.vo.request.VoRegisterReq;
 import com.gofobao.framework.member.vo.request.VoUserInfoUpdateReq;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.member.vo.response.pc.UserInfoExt;
+import com.gofobao.framework.member.vo.response.pc.VipInfoRes;
+import com.gofobao.framework.member.vo.response.pc.VoViewServiceUserListWarpRes;
 import com.gofobao.framework.security.vo.VoLoginReq;
 import org.springframework.http.ResponseEntity;
 
@@ -63,6 +66,21 @@ public interface UserBiz {
     ResponseEntity<VoBasicUserInfoResp> login(HttpServletRequest httpServletRequest, HttpServletResponse response, VoLoginReq voLoginReq);
 
 
+    /**
+     *开启vip
+     * @param vip
+     * @return
+     */
+    ResponseEntity<VoBaseResp>saveVip(Vip vip);
 
+
+    ResponseEntity<VoViewServiceUserListWarpRes>serviceUserList();
+
+    /**
+     *
+     * @param userId
+     * @return
+     */
+    ResponseEntity<VipInfoRes>vipInfo(Long userId);
 }
 

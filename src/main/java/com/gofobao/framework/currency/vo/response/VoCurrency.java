@@ -34,6 +34,10 @@ public class VoCurrency {
     @ApiModelProperty("可用广福币")
     private Integer totalCurrency;
 
+
+    @ApiModelProperty("已兑")
+    private Integer noCurrency;
+
     /**
      * 时间
      */

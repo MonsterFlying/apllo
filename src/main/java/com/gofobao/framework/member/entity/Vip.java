@@ -21,7 +21,7 @@ public class Vip {
 
     private Long userId ;
 
-    private String kefuId ;
+    private Long kefuId ;
 
     private Integer status ;
 

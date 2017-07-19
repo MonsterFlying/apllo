@@ -23,4 +23,8 @@ public interface UserInfoService {
      * @return
      */
     UserInfo update(UserInfo userInfo);
+
+
+
+
 }

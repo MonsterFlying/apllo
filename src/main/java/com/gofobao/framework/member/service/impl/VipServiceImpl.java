@@ -20,4 +20,15 @@ public class VipServiceImpl implements VipService {
     public Vip findTopByUserIdAndStatus(Long userId, int status) {
         return vipRepository.findTopByUserIdAndStatus(userId, status);
     }
+
+    @Override
+    public Boolean save(Vip vip) {
+        try {
+            vipRepository.save(vip);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+
+    }
 }
