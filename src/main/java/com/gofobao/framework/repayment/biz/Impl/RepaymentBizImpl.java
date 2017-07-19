@@ -562,16 +562,13 @@ public class RepaymentBizImpl implements RepaymentBiz {
         borrowRepayment.setRepayMoneyYes(repayMoney);
         borrowRepaymentService.updateById(borrowRepayment);
 
-        if (borrowRepayment.getOrder() == (borrow.getTotalOrder() - 1)) {
-            borrow.setCloseAt(borrowRepayment.getRepayAtYes());
-        }
-        borrow.setUpdatedAt(nowDate);
-        borrowService.updateById(borrow);
-
         //====================================================================
         //结束债权：最后一期还款时
         //====================================================================
-        if (borrow.getTotalOrder() == (borrowRepayment.getOrder() + 1)) {
+        if (borrowRepayment.getOrder() == (borrow.getTotalOrder() - 1)) {
+            borrow.setCloseAt(borrowRepayment.getRepayAtYes());
+
+            //推送队列结束债权
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
             mqConfig.setTag(MqTagEnum.END_CREDIT);
@@ -586,6 +583,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 log.error("repaymentBizImpl repayDeal send mq exception", e);
             }
         }
+        borrow.setUpdatedAt(nowDate);
+        borrowService.updateById(borrow);
 
         //更新统计数据
         try {
