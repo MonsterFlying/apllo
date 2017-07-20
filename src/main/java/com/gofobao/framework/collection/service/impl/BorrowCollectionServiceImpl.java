@@ -60,14 +60,24 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
     @Override
     public List<BorrowCollection> orderList(VoCollectionOrderReq voCollectionOrderReq) {
         Date date = DateHelper.stringToDate(voCollectionOrderReq.getTime(), DateHelper.DATE_FORMAT_YMD);
-
         Specification<BorrowCollection> specification = Specifications.<BorrowCollection>and()
+                .between("collectionAt", new Range<>(DateHelper.beginOfDate(date), DateHelper.endOfDate(date)))
                 .eq("userId", voCollectionOrderReq.getUserId())
-                .between("collectionAt", new Range<>(date, DateHelper.endOfDate(date)))
                 .eq("transferFlag", BorrowCollectionContants.TRANSFER_FLAG_NO)
                 .ne("borrowId", null)
                 .build();
-        List<BorrowCollection> borrowCollections = borrowCollectionRepository.findAll(specification);
+     /*   String sql = "SELECT  b.* FROM gfb_borrow_collection b " +
+                "WHERE " +
+                "b.user_id=:userId " +
+                "AND " +
+                "(b.collection_at BETWEEN '" + endOfDate + "' AND '" + beginOfDate + "' ) " +
+                "AND " +
+                "b.transfer_flag=" + BorrowCollectionContants.TRANSFER_FLAG_NO +" "+
+                "AND b.borrow_id IS NULL";
+        Query query = entityManager.createNativeQuery(sql, BorrowCollection.class);
+        query.setParameter("userId",voCollectionOrderReq.getUserId());*/
+
+          List<BorrowCollection> borrowCollections = borrowCollectionRepository.findAll(specification);
         return Optional.ofNullable(borrowCollections).orElse(Collections.EMPTY_LIST);
     }
 
@@ -152,19 +162,19 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
             Collection collection = new Collection();
             Borrow borrow = borrowMaps.get(p.getBorrowId());
             collection.setBorrowName(borrow.getName());
-            collection.setInterest(StringHelper.formatMon(p.getInterest()/100D));
-            collection.setPrincipal(StringHelper.formatMon(p.getPrincipal()/100D));
+            collection.setInterest(StringHelper.formatMon(p.getInterest() / 100D));
+            collection.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
             collection.setCollectionAt(DateHelper.dateToString(p.getCollectionAt()));
-            collection.setOrder(p.getOrder()+1);
+            collection.setOrder(p.getOrder() + 1);
             collection.setTimeLimit(borrow.getTimeLimit());
-            if(borrow.getStatus()==0||borrow.getStatus()==4){ //官标
-                    collection.setEarnings(StringHelper.formatMon((p.getCollectionMoney()*0.9)/100D));
-            }else{
-                collection.setEarnings(StringHelper.formatMon(p.getCollectionMoney()/100D));
+            if (borrow.getStatus() == 0 || borrow.getStatus() == 4) { //官标
+                collection.setEarnings(StringHelper.formatMon((p.getCollectionMoney() * 0.9) / 100D));
+            } else {
+                collection.setEarnings(StringHelper.formatMon(p.getCollectionMoney() / 100D));
             }
             collectionList.add(collection);
         });
-        resultMaps.put("collectionList",collectionList);
+        resultMaps.put("collectionList", collectionList);
         return resultMaps;
     }
 

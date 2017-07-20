@@ -17,5 +17,13 @@ public interface ThirdBatchLogBiz {
      * @param sourceId
      * @return
      */
-    boolean checkBatchOftenSubmit(String sourceId,int ... type);
+    int checkBatchOftenSubmit(String sourceId,Integer ... type);
+
+    /**
+     * 校验本地资源回调状态
+     * @param sourceId
+     * @param type
+     * @return true 已处理  false 未处理
+     */
+    boolean checkLocalSourceState(String sourceId,int type);
 }

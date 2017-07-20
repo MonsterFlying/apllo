@@ -2,8 +2,8 @@ package com.gofobao.framework.award.biz;
 
 import com.gofobao.framework.award.vo.request.VoCouponReq;
 import com.gofobao.framework.award.vo.request.VoTakeFlowReq;
+import com.gofobao.framework.award.vo.response.CouponTackeRes;
 import com.gofobao.framework.award.vo.response.VoViewCouponWarpRes;
-import com.gofobao.framework.core.vo.VoBaseResp;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -25,7 +25,7 @@ public interface CouponBiz {
      *takeFlowReq
      * @return
      */
-    ResponseEntity<VoBaseResp>exchange(VoTakeFlowReq takeFlowReq);
+    ResponseEntity<CouponTackeRes> exchange(VoTakeFlowReq takeFlowReq);
 
 
 

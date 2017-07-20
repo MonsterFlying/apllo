@@ -45,7 +45,7 @@ public class AutoTenderProvider {
         Borrow borrow = borrowService.findByIdLock(borrowId);
         Preconditions.checkNotNull(borrow, "自动投标异常：id为" + borrowId + "借款不存在");
         VoFindAutoTenderList voFindAutoTenderList = new VoFindAutoTenderList();
-        List<Map<String,Object>> autoTenderList = null;
+        List<Map<String, Object>> autoTenderList = null;
 
         int num = 0;
         int pageIndex = 0;
@@ -65,12 +65,12 @@ public class AutoTenderProvider {
             voFindAutoTenderList.setGtAprLast(apr);
             autoTenderList = autoTenderService.findQualifiedAutoTenders(voFindAutoTenderList);  // 查询自动投标队列
             if (CollectionUtils.isEmpty(autoTenderList)) {
-                log.info("自动投标MQ：没有匹配到自动投标规则！");
+                log.info("自动投标MQ：第" + (pageIndex + 1) + "页,没有匹配到自动投标规则！");
                 break;
             }
 
-            Iterator<Map<String,Object>> itAutoTender = autoTenderList.iterator();
-            Map<String,Object> voFindAutoTender = null;
+            Iterator<Map<String, Object>> itAutoTender = autoTenderList.iterator();
+            Map<String, Object> voFindAutoTender = null;
             long money = 0;
             long lowest = 0;
             long useMoney = 0;
@@ -81,7 +81,7 @@ public class AutoTenderProvider {
             Set<Long> autoTenderIds = new HashSet<>();
             AutoTender autoTender = null;
             while (itAutoTender.hasNext()) { // 将合格的自动投标  放入消息队列
-                autoTender = new AutoTender() ;
+                autoTender = new AutoTender();
                 voFindAutoTender = itAutoTender.next();
                 if ((moneyYes >= borrowMoney) || (mostAuto > 0 && moneyYes >= mostAuto)) {  // 判断是否满标或者 达到自动投标最大额度
                     bool = true;
@@ -120,7 +120,7 @@ public class AutoTenderProvider {
                     if (response.getStatusCode().equals(HttpStatus.OK)) {
                         moneyYes += lowest;
                         autoTenderIds.add(NumberHelper.toLong(voFindAutoTender.get("id")));
-                        tenderUserIds.add(NumberHelper.toLong(voFindAutoTender.get("userId"))) ;
+                        tenderUserIds.add(NumberHelper.toLong(voFindAutoTender.get("userId")));
                         autoTender.setAutoAt(nowDate);
                         autoTenderService.updateById(autoTender);
                         autoTenderCount++;

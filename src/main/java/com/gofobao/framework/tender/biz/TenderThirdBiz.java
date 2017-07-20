@@ -35,4 +35,16 @@ public interface TenderThirdBiz {
      */
     void thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception;
 
+    /**
+     * 投资人批次结束债权参数验证回调
+     * @return
+     */
+    void thirdBatchCreditEndCheckCall(HttpServletRequest request, HttpServletResponse response);
+
+    /**
+     * 投资人批次结束债权参数运行回调
+     * @return
+     */
+    void thirdBatchCreditEndRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception;
+
 }

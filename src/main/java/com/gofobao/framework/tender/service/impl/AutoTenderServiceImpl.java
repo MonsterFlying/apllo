@@ -89,7 +89,10 @@ public class AutoTenderServiceImpl implements AutoTenderService {
         StringBuffer sql = new StringBuffer("select t.id AS id,t. STATUS AS status,t.user_id AS userId,t.lowest AS lowest,t.borrow_types AS borrowTypes," +
                 "t.repay_fashions AS repayFashions,t.tender_0 AS tender0,t.tender_1 AS tender1,t.tender_3 AS tender3,t.tender_4 AS tender4,t.`mode` AS mode,t.tender_money AS tenderMoney,t.timelimit_first AS timelimitFirst,t.timelimit_last AS timelimitLast,t.timelimit_type AS timelimitType,t.apr_first AS aprFirst,t.apr_last AS aprLast,t.save_money AS saveMoney,t.`order` AS `order`,t.auto_at AS autoAt,t.created_at AS createdAt," +
                 "t.updated_at AS updatedAt,a.use_money AS useMoney,a.no_use_money AS noUseMoney,a.virtual_money AS virtualMoney,a.collection AS collection,a.payment AS payment " +
-                "from gfb_auto_tender t left join gfb_asset a on t.user_id = a.user_id where 1=1 ");
+                "from gfb_auto_tender t " +
+                "left join gfb_asset a on t.user_id = a.user_id " +
+                "left join gfb_user_third_account uta on  t.user_id =  uta.user_id " +
+                "where 1=1 and uta.del = 0 ");
 
         Integer type = !ObjectUtils.isEmpty(borrow.getTenderId()) ? 3 : borrow.getType();
         sql.append(" and t.tender_" + type + " = 1");

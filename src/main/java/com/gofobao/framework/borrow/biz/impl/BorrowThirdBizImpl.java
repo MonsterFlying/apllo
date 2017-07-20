@@ -7,7 +7,6 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeReq;
 import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeResp;
-import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.batch_repay.*;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryReq;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
@@ -45,7 +44,7 @@ import com.gofobao.framework.scheduler.biz.TaskSchedulerBiz;
 import com.gofobao.framework.scheduler.constants.TaskSchedulerConstants;
 import com.gofobao.framework.scheduler.entity.TaskScheduler;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
-import com.gofobao.framework.system.contants.ThirdBatchNoTypeContant;
+import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.service.TenderService;
@@ -278,11 +277,13 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         Preconditions.checkNotNull(borrowAsset, "借款人资产记录不存在!");
 
         //判断提交还款批次是否多次重复提交
-        boolean flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(borrowId),ThirdBatchNoTypeContant.BATCH_REPAY);
-        if (flag){
+        int flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(borrowId), ThirdBatchLogContants.BATCH_REPAY);
+        if (flag == ThirdBatchLogContants.AWAIT) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("还款处理中，请勿重复点击!")));
+        } else if (flag == ThirdBatchLogContants.SUCCESS) {
+            //更新状态
         }
 
         int repaymentTotal = 0;
@@ -372,16 +373,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             sumTxAmount += NumberHelper.toDouble(tempRepay.getTxAmount());
         }
 
-        //记录日志
         String batchNo = jixinHelper.getBatchNo();
-        ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
-        thirdBatchLog.setBatchNo(batchNo);
-        thirdBatchLog.setCreateAt(nowDate);
-        thirdBatchLog.setUpdateAt(nowDate);
-        thirdBatchLog.setSourceId(borrowRepayment.getBorrowId());
-        thirdBatchLog.setType(ThirdBatchNoTypeContant.BATCH_REPAY);
-        thirdBatchLog.setRemark("即信批次还款");
-        thirdBatchLogService.save(thirdBatchLog);
 
         //====================================================================
         //冻结借款人账户资金
@@ -411,6 +403,16 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             throw new Exception("即信批次还款失败：" + response.getRetMsg());
         }
 
+        //记录日志
+        ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
+        thirdBatchLog.setBatchNo(batchNo);
+        thirdBatchLog.setCreateAt(nowDate);
+        thirdBatchLog.setUpdateAt(nowDate);
+        thirdBatchLog.setSourceId(borrowRepayment.getBorrowId());
+        thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY);
+        thirdBatchLog.setRemark("即信批次还款");
+        thirdBatchLogService.save(thirdBatchLog);
+
         return null;
     }
 
@@ -432,12 +434,12 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(repayCheckResp.getRetCode())) {
             log.error("=============================(提前结清)即信批次还款检验参数回调===========================");
             log.error("回调失败! msg:" + repayCheckResp.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(),NumberHelper.toLong(repayCheckResp.getAcqRes()),2);
+            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), NumberHelper.toLong(repayCheckResp.getAcqRes()), 2);
         } else {
             log.info("=============================(提前结清)即信批次放款检验参数回调===========================");
             log.info("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(),NumberHelper.toLong(repayCheckResp.getAcqRes()),1);
+            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), NumberHelper.toLong(repayCheckResp.getAcqRes()), 1);
         }
 
         return ResponseEntity.ok("success");

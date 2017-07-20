@@ -18,7 +18,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import javax.persistence.EntityManager;
 import javax.persistence.LockModeType;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -29,17 +32,21 @@ import java.util.Optional;
  */
 @Service
 @Slf4j
-public class UserServiceImpl implements UserDetailsService, UserService{
+public class UserServiceImpl implements UserDetailsService, UserService {
     @Autowired
     private UsersRepository userRepository;
+
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Users users = findByAccount(username);
-        if(ObjectUtils.isEmpty(users)){
+        if (ObjectUtils.isEmpty(users)) {
             throw new UsernameNotFoundException(String.format("No user found with username '%s'.", username));
-        }else{
-            return  JwtUserFactory.create(users) ;
+        } else {
+            return JwtUserFactory.create(users);
         }
     }
 
@@ -141,5 +148,11 @@ public class UserServiceImpl implements UserDetailsService, UserService{
     }
 
 
-
+    @Override
+    public List<Users> serviceUser() {
+        String sql = "SELECT t1.* " +
+                "FROM `gfb_users` t1 JOIN gfb_role_user t2 ON t1.id = t2.user_id WHERE t2.role_id in (3, 4)";
+        Query query = entityManager.createNativeQuery(sql,Users.class);
+        return query.getResultList();
+    }
 }

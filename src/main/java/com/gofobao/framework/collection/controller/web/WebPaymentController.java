@@ -29,7 +29,7 @@ public class WebPaymentController {
     @GetMapping("/v2/collection/list")
     public ResponseEntity<VoViewCollectionWarpRes> collectionOrderList(VoCollectionListReq collectionListReq,
                                                                                  @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        collectionListReq.setUserId(userId);
+        collectionListReq.setUserId(901L);
         return paymentBiz.pcOrderDetail(collectionListReq);
     }
 
@@ -46,19 +46,19 @@ public class WebPaymentController {
         return paymentBiz.pcOrderList(orderListReq);
     }
 
-/*    *//**
+    /**
      * 根据时间查询回款列表
      *
      * @param date
      * @param userId
      * @return
-     *//*
+     */
     @ApiOperation("根据时间查询回款列表")
     @GetMapping("/v2/days/collection/list/{date}")
     public ResponseEntity<VoCollectionListByDays> collectionListByDays(@PathVariable("date") String date,
                                                                        @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         return paymentBiz.collectionListByDays(date,userId);
-    }*/
+    }
 
 
 

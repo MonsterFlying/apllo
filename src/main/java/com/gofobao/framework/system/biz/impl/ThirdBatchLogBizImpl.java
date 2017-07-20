@@ -7,11 +7,12 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
+import com.gofobao.framework.borrow.entity.Borrow;
+import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
-import com.gofobao.framework.system.contants.ThirdBatchNoStateContants;
+import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
-import com.gofobao.framework.system.repository.ThirdBatchLogRepository;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -37,6 +37,8 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
     private ThirdBatchLogService thirdBatchLogService;
     @Autowired
     private JixinManager jixinManager;
+    @Autowired
+    private BorrowService borrowService;
 
     /**
      * 更新批次日志状态
@@ -60,18 +62,18 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
      * @param sourceId
      * @return
      */
-    public boolean checkBatchOftenSubmit(String sourceId, int ... type) {
+    public int checkBatchOftenSubmit(String sourceId, Integer... type) {
         //查询最后一条提交的批次
         Specification<ThirdBatchLog> tbls = Specifications
                 .<ThirdBatchLog>and()
                 .eq("sourceId", sourceId)
                 .in("state", 0, 1)
-                .eq("type", type)
+                .in("type", type)
                 .build();
         Pageable pageable = new PageRequest(0, 1, new Sort(Sort.Direction.DESC, "id"));
         List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls, pageable);
         if (CollectionUtils.isEmpty(thirdBatchLogList)) {
-            return false;
+            return ThirdBatchLogContants.SUCCESS;
         }
 
         //判断这个批次是否处理成功
@@ -83,13 +85,54 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
         BatchQueryResp resp = jixinManager.send(JixinTxCodeEnum.BATCH_QUERY, req, BatchQueryResp.class);
         if ((ObjectUtils.isEmpty(resp)) || (!JixinResultContants.SUCCESS.equals(resp.getRetCode()))) {
             log.error(ObjectUtils.isEmpty(resp) ? "当前网络不稳定，请稍候重试" : resp.getRetMsg());
-            return true;
+            //修改批次日志状态
+            thirdBatchLog.setState(2);
+            thirdBatchLogService.save(thirdBatchLog);
+            return ThirdBatchLogContants.AWAIT;
         }
 
-        if (resp.getBatchState().equals(ThirdBatchNoStateContants.DISPOSING)) {
-            return true;
+        if (resp.getBatchState().equals(ThirdBatchLogContants.DISPOSING)) {
+            return ThirdBatchLogContants.AWAIT;
+        } else if (resp.getBatchState().equals(ThirdBatchLogContants.PROCESSED)) {
+            return ThirdBatchLogContants.SUCCESS;
         }
 
+        return ThirdBatchLogContants.VACANCY;
+    }
+
+    /**
+     * 校验本地资源回调状态
+     *
+     * @param sourceId
+     * @param type
+     * @return true 已处理  false 未处理
+     */
+    public boolean checkLocalSourceState(String sourceId, int type) {
+
+        switch (type) {
+            case ThirdBatchLogContants.BATCH_CREDIT_INVEST: //投资人批次购买债权
+
+                break;
+            case ThirdBatchLogContants.BATCH_LEND_REPAY: //即信批次放款
+                Specification<Borrow> bs = Specifications
+                        .<Borrow>and()
+                        .eq("id", sourceId)
+                        .notIn("status", 1)
+                        .build();
+                long rowNum = borrowService.count(bs);
+                if (rowNum < 1) {
+                    return true;
+                }
+                break;
+            case ThirdBatchLogContants.BATCH_REPAY: //即信批次还款
+                break;
+            case ThirdBatchLogContants.BATCH_BAIL_REPAY: //担保人垫付
+                break;
+            case ThirdBatchLogContants.BATCH_REPAY_BAIL: //批次融资人还担保账户垫款
+                break;
+            default:
+
+        }
         return false;
     }
 }

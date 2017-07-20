@@ -25,7 +25,7 @@ import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
-import com.gofobao.framework.system.contants.ThirdBatchNoTypeContant;
+import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
@@ -237,16 +237,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             tenderService.updateById(tender);
         }
 
-        //记录日志
         String batchNo = jixinHelper.getBatchNo();
-        ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
-        thirdBatchLog.setBatchNo(batchNo);
-        thirdBatchLog.setCreateAt(nowDate);
-        thirdBatchLog.setUpdateAt(nowDate);
-        thirdBatchLog.setSourceId(borrowId);
-        thirdBatchLog.setType(ThirdBatchNoTypeContant.BATCH_CREDIT_INVEST);
-        thirdBatchLog.setRemark("投资人批次购买债权");
-        thirdBatchLogService.save(thirdBatchLog);
 
         BatchCreditInvestReq request = new BatchCreditInvestReq();
         request.setBatchNo(batchNo);
@@ -261,6 +252,16 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
             throw new Exception("投资人批次购买债权失败!:" + response.getRetMsg());
         }
+
+        //记录日志
+        ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
+        thirdBatchLog.setBatchNo(batchNo);
+        thirdBatchLog.setCreateAt(nowDate);
+        thirdBatchLog.setUpdateAt(nowDate);
+        thirdBatchLog.setSourceId(borrowId);
+        thirdBatchLog.setType(ThirdBatchLogContants.BATCH_CREDIT_INVEST);
+        thirdBatchLog.setRemark("投资人批次购买债权");
+        thirdBatchLogService.save(thirdBatchLog);
 
         return null;
     }
@@ -558,5 +559,21 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         tender.setThirdTenderCancelOrderId(orderId);
         tenderService.save(tender);
         return ResponseEntity.ok(VoBaseResp.ok("取消成功!"));
+    }
+
+
+    /**
+     * 投资人批次结束债权参数验证回调
+     * @return
+     */
+    public void thirdBatchCreditEndCheckCall(HttpServletRequest request, HttpServletResponse response){
+
+    }
+    /**
+     * 投资人批次结束债权参数运行回调
+     * @return
+     */
+    public void thirdBatchCreditEndRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception{
+
     }
 }

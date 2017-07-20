@@ -71,8 +71,6 @@ import static cn.jpush.api.push.model.PushModel.gson;
 
 public class AplloApplicationTests {
 
-
-
     final Gson GSON = new GsonBuilder().create();
 
     @Autowired
@@ -134,7 +132,19 @@ public class AplloApplicationTests {
     }
 
     public static void main(String[] args) {
-        System.err.println(Long.MAX_VALUE );
+        System.out.println("select t.id AS id,t. STATUS AS status,t.user_id AS userId,t.lowest AS lowest,t.borrow_types AS borrowTypes," +
+                "t.repay_fashions AS repayFashions,t.tender_0 AS tender0,t.tender_1 AS tender1,t.tender_3 AS tender3,t.tender_4 AS tender4,t.`mode` AS mode,t.tender_money AS tenderMoney,t.timelimit_first AS timelimitFirst,t.timelimit_last AS timelimitLast,t.timelimit_type AS timelimitType,t.apr_first AS aprFirst,t.apr_last AS aprLast,t.save_money AS saveMoney,t.`order` AS `order`,t.auto_at AS autoAt,t.created_at AS createdAt," +
+                "t.updated_at AS updatedAt,a.use_money AS useMoney,a.no_use_money AS noUseMoney,a.virtual_money AS virtualMoney,a.collection AS collection,a.payment AS payment " +
+                "from gfb_auto_tender t " +
+                "left join gfb_asset a on t.user_id = a.user_id " +
+                "left join gfb_user_third_account uta on  t.user_id =  uta.user_id " +
+                "where 1=1 and uta.del = 0 ");
+
+        Gson gson = new Gson();
+        Map<String, String> map = new HashMap<>();
+        map.put("repaymentId", "173810");
+        System.out.println(gson.toJson(map));
+        System.out.println(SecurityHelper.getSign(gson.toJson(map)));
     }
 
     public AccountQueryByMobileResponse findAccountByMobile() {
@@ -205,8 +215,8 @@ public class AplloApplicationTests {
 
     private void repayDeal() {
         VoRepayReq voRepayReq = new VoRepayReq();
-        voRepayReq.setRepaymentId(168683L);
-        voRepayReq.setUserId(901L);
+        voRepayReq.setRepaymentId(173823L);
+        voRepayReq.setUserId(37243L);
         voRepayReq.setIsUserOpen(false);
         voRepayReq.setInterestPercent(1d);
         try {
@@ -240,8 +250,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("193807");
-        batchDetailsQueryReq.setBatchTxDate("20170717");
+        batchDetailsQueryReq.setBatchNo("151317");
+        batchDetailsQueryReq.setBatchTxDate("20170719");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -272,7 +282,7 @@ public class AplloApplicationTests {
     }
 
     private void noTransferBorrowAgainVerify() {
-        Borrow borrow = borrowService.findById(169864L);
+        Borrow borrow = borrowService.findById(169881L);
         try {
             borrowBiz.notTransferBorrowAgainVerify(borrow);
         } catch (Throwable e) {
@@ -286,28 +296,29 @@ public class AplloApplicationTests {
     @Test
     public void test() {
 
+
         /*BatchQueryReq req = new BatchQueryReq();
         req.setChannel(ChannelContant.HTML);
-        req.setBatchNo("104028");
+        req.setBatchNo("173607");
         req.setBatchTxDate("20170718");
         BatchQueryResp resp = jixinManager.send(JixinTxCodeEnum.BATCH_QUERY,req,BatchQueryResp.class);
-        System.out.println(resp);*/
-
+        System.out.println(resp);
+*/
         /*AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
-        request.setAccountId("6212462040000550055");
+        request.setAccountId("6212462040000950032");
         request.setStartDate("20161002");
         request.setEndDate("20171003");
         request.setChannel(ChannelContant.HTML);
         request.setType("0"); // 转入
         //request.setTranType("7820"); // 线下转账的
-        request.setPageSize(String.valueOf(1));
-        request.setPageNum(String.valueOf(10));
+        request.setPageSize(String.valueOf(10));
+        request.setPageNum(String.valueOf(1));
         AccountDetailsQueryResponse response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, request, AccountDetailsQueryResponse.class);
         System.out.println(response);
 
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId("6212462040000550055");
+        balanceQueryRequest.setAccountId("6212462040000950032");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         System.out.println(balanceQueryResponse);*/
 

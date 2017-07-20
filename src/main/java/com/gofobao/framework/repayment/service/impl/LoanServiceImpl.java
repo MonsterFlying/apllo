@@ -87,6 +87,9 @@ public class LoanServiceImpl implements LoanService {
             VoViewRefundRes voViewRefundRes = new VoViewRefundRes();
             voViewRefundRes.setApr(StringHelper.formatMon(p.getApr()/100D));
             List<BorrowRepayment> borrowRepaymentList = borrowRepaymentMaps.get(p.getId());
+            if(CollectionUtils.isEmpty(borrowRepaymentList)){
+                return;
+            }
             voViewRefundRes.setBorrowName(p.getName());
             voViewRefundRes.setReleaseAt(DateHelper.dateToString(p.getReleaseAt()));
             voViewRefundRes.setMoney(StringHelper.formatMon(p.getMoneyYes() / 100D));

@@ -36,8 +36,5 @@ public class VoucherPayRequest extends JixinBaseRequest{
      * 请求方保留 选填
      */
     private String acqRes;
-    /**
-     * 投资人投标成功的授权号
-     */
-    private String authCode;
+
 }

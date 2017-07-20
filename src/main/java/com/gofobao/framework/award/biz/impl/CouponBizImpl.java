@@ -8,6 +8,7 @@ import com.gofobao.framework.award.service.CouponService;
 import com.gofobao.framework.award.vo.request.VoCouponReq;
 import com.gofobao.framework.award.vo.request.VoTakeFlowReq;
 import com.gofobao.framework.award.vo.response.CouponRes;
+import com.gofobao.framework.award.vo.response.CouponTackeRes;
 import com.gofobao.framework.award.vo.response.VoViewCouponWarpRes;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
@@ -182,7 +183,7 @@ public class CouponBizImpl implements CouponBiz {
     }
 
 
-    public ResponseEntity<VoBaseResp> exchange(VoTakeFlowReq takeFlowReq) {
+    public ResponseEntity<CouponTackeRes> exchange(VoTakeFlowReq takeFlowReq) {
 
         List<Coupon> couponList = couponService.takeFlow(takeFlowReq.getUserId(), takeFlowReq.getCouponId());
         if (CollectionUtils.isEmpty(couponList)) {
@@ -202,14 +203,14 @@ public class CouponBizImpl implements CouponBiz {
                     .body(
                             VoBaseResp.error(
                                     VoBaseResp.ERROR,
-                                    String.format("流量劵%s", message)));
+                                    String.format("流量劵%s", message),CouponTackeRes.class));
         }
         String bizcode = getBizcode(coupon.getPhone(), coupon.getSize());
         if (ObjectUtils.isEmpty(bizcode)) {
             return ResponseEntity.badRequest()
                     .body(
                             VoBaseResp.error(
-                                    VoBaseResp.ERROR, "操作失败"));
+                                    VoBaseResp.ERROR, "操作失败",CouponTackeRes.class));
         }
 
         Map<String, String> params = new HashMap<>();
@@ -237,7 +238,7 @@ public class CouponBizImpl implements CouponBiz {
             return ResponseEntity.badRequest()
                     .body(
                             VoBaseResp.error(
-                                    VoBaseResp.ERROR, "操作失败"));
+                                    VoBaseResp.ERROR, "操作失败",CouponTackeRes.class));
         }
         coupon.setStatus(CouponContants.LOCK);
         coupon.setUpdatedAt(new Date());
@@ -248,9 +249,11 @@ public class CouponBizImpl implements CouponBiz {
             return ResponseEntity.badRequest()
                     .body(
                             VoBaseResp.error(
-                                    VoBaseResp.ERROR, "操作失败"));
+                                    VoBaseResp.ERROR, "操作失败",CouponTackeRes.class));
         }
-        return ResponseEntity.ok(VoBaseResp.ok(response.getRedirectUrl()));
+        CouponTackeRes tackeRes=VoBaseResp.ok("操作成功",CouponTackeRes.class);
+        tackeRes.setResponseUrl(response.getRedirectUrl());
+        return ResponseEntity.ok(tackeRes);
     }
 
     @Override

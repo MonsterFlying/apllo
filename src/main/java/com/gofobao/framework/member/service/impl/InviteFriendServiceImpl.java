@@ -220,8 +220,12 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
                     .between("createdAt", new Range<>( DateHelper.subDays(new Date(),365),new Date()))
                     .build();
         }
+
+        if(voFriendsReq.getPageIndex().intValue()>new Integer(1)){
+            voFriendsReq.setPageIndex((voFriendsReq.getPageIndex()-1)*voFriendsReq.getPageSize());
+        }
         Page<Users> usersPage = usersRepository.findAll(specification,
-                new PageRequest(voFriendsReq.getPageIndex()*voFriendsReq.getPageSize(),
+                new PageRequest(voFriendsReq.getPageIndex(),
                         voFriendsReq.getPageSize(),
                         new Sort("id")));
         Long totalCount = usersPage.getTotalElements();

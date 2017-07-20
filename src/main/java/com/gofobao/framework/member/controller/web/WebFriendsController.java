@@ -31,14 +31,14 @@ public class WebFriendsController {
 
     @ApiOperation("邀请好友列表,type:0全部，1：提成")
     @GetMapping("/invite/pc/v2/list/{type}/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewInviteFriendsWarpRes> list(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
-                                                           @PathVariable Integer type,
-                                                           @PathVariable Integer pageIndex,
-                                                           @PathVariable Integer pageSize) {
+    public ResponseEntity<VoViewInviteFriendsWarpRes> list(/*@RequestAttribute(SecurityContants.USERID_KEY) Long userId,*/
+                                                           @PathVariable("type") Integer type,
+                                                           @PathVariable("pageIndex") Integer pageIndex,
+                                                           @PathVariable("pageSize") Integer pageSize) {
         VoFriendsReq voFriendsReq = new VoFriendsReq();
         voFriendsReq.setPageSize(pageSize);
         voFriendsReq.setPageIndex(pageIndex);
-        voFriendsReq.setUserId(userId);
+        voFriendsReq.setUserId(901L);
         voFriendsReq.setType(type);
         return brokerBounsBiz.pcFriendsTender(voFriendsReq);
     }

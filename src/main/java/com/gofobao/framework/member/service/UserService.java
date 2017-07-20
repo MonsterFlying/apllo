@@ -96,4 +96,8 @@ public interface UserService {
 
     long count(Specification<Users> specification);
 
+
+
+    List<Users>serviceUser();
+
 }
