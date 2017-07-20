@@ -92,6 +92,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -1357,10 +1358,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
 
         // 2判断提交还款批次是否多次重复提交
-        boolean flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(borrowRepayment.getId()),
-                ThirdBatchNoTypeContant.REPAY_BAIL,
-                ThirdBatchNoTypeContant.BATCH_REPAY);
-        if (flag) {
+        int flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(borrowRepayment.getId()),
+                ThirdBatchLogContants.BATCH_REPAY_BAIL,
+                ThirdBatchLogContants.BATCH_REPAY);
+        if ( flag > 1) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("还款处理中，请勿重复点击!")));
