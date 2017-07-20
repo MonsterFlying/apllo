@@ -37,56 +37,32 @@ public class BorrowListener {
     @RabbitHandler
     public void process(String message) {
         try {
-            Map<String, Object> body = null;
-            String tag = null;
-            Map<String, String> msg = null;
-            Long borrowId = null;
-
+            log.info(String.format("标的队列待处理信息%s", message));
             Preconditions.checkNotNull(message, "BorrowListener process message is empty");
-            body = gson.fromJson(message, TypeTokenContants.MAP_TOKEN);
+            Map<String, Object> body = gson.fromJson(message, TypeTokenContants.MAP_TOKEN);
             Preconditions.checkNotNull(body.get(MqConfig.MSG_TAG), "BorrowListener process tag is empty ");
             Preconditions.checkNotNull(body.get(MqConfig.MSG_BODY), "BorrowListener process body is empty ");
-            tag = body.get(MqConfig.MSG_TAG).toString();
-            msg = (Map<String, String>) body.get(MqConfig.MSG_BODY);
-
-            borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
-
-
+            String tag = body.get(MqConfig.MSG_TAG).toString();
+            Map<String, String> msg = (Map<String, String>) body.get(MqConfig.MSG_BODY);
+            Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
             boolean bool = false;
+            String processMsg;
             if (tag.equals(MqTagEnum.FIRST_VERIFY.getValue())) {  // 标的初审
-                try {
-                    bool = borrowBiz.doFirstVerify(borrowId);
-                } catch (Throwable throwable) {
-                    log.error("初审异常:", throwable);
-                }
-                if (bool) {
-                    log.info("===========================BorrowListener===========================");
-                    log.info("初审成功! borrowId：" + borrowId);
-                    log.info("====================================================================");
-                } else {
-                    log.info("===========================BorrowListener===========================");
-                    log.info("初审失败! borrowId：" + borrowId);
-                    log.info("====================================================================");
-                }
+                bool = borrowBiz.doFirstVerify(borrowId);
+                processMsg = "标的初审";
             } else if (tag.equals(MqTagEnum.AGAIN_VERIFY.getValue())) {  // 复审
-                try {
-                    bool = borrowProvider.doAgainVerify(msg);
-                } catch (Throwable throwable) {
-                    log.error("复审异常:", throwable);
-                }
-
-                if (bool) {
-                    log.info("===========================BorrowListener===========================");
-                    log.info("复审成功! borrowId：" + borrowId);
-                    log.info("====================================================================");
-                } else {
-                    log.info("===========================BorrowListener===========================");
-                    log.info("复审失败! borrowId：" + borrowId);
-                    log.info("====================================================================");
-                }
+                bool = borrowProvider.doAgainVerify(msg);
+                processMsg = "标的复审";
             } else {
-                log.error("BorrowListener 未找到对应的type");
+                processMsg = "其他";
             }
+
+            if (bool) {
+                log.info(String.format("操作成功: %s: %s", processMsg, message));
+            } else {
+                log.error(String.format("操作失败: %s: %s", processMsg, message));
+            }
+
         } catch (Throwable throwable) {
             log.error("borrowListener param error：", throwable);
         }

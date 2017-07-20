@@ -5,6 +5,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,11 +30,12 @@ public class TenderThirdController {
      */
     @ApiOperation("投资人批次购买债权运行回调")
     @RequestMapping("/v2/third/batch/creditinvest/run")
-    public void thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) {
         try {
-            tenderThirdBiz.thirdBatchCreditInvestRunCall(request, response);
+            return tenderThirdBiz.thirdBatchCreditInvestRunCall(request, response);
         } catch (Exception e) {
             e.printStackTrace();
+            return ResponseEntity.ok("error");
         }
     }
 
@@ -46,5 +48,32 @@ public class TenderThirdController {
     @RequestMapping("/v2/third/batch/creditinvest/check")
     public void thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse response) {
         tenderThirdBiz.thirdBatchCreditInvestCheckCall(request, response);
+    }
+
+
+    /**
+     * 投资人批次结束债权运行回调
+     *
+     * @return
+     */
+    @ApiOperation("投资人批次结束债权运行回调")
+    @RequestMapping("/v2/third/batch/creditend/run")
+    public void thirdBatchCreditEndRunCall(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            tenderThirdBiz.thirdBatchCreditEndRunCall(request, response);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 投资人批次结束债权参数验证回调
+     *
+     * @return
+     */
+    @ApiOperation("投资人批次结束债权参数验证回调")
+    @RequestMapping("/v2/third/batch/creditend/check")
+    public void thirdBatchCreditEndCheckCall(HttpServletRequest request, HttpServletResponse response) {
+        tenderThirdBiz.thirdBatchCreditEndCheckCall(request, response);
     }
 }

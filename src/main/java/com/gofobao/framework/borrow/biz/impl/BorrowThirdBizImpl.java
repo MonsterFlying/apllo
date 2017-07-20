@@ -122,13 +122,6 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     public ResponseEntity<VoBaseResp> createThirdBorrow(VoCreateThirdBorrowReq voCreateThirdBorrowReq) {
         Long borrowId = voCreateThirdBorrowReq.getBorrowId();
         boolean entrustFlag = voCreateThirdBorrowReq.getEntrustFlag();
-
-        if (ObjectUtils.isEmpty(borrowId)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款id为空!"));
-        }
-
         Borrow borrow = borrowService.findById(borrowId);
         Preconditions.checkNotNull(borrow, "借款记录不存在！");
         borrow.setReleaseAt(ObjectUtils.isEmpty(borrow.getReleaseAt()) ? new Date() : borrow.getReleaseAt());
@@ -139,7 +132,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "借款人未开户!");
-        String productId = jixinHelper.generateProductId(borrowId);
+        String productId = jixinHelper.generateProductId(borrowId);  // 生成标的的唯一识别码
 
         DebtRegisterRequest debtRegisterRequest = new DebtRegisterRequest();
         debtRegisterRequest.setAccountId(userThirdAccount.getAccountId());
@@ -148,7 +141,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         debtRegisterRequest.setRaiseDate(DateHelper.dateToString(borrow.getReleaseAt(), DateHelper.DATE_FORMAT_YMD_NUM));
         debtRegisterRequest.setRaiseEndDate(DateHelper.dateToString(DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1), DateHelper.DATE_FORMAT_YMD_NUM));
         debtRegisterRequest.setIntType(StringHelper.toString(repayFashion == 1 ? 0 : 1));
-        int duration = 0;
+        int duration;
         if (repayFashion != 1) {
             Date releaseAt = borrow.getReleaseAt();
             debtRegisterRequest.setIntPayDay(DateHelper.dateToString(releaseAt, "dd"));
@@ -380,7 +373,11 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             sumTxAmount += NumberHelper.toDouble(tempRepay.getTxAmount());
         }
 
+        //批次号
         String batchNo = jixinHelper.getBatchNo();
+        //请求保留参数
+        Map<String, Object> acqResMap = new HashMap<>();
+        acqResMap.put("borrowId", borrowId);
 
         //====================================================================
         //冻结借款人账户资金
@@ -401,7 +398,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         request.setTxAmount(StringHelper.formatDouble(sumTxAmount, false));
         request.setRetNotifyURL(javaDomain + "/pub/borrow/v2/third/repayall/run");
         request.setNotifyURL(javaDomain + "/pub/borrow/v2/third/repayall/check");
-        request.setAcqRes(GSON.toJson(borrowId));
+        request.setAcqRes(GSON.toJson(acqResMap));
         request.setSubPacks(GSON.toJson(tempRepayList));
         request.setChannel(ChannelContant.HTML);
         request.setTxCounts(StringHelper.toString(tempRepayList.size()));
@@ -416,8 +413,8 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         thirdBatchLog.setCreateAt(nowDate);
         thirdBatchLog.setUpdateAt(nowDate);
         thirdBatchLog.setSourceId(borrowRepayment.getBorrowId());
-        thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY);
-        thirdBatchLog.setRemark("即信批次还款");
+        thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY_ALL);
+        thirdBatchLog.setRemark("(提前结清)即信批次还款");
         thirdBatchLogService.save(thirdBatchLog);
 
         return null;
@@ -460,18 +457,45 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     public ResponseEntity<String> thirdBatchRepayAllRunCall(HttpServletRequest request, HttpServletResponse response) {
         BatchRepayRunResp repayRunResp = jixinManager.callback(request, new TypeToken<BatchRepayRunResp>() {
         });
+        Map<String, Object> acqResMap = GSON.fromJson(repayRunResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
+
         boolean bool = true;
         if (ObjectUtils.isEmpty(repayRunResp)) {
+            log.error("==================================批次回调======================================");
             log.error("=============================即信批次还款处理结果回调===========================");
             log.error("请求体为空!");
-            bool = false;
+            log.error("================================================================================");
+            log.error("================================================================================");
         }
 
         if (!JixinResultContants.SUCCESS.equals(repayRunResp.getRetCode())) {
+            log.error("==================================批次回调======================================");
             log.error("=============================即信批次还款处理结果回调===========================");
             log.error("回调失败! msg:" + repayRunResp.getRetMsg());
-            bool = false;
+            log.error("================================================================================");
+            log.error("================================================================================");
+        }else {
+            log.error("==================================批次回调======================================");
+            log.error("=============================即信批次还款处理结果回调===========================");
+            log.error("回调成功!");
+            log.error("================================================================================");
+            log.error("================================================================================");
         }
+
+        //触发处理批次放款处理结果队列
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(acqResMap.get("borrowId")), MqConfig.BATCH_NO, StringHelper.toString(repayRunResp.getBatchNo()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            log.info(String.format("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("borrowProvider autoTender send mq exception", e);
+        }
+
 
         int num = NumberHelper.toInt(repayRunResp.getFailCounts());
         if (num > 0) {
@@ -510,6 +534,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoHtmlResp> thirdTrusteePay(VoThirdTrusteePayReq voThirdTrusteePayReq, HttpServletRequest httpServletRequest) {
+
         long borrowId = voThirdTrusteePayReq.getBorrowId();
         Borrow borrow = borrowService.findById(borrowId);
         Preconditions.checkNotNull(borrow, "borrowThirdBizImpl thirdTrusteePay： 借款记录不存在!");
@@ -529,13 +554,14 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         trusteePayQueryReq.setAccountId(lendUserThirdAccount.getAccountId());
         TrusteePayQueryResp trusteePayQueryResp = jixinManager.send(JixinTxCodeEnum.TRUSTEE_PAY_QUERY, trusteePayQueryReq, TrusteePayQueryResp.class);
         if (ObjectUtils.isEmpty(trusteePayQueryResp)) {
-            log.error("查询委托状态失败");
+            log.info(String.format("车贷标/ 渠道标初审: 委托支付状态查询失败( %s )", GSON.toJson(trusteePayQueryResp)));
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了， 请稍候重试", VoHtmlResp.class));
         }
 
         if (trusteePayQueryResp.getState().equals("0")) {
+            log.info(String.format("车贷标/ 渠道标初审: 委托支付开始( %s )", GSON.toJson(voThirdTrusteePayReq)));
             TrusteePayReq trusteePayReq = new TrusteePayReq();
             trusteePayReq.setAccountId(lendUserThirdAccount.getAccountId());
             trusteePayReq.setChannel(ChannelContant.HTML);
@@ -576,7 +602,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             return ResponseEntity.ok(resp);
         } else {
             if ((JixinResultContants.SUCCESS.equals(trusteePayQueryResp.getRetCode()))) {
-                // 主动触发 审核
+                log.info(String.format("车贷标/ 渠道标初审: 委托支付主动触发审核( %s )", GSON.toJson(voThirdTrusteePayReq)));
                 MqConfig mqConfig = new MqConfig();
                 mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
                 mqConfig.setTag(MqTagEnum.FIRST_VERIFY);

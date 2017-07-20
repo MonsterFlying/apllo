@@ -30,8 +30,13 @@ public class BorrowRepaymentThirdContorller {
 
     @RequestMapping("/v2/third/batch/lendrepay/run")
     @ApiOperation("批次放款运行结果通知")
-    public ResponseEntity<String> thirdBatchLendRepayRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        return borrowRepaymentThirdBiz.thirdBatchLendRepayRunCall(request, response);
+    public ResponseEntity<String> thirdBatchLendRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            return borrowRepaymentThirdBiz.thirdBatchLendRepayRunCall(request, response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.ok("error");
+        }
     }
 
     @RequestMapping("/v2/third/batch/repayDeal/check")

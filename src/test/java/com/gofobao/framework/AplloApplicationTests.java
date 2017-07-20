@@ -315,12 +315,13 @@ public class AplloApplicationTests {
         request.setPageNum(String.valueOf(1));
         AccountDetailsQueryResponse response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, request, AccountDetailsQueryResponse.class);
         System.out.println(response);
+        */
 
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId("6212462040000950032");
+        balanceQueryRequest.setAccountId("6212462040000450041");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
-        System.out.println(balanceQueryResponse);*/
+        System.out.println(balanceQueryResponse);
 
         //根据手机号查询存管账户
         //findAccountByMobile();

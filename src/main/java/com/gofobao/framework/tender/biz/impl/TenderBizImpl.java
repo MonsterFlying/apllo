@@ -43,6 +43,7 @@ import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
 import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multiset;
@@ -109,9 +110,17 @@ public class TenderBizImpl implements TenderBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "当前用户未开户状态"));
         }
         Users user = userService.findByIdLock(voCreateTenderReq.getUserId());
+        Preconditions.checkNotNull(user, "投标: 用户信息为空!") ;
+
         Borrow borrow = borrowService.findByIdLock(voCreateTenderReq.getBorrowId());
+        Preconditions.checkNotNull(borrow, "投标: 标的信息为空!") ;
+
         Asset asset = assetService.findByUserIdLock(voCreateTenderReq.getUserId());
+        Preconditions.checkNotNull(asset, "投标: 资金记录为空!") ;
+
         UserCache userCache = userCacheService.findByUserIdLock(voCreateTenderReq.getUserId());
+        Preconditions.checkNotNull(userCache, "投标: 用户缓存信息为空!") ;
+
         Multiset<String> extendMessage = HashMultiset.create();
         // 标的判断
         boolean state = verifyBorrowInfo4Borrow(borrow, user, voCreateTenderReq, extendMessage);
@@ -134,12 +143,10 @@ public class TenderBizImpl implements TenderBiz {
         //创建标的：投标行为 非转让标第一次成功前创建标的，
         //===========================================================
         ResponseEntity<VoBaseResp> resp;
-
         String productId = borrow.getProductId();
-        if (ObjectUtils.isEmpty(productId) && !borrow.isTransfer()) { //判断没有在即信注册、并且类型为非转让标
-            //标的登记
+        if (ObjectUtils.isEmpty(productId) && !borrow.isTransfer()) { // 判断没有在即信注册、并且类型为非转让标
             int type = borrow.getType();
-            if (type != 0 && type != 4) { //判断是否是官标、官标不需要在这里登记标的
+            if (type != 0 && type != 4) { // 判断是否是官标、官标不需要在这里登记标的
                 VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
                 voCreateThirdBorrowReq.setBorrowId(borrow.getId());
                 resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);

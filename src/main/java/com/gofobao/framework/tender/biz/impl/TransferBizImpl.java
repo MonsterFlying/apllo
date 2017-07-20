@@ -9,6 +9,8 @@ import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.member.entity.UserThirdAccount;
+import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.entity.Tender;
@@ -19,10 +21,12 @@ import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
 import com.gofobao.framework.tender.vo.response.*;
 import com.gofobao.framework.tender.vo.response.web.TransferBuy;
 import com.gofobao.framework.tender.vo.response.web.VoViewTransferBuyWarpRes;
+import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,15 +45,19 @@ import java.util.Map;
 public class TransferBizImpl implements TransferBiz {
 
     @Autowired
-    private TransferService transferService;
+     TransferService transferService;
+
     @Autowired
-    private TenderService tenderService;
+    TenderService tenderService;
+
     @Autowired
-    private BorrowService borrowService;
+    BorrowService borrowService;
+
     @Autowired
-    private BorrowCollectionService borrowCollectionService;
+    BorrowCollectionService borrowCollectionService;
+
     @Autowired
-    private AssetService assetService;
+    UserThirdAccountService userThirdAccountService ;
 
     /**
      * 转让中
@@ -164,19 +172,18 @@ public class TransferBizImpl implements TransferBiz {
         Long tenderId = voTransferTenderReq.getTenderId();
 
         Tender tender = tenderService.findById(tenderId);
-        if ((ObjectUtils.isEmpty(tender)) || (tender.getTransferFlag() != 0) || (tender.getStatus() != 1)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "操作不存在"));
+        Preconditions.checkNotNull(tender, "立即转让: 查询用户投标记录为空!") ;
+        Borrow borrow = borrowService.findByIdLock(tender.getBorrowId());
+        Preconditions.checkNotNull(borrow, "立即转让: 查询用户投标标的信息为空!") ;
+
+        // 前期债权转让检测
+        ResponseEntity<VoBaseResp> tranferConditonCheckResponse = tranferConditionCheck(tender, borrow) ;
+        if(!tranferConditonCheckResponse.getStatusCode().equals(HttpStatus.OK)){
+            return tranferConditonCheckResponse ;
         }
 
-        Borrow borrow = borrowService.findById(tender.getBorrowId());
-        if ((borrow.getType() != 0) || (borrow.getStatus() != 3) || borrow.isTransfer()) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "操作不存在"));
-        }
-
+        // 计算债权本金之和
+        // 判断本金必须大于 1000元
         Specification<BorrowCollection> bcs = Specifications
                 .<BorrowCollection>and()
                 .eq("transferFlag", 0)
@@ -185,81 +192,139 @@ public class TransferBizImpl implements TransferBiz {
                 .build();
 
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "order"));
-        if (CollectionUtils.isEmpty(borrowCollectionList)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "立即转让失败!"));
-        }
-
-        int waitRepayCount = borrowCollectionList.size();
-        if (waitRepayCount < 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "操作不存在"));
-        }
-
-        int cantrCapital = 0;
-        for (BorrowCollection borrowCollection : borrowCollectionList) {
-            cantrCapital += borrowCollection.getPrincipal();
-        }
-
+        Preconditions.checkNotNull(borrowCollectionList,  "立即转让: 查询转让用户还款计划为空" ) ;
+        int waitRepayCount = borrowCollectionList.size();  // 等待回款期数
+        int cantrCapital = borrowCollectionList.stream().mapToInt(borrowCollection ->  borrowCollection.getPrincipal()).sum() ; // 待汇款本金
         if (cantrCapital < (1000 * 100)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "可转本金必须大于1000元才能转让"));
         }
 
-        //转让借款
-        Borrow tempBorrow = new Borrow();
-        tempBorrow.setType(3);//3 转让标
-        tempBorrow.setUse(borrow.getUse());
-        tempBorrow.setIsLock(false);
-        tempBorrow.setRepayFashion(borrow.getRepayFashion());
-        tempBorrow.setTimeLimit(borrow.getRepayFashion() == 1 ? borrow.getTimeLimit() : waitRepayCount);
-        tempBorrow.setMoney(cantrCapital);
-        tempBorrow.setApr(borrow.getApr());
-        tempBorrow.setLowest(1000 * 100);
-        tempBorrow.setValidDay(1);
-        tempBorrow.setName(borrow.getName());
-        tempBorrow.setDescription(borrow.getDescription());
-        tempBorrow.setIsVouch(borrow.getIsVouch());
-        tempBorrow.setIsMortgage(borrow.getIsMortgage());
-        tempBorrow.setIsConversion(borrow.getIsConversion());
-        tempBorrow.setUserId(userId);
-        tempBorrow.setTenderId(tender.getId());
-        tempBorrow.setCreatedAt(nowDate);
-        tempBorrow.setUpdatedAt(nowDate);
-        tempBorrow.setMost(0);
-        tempBorrow.setMostAuto(0);
-        tempBorrow.setAwardType(0);
-        tempBorrow.setAward(0);
-        tempBorrow.setPassword("");
-        tempBorrow.setMoneyYes(0);
-        tempBorrow.setTenderCount(0);
+        saveTranferBorrow(nowDate, userId, tender, borrow, waitRepayCount, cantrCapital) ;
+        return ResponseEntity.ok(VoBaseResp.ok("操作成功"));
+    }
 
-        //锁定资产表
-        assetService.findByUserIdLock(userId);
+    /**
+     * 保存债权,并且更改投标记录为转让中
+     * @param nowDate
+     * @param userId
+     * @param tender
+     * @param borrow
+     * @param waitRepayCount
+     * @param cantrCapital
+     */
+    private void saveTranferBorrow(Date nowDate, Long userId, Tender tender, Borrow borrow, int waitRepayCount, int cantrCapital) {
+        // 转让借款
+        Borrow tranferBorrow = new Borrow();
+        tranferBorrow.setType(3); // 3 转让标
+        tranferBorrow.setUse(borrow.getUse());
+        tranferBorrow.setIsLock(false);
+        tranferBorrow.setRepayFashion(borrow.getRepayFashion());
+        tranferBorrow.setTimeLimit(borrow.getRepayFashion() == 1 ? borrow.getTimeLimit() : waitRepayCount);
+        tranferBorrow.setMoney(cantrCapital);
+        tranferBorrow.setApr(borrow.getApr());
+        tranferBorrow.setLowest(1000 * 100);
+        tranferBorrow.setValidDay(1);
+        tranferBorrow.setName(borrow.getName());
+        tranferBorrow.setDescription(borrow.getDescription());
+        tranferBorrow.setIsVouch(borrow.getIsVouch());
+        tranferBorrow.setIsMortgage(borrow.getIsMortgage());
+        tranferBorrow.setIsConversion(borrow.getIsConversion());
+        tranferBorrow.setUserId(userId);
+        tranferBorrow.setTenderId(tender.getId());
+        tranferBorrow.setCreatedAt(nowDate);
+        tranferBorrow.setUpdatedAt(nowDate);
+        tranferBorrow.setMost(0);
+        tranferBorrow.setMostAuto(0);
+        tranferBorrow.setAwardType(0);
+        tranferBorrow.setAward(0);
+        tranferBorrow.setPassword("");
+        tranferBorrow.setMoneyYes(0);
+        tranferBorrow.setTenderCount(0);
+        borrowService.insert(tranferBorrow);//插入转让标
+
+        tender.setTransferFlag(1);
+        tender.setUpdatedAt(nowDate);
+        tenderService.updateById(tender);
+    }
+
+    /**
+     * 债权装让前期检测
+     * 1. 当期债权是否已经发生转让行为
+     * 2. 当前待还是否为官方标的
+     * 3. 保证只能同时发生一个债权转让
+     * @param tender
+     * @param borrow
+     * @return
+     */
+    private ResponseEntity<VoBaseResp> tranferConditionCheck(Tender tender, Borrow borrow) {
+        if((tender.getTransferFlag() != 0) || (borrow.isTransfer())){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "操作失败: 你已经出让债权了!"));
+        }
+
+        if((tender.getStatus() != 1)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前系统出现异常, 麻烦通知平台客服人员!"));
+        }
+
+
+        if((borrow.getType() != 0)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error( VoBaseResp.ERROR, "投资非投资官方标的是不可债权转让!") );
+        }
+
+        if ((borrow.getStatus() != 3) ) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前债权不符合转让规则!"));
+        }
+
 
         Specification<Borrow> borrowSpecification = Specifications
                 .<Borrow>and()
-                .eq("userId",userId)
+                .eq("userId",tender.getUserId())
                 .in("status", 0, 1)
                 .build();
 
-        long rsnum = borrowService.count(borrowSpecification);
-        if (rsnum > 0) {
+        long tranferingNum = borrowService.count(borrowSpecification);
+        if (tranferingNum > 0) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "您已经有一个进行中的借款标"));
         }
 
-        borrowService.insert(tempBorrow);//插入转让标
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
+        if(ObjectUtils.isEmpty(userThirdAccount)){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你没有开通银行存管，请先开通银行存管！"));
+        }
 
-        tender.setTransferFlag(1);
-        tender.setUpdatedAt(nowDate);
-        tenderService.updateById(tender);
+        Integer passwordState = userThirdAccount.getPasswordState();
+        if(passwordState == 0){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请先初始化江西银行存管账户交易密码！"));
+        }
 
-        return ResponseEntity.ok(VoBaseResp.ok("立即转让成功!"));
+        if (userThirdAccount.getAutoTransferState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoAutoTenderInfo.class));
+        }
+
+
+        if (userThirdAccount.getAutoTenderState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoAutoTenderInfo.class));
+        }
+        return ResponseEntity.ok(VoBaseResp.ok("检测成功!")) ;
     }
 
     /**
@@ -269,18 +334,9 @@ public class TransferBizImpl implements TransferBiz {
      * @return
      */
     public ResponseEntity<VoGoTenderInfo> goTenderInfo(Long tenderId, Long userId) {
-
-        if ((ObjectUtils.isEmpty(tenderId)) || (ObjectUtils.isEmpty(userId))) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoGoTenderInfo.error(VoGoTenderInfo.ERROR, "参数缺少!", VoGoTenderInfo.class));
-        }
         Tender tender = tenderService.findById(tenderId);
-        if (!userId.equals(tender.getUserId())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoGoTenderInfo.error(VoGoTenderInfo.ERROR, "只有债权持有人才允许转让!", VoGoTenderInfo.class));
-        }
+        Preconditions.checkNotNull(tender, "") ;
+        Preconditions.checkArgument(userId.equals(tender.getUserId()), "获取立即转让详情: 非法操作!");
 
         Specification<BorrowCollection> bcs = Specifications
                 .<BorrowCollection>and()
@@ -288,20 +344,10 @@ public class TransferBizImpl implements TransferBiz {
                 .eq("status", 0)
                 .build();
         List<BorrowCollection> borrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "id"));
-        if (CollectionUtils.isEmpty(borrowCollections)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoGoTenderInfo.error(VoGoTenderInfo.ERROR, "未找到回款记录!", VoGoTenderInfo.class));
-        }
-
+        Preconditions.checkNotNull(borrowCollections, "获取立即转让详情: 还款计划查询失败!") ;
         BorrowCollection borrowCollection = borrowCollections.get(0);
         Borrow borrow = borrowService.findById(tender.getBorrowId());
-        if (ObjectUtils.isEmpty(borrow)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoGoTenderInfo.error(VoGoTenderInfo.ERROR, "未找到借款记录!", VoGoTenderInfo.class));
-        }
-
+        Preconditions.checkNotNull(borrowCollections, "获取立即转让详情: 获取投资的标的信息失败!") ;
         String repayFashionStr = "";
         switch (borrow.getRepayFashion()) {
             case BorrowContants.REPAY_FASHION_AYFQ_NUM:
@@ -314,20 +360,15 @@ public class TransferBizImpl implements TransferBiz {
                 repayFashionStr = "先息后本";
                 break;
             default:
-
         }
 
-        int money = 0;
-        for (BorrowCollection bean : borrowCollections) {
-            money += bean.getPrincipal();
-        }
+        int money = borrowCollections.stream().mapToInt(borrowCollectionItem ->  borrowCollectionItem.getPrincipal()).sum() ; // 待汇款本金
         // 0.4% + 0.08% * (剩余期限-1)  （费率最高上限为1.28%）
         double rate = 0.004 + 0.0008 * (borrowCollections.size() - 1);
         rate = Math.min(rate, 0.0128);
-        Double fee = money * rate;
+        Double fee = money * rate;  // 费用
         int day = DateHelper.diffInDays(borrowCollection.getCollectionAt(), new Date(), false);
         day = day < 0 ? 0 : day;
-
         VoGoTenderInfo voGoTenderInfo = VoGoTenderInfo.ok("查询成功!", VoGoTenderInfo.class);
         voGoTenderInfo.setTenderId(tender.getId());
         voGoTenderInfo.setApr(StringHelper.formatDouble(borrow.getApr(), 100.0, false));
@@ -338,7 +379,6 @@ public class TransferBizImpl implements TransferBiz {
         voGoTenderInfo.setTimeLimit(String.valueOf(borrowCollections.size()) + "个月");
         voGoTenderInfo.setMoney(StringHelper.formatDouble(money, 100.0, true));
         voGoTenderInfo.setFee(StringHelper.formatDouble(fee, 100.0, true));
-
         return ResponseEntity.ok(voGoTenderInfo);
     }
 }
