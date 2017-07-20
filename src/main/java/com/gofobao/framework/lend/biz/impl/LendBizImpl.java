@@ -13,6 +13,7 @@ import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.ThirdAccountHelper;
 import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.lend.biz.LendBiz;
 import com.gofobao.framework.lend.entity.Lend;
@@ -40,6 +41,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -270,116 +272,67 @@ public class LendBizImpl implements LendBiz {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> lend(VoLend voLend) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voLend.getUserId());
-        if (ObjectUtils.isEmpty(userThirdAccount)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoAutoTenderInfo.class));
+        ResponseEntity<VoBaseResp> conditionCheckResponse = ThirdAccountHelper.conditionCheck(userThirdAccount);
+        if (!conditionCheckResponse.getStatusCode().equals(HttpStatus.OK)) {
+            return conditionCheckResponse;
         }
 
-        if (userThirdAccount.getPasswordState() != 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoAutoTenderInfo.class));
-        }
-
-        if (userThirdAccount.getAutoTransferState() != 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoAutoTenderInfo.class));
-        }
-
-
-        if (userThirdAccount.getAutoTenderState() != 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoAutoTenderInfo.class));
-        }
-
-        int rs = 1;
         long userId = voLend.getUserId();
         Double money = voLend.getMoney();
-        long lendId = voLend.getLendId();
-
-        Lend lend = lendService.findByIdLock(lendId);
-        Preconditions.checkNotNull(lend, "您看到的有草出借消失了!");
+        Lend lend = lendService.findByIdLock(voLend.getLendId());
+        Preconditions.checkNotNull(lend, "摘草: 有草出借记录为空");
+        ResponseEntity<VoBaseResp> lendCondiitionCheckResponse = lendCondiitionCheck(userId, money, lend);  // 有草出借前期判断
+        if (!lendCondiitionCheckResponse.getStatusCode().equals(HttpStatus.OK)) {
+            return lendCondiitionCheckResponse;
+        }
 
         long lendUserId = lend.getUserId();
-        Asset asset = assetService.findByUserIdLock(lendUserId);
-        Preconditions.checkNotNull(lend, "用户资产记录获取失败!");
-
+        Asset landAsset = assetService.findByUserIdLock(lendUserId);  // 出借人资金记录
+        Preconditions.checkNotNull(landAsset, "摘草: 有草出借发起人资产记录为空!");
         Users user = userService.findById(userId);
-        Preconditions.checkNotNull(lend, "用户记录获取失败!");
+        Preconditions.checkNotNull(user, "摘草: 用户记录为空!");
 
-        if (user.getIsLock()) { //判断用户是否锁定
+        if (user.getIsLock()) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "账户已被锁定，请联系客服人员!"));
         }
 
         UserCache userCache = userCacheService.findById(userId);
-        Preconditions.checkNotNull(lend, "用户缓存记录获取失败!");
+        Preconditions.checkNotNull(lend, "摘草: 用户缓存记录获取失败!");
         Asset userAsset = assetService.findByUserIdLock(userId);
-        Preconditions.checkNotNull(lend, "用户资产记录获取失败!");
+        Preconditions.checkNotNull(lend, "摘草: 用户资产记录获取失败!");
+
         double totalMoney = (userAsset.getUseMoney() + userCache.getWaitCollectionPrincipal()) * 0.8 - userAsset.getPayment();  // 用户净值金额
         if (money > totalMoney) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "摘草金额大于净值额度"));
-        }
-
-        if (lend.getStatus() != 0) { //该出借信息已结束
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "出借已结束"));
-        }
-
-        if (StringHelper.toString(lend.getUserId()).equals(StringHelper.toString(userId))) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "该出借是本人发布的"));
-        }
-
-        Specification<LendBlacklist> lbs = Specifications
-                .<LendBlacklist>and()
-                .eq("userId", lend.getUserId())
-                .eq("blackUserId", userId)
-                .build();
-
-        long count = lendBlackListService.count(lbs);
-        if (count > 0) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前会员被拉黑"));
-        }
-
-        if (money > (lend.getMoney() - lend.getMoneyYes())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借入金额不能大于剩余金额"));
-        }
-
-        if (money < lend.getLowest()) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借入金额不能小于起借金额"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "操作失败: 摘草金额大于你当前的净值额度!"));
         }
 
         Date nowDate = new Date();
         Date endDate = DateHelper.endOfDate(lend.getCreatedAt());
+        // 标的结束判断:
+        // 1.当标的剩余出借金额小于当前标最小借款金额
+        // 2.出借用户可用余额小于当前借款金额
+        // 3.有草出借信息已过期
         if (((lend.getMoney() - lend.getMoneyYes()) < lend.getLowest())
-                || asset.getUseMoney() < money
-                || nowDate.getTime() > endDate.getTime()
-                ) {
-            Lend lend1 = lendService.findById(lendId);
-            lend1.setId(lendId);
-            lend1.setStatus(1);
-            lendService.updateById(lend1);
+                || (landAsset.getUseMoney() < money)
+                || (nowDate.getTime() > endDate.getTime())) {
+            lend.setStatus(1);  // 已经结束
+            lendService.updateById(lend);
 
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "出借已结束"));
         }
 
+        //  反向修改借款记录. 并且减少有草出借数量
+        createBorrow4Lend(userId, money, lend, user);
+        return ResponseEntity.ok(VoBaseResp.ok("摘草成功!"));
+    }
+
+    private void createBorrow4Lend(long userId, Double money, Lend lend, Users user) {
         Borrow tempBorrow = new Borrow();
         tempBorrow.setType(1);
         tempBorrow.setRepayFashion(1);
@@ -422,8 +375,48 @@ public class LendBizImpl implements LendBiz {
         } catch (Throwable e) {
             log.error("borrowBizImpl firstVerify send mq exception", e);
         }
+    }
 
-        return ResponseEntity.ok(VoBaseResp.ok("摘草成功!"));
+    private ResponseEntity<VoBaseResp> lendCondiitionCheck(long userId, Double money, Lend lend) {
+        if (StringHelper.toString(lend.getUserId()).equals(StringHelper.toString(userId))) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "操作失败: 有草出借发起人与摘草人为同一人!"));
+        }
+
+        if (lend.getStatus() != 0) { // 该出借信息已结束
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "操作失败: 当前出借已结束!"));
+        }
+
+        // 金额判断
+        if (money > (lend.getMoney() - lend.getMoneyYes())) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借入金额不能大于剩余金额"));
+        }
+
+        if (money < lend.getLowest()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借入金额不能小于起借金额"));
+        }
+
+        // 是否拉黑
+        Specification<LendBlacklist> lbs = Specifications
+                .<LendBlacklist>and()
+                .eq("userId", lend.getUserId())
+                .eq("blackUserId", userId)
+                .build();
+
+        long count = lendBlackListService.count(lbs);
+        if (count > 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "你已被有草出借发起人拉黑, 如有疑问请联系平台客服!"));
+        }
+        return ResponseEntity.ok(VoBaseResp.ok("验证通过"));
     }
 
     /**
@@ -488,9 +481,9 @@ public class LendBizImpl implements LendBiz {
                 .eq("userId", voAddLendBlacklist.getUserId())
                 .build();
         LendBlacklist lendBlacklist1 = lendBlacklistRepository.findOne(specification);
-        if(!ObjectUtils.isEmpty(lendBlacklist1)){
+        if (!ObjectUtils.isEmpty(lendBlacklist1)) {
             return ResponseEntity.badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR,"該用戶已被拉黑過啦"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "該用戶已被拉黑過啦"));
         }
         lendBlacklist.setBlackUserId(voAddLendBlacklist.getBlackUserId());
         lendBlacklist.setUserId(voAddLendBlacklist.getUserId());

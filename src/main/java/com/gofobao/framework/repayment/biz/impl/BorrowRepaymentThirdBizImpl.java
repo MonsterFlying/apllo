@@ -1011,6 +1011,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
             //  平台收取出借用户利息管理费为: 利息的百分之十;
             //  特殊注意: 其中有部分用户不需要收取手续费(在2015年签署股东写).有效期(2015. 12 - 2017.12.25)
+
             if (((borrow.getType() == 0) || (borrow.getType() == 4)) && intAmount > interestLower) {
                 ImmutableSet<Long> stockholder = ImmutableSet.of(2480L, 1753L, 1699L,
                         3966L, 1413L, 1857L,

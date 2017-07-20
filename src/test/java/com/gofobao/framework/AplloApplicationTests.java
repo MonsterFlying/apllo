@@ -71,6 +71,8 @@ import static cn.jpush.api.push.model.PushModel.gson;
 
 public class AplloApplicationTests {
 
+
+
     final Gson GSON = new GsonBuilder().create();
 
     @Autowired
@@ -132,11 +134,7 @@ public class AplloApplicationTests {
     }
 
     public static void main(String[] args) {
-        Gson gson = new Gson();
-        Map<String, String> map = new HashMap<>();
-        map.put("repaymentId", "173810");
-        System.out.println(gson.toJson(map));
-        System.out.println(SecurityHelper.getSign(gson.toJson(map)));
+        System.err.println(Long.MAX_VALUE );
     }
 
     public AccountQueryByMobileResponse findAccountByMobile() {

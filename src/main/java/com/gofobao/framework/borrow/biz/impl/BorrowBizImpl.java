@@ -862,7 +862,7 @@ public class BorrowBizImpl implements BorrowBiz {
         disposeBorrowRepay(borrow, nowDate);
         //生成回款记录
         boolean generateState = disposeBorrowCollection(borrow, nowDate);
-        if(!generateState){
+        if (!generateState) {
             return false;
         }
 
@@ -880,6 +880,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
     /**
      * 生成还款记录
+     *
      * @param borrow
      * @param nowDate
      */
@@ -1585,6 +1586,7 @@ public class BorrowBizImpl implements BorrowBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoHtmlResp> registerOfficialBorrow(VoRegisterOfficialBorrow voRegisterOfficialBorrow, HttpServletRequest request) {
+        log.info(String.format("车贷标/ 渠道标初审: 请求信息( %s )", GSON.toJson(voRegisterOfficialBorrow)));
         String paramStr = voRegisterOfficialBorrow.getParamStr();
         if (!SecurityHelper.checkSign(voRegisterOfficialBorrow.getSign(), paramStr)) {
             return ResponseEntity
@@ -1595,8 +1597,9 @@ public class BorrowBizImpl implements BorrowBiz {
         Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         Long borrowId = NumberHelper.toLong(paramMap.get("borrowId"));
         Borrow borrow = borrowService.findById(borrowId);
-
+        Preconditions.checkNotNull(borrow, "当前标的信息为空") ;
         Long userId = borrow.getUserId();
+
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         if (ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
@@ -1610,26 +1613,18 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "借款人还未初始化银行交易密码!", VoHtmlResp.class));
         }
 
-        Preconditions.checkNotNull(borrow, "借款不存在!");
-        if (borrow.getStatus() != 0) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc 登记官方借款 该标已初审", VoHtmlResp.class));
-        }
-
-        ResponseEntity<VoBaseResp> resp = null;
-        //检查标的是否登记
         if (StringUtils.isEmpty(borrow.getProductId())) {
-            //即信标的登记
             VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
             voCreateThirdBorrowReq.setBorrowId(borrowId);
             voCreateThirdBorrowReq.setEntrustFlag(true);
-            resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
+            ResponseEntity<VoBaseResp> resp  = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);   // 即信标的登记
             if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) { //创建状态为失败时返回错误提示
+                log.error(String.format("车贷标/ 渠道标初审: 存管登记失败( %s )", GSON.toJson(voRegisterOfficialBorrow)));
                 return ResponseEntity
                         .badRequest()
                         .body(VoHtmlResp.error(VoHtmlResp.ERROR, resp.getBody().getState().getMsg(), VoHtmlResp.class));
             }
+            log.info(String.format("车贷标/ 渠道标初审: 存管登记成功( %s )", GSON.toJson(voRegisterOfficialBorrow)));
         }
 
         //受托支付
@@ -1954,16 +1949,18 @@ public class BorrowBizImpl implements BorrowBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public boolean doFirstVerify(Long borrowId) throws Exception {
-
-        log.info(String.format("触发标的初审: %s", borrowId));
         Borrow borrow = borrowService.findByIdLock(borrowId);
         if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 0)) {
+            log.error("标的初审重复审核!");
             return false;
         }
 
+        Gson gson = new Gson() ;
         if (!ObjectUtils.isEmpty(borrow.getLendId())) {
+            log.info(String.format("有草出借标的初步审核: %s", gson.toJson(borrow)));
             return verifyLendBorrow(borrow);      //有草出借初审
         } else {
+            log.info(String.format("常规标的初步审核: %s", gson.toJson(borrow)));
             return verifyStandardBorrow(borrow);  //标准标的初审
         }
 
@@ -1972,16 +1969,17 @@ public class BorrowBizImpl implements BorrowBiz {
 
     /**
      * 车贷标、净值标、渠道标、转让标初审
+     * 标的状态改变
+     * 判断是否需要推送到自动投标队列
      *
      * @return
      */
-
     private boolean verifyStandardBorrow(Borrow borrow) {
         Date nowDate = DateHelper.subSeconds(new Date(), 10);
         borrow.setStatus(1);
         borrow.setVerifyAt(nowDate);
         Date releaseAt = borrow.getReleaseAt();
-        borrow.setReleaseAt(ObjectUtils.isEmpty(releaseAt) ? nowDate : releaseAt);   // 处理不填写发布时间的请款
+        borrow.setReleaseAt(ObjectUtils.isEmpty(releaseAt) ? nowDate : releaseAt);
         borrowService.updateById(borrow);    //更新借款状态
 
         // 自动投标前提:
@@ -2016,11 +2014,16 @@ public class BorrowBizImpl implements BorrowBiz {
                 return false;
             }
         }
+
+
         return true;
     }
 
     /**
      * 摘草 生成借款 初审
+     *
+     *  更改标的为可投状态,
+     *  并且调用投标流程, 完成摘草动作
      *
      * @param borrow
      * @return

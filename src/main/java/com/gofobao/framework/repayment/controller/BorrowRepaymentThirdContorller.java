@@ -41,7 +41,7 @@ public class BorrowRepaymentThirdContorller {
     }
 
     @RequestMapping("/v2/third/batch/repay/run")
-    @ApiOperation("批次还款参数检查通知")
+    @ApiOperation("批次还款回调")
     public ResponseEntity<String> thirdBatchRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
         return borrowRepaymentThirdBiz.thirdBatchRepayRunCall(request, response);
     }
