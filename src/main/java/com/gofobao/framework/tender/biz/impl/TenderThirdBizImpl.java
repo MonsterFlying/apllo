@@ -560,4 +560,20 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         tenderService.save(tender);
         return ResponseEntity.ok(VoBaseResp.ok("取消成功!"));
     }
+
+
+    /**
+     * 投资人批次结束债权参数验证回调
+     * @return
+     */
+    public void thirdBatchCreditEndCheckCall(HttpServletRequest request, HttpServletResponse response){
+
+    }
+    /**
+     * 投资人批次结束债权参数运行回调
+     * @return
+     */
+    public void thirdBatchCreditEndRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception{
+
+    }
 }

@@ -255,6 +255,14 @@ public enum JixinTxCodeEnum {
             "批次撤销"
     ),
     /**
+     * 批次结束债权
+     */
+    BATCH_CREDIT_END(
+            "batchCreditEnd",
+            "/escrow/p2p/online",
+            "批次结束债权"
+    ),
+    /**
      * 投资人购买债权查询
      */
     CREDIT_INVEST_QUERY(

@@ -69,6 +69,7 @@ public class Tender {
     private String thirdTenderCancelOrderId;
     private String transferAuthCode;
     private String thirdLendPayOrderId;
+    private String thirdCreditEndOrderId;
     private Boolean thirdTransferFlag;
     private Boolean thirdTenderFlag;
     /**

@@ -409,7 +409,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
 
         //判断提交还款批次是否多次重复提交
-        int flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(repaymentId), ThirdBatchLogContants.REPAY_BAIL, ThirdBatchLogContants.BATCH_REPAY);
+        int flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(repaymentId), ThirdBatchLogContants.BATCH_REPAY_BAIL, ThirdBatchLogContants.BATCH_REPAY);
         if (flag == ThirdBatchLogContants.AWAIT) {
             return ResponseEntity
                     .badRequest()
@@ -1052,7 +1052,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, balanceFreezeResp.getRetMsg()));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, response.getRetMsg()));
         }
 
         //记录日志
@@ -1280,7 +1280,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
 
         //判断提交还款批次是否多次重复提交
-        int flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(repaymentId), ThirdBatchLogContants.BAIL_REPAY);
+        int flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(repaymentId), ThirdBatchLogContants.BATCH_BAIL_REPAY);
         if (flag == ThirdBatchLogContants.AWAIT) {
             return ResponseEntity
                     .badRequest()
@@ -1422,7 +1422,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         thirdBatchLog.setCreateAt(nowDate);
         thirdBatchLog.setUpdateAt(nowDate);
         thirdBatchLog.setSourceId(borrowId);
-        thirdBatchLog.setType(ThirdBatchLogContants.BAIL_REPAY);
+        thirdBatchLog.setType(ThirdBatchLogContants.BATCH_BAIL_REPAY);
         thirdBatchLog.setRemark("即信担保人还垫付");
         thirdBatchLogService.save(thirdBatchLog);
 
@@ -1633,7 +1633,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         thirdBatchLog.setCreateAt(nowDate);
         thirdBatchLog.setUpdateAt(nowDate);
         thirdBatchLog.setSourceId(borrowId);
-        thirdBatchLog.setType(ThirdBatchLogContants.REPAY_BAIL);
+        thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY_BAIL);
         thirdBatchLog.setRemark("批次融资人还担保账户垫款");
         thirdBatchLogService.save(thirdBatchLog);
 

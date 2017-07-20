@@ -734,6 +734,12 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "借款状态已发生更改!"));
         }
 
+        if (borrow.getMoneyYes()/borrow.getMoney() == 1){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "满标后标的不可以撤销!"));
+        }
+
         Specification<Tender> borrowSpecification = Specifications
                 .<Tender>and()
                 .eq("status", 1)

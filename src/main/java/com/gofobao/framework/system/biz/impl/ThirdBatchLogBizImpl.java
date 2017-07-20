@@ -7,7 +7,6 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
-import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.helper.DateHelper;
@@ -127,9 +126,9 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
                 break;
             case ThirdBatchLogContants.BATCH_REPAY: //即信批次还款
                 break;
-            case ThirdBatchLogContants.BAIL_REPAY: //担保人垫付
+            case ThirdBatchLogContants.BATCH_BAIL_REPAY: //担保人垫付
                 break;
-            case ThirdBatchLogContants.REPAY_BAIL: //批次融资人还担保账户垫款
+            case ThirdBatchLogContants.BATCH_REPAY_BAIL: //批次融资人还担保账户垫款
                 break;
             default:
 
