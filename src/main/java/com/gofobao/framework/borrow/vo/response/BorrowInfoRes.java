@@ -46,7 +46,7 @@ public class BorrowInfoRes extends VoBaseResp {
     @ApiModelProperty("满标时间")
     private String successAt;
 
-    @ApiModelProperty("状态 1.待发布 2.还款中 3.招标中 4.已完成 5.其它")
+    @ApiModelProperty("状态 1.待发布 2.还款中 3.招标中 4.已完成 5.已过期")
     private Integer status;
 
     @ApiModelProperty("秒差 ：当状态是招标中 为正数  其他状态则返回-1")
@@ -93,5 +93,8 @@ public class BorrowInfoRes extends VoBaseResp {
 
     @ApiModelProperty("头像")
     private String avatar;
+
+    @ApiModelProperty("隱藏最低投標金額")
+    private Integer hideLowMoney;
 
 }
