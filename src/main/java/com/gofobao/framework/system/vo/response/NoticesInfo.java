@@ -11,4 +11,5 @@ public class NoticesInfo {
     private String title;
     private String createTime;
     private String content;
+    private Boolean read;
 }

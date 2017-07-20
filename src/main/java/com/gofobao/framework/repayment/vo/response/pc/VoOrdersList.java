@@ -15,7 +15,7 @@ public class VoOrdersList {
     @ApiModelProperty("本息")
     private String collectionMoney;
 
-    @ApiModelProperty("本息")
+    @ApiModelProperty("本金")
     private String principal;
 
     @ApiModelProperty("利息")

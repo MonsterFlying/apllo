@@ -44,6 +44,8 @@ import com.gofobao.framework.common.data.DataObject;
 import com.gofobao.framework.common.data.LtSpecification;
 import com.gofobao.framework.common.integral.IntegralChangeEntity;
 import com.gofobao.framework.common.integral.IntegralChangeEnum;
+import com.gofobao.framework.common.jxl.ExcelException;
+import com.gofobao.framework.common.jxl.ExcelUtil;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -83,6 +85,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -92,12 +95,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -272,6 +277,25 @@ public class RepaymentBizImpl implements RepaymentBiz {
             e.printStackTrace();
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewOrderListWarpRes.class));
+        }
+    }
+
+    @Override
+    public void toExcel(HttpServletResponse response, VoOrderListReq listReq) {
+
+        List<VoOrdersList> ordersLists = borrowRepaymentService.toExcel(listReq);
+        if (!CollectionUtils.isEmpty(ordersLists)) {
+            LinkedHashMap<String, String> paramMaps = Maps.newLinkedHashMap();
+            paramMaps.put("time", "时间");
+            paramMaps.put("collectionMoney", "本息");
+            paramMaps.put("principal", "本金");
+            paramMaps.put("interest", "利息");
+            paramMaps.put("orderCount", "笔数");
+            try {
+                ExcelUtil.listToExcel(ordersLists, paramMaps, "还款计划", response);
+            } catch (ExcelException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -962,6 +986,427 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
     }
 
+    /**
+     * 新版立即还款
+     * 1.还款判断
+     * 2.
+     *
+     * @param userId
+     * @param borrowRepaymentId
+     * @return
+     */
+    public ResponseEntity<VoBaseResp> newRepay(Long userId, Long borrowRepaymentId) throws Exception {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        Preconditions.checkNotNull(userThirdAccount, "批量还款: 还款用户存管账户不存在");
+        BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(borrowRepaymentId);
+        Preconditions.checkNotNull(borrowRepayment, "批量还款: 还款记录不存在");
+        Borrow normalBorrow = borrowService.findByIdLock(borrowRepayment.getBorrowId());
+        Preconditions.checkNotNull(normalBorrow, "批量还款: 还款标的信息不存在");
+        ResponseEntity<VoBaseResp> conditionResponse = repayConditionCheck(userThirdAccount, borrowRepayment);
+        if (!conditionResponse.getStatusCode().equals(HttpStatus.OK)) {
+            return conditionResponse;
+        }
+
+        // 获取投标记录
+        List<Tender> normalTenderList = queryTenderByRepayment(borrowRepayment);
+        findTranferAndCancelTranfer(normalTenderList);
+        List<BorrowCollection> normalBorrowCollections = queryBorrowCollectionByTender(borrowRepayment.getOrder(), normalTenderList);
+
+        List<Tender> tranferedTender = normalTenderList
+                .stream()
+                .filter(p -> p.getTransferFlag() == 2)
+                .collect(Collectors.toList());   // 已经债权转让成功的投资记录
+
+        Map<Long, List<Tender>> tranferedTenderMap = findTranferedTenderRecord(tranferedTender);   // 获取债权装让成功的投资记录
+        Map<Long, Borrow> tranferedBorrowMap = findTranferedBorrowByTender(tranferedTender);
+
+        Map<Long, List<BorrowCollection>> tranferedBorrowCollections = findTranferBorrowCollection(borrowRepayment, normalBorrow, tranferedTenderMap, tranferedBorrowMap);
+
+        // 计算逾期产生的总费用
+        int lateInterest = calculateLateInterest(borrowRepayment, normalBorrow);
+
+        List<Repay> repayPlans = programRepayPlan(borrowRepayment,
+                normalBorrow,
+                normalTenderList,
+                normalBorrowCollections,
+                tranferedBorrowMap,
+                tranferedTenderMap,
+                tranferedBorrowCollections,
+                lateInterest);
+
+
+        if (ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) {
+            log.info("批次还款: 进入正常还款流程");
+        } else {
+            log.info("垫付批次划款");
+
+        }
+
+        return null;
+
+    }
+
+
+    /**
+     * 生成还款计划
+     *
+     * @param borrowRepayment
+     * @param normalBorrow
+     * @param normalTenderList
+     * @param normalBorrowCollections
+     * @param tranferedBorrowMap
+     * @param tranferedTenderMap
+     * @param tranferedBorrowCollections
+     * @param lateInterest               @return
+     */
+    private List<Repay> programRepayPlan(BorrowRepayment borrowRepayment,
+                                         Borrow normalBorrow,
+                                         List<Tender> normalTenderList,
+                                         List<BorrowCollection> normalBorrowCollections,
+                                         Map<Long, Borrow> tranferedBorrowMap,
+                                         Map<Long, List<Tender>> tranferedTenderMap,
+                                         Map<Long, List<BorrowCollection>> tranferedBorrowCollections,
+                                         int lateInterest) {
+        long currInterestAll = borrowRepayment.getInterest(); // 当期还款总额
+        long currPrincipal = borrowRepayment.getPrincipal();  //  当期还款本金
+        Long repaymentUserId = borrowRepayment.getUserId();
+        UserThirdAccount repaymentUserThirdAccount = userThirdAccountService.findByUserId(repaymentUserId);
+        // 获取用户开户信息
+        Map<Long, UserThirdAccount> userThirdAccounts = findUserThirdAccountByTenderList(normalTenderList, tranferedTenderMap);
+        Map<Long, BorrowCollection> borrowCollectionRefMap = normalBorrowCollections
+                .stream()
+                .collect(Collectors.toMap(BorrowCollection::getTenderId, Function.identity()));
+        List<Repay> repays = new ArrayList<>();
+        for (Tender tender : normalTenderList) {
+            Repay repay = null;
+            int inIn = 0;  // 出借人利息
+            int inPr = 0;  // 出借人本金
+            int inFee = 0; // 出借人费用
+            int ouFee = 0; // 借款人费用
+            if (tender.getTransferFlag().equals(2)) {   // 债权转让成功
+                List<Tender> tranferedTenderList = tranferedTenderMap.get(tender.getId());
+                List<BorrowCollection> tranferedBorrowCollectionList = tranferedBorrowCollections.get(tender.getId());
+                Map<Long, BorrowCollection> tranferedBorrowCollectionMap = tranferedBorrowCollectionList
+                        .stream()
+                        .collect(Collectors.toMap(BorrowCollection::getTenderId, Function.identity()));
+
+
+
+                for (Tender tranferTender : tranferedTenderList) {
+                    inIn = 0;  // 出借人利息
+                    inPr = 0;  // 出借人本金
+                    inFee = 0; // 出借人费用
+                    ouFee = 0; // 借款人费用
+                    BorrowCollection borrowCollection = tranferedBorrowCollectionMap.get(tranferTender.getId());
+                    inPr = borrowCollection.getPrincipal();    // 本金
+                    inIn = borrowCollection.getInterest();     // 利息
+                    inFee = new Double(MathHelper.myRound(inIn * 0.1, 2)).intValue();  // 收取费用
+                    inIn += new Double(MathHelper.myRound((lateInterest / 2D) * (borrowCollection.getPrincipal() / borrowRepayment.getPrincipal()), 2)).intValue();  // 用户收取的逾期费用 / 2
+                    ouFee = new Double(MathHelper.myRound((lateInterest / 2D) * (borrowCollection.getPrincipal() / borrowRepayment.getPrincipal()), 2)).intValue();  // 平台收取的逾期费油 / 2
+                    repay = new Repay();
+                    String orderId = JixinHelper.getOrderId(JixinHelper.REPAY_PREFIX);
+                    UserThirdAccount userThirdAccount = userThirdAccounts.get(tender.getUserId());
+                    Preconditions.checkNotNull(userThirdAccount, "批量还款: 生成还款, 出借人为开户");
+                    repay.setAccountId(repaymentUserThirdAccount.getAccountId());  // 还款
+                    repay.setAuthCode(tender.getAuthCode()); // 授权码
+                    repay.setForAccountId(userThirdAccount.getAccountId()); // 出借人电子账户信息
+                    repay.setIntAmount(StringHelper.formatDouble(inIn, 100, false));  // 利息
+                    repay.setOrderId(orderId);
+                    repay.setProductId(normalBorrow.getProductId()); // 标的信息
+                    repay.setTxAmount(StringHelper.formatDouble(inPr, 100, false));  // 本金
+                    repay.setTxFeeIn(StringHelper.formatDouble(inFee, 100, false));  // 出借人手续费
+                    repay.setTxFeeOut(StringHelper.formatDouble(ouFee, 100, false)); // 融资人手续费
+                    repays.add(repay);
+                }
+            } else {
+                inIn = 0;  // 出借人利息
+                inPr = 0;  // 出借人本金
+                inFee = 0; // 出借人费用
+                ouFee = 0; // 借款人费用
+                BorrowCollection borrowCollection = borrowCollectionRefMap.get(tender.getId());
+                inPr = borrowCollection.getPrincipal();    // 本金
+                inIn = borrowCollection.getInterest();     // 利息
+                inFee = new Double(MathHelper.myRound(inIn * 0.1, 2)).intValue();  // 收取费用
+                inIn += new Double(MathHelper.myRound((lateInterest / 2D) * (borrowCollection.getPrincipal() / borrowRepayment.getPrincipal()), 2)).intValue();  // 用户收取的逾期费用 / 2
+                ouFee = new Double(MathHelper.myRound((lateInterest / 2D) * (borrowCollection.getPrincipal() / borrowRepayment.getPrincipal()), 2)).intValue();  // 平台收取的逾期费油 / 2
+                repay = new Repay();
+                String orderId = JixinHelper.getOrderId(JixinHelper.REPAY_PREFIX);
+                UserThirdAccount userThirdAccount = userThirdAccounts.get(tender.getUserId());
+                Preconditions.checkNotNull(userThirdAccount, "批量还款: 生成还款, 出借人为开户");
+                repay.setAccountId(repaymentUserThirdAccount.getAccountId());  // 还款
+                repay.setAuthCode(tender.getAuthCode()); // 授权码
+                repay.setForAccountId(userThirdAccount.getAccountId()); // 出借人电子账户信息
+                repay.setIntAmount(StringHelper.formatDouble(inIn, 100, false));  // 利息
+                repay.setOrderId(orderId);
+                repay.setProductId(normalBorrow.getProductId()); // 标的信息
+                repay.setTxAmount(StringHelper.formatDouble(inPr, 100, false));  // 本金
+                repay.setTxFeeIn(StringHelper.formatDouble(inFee, 100, false));  // 出借人手续费
+                repay.setTxFeeOut(StringHelper.formatDouble(ouFee, 100, false)); // 融资人手续费
+                repays.add(repay);
+            }
+        }
+
+        return repays;
+    }
+
+
+    /**
+     * 根据投资记录获取用户开户信息
+     *
+     * @param normalTenderList
+     * @param tranferedTenderMap
+     * @return
+     */
+    private Map<Long, UserThirdAccount> findUserThirdAccountByTenderList(List<Tender> normalTenderList, Map<Long, List<Tender>> tranferedTenderMap) {
+        List<Tender> allTender = new ArrayList<>();
+        allTender.addAll(normalTenderList);
+        tranferedTenderMap.keySet().stream().forEach(key -> {
+            allTender.addAll(tranferedTenderMap.get(key));
+        });
+
+        Set<Long> userIdSet = allTender.stream().map(p -> p.getUserId()).collect(Collectors.toSet());
+        Specification<UserThirdAccount> userThirderAccountSpe = Specifications
+                .<UserThirdAccount>and()
+                .in("userId", userIdSet)
+                .build();
+        List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findList(userThirderAccountSpe);
+
+        return userThirdAccountList
+                .stream()
+                .collect(Collectors.toMap(UserThirdAccount::getUserId, Function.identity()));
+    }
+
+    /**
+     * 获取用户逾期费用
+     * 逾期规则: 未还款本金之和 * 0.4$ 的费用, 平台收取 0.2%, 出借人 0.2%
+     *
+     * @param borrowRepayment
+     * @param repaymentBorrow
+     * @return
+     */
+    private int calculateLateInterest(BorrowRepayment borrowRepayment, Borrow repaymentBorrow) {
+        Date nowDateOfBegin = DateHelper.beginOfDate(new Date());
+        Date repayDateOfBegin = DateHelper.beginOfDate(borrowRepayment.getRepayAt());
+        int lateDays = DateHelper.diffInDays(nowDateOfBegin, repayDateOfBegin, false);
+        lateDays = lateDays < 0 ? 0 : lateDays;
+        if (0 == lateDays) {
+            return 0;
+        }
+
+        int overPrincipal = borrowRepayment.getPrincipal();
+        if (borrowRepayment.getOrder() < (repaymentBorrow.getTotalOrder() - 1)) { //
+            Specification<BorrowRepayment> brs = Specifications
+                    .<BorrowRepayment>and()
+                    .eq("borrowId", repaymentBorrow.getId())
+                    .eq("status", 0)
+                    .build();
+            List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
+            Preconditions.checkNotNull(borrowRepayment, "批量放款: 计算逾期费用时还款计划为空");
+            overPrincipal = 0;
+            for (BorrowRepayment temp : borrowRepaymentList) {
+                overPrincipal += temp.getPrincipal();
+            }
+        }
+        return new Double(MathHelper.myRound(overPrincipal * 0.004 * lateDays, 2)).intValue();
+
+    }
+
+
+    /**
+     * 获取债权转让还款计划
+     *
+     * @param borrowRepayment
+     * @param repaymentBorrow
+     * @param tranferedTenderMap
+     * @param tranferedBorrowMap
+     * @return
+     */
+    private Map<Long, List<BorrowCollection>> findTranferBorrowCollection(BorrowRepayment borrowRepayment,
+                                                                          Borrow repaymentBorrow,
+                                                                          Map<Long, List<Tender>> tranferedTenderMap,
+                                                                          Map<Long, Borrow> tranferedBorrowMap) {
+
+        Map<Long, List<BorrowCollection>> tranferedBorrowCollections = new HashMap<>(tranferedTenderMap.size());
+
+        tranferedTenderMap.keySet().stream().forEach((Long key) -> {
+            Borrow borrow = tranferedBorrowMap.get(key);
+            int order = borrowRepayment.getOrder() + borrow.getTotalOrder() - repaymentBorrow.getTotalOrder();  // 获取还款
+            tranferedBorrowCollections.put(key,
+                    queryBorrowCollectionByTender(order, tranferedTenderMap.get(key)));
+        });
+
+        return tranferedBorrowCollections;
+    }
+
+    /**
+     * 根据
+     *
+     * @param tranferedTender
+     * @return
+     */
+    private Map<Long, Borrow> findTranferedBorrowByTender(List<Tender> tranferedTender) {
+        Map<Long, Borrow> refMap = new HashMap<>();
+        tranferedTender.forEach((Tender tender) -> {
+            Specification<Borrow> bs = Specifications
+                    .<Borrow>and()
+                    .eq("tenderId", tender.getId())
+                    .eq("status", 3)
+                    .build();
+            List<Borrow> borrowList = borrowService.findList(bs);
+            Preconditions.checkNotNull(borrowList, "批量还款: 查询转让标的为空");
+            Borrow borrow = borrowList.get(0);
+            refMap.put(tender.getId(), borrow);
+        });
+
+        return refMap;
+    }
+
+
+    /**
+     * 查询已经债权转让成功投资记录
+     *
+     * @param tranferedTender
+     * @return
+     */
+    private Map<Long, List<Tender>> findTranferedTenderRecord(List<Tender> tranferedTender) {
+
+        Map<Long, List<Tender>> refMap = new HashMap<>();
+        tranferedTender.forEach((Tender tender) -> {
+            Specification<Borrow> bs = Specifications
+                    .<Borrow>and()
+                    .eq("tenderId", tender.getId())
+                    .eq("status", 3)
+                    .build();
+            List<Borrow> borrowList = borrowService.findList(bs);
+            Preconditions.checkNotNull(borrowList, "批量还款: 查询转让标的为空");
+            Borrow borrow = borrowList.get(0);
+
+            Specification<Tender> specification = Specifications
+                    .<Tender>and()
+                    .eq("status", 1)
+                    .eq("borrowId", borrow.getId())
+                    .build();
+
+            List<Tender> tranferedTenderList = tenderService.findList(specification);
+            Preconditions.checkNotNull(tranferedTenderList, "批量还款: 获取投资记录列表为空");
+            refMap.put(tender.getId(), tranferedTenderList);
+        });
+        return refMap;
+    }
+
+    /**
+     * 查询投标记录中是否存在债权转让进行中的记录, 如果存在则进行取消债权转让
+     *
+     * @param tenderList
+     */
+    private void findTranferAndCancelTranfer(List<Tender> tenderList) throws Exception {
+        // 债转进行中的记录
+        List<Tender> tranferingTender = tenderList
+                .stream()
+                .filter(p -> p.getTransferFlag() == 1)
+                .collect(Collectors.toList());
+        for (Tender tender : tranferingTender) {
+            // TODO 取消债权转让
+            doCancelTranfer(tender);
+        }
+    }
+
+    /**
+     * 取消债权转让
+     *
+     * @param tender
+     * @throws Exception
+     */
+    private void doCancelTranfer(Tender tender) throws Exception {
+
+    }
+
+    /**
+     * 查询还款计划
+     *
+     * @param order
+     * @param tenderList
+     * @return
+     */
+    private List<BorrowCollection> queryBorrowCollectionByTender(int order, List<Tender> tenderList) {
+        Set<Long> tenderIdSet = tenderList.stream().map(p -> p.getId()).collect(Collectors.toSet());
+        Specification<BorrowCollection> bcs = Specifications
+                .<BorrowCollection>and()
+                .in("tenderId", tenderIdSet.toArray())
+                .eq("status", 0)
+                .eq("order", order)
+                .build();
+
+        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
+        Preconditions.checkNotNull(borrowCollectionList, "批量还款: 查询还款计划为空");
+        return borrowCollectionList;
+    }
+
+    /**
+     * 获取正常投标记录
+     *
+     * @param borrowRepayment
+     * @return
+     */
+    private List<Tender> queryTenderByRepayment(BorrowRepayment borrowRepayment) {
+        Specification<Tender> specification = Specifications
+                .<Tender>and()
+                .eq("status", 1)
+                .eq("borrowId", borrowRepayment.getBorrowId())
+                .build();
+
+        List<Tender> tenderList = tenderService.findList(specification);
+        Preconditions.checkNotNull(tenderList, "批量还款: 获取投资记录列表为空");
+        return tenderList;
+    }
+
+
+    /**
+     * 用户还款前期判断
+     * 1. 还款用户是否与还款计划用户一致
+     * 2. 是否重复提交
+     * 3. 判断是否跳跃还款
+     *
+     * @param userThirdAccount 用户开户
+     * @param borrowRepayment  还款计划
+     * @return
+     */
+    private ResponseEntity<VoBaseResp> repayConditionCheck(UserThirdAccount userThirdAccount, BorrowRepayment borrowRepayment) {
+        // 1. 还款用户是否与还款计划用户一致
+        if (!userThirdAccount.getUserId().equals(borrowRepayment.getUserId())) {
+            log.error("批量还款: 还款前期判断, 还款计划用户与主动请求还款用户不匹配");
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "非法操作: 还款计划与当前请求用户不一致!"));
+        }
+
+        // 2判断提交还款批次是否多次重复提交
+        int flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(borrowRepayment.getId()),
+                ThirdBatchLogContants.BATCH_REPAY_BAIL,
+                ThirdBatchLogContants.BATCH_REPAY);
+        if ( flag > 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("还款处理中，请勿重复点击!")));
+        }
+
+        //  3. 判断是否跳跃还款
+        Specification<BorrowRepayment> borrowRepaymentSpe = Specifications
+                .<BorrowRepayment>and()
+                .eq("id", borrowRepayment.getId())
+                .eq("status", 0)
+                .predicate(new LtSpecification<BorrowRepayment>("order", new DataObject(borrowRepayment.getOrder())))
+                .build();
+        List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(borrowRepaymentSpe);
+        if (!CollectionUtils.isEmpty(borrowRepaymentList)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("该借款上一期还未还!")));
+        }
+
+        return ResponseEntity.ok(VoBaseResp.ok("验证成功"));
+
+    }
 
     /**
      * 立即还款
@@ -1243,7 +1688,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    private ResponseEntity<VoBaseResp> advanceCheck(Long repaymentId) throws Exception {
+    public ResponseEntity<VoBaseResp> advanceCheck(Long repaymentId) throws Exception {
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);
         Preconditions.checkNotNull(borrowRepayment, "还款记录不存在！");
         if (borrowRepayment.getStatus() != 0) {
@@ -1556,12 +2001,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
         UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
 
-        //逾期天数
+        // 逾期天数
         Date nowDateOfBegin = DateHelper.beginOfDate(new Date());
         Date repayDateOfBegin = DateHelper.beginOfDate(borrowRepayment.getRepayAt());
         int lateDays = DateHelper.diffInDays(nowDateOfBegin, repayDateOfBegin, false);
         lateDays = lateDays < 0 ? 0 : lateDays;
-        if (0 < lateDays) {
+        if (0 < lateDays) {  // 产生逾期
             int overPrincipal = borrowRepayment.getPrincipal();
             if (borrowRepayment.getOrder() < (borrow.getTotalOrder() - 1)) {
                 Specification<BorrowRepayment> brs = Specifications.<BorrowRepayment>and()

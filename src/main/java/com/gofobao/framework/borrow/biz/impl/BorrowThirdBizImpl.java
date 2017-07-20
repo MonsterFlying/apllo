@@ -122,13 +122,6 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     public ResponseEntity<VoBaseResp> createThirdBorrow(VoCreateThirdBorrowReq voCreateThirdBorrowReq) {
         Long borrowId = voCreateThirdBorrowReq.getBorrowId();
         boolean entrustFlag = voCreateThirdBorrowReq.getEntrustFlag();
-
-        if (ObjectUtils.isEmpty(borrowId)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款id为空!"));
-        }
-
         Borrow borrow = borrowService.findById(borrowId);
         Preconditions.checkNotNull(borrow, "借款记录不存在！");
         borrow.setReleaseAt(ObjectUtils.isEmpty(borrow.getReleaseAt()) ? new Date() : borrow.getReleaseAt());
@@ -139,7 +132,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "借款人未开户!");
-        String productId = jixinHelper.generateProductId(borrowId);
+        String productId = jixinHelper.generateProductId(borrowId);  // 生成标的的唯一识别码
 
         DebtRegisterRequest debtRegisterRequest = new DebtRegisterRequest();
         debtRegisterRequest.setAccountId(userThirdAccount.getAccountId());
@@ -148,7 +141,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         debtRegisterRequest.setRaiseDate(DateHelper.dateToString(borrow.getReleaseAt(), DateHelper.DATE_FORMAT_YMD_NUM));
         debtRegisterRequest.setRaiseEndDate(DateHelper.dateToString(DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1), DateHelper.DATE_FORMAT_YMD_NUM));
         debtRegisterRequest.setIntType(StringHelper.toString(repayFashion == 1 ? 0 : 1));
-        int duration = 0;
+        int duration;
         if (repayFashion != 1) {
             Date releaseAt = borrow.getReleaseAt();
             debtRegisterRequest.setIntPayDay(DateHelper.dateToString(releaseAt, "dd"));
@@ -541,6 +534,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoHtmlResp> thirdTrusteePay(VoThirdTrusteePayReq voThirdTrusteePayReq, HttpServletRequest httpServletRequest) {
+
         long borrowId = voThirdTrusteePayReq.getBorrowId();
         Borrow borrow = borrowService.findById(borrowId);
         Preconditions.checkNotNull(borrow, "borrowThirdBizImpl thirdTrusteePay： 借款记录不存在!");
@@ -560,13 +554,14 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         trusteePayQueryReq.setAccountId(lendUserThirdAccount.getAccountId());
         TrusteePayQueryResp trusteePayQueryResp = jixinManager.send(JixinTxCodeEnum.TRUSTEE_PAY_QUERY, trusteePayQueryReq, TrusteePayQueryResp.class);
         if (ObjectUtils.isEmpty(trusteePayQueryResp)) {
-            log.error("查询委托状态失败");
+            log.info(String.format("车贷标/ 渠道标初审: 委托支付状态查询失败( %s )", GSON.toJson(trusteePayQueryResp)));
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了， 请稍候重试", VoHtmlResp.class));
         }
 
         if (trusteePayQueryResp.getState().equals("0")) {
+            log.info(String.format("车贷标/ 渠道标初审: 委托支付开始( %s )", GSON.toJson(voThirdTrusteePayReq)));
             TrusteePayReq trusteePayReq = new TrusteePayReq();
             trusteePayReq.setAccountId(lendUserThirdAccount.getAccountId());
             trusteePayReq.setChannel(ChannelContant.HTML);
@@ -607,7 +602,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             return ResponseEntity.ok(resp);
         } else {
             if ((JixinResultContants.SUCCESS.equals(trusteePayQueryResp.getRetCode()))) {
-                // 主动触发 审核
+                log.info(String.format("车贷标/ 渠道标初审: 委托支付主动触发审核( %s )", GSON.toJson(voThirdTrusteePayReq)));
                 MqConfig mqConfig = new MqConfig();
                 mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
                 mqConfig.setTag(MqTagEnum.FIRST_VERIFY);

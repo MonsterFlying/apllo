@@ -3,6 +3,7 @@ package com.gofobao.framework.asset.controller.web;
 import com.gofobao.framework.asset.biz.CashDetailLogBiz;
 import com.gofobao.framework.asset.vo.request.VoCashReq;
 import com.gofobao.framework.asset.vo.request.VoPcCashLogs;
+import com.gofobao.framework.asset.vo.request.VoPcRechargeReq;
 import com.gofobao.framework.asset.vo.response.VoCashLogDetailResp;
 import com.gofobao.framework.asset.vo.response.VoPreCashResp;
 import com.gofobao.framework.asset.vo.response.pc.VoCashLogWarpRes;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 /**
@@ -38,6 +40,17 @@ public class WebCashController {
         cashLogs.setUserId(userId);
         return cashDetailLogBiz.psLogs(cashLogs);
     }
+
+
+    @ApiOperation("资金流水导出")
+    @RequestMapping(value = "pub/cash/pc/v2/toExcel", method = RequestMethod.GET)
+    public void pcAssetLogToExcel(HttpServletResponse response, @ModelAttribute VoPcCashLogs cashLogs,
+                                  @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        cashLogs.setUserId(userId);
+        cashDetailLogBiz.toExcel( cashLogs,  response);
+    }
+
+
 
     @ApiOperation("提现")
     @PostMapping("/asset/pc/v2/cash")

@@ -25,6 +25,8 @@ import com.gofobao.framework.asset.vo.response.pc.VoCashLogWarpRes;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
+import com.gofobao.framework.common.jxl.ExcelException;
+import com.gofobao.framework.common.jxl.ExcelUtil;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -53,6 +55,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -74,10 +77,8 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.servlet.http.HttpServletResponse;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -601,6 +602,28 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                             "查询异常",
                             VoCashLogWarpRes.class));
         }
+    }
+
+
+    @Override
+    public void toExcel(VoPcCashLogs cashLogs, HttpServletResponse response) {
+        List<VoCashLog> logList = cashDetailLogService.pcLogs(cashLogs);
+        if(!CollectionUtils.isEmpty(logList)){
+            LinkedHashMap<String,String> paramMaps= Maps.newLinkedHashMap();
+            paramMaps.put("createTime","时间");
+            paramMaps.put("banKName","提现银行");
+            paramMaps.put("bankNo","提现账号");
+            paramMaps.put("money","提现金额");
+            paramMaps.put("serviceCharge","手续费");
+            try {
+                ExcelUtil.listToExcel(logList,paramMaps,"资金流水",response);
+            } catch (ExcelException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+
     }
 
     @Override

@@ -41,42 +41,42 @@ import javax.servlet.http.HttpServletRequest;
 public class MessageBizImpl implements MessageBiz {
 
     @Autowired
-    UserService userService ;
+    UserService userService;
 
     @Autowired
-    UserThirdAccountService userThirdAccountService ;
+    UserThirdAccountService userThirdAccountService;
 
     @Autowired
-    MqHelper apollomqHelper ;
+    MqHelper apollomqHelper;
 
     @Autowired
-    JixinManager jixinManager ;
+    JixinManager jixinManager;
 
     @Autowired
-    RedisHelper redisHelper ;
+    RedisHelper redisHelper;
 
 
     @Override
     public ResponseEntity<VoBaseResp> sendRegisterCode(ServletRequest request, VoAnonSmsReq voAnonSmsReq) {
         // 查询用户是否唯一
-        boolean notExistsState = userService.notExistsByPhone(voAnonSmsReq.getPhone()) ;
+        boolean notExistsState = userService.notExistsByPhone(voAnonSmsReq.getPhone());
 
-        if(!notExistsState) {
+        if (!notExistsState) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "手机号已经注册"));
         }
 
 
-        MqConfig config = new MqConfig() ;
+        MqConfig config = new MqConfig();
         config.setQueue(MqQueueEnum.RABBITMQ_SMS);
         config.setTag(MqTagEnum.SMS_REGISTER);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.PHONE, voAnonSmsReq.getPhone(), MqConfig.IP, request.getRemoteAddr()) ;
+                .of(MqConfig.PHONE, voAnonSmsReq.getPhone(), MqConfig.IP, request.getRemoteAddr());
         config.setMsg(body);
 
         boolean state = apollomqHelper.convertAndSend(config);
-        if(!state) {
+        if (!state) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍候重试！"));
@@ -89,24 +89,24 @@ public class MessageBizImpl implements MessageBiz {
     @Override
     public ResponseEntity<VoBaseResp> sendFindPassword(HttpServletRequest request, VoAnonSmsReq voAnonSmsReq) {
         // 查询用户是否存在
-        boolean notExistsState = userService.notExistsByPhone(voAnonSmsReq.getPhone()) ;
+        boolean notExistsState = userService.notExistsByPhone(voAnonSmsReq.getPhone());
 
-        if(notExistsState) {
+        if (notExistsState) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前手机号未在平台注册"));
         }
 
-        MqConfig config = new MqConfig() ;
+        MqConfig config = new MqConfig();
         config.setQueue(MqQueueEnum.RABBITMQ_SMS);
         config.setTag(MqTagEnum.SMS_RESET_PASSWORD);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.PHONE, voAnonSmsReq.getPhone(), MqConfig.IP, request.getRemoteAddr()) ;
+                .of(MqConfig.PHONE, voAnonSmsReq.getPhone(), MqConfig.IP, request.getRemoteAddr());
         config.setMsg(body);
 
         boolean state = apollomqHelper.convertAndSend(config);
 
-        if(!state) {
+        if (!state) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍候重试！"));
@@ -118,36 +118,37 @@ public class MessageBizImpl implements MessageBiz {
 
     /**
      * 发送更换手机号码短信验证码
-     * @param request 请求类
+     *
+     * @param request      请求类
      * @param voUserSmsReq 消息体
      * @return
      */
-    public ResponseEntity<VoBaseResp> sendSwitchPhone(HttpServletRequest request, VoUserSmsReq voUserSmsReq){
+    public ResponseEntity<VoBaseResp> sendSwitchPhone(HttpServletRequest request, VoUserSmsReq voUserSmsReq) {
         // 查询用户是否存在
-        Users user = userService.findById(voUserSmsReq.getUserId()) ;
-        if(ObjectUtils.isEmpty(user)) {
+        Users user = userService.findById(voUserSmsReq.getUserId());
+        if (ObjectUtils.isEmpty(user)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前手机号未在平台注册!"));
         }
 
-        if(StringUtils.isEmpty(user.getPhone())){
+        if (StringUtils.isEmpty(user.getPhone())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户未绑定手机,你可以前往绑定手机操作!"));
         }
 
 
-        MqConfig config = new MqConfig() ;
+        MqConfig config = new MqConfig();
         config.setQueue(MqQueueEnum.RABBITMQ_SMS);
         config.setTag(MqTagEnum.SMS_SWICTH_PHONE);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.PHONE, user.getPhone(), MqConfig.IP, request.getRemoteAddr()) ;
+                .of(MqConfig.PHONE, user.getPhone(), MqConfig.IP, request.getRemoteAddr());
         config.setMsg(body);
 
         boolean state = apollomqHelper.convertAndSend(config);
 
-        if(!state) {
+        if (!state) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍候重试！"));
@@ -158,39 +159,39 @@ public class MessageBizImpl implements MessageBiz {
     }
 
     @Override
-    public ResponseEntity<VoBaseResp> sendBindPhone(HttpServletRequest request, VoAnonSmsReq voAnonSmsReq, Long userId){
+    public ResponseEntity<VoBaseResp> sendBindPhone(HttpServletRequest request, VoAnonSmsReq voAnonSmsReq, Long userId) {
         // 查询用户是否已经绑定过
         Users user = userService.findById(userId);
-        if( (ObjectUtils.isEmpty(user) || (user.getIsLock().equals(1)))){
+        if ((ObjectUtils.isEmpty(user) || (user.getIsLock().equals(1)))) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前账户已经被系统锁定。如有疑问，请联系客户！"));
         }
 
-        if(!StringUtils.isEmpty(user.getPhone())){
+        if (!StringUtils.isEmpty(user.getPhone())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户已经绑定手机号, 请前往解绑手机操作"));
         }
 
-        boolean notExistsState = userService.notExistsByPhone(voAnonSmsReq.getPhone()) ;
+        boolean notExistsState = userService.notExistsByPhone(voAnonSmsReq.getPhone());
 
-        if(!notExistsState) {
+        if (!notExistsState) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前手机已在平台注册！"));
         }
 
-        MqConfig config = new MqConfig() ;
+        MqConfig config = new MqConfig();
         config.setQueue(MqQueueEnum.RABBITMQ_SMS);
         config.setTag(MqTagEnum.SMS_BUNDLE);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.PHONE, voAnonSmsReq.getPhone(), MqConfig.IP, request.getRemoteAddr()) ;
+                .of(MqConfig.PHONE, voAnonSmsReq.getPhone(), MqConfig.IP, request.getRemoteAddr());
         config.setMsg(body);
 
         boolean state = apollomqHelper.convertAndSend(config);
 
-        if(!state) {
+        if (!state) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍候重试！"));
@@ -203,14 +204,14 @@ public class MessageBizImpl implements MessageBiz {
     @Override
     public ResponseEntity<VoBaseResp> openAutoTender(VoUserSmsReq voUserSmsReq) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voUserSmsReq.getUserId());
-        if(ObjectUtils.isEmpty(userThirdAccount)){
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你没有开通银行存管，请先开通银行存管！"));
         }
 
         Integer passwordState = userThirdAccount.getPasswordState();
-        if(passwordState == 0){
+        if (passwordState == 0) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请先初始化江西银行存管账户交易密码！"));
@@ -218,27 +219,27 @@ public class MessageBizImpl implements MessageBiz {
 
         Integer autoTenderState = userThirdAccount.getAutoTenderState();
 
-        if(autoTenderState == 1){
+        if (autoTenderState == 1) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "你已经签署自动投标协议，无需再次签署！"));
         }
-        SmsCodeApplyRequest request = new SmsCodeApplyRequest() ;
-        request.setSrvTxCode(SrvTxCodeContants.AUTO_BID_AUTH_PLUS) ;
-        request.setMobile(userThirdAccount.getMobile()) ;
+        SmsCodeApplyRequest request = new SmsCodeApplyRequest();
+        request.setSrvTxCode(SrvTxCodeContants.AUTO_BID_AUTH_PLUS);
+        request.setMobile(userThirdAccount.getMobile());
         request.setChannel(ChannelContant.HTML);
         SmsCodeApplyResponse body = jixinManager.send(
                 JixinTxCodeEnum.SMS_CODE_APPLY,
                 request,
                 SmsCodeApplyResponse.class);
 
-        if(ObjectUtils.isEmpty(body)){
+        if (ObjectUtils.isEmpty(body)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前通讯网络不稳定，请稍候重试！"));
         }
 
-        if(!JixinResultContants.SUCCESS.equals(body.getRetCode())){
+        if (!JixinResultContants.SUCCESS.equals(body.getRetCode())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, body.getRetMsg()));
@@ -265,42 +266,42 @@ public class MessageBizImpl implements MessageBiz {
     @Override
     public ResponseEntity<VoBaseResp> openAutoTranfer(VoUserSmsReq voUserSmsReq) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voUserSmsReq.getUserId());
-        if(ObjectUtils.isEmpty(userThirdAccount)){
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你没有开通银行存管，请先开通银行存管！"));
         }
 
         Integer passwordState = userThirdAccount.getPasswordState();
-        if(passwordState == 0){
+        if (passwordState == 0) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请先初始化江西银行存管账户交易密码！"));
         }
 
         Integer autoTransferState = userThirdAccount.getAutoTransferState();
-        if(autoTransferState == 1){
+        if (autoTransferState == 1) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "你已经签署自动投标协议，无需再次签署！"));
         }
 
-        SmsCodeApplyRequest request = new SmsCodeApplyRequest() ;
-        request.setSrvTxCode(SrvTxCodeContants.AUTO_CREDIT_INVEST_AUTH_PLUS) ;
-        request.setMobile(userThirdAccount.getMobile()) ;
+        SmsCodeApplyRequest request = new SmsCodeApplyRequest();
+        request.setSrvTxCode(SrvTxCodeContants.AUTO_CREDIT_INVEST_AUTH_PLUS);
+        request.setMobile(userThirdAccount.getMobile());
         request.setChannel(ChannelContant.HTML);
         SmsCodeApplyResponse body = jixinManager.send(
                 JixinTxCodeEnum.SMS_CODE_APPLY,
                 request,
                 SmsCodeApplyResponse.class);
 
-        if(ObjectUtils.isEmpty(body)){
+        if (ObjectUtils.isEmpty(body)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前通讯网络不稳定，请稍候重试！"));
         }
 
-        if(!JixinResultContants.SUCCESS.equals(body.getRetCode())){
+        if (!JixinResultContants.SUCCESS.equals(body.getRetCode())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, body.getRetMsg()));
@@ -328,35 +329,35 @@ public class MessageBizImpl implements MessageBiz {
     @Override
     public ResponseEntity<VoBaseResp> recharge(VoUserSmsReq voUserSmsReq) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voUserSmsReq.getUserId());
-        if(ObjectUtils.isEmpty(userThirdAccount)){
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你没有开通银行存管，请先开通银行存管！"));
         }
 
         Integer passwordState = userThirdAccount.getPasswordState();
-        if(passwordState == 0){
+        if (passwordState == 0) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请先初始化江西银行存管账户交易密码！"));
         }
 
-        SmsCodeApplyRequest request = new SmsCodeApplyRequest() ;
-        request.setSrvTxCode(SrvTxCodeContants.DIRECT_RECHARGE_PLUS) ;
-        request.setMobile(userThirdAccount.getMobile()) ;
+        SmsCodeApplyRequest request = new SmsCodeApplyRequest();
+        request.setSrvTxCode(SrvTxCodeContants.DIRECT_RECHARGE_PLUS);
+        request.setMobile(userThirdAccount.getMobile());
         request.setChannel(ChannelContant.HTML);
         SmsCodeApplyResponse body = jixinManager.send(
                 JixinTxCodeEnum.SMS_CODE_APPLY,
                 request,
                 SmsCodeApplyResponse.class);
 
-        if(ObjectUtils.isEmpty(body)){
+        if (ObjectUtils.isEmpty(body)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前通讯网络不稳定，请稍候重试！"));
         }
 
-        if(!JixinResultContants.SUCCESS.equals(body.getRetCode())){
+        if (!JixinResultContants.SUCCESS.equals(body.getRetCode())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, body.getRetMsg()));
@@ -384,40 +385,76 @@ public class MessageBizImpl implements MessageBiz {
     public ResponseEntity<VoBaseResp> sendBindEmail(HttpServletRequest request, VoAnonEmailReq voAnonEmailReq, Long userId) {
         // 验证用户是否无效
         Users user = userService.findByIdLock(userId);
-        if(ObjectUtils.isEmpty(user)){
+        if (ObjectUtils.isEmpty(user)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户不存在！"));
         }
 
         // 验证用户是否已经绑定邮箱
-        if(!StringUtils.isEmpty(user.getEmail())){
+        if (!StringUtils.isEmpty(user.getEmail())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户已经绑定邮箱,请勿重新绑定!"));
         }
 
         // 邮箱邮箱是否唯一
+
         boolean notExistsState = userService.notExistsByEmail(voAnonEmailReq.getEmail());
-        if(!notExistsState){
+        if (!notExistsState) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前邮箱已在平台注册,请选择其他邮箱注册!"));
         }
 
-
-        MqConfig config = new MqConfig() ;
+        MqConfig config = new MqConfig();
         config.setQueue(MqQueueEnum.RABBITMQ_EMAIL);
         config.setTag(MqTagEnum.SMS_EMAIL_BIND);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.EMAIL, voAnonEmailReq.getEmail(), MqConfig.IP, request.getRemoteAddr(), "subject", "广富宝金服账号邮箱绑定") ;
+                .of(MqConfig.EMAIL, voAnonEmailReq.getEmail(), MqConfig.IP, request.getRemoteAddr(), "subject", "广富宝金服账号邮箱绑定");
         config.setMsg(body);
 
         boolean state = apollomqHelper.convertAndSend(config);
-        if(state){
+        if (state) {
             return ResponseEntity.ok(VoBaseResp.ok("邮箱发送成功"));
-        }else{
+        } else {
             log.error("邮箱绑定邮件发送失败");
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍候重试！"));
+        }
+    }
+
+    @Override
+    public ResponseEntity<VoBaseResp> changeEmail(HttpServletRequest request, VoAnonEmailReq voAnonEmailReq, Long userId) {
+        // 验证用户是否无效
+        Users user = userService.findByIdLock(userId);
+        if (ObjectUtils.isEmpty(user)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户不存在！"));
+        }
+
+        // 邮箱邮箱是否唯一
+        boolean notExistsState = userService.notExistsByEmail(voAnonEmailReq.getEmail());
+        if (!notExistsState) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前邮箱已在平台注册,请选择其他邮箱注册!"));
+        }
+
+        MqConfig config = new MqConfig();
+        config.setQueue(MqQueueEnum.RABBITMQ_EMAIL);
+        config.setTag(MqTagEnum.SMS_EMAIL_BIND);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.EMAIL, voAnonEmailReq.getEmail(), MqConfig.IP, request.getRemoteAddr(), "subject", "广富宝金服账号邮箱绑定");
+        config.setMsg(body);
+
+        boolean state = apollomqHelper.convertAndSend(config);
+        if (state) {
+            return ResponseEntity.ok(VoBaseResp.ok("邮箱发送成功"));
+        } else {
+            log.error("邮箱更换邮件发送失败");
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍候重试！"));
@@ -427,7 +464,7 @@ public class MessageBizImpl implements MessageBiz {
     @Override
     public ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest httpServletRequest, VoUserSmsReq voUserSmsReq) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voUserSmsReq.getUserId());
-        if(ObjectUtils.isEmpty(userThirdAccount)){
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
             log.error("MessageBizImpl.rechargeOnline 当前用户未开通存管");
             return ResponseEntity
                     .badRequest()
@@ -435,7 +472,7 @@ public class MessageBizImpl implements MessageBiz {
         }
 
         Integer passwordState = userThirdAccount.getPasswordState();
-        if(passwordState == 0){
+        if (passwordState == 0) {
             log.error("MessageBizImpl.rechargeOnline 为未设置交易密码");
             return ResponseEntity
                     .badRequest()
@@ -443,9 +480,9 @@ public class MessageBizImpl implements MessageBiz {
         }
 
         userThirdAccount.setMobile("13008875126");
-        SmsCodeApplyRequest request = new SmsCodeApplyRequest() ;
-        request.setSrvTxCode(SrvTxCodeContants.DIRECT_RECHARGE_ONLINE) ;
-        request.setMobile(userThirdAccount.getMobile()) ;
+        SmsCodeApplyRequest request = new SmsCodeApplyRequest();
+        request.setSrvTxCode(SrvTxCodeContants.DIRECT_RECHARGE_ONLINE);
+        request.setMobile(userThirdAccount.getMobile());
         request.setReqType("2");
         request.setChannel(ChannelContant.getchannel(httpServletRequest));
         request.setCardNo(userThirdAccount.getCardNo());
@@ -454,13 +491,13 @@ public class MessageBizImpl implements MessageBiz {
                 request,
                 SmsCodeApplyResponse.class);
 
-        if(ObjectUtils.isEmpty(body)){
+        if (ObjectUtils.isEmpty(body)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前通讯网络不稳定，请稍候重试！"));
         }
 
-        if(!JixinResultContants.SUCCESS.equals(body.getRetCode())){
+        if (!JixinResultContants.SUCCESS.equals(body.getRetCode())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, body.getRetMsg()));
@@ -487,36 +524,36 @@ public class MessageBizImpl implements MessageBiz {
     public ResponseEntity<VoBaseResp> sendBindPhone4Switch(HttpServletRequest request, VoAnonSmsReq voAnonSmsReq, Long userId) {
         // 查询用户是否已经绑定过
         Users user = userService.findById(userId);
-        if( (ObjectUtils.isEmpty(user) || (user.getIsLock().equals(1)))){
+        if ((ObjectUtils.isEmpty(user) || (user.getIsLock().equals(1)))) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前账户已经被系统锁定。如有疑问，请联系客户！"));
         }
 
-        if(StringUtils.isEmpty(user.getPhone())){
+        if (StringUtils.isEmpty(user.getPhone())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户还没有绑定手机, 请前往绑定手机操作"));
         }
 
-        boolean notExistsState = userService.notExistsByPhone(voAnonSmsReq.getPhone()) ;
+        boolean notExistsState = userService.notExistsByPhone(voAnonSmsReq.getPhone());
 
-        if(!notExistsState) {
+        if (!notExistsState) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前手机已在平台注册！"));
         }
 
-        MqConfig config = new MqConfig() ;
+        MqConfig config = new MqConfig();
         config.setQueue(MqQueueEnum.RABBITMQ_SMS);
         config.setTag(MqTagEnum.SMS_BUNDLE);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.PHONE, voAnonSmsReq.getPhone(), MqConfig.IP, request.getRemoteAddr()) ;
+                .of(MqConfig.PHONE, voAnonSmsReq.getPhone(), MqConfig.IP, request.getRemoteAddr());
         config.setMsg(body);
 
         boolean state = apollomqHelper.convertAndSend(config);
 
-        if(!state) {
+        if (!state) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍候重试！"));
@@ -529,7 +566,7 @@ public class MessageBizImpl implements MessageBiz {
     @Override
     public ResponseEntity<VoBaseResp> openAccount(Long userId, VoAnonSmsReq voAnonSmsReq) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        if(!ObjectUtils.isEmpty(userThirdAccount)){
+        if (!ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "你已经开通银行存管，无需再次开通！"));
@@ -537,29 +574,29 @@ public class MessageBizImpl implements MessageBiz {
 
 
         UserThirdAccount userThirdAccountByPhone = userThirdAccountService.findByMobile(voAnonSmsReq.getPhone());
-        if(!ObjectUtils.isEmpty(userThirdAccountByPhone)){
+        if (!ObjectUtils.isEmpty(userThirdAccountByPhone)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "手机已在存管平台开户, 无需开户!"));
         }
 
         // 4.请求即信发送验证码
-        SmsCodeApplyRequest request = new SmsCodeApplyRequest() ;
-        request.setSrvTxCode(SrvTxCodeContants.ACCOUNT_OPEN_PLUS) ;
-        request.setMobile(voAnonSmsReq.getPhone()) ;
+        SmsCodeApplyRequest request = new SmsCodeApplyRequest();
+        request.setSrvTxCode(SrvTxCodeContants.ACCOUNT_OPEN_PLUS);
+        request.setMobile(voAnonSmsReq.getPhone());
         request.setChannel(ChannelContant.HTML);
         SmsCodeApplyResponse body = jixinManager.send(
                 JixinTxCodeEnum.SMS_CODE_APPLY,
                 request,
                 SmsCodeApplyResponse.class);
 
-        if(ObjectUtils.isEmpty(body)){
+        if (ObjectUtils.isEmpty(body)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前通讯网络不稳定，请稍候重试！"));
         }
 
-        if(!JixinResultContants.SUCCESS.equals(body.getRetCode())){
+        if (!JixinResultContants.SUCCESS.equals(body.getRetCode())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, body.getRetMsg()));

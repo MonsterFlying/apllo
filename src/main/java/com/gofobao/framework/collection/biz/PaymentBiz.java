@@ -12,6 +12,8 @@ import com.gofobao.framework.collection.vo.response.web.VoViewCollectionListWarp
 import com.gofobao.framework.collection.vo.response.web.VoViewCollectionWarpRes;
 import org.springframework.http.ResponseEntity;
 
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * Created by admin on 2017/6/6.
  */
@@ -32,6 +34,14 @@ public interface PaymentBiz {
      * @return
      */
     ResponseEntity<VoViewCollectionListWarpRes> pcOrderList(OrderListReq orderListReq);
+
+
+    /**
+     * PC:回款明细导出excel
+     * @param response
+     * @param listReq
+     */
+    void  toExcel(HttpServletResponse response,OrderListReq listReq);
 
 
     /**
@@ -59,5 +69,7 @@ public interface PaymentBiz {
      * @return
      */
     ResponseEntity<VoCollectionListByDays> collectionListByDays(String date, Long userId);
+
+
 
 }

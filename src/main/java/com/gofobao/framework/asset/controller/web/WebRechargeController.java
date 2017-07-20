@@ -2,6 +2,7 @@ package com.gofobao.framework.asset.controller.web;
 
 import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.biz.RechargeLogsBiz;
+import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.request.VoPcRechargeReq;
 import com.gofobao.framework.asset.vo.request.VoRechargeReq;
 import com.gofobao.framework.asset.vo.response.VoPreRechargeResp;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 /**
@@ -35,7 +37,7 @@ public class WebRechargeController {
     @Autowired
     private RechargeLogsBiz rechargeLogsBiz;
 
-    @ApiOperation("pc:充值日志")
+    @ApiOperation("pc:充值记录")
     @RequestMapping(value = "/pub/recharge/pc/v2/list",method = RequestMethod.POST)
     public ResponseEntity<VoViewRechargeWarpRes> list(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                       @ModelAttribute VoPcRechargeReq rechargeReq) {
@@ -58,5 +60,13 @@ public class WebRechargeController {
         return assetBiz.rechargeOnline(request, voRechargeReq) ;
     }
 
+
+    @ApiOperation("资金流水导出")
+    @RequestMapping(value = "pub/recharge/pc/v2/toExcel", method = RequestMethod.GET)
+    public void pcAssetLogToExcel(HttpServletResponse response, @ModelAttribute VoPcRechargeReq rechargeReq,
+                                  @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        rechargeReq.setUserId(userId);
+        rechargeLogsBiz.pcToExcel(rechargeReq,response);
+    }
 
 }

@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * Created by admin on 2017/5/31.
  */
@@ -28,7 +30,7 @@ public class WebPaymentController {
     @ApiOperation("回款明细-回款详情 time:2017-05-06")
     @GetMapping("/v2/collection/list")
     public ResponseEntity<VoViewCollectionWarpRes> collectionOrderList(VoCollectionListReq collectionListReq,
-                                                                                 @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+                                                                       @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         collectionListReq.setUserId(901L);
         return paymentBiz.pcOrderDetail(collectionListReq);
     }
@@ -37,14 +39,25 @@ public class WebPaymentController {
     @ApiOperation("回款明细")
     @GetMapping("/v2/days/collection/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewCollectionListWarpRes> orderDetail(@PathVariable("pageIndex") Integer pageIndex,
-                                                             @PathVariable("pageSize") Integer pageSize,
-                                                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        OrderListReq orderListReq=new OrderListReq();
+                                                                   @PathVariable("pageSize") Integer pageSize,
+                                                                   @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        OrderListReq orderListReq = new OrderListReq();
         orderListReq.setUserId(userId);
         orderListReq.setPageIndex(pageIndex);
         orderListReq.setPageSize(pageSize);
         return paymentBiz.pcOrderList(orderListReq);
     }
+
+
+    @ApiOperation("回款明细导出Excel")
+    @GetMapping("/v2/days/collection/toExcel")
+    public void orderDetail(HttpServletResponse response,
+                            @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        OrderListReq orderListReq = new OrderListReq();
+        orderListReq.setUserId(userId);
+        paymentBiz.toExcel(response, orderListReq);
+    }
+
 
     /**
      * 根据时间查询回款列表
@@ -56,10 +69,9 @@ public class WebPaymentController {
     @ApiOperation("根据时间查询回款列表")
     @GetMapping("/v2/days/collection/list/{date}")
     public ResponseEntity<VoCollectionListByDays> collectionListByDays(@PathVariable("date") String date,
-                                                                       @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
-        return paymentBiz.collectionListByDays(date,userId);
+                                                                       @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return paymentBiz.collectionListByDays(date, userId);
     }
-
 
 
 }

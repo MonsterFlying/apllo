@@ -5,6 +5,7 @@ import com.gofobao.framework.member.repository.UserThirdAccountRepository;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
@@ -14,7 +15,7 @@ import java.util.List;
  * Created by Max on 17/5/22.
  */
 @Service
-public class UserThirdAccountServiceImpl implements UserThirdAccountService {
+public class UserThirdAccountServiceImpl implements UserThirdAccountService{
 
     @Autowired
     private UserThirdAccountRepository userThirdAccountRepository;
@@ -70,5 +71,10 @@ public class UserThirdAccountServiceImpl implements UserThirdAccountService {
     @Override
     public List<UserThirdAccount> findByAll() {
         return userThirdAccountRepository.findAll();
+    }
+
+    @Override
+    public List<UserThirdAccount> findList(Specification<UserThirdAccount> userThirderAccountSpe) {
+        return userThirdAccountRepository.findAll(userThirderAccountSpe) ;
     }
 }

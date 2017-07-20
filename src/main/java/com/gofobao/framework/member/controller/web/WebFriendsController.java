@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.Map;
 
 /**
@@ -31,14 +32,14 @@ public class WebFriendsController {
 
     @ApiOperation("邀请好友列表,type:0全部，1：提成")
     @GetMapping("/invite/pc/v2/list/{type}/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewInviteFriendsWarpRes> list(/*@RequestAttribute(SecurityContants.USERID_KEY) Long userId,*/
+    public ResponseEntity<VoViewInviteFriendsWarpRes> list(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                            @PathVariable("type") Integer type,
                                                            @PathVariable("pageIndex") Integer pageIndex,
                                                            @PathVariable("pageSize") Integer pageSize) {
         VoFriendsReq voFriendsReq = new VoFriendsReq();
         voFriendsReq.setPageSize(pageSize);
         voFriendsReq.setPageIndex(pageIndex);
-        voFriendsReq.setUserId(901L);
+        voFriendsReq.setUserId(userId);
         voFriendsReq.setType(type);
         return brokerBounsBiz.pcFriendsTender(voFriendsReq);
     }
@@ -56,6 +57,15 @@ public class WebFriendsController {
                                                               VoFriendsTenderReq friendsTenderReq) {
         friendsTenderReq.setUserId(userId);
         return brokerBounsBiz.pcBrokerBounsList(friendsTenderReq);
+    }
+
+    @ApiOperation("邀请统计导出到excel")
+    @PostMapping("/invite/pc/v2/toExcel")
+    public void statistic(HttpServletResponse response,
+                          @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                          VoFriendsTenderReq friendsTenderReq) {
+        friendsTenderReq.setUserId(userId);
+        brokerBounsBiz.toExcel(friendsTenderReq, response);
     }
 
 
