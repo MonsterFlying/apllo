@@ -18,6 +18,11 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.constans.TypeTokenContants;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.BorrowHelper;
@@ -35,6 +40,7 @@ import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoThirdBatchCreditInvest;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -81,6 +87,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
     private CapitalChangeHelper capitalChangeHelper;
     @Autowired
     private ThirdBatchLogBiz thirdBatchLogBiz;
+    @Autowired
+    private MqHelper mqHelper;
 
     @Value("${gofobao.webDomain}")
     private String webDomain;
@@ -216,7 +224,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             sumCount += validMoney;
 
             if (borrow.isTransfer()) { //转让管理费
-                txFee += (int) MathHelper.myRound(( validMoney / (double)borrow.getMoney()) * transferFee, 0);
+                txFee += (int) MathHelper.myRound((validMoney / (double) borrow.getMoney()) * transferFee, 0);
             }
 
             String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
@@ -237,14 +245,19 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             tenderService.updateById(tender);
         }
 
+        //批次号
         String batchNo = jixinHelper.getBatchNo();
+        //请求保留参数
+        Map<String, Object> acqResMap = new HashMap<>();
+        acqResMap.put("borrowId", borrowId);
 
+        //调用存管批次债权转让接口
         BatchCreditInvestReq request = new BatchCreditInvestReq();
         request.setBatchNo(batchNo);
         request.setTxAmount(StringHelper.formatDouble(sumCount, 100, false));
         request.setTxCounts(StringHelper.toString(creditInvestList.size()));
         request.setSubPacks(GSON.toJson(creditInvestList));
-        request.setAcqRes(StringHelper.toString(borrowId));
+        request.setAcqRes(GSON.toJson(acqResMap));
         request.setChannel(ChannelContant.HTML);
         request.setNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditinvest/check");
         request.setRetNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditinvest/run");
@@ -284,12 +297,12 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(lendRepayRunResp.getRetCode())) {
             log.error("=============================即信投资人批次购买债权参数验证回调===========================");
             log.error("回调失败! msg:" + lendRepayRunResp.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(lendRepayRunResp.getBatchNo(),NumberHelper.toLong(lendRepayRunResp.getAcqRes()),2);
-        }else {
+            thirdBatchLogBiz.updateBatchLogState(lendRepayRunResp.getBatchNo(), NumberHelper.toLong(lendRepayRunResp.getAcqRes()), 2);
+        } else {
             log.error("=============================即信投资人批次购买债权参数验证回调===========================");
             log.error("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(lendRepayRunResp.getBatchNo(),NumberHelper.toLong(lendRepayRunResp.getAcqRes()),1);
+            thirdBatchLogBiz.updateBatchLogState(lendRepayRunResp.getBatchNo(), NumberHelper.toLong(lendRepayRunResp.getAcqRes()), 1);
         }
 
         try {
@@ -306,190 +319,57 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      *
      * @return
      */
-    public void thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public ResponseEntity<String> thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
         BatchCreditInvestRunCall creditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
         });
+        Map<String, Object> acqResMap = GSON.fromJson(creditInvestRunCall.getAcqRes(), TypeTokenContants.MAP_TOKEN);
 
-        boolean bool = true;
         if (ObjectUtils.isEmpty(creditInvestRunCall)) {
+            log.error("=========================================批次回调=========================================");
             log.error("=============================即信投资人批次购买债权处理结果回调===========================");
             log.error("请求体为空!");
-            bool = false;
+            log.error("==========================================================================================");
+            log.error("==========================================================================================");
+            return ResponseEntity.ok("error");
         }
 
         if (!JixinResultContants.SUCCESS.equals(creditInvestRunCall.getRetCode())) {
+            log.error("=========================================批次回调=========================================");
             log.error("=============================即信投资人批次购买债权处理结果回调===========================");
             log.error("回调失败! msg:" + creditInvestRunCall.getRetMsg());
-            bool = false;
+            log.error("==========================================================================================");
+            log.error("==========================================================================================");
+            return ResponseEntity.ok("error");
+        } else {
+            log.error("=========================================批次回调=========================================");
+            log.error("=============================即信投资人批次购买债权处理结果回调===========================");
+            log.error("回调成功!");
+            log.error("==========================================================================================");
+            log.error("==========================================================================================");
+        }
+
+        //触发处理批次购买债权处理队列
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(acqResMap.get("borrowId")), MqConfig.BATCH_NO, StringHelper.toString(creditInvestRunCall.getBatchNo()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            log.info(String.format("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("borrowProvider autoTender send mq exception", e);
         }
 
         //=============================================
-        // 保存第三债权转让授权码
+        // 保存第三方债权转让授权码
         //=============================================
         List<CreditInvestRun> creditInvestRunList = GSON.fromJson(creditInvestRunCall.getSubPacks(), new TypeToken<List<CreditInvestRun>>() {
         }.getType());
         saveThirdTransferAuthCode(creditInvestRunList);
 
-        //========================================
-        // 处理失败批次
-        //========================================
-        Long borrowId = NumberHelper.toLong(creditInvestRunCall.getAcqRes());//获取borrowid
-        int num = NumberHelper.toInt(creditInvestRunCall.getFailCounts());
-        String batchNo = creditInvestRunCall.getBatchNo();//批次号
-        do {
-            if (num <= 0) {
-                break;
-            }
-            bool = false;
-
-            log.error("=============================即信投资人批次购买债权处理结果回调===========================");
-            log.error("即信投资人批次购买债权失败! 一共:" + num + "笔");
-
-            Date nowDate = new Date();
-
-            //0.查询gfb_third_batch_log标获取批次发送时间
-            Specification<ThirdBatchLog> tbls = Specifications
-                    .<ThirdBatchLog>and()
-                    .eq("sourceId", borrowId)
-                    .eq("batchNo", batchNo)
-                    .build();
-            List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls);
-            if (CollectionUtils.isEmpty(thirdBatchLogList)) {
-                log.error("债权转让回撤：thirdBatchLog记录不存在！");
-                break;
-            }
-
-            //1.查询批次交易明细
-            BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-            batchDetailsQueryReq.setBatchNo(creditInvestRunCall.getBatchNo());
-            batchDetailsQueryReq.setBatchTxDate(DateHelper.dateToString(thirdBatchLogList.get(0).getCreateAt(), DateHelper.DATE_FORMAT_YMD_NUM));
-            batchDetailsQueryReq.setType("2");
-            batchDetailsQueryReq.setPageNum("1");
-            batchDetailsQueryReq.setPageSize("10");
-            batchDetailsQueryReq.setChannel(ChannelContant.HTML);
-            BatchDetailsQueryResp batchDetailsQueryResp = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, batchDetailsQueryReq, BatchDetailsQueryResp.class);
-            if ((ObjectUtils.isEmpty(batchDetailsQueryResp)) || (!JixinResultContants.SUCCESS.equals(batchDetailsQueryResp.getRetCode()))) {
-                log.error(ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : batchDetailsQueryResp.getRetMsg());
-                break;
-            }
-
-            //2.筛选失败批次
-            List<String> failureThirdTransferOrderIds = new ArrayList<>(); //转让标orderId
-            List<String> successThirdTransferOrderIds = new ArrayList<>(); //转让标orderId
-            List<DetailsQueryResp> detailsQueryRespList = GSON.fromJson(batchDetailsQueryResp.getSubPacks(), new TypeToken<List<DetailsQueryResp>>() {
-            }.getType());
-            if (CollectionUtils.isEmpty(detailsQueryRespList)) {
-                log.info("================================================================================");
-                log.info("债权转让批次查询：查询未发现失败批次！");
-                log.info("================================================================================");
-            }
-
-            Optional<List<DetailsQueryResp>> detailsQueryRespOptional = Optional.of(detailsQueryRespList);
-            detailsQueryRespOptional.ifPresent(list -> detailsQueryRespList.forEach(obj -> {
-                if ("F".equalsIgnoreCase(obj.getTxState())) {
-                    failureThirdTransferOrderIds.add(obj.getOrderId());
-                } else {
-                    successThirdTransferOrderIds.add(obj.getOrderId());
-                }
-            }));
-
-            if (CollectionUtils.isEmpty(failureThirdTransferOrderIds)) {
-                log.info("================================================================================");
-                log.info("债权转让批次查询：查询未发现失败批次！");
-                log.info("================================================================================");
-            }
-
-            //失败批次对应债权
-            List<Long> borrowIdList = new ArrayList<>();
-            Specification<Tender> ts = Specifications
-                    .<Tender>and()
-                    .in("thirdTransferOrderId", failureThirdTransferOrderIds.toArray())
-                    .build();
-            List<Tender> failureTenderList = tenderService.findList(ts);
-            for (Tender tender : failureTenderList) {
-                borrowIdList.add(tender.getBorrowId());
-            }
-
-            //成功批次对应债权
-            ts = Specifications
-                    .<Tender>and()
-                    .in("thirdTransferOrderId", successThirdTransferOrderIds.toArray())
-                    .build();
-            List<Tender> successTenderList = tenderService.findList(ts);
-            for (Tender tender : successTenderList) {
-                tender.setThirdTransferFlag(true);
-            }
-            tenderService.save(successTenderList);
-
-            //3.与本地失败投标做匹配，并提出tender
-            Specification<Borrow> bs = Specifications
-                    .<Borrow>and()
-                    .in("id", borrowIdList.toArray())
-                    .build();
-            List<Borrow> borrowList = borrowService.findList(bs);
-
-            //4.本地资金进行资金解封操作
-            int failAmount = 0;//失败金额
-            int failNum = 0;//失败次数
-            Set<Long> borrowIdSet = new HashSet<>();
-            for (Borrow borrow : borrowList) {
-                failAmount = 0;
-                failNum = 0;
-                if (!borrowIdSet.contains(borrow.getId())) {
-                    for (Tender tender : successTenderList) {
-                        if (StringHelper.toString(borrow.getId()).equals(StringHelper.toString(tender.getBorrowId()))) {
-                            failAmount += tender.getValidMoney(); //失败金额
-
-                            //对冻结资金进行回滚
-                            tender.setId(tender.getId());
-                            tender.setStatus(2); // 取消状态
-                            tender.setUpdatedAt(nowDate);
-
-                            CapitalChangeEntity entity = new CapitalChangeEntity();
-                            entity.setType(CapitalChangeEnum.Unfrozen);
-                            entity.setUserId(tender.getUserId());
-                            entity.setMoney(tender.getValidMoney());
-                            entity.setRemark("借款 [" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "] 投标与存管通信失败，解除冻结资金。");
-                            try {
-                                capitalChangeHelper.capitalChange(entity);
-                            } catch (Throwable e) {
-                                log.error("tenderThirdBizImpl thirdBatchCreditInvestRunCall error：", e);
-                            }
-
-                            //可以加上同步资金操作
-                        }
-                    }
-                    borrow.setTenderCount(borrow.getTenderCount() - failNum);
-                    borrow.setMoneyYes(borrow.getMoneyYes() - failAmount);
-                }
-            }
-            borrowService.save(borrowList);
-            tenderService.save(successTenderList);
-
-            log.error("已对无效投标进行撤回！");
-        } while (false);
-
-        if (bool && !ObjectUtils.isEmpty(borrowId)) {
-            Borrow borrow = borrowService.findById(borrowId);
-            try {
-                bool = borrowBiz.transferBorrowAgainVerify(borrow);
-            } catch (Throwable e) {
-                log.error("非流转标复审异常:", e);
-            }
-        }
-        if (bool) {
-            log.info("非流转标复审成功!");
-        } else {
-            log.info("非流转标复审失败!");
-        }
-
-        try {
-            PrintWriter out = response.getWriter();
-            out.print("success");
-            out.flush();
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
+        return ResponseEntity.ok("success");
 
     }
 
@@ -564,16 +444,72 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
 
     /**
      * 投资人批次结束债权参数验证回调
+     *
      * @return
      */
-    public void thirdBatchCreditEndCheckCall(HttpServletRequest request, HttpServletResponse response){
+    public void thirdBatchCreditEndCheckCall(HttpServletRequest request, HttpServletResponse response) {
+        BatchCreditInvestRunCall lendRepayRunResp = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
+        });
 
+        if (ObjectUtils.isEmpty(lendRepayRunResp)) {
+            log.error("=============================投资人批次结束债权参数验证回调===========================");
+            log.error("请求体为空!");
+        }
+
+        if (!JixinResultContants.SUCCESS.equals(lendRepayRunResp.getRetCode())) {
+            log.error("=============================投资人批次结束债权参数验证回调===========================");
+            log.error("回调失败! msg:" + lendRepayRunResp.getRetMsg());
+            thirdBatchLogBiz.updateBatchLogState(lendRepayRunResp.getBatchNo(), NumberHelper.toLong(lendRepayRunResp.getAcqRes()), 2);
+        } else {
+            log.error("=============================投资人批次结束债权参数验证回调===========================");
+            log.error("回调成功!");
+            //更新批次状态
+            thirdBatchLogBiz.updateBatchLogState(lendRepayRunResp.getBatchNo(), NumberHelper.toLong(lendRepayRunResp.getAcqRes()), 1);
+        }
+
+        try {
+            PrintWriter out = response.getWriter();
+            out.print("success");
+            out.flush();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
     }
+
     /**
-     * 投资人批次结束债权参数运行回调
+     * 投资人批次结束债权业务运行回调
+     *
      * @return
      */
-    public void thirdBatchCreditEndRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception{
+    public void thirdBatchCreditEndRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        BatchCreditInvestRunCall creditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
+        });
 
+        boolean bool = true;
+        if (ObjectUtils.isEmpty(creditInvestRunCall)) {
+            log.error("=============================投资人批次结束债权业务运行回调===========================");
+            log.error("请求体为空!");
+            bool = false;
+        }
+
+        if (!JixinResultContants.SUCCESS.equals(creditInvestRunCall.getRetCode())) {
+            log.error("=============================投资人批次结束债权业务运行回调===========================");
+            log.error("回调失败! msg:" + creditInvestRunCall.getRetMsg());
+            bool = false;
+        }
+
+        if (bool) {
+            log.info("投资人批次结束债权成功!");
+        } else {
+            log.info("投资人批次结束债权失败!");
+        }
+
+        try {
+            PrintWriter out = response.getWriter();
+            out.print("success");
+            out.flush();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
     }
 }
