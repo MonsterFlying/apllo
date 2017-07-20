@@ -185,7 +185,7 @@ public class BorrowServiceImpl implements BorrowService {
                 //待发布
                 if (releaseAt.getTime() >= nowDate.getTime()) {
                     status = 1;
-                    item.setSurplusSecond((releaseAt.getTime() - nowDate.getTime()) / 1000 + 5);
+                    item.setSurplusSecond(((releaseAt.getTime() - nowDate.getTime()) / 1000) + 5);
                 } else if (nowDate.getTime() >= endAt.getTime()) {  //当前时间大于招标有效时间
                     status = 5; //已过期
                 } else {

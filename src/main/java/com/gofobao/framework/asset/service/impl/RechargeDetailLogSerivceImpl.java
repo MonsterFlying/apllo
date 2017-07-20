@@ -103,4 +103,5 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService {
                             VoViewRechargeWarpRes.class));
         }
     }
+
 }

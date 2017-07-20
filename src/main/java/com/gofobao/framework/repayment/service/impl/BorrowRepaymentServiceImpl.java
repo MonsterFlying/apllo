@@ -37,6 +37,8 @@ import java.util.stream.Collectors;
 /**
  * Created by admin on 2017/6/1.
  */
+
+@SuppressWarnings("all")
 @Component
 public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
 
@@ -110,6 +112,37 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         return resultMaps;
     }
 
+    /**
+     * pc:还款计划导出到excel
+     * @param orderListReq
+     * @return
+     */
+    @Override
+    public List<VoOrdersList> toExcel(VoOrderListReq orderListReq) {
+
+        String sql = "select date_format(b.repayAt,'%Y-%m-%d'), SUM (b.repayMoney),SUM(b.principal),SUM(b.interest),COUNT(b.id) FROM BorrowRepayment b where b.userId=:userId and b.status=0 GROUP BY date_format(b.repayAt,'%Y-%m-%d') ORDER BY  b.repayAt ASC";
+        Query query = entityManager.createQuery(sql);
+
+        query.setParameter("userId", orderListReq.getUserId());
+        List resultList = query.getResultList();
+        if (CollectionUtils.isEmpty(resultList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<VoOrdersList> ordersLists = Lists.newArrayList();
+        //装配结果集
+        resultList.stream().forEach(p -> {
+            VoOrdersList item = new VoOrdersList();
+            Object[] objects = (Object[]) p;
+            item.setTime((String) objects[0]);
+            item.setCollectionMoney(StringHelper.formatMon((Long) objects[1] / 100D));
+            item.setPrincipal(StringHelper.formatMon((Long) objects[2] / 100D));
+            item.setInterest(StringHelper.formatMon((Long) objects[3] / 100D));
+            item.setOrderCount((Long) objects[4]);
+            ordersLists.add(item);
+        });
+        return ordersLists;
+    }
+
 
     /**
      * pc：还款详情
@@ -150,7 +183,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
             collection.setOrder(p.getOrder() + 1);
             Borrow borrow = borrowMap.get(p.getBorrowId());
             collection.setTimeLimit(borrow.getTimeLimit());
-            collection.setLend(!StringUtils.isEmpty(borrow.getLendId())? true : false);
+            collection.setLend(!StringUtils.isEmpty(borrow.getLendId()) ? true : false);
             collection.setRepayAt(!StringUtils.isEmpty(borrow.getLendId()) ? DateHelper.dateToString(p.getRepayAt(), DateHelper.DATE_FORMAT_YMD) : DateHelper.dateToString(p.getRepayAt()));
             collection.setRepaymentId(p.getId());
             collection.setBorrowName(borrow.getName());

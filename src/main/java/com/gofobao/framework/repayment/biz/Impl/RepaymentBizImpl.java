@@ -44,6 +44,8 @@ import com.gofobao.framework.common.data.DataObject;
 import com.gofobao.framework.common.data.LtSpecification;
 import com.gofobao.framework.common.integral.IntegralChangeEntity;
 import com.gofobao.framework.common.integral.IntegralChangeEnum;
+import com.gofobao.framework.common.jxl.ExcelException;
+import com.gofobao.framework.common.jxl.ExcelUtil;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -83,6 +85,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -98,6 +101,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -272,6 +276,25 @@ public class RepaymentBizImpl implements RepaymentBiz {
             e.printStackTrace();
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewOrderListWarpRes.class));
+        }
+    }
+
+    @Override
+    public void toExcel(HttpServletResponse response, VoOrderListReq listReq) {
+
+        List<VoOrdersList> ordersLists = borrowRepaymentService.toExcel(listReq);
+        if (!CollectionUtils.isEmpty(ordersLists)) {
+            LinkedHashMap<String, String> paramMaps = Maps.newLinkedHashMap();
+            paramMaps.put("time", "时间");
+            paramMaps.put("collectionMoney", "本息");
+            paramMaps.put("principal", "本金");
+            paramMaps.put("interest", "利息");
+            paramMaps.put("orderCount", "笔数");
+            try {
+                ExcelUtil.listToExcel(ordersLists, paramMaps, "还款计划", response);
+            } catch (ExcelException e) {
+                e.printStackTrace();
+            }
         }
     }
 

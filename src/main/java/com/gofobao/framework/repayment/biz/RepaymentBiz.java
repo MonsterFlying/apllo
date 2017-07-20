@@ -13,6 +13,8 @@ import com.gofobao.framework.repayment.vo.response.pc.VoViewCollectionWarpRes;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewOrderListWarpRes;
 import org.springframework.http.ResponseEntity;
 
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * Created by admin on 2017/6/5.
  */
@@ -34,6 +36,14 @@ public interface RepaymentBiz {
      */
     ResponseEntity<VoViewOrderListWarpRes> pcRepaymentList(VoOrderListReq listReq);
 
+
+    /**
+     * PC：还款计划列表导出excel
+     *
+     * @param listReq
+     * @return
+     */
+    void toExcel(HttpServletResponse response,VoOrderListReq listReq);
 
     /**
      * 还款详情

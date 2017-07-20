@@ -17,10 +17,14 @@ import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWar
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderRes;
 import com.gofobao.framework.collection.vo.response.VoViewOrderDetailResp;
 import com.gofobao.framework.collection.vo.response.web.*;
+import com.gofobao.framework.collection.vo.response.web.Collection;
+import com.gofobao.framework.common.jxl.ExcelException;
+import com.gofobao.framework.common.jxl.ExcelUtil;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.google.common.collect.Maps;
 import io.jsonwebtoken.lang.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,10 +35,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import javax.servlet.http.HttpServletResponse;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -142,6 +144,26 @@ public class PaymentBizImpl implements PaymentBiz {
     }
 
 
+    @Override
+    public void toExcel(HttpServletResponse response, OrderListReq listReq) {
+
+        List<CollectionList> collectionLists = borrowCollectionService.toExecl(listReq);
+        if(!CollectionUtils.isEmpty(collectionLists)){
+            LinkedHashMap<String,String >paramMaps=Maps.newLinkedHashMap();
+            paramMaps.put("createTime","时间");
+            paramMaps.put("collectionMoney","待收本息");
+            paramMaps.put("principal","待收本金");
+            paramMaps.put("interest","待收利息");
+            paramMaps.put("orderCount","笔数");
+            try {
+                ExcelUtil.listToExcel(collectionLists,paramMaps,"回款明细",response);
+            } catch (ExcelException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
     /**
      * pc: 回款详情
      *
@@ -208,48 +230,48 @@ public class PaymentBizImpl implements PaymentBiz {
      */
     public ResponseEntity<VoCollectionListByDays> collectionListByDays(String dateStr, Long userId) {
 
-        Date date = DateHelper.stringToDate(dateStr,DateHelper.DATE_FORMAT_YMD);
+        Date date = DateHelper.stringToDate(dateStr, DateHelper.DATE_FORMAT_YMD);
 
-        VoCollectionListByDays voCollectionListByDays = VoCollectionListByDays.ok("查询成功!",VoCollectionListByDays.class);
+        VoCollectionListByDays voCollectionListByDays = VoCollectionListByDays.ok("查询成功!", VoCollectionListByDays.class);
         List<CollectionDetail> collectionDetailList = new ArrayList<>();
 
         Specification<BorrowCollection> bcs = Specifications
                 .<BorrowCollection>and()
-                .eq("userId",userId)
+                .eq("userId", userId)
                 .between("collectionAt", new Range<>(DateHelper.beginOfDate(date), DateHelper.endOfDate(date)))
                 .eq("status", 0)
                 .build();
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
         List<Long> borrowIds = new ArrayList<>();
-        if (CollectionUtils.isEmpty(borrowCollectionList)){
+        if (CollectionUtils.isEmpty(borrowCollectionList)) {
             return ResponseEntity.ok(voCollectionListByDays);
         }
 
-        for (BorrowCollection borrowCollection : borrowCollectionList){
+        for (BorrowCollection borrowCollection : borrowCollectionList) {
             borrowIds.add(borrowCollection.getBorrowId());
         }
 
         Specification<Borrow> bs = Specifications
                 .<Borrow>and()
-                .in("id",borrowIds.toArray())
+                .in("id", borrowIds.toArray())
                 .build();
         List<Borrow> borrowList = borrowService.findList(bs);
 
         CollectionDetail collectionDetail = null;
-        for (BorrowCollection borrowCollection : borrowCollectionList){
-            for (Borrow borrow : borrowList){
+        for (BorrowCollection borrowCollection : borrowCollectionList) {
+            for (Borrow borrow : borrowList) {
                 if (String.valueOf(borrowCollection.getBorrowId()).equals(String.valueOf(borrow.getId()))) {
                     collectionDetail = new CollectionDetail();
                     collectionDetail.setName(borrow.getName());
-                    collectionDetail.setCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAt(),DateHelper.DATE_FORMAT_YMD));
-                    collectionDetail.setPrincipal(StringHelper.formatDouble(borrowCollection.getPrincipal(),100,false));
+                    collectionDetail.setCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAt(), DateHelper.DATE_FORMAT_YMD));
+                    collectionDetail.setPrincipal(StringHelper.formatDouble(borrowCollection.getPrincipal(), 100, false));
                     int money = borrowCollection.getInterest();
-                    if (borrow.getType() == 0 || borrow.getType() == 4){
-                        money -= (int)MathHelper.myRound(borrowCollection.getInterest() * 0.9,0);
+                    if (borrow.getType() == 0 || borrow.getType() == 4) {
+                        money -= (int) MathHelper.myRound(borrowCollection.getInterest() * 0.9, 0);
                     }
-                    collectionDetail.setEarnings(StringHelper.formatDouble(money,100,false));
-                    collectionDetail.setInterest(StringHelper.formatDouble(borrowCollection.getInterest(),100,false));
-                    collectionDetail.setOrderStr(borrowCollection.getOrder()+1 +"/"+borrow.getTotalOrder());
+                    collectionDetail.setEarnings(StringHelper.formatDouble(money, 100, false));
+                    collectionDetail.setInterest(StringHelper.formatDouble(borrowCollection.getInterest(), 100, false));
+                    collectionDetail.setOrderStr(borrowCollection.getOrder() + 1 + "/" + borrow.getTotalOrder());
                     collectionDetailList.add(collectionDetail);
                 }
             }

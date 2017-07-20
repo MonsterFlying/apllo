@@ -9,6 +9,7 @@ import com.gofobao.framework.system.vo.request.VoNoticesReq;
 import com.gofobao.framework.system.vo.request.VoNoticesTranReq;
 import com.gofobao.framework.system.vo.response.NoticesInfo;
 import com.gofobao.framework.system.vo.response.UserNotices;
+import freemarker.template.utility.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -85,15 +87,19 @@ public class NoticesServiceImpl implements NoticesService {
             return noticesInfo;
         }
         noticesInfo.setTitle(notices.getName());
+
         String content = notices.getContent();
-        if (voNoticesReq.getType() == 0) {
-            if (content.contains("[")) {
-                content = content.replace("[", "");
-            }
-            if (content.contains("[")) {
-                content = content.replace("[", "");
+        if (StringUtils.isEmpty(content)) {
+            content = noticesInfo.getTitle();
+        } else {
+            if (voNoticesReq.getType() == 0) {//移動端讀取
+                if (content.contains("[")) {
+                    StringBuffer stringBuffer = new StringBuffer(content);
+                    content = content.replaceAll("<[^>]+>", "");
+                }
             }
         }
+        noticesInfo.setRead(notices.getRead());
         noticesInfo.setContent(content);
         noticesInfo.setCreateTime(DateHelper.dateToString(notices.getCreatedAt()));
         return noticesInfo;
@@ -101,17 +107,18 @@ public class NoticesServiceImpl implements NoticesService {
 
     /**
      * 未读消息数量
+     *
      * @param userId
      * @return
      */
     @Override
     public Long unread(Long userId) {
-        Specification specification=Specifications.<Notices>and()
-                .eq("userId",userId)
-                .eq("deletedAt",null)
-                .eq("read",false)
+        Specification specification = Specifications.<Notices>and()
+                .eq("userId", userId)
+                .eq("deletedAt", null)
+                .eq("read", false)
                 .build();
-       return noticesRepository.count(specification);
+        return noticesRepository.count(specification);
     }
 
     @Transactional
@@ -122,6 +129,7 @@ public class NoticesServiceImpl implements NoticesService {
                 voNoticesTranReq.getUserId(),
                 voNoticesTranReq.getNoticesIds()) <= 0 ? false : true;
     }
+
     @Transactional
     @Override
     public boolean update(VoNoticesTranReq voNoticesTranReq) {

@@ -9,6 +9,7 @@ import com.gofobao.framework.member.vo.response.pc.VoViewBrokerBounsWarpRes;
 import com.gofobao.framework.member.vo.response.pc.VoViewInviteFriendsWarpRes;
 import org.springframework.http.ResponseEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.Map;
 
 /**
@@ -24,6 +25,9 @@ public interface BrokerBounsBiz  {
      * @return
      */
     ResponseEntity<VoViewInviteFriendsWarpRes> pcFriendsTender(VoFriendsReq voFriendsReq);
+
+
+
 
 
     /**
@@ -42,4 +46,11 @@ public interface BrokerBounsBiz  {
 
     Map<String, Object> shareRegister(Long userId);
 
+
+    /**
+     * pc 导出excel
+     * @param friendsTenderReq
+     * @param response
+     */
+    void  toExcel(VoFriendsTenderReq friendsTenderReq, HttpServletResponse response);
 }

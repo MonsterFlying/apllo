@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 /**
@@ -31,21 +32,32 @@ public class WebBorrowRepaymentContorller {
 
     @GetMapping(value = "/v2/collection/days/{pageIndex}/{pageSize}")
     @ApiOperation("还款计划列表 ")
-    public ResponseEntity<VoViewOrderListWarpRes> days(@PathVariable("pageIndex")Integer pageIndex,
-                                                       @PathVariable("pageSize")Integer pageSize,
+    public ResponseEntity<VoViewOrderListWarpRes> days(@PathVariable("pageIndex") Integer pageIndex,
+                                                       @PathVariable("pageSize") Integer pageSize,
                                                        @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
 
-        VoOrderListReq listReq=new VoOrderListReq();
+        VoOrderListReq listReq = new VoOrderListReq();
         listReq.setPageIndex(pageIndex);
         listReq.setPageSize(pageSize);
         listReq.setUserId(userId);
         return repaymentBiz.pcRepaymentList(listReq);
     }
 
+
+    @GetMapping(value = "/v2/collection/days/toExcel")
+    @ApiOperation("还款计划列表导出excel ")
+    public void days(HttpServletResponse response,
+                     @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        VoOrderListReq listReq = new VoOrderListReq();
+        listReq.setUserId(userId);
+        repaymentBiz.toExcel(response, listReq);
+    }
+
+
     @PostMapping(value = "/v2/order/list")
     @ApiOperation("还款计划列表 time:2017-05-02")
     public ResponseEntity<VoViewCollectionWarpRes> listRes(VoCollectionListReq voCollectionListReq,
-                                                                     @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+                                                           @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voCollectionListReq.setUserId(userId);
         return repaymentBiz.orderList(voCollectionListReq);
     }
