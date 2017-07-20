@@ -380,7 +380,11 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             sumTxAmount += NumberHelper.toDouble(tempRepay.getTxAmount());
         }
 
+        //批次号
         String batchNo = jixinHelper.getBatchNo();
+        //请求保留参数
+        Map<String, Object> acqResMap = new HashMap<>();
+        acqResMap.put("borrowId", borrowId);
 
         //====================================================================
         //冻结借款人账户资金
@@ -401,7 +405,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         request.setTxAmount(StringHelper.formatDouble(sumTxAmount, false));
         request.setRetNotifyURL(javaDomain + "/pub/borrow/v2/third/repayall/run");
         request.setNotifyURL(javaDomain + "/pub/borrow/v2/third/repayall/check");
-        request.setAcqRes(GSON.toJson(borrowId));
+        request.setAcqRes(GSON.toJson(acqResMap));
         request.setSubPacks(GSON.toJson(tempRepayList));
         request.setChannel(ChannelContant.HTML);
         request.setTxCounts(StringHelper.toString(tempRepayList.size()));
@@ -416,8 +420,8 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         thirdBatchLog.setCreateAt(nowDate);
         thirdBatchLog.setUpdateAt(nowDate);
         thirdBatchLog.setSourceId(borrowRepayment.getBorrowId());
-        thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY);
-        thirdBatchLog.setRemark("即信批次还款");
+        thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY_ALL);
+        thirdBatchLog.setRemark("(提前结清)即信批次还款");
         thirdBatchLogService.save(thirdBatchLog);
 
         return null;
@@ -460,18 +464,45 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     public ResponseEntity<String> thirdBatchRepayAllRunCall(HttpServletRequest request, HttpServletResponse response) {
         BatchRepayRunResp repayRunResp = jixinManager.callback(request, new TypeToken<BatchRepayRunResp>() {
         });
+        Map<String, Object> acqResMap = GSON.fromJson(repayRunResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
+
         boolean bool = true;
         if (ObjectUtils.isEmpty(repayRunResp)) {
+            log.error("==================================批次回调======================================");
             log.error("=============================即信批次还款处理结果回调===========================");
             log.error("请求体为空!");
-            bool = false;
+            log.error("================================================================================");
+            log.error("================================================================================");
         }
 
         if (!JixinResultContants.SUCCESS.equals(repayRunResp.getRetCode())) {
+            log.error("==================================批次回调======================================");
             log.error("=============================即信批次还款处理结果回调===========================");
             log.error("回调失败! msg:" + repayRunResp.getRetMsg());
-            bool = false;
+            log.error("================================================================================");
+            log.error("================================================================================");
+        }else {
+            log.error("==================================批次回调======================================");
+            log.error("=============================即信批次还款处理结果回调===========================");
+            log.error("回调成功!");
+            log.error("================================================================================");
+            log.error("================================================================================");
         }
+
+        //触发处理批次放款处理结果队列
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(acqResMap.get("borrowId")), MqConfig.BATCH_NO, StringHelper.toString(repayRunResp.getBatchNo()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            log.info(String.format("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("borrowProvider autoTender send mq exception", e);
+        }
+
 
         int num = NumberHelper.toInt(repayRunResp.getFailCounts());
         if (num > 0) {

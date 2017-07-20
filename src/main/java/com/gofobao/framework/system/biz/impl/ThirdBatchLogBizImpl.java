@@ -7,9 +7,14 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
+import com.gofobao.framework.asset.entity.AdvanceLog;
+import com.gofobao.framework.asset.service.AdvanceLogService;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.common.data.LtSpecification;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
@@ -39,6 +44,10 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
     private JixinManager jixinManager;
     @Autowired
     private BorrowService borrowService;
+    @Autowired
+    private BorrowRepaymentService borrowRepaymentService;
+    @Autowired
+    private AdvanceLogService advanceLogService;
 
     /**
      * 更新批次日志状态
@@ -109,26 +118,88 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
      */
     public boolean checkLocalSourceState(String sourceId, int type) {
 
+        Specification<Borrow> bs = null;
+        Specification<BorrowRepayment> brs = null;
+        Specification<AdvanceLog> als = null;
+        List<Borrow> borrowList = null;
+        long rowNum = 0;
         switch (type) {
             case ThirdBatchLogContants.BATCH_CREDIT_INVEST: //投资人批次购买债权
+                bs = Specifications
+                        .<Borrow>and()
+                        .eq("status", 3)
+                        .eq("id", sourceId)
+                        .build();
+                borrowList = borrowService.findList(bs);
+                if (CollectionUtils.isEmpty(borrowList)) {
+                    return false;
+                }
 
+                if (!ObjectUtils.isEmpty(borrowList.get(0).getSuccessAt())) {//判断是否满标处理成功
+                    return true;
+                }
                 break;
             case ThirdBatchLogContants.BATCH_LEND_REPAY: //即信批次放款
-                Specification<Borrow> bs = Specifications
+                bs = Specifications
                         .<Borrow>and()
+                        .eq("status", 3)
                         .eq("id", sourceId)
-                        .notIn("status", 1)
                         .build();
-                long rowNum = borrowService.count(bs);
-                if (rowNum < 1) {
+                borrowList = borrowService.findList(bs);
+                if (CollectionUtils.isEmpty(borrowList)) {
+                    return false;
+                }
+
+                if (!ObjectUtils.isEmpty(borrowList.get(0).getSuccessAt())) {//判断是否满标处理成功
                     return true;
                 }
                 break;
             case ThirdBatchLogContants.BATCH_REPAY: //即信批次还款
+                brs = Specifications
+                        .<BorrowRepayment>and()
+                        .eq("id", sourceId)
+                        .eq("status", 1)
+                        .build();
+                rowNum = borrowRepaymentService.count(brs);
+                if (rowNum >= 1) {
+                    return true;
+                }
                 break;
             case ThirdBatchLogContants.BATCH_BAIL_REPAY: //担保人垫付
+                als = Specifications
+                        .<AdvanceLog>and()
+                        .eq("repaymentId", sourceId)
+                        .build();
+                rowNum = advanceLogService.count(als);
+                if (rowNum >= 1) {
+                    return true;
+                }
                 break;
             case ThirdBatchLogContants.BATCH_REPAY_BAIL: //批次融资人还担保账户垫款
+                als = Specifications
+                        .<AdvanceLog>and()
+                        .eq("repaymentId", sourceId)
+                        .eq("status", 1)
+                        .build();
+                rowNum = advanceLogService.count(als);
+                if (rowNum >= 1) {
+                    return true;
+                }
+                break;
+            case ThirdBatchLogContants.BATCH_REPAY_ALL: //提前结清批次还款
+                bs = Specifications
+                        .<Borrow>and()
+                        .eq("id", sourceId)
+                        .eq("status", 3)
+                        .build();
+                borrowList = borrowService.findList(bs);
+                if (CollectionUtils.isEmpty(borrowList)) {
+                    return false;
+                }
+
+                if (!ObjectUtils.isEmpty(borrowList.get(0).getCloseAt())) {
+                    return true;
+                }
                 break;
             default:
 

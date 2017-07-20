@@ -31,6 +31,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -66,6 +67,8 @@ public class CreditProvider {
     private JixinHelper jixinHelper;
     @Autowired
     private ThirdBatchLogService thirdBatchLogService;
+    @Value("${gofobao.javaDomain}")
+    String javaDomain;
 
     public boolean endThirdCredit(Map<String, String> msg) throws Exception {
         do {
@@ -104,7 +107,7 @@ public class CreditProvider {
             String orderId = null;
             for (Tender tender : tenderList) {
                 creditEnd = new CreditEnd();
-                orderId =  JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
+                orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
 
                 tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
                 creditEnd.setAccountId(borrowUserThirdAccount.getAccountId());
@@ -126,8 +129,8 @@ public class CreditProvider {
             BatchCreditEndReq request = new BatchCreditEndReq();
             request.setBatchNo(batchNo);
             request.setTxCounts(String.valueOf(creditEndList.size()));
-            request.setNotifyURL("");
-            request.setRetNotifyURL("");
+            request.setNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditend/check");
+            request.setRetNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditend/run");
             request.setAcqRes(String.valueOf(borrowId));
             request.setSubPacks(gson.toJson(creditEndList));
 
@@ -143,7 +146,7 @@ public class CreditProvider {
             thirdBatchLog.setUpdateAt(nowDate);
             thirdBatchLog.setSourceId(borrowId);
             thirdBatchLog.setType(ThirdBatchLogContants.BATCH_CREDIT_END);
-            thirdBatchLog.setRemark("即信批次还款");
+            thirdBatchLog.setRemark("即信批次结束债权");
             thirdBatchLogService.save(thirdBatchLog);
 
         } while (false);
