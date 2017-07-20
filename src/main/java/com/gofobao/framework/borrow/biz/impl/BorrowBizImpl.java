@@ -406,39 +406,12 @@ public class BorrowBizImpl implements BorrowBiz {
         boolean closeAuto = voAddNetWorthBorrow.isCloseAuto();
 
         Asset asset = assetService.findByUserIdLock(userId);
-        if (ObjectUtils.isEmpty(asset)) {
-            log.info("新增借款：用户asset未被查询得到。");
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍候重试！"));
-        }
-
+        Preconditions.checkNotNull(asset, "净值标的发布: 当前用户资金账户为空!") ;
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        if (ObjectUtils.isEmpty(userThirdAccount)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoAutoTenderInfo.class));
+        ResponseEntity<VoBaseResp> conditionCheckResponse = ThirdAccountHelper.conditionCheck(userThirdAccount);
+        if(!conditionCheckResponse.getStatusCode().equals(HttpStatus.OK)){
+            return conditionCheckResponse ;
         }
-
-        if (userThirdAccount.getPasswordState() != 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoAutoTenderInfo.class));
-        }
-
-        if (userThirdAccount.getAutoTransferState() != 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoAutoTenderInfo.class));
-        }
-
-
-        if (userThirdAccount.getAutoTenderState() != 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoAutoTenderInfo.class));
-        }
-
 
         Date releaseAt = DateHelper.stringToDate(releaseAtStr, DateHelper.DATE_FORMAT_YMDHMS);
         if (releaseAt.getTime() > DateHelper.addDays(new Date(), 1).getTime()) {
@@ -449,12 +422,7 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         UserCache userCache = userCacheService.findById(userId);
-        if (ObjectUtils.isEmpty(userCache)) {
-            log.info("新增借款：用户usercache未被查询得到。");
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍候重试！"));
-        }
+        Preconditions.checkNotNull(userCache, "净值标的发布: 当前用户资金缓存账户为空!") ;
 
         double totalMoney = (asset.getUseMoney() + userCache.getWaitCollectionPrincipal()) * 0.8 - asset.getPayment();
         if (totalMoney < money) {
@@ -472,6 +440,14 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "您已经有一个进行中的借款标!"));
         }
 
+        Long borrowId = insertBorrow(voAddNetWorthBorrow, userId);  // 插入标
+        if (borrowId <= 0) {
+            log.info("新增借款：净值标插入失败。");
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "净值标插入失败!"));
+        }
+
         if (closeAuto) { //关闭用户自动投标
             AutoTender saveAutoTender = new AutoTender();
             saveAutoTender.setStatus(false);
@@ -487,22 +463,6 @@ public class BorrowBizImpl implements BorrowBiz {
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "自动投标关闭失败!"));
             }
-        }
-
-        Long borrowId = null;
-        try {
-            borrowId = insertBorrow(voAddNetWorthBorrow, userId);  // 插入标
-        } catch (Throwable e) {
-
-            log.error("新增借款异常：", e);
-            throw new Exception(e);
-        }
-
-        if (borrowId <= 0) {
-            log.info("新增借款：净值标插入失败。");
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "净值标插入失败!"));
         }
 
         //初审
