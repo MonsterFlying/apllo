@@ -119,4 +119,6 @@ public class BorrowCollection {
     private String tBailAuthCode;
 
     private Boolean thirdRepayFlag;
+
+    private Boolean thirdRepayBailFlag;
 }

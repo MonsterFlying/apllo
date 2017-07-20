@@ -9,6 +9,7 @@ import com.gofobao.framework.api.model.batch_bail_repay.BailRepay;
 import com.gofobao.framework.api.model.batch_bail_repay.BailRepayRun;
 import com.gofobao.framework.api.model.batch_bail_repay.BatchBailRepayCheckResp;
 import com.gofobao.framework.api.model.batch_bail_repay.BatchBailRepayRunResp;
+import com.gofobao.framework.api.model.batch_credit_invest.CreditInvestRun;
 import com.gofobao.framework.api.model.batch_lend_pay.*;
 import com.gofobao.framework.api.model.batch_repay.BatchRepayCheckResp;
 import com.gofobao.framework.api.model.batch_repay.BatchRepayRunResp;
@@ -52,6 +53,9 @@ import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -499,6 +503,11 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     continue;
                 }
 
+                //判断这笔回款是否已经在即信登记过批次垫付
+                if (borrowCollection.getThirdRepayBailFlag()) {
+                    continue;
+                }
+
                 if (tender.getTransferFlag() == 1) {//转让中
                     Specification<Borrow> bs = Specifications
                             .<Borrow>and()
@@ -614,19 +623,35 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         });
         boolean bool = true;
         if (ObjectUtils.isEmpty(batchBailRepayRunResp)) {
+            log.error("======================================批次回调======================================");
             log.error("=============================批次担保账户代偿业务处理回调===========================");
             log.error("请求体为空!");
+            log.error("====================================================================================");
+            log.error("====================================================================================");
             bool = false;
         }
 
         if (!JixinResultContants.SUCCESS.equals(batchBailRepayRunResp.getRetCode())) {
+            log.error("======================================批次回调======================================");
             log.error("=============================批次担保账户代偿业务处理回调===========================");
             log.error("回调失败! msg:" + batchBailRepayRunResp.getRetMsg());
+            log.error("====================================================================================");
+            log.error("====================================================================================");
             bool = false;
         } else {
+            log.error("======================================批次回调======================================");
             log.error("=============================批次担保账户代偿业务处理回调===========================");
             log.error("回调成功!");
+            log.error("====================================================================================");
+            log.error("====================================================================================");
         }
+
+        //=============================================
+        // 保存批次担保人代偿授权号
+        //=============================================
+        List<BailRepayRun> bailRepayRunList = GSON.fromJson(batchBailRepayRunResp.getSubPacks(), new TypeToken<List<BailRepayRun>>() {
+        }.getType());
+        saveThirdBailRepayAuthCode(bailRepayRunList);
 
         int num = NumberHelper.toInt(batchBailRepayRunResp.getFailCounts());
         if (num > 0) {
@@ -641,8 +666,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             try {
                 VoAdvanceCall voAdvanceCall = new VoAdvanceCall();
                 voAdvanceCall.setRepaymentId(repaymentId);
-                voAdvanceCall.setBailRepayRunList(GSON.fromJson(GSON.toJson(batchBailRepayRunResp.getSubPacks()), new TypeToken<List<BailRepayRun>>() {
-                }.getType()));
+
                 resp = repaymentBiz.advanceDeal(voAdvanceCall);
             } catch (Throwable e) {
                 log.error("垫付异常:", e);
@@ -657,6 +681,43 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         return ResponseEntity.ok("success");
     }
 
+    /**
+     * 保存批次担保人代偿授权号
+     *
+     * @param bailRepayRunList
+     */
+    public void saveThirdBailRepayAuthCode(List<BailRepayRun> bailRepayRunList) {
+        List<String> orderList = new ArrayList<>();
+        for (BailRepayRun bailRepayRun : bailRepayRunList) {
+            orderList.add(bailRepayRun.getOrderId());
+        }
+
+        Specification<BorrowCollection> bcs = Specifications
+                .<BorrowCollection>and()
+                .eq("tBailRepayOrderId", orderList.toArray())
+                .build();
+
+        int pageIndex = 0;
+        int maxPageSize = 50;
+        Pageable pageable = null;
+        List<BorrowCollection> borrowCollectionList = null;
+        do {
+            pageable = new PageRequest(pageIndex++, maxPageSize, new Sort(Sort.Direction.ASC, "id"));
+            borrowCollectionList = borrowCollectionService.findList(bcs, pageable);
+            if (CollectionUtils.isEmpty(borrowCollectionList)) {
+                break;
+            }
+            for (BorrowCollection borrowCollection : borrowCollectionList) {
+                for (BailRepayRun bailRepayRun : bailRepayRunList) {
+                    if (borrowCollection.getTBailRepayOrderId().equals(bailRepayRun.getOrderId())) {
+                        borrowCollection.setTBailAuthCode(bailRepayRun.getAuthCode());
+                        break;
+                    }
+                }
+            }
+            borrowCollectionService.save(borrowCollectionList);
+        } while (borrowCollectionList.size() >= maxPageSize);
+    }
 
     /**
      * 批次融资人还担保账户垫款参数检查回调

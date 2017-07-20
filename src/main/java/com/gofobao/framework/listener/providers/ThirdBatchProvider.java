@@ -5,13 +5,13 @@ import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.batch_bail_repay.BailRepayRun;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.batch_details_query.DetailsQueryResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
-import com.gofobao.framework.borrow.vo.request.VoRepayAll;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
@@ -24,7 +24,7 @@ import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
-import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.vo.request.VoAdvanceCall;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
@@ -171,12 +171,16 @@ public class ThirdBatchProvider {
                 //=====================================================
                 // 即信批次还款结果处理
                 //=====================================================
-                batchRepayDeal(acqRes, failureOrderIds, successOrderIds);
+                repayDeal(acqRes, failureOrderIds, successOrderIds);
                 break;
             case ThirdBatchLogContants.BATCH_BAIL_REPAY: //担保人垫付
-
+                //=====================================================
+                // 即信批次担保人垫付处理
+                //=====================================================
+                bailRepayDeal(sourceId, failureOrderIds, successOrderIds);
                 break;
             case ThirdBatchLogContants.BATCH_REPAY_BAIL: //批次融资人还担保账户垫款
+                //setTRepayBailOrderId
 
                 break;
             case ThirdBatchLogContants.BATCH_REPAY_ALL: //提前结清批次还款
@@ -189,13 +193,68 @@ public class ThirdBatchProvider {
     }
 
     /**
+     * 批次借款人还代偿处理
+     * @param borrowId
+     * @param failureTRepayBailOrderIds
+     * @param successTRepayBailOrderIds
+     */
+    private void repayAll(Long borrowId, List<String> failureTRepayBailOrderIds, List<String> successTRepayBailOrderIds) {
+
+    }
+
+    /**
+     * 批次担保人代偿处理
+     *
+     * @param repaymentId
+     * @param failureTBailRepayOrderIds
+     * @param successTBailRepayOrderIds
+     */
+    private void bailRepayDeal(Long repaymentId, List<String> failureTBailRepayOrderIds, List<String> successTBailRepayOrderIds) throws Exception {
+
+        if (CollectionUtils.isEmpty(failureTBailRepayOrderIds)) {
+            log.info("================================================================================");
+            log.info("即信批次还款查询：查询未发现失败批次！");
+            log.info("================================================================================");
+        }
+
+        //登记成功批次
+        if (!CollectionUtils.isEmpty(successTBailRepayOrderIds)) {
+            Specification<BorrowCollection> bcs = Specifications
+                    .<BorrowCollection>and()
+                    .in("tBailRepayOrderId", successTBailRepayOrderIds.toArray())
+                    .build();
+            List<BorrowCollection> successBorrowCollectionList = borrowCollectionService.findList(bcs);
+            successBorrowCollectionList.stream().forEach(borrowCollection -> {
+                borrowCollection.setThirdRepayBailFlag(true);
+            });
+            borrowCollectionService.save(successBorrowCollectionList);
+        }
+
+        //处理失败批次
+        if (!CollectionUtils.isEmpty(failureTBailRepayOrderIds)) { //不处理失败！
+            /**
+             * @// TODO: 2017/7/20 每五分钟处理一次  处理5次
+             */
+        }
+
+        //==================================================================
+        // 批次担保人代偿操作
+        //==================================================================
+        if (CollectionUtils.isEmpty(failureTBailRepayOrderIds)) {
+            VoAdvanceCall voAdvanceCall = new VoAdvanceCall();
+            voAdvanceCall.setRepaymentId(repaymentId);
+            repaymentBiz.advanceDeal(voAdvanceCall);
+        }
+    }
+
+    /**
      * 批次还款处理
      *
      * @param acqRes
      * @param failureTRepayOrderIds
      * @param successTRepayOrderIds
      */
-    private void batchRepayDeal(String acqRes, List<String> failureTRepayOrderIds, List<String> successTRepayOrderIds) throws Exception {
+    private void repayDeal(String acqRes, List<String> failureTRepayOrderIds, List<String> successTRepayOrderIds) throws Exception {
 
         if (CollectionUtils.isEmpty(failureTRepayOrderIds)) {
             log.info("================================================================================");
@@ -204,21 +263,23 @@ public class ThirdBatchProvider {
         }
 
         //登记成功批次
-        if (CollectionUtils.isEmpty(successTRepayOrderIds)) {
+        if (!CollectionUtils.isEmpty(successTRepayOrderIds)) {
             Specification<BorrowCollection> bcs = Specifications
                     .<BorrowCollection>and()
                     .in("tRepayOrderId", successTRepayOrderIds.toArray())
                     .build();
-            List<BorrowCollection> successTenderList = borrowCollectionService.findList(bcs);
-            successTenderList.stream().forEach(tender -> {
-                tender.setThirdRepayFlag(true);
+            List<BorrowCollection> successBorrowCollectionList = borrowCollectionService.findList(bcs);
+            successBorrowCollectionList.stream().forEach(borrowCollection -> {
+                borrowCollection.setThirdRepayFlag(true);
             });
-            borrowCollectionService.save(successTenderList);
+            borrowCollectionService.save(successBorrowCollectionList);
         }
 
         //处理失败批次
-        if (CollectionUtils.isEmpty(failureTRepayOrderIds)) { //不处理失败！
-
+        if (!CollectionUtils.isEmpty(failureTRepayOrderIds)) { //不处理失败！
+            /**
+             * @// TODO: 2017/7/20 每五分钟处理一次  处理5次
+             */
         }
 
         //==================================================================
