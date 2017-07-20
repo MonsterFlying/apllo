@@ -117,4 +117,6 @@ public class BorrowCollection {
     @Basic
     @Column(name = "t_bail_auth_code")
     private String tBailAuthCode;
+
+    private Boolean thirdRepayFlag;
 }

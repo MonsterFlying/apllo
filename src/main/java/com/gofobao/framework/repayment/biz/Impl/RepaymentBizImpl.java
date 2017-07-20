@@ -1060,7 +1060,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         thirdBatchLog.setBatchNo(batchNo);
         thirdBatchLog.setCreateAt(nowDate);
         thirdBatchLog.setUpdateAt(nowDate);
-        thirdBatchLog.setSourceId(borrowRepayment.getId());
+        thirdBatchLog.setSourceId(repaymentId);
         thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY);
         thirdBatchLog.setRemark("即信批次还款");
         thirdBatchLogService.save(thirdBatchLog);

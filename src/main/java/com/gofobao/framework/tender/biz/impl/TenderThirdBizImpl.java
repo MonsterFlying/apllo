@@ -353,7 +353,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(acqResMap.get("borrowId")), MqConfig.BATCH_NO, StringHelper.toString(creditInvestRunCall.getBatchNo()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("borrowId")), MqConfig.BATCH_NO, StringHelper.toString(creditInvestRunCall.getBatchNo()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
         try {
             log.info(String.format("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq %s", GSON.toJson(body)));

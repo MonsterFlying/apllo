@@ -12,6 +12,8 @@ import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoRepayAll;
+import com.gofobao.framework.collection.entity.BorrowCollection;
+import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
@@ -22,6 +24,7 @@ import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
@@ -74,6 +77,8 @@ public class ThirdBatchProvider {
     private TenderThirdBiz tenderThirdBiz;
     @Autowired
     private RepaymentBiz repaymentBiz;
+    @Autowired
+    private BorrowCollectionService borrowCollectionService;
 
     /**
      * 批次处理
@@ -187,16 +192,43 @@ public class ThirdBatchProvider {
      * 批次还款处理
      *
      * @param acqRes
-     * @param failureThirdLendPayOrderIds
-     * @param successThirdLendPayOrderIds
+     * @param failureTRepayOrderIds
+     * @param successTRepayOrderIds
      */
-    private void batchRepayDeal(String acqRes, List<String> failureThirdLendPayOrderIds, List<String> successThirdLendPayOrderIds) throws Exception{
+    private void batchRepayDeal(String acqRes, List<String> failureTRepayOrderIds, List<String> successTRepayOrderIds) throws Exception {
 
+        if (CollectionUtils.isEmpty(failureTRepayOrderIds)) {
+            log.info("================================================================================");
+            log.info("即信批次还款查询：查询未发现失败批次！");
+            log.info("================================================================================");
+        }
 
-        //提前结清操作
-        VoRepayReq voRepayReq = GSON.fromJson(acqRes, new TypeToken<VoRepayReq>() {
-        }.getType());
-        repaymentBiz.repayDeal(voRepayReq);
+        //登记成功批次
+        if (CollectionUtils.isEmpty(successTRepayOrderIds)) {
+            Specification<BorrowCollection> bcs = Specifications
+                    .<BorrowCollection>and()
+                    .in("tRepayOrderId", successTRepayOrderIds.toArray())
+                    .build();
+            List<BorrowCollection> successTenderList = borrowCollectionService.findList(bcs);
+            successTenderList.stream().forEach(tender -> {
+                tender.setThirdRepayFlag(true);
+            });
+            borrowCollectionService.save(successTenderList);
+        }
+
+        //处理失败批次
+        if (CollectionUtils.isEmpty(failureTRepayOrderIds)) { //不处理失败！
+
+        }
+
+        //==================================================================
+        // 提前结清操作
+        //==================================================================
+        if (CollectionUtils.isEmpty(failureTRepayOrderIds)) {
+            VoRepayReq voRepayReq = GSON.fromJson(acqRes, new TypeToken<VoRepayReq>() {
+            }.getType());
+            repaymentBiz.repayDeal(voRepayReq);
+        }
     }
 
     /**
