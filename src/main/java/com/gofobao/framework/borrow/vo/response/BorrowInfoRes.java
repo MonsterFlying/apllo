@@ -94,4 +94,7 @@ public class BorrowInfoRes extends VoBaseResp {
     @ApiModelProperty("头像")
     private String avatar;
 
+    @ApiModelProperty("隱藏最低投標金額")
+    private Integer hideLowMoney;
+
 }
