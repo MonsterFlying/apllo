@@ -23,8 +23,8 @@ import java.util.Map;
  */
 @Slf4j
 @Component
-@RabbitListener(queues = MqQueueEnumContants.RABBITMQ_AUTO_TENDER)
-public class AutoTenderMessageListener {
+@RabbitListener(queues = MqQueueEnumContants.RABBITMQ_TENDER)
+public class TenderMessageListener {
 
     Gson gson = new GsonBuilder().create();
     @Autowired

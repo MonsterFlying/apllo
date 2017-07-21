@@ -1866,7 +1866,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         thirdBatchLog.setUpdateAt(nowDate);
         thirdBatchLog.setSourceId(repaymentId);
         thirdBatchLog.setType(ThirdBatchLogContants.BATCH_BAIL_REPAY);
-        thirdBatchLog.setRemark("即信担保人还垫付");
+        thirdBatchLog.setRemark("批次担保账户垫付");
         thirdBatchLogService.save(thirdBatchLog);
 
         return ResponseEntity.ok(VoBaseResp.ok("批次担保账户代偿成功!"));

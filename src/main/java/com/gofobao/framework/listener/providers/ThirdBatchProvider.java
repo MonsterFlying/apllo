@@ -178,7 +178,7 @@ public class ThirdBatchProvider {
                 //=====================================================
                 // 即信批次还款结果处理
                 //=====================================================
-                repayDeal(acqRes, failureOrderIds, successOrderIds);
+                repayDeal(sourceId,acqRes, failureOrderIds, successOrderIds);
                 break;
             case ThirdBatchLogContants.BATCH_BAIL_REPAY: //担保人垫付
                 //=====================================================
@@ -190,7 +190,7 @@ public class ThirdBatchProvider {
                 //=====================================================
                 // 即信批次融资人还担保账户垫款处理
                 //=====================================================
-                repayBailDeal(acqRes, failureOrderIds, successOrderIds);
+                repayBailDeal(sourceId,acqRes, failureOrderIds, successOrderIds);
                 break;
             case ThirdBatchLogContants.BATCH_CREDIT_END: //批次结束债权
                 //=====================================================
@@ -287,8 +287,22 @@ public class ThirdBatchProvider {
         }
 
         //处理失败批次
+        //五分钟处理一次
         if (!CollectionUtils.isEmpty(failureTRepayAllOrderIds)) {
-
+            //推送队列结束债权
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_REPAYMENT);
+            mqConfig.setTag(MqTagEnum.REPAY_ALL);
+            mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 5));
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("thirdBatchProvider repayAllDeal send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("thirdBatchProvider repayAllDeal send mq exception", e);
+            }
         }
 
         //==================================================================
@@ -309,7 +323,8 @@ public class ThirdBatchProvider {
      * @param failureTRepayBailOrderIds
      * @param successTRepayBailOrderIds
      */
-    private void repayBailDeal(String acqRes, List<String> failureTRepayBailOrderIds, List<String> successTRepayBailOrderIds) {
+    private void repayBailDeal(long repaymentId,String acqRes, List<String> failureTRepayBailOrderIds, List<String> successTRepayBailOrderIds) {
+
         if (CollectionUtils.isEmpty(failureTRepayBailOrderIds)) {
             log.info("================================================================================");
             log.info("即信批次还款查询：查询未发现失败批次！");
@@ -331,9 +346,21 @@ public class ThirdBatchProvider {
 
         //处理失败批次
         if (!CollectionUtils.isEmpty(failureTRepayBailOrderIds)) { //不处理失败！
-            /**
-             * @// TODO: 2017/7/20 每五分钟处理一次  处理5次
-             */
+            //推送队列结束债权
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_REPAYMENT);
+            mqConfig.setTag(MqTagEnum.REPAY_ADVANCE);
+            mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 5));
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_REPAYMENT_ID, StringHelper.toString(repaymentId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("thirdBatchProvider repayBailDeal send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("thirdBatchProvider repayBailDeal send mq exception", e);
+            }
+
         }
 
         //==================================================================
@@ -381,10 +408,21 @@ public class ThirdBatchProvider {
         }
 
         //处理失败批次
-        if (!CollectionUtils.isEmpty(failureTBailRepayOrderIds)) { //不处理失败！
-            /**
-             * @// TODO: 2017/7/20 每五分钟处理一次  处理5次
-             */
+        if (!CollectionUtils.isEmpty(failureTBailRepayOrderIds)) {
+            //推送队列结束债权
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_REPAYMENT);
+            mqConfig.setTag(MqTagEnum.ADVANCE);
+            mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 5));
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_REPAYMENT_ID, StringHelper.toString(repaymentId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("thirdBatchProvider bailRepayDeal send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("thirdBatchProvider bailRepayDeal send mq exception", e);
+            }
         }
 
         //==================================================================
@@ -407,7 +445,7 @@ public class ThirdBatchProvider {
      * @param failureTRepayOrderIds
      * @param successTRepayOrderIds
      */
-    private void repayDeal(String acqRes, List<String> failureTRepayOrderIds, List<String> successTRepayOrderIds) throws Exception {
+    private void repayDeal(long repaymentId,String acqRes, List<String> failureTRepayOrderIds, List<String> successTRepayOrderIds) throws Exception {
 
         if (CollectionUtils.isEmpty(failureTRepayOrderIds)) {
             log.info("================================================================================");
@@ -430,9 +468,20 @@ public class ThirdBatchProvider {
 
         //处理失败批次
         if (!CollectionUtils.isEmpty(failureTRepayOrderIds)) { //不处理失败！
-            /**
-             * @// TODO: 2017/7/20 每五分钟处理一次  处理5次
-             */
+            //推送队列结束债权
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_REPAYMENT);
+            mqConfig.setTag(MqTagEnum.REPAY);
+            mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 5));
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_REPAYMENT_ID, StringHelper.toString(repaymentId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("thirdBatchProvider repayDeal send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("thirdBatchProvider repayDeal send mq exception", e);
+            }
         }
 
         //==================================================================
@@ -640,7 +689,7 @@ public class ThirdBatchProvider {
         //2.判断borrowId不为空
         if (CollectionUtils.isEmpty(failureThirdTransferOrderIds)) {
             Borrow borrow = borrowService.findById(borrowId);
-            Preconditions.checkNotNull(borrow, "摘取批次处理: 查询复审标的失败") ;
+            Preconditions.checkNotNull(borrow, "摘取批次处理: 查询复审标的失败");
             log.info(String.format("批量债权转让复审: %s", gson.toJson(borrow)));
             boolean b = borrowBiz.transferBorrowAgainVerify(borrow);
             if (b) {

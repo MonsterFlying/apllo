@@ -2342,7 +2342,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
             //触发自动投标队列
             MqConfig mqConfig = new MqConfig();
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_AUTO_TENDER);
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_TENDER);
             mqConfig.setTag(MqTagEnum.AUTO_TENDER);
             mqConfig.setSendTime(releaseAt);
             ImmutableMap<String, String> body = ImmutableMap

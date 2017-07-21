@@ -140,4 +140,11 @@ public interface RepaymentBiz {
      * @throws Exception
      */
     VoBuildThirdRepayResp buildThirdRepay(VoBuildThirdRepayReq voBuildThirdRepayReq) throws Exception;
+
+    /**
+     * 批次融资人还担保账户垫款
+     *
+     * @param voRepayReq
+     */
+    ResponseEntity<VoBaseResp> thirdBatchRepayBail(VoRepayReq voRepayReq) throws Exception;
 }
