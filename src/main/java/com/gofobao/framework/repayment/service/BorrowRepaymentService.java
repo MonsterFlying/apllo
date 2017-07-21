@@ -7,6 +7,7 @@ import com.gofobao.framework.repayment.vo.request.VoInfoReq;
 import com.gofobao.framework.repayment.vo.request.VoOrderListReq;
 import com.gofobao.framework.repayment.vo.response.RepayCollectionLog;
 import com.gofobao.framework.repayment.vo.response.RepaymentOrderDetail;
+import com.gofobao.framework.repayment.vo.response.pc.VoOrdersList;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -28,6 +29,8 @@ public interface BorrowRepaymentService {
     List<BorrowRepayment> repaymentList(VoCollectionOrderReq voCollectionOrderReq);
 
 
+
+
     /**
      * PC：还款计划
      * @param orderListReq
@@ -35,6 +38,13 @@ public interface BorrowRepaymentService {
      */
     Map<String, Object> pcOrderList(VoOrderListReq orderListReq);
 
+
+    /**
+     * PC：还款计划导出excel
+     * @param orderListReq
+     * @return
+     */
+    List<VoOrdersList> toExcel(VoOrderListReq orderListReq);
 
     /**
      * 还款详情

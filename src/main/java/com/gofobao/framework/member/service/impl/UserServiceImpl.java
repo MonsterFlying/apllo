@@ -1,5 +1,6 @@
 package com.gofobao.framework.member.service.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.member.service.UserService;
@@ -7,6 +8,7 @@ import com.gofobao.framework.security.entity.JwtUserFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -114,8 +116,10 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 
     @Override
     public boolean notExistsByEmail(String email) {
-        List<Users> users = userRepository.findByEmail(email);
-        return CollectionUtils.isEmpty(users);
+        Users users = new Users();
+        users.setEmail(email);
+        Example<Users> example = Example.of(users);
+        return !userRepository.exists(example);
     }
 
     /**
@@ -152,7 +156,7 @@ public class UserServiceImpl implements UserDetailsService, UserService {
     public List<Users> serviceUser() {
         String sql = "SELECT t1.* " +
                 "FROM `gfb_users` t1 JOIN gfb_role_user t2 ON t1.id = t2.user_id WHERE t2.role_id in (3, 4)";
-        Query query = entityManager.createNativeQuery(sql,Users.class);
+        Query query = entityManager.createNativeQuery(sql, Users.class);
         return query.getResultList();
     }
 }

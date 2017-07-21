@@ -77,7 +77,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         Query query = entityManager.createNativeQuery(sql, BorrowCollection.class);
         query.setParameter("userId",voCollectionOrderReq.getUserId());*/
 
-          List<BorrowCollection> borrowCollections = borrowCollectionRepository.findAll(specification);
+        List<BorrowCollection> borrowCollections = borrowCollectionRepository.findAll(specification);
         return Optional.ofNullable(borrowCollections).orElse(Collections.EMPTY_LIST);
     }
 
@@ -124,6 +124,35 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         return resultMaps;
     }
 
+    /**
+     * pc :回款明细导出excel
+     * @param listReq
+     * @return
+     */
+    @Override
+    public List<CollectionList> toExecl(OrderListReq listReq) {
+        String sql = "select date_format(b.collectionAt,'%Y-%m-%d'),sum(b.collectionMoney),sum(b.principal),sum(b.interest),count(b.id) from BorrowCollection AS b where b.userId=:userId  and b.status=0 GROUP BY date_format(b.collectionAt,'%Y-%m-%d') ORDER BY  b.collectionAt ASC";
+        Query query = entityManager.createQuery(sql);
+        query.setParameter("userId", listReq.getUserId());
+        List resultList = query.getResultList();
+
+        if (CollectionUtils.isEmpty(resultList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<CollectionList> collectionLists = Lists.newArrayList();
+        //装配结果集
+        resultList.stream().forEach(p -> {
+            CollectionList item = new CollectionList();
+            Object[] objects = (Object[]) p;
+            item.setCreateTime((String) objects[0]);
+            item.setCollectionMoney(StringHelper.formatMon((Long) objects[1] / 100D));
+            item.setPrincipal(StringHelper.formatMon((Long) objects[2] / 100D));
+            item.setInterest(StringHelper.formatMon((Long) objects[3] / 100D));
+            item.setOrderCount((Long) objects[4]);
+            collectionLists.add(item);
+        });
+        return collectionLists;
+    }
 
     @Override
     public Map<String, Object> pcCollectionsByDay(VoCollectionListReq listReq) {

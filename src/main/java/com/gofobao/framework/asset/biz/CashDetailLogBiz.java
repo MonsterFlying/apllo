@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Created by Administrator on 2017/6/12 0012.
@@ -66,6 +67,8 @@ public interface CashDetailLogBiz {
     ResponseEntity<VoCashLogWrapResp> log(Long userId, int pageIndex, int pageSize);
 
 
+
+
     /**
      * 提现详情
      * @param id
@@ -96,5 +99,12 @@ public interface CashDetailLogBiz {
      * @return
      */
     ResponseEntity<VoHtmlResp> adminWebCash(HttpServletRequest httpServletRequest, VoAdminCashReq voAdminCashReq) throws Exception;
+
+    /**
+     * PC 提现记录导出
+     * @param cashLogs
+     * @param response
+     */
+    void toExcel(VoPcCashLogs cashLogs, HttpServletResponse response);
 
 }

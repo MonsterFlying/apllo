@@ -6,9 +6,6 @@ import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.batch_credit_invest.*;
-import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
-import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
-import com.gofobao.framework.api.model.batch_details_query.DetailsQueryResp;
 import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyRequest;
 import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyResponse;
 import com.gofobao.framework.api.model.bid_cancel.BidCancelReq;
@@ -16,8 +13,6 @@ import com.gofobao.framework.api.model.bid_cancel.BidCancelResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
-import com.gofobao.framework.common.capital.CapitalChangeEntity;
-import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
@@ -25,7 +20,6 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
-import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
@@ -39,7 +33,6 @@ import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoThirdBatchCreditInvest;
-import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
@@ -54,7 +47,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.servlet.http.HttpServletRequest;
@@ -326,7 +318,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(acqResMap.get("borrowId")),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("borrowId")),
                         MqConfig.BATCH_NO, StringHelper.toString(creditInvestRunCall.getBatchNo()),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);

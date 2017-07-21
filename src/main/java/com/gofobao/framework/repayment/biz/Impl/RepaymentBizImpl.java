@@ -44,6 +44,8 @@ import com.gofobao.framework.common.data.DataObject;
 import com.gofobao.framework.common.data.LtSpecification;
 import com.gofobao.framework.common.integral.IntegralChangeEntity;
 import com.gofobao.framework.common.integral.IntegralChangeEnum;
+import com.gofobao.framework.common.jxl.ExcelException;
+import com.gofobao.framework.common.jxl.ExcelUtil;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -83,6 +85,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -99,6 +102,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -273,6 +277,25 @@ public class RepaymentBizImpl implements RepaymentBiz {
             e.printStackTrace();
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewOrderListWarpRes.class));
+        }
+    }
+
+    @Override
+    public void toExcel(HttpServletResponse response, VoOrderListReq listReq) {
+
+        List<VoOrdersList> ordersLists = borrowRepaymentService.toExcel(listReq);
+        if (!CollectionUtils.isEmpty(ordersLists)) {
+            LinkedHashMap<String, String> paramMaps = Maps.newLinkedHashMap();
+            paramMaps.put("time", "时间");
+            paramMaps.put("collectionMoney", "本息");
+            paramMaps.put("principal", "本金");
+            paramMaps.put("interest", "利息");
+            paramMaps.put("orderCount", "笔数");
+            try {
+                ExcelUtil.listToExcel(ordersLists, paramMaps, "还款计划", response);
+            } catch (ExcelException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -1482,7 +1505,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         thirdBatchLog.setBatchNo(batchNo);
         thirdBatchLog.setCreateAt(nowDate);
         thirdBatchLog.setUpdateAt(nowDate);
-        thirdBatchLog.setSourceId(borrowRepayment.getId());
+        thirdBatchLog.setSourceId(repaymentId);
         thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY);
         thirdBatchLog.setRemark("即信批次还款");
         thirdBatchLogService.save(thirdBatchLog);
@@ -1798,15 +1821,17 @@ public class RepaymentBizImpl implements RepaymentBiz {
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);
         Borrow borrow = borrowService.findById(borrowRepayment.getBorrowId());
         UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
-        Long borrowId = borrow.getId();//借款ID
 
         double txAmount = 0;
         for (BailRepay bailRepay : bailRepayList) {
             txAmount += NumberHelper.toDouble(bailRepay.getTxAmount());
         }
 
-
+        //批次号
         String batchNo = jixinHelper.getBatchNo();
+        //请求保留参数
+        Map<String, Object> acqResMap = new HashMap<>();
+        acqResMap.put("repaymentId", repaymentId);
 
         //====================================================================
         //冻结借款人账户资金
@@ -1831,7 +1856,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         request.setTxCounts(StringHelper.toString(bailRepayList.size()));
         request.setNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/bailrepay/check");
         request.setRetNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/bailrepay/run");
-        request.setAcqRes(StringHelper.toString(repaymentId));
+        request.setAcqRes(GSON.toJson(acqResMap));
         request.setSubPacks(GSON.toJson(bailRepayList));
         BatchBailRepayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_BAIL_REPAY, request, BatchBailRepayResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
@@ -1866,7 +1891,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
             return resp;
         }
         Long repaymentId = voAdvanceReq.getRepaymentId();
-        List<BailRepayRun> bailRepayRunList = voAdvanceReq.getBailRepayRunList();
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);
         Borrow borrow = borrowService.findById(borrowRepayment.getBorrowId());
 
@@ -1926,37 +1950,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
         borrowRepayment.setAdvanceMoneyYes((int) (repayMoney + lateInterest));
         borrowRepaymentService.updateById(borrowRepayment);
 
-        //存储即信授权码
-        List<String> orderList = new ArrayList<>();
-        for (BailRepayRun bailRepayRun : bailRepayRunList) {
-            orderList.add(bailRepayRun.getOrderId());
-        }
-
-        Specification<BorrowCollection> bcs = Specifications
-                .<BorrowCollection>and()
-                .eq("tBailRepayOrderId", orderList.toArray())
-                .build();
-
-        int pageIndex = 0;
-        int maxPageSize = 50;
-        Pageable pageable = null;
-        List<BorrowCollection> borrowCollectionList = null;
-        do {
-            pageable = new PageRequest(pageIndex++, maxPageSize, new Sort(Sort.Direction.ASC, "id"));
-            borrowCollectionList = borrowCollectionService.findList(bcs, pageable);
-            if (CollectionUtils.isEmpty(borrowCollectionList)) {
-                break;
-            }
-            for (BorrowCollection borrowCollection : borrowCollectionList) {
-                for (BailRepayRun bailRepayRun : bailRepayRunList) {
-                    if (borrowCollection.getTBailRepayOrderId().equals(bailRepayRun.getOrderId())) {
-                        borrowCollection.setTBailAuthCode(bailRepayRun.getAuthCode());
-                        break;
-                    }
-                }
-            }
-            borrowCollectionService.save(borrowCollectionList);
-        } while (borrowCollectionList.size() >= maxPageSize);
         return ResponseEntity.ok(VoBaseResp.ok("垫付成功!"));
     }
 

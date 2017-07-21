@@ -21,10 +21,7 @@ import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.service.NoticesService;
 import com.gofobao.framework.system.vo.request.VoNoticesReq;
 import com.gofobao.framework.system.vo.request.VoNoticesTranReq;
-import com.gofobao.framework.system.vo.response.UnReadMsgNumWarpRes;
-import com.gofobao.framework.system.vo.response.UserNotices;
-import com.gofobao.framework.system.vo.response.VoViewNoticesInfoWarpRes;
-import com.gofobao.framework.system.vo.response.VoViewUserNoticesWarpRes;
+import com.gofobao.framework.system.vo.response.*;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -61,7 +58,7 @@ public class NoticesBizImpl implements NoticesBiz {
     JPushClient jPushClient;
 
     @Value("${gofobao.dev}")
-    boolean dev ;
+    boolean dev;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -96,7 +93,7 @@ public class NoticesBizImpl implements NoticesBiz {
                     && (!StringUtils.isEmpty(users.getPushId()))
                     && (platforms.contains(users.getPlatform()))) {
                 PlatformNotification platformNotification;
-                String msg = HtmlHelper.filterHtml(notices.getContent()) ;
+                String msg = HtmlHelper.filterHtml(notices.getContent());
                 PushResult pushResult;
 
                 if (users.getPlatform().equals(1)) {
@@ -106,7 +103,7 @@ public class NoticesBizImpl implements NoticesBiz {
                             .addExtra("from", "广富宝金服")
                             .build();
 
-                    PushPayload payload  = PushPayload.newBuilder()
+                    PushPayload payload = PushPayload.newBuilder()
                             .setPlatform(users.getPlatform().equals(1) ? Platform.android() : Platform.ios())
                             .setAudience(Audience.newBuilder()
                                     .addAudienceTarget(AudienceTarget.alias(users.getPushId()))
@@ -124,7 +121,7 @@ public class NoticesBizImpl implements NoticesBiz {
                             .addExtra("from", "广富宝金服")
                             .build();
 
-                    PushPayload payload  = PushPayload.newBuilder()
+                    PushPayload payload = PushPayload.newBuilder()
                             .setPlatform(users.getPlatform().equals(1) ? Platform.android() : Platform.ios())
                             .setAudience(Audience.newBuilder()
                                     .addAudienceTarget(AudienceTarget.alias(users.getPushId()))
@@ -142,7 +139,7 @@ public class NoticesBizImpl implements NoticesBiz {
 
                 log.info(String.format("极光发送结果: %s", new Gson().toJson(pushResult)));
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             log.error("极光推送发送失败", e);
         }
 
@@ -192,16 +189,20 @@ public class NoticesBizImpl implements NoticesBiz {
 
             voNoticesTranReq.setUserId(voNoticesReq.getUserId());
             voNoticesTranReq.setNoticesIds(Lists.newArrayList(voNoticesReq.getId()));
-            Boolean falg = noticesService.update(voNoticesTranReq);
-            if (!falg) {
-                return ResponseEntity.badRequest()
-                        .body(
-                                VoBaseResp.error(
-                                        VoBaseResp.ERROR,
-                                        "查询失败",
-                                        VoViewNoticesInfoWarpRes.class));
+            NoticesInfo noticesInfo = noticesService.info(voNoticesReq);
+            if (!noticesInfo.getRead()) {
+                Boolean falg = noticesService.update(voNoticesTranReq);
+                if (!falg) {
+                    return ResponseEntity.badRequest()
+                            .body(
+                                    VoBaseResp.error(
+                                            VoBaseResp.ERROR,
+                                            "查询失败",
+                                            VoViewNoticesInfoWarpRes.class));
+                }
             }
-            warpRes.setNoticesInfo(noticesService.info(voNoticesReq));
+
+            warpRes.setNoticesInfo(noticesInfo);
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {
             return ResponseEntity.badRequest()

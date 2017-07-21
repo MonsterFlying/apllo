@@ -1,5 +1,7 @@
 package com.gofobao.framework.member.biz.impl;
 
+import com.gofobao.framework.common.jxl.ExcelException;
+import com.gofobao.framework.common.jxl.ExcelUtil;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.member.biz.BrokerBounsBiz;
@@ -12,13 +14,17 @@ import com.gofobao.framework.member.vo.response.*;
 import com.gofobao.framework.member.vo.response.pc.PcInviteFriends;
 import com.gofobao.framework.member.vo.response.pc.VoViewBrokerBounsWarpRes;
 import com.gofobao.framework.member.vo.response.pc.VoViewInviteFriendsWarpRes;
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -133,6 +139,7 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
 
     /**
      * PC
+     *
      * @param voFriendsTenderReq
      * @return
      */
@@ -150,5 +157,25 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询异常", VoViewBrokerBounsWarpRes.class));
         }
+    }
+
+    @Override
+    public void toExcel(VoFriendsTenderReq friendsTenderReq, HttpServletResponse response) {
+        Map<String, Object> resultMaps = inviteFriendsService.pcBrokerBounsList(friendsTenderReq);
+        List<InviteFriends> friendsList = (List<InviteFriends>) resultMaps.get("bounsList");
+        if (!CollectionUtils.isEmpty(friendsList)) {
+            LinkedHashMap<String, String> paramMaps = Maps.newLinkedHashMap();
+            paramMaps.put("createdAt", "时间");
+            paramMaps.put("leave", "等级");
+            paramMaps.put("scale", "奖励年利率");
+            paramMaps.put("money", "提成奖励");
+            paramMaps.put("waitPrincipalTotal", "计算提成的总待收本金");
+            try {
+                ExcelUtil.listToExcel(friendsList, paramMaps, "邀请好友", response);
+            } catch (ExcelException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 }

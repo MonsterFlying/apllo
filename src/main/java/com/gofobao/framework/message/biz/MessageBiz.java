@@ -91,4 +91,8 @@ public interface MessageBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> openAccount(Long userId, VoAnonSmsReq voAnonSmsReq);
+
+
+    ResponseEntity<VoBaseResp>changeEmail(HttpServletRequest request, VoAnonEmailReq voAnonEmailReq, Long userId);
+
 }

@@ -85,6 +85,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static com.gofobao.framework.helper.project.UserHelper.getAssetTypeStr;
+
 /**
  * Created by Zeke on 2017/5/19.
  */
@@ -814,19 +816,29 @@ public class AssetBizImpl implements AssetBiz {
     @Override
     public void pcToExcel(VoAssetLogReq voAssetLogReq,HttpServletResponse response) {
         List<AssetLog>assetLogs=assetLogService.pcToExcel(voAssetLogReq);
+
+        List<AssetLogs>assetLogsList=new ArrayList<>(assetLogs.size());
         if(!CollectionUtils.isEmpty(assetLogs)){
+            assetLogs.stream().forEach(p->{
+                AssetLogs assetLog=new AssetLogs();
+                assetLog.setOperationMoney(StringHelper.formatMon(p.getMoney() / 100D));
+                assetLog.setRemark(p.getRemark());
+                assetLog.setTime(DateHelper.dateToString(p.getCreatedAt()));
+                assetLog.setTypeName(getAssetTypeStr(p.getType()));
+                assetLog.setUsableMoney(StringHelper.formatMon(p.getUseMoney() / 100D));
+                assetLogsList.add(assetLog);
+            });
             LinkedHashMap<String,String>paramMaps= Maps.newLinkedHashMap();
-            paramMaps.put("createdAt","时间");
-            paramMaps.put("type","交易类型");
-            paramMaps.put("money","操作金额（分）");
-            paramMaps.put("useMoney","可用金额（分）");
+            paramMaps.put("time","时间");
+            paramMaps.put("typeName","交易类型");
+            paramMaps.put("operationMoney","操作金额（分）");
+            paramMaps.put("usableMoney","可用金额（分）");
             paramMaps.put("remark","备注");
             try {
-                ExcelUtil.listToExcel(assetLogs,paramMaps,"资金流水",response);
+                ExcelUtil.listToExcel(assetLogsList,paramMaps,"资金流水",response);
             } catch (ExcelException e) {
                 e.printStackTrace();
             }
-
         }
     }
 

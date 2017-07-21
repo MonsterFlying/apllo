@@ -54,9 +54,5 @@ private AssetLogRepository assetRepository;
                                             @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voAssetLogReq.setUserId(userId);
         assetBiz.pcToExcel(voAssetLogReq,response);
-
     }
-
-
-
 }

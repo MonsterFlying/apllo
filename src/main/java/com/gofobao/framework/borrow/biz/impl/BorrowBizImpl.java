@@ -256,7 +256,7 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setTenderCount(borrow.getTenderCount() + BorrowContants.TIME);
             borrowInfoRes.setMoney(StringHelper.formatMon(borrow.getMoney() / 100d));
             borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
-            borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes() / borrow.getMoney().doubleValue())));
+            borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatDouble(borrow.getMoneyYes() / borrow.getMoney().doubleValue(),false)));
             //结束时间
             Date endAt = DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);
             borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
@@ -264,14 +264,14 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setSurplusSecond(-1L);
             //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
             Integer status = borrow.getStatus();
-            Date nowDate = new Date();
+            Date nowDate = new Date(System.currentTimeMillis());
             Date releaseAt = borrow.getReleaseAt();  //发布时间
 
             if (status == BorrowContants.BIDDING) {//招标中
                 //待发布
                 if (releaseAt.getTime() >= nowDate.getTime()) {
                     status = 1;
-                    borrowInfoRes.setSurplusSecond((releaseAt.getTime() - nowDate.getTime()) / 1000 + 5);
+                    borrowInfoRes.setSurplusSecond(((releaseAt.getTime() - nowDate.getTime()) / 1000 )+ 5);
                 } else if (nowDate.getTime() > endAt.getTime()) {  //当前时间大于招标有效时间
                     status = 5; //已过期
                 } else {
