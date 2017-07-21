@@ -6,6 +6,7 @@ import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.request.VoPcRechargeReq;
 import com.gofobao.framework.asset.vo.request.VoRechargeReq;
 import com.gofobao.framework.asset.vo.response.VoPreRechargeResp;
+import com.gofobao.framework.asset.vo.response.VoRechargeBankInfoResp;
 import com.gofobao.framework.asset.vo.response.pc.VoViewRechargeWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
@@ -67,6 +68,13 @@ public class WebRechargeController {
                                   @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         rechargeReq.setUserId(userId);
         rechargeLogsBiz.pcToExcel(rechargeReq,response);
+    }
+
+
+    @ApiOperation("获取转账的银行账户信息")
+    @GetMapping("/asset/recharge/pc/V2/bankAccount")
+    public ResponseEntity<VoRechargeBankInfoResp> bankAccount(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+        return assetBiz.bankAcount(userId) ;
     }
 
 }
