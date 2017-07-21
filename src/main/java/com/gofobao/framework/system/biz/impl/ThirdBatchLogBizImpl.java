@@ -5,6 +5,7 @@ import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.batch_credit_end.CreditEnd;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
 import com.gofobao.framework.asset.entity.AdvanceLog;
@@ -13,12 +14,17 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.data.LtSpecification;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.JixinHelper;
+import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
+import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.service.TenderService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -48,6 +54,8 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
     private BorrowRepaymentService borrowRepaymentService;
     @Autowired
     private AdvanceLogService advanceLogService;
+    @Autowired
+    private TenderService tenderService;
 
     /**
      * 更新批次日志状态
@@ -186,6 +194,13 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
                     return true;
                 }
                 break;
+            case ThirdBatchLogContants.BATCH_CREDIT_END:
+                //判断借款是否存在失败批次
+                boolean flag = existFailureCreditEnd(NumberHelper.toLong(sourceId));
+                if (!flag) {
+                    return true;
+                }
+                break;
             case ThirdBatchLogContants.BATCH_REPAY_ALL: //提前结清批次还款
                 bs = Specifications
                         .<Borrow>and()
@@ -205,5 +220,32 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
 
         }
         return false;
+    }
+
+    /**
+     * 判断借款是否存在失败批次
+     *
+     * @param borrowId
+     * @return
+     */
+    private boolean existFailureCreditEnd(long borrowId) {
+        Specification<Tender> ts = Specifications
+                .<Tender>and()
+                .eq("borrowId", borrowId)
+                .eq("status", 1)
+                .build();
+        List<Tender> tenderList = tenderService.findList(ts);
+        if (CollectionUtils.isEmpty(tenderList)) {
+            log.info("creditProvider buildCreditEndList: 借款" + borrowId + " 未找到投递成功债权！");
+        }
+
+        //筛选出已转让的投资记录
+        tenderList.stream().filter(p -> p.getTransferFlag() == 2).forEach(tender -> {
+            existFailureCreditEnd(tender.getBorrowId());
+        });
+
+        //判断投标记录里是否存在批次结束债权失败记录
+        return tenderList.stream().filter(tender -> !tender.getThirdCreditEndFlag()).count() > 0;
+
     }
 }

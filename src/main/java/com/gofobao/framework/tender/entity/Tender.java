@@ -76,4 +76,8 @@ public class Tender {
      * 是否在存管进行登记 0否 1.是否
      */
     private Boolean isThirdRegister;
+    /**
+     * 当前投标记录在是否结束存管债权
+     */
+    private Boolean thirdCreditEndFlag;
 }

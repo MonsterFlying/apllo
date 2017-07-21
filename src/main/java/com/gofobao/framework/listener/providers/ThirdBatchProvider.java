@@ -186,9 +186,15 @@ public class ThirdBatchProvider {
                 repayBailDeal(acqRes, failureOrderIds, successOrderIds);
                 break;
             case ThirdBatchLogContants.BATCH_CREDIT_END: //批次结束债权
-
+                //=====================================================
+                // 批次结束债权
+                //=====================================================
+                creditEndDeal(sourceId, failureOrderIds, successOrderIds);
                 break;
             case ThirdBatchLogContants.BATCH_REPAY_ALL: //提前结清批次还款
+                //======================================================
+                //提前结清批次还款
+                //======================================================
                 repayAllDeal(sourceId, failureOrderIds, successOrderIds);
                 break;
             default:
@@ -197,7 +203,14 @@ public class ThirdBatchProvider {
         return false;
     }
 
-    private void creditEndDeal() {
+    /**
+     * 批次结束债权处理
+     *
+     * @param borrowId
+     * @param failureThirdCreditEndOrderIds
+     * @param successThirdCreditEndOrderIds
+     */
+    private void creditEndDeal(Long borrowId, List<String> failureThirdCreditEndOrderIds, List<String> successThirdCreditEndOrderIds) {
 
     }
 
