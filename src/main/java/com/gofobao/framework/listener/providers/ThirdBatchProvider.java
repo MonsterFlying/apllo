@@ -189,12 +189,16 @@ public class ThirdBatchProvider {
 
                 break;
             case ThirdBatchLogContants.BATCH_REPAY_ALL: //提前结清批次还款
-                repayAll(sourceId, failureOrderIds, successOrderIds);
+                repayAllDeal(sourceId, failureOrderIds, successOrderIds);
                 break;
             default:
         }
 
         return false;
+    }
+
+    private void creditEndDeal() {
+
     }
 
     /**
@@ -204,7 +208,7 @@ public class ThirdBatchProvider {
      * @param failureTRepayAllOrderIds
      * @param successTRepayAllOrderIds
      */
-    private void repayAll(Long borrowId, List<String> failureTRepayAllOrderIds, List<String> successTRepayAllOrderIds) {
+    private void repayAllDeal(Long borrowId, List<String> failureTRepayAllOrderIds, List<String> successTRepayAllOrderIds) {
         if (CollectionUtils.isEmpty(failureTRepayAllOrderIds)) {
             log.info("================================================================================");
             log.info("即信批次还款查询：查询未发现失败批次！");
