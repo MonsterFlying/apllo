@@ -326,7 +326,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             log.info(String.format("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq %s", GSON.toJson(body)));
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
-            log.error("borrowProvider autoTender send mq exception", e);
+            log.error("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq exception", e);
         }
 
         return ResponseEntity.ok("success");
@@ -436,23 +436,26 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         BatchCreditInvestRunCall creditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
         });
 
-        boolean bool = true;
         if (ObjectUtils.isEmpty(creditInvestRunCall)) {
+            log.error("======================================运行回调========================================");
             log.error("=============================投资人批次结束债权业务运行回调===========================");
             log.error("请求体为空!");
-            bool = false;
+            log.error("======================================================================================");
+            log.error("======================================================================================");
         }
 
         if (!JixinResultContants.SUCCESS.equals(creditInvestRunCall.getRetCode())) {
+            log.error("======================================运行回调========================================");
             log.error("=============================投资人批次结束债权业务运行回调===========================");
             log.error("回调失败! msg:" + creditInvestRunCall.getRetMsg());
-            bool = false;
-        }
-
-        if (bool) {
-            log.info("投资人批次结束债权成功!");
-        } else {
-            log.info("投资人批次结束债权失败!");
+            log.error("======================================================================================");
+            log.error("======================================================================================");
+        }else {
+            log.error("======================================运行回调========================================");
+            log.error("=============================投资人批次结束债权业务运行回调===========================");
+            log.error("回调成功!");
+            log.error("======================================================================================");
+            log.error("======================================================================================");
         }
 
         try {

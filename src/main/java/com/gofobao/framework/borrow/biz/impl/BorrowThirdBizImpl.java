@@ -359,20 +359,20 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "结清总共需要还款 " + repayMoney + " 元，您的账户余额不足，请先充值!！"));
         }
 
-        List<Repay> tempRepayList = new ArrayList<>(); // 往后每期未还回款集合
+        List<Repay> repayList = new ArrayList<>(); // 往后每期未还回款集合
         for (VoThirdBatchRepay tempVoRepayReq : voThirdBatchRepayList) {
-            tempRepayList.addAll(borrowRepaymentThirdBiz.getRepayList(tempVoRepayReq));
+            repayList.addAll(borrowRepaymentThirdBiz.getRepayList(tempVoRepayReq));
         }
 
-        if (CollectionUtils.isEmpty(tempRepayList)) {
+        if (CollectionUtils.isEmpty(repayList)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "还款不存在"));
         }
 
         double sumTxAmount = 0;
-        double partPenalty = penalty / tempRepayList.size();
-        for (Repay tempRepay : tempRepayList) {
+        double partPenalty = penalty / repayList.size();
+        for (Repay tempRepay : repayList) {
             //给每期回款分摊违约金
             tempRepay.setTxFeeOut(StringHelper.formatDouble(NumberHelper.toDouble(tempRepay.getTxFeeOut()) + partPenalty / 100.0, false));
             sumTxAmount += NumberHelper.toDouble(tempRepay.getTxAmount());
@@ -404,9 +404,9 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         request.setRetNotifyURL(javaDomain + "/pub/borrow/v2/third/repayall/run");
         request.setNotifyURL(javaDomain + "/pub/borrow/v2/third/repayall/check");
         request.setAcqRes(GSON.toJson(acqResMap));
-        request.setSubPacks(GSON.toJson(tempRepayList));
+        request.setSubPacks(GSON.toJson(repayList));
         request.setChannel(ChannelContant.HTML);
-        request.setTxCounts(StringHelper.toString(tempRepayList.size()));
+        request.setTxCounts(StringHelper.toString(repayList.size()));
         BatchRepayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_REPAY, request, BatchRepayResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
             throw new Exception("即信批次还款失败：" + response.getRetMsg());
@@ -495,37 +495,12 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
                 .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(acqResMap.get("borrowId")), MqConfig.BATCH_NO, StringHelper.toString(repayRunResp.getBatchNo()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
         try {
-            log.info(String.format("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq %s", GSON.toJson(body)));
+            log.info(String.format("tenderThirdBizImpl thirdBatchRepayAllRunCall send mq %s", GSON.toJson(body)));
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
-            log.error("borrowProvider autoTender send mq exception", e);
+            log.error("tenderThirdBizImpl thirdBatchRepayAllRunCall send mq exception", e);
         }
 
-
-        int num = NumberHelper.toInt(repayRunResp.getFailCounts());
-        if (num > 0) {
-            log.error("=============================即信批次还款处理结果回调===========================");
-            log.error("即信批次还款处理失败! 一共:" + num + "笔");
-            bool = false;
-        }
-
-        if (bool) {
-            ResponseEntity<VoBaseResp> resp = null;
-            try {
-                Long borrowId = NumberHelper.toLong(repayRunResp.getAcqRes());
-                //提前结清操作
-                VoRepayAll voRepayAll = new VoRepayAll();
-                voRepayAll.setBorrowId(borrowId);
-                borrowBiz.repayAll(voRepayAll);
-            } catch (Throwable e) {
-                log.error("提前结清异常:", e);
-            }
-            if (ObjectUtils.isEmpty(resp)) {
-                log.info("提前结清成功!");
-            }
-        } else {
-            log.info("提前结清失败!");
-        }
         return ResponseEntity.ok("success");
     }
 

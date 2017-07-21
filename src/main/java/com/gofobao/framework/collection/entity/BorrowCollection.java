@@ -120,5 +120,7 @@ public class BorrowCollection {
 
     private Boolean thirdRepayFlag;
 
-    private Boolean thirdRepayBailFlag;
+    private Boolean thirdRepayBailFlag; //第三方是否借款人还担保人 0否 1是
+
+    private Boolean thirdBailRepayFlag; //第三方是否登记担保人垫付 0否 1是
 }

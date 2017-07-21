@@ -12,6 +12,7 @@ import com.gofobao.framework.api.model.batch_details_query.DetailsQueryResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.borrow.vo.request.VoRepayAll;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
@@ -185,11 +186,22 @@ public class ThirdBatchProvider {
                 bailRepayDeal(sourceId, failureOrderIds, successOrderIds);
                 break;
             case ThirdBatchLogContants.BATCH_REPAY_BAIL: //批次融资人还担保账户垫款
-                //setTRepayBailOrderId
-
+                //=====================================================
+                // 即信批次融资人还担保账户垫款处理
+                //=====================================================
+                repayBailDeal(acqRes, failureOrderIds, successOrderIds);
+                break;
+            case ThirdBatchLogContants.BATCH_CREDIT_END: //批次结束债权
+                //=====================================================
+                // 批次结束债权
+                //=====================================================
+                creditEndDeal(sourceId, failureOrderIds, successOrderIds);
                 break;
             case ThirdBatchLogContants.BATCH_REPAY_ALL: //提前结清批次还款
-
+                //======================================================
+                //提前结清批次还款
+                //======================================================
+                repayAllDeal(sourceId, failureOrderIds, successOrderIds);
                 break;
             default:
         }
@@ -198,13 +210,111 @@ public class ThirdBatchProvider {
     }
 
     /**
-     * 批次借款人还代偿处理
+     * 批次结束债权处理
+     *
      * @param borrowId
+     * @param failureThirdCreditEndOrderIds
+     * @param successThirdCreditEndOrderIds
+     */
+    private void creditEndDeal(Long borrowId, List<String> failureThirdCreditEndOrderIds, List<String> successThirdCreditEndOrderIds) {
+
+    }
+
+    /**
+     * 批次借款人还代偿处理
+     *
+     * @param borrowId
+     * @param failureTRepayAllOrderIds
+     * @param successTRepayAllOrderIds
+     */
+    private void repayAllDeal(Long borrowId, List<String> failureTRepayAllOrderIds, List<String> successTRepayAllOrderIds) {
+        if (CollectionUtils.isEmpty(failureTRepayAllOrderIds)) {
+            log.info("================================================================================");
+            log.info("即信批次还款查询：查询未发现失败批次！");
+            log.info("================================================================================");
+        }
+
+        //登记成功批次
+        Specification<BorrowCollection> bcs = null;
+        if (!CollectionUtils.isEmpty(successTRepayAllOrderIds)) {
+            bcs = Specifications
+                    .<BorrowCollection>and()
+                    .in("tRepayOrderId", successTRepayAllOrderIds.toArray())
+                    .build();
+            List<BorrowCollection> successBorrowCollectionList = borrowCollectionService.findList(bcs);
+            successBorrowCollectionList.stream().forEach(collection -> {
+                collection.setThirdRepayFlag(true);
+            });
+            borrowCollectionService.save(successBorrowCollectionList);
+        }
+
+        //处理失败批次
+        if (!CollectionUtils.isEmpty(failureTRepayAllOrderIds)) { //不处理失败！
+            /**
+             * @// TODO: 2017/7/20 每五分钟处理一次  处理5次
+             */
+        }
+
+        //==================================================================
+        // 批次还款处理(提前结清)
+        //==================================================================
+        if (CollectionUtils.isEmpty(failureTRepayAllOrderIds)) {
+            //提前结清操作
+            VoRepayAll voRepayAll = new VoRepayAll();
+            voRepayAll.setBorrowId(borrowId);
+            borrowBiz.repayAll(voRepayAll);
+        }
+    }
+
+    /**
+     * 批次融资人还担保账户垫款
+     *
+     * @param acqRes
      * @param failureTRepayBailOrderIds
      * @param successTRepayBailOrderIds
      */
-    private void repayAll(Long borrowId, List<String> failureTRepayBailOrderIds, List<String> successTRepayBailOrderIds) {
+    private void repayBailDeal(String acqRes, List<String> failureTRepayBailOrderIds, List<String> successTRepayBailOrderIds) {
+        if (CollectionUtils.isEmpty(failureTRepayBailOrderIds)) {
+            log.info("================================================================================");
+            log.info("即信批次还款查询：查询未发现失败批次！");
+            log.info("================================================================================");
+        }
 
+        //登记成功批次
+        if (!CollectionUtils.isEmpty(successTRepayBailOrderIds)) {
+            Specification<BorrowCollection> bcs = Specifications
+                    .<BorrowCollection>and()
+                    .in("tRepayBailOrderId", successTRepayBailOrderIds.toArray())
+                    .build();
+            List<BorrowCollection> successBorrowCollectionList = borrowCollectionService.findList(bcs);
+            successBorrowCollectionList.stream().forEach(borrowCollection -> {
+                borrowCollection.setThirdRepayBailFlag(true);
+            });
+            borrowCollectionService.save(successBorrowCollectionList);
+        }
+
+        //处理失败批次
+        if (!CollectionUtils.isEmpty(failureTRepayBailOrderIds)) { //不处理失败！
+            /**
+             * @// TODO: 2017/7/20 每五分钟处理一次  处理5次
+             */
+        }
+
+        //==================================================================
+        // 批次还款处理
+        //==================================================================
+        if (CollectionUtils.isEmpty(failureTRepayBailOrderIds)) {
+            VoRepayReq voRepayReq = GSON.fromJson(acqRes, new TypeToken<VoRepayReq>() {
+            }.getType());
+            try {
+                ResponseEntity<VoBaseResp> resp = repaymentBiz.repayDeal(voRepayReq);
+                if (!ObjectUtils.isEmpty(resp)) {
+                    log.error("批次融资人还担保账户垫款：" + resp.getBody().getState().getMsg());
+                }
+            } catch (Exception e) {
+                log.error("ThirdBatchProvider repayBailDeal error:", e);
+            }
+        }
     }
 
     /**
@@ -215,7 +325,6 @@ public class ThirdBatchProvider {
      * @param successTBailRepayOrderIds
      */
     private void bailRepayDeal(Long repaymentId, List<String> failureTBailRepayOrderIds, List<String> successTBailRepayOrderIds) throws Exception {
-
         if (CollectionUtils.isEmpty(failureTBailRepayOrderIds)) {
             log.info("================================================================================");
             log.info("即信批次还款查询：查询未发现失败批次！");
@@ -248,7 +357,10 @@ public class ThirdBatchProvider {
         if (CollectionUtils.isEmpty(failureTBailRepayOrderIds)) {
             VoAdvanceCall voAdvanceCall = new VoAdvanceCall();
             voAdvanceCall.setRepaymentId(repaymentId);
-            repaymentBiz.advanceDeal(voAdvanceCall);
+            ResponseEntity<VoBaseResp> resp = repaymentBiz.advanceDeal(voAdvanceCall);
+            if (!ObjectUtils.isEmpty(resp)) {
+                log.error("批次担保人代偿操作：" + resp.getBody().getState().getMsg());
+            }
         }
     }
 
@@ -288,12 +400,15 @@ public class ThirdBatchProvider {
         }
 
         //==================================================================
-        // 提前结清操作
+        // 批次还款处理
         //==================================================================
         if (CollectionUtils.isEmpty(failureTRepayOrderIds)) {
             VoRepayReq voRepayReq = GSON.fromJson(acqRes, new TypeToken<VoRepayReq>() {
             }.getType());
-            repaymentBiz.repayDeal(voRepayReq);
+            ResponseEntity<VoBaseResp> resp = repaymentBiz.repayDeal(voRepayReq);
+            if (!ObjectUtils.isEmpty(resp)) {
+                log.error("批次还款处理:" + resp.getBody().getState().getMsg());
+            }
         }
     }
 
