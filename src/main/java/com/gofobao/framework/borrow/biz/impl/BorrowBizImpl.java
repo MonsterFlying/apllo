@@ -826,7 +826,6 @@ public class BorrowBizImpl implements BorrowBiz {
      */
     @Transactional(rollbackFor = Throwable.class)
     public boolean notTransferBorrowAgainVerify(Borrow borrow) throws Exception {
-
         if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1)
                 || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
             return false;
@@ -835,19 +834,43 @@ public class BorrowBizImpl implements BorrowBiz {
         Date nowDate = new Date();
         // 生成还款记录
         disposeBorrowRepay(borrow, nowDate);
-        //生成回款记录
-        boolean generateState = disposeBorrowCollection(borrow, nowDate);
-        if (!generateState) {
-            return false;
-        }
+
+        //查询当前借款的所有 状态为1的 tender记录
+        Specification<Tender> ts = Specifications.<Tender>and()
+                .eq("borrowId", borrow.getId())
+                .eq("status", 1)
+                .build();
+        List<Tender> tenderList = tenderService.findList(ts);
+        Preconditions.checkNotNull(tenderList, "生成还款记录: 投标记录为空");
+
+        // 这里涉及用户投标回款计划生成和平台资金的变动
+        generateBorrowCollectionAndAssetChange(borrow, tenderList, nowDate);
+
+        // 标的自身设置奖励信息:进行存管红包发放
+        awardUserByBorrowTender(borrow, tenderList);
+
+        // 发送投资成功站内信
+        sendNoticsByTender(borrow, tenderList);
+
+        // 用户投标信息和每日统计
+        userTenderStatistic(borrow, tenderList, nowDate);
+
+        // 借款人资金变动
+        processBorrowAssetChange(borrow, tenderList, nowDate) ;
+
+        // 满标操作
+        finishBorrow(borrow, tenderList) ;
 
         // 复审事件
         //如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
         updateUserCacheByBorrowReview(borrow);
+
         //更新网站统计
         updateStatisticByBorrowReview(borrow);
+
         //借款成功发送通知短信
         smsNoticeByBorrowReview(borrow);
+
         //发送借款协议
         sendBorrowProtocol(borrow);
         return true;
@@ -908,6 +931,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 .build();
         List<Tender> tenderList = tenderService.findList(ts);
         Preconditions.checkNotNull(tenderList, "生成还款记录: 投标记录为空");
+
         // 这里涉及用户投标回款计划生成和平台资金的变动
         generateBorrowCollectionAndAssetChange(borrow, tenderList, oldBorrowCollections.get(0).getStartAt());
         // 标的自身设置奖励信息:进行存管红包发放
@@ -920,6 +944,7 @@ public class BorrowBizImpl implements BorrowBiz {
         processBorrowAssetChange(borrow, tenderList, oldBorrowCollections.get(0).getStartAt()) ;
         // 满标操作
         finishBorrow(borrow, tenderList) ;
+        // 复审事件
         //如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
         updateUserCacheByBorrowReview(borrow);
         //更新全网网站统计
@@ -929,6 +954,7 @@ public class BorrowBizImpl implements BorrowBiz {
         //发送借款协议
         sendBorrowProtocol(borrow);
         return true;
+
     }
 
     /**

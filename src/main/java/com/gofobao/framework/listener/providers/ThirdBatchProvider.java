@@ -15,6 +15,7 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoRepayAll;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
+import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
@@ -420,12 +421,6 @@ public class ThirdBatchProvider {
      */
     private void lendRepayDeal(Long borrowId, List<String> failureThirdLendPayOrderIds, List<String> successThirdLendPayOrderIds) throws Exception {
         Date nowDate = new Date();
-        if (CollectionUtils.isEmpty(failureThirdLendPayOrderIds)) {
-            log.info("================================================================================");
-            log.info("即信批次放款查询：查询未发现失败批次！");
-            log.info("================================================================================");
-        }
-
         // 当明细中存在批量放款成功是
         // 直接更改记录为存款放款成功
         if (!CollectionUtils.isEmpty(successThirdLendPayOrderIds)) {
@@ -434,21 +429,22 @@ public class ThirdBatchProvider {
                     .in("thirdLendPayOrderId", successThirdLendPayOrderIds.toArray())
                     .build();
             List<Tender> successTenderList = tenderService.findList(ts);
+            Preconditions.checkNotNull(successTenderList, "正常批次放款回调: 查询成功投标记录为空") ;
             successTenderList.stream().forEach(tender -> {
                 tender.setThirdTenderFlag(true);
             });
             tenderService.save(successTenderList);
         }
 
-        boolean success = true;
+
         // 对于失败的债权, 先查询失败的标的ID
         if (!CollectionUtils.isEmpty(failureThirdLendPayOrderIds)) {
-            success = false;
             Specification<Tender> ts = Specifications
                     .<Tender>and()
                     .in("thirdLendPayOrderId", failureThirdLendPayOrderIds.toArray())
                     .build();
             List<Tender> failureTenderList = tenderService.findList(ts);
+            Preconditions.checkNotNull(failureTenderList, "正常批次放款回调: 查询失败投标记录为空") ;
             Map<Long, List<Tender>> borrowIdAndTenderMap = failureTenderList.stream().collect(Collectors.groupingBy(Tender::getBorrowId));
             Set<Long> borrowIdSet = borrowIdAndTenderMap.keySet();
             Specification<Borrow> bs = Specifications
@@ -459,9 +455,9 @@ public class ThirdBatchProvider {
 
             // 对于失败的投标记录做以下操作
             // 1. 改变投标记录为失败
-            // 2.解除资金冻结
-            // 3.解除即信投标申请
-            // 4.将标的改为可投状态, 减去投标金额
+            // 2. 解除资金冻结
+            // 3. 解除即信投标申请
+            // 4. 将标的改为可投状态, 减去投标金额
             for (Borrow borrow : failureBorrowList) {
                 List<Tender> tenders = borrowIdAndTenderMap.get(borrow.getId());
                 Long failureAmount = tenders.stream().mapToLong(t -> t.getValidMoney()).sum();  // 投标失败金额
@@ -485,18 +481,56 @@ public class ThirdBatchProvider {
                     entity.setRemark("借款 [" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "] 投标与存管通信失败，解除冻结资金。");
                     capitalChangeHelper.capitalChange(entity);
                 }
+
+                // 发送取消债权通知
+                sendCancelTender(nowDate, borrow, tenders);
                 borrow.setTenderCount(borrow.getTenderCount() - failureNum.intValue());
                 borrow.setMoneyYes(borrow.getMoneyYes() - failureAmount.intValue());
+                borrow.setUpdatedAt(nowDate);
             }
             borrowService.save(failureBorrowList);
         }
 
-        if (success) {
+        if (CollectionUtils.isEmpty(failureThirdLendPayOrderIds)) {
             Borrow borrow = borrowService.findById(borrowId);
+            log.info( String.format("正常标的放款回调: %s", gson.toJson(borrow)));
             borrowBiz.notTransferBorrowAgainVerify(borrow);
         } else {
             log.info("非流转标复审失败!");
         }
+    }
+
+    /**
+     *  即信验证投标失败, 取消投标记录. 发送站内信
+     * @param nowDate
+     * @param borrow
+     * @param tenders
+     */
+    private void sendCancelTender(Date nowDate, Borrow borrow, List<Tender> tenders) {
+        Set<Long> userIdSet = tenders.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet());
+        String content = String.format("你所投资的借款[ %s ] 与存管通讯失败, 在 %s 已取消", BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()), DateHelper.nextDate(nowDate));
+        userIdSet.forEach(userid -> {
+            Notices notices = new Notices();
+            notices.setFromUserId(1L);
+            notices.setUserId(userid);
+            notices.setRead(false);
+            notices.setName("投资的借款失败");
+            notices.setContent(content);
+            notices.setType("system");
+            notices.setCreatedAt(nowDate);
+            notices.setUpdatedAt(nowDate);
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
+            mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
+            Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("ThirdBatchProvider creditInvestDeal send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("ThirdBatchProvider creditInvestDeal send mq exception", e);
+            }
+        });
     }
 
     /**
@@ -557,38 +591,13 @@ public class ThirdBatchProvider {
                     capitalChangeHelper.capitalChange(entity);
                 }
 
-
                 // 发送取消债权通知
-                Set<Long> userIdSet = tenders.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet());
-                String content = String.format("你所投资的借款[ %s ] 与存管通讯失败, 在 %s 已取消", BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()), DateHelper.nextDate(nowDate));
-                userIdSet.forEach(userid -> {
-                    Notices notices = new Notices();
-                    notices.setFromUserId(1L);
-                    notices.setUserId(userid);
-                    notices.setRead(false);
-                    notices.setName("投资的借款失败");
-                    notices.setContent(content);
-                    notices.setType("system");
-                    notices.setCreatedAt(nowDate);
-                    notices.setUpdatedAt(nowDate);
-                    MqConfig mqConfig = new MqConfig();
-                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
-                    mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
-                    Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
-                    mqConfig.setMsg(body);
-                    try {
-                        log.info(String.format("ThirdBatchProvider creditInvestDeal send mq %s", GSON.toJson(body)));
-                        mqHelper.convertAndSend(mqConfig);
-                    } catch (Throwable e) {
-                        log.error("ThirdBatchProvider creditInvestDeal send mq exception", e);
-                    }
-                });
+                sendCancelTender(nowDate, borrow, tenders);
 
                 borrow.setTenderCount(borrow.getTenderCount() - tenders.size());
                 int sum = tenders.stream().mapToInt(tender -> tender.getValidMoney()).sum();  // 取消的总总债权
                 borrow.setMoneyYes(borrow.getMoneyYes() - sum);
                 borrow.setUpdatedAt(nowDate);
-                borrow.setSuccessAt(null);
             }
 
             borrowService.save(borrowList);
