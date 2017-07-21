@@ -33,21 +33,24 @@ public class ThirdBatchListener {
 
     @RabbitHandler
     public void process(String message) {
-        Map<String, Object> body = null;
-        String tag = null;
-        Map<String, String> msg = null;
-
+        log.info(String.format("即信批处理消息队列处理开始: %s", message));
         Preconditions.checkNotNull(message, "BorrowListener process message is empty");
-        body = gson.fromJson(message, TypeTokenContants.MAP_TOKEN);
+        Map<String, Object> body = gson.fromJson(message, TypeTokenContants.MAP_TOKEN);
         Preconditions.checkNotNull(body.get(MqConfig.MSG_TAG), "BorrowListener process tag is empty ");
         Preconditions.checkNotNull(body.get(MqConfig.MSG_BODY), "BorrowListener process body is empty ");
-        tag = body.get(MqConfig.MSG_TAG).toString();
-        msg = (Map<String, String>) body.get(MqConfig.MSG_BODY);
+        String tag = body.get(MqConfig.MSG_TAG).toString();
+        Map<String, String> msg = (Map<String, String>) body.get(MqConfig.MSG_BODY);
         if (tag.equals(MqTagEnum.BATCH_DEAL.getValue())) {
+            boolean state = false ;
             try {
-                thirdBatchProvider.batchDeal(msg);
+                state = thirdBatchProvider.batchDeal(msg);
             } catch (Throwable e) {
                 log.error("ThirdBatchListener error ：", e);
+            }
+            if(state){
+                log.info(String.format("即信批处理消息队列处理成功: %s", message));
+            }else{
+                log.error(String.format("即信批处理消息队列处理失败: %s", message));
             }
         }
     }

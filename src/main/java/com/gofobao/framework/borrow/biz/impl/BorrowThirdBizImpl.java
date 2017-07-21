@@ -120,6 +120,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> createThirdBorrow(VoCreateThirdBorrowReq voCreateThirdBorrowReq) {
+        log.error(String.format(String.format("报备标的信息: %s", new Gson().toJson(voCreateThirdBorrowReq))));
         Long borrowId = voCreateThirdBorrowReq.getBorrowId();
         boolean entrustFlag = voCreateThirdBorrowReq.getEntrustFlag();
         Borrow borrow = borrowService.findById(borrowId);
@@ -164,14 +165,17 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
 
         DebtRegisterResponse response = jixinManager.send(JixinTxCodeEnum.DEBT_REGISTER, debtRegisterRequest, DebtRegisterResponse.class);
         if ((ObjectUtils.isEmpty(response))) {
+            log.error(String.format(String.format("报备标的信息: 失败 %s", new Gson().toJson(voCreateThirdBorrowReq))));
             String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
         }
 
         if (!JixinResultContants.SUCCESS.equals(response.getRetCode())) {
+            log.error(String.format(String.format("报备标的信息: %s", new Gson().toJson(voCreateThirdBorrowReq))));
             if (response.getRetCode().equals("JX900122")) {  // 查看是否重复登记
                 borrow.setProductId(response.getProductId());
             } else {
+                log.error(String.format(String.format("报备标的信息: 失败 %s", new Gson().toJson(voCreateThirdBorrowReq))));
                 String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
                 return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
             }
@@ -180,6 +184,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         borrow.setBailAccountId(bailAccountId);
         borrow.setProductId(productId);
         borrowService.updateById(borrow);
+        log.error(String.format(String.format("报备标的信息: 成功 %s", new Gson().toJson(voCreateThirdBorrowReq))));
         return ResponseEntity.ok(VoBaseResp.ok("创建标的成功!"));
     }
 
