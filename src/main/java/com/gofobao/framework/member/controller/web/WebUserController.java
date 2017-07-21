@@ -116,7 +116,7 @@ public class WebUserController {
     public ResponseEntity<VoBaseResp> applyFor(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                VoApplyForVipReq forVipReq) {
         Vip vip = new Vip();
-        vip.setUserId(901L);
+        vip.setUserId(userId);
         vip.setVerifyAt(new Date());
         vip.setKefuId(forVipReq.getServiceUserId());
         vip.setExpireAt(DateHelper.addYears(new Date(), 1));

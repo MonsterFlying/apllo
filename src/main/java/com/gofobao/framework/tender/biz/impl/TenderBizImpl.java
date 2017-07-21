@@ -112,6 +112,16 @@ public class TenderBizImpl implements TenderBiz {
         Users user = userService.findByIdLock(voCreateTenderReq.getUserId());
         Preconditions.checkNotNull(user, "投标: 用户信息为空!") ;
 
+        if( voCreateTenderReq.getSource()==1){ //PC端需要交易密码校验
+           if(StringUtils.isEmpty(voCreateTenderReq.getPayPassword())){
+               Preconditions.checkNotNull(user.getPayPassword(), "投标: 用户信息为空!") ;
+
+           }
+
+
+        }
+
+
         Borrow borrow = borrowService.findByIdLock(voCreateTenderReq.getBorrowId());
         Preconditions.checkNotNull(borrow, "投标: 标的信息为空!") ;
 

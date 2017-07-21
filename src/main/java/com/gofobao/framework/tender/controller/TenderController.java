@@ -50,6 +50,7 @@ public class TenderController {
     public ResponseEntity<VoBaseResp> tender(@ModelAttribute @Valid VoCreateTenderReq voCreateTenderReq,
                                              @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
         voCreateTenderReq.setUserId(userId);
+        voCreateTenderReq.setSource(0);//pc端
         return tenderBiz.tender(voCreateTenderReq);
     }
 

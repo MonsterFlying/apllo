@@ -29,6 +29,7 @@ public class WebTenderController {
     private TenderBiz tenderBiz;
 
 
+
     @ApiOperation("pc:投标用户列表")
     @GetMapping("v2/user/list/{pageIndex}/{pageSize}/{borrowId}")
     public ResponseEntity<VoBorrowTenderUserWarpListRes> pcFindBorrowTenderUser(@PathVariable Integer pageIndex,
@@ -45,6 +46,7 @@ public class WebTenderController {
     @PostMapping("v2/create")
     public ResponseEntity<VoBaseResp> pcTender(@ModelAttribute @Valid VoCreateTenderReq voCreateTenderReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
         voCreateTenderReq.setUserId(userId);
+        voCreateTenderReq.setSource(1);//pc端
         return tenderBiz.tender(voCreateTenderReq);
     }
 }

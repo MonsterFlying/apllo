@@ -498,7 +498,7 @@ public class UserBizImpl implements UserBiz {
         Vip vip = vipService.findTopByUserIdAndStatus(userId, 1);
         VipInfoRes vipInfoRes =VoBaseResp.ok("查询成功",VipInfoRes.class);
         vipInfoRes.setEndAt(DateHelper.dateToString(vip.getExpireAt()));
-        Users user = userService.findById(vip.getUserId());
+        Users user = userService.findById(vip.getKefuId());
         vipInfoRes.setServiceUserName(user.getUsername());
         return ResponseEntity.ok(vipInfoRes);
     }
