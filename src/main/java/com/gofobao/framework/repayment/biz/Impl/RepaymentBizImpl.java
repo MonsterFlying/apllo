@@ -709,8 +709,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if (tender.getTransferFlag() == 1) {//转让中
                 Specification<Borrow> bs = Specifications
                         .<Borrow>and()
-                        .eq("tenderId", tender.getId())
                         .in("status", 0, 1)
+                        .eq("tenderId", tender.getId())
                         .build();
 
                 List<Borrow> borrowList = borrowService.findList(bs);
@@ -719,7 +719,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     voCancelBorrow.setBorrowId(borrowList.get(0).getId());
                     //取消当前借款
                     borrowBiz.cancelBorrow(voCancelBorrow);
-
                 }
                 tender.setTransferFlag(0);//设置转让标识
             }
