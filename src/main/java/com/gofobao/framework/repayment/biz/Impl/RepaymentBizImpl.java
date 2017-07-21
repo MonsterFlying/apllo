@@ -709,8 +709,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if (tender.getTransferFlag() == 1) {//转让中
                 Specification<Borrow> bs = Specifications
                         .<Borrow>and()
-                        .eq("tenderId", tender.getId())
                         .in("status", 0, 1)
+                        .eq("tenderId", tender.getId())
                         .build();
 
                 List<Borrow> borrowList = borrowService.findList(bs);
@@ -719,7 +719,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     voCancelBorrow.setBorrowId(borrowList.get(0).getId());
                     //取消当前借款
                     borrowBiz.cancelBorrow(voCancelBorrow);
-
                 }
                 tender.setTransferFlag(0);//设置转让标识
             }
@@ -1091,7 +1090,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
                         .collect(Collectors.toMap(BorrowCollection::getTenderId, Function.identity()));
 
 
-
                 for (Tender tranferTender : tranferedTenderList) {
                     inIn = 0;  // 出借人利息
                     inPr = 0;  // 出借人本金
@@ -1384,7 +1382,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         int flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(borrowRepayment.getId()),
                 ThirdBatchLogContants.BATCH_REPAY_BAIL,
                 ThirdBatchLogContants.BATCH_REPAY);
-        if ( flag > 1) {
+        if (flag > 1) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("还款处理中，请勿重复点击!")));
@@ -1447,12 +1445,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
         if (ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) {  // 正常还款
             repayList = borrowRepaymentThirdBiz.getRepayList(voThirdBatchRepay);
         } else {  //批次融资人还担保账户垫款
-            VoBatchRepayBailReq voBatchRepayBailReq = new VoBatchRepayBailReq();
-            voBatchRepayBailReq.setRepaymentId(repaymentId);
-            voBatchRepayBailReq.setInterestPercent(voBatchRepayBailReq.getInterestPercent());
-            voBatchRepayBailReq.setUserId(voBatchRepayBailReq.getUserId());
-            voBatchRepayBailReq.setIsUserOpen(voBatchRepayBailReq.getIsUserOpen());
-            return thirdBatchRepayBail(voBatchRepayBailReq);
+            //====================================================================
+            // 批次融资人还担保账户垫款
+            //====================================================================
+            return thirdBatchRepayBail(voRepayReq);
         }
 
         if (CollectionUtils.isEmpty(repayList)) {
@@ -1956,13 +1952,13 @@ public class RepaymentBizImpl implements RepaymentBiz {
     /**
      * 批次融资人还担保账户垫款
      *
-     * @param voBatchRepayBailReq
+     * @param voRepayReq
      */
-    public ResponseEntity<VoBaseResp> thirdBatchRepayBail(VoBatchRepayBailReq voBatchRepayBailReq) throws Exception {
+    public ResponseEntity<VoBaseResp> thirdBatchRepayBail(VoRepayReq voRepayReq) throws Exception {
         Date nowDate = new Date();
         int lateInterest = 0;//逾期利息
-        Double interestPercent = voBatchRepayBailReq.getInterestPercent();
-        Long repaymentId = voBatchRepayBailReq.getRepaymentId();
+        Double interestPercent = voRepayReq.getInterestPercent();
+        Long repaymentId = voRepayReq.getRepaymentId();
         interestPercent = ObjectUtils.isEmpty(interestPercent) ? 1 : interestPercent;
 
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);
@@ -2035,7 +2031,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         request.setTxCounts(StringHelper.toString(repayBails.size()));
         request.setNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/repaybail/check");
         request.setRetNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/repaybail/run");
-        request.setAcqRes(GSON.toJson(voBatchRepayBailReq));
+        request.setAcqRes(GSON.toJson(voRepayReq));
         request.setChannel(ChannelContant.HTML);
         BatchRepayBailResp response = jixinManager.send(JixinTxCodeEnum.BATCH_REPAY_BAIL, request, BatchRepayBailResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {

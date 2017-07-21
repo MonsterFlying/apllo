@@ -27,6 +27,7 @@ import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 
 /**
@@ -75,52 +77,11 @@ public class CreditProvider {
             Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
             Borrow borrow = borrowService.findById(borrowId);
             Preconditions.checkNotNull(borrow, "creditProvider endThirdCredit: 借款不能为空!");
-
-            Specification<BorrowRepayment> brs = Specifications
-                    .<BorrowRepayment>and()
-                    .eq("borrowId", borrowId)
-                    .eq("status", 0)
-                    .build();
-            long count = borrowRepaymentService.count(brs);
-            if (count > 0) {
-                log.info("creditProvider endThirdCredit: 存在未还清还款！");
-                break;
-            }
-
-            Specification<Tender> ts = Specifications
-                    .<Tender>and()
-                    .eq("borrowId", borrowId)
-                    .eq("status", 1)
-                    .build();
-            List<Tender> tenderList = tenderService.findList(ts);
-            if (CollectionUtils.isEmpty(tenderList)) {
-                log.info("creditProvider endThirdCredit: 未找到投递成功债权！");
-                break;
-            }
-
-            UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
-            Preconditions.checkNotNull(borrow, "creditProvider endThirdCredit: 借款不能为空!");
-
-            UserThirdAccount tenderUserThirdAccount = null;
+            UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
+            Preconditions.checkNotNull(userThirdAccount, "creditProvider endThirdCredit: 借款人未开户!");
+            //构建结束债权集合
             List<CreditEnd> creditEndList = new ArrayList<>();
-            CreditEnd creditEnd = null;
-            String orderId = null;
-            for (Tender tender : tenderList) {
-                creditEnd = new CreditEnd();
-                orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
-
-                tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
-                creditEnd.setAccountId(borrowUserThirdAccount.getAccountId());
-                creditEnd.setOrderId(orderId);
-                creditEnd.setAuthCode(tender.getAuthCode());
-                creditEnd.setForAccountId(tenderUserThirdAccount.getAccountId());
-                creditEnd.setProductId(borrow.getProductId());
-                creditEndList.add(creditEnd);
-
-                tender.setThirdCreditEndOrderId(orderId);
-            }
-
-            tenderService.save(tenderList);
+            buildCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
 
             //发送批次结束债权
             Date nowDate = new Date();
@@ -151,5 +112,47 @@ public class CreditProvider {
 
         } while (false);
         return false;
+    }
+
+    /**
+     * 构建结束债权集合
+     *
+     * @param creditEndList
+     * @param borrowId
+     */
+    private void buildCreditEndList(List<CreditEnd> creditEndList, String borrowUserThirdAccountId, String productId, Long borrowId) {
+        do {
+            Specification<Tender> ts = Specifications
+                    .<Tender>and()
+                    .eq("borrowId", borrowId)
+                    .eq("status", 1)
+                    .build();
+            List<Tender> tenderList = tenderService.findList(ts);
+            if (CollectionUtils.isEmpty(tenderList)) {
+                log.info("creditProvider buildCreditEndList: 借款" + borrowId + " 未找到投递成功债权！");
+            }
+
+            //筛选出已转让的投资记录
+            tenderList.stream().filter(p -> p.getTransferFlag() == 2).forEach(tender -> {
+                buildCreditEndList(creditEndList, borrowUserThirdAccountId, productId, tender.getBorrowId());
+            });
+
+            tenderList.forEach(tender -> {
+                CreditEnd creditEnd = new CreditEnd();
+                String orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
+
+                UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
+                creditEnd.setAccountId(borrowUserThirdAccountId);
+                creditEnd.setOrderId(orderId);
+                creditEnd.setAuthCode(tender.getAuthCode());
+                creditEnd.setForAccountId(tenderUserThirdAccount.getAccountId());
+                creditEnd.setProductId(productId);
+                creditEndList.add(creditEnd);
+
+                tender.setThirdCreditEndOrderId(orderId);
+            });
+            tenderService.save(tenderList);
+
+        } while (false);
     }
 }

@@ -59,6 +59,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created by Zeke on 2017/6/1.
@@ -348,6 +350,13 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             log.error("==========================================================================================");
         }
 
+        //=============================================
+        // 保存第三方债权转让授权码
+        //=============================================
+        List<CreditInvestRun> creditInvestRunList = GSON.fromJson(creditInvestRunCall.getSubPacks(), new TypeToken<List<CreditInvestRun>>() {
+        }.getType());
+        saveThirdTransferAuthCode(creditInvestRunList);
+
         //触发处理批次购买债权处理队列
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
@@ -359,15 +368,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             log.info(String.format("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq %s", GSON.toJson(body)));
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
-            log.error("borrowProvider autoTender send mq exception", e);
+            log.error("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq exception", e);
         }
-
-        //=============================================
-        // 保存第三方债权转让授权码
-        //=============================================
-        List<CreditInvestRun> creditInvestRunList = GSON.fromJson(creditInvestRunCall.getSubPacks(), new TypeToken<List<CreditInvestRun>>() {
-        }.getType());
-        saveThirdTransferAuthCode(creditInvestRunList);
 
         return ResponseEntity.ok("success");
 
@@ -379,28 +381,19 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      * @param creditInvestRunList
      */
     public void saveThirdTransferAuthCode(List<CreditInvestRun> creditInvestRunList) {
-        List<String> orderIds = new ArrayList<>();
-
-        Optional<List<CreditInvestRun>> creditInvestRunOption = Optional.ofNullable(creditInvestRunList);
-        creditInvestRunOption.ifPresent(list -> creditInvestRunList.forEach(obj -> {
-            orderIds.add(obj.getOrderId());
-        }));
-
+        List<String> orderIds = creditInvestRunList.stream().map(creditInvestRun -> creditInvestRun.getOrderId()).collect(Collectors.toList());
         Specification<Tender> ts = Specifications
                 .<Tender>and()
                 .in("thirdTransferOrderId", orderIds.toArray())
                 .build();
-        List<Tender> tenderList = tenderService.findList(ts);
 
-        creditInvestRunOption = Optional.of(creditInvestRunList);
-        Optional<List<Tender>> tenderOptional = Optional.of(tenderList);
-        creditInvestRunOption.ifPresent(list -> creditInvestRunList.forEach(creditInvestRun -> {
-            tenderOptional.ifPresent(list2 -> tenderList.forEach(tender -> {
-                if (creditInvestRun.getOrderId().equals(tender.getThirdTransferOrderId())) {
-                    tender.setTransferAuthCode(creditInvestRun.getAuthCode());
-                }
-            }));
-        }));
+        List<Tender> tenderList = tenderService.findList(ts);
+        Map<String, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getThirdTenderOrderId, Function.identity()));
+        creditInvestRunList.forEach(creditInvestRun -> {
+            String orderId = creditInvestRun.getOrderId();
+            Tender tender = tenderMap.get(orderId);
+            tender.setTransferAuthCode(creditInvestRun.getAuthCode());
+        });
         tenderService.save(tenderList);
     }
 
@@ -485,23 +478,26 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         BatchCreditInvestRunCall creditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
         });
 
-        boolean bool = true;
         if (ObjectUtils.isEmpty(creditInvestRunCall)) {
+            log.error("======================================运行回调========================================");
             log.error("=============================投资人批次结束债权业务运行回调===========================");
             log.error("请求体为空!");
-            bool = false;
+            log.error("======================================================================================");
+            log.error("======================================================================================");
         }
 
         if (!JixinResultContants.SUCCESS.equals(creditInvestRunCall.getRetCode())) {
+            log.error("======================================运行回调========================================");
             log.error("=============================投资人批次结束债权业务运行回调===========================");
             log.error("回调失败! msg:" + creditInvestRunCall.getRetMsg());
-            bool = false;
-        }
-
-        if (bool) {
-            log.info("投资人批次结束债权成功!");
-        } else {
-            log.info("投资人批次结束债权失败!");
+            log.error("======================================================================================");
+            log.error("======================================================================================");
+        }else {
+            log.error("======================================运行回调========================================");
+            log.error("=============================投资人批次结束债权业务运行回调===========================");
+            log.error("回调成功!");
+            log.error("======================================================================================");
+            log.error("======================================================================================");
         }
 
         try {
