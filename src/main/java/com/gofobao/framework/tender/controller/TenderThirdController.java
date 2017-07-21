@@ -32,9 +32,10 @@ public class TenderThirdController {
     @RequestMapping("/v2/third/batch/creditinvest/run")
     public ResponseEntity<String> thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) {
         try {
+            log.info("批量债权购买回调触发");
             return tenderThirdBiz.thirdBatchCreditInvestRunCall(request, response);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("批量债权购买回调失败", e);
             return ResponseEntity.ok("error");
         }
     }

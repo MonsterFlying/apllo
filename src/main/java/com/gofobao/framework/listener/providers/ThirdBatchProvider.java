@@ -14,7 +14,11 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoRepayAll;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
@@ -25,12 +29,14 @@ import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
+import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
+import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -43,6 +49,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.gofobao.framework.listener.providers.NoticesMessageProvider.GSON;
@@ -57,23 +64,26 @@ public class ThirdBatchProvider {
     final Gson gson = new GsonBuilder().create();
 
     @Autowired
-    private ThirdBatchLogService thirdBatchLogService;
+    ThirdBatchLogService thirdBatchLogService;
     @Autowired
-    private ThirdBatchLogBiz thirdBatchLogBiz;
+    ThirdBatchLogBiz thirdBatchLogBiz;
     @Autowired
-    private JixinManager jixinManager;
+    JixinManager jixinManager;
     @Autowired
-    private TenderService tenderService;
+    TenderService tenderService;
     @Autowired
-    private BorrowService borrowService;
+    BorrowService borrowService;
     @Autowired
-    private CapitalChangeHelper capitalChangeHelper;
+    CapitalChangeHelper capitalChangeHelper;
     @Autowired
-    private BorrowBiz borrowBiz;
+    BorrowBiz borrowBiz;
     @Autowired
-    private TenderThirdBiz tenderThirdBiz;
+    TenderThirdBiz tenderThirdBiz;
     @Autowired
-    private RepaymentBiz repaymentBiz;
+    RepaymentBiz repaymentBiz;
+
+    @Autowired
+    MqHelper mqHelper;
 
     /**
      * 批次处理
@@ -92,10 +102,7 @@ public class ThirdBatchProvider {
                 .eq("batchNo", batchNo)
                 .build();
         List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls);
-        if (CollectionUtils.isEmpty(thirdBatchLogList)) {
-            log.info("ThirdBatchProvider batchDeal:未查询到批次记录!");
-            return false;
-        }
+        Preconditions.checkNotNull(thirdBatchLogList, "批处理回调: 查询批处理记录为空");
         //主动查询未改变记录的批次状态，
         ThirdBatchLog thirdBatchLog = thirdBatchLogList.get(0);
         boolean flag = thirdBatchLogBiz.checkLocalSourceState(String.valueOf(thirdBatchLog.getSourceId()), thirdBatchLog.getType());//获取资源状态是否已完成状态
@@ -103,7 +110,7 @@ public class ThirdBatchProvider {
             log.info("资源状态：已发生改变!");
         }
 
-        //批次存在失败批次，处理失败批次
+        // 批次存在失败批次，处理失败批次
         int pageIndex = 0, pageSize = 20, realSize = 0;
         List<DetailsQueryResp> detailsQueryRespList = new ArrayList<>();
         do {
@@ -120,7 +127,6 @@ public class ThirdBatchProvider {
             if ((ObjectUtils.isEmpty(batchDetailsQueryResp)) || (!JixinResultContants.SUCCESS.equals(batchDetailsQueryResp.getRetCode()))) {
                 log.error(ObjectUtils.isEmpty(batchDetailsQueryResp) ? "当前网络不稳定，请稍候重试" : batchDetailsQueryResp.getRetMsg());
             }
-
             List<DetailsQueryResp> detailsQueryRespsItemList = gson.fromJson(batchDetailsQueryResp.getSubPacks(), new TypeToken<List<DetailsQueryResp>>() {
             }.getType());
             if (CollectionUtils.isEmpty(detailsQueryRespsItemList)) {
@@ -130,11 +136,8 @@ public class ThirdBatchProvider {
             detailsQueryRespList.addAll(detailsQueryRespsItemList);
         } while (pageSize == realSize);
 
-        //赛选失败批次
-        if (CollectionUtils.isEmpty(detailsQueryRespList)) {
-            log.error(String.format("批量放款回调查询异常: %s", batchNo));
-        }
-
+        //筛选失败批次
+        Preconditions.checkNotNull(detailsQueryRespList, "批处理回调: 查询批次详细异常!");
         List<String> failureOrderIds = new ArrayList<>(); // 失败orderId
         List<String> successOrderIds = new ArrayList<>(); // 成功orderId
         detailsQueryRespList.forEach(list -> detailsQueryRespList.forEach(obj -> {
@@ -169,10 +172,8 @@ public class ThirdBatchProvider {
                 batchRepayDeal(acqRes, failureOrderIds, successOrderIds);
                 break;
             case ThirdBatchLogContants.BATCH_BAIL_REPAY: //担保人垫付
-
                 break;
             case ThirdBatchLogContants.BATCH_REPAY_BAIL: //批次融资人还担保账户垫款
-
                 break;
             case ThirdBatchLogContants.BATCH_REPAY_ALL: //提前结清批次还款
 
@@ -190,9 +191,7 @@ public class ThirdBatchProvider {
      * @param failureThirdLendPayOrderIds
      * @param successThirdLendPayOrderIds
      */
-    private void batchRepayDeal(String acqRes, List<String> failureThirdLendPayOrderIds, List<String> successThirdLendPayOrderIds) throws Exception{
-
-
+    private void batchRepayDeal(String acqRes, List<String> failureThirdLendPayOrderIds, List<String> successThirdLendPayOrderIds) throws Exception {
         //提前结清操作
         VoRepayReq voRepayReq = GSON.fromJson(acqRes, new TypeToken<VoRepayReq>() {
         }.getType());
@@ -294,91 +293,109 @@ public class ThirdBatchProvider {
      */
     private void creditInvestDeal(Long borrowId, List<String> failureThirdTransferOrderIds, List<String> successThirdTransferOrderIds) throws Exception {
         Date nowDate = new Date();
-        if (CollectionUtils.isEmpty(failureThirdTransferOrderIds)) {
-            log.info("================================================================================");
-            log.info("债权转让批次查询：查询未发现失败批次！");
-            log.info("================================================================================");
-        }
 
-        //失败批次对应债权
-        List<Long> borrowIdList = new ArrayList<>();
-        Specification<Tender> ts = Specifications
-                .<Tender>and()
-                .in("thirdTransferOrderId", failureThirdTransferOrderIds.toArray())
-                .build();
-        List<Tender> failureTenderList = tenderService.findList(ts);
-        for (Tender tender : failureTenderList) {
-            borrowIdList.add(tender.getBorrowId());
-        }
-
-        //成功批次对应债权
-        ts = Specifications
-                .<Tender>and()
-                .in("thirdTransferOrderId", successThirdTransferOrderIds.toArray())
-                .build();
-        List<Tender> successTenderList = tenderService.findList(ts);
-        for (Tender tender : successTenderList) {
-            tender.setThirdTransferFlag(true);
-        }
-        tenderService.save(successTenderList);
-
-        //3.与本地失败投标做匹配，并提出tender
-        Specification<Borrow> bs = Specifications
-                .<Borrow>and()
-                .in("id", borrowIdList.toArray())
-                .build();
-        List<Borrow> borrowList = borrowService.findList(bs);
-
-        //4.本地资金进行资金解封操作
-        int failAmount = 0;//失败金额
-        int failNum = 0;//失败次数
-        Set<Long> borrowIdSet = new HashSet<>();
-        for (Borrow borrow : borrowList) {
-            failAmount = 0;
-            failNum = 0;
-            if (!borrowIdSet.contains(borrow.getId())) {
-                for (Tender tender : successTenderList) {
-                    if (StringHelper.toString(borrow.getId()).equals(StringHelper.toString(tender.getBorrowId()))) {
-                        failAmount += tender.getValidMoney(); //失败金额
-
-                        //对冻结资金进行回滚
-                        tender.setId(tender.getId());
-                        tender.setStatus(2); // 取消状态
-                        tender.setUpdatedAt(nowDate);
-
-                        CapitalChangeEntity entity = new CapitalChangeEntity();
-                        entity.setType(CapitalChangeEnum.Unfrozen);
-                        entity.setUserId(tender.getUserId());
-                        entity.setMoney(tender.getValidMoney());
-                        entity.setRemark("借款 [" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "] 投标与存管通信失败，解除冻结资金。");
-                        capitalChangeHelper.capitalChange(entity);
-
-                    }
-                }
-                borrow.setTenderCount(borrow.getTenderCount() - failNum);
-                borrow.setMoneyYes(borrow.getMoneyYes() - failAmount);
+        if (!CollectionUtils.isEmpty(successThirdTransferOrderIds)) {
+            //成功批次对应债权
+            Specification<Tender> ts = Specifications
+                    .<Tender>and()
+                    .in("thirdTransferOrderId", successThirdTransferOrderIds.toArray())
+                    .build();
+            List<Tender> successTenderList = tenderService.findList(ts);
+            for (Tender tender : successTenderList) {
+                tender.setThirdTransferFlag(true);
             }
+            tenderService.save(successTenderList);
         }
-        borrowService.save(borrowList);
-        tenderService.save(successTenderList);
 
-        log.info("债权转让失败批次撤回成功!");
+        if (!CollectionUtils.isEmpty(failureThirdTransferOrderIds)) {
+            log.info(String.format("批量债权回调: 取消失败债权购买: %s", gson.toJson(failureThirdTransferOrderIds)));
+            //失败批次对应债权
+            new ArrayList<>();
+            Specification<Tender> ts = Specifications
+                    .<Tender>and()
+                    .in("thirdTransferOrderId", failureThirdTransferOrderIds.toArray())
+                    .build();
+            List<Tender> failureTenderList = tenderService.findList(ts);
+            Preconditions.checkNotNull(failureTenderList, "摘取批次处理: 查询失败的投标记录");
+            Set<Long> borrowIdSet = failureTenderList.stream().map(tender -> tender.getBorrowId()).collect(Collectors.toSet());
+            //3.与本地失败投标做匹配，并提出tender
+            Specification<Borrow> bs = Specifications
+                    .<Borrow>and()
+                    .in("id", borrowIdSet.toArray())
+                    .build();
+            List<Borrow> borrowList = borrowService.findList(bs);
+            Preconditions.checkNotNull(borrowList, "债权批次回调处理: 查询投标记录为空!");
+            Map<Long, List<Tender>> tenderMap = failureTenderList.stream().collect(Collectors.groupingBy(Tender::getBorrowId));
+
+            for (Borrow borrow : borrowList) {
+                List<Tender> tenders = tenderMap.get(borrow.getId());
+                for (Tender tender : tenders) {  // 解除资金,并设置投标状态为取消
+                    tender.setId(tender.getId());
+                    tender.setStatus(2); // 取消状态
+                    tender.setUpdatedAt(nowDate);
+                    tender.setUpdatedAt(nowDate);
+
+                    CapitalChangeEntity entity = new CapitalChangeEntity();
+                    entity.setType(CapitalChangeEnum.Unfrozen);
+                    entity.setUserId(tender.getUserId());
+                    entity.setMoney(tender.getValidMoney());
+                    entity.setRemark("借款 [" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "] 投标与存管通信失败，解除冻结资金。");
+                    capitalChangeHelper.capitalChange(entity);
+                }
+
+
+                // 发送取消债权通知
+                Set<Long> userIdSet = tenders.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet());
+                String content = String.format("你所投资的借款[ %s ] 与存管通讯失败, 在 %s 已取消", BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()), DateHelper.nextDate(nowDate));
+                userIdSet.forEach(userid -> {
+                    Notices notices = new Notices();
+                    notices.setFromUserId(1L);
+                    notices.setUserId(userid);
+                    notices.setRead(false);
+                    notices.setName("投资的借款失败");
+                    notices.setContent(content);
+                    notices.setType("system");
+                    notices.setCreatedAt(nowDate);
+                    notices.setUpdatedAt(nowDate);
+                    MqConfig mqConfig = new MqConfig();
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
+                    mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
+                    Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
+                    mqConfig.setMsg(body);
+                    try {
+                        log.info(String.format("ThirdBatchProvider creditInvestDeal send mq %s", GSON.toJson(body)));
+                        mqHelper.convertAndSend(mqConfig);
+                    } catch (Throwable e) {
+                        log.error("ThirdBatchProvider creditInvestDeal send mq exception", e);
+                    }
+                });
+
+                borrow.setTenderCount(borrow.getTenderCount() - tenders.size());
+                int sum = tenders.stream().mapToInt(tender -> tender.getValidMoney()).sum();  // 取消的总总债权
+                borrow.setMoneyYes(borrow.getMoneyYes() - sum);
+                borrow.setUpdatedAt(nowDate);
+                borrow.setSuccessAt(null);
+            }
+
+            borrowService.save(borrowList);
+            tenderService.save(failureTenderList);
+        }
 
         //1.判断失败orderId集合为空
         //2.判断borrowId不为空
-        boolean bool = false;
-        if (CollectionUtils.isEmpty(failureThirdTransferOrderIds) && !ObjectUtils.isEmpty(borrowId)) {
+        if (CollectionUtils.isEmpty(failureThirdTransferOrderIds)) {
+
             Borrow borrow = borrowService.findById(borrowId);
-            try {
-                bool = borrowBiz.transferBorrowAgainVerify(borrow);
-            } catch (Throwable e) {
-                log.error("非流转标复审异常:", e);
+            log.info(String.format("批量债权转让复审: %s", gson.toJson(borrow)));
+            boolean b = borrowBiz.transferBorrowAgainVerify(borrow);
+            if (b) {
+                log.info("批量债权转让复审: 成功");
+            } else {
+                log.error("批量债权转让复审: 失败");
+                ;
             }
-        }
-        if (bool) {
-            log.info("非流转标复审成功!");
-        } else {
-            log.info("非流转标复审失败!");
+
+
         }
     }
 

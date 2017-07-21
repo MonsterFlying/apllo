@@ -541,21 +541,26 @@ public class BorrowBizImpl implements BorrowBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> cancelBorrow(VoCancelBorrow voCancelBorrow) throws Exception {
+
         Long borrowId = voCancelBorrow.getBorrowId();
         Long userId = voCancelBorrow.getUserId();
         Date nowDate = new Date();
-
         Borrow borrow = borrowService.findByIdLock(borrowId);
-        Preconditions.checkNotNull(borrow, "借记录不存在!");
+        Preconditions.checkNotNull(borrow, "取消借款: 标的信息为空!");
 
-        if (ObjectUtils.isEmpty(borrow) || ObjectUtils.isEmpty(userId)
-                || (borrow.getStatus() != 0 && borrow.getStatus() != 1)) {
+        if ((borrow.getStatus() > 1)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "借款状态已发生更改!"));
         }
 
-        boolean bool = false;//债权转让默认不过期
+        if(voCancelBorrow.getUserId() != borrow.getUserId()){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "非法操作!"));
+        }
+
+        boolean bool = false;  // 债权转让默认不过期
         if (!ObjectUtils.isEmpty(borrow.getReleaseAt())) {
             Date limitDate = DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);
             bool = limitDate.getTime() < nowDate.getTime();
@@ -595,7 +600,9 @@ public class BorrowBizImpl implements BorrowBiz {
                 voCancelThirdTenderReq = new VoCancelThirdTenderReq();
                 voCancelThirdTenderReq.setTenderId(tender.getId());
                 ResponseEntity<VoBaseResp> resp = tenderThirdBiz.cancelThirdTender(voCancelThirdTenderReq);
+                log.info(String.format("取消借款: 发起即信存管投资取消!"));
                 if (!resp.getStatusCode().equals(HttpStatus.OK)) {
+                    log.error(String.format("取消借款:取消即信投标记录失败: %s", new Gson().toJson(resp)));
                     throw new Exception("borrowBizImpl cancelBorrow:" + resp.getBody().getState().getMsg());
                 }
             }
@@ -1948,7 +1955,20 @@ public class BorrowBizImpl implements BorrowBiz {
         borrow.setVerifyAt(nowDate);
         Date releaseAt = borrow.getReleaseAt();
         borrow.setReleaseAt(ObjectUtils.isEmpty(releaseAt) ? nowDate : releaseAt);
-        borrowService.updateById(borrow);    //更新借款状态
+        borrow = borrowService.save(borrow);    //更新借款状态
+        String productId = borrow.getProductId();
+        if (ObjectUtils.isEmpty(productId) && !borrow.isTransfer()) { // 判断没有在即信注册、并且类型为非转让标
+            int type = borrow.getType();
+            if (type != 0 && type != 4) { // 判断是否是官标、官标不需要在这里登记标的
+                VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
+                voCreateThirdBorrowReq.setBorrowId(borrow.getId());
+                ResponseEntity<VoBaseResp> resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
+                if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) { //创建状态为失败时返回错误提示
+                    log.error(String.format("标的初审: 普通标的报备 %s", new Gson().toJson(resp)));
+                    return false ;
+                }
+            }
+        }
 
         // 自动投标前提:
         // 1.没有设置标密码
@@ -1991,6 +2011,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * 摘草 生成借款 初审
      *
      *  更改标的为可投状态,
+     *  存管平台报备
      *  并且调用投标流程, 完成摘草动作
      *
      * @param borrow
@@ -2003,9 +2024,23 @@ public class BorrowBizImpl implements BorrowBiz {
         borrow.setVerifyAt(nowDate);
         Date releaseAt = borrow.getReleaseAt();
         borrow.setReleaseAt(ObjectUtils.isEmpty(releaseAt) ? nowDate : releaseAt);
-        borrowService.save(borrow);   // 更改标的为可投标状态
-        Long lendId = borrow.getLendId();
+        borrow = borrowService.save(borrow);// 更改标的为可投标状态
 
+        String productId = borrow.getProductId();
+        if (ObjectUtils.isEmpty(productId) && !borrow.isTransfer()) { // 判断没有在即信注册、并且类型为非转让标
+            int type = borrow.getType();
+            if (type != 0 && type != 4) { // 判断是否是官标、官标不需要在这里登记标的
+                VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
+                voCreateThirdBorrowReq.setBorrowId(borrow.getId());
+                ResponseEntity<VoBaseResp> resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
+                if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) { //创建状态为失败时返回错误提示
+                    log.error(String.format("标的初审: 摘草报备标的信息失败 %s", new Gson().toJson(resp)));
+                    return false ;
+                }
+            }
+        }
+
+        Long lendId = borrow.getLendId();
         Lend lend = lendService.findById(lendId);
         VoCreateTenderReq voCreateTenderReq = new VoCreateTenderReq();
         voCreateTenderReq.setUserId(lend.getUserId());

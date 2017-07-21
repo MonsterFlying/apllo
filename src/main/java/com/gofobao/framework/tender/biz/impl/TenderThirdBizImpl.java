@@ -39,6 +39,7 @@ import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoThirdBatchCreditInvest;
+import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
@@ -49,6 +50,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,6 +61,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created by Zeke on 2017/6/1.
@@ -159,14 +163,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> thirdBatchCreditInvest(VoThirdBatchCreditInvest voThirdBatchCreditInvest) throws Exception {
         Date nowDate = new Date();
-        Long borrowId = voThirdBatchCreditInvest.getBorrowId();
-        if (ObjectUtils.isEmpty(borrowId)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "borrowId不存在!"));
-        }
-
-        Borrow borrow = borrowService.findById(borrowId);
+        Borrow borrow = borrowService.findById(voThirdBatchCreditInvest.getBorrowId());
+        Preconditions.checkNotNull(borrow, "批量债权转让: 债权装标的信息为空");
         if (!borrow.isTransfer()) {
             return ResponseEntity
                     .badRequest()
@@ -175,58 +173,46 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
 
         //查询当前借款的所有 状态为1的 tender记录
         Specification<Tender> ts = Specifications.<Tender>and()
-                .eq("borrowId", borrowId)
+                .eq("borrowId", voThirdBatchCreditInvest.getBorrowId())
                 .eq("status", 1)
                 .build();
         List<Tender> tenderList = tenderService.findList(ts);
-        if (CollectionUtils.isEmpty(tenderList)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "不存在有效的投标记录!"));
-        }
+        Preconditions.checkNotNull(tenderList, "批量债权转让: 标的信息为空!");
 
-        Tender oldTender = tenderService.findById(borrow.getTenderId());//债权转让原tender
-        if (ObjectUtils.isEmpty(oldTender)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "要转让的投标记录不存在!"));
-        }
-
+        Tender oldTender = tenderService.findById(borrow.getTenderId()); // 债权转让原tender
+        Preconditions.checkNotNull(oldTender, "批量债权转让: 债权原始投标记录为空!");
         Borrow oldBorrow = borrowService.findById(oldTender.getBorrowId());
-        if (ObjectUtils.isEmpty(oldBorrow)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "要转让的投标的借款记录不存在!"));
-        }
+        Preconditions.checkNotNull(oldBorrow, "批量债权转让: 债权原始投标信息为空!");
 
-        double transferFeeRate = 0;
-        if (borrow.isTransfer()) { //转让管理费
-            transferFeeRate = Math.min(0.004 + 0.0008 * (borrow.getTotalOrder() - 1), 0.0128);
-        }
-
+        double transferFeeRate = Math.min(0.004 + 0.0008 * (borrow.getTotalOrder() - 1), 0.0128); // 获取债权转让费用
         UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
-        List<CreditInvest> creditInvestList = new ArrayList<>();
+        ResponseEntity<VoBaseResp> thirdAccountConditionResponse = ThirdAccountHelper.conditionCheck(borrowUserThirdAccount);
+        if(!thirdAccountConditionResponse.getStatusCode().equals(HttpStatus.OK)){
+            return thirdAccountConditionResponse ;
+        }
+
+        List<CreditInvest> creditInvestList = new ArrayList<>() ;
         CreditInvest creditInvest = null;
         UserThirdAccount tenderUserThirdAccount = null;
         int sumCount = 0;
         double validMoney = 0;
         double txFee = 0;
-        double transferFee = borrow.getMoney() * transferFeeRate;//转让管理费
+        double transferFee = borrow.getMoney() * transferFeeRate;  // 转让管理费
         for (Tender tender : tenderList) {
             txFee = 0;
-
-            if (!ObjectUtils.isEmpty(tender.getThirdTransferFlag()) && tender.getThirdTransferFlag()) {//判断标的是否已在存管转让
+            if (!ObjectUtils.isEmpty(tender.getThirdTransferFlag()) && tender.getThirdTransferFlag()) {  //判断标的是否已在存管转让
                 continue;
             }
 
             tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
-            validMoney = tender.getValidMoney();//投标有效金额
-            sumCount += validMoney;
-
-            if (borrow.isTransfer()) { //转让管理费
-                txFee += (int) MathHelper.myRound((validMoney / (double) borrow.getMoney()) * transferFee, 0);
+            ResponseEntity<VoBaseResp> tenderUserThirdAccountConditionResponse = ThirdAccountHelper.conditionCheck(tenderUserThirdAccount);
+            if(!tenderUserThirdAccountConditionResponse.getStatusCode().equals(HttpStatus.OK)){
+                return thirdAccountConditionResponse ;
             }
 
+            validMoney = tender.getValidMoney();  //投标有效金额
+            sumCount += validMoney;
+            txFee += (int) MathHelper.myRound((validMoney /  new Double(borrow.getMoney())) * transferFee, 0);
             String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
             creditInvest = new CreditInvest();
             creditInvest.setAccountId(tenderUserThirdAccount.getAccountId());
@@ -240,7 +226,6 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             creditInvest.setProductId(oldBorrow.getProductId());
             creditInvest.setContOrderId(tenderUserThirdAccount.getAutoTransferBondOrderId());
             creditInvestList.add(creditInvest);
-
             tender.setThirdTransferOrderId(transferOrderId);
             tenderService.updateById(tender);
         }
@@ -249,8 +234,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         String batchNo = jixinHelper.getBatchNo();
         //请求保留参数
         Map<String, Object> acqResMap = new HashMap<>();
-        acqResMap.put("borrowId", borrowId);
-
+        acqResMap.put("borrowId", voThirdBatchCreditInvest.getBorrowId());
         //调用存管批次债权转让接口
         BatchCreditInvestReq request = new BatchCreditInvestReq();
         request.setBatchNo(batchNo);
@@ -271,11 +255,10 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         thirdBatchLog.setBatchNo(batchNo);
         thirdBatchLog.setCreateAt(nowDate);
         thirdBatchLog.setUpdateAt(nowDate);
-        thirdBatchLog.setSourceId(borrowId);
+        thirdBatchLog.setSourceId(voThirdBatchCreditInvest.getBorrowId());
         thirdBatchLog.setType(ThirdBatchLogContants.BATCH_CREDIT_INVEST);
         thirdBatchLog.setRemark("投资人批次购买债权");
         thirdBatchLogService.save(thirdBatchLog);
-
         return null;
     }
 
@@ -322,38 +305,30 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
     public ResponseEntity<String> thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
         BatchCreditInvestRunCall creditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
         });
+        Gson gson = new Gson() ;
+        log.info(String.format("批量债权购买回调信息打印: %s", gson.toJson(creditInvestRunCall))) ;
+        Preconditions.checkNotNull(creditInvestRunCall, "批量债权转让回调: 回调信息为空!") ;
+        Preconditions.checkArgument(JixinResultContants.SUCCESS.equals(creditInvestRunCall.getRetCode()),
+                "批量债权转让回调: 请求失败!");
         Map<String, Object> acqResMap = GSON.fromJson(creditInvestRunCall.getAcqRes(), TypeTokenContants.MAP_TOKEN);
 
-        if (ObjectUtils.isEmpty(creditInvestRunCall)) {
-            log.error("=========================================批次回调=========================================");
-            log.error("=============================即信投资人批次购买债权处理结果回调===========================");
-            log.error("请求体为空!");
-            log.error("==========================================================================================");
-            log.error("==========================================================================================");
-            return ResponseEntity.ok("error");
-        }
+        //=============================================
+        // 保存第三方债权转让授权码
+        //=============================================
+        List<CreditInvestRun> creditInvestRunList = GSON.fromJson(creditInvestRunCall.getSubPacks(), new TypeToken<List<CreditInvestRun>>() {
+        }.getType());
+        Preconditions.checkNotNull(creditInvestRunList, "批量债权转让回调: 查询批次详情为空") ;
+        saveThirdTransferAuthCode(creditInvestRunList);
 
-        if (!JixinResultContants.SUCCESS.equals(creditInvestRunCall.getRetCode())) {
-            log.error("=========================================批次回调=========================================");
-            log.error("=============================即信投资人批次购买债权处理结果回调===========================");
-            log.error("回调失败! msg:" + creditInvestRunCall.getRetMsg());
-            log.error("==========================================================================================");
-            log.error("==========================================================================================");
-            return ResponseEntity.ok("error");
-        } else {
-            log.error("=========================================批次回调=========================================");
-            log.error("=============================即信投资人批次购买债权处理结果回调===========================");
-            log.error("回调成功!");
-            log.error("==========================================================================================");
-            log.error("==========================================================================================");
-        }
 
-        //触发处理批次购买债权处理队列
+        // 触发处理批次购买债权处理队列
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(acqResMap.get("borrowId")), MqConfig.BATCH_NO, StringHelper.toString(creditInvestRunCall.getBatchNo()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(acqResMap.get("borrowId")),
+                        MqConfig.BATCH_NO, StringHelper.toString(creditInvestRunCall.getBatchNo()),
+                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
         try {
             log.info(String.format("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq %s", GSON.toJson(body)));
@@ -362,15 +337,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             log.error("borrowProvider autoTender send mq exception", e);
         }
 
-        //=============================================
-        // 保存第三方债权转让授权码
-        //=============================================
-        List<CreditInvestRun> creditInvestRunList = GSON.fromJson(creditInvestRunCall.getSubPacks(), new TypeToken<List<CreditInvestRun>>() {
-        }.getType());
-        saveThirdTransferAuthCode(creditInvestRunList);
-
         return ResponseEntity.ok("success");
-
     }
 
     /**
@@ -379,28 +346,20 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      * @param creditInvestRunList
      */
     public void saveThirdTransferAuthCode(List<CreditInvestRun> creditInvestRunList) {
-        List<String> orderIds = new ArrayList<>();
-
-        Optional<List<CreditInvestRun>> creditInvestRunOption = Optional.ofNullable(creditInvestRunList);
-        creditInvestRunOption.ifPresent(list -> creditInvestRunList.forEach(obj -> {
-            orderIds.add(obj.getOrderId());
-        }));
-
+        List<String> orderIds = creditInvestRunList.stream().map(creditInvestRun -> creditInvestRun.getOrderId()).collect(Collectors.toList());
         Specification<Tender> ts = Specifications
                 .<Tender>and()
                 .in("thirdTransferOrderId", orderIds.toArray())
                 .build();
-        List<Tender> tenderList = tenderService.findList(ts);
 
-        creditInvestRunOption = Optional.of(creditInvestRunList);
-        Optional<List<Tender>> tenderOptional = Optional.of(tenderList);
-        creditInvestRunOption.ifPresent(list -> creditInvestRunList.forEach(creditInvestRun -> {
-            tenderOptional.ifPresent(list2 -> tenderList.forEach(tender -> {
-                if (creditInvestRun.getOrderId().equals(tender.getThirdTransferOrderId())) {
-                    tender.setTransferAuthCode(creditInvestRun.getAuthCode());
-                }
-            }));
-        }));
+        List<Tender> tenderList = tenderService.findList(ts) ;
+        Map<String, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getThirdTenderOrderId, Function.identity()));
+        creditInvestRunList.forEach(creditInvestRun -> {
+            String orderId = creditInvestRun.getOrderId();
+            Tender tender = tenderMap.get(orderId);
+            tender.setTransferAuthCode(creditInvestRun.getAuthCode());
+        });
+
         tenderService.save(tenderList);
     }
 
