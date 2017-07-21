@@ -805,10 +805,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         int lateInterest = 0;//逾期利息
         Double interestPercent = voThirdBatchRepay.getInterestPercent();
         Long repaymentId = voThirdBatchRepay.getRepaymentId();
-        /**
-         * @// TODO: 2017/7/20 检查提前还款  立即还款 interestPercent参数
-         */
-        interestPercent = interestPercent == 0 ? 1 : interestPercent;
+        interestPercent = ObjectUtils.isEmpty(interestPercent) ? 1 : interestPercent;
 
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);
         Borrow borrow = borrowService.findById(borrowRepayment.getBorrowId());

@@ -364,7 +364,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Double interestPercent = voRepayReq.getInterestPercent();
         Long userId = voRepayReq.getUserId();
         Long repaymentId = voRepayReq.getRepaymentId();
-        interestPercent = (ObjectUtils.isEmpty(interestPercent) || interestPercent == 0) ? 1 : interestPercent;
+        interestPercent = ObjectUtils.isEmpty(interestPercent) ? 1 : interestPercent;
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);
         Preconditions.checkNotNull(borrowRepayment, "还款不存在!");
         if (borrowRepayment.getStatus() != 0) {
@@ -483,7 +483,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Double interestPercent = voRepayReq.getInterestPercent();
         Long repaymentId = voRepayReq.getRepaymentId();
         Boolean isUserOpen = voRepayReq.getIsUserOpen();//是否是用户主动还款
-        interestPercent = interestPercent == 0 ? 1 : interestPercent;//回款 利息百分比
+        interestPercent = ObjectUtils.isEmpty(interestPercent) ? 1 : interestPercent;//回款 利息百分比
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);//还款记录
         Borrow borrow = borrowService.findById(borrowRepayment.getBorrowId());//借款记录
 
@@ -1428,7 +1428,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         VoThirdBatchRepay voThirdBatchRepay = new VoThirdBatchRepay();
         voThirdBatchRepay.setUserId(voRepayReq.getUserId());
         voThirdBatchRepay.setRepaymentId(voRepayReq.getRepaymentId());
-        voThirdBatchRepay.setInterestPercent(0d);
+        voThirdBatchRepay.setInterestPercent(null);
         voThirdBatchRepay.setIsUserOpen(true);
 
         // ====================================

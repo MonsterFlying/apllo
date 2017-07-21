@@ -5,7 +5,6 @@ import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
-import com.gofobao.framework.api.model.batch_bail_repay.BailRepayRun;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.batch_details_query.DetailsQueryResp;
@@ -15,7 +14,6 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoRepayAll;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
-import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
@@ -55,7 +53,6 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.gofobao.framework.listener.providers.NoticesMessageProvider.GSON;
@@ -529,7 +526,6 @@ public class ThirdBatchProvider {
 
         // 对于失败的债权, 先查询失败的标的ID
         if (!CollectionUtils.isEmpty(failureThirdLendPayOrderIds)) {
-            success = false;
             Specification<Tender> ts = Specifications
                     .<Tender>and()
                     .in("thirdLendPayOrderId", failureThirdLendPayOrderIds.toArray())
