@@ -60,13 +60,13 @@ import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
-import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
@@ -256,7 +256,7 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setTenderCount(borrow.getTenderCount() + BorrowContants.TIME);
             borrowInfoRes.setMoney(StringHelper.formatMon(borrow.getMoney() / 100d));
             borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
-            borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatDouble(borrow.getMoneyYes() / borrow.getMoney().doubleValue(),false)));
+            borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatDouble(borrow.getMoneyYes() / borrow.getMoney().doubleValue(), false)));
             //结束时间
             Date endAt = DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);
             borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
@@ -271,7 +271,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 //待发布
                 if (releaseAt.getTime() >= nowDate.getTime()) {
                     status = 1;
-                    borrowInfoRes.setSurplusSecond(((releaseAt.getTime() - nowDate.getTime()) / 1000 )+ 5);
+                    borrowInfoRes.setSurplusSecond(((releaseAt.getTime() - nowDate.getTime()) / 1000) + 5);
                 } else if (nowDate.getTime() > endAt.getTime()) {  //当前时间大于招标有效时间
                     status = 5; //已过期
                 } else {
@@ -898,40 +898,437 @@ public class BorrowBizImpl implements BorrowBiz {
                 || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
             return false;
         }
-        Long tenderId = borrow.getTenderId();
-        List<BorrowCollection> transferedBorrowCollections = null;
 
-        //============================更新转让标识=============================
+        // 原标的信息更改
+        List<BorrowCollection> oldBorrowCollections = processOldTenderAndBorrowCollection(borrow);
+        //查询当前借款的所有 状态为1的 tender记录
+        Specification<Tender> ts = Specifications.<Tender>and()
+                .eq("borrowId", borrow.getId())
+                .eq("status", 1)
+                .build();
+        List<Tender> tenderList = tenderService.findList(ts);
+        Preconditions.checkNotNull(tenderList, "生成还款记录: 投标记录为空");
+        // 这里涉及用户投标回款计划生成和平台资金的变动
+        generateBorrowCollectionAndAssetChange(borrow, tenderList, oldBorrowCollections.get(0).getStartAt());
+        // 标的自身设置奖励信息:进行存管红包发放
+        awardUserByBorrowTender(borrow, tenderList);
+        // 发送投资成功站内信
+        sendNoticsByTender(borrow, tenderList);
+        // 用户投标信息和每日统计
+        userTenderStatistic(borrow, tenderList, oldBorrowCollections.get(0).getStartAt());
+        // 借款人资金变动
+        processBorrowAssetChange(borrow, tenderList, oldBorrowCollections.get(0).getStartAt()) ;
+        // 满标操作
+        finishBorrow(borrow, tenderList) ;
+        //如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
+        updateUserCacheByBorrowReview(borrow);
+        //更新全网网站统计
+        updateStatisticByBorrowReview(borrow);
+        //借款成功发送通知短信
+        smsNoticeByBorrowReview(borrow);
+        //发送借款协议
+        sendBorrowProtocol(borrow);
+        return true;
+    }
+
+    /**
+     * 结束标的信息
+     * @param borrow
+     * @param tenderList
+     */
+    private void finishBorrow(Borrow borrow, List<Tender> tenderList) {
+        log.info(String.format("批处理: 更改标的为满标 %s", new Gson().toJson(borrow) ));
+        borrow.setStatus(3);
+        borrow.setSuccessAt(new Date());
+        borrowService.updateById(borrow);
+        tenderList.forEach(tender -> {
+            tender.setState(2);
+            tender.setUpdatedAt(new Date());
+        });
+
+        tenderService.save(tenderList) ;
+    }
+
+    /**
+     *  处理借款人资金变动问题
+     * @param borrow
+     * @param tenderList
+     * @param startAt
+     * @throws Exception
+     */
+    private void processBorrowAssetChange(Borrow borrow, List<Tender> tenderList, Date startAt) throws Exception {
+        CapitalChangeEntity entity = new CapitalChangeEntity();
+        entity.setType(CapitalChangeEnum.Borrow);
+        entity.setUserId(ObjectUtils.isEmpty(borrow.getTakeUserId()) ? borrow.getUserId() : borrow.getTakeUserId());
+        entity.setMoney(borrow.getMoney());
+        entity.setRemark("通过[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]借到的款");
+        if (borrow.getType() == 2) {
+            entity.setAsset("add@noUseMoney");
+        }
+
+        capitalChangeHelper.capitalChange(entity);
+        //  扣除奖励
+        if (!ObjectUtils.isEmpty(borrow.getAwardType())) {
+            entity = new CapitalChangeEntity();
+            entity.setType(CapitalChangeEnum.Fee);
+            entity.setUserId(borrow.getUserId());
+            int money = borrow.getAward();
+            if (borrow.getAwardType() == 2) {
+                money = borrow.getMoney() * borrow.getAward();
+            }
+            entity.setMoney(money);
+            entity.setRemark("扣除借款标[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]的奖励");
+            if (borrow.getType() == 2) {
+                entity.setAsset("sub@noUseMoney");
+            }
+            capitalChangeHelper.capitalChange(entity);
+        }
+
+        // 扣除债权转让费用
+        if ((borrow.getType() == 0) && (!ObjectUtils.isEmpty(borrow.getTenderId())) && (borrow.getTenderId() > 0)) { //转让管理费
+            entity = new CapitalChangeEntity();
+            entity.setType(CapitalChangeEnum.Fee);
+            entity.setUserId(borrow.getUserId());
+            double transferFeeRate = Math.min(0.004 + 0.0008 * (borrow.getTotalOrder() - 1), 0.0128);
+            entity.setMoney((int) (borrow.getMoney() * transferFeeRate));
+            entity.setRemark("扣除借款标[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]的转让管理费");
+            capitalChangeHelper.capitalChange(entity);
+        } else {
+            int collectionMoney = 0;
+            int collectionInterest = 0;
+            for (Tender tender : tenderList) {
+                BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
+                        NumberHelper.toDouble(StringHelper.toString(tender.getValidMoney())),
+                        NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), startAt);
+                Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
+                List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
+                Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
+                for (int i = 0; i < repayDetailList.size(); i++) {
+                    Map<String, Object> repayDetailMap = repayDetailList.get(i);
+                    collectionMoney += new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue();
+                    collectionInterest += new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue();
+                }
+            }
+
+            entity = new CapitalChangeEntity();
+            entity.setType(CapitalChangeEnum.PaymentAdd);
+            entity.setUserId(borrow.getUserId());
+            entity.setMoney(collectionMoney);
+            entity.setInterest(collectionInterest);
+            entity.setRemark("添加待还金额");
+            capitalChangeHelper.capitalChange(entity);
+        }
+
+        //净值账户管理费
+        if (borrow.getType() == 1) {
+            double fee = 0;
+            if (borrow.getRepayFashion() == 1) {
+                fee = MathHelper.myRound(borrow.getMoney() * 0.0012 / 30 * borrow.getTimeLimit(), 2);
+            } else {
+                fee = MathHelper.myRound(borrow.getMoney() * 0.0012 * borrow.getTimeLimit(), 2);
+            }
+            entity = new CapitalChangeEntity();
+            entity.setType(CapitalChangeEnum.Manager);
+            entity.setUserId(borrow.getUserId());
+            entity.setMoney((int) fee);
+            entity.setRemark("扣除借款标[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]的管理费");
+            capitalChangeHelper.capitalChange(entity);
+        }
+    }
+
+    /**
+     * 用户投标统计
+     *
+     * @param borrow
+     * @param tenderList
+     * @param startAt
+     */
+    private void userTenderStatistic(Borrow borrow, List<Tender> tenderList, Date startAt) throws Exception {
+        Gson gson = new Gson() ;
+        for (Tender tender : tenderList) {
+            log.info(String.format("投标统计: %s", gson.toJson(tender)));
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
+                    NumberHelper.toDouble(StringHelper.toString(tender.getValidMoney())),
+                    NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), startAt);
+            Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
+            List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
+            Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
+            Integer countInterest = 0;
+            for (int i = 0; i < repayDetailList.size(); i++) {
+                Map<String, Object> repayDetailMap = repayDetailList.get(i);
+                countInterest += new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue();
+            }
+
+            UserCache userCache = userCacheService.findById(tender.getUserId());
+            if (borrow.getType() == 0) {
+                userCache.setTjWaitCollectionPrincipal(userCache.getTjWaitCollectionPrincipal() + tender.getValidMoney());
+                userCache.setTjWaitCollectionInterest(userCache.getTjWaitCollectionInterest() + countInterest);
+            }
+
+            if (borrow.getType() == 4) {
+                userCache.setQdWaitCollectionPrincipal(userCache.getQdWaitCollectionPrincipal() + tender.getValidMoney());
+                userCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() + countInterest);
+            }
+
+            IncrStatistic incrStatistic = new IncrStatistic();
+            if ((!userCache.getTenderTransfer()) && (!userCache.getTenderTuijian()) && (!userCache.getTenderJingzhi()) && (!userCache.getTenderMiao()) && (!userCache.getTenderQudao())) {
+                incrStatistic.setTenderCount(1);
+                incrStatistic.setTenderTotal(1);
+            }
+
+            if (borrow.isTransfer() && (!userCache.getTenderTransfer())) {
+                incrStatistic.setTenderLzCount(1);
+                incrStatistic.setTenderLzTotalCount(1);
+                userCache.setTenderTransfer(true);
+            } else if ((borrow.getType() == 0) && (!userCache.getTenderTuijian())) {
+                incrStatistic.setTenderTjCount(1);
+                incrStatistic.setTenderTjTotalCount(1);
+                userCache.setTenderTuijian(true);
+            } else if ((borrow.getType() == 1) && (!userCache.getTenderJingzhi())) {
+                incrStatistic.setTenderJzCount(1);
+                incrStatistic.setTenderJzTotalCount(1);
+                userCache.setTenderJingzhi(true);
+            } else if ((borrow.getType() == 2) && (!userCache.getTenderMiao())) {
+                incrStatistic.setTenderMiaoCount(1);
+                incrStatistic.setTenderMiaoTotalCount(1);
+                userCache.setTenderMiao(true);
+            } else if ((borrow.getType() == 4) && (!userCache.getTenderQudao())) {
+                incrStatistic.setTenderQdCount(1);
+                incrStatistic.setTenderQdTotalCount(1);
+                userCache.setTenderQudao(true);
+            }
+
+            userCacheService.save(userCache) ;
+            if (!ObjectUtils.isEmpty(incrStatistic)) {
+                incrStatisticBiz.caculate(incrStatistic);
+            }
+        }
+    }
+
+    /**
+     * 发送投资成功站内信
+     *
+     * @param borrow
+     * @param tenderList
+     */
+    private void sendNoticsByTender(Borrow borrow, List<Tender> tenderList) {
+        Gson gson = new Gson();
+        log.info(String.format("发送投标成功站内信开始: %s", gson.toJson(tenderList)));
+        Date nowDate = new Date();
+        Set<Long> userIdSet = tenderList.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet());
+        for (Long userId : userIdSet) {
+            Notices notices = new Notices();
+            notices.setFromUserId(1L);
+            notices.setUserId(userId);
+            notices.setRead(false);
+            notices.setName("投资的借款满标审核通过");
+            notices.setContent("您所投资的借款[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]在 " + DateHelper.dateToString(nowDate) + " 已满标审核通过");
+            notices.setType("system");
+            notices.setCreatedAt(nowDate);
+            notices.setUpdatedAt(nowDate);
+            //发送站内信
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
+            mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
+            Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("borrowProvider doAgainVerify send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("borrowProvider doAgainVerify send mq exception", e);
+            }
+        }
+        log.info(String.format("发送投标成功站内信结束:  %s", gson.toJson(tenderList)));
+    }
+
+    /**
+     * 处理标的设置投标奖励处理, 并且调用存管发放红包
+     *
+     * @param borrow
+     * @param tenderList
+     */
+    private void awardUserByBorrowTender(Borrow borrow, List<Tender> tenderList) throws Exception {
+        Gson gson = new Gson();
+        if (borrow.getAwardType() > 0) {
+            log.info(String.format("触发标的设置的投标送奖励活动开始: %s", gson.toJson(tenderList)));
+            for (Tender tender : tenderList) {
+                UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
+                ResponseEntity<VoBaseResp> conditionResponse = ThirdAccountHelper.conditionCheck(userThirdAccount);
+                if (!conditionResponse.getStatusCode().equals(HttpStatus.OK)) {
+                    throw new Exception(String.format("投标送奖励活动: 用户存管条件验证失败 %s", gson.toJson(tender)));
+                }
+                int money = (int) MathHelper.myRound((tender.getValidMoney().doubleValue() / borrow.getMoney().doubleValue()) * borrow.getAward(), 2);
+                if (borrow.getAwardType() == 2) {
+                    money = (int) MathHelper.myRound(tender.getValidMoney().doubleValue() * borrow.getAward() / 100, 2);
+                }
+
+                String remark = "借款标‘" + borrow.getName() + "’的奖励";
+
+                //查询红包账户
+                DictValue dictValue = jixinCache.get(JixinContants.RED_PACKET_USER_ID);
+                UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
+
+                //通过红包的形式发送奖励
+                VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
+                voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
+                voucherPayRequest.setTxAmount(StringHelper.formatDouble(money, 100, false));
+                voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
+                voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
+                voucherPayRequest.setChannel(ChannelContant.HTML);
+                voucherPayRequest.setDesLine(remark);
+                VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
+                if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+                    String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+                    throw new Exception("发放投资奖励异常：" + msg);
+                }
+
+                CapitalChangeEntity entity = new CapitalChangeEntity();
+                entity.setType(CapitalChangeEnum.Award);
+                entity.setUserId(tender.getUserId());
+                entity.setToUserId(borrow.getUserId());
+                entity.setMoney(money);
+                entity.setRemark(remark);
+                capitalChangeHelper.capitalChange(entity);
+            }
+
+            log.info(String.format("触发标的设置的投标送奖励活动结束: %s", gson.toJson(tenderList)));
+        }
+
+
+        // 渠道用户投资活动触发
+        for (Tender tender : tenderList) {
+            UserCache userCache = userCacheService.findById(tender.getUserId());
+            Users user = userService.findById(tender.getUserId());
+            if ((!borrow.isTransfer()) && (!userCache.getTenderTuijian()) && (!userCache.getTenderQudao())) {
+                //首次投资推荐标满2000元赠送流
+                ImmutableSet channelSet = ImmutableSet.of(3, 5, 7);
+                if ((!channelSet.contains(tender.getSource())) && tender.getValidMoney() >= 2000 * 100) {
+                } else if ((user.getSource() == 5) && (tender.getValidMoney() >= 1000 * 100)) {
+                    log.info(String.format("触发投资送流量券活动: %s", gson.toJson(tender)));
+                    MqConfig mqConfig = new MqConfig();
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_ACTIVITY);
+                    mqConfig.setTag(MqTagEnum.GIVE_COUPON);
+                    ImmutableMap<String, String> body = ImmutableMap
+                            .of(MqConfig.MSG_TENDER_ID, StringHelper.toString(tender.getId()),
+                                    MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                    mqConfig.setMsg(body);
+                    try {
+                        log.info(String.format("borrowBizImpl firstVerify send mq %s", GSON.toJson(body)));
+                        mqHelper.convertAndSend(mqConfig);
+                    } catch (Throwable e) {
+                        log.error("borrowBizImpl firstVerify send mq exception", e);
+                    }
+                }
+            }
+        }
+    }
+
+
+    /**
+     * 添加用户回款计划
+     *
+     * @param borrow     标的信息
+     * @param tenderList 投标记录
+     * @param borrowDate 计算利息开始时间
+     */
+    private void generateBorrowCollectionAndAssetChange(Borrow borrow, List<Tender> tenderList, Date borrowDate) throws Exception {
+        Gson gson = new Gson();
+        Date nowDate = new Date();
+        log.info(String.format("生成用户回款计划开始: %s", gson.toJson(tenderList)));
+        for (Tender tender : tenderList) {
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
+                    NumberHelper.toDouble(StringHelper.toString(tender.getValidMoney())),
+                    NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrowDate);
+            Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
+            List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
+            Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
+            BorrowCollection borrowCollection;
+            int collectionMoney = 0;
+            int collectionInterest = 0;
+            for (int i = 0; i < repayDetailList.size(); i++) {
+                borrowCollection = new BorrowCollection();
+                Map<String, Object> repayDetailMap = repayDetailList.get(i);
+                collectionMoney += new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue();
+                collectionInterest += new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue();
+                borrowCollection.setTenderId(tender.getId());
+                borrowCollection.setStatus(0);
+                borrowCollection.setOrder(i);
+                borrowCollection.setUserId(tender.getUserId());
+                borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : borrowDate);
+                borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : nowDate);
+                borrowCollection.setCollectionAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
+                borrowCollection.setCollectionMoney(new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue());
+                borrowCollection.setPrincipal(new Double(NumberHelper.toDouble(repayDetailMap.get("principal"))).intValue());
+                borrowCollection.setInterest(new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue());
+                borrowCollection.setCreatedAt(nowDate);
+                borrowCollection.setUpdatedAt(nowDate);
+                borrowCollection.setCollectionMoneyYes(0);
+                borrowCollection.setLateDays(0);
+                borrowCollection.setLateInterest(0);
+                borrowCollection.setBorrowId(borrow.getId());
+                borrowCollectionService.insert(borrowCollection);
+            }
+
+            // 扣除冻结
+            CapitalChangeEntity entity = new CapitalChangeEntity();
+            entity.setType(CapitalChangeEnum.Tender);
+            entity.setUserId(tender.getUserId());
+            entity.setToUserId(borrow.getUserId());
+            entity.setMoney(tender.getValidMoney());
+            entity.setRemark("成功投资[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]");
+            capitalChangeHelper.capitalChange(entity);
+
+            // 添加待收
+            entity = new CapitalChangeEntity();
+            entity.setType(CapitalChangeEnum.CollectionAdd);
+            entity.setUserId(tender.getUserId());
+            entity.setToUserId(borrow.getUserId());
+            entity.setMoney(collectionMoney);
+            entity.setInterest(collectionInterest);
+            entity.setRemark("添加待收金额");
+            capitalChangeHelper.capitalChange(entity);
+        }
+    }
+
+    /**
+     * 更改原始债权信息
+     * 1. 更改原始债权投标记录为已转让
+     * 2. 更改原始债权待收记录为已转让标至
+     * 3. 减少债权人待收金额
+     *
+     * @param borrow
+     * @return
+     * @throws Exception
+     */
+    private List<BorrowCollection> processOldTenderAndBorrowCollection(Borrow borrow) throws Exception {
+        Long oldTenderId = borrow.getTenderId();  // 原标的投标记录
+
+        //将债权转人待收设置为已转让状态
         BorrowCollection borrowCollection = new BorrowCollection();
         borrowCollection.setTransferFlag(1);
         Specification<BorrowCollection> bcs = Specifications.<BorrowCollection>and()
-                .eq("tenderId", tenderId)
+                .eq("tenderId", oldTenderId)
                 .eq("status", 0)
                 .build();
         borrowCollectionService.updateBySpecification(borrowCollection, bcs);
-
-        Tender tender = tenderService.findById(tenderId);
-        tender.setId(tenderId);
+        // 更新装让人投标记录为转让状态
+        Tender tender = tenderService.findById(oldTenderId);
+        tender.setId(oldTenderId);
         tender.setTransferFlag(2);
         tenderService.updateById(tender);
+
         //======================================================================
-        //扣除转让待收
+        // 扣除转让待收
         bcs = Specifications.<BorrowCollection>and()
-                .eq("tenderId", tenderId)
+                .eq("tenderId", oldTenderId)
                 .eq("status", 0)
                 .eq("transferFlag", 1)
                 .build();
-
-        transferedBorrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "order"));
-
-        Integer collectionMoney = 0;
-        Integer collectionInterest = 0;
-        for (BorrowCollection temp : transferedBorrowCollections) {
-            collectionMoney += temp.getCollectionMoney();
-            collectionInterest += temp.getInterest();
-        }
-
-        //更新资产记录
+        List<BorrowCollection> oldBorrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "order"));
+        Preconditions.checkNotNull(oldBorrowCollections, "债权转让复审: 原始投标还款计划为空");
+        Integer collectionMoney = oldBorrowCollections.stream().mapToInt(borrowCollection1 -> borrowCollection.getCollectionMoney()).sum();  // 待收
+        Integer collectionInterest = oldBorrowCollections.stream().mapToInt(borrowCollection1 -> borrowCollection.getInterest()).sum(); //  待收利息
         CapitalChangeEntity entity = new CapitalChangeEntity();
         entity.setType(CapitalChangeEnum.CollectionLower);
         entity.setUserId(borrow.getUserId());
@@ -939,21 +1336,7 @@ public class BorrowBizImpl implements BorrowBiz {
         entity.setInterest(collectionInterest);
         entity.setRemark("债权转让成功，扣除待收资金");
         capitalChangeHelper.capitalChange(entity);
-
-        //生成回款记录
-         disposeBorrowCollection(borrow, transferedBorrowCollections.get(0).getStartAt());
-
-        // 复审事件
-        //如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
-        updateUserCacheByBorrowReview(borrow);
-        //更新网站统计
-        updateStatisticByBorrowReview(borrow);
-        //借款成功发送通知短信
-        smsNoticeByBorrowReview(borrow);
-        //发送借款协议
-        sendBorrowProtocol(borrow);
-        return true ;
-
+        return oldBorrowCollections;
     }
 
     /**
@@ -974,17 +1357,13 @@ public class BorrowBizImpl implements BorrowBiz {
         //投标用户id集合
         Set<Integer> tenderUserIds = new HashSet<>();
         CapitalChangeEntity entity = null;
-
         //查询当前借款的所有 状态为1的 tender记录
         Specification<Tender> ts = Specifications.<Tender>and()
                 .eq("borrowId", borrowId)
                 .eq("status", 1)
                 .build();
         List<Tender> tenderList = tenderService.findList(ts);
-        if (CollectionUtils.isEmpty(tenderList)) {
-            return false;
-        }
-
+        Preconditions.checkNotNull(tenderList, "生成还款记录: 投标记录为空");
         for (Tender tender : tenderList) {
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
                     NumberHelper.toDouble(StringHelper.toString(tender.getValidMoney())),
@@ -1019,7 +1398,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 borrowCollectionService.insert(borrowCollection);
             }
 
-            //扣除冻结
+            // 扣除冻结
             entity = new CapitalChangeEntity();
             entity.setType(CapitalChangeEnum.Tender);
             entity.setUserId(tender.getUserId());
@@ -1028,7 +1407,7 @@ public class BorrowBizImpl implements BorrowBiz {
             entity.setRemark("成功投资[" + BorrowHelper.getBorrowLink(borrowId, borrow.getName()) + "]");
             capitalChangeHelper.capitalChange(entity);
 
-            //添加待收
+            // 添加待收
             entity = new CapitalChangeEntity();
             entity.setType(CapitalChangeEnum.CollectionAdd);
             entity.setUserId(tender.getUserId());
@@ -1125,7 +1504,6 @@ public class BorrowBizImpl implements BorrowBiz {
             entity.setAsset("add@noUseMoney");
         }
         capitalChangeHelper.capitalChange(entity);
-
         //扣除奖励
         Integer awardType = borrow.getAwardType();
         if (!ObjectUtils.isEmpty(awardType)) {
@@ -1138,6 +1516,7 @@ public class BorrowBizImpl implements BorrowBiz {
             if (borrow.getAwardType() == 2) {
                 tempMoney = borrow.getMoney() * borrow.getAward();
             }
+
             entity.setType(CapitalChangeEnum.Fee);
             entity.setUserId(borrow.getUserId());
             entity.setMoney(tempMoney);
@@ -1155,7 +1534,6 @@ public class BorrowBizImpl implements BorrowBiz {
             entity.setMoney((int) (borrow.getMoney() * transferFeeRate));
             entity.setRemark("扣除借款标[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]的转让管理费");
             capitalChangeHelper.capitalChange(entity);
-
         } else {
             //添加待还
             entity = new CapitalChangeEntity();
@@ -1201,37 +1579,25 @@ public class BorrowBizImpl implements BorrowBiz {
      */
     private Map<String, Object> updateUserCacheByTenderSuccess(Tender tender, Borrow borrow, List<Map<String, Object>> repayDetailList) throws Exception {
         Map<String, Object> resultMap = new HashMap<>();
-        Users user = userService.findById(tender.getUserId());
-        UserCache userCache = userCacheService.findById(tender.getUserId());
-        log.debug("-------updateUserCacheByTenderSuccess---" + GSON.toJson(borrow) + "-------");
-        log.debug("------------------");
-        log.debug("-------updateUserCacheByTenderSuccess---" + GSON.toJson(tender) + "-------");
-        if ((!borrow.isTransfer())
-                && (!userCache.getTenderTuijian()) && (!userCache.getTenderQudao())) {
-            //首次投资推荐标满2000元赠送流量
-            Set<Integer> tempSet = new HashSet<>();
-            tempSet.add(3);
-            tempSet.add(5);
-            tempSet.add(7);
-            if ((!tempSet.contains(tender.getSource())) && tender.getValidMoney() >= 2000 * 100) {
-
+        Users user = userService.findByIdLock(tender.getUserId());
+        UserCache userCache = userCacheService.findByUserIdLock(tender.getUserId());
+        if ((!borrow.isTransfer()) && (!userCache.getTenderTuijian()) && (!userCache.getTenderQudao())) {
+            //首次投资推荐标满2000元赠送流
+            ImmutableSet channelSet = ImmutableSet.of(3, 5, 7);
+            if ((!channelSet.contains(tender.getSource())) && tender.getValidMoney() >= 2000 * 100) {
             } else if ((user.getSource() == 5) && (tender.getValidMoney() >= 1000 * 100)) {
-
                 MqConfig mqConfig = new MqConfig();
                 mqConfig.setQueue(MqQueueEnum.RABBITMQ_ACTIVITY);
                 mqConfig.setTag(MqTagEnum.GIVE_COUPON);
                 ImmutableMap<String, String> body = ImmutableMap
-                        .of(MqConfig.MSG_TENDER_ID, StringHelper.toString(tender.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                        .of(MqConfig.MSG_TENDER_ID, StringHelper.toString(tender.getId()),
+                                MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
                 mqConfig.setMsg(body);
-                boolean mqState = false;
                 try {
                     log.info(String.format("borrowBizImpl firstVerify send mq %s", GSON.toJson(body)));
-                    mqState = mqHelper.convertAndSend(mqConfig);
+                    mqHelper.convertAndSend(mqConfig);
                 } catch (Throwable e) {
                     log.error("borrowBizImpl firstVerify send mq exception", e);
-                }
-                if (!mqState) {
-                    log.error("赠送流量券失败!");
                 }
             }
         }
@@ -1784,22 +2150,17 @@ public class BorrowBizImpl implements BorrowBiz {
      * @throws Exception
      */
     private void smsNoticeByBorrowReview(Borrow borrow) throws Exception {
-
         Users user = userService.findById(borrow.getUserId());
-
         if ((borrow.getType() == 1) && (!ObjectUtils.isEmpty(borrow.getLendId())) && ((borrow.getApr() / 100) > 1)
                 && ((borrow.getRepayFashion() != 1) || (borrow.getTimeLimit() > 1))) {
             String phone = user.getPhone();
-
-            if ((ObjectUtils.isEmpty(phone))) {
-
+            if (!ObjectUtils.isEmpty(phone)) {
                 long fee = 0;
                 if (borrow.getRepayFashion() == 1) {
                     fee = Math.round(borrow.getMoney() * 0.12 / 30 * borrow.getTimeLimit());
                 } else {
                     fee = Math.round(borrow.getMoney() * 0.12 * borrow.getTimeLimit());
                 }
-
                 // 使用消息队列发送短信
                 MqConfig config = new MqConfig();
                 config.setQueue(MqQueueEnum.RABBITMQ_SMS);
@@ -1811,7 +2172,6 @@ public class BorrowBizImpl implements BorrowBiz {
                                 "fee", StringHelper.formatDouble(fee, 100.0, true),
                                 "id", StringHelper.toString(borrow.getId()));
                 config.setMsg(body);
-
                 mqHelper.convertAndSend(config);
             }
         }
@@ -1824,7 +2184,6 @@ public class BorrowBizImpl implements BorrowBiz {
      */
     private void updateUserCacheByBorrowReview(Borrow borrow) throws Exception {
         UserCache userCache = userCacheService.findById(borrow.getUserId());
-
         if (borrow.isTransfer()) {
             Specification<BorrowCollection> bcs = Specifications
                     .<BorrowCollection>and()
@@ -1836,12 +2195,10 @@ public class BorrowBizImpl implements BorrowBiz {
             if (CollectionUtils.isEmpty(borrowCollectionList)) {
                 return;
             }
-
             Integer countInterest = 0;
             for (BorrowCollection borrowCollection : borrowCollectionList) {
                 countInterest += borrowCollection.getInterest();
             }
-
             userCache.setUserId(userCache.getUserId());
             if (borrow.getType() == 0) {
                 userCache.setTjWaitCollectionPrincipal(userCache.getTjWaitCollectionPrincipal() - borrow.getMoney());
@@ -1861,7 +2218,6 @@ public class BorrowBizImpl implements BorrowBiz {
      */
     private void updateStatisticByBorrowReview(Borrow borrow) {
         Date nowDate = new Date();
-
         Specification<BorrowRepayment> brs = Specifications
                 .<BorrowRepayment>and()
                 .eq("borrowId", borrow.getId())
