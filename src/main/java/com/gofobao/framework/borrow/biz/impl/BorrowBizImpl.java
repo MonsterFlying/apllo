@@ -406,11 +406,11 @@ public class BorrowBizImpl implements BorrowBiz {
         boolean closeAuto = voAddNetWorthBorrow.isCloseAuto();
 
         Asset asset = assetService.findByUserIdLock(userId);
-        Preconditions.checkNotNull(asset, "净值标的发布: 当前用户资金账户为空!") ;
+        Preconditions.checkNotNull(asset, "净值标的发布: 当前用户资金账户为空!");
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         ResponseEntity<VoBaseResp> conditionCheckResponse = ThirdAccountHelper.conditionCheck(userThirdAccount);
-        if(!conditionCheckResponse.getStatusCode().equals(HttpStatus.OK)){
-            return conditionCheckResponse ;
+        if (!conditionCheckResponse.getStatusCode().equals(HttpStatus.OK)) {
+            return conditionCheckResponse;
         }
 
         Date releaseAt = DateHelper.stringToDate(releaseAtStr, DateHelper.DATE_FORMAT_YMDHMS);
@@ -422,7 +422,7 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         UserCache userCache = userCacheService.findById(userId);
-        Preconditions.checkNotNull(userCache, "净值标的发布: 当前用户资金缓存账户为空!") ;
+        Preconditions.checkNotNull(userCache, "净值标的发布: 当前用户资金缓存账户为空!");
 
         double totalMoney = (asset.getUseMoney() + userCache.getWaitCollectionPrincipal()) * 0.8 - asset.getPayment();
         if (totalMoney < money) {
@@ -554,7 +554,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "借款状态已发生更改!"));
         }
 
-        if(voCancelBorrow.getUserId() != borrow.getUserId()){
+        if (voCancelBorrow.getUserId() != borrow.getUserId()) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "非法操作!"));
@@ -702,7 +702,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "借款状态已发生更改!"));
         }
 
-        if (borrow.getMoneyYes()/borrow.getMoney() == 1){
+        if (borrow.getMoneyYes() / borrow.getMoney() == 1) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "满标后标的不可以撤销!"));
@@ -894,68 +894,66 @@ public class BorrowBizImpl implements BorrowBiz {
      */
     @Transactional(rollbackFor = Throwable.class)
     public boolean transferBorrowAgainVerify(Borrow borrow) throws Exception {
-        boolean bool = false;
-        do {
-            if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1)
-                    || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
-                break;
-            }
-            Long tenderId = borrow.getTenderId();
-            List<BorrowCollection> transferedBorrowCollections = null;
+        if ((borrow.getStatus() != 1)
+                || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
+            return false;
+        }
+        Long tenderId = borrow.getTenderId();
+        List<BorrowCollection> transferedBorrowCollections = null;
 
-            //============================更新转让标识=============================
-            BorrowCollection borrowCollection = new BorrowCollection();
-            borrowCollection.setTransferFlag(1);
-            Specification<BorrowCollection> bcs = Specifications.<BorrowCollection>and()
-                    .eq("tenderId", tenderId)
-                    .eq("status", 0)
-                    .build();
-            borrowCollectionService.updateBySpecification(borrowCollection, bcs);
+        //============================更新转让标识=============================
+        BorrowCollection borrowCollection = new BorrowCollection();
+        borrowCollection.setTransferFlag(1);
+        Specification<BorrowCollection> bcs = Specifications.<BorrowCollection>and()
+                .eq("tenderId", tenderId)
+                .eq("status", 0)
+                .build();
+        borrowCollectionService.updateBySpecification(borrowCollection, bcs);
 
-            Tender tender = tenderService.findById(tenderId);
-            tender.setId(tenderId);
-            tender.setTransferFlag(2);
-            tenderService.updateById(tender);
-            //======================================================================
-            //扣除转让待收
-            bcs = Specifications.<BorrowCollection>and()
-                    .eq("tenderId", tenderId)
-                    .eq("status", 0)
-                    .eq("transferFlag", 1)
-                    .build();
+        Tender tender = tenderService.findById(tenderId);
+        tender.setId(tenderId);
+        tender.setTransferFlag(2);
+        tenderService.updateById(tender);
+        //======================================================================
+        //扣除转让待收
+        bcs = Specifications.<BorrowCollection>and()
+                .eq("tenderId", tenderId)
+                .eq("status", 0)
+                .eq("transferFlag", 1)
+                .build();
 
-            transferedBorrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "order"));
+        transferedBorrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "order"));
 
-            Integer collectionMoney = 0;
-            Integer collectionInterest = 0;
-            for (BorrowCollection temp : transferedBorrowCollections) {
-                collectionMoney += temp.getCollectionMoney();
-                collectionInterest += temp.getInterest();
-            }
+        Integer collectionMoney = 0;
+        Integer collectionInterest = 0;
+        for (BorrowCollection temp : transferedBorrowCollections) {
+            collectionMoney += temp.getCollectionMoney();
+            collectionInterest += temp.getInterest();
+        }
 
-            //更新资产记录
-            CapitalChangeEntity entity = new CapitalChangeEntity();
-            entity.setType(CapitalChangeEnum.CollectionLower);
-            entity.setUserId(borrow.getUserId());
-            entity.setMoney(collectionMoney);
-            entity.setInterest(collectionInterest);
-            entity.setRemark("债权转让成功，扣除待收资金");
-            capitalChangeHelper.capitalChange(entity);
+        //更新资产记录
+        CapitalChangeEntity entity = new CapitalChangeEntity();
+        entity.setType(CapitalChangeEnum.CollectionLower);
+        entity.setUserId(borrow.getUserId());
+        entity.setMoney(collectionMoney);
+        entity.setInterest(collectionInterest);
+        entity.setRemark("债权转让成功，扣除待收资金");
+        capitalChangeHelper.capitalChange(entity);
 
-            //生成回款记录
-            bool = disposeBorrowCollection(borrow, transferedBorrowCollections.get(0).getStartAt());
+        //生成回款记录
+         disposeBorrowCollection(borrow, transferedBorrowCollections.get(0).getStartAt());
 
-            // 复审事件
-            //如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
-            updateUserCacheByBorrowReview(borrow);
-            //更新网站统计
-            updateStatisticByBorrowReview(borrow);
-            //借款成功发送通知短信
-            smsNoticeByBorrowReview(borrow);
-            //发送借款协议
-            sendBorrowProtocol(borrow);
-        } while (false);
-        return bool;
+        // 复审事件
+        //如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
+        updateUserCacheByBorrowReview(borrow);
+        //更新网站统计
+        updateStatisticByBorrowReview(borrow);
+        //借款成功发送通知短信
+        smsNoticeByBorrowReview(borrow);
+        //发送借款协议
+        sendBorrowProtocol(borrow);
+        return true ;
+
     }
 
     /**
@@ -1572,7 +1570,7 @@ public class BorrowBizImpl implements BorrowBiz {
         Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         Long borrowId = NumberHelper.toLong(paramMap.get("borrowId"));
         Borrow borrow = borrowService.findById(borrowId);
-        Preconditions.checkNotNull(borrow, "当前标的信息为空") ;
+        Preconditions.checkNotNull(borrow, "当前标的信息为空");
         Long userId = borrow.getUserId();
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
@@ -1592,7 +1590,7 @@ public class BorrowBizImpl implements BorrowBiz {
             VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
             voCreateThirdBorrowReq.setBorrowId(borrowId);
             voCreateThirdBorrowReq.setEntrustFlag(true);
-            ResponseEntity<VoBaseResp> resp  = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);   // 即信标的登记
+            ResponseEntity<VoBaseResp> resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);   // 即信标的登记
             if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) { //创建状态为失败时返回错误提示
                 log.error(String.format("车贷标/ 渠道标初审: 存管登记失败( %s )", GSON.toJson(voRegisterOfficialBorrow)));
                 return ResponseEntity
@@ -1930,7 +1928,7 @@ public class BorrowBizImpl implements BorrowBiz {
             return false;
         }
 
-        Gson gson = new Gson() ;
+        Gson gson = new Gson();
         if (!ObjectUtils.isEmpty(borrow.getLendId())) {
             log.info(String.format("有草出借标的初步审核: %s", gson.toJson(borrow)));
             return verifyLendBorrow(borrow);      //有草出借初审
@@ -1965,7 +1963,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 ResponseEntity<VoBaseResp> resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
                 if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) { //创建状态为失败时返回错误提示
                     log.error(String.format("标的初审: 普通标的报备 %s", new Gson().toJson(resp)));
-                    return false ;
+                    return false;
                 }
             }
         }
@@ -2009,10 +2007,10 @@ public class BorrowBizImpl implements BorrowBiz {
 
     /**
      * 摘草 生成借款 初审
-     *
-     *  更改标的为可投状态,
-     *  存管平台报备
-     *  并且调用投标流程, 完成摘草动作
+     * <p>
+     * 更改标的为可投状态,
+     * 存管平台报备
+     * 并且调用投标流程, 完成摘草动作
      *
      * @param borrow
      * @return
@@ -2035,7 +2033,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 ResponseEntity<VoBaseResp> resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
                 if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) { //创建状态为失败时返回错误提示
                     log.error(String.format("标的初审: 摘草报备标的信息失败 %s", new Gson().toJson(resp)));
-                    return false ;
+                    return false;
                 }
             }
         }

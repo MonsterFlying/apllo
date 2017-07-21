@@ -384,18 +384,15 @@ public class ThirdBatchProvider {
         //1.判断失败orderId集合为空
         //2.判断borrowId不为空
         if (CollectionUtils.isEmpty(failureThirdTransferOrderIds)) {
-
             Borrow borrow = borrowService.findById(borrowId);
+            Preconditions.checkNotNull(borrow, "摘取批次处理: 查询复审标的失败") ;
             log.info(String.format("批量债权转让复审: %s", gson.toJson(borrow)));
             boolean b = borrowBiz.transferBorrowAgainVerify(borrow);
             if (b) {
                 log.info("批量债权转让复审: 成功");
             } else {
                 log.error("批量债权转让复审: 失败");
-                ;
             }
-
-
         }
     }
 
