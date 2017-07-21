@@ -112,7 +112,6 @@ public class BorrowProvider {
             if (ObjectUtils.isEmpty(resp)) {
                 log.info(String.format("复审: 批量正常放款申请申请成功: %s", GSON.toJson(msg)));
                 return true;
-
             } else {
                 log.info(String.format("复审: 批量正常放款申请申请失败: %s", GSON.toJson(resp)));
                 return false;
