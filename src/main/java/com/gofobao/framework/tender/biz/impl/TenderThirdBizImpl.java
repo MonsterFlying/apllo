@@ -432,9 +432,10 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      *
      * @return
      */
-    public void thirdBatchCreditEndRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public ResponseEntity<String> thirdBatchCreditEndRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
         BatchCreditInvestRunCall creditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
         });
+        Map<String, Object> acqResMap = GSON.fromJson(creditInvestRunCall.getAcqRes(), TypeTokenContants.MAP_TOKEN);
 
         if (ObjectUtils.isEmpty(creditInvestRunCall)) {
             log.error("======================================运行回调========================================");
@@ -450,7 +451,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             log.error("回调失败! msg:" + creditInvestRunCall.getRetMsg());
             log.error("======================================================================================");
             log.error("======================================================================================");
-        }else {
+        } else {
             log.error("======================================运行回调========================================");
             log.error("=============================投资人批次结束债权业务运行回调===========================");
             log.error("回调成功!");
@@ -458,12 +459,22 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             log.error("======================================================================================");
         }
 
+        //触发处理批次放款处理结果队列
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("borrowId")),
+                        MqConfig.BATCH_NO, StringHelper.toString(creditInvestRunCall.getBatchNo()),
+                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
         try {
-            PrintWriter out = response.getWriter();
-            out.print("success");
-            out.flush();
+            log.info(String.format("tenderThirdBizImpl thirdBatchCreditEndRunCall send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
-            e.printStackTrace();
+            log.error("tenderThirdBizImpl thirdBatchCreditEndRunCall send mq exception", e);
         }
+
+        return ResponseEntity.ok("success");
     }
 }

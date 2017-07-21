@@ -42,6 +42,7 @@ import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -218,7 +219,44 @@ public class ThirdBatchProvider {
      * @param successThirdCreditEndOrderIds
      */
     private void creditEndDeal(Long borrowId, List<String> failureThirdCreditEndOrderIds, List<String> successThirdCreditEndOrderIds) {
+        if (CollectionUtils.isEmpty(failureThirdCreditEndOrderIds)) {
+            log.info("================================================================================");
+            log.info("即信批次还款查询：查询未发现失败批次！");
+            log.info("================================================================================");
+        }
 
+        //登记成功批次
+        Specification<Tender> ts = null;
+        if (!CollectionUtils.isEmpty(successThirdCreditEndOrderIds)) {
+            ts = Specifications
+                    .<Tender>and()
+                    .in("thirdCreditEndOrderId", successThirdCreditEndOrderIds.toArray())
+                    .build();
+            List<Tender> successTenderList = tenderService.findList(ts);
+            successTenderList.stream().forEach(collection -> {
+                collection.setThirdCreditEndFlag(true);
+            });
+            tenderService.save(successTenderList);
+        }
+
+        //处理失败批次
+        //5分钟处理一次
+        if (!CollectionUtils.isEmpty(failureThirdCreditEndOrderIds)) {
+            //推送队列结束债权
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
+            mqConfig.setTag(MqTagEnum.END_CREDIT);
+            mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 5));
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("repaymentBizImpl repayDeal send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("repaymentBizImpl repayDeal send mq exception", e);
+            }
+        }
     }
 
     /**
@@ -250,10 +288,8 @@ public class ThirdBatchProvider {
         }
 
         //处理失败批次
-        if (!CollectionUtils.isEmpty(failureTRepayAllOrderIds)) { //不处理失败！
-            /**
-             * @// TODO: 2017/7/20 每五分钟处理一次  处理5次
-             */
+        if (!CollectionUtils.isEmpty(failureTRepayAllOrderIds)) {
+
         }
 
         //==================================================================
@@ -421,6 +457,12 @@ public class ThirdBatchProvider {
      */
     private void lendRepayDeal(Long borrowId, List<String> failureThirdLendPayOrderIds, List<String> successThirdLendPayOrderIds) throws Exception {
         Date nowDate = new Date();
+        if (CollectionUtils.isEmpty(failureThirdLendPayOrderIds)) {
+            log.info("================================================================================");
+            log.info("即信批次放款查询：查询未发现失败批次！");
+            log.info("================================================================================");
+        }
+
         // 当明细中存在批量放款成功是
         // 直接更改记录为存款放款成功
         if (!CollectionUtils.isEmpty(successThirdLendPayOrderIds)) {
@@ -429,7 +471,6 @@ public class ThirdBatchProvider {
                     .in("thirdLendPayOrderId", successThirdLendPayOrderIds.toArray())
                     .build();
             List<Tender> successTenderList = tenderService.findList(ts);
-            Preconditions.checkNotNull(successTenderList, "正常批次放款回调: 查询成功投标记录为空") ;
             successTenderList.stream().forEach(tender -> {
                 tender.setThirdTenderFlag(true);
             });
@@ -439,6 +480,7 @@ public class ThirdBatchProvider {
 
         // 对于失败的债权, 先查询失败的标的ID
         if (!CollectionUtils.isEmpty(failureThirdLendPayOrderIds)) {
+            success = false;
             Specification<Tender> ts = Specifications
                     .<Tender>and()
                     .in("thirdLendPayOrderId", failureThirdLendPayOrderIds.toArray())
@@ -534,13 +576,18 @@ public class ThirdBatchProvider {
     }
 
     /**
-     * 批次债权转让失败批次处理
+     * 批次债权转让批次处理
      *
      * @param successThirdTransferOrderIds
      * @param failureThirdTransferOrderIds
      */
     private void creditInvestDeal(Long borrowId, List<String> failureThirdTransferOrderIds, List<String> successThirdTransferOrderIds) throws Exception {
         Date nowDate = new Date();
+        if (CollectionUtils.isEmpty(failureThirdTransferOrderIds)) {
+            log.info("================================================================================");
+            log.info("债权转让批次查询：查询未发现失败批次！");
+            log.info("================================================================================");
+        }
 
         if (!CollectionUtils.isEmpty(successThirdTransferOrderIds)) {
             //成功批次对应债权

@@ -1390,6 +1390,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 .build();
         List<Tender> tenderList = tenderService.findList(ts);
         Preconditions.checkNotNull(tenderList, "生成还款记录: 投标记录为空");
+
         for (Tender tender : tenderList) {
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
                     NumberHelper.toDouble(StringHelper.toString(tender.getValidMoney())),
