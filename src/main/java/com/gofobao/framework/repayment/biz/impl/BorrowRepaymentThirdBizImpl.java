@@ -385,7 +385,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("borrowId")), MqConfig.BATCH_NO, StringHelper.toString(lendRepayRunResp.getBatchNo()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("borrowId")),
+                        MqConfig.BATCH_NO, StringHelper.toString(lendRepayRunResp.getBatchNo()),
+                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
         try {
             log.info(String.format("tenderThirdBizImpl thirdBatchLendRepayRunCall send mq %s", GSON.toJson(body)));

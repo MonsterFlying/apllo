@@ -256,7 +256,7 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setTenderCount(borrow.getTenderCount() + BorrowContants.TIME);
             borrowInfoRes.setMoney(StringHelper.formatMon(borrow.getMoney() / 100d));
             borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
-            borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatDouble(borrow.getMoneyYes() / borrow.getMoney().doubleValue(),false)));
+            borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatDouble(borrow.getMoneyYes() / borrow.getMoney().doubleValue(), false)));
             //结束时间
             Date endAt = DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);
             borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
@@ -271,7 +271,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 //待发布
                 if (releaseAt.getTime() >= nowDate.getTime()) {
                     status = 1;
-                    borrowInfoRes.setSurplusSecond(((releaseAt.getTime() - nowDate.getTime()) / 1000 )+ 5);
+                    borrowInfoRes.setSurplusSecond(((releaseAt.getTime() - nowDate.getTime()) / 1000) + 5);
                 } else if (nowDate.getTime() > endAt.getTime()) {  //当前时间大于招标有效时间
                     status = 5; //已过期
                 } else {
@@ -406,11 +406,11 @@ public class BorrowBizImpl implements BorrowBiz {
         boolean closeAuto = voAddNetWorthBorrow.isCloseAuto();
 
         Asset asset = assetService.findByUserIdLock(userId);
-        Preconditions.checkNotNull(asset, "净值标的发布: 当前用户资金账户为空!") ;
+        Preconditions.checkNotNull(asset, "净值标的发布: 当前用户资金账户为空!");
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         ResponseEntity<VoBaseResp> conditionCheckResponse = ThirdAccountHelper.conditionCheck(userThirdAccount);
-        if(!conditionCheckResponse.getStatusCode().equals(HttpStatus.OK)){
-            return conditionCheckResponse ;
+        if (!conditionCheckResponse.getStatusCode().equals(HttpStatus.OK)) {
+            return conditionCheckResponse;
         }
 
         Date releaseAt = DateHelper.stringToDate(releaseAtStr, DateHelper.DATE_FORMAT_YMDHMS);
@@ -422,7 +422,7 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         UserCache userCache = userCacheService.findById(userId);
-        Preconditions.checkNotNull(userCache, "净值标的发布: 当前用户资金缓存账户为空!") ;
+        Preconditions.checkNotNull(userCache, "净值标的发布: 当前用户资金缓存账户为空!");
 
         double totalMoney = (asset.getUseMoney() + userCache.getWaitCollectionPrincipal()) * 0.8 - asset.getPayment();
         if (totalMoney < money) {
@@ -695,7 +695,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "借款状态已发生更改!"));
         }
 
-        if (borrow.getMoneyYes()/borrow.getMoney() == 1){
+        if (borrow.getMoneyYes() / borrow.getMoney() == 1) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "满标后标的不可以撤销!"));
@@ -1204,13 +1204,7 @@ public class BorrowBizImpl implements BorrowBiz {
         if ((!borrow.isTransfer())
                 && (!userCache.getTenderTuijian()) && (!userCache.getTenderQudao())) {
             //首次投资推荐标满2000元赠送流量
-            Set<Integer> tempSet = new HashSet<>();
-            tempSet.add(3);
-            tempSet.add(5);
-            tempSet.add(7);
-            if ((!tempSet.contains(tender.getSource())) && tender.getValidMoney() >= 2000 * 100) {
-
-            } else if ((user.getSource() == 5) && (tender.getValidMoney() >= 1000 * 100)) {
+            if ((user.getSource() == 5) && (tender.getValidMoney() >= 1000 * 100)) {
 
                 MqConfig mqConfig = new MqConfig();
                 mqConfig.setQueue(MqQueueEnum.RABBITMQ_ACTIVITY);
@@ -1565,7 +1559,7 @@ public class BorrowBizImpl implements BorrowBiz {
         Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         Long borrowId = NumberHelper.toLong(paramMap.get("borrowId"));
         Borrow borrow = borrowService.findById(borrowId);
-        Preconditions.checkNotNull(borrow, "当前标的信息为空") ;
+        Preconditions.checkNotNull(borrow, "当前标的信息为空");
         Long userId = borrow.getUserId();
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
@@ -1585,7 +1579,7 @@ public class BorrowBizImpl implements BorrowBiz {
             VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
             voCreateThirdBorrowReq.setBorrowId(borrowId);
             voCreateThirdBorrowReq.setEntrustFlag(true);
-            ResponseEntity<VoBaseResp> resp  = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);   // 即信标的登记
+            ResponseEntity<VoBaseResp> resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);   // 即信标的登记
             if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) { //创建状态为失败时返回错误提示
                 log.error(String.format("车贷标/ 渠道标初审: 存管登记失败( %s )", GSON.toJson(voRegisterOfficialBorrow)));
                 return ResponseEntity
@@ -1923,7 +1917,7 @@ public class BorrowBizImpl implements BorrowBiz {
             return false;
         }
 
-        Gson gson = new Gson() ;
+        Gson gson = new Gson();
         if (!ObjectUtils.isEmpty(borrow.getLendId())) {
             log.info(String.format("有草出借标的初步审核: %s", gson.toJson(borrow)));
             return verifyLendBorrow(borrow);      //有草出借初审
@@ -1989,9 +1983,9 @@ public class BorrowBizImpl implements BorrowBiz {
 
     /**
      * 摘草 生成借款 初审
-     *
-     *  更改标的为可投状态,
-     *  并且调用投标流程, 完成摘草动作
+     * <p>
+     * 更改标的为可投状态,
+     * 并且调用投标流程, 完成摘草动作
      *
      * @param borrow
      * @return

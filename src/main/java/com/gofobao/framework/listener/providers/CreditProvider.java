@@ -39,10 +39,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -57,8 +54,6 @@ public class CreditProvider {
 
     @Autowired
     private BorrowService borrowService;
-    @Autowired
-    private BorrowRepaymentService borrowRepaymentService;
     @Autowired
     private TenderService tenderService;
     @Autowired
@@ -85,14 +80,19 @@ public class CreditProvider {
 
             //发送批次结束债权
             Date nowDate = new Date();
+
+            //批次号
             String batchNo = jixinHelper.getBatchNo();
+            //请求保留参数
+            Map<String, Object> acqResMap = new HashMap<>();
+            acqResMap.put("borrowId", borrowId);
 
             BatchCreditEndReq request = new BatchCreditEndReq();
             request.setBatchNo(batchNo);
             request.setTxCounts(String.valueOf(creditEndList.size()));
             request.setNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditend/check");
             request.setRetNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditend/run");
-            request.setAcqRes(String.valueOf(borrowId));
+            request.setAcqRes(gson.toJson(acqResMap));
             request.setSubPacks(gson.toJson(creditEndList));
 
             BatchCreditEndResp creditEndResp = jixinManager.send(JixinTxCodeEnum.BATCH_CREDIT_END, request, BatchCreditEndResp.class);
@@ -137,7 +137,8 @@ public class CreditProvider {
                 buildCreditEndList(creditEndList, borrowUserThirdAccountId, productId, tender.getBorrowId());
             });
 
-            tenderList.forEach(tender -> {
+            //排除已经在存管登记结束债权的投标记录
+            tenderList.stream().filter(tender -> !tender.getThirdCreditEndFlag()).forEach(tender -> {
                 CreditEnd creditEnd = new CreditEnd();
                 String orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
 

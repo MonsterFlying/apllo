@@ -18,6 +18,9 @@ import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
@@ -36,6 +39,7 @@ import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -81,6 +85,8 @@ public class ThirdBatchProvider {
     private RepaymentBiz repaymentBiz;
     @Autowired
     private BorrowCollectionService borrowCollectionService;
+    @Autowired
+    private MqHelper mqHelper;
 
     /**
      * 批次处理
@@ -211,7 +217,44 @@ public class ThirdBatchProvider {
      * @param successThirdCreditEndOrderIds
      */
     private void creditEndDeal(Long borrowId, List<String> failureThirdCreditEndOrderIds, List<String> successThirdCreditEndOrderIds) {
+        if (CollectionUtils.isEmpty(failureThirdCreditEndOrderIds)) {
+            log.info("================================================================================");
+            log.info("即信批次还款查询：查询未发现失败批次！");
+            log.info("================================================================================");
+        }
 
+        //登记成功批次
+        Specification<Tender> ts = null;
+        if (!CollectionUtils.isEmpty(successThirdCreditEndOrderIds)) {
+            ts = Specifications
+                    .<Tender>and()
+                    .in("thirdCreditEndOrderId", successThirdCreditEndOrderIds.toArray())
+                    .build();
+            List<Tender> successTenderList = tenderService.findList(ts);
+            successTenderList.stream().forEach(collection -> {
+                collection.setThirdCreditEndFlag(true);
+            });
+            tenderService.save(successTenderList);
+        }
+
+        //处理失败批次
+        //5分钟处理一次
+        if (!CollectionUtils.isEmpty(failureThirdCreditEndOrderIds)) {
+            //推送队列结束债权
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
+            mqConfig.setTag(MqTagEnum.END_CREDIT);
+            mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 5));
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("repaymentBizImpl repayDeal send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("repaymentBizImpl repayDeal send mq exception", e);
+            }
+        }
     }
 
     /**
@@ -243,10 +286,8 @@ public class ThirdBatchProvider {
         }
 
         //处理失败批次
-        if (!CollectionUtils.isEmpty(failureTRepayAllOrderIds)) { //不处理失败！
-            /**
-             * @// TODO: 2017/7/20 每五分钟处理一次  处理5次
-             */
+        if (!CollectionUtils.isEmpty(failureTRepayAllOrderIds)) {
+
         }
 
         //==================================================================

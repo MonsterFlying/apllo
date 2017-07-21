@@ -45,6 +45,6 @@ public interface TenderThirdBiz {
      * 投资人批次结束债权参数运行回调
      * @return
      */
-    void thirdBatchCreditEndRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception;
+    ResponseEntity<String> thirdBatchCreditEndRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception;
 
 }
