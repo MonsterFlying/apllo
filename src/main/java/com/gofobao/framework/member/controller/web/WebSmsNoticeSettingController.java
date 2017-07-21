@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 /**
  * Created by admin on 2017/7/13.
  */
@@ -40,7 +42,7 @@ public class WebSmsNoticeSettingController {
      */
     @ApiOperation("用户短信设置列表")
     @PostMapping("smmSetting/pc/v2/list")
-    public ResponseEntity list(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<List<SmsNoticeSettingsEntity>> list(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return smsNoticeSettingsBiz.list(userId.intValue());
     }
 }

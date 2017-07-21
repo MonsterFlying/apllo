@@ -111,6 +111,24 @@ public class WebUserController {
         return userBiz.pcUserInfoUpdate(VoUserInfoUpdateReq);
     }
 
+    @ApiOperation("设置交易密码")
+    @PostMapping("/user/pc/payPayPassWord/save")
+    public ResponseEntity<VoBaseResp> userInfoUpdate(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                                     @ModelAttribute VoSettingTranPassWord tranPassWord) {
+        tranPassWord.setUserId(userId);
+        return userBiz.saveUserTranPassWord(tranPassWord);
+    }
+
+    @ApiOperation("重置交易密码")
+    @PostMapping("/user/pc/rest/payPassWord")
+    public ResponseEntity<VoBaseResp> restPayPassWord(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                                     @ModelAttribute VoRestPayPassWord tranPassWord) {
+        tranPassWord.setUserId(userId);
+        return userBiz.restPayPassWord(tranPassWord);
+    }
+
+
+
     @ApiOperation("申请vip")
     @PostMapping("/user/pc/v2/applyFor/vip")
     public ResponseEntity<VoBaseResp> applyFor(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,

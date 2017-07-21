@@ -5,6 +5,8 @@ import com.gofobao.framework.member.entity.UserInfo;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.entity.Vip;
 import com.gofobao.framework.member.vo.request.VoRegisterReq;
+import com.gofobao.framework.member.vo.request.VoRestPayPassWord;
+import com.gofobao.framework.member.vo.request.VoSettingTranPassWord;
 import com.gofobao.framework.member.vo.request.VoUserInfoUpdateReq;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.member.vo.response.pc.UserInfoExt;
@@ -82,5 +84,21 @@ public interface UserBiz {
      * @return
      */
     ResponseEntity<VipInfoRes>vipInfo(Long userId);
+
+
+    /**
+     * 设置交易密码
+     * @param tranPassWord
+     * @return
+     */
+    ResponseEntity<VoBaseResp>saveUserTranPassWord(VoSettingTranPassWord tranPassWord);
+
+
+    /**
+     * 重置交易密码
+     * @param restPayPassWord
+     * @return
+     */
+    ResponseEntity<VoBaseResp>restPayPassWord(VoRestPayPassWord restPayPassWord);
 }
 
