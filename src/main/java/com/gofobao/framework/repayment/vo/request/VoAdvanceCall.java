@@ -11,5 +11,4 @@ import java.util.List;
 @Data
 public class VoAdvanceCall {
     private Long repaymentId;
-    private List<BailRepayRun> bailRepayRunList;
 }
