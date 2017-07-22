@@ -60,7 +60,7 @@ public class WebFriendsController {
     }
 
     @ApiOperation("邀请统计导出到excel")
-    @PostMapping("/invite/pc/v2/toExcel")
+    @GetMapping("/invite/pc/v2/toExcel")
     public void statistic(HttpServletResponse response,
                           @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                           VoFriendsTenderReq friendsTenderReq) {

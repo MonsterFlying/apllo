@@ -69,6 +69,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -313,6 +314,8 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setAvatar(imageDomain + "/data/images/avatar/" + borrow.getUserId() + "_avatar_small.jpg");
             borrowInfoRes.setReleaseAt(status != 1 ? DateHelper.dateToString(borrow.getReleaseAt()) : "");
             borrowInfoRes.setLockStatus(borrow.getIsLock());
+            
+
             return ResponseEntity.ok(borrowInfoRes);
         } catch (Throwable e) {
             log.info("BorrowBizImpl detail fail%s", e);

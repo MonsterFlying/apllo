@@ -27,5 +27,12 @@ public interface RechargeDetailLogService {
 
     ResponseEntity<VoViewRechargeWarpRes> pcLogs(VoPcRechargeReq rechargeReq);
 
+    /**
+     * 充值记录导出excel
+     * @param rechargeReq
+     * @return
+     */
+    List<RechargeLogs>toExcel(VoPcRechargeReq rechargeReq);
+
 
 }

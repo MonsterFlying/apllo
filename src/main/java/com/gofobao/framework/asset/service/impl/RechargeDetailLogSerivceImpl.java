@@ -11,6 +11,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -104,4 +105,32 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService {
         }
     }
 
+    /**
+     * 充值记录导出excel
+     * @param rechargeReq
+     * @return
+     */
+    @Override
+    public List<RechargeLogs> toExcel(VoPcRechargeReq rechargeReq) {
+        Date beginAt = DateHelper.beginOfDate(DateHelper.stringToDate(rechargeReq.getBeginAt(), DateHelper.DATE_FORMAT_YMD));
+        Date endAt = DateHelper.endOfDate(DateHelper.stringToDate(rechargeReq.getEndAt(), DateHelper.DATE_FORMAT_YMD));
+
+        Specification specification = Specifications.<RechargeDetailLog>and()
+                .eq("userId", rechargeReq.getUserId())
+                .eq("state", rechargeReq.getState())
+                .between("createTime", new Range<>(beginAt, endAt))
+                .build();
+        List<RechargeDetailLog> rechargeDetailLogs=rechargeDetailLogRepository.findAll(specification);
+        List<RechargeLogs> rechargeLogsList= Lists.newArrayList();
+        rechargeDetailLogs.forEach(p->{
+            RechargeLogs rechargeLogs=new RechargeLogs();
+            rechargeLogs.setCreateAt(DateHelper.dateToString(p.getCreateTime()));
+            rechargeLogs.setRemark(p.getRemark());
+            rechargeLogs.setMoney(StringHelper.formatMon(p.getMoney()/100D));
+            rechargeLogs.setChannel(p.getRechargeChannel());
+            rechargeLogs.setStatus(p.getState());
+            rechargeLogsList.add(rechargeLogs);
+        });
+        return rechargeLogsList;
+    }
 }
