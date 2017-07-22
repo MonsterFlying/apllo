@@ -294,6 +294,10 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         return borrowRepaymentRepository.save(borrowRepayment);
     }
 
+    public List<BorrowRepayment> save(List<BorrowRepayment> borrowRepaymentList) {
+        return borrowRepaymentRepository.save(borrowRepaymentList);
+    }
+
     public BorrowRepayment insert(BorrowRepayment borrowRepayment) {
         if (ObjectUtils.isEmpty(borrowRepayment)) {
             return null;

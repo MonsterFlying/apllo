@@ -60,6 +60,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -450,12 +451,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 break;
             }
 
-            List<Long> userIds = new ArrayList<>();
-            List<Long> tenderIds = new ArrayList<>();
-            for (Tender tender : tenderList) {
-                userIds.add(tender.getUserId());
-                tenderIds.add(tender.getId());
-            }
+            List<Long> userIds = tenderList.stream().map(tender -> tender.getUserId()).collect(Collectors.toList());
+            List<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toList());
 
             Specification<UserCache> ucs = Specifications
                     .<UserCache>and()
@@ -494,15 +491,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
                 tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());//投标人银行存管账户
                 Preconditions.checkNotNull(tenderUserThirdAccount, "投资人存管账户未开户!");
-                BorrowCollection borrowCollection = null;//当前借款的回款记录
-                for (int i = 0; i < borrowCollectionList.size(); i++) {
-                    borrowCollection = borrowCollectionList.get(i);
-                    if (StringHelper.toString(tender.getId()).equals(StringHelper.toString(borrowCollection.getTenderId()))) {
-                        break;
-                    }
-                    borrowCollection = null;
-                    continue;
-                }
+                //当前投资的回款记录
+                BorrowCollection borrowCollection = borrowCollectionList.stream().filter(bc -> StringHelper.toString(bc.getTenderId()).equals(StringHelper.toString(tender.getId()))).collect(Collectors.toList()).get(0);
 
                 //判断这笔回款是否已经在即信登记过批次垫付
                 if (borrowCollection.getThirdRepayBailFlag()) {
@@ -829,10 +819,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
                 Preconditions.checkNotNull(borrowRepayment, "还款不存在");
 
-                overPrincipal = 0;
-                for (BorrowRepayment temp : borrowRepaymentList) {
-                    overPrincipal += temp.getPrincipal();
-                }
+                //叠加剩余本金
+                overPrincipal = borrowRepaymentList.stream().mapToInt(w -> w.getPrincipal()).sum();
             }
             lateInterest = (int) MathHelper.myRound(overPrincipal * 0.004 * lateDays, 2);
         }

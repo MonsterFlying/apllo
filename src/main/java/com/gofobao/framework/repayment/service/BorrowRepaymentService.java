@@ -28,11 +28,12 @@ public interface BorrowRepaymentService {
      */
     List<BorrowRepayment> repaymentList(VoCollectionOrderReq voCollectionOrderReq);
 
-
+    List<BorrowRepayment> save(List<BorrowRepayment> borrowRepaymentList);
 
 
     /**
      * PC：还款计划
+     *
      * @param orderListReq
      * @return
      */
@@ -41,6 +42,7 @@ public interface BorrowRepaymentService {
 
     /**
      * PC：还款计划导出excel
+     *
      * @param orderListReq
      * @return
      */
@@ -57,19 +59,20 @@ public interface BorrowRepaymentService {
 
     /**
      * 还款详情
+     *
      * @param orderReq
      * @return
      */
-    Map<String,Object>collectionList(VoCollectionListReq orderReq);
+    Map<String, Object> collectionList(VoCollectionListReq orderReq);
 
     /**
      * 当月还款天数
+     *
      * @param userId
      * @param time
      * @return
      */
-    List<Integer> days(Long userId,String time);
-
+    List<Integer> days(Long userId, String time);
 
 
     List<RepayCollectionLog> logs(Long borrowId);
