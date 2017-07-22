@@ -39,6 +39,17 @@ public interface MessageBiz {
      */
     ResponseEntity<VoBaseResp> sendSwitchPhone(HttpServletRequest request, VoUserSmsReq voUserSmsReq);
 
+
+    /**
+     * 修改交易密码
+     * @param httpServletRequest
+     * @param voUserSmsReq
+     * @return
+     */
+    ResponseEntity<VoBaseResp> sendRestTranPassWord(HttpServletRequest httpServletRequest, VoUserSmsReq voUserSmsReq);
+
+
+
     /**
      * 发送更换手机号码短信验证码
      * @param request 请求类
@@ -94,5 +105,8 @@ public interface MessageBiz {
 
 
     ResponseEntity<VoBaseResp>changeEmail(HttpServletRequest request, VoAnonEmailReq voAnonEmailReq, Long userId);
+
+
+
 
 }

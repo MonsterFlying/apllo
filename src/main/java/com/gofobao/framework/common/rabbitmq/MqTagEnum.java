@@ -9,6 +9,8 @@ public enum MqTagEnum {
     SMS_SWICTH_PHONE("SMS_SWICTH_PHONE"),
     SMS_BUNDLE("SMS_BUNDLE"),
     SMS_MODIFY_BANK("SMS_MODIFY_BANK"),
+    SMS_REST_PAY_PASSWORD("SMS_REST_PAY_PASSWORD"),
+
     SMS_DEFAULT("SMS_DEFAULT"),
     SMS_EMAIL_BIND("SMS_EMAIL_BIND"),
     SEND_BORROW_PROTOCOL_EMAIL("SEND_BORROW_PROTOCOL_EMAIL"),
@@ -36,6 +38,7 @@ public enum MqTagEnum {
     REPAY_ADVANCE("repayAdvance"),//提前结清
     ADVANCE("advance"),//担保人垫付
     REPAY("repay");//立即还款
+
 
     private String value;
 

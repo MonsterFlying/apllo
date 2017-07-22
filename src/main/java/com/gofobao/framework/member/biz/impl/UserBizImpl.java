@@ -19,6 +19,8 @@ import com.gofobao.framework.member.entity.*;
 import com.gofobao.framework.member.enums.RegisterSourceEnum;
 import com.gofobao.framework.member.service.*;
 import com.gofobao.framework.member.vo.request.VoRegisterReq;
+import com.gofobao.framework.member.vo.request.VoRestPayPassWord;
+import com.gofobao.framework.member.vo.request.VoSettingTranPassWord;
 import com.gofobao.framework.member.vo.request.VoUserInfoUpdateReq;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.member.vo.response.pc.ServiceUser;
@@ -496,10 +498,42 @@ public class UserBizImpl implements UserBiz {
     @Override
     public ResponseEntity<VipInfoRes> vipInfo(Long userId) {
         Vip vip = vipService.findTopByUserIdAndStatus(userId, 1);
-        VipInfoRes vipInfoRes =VoBaseResp.ok("查询成功",VipInfoRes.class);
+        VipInfoRes vipInfoRes = VoBaseResp.ok("查询成功", VipInfoRes.class);
         vipInfoRes.setEndAt(DateHelper.dateToString(vip.getExpireAt()));
-        Users user = userService.findById(vip.getUserId());
+        Users user = userService.findById(vip.getKefuId());
         vipInfoRes.setServiceUserName(user.getUsername());
         return ResponseEntity.ok(vipInfoRes);
+    }
+
+    @Override
+    public ResponseEntity<VoBaseResp> saveUserTranPassWord(VoSettingTranPassWord tranPassWord) {
+        Users users = userService.findById(tranPassWord.getUserId());
+        if (ObjectUtils.isEmpty(users)) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非法访问"));
+        }
+        if (!StringUtils.isEmpty(users.getPayPassword()) && users.getPayPassword().length() > 1) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "用户已设置过交易密码"));
+        }
+        try {
+            users.setPayPassword(PasswordHelper.encodingPassword(tranPassWord.getTranPassWord()));
+            userService.save(users);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统异常,请稍后再试试吧"));
+        }
+        return ResponseEntity.ok(VoBaseResp.ok("设置成功"));
+    }
+
+    @Override
+    public ResponseEntity<VoBaseResp> restPayPassWord(VoRestPayPassWord restPayPassWord) {
+        Users users = userService.findById(restPayPassWord.getUserId());
+        if (ObjectUtils.isEmpty(users) || StringUtils.isEmpty(users.getPayPassword())) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非法访问"));
+        }
+        Boolean flag = macthHelper.match(MqTagEnum.SMS_REST_PAY_PASSWORD.getValue(), users.getPhone(), restPayPassWord.getCode());
+        if (!flag)
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统异常,请稍后再试试吧"));
+        else
+            return ResponseEntity.ok(VoBaseResp.ok("重置密码成功"));
+
     }
 }

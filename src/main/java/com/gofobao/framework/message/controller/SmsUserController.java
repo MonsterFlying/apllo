@@ -23,51 +23,72 @@ import javax.validation.Valid;
 public class SmsUserController {
 
     @Autowired
-    private MessageBiz messageBiz ;
+    private MessageBiz messageBiz;
 
     @ApiOperation("发送银行存管开户短信")
     @PostMapping("/openAccount")
-    public ResponseEntity<VoBaseResp> openAccount(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoAnonSmsReq voAnonSmsReq){
-        ResponseEntity<VoBaseResp> result = messageBiz.openAccount(userId, voAnonSmsReq) ;
+    public ResponseEntity<VoBaseResp> openAccount(HttpServletRequest request,
+                                                  @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                                  @Valid @ModelAttribute VoAnonSmsReq voAnonSmsReq) {
+        ResponseEntity<VoBaseResp> result = messageBiz.openAccount(userId, voAnonSmsReq);
         return result;
     }
 
 
     @ApiOperation("充值短信发送 -- 此接口已放弃 ")
     @PostMapping("/recharge")
-    public ResponseEntity<VoBaseResp> recharge(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoUserSmsReq voUserSmsReq){
+    public ResponseEntity<VoBaseResp> recharge(HttpServletRequest request,
+                                               @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                               @Valid @ModelAttribute VoUserSmsReq voUserSmsReq) {
         voUserSmsReq.setUserId(userId);
-        ResponseEntity<VoBaseResp> result = messageBiz.recharge(voUserSmsReq) ;
+        ResponseEntity<VoBaseResp> result = messageBiz.recharge(voUserSmsReq);
         return result;
     }
 
     @ApiOperation("在线联机充值短信发送")
     @PostMapping("/rechargeOnline")
-    public ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoUserSmsReq voUserSmsReq){
+    public ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest request,
+                                                     @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                                     @Valid @ModelAttribute VoUserSmsReq voUserSmsReq) {
         voUserSmsReq.setUserId(userId);
-        ResponseEntity<VoBaseResp> result = messageBiz.rechargeOnline(request, voUserSmsReq) ;
+        ResponseEntity<VoBaseResp> result = messageBiz.rechargeOnline(request, voUserSmsReq);
         return result;
     }
 
     @ApiOperation("更换手机---> 发送解绑手机验证码  第一步")
     @PostMapping("/switch/phone/unbind")
-    public ResponseEntity<VoBaseResp> switchPhone(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,  @Valid @ModelAttribute VoUserSmsReq voUserSmsReq){
+    public ResponseEntity<VoBaseResp> switchPhone(HttpServletRequest request,
+                                                  @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                                  @Valid @ModelAttribute VoUserSmsReq voUserSmsReq) {
         voUserSmsReq.setUserId(userId);
-        return messageBiz.sendSwitchPhone(request, voUserSmsReq) ;
+        return messageBiz.sendSwitchPhone(request, voUserSmsReq);
     }
 
 
     @ApiOperation("绑定新手---> 发送用户绑定手机")
     @PostMapping("/bindPhone")
-    public ResponseEntity<VoBaseResp> sendBindPhone(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,  @Valid @ModelAttribute VoAnonSmsReq voAnonSmsReq){
-        return messageBiz.sendBindPhone(request, voAnonSmsReq, userId) ;
+    public ResponseEntity<VoBaseResp> sendBindPhone(HttpServletRequest request,
+                                                    @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                                    @Valid @ModelAttribute VoAnonSmsReq voAnonSmsReq) {
+        return messageBiz.sendBindPhone(request, voAnonSmsReq, userId);
     }
 
 
     @ApiOperation("更换手机---> 发送绑定新手机短信验证码 ")
     @PostMapping("/switch/newPhone/bind")
-    public ResponseEntity<VoBaseResp> sendBindPhone4Switch(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,  @Valid @ModelAttribute VoAnonSmsReq voAnonSmsReq){
-        return messageBiz.sendBindPhone4Switch(request, voAnonSmsReq, userId) ;
+    public ResponseEntity<VoBaseResp> sendBindPhone4Switch(HttpServletRequest request,
+                                                           @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                                           @Valid @ModelAttribute VoAnonSmsReq voAnonSmsReq) {
+        return messageBiz.sendBindPhone4Switch(request, voAnonSmsReq, userId);
+    }
+
+    @ApiOperation("重置交易密码-->发送短信验证码")
+    @PostMapping("/rest/payPassWord/sendSms")
+    public ResponseEntity<VoBaseResp> restPayPassWord(HttpServletRequest request,
+                                                      @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                                      @Valid @ModelAttribute VoUserSmsReq voUserSmsReq) {
+        voUserSmsReq.setUserId(userId);
+        return messageBiz.sendRestTranPassWord(request, voUserSmsReq);
     }
 
 }

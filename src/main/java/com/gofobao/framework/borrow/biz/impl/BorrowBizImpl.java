@@ -276,8 +276,14 @@ public class BorrowBizImpl implements BorrowBiz {
                     status = 5; //已过期
                 } else {
                     status = 3; //招标中
+
                     //  进度
-                    borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes().doubleValue() / borrow.getMoney())));
+                    double spend = Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes().doubleValue() / borrow.getMoney()));
+                    if (spend == 1) {
+                        status = 6;
+                    }
+                    borrowInfoRes.setSpend(spend);
+
                 }
             } else if (!ObjectUtils.isEmpty(borrow.getSuccessAt()) && !ObjectUtils.isEmpty(borrow.getCloseAt())) {   //满标时间 结清
                 status = 4; //已完成
