@@ -541,9 +541,7 @@ public class BorrowBizImpl implements BorrowBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> cancelBorrow(VoCancelBorrow voCancelBorrow) throws Exception {
-
         Long borrowId = voCancelBorrow.getBorrowId();
-        Long userId = voCancelBorrow.getUserId();
         Date nowDate = new Date();
         Borrow borrow = borrowService.findByIdLock(borrowId);
         Preconditions.checkNotNull(borrow, "取消借款: 标的信息为空!");

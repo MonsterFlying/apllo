@@ -409,15 +409,16 @@ public class ThirdBatchProvider {
      * @param successTRepayOrderIds
      */
     private void repayDeal(String acqRes, List<String> failureTRepayOrderIds, List<String> successTRepayOrderIds) throws Exception {
-
         if (CollectionUtils.isEmpty(failureTRepayOrderIds)) {
             log.info("================================================================================");
             log.info("即信批次还款查询：查询未发现失败批次！");
             log.info("================================================================================");
         }
 
+        Gson gson = new Gson() ;
         //登记成功批次
         if (!CollectionUtils.isEmpty(successTRepayOrderIds)) {
+            log.info(String.format("批次还款回调: 成功批次处理开始 %s", gson.toJson(successTRepayOrderIds)));
             Specification<BorrowCollection> bcs = Specifications
                     .<BorrowCollection>and()
                     .in("tRepayOrderId", successTRepayOrderIds.toArray())
@@ -427,6 +428,7 @@ public class ThirdBatchProvider {
                 borrowCollection.setThirdRepayFlag(true);
             });
             borrowCollectionService.save(successBorrowCollectionList);
+            log.info(String.format("批次还款回调: 成功批次处理结束 %s", gson.toJson(successTRepayOrderIds)));
         }
 
         //处理失败批次
@@ -463,9 +465,11 @@ public class ThirdBatchProvider {
             log.info("================================================================================");
         }
 
+        Gson gson = new Gson() ;
         // 当明细中存在批量放款成功是
         // 直接更改记录为存款放款成功
         if (!CollectionUtils.isEmpty(successThirdLendPayOrderIds)) {
+            log.info(String.format("批次放款: 正确放款批次处理开始 %s",  gson.toJson(successThirdLendPayOrderIds)));
             Specification<Tender> ts = Specifications
                     .<Tender>and()
                     .in("thirdLendPayOrderId", successThirdLendPayOrderIds.toArray())
@@ -475,31 +479,29 @@ public class ThirdBatchProvider {
                 tender.setThirdTenderFlag(true);
             });
             tenderService.save(successTenderList);
+            log.info(String.format("批次放款: 正确放款批次处理结束 %s",  gson.toJson(successThirdLendPayOrderIds)));
         }
 
 
         // 对于失败的债权, 先查询失败的标的ID
         if (!CollectionUtils.isEmpty(failureThirdLendPayOrderIds)) {
-            success = false;
+            log.info(String.format("批次放款: 错误放款批次处理开始 %s",  gson.toJson(successThirdLendPayOrderIds)));
             Specification<Tender> ts = Specifications
                     .<Tender>and()
                     .in("thirdLendPayOrderId", failureThirdLendPayOrderIds.toArray())
                     .build();
             List<Tender> failureTenderList = tenderService.findList(ts);
             Preconditions.checkNotNull(failureTenderList, "正常批次放款回调: 查询失败投标记录为空") ;
-            Map<Long, List<Tender>> borrowIdAndTenderMap = failureTenderList.stream().collect(Collectors.groupingBy(Tender::getBorrowId));
+            Map<Long/** borrowId */, List<Tender> /** borrowid 对应的投标记录*/> borrowIdAndTenderMap = failureTenderList
+                    .stream()
+                    .collect(Collectors.groupingBy(Tender::getBorrowId));
+
             Set<Long> borrowIdSet = borrowIdAndTenderMap.keySet();
             Specification<Borrow> bs = Specifications
                     .<Borrow>and()
                     .in("id", borrowIdSet.toArray())
                     .build();
             List<Borrow> failureBorrowList = borrowService.findList(bs);
-
-            // 对于失败的投标记录做以下操作
-            // 1. 改变投标记录为失败
-            // 2. 解除资金冻结
-            // 3. 解除即信投标申请
-            // 4. 将标的改为可投状态, 减去投标金额
             for (Borrow borrow : failureBorrowList) {
                 List<Tender> tenders = borrowIdAndTenderMap.get(borrow.getId());
                 Long failureAmount = tenders.stream().mapToLong(t -> t.getValidMoney()).sum();  // 投标失败金额

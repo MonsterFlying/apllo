@@ -2,6 +2,7 @@ package com.gofobao.framework.repayment.biz;
 
 import com.gofobao.framework.api.model.batch_bail_repay.BailRepay;
 import com.gofobao.framework.api.model.batch_repay.Repay;
+import com.gofobao.framework.api.model.batch_repay_bail.RepayBail;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.vo.request.VoBatchBailRepayReq;
@@ -113,4 +114,28 @@ public interface BorrowRepaymentThirdBiz {
      */
     List<BailRepay> getBailRepayList(VoBatchBailRepayReq voBatchBailRepayReq) throws Exception;
 
+
+    /**
+     *  新版生成还款计划
+     * @param borrow
+     * @param repayAccountId
+     * @param order
+     * @param lateDays
+     * @param lateInterest
+     * @return
+     * @throws Exception
+     */
+    List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, int lateInterest) throws Exception ;
+
+
+    /**
+     *  生成借款人偿还担保人计划
+     * @param borrow
+     * @param repayAccountId
+     * @param lateDays
+     * @param order
+     * @param lateInterest
+     * @return
+     */
+    List<RepayBail> calculateRepayBailPlan(Borrow borrow, String repayAccountId, int lateDays, Integer order, int lateInterest) throws Exception;
 }
