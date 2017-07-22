@@ -95,7 +95,7 @@ public class RepaymentListener {
                     voRepayReq.setRepaymentId(borrowRepayment.getId());
                     voRepayReq.setUserId(borrowRepayment.getUserId());
                     voRepayReq.setInterestPercent(null);
-                    repaymentBiz.repay(voRepayReq);
+                    repaymentBiz.newRepay(voRepayReq);
                 } catch (Exception e) {
                     log.error("RepaymentListener process error:", e);
                 }

@@ -76,7 +76,7 @@ public interface RepaymentBiz {
      * @return
      * @throws Exception
      */
-    ResponseEntity<VoBaseResp> repay(VoRepayReq voRepayReq) throws Exception;
+    ResponseEntity<VoBaseResp> newRepay(VoRepayReq voRepayReq) throws Exception;
 
     /**
      * 还款处理
