@@ -327,6 +327,47 @@ public class MessageBizImpl implements MessageBiz {
     }
 
     @Override
+    public ResponseEntity<VoBaseResp> sendRestTranPassWord(HttpServletRequest httpServletRequest, VoUserSmsReq voUserSmsReq) {
+
+        // 查询用户是否存在
+        Users user = userService.findById(voUserSmsReq.getUserId());
+        if (ObjectUtils.isEmpty(user)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前手机号未在平台注册!"));
+        }
+
+        if (StringUtils.isEmpty(user.getPhone())) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户未绑定手机,你可以前往绑定手机操作!"));
+        }
+        if (StringUtils.isEmpty(user.getPassword()) && user.getPayPassword().length() > 2) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "非法请求"));
+        }
+
+        MqConfig config = new MqConfig();
+        config.setQueue(MqQueueEnum.RABBITMQ_SMS);
+        config.setTag(MqTagEnum.SMS_REST_PAY_PASSWORD);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.PHONE, user.getPhone(), MqConfig.IP, httpServletRequest.getRemoteAddr());
+        config.setMsg(body);
+
+        boolean state = apollomqHelper.convertAndSend(config);
+
+        if (!state) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍候重试！"));
+        }
+        // 调用MQ 发送注册短信
+        return ResponseEntity.ok(VoBaseResp.ok("短信发送成功"));
+
+    }
+
+    @Override
     public ResponseEntity<VoBaseResp> recharge(VoUserSmsReq voUserSmsReq) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voUserSmsReq.getUserId());
         if (ObjectUtils.isEmpty(userThirdAccount)) {
@@ -618,4 +659,5 @@ public class MessageBizImpl implements MessageBiz {
 
         return ResponseEntity.ok(VoBaseResp.ok("短信发送成功"));
     }
+
 }

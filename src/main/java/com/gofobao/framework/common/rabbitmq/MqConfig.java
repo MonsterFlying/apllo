@@ -17,6 +17,7 @@ public class MqConfig {
     public static final String MSG_TIME = "time";
     public static final String MSG_BORROW_ID = "borrowId";
     public static final String MSG_TENDER_ID = "tenderId";
+    public static final String MSG_REPAYMENT_ID = "repaymentId";
     public static final String MSG_ID = "id";
 
     public static final String IP = "ip";

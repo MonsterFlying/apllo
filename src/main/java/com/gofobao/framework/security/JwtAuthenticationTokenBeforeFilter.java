@@ -26,9 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-public class
-
-JwtAuthenticationTokenBeforeFilter extends OncePerRequestFilter {
+public class JwtAuthenticationTokenBeforeFilter extends OncePerRequestFilter {
 
     LoadingCache<String, UserDetails> userDetailsLoadingCache = CacheBuilder
             .newBuilder()

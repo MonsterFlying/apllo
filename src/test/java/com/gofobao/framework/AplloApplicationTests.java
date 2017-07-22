@@ -5,19 +5,14 @@ import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.CertHelper;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileRequest;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
-import com.gofobao.framework.api.model.batch_bail_repay.BailRepayRun;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
-import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
-import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
@@ -47,7 +42,6 @@ import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoAdvanceCall;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -60,10 +54,7 @@ import org.springframework.util.ObjectUtils;
 
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
-import static cn.jpush.api.push.model.PushModel.gson;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -117,7 +108,7 @@ public class AplloApplicationTests {
     @Test
     public void contextLoads() throws InterruptedException {
         MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_AUTO_TENDER);
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TENDER);
         mqConfig.setTag(MqTagEnum.AUTO_TENDER);
         ImmutableMap<String, String> body = ImmutableMap
                 .of(MqConfig.MSG_BORROW_ID, StringHelper.toString("169782"), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
@@ -203,6 +194,7 @@ public class AplloApplicationTests {
         }
     }
 
+
     private void doFirstVerify() {
         try {
             borrowBiz.doFirstVerify(169853L);
@@ -248,8 +240,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("151317");
-        batchDetailsQueryReq.setBatchTxDate("20170719");
+        batchDetailsQueryReq.setBatchNo("153238");
+        batchDetailsQueryReq.setBatchTxDate("20170721");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -315,11 +307,11 @@ public class AplloApplicationTests {
         System.out.println(response);
         */
 
-        BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
+        /*BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
         balanceQueryRequest.setAccountId("6212462040000450041");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
-        System.out.println(balanceQueryResponse);
+        System.out.println(balanceQueryResponse);*/
 
         //根据手机号查询存管账户
         //findAccountByMobile();
@@ -342,7 +334,7 @@ public class AplloApplicationTests {
         //复审
         //doAgainVerify();
         //批次详情查询
-        //batchDetailsQuery();
+        batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调

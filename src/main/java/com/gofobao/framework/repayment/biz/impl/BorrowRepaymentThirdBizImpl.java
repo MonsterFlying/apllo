@@ -63,6 +63,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -440,12 +441,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 break;
             }
 
-            List<Long> userIds = new ArrayList<>();
-            List<Long> tenderIds = new ArrayList<>();
-            for (Tender tender : tenderList) {
-                userIds.add(tender.getUserId());
-                tenderIds.add(tender.getId());
-            }
+            List<Long> userIds = tenderList.stream().map(tender -> tender.getUserId()).collect(Collectors.toList());
+            List<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toList());
 
             Specification<UserCache> ucs = Specifications
                     .<UserCache>and()
@@ -484,15 +481,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
                 tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());//投标人银行存管账户
                 Preconditions.checkNotNull(tenderUserThirdAccount, "投资人存管账户未开户!");
-                BorrowCollection borrowCollection = null;//当前借款的回款记录
-                for (int i = 0; i < borrowCollectionList.size(); i++) {
-                    borrowCollection = borrowCollectionList.get(i);
-                    if (StringHelper.toString(tender.getId()).equals(StringHelper.toString(borrowCollection.getTenderId()))) {
-                        break;
-                    }
-                    borrowCollection = null;
-                    continue;
-                }
+                //当前投资的回款记录
+                BorrowCollection borrowCollection = borrowCollectionList.stream().filter(bc -> StringHelper.toString(bc.getTenderId()).equals(StringHelper.toString(tender.getId()))).collect(Collectors.toList()).get(0);
 
                 //判断这笔回款是否已经在即信登记过批次垫付
                 if (borrowCollection.getThirdRepayBailFlag()) {
@@ -563,7 +553,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     }
                 }
 
-                txAmount = principal + intAmount;
+                txAmount = principal;
 
                 String orderId = JixinHelper.getOrderId(JixinHelper.REPAY_BAIL_PREFIX);
                 bailRepay.setOrderId(orderId);
@@ -612,14 +602,13 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     public ResponseEntity<String> thirdBatchBailRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
         BatchBailRepayRunResp batchBailRepayRunResp = jixinManager.callback(request, new TypeToken<BatchBailRepayRunResp>() {
         });
-        boolean bool = true;
+        Map<String, Object> acqResMap = GSON.fromJson(batchBailRepayRunResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
         if (ObjectUtils.isEmpty(batchBailRepayRunResp)) {
             log.error("======================================批次回调======================================");
             log.error("=============================批次担保账户代偿业务处理回调===========================");
             log.error("请求体为空!");
             log.error("====================================================================================");
             log.error("====================================================================================");
-            bool = false;
         }
 
         if (!JixinResultContants.SUCCESS.equals(batchBailRepayRunResp.getRetCode())) {
@@ -628,7 +617,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("回调失败! msg:" + batchBailRepayRunResp.getRetMsg());
             log.error("====================================================================================");
             log.error("====================================================================================");
-            bool = false;
         } else {
             log.error("======================================批次回调======================================");
             log.error("=============================批次担保账户代偿业务处理回调===========================");
@@ -644,29 +632,20 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         }.getType());
         saveThirdBailRepayAuthCode(bailRepayRunList);
 
-        int num = NumberHelper.toInt(batchBailRepayRunResp.getFailCounts());
-        if (num > 0) {
-            log.error("=============================批次担保账户代偿业务处理回调===========================");
-            log.error("批次担保账户代偿失败! 一共:" + num + "笔");
-            bool = false;
-        }
-
-        if (bool) {
-            long repaymentId = NumberHelper.toLong(batchBailRepayRunResp.getAcqRes());
-            ResponseEntity<VoBaseResp> resp = null;
-            try {
-                VoAdvanceCall voAdvanceCall = new VoAdvanceCall();
-                voAdvanceCall.setRepaymentId(repaymentId);
-
-                resp = repaymentBiz.advanceDeal(voAdvanceCall);
-            } catch (Throwable e) {
-                log.error("垫付异常:", e);
-            }
-            if (ObjectUtils.isEmpty(resp)) {
-                log.info("垫付成功!");
-            } else {
-                log.error("垫付失败:" + resp.getBody().getState().getMsg());
-            }
+        // 触发批次担保账户代偿业务处理队列
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("repaymentId")),
+                        MqConfig.BATCH_NO, StringHelper.toString(batchBailRepayRunResp.getBatchNo()),
+                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            log.info(String.format("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq exception", e);
         }
 
         return ResponseEntity.ok("success");
@@ -795,10 +774,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         int lateInterest = 0;//逾期利息
         Double interestPercent = voThirdBatchRepay.getInterestPercent();
         Long repaymentId = voThirdBatchRepay.getRepaymentId();
-        /**
-         * @// TODO: 2017/7/20 检查提前还款  立即还款 interestPercent参数
-         */
-        interestPercent = interestPercent == 0 ? 1 : interestPercent;
+        interestPercent = ObjectUtils.isEmpty(interestPercent) ? 1 : interestPercent;
 
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);
         Borrow borrow = borrowService.findById(borrowRepayment.getBorrowId());
@@ -822,10 +798,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
                 Preconditions.checkNotNull(borrowRepayment, "还款不存在");
 
-                overPrincipal = 0;
-                for (BorrowRepayment temp : borrowRepaymentList) {
-                    overPrincipal += temp.getPrincipal();
-                }
+                //叠加剩余本金
+                overPrincipal = borrowRepaymentList.stream().mapToInt(w -> w.getPrincipal()).sum();
             }
             lateInterest = (int) MathHelper.myRound(overPrincipal * 0.004 * lateDays, 2);
         }
@@ -1122,8 +1096,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
         UserThirdAccount tenderUserThirdAccount;
         Repay repay;
+        //融资人实际付出金额 = 交易金额 + 交易利息 + 还款手续费
         int txFeeIn = 0;    // 投资方手续费 利息管理费
-        int txAmount = 0;   // 融资人实际付出金额 = 交易金额 + 交易利息 + 还款手续费
+        int txAmount = 0;   // 还款本金
         int intAmount = 0;  // 交易利息
         int txFeeOut = 0;   // 借款方手续费  逾期利息
         for (Tender tender : tenderList) {
@@ -1178,7 +1153,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             }
 
             intAmount = new Double(borrowCollection.getInterest() * interestPercent).intValue();  // 本期还款利息
-            txAmount = borrowCollection.getPrincipal() + intAmount;  // 本期还款金额
+            txAmount = borrowCollection.getPrincipal();  // 本期还款金额
 
             // 此处代码说明
             // 还款计划:2.1号, 3.1号, 4.1号. 5.1号, 6.1号;
@@ -1229,7 +1204,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             String orderId = JixinHelper.getOrderId(JixinHelper.REPAY_PREFIX);
             repay.setAccountId(borrowAccountId);
             repay.setOrderId(orderId);
-            repay.setTxAmount(StringHelper.formatDouble(txAmount + txFeeIn, 100, false));
+            repay.setTxAmount(StringHelper.formatDouble(txAmount, 100, false));
             repay.setIntAmount(StringHelper.formatDouble(intAmount, 100, false));
             repay.setTxFeeIn(StringHelper.formatDouble(txFeeIn, 100, false));
             repay.setTxFeeOut(StringHelper.formatDouble(txFeeOut, 100, false));

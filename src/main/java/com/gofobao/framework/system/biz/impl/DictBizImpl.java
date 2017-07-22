@@ -4,7 +4,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.system.biz.DictBiz;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
-import com.gofobao.framework.system.service.DictItemServcie;
+import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
 import com.gofobao.framework.system.vo.response.VoServiceResp;
 import com.google.common.cache.CacheBuilder;
@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 public class DictBizImpl implements DictBiz {
 
     @Autowired
-    DictItemServcie dictItemServcie;
+    DictItemService dictItemService;
 
 
     @Autowired
@@ -38,7 +38,7 @@ public class DictBizImpl implements DictBiz {
             .build(new CacheLoader<String, List<DictValue>>() {
                 @Override
                 public List<DictValue> load(String s) throws Exception {
-                    DictItem servicePlatform = dictItemServcie.findTopByAliasCodeAndDel(s, 0);
+                    DictItem servicePlatform = dictItemService.findTopByAliasCodeAndDel(s, 0);
                     if (ObjectUtils.isEmpty(servicePlatform)) {
                         return null;
                     }

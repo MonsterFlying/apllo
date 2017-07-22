@@ -136,6 +136,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .permitAll()
                 .antMatchers(
                         "/asset/**")
+
                 .permitAll()
                 .antMatchers(
                         "/invest/**")

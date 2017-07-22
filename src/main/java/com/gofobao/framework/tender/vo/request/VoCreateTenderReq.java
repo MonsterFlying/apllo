@@ -44,6 +44,9 @@ public class VoCreateTenderReq extends VoBaseReq {
     private Boolean isAutoTender = false;
 
     @ApiModelProperty(hidden = true)
+    private Integer source;
+
+    @ApiModelProperty(hidden = true)
     private String requestSource;
 
 

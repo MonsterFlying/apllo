@@ -50,7 +50,7 @@ import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.system.biz.IncrStatisticBiz;
 import com.gofobao.framework.system.biz.StatisticBiz;
 import com.gofobao.framework.system.entity.*;
-import com.gofobao.framework.system.service.DictItemServcie;
+import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
@@ -69,6 +69,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -148,7 +149,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
 
     @Autowired
-    private DictItemServcie dictItemServcie;
+    private DictItemService dictItemService;
 
     @Autowired
     private DictValueService dictValueService;
@@ -160,7 +161,7 @@ public class BorrowBizImpl implements BorrowBiz {
             .build(new CacheLoader<String, DictValue>() {
                 @Override
                 public DictValue load(String bankName) throws Exception {
-                    DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
+                    DictItem dictItem = dictItemService.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
                     if (ObjectUtils.isEmpty(dictItem)) {
                         return null;
                     }
@@ -276,8 +277,14 @@ public class BorrowBizImpl implements BorrowBiz {
                     status = 5; //已过期
                 } else {
                     status = 3; //招标中
+
                     //  进度
-                    borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes().doubleValue() / borrow.getMoney())));
+                    double spend = Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes().doubleValue() / borrow.getMoney()));
+                    if (spend == 1) {
+                        status = 6;
+                    }
+                    borrowInfoRes.setSpend(spend);
+
                 }
             } else if (!ObjectUtils.isEmpty(borrow.getSuccessAt()) && !ObjectUtils.isEmpty(borrow.getCloseAt())) {   //满标时间 结清
                 status = 4; //已完成
@@ -307,6 +314,8 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setAvatar(imageDomain + "/data/images/avatar/" + borrow.getUserId() + "_avatar_small.jpg");
             borrowInfoRes.setReleaseAt(status != 1 ? DateHelper.dateToString(borrow.getReleaseAt()) : "");
             borrowInfoRes.setLockStatus(borrow.getIsLock());
+            
+
             return ResponseEntity.ok(borrowInfoRes);
         } catch (Throwable e) {
             log.info("BorrowBizImpl detail fail%s", e);
@@ -2366,7 +2375,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
             //触发自动投标队列
             MqConfig mqConfig = new MqConfig();
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_AUTO_TENDER);
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_TENDER);
             mqConfig.setTag(MqTagEnum.AUTO_TENDER);
             mqConfig.setSendTime(releaseAt);
             ImmutableMap<String, String> body = ImmutableMap

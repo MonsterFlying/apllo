@@ -9,6 +9,8 @@ public enum MqTagEnum {
     SMS_SWICTH_PHONE("SMS_SWICTH_PHONE"),
     SMS_BUNDLE("SMS_BUNDLE"),
     SMS_MODIFY_BANK("SMS_MODIFY_BANK"),
+    SMS_REST_PAY_PASSWORD("SMS_REST_PAY_PASSWORD"),
+
     SMS_DEFAULT("SMS_DEFAULT"),
     SMS_EMAIL_BIND("SMS_EMAIL_BIND"),
     SEND_BORROW_PROTOCOL_EMAIL("SEND_BORROW_PROTOCOL_EMAIL"),
@@ -31,7 +33,12 @@ public enum MqTagEnum {
     INVITE_USER_REAL_NAME("INVITE_USER_REAL_NAME"),  //邀请用户实名
     INVITE_USER_TENDER("INVITE_USER_TENDER"), //邀请用户投资
     END_CREDIT("END_CREDIT"),//结束债权
-    BATCH_DEAL("batchDeal");//批次处理
+    BATCH_DEAL("batchDeal"),//批次处理
+    REPAY_ALL("repayAll"),//提前结清
+    REPAY_ADVANCE("repayAdvance"),//提前结清
+    ADVANCE("advance"),//担保人垫付
+    REPAY("repay");//立即还款
+
 
     private String value;
 

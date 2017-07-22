@@ -14,7 +14,6 @@ import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
-import com.gofobao.framework.borrow.vo.request.VoCreateThirdBorrowReq;
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
@@ -42,7 +41,6 @@ import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.TenderUserReq;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
-import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultiset;
@@ -55,7 +53,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
@@ -114,13 +111,28 @@ public class TenderBizImpl implements TenderBiz {
         }
 
         Users user = userService.findByIdLock(voCreateTenderReq.getUserId());
+        Preconditions.checkNotNull(user, "投标: 用户信息为空!");
+
+        if (voCreateTenderReq.getSource() == 1) { //PC端需要交易密码校验
+            if (StringUtils.isEmpty(voCreateTenderReq.getPayPassword())&&voCreateTenderReq.getPayPassword().length()>1) {
+                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "投标：交易密碼为空,请设置交易密码"));
+            }
+            Boolean flag = PasswordHelper.verifyPassword(user.getPayPassword(), voCreateTenderReq.getPayPassword());
+            if (!flag) {
+                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "投标：交易密码错误,请重新输入"));
+            }
+        }
         Preconditions.checkNotNull(user, "投标: 用户信息为空!") ;
         Borrow borrow = borrowService.findByIdLock(voCreateTenderReq.getBorrowId());
+        Preconditions.checkNotNull(borrow, "投标: 标的信息为空!");
+
         Preconditions.checkNotNull(borrow, "投标: 标的信息为空!") ;
         Asset asset = assetService.findByUserIdLock(voCreateTenderReq.getUserId());
+        Preconditions.checkNotNull(asset, "投标: 资金记录为空!");
+
         Preconditions.checkNotNull(asset, "投标: 资金记录为空!") ;
         UserCache userCache = userCacheService.findByUserIdLock(voCreateTenderReq.getUserId());
-        Preconditions.checkNotNull(userCache, "投标: 用户缓存信息为空!") ;
+        Preconditions.checkNotNull(userCache, "投标: 用户缓存信息为空!");
 
         Multiset<String> extendMessage = HashMultiset.create();
         boolean state = verifyBorrowInfo4Borrow(borrow, user, voCreateTenderReq, extendMessage);  // 标的判断
@@ -403,7 +415,7 @@ public class TenderBizImpl implements TenderBiz {
         if (voBaseRespResponseEntity.getStatusCode().equals(HttpStatus.OK)) {
             return ResponseEntity.ok(VoBaseResp.ok("投标成功!"));
         } else {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "投标失败"));
+            return voBaseRespResponseEntity;
         }
     }
 

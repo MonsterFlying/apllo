@@ -16,7 +16,7 @@ import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
-import com.gofobao.framework.system.service.DictItemServcie;
+import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -58,7 +58,7 @@ public class BankAccountBizImpl implements BankAccountBiz{
     DictValueService dictValueServcie ;
 
     @Autowired
-    DictItemServcie dictItemServcie ;
+    DictItemService dictItemService;
 
     @Autowired
     RechargeDetailLogService rechargeDetailLogService ;
@@ -76,7 +76,7 @@ public class BankAccountBizImpl implements BankAccountBiz{
             .build(new CacheLoader<String, DictValue>() {
                 @Override
                 public DictValue load(String bankName) throws Exception {
-                    DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("PLATFORM_BANK", 0) ;
+                    DictItem dictItem = dictItemService.findTopByAliasCodeAndDel("PLATFORM_BANK", 0) ;
                     if(ObjectUtils.isEmpty(dictItem)){
                         return null ;
                     }
@@ -155,7 +155,7 @@ public class BankAccountBizImpl implements BankAccountBiz{
 
     @Override
     public void showDesc(Model model) {
-        DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("PLATFORM_BANK", 0) ;
+        DictItem dictItem = dictItemService.findTopByAliasCodeAndDel("PLATFORM_BANK", 0) ;
         if(ObjectUtils.isEmpty(dictItem)){
             throw new RuntimeException("BankAccountBizImpl.showDesc： 查询平台支持银行卡列表异常， 请联系平台客服!");
         }
