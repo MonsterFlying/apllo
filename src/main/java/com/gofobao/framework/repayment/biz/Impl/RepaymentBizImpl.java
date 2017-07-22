@@ -1120,31 +1120,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
         int lateDays = DateHelper.diffInDays(nowDateOfBegin, repayDateOfBegin, false);
         lateDays = lateDays < 0 ? 0 : lateDays;
         return lateDays;
-
-    /**
-     * 获取债权转让还款计划
-     *
-     * @param borrowRepayment
-     * @param repaymentBorrow
-     * @param tranferedTenderMap
-     * @param tranferedBorrowMap
-     * @return
-     */
-    private Map<Long, List<BorrowCollection>> findTranferBorrowCollection(BorrowRepayment borrowRepayment,
-                                                                          Borrow repaymentBorrow,
-                                                                          Map<Long, List<Tender>> tranferedTenderMap,
-                                                                          Map<Long, Borrow> tranferedBorrowMap) {
-
-        Map<Long, List<BorrowCollection>> tranferedBorrowCollections = new HashMap<>(tranferedTenderMap.size());
-
-        tranferedTenderMap.keySet().stream().forEach((Long key) -> {
-            Borrow borrow = tranferedBorrowMap.get(key);
-            int order = borrowRepayment.getOrder() + borrow.getTotalOrder() - repaymentBorrow.getTotalOrder();  // 获取还款
-            tranferedBorrowCollections.put(key,
-                    queryBorrowCollectionByTender(order, tranferedTenderMap.get(key)));
-        });
-
-        return tranferedBorrowCollections;
     }
 
     /**
