@@ -1598,7 +1598,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     txFeeOut += lateInterest;
                 }
 
-                txAmount = principal + intAmount + txFeeOut;
+                txAmount = principal;
 
                 String orderId = JixinHelper.getOrderId(JixinHelper.BAIL_REPAY_PREFIX);
                 repayBail.setOrderId(orderId);
@@ -1784,8 +1784,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Borrow borrow = borrowService.findById(borrowRepayment.getBorrowId());
         UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
 
-        double txAmount = 0;
-        txAmount += bailRepayList.stream().mapToDouble(w -> NumberHelper.toDouble(w.getTxAmount())).sum();
+        double txAmount = bailRepayList.stream().mapToDouble(w -> NumberHelper.toDouble(w.getTxAmount())).sum();
 
         //批次号
         String batchNo = jixinHelper.getBatchNo();

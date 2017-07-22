@@ -349,9 +349,11 @@ public class AssetBizImpl implements AssetBiz {
         }
         Gson gson = new Gson();
         int state;
+        String msg = "";
         if (!directRechargeOnlineResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
             log.error(String.format("请求即信联机充值异常: %s", gson.toJson(directRechargeOnlineResponse)));
             state = 2;
+            msg = directRechargeOnlineResponse.getRetMsg();
         } else {
             log.info(String.format("充值成功: %s", gson.toJson(directRechargeOnlineResponse)));
             state = 1;
@@ -397,7 +399,7 @@ public class AssetBizImpl implements AssetBiz {
         } else {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "充值失败！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, String.format("充值失败！%s", msg)));
         }
     }
 
@@ -785,7 +787,7 @@ public class AssetBizImpl implements AssetBiz {
 
     @Override
     public ResponseEntity<VoRechargeEntityWrapResp> log(Long userId, int pageIndex, int pageSize) {
-        pageIndex = pageIndex <= 1 ? 0 : pageIndex - 1 ;
+        pageIndex = pageIndex <= 1 ? 0 : pageIndex - 1;
         pageSize = pageSize < 0 ? 10 : pageSize;
         List<RechargeDetailLog> logs = rechargeDetailLogService.log(userId, pageIndex, pageSize);
         List<VoRechargeEntityResp> voRechargeEntityRespList = new ArrayList<>(logs.size());
@@ -809,17 +811,18 @@ public class AssetBizImpl implements AssetBiz {
 
     /**
      * PC:资金流水导出到excel
+     *
      * @param voAssetLogReq
      * @param response
      */
     @Override
-    public void pcToExcel(VoAssetLogReq voAssetLogReq,HttpServletResponse response) {
-        List<AssetLog>assetLogs=assetLogService.pcToExcel(voAssetLogReq);
+    public void pcToExcel(VoAssetLogReq voAssetLogReq, HttpServletResponse response) {
+        List<AssetLog> assetLogs = assetLogService.pcToExcel(voAssetLogReq);
 
-        List<AssetLogs>assetLogsList=new ArrayList<>(assetLogs.size());
-        if(!CollectionUtils.isEmpty(assetLogs)){
-            assetLogs.stream().forEach(p->{
-                AssetLogs assetLog=new AssetLogs();
+        List<AssetLogs> assetLogsList = new ArrayList<>(assetLogs.size());
+        if (!CollectionUtils.isEmpty(assetLogs)) {
+            assetLogs.stream().forEach(p -> {
+                AssetLogs assetLog = new AssetLogs();
                 assetLog.setOperationMoney(StringHelper.formatMon(p.getMoney() / 100D));
                 assetLog.setRemark(p.getRemark());
                 assetLog.setTime(DateHelper.dateToString(p.getCreatedAt()));
@@ -827,14 +830,14 @@ public class AssetBizImpl implements AssetBiz {
                 assetLog.setUsableMoney(StringHelper.formatMon(p.getUseMoney() / 100D));
                 assetLogsList.add(assetLog);
             });
-            LinkedHashMap<String,String>paramMaps= Maps.newLinkedHashMap();
-            paramMaps.put("time","时间");
-            paramMaps.put("typeName","交易类型");
-            paramMaps.put("operationMoney","操作金额（分）");
-            paramMaps.put("usableMoney","可用金额（分）");
-            paramMaps.put("remark","备注");
+            LinkedHashMap<String, String> paramMaps = Maps.newLinkedHashMap();
+            paramMaps.put("time", "时间");
+            paramMaps.put("typeName", "交易类型");
+            paramMaps.put("operationMoney", "操作金额（分）");
+            paramMaps.put("usableMoney", "可用金额（分）");
+            paramMaps.put("remark", "备注");
             try {
-                ExcelUtil.listToExcel(assetLogsList,paramMaps,"资金流水",response);
+                ExcelUtil.listToExcel(assetLogsList, paramMaps, "资金流水", response);
             } catch (ExcelException e) {
                 e.printStackTrace();
             }
@@ -1124,6 +1127,7 @@ public class AssetBizImpl implements AssetBiz {
 
     /**
      * 账户总额统计
+     *
      * @param userId
      * @return
      */
@@ -1146,11 +1150,12 @@ public class AssetBizImpl implements AssetBiz {
 
     @Override
     public ResponseEntity<IncomeEarnedDetail> pcIncomeEarned(Long userId) {
-       return userCacheService.incomeEarned(userId);
+        return userCacheService.incomeEarned(userId);
     }
 
     /**
      * 支出统计
+     *
      * @param userId
      * @return
      */
@@ -1169,12 +1174,11 @@ public class AssetBizImpl implements AssetBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "pc 签名验证不通过", VoUserAssetInfoResp.class));
         }
 
-        log.info(String.format("资金同步: %s", paramStr)) ;
+        log.info(String.format("资金同步: %s", paramStr));
         Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
-        Long userId = Long.parseLong(paramMap.get("userId")) ;
+        Long userId = Long.parseLong(paramMap.get("userId"));
         return synOffLineRecharge(userId);
     }
-
 
 
 }

@@ -563,7 +563,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     }
                 }
 
-                txAmount = principal + intAmount;
+                txAmount = principal;
 
                 String orderId = JixinHelper.getOrderId(JixinHelper.REPAY_BAIL_PREFIX);
                 bailRepay.setOrderId(orderId);
@@ -878,8 +878,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
         UserThirdAccount tenderUserThirdAccount;
         Repay repay;
+        //融资人实际付出金额 = 交易金额 + 交易利息 + 还款手续费
         int txFeeIn = 0;    // 投资方手续费 利息管理费
-        int txAmount = 0;   // 融资人实际付出金额 = 交易金额 + 交易利息 + 还款手续费
+        int txAmount = 0;   // 还款本金
         int intAmount = 0;  // 交易利息
         int txFeeOut = 0;   // 借款方手续费  逾期利息
         for (Tender tender : tenderList) {
@@ -934,7 +935,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             }
 
             intAmount = new Double(borrowCollection.getInterest() * interestPercent).intValue();  // 本期还款利息
-            txAmount = borrowCollection.getPrincipal() + intAmount;  // 本期还款金额
+            txAmount = borrowCollection.getPrincipal();  // 本期还款金额
 
             // 此处代码说明
             // 还款计划:2.1号, 3.1号, 4.1号. 5.1号, 6.1号;
@@ -985,7 +986,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             String orderId = JixinHelper.getOrderId(JixinHelper.REPAY_PREFIX);
             repay.setAccountId(borrowAccountId);
             repay.setOrderId(orderId);
-            repay.setTxAmount(StringHelper.formatDouble(txAmount + txFeeIn, 100, false));
+            repay.setTxAmount(StringHelper.formatDouble(txAmount, 100, false));
             repay.setIntAmount(StringHelper.formatDouble(intAmount, 100, false));
             repay.setTxFeeIn(StringHelper.formatDouble(txFeeIn, 100, false));
             repay.setTxFeeOut(StringHelper.formatDouble(txFeeOut, 100, false));
