@@ -32,6 +32,7 @@ import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import java.util.*;
 import java.util.function.Function;
@@ -398,9 +399,9 @@ public class LoanServiceImpl implements LoanService {
         resultMaps.put("totalCount", totalList);
 
         //分页
-        TypedQuery query = entityManager.createQuery(sql + condition, BorrowRepayment.class);
-        query.setMaxResults(voStatisticsReq.getPageSize() * voStatisticsReq.getPageIndex());
-        query.setFirstResult(voStatisticsReq.getPageIndex());
+        Query query = entityManager.createQuery(sql + condition, BorrowRepayment.class);
+        query.setFirstResult(voStatisticsReq.getPageSize()* voStatisticsReq.getPageIndex());
+        query.setMaxResults(voStatisticsReq.getPageSize() );
         List<BorrowRepayment> borrowRepayments = query.getResultList();
 
         if (CollectionUtils.isEmpty(borrowRepayments)) {

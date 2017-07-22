@@ -86,7 +86,7 @@ public class StatisticBizImpl implements StatisticBiz {
                 Long borrowTotal = statistic.getBorrowTotal();
                 indexStatistics.setTransactionsTotal(borrowTotal);
                 indexStatistics.setDueTotal(statistic.getWaitRepayTotal());
-                indexStatistics.setBorrowTotal(statistic.getBorrowTotal());
+                indexStatistics.setBorrowTotal(statistic.getBorrowItems());
                 indexStatistics.setEarnings(statistic.getUserIncomeTotal());
                 indexStatistics.setYesterdayDueTotal(0);
                 //注册人数
