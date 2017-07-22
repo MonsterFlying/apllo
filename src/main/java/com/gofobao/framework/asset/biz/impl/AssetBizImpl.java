@@ -20,7 +20,6 @@ import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.AssetLogService;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
-import com.gofobao.framework.asset.service.impl.AssetLogServiceImpl;
 import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.request.VoRechargeReq;
 import com.gofobao.framework.asset.vo.request.VoSynAssetsRep;
@@ -57,7 +56,7 @@ import com.gofobao.framework.member.vo.response.pc.IncomeEarnedDetail;
 import com.gofobao.framework.member.vo.response.pc.VoViewAssetStatisticWarpRes;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
-import com.gofobao.framework.system.service.DictItemServcie;
+import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
@@ -134,7 +133,7 @@ public class AssetBizImpl implements AssetBiz {
     DictValueService dictValueServcie;
 
     @Autowired
-    DictItemServcie dictItemServcie;
+    DictItemService dictItemService;
 
     @Autowired
     BankAccountBizImpl bankAccountBiz;
@@ -147,7 +146,7 @@ public class AssetBizImpl implements AssetBiz {
             .build(new CacheLoader<String, DictValue>() {
                 @Override
                 public DictValue load(String bankName) throws Exception {
-                    DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("PLATFORM_BANK", 0);
+                    DictItem dictItem = dictItemService.findTopByAliasCodeAndDel("PLATFORM_BANK", 0);
                     if (ObjectUtils.isEmpty(dictItem)) {
                         return null;
                     }

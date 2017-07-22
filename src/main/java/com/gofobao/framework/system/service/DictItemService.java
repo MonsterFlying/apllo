@@ -5,7 +5,7 @@ import com.gofobao.framework.system.entity.DictItem;
 /**
  * Created by Max on 17/6/6.
  */
-public interface DictItemServcie {
+public interface DictItemService {
 
     DictItem findTopByAliasCodeAndDel(String aliasCode, int del);
 }
