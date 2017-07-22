@@ -489,7 +489,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         int repayMoney = borrowRepayment.getPrincipal() + repayInterest;//还款金额
 
         //逾期天数
-        Date nowDateOfBegin = DateHelper.beginOfDate(new Date());
+        Date nowDateOfBegin = DateHelper.beginOfDate(new Date()); //todo 处理逾期天数
         Date repayDateOfBegin = DateHelper.beginOfDate(borrowRepayment.getRepayAt());
         int lateDays = DateHelper.diffInDays(nowDateOfBegin, repayDateOfBegin, false);
         lateDays = lateDays < 0 ? 0 : lateDays;
@@ -552,9 +552,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
             capitalChangeHelper.capitalChange(entity);
         }
 
-        if (ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) {
+        if (ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) { //非垫付
             receivedReapy(borrow, borrowRepayment.getOrder(), interestPercent, lateDays, lateInterest / 2, false);
-        } else {
+        } else { //垫付
             AdvanceLog advanceLog = advanceLogService.findByRepaymentId(repaymentId);
             Preconditions.checkNotNull(advanceLog, "垫付记录不存在!请联系客服");
 

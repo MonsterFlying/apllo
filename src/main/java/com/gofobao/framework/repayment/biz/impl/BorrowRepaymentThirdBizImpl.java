@@ -612,14 +612,13 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     public ResponseEntity<String> thirdBatchBailRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
         BatchBailRepayRunResp batchBailRepayRunResp = jixinManager.callback(request, new TypeToken<BatchBailRepayRunResp>() {
         });
-        boolean bool = true;
+        Map<String, Object> acqResMap = GSON.fromJson(batchBailRepayRunResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
         if (ObjectUtils.isEmpty(batchBailRepayRunResp)) {
             log.error("======================================批次回调======================================");
             log.error("=============================批次担保账户代偿业务处理回调===========================");
             log.error("请求体为空!");
             log.error("====================================================================================");
             log.error("====================================================================================");
-            bool = false;
         }
 
         if (!JixinResultContants.SUCCESS.equals(batchBailRepayRunResp.getRetCode())) {
@@ -628,7 +627,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("回调失败! msg:" + batchBailRepayRunResp.getRetMsg());
             log.error("====================================================================================");
             log.error("====================================================================================");
-            bool = false;
         } else {
             log.error("======================================批次回调======================================");
             log.error("=============================批次担保账户代偿业务处理回调===========================");
@@ -644,29 +642,20 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         }.getType());
         saveThirdBailRepayAuthCode(bailRepayRunList);
 
-        int num = NumberHelper.toInt(batchBailRepayRunResp.getFailCounts());
-        if (num > 0) {
-            log.error("=============================批次担保账户代偿业务处理回调===========================");
-            log.error("批次担保账户代偿失败! 一共:" + num + "笔");
-            bool = false;
-        }
-
-        if (bool) {
-            long repaymentId = NumberHelper.toLong(batchBailRepayRunResp.getAcqRes());
-            ResponseEntity<VoBaseResp> resp = null;
-            try {
-                VoAdvanceCall voAdvanceCall = new VoAdvanceCall();
-                voAdvanceCall.setRepaymentId(repaymentId);
-
-                resp = repaymentBiz.advanceDeal(voAdvanceCall);
-            } catch (Throwable e) {
-                log.error("垫付异常:", e);
-            }
-            if (ObjectUtils.isEmpty(resp)) {
-                log.info("垫付成功!");
-            } else {
-                log.error("垫付失败:" + resp.getBody().getState().getMsg());
-            }
+        // 触发批次担保账户代偿业务处理队列
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("repaymentId")),
+                        MqConfig.BATCH_NO, StringHelper.toString(batchBailRepayRunResp.getBatchNo()),
+                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            log.info(String.format("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq exception", e);
         }
 
         return ResponseEntity.ok("success");
