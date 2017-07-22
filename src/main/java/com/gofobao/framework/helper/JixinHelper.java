@@ -7,7 +7,7 @@ import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
-import com.gofobao.framework.system.service.DictItemServcie;
+import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 public class JixinHelper {
 
     @Autowired
-    private DictItemServcie dictItemServcie;
+    private DictItemService dictItemService;
     @Autowired
     private DictValueService dictValueService;
     @Autowired
@@ -41,7 +41,7 @@ public class JixinHelper {
             .build(new CacheLoader<String, DictValue>() {
                 @Override
                 public DictValue load(String bankName) throws Exception {
-                    DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
+                    DictItem dictItem = dictItemService.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
                     if (ObjectUtils.isEmpty(dictItem)) {
                         return null;
                     }

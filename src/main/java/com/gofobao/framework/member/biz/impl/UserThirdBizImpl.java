@@ -40,7 +40,7 @@ import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
 import com.gofobao.framework.member.vo.response.*;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
-import com.gofobao.framework.system.service.DictItemServcie;
+import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -105,7 +105,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     DictValueService dictValueServcie;
 
     @Autowired
-    DictItemServcie dictItemServcie;
+    DictItemService dictItemService;
 
     @Autowired
     BankBinHelper bankBinHelper;
@@ -127,7 +127,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             .build(new CacheLoader<String, DictValue>() {
                 @Override
                 public DictValue load(String bankName) throws Exception {
-                    DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("PLATFORM_BANK", 0);
+                    DictItem dictItem = dictItemService.findTopByAliasCodeAndDel("PLATFORM_BANK", 0);
                     if (ObjectUtils.isEmpty(dictItem)) {
                         return null;
                     }

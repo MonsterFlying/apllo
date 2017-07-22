@@ -45,31 +45,32 @@ import java.util.Map;
 public class TransferBizImpl implements TransferBiz {
 
     @Autowired
-     TransferService transferService;
+    private TransferService transferService;
 
     @Autowired
-    TenderService tenderService;
+    private TenderService tenderService;
 
     @Autowired
-    BorrowService borrowService;
+    private BorrowService borrowService;
 
     @Autowired
-    BorrowCollectionService borrowCollectionService;
+    private BorrowCollectionService borrowCollectionService;
 
     @Autowired
-    UserThirdAccountService userThirdAccountService ;
+    private UserThirdAccountService userThirdAccountService;
 
     /**
      * 转让中
+     *
      * @param voTransferReq
      * @return
      */
     @Override
     public ResponseEntity<VoViewTransferOfWarpRes> tranferOfList(VoTransferReq voTransferReq) {
         try {
-            Map<String,Object>resultMaps=transferService.transferOfList(voTransferReq);
-            List<TransferOf> transferOfs =(List<TransferOf>) resultMaps.get("transferOfList");
-            Integer totalCount=Integer.valueOf(resultMaps.get("totalCount").toString());
+            Map<String, Object> resultMaps = transferService.transferOfList(voTransferReq);
+            List<TransferOf> transferOfs = (List<TransferOf>) resultMaps.get("transferOfList");
+            Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
             VoViewTransferOfWarpRes voViewTransferOfWarpRes = VoBaseResp.ok("查询成功", VoViewTransferOfWarpRes.class);
             voViewTransferOfWarpRes.setTransferOfs(transferOfs);
             voViewTransferOfWarpRes.setTotalCount(totalCount);
@@ -86,15 +87,16 @@ public class TransferBizImpl implements TransferBiz {
 
     /**
      * 已转让
+     *
      * @param voTransferReq
      * @return
      */
     @Override
     public ResponseEntity<VoViewTransferedWarpRes> transferedlist(VoTransferReq voTransferReq) {
         try {
-            Map<String,Object>resultMaps=transferService.transferedList(voTransferReq);
-            List<Transfered> transfereds =(List<Transfered>) resultMaps.get("transferedList");
-            Integer totalCount=Integer.valueOf(resultMaps.get("totalCount").toString());
+            Map<String, Object> resultMaps = transferService.transferedList(voTransferReq);
+            List<Transfered> transfereds = (List<Transfered>) resultMaps.get("transferedList");
+            Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
             VoViewTransferedWarpRes voViewTransferOfWarpRes = VoBaseResp.ok("查询成功", VoViewTransferedWarpRes.class);
             voViewTransferOfWarpRes.setTransferedList(transfereds);
             voViewTransferOfWarpRes.setTotalCount(totalCount);
@@ -111,15 +113,16 @@ public class TransferBizImpl implements TransferBiz {
 
     /**
      * 可转让
+     *
      * @param voTransferReq
      * @return
      */
     @Override
     public ResponseEntity<VoViewTransferMayWarpRes> transferMayList(VoTransferReq voTransferReq) {
         try {
-            Map<String,Object>resultMaps=transferService.transferMayList(voTransferReq);
-            List<TransferMay> transferOfs =(List<TransferMay>) resultMaps.get("transferMayList");
-            Integer totalCount=Integer.valueOf(resultMaps.get("totalCount").toString());
+            Map<String, Object> resultMaps = transferService.transferMayList(voTransferReq);
+            List<TransferMay> transferOfs = (List<TransferMay>) resultMaps.get("transferMayList");
+            Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
             VoViewTransferMayWarpRes voViewTransferOfWarpRes = VoBaseResp.ok("查询成功", VoViewTransferMayWarpRes.class);
             voViewTransferOfWarpRes.setMayList(transferOfs);
             voViewTransferOfWarpRes.setTotalCount(totalCount);
@@ -136,15 +139,16 @@ public class TransferBizImpl implements TransferBiz {
 
     /**
      * 已购买
+     *
      * @param voTransferReq
      * @return
      */
     @Override
     public ResponseEntity<VoViewTransferBuyWarpRes> tranferBuyList(VoTransferReq voTransferReq) {
         try {
-            Map<String,Object>resultMaps=transferService.transferBuyList(voTransferReq);
-            List<TransferBuy> transferOfs =(List<TransferBuy>) resultMaps.get("transferBuys");
-            Integer totalCount=Integer.valueOf(resultMaps.get("totalCount").toString());
+            Map<String, Object> resultMaps = transferService.transferBuyList(voTransferReq);
+            List<TransferBuy> transferOfs = (List<TransferBuy>) resultMaps.get("transferBuys");
+            Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
             VoViewTransferBuyWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewTransferBuyWarpRes.class);
             warpRes.setTransferBuys(transferOfs);
             warpRes.setTotalCount(totalCount);
@@ -172,14 +176,14 @@ public class TransferBizImpl implements TransferBiz {
         Long tenderId = voTransferTenderReq.getTenderId();
 
         Tender tender = tenderService.findById(tenderId);
-        Preconditions.checkNotNull(tender, "立即转让: 查询用户投标记录为空!") ;
+        Preconditions.checkNotNull(tender, "立即转让: 查询用户投标记录为空!");
         Borrow borrow = borrowService.findByIdLock(tender.getBorrowId());
-        Preconditions.checkNotNull(borrow, "立即转让: 查询用户投标标的信息为空!") ;
+        Preconditions.checkNotNull(borrow, "立即转让: 查询用户投标标的信息为空!");
 
         // 前期债权转让检测
-        ResponseEntity<VoBaseResp> tranferConditonCheckResponse = tranferConditionCheck(tender, borrow) ;
-        if(!tranferConditonCheckResponse.getStatusCode().equals(HttpStatus.OK)){
-            return tranferConditonCheckResponse ;
+        ResponseEntity<VoBaseResp> tranferConditonCheckResponse = tranferConditionCheck(tender, borrow);
+        if (!tranferConditonCheckResponse.getStatusCode().equals(HttpStatus.OK)) {
+            return tranferConditonCheckResponse;
         }
 
         // 计算债权本金之和
@@ -192,21 +196,22 @@ public class TransferBizImpl implements TransferBiz {
                 .build();
 
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "order"));
-        Preconditions.checkNotNull(borrowCollectionList,  "立即转让: 查询转让用户还款计划为空" ) ;
+        Preconditions.checkNotNull(borrowCollectionList, "立即转让: 查询转让用户还款计划为空");
         int waitRepayCount = borrowCollectionList.size();  // 等待回款期数
-        int cantrCapital = borrowCollectionList.stream().mapToInt(borrowCollection ->  borrowCollection.getPrincipal()).sum() ; // 待汇款本金
+        int cantrCapital = borrowCollectionList.stream().mapToInt(borrowCollection -> borrowCollection.getPrincipal()).sum(); // 待汇款本金
         if (cantrCapital < (1000 * 100)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "可转本金必须大于1000元才能转让"));
         }
 
-        saveTranferBorrow(nowDate, userId, tender, borrow, waitRepayCount, cantrCapital) ;
+        saveTranferBorrow(nowDate, userId, tender, borrow, waitRepayCount, cantrCapital);
         return ResponseEntity.ok(VoBaseResp.ok("操作成功"));
     }
 
     /**
      * 保存债权,并且更改投标记录为转让中
+     *
      * @param nowDate
      * @param userId
      * @param tender
@@ -254,31 +259,32 @@ public class TransferBizImpl implements TransferBiz {
      * 1. 当期债权是否已经发生转让行为
      * 2. 当前待还是否为官方标的
      * 3. 保证只能同时发生一个债权转让
+     *
      * @param tender
      * @param borrow
      * @return
      */
     private ResponseEntity<VoBaseResp> tranferConditionCheck(Tender tender, Borrow borrow) {
-        if((tender.getTransferFlag() != 0) || (borrow.isTransfer())){
+        if ((tender.getTransferFlag() != 0) || (borrow.isTransfer())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "操作失败: 你已经出让债权了!"));
         }
 
-        if((tender.getStatus() != 1)){
+        if ((tender.getStatus() != 1)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前系统出现异常, 麻烦通知平台客服人员!"));
         }
 
 
-        if((borrow.getType() != 0)){
+        if ((borrow.getType() != 0)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error( VoBaseResp.ERROR, "投资非投资官方标的是不可债权转让!") );
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "投资非投资官方标的是不可债权转让!"));
         }
 
-        if ((borrow.getStatus() != 3) ) {
+        if ((borrow.getStatus() != 3)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前债权不符合转让规则!"));
@@ -287,7 +293,7 @@ public class TransferBizImpl implements TransferBiz {
 
         Specification<Borrow> borrowSpecification = Specifications
                 .<Borrow>and()
-                .eq("userId",tender.getUserId())
+                .eq("userId", tender.getUserId())
                 .in("status", 0, 1)
                 .build();
 
@@ -299,14 +305,14 @@ public class TransferBizImpl implements TransferBiz {
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
-        if(ObjectUtils.isEmpty(userThirdAccount)){
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你没有开通银行存管，请先开通银行存管！"));
         }
 
         Integer passwordState = userThirdAccount.getPasswordState();
-        if(passwordState == 0){
+        if (passwordState == 0) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请先初始化江西银行存管账户交易密码！"));
@@ -324,7 +330,7 @@ public class TransferBizImpl implements TransferBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoAutoTenderInfo.class));
         }
-        return ResponseEntity.ok(VoBaseResp.ok("检测成功!")) ;
+        return ResponseEntity.ok(VoBaseResp.ok("检测成功!"));
     }
 
     /**
@@ -335,7 +341,7 @@ public class TransferBizImpl implements TransferBiz {
      */
     public ResponseEntity<VoGoTenderInfo> goTenderInfo(Long tenderId, Long userId) {
         Tender tender = tenderService.findById(tenderId);
-        Preconditions.checkNotNull(tender, "") ;
+        Preconditions.checkNotNull(tender, "");
         Preconditions.checkArgument(userId.equals(tender.getUserId()), "获取立即转让详情: 非法操作!");
 
         Specification<BorrowCollection> bcs = Specifications
@@ -344,10 +350,10 @@ public class TransferBizImpl implements TransferBiz {
                 .eq("status", 0)
                 .build();
         List<BorrowCollection> borrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "id"));
-        Preconditions.checkNotNull(borrowCollections, "获取立即转让详情: 还款计划查询失败!") ;
+        Preconditions.checkNotNull(borrowCollections, "获取立即转让详情: 还款计划查询失败!");
         BorrowCollection borrowCollection = borrowCollections.get(0);
         Borrow borrow = borrowService.findById(tender.getBorrowId());
-        Preconditions.checkNotNull(borrowCollections, "获取立即转让详情: 获取投资的标的信息失败!") ;
+        Preconditions.checkNotNull(borrowCollections, "获取立即转让详情: 获取投资的标的信息失败!");
         String repayFashionStr = "";
         switch (borrow.getRepayFashion()) {
             case BorrowContants.REPAY_FASHION_AYFQ_NUM:
@@ -362,7 +368,7 @@ public class TransferBizImpl implements TransferBiz {
             default:
         }
 
-        int money = borrowCollections.stream().mapToInt(borrowCollectionItem ->  borrowCollectionItem.getPrincipal()).sum() ; // 待汇款本金
+        int money = borrowCollections.stream().mapToInt(borrowCollectionItem -> borrowCollectionItem.getPrincipal()).sum(); // 待汇款本金
         // 0.4% + 0.08% * (剩余期限-1)  （费率最高上限为1.28%）
         double rate = 0.004 + 0.0008 * (borrowCollections.size() - 1);
         rate = Math.min(rate, 0.0128);

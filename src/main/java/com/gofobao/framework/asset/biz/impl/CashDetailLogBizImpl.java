@@ -48,7 +48,7 @@ import com.gofobao.framework.scheduler.biz.TaskSchedulerBiz;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.entity.Notices;
-import com.gofobao.framework.system.service.DictItemServcie;
+import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
@@ -130,7 +130,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     ThirdAccountPasswordHelper thirdAccountPasswordHelper;
 
     @Autowired
-    DictItemServcie dictItemServcie;
+    DictItemService dictItemService;
 
     @Autowired
     DictValueService dictValueService;
@@ -146,7 +146,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             .build(new CacheLoader<String, DictValue>() {
                 @Override
                 public DictValue load(String bankName) throws Exception {
-                    DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("PLATFORM_BANK", 0);
+                    DictItem dictItem = dictItemService.findTopByAliasCodeAndDel("PLATFORM_BANK", 0);
                     if (ObjectUtils.isEmpty(dictItem)) {
                         return null;
                     }

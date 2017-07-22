@@ -9,7 +9,6 @@ import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeReq;
 import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeResp;
 import com.gofobao.framework.api.model.batch_bail_repay.BailRepay;
-import com.gofobao.framework.api.model.batch_bail_repay.BailRepayRun;
 import com.gofobao.framework.api.model.batch_bail_repay.BatchBailRepayReq;
 import com.gofobao.framework.api.model.batch_bail_repay.BatchBailRepayResp;
 import com.gofobao.framework.api.model.batch_repay.BatchRepayReq;
@@ -74,7 +73,7 @@ import com.gofobao.framework.system.biz.StatisticBiz;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.*;
-import com.gofobao.framework.system.service.DictItemServcie;
+import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.entity.Tender;
@@ -91,9 +90,6 @@ import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -136,7 +132,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private MqHelper mqHelper;
     @Autowired
     private IntegralChangeHelper integralChangeHelper;
-
     @Autowired
     private BorrowRepaymentService borrowRepaymentService;
     @Autowired
@@ -144,7 +139,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
     @Autowired
     private BorrowRepository borrowRepository;
     @Autowired
-    private DictItemServcie dictItemServcie;
+    private DictItemService dictItemService;
     @Autowired
     private ThirdBatchLogService thirdBatchLogService;
     @Autowired
@@ -170,7 +165,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             .build(new CacheLoader<String, DictValue>() {
                 @Override
                 public DictValue load(String bankName) throws Exception {
-                    DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
+                    DictItem dictItem = dictItemService.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
                     if (ObjectUtils.isEmpty(dictItem)) {
                         return null;
                     }

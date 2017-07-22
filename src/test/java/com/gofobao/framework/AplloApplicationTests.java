@@ -239,8 +239,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("151317");
-        batchDetailsQueryReq.setBatchTxDate("20170719");
+        batchDetailsQueryReq.setBatchNo("153238");
+        batchDetailsQueryReq.setBatchTxDate("20170721");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -306,11 +306,11 @@ public class AplloApplicationTests {
         System.out.println(response);
         */
 
-        BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
+        /*BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
         balanceQueryRequest.setAccountId("6212462040000450041");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
-        System.out.println(balanceQueryResponse);
+        System.out.println(balanceQueryResponse);*/
 
         //根据手机号查询存管账户
         //findAccountByMobile();
@@ -333,7 +333,7 @@ public class AplloApplicationTests {
         //复审
         //doAgainVerify();
         //批次详情查询
-        //batchDetailsQuery();
+        batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调

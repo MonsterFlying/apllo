@@ -1,6 +1,5 @@
 package com.gofobao.framework.integral.biz.impl;
 
-import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.DesLineFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
@@ -34,7 +33,7 @@ import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.contants.DictAliasCodeContants;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
-import com.gofobao.framework.system.service.DictItemServcie;
+import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictService;
 import com.gofobao.framework.system.service.DictValueService;
 import com.google.common.cache.CacheBuilder;
@@ -47,7 +46,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -80,7 +78,7 @@ public class IntegralBizImpl implements IntegralBiz {
     private JixinManager jixinManager;
 
     @Autowired
-    private DictItemServcie dictItemServcie;
+    private DictItemService dictItemService;
 
     @Value("${gofobao.webDomain}")
     private String webDomain;
@@ -96,7 +94,7 @@ public class IntegralBizImpl implements IntegralBiz {
             .build(new CacheLoader<String, DictValue>() {
                 @Override
                 public DictValue load(String bankName) throws Exception {
-                    DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
+                    DictItem dictItem = dictItemService.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
                     if (ObjectUtils.isEmpty(dictItem)) {
                         return null;
                     }

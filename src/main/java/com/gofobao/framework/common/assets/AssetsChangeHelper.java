@@ -17,7 +17,7 @@ import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
-import com.gofobao.framework.system.service.DictItemServcie;
+import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
@@ -59,7 +59,7 @@ public class AssetsChangeHelper {
     AssetsChangeLogItemService assetsChangeLogItemService;
 
     @Autowired
-    DictItemServcie dictItemServcie ;
+    DictItemService dictItemService;
 
     @Autowired
     DictValueService dictValueService ;
@@ -70,7 +70,7 @@ public class AssetsChangeHelper {
             .build(new CacheLoader<String, Long>() {
                 @Override
                 public Long load(String jixinParamStr) throws Exception {
-                    DictItem dictItem = dictItemServcie.findTopByAliasCodeAndDel("JIXIN_PARAM", 0) ;
+                    DictItem dictItem = dictItemService.findTopByAliasCodeAndDel("JIXIN_PARAM", 0) ;
                     if(ObjectUtils.isEmpty(dictItem)){
                         return null ;
                     }

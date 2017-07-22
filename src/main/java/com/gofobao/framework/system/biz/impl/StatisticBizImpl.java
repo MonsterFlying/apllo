@@ -8,7 +8,7 @@ import com.gofobao.framework.system.contants.DictAliasCodeContants;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.entity.Statistic;
-import com.gofobao.framework.system.service.DictItemServcie;
+import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
 import com.gofobao.framework.system.service.IncrStatisticService;
 import com.gofobao.framework.system.service.StatisticService;
@@ -48,7 +48,7 @@ public class StatisticBizImpl implements StatisticBiz {
     private DictValueService dictValueService;
 
     @Autowired
-    private DictItemServcie dictItemServcie;
+    private DictItemService dictItemService;
 
     @Autowired
     private IncrStatisticService incrStatisticService;
@@ -94,7 +94,7 @@ public class StatisticBizImpl implements StatisticBiz {
                 indexStatistics.setRegisterTotal(registerTotal);
                 //起头金额&年华利率
 
-                DictItem dictItem=dictItemServcie.findTopByAliasCodeAndDel(DictAliasCodeContants.INDEX_CONFIG,0);
+                DictItem dictItem= dictItemService.findTopByAliasCodeAndDel(DictAliasCodeContants.INDEX_CONFIG,0);
                 List<DictValue> dictValue=dictValueService.findByItemId(dictItem.getId());
                 Map<String,String> dictValueMap=dictValue.stream().collect(Collectors.toMap(DictValue::getValue02, DictValue::getValue01));
                 indexStatistics.setApr(Integer.valueOf(dictValueMap.get("annualized").toString()));

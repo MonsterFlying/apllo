@@ -61,14 +61,7 @@ public class BorrowProvider {
     @Autowired
     private TenderThirdBiz tenderThirdBiz;
     @Autowired
-    private UserCacheService userCacheService;
-    @Autowired
     private BorrowService borrowService;
-    @Autowired
-    private MqHelper mqHelper;
-    @Autowired
-    private TenderRepository tenderRepository;
-
 
     /**
      * 复审
@@ -102,7 +95,7 @@ public class BorrowProvider {
             log.info(String.format("复审: 批量正常放款申请开始: %s", GSON.toJson(msg)));
             if (ObjectUtils.isEmpty(borrow.getSuccessAt())) {
                 borrow.setSuccessAt(new Date());
-                borrow = borrowService.save(borrow);
+                borrowService.save(borrow);
             }
 
             //批次放款
