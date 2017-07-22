@@ -163,6 +163,7 @@ public class BorrowServiceImpl implements BorrowService {
             item.setMoneyYes(StringHelper.formatMon(m.getMoneyYes() / 100d) + MoneyConstans.RMB);
             item.setIsNovice(m.getIsNovice());
             item.setIsMortgage(m.getIsMortgage());
+            item.setIsPassWord(StringUtils.isEmpty(m.getPassword())?false:true);
             if (m.getType() == BorrowContants.REPAY_FASHION_ONCE) {
                 item.setTimeLimit(m.getTimeLimit() + BorrowContants.DAY);
             } else {

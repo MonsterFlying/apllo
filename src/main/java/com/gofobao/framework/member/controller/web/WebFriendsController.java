@@ -61,10 +61,10 @@ public class WebFriendsController {
 
     @ApiOperation("邀请统计导出到excel")
     @GetMapping("/invite/pc/v2/toExcel")
-    public void statistic(HttpServletResponse response,/*
-                          @RequestAttribute(SecurityContants.USERID_KEY) Long userId,*/
+    public void statistic(HttpServletResponse response,
+                          @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                           VoFriendsTenderReq friendsTenderReq) {
-        friendsTenderReq.setUserId(901L);
+        friendsTenderReq.setUserId(userId);
         brokerBounsBiz.toExcel(friendsTenderReq, response);
     }
 
