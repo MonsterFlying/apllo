@@ -46,4 +46,12 @@ public interface InviteFriendsService {
      */
     Map<String, Object> pcInviteUserFirstTender(VoFriendsReq voFriendsReq);
 
+    /**
+     * PC 邀请用户导出excel
+     * @param friendsTenderReq
+     * @return
+     */
+    List<InviteFriends>toExcel(VoFriendsTenderReq friendsTenderReq);
+
+
 }

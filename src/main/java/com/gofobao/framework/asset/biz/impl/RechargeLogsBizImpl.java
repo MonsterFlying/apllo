@@ -35,8 +35,7 @@ public class RechargeLogsBizImpl implements RechargeLogsBiz {
 
     @Override
     public void pcToExcel(VoPcRechargeReq rechargeReq, HttpServletResponse response) {
-        ResponseEntity<VoViewRechargeWarpRes> rechargeDetailLogs=logService.pcLogs(rechargeReq);
-        List<RechargeLogs> rechargeLogs=rechargeDetailLogs.getBody().getLogs();
+        List<RechargeLogs> rechargeLogs=logService.toExcel(rechargeReq);
         if(!CollectionUtils.isEmpty(rechargeLogs)) {
                 LinkedHashMap<String, String> paramMaps = Maps.newLinkedHashMap();
                 paramMaps.put("createAt", "时间");

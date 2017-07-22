@@ -56,7 +56,9 @@ public class WebRechargeController {
 
     @ApiOperation("联机充值")
     @PostMapping("/asset/pc/v2/rechargeOnline")
-    public ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoRechargeReq voRechargeReq) throws Exception{
+    public ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest request,
+                                                     @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                                     @Valid @ModelAttribute VoRechargeReq voRechargeReq) throws Exception{
         voRechargeReq.setUserId(userId) ;
         return assetBiz.rechargeOnline(request, voRechargeReq) ;
     }

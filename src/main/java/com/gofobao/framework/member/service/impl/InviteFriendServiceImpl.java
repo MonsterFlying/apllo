@@ -110,6 +110,29 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
         return resultMaps;
     }
 
+
+    @Override
+    public List<InviteFriends> toExcel(VoFriendsTenderReq friendsTenderReq) {
+        Date beginAt = DateHelper.beginOfDate(DateHelper.stringToDate(friendsTenderReq.getBeginAt(),DateHelper.DATE_FORMAT_YMD));
+        Date endAt = DateHelper.endOfDate(DateHelper.stringToDate(friendsTenderReq.getEndAt(),DateHelper.DATE_FORMAT_YMD));
+        Specification specification = Specifications.<BrokerBouns>and()
+                .eq("userId", friendsTenderReq.getUserId())
+                .between("createdAt", new Range<>(beginAt, endAt))
+                .build();
+        List<BrokerBouns> bounsList=brokerBounsRepository.findAll(specification);
+        List<InviteFriends> brokerBouns= new ArrayList<>(bounsList.size());
+        bounsList.forEach(p->{
+            InviteFriends inviteFriends=new InviteFriends();
+            inviteFriends.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
+            inviteFriends.setMoney(DateHelper.dateToString(p.getCreatedAt()));
+            inviteFriends.setLeave(p.getLevel());
+            inviteFriends.setWaitPrincipalTotal(StringHelper.formatMon(p.getWaitPrincipalTotal()));
+            inviteFriends.setScale(StringHelper.formatMon(p.getAwardApr()));
+            brokerBouns.add(inviteFriends);
+        });
+        return brokerBouns;
+    }
+
     @Override
     public InviteAwardStatistics query(Long userId) {
         Specification<BrokerBouns> specification = Specifications.<BrokerBouns>and()

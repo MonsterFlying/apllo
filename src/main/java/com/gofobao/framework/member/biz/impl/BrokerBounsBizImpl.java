@@ -161,9 +161,8 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
 
     @Override
     public void toExcel(VoFriendsTenderReq friendsTenderReq, HttpServletResponse response) {
-        Map<String, Object> resultMaps = inviteFriendsService.pcBrokerBounsList(friendsTenderReq);
-        List<InviteFriends> friendsList = (List<InviteFriends>) resultMaps.get("bounsList");
-        if (!CollectionUtils.isEmpty(friendsList)) {
+        List<InviteFriends> inviteFriends  = inviteFriendsService.toExcel(friendsTenderReq);
+        if (!CollectionUtils.isEmpty(inviteFriends)) {
             LinkedHashMap<String, String> paramMaps = Maps.newLinkedHashMap();
             paramMaps.put("createdAt", "时间");
             paramMaps.put("leave", "等级");
@@ -171,7 +170,7 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
             paramMaps.put("money", "提成奖励");
             paramMaps.put("waitPrincipalTotal", "计算提成的总待收本金");
             try {
-                ExcelUtil.listToExcel(friendsList, paramMaps, "邀请好友", response);
+                ExcelUtil.listToExcel(inviteFriends, paramMaps, "邀请好友", response);
             } catch (ExcelException e) {
                 e.printStackTrace();
             }
