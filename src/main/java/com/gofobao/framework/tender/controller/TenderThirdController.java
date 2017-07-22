@@ -1,5 +1,6 @@
 package com.gofobao.framework.tender.controller;
 
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -32,9 +33,10 @@ public class TenderThirdController {
     @RequestMapping("/v2/third/batch/creditinvest/run")
     public ResponseEntity<String> thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) {
         try {
+            log.info("批量债权购买回调触发");
             return tenderThirdBiz.thirdBatchCreditInvestRunCall(request, response);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("批量债权购买回调失败", e);
             return ResponseEntity.ok("error");
         }
     }
@@ -58,11 +60,12 @@ public class TenderThirdController {
      */
     @ApiOperation("投资人批次结束债权运行回调")
     @RequestMapping("/v2/third/batch/creditend/run")
-    public void thirdBatchCreditEndRunCall(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> thirdBatchCreditEndRunCall(HttpServletRequest request, HttpServletResponse response) {
         try {
-            tenderThirdBiz.thirdBatchCreditEndRunCall(request, response);
+            return tenderThirdBiz.thirdBatchCreditEndRunCall(request, response);
         } catch (Exception e) {
             e.printStackTrace();
+            return ResponseEntity.ok("errror");
         }
     }
 

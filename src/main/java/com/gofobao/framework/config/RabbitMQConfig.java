@@ -22,8 +22,8 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Queue autoTenderRabbitmq() {
-        return new Queue(MqQueueEnum.RABBITMQ_AUTO_TENDER.getValue(), true);
+    public Queue tenderRabbitmq() {
+        return new Queue(MqQueueEnum.RABBITMQ_TENDER.getValue(), true);
     }
 
     @Bean
@@ -62,6 +62,11 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue repaymentRabbitmq() {
+        return new Queue(MqQueueEnum.RABBITMQ_REPAYMENT.getValue(), true);
+    }
+
+    @Bean
     DirectExchange delayExchange() {
         DirectExchange directExchange = new DirectExchange(MqExchangeContants.DELAY_EXCHANGE, true, false);
         directExchange.setDelayed(true);
@@ -81,8 +86,8 @@ public class RabbitMQConfig {
 
 
     @Bean
-    Binding autoTenderRabbitmqBinding(Queue autoTenderRabbitmq, Exchange delayExchange) {
-        return BindingBuilder.bind(autoTenderRabbitmq).to(delayExchange).with(MqQueueEnum.RABBITMQ_AUTO_TENDER.getValue()).noargs();
+    Binding tenderRabbitmqBinding(Queue tenderRabbitmq, Exchange delayExchange) {
+        return BindingBuilder.bind(tenderRabbitmq).to(delayExchange).with(MqQueueEnum.RABBITMQ_TENDER.getValue()).noargs();
     }
 
 
@@ -106,10 +111,15 @@ public class RabbitMQConfig {
     Binding redPackageRabbitmqBinding(Queue redPackageRabbitmq, Exchange delayExchange) {
         return BindingBuilder.bind(redPackageRabbitmq).to(delayExchange).with(MqQueueEnum.RABBITMQ_RED_PACKAGE.getValue()).noargs();
     }
+
     @Bean
     Binding creditRabbitmqBinding(Queue creditRabbitmq, Exchange delayExchange) {
         return BindingBuilder.bind(creditRabbitmq).to(delayExchange).with(MqQueueEnum.RABBITMQ_CREDIT.getValue()).noargs();
     }
 
+    @Bean
+    Binding repaymentRabbitmqBinding(Queue repaymentRabbitmq, Exchange delayExchange) {
+        return BindingBuilder.bind(repaymentRabbitmq).to(delayExchange).with(MqQueueEnum.RABBITMQ_REPAYMENT.getValue()).noargs();
+    }
 
 }

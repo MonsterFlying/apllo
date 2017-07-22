@@ -14,7 +14,6 @@ import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
-import com.gofobao.framework.borrow.vo.request.VoCreateThirdBorrowReq;
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
@@ -27,6 +26,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.ThirdAccountHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -105,10 +105,13 @@ public class TenderBizImpl implements TenderBiz {
      * @throws Exception
      */
     public ResponseEntity<VoBaseResp> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception {
+        log.info(String.format("马上投资: 起步: %s", new Gson().toJson(voCreateTenderReq)));
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voCreateTenderReq.getUserId());
-        if (ObjectUtils.isEmpty(userThirdAccount)) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "当前用户未开户状态"));
+        ResponseEntity<VoBaseResp> thirdAccountConditionResponse = ThirdAccountHelper.conditionCheck(userThirdAccount);
+        if(!thirdAccountConditionResponse.getStatusCode().equals(HttpStatus.OK)){
+            return thirdAccountConditionResponse ;
         }
+
         Users user = userService.findByIdLock(voCreateTenderReq.getUserId());
         Preconditions.checkNotNull(user, "投标: 用户信息为空!");
 
@@ -121,92 +124,49 @@ public class TenderBizImpl implements TenderBiz {
                 return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "投标：交易密码错误,请重新输入"));
             }
         }
+        Preconditions.checkNotNull(user, "投标: 用户信息为空!") ;
         Borrow borrow = borrowService.findByIdLock(voCreateTenderReq.getBorrowId());
         Preconditions.checkNotNull(borrow, "投标: 标的信息为空!");
 
+        Preconditions.checkNotNull(borrow, "投标: 标的信息为空!") ;
         Asset asset = assetService.findByUserIdLock(voCreateTenderReq.getUserId());
         Preconditions.checkNotNull(asset, "投标: 资金记录为空!");
 
+        Preconditions.checkNotNull(asset, "投标: 资金记录为空!") ;
         UserCache userCache = userCacheService.findByUserIdLock(voCreateTenderReq.getUserId());
         Preconditions.checkNotNull(userCache, "投标: 用户缓存信息为空!");
 
         Multiset<String> extendMessage = HashMultiset.create();
-        // 标的判断
-        boolean state = verifyBorrowInfo4Borrow(borrow, user, voCreateTenderReq, extendMessage);
+        boolean state = verifyBorrowInfo4Borrow(borrow, user, voCreateTenderReq, extendMessage);  // 标的判断
         if (!state) {
             Set<String> errorSet = extendMessage.elementSet();
             Iterator<String> iterator = errorSet.iterator();
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, iterator.next()));
         }
 
-        // 借款用户资产判断
-        state = verifyUserInfo4Borrow(user, borrow, asset, userCache, voCreateTenderReq, extendMessage);
+        state = verifyUserInfo4Borrow(user, borrow, asset, userCache, voCreateTenderReq, extendMessage); // 借款用户资产判断
         Set<String> errorSet = extendMessage.elementSet();
         Iterator<String> iterator = errorSet.iterator();
 
         if (!state) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, iterator.next()));
-        }
-
-        //===========================================================
-        //创建标的：投标行为 非转让标第一次成功前创建标的，
-        //===========================================================
-        ResponseEntity<VoBaseResp> resp;
-        String productId = borrow.getProductId();
-        if (ObjectUtils.isEmpty(productId) && !borrow.isTransfer()) { // 判断没有在即信注册、并且类型为非转让标
-            int type = borrow.getType();
-            if (type != 0 && type != 4) { // 判断是否是官标、官标不需要在这里登记标的
-                VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
-                voCreateThirdBorrowReq.setBorrowId(borrow.getId());
-                resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
-                if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) { //创建状态为失败时返回错误提示
-                    return resp;
-                }
-            }
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, iterator.next()));
         }
 
         Date nowDate = new Date();
         int validateMoney = Integer.parseInt(iterator.next());
-
-        // 生成投标记录
-        Tender borrowTender = createBorrowTenderRecord(voCreateTenderReq, user, nowDate, validateMoney);
-
-        //===========================================================
-        //投资人投标:类型为非转让标
-        //===========================================================
-        if (!borrow.isTransfer()) { //类型为非转让标
-            VoCreateThirdTenderReq voCreateThirdTenderReq = new VoCreateThirdTenderReq();
-            voCreateThirdTenderReq.setAcqRes(String.valueOf(borrowTender.getId()));
-            voCreateThirdTenderReq.setUserId(borrowTender.getUserId());
-            voCreateThirdTenderReq.setTxAmount(StringHelper.formatDouble(borrowTender.getValidMoney(), 100, false));
-            voCreateThirdTenderReq.setProductId(borrow.getProductId());
-            voCreateThirdTenderReq.setFrzFlag(FrzFlagContant.FREEZE);
-            resp = tenderThirdBiz.createThirdTender(voCreateThirdTenderReq);
-            if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) {
-                String msg = "tenderBizImpl createTender: tenderId->" + borrowTender.getId() + "msg->" + resp.getBody().getState().getMsg();
-                throw new Exception(msg);
-            }
-        }
-
-        borrowTender.setIsThirdRegister(true);
-        tenderService.updateById(borrowTender);
-
-        // 扣除待还
-        CapitalChangeEntity entity = new CapitalChangeEntity();
-        entity.setType(CapitalChangeEnum.Frozen);
-        entity.setUserId(borrowTender.getUserId());
-        entity.setToUserId(borrow.getUserId());
-        entity.setMoney(borrowTender.getValidMoney());
-        entity.setRemark("投标冻结资金");
-        capitalChangeHelper.capitalChange(entity);
+        Tender borrowTender = createBorrowTenderRecord(voCreateTenderReq, user, nowDate, validateMoney);    // 生成投标记录
+        borrowTender = registerTender(borrow, borrowTender) ;  // 投标的存管报备
+        updateAssetByTender(borrow, borrowTender); // 扣除用户投标金额
 
         borrow.setMoneyYes(borrow.getMoneyYes() + validateMoney);
         borrow.setTenderCount((borrow.getTenderCount() + 1));
         borrow.setId(borrow.getId());
         borrow.setUpdatedAt(nowDate);
-        borrowService.updateById(borrow);
-        // 对于投标金额等于招标金额触发复审
-        if (borrow.getMoneyYes() >= borrow.getMoney()) {
+        borrowService.updateById(borrow);  // 更改标的信息
+
+        if (borrow.getMoneyYes() >= borrow.getMoney()) {   // 对于投标金额等于招标金额触发复审
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
             mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
@@ -219,6 +179,37 @@ public class TenderBizImpl implements TenderBiz {
 
         return ResponseEntity.ok(VoBaseResp.ok("投资成功"));
     }
+
+    private void updateAssetByTender(Borrow borrow, Tender borrowTender) throws Exception {
+        CapitalChangeEntity entity = new CapitalChangeEntity();
+        entity.setType(CapitalChangeEnum.Frozen);
+        entity.setUserId(borrowTender.getUserId());
+        entity.setToUserId(borrow.getUserId());
+        entity.setMoney(borrowTender.getValidMoney());
+        entity.setRemark("投标冻结资金");
+        capitalChangeHelper.capitalChange(entity);
+    }
+
+    private Tender registerTender(Borrow borrow, Tender borrowTender) throws Exception {
+        if (!borrow.isTransfer()) { //类型为非转让标
+            log.info(String.format("马上投资: 投资报备: %s", new Gson().toJson(borrowTender)));
+            VoCreateThirdTenderReq voCreateThirdTenderReq = new VoCreateThirdTenderReq();
+            voCreateThirdTenderReq.setAcqRes(String.valueOf(borrowTender.getId()));
+            voCreateThirdTenderReq.setUserId(borrowTender.getUserId());
+            voCreateThirdTenderReq.setTxAmount(StringHelper.formatDouble(borrowTender.getValidMoney(), 100, false));
+            voCreateThirdTenderReq.setProductId(borrow.getProductId());
+            voCreateThirdTenderReq.setFrzFlag(FrzFlagContant.FREEZE);
+            ResponseEntity<VoBaseResp> resp = tenderThirdBiz.createThirdTender(voCreateThirdTenderReq);
+            if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) {
+                log.info(String.format("马上投资: 投资报备失败: %s", new Gson().toJson(resp)));
+                String msg = "tenderBizImpl createTender: tenderId->" + borrowTender.getId() + "msg->" + resp.getBody().getState().getMsg();
+                throw new Exception(msg);
+            }
+        }
+        borrowTender.setIsThirdRegister(true);
+        return tenderService.save(borrowTender);
+    }
+
 
     /**
      * 生成投标记录
@@ -422,33 +413,6 @@ public class TenderBizImpl implements TenderBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> tender(VoCreateTenderReq voCreateTenderReq) throws Exception {
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voCreateTenderReq.getUserId());
-        if (ObjectUtils.isEmpty(userThirdAccount)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoAutoTenderInfo.class));
-        }
-
-        if (userThirdAccount.getPasswordState() != 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoAutoTenderInfo.class));
-        }
-
-        if (userThirdAccount.getAutoTransferState() != 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoAutoTenderInfo.class));
-        }
-
-
-        if (userThirdAccount.getAutoTenderState() != 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoAutoTenderInfo.class));
-        }
-
-
         ResponseEntity<VoBaseResp> voBaseRespResponseEntity = createTender(voCreateTenderReq);
         if (voBaseRespResponseEntity.getStatusCode().equals(HttpStatus.OK)) {
             return ResponseEntity.ok(VoBaseResp.ok("投标成功!"));

@@ -125,7 +125,6 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
      * @return true 已处理  false 未处理
      */
     public boolean checkLocalSourceState(String sourceId, int type) {
-
         Specification<Borrow> bs = null;
         Specification<BorrowRepayment> brs = null;
         Specification<AdvanceLog> als = null;

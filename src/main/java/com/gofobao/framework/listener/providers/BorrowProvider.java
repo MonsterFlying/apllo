@@ -79,7 +79,6 @@ public class BorrowProvider {
      */
     @Transactional(rollbackFor = Exception.class)
     public boolean doAgainVerify(Map<String, String> msg) throws Exception {
-        boolean bool = false;
         Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get("borrowId")));
         Borrow borrow = borrowService.findByIdLock(borrowId);
         if (borrow.getStatus() != 1) {
@@ -88,85 +87,35 @@ public class BorrowProvider {
         }
 
         if (borrow.isTransfer()) { // 批次债券转让
+            log.info(String.format("复审: 批量债权转让申请开始: %s", GSON.toJson(msg)));
             VoThirdBatchCreditInvest voThirdBatchCreditInvest = new VoThirdBatchCreditInvest();
             voThirdBatchCreditInvest.setBorrowId(borrowId);
             ResponseEntity<VoBaseResp> resp = tenderThirdBiz.thirdBatchCreditInvest(voThirdBatchCreditInvest);
             if (ObjectUtils.isEmpty(resp)) {
-                log.info("====================================================================");
-                log.info("转让标发起复审成功！");
-                log.info("====================================================================");
-                bool = true;
+                log.info(String.format("复审: 批量债权转让申请成功: %s", GSON.toJson(msg)));
+                return true;
             } else {
-                log.info("====================================================================");
-                log.info("转让标发起复审失败！ msg:" + resp.getBody().getState().getMsg());
-                log.info("====================================================================");
+                log.error(String.format("复审: 批量债权转让申请失败: %s", GSON.toJson(resp)));
+                return false;
             }
         } else {  // 批次标准标的放款
+            log.info(String.format("复审: 批量正常放款申请开始: %s", GSON.toJson(msg)));
             if (ObjectUtils.isEmpty(borrow.getSuccessAt())) {
                 borrow.setSuccessAt(new Date());
-                borrowService.updateById(borrow);
+                borrow = borrowService.save(borrow);
             }
 
             //批次放款
             VoThirdBatchLendRepay voThirdBatchLendRepay = new VoThirdBatchLendRepay();
             voThirdBatchLendRepay.setBorrowId(borrowId);
             ResponseEntity<VoBaseResp> resp = borrowRepaymentThirdBiz.thirdBatchLendRepay(voThirdBatchLendRepay);
-
             if (ObjectUtils.isEmpty(resp)) {
-                log.info("====================================================================");
-                log.info("非转让标发起复审成功！");
-                log.info("====================================================================");
-                bool = true;
-                Specification specification = Specifications.<Tender>and()
-                        .eq("borrowId", borrowId)
-                        .eq("status", TenderConstans.SUCCESS)
-                        .build();
-                List<Tender> tenders = tenderRepository.findAll(specification);
-
-                //======================================
-                // 老用户投标红包
-                //======================================
-                try {
-                    tenders.stream().forEach(p -> {
-                        UserCache userCache = userCacheService.findById(p.getUserId());
-                        Map<String, String> paramsMap = newHashMap();
-                        MqConfig mqConfig = new MqConfig();
-                        // 非新手标  是新手标但是老用投
-                        boolean access = (!borrow.getIsNovice()) || (borrow.getIsNovice() && (userCache.getTenderTuijian() || userCache.getTenderQudao()));
-                        if (access) {
-                            paramsMap.put("type", RedPacketContants.OLD_USER_TENDER_BORROW_REDPACKAGE);
-                            paramsMap.put("tenderId", p.getId().toString());
-                            paramsMap.put("time", DateHelper.dateToString(new Date()));
-
-                            mqConfig.setMsg(paramsMap);
-                            mqConfig.setTag(MqTagEnum.OLD_USER_TENDER);
-                            mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
-                            mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 120));
-                            mqHelper.convertAndSend(mqConfig);
-                        }
-
-                        //======================================
-                        // 推荐用户投资红包
-                        //======================================
-                        paramsMap.clear();
-                        paramsMap.put("type", RedPacketContants.INVITE_USER_TENDER_BORROW_REDPACKAGE);
-                        paramsMap.put("tenderId", p.getId().toString());
-                        paramsMap.put("time", DateHelper.dateToString(new Date()));
-                        mqConfig.setMsg(paramsMap);
-                        mqConfig.setTag(MqTagEnum.INVITE_USER_TENDER);
-                        mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
-                        mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 160));
-                        mqHelper.convertAndSend(mqConfig);
-                    });
-                }catch (Exception e){
-                    log.error("派发红包失败");
-                }
+                log.info(String.format("复审: 批量正常放款申请申请成功: %s", GSON.toJson(msg)));
+                return true;
             } else {
-                log.info("====================================================================");
-                log.info("非转让标发起复审失败！ msg:" + resp.getBody().getState().getMsg());
-                log.info("====================================================================");
+                log.info(String.format("复审: 批量正常放款申请申请失败: %s", GSON.toJson(resp)));
+                return false;
             }
         }
-        return bool;
     }
 }

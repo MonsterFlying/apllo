@@ -136,6 +136,13 @@ public class JixinManager {
         return new HttpEntity(params, httpHeaders);
     }
 
+    /**
+     *  回调
+     * @param request
+     * @param typeToken
+     * @param <T>
+     * @return
+     */
     public <T extends JixinBaseResponse> T callback(HttpServletRequest request, TypeToken<T> typeToken) {
         checkNotNull(request, "请求体为null");
         String bgData = request.getParameter("bgData");
@@ -147,15 +154,16 @@ public class JixinManager {
         }.getType());
         jixinTxLogBiz.saveResponse(param);
         String unsige = StringHelper.mergeMap(param);
-        /*boolean result = certHelper.verify(unsige, param.get("sign"));
+        boolean result = certHelper.verify(unsige, param.get("sign"));
         if (!result) {
             log.error("验签失败", bgData);
             return null;
-        }*/
+        }
 
         t.setRetMsg(JixinResultContants.getMessage(t.getRetCode())) ;
         return t;
     }
+
 
     public <T extends JixinBaseRequest, S extends JixinBaseResponse> S send(JixinTxCodeEnum txCodeEnum, T req, Class<S> clazz) {
         checkNotNull(req, "请求体为null");
