@@ -71,7 +71,8 @@ public class CashController {
 
     @ApiOperation("获取提现详情")
     @GetMapping("/asset/cash/logDetail/{id}")
-    public ResponseEntity<VoCashLogDetailResp> logDetail(@PathVariable("id") Long id ){
-        return cashDetailLogBiz.logDetail(id) ;
+    public ResponseEntity<VoCashLogDetailResp> logDetail(@PathVariable("id") Long id ,
+                                                         @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+        return cashDetailLogBiz.logDetail(id,userId) ;
     }
 }

@@ -69,7 +69,8 @@ public class WebCashController {
 
     @ApiOperation("获取提现详情")
     @GetMapping("/asset/pc/v2/cash/logDetail/{id}")
-    public ResponseEntity<VoCashLogDetailResp> logDetail(@PathVariable("id") Long id ){
-        return cashDetailLogBiz.logDetail(id) ;
+    public ResponseEntity<VoCashLogDetailResp> logDetail(@PathVariable("id") Long id,
+                                                         @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+        return cashDetailLogBiz.logDetail(id,userId) ;
     }
 }
