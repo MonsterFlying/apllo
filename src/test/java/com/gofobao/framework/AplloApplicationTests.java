@@ -3,6 +3,7 @@ package com.gofobao.framework;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.CertHelper;
+import com.gofobao.framework.api.helper.JixinFileManager;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileRequest;
@@ -41,7 +42,10 @@ import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoAdvanceCall;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
+import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -52,9 +56,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.ObjectUtils;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.File;
+import java.util.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -81,6 +84,15 @@ public class AplloApplicationTests {
     private RepaymentBiz repaymentBiz;
     @Autowired
     private AssetsChangeHelper assetsChangeHelper;
+
+
+    @Autowired
+    FundStatisticsBiz fundStatisticsBiz ;
+    @Test
+    public void testDownloadFile() throws Exception {
+        fundStatisticsBiz.doEVE() ;
+    }
+
 
 
     @Test

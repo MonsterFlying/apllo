@@ -94,7 +94,7 @@ public class StringHelper {
         Map.Entry<String, String> entry;
         while (iter.hasNext()) {
             entry = iter.next();
-            if (!"sign".equals(entry.getKey())) {
+            if (!"sign".equalsIgnoreCase(entry.getKey())) {
                 if (entry.getValue() == null) {
                     entry.setValue("");
                     buff.append("");

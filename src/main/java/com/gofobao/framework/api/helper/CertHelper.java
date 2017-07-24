@@ -147,7 +147,6 @@ public class CertHelper {
     public boolean verify(String unSignData, String sign) {
         checkNotNull(unSignData, "待验签字符串为空") ;
         checkNotNull(sign, "签名为空") ;
-        log.info(String.format("待解密字符串: %s", unSignData));
         try {
             byte[] signBytes = Base64Utils.decodeFromString(sign);
             byte[] unSignBytes = unSignData.getBytes(ENCODING);
