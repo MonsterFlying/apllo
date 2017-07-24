@@ -272,7 +272,7 @@ public class LoanServiceImpl implements LoanService {
         repaymentDetail.setBorrowName(borrow.getName());
         repaymentDetail.setApr(StringHelper.formatMon(borrow.getApr() / 100D));
         repaymentDetail.setMoney(StringHelper.formatMon(borrow.getMoney() / 100D));
-        repaymentDetail.setSuccessAt(DateHelper.dateToString(borrow.getSuccessAt()));
+        repaymentDetail.setSuccessAt(StringUtils.isEmpty(borrow.getSuccessAt())?"":DateHelper.dateToString(borrow.getSuccessAt()));
         repaymentDetail.setCreatedAt(DateHelper.dateToString(borrow.getCreatedAt()));
         String repayFashion = "";
         if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE) {
