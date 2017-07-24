@@ -56,10 +56,10 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
-    public String info(Long id) {
+    public Article info(Long id) {
         try {
-            Article article = articleRepository.findOne(id);
-            return article.getContent();
+           return articleRepository.findOne(id);
+
         } catch (Exception e) {
             e.printStackTrace();
             return null;
