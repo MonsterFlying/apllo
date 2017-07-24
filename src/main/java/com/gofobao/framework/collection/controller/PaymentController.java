@@ -27,30 +27,30 @@ public class PaymentController {
 
     @ApiOperation("回款明细-回款列表 time:2017-05-06")
     @GetMapping("/v2/order/list/{time}")
-    public ResponseEntity<VoViewCollectionOrderListWarpResp> collectionOrderList(@PathVariable("time") String time/*,
-                                                                                 @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+    public ResponseEntity<VoViewCollectionOrderListWarpResp> collectionOrderList(@PathVariable("time") String time,
+                                                                                 @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoCollectionOrderReq voCollectionOrderReq = new VoCollectionOrderReq();
-        voCollectionOrderReq.setUserId(901L);
+        voCollectionOrderReq.setUserId(userId);
         voCollectionOrderReq.setTime(time);
         return paymentBiz.orderList(voCollectionOrderReq);
     }
 
     @ApiOperation("回款明细-回款详情")
     @GetMapping("/v2/order/detail/{collectionId}")
-    public ResponseEntity<VoViewOrderDetailResp> orderDetail(@PathVariable("collectionId") Long collectionId/*,
-                                                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+    public ResponseEntity<VoViewOrderDetailResp> orderDetail(@PathVariable("collectionId") Long collectionId,
+                                                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoOrderDetailReq voOrderDetailReq = new VoOrderDetailReq();
         voOrderDetailReq.setCollectionId(collectionId);
-        voOrderDetailReq.setUserId(901L);
+        voOrderDetailReq.setUserId(userId);
         return paymentBiz.orderDetail(voOrderDetailReq);
     }
 
     @ApiOperation("回款明细-日历控件,time：'201705'")
     @GetMapping("/v2/collection/days/{time}")
-    public ResponseEntity<VoViewCollectionDaysWarpRes> days(@PathVariable("time") String time/*,
-                                                            @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
+    public ResponseEntity<VoViewCollectionDaysWarpRes> days(@PathVariable("time") String time,
+                                                            @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
 
-        return paymentBiz.collectionDays(time, 901L);
+        return paymentBiz.collectionDays(time, userId);
     }
 
 

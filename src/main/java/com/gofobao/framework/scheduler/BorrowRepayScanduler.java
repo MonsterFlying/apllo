@@ -83,7 +83,7 @@ public class BorrowRepayScanduler {
                             voRepayReq.setUserId(borrowRepayment.getUserId());
                             voRepayReq.setInterestPercent(null);
                             voRepayReq.setIsUserOpen(false);
-                            repaymentBiz.repay(voRepayReq);
+                            repaymentBiz.newRepay(voRepayReq);
                         } catch (Exception e) {
                             log.error("borrowRepayScheduler error:",e);
                         }

@@ -39,12 +39,12 @@ public class WebArticleController {
         return articleBiz.info(id);
     }
 
-    @ApiOperation("关于我们")
+  /*  @ApiOperation("关于我们")
     @GetMapping("aboutWe/{tag}")
     public ResponseEntity<VoViewArticleInfoWarpRes> aboutWe(@PathVariable("tag") String tag) {
         VoViewArticleInfoWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewArticleInfoWarpRes.class);
         String html = thymeleafHelper.build("aboutWe/pc/" + tag, null);
         warpRes.setHtml(html);
         return ResponseEntity.ok(warpRes);
-    }
+    }*/
 }

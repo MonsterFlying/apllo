@@ -42,7 +42,7 @@ public class NoticesController {
                                                          @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoNoticesReq voNoticesReq = new VoNoticesReq();
         voNoticesReq.setType(0);
-        voNoticesReq.setUserId(901L);
+        voNoticesReq.setUserId(userId);
         voNoticesReq.setId(noticesId);
         return noticesBiz.info(voNoticesReq);
     }
