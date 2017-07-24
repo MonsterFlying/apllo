@@ -176,7 +176,7 @@ public class ThirdBatchProvider {
                 //=====================================================
                 // 即信批次还款结果处理
                 //=====================================================
-                repayDeal(sourceId,acqRes, failureOrderIds, successOrderIds);
+                repayDeal(sourceId, acqRes, failureOrderIds, successOrderIds);
                 break;
             case ThirdBatchLogContants.BATCH_BAIL_REPAY: //担保人垫付
                 //=====================================================
@@ -188,7 +188,7 @@ public class ThirdBatchProvider {
                 //=====================================================
                 // 即信批次融资人还担保账户垫款处理
                 //=====================================================
-                repayBailDeal(sourceId,acqRes, failureOrderIds, successOrderIds);
+                repayBailDeal(sourceId, acqRes, failureOrderIds, successOrderIds);
                 break;
             case ThirdBatchLogContants.BATCH_CREDIT_END: //批次结束债权
                 //=====================================================
@@ -242,7 +242,7 @@ public class ThirdBatchProvider {
             //推送队列结束债权
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
-            mqConfig.setTag(MqTagEnum.END_CREDIT);
+            mqConfig.setTag(MqTagEnum.END_CREDIT_ALL);
             mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 5));
             ImmutableMap<String, String> body = ImmutableMap
                     .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
@@ -321,7 +321,7 @@ public class ThirdBatchProvider {
      * @param failureTRepayBailOrderIds
      * @param successTRepayBailOrderIds
      */
-    private void repayBailDeal(long repaymentId,String acqRes, List<String> failureTRepayBailOrderIds, List<String> successTRepayBailOrderIds) {
+    private void repayBailDeal(long repaymentId, String acqRes, List<String> failureTRepayBailOrderIds, List<String> successTRepayBailOrderIds) {
 
         if (CollectionUtils.isEmpty(failureTRepayBailOrderIds)) {
             log.info("================================================================================");
@@ -443,7 +443,7 @@ public class ThirdBatchProvider {
      * @param failureTRepayOrderIds
      * @param successTRepayOrderIds
      */
-    private void repayDeal(long repaymentId,String acqRes, List<String> failureTRepayOrderIds, List<String> successTRepayOrderIds) throws Exception {
+    private void repayDeal(long repaymentId, String acqRes, List<String> failureTRepayOrderIds, List<String> successTRepayOrderIds) throws Exception {
 
         if (CollectionUtils.isEmpty(failureTRepayOrderIds)) {
             log.info("================================================================================");
@@ -466,7 +466,7 @@ public class ThirdBatchProvider {
 
         //处理失败批次
         if (!CollectionUtils.isEmpty(failureTRepayOrderIds)) { //不处理失败！
-            log.info(String.format("批量还款出现还款失败: %s", gson.toJson(failureTRepayOrderIds) ));
+            log.info(String.format("批量还款出现还款失败: %s", gson.toJson(failureTRepayOrderIds)));
             //推送队列结束债权
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_REPAYMENT);
@@ -510,11 +510,11 @@ public class ThirdBatchProvider {
             log.info("================================================================================");
         }
 
-        Gson gson = new Gson() ;
+        Gson gson = new Gson();
         // 当明细中存在批量放款成功是
         // 直接更改记录为存款放款成功
         if (!CollectionUtils.isEmpty(successThirdLendPayOrderIds)) {
-            log.info(String.format("批次放款: 正确放款批次处理开始 %s",  gson.toJson(successThirdLendPayOrderIds)));
+            log.info(String.format("批次放款: 正确放款批次处理开始 %s", gson.toJson(successThirdLendPayOrderIds)));
             Specification<Tender> ts = Specifications
                     .<Tender>and()
                     .in("thirdLendPayOrderId", successThirdLendPayOrderIds.toArray())
@@ -524,19 +524,19 @@ public class ThirdBatchProvider {
                 tender.setThirdTenderFlag(true);
             });
             tenderService.save(successTenderList);
-            log.info(String.format("批次放款: 正确放款批次处理结束 %s",  gson.toJson(successThirdLendPayOrderIds)));
+            log.info(String.format("批次放款: 正确放款批次处理结束 %s", gson.toJson(successThirdLendPayOrderIds)));
         }
 
 
         // 对于失败的债权, 先查询失败的标的ID
         if (!CollectionUtils.isEmpty(failureThirdLendPayOrderIds)) {
-            log.info(String.format("批次放款: 错误放款批次处理开始 %s",  gson.toJson(successThirdLendPayOrderIds)));
+            log.info(String.format("批次放款: 错误放款批次处理开始 %s", gson.toJson(successThirdLendPayOrderIds)));
             Specification<Tender> ts = Specifications
                     .<Tender>and()
                     .in("thirdLendPayOrderId", failureThirdLendPayOrderIds.toArray())
                     .build();
             List<Tender> failureTenderList = tenderService.findList(ts);
-            Preconditions.checkNotNull(failureTenderList, "正常批次放款回调: 查询失败投标记录为空") ;
+            Preconditions.checkNotNull(failureTenderList, "正常批次放款回调: 查询失败投标记录为空");
             Map<Long/** borrowId */, List<Tender> /** borrowid 对应的投标记录*/> borrowIdAndTenderMap = failureTenderList
                     .stream()
                     .collect(Collectors.groupingBy(Tender::getBorrowId));
@@ -582,7 +582,7 @@ public class ThirdBatchProvider {
 
         if (CollectionUtils.isEmpty(failureThirdLendPayOrderIds)) {
             Borrow borrow = borrowService.findById(borrowId);
-            log.info( String.format("正常标的放款回调: %s", gson.toJson(borrow)));
+            log.info(String.format("正常标的放款回调: %s", gson.toJson(borrow)));
             borrowBiz.notTransferBorrowAgainVerify(borrow);
         } else {
             log.info("非流转标复审失败!");
@@ -590,7 +590,8 @@ public class ThirdBatchProvider {
     }
 
     /**
-     *  即信验证投标失败, 取消投标记录. 发送站内信
+     * 即信验证投标失败, 取消投标记录. 发送站内信
+     *
      * @param nowDate
      * @param borrow
      * @param tenders
@@ -706,6 +707,21 @@ public class ThirdBatchProvider {
             log.info(String.format("批量债权转让复审: %s", gson.toJson(borrow)));
             boolean b = borrowBiz.transferBorrowAgainVerify(borrow);
             if (b) {
+                //推送队列结束债权
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
+                mqConfig.setTag(MqTagEnum.END_CREDIT_BY_TRANSFER);
+                mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
+                ImmutableMap<String, String> body = ImmutableMap
+                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                mqConfig.setMsg(body);
+                try {
+                    log.info(String.format("thirdBatchProvider creditInvestDeal send mq %s", GSON.toJson(body)));
+                    mqHelper.convertAndSend(mqConfig);
+                } catch (Throwable e) {
+                    log.error("thirdBatchProvider creditInvestDeal send mq exception", e);
+                }
+
                 log.info("批量债权转让复审: 成功");
             } else {
                 log.error("批量债权转让复审: 失败");

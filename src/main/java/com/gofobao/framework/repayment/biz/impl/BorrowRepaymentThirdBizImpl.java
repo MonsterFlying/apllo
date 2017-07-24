@@ -50,6 +50,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -632,9 +633,13 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         //=============================================
         // 保存批次担保人代偿授权号
         //=============================================
-        List<BailRepayRun> bailRepayRunList = GSON.fromJson(batchBailRepayRunResp.getSubPacks(), new TypeToken<List<BailRepayRun>>() {
-        }.getType());
-        saveThirdBailRepayAuthCode(bailRepayRunList);
+        try {
+            List<BailRepayRun> bailRepayRunList = GSON.fromJson(batchBailRepayRunResp.getSubPacks(), new TypeToken<List<BailRepayRun>>() {
+            }.getType());
+            saveThirdBailRepayAuthCode(bailRepayRunList);
+        } catch (JsonSyntaxException e) {
+            log.error("保存批次担保人代偿授权号!", e);
+        }
 
         // 触发批次担保账户代偿业务处理队列
         MqConfig mqConfig = new MqConfig();

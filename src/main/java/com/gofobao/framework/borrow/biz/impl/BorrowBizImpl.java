@@ -1360,8 +1360,8 @@ public class BorrowBizImpl implements BorrowBiz {
                 .build();
         List<BorrowCollection> oldBorrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "order"));
         Preconditions.checkNotNull(oldBorrowCollections, "债权转让复审: 原始投标还款计划为空");
-        Integer collectionMoney = oldBorrowCollections.stream().mapToInt(borrowCollection1 -> borrowCollection.getCollectionMoney()).sum();  // 待收
-        Integer collectionInterest = oldBorrowCollections.stream().mapToInt(borrowCollection1 -> borrowCollection.getInterest()).sum(); //  待收利息
+        Integer collectionMoney = oldBorrowCollections.stream().mapToInt(borrowCollection1 -> borrowCollection1.getCollectionMoney()).sum();  // 待收
+        Integer collectionInterest = oldBorrowCollections.stream().mapToInt(borrowCollection1 -> borrowCollection1.getInterest()).sum(); //  待收利息
         CapitalChangeEntity entity = new CapitalChangeEntity();
         entity.setType(CapitalChangeEnum.CollectionLower);
         entity.setUserId(borrow.getUserId());
