@@ -74,12 +74,13 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
     }
 
     /**
-     * 更据sourceId检查批次是否频繁提交
+     * 获取有效的最后一条批次记录
      *
      * @param sourceId
+     * @param type
      * @return
      */
-    public int checkBatchOftenSubmit(String sourceId, Integer... type) {
+    public ThirdBatchLog getValidLastBatchLog(String sourceId, Integer ... type) {
         //查询最后一条提交的批次
         Specification<ThirdBatchLog> tbls = Specifications
                 .<ThirdBatchLog>and()
@@ -90,11 +91,25 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
         Pageable pageable = new PageRequest(0, 1, new Sort(Sort.Direction.DESC, "id"));
         List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls, pageable);
         if (CollectionUtils.isEmpty(thirdBatchLogList)) {
+            return thirdBatchLogList.get(0);
+        }
+        return null;
+    }
+
+    /**
+     * 更据sourceId检查批次是否频繁提交
+     *
+     * @param sourceId
+     * @return
+     */
+    public int checkBatchOftenSubmit(String sourceId, Integer ... type) {
+        //查询最后一条提交的批次
+        ThirdBatchLog thirdBatchLog = getValidLastBatchLog(sourceId, type);
+        if (ObjectUtils.isEmpty(thirdBatchLog)) {
             return ThirdBatchLogContants.SUCCESS;
         }
 
         //判断这个批次是否处理成功
-        ThirdBatchLog thirdBatchLog = thirdBatchLogList.get(0);
         BatchQueryReq req = new BatchQueryReq();
         req.setChannel(ChannelContant.HTML);
         req.setBatchNo(thirdBatchLog.getBatchNo());
