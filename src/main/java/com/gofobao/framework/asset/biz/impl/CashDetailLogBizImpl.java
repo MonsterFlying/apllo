@@ -524,9 +524,9 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     }
 
     @Override
-    public ResponseEntity<VoCashLogDetailResp> logDetail(Long id) {
+    public ResponseEntity<VoCashLogDetailResp> logDetail(Long id,Long userId) {
         CashDetailLog cashDetailLog = cashDetailLogService.findById(id);
-        if (ObjectUtils.isEmpty(cashDetailLog)) {
+        if (ObjectUtils.isEmpty(cashDetailLog)&&cashDetailLog.getUserId()!=userId) {
             log.error("CashDetailLogBizImpl.logDetail 查询用户提现记录不存在!");
             return ResponseEntity
                     .badRequest()

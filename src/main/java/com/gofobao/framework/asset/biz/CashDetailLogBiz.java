@@ -74,7 +74,7 @@ public interface CashDetailLogBiz {
      * @param id
      * @return
      */
-    ResponseEntity<VoCashLogDetailResp> logDetail(Long id);
+    ResponseEntity<VoCashLogDetailResp> logDetail(Long id,Long userId);
 
 
     /**
