@@ -38,6 +38,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -309,10 +310,14 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         //=============================================
         // 保存第三方债权转让授权码
         //=============================================
-        List<CreditInvestRun> creditInvestRunList = GSON.fromJson(batchCreditInvestRunCall.getSubPacks(), new TypeToken<List<CreditInvestRun>>() {
-        }.getType());
-        Preconditions.checkNotNull(creditInvestRunList, "批量债权转让回调: 查询批次详情为空");
-        saveThirdTransferAuthCode(creditInvestRunList);
+        try {
+            List<CreditInvestRun> creditInvestRunList = GSON.fromJson(batchCreditInvestRunCall.getSubPacks(), new TypeToken<List<CreditInvestRun>>() {
+            }.getType());
+            Preconditions.checkNotNull(creditInvestRunList, "批量债权转让回调: 查询批次详情为空");
+            saveThirdTransferAuthCode(creditInvestRunList);
+        } catch (JsonSyntaxException e) {
+            log.error("保存第三方债权转让授权码!",e);
+        }
 
 
         // 触发处理批次购买债权处理队列
@@ -347,7 +352,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
                 .build();
 
         List<Tender> tenderList = tenderService.findList(ts);
-        Map<String, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getThirdTenderOrderId, Function.identity()));
+        Map<String, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getThirdTransferOrderId, Function.identity()));
         creditInvestRunList.forEach(creditInvestRun -> {
             String orderId = creditInvestRun.getOrderId();
             Tender tender = tenderMap.get(orderId);
@@ -356,6 +361,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
 
         tenderService.save(tenderList);
     }
+
+
 
     /**
      * 取消即信投标申请

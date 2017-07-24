@@ -6,6 +6,7 @@ import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.contants.SrvTxCodeContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
@@ -92,6 +93,9 @@ import static com.gofobao.framework.helper.project.UserHelper.getAssetTypeStr;
 @Service
 @Slf4j
 public class AssetBizImpl implements AssetBiz {
+
+    @Autowired
+    JixinTxDateHelper jixinTxDateHelper ;
 
     @Autowired
     AssetService assetService;
@@ -453,8 +457,8 @@ public class AssetBizImpl implements AssetBiz {
             AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
             accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
             accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
-            accountDetailsQueryRequest.setStartDate(DateHelper.getDate()); // 查询当天数据
-            accountDetailsQueryRequest.setEndDate(DateHelper.getDate());
+            accountDetailsQueryRequest.setStartDate(jixinTxDateHelper.getTxDateStr()); // 查询当天数据
+            accountDetailsQueryRequest.setEndDate(jixinTxDateHelper.getTxDateStr());
             accountDetailsQueryRequest.setType("9");
             accountDetailsQueryRequest.setTranType("7820"); //  线下转账
             accountDetailsQueryRequest.setAccountId(accountId);
@@ -997,26 +1001,31 @@ public class AssetBizImpl implements AssetBiz {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> synchronizedAsset(Long userId) throws Exception {
         Users users = userService.findByIdLock(userId);
-        if (ObjectUtils.isEmpty(users))
+        if (ObjectUtils.isEmpty(users)){
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "错误"));
+        }
         Boolean isLock = users.getIsLock();
-        if (isLock) return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "错误"));
+        if (isLock){
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "错误"));
+        }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        if (ObjectUtils.isEmpty(userThirdAccount))
+        if (ObjectUtils.isEmpty(userThirdAccount)){
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "错误"));
+        }
+
         Asset asset = assetService.findByUserIdLock(userId);
-        if (ObjectUtils.isEmpty(asset))
+        if (ObjectUtils.isEmpty(asset)){
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "错误"));
-        Date endDate = new Date();
-        Date startDate = DateHelper.subDays(endDate, 3);
+        }
+
         int pageIndex = 1;
         int pageSize = 10;
         boolean looperState = true;
         Gson gson = new Gson();
         do {
             //  查询线下充值
-            AccountDetailsQueryResponse response = doOffLineRecharge(pageIndex, pageSize, userThirdAccount.getAccountId(), startDate, endDate);
+            AccountDetailsQueryResponse response = doOffLineRecharge(pageIndex, pageSize, userThirdAccount.getAccountId());
             if (ObjectUtils.isEmpty(response)) break;
             if (StringUtils.isEmpty(response.getSubPacks())) break;
             List<AccountDetailsQueryItem> accountDetailsQueryItems = gson.fromJson(response.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
@@ -1096,15 +1105,13 @@ public class AssetBizImpl implements AssetBiz {
      * @param pageIndex 下标
      * @param pageSize  页面
      * @param accountId 存管账户
-     * @param startDate 开始时间
-     * @param endDate   结束时间
      * @return
      */
-    private AccountDetailsQueryResponse doOffLineRecharge(int pageIndex, int pageSize, String accountId, Date startDate, Date endDate) {
+    private AccountDetailsQueryResponse doOffLineRecharge(int pageIndex, int pageSize, String accountId) {
         AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
         request.setAccountId(accountId);
-        request.setStartDate(DateHelper.dateToString(startDate, DateHelper.DATE_FORMAT_YMD_NUM));
-        request.setEndDate(DateHelper.dateToString(endDate, DateHelper.DATE_FORMAT_YMD_NUM));
+        request.setStartDate(jixinTxDateHelper.getTxDateStr());
+        request.setEndDate(jixinTxDateHelper.getTxDateStr());
         request.setChannel(ChannelContant.HTML);
         request.setType("9"); // 转入
         request.setTranType("7820"); // 线下转账的

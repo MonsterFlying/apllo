@@ -46,9 +46,15 @@ jixin: #银行存管
   keysPassword: guangfubao_sit@2016 #私钥密码
   crtPath: D:/cert/gofobao/fdep.crt #服务端证书文件路径
   url: https://test.credit2go.cn #即信服务器路径
+  file-url: https://test.credit2go.cn/escrow/file/download #文件请求下载链接
+  save-file-path: D:/statistice   #文件本地保存的路径
   version: 10 #版本号
   instCode: "00960001" #机构代码
   bankCode: "30050000" #交易机构代码
+  product-no: "0105" # 产品编号
+  bank-no: "3005" #产品编号
+  close-time-init: false # 此选项设置存管查询设置状态! 当设置为false query-time必须跟即信系统时间一致, true时会自动设置平台系统时间
+  query-time: 20161004 #查询时间 结合close-time-init 结合使用
 gofobao:
   dev: true # 开发环境
   javaDomain: http://wangg.hk1.mofasuidao.cn
