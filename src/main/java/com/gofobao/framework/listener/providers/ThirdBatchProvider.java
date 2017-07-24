@@ -466,6 +466,7 @@ public class ThirdBatchProvider {
 
         //处理失败批次
         if (!CollectionUtils.isEmpty(failureTRepayOrderIds)) { //不处理失败！
+            log.info(String.format("批量还款出现还款失败: %s", gson.toJson(failureTRepayOrderIds) ));
             //推送队列结束债权
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_REPAYMENT);

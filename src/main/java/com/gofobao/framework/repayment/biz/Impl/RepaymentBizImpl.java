@@ -101,6 +101,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
@@ -484,7 +485,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Long repaymentId = voRepayReq.getRepaymentId();
         Boolean isUserOpen = voRepayReq.getIsUserOpen();//是否是用户主动还款
         interestPercent = ObjectUtils.isEmpty(interestPercent) ? 1 : interestPercent;//回款 利息百分比
-        BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);//还款记录
+        BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);// 还款记录
         Borrow borrow = borrowService.findById(borrowRepayment.getBorrowId());//借款记录
 
         Long borrowId = borrow.getId();//借款ID
@@ -498,7 +499,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
         if (0 < lateDays) {
             int overPrincipal = borrowRepayment.getPrincipal();//剩余未还本金
             if (borrowRepayment.getOrder() < (borrow.getTotalOrder() - 1)) {//计算非一次性还本付息 剩余本金
-
                 Specification<BorrowRepayment> brs = Specifications
                         .<BorrowRepayment>and()
                         .eq("borrowId", borrowId)
@@ -526,11 +526,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         } else if (!isUserOpen) {
             entity.setRemark("（系统自动还款）");
         }
-        try {
-            capitalChangeHelper.capitalChange(entity);
-        } catch (Throwable e) {
-            log.error("立即还款异常:", e);
-        }
+        capitalChangeHelper.capitalChange(entity);
 
         //扣除待还
         entity = new CapitalChangeEntity();
@@ -539,12 +535,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         entity.setMoney(borrowRepayment.getRepayMoney());
         entity.setInterest(borrowRepayment.getInterest());
         entity.setRemark("还款成功扣除待还");
-        try {
-            capitalChangeHelper.capitalChange(entity);
-        } catch (Throwable e) {
-            log.error("立即还款异常:", e);
-        }
-
+        capitalChangeHelper.capitalChange(entity);
         if ((lateDays > 0) && (lateInterest > 0)) {
             entity = new CapitalChangeEntity();
             entity.setType(CapitalChangeEnum.Overdue);
@@ -607,7 +598,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //更新统计数据
         try {
             Statistic statistic = new Statistic();
-
             statistic.setWaitRepayTotal((long) -repayMoney);
             if (!borrow.isTransfer()) {//判断非转让标
                 if (borrow.getType() == 0) {
@@ -617,7 +607,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     statistic.setJzWaitRepayPrincipalTotal((long) -borrowRepayment.getPrincipal());
                     statistic.setJzWaitRepayTotal((long) -repayMoney);
                 } else if (borrow.getType() == 2) {
-
                 } else if (borrow.getType() == 4) {
                     statistic.setQdWaitRepayPrincipalTotal((long) -borrowRepayment.getPrincipal());
                     statistic.setQdWaitRepayTotal((long) -repayMoney);
@@ -658,7 +647,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         List<Tender> tenderList = tenderService.findList(specification);
         Preconditions.checkNotNull(tenderList, "立即还款: 投标记录为空!");
 
-        List<Long> userIds = tenderList.stream().map(tender -> tender.getUserId()).collect(Collectors.toList());
+        Set<Long> userIds = tenderList.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet());
         List<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toList());
 
         Specification<UserCache> ucs = Specifications
@@ -678,15 +667,25 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
         Preconditions.checkNotNull(userCacheList, "立即还款: 回款记录为空!");
+        Map<Long /** tenderId */, BorrowCollection /** tender 对应的待收*/> borrowCollectionMap = borrowCollectionList
+                .stream()
+                .collect(Collectors.toMap(BorrowCollection::getTenderId, Function.identity()));
+
+        Specification<UserThirdAccount> uta = Specifications
+                .<UserThirdAccount>and()
+                .in("userId", userIds.toArray())
+                .build();
+        List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findList(uta);
+        Preconditions.checkNotNull(userThirdAccountList, "立即还款: 用户存管信息列表为空!");
+        Map<Long /** userId */, UserThirdAccount /** tender 对应的待收*/> userThirdAccountMap = userThirdAccountList
+                .stream()
+                .collect(Collectors.toMap(UserThirdAccount::getUserId, Function.identity()));
 
         for (Tender tender : tenderList) {
-
-            UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
-
-            //获取当前借款的回款记录
-            BorrowCollection borrowCollection = borrowCollectionList.stream()
-                    .filter(bc -> StringHelper.toString(bc.getTenderId()).equals(StringHelper.toString(tender.getId())))
-                    .collect(Collectors.toList()).get(0);
+            UserThirdAccount userThirdAccount = userThirdAccountMap.get(tender.getUserId()) ;
+            Preconditions.checkNotNull(userThirdAccount, "立即还款: 用户存管信息为空!");
+            BorrowCollection borrowCollection = borrowCollectionMap.get(tender.getId());   //获取当前借款的回款记录
+            Preconditions.checkNotNull(borrowCollection, "立即还款: 待还计划为空!");
 
             if (tender.getTransferFlag() == 1) {//转让中
                 Specification<Borrow> bs = Specifications
@@ -712,22 +711,21 @@ public class RepaymentBizImpl implements RepaymentBiz {
                         .eq("status", 3)
                         .build();
 
-                List<Borrow> borrowList = borrowService.findList(bs);
-                if (CollectionUtils.isEmpty(borrowList)) {
+                List<Borrow> tranferedBorrowList = borrowService.findList(bs);
+                if (CollectionUtils.isEmpty(tranferedBorrowList)) {
                     continue;
                 }
 
-                Borrow tempBorrow = borrowList.get(0);
-                int tempOrder = order + tempBorrow.getTotalOrder() - borrow.getTotalOrder();
-                int tempLateInterest = tender.getValidMoney() / borrow.getMoney() * lateInterest;
+                Borrow tranferedBorrow = tranferedBorrowList.get(0);
+                int tranferedOrder = order + tranferedBorrow.getTotalOrder() - borrow.getTotalOrder();
+                int tranferedLateInterest = tender.getValidMoney() / borrow.getMoney() * lateInterest;
                 int accruedInterest = 0;
-                if (tempOrder == 0) {//如果是转让后第一期回款, 则计算转让者首期应计利息
+                if (tranferedOrder == 0) { //如果是转让后第一期回款, 则计算转让者首期应计利息
                     int interest = borrowCollection.getInterest();
-                    Date startAt = DateHelper.beginOfDate((Date) borrowCollection.getStartAt().clone());//获取00点00分00秒
-                    Date collectionAt = DateHelper.beginOfDate((Date) borrowCollection.getCollectionAt().clone());
-                    Date startAtYes = DateHelper.beginOfDate((Date) borrowCollection.getStartAtYes().clone());
-                    Date endAt = DateHelper.beginOfDate((Date) tempBorrow.getSuccessAt().clone());
-
+                    Date startAt = DateHelper.beginOfDate(borrowCollection.getStartAt());//获取00点00分00秒
+                    Date collectionAt = DateHelper.beginOfDate(borrowCollection.getCollectionAt());
+                    Date startAtYes = DateHelper.beginOfDate(borrowCollection.getStartAtYes());
+                    Date endAt = DateHelper.beginOfDate(tranferedBorrow.getSuccessAt());
                     if (endAt.getTime() > collectionAt.getTime()) {
                         endAt = (Date) collectionAt.clone();
                     }
@@ -741,7 +739,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                         entity.setType(CapitalChangeEnum.IncomeOther);
                         entity.setUserId(tender.getUserId());
                         entity.setMoney(accruedInterest);
-                        entity.setRemark("收到借款标[" + BorrowHelper.getBorrowLink(tempBorrow.getId(), tempBorrow.getName()) + "]转让当期应计利息。");
+                        entity.setRemark("收到借款标[" + BorrowHelper.getBorrowLink(tranferedBorrow.getId(), tranferedBorrow.getName()) + "]转让当期应计利息。");
                         capitalChangeHelper.capitalChange(entity);
 
                         //通过红包账户发放
@@ -788,11 +786,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 borrowCollectionService.updateById(borrowCollection);
 
                 //回调
-                receivedReapy(tempBorrow, tempOrder, interestPercent, lateDays, tempLateInterest, advance);
+                receivedReapy(tranferedBorrow, tranferedOrder, interestPercent, lateDays, tranferedLateInterest, advance);
 
-                if (tempOrder == (tempBorrow.getTotalOrder() - 1)) {
-                    tempBorrow.setCloseAt(borrowCollection.getCollectionAtYes());
-                    borrowService.updateById(tempBorrow);
+                if (tranferedOrder == (tranferedBorrow.getTotalOrder() - 1)) {
+                    tranferedBorrow.setCloseAt(borrowCollection.getCollectionAtYes());
+                    borrowService.updateById(tranferedBorrow);
                 }
                 continue;
             }
@@ -1021,7 +1019,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private ResponseEntity<VoBaseResp> repayGuarantor(Long userId, Long borrowRepaymentId, UserThirdAccount repayUserThirdAccount, BorrowRepayment borrowRepayment, Borrow borrow, Date nowDate, int lateInterest) throws Exception {
         log.info("借款人还款垫付人开始");
         List<RepayBail> repayBails = borrowRepaymentThirdBiz.calculateRepayBailPlan(borrow, repayUserThirdAccount.getAccountId(), getLateDays(borrowRepayment), borrowRepayment.getOrder(), lateInterest);
-        //所有交易金额的和  txAmount的和
         double txAmount = repayBails.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxAmount())).sum();
 
         String batchNo = jixinHelper.getBatchNo();
