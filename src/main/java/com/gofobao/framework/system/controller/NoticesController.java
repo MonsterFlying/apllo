@@ -38,11 +38,11 @@ public class NoticesController {
 
     @ApiOperation("站内信内容")
     @RequestMapping(path = "v2/info/{noticesId}", method = RequestMethod.GET)
-    public ResponseEntity<VoViewNoticesInfoWarpRes> info(@PathVariable Long noticesId,
-                                                         @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoViewNoticesInfoWarpRes> info(@PathVariable Long noticesId/*,
+                                                         @RequestAttribute(SecurityContants.USERID_KEY) Long userId*/) {
         VoNoticesReq voNoticesReq = new VoNoticesReq();
         voNoticesReq.setType(0);
-        voNoticesReq.setUserId(userId);
+        voNoticesReq.setUserId(901L);
         voNoticesReq.setId(noticesId);
         return noticesBiz.info(voNoticesReq);
     }

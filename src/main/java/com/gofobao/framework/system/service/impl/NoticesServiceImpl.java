@@ -59,7 +59,8 @@ public class NoticesServiceImpl implements NoticesService {
         final int[] num = {0};
         noticesList.stream().forEach(p -> {
             UserNotices userNotice = new UserNotices();
-            userNotice.setTitle(p.getName());
+            String title=p.getName();
+            userNotice.setTitle( title.replaceAll("<[^>]+>", ""));
             userNotice.setStauts(p.getRead());
             userNotice.setId(p.getId());
             userNotice.setTime(DateHelper.dateToString(p.getCreatedAt()));
