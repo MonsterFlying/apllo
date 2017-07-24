@@ -1019,13 +1019,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private ResponseEntity<VoBaseResp> repayGuarantor(Long userId, Long borrowRepaymentId, UserThirdAccount repayUserThirdAccount, BorrowRepayment borrowRepayment, Borrow borrow, Date nowDate, int lateInterest) throws Exception {
         log.info("借款人还款垫付人开始");
         List<RepayBail> repayBails = borrowRepaymentThirdBiz.calculateRepayBailPlan(borrow, repayUserThirdAccount.getAccountId(), getLateDays(borrowRepayment), borrowRepayment.getOrder(), lateInterest);
-        double txAmount = 0;
-        for (RepayBail repay : repayBails) {
-            txAmount += NumberHelper.toDouble(repay.getTxAmount()); // 本金
-            txAmount += NumberHelper.toDouble(repay.getTxFeeOut()); // 借款人管理费用
-            txAmount += NumberHelper.toDouble(repay.getIntAmount()); // 利息
-        }
-        //所有交易金额的和  txAmount的和
         double txAmount = repayBails.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxAmount())).sum();
 
         String batchNo = jixinHelper.getBatchNo();
