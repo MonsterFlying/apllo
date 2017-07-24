@@ -205,7 +205,7 @@ public class ThirdBatchProvider {
             default:
         }
 
-        return false;
+        return true;
     }
 
     /**

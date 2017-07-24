@@ -240,8 +240,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("153238");
-        batchDetailsQueryReq.setBatchTxDate("20170721");
+        batchDetailsQueryReq.setBatchNo("105742");
+        batchDetailsQueryReq.setBatchTxDate("20170724");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -286,6 +286,21 @@ public class AplloApplicationTests {
     @Test
     public void test() {
 
+        //触发处理批次放款处理结果队列
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.SOURCE_ID, StringHelper.toString("169906.0"),
+                        MqConfig.BATCH_NO, StringHelper.toString("105742"),
+                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            log.info(String.format("tenderThirdBizImpl thirdBatchLendRepayRunCall send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("tenderThirdBizImpl thirdBatchLendRepayRunCall send mq exception", e);
+        }
 
         /*BatchQueryReq req = new BatchQueryReq();
         req.setChannel(ChannelContant.HTML);
@@ -334,7 +349,7 @@ public class AplloApplicationTests {
         //复审
         //doAgainVerify();
         //批次详情查询
-        batchDetailsQuery();
+        //batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调
