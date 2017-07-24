@@ -31,7 +31,7 @@ public class WebPaymentController {
     @GetMapping("/v2/collection/list")
     public ResponseEntity<VoViewCollectionWarpRes> collectionOrderList(VoCollectionListReq collectionListReq,
                                                                        @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        collectionListReq.setUserId(901L);
+        collectionListReq.setUserId(userId);
         return paymentBiz.pcOrderDetail(collectionListReq);
     }
 

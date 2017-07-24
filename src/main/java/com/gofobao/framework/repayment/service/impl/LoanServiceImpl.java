@@ -179,12 +179,12 @@ public class LoanServiceImpl implements LoanService {
         Map<String, Object> borrowsMaps = commonQuery(voLoanListReq);
         List<Borrow> borrowList = (List<Borrow>) borrowsMaps.get("borrows");
 
-
         resultMaps.put("totalCount", borrowsMaps.get("totalCount"));
         if (CollectionUtils.isEmpty(borrowList)) {
             resultMaps.put("buddingList", new ArrayList<>());
             return resultMaps;
         }
+
         List<VoViewBuddingRes> budingResList = new ArrayList<>();
         borrowList.stream().forEach(p -> {
             VoViewBuddingRes budingRes = new VoViewBuddingRes();
@@ -292,21 +292,32 @@ public class LoanServiceImpl implements LoanService {
             repaymentDetail.setMoney(StringHelper.formatMon(borrow.getMoneyYes() / 100D));
             List<BorrowRepayment> borrowRepayments = repaymentRepository.findByBorrowId(borrow.getId());
             //统计还款中
-            Long count = borrowRepayments.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_NO).mapToLong(w -> w.getId()).count();
-            if (count > 0) {
-                interest = borrowRepayments.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_YES).mapToInt(w -> w.getInterest()).sum();
-                principal = borrowRepayments.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_YES).mapToInt(w -> w.getPrincipal()).sum();
+            Long count = borrowRepayments.stream()
+                    .filter(p -> p.getStatus() == RepaymentContants.STATUS_NO)
+                    .mapToLong(w -> w.getId()).count();
+            if (count > 0) {//未还清
+                interest = borrowRepayments.stream()
+                        .filter(p -> p.getStatus() == RepaymentContants.STATUS_YES)
+                        .mapToInt(w -> w.getInterest())
+                        .sum();
+                principal = borrowRepayments.stream()
+                        .filter(p -> p.getStatus() == RepaymentContants.STATUS_YES)
+                        .mapToInt(w -> w.getPrincipal())
+                        .sum();
                 repaymentDetail.setStatus(RepaymentContants.STATUS_NO);
             } else {   //以还清
-                interest = borrowRepayments.stream().mapToInt(w -> w.getInterest()).sum();
-                principal = borrowRepayments.stream().mapToInt(w -> w.getPrincipal()).sum();
+                interest = borrowRepayments.stream()
+                        .mapToInt(w -> w.getInterest())
+                        .sum();
+                principal = borrowRepayments.stream()
+                        .mapToInt(w -> w.getPrincipal())
+                        .sum();
                 repaymentDetail.setStatus(RepaymentContants.STATUS_YES);
             }
             //预期收益
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(borrow.getMoneyYes()), new Double(borrow.getApr()), borrow.getTimeLimit(), borrow.getSuccessAt());
             Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
             receivableInterest = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("repayTotal")));
-
         }
         repaymentDetail.setBorrowId(borrow.getId());
         if (borrow.getStatus() == BorrowContants.BIDDING) {
