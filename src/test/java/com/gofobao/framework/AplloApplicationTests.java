@@ -41,6 +41,7 @@ import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoAdvanceCall;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
+import com.gofobao.framework.repayment.vo.request.VoThirdBatchRepay;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -123,7 +124,8 @@ public class AplloApplicationTests {
     }
 
     public static void main(String[] args) {
-        System.out.println("select t.id AS id,t. STATUS AS status,t.user_id AS userId,t.lowest AS lowest,t.borrow_types AS borrowTypes," +
+        com.gofobao.framework.repayment.vo.request.VoThirdBatchRepay voThirdBatchRepay = new Gson().fromJson(new Gson().toJson("{\"userId\":44815,\"repaymentId\":173840,\"interestPercent\":0.0,\"isUserOpen\":true}"), VoThirdBatchRepay.class);
+        /*System.out.println("select t.id AS id,t. STATUS AS status,t.user_id AS userId,t.lowest AS lowest,t.borrow_types AS borrowTypes," +
                 "t.repay_fashions AS repayFashions,t.tender_0 AS tender0,t.tender_1 AS tender1,t.tender_3 AS tender3,t.tender_4 AS tender4,t.`mode` AS mode,t.tender_money AS tenderMoney,t.timelimit_first AS timelimitFirst,t.timelimit_last AS timelimitLast,t.timelimit_type AS timelimitType,t.apr_first AS aprFirst,t.apr_last AS aprLast,t.save_money AS saveMoney,t.`order` AS `order`,t.auto_at AS autoAt,t.created_at AS createdAt," +
                 "t.updated_at AS updatedAt,a.use_money AS useMoney,a.no_use_money AS noUseMoney,a.virtual_money AS virtualMoney,a.collection AS collection,a.payment AS payment " +
                 "from gfb_auto_tender t " +
@@ -135,7 +137,7 @@ public class AplloApplicationTests {
         Map<String, String> map = new HashMap<>();
         map.put("repaymentId", "173810");
         System.out.println(gson.toJson(map));
-        System.out.println(SecurityHelper.getSign(gson.toJson(map)));
+        System.out.println(SecurityHelper.getSign(gson.toJson(map)));*/
     }
 
     public AccountQueryByMobileResponse findAccountByMobile() {
@@ -285,22 +287,6 @@ public class AplloApplicationTests {
 
     @Test
     public void test() {
-
-        //触发处理批次放款处理结果队列
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
-        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString("169906.0"),
-                        MqConfig.BATCH_NO, StringHelper.toString("105742"),
-                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            log.info(String.format("tenderThirdBizImpl thirdBatchLendRepayRunCall send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("tenderThirdBizImpl thirdBatchLendRepayRunCall send mq exception", e);
-        }
 
         /*BatchQueryReq req = new BatchQueryReq();
         req.setChannel(ChannelContant.HTML);

@@ -975,6 +975,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param repayReq
      * @return
      */
+    @Transactional(rollbackFor = Throwable.class)
     public ResponseEntity<VoBaseResp> newRepay(VoRepayReq repayReq) throws Exception {
         /* 还款人id */
         long userId = repayReq.getUserId();
