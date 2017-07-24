@@ -271,7 +271,7 @@ public class LoanServiceImpl implements LoanService {
         VoViewRepaymentDetail repaymentDetail = new VoViewRepaymentDetail();
         repaymentDetail.setBorrowName(borrow.getName());
         repaymentDetail.setApr(StringHelper.formatMon(borrow.getApr() / 100D));
-        repaymentDetail.setMoney(StringHelper.formatMon(borrow.getMoneyYes() / 100D));
+        repaymentDetail.setMoney(StringHelper.formatMon(borrow.getMoney() / 100D));
         repaymentDetail.setSuccessAt(DateHelper.dateToString(borrow.getSuccessAt()));
         repaymentDetail.setCreatedAt(DateHelper.dateToString(borrow.getCreatedAt()));
         String repayFashion = "";
@@ -289,6 +289,7 @@ public class LoanServiceImpl implements LoanService {
         Integer principal = 0;
         Integer receivableInterest = 0;
         if (borrow.getStatus() == BorrowContants.PASS) {
+            repaymentDetail.setMoney(StringHelper.formatMon(borrow.getMoneyYes() / 100D));
             List<BorrowRepayment> borrowRepayments = repaymentRepository.findByBorrowId(borrow.getId());
             //统计还款中
             Long count = borrowRepayments.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_NO).mapToLong(w -> w.getId()).count();
