@@ -490,7 +490,7 @@ public class ThirdBatchProvider {
             VoRepayReq voRepayReq = GSON.fromJson(acqRes, new TypeToken<VoRepayReq>() {
             }.getType());
             ResponseEntity<VoBaseResp> resp = repaymentBiz.repayDeal(voRepayReq);
-            if (!ObjectUtils.isEmpty(resp)) {
+            if (resp.getBody().getState().getCode()!=VoBaseResp.OK) {
                 log.error("批次还款处理:" + resp.getBody().getState().getMsg());
             }
         }

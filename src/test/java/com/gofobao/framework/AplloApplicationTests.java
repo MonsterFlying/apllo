@@ -6,6 +6,8 @@ import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.CertHelper;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileRequest;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
@@ -255,7 +257,7 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("154553");
+        batchDetailsQueryReq.setBatchNo("181114");
         batchDetailsQueryReq.setBatchTxDate("20170724");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
@@ -317,20 +319,20 @@ public class AplloApplicationTests {
     @Test
     public void test() {
 
-        /*// 触发处理批次购买债权处理队列
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
-        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+
+        //推送队列结束债权
+        /*MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
+        mqConfig.setTag(MqTagEnum.END_CREDIT_BY_NOT_TRANSFER);
+        mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(169910),
-                        MqConfig.BATCH_NO, StringHelper.toString("150307"),
-                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(169905), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
         try {
-            log.info(String.format("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq %s", GSON.toJson(body)));
+            log.info(String.format("repaymentBizImpl repayDeal send mq %s", GSON.toJson(body)));
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
-            log.error("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq exception", e);
+            log.error("repaymentBizImpl repayDeal send mq exception", e);
         }*/
 
         /*BatchQueryReq req = new BatchQueryReq();
@@ -341,7 +343,7 @@ public class AplloApplicationTests {
         System.out.println(resp);
 */
         /*AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
-        request.setAccountId("6212462040000950032");
+        request.setAccountId("6212462040000350092");
         request.setStartDate("20161002");
         request.setEndDate("20171003");
         request.setChannel(ChannelContant.HTML);
@@ -350,12 +352,11 @@ public class AplloApplicationTests {
         request.setPageSize(String.valueOf(10));
         request.setPageNum(String.valueOf(1));
         AccountDetailsQueryResponse response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, request, AccountDetailsQueryResponse.class);
-        System.out.println(response);
-        */
+        System.out.println(response);*/
 
         /*BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId("6212462040000450041");
+        balanceQueryRequest.setAccountId("6212462040000350092");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         System.out.println(balanceQueryResponse);*/
 
