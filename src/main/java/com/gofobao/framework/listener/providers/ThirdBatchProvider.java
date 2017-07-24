@@ -205,7 +205,7 @@ public class ThirdBatchProvider {
             default:
         }
 
-        return false;
+        return true;
     }
 
     /**
@@ -218,7 +218,7 @@ public class ThirdBatchProvider {
     private void creditEndDeal(Long borrowId, List<String> failureThirdCreditEndOrderIds, List<String> successThirdCreditEndOrderIds) {
         if (CollectionUtils.isEmpty(failureThirdCreditEndOrderIds)) {
             log.info("================================================================================");
-            log.info("即信批次还款查询：查询未发现失败批次！");
+            log.info("即信批次还款查询：未发现失败批次！");
             log.info("================================================================================");
         }
 
@@ -266,7 +266,7 @@ public class ThirdBatchProvider {
     private void repayAllDeal(Long borrowId, List<String> failureTRepayAllOrderIds, List<String> successTRepayAllOrderIds) {
         if (CollectionUtils.isEmpty(failureTRepayAllOrderIds)) {
             log.info("================================================================================");
-            log.info("即信批次还款查询：查询未发现失败批次！");
+            log.info("即信批次还款查询：未发现失败批次！");
             log.info("================================================================================");
         }
 
@@ -325,7 +325,7 @@ public class ThirdBatchProvider {
 
         if (CollectionUtils.isEmpty(failureTRepayBailOrderIds)) {
             log.info("================================================================================");
-            log.info("即信批次还款查询：查询未发现失败批次！");
+            log.info("即信批次还款查询：未发现失败批次！");
             log.info("================================================================================");
         }
 
@@ -388,7 +388,7 @@ public class ThirdBatchProvider {
     private void bailRepayDeal(Long repaymentId, List<String> failureTBailRepayOrderIds, List<String> successTBailRepayOrderIds) throws Exception {
         if (CollectionUtils.isEmpty(failureTBailRepayOrderIds)) {
             log.info("================================================================================");
-            log.info("即信批次还款查询：查询未发现失败批次！");
+            log.info("即信批次还款查询：未发现失败批次！");
             log.info("================================================================================");
         }
 
@@ -447,7 +447,7 @@ public class ThirdBatchProvider {
 
         if (CollectionUtils.isEmpty(failureTRepayOrderIds)) {
             log.info("================================================================================");
-            log.info("即信批次还款查询：查询未发现失败批次！");
+            log.info("即信批次还款查询：未发现失败批次！");
             log.info("================================================================================");
         }
 
@@ -506,7 +506,7 @@ public class ThirdBatchProvider {
         Date nowDate = new Date();
         if (CollectionUtils.isEmpty(failureThirdLendPayOrderIds)) {
             log.info("================================================================================");
-            log.info("即信批次放款查询：查询未发现失败批次！");
+            log.info("即信批次放款查询：未发现失败批次！");
             log.info("================================================================================");
         }
 
@@ -632,7 +632,7 @@ public class ThirdBatchProvider {
         Date nowDate = new Date();
         if (CollectionUtils.isEmpty(failureThirdTransferOrderIds)) {
             log.info("================================================================================");
-            log.info("债权转让批次查询：查询未发现失败批次！");
+            log.info("债权转让批次查询：未发现失败批次！");
             log.info("================================================================================");
         }
 

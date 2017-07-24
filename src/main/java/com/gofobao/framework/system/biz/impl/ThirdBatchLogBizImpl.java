@@ -80,7 +80,7 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
      * @param type
      * @return
      */
-    public ThirdBatchLog getValidLastBatchLog(String sourceId, Integer ... type) {
+    public ThirdBatchLog getValidLastBatchLog(String sourceId, Integer... type) {
         //查询最后一条提交的批次
         Specification<ThirdBatchLog> tbls = Specifications
                 .<ThirdBatchLog>and()
@@ -90,7 +90,7 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
                 .build();
         Pageable pageable = new PageRequest(0, 1, new Sort(Sort.Direction.DESC, "id"));
         List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls, pageable);
-        if (CollectionUtils.isEmpty(thirdBatchLogList)) {
+        if (!CollectionUtils.isEmpty(thirdBatchLogList)) {
             return thirdBatchLogList.get(0);
         }
         return null;
@@ -102,11 +102,11 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
      * @param sourceId
      * @return
      */
-    public int checkBatchOftenSubmit(String sourceId, Integer ... type) {
+    public int checkBatchOftenSubmit(String sourceId, Integer... type) {
         //查询最后一条提交的批次
         ThirdBatchLog thirdBatchLog = getValidLastBatchLog(sourceId, type);
         if (ObjectUtils.isEmpty(thirdBatchLog)) {
-            return ThirdBatchLogContants.SUCCESS;
+            return ThirdBatchLogContants.VACANCY;
         }
 
         //判断这个批次是否处理成功
@@ -123,9 +123,10 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
             return ThirdBatchLogContants.AWAIT;
         }
 
-        if (resp.getBatchState().equals(ThirdBatchLogContants.DISPOSING)) {
+        String state = resp.getBatchState();
+        if (state.equals(ThirdBatchLogContants.DISPOSING) || state.equals(ThirdBatchLogContants.AWAIT_DISPOSE)) {
             return ThirdBatchLogContants.AWAIT;
-        } else if (resp.getBatchState().equals(ThirdBatchLogContants.PROCESSED)) {
+        } else if (state.equals(ThirdBatchLogContants.PROCESSED)) {
             return ThirdBatchLogContants.SUCCESS;
         }
 
