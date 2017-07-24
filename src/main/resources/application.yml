@@ -53,8 +53,7 @@ jixin: #银行存管
   bankCode: "30050000" #交易机构代码
   product-no: "0105" # 产品编号
   bank-no: "3005" #产品编号
-  close-time-init: false # 此选项设置存管查询设置状态! 当设置为false query-time必须跟即信系统时间一致, true时会自动设置平台系统时间
-  query-time: 20161004 #查询时间 结合close-time-init 结合使用
+  time-interval: 287 # 与存管系统相差几天
 gofobao:
   dev: true # 开发环境
   javaDomain: http://wangg.hk1.mofasuidao.cn
