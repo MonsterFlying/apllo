@@ -96,18 +96,21 @@ public class NumberHelper {
      * 将10进制的String安全的转化为long，当str为空或非数字字符串时，返回0
      */
     public static long toLong(String str) {
-        return NumberUtils.toLong(str, 0L);
+        return toLong(str,0l);
     }
 
     public static long toLong(Object str) {
-        return NumberUtils.toLong(StringHelper.toString(str), 0L);
+        return toLong(StringHelper.toString(str));
     }
 
     /**
      * 将10进制的String安全的转化为long，当str为空或非数字字符串时，返回default值
      */
     public static long toLong(String str, long defaultValue) {
-        return NumberUtils.toLong(str, defaultValue);
+        if (StringUtils.isEmpty(str)){
+            return defaultValue;
+        }
+        return new Double(NumberHelper.toDouble(str)).longValue();
     }
 
     /**

@@ -42,23 +42,35 @@ public class CreditListener {
         Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
 
         boolean bool = false;
-        if (tag.equals(MqTagEnum.END_CREDIT.getValue())) {  // 标的初审
+        if (tag.equals(MqTagEnum.END_CREDIT_BY_NOT_TRANSFER.getValue())) {  // 结束债权by非转让标
             try {
-                creditProvider.endThirdCredit(msg);
+                bool = creditProvider.endThirdCredit(msg, CreditProvider.NOT_TRANSFER);
             } catch (Throwable throwable) {
                 log.error("结束存管债权异常:", throwable);
             }
-            if (bool) {
-                log.info("===========================BorrowListener===========================");
-                log.info("结束存管债权成功! borrowId：" + borrowId);
-                log.info("====================================================================");
-            } else {
-                log.info("===========================BorrowListener===========================");
-                log.info("结束存管债权失败! borrowId：" + borrowId);
-                log.info("====================================================================");
+        } else if (tag.equals(MqTagEnum.END_CREDIT_BY_TRANSFER.getValue())) { // 结束债权by转让标
+            try {
+                bool = creditProvider.endThirdCredit(msg, CreditProvider.TRANSFER);
+            } catch (Throwable throwable) {
+                log.error("结束存管债权异常:", throwable);
             }
-        } else {
+        } else if(tag.equals(MqTagEnum.END_CREDIT_ALL.getValue())){
+            try {
+                bool = creditProvider.endThirdCredit(msg, CreditProvider.TRANSFER);
+            } catch (Throwable throwable) {
+                log.error("结束存管债权异常:", throwable);
+            }
+        }else  {
             log.error("BorrowListener 未找到对应的type");
+        }
+        if (bool) {
+            log.info("===========================BorrowListener===========================");
+            log.info("结束存管债权成功! borrowId：" + borrowId);
+            log.info("====================================================================");
+        } else {
+            log.info("===========================BorrowListener===========================");
+            log.info("结束存管债权失败! borrowId：" + borrowId);
+            log.info("====================================================================");
         }
     }
 }

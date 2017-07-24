@@ -90,6 +90,10 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(tenderRabbitmq).to(delayExchange).with(MqQueueEnum.RABBITMQ_TENDER.getValue()).noargs();
     }
 
+    @Bean
+    Binding thirdBatchRabbitmqBinding(Queue thirdBatchRabbitmq, Exchange delayExchange) {
+        return BindingBuilder.bind(thirdBatchRabbitmq).to(delayExchange).with(MqQueueEnum.RABBITMQ_THIRD_BATCH.getValue()).noargs();
+    }
 
     @Bean
     Binding borrowRabbitmqBinding(Queue borrowRabbitmq, Exchange delayExchange) {

@@ -50,6 +50,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CreditProvider {
 
+    public static final int ALL = 0;
+    public static final int NOT_TRANSFER = 1;
+    public static final int TRANSFER = 2;
+
     final Gson gson = new GsonBuilder().create();
 
     @Autowired
@@ -67,60 +71,113 @@ public class CreditProvider {
     @Value("${gofobao.javaDomain}")
     String javaDomain;
 
-    public boolean endThirdCredit(Map<String, String> msg) throws Exception {
-        do {
-            Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
-            Borrow borrow = borrowService.findById(borrowId);
-            Preconditions.checkNotNull(borrow, "creditProvider endThirdCredit: 借款不能为空!");
-            UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
-            Preconditions.checkNotNull(userThirdAccount, "creditProvider endThirdCredit: 借款人未开户!");
-            //构建结束债权集合
-            List<CreditEnd> creditEndList = new ArrayList<>();
-            buildCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
+    public boolean endThirdCredit(Map<String, String> msg, int type) throws Exception {
+        Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
+        Borrow borrow = borrowService.findById(borrowId);
+        Preconditions.checkNotNull(borrow, "creditProvider endThirdCredit: 借款不能为空!");
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
+        Preconditions.checkNotNull(userThirdAccount, "creditProvider endThirdCredit: 借款人未开户!");
+        //构建结束债权集合
+        List<CreditEnd> creditEndList = new ArrayList<>();
+        switch (type) {
+            case NOT_TRANSFER://未转让投标记录
+                buildNotTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
+                break;
+            case TRANSFER://已转让投标记录
+                buildTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
+                break;
+            case ALL:
+                buildTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
+                buildNotTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
+                break;
+            default:
+        }
 
-            //发送批次结束债权
-            Date nowDate = new Date();
+        //发送批次结束债权
+        Date nowDate = new Date();
 
-            //批次号
-            String batchNo = jixinHelper.getBatchNo();
-            //请求保留参数
-            Map<String, Object> acqResMap = new HashMap<>();
-            acqResMap.put("borrowId", borrowId);
+        //批次号
+        String batchNo = jixinHelper.getBatchNo();
+        //请求保留参数
+        Map<String, Object> acqResMap = new HashMap<>();
+        acqResMap.put("borrowId", borrowId);
 
-            BatchCreditEndReq request = new BatchCreditEndReq();
-            request.setBatchNo(batchNo);
-            request.setTxCounts(String.valueOf(creditEndList.size()));
-            request.setNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditend/check");
-            request.setRetNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditend/run");
-            request.setAcqRes(gson.toJson(acqResMap));
-            request.setSubPacks(gson.toJson(creditEndList));
+        BatchCreditEndReq request = new BatchCreditEndReq();
+        request.setBatchNo(batchNo);
+        request.setTxCounts(String.valueOf(creditEndList.size()));
+        request.setNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditend/check");
+        request.setRetNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditend/run");
+        request.setAcqRes(gson.toJson(acqResMap));
+        request.setSubPacks(gson.toJson(creditEndList));
 
-            BatchCreditEndResp creditEndResp = jixinManager.send(JixinTxCodeEnum.BATCH_CREDIT_END, request, BatchCreditEndResp.class);
-            if ((ObjectUtils.isEmpty(creditEndResp)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(creditEndResp.getReceived()))) {
-                throw new Exception(creditEndResp.getRetMsg());
-            }
+        BatchCreditEndResp creditEndResp = jixinManager.send(JixinTxCodeEnum.BATCH_CREDIT_END, request, BatchCreditEndResp.class);
+        if ((ObjectUtils.isEmpty(creditEndResp)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(creditEndResp.getReceived()))) {
+            throw new Exception(creditEndResp.getRetMsg());
+        }
 
-            //记录日志
-            ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
-            thirdBatchLog.setBatchNo(batchNo);
-            thirdBatchLog.setCreateAt(nowDate);
-            thirdBatchLog.setUpdateAt(nowDate);
-            thirdBatchLog.setSourceId(borrowId);
-            thirdBatchLog.setType(ThirdBatchLogContants.BATCH_CREDIT_END);
-            thirdBatchLog.setRemark("即信批次结束债权");
-            thirdBatchLogService.save(thirdBatchLog);
+        //记录日志
+        ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
+        thirdBatchLog.setBatchNo(batchNo);
+        thirdBatchLog.setCreateAt(nowDate);
+        thirdBatchLog.setUpdateAt(nowDate);
+        thirdBatchLog.setSourceId(borrowId);
+        thirdBatchLog.setType(ThirdBatchLogContants.BATCH_CREDIT_END);
+        thirdBatchLog.setRemark("即信批次结束债权");
+        thirdBatchLogService.save(thirdBatchLog);
+        return true;
 
-        } while (false);
-        return false;
     }
 
     /**
-     * 构建结束债权集合
+     * 构建结束已转让债权集合
      *
      * @param creditEndList
      * @param borrowId
      */
-    private void buildCreditEndList(List<CreditEnd> creditEndList, String borrowUserThirdAccountId, String productId, Long borrowId) {
+    private void buildTransferCreditEndList(List<CreditEnd> creditEndList, String borrowUserThirdAccountId, String productId, Long borrowId) {
+        do {
+            Specification<Tender> ts = Specifications
+                    .<Tender>and()
+                    .eq("borrowId", borrowId)
+                    .eq("status", 2)
+                    .build();
+            List<Tender> tenderList = tenderService.findList(ts);
+            if (CollectionUtils.isEmpty(tenderList)) {
+                log.info("creditProvider buildCreditEndList: 借款" + borrowId + " 未找到投递成功债权！");
+            }
+
+            //筛选出已转让的投资记录
+            tenderList.stream().filter(p -> p.getTransferFlag() == 2).forEach(tender -> {
+                buildTransferCreditEndList(creditEndList, borrowUserThirdAccountId, productId, tender.getBorrowId());
+            });
+
+            //排除已经在存管登记结束债权的投标记录
+            tenderList.stream().filter(tender -> !tender.getThirdCreditEndFlag()).forEach(tender -> {
+                CreditEnd creditEnd = new CreditEnd();
+                String orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
+
+                UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
+                creditEnd.setAccountId(borrowUserThirdAccountId);
+                creditEnd.setOrderId(orderId);
+                creditEnd.setAuthCode(tender.getAuthCode());
+                creditEnd.setProductId(productId);
+                creditEnd.setForAccountId(tenderUserThirdAccount.getAccountId());
+                creditEndList.add(creditEnd);
+
+                tender.setThirdCreditEndOrderId(orderId);
+            });
+            tenderService.save(tenderList);
+
+        } while (false);
+    }
+
+    /**
+     * 构建结束未转让债权集合
+     *
+     * @param creditEndList
+     * @param borrowId
+     */
+    private void buildNotTransferCreditEndList(List<CreditEnd> creditEndList, String borrowUserThirdAccountId, String productId, Long borrowId) {
         do {
             Specification<Tender> ts = Specifications
                     .<Tender>and()
@@ -134,7 +191,7 @@ public class CreditProvider {
 
             //筛选出已转让的投资记录
             tenderList.stream().filter(p -> p.getTransferFlag() == 2).forEach(tender -> {
-                buildCreditEndList(creditEndList, borrowUserThirdAccountId, productId, tender.getBorrowId());
+                buildNotTransferCreditEndList(creditEndList, borrowUserThirdAccountId, productId, tender.getBorrowId());
             });
 
             //排除已经在存管登记结束债权的投标记录

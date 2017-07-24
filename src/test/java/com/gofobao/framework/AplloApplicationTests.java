@@ -1,5 +1,6 @@
 package com.gofobao.framework;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.CertHelper;
@@ -12,6 +13,8 @@ import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
+import com.gofobao.framework.api.model.batch_credit_invest.CreditInvest;
+import com.gofobao.framework.api.model.batch_credit_invest.CreditInvestRun;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
@@ -42,9 +45,13 @@ import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoAdvanceCall;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
+import com.gofobao.framework.repayment.vo.request.VoThirdBatchRepay;
+import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.reflect.TypeToken;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -53,9 +60,16 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.ObjectUtils;
 
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.io.File;
 import java.util.*;
 
@@ -84,6 +98,8 @@ public class AplloApplicationTests {
     private RepaymentBiz repaymentBiz;
     @Autowired
     private AssetsChangeHelper assetsChangeHelper;
+    @Autowired
+    private TenderService tenderService;
 
 
     @Autowired
@@ -135,7 +151,9 @@ public class AplloApplicationTests {
     }
 
     public static void main(String[] args) {
-        System.out.println("select t.id AS id,t. STATUS AS status,t.user_id AS userId,t.lowest AS lowest,t.borrow_types AS borrowTypes," +
+
+
+        /*System.out.println("select t.id AS id,t. STATUS AS status,t.user_id AS userId,t.lowest AS lowest,t.borrow_types AS borrowTypes," +
                 "t.repay_fashions AS repayFashions,t.tender_0 AS tender0,t.tender_1 AS tender1,t.tender_3 AS tender3,t.tender_4 AS tender4,t.`mode` AS mode,t.tender_money AS tenderMoney,t.timelimit_first AS timelimitFirst,t.timelimit_last AS timelimitLast,t.timelimit_type AS timelimitType,t.apr_first AS aprFirst,t.apr_last AS aprLast,t.save_money AS saveMoney,t.`order` AS `order`,t.auto_at AS autoAt,t.created_at AS createdAt," +
                 "t.updated_at AS updatedAt,a.use_money AS useMoney,a.no_use_money AS noUseMoney,a.virtual_money AS virtualMoney,a.collection AS collection,a.payment AS payment " +
                 "from gfb_auto_tender t " +
@@ -147,7 +165,7 @@ public class AplloApplicationTests {
         Map<String, String> map = new HashMap<>();
         map.put("repaymentId", "173810");
         System.out.println(gson.toJson(map));
-        System.out.println(SecurityHelper.getSign(gson.toJson(map)));
+        System.out.println(SecurityHelper.getSign(gson.toJson(map)));*/
     }
 
     public AccountQueryByMobileResponse findAccountByMobile() {
@@ -252,8 +270,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("153238");
-        batchDetailsQueryReq.setBatchTxDate("20170721");
+        batchDetailsQueryReq.setBatchNo("154553");
+        batchDetailsQueryReq.setBatchTxDate("20170724");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -295,9 +313,40 @@ public class AplloApplicationTests {
     @Autowired
     CertHelper certHelper;
 
+    public void saveThirdTransferAuthCode(List<CreditInvestRun> creditInvestRunList) {
+        List<String> orderIds = creditInvestRunList.stream().map(creditInvestRun -> creditInvestRun.getOrderId()).collect(Collectors.toList());
+        Specification<Tender> ts = Specifications
+                .<Tender>and()
+                .in("thirdTransferOrderId", orderIds.toArray())
+                .build();
+
+        List<Tender> tenderList = tenderService.findList(ts);
+        Map<String, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getThirdTransferOrderId, Function.identity()));
+        creditInvestRunList.stream().forEach(creditInvestRun -> {
+            String orderId = creditInvestRun.getOrderId();
+            Tender tender = tenderMap.get(orderId);
+            tender.setTransferAuthCode(creditInvestRun.getAuthCode());
+        });
+    }
+
     @Test
     public void test() {
 
+        /*// 触发处理批次购买债权处理队列
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(169910),
+                        MqConfig.BATCH_NO, StringHelper.toString("150307"),
+                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            log.info(String.format("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq exception", e);
+        }*/
 
         /*BatchQueryReq req = new BatchQueryReq();
         req.setChannel(ChannelContant.HTML);

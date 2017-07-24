@@ -50,6 +50,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -254,16 +255,16 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("请求体为空!");
         }
 
-        VoThirdBatchRepay voThirdBatchRepay = GSON.fromJson(GSON.toJson(repayCheckResp.getAcqRes()), VoThirdBatchRepay.class);
+        Map<String, Object> acqResMap = GSON.fromJson(repayCheckResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
         if (!JixinResultContants.SUCCESS.equals(repayCheckResp.getRetCode())) {
             log.error("=============================即信批次还款检验参数回调===========================");
             log.error("回调失败! msg:" + repayCheckResp.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), voThirdBatchRepay.getRepaymentId(), 2);
+            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), NumberHelper.toLong(acqResMap.get("repaymentId")), 2);
         } else {
-            log.info("=============================即信批次放款检验参数回调===========================");
+            log.info("=============================即信批次还款检验参数回调===========================");
             log.info("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), voThirdBatchRepay.getRepaymentId(), 1);
+            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), NumberHelper.toLong(acqResMap.get("repaymentId")), 1);
         }
 
         return ResponseEntity.ok("success");
@@ -323,15 +324,17 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("请求体为空!");
         }
 
+        Map<String, Object> acqResMap = GSON.fromJson(lendRepayCheckResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
+        Long borrowId = NumberHelper.toLong(acqResMap.get("borrowId"));
         if (!JixinResultContants.SUCCESS.equals(lendRepayCheckResp.getRetCode())) {
             log.error("=============================即信批次放款检验参数回调===========================");
             log.error("回调失败! msg:" + lendRepayCheckResp.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(lendRepayCheckResp.getBatchNo(), NumberHelper.toLong(lendRepayCheckResp.getAcqRes()), 2);
+            thirdBatchLogBiz.updateBatchLogState(lendRepayCheckResp.getBatchNo(), borrowId, 2);
         } else {
             log.info("=============================即信批次放款检验参数回调===========================");
             log.info("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(lendRepayCheckResp.getBatchNo(), NumberHelper.toLong(lendRepayCheckResp.getAcqRes()), 1);
+            thirdBatchLogBiz.updateBatchLogState(lendRepayCheckResp.getBatchNo(), borrowId, 1);
         }
 
         return ResponseEntity.ok("success");
@@ -582,15 +585,17 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("请求体为空!");
         }
 
+        Map<String, Object> acqResMap = GSON.fromJson(batchBailRepayCheckResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
+        Long repaymentId = NumberHelper.toLong(acqResMap.get("repaymentId"));
         if (!JixinResultContants.SUCCESS.equals(batchBailRepayCheckResp.getRetCode())) {
             log.error("=============================批次担保账户代偿参数检查回调===========================");
             log.error("回调失败! msg:" + batchBailRepayCheckResp.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(batchBailRepayCheckResp.getBatchNo(), NumberHelper.toLong(batchBailRepayCheckResp.getAcqRes()), 2);
+            thirdBatchLogBiz.updateBatchLogState(batchBailRepayCheckResp.getBatchNo(), repaymentId, 2);
         } else {
             log.info("=============================批次担保账户代偿参数成功回调===========================");
             log.info("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(batchBailRepayCheckResp.getBatchNo(), NumberHelper.toLong(batchBailRepayCheckResp.getAcqRes()), 1);
+            thirdBatchLogBiz.updateBatchLogState(batchBailRepayCheckResp.getBatchNo(), repaymentId, 1);
         }
 
         return ResponseEntity.ok("success");
@@ -628,9 +633,13 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         //=============================================
         // 保存批次担保人代偿授权号
         //=============================================
-        List<BailRepayRun> bailRepayRunList = GSON.fromJson(batchBailRepayRunResp.getSubPacks(), new TypeToken<List<BailRepayRun>>() {
-        }.getType());
-        saveThirdBailRepayAuthCode(bailRepayRunList);
+        try {
+            List<BailRepayRun> bailRepayRunList = GSON.fromJson(batchBailRepayRunResp.getSubPacks(), new TypeToken<List<BailRepayRun>>() {
+            }.getType());
+            saveThirdBailRepayAuthCode(bailRepayRunList);
+        } catch (JsonSyntaxException e) {
+            log.error("保存批次担保人代偿授权号!", e);
+        }
 
         // 触发批次担保账户代偿业务处理队列
         MqConfig mqConfig = new MqConfig();
@@ -696,15 +705,16 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("请求体为空!");
         }
 
+        Map<String, Object> acqResMap = GSON.fromJson(batchRepayBailCheckResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
         //更新批次状态
-        VoBatchRepayBailReq voBatchRepayBailReq = GSON.fromJson(batchRepayBailCheckResp.getAcqRes(), VoBatchRepayBailReq.class);
+        Long repaymentId = NumberHelper.toLong(acqResMap.get("repaymentId"));
         if (!JixinResultContants.SUCCESS.equals(batchRepayBailCheckResp.getRetCode())) {
             log.error("=============================批次融资人还担保账户垫款参数检查回调===========================");
             log.error("回调失败! msg:" + batchRepayBailCheckResp.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(batchRepayBailCheckResp.getBatchNo(), voBatchRepayBailReq.getRepaymentId(), 2);
+            thirdBatchLogBiz.updateBatchLogState(batchRepayBailCheckResp.getBatchNo(), repaymentId, 2);
         } else {
             log.error("=============================批次融资人还担保账户垫款参数检查成功===========================");
-            thirdBatchLogBiz.updateBatchLogState(batchRepayBailCheckResp.getBatchNo(), voBatchRepayBailReq.getRepaymentId(), 1);
+            thirdBatchLogBiz.updateBatchLogState(batchRepayBailCheckResp.getBatchNo(), repaymentId, 1);
         }
 
         return ResponseEntity.ok("success");
@@ -973,9 +983,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 .collect(Collectors.toMap(BorrowCollection::getTenderId,
                         Function.identity()));
         for (Tender tender : tenderList) {
-            int inIn = 0 ;
-            int inPr = 0 ;
-            int outFee = 0 ;
+            int inIn = 0;
+            int inPr = 0;
+            int outFee = 0;
             BorrowCollection borrowCollection = borrowCollectionMap.get(tender.getId()); // 已经还款金额
             if (tender.getTransferFlag() == 1) { // 标的转让中时, 需要取消出让信息
                 doCancelBorrowByRepay(tender);
@@ -998,13 +1008,13 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             }
 
             // 生成还款计划
-            inIn += borrowCollection.getInterest() ; // 利息
-            inPr += borrowCollection.getPrincipal() ; // 本金
+            inIn += borrowCollection.getInterest(); // 利息
+            inPr += borrowCollection.getPrincipal(); // 本金
             if ((lateDays > 0) && (lateInterest > 0)) {  //借款人逾期罚息
                 inIn += new Double(tender.getValidMoney() / new Double(borrow.getMoney()) * lateInterest).intValue();
             }
             String orderId = JixinHelper.getOrderId(JixinHelper.BAIL_REPAY_PREFIX);
-            RepayBail repayBail = new RepayBail() ;
+            RepayBail repayBail = new RepayBail();
             repayBail.setOrderId(orderId);
             repayBail.setAccountId(repayAccountId);
             repayBail.setTxAmount(StringHelper.formatDouble(inPr, 100, false));
@@ -1015,7 +1025,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             repayBail.setAuthCode(borrowCollection.getTBailAuthCode());
             repayBailList.add(repayBail);
         }
-        tenderService.save(tenderList) ;
+        tenderService.save(tenderList);
         return repayBailList;
     }
 

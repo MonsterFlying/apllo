@@ -32,7 +32,9 @@ public enum MqTagEnum {
     OLD_USER_TENDER("OLD_USER_TENDER"), //老用户投标
     INVITE_USER_REAL_NAME("INVITE_USER_REAL_NAME"),  //邀请用户实名
     INVITE_USER_TENDER("INVITE_USER_TENDER"), //邀请用户投资
-    END_CREDIT("END_CREDIT"),//结束债权
+    END_CREDIT_BY_NOT_TRANSFER("END_CREDIT_BY_NOT_TRANSFER"),//结束债权非转让
+    END_CREDIT_BY_TRANSFER("END_CREDIT_BY_TRANSFER"),//结束债权
+    END_CREDIT_ALL("END_CREDIT_ALL"),//结束债权
     BATCH_DEAL("batchDeal"),//批次处理
     REPAY_ALL("repayAll"),//提前结清
     REPAY_ADVANCE("repayAdvance"),//提前结清

@@ -38,6 +38,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -179,11 +180,11 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         double transferFeeRate = Math.min(0.004 + 0.0008 * (borrow.getTotalOrder() - 1), 0.0128); // 获取债权转让费用
         UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
         ResponseEntity<VoBaseResp> thirdAccountConditionResponse = ThirdAccountHelper.conditionCheck(borrowUserThirdAccount);
-        if(!thirdAccountConditionResponse.getStatusCode().equals(HttpStatus.OK)){
-            return thirdAccountConditionResponse ;
+        if (!thirdAccountConditionResponse.getStatusCode().equals(HttpStatus.OK)) {
+            return thirdAccountConditionResponse;
         }
 
-        List<CreditInvest> creditInvestList = new ArrayList<>() ;
+        List<CreditInvest> creditInvestList = new ArrayList<>();
         CreditInvest creditInvest = null;
         UserThirdAccount tenderUserThirdAccount = null;
         int sumCount = 0;
@@ -198,13 +199,13 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
 
             tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
             ResponseEntity<VoBaseResp> tenderUserThirdAccountConditionResponse = ThirdAccountHelper.conditionCheck(tenderUserThirdAccount);
-            if(!tenderUserThirdAccountConditionResponse.getStatusCode().equals(HttpStatus.OK)){
-                return thirdAccountConditionResponse ;
+            if (!tenderUserThirdAccountConditionResponse.getStatusCode().equals(HttpStatus.OK)) {
+                return thirdAccountConditionResponse;
             }
 
             validMoney = tender.getValidMoney();  //投标有效金额
             sumCount += validMoney;
-            txFee += (int) MathHelper.myRound((validMoney /  new Double(borrow.getMoney())) * transferFee, 0);
+            txFee += (int) MathHelper.myRound((validMoney / new Double(borrow.getMoney())) * transferFee, 0);
             String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
             creditInvest = new CreditInvest();
             creditInvest.setAccountId(tenderUserThirdAccount.getAccountId());
@@ -261,23 +262,25 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      * @return
      */
     public void thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse response) {
-        BatchCreditInvestRunCall lendRepayRunResp = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
+        BatchCreditInvestCheckCall batchCreditInvestCheckCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestCheckCall>() {
         });
 
-        if (ObjectUtils.isEmpty(lendRepayRunResp)) {
+        if (ObjectUtils.isEmpty(batchCreditInvestCheckCall)) {
             log.error("=============================即信投资人批次购买债权参数验证回调===========================");
             log.error("请求体为空!");
         }
 
-        if (!JixinResultContants.SUCCESS.equals(lendRepayRunResp.getRetCode())) {
+        Map<String, Object> acqResMap = GSON.fromJson(batchCreditInvestCheckCall.getAcqRes(), TypeTokenContants.MAP_TOKEN);
+        Long borrowId = NumberHelper.toLong(acqResMap.get("borrowId"));
+        if (!JixinResultContants.SUCCESS.equals(batchCreditInvestCheckCall.getRetCode())) {
             log.error("=============================即信投资人批次购买债权参数验证回调===========================");
-            log.error("回调失败! msg:" + lendRepayRunResp.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(lendRepayRunResp.getBatchNo(), NumberHelper.toLong(lendRepayRunResp.getAcqRes()), 2);
+            log.error("回调失败! msg:" + batchCreditInvestCheckCall.getRetMsg());
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), borrowId, 2);
         } else {
             log.error("=============================即信投资人批次购买债权参数验证回调===========================");
             log.error("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(lendRepayRunResp.getBatchNo(), NumberHelper.toLong(lendRepayRunResp.getAcqRes()), 1);
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), borrowId, 1);
         }
 
         try {
@@ -295,22 +298,26 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      * @return
      */
     public ResponseEntity<String> thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        BatchCreditInvestRunCall creditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
+        BatchCreditInvestRunCall batchCreditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
         });
-        Gson gson = new Gson() ;
-        log.info(String.format("批量债权购买回调信息打印: %s", gson.toJson(creditInvestRunCall))) ;
-        Preconditions.checkNotNull(creditInvestRunCall, "批量债权转让回调: 回调信息为空!") ;
-        Preconditions.checkArgument(JixinResultContants.SUCCESS.equals(creditInvestRunCall.getRetCode()),
+        Gson gson = new Gson();
+        log.info(String.format("批量债权购买回调信息打印: %s", gson.toJson(batchCreditInvestRunCall)));
+        Preconditions.checkNotNull(batchCreditInvestRunCall, "批量债权转让回调: 回调信息为空!");
+        Preconditions.checkArgument(JixinResultContants.SUCCESS.equals(batchCreditInvestRunCall.getRetCode()),
                 "批量债权转让回调: 请求失败!");
-        Map<String, Object> acqResMap = GSON.fromJson(creditInvestRunCall.getAcqRes(), TypeTokenContants.MAP_TOKEN);
+        Map<String, Object> acqResMap = GSON.fromJson(batchCreditInvestRunCall.getAcqRes(), TypeTokenContants.MAP_TOKEN);
 
         //=============================================
         // 保存第三方债权转让授权码
         //=============================================
-        List<CreditInvestRun> creditInvestRunList = GSON.fromJson(creditInvestRunCall.getSubPacks(), new TypeToken<List<CreditInvestRun>>() {
-        }.getType());
-        Preconditions.checkNotNull(creditInvestRunList, "批量债权转让回调: 查询批次详情为空") ;
-        saveThirdTransferAuthCode(creditInvestRunList);
+        try {
+            List<CreditInvestRun> creditInvestRunList = GSON.fromJson(batchCreditInvestRunCall.getSubPacks(), new TypeToken<List<CreditInvestRun>>() {
+            }.getType());
+            Preconditions.checkNotNull(creditInvestRunList, "批量债权转让回调: 查询批次详情为空");
+            saveThirdTransferAuthCode(creditInvestRunList);
+        } catch (JsonSyntaxException e) {
+            log.error("保存第三方债权转让授权码!",e);
+        }
 
 
         // 触发处理批次购买债权处理队列
@@ -319,7 +326,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
                 .of(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("borrowId")),
-                        MqConfig.BATCH_NO, StringHelper.toString(creditInvestRunCall.getBatchNo()),
+                        MqConfig.BATCH_NO, StringHelper.toString(batchCreditInvestRunCall.getBatchNo()),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
         try {
@@ -344,8 +351,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
                 .in("thirdTransferOrderId", orderIds.toArray())
                 .build();
 
-        List<Tender> tenderList = tenderService.findList(ts) ;
-        Map<String, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getThirdTenderOrderId, Function.identity()));
+        List<Tender> tenderList = tenderService.findList(ts);
+        Map<String, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getThirdTransferOrderId, Function.identity()));
         creditInvestRunList.forEach(creditInvestRun -> {
             String orderId = creditInvestRun.getOrderId();
             Tender tender = tenderMap.get(orderId);
@@ -354,6 +361,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
 
         tenderService.save(tenderList);
     }
+
+
 
     /**
      * 取消即信投标申请
@@ -399,23 +408,25 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      * @return
      */
     public void thirdBatchCreditEndCheckCall(HttpServletRequest request, HttpServletResponse response) {
-        BatchCreditInvestRunCall lendRepayRunResp = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
+        BatchCreditInvestRunCall batchCreditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
         });
 
-        if (ObjectUtils.isEmpty(lendRepayRunResp)) {
+        if (ObjectUtils.isEmpty(batchCreditInvestRunCall)) {
             log.error("=============================投资人批次结束债权参数验证回调===========================");
             log.error("请求体为空!");
         }
 
-        if (!JixinResultContants.SUCCESS.equals(lendRepayRunResp.getRetCode())) {
+        Map<String, Object> acqResMap = GSON.fromJson(batchCreditInvestRunCall.getAcqRes(), TypeTokenContants.MAP_TOKEN);
+        Long borrowId = NumberHelper.toLong(acqResMap.get("borrowId"));
+        if (!JixinResultContants.SUCCESS.equals(batchCreditInvestRunCall.getRetCode())) {
             log.error("=============================投资人批次结束债权参数验证回调===========================");
-            log.error("回调失败! msg:" + lendRepayRunResp.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(lendRepayRunResp.getBatchNo(), NumberHelper.toLong(lendRepayRunResp.getAcqRes()), 2);
+            log.error("回调失败! msg:" + batchCreditInvestRunCall.getRetMsg());
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestRunCall.getBatchNo(), borrowId, 2);
         } else {
             log.error("=============================投资人批次结束债权参数验证回调===========================");
             log.error("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(lendRepayRunResp.getBatchNo(), NumberHelper.toLong(lendRepayRunResp.getAcqRes()), 1);
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestRunCall.getBatchNo(), borrowId, 1);
         }
 
         try {
@@ -433,11 +444,11 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      * @return
      */
     public ResponseEntity<String> thirdBatchCreditEndRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        BatchCreditInvestRunCall creditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
+        BatchCreditInvestRunCall batchCreditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
         });
-        Map<String, Object> acqResMap = GSON.fromJson(creditInvestRunCall.getAcqRes(), TypeTokenContants.MAP_TOKEN);
+        Map<String, Object> acqResMap = GSON.fromJson(batchCreditInvestRunCall.getAcqRes(), TypeTokenContants.MAP_TOKEN);
 
-        if (ObjectUtils.isEmpty(creditInvestRunCall)) {
+        if (ObjectUtils.isEmpty(batchCreditInvestRunCall)) {
             log.error("======================================运行回调========================================");
             log.error("=============================投资人批次结束债权业务运行回调===========================");
             log.error("请求体为空!");
@@ -445,10 +456,10 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             log.error("======================================================================================");
         }
 
-        if (!JixinResultContants.SUCCESS.equals(creditInvestRunCall.getRetCode())) {
+        if (!JixinResultContants.SUCCESS.equals(batchCreditInvestRunCall.getRetCode())) {
             log.error("======================================运行回调========================================");
             log.error("=============================投资人批次结束债权业务运行回调===========================");
-            log.error("回调失败! msg:" + creditInvestRunCall.getRetMsg());
+            log.error("回调失败! msg:" + batchCreditInvestRunCall.getRetMsg());
             log.error("======================================================================================");
             log.error("======================================================================================");
         } else {
@@ -465,7 +476,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
                 .of(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("borrowId")),
-                        MqConfig.BATCH_NO, StringHelper.toString(creditInvestRunCall.getBatchNo()),
+                        MqConfig.BATCH_NO, StringHelper.toString(batchCreditInvestRunCall.getBatchNo()),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
         try {

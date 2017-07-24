@@ -580,7 +580,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             //推送队列结束债权
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
-            mqConfig.setTag(MqTagEnum.END_CREDIT);
+            mqConfig.setTag(MqTagEnum.END_CREDIT_BY_NOT_TRANSFER);
             mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
             ImmutableMap<String, String> body = ImmutableMap
                     .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
@@ -973,6 +973,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param repayReq
      * @return
      */
+    @Transactional(rollbackFor = Throwable.class)
     public ResponseEntity<VoBaseResp> newRepay(VoRepayReq repayReq) throws Exception {
         /* 还款人id */
         long userId = repayReq.getUserId();

@@ -440,15 +440,17 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             log.error("请求体为空!");
         }
 
+        Map<String, Object> acqResMap = GSON.fromJson(repayCheckResp.getRetCode(),TypeTokenContants.MAP_TOKEN);
+        Long borrowId = NumberHelper.toLong(acqResMap.get("borrowId"));
         if (!JixinResultContants.SUCCESS.equals(repayCheckResp.getRetCode())) {
             log.error("=============================(提前结清)即信批次还款检验参数回调===========================");
             log.error("回调失败! msg:" + repayCheckResp.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), NumberHelper.toLong(repayCheckResp.getAcqRes()), 2);
+            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), borrowId, 2);
         } else {
             log.info("=============================(提前结清)即信批次放款检验参数回调===========================");
             log.info("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), NumberHelper.toLong(repayCheckResp.getAcqRes()), 1);
+            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), borrowId, 1);
         }
 
         return ResponseEntity.ok("success");
