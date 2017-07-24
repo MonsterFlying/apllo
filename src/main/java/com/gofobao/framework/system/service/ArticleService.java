@@ -1,5 +1,6 @@
 package com.gofobao.framework.system.service;
 
+import com.gofobao.framework.system.entity.Article;
 import com.gofobao.framework.system.vo.request.VoArticleReq;
 
 import java.util.Map;
@@ -22,6 +23,6 @@ public interface ArticleService {
      * @param id
      * @return
      */
-    String info(Long id);
+    Article info(Long id);
 
 }

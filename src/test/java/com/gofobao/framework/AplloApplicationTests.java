@@ -4,6 +4,7 @@ import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.CertHelper;
+import com.gofobao.framework.api.helper.JixinFileManager;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
@@ -49,8 +50,11 @@ import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchRepay;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
+import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
+import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -68,6 +72,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.io.File;
+import java.util.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -96,6 +102,15 @@ public class AplloApplicationTests {
     private AssetsChangeHelper assetsChangeHelper;
     @Autowired
     private TenderService tenderService;
+
+
+    @Autowired
+    FundStatisticsBiz fundStatisticsBiz ;
+    @Test
+    public void testDownloadFile() throws Exception {
+        fundStatisticsBiz.doEVE() ;
+    }
+
 
 
     @Test

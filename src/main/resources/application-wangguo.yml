@@ -49,12 +49,15 @@ jixin: #银行存管
   version: 10 #版本号
   instCode: "00960001" #机构代码
   bankCode: "30050000" #交易机构代码
+  time-interval: 287 # 与存管系统相差几天
 gofobao:
   dev: true # 开发环境
   javaDomain: http://qtfja75.hk1.mofasuidao.cn
   webDomain: http://qtfja75.hk1.mofasuidao.cn
   h5Domain:  http://ng.hk1.mofasuidao.cn
   imageDomain : http://www.gofobao.com
+  file-url: https://test.credit2go.cn/escrow/file/download #文件请求下载链接
+  save-file-path: D:/statistice/   #文件本地保存的路径
   captcha: false # 全站是否开启图形验证码验证
   close-email-send: true # 关闭邮箱发送
   close-phone-send: true # 关闭短信发送

@@ -12,4 +12,10 @@ public class VoViewArticleInfoWarpRes extends VoBaseResp {
 
     @ApiModelProperty("内容")
     private String html;
+
+    @ApiModelProperty("標題")
+    private String title;
+
+    @ApiModelProperty("時間")
+    private String  createAt;
 }

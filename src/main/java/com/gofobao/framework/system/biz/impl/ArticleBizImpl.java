@@ -1,8 +1,10 @@
 package com.gofobao.framework.system.biz.impl;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.system.biz.ArticleBiz;
+import com.gofobao.framework.system.entity.Article;
 import com.gofobao.framework.system.service.ArticleService;
 import com.gofobao.framework.system.vo.request.VoArticleReq;
 import com.gofobao.framework.system.vo.response.ArticleModle;
@@ -11,6 +13,7 @@ import com.gofobao.framework.system.vo.response.VoViewArticleWarpRes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -49,11 +52,11 @@ public class ArticleBizImpl implements ArticleBiz {
         VoViewArticleInfoWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewArticleInfoWarpRes.class);
         String content = thymeleafHelper.build("load_error", null);
         try {
-            String articleHtml = articleService.info(id);
-            if (articleHtml!=null) {
-                warpRes.setHtml(articleHtml);
-            } else {
-                warpRes.setHtml(content);
+            Article article = articleService.info(id);
+            if(!ObjectUtils.isEmpty(article)){
+                warpRes.setTitle(article.getTitle());
+                warpRes.setHtml(article.getContent());
+                warpRes.setCreateAt(DateHelper.dateToString(article.getCreatedAt()));
             }
         } catch (Exception e) {
             warpRes.setHtml(content);
