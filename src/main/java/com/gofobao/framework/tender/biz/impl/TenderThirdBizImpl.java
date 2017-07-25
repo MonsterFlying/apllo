@@ -198,10 +198,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             }
 
             tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
-            ResponseEntity<VoBaseResp> tenderUserThirdAccountConditionResponse = ThirdAccountHelper.conditionCheck(tenderUserThirdAccount);
-            if (!tenderUserThirdAccountConditionResponse.getStatusCode().equals(HttpStatus.OK)) {
-                return thirdAccountConditionResponse;
-            }
+            Preconditions.checkNotNull(tenderUserThirdAccount, "投资人未开户!") ;
 
             validMoney = tender.getValidMoney();  //投标有效金额
             sumCount += validMoney;
