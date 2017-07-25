@@ -53,7 +53,7 @@ jixin: #银行存管
   bankCode: "30050000" #交易机构代码
   product-no: "0105" # 产品编号
   bank-no: "3005" #产品编号
-  time-interval: 287 # 与存管系统相差几天
+  query-time-init: "20161010" # 与存管系统查询时间
 gofobao:
   dev: true # 开发环境
   javaDomain: http://wangg.hk1.mofasuidao.cn

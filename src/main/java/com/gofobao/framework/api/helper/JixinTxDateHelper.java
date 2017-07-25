@@ -3,14 +3,15 @@ package com.gofobao.framework.api.helper;
 import com.gofobao.framework.helper.DateHelper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.Date;
 
 @Component
 public class JixinTxDateHelper {
 
-    @Value("${jixin.time-interval}")
-    int timeInterval;
+    @Value("${jixin.query-time-init}")
+    String queryTimeInit;
 
 
     /**
@@ -19,8 +20,13 @@ public class JixinTxDateHelper {
      * @return
      */
     public Date getTxDate() {
-        Date nowDate = new Date();
-        return DateHelper.subDays(nowDate, timeInterval);
+        Date date ;
+        if(StringUtils.isEmpty(queryTimeInit)){
+            date = new Date() ;
+        }else{
+            return DateHelper.stringToDate(queryTimeInit, DateHelper.DATE_FORMAT_YMD_NUM);
+        }
+        return date;
     }
 
 
