@@ -95,7 +95,6 @@ public class NoticesBizImpl implements NoticesBiz {
                 PlatformNotification platformNotification;
                 String msg = HtmlHelper.filterHtml(notices.getContent());
                 PushResult pushResult;
-
                 if (users.getPlatform().equals(1)) {
                     platformNotification = AndroidNotification.newBuilder()
                             .setAlert(msg)

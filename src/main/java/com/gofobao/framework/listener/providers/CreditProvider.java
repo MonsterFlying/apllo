@@ -1,46 +1,37 @@
 package com.gofobao.framework.listener.providers;
 
 import com.github.wenhao.jpa.Specifications;
-import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.batch_credit_end.BatchCreditEndReq;
 import com.gofobao.framework.api.model.batch_credit_end.BatchCreditEndResp;
 import com.gofobao.framework.api.model.batch_credit_end.CreditEnd;
-import com.gofobao.framework.api.model.credit_end.CreditEndReq;
-import com.gofobao.framework.api.model.credit_end.CreditEndResp;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
-import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
-import com.gofobao.framework.repayment.entity.BorrowRepayment;
-import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 /**
@@ -152,7 +143,7 @@ public class CreditProvider {
             });
 
             //排除已经在存管登记结束债权的投标记录
-            tenderList.stream().filter(tender -> !tender.getThirdCreditEndFlag()).forEach(tender -> {
+            tenderList.stream().filter(tender -> (ObjectUtils.isEmpty(tender.getThirdCreditEndFlag()) || !tender.getThirdCreditEndFlag())).forEach(tender -> {
                 CreditEnd creditEnd = new CreditEnd();
                 String orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
 
@@ -195,7 +186,7 @@ public class CreditProvider {
             });
 
             //排除已经在存管登记结束债权的投标记录
-            tenderList.stream().filter(tender -> !tender.getThirdCreditEndFlag()).forEach(tender -> {
+            tenderList.stream().filter(tender -> (ObjectUtils.isEmpty(tender.getThirdCreditEndFlag()) || !tender.getThirdCreditEndFlag())).forEach(tender -> {
                 CreditEnd creditEnd = new CreditEnd();
                 String orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
 

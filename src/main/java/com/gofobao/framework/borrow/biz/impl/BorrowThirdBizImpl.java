@@ -133,7 +133,8 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "借款人未开户!");
-        String productId = jixinHelper.generateProductId(borrowId);  // 生成标的的唯一识别码
+        //jixinHelper.generateProductId(borrowId)
+        String productId = StringHelper.toString(borrowId);  // 生成标的的唯一识别码
 
         DebtRegisterRequest debtRegisterRequest = new DebtRegisterRequest();
         debtRegisterRequest.setAccountId(userThirdAccount.getAccountId());

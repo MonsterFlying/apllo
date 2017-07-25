@@ -422,7 +422,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             VoThirdBatchRepay voThirdBatchRepay = new VoThirdBatchRepay();
             voThirdBatchRepay.setUserId(userId);
             voThirdBatchRepay.setRepaymentId(repaymentId);
-            voThirdBatchRepay.setInterestPercent(0d);
+            voThirdBatchRepay.setInterestPercent(1d);
             voThirdBatchRepay.setIsUserOpen(true);
 
             //获取最后一条有效的发布批次记录
@@ -475,9 +475,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> repayDeal(VoRepayReq voRepayReq) throws Exception {
         log.info("立即还款开始");
-        ResponseEntity resp = checkRepay(voRepayReq);
-        if (!ObjectUtils.isEmpty(resp)) {
-            return null;
+        ResponseEntity<VoBaseResp> resp = checkRepay(voRepayReq);
+        if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
+            return resp;
         }
         Date nowDate = new Date();
         int lateInterest = 0;//逾期利息
@@ -1037,7 +1037,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         VoThirdBatchRepay voThirdBatchRepay = new VoThirdBatchRepay();
         voThirdBatchRepay.setUserId(userId);
         voThirdBatchRepay.setRepaymentId(borrowRepaymentId);
-        voThirdBatchRepay.setInterestPercent(0d);
+        voThirdBatchRepay.setInterestPercent(null);
         voThirdBatchRepay.setIsUserOpen(true);
 
         BatchRepayBailReq request = new BatchRepayBailReq();
@@ -1091,7 +1091,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         VoThirdBatchRepay voThirdBatchRepay = new VoThirdBatchRepay();
         voThirdBatchRepay.setUserId(userId);
         voThirdBatchRepay.setRepaymentId(borrowRepaymentId);
-        voThirdBatchRepay.setInterestPercent(0d);
+        voThirdBatchRepay.setInterestPercent(1d);
         voThirdBatchRepay.setIsUserOpen(true);
         BatchRepayReq request = new BatchRepayReq();
         request.setBatchNo(batchNo);

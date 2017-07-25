@@ -69,7 +69,7 @@ public class RepaymentListener {
                 VoRepayReq voRepayReq = new VoRepayReq();
                 voRepayReq.setRepaymentId(borrowRepayment.getId());
                 voRepayReq.setUserId(borrowRepayment.getUserId());
-                voRepayReq.setInterestPercent(null);
+                voRepayReq.setInterestPercent(1d);
                 voRepayReq.setIsUserOpen(true);
                 try {
                     repaymentBiz.thirdBatchRepayBail(voRepayReq);
@@ -94,7 +94,7 @@ public class RepaymentListener {
                     VoRepayReq voRepayReq = new VoRepayReq();
                     voRepayReq.setRepaymentId(borrowRepayment.getId());
                     voRepayReq.setUserId(borrowRepayment.getUserId());
-                    voRepayReq.setInterestPercent(null);
+                    voRepayReq.setInterestPercent(1d);
                     repaymentBiz.newRepay(voRepayReq);
                 } catch (Exception e) {
                     log.error("RepaymentListener process error:", e);

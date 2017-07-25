@@ -77,7 +77,7 @@ public class WebBorrowRepaymentContorller {
         VoRepayReq voRepayReq = new VoRepayReq();
         voRepayReq.setRepaymentId(voInstantlyRepaymentReq.getRepaymentId());
         voRepayReq.setUserId(userId);
-        voRepayReq.setInterestPercent(null);
+        voRepayReq.setInterestPercent(1d);
         voRepayReq.setIsUserOpen(true);
         return repaymentBiz.newRepay(voRepayReq);
     }
