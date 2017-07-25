@@ -982,9 +982,7 @@ public class AssetBizImpl implements AssetBiz {
         }
 
         VoCollectionResp response = VoBaseResp.ok("查询成功", VoCollectionResp.class);
-
         Long waitCollectionInterest = userCache.getWaitCollectionInterest();
-
         Long waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
         Long waitCollectionTotal = userCache.getWaitCollectionPrincipal() + userCache.getWaitCollectionInterest();
         response.setHideInterest(waitCollectionInterest);
@@ -992,7 +990,6 @@ public class AssetBizImpl implements AssetBiz {
 
         response.setPrincipal(StringHelper.formatMon(waitCollectionPrincipal / 100d));
         response.setHidePrincipal(waitCollectionPrincipal);
-
         response.setWaitCollectionTotal(StringHelper.formatMon(waitCollectionTotal / 100d));
         response.setHideWaitCollectionTotal(waitCollectionTotal);
         return ResponseEntity.ok(response);
@@ -1060,7 +1057,6 @@ public class AssetBizImpl implements AssetBiz {
      * @param traceNo
      * @throws Exception
      */
-    @Transactional(rollbackFor = Exception.class)
     private void doOffLineAssetSynchronizedAsset(Users users, AccountDetailsQueryItem item, String traceNo) throws Exception {
         Date now = new Date();
         // 添加重置记录
