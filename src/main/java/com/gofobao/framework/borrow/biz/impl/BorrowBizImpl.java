@@ -1986,7 +1986,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "借款人还未初始化银行交易密码!", VoHtmlResp.class));
         }
 
-        if (StringUtils.isEmpty(borrow.getProductId())) {
+        if (!borrowThirdBiz.registerBorrrowConditionCheck(borrow)) {
             VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
             voCreateThirdBorrowReq.setBorrowId(borrowId);
             voCreateThirdBorrowReq.setEntrustFlag(true);
@@ -2344,8 +2344,7 @@ public class BorrowBizImpl implements BorrowBiz {
         Date releaseAt = borrow.getReleaseAt();
         borrow.setReleaseAt(ObjectUtils.isEmpty(releaseAt) ? nowDate : releaseAt);
         borrow = borrowService.save(borrow);    //更新借款状态
-        String productId = borrow.getProductId();
-        if (ObjectUtils.isEmpty(productId) && !borrow.isTransfer()) { // 判断没有在即信注册、并且类型为非转让标
+        if (!borrowThirdBiz.registerBorrrowConditionCheck(borrow) && !borrow.isTransfer()) { // 判断没有在即信注册、并且类型为非转让标
             int type = borrow.getType();
             if (type != 0 && type != 4) { // 判断是否是官标、官标不需要在这里登记标的
                 VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
@@ -2413,9 +2412,7 @@ public class BorrowBizImpl implements BorrowBiz {
         Date releaseAt = borrow.getReleaseAt();
         borrow.setReleaseAt(ObjectUtils.isEmpty(releaseAt) ? nowDate : releaseAt);
         borrow = borrowService.save(borrow);// 更改标的为可投标状态
-
-        String productId = borrow.getProductId();
-        if (ObjectUtils.isEmpty(productId) && !borrow.isTransfer()) { // 判断没有在即信注册、并且类型为非转让标
+        if (!borrowThirdBiz.registerBorrrowConditionCheck(borrow) && !borrow.isTransfer()) { // 判断没有在即信注册、并且类型为非转让标
             int type = borrow.getType();
             if (type != 0 && type != 4) { // 判断是否是官标、官标不需要在这里登记标的
                 VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();

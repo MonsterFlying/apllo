@@ -1,6 +1,7 @@
 package com.gofobao.framework.borrow.biz;
 
-import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
+import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResponse;
+import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.vo.request.*;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
@@ -17,7 +18,16 @@ public interface BorrowThirdBiz {
 
     ResponseEntity<VoBaseResp> cancelThirdBorrow(VoCancelThirdBorrow voCancelThirdBorrow);
 
-    DebtDetailsQueryResp queryThirdBorrowList(VoQueryThirdBorrowList voQueryThirdBorrowList);
+    DebtDetailsQueryResponse queryThirdBorrowList(VoQueryThirdBorrowList voQueryThirdBorrowList);
+
+
+    /**
+     * 查询当前标的在存管系统登记的状态
+     *
+     * @param borrow
+     * @return
+     */
+    boolean registerBorrrowConditionCheck(Borrow borrow);
 
     /**
      * 即信批次还款(提前结清)

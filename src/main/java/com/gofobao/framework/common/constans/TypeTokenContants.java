@@ -14,4 +14,5 @@ public class TypeTokenContants {
     public static  final Type MAP_TOKEN = new TypeToken<Map<String, Object>>(){}.getType() ;
     public static  final Type MAP_ALL_STRING_TOKEN = new TypeToken<Map<String, String>>(){}.getType() ;
     public static  final Type LIST_MAP_TOKEN = new TypeToken<List<Map<String, Object>>>(){}.getType() ;
+    public static  final Type LIST_ALL_STRING_MAP__TOKEN = new TypeToken<List<Map<String, String>>>(){}.getType() ;
 }

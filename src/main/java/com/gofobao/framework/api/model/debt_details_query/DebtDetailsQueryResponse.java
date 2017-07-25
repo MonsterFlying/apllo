@@ -7,7 +7,7 @@ import lombok.Data;
  * Created by Zeke on 2017/6/5.
  */
 @Data
-public class DebtDetailsQueryResp extends JixinBaseResponse{
+public class DebtDetailsQueryResponse extends JixinBaseResponse{
     /**
      * 存管平台分配的借款人电子账号
      */
