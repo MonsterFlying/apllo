@@ -19,7 +19,6 @@ import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp;
-import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
@@ -233,18 +232,6 @@ public class AplloApplicationTests {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-    }
-
-    private void findThirdBorrowList() {
-        VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
-        voQueryThirdBorrowList.setProductId("GA69857");
-        voQueryThirdBorrowList.setUserId(37231L);
-        voQueryThirdBorrowList.setPageNum("1");
-        voQueryThirdBorrowList.setPageSize("10");
-        DebtDetailsQueryResp resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
-        System.out.println((resp.getTotalItems()));
-
-
     }
 
     private void doAgainVerify() {
