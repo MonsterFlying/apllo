@@ -49,7 +49,7 @@ jixin: #银行存管
   version: 10 #版本号
   instCode: "00960001" #机构代码
   bankCode: "30050000" #交易机构代码
-  time-interval: 286 # 与存管系统相差几天
+  query-time-init: "20161010" # 与存管系统查询时间
 gofobao:
   dev: true # 开发环境
   javaDomain:  http://lang.hk1.mofasuidao.cn
