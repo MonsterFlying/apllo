@@ -9,7 +9,6 @@ import com.gofobao.framework.system.vo.request.VoNoticesReq;
 import com.gofobao.framework.system.vo.request.VoNoticesTranReq;
 import com.gofobao.framework.system.vo.response.NoticesInfo;
 import com.gofobao.framework.system.vo.response.UserNotices;
-import freemarker.template.utility.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

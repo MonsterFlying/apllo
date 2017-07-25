@@ -1,9 +1,7 @@
 package com.gofobao.framework.member.service;
 
-import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 

@@ -107,7 +107,6 @@ public class BorrowServiceImpl implements BorrowService {
         StringBuilder pageSb = new StringBuilder(" SELECT b FROM Borrow b WHERE 1=1 ");
         StringBuilder countSb = new StringBuilder(" SELECT COUNT(id) FROM Borrow b WHERE 1=1 ");
         StringBuilder condtionSql = new StringBuilder("");
-
         // 条件
         if (type != null) {  // 全部
 
@@ -116,7 +115,6 @@ public class BorrowServiceImpl implements BorrowService {
             } else {
                 condtionSql.append(" AND b.type=" + type);
             }
-
         }
         condtionSql.append(" AND b.verifyAt IS Not NULL AND b.status NOT IN(:statusArray)");
         // 排序
