@@ -3,8 +3,6 @@ package com.gofobao.framework.member.vo.request;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
-import javax.validation.constraints.Pattern;
-
 /**
  * Created by admin on 2017/7/19.
  */

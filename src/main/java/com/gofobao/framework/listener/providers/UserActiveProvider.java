@@ -1,6 +1,5 @@
 package com.gofobao.framework.listener.providers;
 
-import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;

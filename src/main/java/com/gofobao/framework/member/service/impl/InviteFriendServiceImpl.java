@@ -16,7 +16,6 @@ import com.gofobao.framework.member.vo.response.FriendsTenderInfo;
 import com.gofobao.framework.member.vo.response.InviteAwardStatistics;
 import com.gofobao.framework.member.vo.response.InviteFriends;
 import com.gofobao.framework.member.vo.response.pc.PcInviteFriends;
-import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.repository.TenderRepository;
 import com.google.common.collect.Lists;

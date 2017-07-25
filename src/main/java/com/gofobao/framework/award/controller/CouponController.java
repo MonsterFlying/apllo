@@ -5,7 +5,6 @@ import com.gofobao.framework.award.vo.request.VoCouponReq;
 import com.gofobao.framework.award.vo.request.VoTakeFlowReq;
 import com.gofobao.framework.award.vo.response.CouponTackeRes;
 import com.gofobao.framework.award.vo.response.VoViewCouponWarpRes;
-import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

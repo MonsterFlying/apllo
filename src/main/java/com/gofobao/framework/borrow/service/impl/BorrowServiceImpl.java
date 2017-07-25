@@ -86,12 +86,13 @@ public class BorrowServiceImpl implements BorrowService {
      */
     @Override
     public List<VoViewBorrowList> findAll(VoBorrowListReq voBorrowListReq) {
-
+        VoPcBorrowList warpRes = new VoPcBorrowList();
         Integer type = voBorrowListReq.getType();
         List<Integer> typeArray = Arrays.asList(-1, 1, 2, 0, 4, 5);
         Boolean flag = typeArray.contains(type);
-        if (!flag) {
-            return Collections.EMPTY_LIST;
+        if (!flag) {  //用户非法访问
+
+            return new ArrayList<>(0);
         }
         if (type == -1) {
             type = null;
@@ -106,7 +107,6 @@ public class BorrowServiceImpl implements BorrowService {
         StringBuilder pageSb = new StringBuilder(" SELECT b FROM Borrow b WHERE 1=1 ");
         StringBuilder countSb = new StringBuilder(" SELECT COUNT(id) FROM Borrow b WHERE 1=1 ");
         StringBuilder condtionSql = new StringBuilder("");
-
         // 条件
         if (type != null) {  // 全部
 
@@ -115,21 +115,18 @@ public class BorrowServiceImpl implements BorrowService {
             } else {
                 condtionSql.append(" AND b.type=" + type);
             }
-
         }
         condtionSql.append(" AND b.verifyAt IS Not NULL AND b.status NOT IN(:statusArray)");
         // 排序
-        if (type == null) {   // 全部
-            statusArray.add(3);
-            condtionSql.append(" ORDER BY FIELD(b.type,0, 4, 1, 2),(b.moneyYes / b.money) DESC, b.id DESC");
+        if (StringUtils.isEmpty(type)) {   // 全部
+            condtionSql.append(" ORDER BY (b.moneyYes / b.money) DESC,b.status ASC , FIELD(b.type,0, 4, 1, 2),b.id DESC");
         } else {
-            if (ObjectUtils.isEmpty(BorrowContants.INDEX_TYPE_CE_DAI)) {
+            if (type.equals(BorrowContants.INDEX_TYPE_CE_DAI)) {
                 condtionSql.append(" ORDER BY b.status ASC,(b.moneyYes / b.money) DESC, b.successAt DESC,b.id DESC");
             } else {
                 condtionSql.append(" ORDER BY b.status, b.successAt DESC, b.id DESC");
             }
         }
-
         Query pageQuery = entityManager.createQuery(pageSb.append(condtionSql).toString(), Borrow.class);
         pageQuery.setParameter("statusArray", statusArray);
         int firstResult = voBorrowListReq.getPageIndex() * voBorrowListReq.getPageSize();
@@ -239,12 +236,13 @@ public class BorrowServiceImpl implements BorrowService {
      */
     @Override
     public VoPcBorrowList pcFindAll(VoBorrowListReq voBorrowListReq) {
-
+        VoPcBorrowList warpRes = new VoPcBorrowList();
         Integer type = voBorrowListReq.getType();
         List<Integer> typeArray = Arrays.asList(-1, 1, 2, 0, 4, 5);
         Boolean flag = typeArray.contains(type);
-        if (!flag) {
-            return null;
+        if (!flag) {  //用户非法访问
+            warpRes.setBorrowLists(Collections.EMPTY_LIST);
+            return warpRes;
         }
         if (type == -1) {
             type = null;
@@ -272,10 +270,10 @@ public class BorrowServiceImpl implements BorrowService {
         }
         condtionSql.append(" AND b.verifyAt IS Not NULL AND b.status NOT IN(:statusArray)");
         // 排序
-        if ("-1".equals(type)) {   // 全部
-            condtionSql.append(" ORDER BY FIELD(b.type,0, 4, 1, 2),(b.moneyYes / b.money) DESC, b.id DESC");
+        if (StringUtils.isEmpty(type)) {   // 全部
+            condtionSql.append(" ORDER BY (b.moneyYes / b.money) DESC,b.status ASC , FIELD(b.type,0, 4, 1, 2),b.id DESC");
         } else {
-            if (ObjectUtils.isEmpty(BorrowContants.INDEX_TYPE_CE_DAI)) {
+            if (type.equals(BorrowContants.INDEX_TYPE_CE_DAI)) {
                 condtionSql.append(" ORDER BY b.status ASC,(b.moneyYes / b.money) DESC, b.successAt DESC,b.id DESC");
             } else {
                 condtionSql.append(" ORDER BY b.status, b.successAt DESC, b.id DESC");
@@ -294,7 +292,7 @@ public class BorrowServiceImpl implements BorrowService {
         }
 
         List<VoViewBorrowList> borrowListList = commonHandle(borrowLists, voBorrowListReq);
-        VoPcBorrowList warpRes = new VoPcBorrowList();
+
         warpRes.setBorrowLists(borrowListList);
         warpRes.setPageIndex(voBorrowListReq.getPageIndex() + 1);
         warpRes.setPageSize(voBorrowListReq.getPageSize());

@@ -1,6 +1,5 @@
 package com.gofobao.framework.system.controller.web;
 
-import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.system.biz.ArticleBiz;
 import com.gofobao.framework.system.vo.request.VoArticleReq;

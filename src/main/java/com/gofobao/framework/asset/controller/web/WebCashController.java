@@ -3,7 +3,6 @@ package com.gofobao.framework.asset.controller.web;
 import com.gofobao.framework.asset.biz.CashDetailLogBiz;
 import com.gofobao.framework.asset.vo.request.VoCashReq;
 import com.gofobao.framework.asset.vo.request.VoPcCashLogs;
-import com.gofobao.framework.asset.vo.request.VoPcRechargeReq;
 import com.gofobao.framework.asset.vo.response.VoCashLogDetailResp;
 import com.gofobao.framework.asset.vo.response.VoPreCashResp;
 import com.gofobao.framework.asset.vo.response.pc.VoCashLogWarpRes;

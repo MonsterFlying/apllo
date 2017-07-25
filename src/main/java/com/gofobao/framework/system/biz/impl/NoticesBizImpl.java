@@ -2,7 +2,6 @@ package com.gofobao.framework.system.biz.impl;
 
 import cn.jpush.api.JPushClient;
 import cn.jpush.api.push.PushResult;
-import cn.jpush.api.push.model.Message;
 import cn.jpush.api.push.model.Options;
 import cn.jpush.api.push.model.Platform;
 import cn.jpush.api.push.model.PushPayload;
@@ -38,8 +37,6 @@ import org.springframework.util.StringUtils;
 
 import java.util.Date;
 import java.util.List;
-
-import static cn.jpush.api.push.model.notification.PlatformNotification.ALERT;
 
 /**
  * Created by Max on 17/6/5.

@@ -13,10 +13,10 @@ import java.util.List;
 public class VoPcBorrowList extends VoBaseResp{
 
     @ApiModelProperty("当前页")
-    private Integer pageIndex;
+    private Integer pageIndex=0;
 
     @ApiModelProperty("页面大小")
-    private Integer pageSize;
+    private Integer pageSize=10;
 
     @ApiModelProperty("总记录数")
     private Integer totalCount=0;
