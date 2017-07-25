@@ -51,11 +51,11 @@ jixin: #银行存管
   version: 10 #版本号
   instCode: "00960001" #机构代码
   bankCode: "30050000" #交易机构代码
-  time-interval: 287 # 与存管系统相差几天
+  query-time-init: "20161010" # 与存管系统查询时间
 gofobao:
   dev: true # 开发环境
-  javaDomain: http://yu.hk1.mofasuidao.cn
-  webDomain: http://yu.hk1.mofasuidao.cn
+  javaDomain: http://20af2aaf.ngrok.io
+  webDomain: http://20af2aaf.ngrok.io
   h5Domain: http://ng.hk1.mofasuidao.cn
 #  javaDomain: http://ogmax.ngrok.club
 #  webDomain: http://ogmax.ngrok.club

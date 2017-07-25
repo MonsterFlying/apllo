@@ -4,7 +4,6 @@ import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.vo.request.VoRepayAll;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
-import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnumContants;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.NumberHelper;

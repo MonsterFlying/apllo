@@ -495,6 +495,32 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "请先设置江西银行存管账户交易密码！", VoHtmlResp.class));
         }
 
+        if (userThirdAccount.getAutoTenderState() == 0) {
+            log.info("查询用户签约状态开始");
+            CreditAuthQueryRequest creditAuthQueryRequest = new CreditAuthQueryRequest();
+            creditAuthQueryRequest.setAccountId(userThirdAccount.getAccountId());
+            creditAuthQueryRequest.setType("1");
+            creditAuthQueryRequest.setChannel(ChannelContant.APP);
+            CreditAuthQueryResponse creditAuthQueryResponse = jixinManager
+                    .send(JixinTxCodeEnum.CREDIT_AUTH_QUERY, creditAuthQueryRequest, CreditAuthQueryResponse.class);
+            if ((!ObjectUtils.isEmpty(creditAuthQueryResponse)) && (creditAuthQueryResponse.getRetCode().equalsIgnoreCase(JixinResultContants.SUCCESS))) {
+                if (creditAuthQueryResponse.getState().equalsIgnoreCase("1")) {
+                    UserThirdAccount dbEntity = userThirdAccountService.findByUserId(userThirdAccount.getUserId());
+                    dbEntity.setUpdateAt(new Date());
+                    dbEntity.setAutoTenderState(1);
+                    dbEntity.setAutoTenderOrderId(creditAuthQueryResponse.getOrderId());
+                    dbEntity.setAutoTenderTotAmount(999999999L);
+                    dbEntity.setAutoTenderTxAmount(999999999L);
+                    userThirdAccountService.save(dbEntity);
+                    return ResponseEntity
+                            .badRequest()
+                            .body(VoBaseResp.error(VoBaseResp.ERROR, "你已签约自动投标协议！", VoHtmlResp.class));
+                }
+            }
+            log.info("查询用户签约状态结束");
+        }
+
+
         AutoBidAuthRequest autoBidAuthRequest = new AutoBidAuthRequest();
         autoBidAuthRequest.setAccountId(userThirdAccount.getAccountId());
         autoBidAuthRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
@@ -549,6 +575,28 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "请先签约江西银行自动投标协议！", VoHtmlResp.class));
         }
 
+        if (userThirdAccount.getAutoTransferState() == 0) {
+            log.info("查询用户自动债权转让协议开始");
+            CreditAuthQueryRequest creditAuthQueryRequest = new CreditAuthQueryRequest();
+            creditAuthQueryRequest.setAccountId(userThirdAccount.getAccountId());
+            creditAuthQueryRequest.setType("2");
+            creditAuthQueryRequest.setChannel(ChannelContant.APP);
+            CreditAuthQueryResponse creditAuthQueryResponse = jixinManager
+                    .send(JixinTxCodeEnum.CREDIT_AUTH_QUERY, creditAuthQueryRequest, CreditAuthQueryResponse.class);
+            if ((!ObjectUtils.isEmpty(creditAuthQueryResponse)) && (creditAuthQueryResponse.getRetCode().equalsIgnoreCase(JixinResultContants.SUCCESS))) {
+                if (creditAuthQueryResponse.getState().equalsIgnoreCase("1")) {
+                    UserThirdAccount dbEntity = userThirdAccountService.findByUserId(userThirdAccount.getUserId());
+                    dbEntity.setUpdateAt(new Date());
+                    dbEntity.setAutoTransferState(1);
+                    dbEntity.setAutoTransferBondOrderId(creditAuthQueryResponse.getOrderId());
+                    userThirdAccountService.save(dbEntity);
+                    return ResponseEntity
+                            .badRequest()
+                            .body(VoBaseResp.error(VoBaseResp.ERROR, "你已经签署自动债权转让协议！", VoHtmlResp.class));
+                }
+            }
+            log.info("查询用户自动债权转让协议结束");
+        }
         AutoCreditInvestAuthRequest autoCreditInvestAuthPlusRequest = new AutoCreditInvestAuthRequest();
         autoCreditInvestAuthPlusRequest.setAccountId(userThirdAccount.getAccountId());
         autoCreditInvestAuthPlusRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));

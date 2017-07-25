@@ -8,8 +8,8 @@ import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeReq;
 import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeResp;
 import com.gofobao.framework.api.model.batch_repay.*;
-import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryReq;
-import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResp;
+import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryRequest;
+import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResponse;
 import com.gofobao.framework.api.model.debt_register.DebtRegisterRequest;
 import com.gofobao.framework.api.model.debt_register.DebtRegisterResponse;
 import com.gofobao.framework.api.model.debt_register_cancel.DebtRegisterCancelReq;
@@ -57,6 +57,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -133,7 +134,6 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "借款人未开户!");
-        //jixinHelper.generateProductId(borrowId)
         String productId = StringHelper.toString(borrowId);  // 生成标的的唯一识别码
 
         DebtRegisterRequest debtRegisterRequest = new DebtRegisterRequest();
@@ -181,11 +181,32 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
                 return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
             }
         }
-
         borrow.setBailAccountId(bailAccountId);
         borrow.setProductId(productId);
         borrowService.updateById(borrow);
-        log.error(String.format(String.format("报备标的信息: 成功 %s", new Gson().toJson(voCreateThirdBorrowReq))));
+        try {
+            DebtDetailsQueryRequest debtDetailsQueryRequest = new DebtDetailsQueryRequest();
+            debtDetailsQueryRequest.setChannel(ChannelContant.HTML);
+            debtDetailsQueryRequest.setAccountId(userThirdAccount.getAccountId());
+            debtDetailsQueryRequest.setProductId(productId);
+            debtDetailsQueryRequest.setPageSize("10");
+            debtDetailsQueryRequest.setPageNum("1");
+            DebtDetailsQueryResponse debtDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.DEBT_DETAILS_QUERY,
+                    debtDetailsQueryRequest,
+                    DebtDetailsQueryResponse.class);
+            if ((ObjectUtils.isEmpty(debtDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(debtDetailsQueryResponse.getRetCode()))) {
+                String msg = ObjectUtils.isEmpty(debtDetailsQueryResponse) ? "当前网络不稳定，请稍候重试" : debtDetailsQueryResponse.getRetMsg();
+                log.error(String.format("查询标的登记情况异常: %s", msg));
+                return ResponseEntity.ok(VoBaseResp.ok("创建标的成功!"));
+            }
+            if(StringUtils.isEmpty(debtDetailsQueryResponse.getSubPacks())){
+                log.error("查询标的登记情况异常: subPacks 为空");
+            }
+        } catch (Exception e) {
+            log.error("查询标的登记情况异常", e);
+        }
+
+        log.info(String.format(String.format("报备标的信息: 成功 %s", new Gson().toJson(voCreateThirdBorrowReq))));
         return ResponseEntity.ok(VoBaseResp.ok("创建标的成功!"));
     }
 
@@ -217,24 +238,24 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         return ResponseEntity.ok(VoBaseResp.ok("取消借款成功"));
     }
 
-    public DebtDetailsQueryResp queryThirdBorrowList(VoQueryThirdBorrowList voQueryThirdBorrowList) {
-        DebtDetailsQueryResp debtDetailsQueryResp = null;
-
+    public DebtDetailsQueryResponse queryThirdBorrowList(VoQueryThirdBorrowList voQueryThirdBorrowList) {
+        DebtDetailsQueryResponse debtDetailsQueryResponse = null;
         Long userId = voQueryThirdBorrowList.getUserId();
         String productId = voQueryThirdBorrowList.getProductId();
         String startDate = voQueryThirdBorrowList.getStartDate();
         String endDate = voQueryThirdBorrowList.getEndDate();
         String pageNum = voQueryThirdBorrowList.getPageNum();//页码 从1开始
         String pageSize = voQueryThirdBorrowList.getPageSize();
-
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "借款人未开户!");
 
-        if (ObjectUtils.isEmpty(productId) && (StringUtils.isEmpty(startDate) || StringUtils.isEmpty(endDate)) && (StringUtils.isEmpty(pageNum) || StringUtils.isEmpty(pageSize))) {
-            return debtDetailsQueryResp;
+        if (ObjectUtils.isEmpty(productId) && (StringUtils.isEmpty(startDate)
+                || StringUtils.isEmpty(endDate)) && (StringUtils.isEmpty(pageNum)
+                || StringUtils.isEmpty(pageSize))) {
+            return debtDetailsQueryResponse;
         }
 
-        DebtDetailsQueryReq request = new DebtDetailsQueryReq();
+        DebtDetailsQueryRequest request = new DebtDetailsQueryRequest();
         request.setChannel(ChannelContant.HTML);
         request.setAccountId(userThirdAccount.getAccountId());
         if (!ObjectUtils.isEmpty(productId)) {
@@ -250,13 +271,65 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             request.setPageSize(pageSize);
         }
 
-        DebtDetailsQueryResp response = jixinManager.send(JixinTxCodeEnum.DEBT_DETAILS_QUERY, request, DebtDetailsQueryResp.class);
+        DebtDetailsQueryResponse response = jixinManager.send(JixinTxCodeEnum.DEBT_DETAILS_QUERY, request, DebtDetailsQueryResponse.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
             String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
             log.error(msg);
         }
 
         return response;
+    }
+
+    @Override
+    public boolean registerBorrrowConditionCheck(Borrow borrow) {
+        Long userId = borrow.getUserId();
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        ResponseEntity<VoBaseResp> conditionResponse = ThirdAccountHelper.conditionCheck(userThirdAccount);
+        if (!conditionResponse.getStatusCode().equals(HttpStatus.OK)) {
+            log.error(String.format("查询标的登记情况异常: %s", conditionResponse.getBody().getState().getMsg()));
+            return false;
+        }
+        String productId = StringUtils.isEmpty(borrow.getProductId()) ? StringHelper.toString(borrow.getId()) : borrow.getProductId();
+        DebtDetailsQueryRequest debtDetailsQueryRequest = new DebtDetailsQueryRequest();
+        debtDetailsQueryRequest.setChannel(ChannelContant.HTML);
+        debtDetailsQueryRequest.setAccountId(userThirdAccount.getAccountId());
+        debtDetailsQueryRequest.setProductId(productId);
+        debtDetailsQueryRequest.setPageSize("10");
+        debtDetailsQueryRequest.setPageNum("1");
+        DebtDetailsQueryResponse debtDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.DEBT_DETAILS_QUERY,
+                debtDetailsQueryRequest,
+                DebtDetailsQueryResponse.class);
+        if ((ObjectUtils.isEmpty(debtDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(debtDetailsQueryResponse.getRetCode()))) {
+            String msg = ObjectUtils.isEmpty(debtDetailsQueryResponse) ? "当前网络不稳定，请稍候重试" : debtDetailsQueryResponse.getRetMsg();
+            log.error(String.format("查询标的登记情况异常: %s", msg));
+            return false;
+        }
+
+        String subPacks = debtDetailsQueryResponse.getSubPacks();
+        if (StringUtils.isEmpty(subPacks)) {
+            log.error("查询标的登记情况异常: subPacks 为空");
+            return false;
+        }
+
+        List<Map<String, String>> itemList = GSON.fromJson(subPacks, TypeTokenContants.LIST_ALL_STRING_MAP__TOKEN);
+        if (CollectionUtils.isEmpty(itemList)) {
+            log.error("查询标的登记情况异常: subPacks 为空");
+            return false;
+        }
+
+        if (itemList.size() > 1) {
+            log.error("查询标的登记情况异常: 查询集合超过1个");
+            return false;
+        }
+
+        String queryProductId = itemList.get(0).get("productId");
+        if (StringUtils.isEmpty(borrow.getProductId())) {
+            log.info("查询标的登记情况: 保存查询出来的productId");
+            borrow.setProductId(queryProductId);
+            borrow.setUpdatedAt(new Date());
+            borrowService.save(borrow);
+        }
+        return true;
     }
 
     /**
@@ -441,7 +514,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             log.error("请求体为空!");
         }
 
-        Map<String, Object> acqResMap = GSON.fromJson(repayCheckResp.getRetCode(),TypeTokenContants.MAP_TOKEN);
+        Map<String, Object> acqResMap = GSON.fromJson(repayCheckResp.getRetCode(), TypeTokenContants.MAP_TOKEN);
         Long borrowId = NumberHelper.toLong(acqResMap.get("borrowId"));
         if (!JixinResultContants.SUCCESS.equals(repayCheckResp.getRetCode())) {
             log.error("=============================(提前结清)即信批次还款检验参数回调===========================");
@@ -482,7 +555,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             log.error("回调失败! msg:" + repayRunResp.getRetMsg());
             log.error("================================================================================");
             log.error("================================================================================");
-        }else {
+        } else {
             log.error("==================================批次回调======================================");
             log.error("=============================即信批次还款处理结果回调===========================");
             log.error("回调成功!");

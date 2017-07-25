@@ -1,8 +1,6 @@
 package com.gofobao.framework.asset.biz.impl;
 
 import com.gofobao.framework.asset.biz.RechargeLogsBiz;
-import com.gofobao.framework.asset.entity.AssetLog;
-import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
 import com.gofobao.framework.asset.vo.request.VoPcRechargeReq;
 import com.gofobao.framework.asset.vo.response.pc.RechargeLogs;

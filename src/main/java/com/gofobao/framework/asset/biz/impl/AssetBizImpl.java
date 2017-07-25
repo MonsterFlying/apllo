@@ -10,6 +10,8 @@ import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
+import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
+import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.api.model.direct_recharge_online.DirectRechargeOnlineRequest;
 import com.gofobao.framework.api.model.direct_recharge_online.DirectRechargeOnlineResponse;
 import com.gofobao.framework.api.model.direct_recharge_plus.DirectRechargePlusRequest;
@@ -38,10 +40,7 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.IpHelper;
-import com.gofobao.framework.helper.RedisHelper;
-import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.entity.UserCache;
@@ -949,15 +948,66 @@ public class AssetBizImpl implements AssetBiz {
     }
 
     @Override
+    @Transactional
     public ResponseEntity<VoAvailableAssetInfoResp> accountMoney(Long userId) {
-        Asset asset = assetService.findByUserId(userId);
-
+        Asset asset = assetService.findByUserIdLock(userId);
         if (ObjectUtils.isEmpty(asset)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoAvailableAssetInfoResp.class));
         }
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if(!ObjectUtils.isEmpty(userThirdAccount)){
+            // 查询用户资金
+            BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
+            balanceQueryRequest.setChannel(ChannelContant.HTML);
+            balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
+            BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
+            if ((ObjectUtils.isEmpty(balanceQueryResponse)) || !balanceQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
+                String msg = ObjectUtils.isEmpty(balanceQueryResponse) ? "当前网络异常, 请稍后尝试!": balanceQueryResponse.getRetMsg() ;
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, msg, VoAvailableAssetInfoResp.class)) ;
+            }
 
+            double availBal = NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0;// 可用余额  账面余额-可用余额=冻结金额
+            double currBal = NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100.0;// 账面余额  账面余额-可用余额=冻结金额
+
+
+            // 查询用户操作记录
+            int pageSize = 20, pageIndex = 1, realSize = 0;
+            String accountId = userThirdAccount.getAccountId();  // 存管账户ID
+            do {
+                AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
+                accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
+                accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
+                accountDetailsQueryRequest.setStartDate(jixinTxDateHelper.getTxDateStr()); // 查询当天数据
+                accountDetailsQueryRequest.setEndDate(jixinTxDateHelper.getTxDateStr());
+                accountDetailsQueryRequest.setType("0");
+                accountDetailsQueryRequest.setAccountId(accountId);
+
+                AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
+                        accountDetailsQueryRequest,
+                        AccountDetailsQueryResponse.class);
+
+                if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
+                    String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
+                    return ResponseEntity
+                            .badRequest()
+                            .body(VoBaseResp.error(VoBaseResp.ERROR, msg, VoAvailableAssetInfoResp.class));
+                }
+
+                String subPacks = accountDetailsQueryResponse.getSubPacks();
+                if (StringUtils.isEmpty(subPacks)) {
+                    break;
+                }
+
+                Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
+                }.getType()));
+                List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
+                realSize = accountDetailsQueryItems.size();
+            } while (realSize == pageSize);
+        }
         VoAvailableAssetInfoResp resp = VoBaseResp.ok("查询成功", VoAvailableAssetInfoResp.class);
         Long noUserMoney = asset.getNoUseMoney();
         Long userMoney = asset.getUseMoney();
@@ -982,9 +1032,7 @@ public class AssetBizImpl implements AssetBiz {
         }
 
         VoCollectionResp response = VoBaseResp.ok("查询成功", VoCollectionResp.class);
-
         Long waitCollectionInterest = userCache.getWaitCollectionInterest();
-
         Long waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
         Long waitCollectionTotal = userCache.getWaitCollectionPrincipal() + userCache.getWaitCollectionInterest();
         response.setHideInterest(waitCollectionInterest);
@@ -992,7 +1040,6 @@ public class AssetBizImpl implements AssetBiz {
 
         response.setPrincipal(StringHelper.formatMon(waitCollectionPrincipal / 100d));
         response.setHidePrincipal(waitCollectionPrincipal);
-
         response.setWaitCollectionTotal(StringHelper.formatMon(waitCollectionTotal / 100d));
         response.setHideWaitCollectionTotal(waitCollectionTotal);
         return ResponseEntity.ok(response);
@@ -1060,7 +1107,6 @@ public class AssetBizImpl implements AssetBiz {
      * @param traceNo
      * @throws Exception
      */
-    @Transactional(rollbackFor = Exception.class)
     private void doOffLineAssetSynchronizedAsset(Users users, AccountDetailsQueryItem item, String traceNo) throws Exception {
         Date now = new Date();
         // 添加重置记录

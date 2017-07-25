@@ -1,6 +1,5 @@
 package com.gofobao.framework.tender.controller;
 
-import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

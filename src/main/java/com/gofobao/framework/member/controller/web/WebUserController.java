@@ -11,7 +11,6 @@ import com.gofobao.framework.member.entity.Vip;
 import com.gofobao.framework.member.vo.request.*;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.member.vo.response.VoSignInfoResp;
-import com.gofobao.framework.member.vo.response.pc.ServiceUser;
 import com.gofobao.framework.member.vo.response.pc.UserInfoExt;
 import com.gofobao.framework.member.vo.response.pc.VipInfoRes;
 import com.gofobao.framework.member.vo.response.pc.VoViewServiceUserListWarpRes;
