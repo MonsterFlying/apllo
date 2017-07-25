@@ -994,7 +994,7 @@ public class AssetBizImpl implements AssetBiz {
                     String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
                     return ResponseEntity
                             .badRequest()
-                            .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, msg, VoAvailableAssetInfoResp.class));
+                            .body(VoBaseResp.error(VoBaseResp.ERROR, msg, VoAvailableAssetInfoResp.class));
                 }
 
                 String subPacks = accountDetailsQueryResponse.getSubPacks();
