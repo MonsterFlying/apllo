@@ -139,22 +139,6 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     @Autowired
     TaskSchedulerBiz taskSchedulerBiz;
 
-    LoadingCache<String, DictValue> bankLimitCache = CacheBuilder
-            .newBuilder()
-            .expireAfterWrite(60, TimeUnit.MINUTES)
-            .maximumSize(1024)
-            .build(new CacheLoader<String, DictValue>() {
-                @Override
-                public DictValue load(String bankName) throws Exception {
-                    DictItem dictItem = dictItemService.findTopByAliasCodeAndDel("PLATFORM_BANK", 0);
-                    if (ObjectUtils.isEmpty(dictItem)) {
-                        return null;
-                    }
-
-                    return dictValueService.findTopByItemIdAndValue02(dictItem.getId(), bankName);
-                }
-            });
-
     @Autowired
     MqHelper mqHelper;
 
@@ -267,7 +251,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
         // 对于大于5万小于20万直接返回失败
-        if (voCashReq.getCashMoney() > 50000 || voCashReq.getCashMoney() < 200000) {
+        if (voCashReq.getCashMoney() > 50000 && voCashReq.getCashMoney() < 200000) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "快捷通道: 只支持小于等于5万; 大额提现: 只支持大于等于20万", VoHtmlResp.class));
@@ -300,8 +284,8 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
         boolean bigCashState = false;
         // 判断是否为大额提现
-        if(voCashReq.getCashMoney() >= 200000){
-            bigCashState = true ;
+        if (voCashReq.getCashMoney() >= 200000) {
+            bigCashState = true;
         }
 
         WithDrawRequest withDrawRequest = new WithDrawRequest();
@@ -315,8 +299,8 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         withDrawRequest.setCardNo(userThirdAccount.getCardNo());
         withDrawRequest.setAccountId(userThirdAccount.getAccountId());
         withDrawRequest.setTxAmount(StringHelper.formatDouble(new Double((cashMoney - fee) / 100D), false)); //  交易金额
-        withDrawRequest.setRouteCode(bigCashState ? "1": "2");
-        if(bigCashState){
+        withDrawRequest.setRouteCode(bigCashState ? "1" : "2");
+        if (bigCashState) {
             withDrawRequest.setCardBankCnaps(voCashReq.getBankAps()); // 联行卡号
         }
         withDrawRequest.setTxFee(StringHelper.formatDouble(new Double(fee / 100D), false));
@@ -338,8 +322,8 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             cashDetailLog.setThirdAccountId(userThirdAccount.getAccountId());
             cashDetailLog.setBankName(userThirdAccount.getBankName());
             cashDetailLog.setCardNo(userThirdAccount.getCardNo());
-            cashDetailLog.setCashType(bigCashState? 1: 0);
-            if(bigCashState){
+            cashDetailLog.setCashType(bigCashState ? 1 : 0);
+            if (bigCashState) {
                 cashDetailLog.setCompanyBankNo(voCashReq.getBankAps()); // 联行卡号
             }
             cashDetailLog.setCompanyBankNo(voCashReq.getBankAps());
@@ -457,7 +441,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         String titel = "";
         String content = "";
         Date nowDate = new Date();
-        if ((JixinResultContants.SUCCESS.equals(response.getRetCode())) || (JixinResultContants.CASH_RETRY.equals(response.getRetCode()))) { // 交易成功
+        if ((JixinResultContants.SUCCESS.equals(response.getRetCode()))) { // 交易成功
             // 更改用户提现记录
             cashDetailLog.setState(3);
             cashDetailLog.setCallbackTime(nowDate);
@@ -473,12 +457,22 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
             titel = "提现成功";
             content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 处理成功! 如有疑问请致电客服.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
-                    StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true)) ;
+                    StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
 
+        } else if ((JixinResultContants.CASH_RETRY.equals(response.getRetCode()))) {
+            log.info(String.format("大额提现回调: %s", GSON.toJson(response)));
+            // 更改用户提现记录
+            cashDetailLog.setState(3);
+            cashDetailLog.setCallbackTime(nowDate);
+            cashDetailLogService.save(cashDetailLog);
+
+
+
+            // 定时5分钟后查询
         } else {  // 交易失败
-            titel = "提现失败" ;
+            titel = "提现失败";
             content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 处理失败! 如有疑问请致电客服.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
-                    StringHelper.formatDouble(cashDetailLog.getMoney(), true)) ;
+                    StringHelper.formatDouble(cashDetailLog.getMoney(), true));
             log.info(String.format("处理提现失败: 交易流水: %s 返回状态/信息: %s/%s", seqNo, response.getRetCode(), response.getRetMsg()));
             cashDetailLog.setState(4);
             cashDetailLog.setCallbackTime(new Date());
@@ -536,9 +530,9 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     }
 
     @Override
-    public ResponseEntity<VoCashLogDetailResp> logDetail(Long id,Long userId) {
+    public ResponseEntity<VoCashLogDetailResp> logDetail(Long id, Long userId) {
         CashDetailLog cashDetailLog = cashDetailLogService.findById(id);
-        if (ObjectUtils.isEmpty(cashDetailLog)&&cashDetailLog.getUserId()!=userId) {
+        if (ObjectUtils.isEmpty(cashDetailLog) && cashDetailLog.getUserId() != userId) {
             log.error("CashDetailLogBizImpl.logDetail 查询用户提现记录不存在!");
             return ResponseEntity
                     .badRequest()
@@ -560,13 +554,13 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         Integer state = cashDetailLog.getState();
 
         String stateMsg = null;
-        if (1==state) {
+        if (1 == state) {
             stateMsg = "提现申请已取消";
-        } else if (1==state) {
+        } else if (1 == state) {
             stateMsg = "系统审核通过";
-        } else if (2==state) {
+        } else if (2 == state) {
             stateMsg = "系统审核不同通过, 如有问题请联系客服";
-        } else if (3==state) {
+        } else if (3 == state) {
             stateMsg = "提现成功";
         } else {
             stateMsg = "提现失败";
@@ -620,15 +614,15 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     @Override
     public void toExcel(VoPcCashLogs cashLogs, HttpServletResponse response) {
         List<VoCashLog> logList = cashDetailLogService.pcLogs(cashLogs);
-        if(!CollectionUtils.isEmpty(logList)){
-            LinkedHashMap<String,String> paramMaps= Maps.newLinkedHashMap();
-            paramMaps.put("createTime","时间");
-            paramMaps.put("banKName","提现银行");
-            paramMaps.put("bankNo","提现账号");
-            paramMaps.put("money","提现金额");
-            paramMaps.put("serviceCharge","手续费");
+        if (!CollectionUtils.isEmpty(logList)) {
+            LinkedHashMap<String, String> paramMaps = Maps.newLinkedHashMap();
+            paramMaps.put("createTime", "时间");
+            paramMaps.put("banKName", "提现银行");
+            paramMaps.put("bankNo", "提现账号");
+            paramMaps.put("money", "提现金额");
+            paramMaps.put("serviceCharge", "手续费");
             try {
-                ExcelUtil.listToExcel(logList,paramMaps,"资金流水",response);
+                ExcelUtil.listToExcel(logList, paramMaps, "资金流水", response);
             } catch (ExcelException e) {
                 e.printStackTrace();
             }
