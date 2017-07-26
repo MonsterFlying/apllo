@@ -1320,7 +1320,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         // 生成html
         CardBindRequest cardBindRequest = new CardBindRequest() ;
         cardBindRequest.setAccountId(userThirdAccount.getAccountId()) ;
-        cardBindRequest.setCardNo(userThirdAccount.getCardNo()) ;
+        cardBindRequest.setCardNo(bankNo) ;
         cardBindRequest.setIdType(IdTypeContant.ID_CARD) ;
         cardBindRequest.setIdNo(userThirdAccount.getIdNo()) ;
         cardBindRequest.setMobile(userThirdAccount.getMobile()) ;
