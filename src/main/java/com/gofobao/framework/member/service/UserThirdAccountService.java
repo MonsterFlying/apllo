@@ -18,6 +18,13 @@ public interface UserThirdAccountService {
     UserThirdAccount findByUserId(Long id);
 
     /**
+     * 根据存管accountId查询用户存管信息
+     * @param accountId
+     * @return
+     */
+    UserThirdAccount findByAccountId(String accountId);
+
+    /**
      * 保存存管账户
      * @param entity
      * @return
