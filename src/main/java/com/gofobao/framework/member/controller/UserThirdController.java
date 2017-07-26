@@ -51,7 +51,7 @@ public class UserThirdController {
 
 
     @ApiOperation("绑定银行卡")
-    @PostMapping("/user/third/bind/bank/{bankNo}")
+    @GetMapping("/user/third/bind/bank/{bankNo}")
     public ResponseEntity<VoHtmlResp> bindBank(HttpServletRequest httpServletRequest, @RequestAttribute(SecurityContants.USERID_KEY) Long userId,@PathVariable("bankNo") String bankNo) {
         return userThirdBiz.bindBank(httpServletRequest, userId, bankNo) ;
     }

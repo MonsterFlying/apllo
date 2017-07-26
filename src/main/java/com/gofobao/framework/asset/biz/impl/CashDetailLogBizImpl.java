@@ -465,27 +465,23 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             titel = "提现成功";
             content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 处理成功! 如有疑问请致电客服.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
                     StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
-
         } else if ((JixinResultContants.CASH_RETRY.equals(response.getRetCode()))) {
-            log.info(String.format("大额提现回调: %s", GSON.toJson(response)));
-            // 更改用户提现记录
+            // 此处考虑到资金安全, 我们使用 先扣除用户可用余额, 在由调取 5分钟 查询一次是是否提现成功或者失败
             cashDetailLog.setState(3);
             cashDetailLog.setCallbackTime(nowDate);
             cashDetailLogService.save(cashDetailLog);
-            // 五分中查询一次
-            TaskScheduler taskScheduler = new TaskScheduler();
-            taskScheduler.setCreateAt(new Date());
-            taskScheduler.setUpdateAt(new Date());
-            taskScheduler.setType(TaskSchedulerConstants.CASH_FORM);
-            Map<String, String> data = new HashMap<>(1);
-            data.put("cashId", cashDetailLog.getId().toString());
-            Gson gson = new Gson();
-            taskScheduler.setTaskData(gson.toJson(data));
-            taskScheduler.setTaskNum(Integer.MAX_VALUE - 2);
-            taskScheduler = taskSchedulerBiz.save(taskScheduler);
-            if (ObjectUtils.isEmpty(taskScheduler.getId())) {
-                log.error(String.format("添加大额提现查询失败 %s", gson.toJson(data)));
-            }
+            // 更改用户资金
+            CapitalChangeEntity entity = new CapitalChangeEntity();
+            entity.setType(CapitalChangeEnum.Cash);
+            entity.setMoney(cashDetailLog.getMoney().intValue());
+            entity.setUserId(userId);
+            entity.setToUserId(userId);
+            capitalChangeHelper.capitalChange(entity);
+            log.info(String.format("大额提现回调需要5分钟过后查证: 交易流水: %s 返回状态/信息: %s/%s", seqNo, response.getRetCode(), response.getRetMsg()));
+
+            titel = "提现成功";
+            content = String.format("敬爱的用户您好! 你在[%s]提交%s元的大额提现请求, 处理成功! 如有疑问请致电客服.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
+                    StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
         } else {  // 交易失败
             titel = "提现失败";
             content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 处理失败! 如有疑问请致电客服.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
@@ -644,53 +640,6 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                 e.printStackTrace();
             }
         }
-    }
-
-    @Override
-    public boolean doBigCashForm(Long cashId) {
-        CashDetailLog cashDetailLog = cashDetailLogService.findById(cashId);
-        Date callbackTime = cashDetailLog.getCallbackTime();
-        Date nowDate = new Date();
-        Date limitData = DateHelper.addMinutes(callbackTime, 5);  // 人行通道 提现回调 5分钟必定会处理成功
-        if(DateHelper.diffInDays(nowDate, limitData, false) < 0){
-            return false ;
-        }
-        Long userId = cashDetailLog.getUserId();
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        // 查询资金记录
-        int pageSize = 20, pageIndex = 1, realSize = 0;
-        String accountId = userThirdAccount.getAccountId();  // 存管账户ID
-        List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
-        do {
-            AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
-            accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
-            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
-            accountDetailsQueryRequest.setStartDate(DateHelper.dateToString(callbackTime, DateHelper.DATE_FORMAT_YMD_NUM));
-            accountDetailsQueryRequest.setEndDate(DateHelper.dateToString(limitData, DateHelper.DATE_FORMAT_YMD_NUM));
-            accountDetailsQueryRequest.setType("9");
-            accountDetailsQueryRequest.setTranType("2820");  // 查询大额提现
-            accountDetailsQueryRequest.setAccountId(accountId);
-            AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
-                    accountDetailsQueryRequest,
-                    AccountDetailsQueryResponse.class);
-
-            if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
-                String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
-                log.error(String.format("资金同步: %s", msg));
-                return false;
-            }
-
-            String subPacks = accountDetailsQueryResponse.getSubPacks();
-            if (StringUtils.isEmpty(subPacks)) {
-                break;
-            }
-            Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
-            }.getType()));
-            List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
-            realSize = accountDetailsQueryItems.size();
-            accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
-        } while (realSize == pageSize);
-        return false;
     }
 
     @Override

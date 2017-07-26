@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -75,6 +76,19 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
         }
         File file = new File(String.format("%s%s%s", filePath, File.separator, fileName));
         List<String> strings = Files.readLines(file, Charsets.UTF_8);
+        BufferedReader bufferedReader = Files.newReader(file, Charsets.UTF_8);
+        bufferedReader.lines().forEach(line ->{
+
+        });
+
+        // to wirte execl file
+
+
+        // 比较当天大额提现
+
+        // 比较当天是否存在活期收益
+
+
         Gson gson = new Gson();
 
         List<Map<String, String>> dataList = new ArrayList<>(strings.size());

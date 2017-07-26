@@ -213,6 +213,11 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>POI</artifactId>
+            <version>3.16</version>
+        </dependency>
     </dependencies>
 
     <build>
