@@ -45,6 +45,8 @@ import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.scheduler.biz.TaskSchedulerBiz;
+import com.gofobao.framework.scheduler.constants.TaskSchedulerConstants;
+import com.gofobao.framework.scheduler.entity.TaskScheduler;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.entity.Notices;
@@ -299,7 +301,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         withDrawRequest.setCardNo(userThirdAccount.getCardNo());
         withDrawRequest.setAccountId(userThirdAccount.getAccountId());
         withDrawRequest.setTxAmount(StringHelper.formatDouble(new Double((cashMoney - fee) / 100D), false)); //  交易金额
-        withDrawRequest.setRouteCode(bigCashState ? "1" : "2");
+        withDrawRequest.setRouteCode(bigCashState ? "2" : "0");
         if (bigCashState) {
             withDrawRequest.setCardBankCnaps(voCashReq.getBankAps()); // 联行卡号
         }
@@ -465,10 +467,20 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             cashDetailLog.setState(3);
             cashDetailLog.setCallbackTime(nowDate);
             cashDetailLogService.save(cashDetailLog);
-
-
-
-            // 定时5分钟后查询
+            // 五分中查询一次
+            TaskScheduler taskScheduler = new TaskScheduler();
+            taskScheduler.setCreateAt(new Date());
+            taskScheduler.setUpdateAt(new Date());
+            taskScheduler.setType(TaskSchedulerConstants.CASH_FORM);
+            Map<String, String> data = new HashMap<>(1);
+            data.put("cashId", cashDetailLog.getId().toString());
+            Gson gson = new Gson();
+            taskScheduler.setTaskData(gson.toJson(data));
+            taskScheduler.setTaskNum(Integer.MAX_VALUE - 2);
+            taskScheduler = taskSchedulerBiz.save(taskScheduler);
+            if (ObjectUtils.isEmpty(taskScheduler.getId())) {
+                log.error(String.format("添加大额提现查询失败 %s", gson.toJson(data)));
+            }
         } else {  // 交易失败
             titel = "提现失败";
             content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 处理失败! 如有疑问请致电客服.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
@@ -630,6 +642,11 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
 
+    }
+
+    @Override
+    public boolean doBigCashForm(Long cashId) {
+        return false;
     }
 
     @Override

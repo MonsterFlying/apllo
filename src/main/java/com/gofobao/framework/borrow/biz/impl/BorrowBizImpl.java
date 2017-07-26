@@ -2228,4 +2228,5 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "初审失败!"));
         }
     }
+
 }
