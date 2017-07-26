@@ -2,6 +2,7 @@ package com.gofobao.framework.member.biz;
 
 import com.gofobao.framework.borrow.vo.request.VoAdminModifyPasswordResp;
 import com.gofobao.framework.borrow.vo.request.VoAdminOpenAccountResp;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
@@ -198,4 +199,12 @@ public interface UserThirdBiz {
      */
     ResponseEntity<VoHtmlResp> adminModifyOpenAccPwd(HttpServletRequest httpServletRequest, VoAdminModifyPasswordResp voAdminModifyPasswordResp);
 
+
+    /**
+     * 解除银行卡
+     * @param httpServletRequest
+     * @param userId
+     * @return
+     */
+    ResponseEntity<VoBaseResp> delBank(HttpServletRequest httpServletRequest, Long userId);
 }

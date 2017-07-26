@@ -2,6 +2,7 @@ package com.gofobao.framework.member.controller;
 
 import com.gofobao.framework.borrow.vo.request.VoAdminModifyPasswordResp;
 import com.gofobao.framework.borrow.vo.request.VoAdminOpenAccountResp;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.biz.UserThirdBiz;
 import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
@@ -47,6 +48,25 @@ public class UserThirdController {
     public ResponseEntity<VoHtmlResp> modifyOpenAccPwd(HttpServletRequest httpServletRequest, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return userThirdBiz.modifyOpenAccPwd(httpServletRequest, userId) ;
     }
+
+
+    @ApiOperation("绑定银行卡")
+    @PostMapping("/user/third/bind/bank/{cardNo}")
+    public ResponseEntity<VoHtmlResp> bindBank(HttpServletRequest httpServletRequest, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return userThirdBiz.modifyOpenAccPwd(httpServletRequest, userId) ;
+    }
+
+
+    @ApiOperation("解除银行卡绑定")
+    @PostMapping("/user/third/del/bank")
+    public ResponseEntity<VoBaseResp> delBank(HttpServletRequest httpServletRequest, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return userThirdBiz.delBank(httpServletRequest, userId) ;
+    }
+
+
+
+
+
 
 
     @ApiOperation("银行存管页面中的忘记密码")
