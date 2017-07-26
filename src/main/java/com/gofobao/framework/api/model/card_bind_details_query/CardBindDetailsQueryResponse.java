@@ -9,7 +9,7 @@ import lombok.Data;
  */
 @Data
 public class CardBindDetailsQueryResponse extends JixinBaseResponse {
-    private String accountid ;
+    private String accountId ;
     private String name ;
     private String totalItems ;
     private String subPacks ;

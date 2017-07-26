@@ -5,6 +5,10 @@ import com.gofobao.framework.api.contants.IdTypeContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.helper.JixinTxDateHelper;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.api.model.with_daw.WithDrawRequest;
@@ -57,6 +61,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -113,15 +118,15 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     @Autowired
     BankAccountBizImpl bankAccountBiz;
 
+
+
     @Value("${gofobao.javaDomain}")
     String javaDomain;
 
     @Value("${gofobao.h5Domain}")
     String h5Domain;
 
-
     static final Gson GSON = new Gson();
-
     @Value("${gofobao.aliyun-bankaps-url}")
     String aliyunQueryBankapsUrl;
 
@@ -646,6 +651,48 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
     @Override
     public boolean doBigCashForm(Long cashId) {
+        CashDetailLog cashDetailLog = cashDetailLogService.findById(cashId);
+        Date callbackTime = cashDetailLog.getCallbackTime();
+        Date nowDate = new Date();
+        Date limitData = DateHelper.addMinutes(callbackTime, 15);
+        if(DateHelper.diffInDays(nowDate, limitData, false) < 0){
+            return false ;
+        }
+        Long userId = cashDetailLog.getUserId();
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        // 查询资金记录
+        int pageSize = 20, pageIndex = 1, realSize = 0;
+        String accountId = userThirdAccount.getAccountId();  // 存管账户ID
+        List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
+        do {
+            AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
+            accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
+            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
+            accountDetailsQueryRequest.setStartDate(DateHelper.dateToString(callbackTime, DateHelper.DATE_FORMAT_YMD_NUM));
+            accountDetailsQueryRequest.setEndDate(DateHelper.dateToString(callbackTime, DateHelper.DATE_FORMAT_YMD_NUM));
+            accountDetailsQueryRequest.setType("9");
+            accountDetailsQueryRequest.setTranType("2820");
+            accountDetailsQueryRequest.setAccountId(accountId);
+            AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
+                    accountDetailsQueryRequest,
+                    AccountDetailsQueryResponse.class);
+
+            if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
+                String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
+                log.error(String.format("资金同步: %s", msg));
+                return false;
+            }
+
+            String subPacks = accountDetailsQueryResponse.getSubPacks();
+            if (StringUtils.isEmpty(subPacks)) {
+                break;
+            }
+            Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
+            }.getType()));
+            List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
+            realSize = accountDetailsQueryItems.size();
+            accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
+        } while (realSize == pageSize);
         return false;
     }
 

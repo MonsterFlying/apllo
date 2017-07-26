@@ -1163,7 +1163,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
                 || (asset.getCollection() != 0)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "不满住解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "不满足解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零"));
         }
 
         // 查询即信账户余额
@@ -1183,7 +1183,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         if (currBal != 0) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "不满住解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零")) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "不满足解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零")) ;
         }
         CardBindItem cardInfoByThird = null ;
         try {
@@ -1223,7 +1223,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             if(!CollectionUtils.isEmpty(creditDetailsQueryItemList)){
                 return ResponseEntity
                         .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR, "不满住解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零")) ;
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "不满足解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零")) ;
             }
         }
 
@@ -1433,7 +1433,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
                 CardBindDetailsQueryResponse.class);
 
         if(ObjectUtils.isEmpty(cardBindDetailsQueryResponse)
-                && cardBindDetailsQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)){
+                && !cardBindDetailsQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)){
             String msg = ObjectUtils.isEmpty(cardBindDetailsQueryResponse)?  " 查询银行卡信息, 网络请求超时"
                     : cardBindDetailsQueryResponse.getRetMsg() ;
             throw new Exception(msg) ;
