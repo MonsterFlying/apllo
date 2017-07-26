@@ -139,10 +139,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         Borrow borrow = borrowService.findById(borrowId);
         Preconditions.checkNotNull(borrow, "批次放款调用: 标的信息为空 ");
         UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());// 收款人存管账户记录
-        ResponseEntity<VoBaseResp> conditionResponse = ThirdAccountHelper.conditionCheck(takeUserThirdAccount);
-        if (!conditionResponse.getStatusCode().equals(HttpStatus.OK)) {
-            return conditionResponse;
-        }
+        Preconditions.checkNotNull(takeUserThirdAccount, "借款人未开户!") ;
         Long takeUserId = borrow.getTakeUserId();
         if (!ObjectUtils.isEmpty(takeUserId)) {
             takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
@@ -169,10 +166,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 continue;
             }
             tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
-            ResponseEntity<VoBaseResp> tenderUserConditionResponse = ThirdAccountHelper.conditionCheck(tenderUserThirdAccount);
-            if (!tenderUserConditionResponse.getStatusCode().equals(HttpStatus.OK)) {
-                return tenderUserConditionResponse;
-            }
+            Preconditions.checkNotNull(tenderUserThirdAccount, "投资人未开户!") ;
 
             validMoney = tender.getValidMoney();//投标有效金额
             sumCount += validMoney; //放款总金额
@@ -942,10 +936,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             repay.setProductId(borrow.getProductId());
             repay.setAuthCode(tender.getAuthCode());
             UserThirdAccount userThirdAccount = userThirdAccountMap.get(tender.getUserId());
-            ResponseEntity<VoBaseResp> thirdAccountResponse = ThirdAccountHelper.conditionCheck(userThirdAccount);
-            if (!thirdAccountResponse.getStatusCode().equals(HttpStatus.OK)) {
-                throw new Exception(String.format("当前划款人中存在未开户: 用户ID: %s", tender.getUserId()));
-            }
+            Preconditions.checkNotNull(userThirdAccount, "投资人未开户!") ;
             repay.setForAccountId(userThirdAccount.getAccountId());
             repayList.add(repay);
             borrowCollection.setTRepayOrderId(orderId);

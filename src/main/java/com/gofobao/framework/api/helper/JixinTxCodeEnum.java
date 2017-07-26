@@ -184,12 +184,12 @@ public enum JixinTxCodeEnum {
             "批次放款"
     ),
     /**
-     * 查询用户资金
+     * 电子账户资金交易明细查询
      */
     ACCOUNT_DETAILS_QUERY(
             "accountDetailsQuery",
             "/escrow/p2p/online",
-            "查询用户资金"
+            "电子账户资金交易明细查询"
     ),
     /**
      * 批次融资人还担保账户垫款

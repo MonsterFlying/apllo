@@ -388,10 +388,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //检查还款账户是否完成存管操作  与  完成必需操作
         //===================================================================
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        ResponseEntity<VoBaseResp> userThirdAccountResponse = ThirdAccountHelper.conditionCheck(userThirdAccount);
-        if (!userThirdAccountResponse.getStatusCode().equals(HttpStatus.OK)) {
-            return userThirdAccountResponse;
-        }
+        Preconditions.checkNotNull(userThirdAccount, "借款人未开户!") ;
 
         int repayInterest = (int) (borrowRepayment.getInterest() * interestPercent); //还款利息
         int repayMoney = borrowRepayment.getPrincipal() + repayInterest;//还款金额

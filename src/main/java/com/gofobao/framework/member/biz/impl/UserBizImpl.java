@@ -1,5 +1,6 @@
 package com.gofobao.framework.member.biz.impl;
 
+import com.gofobao.framework.asset.biz.AssetSynBiz;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
@@ -88,6 +89,9 @@ public class UserBizImpl implements UserBiz {
 
     @Autowired
     MacthHelper macthHelper;
+
+    @Autowired
+    AssetSynBiz assetSynBiz ;
 
 
     @Value("${jwt.header}")
@@ -243,6 +247,7 @@ public class UserBizImpl implements UserBiz {
             voBasicUserInfoResp.setBankState(!StringUtils.isEmpty(userThirdAccount.getCardNo()));
             voBasicUserInfoResp.setAutoTenderState(userThirdAccount.getAutoTenderState().equals(1));
             voBasicUserInfoResp.setAutoTranferState(userThirdAccount.getAutoTransferState().equals(1));
+            assetSynBiz.doAssetSyn(user.getId());
         }
 
 
