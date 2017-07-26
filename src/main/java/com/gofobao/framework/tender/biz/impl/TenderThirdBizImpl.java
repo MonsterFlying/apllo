@@ -179,7 +179,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
 
         double transferFeeRate = Math.min(0.004 + 0.0008 * (borrow.getTotalOrder() - 1), 0.0128); // 获取债权转让费用
         UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
-        ResponseEntity<VoBaseResp> thirdAccountConditionResponse = ThirdAccountHelper.conditionCheck(borrowUserThirdAccount);
+        ResponseEntity<VoBaseResp> thirdAccountConditionResponse = ThirdAccountHelper.allConditionCheck(borrowUserThirdAccount);
         if (!thirdAccountConditionResponse.getStatusCode().equals(HttpStatus.OK)) {
             return thirdAccountConditionResponse;
         }

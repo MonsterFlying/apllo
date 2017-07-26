@@ -207,4 +207,30 @@ public interface UserThirdBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> delBank(HttpServletRequest httpServletRequest, Long userId);
+
+
+    /**
+     * 添加银行卡绑定
+     * @param httpServletRequest
+     * @param userId
+     * @param bankNo
+     * @return
+     */
+    ResponseEntity<VoHtmlResp> bindBank(HttpServletRequest httpServletRequest, Long userId, String bankNo);
+
+
+    /**
+     * 绑定银行卡回调
+     * @param httpServletRequest
+     * @return
+     */
+    ResponseEntity<String> bankBindCallback(HttpServletRequest httpServletRequest);
+
+    /**
+     * 银行卡解绑回调
+     * @param id
+     * @param model
+     * @return
+     */
+    String showBindCard(Long id, Model model);
 }

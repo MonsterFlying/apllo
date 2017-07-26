@@ -315,10 +315,15 @@ public enum JixinTxCodeEnum {
             "/escrow/p2p/online",
             "解绑银行卡"
     ),
-    CARD_BIND_PLUS(
-            "cardBindPlus",
-            "/escrow/p2p/online",
-            "绑定银行卡增强"
+    CARD_BIND(
+            "cardBind",
+            "/escrow/p2p/page/mobile",
+            "绑定银行卡"
+    ),
+    CARD_BIND_DETAILS_QUERY(
+            "cardBindDetailsQuery",
+                    "/escrow/p2p/online",
+                    "绑卡关系查询"
     );
 
 

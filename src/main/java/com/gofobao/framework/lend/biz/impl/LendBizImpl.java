@@ -271,7 +271,7 @@ public class LendBizImpl implements LendBiz {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> lend(VoLend voLend) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voLend.getUserId());
-        ResponseEntity<VoBaseResp> conditionCheckResponse = ThirdAccountHelper.conditionCheck(userThirdAccount);
+        ResponseEntity<VoBaseResp> conditionCheckResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
         if (!conditionCheckResponse.getStatusCode().equals(HttpStatus.OK)) {
             return conditionCheckResponse;
         }

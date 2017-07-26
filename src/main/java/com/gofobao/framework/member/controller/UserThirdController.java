@@ -51,9 +51,9 @@ public class UserThirdController {
 
 
     @ApiOperation("绑定银行卡")
-    @PostMapping("/user/third/bind/bank/{cardNo}")
-    public ResponseEntity<VoHtmlResp> bindBank(HttpServletRequest httpServletRequest, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        return userThirdBiz.modifyOpenAccPwd(httpServletRequest, userId) ;
+    @PostMapping("/user/third/bind/bank/{bankNo}")
+    public ResponseEntity<VoHtmlResp> bindBank(HttpServletRequest httpServletRequest, @RequestAttribute(SecurityContants.USERID_KEY) Long userId,@PathVariable("bankNo") String bankNo) {
+        return userThirdBiz.bindBank(httpServletRequest, userId, bankNo) ;
     }
 
 
@@ -64,9 +64,11 @@ public class UserThirdController {
     }
 
 
-
-
-
+    @ApiOperation("银行卡绑定回调")
+    @PostMapping("/pub/third/bank/bind/callback")
+    public ResponseEntity<String> bankBindCallback(HttpServletRequest httpServletRequest) {
+        return userThirdBiz.bankBindCallback(httpServletRequest) ;
+    }
 
 
     @ApiOperation("银行存管页面中的忘记密码")

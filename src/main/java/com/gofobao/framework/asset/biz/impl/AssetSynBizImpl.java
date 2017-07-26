@@ -14,7 +14,6 @@ import com.gofobao.framework.asset.biz.AssetSynBiz;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetLogService;
 import com.gofobao.framework.asset.service.AssetService;
-import com.gofobao.framework.asset.vo.response.VoAvailableAssetInfoResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.ThirdAccountHelper;
@@ -75,7 +74,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
         Preconditions.checkNotNull(asset, "资金同步: 查询用户资产为空");
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        ResponseEntity<VoBaseResp> conditionResponse = ThirdAccountHelper.conditionCheck(userThirdAccount);
+        ResponseEntity<VoBaseResp> conditionResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
         if (!conditionResponse.getStatusCode().equals(HttpStatus.OK)) {
             return asset;
         }
