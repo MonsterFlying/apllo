@@ -7,6 +7,8 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -77,6 +79,8 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
         File file = new File(String.format("%s%s%s", filePath, File.separator, fileName));
         List<String> strings = Files.readLines(file, Charsets.UTF_8);
         BufferedReader bufferedReader = Files.newReader(file, Charsets.UTF_8);
+        XSSFWorkbook xwb = new XSSFWorkbook();//创建excel表格的工作空间
+        XSSFSheet sheet = xwb.createSheet();
         bufferedReader.lines().forEach(line ->{
 
         });
