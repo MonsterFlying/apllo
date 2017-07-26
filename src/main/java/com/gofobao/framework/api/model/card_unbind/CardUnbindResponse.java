@@ -9,6 +9,6 @@ import lombok.Data;
  */
 @Data
 public class CardUnbindResponse extends JixinBaseResponse {
-    private String accountid ;
+    private String accountId ;
     private String acqRes ;
 }

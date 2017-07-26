@@ -1236,7 +1236,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         cardUnbindRequest.setName(userThirdAccount.getName());
 
         CardUnbindResponse cardUnbindResponse = jixinManager.send(JixinTxCodeEnum.CARD_UNBIND, cardUnbindRequest, CardUnbindResponse.class);
-        if(ObjectUtils.isEmpty(cardUnbindResponse) || JixinResultContants.SUCCESS.equalsIgnoreCase(cardUnbindResponse.getRetCode())){
+        if(ObjectUtils.isEmpty(cardUnbindResponse) || !JixinResultContants.SUCCESS.equalsIgnoreCase(cardUnbindResponse.getRetCode())){
             String msg = ObjectUtils.isEmpty(cardUnbindResponse) ? "当前网络异常, 请稍后尝试!" : cardUnbindResponse.getRetMsg();
             log.error(String.format("解绑异常: %s", msg));
             return ResponseEntity
