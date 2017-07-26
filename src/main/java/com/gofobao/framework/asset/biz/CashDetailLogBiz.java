@@ -107,4 +107,11 @@ public interface CashDetailLogBiz {
      */
     void toExcel(VoPcCashLogs cashLogs, HttpServletResponse response);
 
+
+    /**
+     * 大额提现的确认
+     * @param cashId
+     * @return
+     */
+    boolean doBigCashForm(Long cashId);
 }

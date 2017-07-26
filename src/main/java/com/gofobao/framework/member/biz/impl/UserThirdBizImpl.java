@@ -11,13 +11,27 @@ import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthRequest;
 import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthResponse;
 import com.gofobao.framework.api.model.auto_credit_invest_auth.AutoCreditInvestAuthRequest;
 import com.gofobao.framework.api.model.auto_credit_invest_auth.AutoCreditInvestAuthResponse;
+import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
+import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
+import com.gofobao.framework.api.model.card_bind.CardBindRequest;
+import com.gofobao.framework.api.model.card_bind.CardBindResponse;
+import com.gofobao.framework.api.model.card_bind_details_query.CardBindDetailsQueryRequest;
+import com.gofobao.framework.api.model.card_bind_details_query.CardBindDetailsQueryResponse;
+import com.gofobao.framework.api.model.card_bind_details_query.CardBindItem;
+import com.gofobao.framework.api.model.card_unbind.CardUnbindRequest;
+import com.gofobao.framework.api.model.card_unbind.CardUnbindResponse;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
+import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryItem;
+import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryRequest;
+import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryResponse;
 import com.gofobao.framework.api.model.password_reset.PasswordResetRequest;
 import com.gofobao.framework.api.model.password_reset.PasswordResetResponse;
 import com.gofobao.framework.api.model.password_set.PasswordSetRequest;
 import com.gofobao.framework.api.model.password_set.PasswordSetResponse;
+import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.entity.BankAccount;
+import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.BankAccountService;
 import com.gofobao.framework.award.contants.RedPacketContants;
 import com.gofobao.framework.borrow.vo.request.VoAdminModifyPasswordResp;
@@ -42,6 +56,8 @@ import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
+import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
+import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -51,10 +67,13 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.util.Base64Utils;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -81,6 +100,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Autowired
     RedisHelper redisHelper;
+
+    @Autowired
+    AssetService assetService;
 
     @Autowired
     UserThirdAccountService userThirdAccountService;
@@ -951,8 +973,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
         // 8.保存银行存管账户到用户中
         UserThirdAccount entity = userThirdAccountService.findByDelUseid(userId);  // 防止重复开户
-        if(ObjectUtils.isEmpty(entity)){
-           entity = new UserThirdAccount();
+        if (ObjectUtils.isEmpty(entity)) {
+            entity = new UserThirdAccount();
         }
         Date nowDate = new Date();
         entity.setUpdateAt(nowDate);
@@ -1064,7 +1086,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
         // 提示用户开户不成功
         if (ObjectUtils.isEmpty(userThirdAccount)) {
-            return ResponseEntity.ok("开户失败!") ;
+            return ResponseEntity.ok("开户失败!");
         }
         PasswordSetRequest passwordSetRequest = new PasswordSetRequest();
         passwordSetRequest.setMobile(userThirdAccount.getMobile());
@@ -1123,8 +1145,316 @@ public class UserThirdBizImpl implements UserThirdBiz {
         return ResponseEntity.ok(voHtmlResp);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoBaseResp> delBank(HttpServletRequest httpServletRequest, Long userId) {
+        // 查询本地账户余额/ 待收/ 待还
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        ResponseEntity<VoBaseResp> voBaseResp = ThirdAccountHelper.allConditionCheck(userThirdAccount);
+        if (!voBaseResp.getStatusCode().equals(HttpStatus.OK)) {
+            return voBaseResp;
+        }
+
+        Asset asset = assetService.findByUserIdLock(userId);
+        Preconditions.checkNotNull(asset);
+        if ((asset.getUseMoney() != 0)
+                || (asset.getNoUseMoney() != 0)
+                || (asset.getPayment() != 0)
+                || (asset.getCollection() != 0)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "不满足解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零"));
+        }
+
+        // 查询即信账户余额
+        BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
+        balanceQueryRequest.setChannel(ChannelContant.HTML);
+        balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
+        BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
+        if ((ObjectUtils.isEmpty(balanceQueryResponse)) || !balanceQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
+            String msg = ObjectUtils.isEmpty(balanceQueryResponse) ? "当前网络异常, 请稍后尝试!" : balanceQueryResponse.getRetMsg();
+            log.error(String.format("资金同步: %s", msg));
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, msg));
+        }
+
+        double currBal = NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100.0;
+        if (currBal != 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "不满足解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零")) ;
+        }
+        CardBindItem cardInfoByThird = null ;
+        try {
+            cardInfoByThird = findCardInfoByThird(userThirdAccount.getAccountId());
+        } catch (Exception e) {
+            log.error("银行卡解绑异常", e);
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前网络异常,请稍后重试")) ;
+        }
+
+        String txnDate = cardInfoByThird.getTxnDate();
+        Date nowDate = new Date() ;
+        // 查询债权关系
+        CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
+        creditDetailsQueryRequest.setAccountId(userThirdAccount.getAccountId()) ;
+        creditDetailsQueryRequest.setStartDate(txnDate) ;
+        creditDetailsQueryRequest.setEndDate(DateHelper.dateToString(nowDate, DateHelper.DATE_FORMAT_YMD_NUM )) ;
+        creditDetailsQueryRequest.setState("1") ;
+        creditDetailsQueryRequest.setPageNum("1");
+        creditDetailsQueryRequest.setPageSize("10");
+        CreditDetailsQueryResponse creditDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.CREDIT_DETAILS_QUERY,
+                creditDetailsQueryRequest,
+                CreditDetailsQueryResponse.class);
+
+        if(ObjectUtils.isEmpty(creditDetailsQueryRequest) || !JixinResultContants.SUCCESS.equalsIgnoreCase(creditDetailsQueryResponse.getRetCode())){
+            String msg = ObjectUtils.isEmpty(balanceQueryResponse) ? "当前网络异常, 请稍后尝试!" : balanceQueryResponse.getRetMsg();
+            log.error(String.format("债权明细查询: %s", msg));
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, msg));
+        }
+
+        String subPacks = creditDetailsQueryResponse.getSubPacks();
+        if(!StringUtils.isEmpty(subPacks)){
+            List<CreditDetailsQueryItem> creditDetailsQueryItemList = new Gson().fromJson(subPacks, new TypeToken<List<CreditDetailsQueryItem>>(){}.getType()) ;
+            if(!CollectionUtils.isEmpty(creditDetailsQueryItemList)){
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "不满足解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零")) ;
+            }
+        }
+
+        CardUnbindRequest cardUnbindRequest = new CardUnbindRequest() ;
+        cardUnbindRequest.setAccountId(userThirdAccount.getAccountId()) ;
+        cardUnbindRequest.setCardNo(userThirdAccount.getCardNo()) ;
+        cardUnbindRequest.setIdType(IdTypeContant.ID_CARD) ;
+        cardUnbindRequest.setIdNo(userThirdAccount.getIdNo()) ;
+        cardUnbindRequest.setMobile(userThirdAccount.getMobile()) ;
+        cardUnbindRequest.setName(userThirdAccount.getName());
+
+        CardUnbindResponse cardUnbindResponse = jixinManager.send(JixinTxCodeEnum.CARD_UNBIND, cardUnbindRequest, CardUnbindResponse.class);
+        if(ObjectUtils.isEmpty(cardUnbindResponse) || !JixinResultContants.SUCCESS.equalsIgnoreCase(cardUnbindResponse.getRetCode())){
+            String msg = ObjectUtils.isEmpty(cardUnbindResponse) ? "当前网络异常, 请稍后尝试!" : cardUnbindResponse.getRetMsg();
+            log.error(String.format("解绑异常: %s", msg));
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, msg));
+        }
+
+        userThirdAccount.setCardNo("");
+        userThirdAccount.setCardNoBindState(1);
+        userThirdAccount.setUpdateAt(nowDate);
+        userThirdAccountService.save(userThirdAccount) ;
+
+        return ResponseEntity.ok(VoBaseResp.ok("银行卡解绑成功!")) ;
+    }
+
+    @Override
+    public ResponseEntity<VoHtmlResp> bindBank(HttpServletRequest httpServletRequest, Long userId, String bankNo) {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoHtmlResp.class));
+        }
+
+        if (userThirdAccount.getPasswordState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoHtmlResp.class));
+        }
+
+        if (userThirdAccount.getAutoTransferState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoHtmlResp.class));
+        }
+
+
+        if (userThirdAccount.getAutoTenderState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoHtmlResp.class));
+        }
+
+        String bankName = null;
+        // 获取银行卡信息
+        try {
+            BankBinHelper.BankInfo bankInfo = bankBinHelper.find(bankNo);
+            if (ObjectUtils.isEmpty(bankInfo)) {
+                log.error("银行卡绑定: 查无此银行卡号, 如有问题请联系平台客户!");
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "查无此银行卡号, 如有问题请联系平台客户!", VoHtmlResp.class));
+            }
+
+            if (!bankInfo.getCardType().equals("借记卡")) {
+                log.error("银行卡绑定: 银行卡类型必须为借记卡!");
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "银行卡类型必须为借记卡!", VoHtmlResp.class));
+            }
+
+            bankName = bankInfo.getBankName();
+        } catch (Throwable e) {
+            log.error("银行卡绑定: 开户查询银行卡异常");
+        }
+
+        // 6 判断银行卡
+        DictValue dictValue = null;
+        try {
+            dictValue = bankLimitCache.get(bankName);
+        } catch (Throwable e) {
+            log.error("银行卡绑定: 查询平台支持银行异常", e);
+        }
+        if (ObjectUtils.isEmpty(dictValue)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, String.format("当前平台不支持%s", bankName), VoHtmlResp.class));
+        }
+
+
+        // 生成html
+        CardBindRequest cardBindRequest = new CardBindRequest() ;
+        cardBindRequest.setAccountId(userThirdAccount.getAccountId()) ;
+        cardBindRequest.setCardNo(userThirdAccount.getCardNo()) ;
+        cardBindRequest.setIdType(IdTypeContant.ID_CARD) ;
+        cardBindRequest.setIdNo(userThirdAccount.getIdNo()) ;
+        cardBindRequest.setMobile(userThirdAccount.getMobile()) ;
+        cardBindRequest.setName(userThirdAccount.getName());
+        cardBindRequest.setAcqRes(String.valueOf(userId));
+        cardBindRequest.setRetUrl(String.format("%s%s%s", javaDomain, "/pub/bindCard/show/", userId));
+        cardBindRequest.setNotifyUrl(String.format("%s%s", javaDomain, "/pub/third/bank/bind/callback"));
+
+        String html = jixinManager.getHtml(JixinTxCodeEnum.CARD_BIND, cardBindRequest);
+        VoHtmlResp voHtmlResp = VoBaseResp.ok("操作成功", VoHtmlResp.class);
+        try {
+            voHtmlResp.setHtml(Base64Utils.encodeToString(html.getBytes("UTF-8")));
+        } catch (Throwable e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了, 请稍后重试!", VoHtmlResp.class));
+        }
+
+        return ResponseEntity.ok(voHtmlResp);
+    }
+
+    @Override
+    public ResponseEntity<String> bankBindCallback(HttpServletRequest httpServletRequest) {
+        CardBindResponse cardBindResponse = jixinManager.callback(httpServletRequest, new TypeToken<CardBindResponse>(){});
+
+        if(ObjectUtils.isEmpty(cardBindResponse) || !cardBindResponse.getRetCode().equalsIgnoreCase(JixinResultContants.SUCCESS)){
+            log.error("银行卡绑定回调: 信息异常");
+            return ResponseEntity.ok("success") ;
+        }
+
+        String accountid = cardBindResponse.getAccountid();
+        CardBindItem cardInfoByThird = null;
+        try {
+            cardInfoByThird = findCardInfoByThird(accountid);
+        } catch (Exception e) {
+            log.error("银行卡回调", e);
+            return ResponseEntity.ok("success") ;
+        }
+
+        String cardNo = cardInfoByThird.getCardNo();
+
+        String bankName = null;
+        // 获取银行卡信息
+        try {
+            BankBinHelper.BankInfo bankInfo = bankBinHelper.find(cardNo);
+            if (ObjectUtils.isEmpty(bankInfo)) {
+                log.error("银行卡绑定: 查无此银行卡号, 如有问题请联系平台客户!");
+                return ResponseEntity.ok("success") ;
+            }
+
+            if (!bankInfo.getCardType().equals("借记卡")) {
+                log.error("银行卡绑定: 银行卡类型必须为借记卡!");
+                return ResponseEntity.ok("success") ;
+            }
+
+            bankName = bankInfo.getBankName();
+        } catch (Throwable e) {
+            log.error("银行卡绑定: 开户查询银行卡异常");
+        }
+
+        // 6 判断银行卡
+        DictValue dictValue = null;
+        try {
+            dictValue = bankLimitCache.get(bankName);
+        } catch (Throwable e) {
+            log.error("银行卡绑定: 查询平台支持银行异常", e);
+        }
+        if (ObjectUtils.isEmpty(dictValue)) {
+            return ResponseEntity.ok("success") ;
+        }
+
+        Long userId = Long.parseLong(cardBindResponse.getAcqRes());
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        userThirdAccount.setCardNoBindState(1);
+        userThirdAccount.setCardNo(cardNo) ;
+        userThirdAccount.setBankLogo(dictValue.getValue03());
+        userThirdAccount.setBankName(bankName);
+        userThirdAccountService.save(userThirdAccount) ;
+        return ResponseEntity.ok("success") ;
+    }
+
+    @Override
+    public String showBindCard(Long id, Model model) {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(id);
+        model.addAttribute("h5Domain", h5Domain);
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return "bindCard/faile";
+        }
+
+        if (userThirdAccount.getCardNoBindState() != 1) {
+            return "bindCard/success";
+        } else {
+            return "bindCard/faile";
+        }
+    }
+
+
     /**
-     *  生成修改密码html
+     * 根据开户账号查询绑定银行卡信息(通过查询存管平台)
+     * @param accountId
+     * @return
+     * @throws Exception
+     */
+    private CardBindItem findCardInfoByThird(String accountId) throws Exception{
+        CardBindDetailsQueryRequest cardBindDetailsQueryRequest = new CardBindDetailsQueryRequest() ;
+        cardBindDetailsQueryRequest.setAccountId(accountId) ;
+        cardBindDetailsQueryRequest.setState("1");
+        CardBindDetailsQueryResponse cardBindDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.CARD_BIND_DETAILS_QUERY,
+                cardBindDetailsQueryRequest,
+                CardBindDetailsQueryResponse.class);
+
+        if(ObjectUtils.isEmpty(cardBindDetailsQueryResponse)
+                || !cardBindDetailsQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)){
+            String msg = ObjectUtils.isEmpty(cardBindDetailsQueryResponse)?  " 查询银行卡信息, 网络请求超时"
+                    : cardBindDetailsQueryResponse.getRetMsg() ;
+            throw new Exception(msg) ;
+        }
+
+        Gson gson = new Gson() ;
+        String subPacks = cardBindDetailsQueryResponse.getSubPacks();
+        if(StringUtils.isEmpty(subPacks)){
+            throw new Exception(String.format("银行卡信息为空 %s", gson.toJson(cardBindDetailsQueryResponse))) ;
+        }
+
+        List<CardBindItem> cardBindItemsList = gson.fromJson(subPacks, new TypeToken<List<CardBindItem>>(){}.getType()) ;
+        if(CollectionUtils.isEmpty(cardBindItemsList)){
+            throw new Exception(String.format("银行卡信息为空 %s", gson.toJson(cardBindDetailsQueryResponse))) ;
+        }
+
+        return cardBindItemsList.get(0);
+    }
+    /**
+     * 生成修改密码html
+     *
      * @param httpServletRequest
      * @param userId
      * @param userThirdAccount

@@ -420,7 +420,7 @@ public class BorrowBizImpl implements BorrowBiz {
         Asset asset = assetService.findByUserIdLock(userId);
         Preconditions.checkNotNull(asset, "净值标的发布: 当前用户资金账户为空!");
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        ResponseEntity<VoBaseResp> conditionCheckResponse = ThirdAccountHelper.conditionCheck(userThirdAccount);
+        ResponseEntity<VoBaseResp> conditionCheckResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
         if (!conditionCheckResponse.getStatusCode().equals(HttpStatus.OK)) {
             return conditionCheckResponse;
         }
@@ -1190,7 +1190,7 @@ public class BorrowBizImpl implements BorrowBiz {
             log.info(String.format("触发标的设置的投标送奖励活动开始: %s", gson.toJson(tenderList)));
             for (Tender tender : tenderList) {
                 UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
-                ResponseEntity<VoBaseResp> conditionResponse = ThirdAccountHelper.conditionCheck(userThirdAccount);
+                ResponseEntity<VoBaseResp> conditionResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
                 if (!conditionResponse.getStatusCode().equals(HttpStatus.OK)) {
                     throw new Exception(String.format("投标送奖励活动: 用户存管条件验证失败 %s", gson.toJson(tender)));
                 }
@@ -2299,4 +2299,5 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "初审失败!"));
         }
     }
+
 }

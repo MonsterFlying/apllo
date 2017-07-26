@@ -15,14 +15,14 @@ import java.util.List;
  * Created by Max on 17/5/22.
  */
 @Service
-public class UserThirdAccountServiceImpl implements UserThirdAccountService{
+public class UserThirdAccountServiceImpl implements UserThirdAccountService {
 
     @Autowired
     private UserThirdAccountRepository userThirdAccountRepository;
 
     @Override
     public UserThirdAccount findByUserId(Long id) {
-        if (ObjectUtils.isEmpty(id)){
+        if (ObjectUtils.isEmpty(id)) {
             return null;
         }
         UserThirdAccount example = new UserThirdAccount();
@@ -31,23 +31,39 @@ public class UserThirdAccountServiceImpl implements UserThirdAccountService{
         return userThirdAccountRepository.findOne(Example.of(example));
     }
 
+
+    /**
+     * 根据存管accountId查询用户存管信息
+     *
+     * @param accountId
+     * @return
+     */
+    public UserThirdAccount findByAccountId(String accountId) {
+        if (ObjectUtils.isEmpty(accountId)) {
+            return null;
+        }
+        UserThirdAccount example = new UserThirdAccount();
+        example.setAccountId(accountId);
+        return userThirdAccountRepository.findOne(Example.of(example));
+    }
+
     @Override
     public Long save(UserThirdAccount entity) {
         UserThirdAccount account = userThirdAccountRepository.save(entity);
-        if(ObjectUtils.isEmpty(account)){
-            return 0L ;
+        if (ObjectUtils.isEmpty(account)) {
+            return 0L;
         }
-        return account.getId() ;
+        return account.getId();
     }
 
     @Override
     public UserThirdAccount findTopByCardNo(String account) {
-        return userThirdAccountRepository.findTopByCardNoAndDel(account, 0) ;
+        return userThirdAccountRepository.findTopByCardNoAndDel(account, 0);
     }
 
     @Override
     public UserThirdAccount findByMobile(String phone) {
-        return userThirdAccountRepository.findTopByMobileAndDel(phone, 0) ;
+        return userThirdAccountRepository.findTopByMobileAndDel(phone, 0);
     }
 
     @Override
@@ -58,7 +74,7 @@ public class UserThirdAccountServiceImpl implements UserThirdAccountService{
 
     @Override
     public UserThirdAccount findByDelUseid(Long userId) {
-        if (ObjectUtils.isEmpty(userId)){
+        if (ObjectUtils.isEmpty(userId)) {
             return null;
         }
         UserThirdAccount example = new UserThirdAccount();
@@ -75,6 +91,6 @@ public class UserThirdAccountServiceImpl implements UserThirdAccountService{
 
     @Override
     public List<UserThirdAccount> findList(Specification<UserThirdAccount> userThirderAccountSpe) {
-        return userThirdAccountRepository.findAll(userThirderAccountSpe) ;
+        return userThirdAccountRepository.findAll(userThirderAccountSpe);
     }
 }

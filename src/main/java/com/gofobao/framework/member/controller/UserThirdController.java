@@ -2,6 +2,7 @@ package com.gofobao.framework.member.controller;
 
 import com.gofobao.framework.borrow.vo.request.VoAdminModifyPasswordResp;
 import com.gofobao.framework.borrow.vo.request.VoAdminOpenAccountResp;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.biz.UserThirdBiz;
 import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
@@ -46,6 +47,27 @@ public class UserThirdController {
     @PostMapping("/user/third/modifyOpenAccPwd")
     public ResponseEntity<VoHtmlResp> modifyOpenAccPwd(HttpServletRequest httpServletRequest, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return userThirdBiz.modifyOpenAccPwd(httpServletRequest, userId) ;
+    }
+
+
+    @ApiOperation("绑定银行卡")
+    @PostMapping("/user/third/bind/bank/{bankNo}")
+    public ResponseEntity<VoHtmlResp> bindBank(HttpServletRequest httpServletRequest, @RequestAttribute(SecurityContants.USERID_KEY) Long userId,@PathVariable("bankNo") String bankNo) {
+        return userThirdBiz.bindBank(httpServletRequest, userId, bankNo) ;
+    }
+
+
+    @ApiOperation("解除银行卡绑定")
+    @PostMapping("/user/third/del/bank")
+    public ResponseEntity<VoBaseResp> delBank(HttpServletRequest httpServletRequest, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return userThirdBiz.delBank(httpServletRequest, userId) ;
+    }
+
+
+    @ApiOperation("银行卡绑定回调")
+    @PostMapping("/pub/third/bank/bind/callback")
+    public ResponseEntity<String> bankBindCallback(HttpServletRequest httpServletRequest) {
+        return userThirdBiz.bankBindCallback(httpServletRequest) ;
     }
 
 

@@ -105,7 +105,7 @@ public class TenderBizImpl implements TenderBiz {
     public ResponseEntity<VoBaseResp> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception {
         log.info(String.format("马上投资: 起步: %s", new Gson().toJson(voCreateTenderReq)));
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voCreateTenderReq.getUserId());
-        ResponseEntity<VoBaseResp> thirdAccountConditionResponse = ThirdAccountHelper.conditionCheck(userThirdAccount);
+        ResponseEntity<VoBaseResp> thirdAccountConditionResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
         if(!thirdAccountConditionResponse.getStatusCode().equals(HttpStatus.OK)){
             return thirdAccountConditionResponse ;
         }
