@@ -267,10 +267,10 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
         // 对于大于5万小于20万直接返回失败
-        if (voCashReq.getCashMoney() > 50000 || voCashReq.getCashMoney() <= 0) {
+        if (voCashReq.getCashMoney() > 50000 || voCashReq.getCashMoney() < 200000) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "快捷提现金额不能大于5万", VoHtmlResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "快捷通道: 只支持小于等于5万; 大额提现: 只支持大于等于20万", VoHtmlResp.class));
         }
 
         // 判断提现金额
@@ -298,6 +298,12 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             fee = 200L;
         }
 
+        boolean bigCashState = false;
+        // 判断是否为大额提现
+        if(voCashReq.getCashMoney() >= 200000){
+            bigCashState = true ;
+        }
+
         WithDrawRequest withDrawRequest = new WithDrawRequest();
         withDrawRequest.setSeqNo(RandomHelper.generateNumberCode(6));
         withDrawRequest.setTxTime(DateHelper.getTime());
@@ -309,7 +315,10 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         withDrawRequest.setCardNo(userThirdAccount.getCardNo());
         withDrawRequest.setAccountId(userThirdAccount.getAccountId());
         withDrawRequest.setTxAmount(StringHelper.formatDouble(new Double((cashMoney - fee) / 100D), false)); //  交易金额
-        withDrawRequest.setRouteCode("0");
+        withDrawRequest.setRouteCode(bigCashState ? "1": "2");
+        if(bigCashState){
+            withDrawRequest.setCardBankCnaps(voCashReq.getBankAps()); // 联行卡号
+        }
         withDrawRequest.setTxFee(StringHelper.formatDouble(new Double(fee / 100D), false));
         withDrawRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, userId));
         withDrawRequest.setRetUrl(String.format("%s/%s/%s", javaDomain, "/pub/cash/show/", withDrawRequest.getTxDate() + withDrawRequest.getTxTime() + withDrawRequest.getSeqNo()));
@@ -329,13 +338,16 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             cashDetailLog.setThirdAccountId(userThirdAccount.getAccountId());
             cashDetailLog.setBankName(userThirdAccount.getBankName());
             cashDetailLog.setCardNo(userThirdAccount.getCardNo());
-            cashDetailLog.setCashType(0);
+            cashDetailLog.setCashType(bigCashState? 1: 0);
+            if(bigCashState){
+                cashDetailLog.setCompanyBankNo(voCashReq.getBankAps()); // 联行卡号
+            }
             cashDetailLog.setCompanyBankNo(voCashReq.getBankAps());
             cashDetailLog.setFee(fee);
             cashDetailLog.setCreateTime(nowDate);
             cashDetailLog.setMoney(new Double(cashMoney).longValue());
             cashDetailLog.setSeqNo(withDrawRequest.getTxDate() + withDrawRequest.getTxTime() + withDrawRequest.getSeqNo());
-            cashDetailLog.setState(4);  //  提现成功
+            cashDetailLog.setState(4);  // 直接设置为失败
             cashDetailLog.setVerifyTime(nowDate);
             cashDetailLog.setVerifyUserId(0L);
             cashDetailLog.setUserId(userId);

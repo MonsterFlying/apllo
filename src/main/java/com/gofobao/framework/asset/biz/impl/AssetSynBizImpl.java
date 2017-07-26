@@ -129,7 +129,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
             System.err.println(GSON.toJson(item));
         });
 
-        if(!CollectionUtils.isEmpty(accountDetailsQueryItemList)){
+        if(CollectionUtils.isEmpty(accountDetailsQueryItemList)){
             return asset ;
         }
 
