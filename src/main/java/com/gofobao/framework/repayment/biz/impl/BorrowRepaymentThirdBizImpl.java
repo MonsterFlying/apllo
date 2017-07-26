@@ -139,7 +139,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         Borrow borrow = borrowService.findById(borrowId);
         Preconditions.checkNotNull(borrow, "批次放款调用: 标的信息为空 ");
         UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());// 收款人存管账户记录
-        Preconditions.checkNotNull(takeUserThirdAccount, "借款人未开户!") ;
+        Preconditions.checkNotNull(takeUserThirdAccount, "借款人未开户!");
         Long takeUserId = borrow.getTakeUserId();
         if (!ObjectUtils.isEmpty(takeUserId)) {
             takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
@@ -166,7 +166,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 continue;
             }
             tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
-            Preconditions.checkNotNull(tenderUserThirdAccount, "投资人未开户!") ;
+            Preconditions.checkNotNull(tenderUserThirdAccount, "投资人未开户!");
 
             validMoney = tender.getValidMoney();//投标有效金额
             sumCount += validMoney; //放款总金额
@@ -422,12 +422,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      */
     private void receivedBailRepay(List<BailRepay> repayList, Borrow borrow, int order, double interestPercent) throws Exception {
         do {
-            //===================================还款校验==========================================
-            if (ObjectUtils.isEmpty(borrow)) {
-                break;
-            }
-
-            Long borrowId = borrow.getId();
+            long borrowId = borrow.getId();
             Specification<Tender> specification = Specifications
                     .<Tender>and()
                     .eq("status", 1)
@@ -435,22 +430,10 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     .build();
 
             List<Tender> tenderList = tenderService.findList(specification);
-            if (CollectionUtils.isEmpty(tenderList)) {
-                break;
-            }
+            Preconditions.checkNotNull(tenderList, "投资人投标信息不存在!");
 
             List<Long> userIds = tenderList.stream().map(tender -> tender.getUserId()).collect(Collectors.toList());
             List<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toList());
-
-            Specification<UserCache> ucs = Specifications
-                    .<UserCache>and()
-                    .in("userId", userIds.toArray())
-                    .build();
-
-            List<UserCache> userCacheList = userCacheService.findList(ucs);
-            if (CollectionUtils.isEmpty(userCacheList)) {
-                break;
-            }
 
             Specification<BorrowCollection> bcs = Specifications
                     .<BorrowCollection>and()
@@ -551,7 +534,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                     }
                 }
 
-                txAmount = principal;
+                txAmount = principal + intAmount; //垫付金额 = 垫付本金 + 垫付利息
 
                 String orderId = JixinHelper.getOrderId(JixinHelper.REPAY_BAIL_PREFIX);
                 bailRepay.setOrderId(orderId);
@@ -936,7 +919,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             repay.setProductId(borrow.getProductId());
             repay.setAuthCode(tender.getAuthCode());
             UserThirdAccount userThirdAccount = userThirdAccountMap.get(tender.getUserId());
-            Preconditions.checkNotNull(userThirdAccount, "投资人未开户!") ;
+            Preconditions.checkNotNull(userThirdAccount, "投资人未开户!");
             repay.setForAccountId(userThirdAccount.getAccountId());
             repayList.add(repay);
             borrowCollection.setTRepayOrderId(orderId);

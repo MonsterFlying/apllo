@@ -25,6 +25,8 @@ import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.*;
+import com.gofobao.framework.common.capital.CapitalChangeEntity;
+import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
@@ -32,6 +34,7 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
@@ -94,18 +97,15 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     @Autowired
     private JixinHelper jixinHelper;
     @Autowired
-    private TenderService tenderService;
-    @Autowired
     private UserThirdAccountService userThirdAccountService;
-    @Autowired
-    private BorrowBiz borrowBiz;
     @Autowired
     private MqHelper mqHelper;
     @Autowired
     private ThirdBatchLogBiz thirdBatchLogBiz;
     @Autowired
     private ThirdAccountPasswordHelper thirdAccountPasswordHelper;
-
+    @Autowired
+    private CapitalChangeHelper capitalChangeHelper;
     @Autowired
     TaskSchedulerBiz taskSchedulerBiz;
 
@@ -199,7 +199,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
                 log.error(String.format("查询标的登记情况异常: %s", msg));
                 return ResponseEntity.ok(VoBaseResp.ok("创建标的成功!"));
             }
-            if(StringUtils.isEmpty(debtDetailsQueryResponse.getSubPacks())){
+            if (StringUtils.isEmpty(debtDetailsQueryResponse.getSubPacks())) {
                 log.error("查询标的登记情况异常: subPacks 为空");
             }
         } catch (Exception e) {
@@ -444,6 +444,8 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "还款不存在"));
         }
 
+
+        //计算总txAmount
         double sumTxAmount = 0;
         double partPenalty = penalty / repayList.size();
         for (Repay tempRepay : repayList) {
@@ -451,6 +453,10 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             tempRepay.setTxFeeOut(StringHelper.formatDouble(NumberHelper.toDouble(tempRepay.getTxFeeOut()) + partPenalty / 100.0, false));
             sumTxAmount += NumberHelper.toDouble(tempRepay.getTxAmount());
         }
+        //所有交易利息
+        double intAmount = repayList.stream().mapToDouble(r -> NumberHelper.toDouble(r.getIntAmount())).sum();
+        //所有还款手续费
+        double txFeeOut = repayList.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxFeeOut())).sum();
 
         //批次号
         String batchNo = jixinHelper.getBatchNo();
@@ -464,13 +470,22 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);
         BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
         balanceFreezeReq.setAccountId(borrowUserThirdAccount.getAccountId());
-        balanceFreezeReq.setTxAmount(StringHelper.formatDouble(sumTxAmount, false));
+        balanceFreezeReq.setTxAmount(StringHelper.formatDouble(sumTxAmount + txFeeOut + intAmount, false));
         balanceFreezeReq.setOrderId(orderId);
         balanceFreezeReq.setChannel(ChannelContant.HTML);
         BalanceFreezeResp balanceFreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BalanceFreezeResp.class);
         if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceFreezeResp.getRetCode()))) {
             throw new Exception("即信批次还款冻结资金失败：" + balanceFreezeResp.getRetMsg());
         }
+
+        //立即还款冻结
+        long frozenMoney = new Double((sumTxAmount + txFeeOut + intAmount) * 100).longValue();
+        CapitalChangeEntity entity = new CapitalChangeEntity();
+        entity.setType(CapitalChangeEnum.Frozen);
+        entity.setUserId(borrow.getUserId());
+        entity.setMoney(frozenMoney);
+        entity.setRemark("立即还款冻结可用资金");
+        capitalChangeHelper.capitalChange(entity);
 
         BatchRepayReq request = new BatchRepayReq();
         request.setBatchNo(batchNo);

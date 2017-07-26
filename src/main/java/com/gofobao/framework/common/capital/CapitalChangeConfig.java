@@ -134,6 +134,14 @@ public class CapitalChangeConfig {
         repayment.setUserCacheChangeRule("add@expenditureInterest#interest");
         repayment.setRemark("还款");
         capitalChangeList.add(repayment);
+        //新的还款  扣除冻结
+        CapitalChangeConfig newRepayment = new CapitalChangeConfig();
+        newRepayment.setType(CapitalChangeEnum.NewRepayment);
+        newRepayment.setName("new还款");
+        newRepayment.setAssetChangeRule("sub@noUseMoney");
+        newRepayment.setUserCacheChangeRule("add@expenditureInterest#interest");
+        newRepayment.setRemark("new还款");
+        capitalChangeList.add(newRepayment);
         //扣除待还
         CapitalChangeConfig paymentLower = new CapitalChangeConfig();
         paymentLower.setType(CapitalChangeEnum.PaymentLower);
@@ -150,6 +158,14 @@ public class CapitalChangeConfig {
         overdue.setUserCacheChangeRule("add@expenditureOverdue");
         overdue.setRemark("逾期费");
         capitalChangeList.add(overdue);
+        //逾期费
+        CapitalChangeConfig newOverdue = new CapitalChangeConfig();
+        newOverdue.setType(CapitalChangeEnum.NewOverdue);
+        newOverdue.setName("new逾期费");
+        newOverdue.setAssetChangeRule("sub@noUseMoney");
+        newOverdue.setUserCacheChangeRule("add@expenditureOverdue");
+        newOverdue.setRemark("new逾期费");
+        capitalChangeList.add(newOverdue);
         //回款
         CapitalChangeConfig incomeRepayment = new CapitalChangeConfig();
         incomeRepayment.setType(CapitalChangeEnum.IncomeRepayment);

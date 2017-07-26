@@ -55,6 +55,10 @@ public enum CapitalChangeEnum {
      */
     Repayment("repayment"),
     /**
+     * new还款
+     */
+    NewRepayment("new_repayment"),
+    /**
      * 扣除待还
      */
     PaymentLower("payment_lower"),
@@ -62,6 +66,10 @@ public enum CapitalChangeEnum {
      * 逾期费
      */
     Overdue("overdue"),
+    /**
+     * new逾期费
+     */
+    NewOverdue("new_overdue"),
     /**
      * 回款
      */

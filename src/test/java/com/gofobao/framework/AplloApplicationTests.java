@@ -19,6 +19,7 @@ import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp;
+import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResponse;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
@@ -29,16 +30,12 @@ import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
 import com.gofobao.framework.common.assets.AssetsChangeEntity;
 import com.gofobao.framework.common.assets.AssetsChangeEnum;
 import com.gofobao.framework.common.assets.AssetsChangeHelper;
-import com.gofobao.framework.common.capital.CapitalChangeEntity;
-import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.helper.project.BorrowHelper;
-import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoAdvanceCall;
@@ -92,8 +89,6 @@ public class AplloApplicationTests {
     private AssetsChangeHelper assetsChangeHelper;
     @Autowired
     private TenderService tenderService;
-    @Autowired
-    private CapitalChangeHelper capitalChangeHelper;
 
 
     @Autowired
@@ -221,7 +216,7 @@ public class AplloApplicationTests {
 
     private void doFirstVerify() {
         try {
-            borrowBiz.doFirstVerify(169917L);
+            borrowBiz.doFirstVerify(169853L);
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -240,9 +235,21 @@ public class AplloApplicationTests {
         }
     }
 
+    private void findThirdBorrowList() {
+        VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
+        voQueryThirdBorrowList.setProductId("169914");
+        voQueryThirdBorrowList.setUserId(40455L);
+        voQueryThirdBorrowList.setPageNum("1");
+        voQueryThirdBorrowList.setPageSize("10");
+        DebtDetailsQueryResponse resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
+        System.out.println((resp.getTotalItems()));
+
+
+    }
+
     private void doAgainVerify() {
         Map<String, String> msg = new HashMap<>();
-        msg.put("borrowId", "169917");
+        msg.put("borrowId", "169914");
         try {
             borrowProvider.doAgainVerify(msg);
         } catch (Throwable e) {
@@ -252,8 +259,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("181114");
-        batchDetailsQueryReq.setBatchTxDate("20170724");
+        batchDetailsQueryReq.setBatchNo("162240");
+        batchDetailsQueryReq.setBatchTxDate("20170725");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -315,17 +322,6 @@ public class AplloApplicationTests {
     public void test() {
 
 
-        CapitalChangeEntity entity = new CapitalChangeEntity();
-        entity.setType(CapitalChangeEnum.Fee);
-        entity.setUserId(44823);
-        entity.setMoney(861);
-        entity.setRemark("扣除借款标的转让管理费");
-        try {
-            capitalChangeHelper.capitalChange(entity);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         //推送队列结束债权
         /*MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
@@ -349,20 +345,20 @@ public class AplloApplicationTests {
         System.out.println(resp);
 */
         /*AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
-        request.setAccountId("6212462040000350092");
+        request.setAccountId("6212462040000250094");
         request.setStartDate("20161002");
         request.setEndDate("20171003");
         request.setChannel(ChannelContant.HTML);
         request.setType("0"); // 转入
         //request.setTranType("7820"); // 线下转账的
-        request.setPageSize(String.valueOf(10));
+        request.setPageSize(String.valueOf(20));
         request.setPageNum(String.valueOf(1));
         AccountDetailsQueryResponse response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, request, AccountDetailsQueryResponse.class);
         System.out.println(response);*/
 
         /*BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId("6212462040000350092");
+        balanceQueryRequest.setAccountId("6212462040000250094");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         System.out.println(balanceQueryResponse);*/
 
@@ -387,7 +383,7 @@ public class AplloApplicationTests {
         //复审
         //doAgainVerify();
         //批次详情查询
-        //batchDetailsQuery();
+        batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调
