@@ -1433,7 +1433,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
                 CardBindDetailsQueryResponse.class);
 
         if(ObjectUtils.isEmpty(cardBindDetailsQueryResponse)
-                && !cardBindDetailsQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)){
+                || !cardBindDetailsQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)){
             String msg = ObjectUtils.isEmpty(cardBindDetailsQueryResponse)?  " 查询银行卡信息, 网络请求超时"
                     : cardBindDetailsQueryResponse.getRetMsg() ;
             throw new Exception(msg) ;
@@ -1445,7 +1445,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             throw new Exception(String.format("银行卡信息为空 %s", gson.toJson(cardBindDetailsQueryResponse))) ;
         }
 
-        List<CardBindItem> cardBindItemsList = gson.fromJson(subPacks, new TypeToken<CardBindItem>(){}.getType()) ;
+        List<CardBindItem> cardBindItemsList = gson.fromJson(subPacks, new TypeToken<List<CardBindItem>>(){}.getType()) ;
         if(CollectionUtils.isEmpty(cardBindItemsList)){
             throw new Exception(String.format("银行卡信息为空 %s", gson.toJson(cardBindDetailsQueryResponse))) ;
         }

@@ -643,10 +643,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             } catch (ExcelException e) {
                 e.printStackTrace();
             }
-
         }
-
-
     }
 
     @Override
@@ -669,9 +666,9 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
             accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
             accountDetailsQueryRequest.setStartDate(DateHelper.dateToString(callbackTime, DateHelper.DATE_FORMAT_YMD_NUM));
-            accountDetailsQueryRequest.setEndDate(DateHelper.dateToString(callbackTime, DateHelper.DATE_FORMAT_YMD_NUM));
+            accountDetailsQueryRequest.setEndDate(DateHelper.dateToString(nowDate, DateHelper.DATE_FORMAT_YMD_NUM));
             accountDetailsQueryRequest.setType("9");
-            accountDetailsQueryRequest.setTranType("2820");
+            accountDetailsQueryRequest.setTranType("2820");  // 查询大额提现
             accountDetailsQueryRequest.setAccountId(accountId);
             AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
                     accountDetailsQueryRequest,
