@@ -39,6 +39,11 @@ public class UserThirdWebController {
         return userThirdBiz.showAutoTranfer(id, model);
     }
 
+    @GetMapping("/pub/bindCard/show/{id}")
+    public String showBindCard(@PathVariable("id") Long id, Model model) {
+        return userThirdBiz.showBindCard(id, model);
+    }
+
 
     @ApiOperation("江西银行网络交易资金账户服务三方协议")
     @GetMapping("/thirdAccount/protocol")

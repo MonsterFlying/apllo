@@ -197,8 +197,10 @@ public class BorrowServiceImpl implements BorrowService {
                 }
             } else if (!ObjectUtils.isEmpty(m.getSuccessAt()) && !ObjectUtils.isEmpty(m.getCloseAt())) {   //满标时间 结清
                 status = 4; //已完成
+                item.setSpend(new Double(1));
             } else if (status == BorrowContants.PASS && ObjectUtils.isEmpty(m.getCloseAt())) {
                 status = 2; //还款中
+                item.setSpend(new Double(1));
             }
 
             Long userId = m.getUserId();

@@ -286,7 +286,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     public boolean registerBorrrowConditionCheck(Borrow borrow) {
         Long userId = borrow.getUserId();
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        ResponseEntity<VoBaseResp> conditionResponse = ThirdAccountHelper.conditionCheck(userThirdAccount);
+        ResponseEntity<VoBaseResp> conditionResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
         if (!conditionResponse.getStatusCode().equals(HttpStatus.OK)) {
             log.error(String.format("查询标的登记情况异常: %s", conditionResponse.getBody().getState().getMsg()));
             return false;

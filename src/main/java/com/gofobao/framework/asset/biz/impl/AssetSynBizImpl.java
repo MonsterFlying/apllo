@@ -14,7 +14,6 @@ import com.gofobao.framework.asset.biz.AssetSynBiz;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetLogService;
 import com.gofobao.framework.asset.service.AssetService;
-import com.gofobao.framework.asset.vo.response.VoAvailableAssetInfoResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.ThirdAccountHelper;
@@ -32,6 +31,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -74,7 +74,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
         Preconditions.checkNotNull(asset, "资金同步: 查询用户资产为空");
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        ResponseEntity<VoBaseResp> conditionResponse = ThirdAccountHelper.conditionCheck(userThirdAccount);
+        ResponseEntity<VoBaseResp> conditionResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
         if (!conditionResponse.getStatusCode().equals(HttpStatus.OK)) {
             return asset;
         }
@@ -96,17 +96,15 @@ public class AssetSynBizImpl implements AssetSynBiz {
         // 查询用户操作记录
         int pageSize = 20, pageIndex = 1, realSize = 0;
         String accountId = userThirdAccount.getAccountId();  // 存管账户ID
-
         List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
         do {
             AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
             accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
             accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
-            accountDetailsQueryRequest.setStartDate(jixinTxDateHelper.getTxDateStr()); // 查询当天数据
+            accountDetailsQueryRequest.setStartDate(jixinTxDateHelper.getTxDateStr());
             accountDetailsQueryRequest.setEndDate(jixinTxDateHelper.getTxDateStr());
             accountDetailsQueryRequest.setType("0");
             accountDetailsQueryRequest.setAccountId(accountId);
-
             AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
                     accountDetailsQueryRequest,
                     AccountDetailsQueryResponse.class);
@@ -127,10 +125,21 @@ public class AssetSynBizImpl implements AssetSynBiz {
             realSize = accountDetailsQueryItems.size();
             accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
         } while (realSize == pageSize);
-
         accountDetailsQueryItemList.forEach(item -> {
             System.err.println(GSON.toJson(item));
         });
+
+        if(CollectionUtils.isEmpty(accountDetailsQueryItemList)){
+            return asset ;
+        }
+
+        String endRelDate = accountDetailsQueryItemList.get(0).getRelDate(); // 查询结束时间
+        String startRelDate = accountDetailsQueryItemList.get(accountDetailsQueryItemList.size() - 1).getRelDate();
+
+        // 便利
+        for(AccountDetailsQueryItem accountDetailsQueryItem: accountDetailsQueryItemList){
+
+        }
 
         return asset;
     }

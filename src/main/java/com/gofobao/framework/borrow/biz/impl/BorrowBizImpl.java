@@ -276,19 +276,19 @@ public class BorrowBizImpl implements BorrowBiz {
                     status = 5; //已过期
                 } else {
                     status = 3; //招标中
-
                     //  进度
                     double spend = Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes().doubleValue() / borrow.getMoney()));
                     if (spend == 1) {
                         status = 6;
                     }
                     borrowInfoRes.setSpend(spend);
-
                 }
             } else if (!ObjectUtils.isEmpty(borrow.getSuccessAt()) && !ObjectUtils.isEmpty(borrow.getCloseAt())) {   //满标时间 结清
                 status = 4; //已完成
+                borrowInfoRes.setSpend(new Double(1));
             } else if (status == BorrowContants.PASS && ObjectUtils.isEmpty(borrow.getCloseAt())) {
                 status = 2; //还款中
+                borrowInfoRes.setSpend(new Double(1));
             }
             borrowInfoRes.setType(borrow.getType());
             if (!StringUtils.isEmpty(borrow.getTenderId())) {
@@ -416,7 +416,7 @@ public class BorrowBizImpl implements BorrowBiz {
         Asset asset = assetService.findByUserIdLock(userId);
         Preconditions.checkNotNull(asset, "净值标的发布: 当前用户资金账户为空!");
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        ResponseEntity<VoBaseResp> conditionCheckResponse = ThirdAccountHelper.conditionCheck(userThirdAccount);
+        ResponseEntity<VoBaseResp> conditionCheckResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
         if (!conditionCheckResponse.getStatusCode().equals(HttpStatus.OK)) {
             return conditionCheckResponse;
         }
@@ -1186,7 +1186,7 @@ public class BorrowBizImpl implements BorrowBiz {
             log.info(String.format("触发标的设置的投标送奖励活动开始: %s", gson.toJson(tenderList)));
             for (Tender tender : tenderList) {
                 UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
-                ResponseEntity<VoBaseResp> conditionResponse = ThirdAccountHelper.conditionCheck(userThirdAccount);
+                ResponseEntity<VoBaseResp> conditionResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
                 if (!conditionResponse.getStatusCode().equals(HttpStatus.OK)) {
                     throw new Exception(String.format("投标送奖励活动: 用户存管条件验证失败 %s", gson.toJson(tender)));
                 }
@@ -2228,4 +2228,5 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "初审失败!"));
         }
     }
+
 }
