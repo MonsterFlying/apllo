@@ -865,6 +865,9 @@ public class BorrowBizImpl implements BorrowBiz {
         // 用户投标信息和每日统计
         userTenderStatistic(borrow, tenderList, nowDate);
 
+        //用戶投資送紅包
+        userTenderRedPackage(borrow,tenderList,nowDate);
+
         // 借款人资金变动
         processBorrowAssetChange(borrow, tenderList, nowDate) ;
 
@@ -1142,6 +1145,84 @@ public class BorrowBizImpl implements BorrowBiz {
     }
 
     /**
+     * 用戶投資送紅包處理
+     * @param borrow
+     * @param tenderList
+     * @param nowDate
+     */
+    public void userTenderRedPackage(Borrow borrow, List<Tender> tenderList, Date nowDate){
+        Gson gson=new Gson();
+        tenderList.forEach(p -> {
+            UserCache userCache = userCacheService.findById(p.getUserId());
+            Map<String, Object> paramsMap = new HashMap<>();
+            //=================================
+            // 非新手标  是新手标但是老用投
+            //===================================
+            boolean access = (!borrow.getIsNovice()) || (borrow.getIsNovice() && (userCache.getTenderTuijian() || userCache.getTenderQudao()));
+            if (access) {
+                try {
+                    paramsMap.put("type", RedPacketContants.OLD_USER_TENDER_BORROW_REDPACKAGE);
+                    paramsMap.put("tenderId", p.getId());
+                    paramsMap.put("time", DateHelper.dateToString(nowDate));
+                    MqConfig mqConfig = new MqConfig();
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
+                    mqConfig.setTag(MqTagEnum.OLD_USER_TENDER);
+                    Map<String, String> body = GSON.fromJson(GSON.toJson(paramsMap), TypeTokenContants.MAP_TOKEN);
+                    mqConfig.setMsg(body);
+                    mqHelper.convertAndSend(mqConfig);
+                    log.info(String.format("触发老手投标红包MQ %s", gson.toJson(paramsMap)));
+                } catch (Exception e) {
+                    log.error(String.format("老用户投资红包推送异常：%s", gson.toJson(paramsMap)), e);
+                }
+            }
+
+            //======================================
+            // 推荐用户投资红包
+            //======================================
+            paramsMap.clear();
+            paramsMap.put("type", RedPacketContants.INVITE_USER_TENDER_BORROW_REDPACKAGE);
+            paramsMap.put("tenderId", p.getId());
+            paramsMap.put("time", DateHelper.dateToString(nowDate));
+            try {
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
+                mqConfig.setTag(MqTagEnum.INVITE_USER_TENDER);
+                Map<String, String> body = GSON.fromJson(GSON.toJson(paramsMap), TypeTokenContants.MAP_TOKEN);
+                mqConfig.setMsg(body);
+                mqHelper.convertAndSend(mqConfig);
+                log.info(String.format("触发邀请用户投资红包MQ%s", gson.toJson(paramsMap)));
+            } catch (Exception e) {
+                log.error(String.format("邀请用户投资红包推送异常：%s", gson.toJson(paramsMap)), e);
+            }
+            paramsMap.clear();
+            boolean accessState = userCache.getTenderTuijian() || userCache.getTenderQudao();
+            //=========================
+            // 新手标，而且未投标过
+            //======================
+            if ((borrow.getIsNovice()) && (!accessState)) {
+                paramsMap.put("type", RedPacketContants.NEW_USER_BORROW_REDPACKAGE);
+                paramsMap.put("tenderId", p.getId());
+                String tranId = RandomHelper.generateNumberCode(4) + System.currentTimeMillis();
+                paramsMap.put("transactionId", tranId);
+                paramsMap.put("time", DateHelper.dateToString(nowDate));
+                try {
+                    MqConfig mqConfig = new MqConfig();
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
+                    mqConfig.setTag(MqTagEnum.NEW_USER_TENDER);
+                    Map<String, String> body = GSON.fromJson(GSON.toJson(paramsMap), TypeTokenContants.MAP_TOKEN);
+                    mqConfig.setMsg(body);
+                    mqHelper.convertAndSend(mqConfig);
+                    log.info(String.format("触发新手投标红包MQ %s", gson.toJson(paramsMap)));
+                } catch (Exception e) {
+                    log.error(String.format("新手投标红包推送异常：%s", gson.toJson(paramsMap)), e);
+                }
+            }
+        });
+
+    }
+
+
+    /**
      * 发送投资成功站内信
      *
      * @param borrow
@@ -1230,75 +1311,6 @@ public class BorrowBizImpl implements BorrowBiz {
 
             log.info(String.format("触发标的设置的投标送奖励活动结束: %s", gson.toJson(tenderList)));
         }
-
-        tenderList.forEach(p -> {
-            UserCache userCache = userCacheService.findById(p.getUserId());
-            Map<String, Object> paramsMap = new HashMap<>();
-            //=================================
-            // 非新手标  是新手标但是老用投
-            //===================================
-            boolean access = (!borrow.getIsNovice()) || (borrow.getIsNovice() && (userCache.getTenderTuijian() || userCache.getTenderQudao()));
-            if (access) {
-                try {
-                    paramsMap.put("type", RedPacketContants.OLD_USER_TENDER_BORROW_REDPACKAGE);
-                    paramsMap.put("tenderId", p.getId());
-                    paramsMap.put("time", DateHelper.dateToString(new Date()));
-                    MqConfig mqConfig = new MqConfig();
-                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
-                    mqConfig.setTag(MqTagEnum.OLD_USER_TENDER);
-                    Map<String, String> body = GSON.fromJson(GSON.toJson(paramsMap), TypeTokenContants.MAP_TOKEN);
-                    mqConfig.setMsg(body);
-                    mqHelper.convertAndSend(mqConfig);
-                    log.info(String.format("触发老手投标红包MQ %s", gson.toJson(paramsMap)));
-                } catch (Exception e) {
-                    log.error(String.format("老用户投资红包推送异常：%s", gson.toJson(paramsMap)), e);
-                }
-            }
-
-            //======================================
-            // 推荐用户投资红包
-            //======================================
-            paramsMap.clear();
-            paramsMap.put("type", RedPacketContants.INVITE_USER_TENDER_BORROW_REDPACKAGE);
-            paramsMap.put("tenderId", p.getId());
-            paramsMap.put("time", DateHelper.dateToString(new Date()));
-            try {
-                MqConfig mqConfig = new MqConfig();
-                mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
-                mqConfig.setTag(MqTagEnum.INVITE_USER_TENDER);
-                Map<String, String> body = GSON.fromJson(GSON.toJson(paramsMap), TypeTokenContants.MAP_TOKEN);
-                mqConfig.setMsg(body);
-                mqHelper.convertAndSend(mqConfig);
-                log.info(String.format("触发邀请用户投资红包MQ%s", gson.toJson(paramsMap)));
-            } catch (Exception e) {
-                log.error(String.format("邀请用户投资红包推送异常：%s", gson.toJson(paramsMap)), e);
-            }
-            paramsMap.clear();
-            boolean accessState = userCache.getTenderTuijian() || userCache.getTenderQudao();
-            //=========================
-            // 新手标，而且未投标过
-            //======================
-            if ((borrow.getIsNovice()) && (!accessState)) {
-                paramsMap.put("type", RedPacketContants.NEW_USER_BORROW_REDPACKAGE);
-                paramsMap.put("tenderId", p.getId());
-                String tranId = RandomHelper.generateNumberCode(4) + System.currentTimeMillis();
-                paramsMap.put("transactionId", tranId);
-                paramsMap.put("time", DateHelper.dateToString(new Date()));
-                try {
-                    MqConfig mqConfig = new MqConfig();
-                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
-                    mqConfig.setTag(MqTagEnum.NEW_USER_TENDER);
-                    Map<String, String> body = GSON.fromJson(GSON.toJson(paramsMap), TypeTokenContants.MAP_TOKEN);
-                    mqConfig.setMsg(body);
-                    mqHelper.convertAndSend(mqConfig);
-                    log.info(String.format("触发新手投标红包MQ %s", gson.toJson(paramsMap)));
-                } catch (Exception e) {
-                    log.error(String.format("新手投标红包推送异常：%s", gson.toJson(paramsMap)), e);
-                }
-            }
-        });
-
-
         // 渠道用户投资活动触发
         for (Tender tender : tenderList) {
             UserCache userCache = userCacheService.findById(tender.getUserId());

@@ -5,6 +5,7 @@ import com.gofobao.framework.award.entity.ActivityRedPacket;
 import com.gofobao.framework.award.entity.ActivityRedPacketLog;
 import com.gofobao.framework.award.repository.RedPackageLogRepository;
 import com.gofobao.framework.award.repository.RedPackageRepository;
+import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.helper.DateHelper;
@@ -82,6 +83,7 @@ public class RedPackageProvider {
 
         Long tenderId = (Long) resultMaps.get("tenderId");
         Tender borrowTender = tenderRepository.findOne(tenderId);
+
         if (ObjectUtils.isEmpty(borrowTender) || (borrowTender.getStatus() == 0)) {
             log.info(String.format("邀请别人投资送红包：投标记录为空"));
             return;
@@ -97,7 +99,7 @@ public class RedPackageProvider {
 
         Long borrowId = borrowTender.getBorrowId();
         Borrow borrow = borrowRepository.findOne(borrowId);
-        if ((!verifyBorrow(borrow)) || (ObjectUtils.isEmpty(borrow.getSuccessAt()))) {
+        if ((!verifyBorrow(borrow)) || (ObjectUtils.isEmpty(borrow.getSuccessAt()))||borrow.getStatus()!=BorrowContants.PASS) {
             log.info("邀请别人投资送红包: 当前标不是/官方标/渠道标/没有满标");
             return;
         }
@@ -223,7 +225,8 @@ public class RedPackageProvider {
 
         Long borrowId = borrowTender.getBorrowId();
         Borrow borrow = borrowRepository.findOne(borrowId);
-        if ((!verifyBorrow(borrow)) || (ObjectUtils.isEmpty(borrow.getSuccessAt()))) {
+
+        if ((!verifyBorrow(borrow)) || (ObjectUtils.isEmpty(borrow.getSuccessAt()))||borrow.getStatus()!=BorrowContants.PASS) {
             log.info("老用户投标红包: 当前标不是/官方标/渠道标/没有满标");
             return;
         }
@@ -335,7 +338,7 @@ public class RedPackageProvider {
 
         Long borrowId = borrowTender.getBorrowId();
         Borrow borrow = borrowRepository.findOne(borrowId);
-        if ((!borrow.getIsNovice() || (!verifyBorrow(borrow)))) {
+        if ((!borrow.getIsNovice() || (!verifyBorrow(borrow)))||borrow.getStatus()!=BorrowContants.PASS) {
             log.info("新手投标红包: 当前标不是新手标/官方标/渠道标");
             return;
         }
