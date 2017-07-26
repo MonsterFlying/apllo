@@ -14,4 +14,5 @@ public interface UserThirdAccountRepository extends JpaRepository<UserThirdAccou
     UserThirdAccount findTopByCardNoAndDel(String account, int del);
 
     UserThirdAccount findTopByMobileAndDel(String phone, int del);
+
 }

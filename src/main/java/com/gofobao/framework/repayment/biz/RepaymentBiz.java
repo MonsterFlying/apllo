@@ -133,15 +133,6 @@ public interface RepaymentBiz {
     ResponseEntity<VoBaseResp> pcRepay(VoPcInstantlyRepaymentReq voPcInstantlyRepaymentReq) throws Exception;
 
     /**
-     * 构建存管还款项
-     *
-     * @param voBuildThirdRepayReq
-     * @return
-     * @throws Exception
-     */
-    VoBuildThirdRepayResp buildThirdRepay(VoBuildThirdRepayReq voBuildThirdRepayReq) throws Exception;
-
-    /**
      * 批次融资人还担保账户垫款
      *
      * @param voRepayReq
