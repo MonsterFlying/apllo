@@ -1209,7 +1209,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
                 creditDetailsQueryRequest,
                 CreditDetailsQueryResponse.class);
 
-        if(ObjectUtils.isEmpty(creditDetailsQueryRequest) || JixinResultContants.SUCCESS.equalsIgnoreCase(creditDetailsQueryResponse.getRetCode())){
+        if(ObjectUtils.isEmpty(creditDetailsQueryRequest) || !JixinResultContants.SUCCESS.equalsIgnoreCase(creditDetailsQueryResponse.getRetCode())){
             String msg = ObjectUtils.isEmpty(balanceQueryResponse) ? "当前网络异常, 请稍后尝试!" : balanceQueryResponse.getRetMsg();
             log.error(String.format("债权明细查询: %s", msg));
             return ResponseEntity

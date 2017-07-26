@@ -651,7 +651,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         CashDetailLog cashDetailLog = cashDetailLogService.findById(cashId);
         Date callbackTime = cashDetailLog.getCallbackTime();
         Date nowDate = new Date();
-        Date limitData = DateHelper.addMinutes(callbackTime, 15);
+        Date limitData = DateHelper.addMinutes(callbackTime, 5);  // 人行通道 提现回调 5分钟必定会处理成功
         if(DateHelper.diffInDays(nowDate, limitData, false) < 0){
             return false ;
         }
@@ -666,7 +666,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
             accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
             accountDetailsQueryRequest.setStartDate(DateHelper.dateToString(callbackTime, DateHelper.DATE_FORMAT_YMD_NUM));
-            accountDetailsQueryRequest.setEndDate(DateHelper.dateToString(nowDate, DateHelper.DATE_FORMAT_YMD_NUM));
+            accountDetailsQueryRequest.setEndDate(DateHelper.dateToString(limitData, DateHelper.DATE_FORMAT_YMD_NUM));
             accountDetailsQueryRequest.setType("9");
             accountDetailsQueryRequest.setTranType("2820");  // 查询大额提现
             accountDetailsQueryRequest.setAccountId(accountId);
