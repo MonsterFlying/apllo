@@ -119,7 +119,7 @@ public class BorrowServiceImpl implements BorrowService {
         condtionSql.append(" AND b.verifyAt IS Not NULL AND b.status NOT IN(:statusArray)");
         // 排序
         if (StringUtils.isEmpty(type)) {   // 全部
-            condtionSql.append(" ORDER BY (b.moneyYes / b.money) DESC,b.status ASC , FIELD(b.type,0, 4, 1, 2),b.id DESC");
+            condtionSql.append(" ORDER BY b.status ASC , (b.moneyYes / b.money) DESC, FIELD(b.type,0, 4, 1, 2),b.id DESC");
         } else {
             if (type.equals(BorrowContants.INDEX_TYPE_CE_DAI)) {
                 condtionSql.append(" ORDER BY b.status ASC,(b.moneyYes / b.money) DESC, b.successAt DESC,b.id DESC");

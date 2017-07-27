@@ -91,9 +91,10 @@ import org.springframework.util.StringUtils;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.gofobao.framework.listener.providers.NoticesMessageProvider.GSON;
+import static java.util.stream.Collectors.groupingBy;
 
 /**
  * Created by Zeke on 2017/5/26.
@@ -317,7 +318,7 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setAvatar(imageDomain + "/data/images/avatar/" + borrow.getUserId() + "_avatar_small.jpg");
             borrowInfoRes.setReleaseAt(status != 1 ? DateHelper.dateToString(borrow.getReleaseAt()) : "");
             borrowInfoRes.setLockStatus(borrow.getIsLock());
-            
+
 
             return ResponseEntity.ok(borrowInfoRes);
         } catch (Throwable e) {
@@ -669,6 +670,138 @@ public class BorrowBizImpl implements BorrowBiz {
     }
 
     /**
+     * @param borrows
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public void schedulerCancelBorrow(List<Borrow> borrows) {
+
+        Date nowDate = new Date();
+        borrows.stream().filter(p -> !ObjectUtils.isEmpty(p) &&   //标不能为空
+                p.getStatus() == 1 && //状态为招标中
+                StringUtils.isEmpty(p.getTenderId()) &&  //不为转让标
+                //招标已过有效期
+                (DateHelper.addDays(DateHelper.beginOfDate(p.getReleaseAt()), p.getValidDay() + 1).getTime()) < nowDate.getTime());
+
+        List<Long> borrowIds = borrows.stream().map(m -> m.getId()).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(borrowIds)) {
+            log.info("调度取消过期标的失败----->查询标的为空");
+            return;
+        }
+        Specification borrowSpecification = Specifications
+                .<Tender>and()
+                .eq("status", 1)
+                .in("borrowId", borrowIds.toArray())
+                .build();
+        List<Tender> tenderList = tenderService.findList(borrowSpecification);
+        if (CollectionUtils.isEmpty(tenderList)) {
+            log.info("调度取消过期标的失败----->投标记录为空");
+            return;
+        }
+        //将所有的投标记录根据标的分组
+        Map<Long, List<Tender>> tenderMaps = tenderList.stream().collect(groupingBy(Tender::getBorrowId));
+        //所有标的map
+        Map<Long, Borrow> borrowMap = borrows.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
+        // 投标的UserID
+        Set<Long> userIds = tenderList.stream().map(p -> p.getUserId()).collect(Collectors.toSet());
+
+        // ======================================
+        //  更改投资记录标识, 并且解冻投资资金
+        // ======================================
+        VoCancelThirdTenderReq voCancelThirdTenderReq = null;
+
+        for (Long key : tenderMaps.keySet()) {
+            List<Tender> tenders = tenderMaps.get(key);
+            for (Tender tender : tenders) {
+                tender.setId(tender.getId());
+                tender.setStatus(2); // 取消状态
+                tender.setUpdatedAt(nowDate);
+                tenderService.save(tender);
+
+                Borrow borrow = borrowMap.get(tender.getBorrowId());
+
+                //==================================================================
+                //取消即信投资人投标记录
+                //==================================================================
+                if (!ObjectUtils.isEmpty(tender.getThirdTenderOrderId())) {
+                    voCancelThirdTenderReq = new VoCancelThirdTenderReq();
+                    voCancelThirdTenderReq.setTenderId(tender.getId());
+                    ResponseEntity<VoBaseResp> resp = tenderThirdBiz.cancelThirdTender(voCancelThirdTenderReq);
+                    log.info(String.format("取消借款: 发起即信存管投资取消!"));
+                    if (!resp.getStatusCode().equals(HttpStatus.OK)) {
+                        log.error(String.format("取消借款:取消即信投标记录失败: %s", new Gson().toJson(resp)));
+                        log.info("borrowBizImpl cancelBorrow:" + resp.getBody().getState().getMsg());
+                    }
+                }
+
+                CapitalChangeEntity entity = new CapitalChangeEntity();
+                entity.setType(CapitalChangeEnum.Unfrozen);
+                entity.setUserId(tender.getUserId());
+                entity.setMoney(tender.getValidMoney());
+                entity.setRemark("借款 [" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "] 招标失败解除冻结资金。");
+                try {
+                    capitalChangeHelper.capitalChange(entity);
+                } catch (Exception e) {
+                    log.error(String.format("取消借款:资金变动失败"));
+                }
+            }
+        }
+        borrows.forEach(borrow->{
+            //==================================================================
+            //即信取消标的
+            //==================================================================
+            try {
+                cancelThirdBorrow(borrow);
+            }catch (Exception e){
+
+            }
+            // ======================================
+            //  发送站内信
+            // ======================================
+            Notices notices;
+            String content = String.format("你所投资的借款[ %s ]在 %s 已取消", BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()), DateHelper.nextDate(nowDate));
+            for (Long toUserId : userIds) {
+                notices = new Notices();
+                notices.setFromUserId(1L);
+                notices.setUserId(toUserId);
+                notices.setRead(false);
+                notices.setName("投资的借款失败");
+                notices.setContent(content);
+                notices.setType("system");
+                notices.setCreatedAt(nowDate);
+                notices.setUpdatedAt(nowDate);
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
+                mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
+                Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
+                mqConfig.setMsg(body);
+                try {
+                    log.info(String.format("borrowBizImpl cancelBorrow send mq %s", GSON.toJson(body)));
+                    mqHelper.convertAndSend(mqConfig);
+                } catch (Throwable e) {
+                    log.error("borrowBizImpl cancelBorrow send mq exception", e);
+                }
+            }
+
+            // 债权转让标识取消
+            try {
+                assertAndDoTransfer(borrow);
+            }catch (Exception e){
+                log.info("调度取消过期标的---->债权转让标识取消----->失败%s");
+                log.info("当前标的信息:"+GSON.toJson(borrow));
+            }
+            //更新借款
+            borrow.setStatus(5);
+            borrow.setUpdatedAt(nowDate);
+            borrowService.updateById(borrow);
+
+        });
+
+
+
+    }
+
+    /**
      * 自动甄别该标是否属于债权转让. 是:自动取消债权转让标识
      *
      * @param borrow
@@ -866,13 +999,13 @@ public class BorrowBizImpl implements BorrowBiz {
         userTenderStatistic(borrow, tenderList, nowDate);
 
         //用戶投資送紅包
-        userTenderRedPackage(borrow,tenderList,nowDate);
+        userTenderRedPackage(borrow, tenderList, nowDate);
 
         // 借款人资金变动
-        processBorrowAssetChange(borrow, tenderList, nowDate) ;
+        processBorrowAssetChange(borrow, tenderList, nowDate);
 
         // 满标操作
-        finishBorrow(borrow, tenderList) ;
+        finishBorrow(borrow, tenderList);
 
         // 复审事件
         //如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
@@ -954,9 +1087,9 @@ public class BorrowBizImpl implements BorrowBiz {
         // 用户投标信息和每日统计
         userTenderStatistic(borrow, tenderList, oldBorrowCollections.get(0).getStartAt());
         // 借款人资金变动
-        processBorrowAssetChange(borrow, tenderList, oldBorrowCollections.get(0).getStartAt()) ;
+        processBorrowAssetChange(borrow, tenderList, oldBorrowCollections.get(0).getStartAt());
         // 满标操作
-        finishBorrow(borrow, tenderList) ;
+        finishBorrow(borrow, tenderList);
         // 复审事件
         //如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
         updateUserCacheByBorrowReview(borrow);
@@ -972,11 +1105,12 @@ public class BorrowBizImpl implements BorrowBiz {
 
     /**
      * 结束标的信息
+     *
      * @param borrow
      * @param tenderList
      */
     private void finishBorrow(Borrow borrow, List<Tender> tenderList) {
-        log.info(String.format("批处理: 更改标的为满标 %s", new Gson().toJson(borrow) ));
+        log.info(String.format("批处理: 更改标的为满标 %s", new Gson().toJson(borrow)));
         borrow.setStatus(3);
         borrow.setSuccessAt(new Date());
         borrowService.updateById(borrow);
@@ -985,11 +1119,12 @@ public class BorrowBizImpl implements BorrowBiz {
             tender.setUpdatedAt(new Date());
         });
 
-        tenderService.save(tenderList) ;
+        tenderService.save(tenderList);
     }
 
     /**
-     *  处理借款人资金变动问题
+     * 处理借款人资金变动问题
+     *
      * @param borrow
      * @param tenderList
      * @param startAt
@@ -1083,7 +1218,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @param startAt
      */
     private void userTenderStatistic(Borrow borrow, List<Tender> tenderList, Date startAt) throws Exception {
-        Gson gson = new Gson() ;
+        Gson gson = new Gson();
         for (Tender tender : tenderList) {
             log.info(String.format("投标统计: %s", gson.toJson(tender)));
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
@@ -1137,7 +1272,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 userCache.setTenderQudao(true);
             }
 
-            userCacheService.save(userCache) ;
+            userCacheService.save(userCache);
             if (!ObjectUtils.isEmpty(incrStatistic)) {
                 incrStatisticBiz.caculate(incrStatistic);
             }
@@ -1146,12 +1281,14 @@ public class BorrowBizImpl implements BorrowBiz {
 
     /**
      * 用戶投資送紅包處理
+     *
      * @param borrow
      * @param tenderList
      * @param nowDate
      */
-    public void userTenderRedPackage(Borrow borrow, List<Tender> tenderList, Date nowDate){
-        Gson gson=new Gson();
+    public void userTenderRedPackage(Borrow borrow, List<Tender> tenderList, Date nowDate) {
+        log.info("红包-----即信放款处理成功,进入红包条件判断中-----------");
+        Gson gson = new Gson();
         tenderList.forEach(p -> {
             UserCache userCache = userCacheService.findById(p.getUserId());
             Map<String, Object> paramsMap = new HashMap<>();

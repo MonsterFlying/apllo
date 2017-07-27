@@ -170,9 +170,9 @@ public class TransferServiceImpl implements TransferService {
             }
             transfered.setName(borrow.getName());
             double transferFeeRate = Math.min(0.004 + 0.0008 * (borrow.getTotalOrder() - 1), 0.0128);
-            transfered.setCost(StringHelper.formatMon(Math.round(borrow.getMoney() * transferFeeRate)));
+            transfered.setCost(StringHelper.formatMon(Math.round(borrow.getMoney() * transferFeeRate)/100D));
             transfered.setTime(DateHelper.dateToString(borrow.getCreatedAt()));
-            transfered.setPrincipal(StringHelper.formatMon(borrow.getMoneyYes() / 100d));
+            transfered.setPrincipal(StringHelper.formatMon(borrow.getMoneyYes() / 100D));
             transfereds.add(transfered);
         });
         resultMaps.put("transferedList", transfereds);
