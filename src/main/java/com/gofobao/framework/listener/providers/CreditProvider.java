@@ -143,7 +143,7 @@ public class CreditProvider {
             });
 
             //排除已经在存管登记结束债权的投标记录
-            tenderList.stream().filter(tender -> (ObjectUtils.isEmpty(tender.getThirdCreditEndFlag()) || !tender.getThirdCreditEndFlag())).forEach(tender -> {
+            tenderList.stream().filter(tender -> (Boolean.FALSE.equals(tender.getThirdCreditEndFlag()))).forEach(tender -> {
                 CreditEnd creditEnd = new CreditEnd();
                 String orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
 
@@ -186,7 +186,7 @@ public class CreditProvider {
             });
 
             //排除已经在存管登记结束债权的投标记录
-            tenderList.stream().filter(tender -> (ObjectUtils.isEmpty(tender.getThirdCreditEndFlag()) || !tender.getThirdCreditEndFlag())).forEach(tender -> {
+            tenderList.stream().filter(tender -> (Boolean.FALSE.equals(tender.getThirdCreditEndFlag()))).forEach(tender -> {
                 CreditEnd creditEnd = new CreditEnd();
                 String orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
 

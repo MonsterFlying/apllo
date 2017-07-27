@@ -59,6 +59,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -505,7 +506,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 BorrowCollection borrowCollection = borrowCollectionList.stream().filter(bc -> StringHelper.toString(bc.getTenderId()).equals(StringHelper.toString(tender.getId()))).collect(Collectors.toList()).get(0);
 
                 //判断这笔回款是否已经在即信登记过批次垫付
-                if (borrowCollection.getThirdRepayBailFlag()) {
+                if (Boolean.TRUE.equals(borrowCollection.getThirdBailRepayFlag())) {
                     continue;
                 }
 
@@ -958,7 +959,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             int inFee = 0; // 出借人利息费用
             int outFee = 0; // 借款人管理费
             BorrowCollection borrowCollection = borrowCollectionMap.get(tender.getId());  // 还款计划
-            if (borrowCollection.getThirdRepayFlag()) {  // 判断还款是否已经在即信登记
+            if (BooleanHelper.isTrue(borrowCollection.getThirdRepayFlag())) {  // 判断还款是否已经在即信登记
                 continue;
             }
             if (tender.getTransferFlag() == 1) {
@@ -1203,7 +1204,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             //==============================================================
             // 判断还款是否已经在即信登记
             //==============================================================
-            if (borrowCollection.getThirdRepayFlag()) {
+            if (Boolean.TRUE.equals(borrowCollection.getThirdRepayFlag())) {
                 continue;
             }
 

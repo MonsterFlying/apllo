@@ -105,7 +105,8 @@ public class CapitalChangeRulePaser {
             }
 
             if(money < 0){
-                throw new Exception("资金表动后数字小于零") ;
+                money = 0;
+                /*throw new Exception("资金表动后数字小于零") ;*/
             }
 
             PropertyUtils.setProperty(target, opFieldName, money);

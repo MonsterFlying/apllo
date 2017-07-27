@@ -30,7 +30,7 @@ public class IntegralChangeHelper {
     @Transactional(rollbackFor = Exception.class)
     public boolean integralChange(IntegralChangeEntity entity) throws Exception{
         Long userId = entity.getUserId();
-        Integer value = entity.getValue();
+        Long value = entity.getValue();
         IntegralChangeEnum type = entity.getType();
         if (ObjectUtils.isEmpty(userId) || ObjectUtils.isEmpty(value) || ObjectUtils.isEmpty(type)){
             return false;
