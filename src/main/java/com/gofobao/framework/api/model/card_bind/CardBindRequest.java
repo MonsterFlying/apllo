@@ -48,6 +48,11 @@ public class CardBindRequest extends JixinBaseRequest {
     private String notifyUrl;
 
     /**
+     * 客户IP
+     */
+    private String userIp;
+
+    /**
      * 请求方保留
      */
     private String acqRes;

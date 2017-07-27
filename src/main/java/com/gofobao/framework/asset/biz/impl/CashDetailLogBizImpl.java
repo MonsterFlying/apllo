@@ -5,6 +5,10 @@ import com.gofobao.framework.api.contants.IdTypeContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.helper.JixinTxDateHelper;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.api.model.with_daw.WithDrawRequest;
@@ -57,6 +61,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -113,15 +118,15 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     @Autowired
     BankAccountBizImpl bankAccountBiz;
 
+
+
     @Value("${gofobao.javaDomain}")
     String javaDomain;
 
     @Value("${gofobao.h5Domain}")
     String h5Domain;
 
-
     static final Gson GSON = new Gson();
-
     @Value("${gofobao.aliyun-bankaps-url}")
     String aliyunQueryBankapsUrl;
 
@@ -460,27 +465,23 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             titel = "提现成功";
             content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 处理成功! 如有疑问请致电客服.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
                     StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
-
         } else if ((JixinResultContants.CASH_RETRY.equals(response.getRetCode()))) {
-            log.info(String.format("大额提现回调: %s", GSON.toJson(response)));
-            // 更改用户提现记录
+            // 此处考虑到资金安全, 我们使用 先扣除用户可用余额, 在由调取 5分钟 查询一次是是否提现成功或者失败
             cashDetailLog.setState(3);
             cashDetailLog.setCallbackTime(nowDate);
             cashDetailLogService.save(cashDetailLog);
-            // 五分中查询一次
-            TaskScheduler taskScheduler = new TaskScheduler();
-            taskScheduler.setCreateAt(new Date());
-            taskScheduler.setUpdateAt(new Date());
-            taskScheduler.setType(TaskSchedulerConstants.CASH_FORM);
-            Map<String, String> data = new HashMap<>(1);
-            data.put("cashId", cashDetailLog.getId().toString());
-            Gson gson = new Gson();
-            taskScheduler.setTaskData(gson.toJson(data));
-            taskScheduler.setTaskNum(Integer.MAX_VALUE - 2);
-            taskScheduler = taskSchedulerBiz.save(taskScheduler);
-            if (ObjectUtils.isEmpty(taskScheduler.getId())) {
-                log.error(String.format("添加大额提现查询失败 %s", gson.toJson(data)));
-            }
+            // 更改用户资金
+            CapitalChangeEntity entity = new CapitalChangeEntity();
+            entity.setType(CapitalChangeEnum.Cash);
+            entity.setMoney(cashDetailLog.getMoney().intValue());
+            entity.setUserId(userId);
+            entity.setToUserId(userId);
+            capitalChangeHelper.capitalChange(entity);
+            log.info(String.format("大额提现回调需要5分钟过后查证: 交易流水: %s 返回状态/信息: %s/%s", seqNo, response.getRetCode(), response.getRetMsg()));
+
+            titel = "提现成功";
+            content = String.format("敬爱的用户您好! 你在[%s]提交%s元的大额提现请求, 处理成功! 如有疑问请致电客服.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
+                    StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
         } else {  // 交易失败
             titel = "提现失败";
             content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 处理失败! 如有疑问请致电客服.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
@@ -638,15 +639,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             } catch (ExcelException e) {
                 e.printStackTrace();
             }
-
         }
-
-
-    }
-
-    @Override
-    public boolean doBigCashForm(Long cashId) {
-        return false;
     }
 
     @Override

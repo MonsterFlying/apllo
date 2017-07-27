@@ -1163,7 +1163,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
                 || (asset.getCollection() != 0)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "不满住解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "不满足解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零"));
         }
 
         // 查询即信账户余额
@@ -1183,7 +1183,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         if (currBal != 0) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "不满住解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零")) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "不满足解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零")) ;
         }
         CardBindItem cardInfoByThird = null ;
         try {
@@ -1209,7 +1209,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
                 creditDetailsQueryRequest,
                 CreditDetailsQueryResponse.class);
 
-        if(ObjectUtils.isEmpty(creditDetailsQueryRequest) || JixinResultContants.SUCCESS.equalsIgnoreCase(creditDetailsQueryResponse.getRetCode())){
+        if(ObjectUtils.isEmpty(creditDetailsQueryRequest) || !JixinResultContants.SUCCESS.equalsIgnoreCase(creditDetailsQueryResponse.getRetCode())){
             String msg = ObjectUtils.isEmpty(balanceQueryResponse) ? "当前网络异常, 请稍后尝试!" : balanceQueryResponse.getRetMsg();
             log.error(String.format("债权明细查询: %s", msg));
             return ResponseEntity
@@ -1223,7 +1223,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             if(!CollectionUtils.isEmpty(creditDetailsQueryItemList)){
                 return ResponseEntity
                         .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR, "不满住解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零")) ;
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "不满足解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零")) ;
             }
         }
 
@@ -1236,7 +1236,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         cardUnbindRequest.setName(userThirdAccount.getName());
 
         CardUnbindResponse cardUnbindResponse = jixinManager.send(JixinTxCodeEnum.CARD_UNBIND, cardUnbindRequest, CardUnbindResponse.class);
-        if(ObjectUtils.isEmpty(cardUnbindResponse) || JixinResultContants.SUCCESS.equalsIgnoreCase(cardUnbindResponse.getRetCode())){
+        if(ObjectUtils.isEmpty(cardUnbindResponse) || !JixinResultContants.SUCCESS.equalsIgnoreCase(cardUnbindResponse.getRetCode())){
             String msg = ObjectUtils.isEmpty(cardUnbindResponse) ? "当前网络异常, 请稍后尝试!" : cardUnbindResponse.getRetMsg();
             log.error(String.format("解绑异常: %s", msg));
             return ResponseEntity
@@ -1320,7 +1320,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         // 生成html
         CardBindRequest cardBindRequest = new CardBindRequest() ;
         cardBindRequest.setAccountId(userThirdAccount.getAccountId()) ;
-        cardBindRequest.setCardNo(userThirdAccount.getCardNo()) ;
+        cardBindRequest.setCardNo(bankNo) ;
         cardBindRequest.setIdType(IdTypeContant.ID_CARD) ;
         cardBindRequest.setIdNo(userThirdAccount.getIdNo()) ;
         cardBindRequest.setMobile(userThirdAccount.getMobile()) ;
@@ -1433,7 +1433,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
                 CardBindDetailsQueryResponse.class);
 
         if(ObjectUtils.isEmpty(cardBindDetailsQueryResponse)
-                && cardBindDetailsQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)){
+                || !cardBindDetailsQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)){
             String msg = ObjectUtils.isEmpty(cardBindDetailsQueryResponse)?  " 查询银行卡信息, 网络请求超时"
                     : cardBindDetailsQueryResponse.getRetMsg() ;
             throw new Exception(msg) ;
@@ -1445,7 +1445,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             throw new Exception(String.format("银行卡信息为空 %s", gson.toJson(cardBindDetailsQueryResponse))) ;
         }
 
-        List<CardBindItem> cardBindItemsList = gson.fromJson(subPacks, new TypeToken<CardBindItem>(){}.getType()) ;
+        List<CardBindItem> cardBindItemsList = gson.fromJson(subPacks, new TypeToken<List<CardBindItem>>(){}.getType()) ;
         if(CollectionUtils.isEmpty(cardBindItemsList)){
             throw new Exception(String.format("银行卡信息为空 %s", gson.toJson(cardBindDetailsQueryResponse))) ;
         }
