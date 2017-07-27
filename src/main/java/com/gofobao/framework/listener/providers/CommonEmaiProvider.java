@@ -193,27 +193,6 @@ public class CommonEmaiProvider {
         checkNotNull(ip, "CommonEmaiProvider doSendMessageCode ip is null");
         checkNotNull(content, "CommonEmaiProvider doSendMessageCode content is null");
 
-        boolean flag = sendEmail(email, "借款协议", content, true);
-
-        // 写入数据库
-        Date nowDate = new Date();
-        SmsEntity smsEntity = new SmsEntity();
-        smsEntity.setIp(ip);
-        smsEntity.setType(tag);
-        smsEntity.setContent(content);
-        smsEntity.setPhone(email);
-        smsEntity.setCreatedAt(nowDate);
-        smsEntity.setStatus(!flag ? 0 : 1);
-        smsEntity.setUsername(email);
-        smsEntity.setExt(" ");
-        smsEntity.setId(null);
-        smsEntity.setRrid(" ");
-        smsEntity.setStime(" ");
-        try {
-            smsRepository.save(smsEntity);
-        } catch (Throwable e) {
-            log.error("保存数据失败", e);
-        }
-        return true;
+        return  sendEmail(email, "借款协议", content, true);
     }
 }
