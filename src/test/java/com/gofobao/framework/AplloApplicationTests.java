@@ -259,8 +259,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("110740");
-        batchDetailsQueryReq.setBatchTxDate("20170726");
+        batchDetailsQueryReq.setBatchNo("162240");
+        batchDetailsQueryReq.setBatchTxDate("20170725");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -320,21 +320,20 @@ public class AplloApplicationTests {
 
     @Test
     public void test() {
-
-
-        //推送队列结束债权
-        /*MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
-        mqConfig.setTag(MqTagEnum.END_CREDIT_BY_NOT_TRANSFER);
-        mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
+        /*//触发处理批次放款处理结果队列
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(169905), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(169914),
+                        MqConfig.BATCH_NO, StringHelper.toString(162132),
+                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
         try {
-            log.info(String.format("repaymentBizImpl repayDeal send mq %s", GSON.toJson(body)));
+            log.info(String.format("tenderThirdBizImpl thirdBatchRepayAllRunCall send mq %s", GSON.toJson(body)));
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
-            log.error("repaymentBizImpl repayDeal send mq exception", e);
+            log.error("tenderThirdBizImpl thirdBatchRepayAllRunCall send mq exception", e);
         }*/
 
         /*BatchQueryReq req = new BatchQueryReq();
