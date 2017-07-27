@@ -106,4 +106,13 @@ public interface CashDetailLogBiz {
      * @param response
      */
     void toExcel(VoPcCashLogs cashLogs, HttpServletResponse response);
+
+
+    /**
+     * @param cashId
+     * @param curNum
+     * @param totalNum
+     * @return
+     */
+    boolean doFormCashMoney(Long cashId, Integer curNum, Integer totalNum) throws Exception;
 }
