@@ -38,7 +38,7 @@ public class CapitalChangeRulePaser {
             String opFieldName; // 操作字段名称
             String area  = "all"; // 作用域
             String[] temp;
-            long money = 0;
+
             if (StringUtils.isEmpty(subRule)) {
                 logger.error(String.format("资金变动规则：%s为空", subRule));
                 return false;
@@ -57,31 +57,14 @@ public class CapitalChangeRulePaser {
                     logger.error(String.format("资金变动规则：%s格式错误", temp[1]));
                     return false;
                 }
-
                 opFieldName = temp[0];
                 area = temp[1];
             } else {
                 opFieldName = temp[1];
             }
 
-            //处理钱的问题
-            switch (area) {
-                case "principal":
-                    money = principal;
-                    break;
-                case "interest":
-                    money = interest;
-                    break;
-
-                case "all":
-                    money = interest + principal;
-                    break;
-                default:
-                    logger.error(String.format("资金变动规则：%s格式错误", area));
-                    return false;
-            }
-
-            Object value;
+            // 此处根据不同类型进行加减
+            Object value ;
             try {
                 value = PropertyUtils.getProperty(target, opFieldName);
             } catch (Throwable e) {
@@ -89,28 +72,82 @@ public class CapitalChangeRulePaser {
                 throw new Exception(e) ;
             }
 
-            if( !(value instanceof  Long) ){
-                throw new Exception("操作类型不是Long") ;
-            }
+            long longValue ;
+            int intValue ;
+            if(value instanceof  Long){
+                Long money = 0L;
+                //处理钱的问题
+                switch (area) {
+                    case "principal":
+                        money = principal;
+                        break;
+                    case "interest":
+                        money = interest;
+                        break;
+                    case "all":
+                        money = interest + principal;
+                        break;
+                    default:
+                        logger.error(String.format("资金变动规则：%s格式错误", area));
+                        return false;
+                }
 
-            switch (op) {
-                case "add":
-                    money = (long)value + money;
-                    break;
-                case "sub":
-                    money = (long)value - money ;
-                    break;
-                default:
-                    return false;
-            }
+                longValue  = Long.parseLong(String.valueOf(value)) ;
+                switch (op) {
+                    case "add":
+                        money = longValue + money ;
+                        break;
+                    case "sub":
+                        money = longValue - money ;
+                        break;
+                    default:
+                        return false;
+                }
 
-            if(money < 0){
-                throw new Exception("资金表动后数字小于零") ;
-            }
+                if(money < 0){
+                    money = 0l;
+                }
+                PropertyUtils.setProperty(target, opFieldName, money);
+            }else if(value instanceof Integer){
+                Integer money = 0;
+                //处理钱的问题
+                switch (area) {
+                    case "principal":
+                        money = new Long(principal).intValue();
+                        break;
+                    case "interest":
+                        money =  new Long(interest).intValue();
+                        break;
+                    case "all":
+                        money =  new Long(interest + principal).intValue();
+                        break;
+                    default:
+                        logger.error(String.format("资金变动规则：%s格式错误", area));
+                        return false;
+                }
+                intValue  = Integer.parseInt(String.valueOf(value)) ;
+                switch (op) {
+                    case "add":
+                        money = intValue + money ;
+                        break;
+                    case "sub":
+                        money = intValue - money ;
+                        break;
+                    default:
+                        return false;
+                }
 
-            PropertyUtils.setProperty(target, opFieldName, money);
+                if(money < 0){
+                    throw new Exception("资金表动后数字小于零") ;
+                }
+
+                PropertyUtils.setProperty(target, opFieldName, money);
+            }else {
+                throw new Exception("资金变动暂时支持 long 和int") ;
+            }
         }
 
         return true;
     }
+
 }

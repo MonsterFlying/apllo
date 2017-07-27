@@ -20,10 +20,10 @@ public class Integral {
     private Long userId;
     @Basic
     @Column(name = "use_integral")
-    private Integer useIntegral;
+    private Long useIntegral;
     @Basic
     @Column(name = "no_use_integral")
-    private Integer noUseIntegral;
+    private Long noUseIntegral;
     @Basic
     @Column(name = "updated_at")
     private Date updatedAt;

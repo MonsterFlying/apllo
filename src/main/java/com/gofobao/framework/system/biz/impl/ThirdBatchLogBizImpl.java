@@ -256,7 +256,7 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
         });
 
         //判断投标记录里是否存在批次结束债权失败记录
-        return tenderList.stream().filter(tender -> !tender.getThirdCreditEndFlag()).count() > 0;
+        return tenderList.stream().filter(tender -> Boolean.FALSE.equals(tender.getThirdCreditEndFlag())).count() > 0;
 
     }
 }

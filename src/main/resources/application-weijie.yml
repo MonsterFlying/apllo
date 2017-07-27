@@ -54,8 +54,8 @@ jixin: #银行存管
   query-time-init: "20161011" # 与存管系统查询时间
 gofobao:
   dev: true # 开发环境
-  javaDomain: http://20af2aaf.ngrok.io
-  webDomain: http://20af2aaf.ngrok.io
+  javaDomain: http://t191fqp.hk1.mofasuidao.cn/
+  webDomain: http://t191fqp.hk1.mofasuidao.cn/
   h5Domain: http://ng.hk1.mofasuidao.cn
 #  javaDomain: http://ogmax.ngrok.club
 #  webDomain: http://ogmax.ngrok.club

@@ -51,7 +51,7 @@ public class UserThirdController {
 
 
     @ApiOperation("绑定银行卡")
-    @PostMapping("/user/third/bind/bank/{bankNo}")
+    @GetMapping("/user/third/bind/bank/{bankNo}")
     public ResponseEntity<VoHtmlResp> bindBank(HttpServletRequest httpServletRequest, @RequestAttribute(SecurityContants.USERID_KEY) Long userId,@PathVariable("bankNo") String bankNo) {
         return userThirdBiz.bindBank(httpServletRequest, userId, bankNo) ;
     }
@@ -110,14 +110,11 @@ public class UserThirdController {
     }
 
 
-
     @ApiOperation("后台开户")
     @PostMapping("/pub/admin/third/openAccout")
     public ResponseEntity<VoHtmlResp> adminOpenAccount(HttpServletRequest httpServletRequest, @Valid @ModelAttribute VoAdminOpenAccountResp voAdminOpenAccountResp ) {
         return userThirdBiz.adminOpenAccount(voAdminOpenAccountResp, httpServletRequest) ;
     }
-
-
 
     @PostMapping("/pub/admin/third/openAccout/callback/{userId}")
     public ResponseEntity<String> adminOpenAccountCallback(HttpServletRequest httpServletRequest, @PathVariable("userId") Long userId ) {

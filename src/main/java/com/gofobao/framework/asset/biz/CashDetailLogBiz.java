@@ -109,9 +109,10 @@ public interface CashDetailLogBiz {
 
 
     /**
-     * 大额提现的确认
      * @param cashId
+     * @param curNum
+     * @param totalNum
      * @return
      */
-    boolean doBigCashForm(Long cashId);
+    boolean doFormCashMoney(Long cashId, Integer curNum, Integer totalNum) throws Exception;
 }

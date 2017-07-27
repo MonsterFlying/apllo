@@ -29,28 +29,28 @@ public class BigCashQueryScheduler {
     TaskSchedulerBiz taskSchedulerBiz;
 
     @Autowired
-    CashDetailLogBiz cashDetailLogBiz;
+    CashDetailLogBiz cashDetailLogBiz ;
 
     @Scheduled(fixedRate = 10 * 60 * 1000)
     public void process() {
-        log.info("委托支付标调动启动");
+        log.info("大额提现资金确认扣减调动启动");
         // 查询带调度队列
         int pageSize = 40;
         int pageIndex = 0;
-        int type = TaskSchedulerConstants.CASH_FORM;
+        int type = TaskSchedulerConstants.CASH_CANCEL;
         int size;
         do {
             List<TaskScheduler> taskSchedulers = taskSchedulerBiz.findByType(pageIndex, pageSize, type);
             size = taskSchedulers.size();
-
             // 处理调度
             taskSchedulers.forEach(p -> {
                 long startDate = System.currentTimeMillis();
                 String taskData = p.getTaskData();
-                Preconditions.checkNotNull(taskData, "大额提现确认调度: 调度数据为空");
+                Preconditions.checkNotNull(taskData, "大额提现资金确认扣减: 数据为空");
                 Map<String, String> rs = new Gson().fromJson(taskData, TypeTokenContants.MAP_ALL_STRING_TOKEN);
                 Long cashId = Long.parseLong(rs.get("cashId"));
-                boolean b = cashDetailLogBiz.doBigCashForm(cashId);
+
+                boolean b = cashDetailLogBiz.doFormCashMoney(cashId, p.getDoTaskNum(), p.getTaskNum()) ;
                 p.setDoTaskNum(p.getDoTaskNum() + 1);
                 p.setState(b ? 1 : 0);
                 p.setDel(b ? 1 : 0);
@@ -60,7 +60,7 @@ public class BigCashQueryScheduler {
                 }
 
                 taskSchedulerBiz.save(p);
-                log.info(String.format("委托支付标信息查询调度使用时间 %s 毫秒", System.currentTimeMillis() - startDate));
+                log.info(String.format("大额提现资金确认扣减调动 使用时间 %s 毫秒", System.currentTimeMillis() - startDate));
             });
         } while (size == pageSize);
     }

@@ -112,7 +112,7 @@ public class TransferServiceImpl implements TransferService {
             transferOf.setPrincipal(StringHelper.formatMon(borrow.getMoney() / 100d));
             double spend = (double) borrow.getMoneyYes() / (double) borrow.getMoney();
             transferOf.setSpend(StringHelper.formatMon(spend));
-            transferOf.setCancel(spend != 1d && !borrow.getThirdTransferFlag());
+            transferOf.setCancel(spend != 1d && Boolean.FALSE.equals(borrow.getThirdTransferFlag()));
             transferOf.setBorrowId(borrow.getId());
             transferOfs.add(transferOf);
         });
