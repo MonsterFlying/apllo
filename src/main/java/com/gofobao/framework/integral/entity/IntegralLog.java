@@ -26,13 +26,13 @@ public class IntegralLog {
     private String type;
     @Basic
     @Column(name = "value")
-    private Integer value;
+    private Long value;
     @Basic
     @Column(name = "use_integral")
-    private Integer useIntegral;
+    private Long useIntegral;
     @Basic
     @Column(name = "no_use_integral")
-    private Integer noUseIntegral;
+    private Long noUseIntegral;
     @Basic
     @Column(name = "created_at")
     private Date createdAt;

@@ -24,19 +24,19 @@ public class VoListIntegralResp extends VoBaseResp{
      * 总积分
      */
     @ApiModelProperty("总积分")
-    private Integer totalIntegral;
+    private Long totalIntegral;
 
     /**
      * 有效积分
      */
     @ApiModelProperty("有效积分")
-    private Integer availableIntegral;
+    private Long availableIntegral;
 
     /**
      * 已使用积分
      */
     @ApiModelProperty("已使用积分")
-    private Integer invalidIntegral;
+    private Long invalidIntegral;
 
     /**
      * 兑换比例

@@ -765,7 +765,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                         entity.setMoney((int) (accruedInterest * 0.1));
                         capitalChangeHelper.capitalChange(entity);
 
-                        Integer integral = accruedInterest * 10;
+                        Long integral = new Long(accruedInterest * 10);
                         if (borrow.getType() == 0 && 0 < integral) {
                             IntegralChangeEntity integralChangeEntity = new IntegralChangeEntity();
                             integralChangeEntity.setUserId(borrow.getUserId());
@@ -927,7 +927,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             }
 
             //投资积分
-            int integral = (collectionInterest - interestLower) * 10;
+            long integral = (collectionInterest - interestLower) * 10;
             if ((borrow.getType() == 0 || borrow.getType() == 4) && 0 < integral) {
                 IntegralChangeEntity integralChangeEntity = new IntegralChangeEntity();
                 integralChangeEntity.setType(IntegralChangeEnum.TENDER);
@@ -1082,7 +1082,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
     private ResponseEntity<VoBaseResp> normalRepay(long userId, Long borrowRepaymentId, UserThirdAccount repayUserThirdAccount, BorrowRepayment borrowRepayment, Borrow borrow, Date nowDate, int lateInterest) throws Exception {
         log.info("批次还款: 进入正常还款流程");
-        List<Repay> repays = borrowRepaymentThirdBiz.calculateRepayPlan(borrow, repayUserThirdAccount.getAccountId(), getLateDays(borrowRepayment), borrowRepayment.getOrder(), lateInterest);
+        List<Repay> repays = borrowRepaymentThirdBiz.calculateRepayPlan(borrow, repayUserThirdAccount.getAccountId(),  borrowRepayment.getOrder(),getLateDays(borrowRepayment), lateInterest);
         //所有交易金额 交易金额指的是txAmount字段
         double txAmount = repays.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxAmount())).sum();
         //所有交易利息

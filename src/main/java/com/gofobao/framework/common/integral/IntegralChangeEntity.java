@@ -14,7 +14,7 @@ public class IntegralChangeEntity {
     /**
      * 变动积分
      */
-    private Integer value;
+    private Long value;
     /**
      * 积分表东类型
      */

@@ -155,7 +155,7 @@ public class IntegralBizImpl implements IntegralBiz {
         }
 
         Long collection = asset.getCollection();//代收金额
-        Integer totalIntegral = integral.getUseIntegral() + integral.getNoUseIntegral();//总积分
+        Long totalIntegral = integral.getUseIntegral() + integral.getNoUseIntegral();//总积分
 
         VoListIntegralResp voListIntegralResp = VoBaseResp.ok("查询成功", VoListIntegralResp.class);
         voListIntegralResp.setTotalIntegral(totalIntegral);
@@ -269,7 +269,7 @@ public class IntegralBizImpl implements IntegralBiz {
         }
 
 
-        Integer useIntegral = integral.getUseIntegral();
+        Long useIntegral = integral.getUseIntegral();
         if (integer >= useIntegral) {
             return ResponseEntity
                     .badRequest()
@@ -289,7 +289,7 @@ public class IntegralBizImpl implements IntegralBiz {
         }
 
         Long collection = asset.getCollection();
-        Integer sumIntegral=useIntegral+integral.getNoUseIntegral();
+        Long sumIntegral=useIntegral+integral.getNoUseIntegral();
         String takeRatesStr = getTakeRates(collection, sumIntegral, integralRule);
         double takeRates = Double.parseDouble(takeRatesStr);//折现系数
         long money = Math.round(takeRates * integer);  // 可兑换金额
@@ -308,8 +308,8 @@ public class IntegralBizImpl implements IntegralBiz {
         if (!b) {
             throw new Exception("用户资产变更失败!");
         }
-        Integer noUseIntegral=integral.getNoUseIntegral() + integer;
-        Integer userInteger1=integral.getUseIntegral() - integer;
+        Long noUseIntegral=integral.getNoUseIntegral() + integer;
+        Long userInteger1=integral.getUseIntegral() - integer;
         Integral saveIntegral = new Integral();
         saveIntegral.setUserId(userId);
         saveIntegral.setNoUseIntegral(noUseIntegral);
@@ -321,7 +321,7 @@ public class IntegralBizImpl implements IntegralBiz {
         integralLog.setNoUseIntegral(noUseIntegral);
         integralLog.setUserId(userId);
         integralLog.setCreatedAt(new Date());
-        integralLog.setValue(integer);
+        integralLog.setValue(new Long(integer));
         integralLog.setType("convert");
 
         integralLog = integralLogService.insert(integralLog);
@@ -369,7 +369,7 @@ public class IntegralBizImpl implements IntegralBiz {
      * @param integral 总积分
      * @return
      */
-    private String getTakeRates(Long money, Integer integral, List<Map<String, String>> maps) {
+    private String getTakeRates(Long money, Long integral, List<Map<String, String>> maps) {
         money = money / 100;
 
         Integer moneyMin = 0;

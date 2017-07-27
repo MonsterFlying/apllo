@@ -193,7 +193,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         double transferFee = borrow.getMoney() * transferFeeRate;  // 转让管理费
         for (Tender tender : tenderList) {
             txFee = 0;
-            if (!ObjectUtils.isEmpty(tender.getThirdTransferFlag()) && tender.getThirdTransferFlag()) {  //判断标的是否已在存管转让
+            if (Boolean.TRUE.equals(tender.getThirdTransferFlag())) {  //判断标的是否已在存管转让
                 continue;
             }
 
