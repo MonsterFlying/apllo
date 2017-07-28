@@ -712,7 +712,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             Integer curr = iterator.next();
             bean.put("cash", filterAssetChangeLogs.get(curr));
             int next = 0;
-            if (iterator.hasNext()) {
+            if (!iterator.hasNext()) {
                 next = filterAssetChangeLogs.size() - 1;
             } else {
                 next = cashIndexList.get(index);
@@ -764,13 +764,13 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             AccountDetailsQueryItem fee = item.get("fee");
             double cashMoney = Double.parseDouble(cash.getTxAmount());
             double feeMomey = 0;
-            if (ObjectUtils.isEmpty(fee)) {
+            if (!ObjectUtils.isEmpty(fee)) {
                 feeMomey = Double.parseDouble(fee.getTxAmount());
             }
 
             double _money = (cashDetailLog.getMoney() - cashDetailLog.getFee()) / 100D;
             double _fee = cashDetailLog.getFee() / 100D;
-            if ( (_money == cashMoney) || (_fee == feeMomey)) {
+            if ( (_money == cashMoney) && (_fee == feeMomey)) {
                 deductionAsset(cashDetailLog, cash);  // 扣除用户
                 return true ;
             }
