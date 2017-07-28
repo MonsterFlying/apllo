@@ -6,7 +6,6 @@ import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.vo.request.*;
-import com.gofobao.framework.repayment.vo.response.VoBuildThirdRepayResp;
 import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
 import com.gofobao.framework.repayment.vo.response.VoViewRepaymentOrderDetailWarpRes;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewCollectionWarpRes;

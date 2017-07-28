@@ -8,6 +8,7 @@ import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -21,6 +22,14 @@ public interface BorrowBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> cancelBorrow(VoCancelBorrow voCancelBorrow) throws Exception;
+
+
+    /**
+     * 调度取消过期的标
+     * @param borrowList
+     * @return
+     */
+    void schedulerCancelBorrow(List<Borrow> borrowList);
 
     /**
      * pc取消借款

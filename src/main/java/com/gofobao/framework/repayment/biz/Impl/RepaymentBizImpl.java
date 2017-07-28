@@ -35,7 +35,6 @@ import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderRes;
-import com.gofobao.framework.common.capital.CapitalChangeConfig;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.JixinContants;
@@ -65,7 +64,10 @@ import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.*;
-import com.gofobao.framework.repayment.vo.response.*;
+import com.gofobao.framework.repayment.vo.response.RepayCollectionLog;
+import com.gofobao.framework.repayment.vo.response.RepaymentOrderDetail;
+import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
+import com.gofobao.framework.repayment.vo.response.VoViewRepaymentOrderDetailWarpRes;
 import com.gofobao.framework.repayment.vo.response.pc.VoCollection;
 import com.gofobao.framework.repayment.vo.response.pc.VoOrdersList;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewCollectionWarpRes;
@@ -1074,6 +1076,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         thirdBatchLog.setSourceId(borrowRepaymentId);
         thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY_BAIL);
         thirdBatchLog.setRemark("批次融资人还担保账户垫款");
+        thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
         thirdBatchLogService.save(thirdBatchLog);
 
         return ResponseEntity.ok(VoBaseResp.ok("批次融资人还担保账户垫款成功!"));
@@ -1148,6 +1151,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         thirdBatchLog.setSourceId(borrowRepaymentId);
         thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY);
         thirdBatchLog.setRemark("即信批次还款");
+        thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
         thirdBatchLogService.save(thirdBatchLog);
         return ResponseEntity.ok(VoBaseResp.ok("还款正常"));
     }
@@ -1716,6 +1720,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         thirdBatchLog.setSourceId(repaymentId);
         thirdBatchLog.setType(ThirdBatchLogContants.BATCH_BAIL_REPAY);
         thirdBatchLog.setRemark("批次担保账户垫付");
+        thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
         thirdBatchLogService.save(thirdBatchLog);
 
         return ResponseEntity.ok(VoBaseResp.ok("批次担保账户代偿成功!"));
@@ -1885,6 +1890,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         thirdBatchLog.setSourceId(repaymentId);
         thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY_BAIL);
         thirdBatchLog.setRemark("批次融资人还担保账户垫款");
+        thirdBatchLog.setAcqRes(GSON.toJson(voRepayReq));
         thirdBatchLogService.save(thirdBatchLog);
 
         return ResponseEntity.ok(VoBaseResp.ok("批次融资人还担保账户垫款成功!"));

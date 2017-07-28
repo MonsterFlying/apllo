@@ -1,8 +1,8 @@
 spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
-    url: jdbc:mysql://120.27.31.182:3306/gofobao9?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&&useSSL=true
-    username: gofobao9
+    url: jdbc:mysql://192.168.1.3:3306/gofobao0627?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&&useSSL=true
+    username: gofobao0627
     password: GOFOBAO@0701.
     driver-class-name: com.mysql.jdbc.Driver
   jpa:
@@ -20,9 +20,9 @@ spring:
     port: 6379
   rabbitmq:
     host: 127.0.0.1
-    port: 15672
-    username: wangguo
-    password: wangguo123
+    port: 5672
+    username: gofobao
+    password: gofobao
   mail:
     host: smtp.qq.com
     port: 587
@@ -34,7 +34,7 @@ spring:
   profiles:
     active: def
 server:
-  port: 8010
+  port: 80
 jwt: #JWT 安全配置
   header: Authorization
   secret: WWW.gOf0b@o.c0m@0701
@@ -42,22 +42,24 @@ jwt: #JWT 安全配置
   prefix: Bearer
 
 jixin: #银行存管
-  keysPath: D:/sign/guangfubao_sit.p12 #私钥路径
+  keysPath: D:/cert/gofobao/guangfubao_sit.p12 #私钥路径
   keysPassword: guangfubao_sit@2016 #私钥密码
-  crtPath: D:/sign/certs/fdep.crt #服务端证书文件路径
+  crtPath: D:/cert/gofobao/fdep.crt #服务端证书文件路径
   url: https://test.credit2go.cn #即信服务器路径
+  file-url: https://test.credit2go.cn/escrow/file/download #文件请求下载链接
+  save-file-path: D:/statistice   #文件本地保存的路径
   version: 10 #版本号
   instCode: "00960001" #机构代码
   bankCode: "30050000" #交易机构代码
+  product-no: "0105" # 产品编号
+  bank-no: "3005" #产品编号
   query-time-init: "20161011" # 与存管系统查询时间
 gofobao:
   dev: true # 开发环境
-  javaDomain: http://qtfja75.hk1.mofasuidao.cn
-  webDomain: http://qtfja75.hk1.mofasuidao.cn
-  h5Domain:  http://ng.hk1.mofasuidao.cn
+  javaDomain: http://wangg.hk1.mofasuidao.cn
+  webDomain: http://wangg.hk1.mofasuidao.cn
+  h5Domain:  http://wangg.hk1.mofasuidao.cn
   imageDomain : http://www.gofobao.com
-  file-url: https://test.credit2go.cn/escrow/file/download #文件请求下载链接
-  save-file-path: D:/statistice/   #文件本地保存的路径
   captcha: false # 全站是否开启图形验证码验证
   close-email-send: true # 关闭邮箱发送
   close-phone-send: true # 关闭短信发送
@@ -81,4 +83,4 @@ logging:
 #    guru.springframework.controllers: DEBUG
 #    org.hibernate: DEBUG
 #    com.gofobao: DEBUG
-    root: INFO
+    root: info

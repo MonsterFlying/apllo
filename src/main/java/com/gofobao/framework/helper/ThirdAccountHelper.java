@@ -2,7 +2,6 @@ package com.gofobao.framework.helper;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.entity.UserThirdAccount;
-import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ObjectUtils;
 

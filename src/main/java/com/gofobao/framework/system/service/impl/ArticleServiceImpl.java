@@ -44,7 +44,7 @@ public class ArticleServiceImpl implements ArticleService {
         List<ArticleModle> articleModles = Lists.newArrayList();
         articles.stream().forEach(p -> {
             ArticleModle articleModle = new ArticleModle();
-            articleModle.setTime(DateHelper.dateToString(p.getCreatedAt()));
+            articleModle.setTime(DateHelper.dateToString(p.getCreatedAt(),DateHelper.DATE_FORMAT_YMD));
             articleModle.setTitle(p.getTitle());
             articleModle.setId(p.getId());
             articleModles.add(articleModle);

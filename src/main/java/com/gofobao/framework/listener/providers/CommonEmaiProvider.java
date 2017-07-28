@@ -4,7 +4,6 @@ import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.helper.MacthHelper;
 import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.message.entity.SmsEntity;
 import com.gofobao.framework.message.repository.SmsRepository;
 import com.gofobao.framework.message.service.SmsTemplateService;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +17,6 @@ import org.springframework.stereotype.Component;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeUtility;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 

@@ -22,6 +22,7 @@ public class ThirdBatchLog {
     private Integer type;
     private Long sourceId;
     private String remark;
+    private String acqRes;
     private Integer iparam1;
     private Integer iparam2;
     private Integer iparam3;

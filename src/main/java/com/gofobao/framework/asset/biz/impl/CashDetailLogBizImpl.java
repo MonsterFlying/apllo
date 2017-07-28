@@ -26,7 +26,6 @@ import com.gofobao.framework.asset.vo.request.VoPcCashLogs;
 import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.asset.vo.response.pc.VoCashLog;
 import com.gofobao.framework.asset.vo.response.pc.VoCashLogWarpRes;
-import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
@@ -49,15 +48,10 @@ import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.scheduler.biz.TaskSchedulerBiz;
 import com.gofobao.framework.scheduler.constants.TaskSchedulerConstants;
 import com.gofobao.framework.scheduler.entity.TaskScheduler;
-import com.gofobao.framework.system.entity.DictItem;
-import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
 import com.google.common.base.Preconditions;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -84,7 +78,6 @@ import org.springframework.util.StringUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Administrator on 2017/6/12 0012.
