@@ -1,6 +1,7 @@
 package com.gofobao.framework.scheduler;
 
 import com.gofobao.framework.asset.biz.CashDetailLogBiz;
+import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.scheduler.biz.TaskSchedulerBiz;
 import com.gofobao.framework.scheduler.constants.TaskSchedulerConstants;
@@ -48,22 +49,23 @@ public class BigCashQueryScheduler {
                 Preconditions.checkNotNull(taskData, "大额提现资金确认扣减: 数据为空");
                 Map<String, String> rs = new Gson().fromJson(taskData, TypeTokenContants.MAP_ALL_STRING_TOKEN);
                 Long cashId = Long.parseLong(rs.get("cashId"));
+
+                boolean b = false;
                 try {
-                    boolean b = cashDetailLogBiz.doFormCashMoney(cashId, p.getDoTaskNum(), p.getTaskNum());
-                    p.setDoTaskNum(p.getDoTaskNum() + 1);
-                    p.setState(b ? 1 : 0);
-                    p.setDel(b ? 1 : 0);
-                    p.setUpdateAt(new Date());
-                    if (p.getTaskNum() <= p.getDoTaskNum()) {
-                        p.setDel(1);
-                    }
-
-                    taskSchedulerBiz.save(p);
-                    log.info(String.format("大额提现资金确认扣减调动 使用时间 %s 毫秒", System.currentTimeMillis() - startDate));
-                }catch (Exception e){
-                    log.info(String.format("大额提现资金确认扣减调动 失败 cashId：",cashId));
-
+                    b = cashDetailLogBiz.doFormCashMoney(cashId, p.getDoTaskNum(), p.getTaskNum());
+                } catch (Exception e) {
+                    log.error("BigCashQueryScheduler process error:",e);
                 }
+                p.setDoTaskNum(p.getDoTaskNum() + 1);
+                p.setState(b ? 1 : 0);
+                p.setDel(b ? 1 : 0);
+                p.setUpdateAt(new Date());
+                if (p.getTaskNum() <= p.getDoTaskNum()) {
+                    p.setDel(1);
+                }
+
+                taskSchedulerBiz.save(p);
+                log.info(String.format("大额提现资金确认扣减调动 使用时间 %s 毫秒", System.currentTimeMillis() - startDate));
             });
         } while (size == pageSize);
     }

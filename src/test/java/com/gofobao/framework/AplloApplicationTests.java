@@ -68,6 +68,8 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.gofobao.framework.listener.providers.NoticesMessageProvider.GSON;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @Slf4j
@@ -358,20 +360,20 @@ public class AplloApplicationTests {
     }
 
     public void batchDeal(){
-        Map<String,Object> acqMap = new HashMap<>();
+        /*Map<String,Object> acqMap = new HashMap<>();
         acqMap.put("repaymentId","173855");
         acqMap.put("interestPercent","1d");
         acqMap.put("isUserOpen",true);
-        acqMap.put("userId",44833);
+        acqMap.put("userId",44833);*/
 
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(173855),
-                        MqConfig.BATCH_NO, StringHelper.toString(113722),
-                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()),
-                        MqConfig.ACQ_RES, GSON.toJson(acqMap)
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(169919),
+                        MqConfig.BATCH_NO, StringHelper.toString(174806),
+                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
+                       /* MqConfig.ACQ_RES, GSON.toJson(acqMap)*/
                         );
 
         mqConfig.setMsg(body);
@@ -385,6 +387,20 @@ public class AplloApplicationTests {
 
     @Test
     public void test() {
+        //推送队列结束债权
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
+        mqConfig.setTag(MqTagEnum.END_CREDIT_ALL);
+        mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 5));
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(169919), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            log.info(String.format("repaymentBizImpl repayDeal send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("repaymentBizImpl repayDeal send mq exception", e);
+        }
         //批次处理
         //batchDeal();
         //查询存管账户资金信息
@@ -416,7 +432,7 @@ public class AplloApplicationTests {
         //批次详情查询
         //batchDetailsQuery();
         //查询投标申请
-        bidApplyQuery();
+        //bidApplyQuery();
         //转让标复审回调
         //transferBorrowAgainVerify();
         //非转让标复审问题

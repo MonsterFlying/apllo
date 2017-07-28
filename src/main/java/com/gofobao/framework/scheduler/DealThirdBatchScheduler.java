@@ -12,7 +12,8 @@ import org.springframework.stereotype.Component;
 public class DealThirdBatchScheduler {
 
     @Scheduled(cron = "0 0 0/1 * * ? ")
-    public void process(){
-
+    public void process() {
+        //1.查询未处理 参数校验成功的批次 gfb_third_batch_log
+        //1.
     }
 }

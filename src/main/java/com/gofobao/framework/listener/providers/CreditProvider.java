@@ -84,6 +84,11 @@ public class CreditProvider {
             default:
         }
 
+        if (CollectionUtils.isEmpty(creditEndList)) {
+            log.error("creditProvider endThirdCredit: 结束债权集合为空!");
+            return false;
+        }
+
         //发送批次结束债权
         Date nowDate = new Date();
 
@@ -113,11 +118,13 @@ public class CreditProvider {
         thirdBatchLog.setUpdateAt(nowDate);
         thirdBatchLog.setSourceId(borrowId);
         thirdBatchLog.setType(ThirdBatchLogContants.BATCH_CREDIT_END);
+        thirdBatchLog.setAcqRes(gson.toJson(acqResMap));
         thirdBatchLog.setRemark("即信批次结束债权");
         thirdBatchLogService.save(thirdBatchLog);
         return true;
 
     }
+
 
     /**
      * 构建结束已转让债权集合
