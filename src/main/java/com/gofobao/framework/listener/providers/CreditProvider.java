@@ -157,6 +157,8 @@ public class CreditProvider {
                 creditEndList.add(creditEnd);
                 //保存结束债权id
                 tender.setThirdCreditEndOrderId(orderId);
+                tender.setThirdCreditEndFlag(true);
+                tenderService.save(tender);
 
                 //查询转让标的
                 Specification<Borrow> bs = Specifications

@@ -390,19 +390,19 @@ public class AplloApplicationTests {
     @Test
     public void test() {
         //推送队列结束债权
-        /*MqConfig mqConfig = new MqConfig();
+        MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
         mqConfig.setTag(MqTagEnum.END_CREDIT_ALL);
         mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 5));
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(169917), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(169919), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
         try {
             log.info(String.format("repaymentBizImpl repayDeal send mq %s", GSON.toJson(body)));
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("repaymentBizImpl repayDeal send mq exception", e);
-        }*/
+        }
         //批次处理
         //batchDeal();
         //查询存管账户资金信息
@@ -440,18 +440,18 @@ public class AplloApplicationTests {
         //非转让标复审问题
         //noTransferBorrowAgainVerify();
         // 查询债权关系
-        CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
+        /*CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
         creditDetailsQueryRequest.setAccountId("6212462040000000077");
-        creditDetailsQueryRequest.setStartDate("20170724");
+        creditDetailsQueryRequest.setStartDate("20161003");
         creditDetailsQueryRequest.setProductId("169917");
         creditDetailsQueryRequest.setEndDate(DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM));
-        creditDetailsQueryRequest.setState("1");
+        creditDetailsQueryRequest.setState("0");
         creditDetailsQueryRequest.setPageNum("1");
         creditDetailsQueryRequest.setPageSize("10");
         CreditDetailsQueryResponse creditDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.CREDIT_DETAILS_QUERY,
                 creditDetailsQueryRequest,
                 CreditDetailsQueryResponse.class);
-        System.out.println(creditDetailsQueryResponse);
+        System.out.println(creditDetailsQueryResponse);*/
     }
 
 }
