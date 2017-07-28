@@ -100,7 +100,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
         do {
             AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
             accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
-            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
+            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex++));
             accountDetailsQueryRequest.setStartDate(jixinTxDateHelper.getTxDateStr());
             accountDetailsQueryRequest.setEndDate(jixinTxDateHelper.getTxDateStr());
             accountDetailsQueryRequest.setType("0");
@@ -124,6 +124,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
             List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
             realSize = accountDetailsQueryItems.size();
             accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
+            pageIndex++ ;
         } while (realSize == pageSize);
         accountDetailsQueryItemList.forEach(item -> {
             System.err.println(GSON.toJson(item));

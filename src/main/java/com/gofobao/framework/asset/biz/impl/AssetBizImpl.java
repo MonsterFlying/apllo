@@ -276,7 +276,8 @@ public class AssetBizImpl implements AssetBiz {
         }
 
 
-        userThirdAccount.setMobile("13008875126");
+        // userThirdAccount.setMobile("13008875126");
+        userThirdAccount.setMobile("13662260509");
         String smsSeq = null;
         try {
 
@@ -1006,6 +1007,7 @@ public class AssetBizImpl implements AssetBiz {
                 }.getType()));
                 List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
                 realSize = accountDetailsQueryItems.size();
+                pageIndex++ ;
             } while (realSize == pageSize);
         }
         VoAvailableAssetInfoResp resp = VoBaseResp.ok("查询成功", VoAvailableAssetInfoResp.class);

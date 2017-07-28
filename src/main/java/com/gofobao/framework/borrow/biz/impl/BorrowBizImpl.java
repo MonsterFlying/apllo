@@ -750,13 +750,13 @@ public class BorrowBizImpl implements BorrowBiz {
                 }
             }
         }
-        borrows.forEach(borrow->{
+        borrows.forEach(borrow -> {
             //==================================================================
             //即信取消标的
             //==================================================================
             try {
                 cancelThirdBorrow(borrow);
-            }catch (Exception e){
+            } catch (Exception e) {
 
             }
             // ======================================
@@ -790,9 +790,9 @@ public class BorrowBizImpl implements BorrowBiz {
             // 债权转让标识取消
             try {
                 assertAndDoTransfer(borrow);
-            }catch (Exception e){
+            } catch (Exception e) {
                 log.info("调度取消过期标的---->债权转让标识取消----->失败%s");
-                log.info("当前标的信息:"+GSON.toJson(borrow));
+                log.info("当前标的信息:" + GSON.toJson(borrow));
             }
             //更新借款
             borrow.setStatus(5);
@@ -800,7 +800,6 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowService.updateById(borrow);
 
         });
-
 
 
     }
@@ -1081,6 +1080,8 @@ public class BorrowBizImpl implements BorrowBiz {
                 .build();
         List<Tender> tenderList = tenderService.findList(ts);
         Preconditions.checkNotNull(tenderList, "生成还款记录: 投标记录为空");
+        //查询债权转让借款原投资
+        Tender transferTender = tenderService.findById(borrow.getTenderId());
 
         // 这里涉及用户投标回款计划生成和平台资金的变动
         generateBorrowCollectionAndAssetChange(borrow, tenderList, oldBorrowCollections.get(0).getStartAt());
@@ -1122,8 +1123,8 @@ public class BorrowBizImpl implements BorrowBiz {
             tender.setState(2);
             tender.setUpdatedAt(new Date());
         });
-
         tenderService.save(tenderList);
+
     }
 
     /**

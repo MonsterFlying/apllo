@@ -34,17 +34,6 @@ public class SmsUserController {
         return result;
     }
 
-
-    @ApiOperation("充值短信发送 -- 此接口已放弃 ")
-    @PostMapping("/recharge")
-    public ResponseEntity<VoBaseResp> recharge(HttpServletRequest request,
-                                               @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
-                                               @Valid @ModelAttribute VoUserSmsReq voUserSmsReq) {
-        voUserSmsReq.setUserId(userId);
-        ResponseEntity<VoBaseResp> result = messageBiz.recharge(voUserSmsReq);
-        return result;
-    }
-
     @ApiOperation("在线联机充值短信发送")
     @PostMapping("/rechargeOnline")
     public ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest request,
