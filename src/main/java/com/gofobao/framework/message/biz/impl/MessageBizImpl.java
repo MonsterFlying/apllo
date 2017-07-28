@@ -519,7 +519,7 @@ public class MessageBizImpl implements MessageBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请先初始化江西银行存管账户交易密码！"));
         }
-
+        // userThirdAccount.setMobile("13008875126");
         userThirdAccount.setMobile("13662260509");
         SmsCodeApplyRequest request = new SmsCodeApplyRequest();
         request.setSrvTxCode(SrvTxCodeContants.DIRECT_RECHARGE_ONLINE);
