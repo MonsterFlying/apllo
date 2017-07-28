@@ -1006,6 +1006,7 @@ public class AssetBizImpl implements AssetBiz {
                 }.getType()));
                 List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
                 realSize = accountDetailsQueryItems.size();
+                pageIndex++ ;
             } while (realSize == pageSize);
         }
         VoAvailableAssetInfoResp resp = VoBaseResp.ok("查询成功", VoAvailableAssetInfoResp.class);

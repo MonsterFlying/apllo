@@ -6,6 +6,8 @@ import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.CertHelper;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.helper.JixinTxDateHelper;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileRequest;
@@ -43,6 +45,8 @@ import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
+import com.gofobao.framework.member.entity.UserThirdAccount;
+import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoAdvanceCall;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
@@ -50,6 +54,8 @@ import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -60,11 +66,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -95,15 +99,18 @@ public class AplloApplicationTests {
     private AssetsChangeHelper assetsChangeHelper;
     @Autowired
     private TenderService tenderService;
-
+    @Autowired
+    FundStatisticsBiz fundStatisticsBiz;
+    @Autowired
+    UserThirdAccountService userThirdAccountService;
 
     @Autowired
-    FundStatisticsBiz fundStatisticsBiz ;
+    JixinTxDateHelper jixinTxDateHelper;
+
     @Test
     public void testDownloadFile() throws Exception {
-        fundStatisticsBiz.doEVE() ;
+        fundStatisticsBiz.doEVE();
     }
-
 
 
     @Test
@@ -212,7 +219,7 @@ public class AplloApplicationTests {
     private void advanceCall() {
         VoAdvanceCall voAdvanceCall = new VoAdvanceCall();
         voAdvanceCall.setRepaymentId(173795L);
-         try {
+        try {
             repaymentBiz.advanceDeal(voAdvanceCall);
         } catch (Throwable e) {
             e.printStackTrace();
@@ -324,7 +331,7 @@ public class AplloApplicationTests {
         });
     }
 
-    public void balanceQuery(){
+    public void balanceQuery() {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
         balanceQueryRequest.setAccountId("6212462040000250094");
@@ -332,7 +339,7 @@ public class AplloApplicationTests {
         System.out.println(balanceQueryResponse);
     }
 
-    public void accountDetailsQuery(){
+    public void accountDetailsQuery() {
         AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
         request.setAccountId("6212462040000150070");
         request.setStartDate("20161002");
@@ -347,22 +354,22 @@ public class AplloApplicationTests {
 
     }
 
-    public void  batchQuery(){
+    public void batchQuery() {
         BatchQueryReq req = new BatchQueryReq();
         req.setChannel(ChannelContant.HTML);
         req.setBatchNo("173607");
         req.setBatchTxDate("20170718");
-        BatchQueryResp resp = jixinManager.send(JixinTxCodeEnum.BATCH_QUERY,req,BatchQueryResp.class);
+        BatchQueryResp resp = jixinManager.send(JixinTxCodeEnum.BATCH_QUERY, req, BatchQueryResp.class);
         System.out.println(resp);
 
     }
 
-    public void batchDeal(){
-        Map<String,Object> acqMap = new HashMap<>();
-        acqMap.put("repaymentId","173855");
-        acqMap.put("interestPercent","1d");
-        acqMap.put("isUserOpen",true);
-        acqMap.put("userId",44833);
+    public void batchDeal() {
+        Map<String, Object> acqMap = new HashMap<>();
+        acqMap.put("repaymentId", "173855");
+        acqMap.put("interestPercent", "1d");
+        acqMap.put("isUserOpen", true);
+        acqMap.put("userId", 44833);
 
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
@@ -372,7 +379,7 @@ public class AplloApplicationTests {
                         MqConfig.BATCH_NO, StringHelper.toString(113722),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date()),
                         MqConfig.ACQ_RES, GSON.toJson(acqMap)
-                        );
+                );
 
         mqConfig.setMsg(body);
         try {
@@ -380,6 +387,49 @@ public class AplloApplicationTests {
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("tenderThirdBizImpl thirdBatchRepayAllRunCall send mq exception", e);
+        }
+    }
+
+    @Test
+    public void selectTest() {
+        List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
+        List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findByAll();
+        for (UserThirdAccount userThirdAccount : userThirdAccountList) {
+            int pageSize = 20, pageIndex = 1, realSize = 0;
+            String accountId = userThirdAccount.getAccountId();  // 存管账户ID
+            do {
+                AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
+                accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
+                accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
+                accountDetailsQueryRequest.setStartDate(jixinTxDateHelper.getTxDateStr());
+                accountDetailsQueryRequest.setEndDate(jixinTxDateHelper.getTxDateStr());
+                accountDetailsQueryRequest.setType("0");
+                accountDetailsQueryRequest.setAccountId(accountId);
+                AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
+                        accountDetailsQueryRequest,
+                        AccountDetailsQueryResponse.class);
+
+                if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
+                    String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
+                    log.error(String.format("资金同步: %s", msg));
+                    break;
+                }
+
+                String subPacks = accountDetailsQueryResponse.getSubPacks();
+                if (StringUtils.isEmpty(subPacks)) {
+                    break;
+                }
+
+                Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
+                }.getType()));
+                List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
+                realSize = accountDetailsQueryItems.size();
+                accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
+                pageIndex ++ ;
+            } while (realSize == pageSize);
+        }
+        for(AccountDetailsQueryItem item : accountDetailsQueryItemList){
+            log.info(new Gson().toJson(item));
         }
     }
 

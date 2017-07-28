@@ -50,7 +50,12 @@ public class BigCashQueryScheduler {
                 Map<String, String> rs = new Gson().fromJson(taskData, TypeTokenContants.MAP_ALL_STRING_TOKEN);
                 Long cashId = Long.parseLong(rs.get("cashId"));
 
-                boolean b = cashDetailLogBiz.doFormCashMoney(cashId, p.getDoTaskNum(), p.getTaskNum()) ;
+                boolean b = false;
+                try {
+                    b = cashDetailLogBiz.doFormCashMoney(cashId, p.getDoTaskNum(), p.getTaskNum());
+                } catch (Exception e) {
+                    log.error("大额提现资金确认扣减调度遗产", e);
+                }
                 p.setDoTaskNum(p.getDoTaskNum() + 1);
                 p.setState(b ? 1 : 0);
                 p.setDel(b ? 1 : 0);

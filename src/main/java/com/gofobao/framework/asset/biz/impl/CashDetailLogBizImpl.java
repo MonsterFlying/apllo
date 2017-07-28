@@ -674,10 +674,79 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         double availBal = NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0;
         double currBal = NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100.0;
         String tranType = cashDetailLog.getCashType() == 1 ? "2820" : "2616";  // 查询提现类型
+        List<AccountDetailsQueryItem> cashItemList = findUserAssetChangeLog(cashDetailLog, userThirdAccount, tranType);
+        tranType = cashDetailLog.getCashType() == 1 ? "4820" : "4616";  // 查询提现类型
+        List<AccountDetailsQueryItem> feeItemList = findUserAssetChangeLog(cashDetailLog, userThirdAccount, tranType);
+        // 查询当天提现记录
+        ImmutableList<Integer> stateList = ImmutableList.of(2, 3);
+        Date startDate = DateHelper.beginOfDate(cashDetailLog.getCreateTime());
+        Date endDate = DateHelper.beginOfDate(DateHelper.addDays(cashDetailLog.getCreateTime(), 1));
+        List<CashDetailLog> cashDetailLogList = cashDetailLogService.findByUserIdAndStateInAndCreateTimeBetween(cashDetailLog.getUserId(), stateList, startDate, endDate);
+        List<CashDetailLog> unMathLogList = new ArrayList<>();
+        for (CashDetailLog item : cashDetailLogList) {  // 去除成功的记录
+            if (item.getState() == 3) { // 成功,日期最前的剔除掉
+                double money = (item.getMoney() - item.getFee()) / 100D;
+                double fee = item.getFee() / 100D;
+                int i = 0;
+                boolean suitabilityState = false;// 匹配状态
+                for (int len = cashItemList.size(); i < len; i++) {
+                    double queryMoney = new Double(cashItemList.get(i).getTxAmount());
+                    if (queryMoney == money) {
+                        suitabilityState = true;
+                        break;
+                    }
+                }
+                if (suitabilityState) {
+                    cashItemList.remove(i);  // 删除匹配中的记录
+                }
+            } else {
+                unMathLogList.add(item);
+            }
+        }
+
+        if (CollectionUtils.isEmpty(cashItemList)
+                || CollectionUtils.isEmpty(unMathLogList)) {
+            return false;
+        }
+
+
+        for (AccountDetailsQueryItem item : cashItemList) {
+            double queryMoney = new Double(item.getTxAmount());
+            int i = 0;
+            boolean suitabilityState = false;// 匹配状态
+            for (int len = unMathLogList.size(); i < len; i++) {
+                double money = (unMathLogList.get(i).getMoney() - unMathLogList.get(i).getFee()) / 100D;
+                if (money == queryMoney) {
+                    suitabilityState = true;
+                    break;
+                }
+            }
+
+            if (suitabilityState) {
+                CashDetailLog remove = unMathLogList.remove(i);
+                deductionAsset(cashDetailLog, remove);  // 扣除用户
+                if (remove.getId() == cashId) {
+                    log.info("大额提现提现已确定");
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * 搜索用户资金变动特定类型
+     * @param cashDetailLog
+     * @param userThirdAccount
+     * @param tranType
+     * @return
+     */
+    private List<AccountDetailsQueryItem> findUserAssetChangeLog(CashDetailLog cashDetailLog, UserThirdAccount userThirdAccount, String tranType) {
+        List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
         // 查询用户操作记录
         int pageSize = 20, pageIndex = 1, realSize = 0;
         String accountId = userThirdAccount.getAccountId();  // 存管账户ID
-        List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
         Date queryDate = ObjectUtils.isEmpty(cashDetailLog.getCancelTime()) ? jixinTxDateHelper.getTxDate() : cashDetailLog.getCancelTime();
         String queryDateStr = DateHelper.dateToString(queryDate, DateHelper.DATE_FORMAT_YMD_NUM);
         do {
@@ -696,7 +765,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
                 String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
                 log.error(String.format("资金同步: %s", msg));
-                return false;
+                return Collections.EMPTY_LIST;
             }
 
             String subPacks = accountDetailsQueryResponse.getSubPacks();
@@ -709,105 +778,56 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
             realSize = accountDetailsQueryItems.size();
             accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
+            pageIndex++;
         } while (realSize == pageSize);
         if (CollectionUtils.isEmpty(accountDetailsQueryItemList)) {
             log.error(String.format("大额提现调度: 查询存管系统信息为空 %s", GSON.toJson(cashDetailLog)));
-            return false;
+            return Collections.EMPTY_LIST;
         }
 
         Collections.reverse(accountDetailsQueryItemList);  // 反序
+        return accountDetailsQueryItemList;
+    }
 
-        // 查询当天提现记录
-        ImmutableList<Integer> stateList = ImmutableList.of(2, 3);
-        Date startDate = DateHelper.beginOfDate(cashDetailLog.getCreateTime());
-        Date endDate = DateHelper.beginOfDate(DateHelper.addDays(cashDetailLog.getCreateTime(), 1));
-        List<CashDetailLog> cashDetailLogList = cashDetailLogService.findByUserIdAndStateInAndCreateTimeBetween(cashDetailLog.getUserId(), stateList, startDate, endDate);
-        List<CashDetailLog> unMathLogList = new ArrayList<>();
-        for (CashDetailLog item : cashDetailLogList) {  // 去除成功的记录
-            if (item.getState() == 3) { // 成功,日期最前的剔除掉
-                double money = (item.getMoney() - item.getFee()) / 100D;
-                int i = 0;
-                boolean suitabilityState = false;// 匹配状态
-                for (int len = accountDetailsQueryItemList.size(); i < len; i++) {
-                    double queryMoney = new Double(accountDetailsQueryItemList.get(i).getTxAmount());
-                    if (queryMoney == money) {
-                        suitabilityState = true;
-                        break;
-                    }
-                }
-                if (suitabilityState) {
-                    accountDetailsQueryItemList.remove(i);  // 删除匹配中的记录
-                }
-            } else {
-                unMathLogList.add(item);
-            }
+    private void deductionAsset(CashDetailLog cashDetailLog, CashDetailLog remove) throws Exception {
+        Date nowDate = new Date();
+
+        remove.setCancelTime(null);
+        // 更改用户提现记录
+        remove.setState(3);
+        remove.setCallbackTime(nowDate);
+        cashDetailLogService.save(remove);
+        // 更改用户资金
+        long userId = remove.getUserId();
+        CapitalChangeEntity entity = new CapitalChangeEntity();
+        entity.setType(CapitalChangeEnum.Cash);
+        entity.setMoney(cashDetailLog.getMoney().intValue());
+        entity.setUserId(userId);
+        entity.setToUserId(userId);
+        capitalChangeHelper.capitalChange(entity);
+        String titel = "提现成功";
+        String content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 处理成功! 如有疑问请致电客服.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
+                StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
+        try {
+            Notices notices = new Notices();
+            notices.setFromUserId(1L);
+            notices.setUserId(userId);
+            notices.setRead(false);
+            notices.setName(titel);
+            notices.setContent(content);
+            notices.setType("system");
+            notices.setCreatedAt(nowDate);
+            notices.setUpdatedAt(nowDate);
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
+            mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
+            Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
+            mqConfig.setMsg(body);
+            log.info(String.format("CashDetailLogBizImpl doFormCash send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("CashDetailLogBizImpl doFormCash send mq exception", e);
         }
-
-        if (CollectionUtils.isEmpty(accountDetailsQueryItemList)
-                || CollectionUtils.isEmpty(unMathLogList)) {
-            return false;
-        }
-
-
-        for (AccountDetailsQueryItem item : accountDetailsQueryItemList) {
-            double queryMoney = new Double(item.getTxAmount());
-            int i = 0;
-            boolean suitabilityState = false;// 匹配状态
-            for (int len = unMathLogList.size(); i < len; i++) {
-                double money = (unMathLogList.get(i).getMoney() - unMathLogList.get(i).getFee()) / 100D;
-                if (money == queryMoney) {
-                    suitabilityState = true ;
-                    break;
-                }
-            }
-
-            if(suitabilityState){
-                Date nowDate = new Date() ;
-                CashDetailLog remove = unMathLogList.remove(i);
-                remove.setCancelTime(null);
-                // 更改用户提现记录
-                remove.setState(3);
-                remove.setCallbackTime(nowDate);
-                cashDetailLogService.save(remove);
-                // 更改用户资金
-                long userId = remove.getUserId() ;
-                CapitalChangeEntity entity = new CapitalChangeEntity();
-                entity.setType(CapitalChangeEnum.Cash);
-                entity.setMoney(cashDetailLog.getMoney().intValue());
-                entity.setUserId(userId);
-                entity.setToUserId(userId);
-                capitalChangeHelper.capitalChange(entity);
-                String titel = "提现成功";
-                String content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 处理成功! 如有疑问请致电客服.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
-                        StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
-                try {
-                    Notices notices = new Notices();
-                    notices.setFromUserId(1L);
-                    notices.setUserId(userId);
-                    notices.setRead(false);
-                    notices.setName(titel);
-                    notices.setContent(content);
-                    notices.setType("system");
-                    notices.setCreatedAt(nowDate);
-                    notices.setUpdatedAt(nowDate);
-                    MqConfig mqConfig = new MqConfig();
-                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
-                    mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
-                    Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
-                    mqConfig.setMsg(body);
-                    log.info(String.format("CashDetailLogBizImpl doFormCash send mq %s", GSON.toJson(body)));
-                    mqHelper.convertAndSend(mqConfig);
-                } catch (Throwable e) {
-                    log.error("CashDetailLogBizImpl doFormCash send mq exception", e);
-                }
-
-                if(remove.getId() == cashId){
-                    log.info("大额提现提现已确定");
-                    return true ;
-                }
-            }
-        }
-        return false;
     }
 
     @Override
