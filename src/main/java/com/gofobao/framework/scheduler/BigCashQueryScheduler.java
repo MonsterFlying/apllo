@@ -37,7 +37,7 @@ public class BigCashQueryScheduler {
         // 查询带调度队列
         int pageSize = 40;
         int pageIndex = 0;
-        int type = TaskSchedulerConstants.CASH_CANCEL;
+        int type = TaskSchedulerConstants.CASH_FORM;
         int size;
         do {
             List<TaskScheduler> taskSchedulers = taskSchedulerBiz.findByType(pageIndex, pageSize, type);
@@ -67,6 +67,7 @@ public class BigCashQueryScheduler {
                 taskSchedulerBiz.save(p);
                 log.info(String.format("大额提现资金确认扣减调动 使用时间 %s 毫秒", System.currentTimeMillis() - startDate));
             });
+            pageIndex ++ ;
         } while (size == pageSize);
     }
 
