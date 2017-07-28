@@ -675,7 +675,6 @@ public class BorrowBizImpl implements BorrowBiz {
     @Transactional(readOnly = true)
     @Override
     public void schedulerCancelBorrow(List<Borrow> borrows) {
-
         Date nowDate = new Date();
         borrows.stream().filter(p -> !ObjectUtils.isEmpty(p) &&   //标不能为空
                 p.getStatus() == 1 && //状态为招标中
