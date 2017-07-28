@@ -366,12 +366,6 @@ public class AplloApplicationTests {
 
     }
 
-    public void batchDeal() {
-        Map<String, Object> acqMap = new HashMap<>();
-        acqMap.put("repaymentId", "173855");
-        acqMap.put("interestPercent", "1d");
-        acqMap.put("isUserOpen", true);
-        acqMap.put("userId", 44833);
     public void batchDeal(){
         /*Map<String,Object> acqMap = new HashMap<>();
         acqMap.put("repaymentId","173855");
@@ -383,11 +377,6 @@ public class AplloApplicationTests {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(173855),
-                        MqConfig.BATCH_NO, StringHelper.toString(113722),
-                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()),
-                        MqConfig.ACQ_RES, GSON.toJson(acqMap)
-                );
                 .of(MqConfig.SOURCE_ID, StringHelper.toString(169919),
                         MqConfig.BATCH_NO, StringHelper.toString(174806),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
