@@ -47,8 +47,10 @@ public class BorrowCancelScheduler {
         do {
             pageable = new PageRequest(pageIndex++, pageSize, new Sort(Sort.Direction.ASC, "id"));
             borrowList = borrowService.findList(bs, pageable);
+            //筛选已过期的标的
             borrowList = borrowList.stream().filter(borrow ->
-                    DateHelper.diffInDays(DateHelper.beginOfDate(new Date()), DateHelper.endOfDate(borrow.getReleaseAt()), false) > borrow.getValidDay()).collect(Collectors.toList());
+                    //当前时间>发布时间（时间+1）
+                    new Date().getTime()>DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1).getTime()).collect(Collectors.toList());
             try {
                 if (CollectionUtils.isEmpty(borrowList)) {
                     break;

@@ -60,24 +60,32 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
     @Override
     public List<BorrowCollection> orderList(VoCollectionOrderReq voCollectionOrderReq) {
         Date date = DateHelper.stringToDate(voCollectionOrderReq.getTime(), DateHelper.DATE_FORMAT_YMD);
-        Specification<BorrowCollection> specification = Specifications.<BorrowCollection>and()
+     /*   Specification<BorrowCollection> specification = Specifications.<BorrowCollection>and()
                 .between("collectionAt", new Range<>(DateHelper.beginOfDate(date), DateHelper.endOfDate(date)))
                 .eq("userId", voCollectionOrderReq.getUserId())
                 .eq("transferFlag", BorrowCollectionContants.TRANSFER_FLAG_NO)
                 .ne("borrowId", null)
-                .build();
-     /*   String sql = "SELECT  b.* FROM gfb_borrow_collection b " +
+                .build();*/
+        String sql = "SELECT b.id ,b.borrow_id ,b.`order`,b.collection_money  ,b.collection_money_yes FROM gfb_borrow_collection b " +
                 "WHERE " +
-                "b.user_id=:userId " +
-                "AND " +
-                "(b.collection_at BETWEEN '" + endOfDate + "' AND '" + beginOfDate + "' ) " +
-                "AND " +
-                "b.transfer_flag=" + BorrowCollectionContants.TRANSFER_FLAG_NO +" "+
-                "AND b.borrow_id IS NULL";
-        Query query = entityManager.createNativeQuery(sql, BorrowCollection.class);
-        query.setParameter("userId",voCollectionOrderReq.getUserId());*/
-
-        List<BorrowCollection> borrowCollections = borrowCollectionRepository.findAll(specification);
+                "b.user_id= " + voCollectionOrderReq.getUserId() +
+                " AND " +
+                "(b.collection_at >= '" + DateHelper.dateToString(DateHelper.beginOfDate(date)) + "' AND  b.collection_at <='" + DateHelper.dateToString(DateHelper.endOfDate(date)) + "' ) " +
+                "AND b.borrow_id IS NOT NULL";
+        Query query = entityManager.createNativeQuery(sql);
+        List<Object[]> resultList = query.getResultList();
+        List<BorrowCollection> borrowCollections = new ArrayList<>(resultList.size());
+        if (CollectionUtils.isEmpty(borrowCollections)) {
+            resultList.forEach(p -> {
+                BorrowCollection borrowCollection = new BorrowCollection();
+                borrowCollection.setId(Long.valueOf(p[0].toString()));
+                borrowCollection.setBorrowId(Long.valueOf(p[1].toString()) );
+                borrowCollection.setOrder(Integer.valueOf(p[2].toString()) );
+                borrowCollection.setCollectionMoney(Integer.valueOf(p[3].toString()) );
+                borrowCollection.setCollectionMoneyYes(Integer.valueOf(p[4].toString()));
+                borrowCollections.add(borrowCollection);
+            });
+        }
         return Optional.ofNullable(borrowCollections).orElse(Collections.EMPTY_LIST);
     }
 
@@ -126,6 +134,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
 
     /**
      * pc :回款明细导出excel
+     *
      * @param listReq
      * @return
      */
