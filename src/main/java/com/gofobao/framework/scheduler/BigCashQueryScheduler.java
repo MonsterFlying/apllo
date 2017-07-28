@@ -54,7 +54,7 @@ public class BigCashQueryScheduler {
                 try {
                     b = cashDetailLogBiz.doFormCashMoney(cashId, p.getDoTaskNum(), p.getTaskNum());
                 } catch (Exception e) {
-                    log.error("BigCashQueryScheduler process error:",e);
+                    log.error("大额提现资金确认扣减调度遗产", e);
                 }
                 p.setDoTaskNum(p.getDoTaskNum() + 1);
                 p.setState(b ? 1 : 0);
