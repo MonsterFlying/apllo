@@ -23,6 +23,8 @@ import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
+import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryRequest;
+import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryResponse;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResponse;
@@ -100,12 +102,12 @@ public class AplloApplicationTests {
 
 
     @Autowired
-    FundStatisticsBiz fundStatisticsBiz ;
+    FundStatisticsBiz fundStatisticsBiz;
+
     @Test
     public void testDownloadFile() throws Exception {
-        fundStatisticsBiz.doEVE() ;
+        fundStatisticsBiz.doEVE();
     }
-
 
 
     @Test
@@ -214,7 +216,7 @@ public class AplloApplicationTests {
     private void advanceCall() {
         VoAdvanceCall voAdvanceCall = new VoAdvanceCall();
         voAdvanceCall.setRepaymentId(173795L);
-         try {
+        try {
             repaymentBiz.advanceDeal(voAdvanceCall);
         } catch (Throwable e) {
             e.printStackTrace();
@@ -281,9 +283,9 @@ public class AplloApplicationTests {
 
     private void bidApplyQuery() {
         BidApplyQueryReq request = new BidApplyQueryReq();
-        request.setAccountId("6212462040000800088");
+        request.setAccountId("6212462040000950073");
         request.setChannel(ChannelContant.HTML);
-        request.setOrgOrderId("GFBT_1501035449024");
+        request.setOrgOrderId("GFBT_1500954712351");
         BidApplyQueryResp response = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, request, BidApplyQueryResp.class);
         System.out.println(response);
 
@@ -326,7 +328,7 @@ public class AplloApplicationTests {
         });
     }
 
-    public void balanceQuery(){
+    public void balanceQuery() {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
         balanceQueryRequest.setAccountId("6212462040000250094");
@@ -334,7 +336,7 @@ public class AplloApplicationTests {
         System.out.println(balanceQueryResponse);
     }
 
-    public void accountDetailsQuery(){
+    public void accountDetailsQuery() {
         AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
         request.setAccountId("6212462040000150070");
         request.setStartDate("20161002");
@@ -349,17 +351,17 @@ public class AplloApplicationTests {
 
     }
 
-    public void  batchQuery(){
+    public void batchQuery() {
         BatchQueryReq req = new BatchQueryReq();
         req.setChannel(ChannelContant.HTML);
         req.setBatchNo("173607");
         req.setBatchTxDate("20170718");
-        BatchQueryResp resp = jixinManager.send(JixinTxCodeEnum.BATCH_QUERY,req,BatchQueryResp.class);
+        BatchQueryResp resp = jixinManager.send(JixinTxCodeEnum.BATCH_QUERY, req, BatchQueryResp.class);
         System.out.println(resp);
 
     }
 
-    public void batchDeal(){
+    public void batchDeal() {
         /*Map<String,Object> acqMap = new HashMap<>();
         acqMap.put("repaymentId","173855");
         acqMap.put("interestPercent","1d");
@@ -374,7 +376,7 @@ public class AplloApplicationTests {
                         MqConfig.BATCH_NO, StringHelper.toString(174806),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
                        /* MqConfig.ACQ_RES, GSON.toJson(acqMap)*/
-                        );
+                );
 
         mqConfig.setMsg(body);
         try {
@@ -388,19 +390,19 @@ public class AplloApplicationTests {
     @Test
     public void test() {
         //推送队列结束债权
-        MqConfig mqConfig = new MqConfig();
+        /*MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
         mqConfig.setTag(MqTagEnum.END_CREDIT_ALL);
         mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 5));
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(169923), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(169917), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
         try {
             log.info(String.format("repaymentBizImpl repayDeal send mq %s", GSON.toJson(body)));
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("repaymentBizImpl repayDeal send mq exception", e);
-        }
+        }*/
         //批次处理
         //batchDeal();
         //查询存管账户资金信息
@@ -437,6 +439,19 @@ public class AplloApplicationTests {
         //transferBorrowAgainVerify();
         //非转让标复审问题
         //noTransferBorrowAgainVerify();
+        // 查询债权关系
+        CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
+        creditDetailsQueryRequest.setAccountId("6212462040000000077");
+        creditDetailsQueryRequest.setStartDate("20170724");
+        creditDetailsQueryRequest.setProductId("169917");
+        creditDetailsQueryRequest.setEndDate(DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM));
+        creditDetailsQueryRequest.setState("1");
+        creditDetailsQueryRequest.setPageNum("1");
+        creditDetailsQueryRequest.setPageSize("10");
+        CreditDetailsQueryResponse creditDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.CREDIT_DETAILS_QUERY,
+                creditDetailsQueryRequest,
+                CreditDetailsQueryResponse.class);
+        System.out.println(creditDetailsQueryResponse);
     }
 
 }

@@ -137,7 +137,7 @@ public class CreditProvider {
             Specification<Tender> ts = Specifications
                     .<Tender>and()
                     .eq("borrowId", borrowId)
-                    .eq("status", 2)
+                    .eq("status", 1)
                     .build();
             List<Tender> tenderList = tenderService.findList(ts);
             if (CollectionUtils.isEmpty(tenderList)) {
@@ -146,25 +146,29 @@ public class CreditProvider {
 
             //筛选出已转让的投资记录
             tenderList.stream().filter(p -> p.getTransferFlag() == 2).forEach(tender -> {
-                buildTransferCreditEndList(creditEndList, borrowUserThirdAccountId, productId, tender.getBorrowId());
-            });
-
-            //排除已经在存管登记结束债权的投标记录
-            tenderList.stream().filter(tender -> (Boolean.FALSE.equals(tender.getThirdCreditEndFlag()))).forEach(tender -> {
                 CreditEnd creditEnd = new CreditEnd();
                 String orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
-
                 UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
                 creditEnd.setAccountId(borrowUserThirdAccountId);
                 creditEnd.setOrderId(orderId);
                 creditEnd.setAuthCode(tender.getAuthCode());
-                creditEnd.setProductId(productId);
                 creditEnd.setForAccountId(tenderUserThirdAccount.getAccountId());
+                creditEnd.setProductId(productId);
                 creditEndList.add(creditEnd);
-
+                //保存结束债权id
                 tender.setThirdCreditEndOrderId(orderId);
+
+                //查询转让标的
+                Specification<Borrow> bs = Specifications
+                        .<Borrow>and()
+                        .eq("tenderId", tender.getId())
+                        .build();
+                List<Borrow> borrowList = borrowService.findList(bs);
+                if (!CollectionUtils.isEmpty(borrowList)) {
+                    buildTransferCreditEndList(creditEndList, borrowUserThirdAccountId, productId, borrowList.get(0).getId());
+                }
+
             });
-            tenderService.save(tenderList);
 
         } while (false);
     }
@@ -189,7 +193,14 @@ public class CreditProvider {
 
             //筛选出已转让的投资记录
             tenderList.stream().filter(p -> p.getTransferFlag() == 2).forEach(tender -> {
-                buildNotTransferCreditEndList(creditEndList, borrowUserThirdAccountId, productId, tender.getBorrowId());
+                Specification<Borrow> bs = Specifications
+                        .<Borrow>and()
+                        .eq("tenderId", tender.getId())
+                        .build();
+                List<Borrow> borrowList = borrowService.findList(bs);
+                if (!CollectionUtils.isEmpty(borrowList)) {
+                    buildNotTransferCreditEndList(creditEndList, borrowUserThirdAccountId, productId, borrowList.get(0).getId());
+                }
             });
 
             //排除已经在存管登记结束债权的投标记录
