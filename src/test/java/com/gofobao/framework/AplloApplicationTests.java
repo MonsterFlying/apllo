@@ -42,9 +42,11 @@ import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
+import com.gofobao.framework.helper.BooleanHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
+import com.gofobao.framework.listener.providers.CreditProvider;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoAdvanceCall;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
@@ -150,7 +152,7 @@ public class AplloApplicationTests {
     }
 
     public static void main(String[] args) {
-
+        System.out.println(BooleanHelper.isFalse(null));
 
         /*System.out.println("select t.id AS id,t. STATUS AS status,t.user_id AS userId,t.lowest AS lowest,t.borrow_types AS borrowTypes," +
                 "t.repay_fashions AS repayFashions,t.tender_0 AS tender0,t.tender_1 AS tender1,t.tender_3 AS tender3,t.tender_4 AS tender4,t.`mode` AS mode,t.tender_money AS tenderMoney,t.timelimit_first AS timelimitFirst,t.timelimit_last AS timelimitLast,t.timelimit_type AS timelimitType,t.apr_first AS aprFirst,t.apr_last AS aprLast,t.save_money AS saveMoney,t.`order` AS `order`,t.auto_at AS autoAt,t.created_at AS createdAt," +
@@ -269,8 +271,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("101710");
-        batchDetailsQueryReq.setBatchTxDate("20170726");
+        batchDetailsQueryReq.setBatchNo("141718");
+        batchDetailsQueryReq.setBatchTxDate("20170728");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -331,14 +333,14 @@ public class AplloApplicationTests {
     public void balanceQuery() {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId("6212462040000250094");
+        balanceQueryRequest.setAccountId("6212462040000050049");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         System.out.println(balanceQueryResponse);
     }
 
     public void accountDetailsQuery() {
         AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
-        request.setAccountId("6212462040000150070");
+        request.setAccountId("6212462040000050049");
         request.setStartDate("20161002");
         request.setEndDate("20171003");
         request.setChannel(ChannelContant.HTML);
@@ -387,10 +389,21 @@ public class AplloApplicationTests {
         }
     }
 
+
+    @Autowired
+    private CreditProvider creditProvider;
+
     @Test
     public void test() {
+       /* Map<String,String> map = new HashMap<>();
+        map.put(MqConfig.MSG_BORROW_ID,"169920");
+        try {
+            creditProvider.endThirdCredit(map,0);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
         //推送队列结束债权
-        MqConfig mqConfig = new MqConfig();
+/*        MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
         mqConfig.setTag(MqTagEnum.END_CREDIT_ALL);
         mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 5));
@@ -402,7 +415,10 @@ public class AplloApplicationTests {
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("repaymentBizImpl repayDeal send mq exception", e);
-        }
+        }*/
+
+
+
         //批次处理
         //batchDeal();
         //查询存管账户资金信息
@@ -441,9 +457,9 @@ public class AplloApplicationTests {
         //noTransferBorrowAgainVerify();
         // 查询债权关系
         /*CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
-        creditDetailsQueryRequest.setAccountId("6212462040000000077");
+        creditDetailsQueryRequest.setAccountId("6212462040000350100");
         creditDetailsQueryRequest.setStartDate("20161003");
-        creditDetailsQueryRequest.setProductId("169917");
+        creditDetailsQueryRequest.setProductId("169923");
         creditDetailsQueryRequest.setEndDate(DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM));
         creditDetailsQueryRequest.setState("0");
         creditDetailsQueryRequest.setPageNum("1");

@@ -168,7 +168,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         double sumCount = 0, validMoney, debtFee;
         for (Tender tender : tenderList) {
             debtFee = 0;
-            if (Boolean.TRUE.equals(tender.getThirdTenderFlag())) {
+            if (BooleanHelper.isTrue(tender.getThirdTenderFlag())) {
                 continue;
             }
             tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
@@ -505,7 +505,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 BorrowCollection borrowCollection = borrowCollectionList.stream().filter(bc -> StringHelper.toString(bc.getTenderId()).equals(StringHelper.toString(tender.getId()))).collect(Collectors.toList()).get(0);
 
                 //判断这笔回款是否已经在即信登记过批次垫付
-                if (Boolean.TRUE.equals(borrowCollection.getThirdBailRepayFlag())) {
+                if (BooleanHelper.isTrue(borrowCollection.getThirdBailRepayFlag())) {
                     continue;
                 }
 
@@ -1203,7 +1203,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             //==============================================================
             // 判断还款是否已经在即信登记
             //==============================================================
-            if (Boolean.TRUE.equals(borrowCollection.getThirdRepayFlag())) {
+            if (BooleanHelper.isTrue(borrowCollection.getThirdRepayFlag())) {
                 continue;
             }
 

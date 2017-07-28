@@ -6,6 +6,7 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.repository.BorrowCollectionRepository;
+import com.gofobao.framework.helper.BooleanHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.tender.contants.TenderConstans;
@@ -112,7 +113,7 @@ public class TransferServiceImpl implements TransferService {
             transferOf.setPrincipal(StringHelper.formatMon(borrow.getMoney() / 100d));
             double spend = (double) borrow.getMoneyYes() / (double) borrow.getMoney();
             transferOf.setSpend(StringHelper.formatMon(spend));
-            transferOf.setCancel(spend != 1d && Boolean.FALSE.equals(borrow.getThirdTransferFlag()));
+            transferOf.setCancel(spend != 1d && BooleanHelper.isFalse(borrow.getThirdTransferFlag()));
             transferOf.setBorrowId(borrow.getId());
             transferOfs.add(transferOf);
         });
