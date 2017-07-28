@@ -100,7 +100,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
         do {
             AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
             accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
-            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
+            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex++));
             accountDetailsQueryRequest.setStartDate(jixinTxDateHelper.getTxDateStr());
             accountDetailsQueryRequest.setEndDate(jixinTxDateHelper.getTxDateStr());
             accountDetailsQueryRequest.setType("0");

@@ -393,7 +393,7 @@ public class AplloApplicationTests {
         mqConfig.setTag(MqTagEnum.END_CREDIT_ALL);
         mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 5));
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(169919), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(169923), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
         try {
             log.info(String.format("repaymentBizImpl repayDeal send mq %s", GSON.toJson(body)));
