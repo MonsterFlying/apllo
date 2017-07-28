@@ -129,7 +129,7 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
         Map<String, Object> paramMaps = new HashMap<>();
         Users user = usersRepository.findOne(userId);
         String inviteCode = user.getInviteCode();
-        paramMaps.put("inviteUrl", webDomain + "/#/auth/register?inviteCode=" + inviteCode);
+        paramMaps.put("inviteUrl", h5Domain + "/#/auth/register?inviteCode=" + inviteCode);
         paramMaps.put("inviteCode", inviteCode);
         paramMaps.put("invitePhone", user.getPhone());
         paramMaps.put("QRCodeURL", webDomain + "/invite/qrcode/getInviteFriendQRCode?inviteCode=" + inviteCode);
