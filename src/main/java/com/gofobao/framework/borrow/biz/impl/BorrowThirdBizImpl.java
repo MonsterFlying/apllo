@@ -512,6 +512,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         thirdBatchLog.setUpdateAt(nowDate);
         thirdBatchLog.setSourceId(borrowRepayment.getBorrowId());
         thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY_ALL);
+        thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
         thirdBatchLog.setRemark("(提前结清)即信批次还款");
         thirdBatchLogService.save(thirdBatchLog);
 

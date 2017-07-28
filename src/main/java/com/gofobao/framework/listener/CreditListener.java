@@ -56,7 +56,7 @@ public class CreditListener {
             }
         } else if(tag.equals(MqTagEnum.END_CREDIT_ALL.getValue())){
             try {
-                bool = creditProvider.endThirdCredit(msg, CreditProvider.TRANSFER);
+                bool = creditProvider.endThirdCredit(msg, CreditProvider.ALL);
             } catch (Throwable throwable) {
                 log.error("结束存管债权异常:", throwable);
             }

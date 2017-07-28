@@ -1074,6 +1074,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         thirdBatchLog.setSourceId(borrowRepaymentId);
         thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY_BAIL);
         thirdBatchLog.setRemark("批次融资人还担保账户垫款");
+        thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
         thirdBatchLogService.save(thirdBatchLog);
 
         return ResponseEntity.ok(VoBaseResp.ok("批次融资人还担保账户垫款成功!"));
@@ -1148,6 +1149,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         thirdBatchLog.setSourceId(borrowRepaymentId);
         thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY);
         thirdBatchLog.setRemark("即信批次还款");
+        thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
         thirdBatchLogService.save(thirdBatchLog);
         return ResponseEntity.ok(VoBaseResp.ok("还款正常"));
     }
@@ -1716,6 +1718,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         thirdBatchLog.setSourceId(repaymentId);
         thirdBatchLog.setType(ThirdBatchLogContants.BATCH_BAIL_REPAY);
         thirdBatchLog.setRemark("批次担保账户垫付");
+        thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
         thirdBatchLogService.save(thirdBatchLog);
 
         return ResponseEntity.ok(VoBaseResp.ok("批次担保账户代偿成功!"));
@@ -1885,6 +1888,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         thirdBatchLog.setSourceId(repaymentId);
         thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY_BAIL);
         thirdBatchLog.setRemark("批次融资人还担保账户垫款");
+        thirdBatchLog.setAcqRes(GSON.toJson(voRepayReq));
         thirdBatchLogService.save(thirdBatchLog);
 
         return ResponseEntity.ok(VoBaseResp.ok("批次融资人还担保账户垫款成功!"));

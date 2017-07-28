@@ -247,6 +247,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         thirdBatchLog.setUpdateAt(nowDate);
         thirdBatchLog.setSourceId(voThirdBatchCreditInvest.getBorrowId());
         thirdBatchLog.setType(ThirdBatchLogContants.BATCH_CREDIT_INVEST);
+        thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
         thirdBatchLog.setRemark("投资人批次购买债权");
         thirdBatchLogService.save(thirdBatchLog);
         return null;
