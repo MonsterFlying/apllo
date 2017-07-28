@@ -66,7 +66,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
                 .eq("transferFlag", BorrowCollectionContants.TRANSFER_FLAG_NO)
                 .ne("borrowId", null)
                 .build();*/
-        String sql = "SELECT b.id ,b.borrow_id ,b.`order`,b.collection_money  ,b.collection_money_yes FROM gfb_borrow_collection b " +
+        String sql = "SELECT b.id ,b.borrow_id ,b.`order`,b.collection_money  ,b.collection_money_yes ,b.status FROM gfb_borrow_collection b " +
                 "WHERE " +
                 "b.user_id= " + voCollectionOrderReq.getUserId() +
                 " AND " +
@@ -83,6 +83,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
                 borrowCollection.setOrder(Integer.valueOf(p[2].toString()) );
                 borrowCollection.setCollectionMoney(Integer.valueOf(p[3].toString()) );
                 borrowCollection.setCollectionMoneyYes(Integer.valueOf(p[4].toString()));
+                borrowCollection.setStatus(Integer.valueOf(p[5].toString()));
                 borrowCollections.add(borrowCollection);
             });
         }
