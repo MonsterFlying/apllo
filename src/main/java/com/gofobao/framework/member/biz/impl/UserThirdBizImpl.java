@@ -189,7 +189,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
         VoPreOpenAccountResp voPreOpenAccountResp = VoBaseResp.ok("查询成功", VoPreOpenAccountResp.class);
-        voPreOpenAccountResp.setMobile(user.getPhone());
+        voPreOpenAccountResp.setMobile(StringUtils.isEmpty(user.getPhone())?"":user.getPhone());
         voPreOpenAccountResp.setIdType("01"); //证件类型：身份证
         voPreOpenAccountResp.setIdNo(ObjectUtils.isEmpty(user.getCardId()) ? "" : user.getCardId());
         voPreOpenAccountResp.setName(user.getRealname());

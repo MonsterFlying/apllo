@@ -88,7 +88,7 @@ public class FriendsController {
             res.setCodeUrl(resultMaps.get("QRCodeURL").toString());
             res.setTitle("邀请好友投资,奖励送不停");
             res.setDesc("新手福利,注册即送1000元投标体验金+加息0.5%-3%");
-            res.setRequestHtmlUrl(h5Domain + "invite/v2/shareRegister");
+            res.setRequestHtmlUrl(resultMaps.get("inviteUrl").toString());
             res.setIcon(webDomain + "/images/bankLogo/logo.png");
             content = thymeleafHelper.build("user/friends", resultMaps);
             res.setHtml(content);
@@ -125,8 +125,7 @@ public class FriendsController {
 
         try {
             InputStream in = FriendsController.class.getResourceAsStream("/static/images/shareLogo/logo.png");
-            http:
-//192.168.1.235:8000/#/auth/register?_k=bpjq7r.createQRCodeTStream(h5Domain+"/#/auth/register?shareRegisterCode="+inviteCode, in, 50, 50, out);
+
             QRCodeHelper.createQRCodeTStream(h5Domain + "/#/auth/register?shareRegisterCode=" + inviteCode, in, 100, 100, out);
             out.flush();
         } catch (Throwable e) {
