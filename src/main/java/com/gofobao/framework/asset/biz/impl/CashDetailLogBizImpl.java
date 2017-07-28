@@ -702,7 +702,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
         // 手续费和提现实际金额匹配
-        List<Map<String, AccountDetailsQueryItem>> onLineItemList = new ArrayList<>(cashIndexList.size());
+        List<Map<String, AccountDetailsQueryItem>> leafAccountDetailQueryList = new ArrayList<>(cashIndexList.size());  // 剩余待匹配的类型
         Map<String, AccountDetailsQueryItem> bean = null;
         Iterator<Integer> iterator = cashIndexList.iterator();
         int index = 0;
@@ -724,7 +724,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                     break;
                 }
             }
-            onLineItemList.add(bean);
+            leafAccountDetailQueryList.add(bean);
         }
 
         // 查询当天提现记录
@@ -737,61 +737,53 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                 .filter(cashDetailLogItem -> cashDetailLogItem.getCashType() == cashDetailLog.getCashType())
                 .collect(Collectors.toList());  // 去除类型
 
-
-        List<CashDetailLog> unMathLogList = new ArrayList<>();
         for (CashDetailLog item : cashDetailLogList) {  // 根据已经匹配的流水剔除用户交易记录
             if (item.getState() == 3) {
                 int i = 0;
                 boolean suitabilityState = false;
-                for (int len = onLineItemList.size(); i < len; i++) {
-                    bean = onLineItemList.get(i);
+                for (int len = leafAccountDetailQueryList.size(); i < len; i++) {
+                    bean = leafAccountDetailQueryList.get(i);
                     AccountDetailsQueryItem accountDetailsQueryItem = bean.get("cash");
-                    String querySeqNo = String.format("%s%s%s", accountDetailsQueryItem.getInpDate(), accountDetailsQueryItem.getInpTime(), accountDetailsQueryItem.getTraceNo()) ;
-                    if(item.getQuerySeqNo().equals(querySeqNo)){
+                    String querySeqNo = String.format("%s%s%s", accountDetailsQueryItem.getInpDate(), accountDetailsQueryItem.getInpTime(), accountDetailsQueryItem.getTraceNo());
+                    if (item.getQuerySeqNo().equals(querySeqNo)) {
                         suitabilityState = true;
                         break;
                     }
                 }
                 if (suitabilityState) {
-                    onLineItemList.remove(i);  // 删除匹配中的记录
+                    leafAccountDetailQueryList.remove(i);  // 删除匹配中的记录
                 }
-            } else {
-                unMathLogList.add(item);
             }
         }
-        if (CollectionUtils.isEmpty(onLineItemList)){
+        if (CollectionUtils.isEmpty(leafAccountDetailQueryList)) {
             log.info("大额提现调度: 大额度匹配在线数据为零");
             return false;
         }
-        if(CollectionUtils.isEmpty(unMathLogList)) {
-            log.info("大额提现调度: 平台资金未匹配为零");
-            return false;
-        }
-
-
-        for ( Map<String, AccountDetailsQueryItem> item : onLineItemList) {
-            AccountDetailsQueryItem cash = item.get("cash") ;
-            AccountDetailsQueryItem fee = item.get("fee") ;
-            double queryMoney = Double.parseDouble(cash.getTxAmount()) ;
-            int i = 0;
-            boolean suitabilityState = false;// 匹配状态
-            for (int len = unMathLogList.size(); i < len; i++) {
-                double money = (unMathLogList.get(i).getMoney() - unMathLogList.get(i).getFee()) / 100D;
-                if (money == queryMoney) {
-                    suitabilityState = true;
-                    break;
-                }
+        for (Map<String, AccountDetailsQueryItem> item : leafAccountDetailQueryList) {
+            AccountDetailsQueryItem cash = item.get("cash");
+            AccountDetailsQueryItem fee = item.get("fee");
+            double cashMoney = Double.parseDouble(cash.getTxAmount());
+            double feeMomey = 0;
+            if (ObjectUtils.isEmpty(fee)) {
+                feeMomey = Double.parseDouble(fee.getTxAmount());
             }
 
-            if (suitabilityState) {
-                CashDetailLog remove = unMathLogList.remove(i);
-                deductionAsset(cashDetailLog, remove);  // 扣除用户
-                if (remove.getId() == cashId) {
-                    log.info("大额提现提现已确定");
-                    return true;
-                }
+            double _money = (cashDetailLog.getMoney() - cashDetailLog.getFee()) / 100D;
+            double _fee = cashDetailLog.getFee() / 100D;
+            if ( (_money == cashMoney) || (_fee == feeMomey)) {
+                deductionAsset(cashDetailLog, cash);  // 扣除用户
+                return true ;
             }
         }
+        if(curNum +1 > totalNum){
+            log.info("===========================================");
+            log.info(String.format("大额提现: 系统调度取消大额提现: %s",  GSON.toJson(cashDetailLog)));
+            log.info("===========================================");
+            cashDetailLog.setState(4);
+            cashDetailLog.setCallbackTime(new Date());
+            cashDetailLogService.save(cashDetailLog) ;
+        }
+
         return false;
     }
 
@@ -848,16 +840,16 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         return accountDetailsQueryItemList;
     }
 
-    private void deductionAsset(CashDetailLog cashDetailLog, CashDetailLog remove) throws Exception {
+    private void deductionAsset(CashDetailLog cashDetailLog, AccountDetailsQueryItem accountDetailsQueryItem) throws Exception {
         Date nowDate = new Date();
-
-        remove.setCancelTime(null);
+        String querySeqNo = String.format("%s%s%s", accountDetailsQueryItem.getInpDate(), accountDetailsQueryItem.getInpTime(), accountDetailsQueryItem.getTraceNo());
         // 更改用户提现记录
-        remove.setState(3);
-        remove.setCallbackTime(nowDate);
-        cashDetailLogService.save(remove);
+        cashDetailLog.setState(3);
+        cashDetailLog.setCallbackTime(nowDate) ;
+        cashDetailLog.setQuerySeqNo(querySeqNo) ;
+        cashDetailLogService.save(cashDetailLog) ;
         // 更改用户资金
-        long userId = remove.getUserId();
+        long userId = cashDetailLog.getUserId();
         CapitalChangeEntity entity = new CapitalChangeEntity();
         entity.setType(CapitalChangeEnum.Cash);
         entity.setMoney(cashDetailLog.getMoney().intValue());
