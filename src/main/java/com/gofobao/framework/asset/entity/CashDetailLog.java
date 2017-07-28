@@ -1,6 +1,8 @@
 package com.gofobao.framework.asset.entity;
 
 import lombok.Data;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -14,6 +16,8 @@ import java.util.Date;
 @Data
 @Entity
 @Table(name = "gfb_cash_detail_log")
+@DynamicInsert
+@DynamicUpdate
 public class CashDetailLog {
     @Id
     @GeneratedValue
@@ -35,4 +39,6 @@ public class CashDetailLog {
     private Date cancelTime ;
     private String ip ;
     private Integer cashType ;
+    private String querySeqNo ;
+    private String queryCallbackTime ;
 }
