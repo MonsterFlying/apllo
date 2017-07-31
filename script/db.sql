@@ -508,3 +508,8 @@ CREATE TABLE gfb_jixin_tx_log
 ALTER TABLE `gfb_auto_tender`
   MODIFY COLUMN `repay_money_yes` int(10) unsigned DEFAULT '0' COMMENT '实际还款金额（分）',
   MODIFY COLUMN `status` int(11) DEFAULT '0' COMMENT '借款用户是否还款状态：0、未还款。1、还款；';
+
+
+
+ALTER TABLE gfb_cash_detail_log ADD query_seq_no VARCHAR(32) DEFAULT '' NULL COMMENT '实时查产生的交易流水(只有成功才能产生)';
+ALTER TABLE gfb_cash_detail_log ADD query_callback_time VARCHAR(32) DEFAULT '' NULL COMMENT '查询交易记录时间';
