@@ -258,7 +258,8 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
         // 判断提现金额
-        if (useMoney < voCashReq.getCashMoney() * 100) {
+        long userCashMoney = NumberHelper.toLong(voCashReq.getCashMoney() * 100);
+        if (useMoney < userCashMoney) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "提现金额大于账户可用余额！", VoHtmlResp.class));

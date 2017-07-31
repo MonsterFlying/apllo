@@ -271,7 +271,7 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("141718");
+        batchDetailsQueryReq.setBatchNo("161955");
         batchDetailsQueryReq.setBatchTxDate("20170728");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
@@ -333,14 +333,14 @@ public class AplloApplicationTests {
     public void balanceQuery() {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId("6212462040000050049");
+        balanceQueryRequest.setAccountId("6212462040000750085");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         System.out.println(balanceQueryResponse);
     }
 
     public void accountDetailsQuery() {
         AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
-        request.setAccountId("6212462040000050049");
+        request.setAccountId("6212462040000750085");
         request.setStartDate("20161002");
         request.setEndDate("20171003");
         request.setChannel(ChannelContant.HTML);
@@ -396,7 +396,7 @@ public class AplloApplicationTests {
     @Test
     public void test() {
        /* Map<String,String> map = new HashMap<>();
-        map.put(MqConfig.MSG_BORROW_ID,"169920");
+        map.put(MqConfig.MSG_BORROW_ID,"169922");
         try {
             creditProvider.endThirdCredit(map,0);
         } catch (Exception e) {
@@ -422,7 +422,7 @@ public class AplloApplicationTests {
         //批次处理
         //batchDeal();
         //查询存管账户资金信息
-        //balanceQuery();
+        balanceQuery();
         //查询资金流水
         //accountDetailsQuery();
         //根据手机号查询存管账户
@@ -457,9 +457,9 @@ public class AplloApplicationTests {
         //noTransferBorrowAgainVerify();
         // 查询债权关系
         /*CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
-        creditDetailsQueryRequest.setAccountId("6212462040000350100");
+        creditDetailsQueryRequest.setAccountId("6212462040000650087");
         creditDetailsQueryRequest.setStartDate("20161003");
-        creditDetailsQueryRequest.setProductId("169923");
+        creditDetailsQueryRequest.setProductId("169922");
         creditDetailsQueryRequest.setEndDate(DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM));
         creditDetailsQueryRequest.setState("0");
         creditDetailsQueryRequest.setPageNum("1");
