@@ -48,18 +48,6 @@ public class Tender {
     private Integer state;
     @Column(name = "auth_code")
     private String authCode;
-    @Column(name = "iparam1")
-    private Integer iparam1;
-    @Column(name = "iparam2")
-    private Integer iparam2;
-    @Column(name = "iparam3")
-    private Integer iparam3;
-    @Column(name = "vparam1")
-    private String vparam1;
-    @Column(name = "vparam2")
-    private String vparam2;
-    @Column(name = "vparam3")
-    private String vparam3;
     @Column(name = "t_user_id")
     private Long tUserId;
     @Column(name = "third_tender_order_id")
@@ -80,4 +68,12 @@ public class Tender {
      * 当前投标记录在是否结束存管债权
      */
     private Boolean thirdCreditEndFlag;
+    /**
+     * 父级投标id（默认为0，最顶级记录）
+     */
+    private Long parentId;
+    /**
+     * 付给债权转让人的当期应计算利息，（债权转让时使用）
+     */
+    private Long alreadyInterest;
 }
