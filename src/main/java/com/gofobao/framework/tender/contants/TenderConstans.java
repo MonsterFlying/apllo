@@ -32,7 +32,7 @@ public class TenderConstans {
     public static final Integer BACK_MONEY=2;
 
 
-    public static final String BACK_MONEY_STR="投标中";
+    public static final String BACK_MONEY_STR="回款中";
 
     public static  String BACK_MONEY_TYPE="2";
     /**
