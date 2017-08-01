@@ -1,6 +1,7 @@
 package com.gofobao.framework.asset.service.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.asset.entity.CashDetailLog;
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.repository.RechargeDetailLogRepository;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
@@ -133,4 +134,5 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService {
         });
         return rechargeLogsList;
     }
+
 }
