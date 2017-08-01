@@ -517,3 +517,27 @@ ALTER TABLE `gfb_auto_tender`
 
 ALTER TABLE gfb_cash_detail_log ADD query_seq_no VARCHAR(32) DEFAULT '' NULL COMMENT '实时查产生的交易流水(只有成功才能产生)';
 ALTER TABLE gfb_cash_detail_log ADD query_callback_time VARCHAR(32) DEFAULT '' NULL COMMENT '查询交易记录时间';
+
+
+CREATE TABLE gfb_new_asset_log
+(
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  op_name VARCHAR(128) DEFAULT '' COMMENT '操作名称',
+  op_money BIGINT DEFAULT 0 COMMENT '操作金额',
+  use_money BIGINT DEFAULT 0 COMMENT '可用金额',
+  no_use_money BIGINT DEFAULT 0 COMMENT '冻结金额',
+  user_id INT DEFAULT 0 COMMENT '操作人ID',
+  for_user_id INT DEFAULT 0 COMMENT '对手账户ID',
+  platform_type VARCHAR(32) DEFAULT '' COMMENT '存管平台类型',
+  local_type VARCHAR(32) DEFAULT '' COMMENT '本地交易类型',
+  tx_flag VARCHAR(8) DEFAULT 'D' COMMENT '交易金额符号: 小于零等于C；大于零等于D；',
+  local_seq_no VARCHAR(32) DEFAULT '' COMMENT '本地交易流水',
+  curr_money BIGINT DEFAULT 0 COMMENT '当前用户账户余额(可用+ 冻结)',
+  source_id INT DEFAULT 0 COMMENT '来源ID',
+  create_time DATETIME COMMENT '创建时间',
+  remark VARCHAR(1024) DEFAULT '' COMMENT '标识',
+  group_op_seq_no VARCHAR(32) DEFAULT '' COMMENT '同组操作标识',
+  syn_state INT DEFAULT 0 COMMENT '对账标识, 0.未同步, 1.同步',
+  del INT DEFAULT 0 COMMENT '有效状态标识: 0.有效, 1.无效',
+  syn_time DATETIME COMMENT '对账时间'
+);
