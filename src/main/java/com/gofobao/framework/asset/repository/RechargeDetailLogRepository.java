@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.List;
 /**
  * Created by Max on 17/6/7.
  */
+@Repository
 public interface RechargeDetailLogRepository extends JpaRepository<RechargeDetailLog, Long>,JpaSpecificationExecutor<RechargeDetailLog> {
     RechargeDetailLog findTopBySeqNoAndDel(String seqNo, int del);
 
@@ -20,6 +22,4 @@ public interface RechargeDetailLogRepository extends JpaRepository<RechargeDetai
     List<RechargeDetailLog> findByUserIdAndDel(Long userId, int del, Pageable pageable);
 
     List<RechargeDetailLog> findByUserIdAndDelAndStateInAndCreateTimeBetween(long userId, int del, ImmutableList<Integer> stateList, Date startTime, Date endTime);
-
-
 }

@@ -257,50 +257,6 @@ public class BankAccountBizImpl implements BankAccountBiz{
         return result ;
     }
 
-
-    /**
-     * 提现额度查询
-     * @param userId
-
-     * @return
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public double[] getCashCredit(Long userId) {
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        String bankName = userThirdAccount.getBankName();
-        double[] bankCredit = getBankCredit(bankName);  // 银行卡充值额度说明
-
-        Date endDate = new Date() ;
-        Date dayStartDate = DateHelper.beginOfYear(endDate) ;
-        Date startDate = DateHelper.beginOfMonth(endDate);
-        ImmutableList<Integer> stateList = ImmutableList.of(0, 1) ; // 充值成功和申请充值中的
-        List<CashDetailLog> cashDetailLogs = cashDetailLogService.findByUserIdAndStateInAndCreateTimeBetween(userId, stateList, startDate, endDate);
-        if(CollectionUtils.isEmpty(cashDetailLogs)){
-            return bankCredit ;
-        }
-
-        // 每一笔提现限额
-        double [] result = new double[3];
-        result[0] = bankCredit[0] ;
-
-        // 今天提现金额
-        long dayCashSum = cashDetailLogs
-                .stream()
-                .filter( bean ->  DateHelper.diffInDays(dayStartDate, bean.getCreateTime(), false) > 0)
-                .mapToLong(bean->bean.getMoney())
-                .sum() ;
-
-        // 这个月提现金额
-        long mouthCashSum = cashDetailLogs
-                .stream()
-                .mapToLong(bean->bean.getMoney())
-                .sum() ;
-
-        result[1] = bankCredit[1] - dayCashSum ;
-        result[2] = bankCredit[2] - mouthCashSum ;
-        return result ;
-    }
-
     /**
      * 获取银行额度
      * @param bankName

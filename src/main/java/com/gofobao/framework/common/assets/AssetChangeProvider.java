@@ -199,4 +199,12 @@ public class AssetChangeProvider {
     public Long getBailAccountId(){
         return jixinConfigCache.getIfPresent("bailUserId") ;
     }
+
+    /**
+     * 获取组的序列
+     * @return
+     */
+    public String getGroupSeqNo(){
+        return String.valueOf(System.currentTimeMillis()) ;
+    }
 }
