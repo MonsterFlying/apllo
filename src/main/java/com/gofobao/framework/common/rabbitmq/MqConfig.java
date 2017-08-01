@@ -16,6 +16,7 @@ public class MqConfig {
     public static final String MSG_USER_ID = "userId";
     public static final String MSG_TIME = "time";
     public static final String MSG_BORROW_ID = "borrowId";
+    public static final String MSG_TRANSFER_ID = "transferId";
     public static final String MSG_TENDER_ID = "tenderId";
     public static final String MSG_REPAYMENT_ID = "repaymentId";
     public static final String MSG_ID = "id";
@@ -28,6 +29,8 @@ public class MqConfig {
     public static final String SOURCE_ID = "sourceId";
     public static final String BATCH_NO = "batch_no";
     public static final String ACQ_RES = "acq_res";
+    public static final String PASSWORD = "password";
+
 
     private MqQueueEnum queue;
     private MqTagEnum tag;

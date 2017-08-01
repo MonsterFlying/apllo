@@ -27,6 +27,8 @@ import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
+import com.gofobao.framework.member.entity.UserThirdAccount;
+import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.tender.contants.VirtualTenderContants;
 import com.gofobao.framework.tender.entity.VirtualTender;
 import com.google.common.collect.Lists;
@@ -78,6 +80,9 @@ public class VirtualServiceImpl implements VirtualService {
 
     @Autowired
     private CouponRepository couponRepository;
+
+    @Autowired
+    private UserThirdAccountService userThirdAccountService;
 
     /**
      * 体验金统计
@@ -164,10 +169,17 @@ public class VirtualServiceImpl implements VirtualService {
     @Override
     public Boolean tenderCreate(VoVirtualReq voVirtualReq) {
 
+        //当前用户是否开通存款
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voVirtualReq.getUserId());
+        if(ObjectUtils.isEmpty(userThirdAccount)){
+            return false;
+        }
+        //体验标是否存在
         BorrowVirtual borrowVirtual = virtualBorrowRepository.findOne(voVirtualReq.getId());
         if (ObjectUtils.isEmpty(borrowVirtual)) {
             return false;
         }
+        //当前有用户是否有可用体验金
         Specification specification = Specifications.<Asset>and()
                 .eq("userId", voVirtualReq.getUserId())
                 .ge("virtualMoney", borrowVirtual.getLowest())

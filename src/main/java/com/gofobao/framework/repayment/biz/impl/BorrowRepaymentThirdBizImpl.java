@@ -168,7 +168,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         double sumCount = 0, validMoney, debtFee;
         for (Tender tender : tenderList) {
             debtFee = 0;
-            if (Boolean.TRUE.equals(tender.getThirdTenderFlag())) {
+            if (BooleanHelper.isTrue(tender.getThirdTenderFlag())) {
                 continue;
             }
             tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
@@ -298,8 +298,12 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         } else {
             log.info("=============================即信批次还款检验参数回调===========================");
             log.info("回调成功!");
-            //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), NumberHelper.toLong(acqResMap.get("repaymentId")), 1);
+            try {
+                //更新批次状态
+                thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), NumberHelper.toLong(acqResMap.get("repaymentId")), 1);
+            } catch (Exception e) {
+                log.error("更新批次日志记录失败:", e);
+            }
         }
 
         return ResponseEntity.ok("success");
@@ -505,7 +509,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 BorrowCollection borrowCollection = borrowCollectionList.stream().filter(bc -> StringHelper.toString(bc.getTenderId()).equals(StringHelper.toString(tender.getId()))).collect(Collectors.toList()).get(0);
 
                 //判断这笔回款是否已经在即信登记过批次垫付
-                if (Boolean.TRUE.equals(borrowCollection.getThirdBailRepayFlag())) {
+                if (BooleanHelper.isTrue(borrowCollection.getThirdBailRepayFlag())) {
                     continue;
                 }
 
@@ -903,6 +907,16 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
 
     /**
+     * 新版生成存管还款计划
+     * @// TODO: 2017/7/31
+     * @return
+     */
+    public List<Repay> newCalculateRepayPlan() {
+        List<Repay> repayList = new ArrayList<>();
+        return repayList;
+    }
+
+    /**
      * 生成存管还款计划(递归调用解决转让问题)
      *
      * @param borrow
@@ -1203,7 +1217,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             //==============================================================
             // 判断还款是否已经在即信登记
             //==============================================================
-            if (Boolean.TRUE.equals(borrowCollection.getThirdRepayFlag())) {
+            if (BooleanHelper.isTrue(borrowCollection.getThirdRepayFlag())) {
                 continue;
             }
 

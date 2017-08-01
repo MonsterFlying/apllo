@@ -27,7 +27,7 @@ import java.util.*;
  */
 @Component
 @Slf4j
-public class AutoTenderProvider {
+public class TenderProvider {
 
     @Autowired
     BorrowService borrowService;
@@ -38,6 +38,26 @@ public class AutoTenderProvider {
     @Autowired
     TenderBiz tenderBiz;
 
+    /**
+     * 自动债权转让
+     * @param msg
+     * @throws Exception
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void autoTransfer(Map<String,String> msg) throws Exception{
+        /*
+         * 1.批次自动投标规则
+         * 2.筛选合适的自动投标规则进行购买债权
+         * 3.更新自动投标规则
+         */
+
+    }
+
+    /**
+     * 自动投标
+     * @param msg
+     * @throws Exception
+     */
     @Transactional(rollbackFor = Exception.class)
     public void autoTender(Map<String, String> msg) throws Exception {
         Date nowDate = new Date();
