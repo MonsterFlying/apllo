@@ -41,6 +41,9 @@ jwt: #JWT 安全配置
   expiration: 2592000
   prefix: Bearer
 
+#风车理财 DES->key
+windmill:
+  key: 2l0IYbNnRcShWOM9Q5Ej0A3gCEP07LBS
 jixin: #银行存管
   keysPath: /root/jenkins/certs/guangfubao_sit.p12 #私钥路径
   keysPassword: guangfubao_sit@2016 #私钥密码
