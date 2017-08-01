@@ -2,6 +2,7 @@ package com.gofobao.framework.windmill.user.controller;
 
 
 import com.gofobao.framework.helper.ThymeleafHelper;
+import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.windmill.user.biz.WindmillUserBiz;
 import com.gofobao.framework.windmill.user.vo.request.BindLoginReq;
 import com.gofobao.framework.windmill.user.vo.respones.UserRegisterRes;
@@ -10,6 +11,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,30 +39,35 @@ public class WindmillRegisterController {
     private ThymeleafHelper thymeleafHelper;
 
     @ApiOperation("用户注册")
-    @GetMapping(value = "user/register")
+    @PostMapping(value = "user/register")
     public UserRegisterRes register(HttpServletRequest request) throws Exception {
         return windmillUserBiz.register(request);
 
     }
 
-
     @ApiOperation("用户绑定请求登录页面")
     @GetMapping("user/bind/html")
     public String loginHtml(HttpServletRequest request) {
         String paramStr = request.getParameter("param");
-        Map<String,Object>paramMap=Maps.newHashMap();
+        Map<String, Object> paramMap = Maps.newHashMap();
         paramMap.put("param", paramStr);
-        return thymeleafHelper.build("/bing/login", paramMap);
+        return thymeleafHelper.build("windmill/user/login", paramMap);
     }
 
 
     @ApiOperation("綁定登陸")
     @PostMapping("user/bind/login")
-    public String bindLogin(HttpServletRequest request,
-                            HttpServletResponse response,
-                            BindLoginReq bindLoginReq) {
-        windmillUserBiz.bindLogin(request, response, bindLoginReq);
-        return "";
+    public ResponseEntity<VoBasicUserInfoResp> bindLogin(HttpServletRequest request,
+                                                         HttpServletResponse response,
+                                                         BindLoginReq bindLoginReq) {
+        return windmillUserBiz.bindLogin(request, response, bindLoginReq);
+    }
+
+    @ApiOperation("用户登录")
+    @PostMapping("/user/login")
+    private ResponseEntity<VoBasicUserInfoResp>loginUser(HttpServletRequest request){
+        return null;
+
     }
 
 
