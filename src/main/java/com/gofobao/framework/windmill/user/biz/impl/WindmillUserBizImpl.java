@@ -45,9 +45,6 @@ import java.util.Map;
 public class WindmillUserBizImpl implements WindmillUserBiz {
 
     @Autowired
-    private MacthHelper macthHelper;
-
-    @Autowired
     private UserService userService;
 
     @Autowired
@@ -74,8 +71,8 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
         log.info("============================================");
         String decryptStr = "";
         try {
-            decryptStr = WrbCoopDESUtil.desDecrypt(key, param);
-            log.info("解密参数成功:" + decryptStr);
+            decryptStr = commonDecryptStr(param);
+            log.info("解密参数成功param:" + decryptStr);
         } catch (Exception e) {
             log.info("=====解密参数失败:param:" + param);
         }
@@ -187,9 +184,8 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
                 smsConfig.setTag(MqTagEnum.SMS_WINDMILL_USER_REGISTER);
                 ImmutableMap<String, String> smsBoby = ImmutableMap
                         .of(MqConfig.PHONE, registerReq.getMobile(), MqConfig.IP, request.getRemoteAddr(), MqConfig.PASSWORD, password);
-                smsConfig.setMsg(body);
+                smsConfig.setMsg(smsBoby);
                 mqHelper.convertAndSend(smsConfig);
-
 
                 registerRes.setPf_user_id(users.getId());
                 registerRes.setRetmsg("风车理财用户注册:注册成功");
@@ -218,15 +214,21 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
     public ResponseEntity<VoBasicUserInfoResp> bindLogin(HttpServletRequest request,
                                                          HttpServletResponse response,
                                                          BindLoginReq bindLoginReq) {
+
+        log.info("===============进入风车理绑定用户登录===============");
+        log.info("用户名："+bindLoginReq.getUserName()+",密文："+bindLoginReq.getParam());
+        log.info("==================================================");
         VoLoginReq voLoginReq = new VoLoginReq();
         voLoginReq.setAccount(bindLoginReq.getUserName());
         voLoginReq.setPassword(bindLoginReq.getPassword());
         ResponseEntity entity = userBiz.login(request, response, voLoginReq);
         //登陸成功
         if (entity.getStatusCode() == HttpStatus.OK) {
+            log.info("================用户登录成功===============");
             VoBasicUserInfoResp userInfoResp = (VoBasicUserInfoResp) entity.getBody();
             try {
-                String desDecryptStr = WrbCoopDESUtil.desDecrypt(key, bindLoginReq.getParam());
+                String desDecryptStr = commonDecryptStr(bindLoginReq.getParam());
+                log.info("解密后的参数：param:"+desDecryptStr);
                 UserRegisterReq userRegisterReq = JacksonHelper.json2pojo(desDecryptStr, UserRegisterReq.class);
                 Users user = userService.findByAccount(bindLoginReq.getUserName());
                 String userName = StringUtils.isEmpty(user.getUsername()) ? user.getPhone() : user.getUsername();
@@ -269,7 +271,35 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             } catch (Exception e) {
                 return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "风车理财验证绑定失败", VoBasicUserInfoResp.class));
             }
+        }else{
+            log.info("================用户登录失败===============");
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "用户登录失败", VoBasicUserInfoResp.class));
+
         }
-        return null;
+
+    }
+
+
+    /**
+     * @param cipherStr
+     * @return
+     */
+    private String commonDecryptStr(String cipherStr) throws Exception {
+        log.info("-==========进入解密请求参数方法========");
+        try {
+            String desDecryptStr = WrbCoopDESUtil.desDecrypt(key, cipherStr);
+            if (StringUtils.isEmpty(desDecryptStr)) {
+                log.info("請求密文為空");
+                return "";
+            }
+            String jsonStr = desDecryptStr.replaceAll("&", ",").replaceAll("=", ":");
+            StringBuilder sb = new StringBuilder(jsonStr);
+            sb.append("{", 0, 1);
+            sb.append("}", sb.length() - 1, sb.length());
+            return sb.toString();
+        } catch (Exception e) {
+            log.info("密文解析失败");
+            return null;
+        }
     }
 }
