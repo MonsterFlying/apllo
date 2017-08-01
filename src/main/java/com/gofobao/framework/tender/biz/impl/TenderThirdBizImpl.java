@@ -93,6 +93,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
 
+
+
     public ResponseEntity<VoBaseResp> createThirdTender(VoCreateThirdTenderReq voCreateThirdTenderReq) {
         Long userId = voCreateThirdTenderReq.getUserId();
         String txAmount = voCreateThirdTenderReq.getTxAmount();

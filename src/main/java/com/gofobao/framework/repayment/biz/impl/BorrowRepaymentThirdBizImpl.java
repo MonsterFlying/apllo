@@ -298,8 +298,12 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         } else {
             log.info("=============================即信批次还款检验参数回调===========================");
             log.info("回调成功!");
-            //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), NumberHelper.toLong(acqResMap.get("repaymentId")), 1);
+            try {
+                //更新批次状态
+                thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), NumberHelper.toLong(acqResMap.get("repaymentId")), 1);
+            } catch (Exception e) {
+                log.error("更新批次日志记录失败:", e);
+            }
         }
 
         return ResponseEntity.ok("success");
@@ -901,6 +905,16 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         return repayList;
     }
 
+
+    /**
+     * 新版生成存管还款计划
+     * @// TODO: 2017/7/31
+     * @return
+     */
+    public List<Repay> newCalculateRepayPlan() {
+        List<Repay> repayList = new ArrayList<>();
+        return repayList;
+    }
 
     /**
      * 生成存管还款计划(递归调用解决转让问题)

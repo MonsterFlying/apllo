@@ -1126,7 +1126,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         acqResMap.put("freezeOrderId", orderId);
         acqResMap.put("freezeMoney", freezeMoney);
 
-        //批次放款操作
+        //批次还款操作
         BatchRepayReq request = new BatchRepayReq();
         request.setBatchNo(batchNo);
         request.setTxAmount(StringHelper.formatDouble(txAmount, false));

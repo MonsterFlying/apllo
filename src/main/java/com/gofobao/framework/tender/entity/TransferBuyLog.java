@@ -1,5 +1,6 @@
 package com.gofobao.framework.tender.entity;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -10,25 +11,21 @@ import java.util.Date;
  * Created by Zeke on 2017/7/31.
  */
 @Entity
+@Table(name = "gfb_transfer_buy_log")
 @Data
-@Table(name = "gfb_transfer")
-public class Transfer {
+public class TransferBuyLog {
     @GeneratedValue
     @Id
     private Long id;
     private Integer state;
-    private String title;
-    private Long principal;
-    private Integer alreadyInterest;
-    private Integer leftOrder;
-    private Long leftPrincipal;
-    private Integer apr;
-    private Date repayAt;
-    private Long tenderId;
-    private Long borrowId;
+    private Long transferId;
     private Long userId;
-    private Long lower;
+    private Long buyMoney;
+    private Long validMoney;
+    private Long alreadyInterest;
     private Boolean del;
+    private Boolean auto;
+    private Integer source;
     private Date createdAt;
     private Date updatedAt;
 

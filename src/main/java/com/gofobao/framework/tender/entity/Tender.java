@@ -69,6 +69,10 @@ public class Tender {
      */
     private Boolean thirdCreditEndFlag;
     /**
+     * 购买债权记录id
+     */
+    private Long transferBuyId;
+    /**
      * 父级投标id（默认为0，最顶级记录）
      */
     private Long parentId;
