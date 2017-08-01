@@ -25,6 +25,7 @@ public class TransferBuyLog {
     private Long alreadyInterest;
     private Boolean del;
     private Boolean auto;
+    private Integer autoOrder;
     private Integer source;
     private Date createdAt;
     private Date updatedAt;

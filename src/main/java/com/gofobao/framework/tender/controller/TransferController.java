@@ -4,6 +4,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.TransferBiz;
+import com.gofobao.framework.tender.vo.request.VoBuyTransfer;
 import com.gofobao.framework.tender.vo.request.VoTransferReq;
 import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
 import com.gofobao.framework.tender.vo.response.VoGoTenderInfo;
@@ -33,12 +34,41 @@ public class TransferController {
     @Autowired
     private ThymeleafHelper thymeleafHelper;
 
+    /**
+     * 新版债权转让
+     *
+     * @param voTransferTenderReq
+     * @return
+     * @throws Exception
+     */
+    @ApiOperation("新版债权转让")
+    @GetMapping("v2/transfer/new")
+    public ResponseEntity<VoBaseResp> newTransferTender(@Valid VoTransferTenderReq voTransferTenderReq) {
+        try {
+            return transferBiz.newTransferTender(voTransferTenderReq);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后重试!"));
+        }
+    }
+
+    /**
+     * 购买债权转让
+     */
+    @ApiOperation("购买债权转让")
+    @GetMapping("v2/buy")
+    public ResponseEntity<VoBaseResp> buyTransfer(@Valid VoBuyTransfer voBuyTransfer) {
+        try {
+            return transferBiz.buyTransfer(voBuyTransfer);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后重试!"));
+        }
+    }
 
     @ApiOperation("转让中列表")
     @GetMapping("v2/transferOf/list/{pageIndex}/{pageSize}")
-    public ResponseEntity<VoViewTransferOfWarpRes> tranferOfList( @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
-                                                                  @PathVariable Integer pageIndex,
-                                                                  @PathVariable Integer pageSize) {
+    public ResponseEntity<VoViewTransferOfWarpRes> tranferOfList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                                                 @PathVariable Integer pageIndex,
+                                                                 @PathVariable Integer pageSize) {
 
         VoTransferReq transferReq = new VoTransferReq();
         transferReq.setUserId(userId);
@@ -78,7 +108,7 @@ public class TransferController {
     public ResponseEntity<String> desc() {
         String content;
         try {
-            content = thymeleafHelper.build("tender/translate",null);
+            content = thymeleafHelper.build("tender/translate", null);
         } catch (Throwable e) {
             content = thymeleafHelper.build("load_error", null);
         }
@@ -109,6 +139,6 @@ public class TransferController {
     @GetMapping("v2/transfer/info/{tenderId}")
     public ResponseEntity<VoGoTenderInfo> goTenderInfo(@PathVariable Long tenderId,
                                                        @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        return transferBiz.goTenderInfo(tenderId,userId);
+        return transferBiz.goTenderInfo(tenderId, userId);
     }
 }

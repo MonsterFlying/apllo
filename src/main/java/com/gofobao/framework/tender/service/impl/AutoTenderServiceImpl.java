@@ -78,6 +78,7 @@ public class AutoTenderServiceImpl implements AutoTenderService {
         return true;
     }
 
+
     public List<Map<String,Object>> findQualifiedAutoTenders(VoFindAutoTenderList voFindAutoTenderList) {
         Long borrowId = voFindAutoTenderList.getBorrowId();
         if (ObjectUtils.isEmpty(borrowId)) {
@@ -112,18 +113,6 @@ public class AutoTenderServiceImpl implements AutoTenderService {
         String inRepayFashions = voFindAutoTenderList.getInRepayFashions();
         if (!StringUtils.isEmpty(inRepayFashions)) {
             sql.append(" and t.repay_fashions in (").append(inRepayFashions).append(")");
-        }
-        String timelimitType = voFindAutoTenderList.getTimelimitType();
-        if (!StringUtils.isEmpty(timelimitType)) {
-            sql.append(" and t.timelimit_type = ").append(timelimitType);
-        }
-        String gtTimelimitLast = voFindAutoTenderList.getGtTimelimitLast();
-        if (!StringUtils.isEmpty(gtTimelimitLast)) {
-            sql.append(" and t.timelimit_last >= ").append(gtTimelimitLast);
-        }
-        String ltTimelimitFirst = voFindAutoTenderList.getLtTimelimitFirst();
-        if (!StringUtils.isEmpty(ltTimelimitFirst)) {
-            sql.append(" and  t.timelimit_first <= ").append(ltTimelimitFirst);
         }
         Integer ltAprFirst = voFindAutoTenderList.getLtAprFirst();
         if (!StringUtils.isEmpty(ltAprFirst)) {

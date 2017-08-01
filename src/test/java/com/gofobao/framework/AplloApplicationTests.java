@@ -341,7 +341,7 @@ public class AplloApplicationTests {
     public void balanceQuery() {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId("6212462040000950073");
+        balanceQueryRequest.setAccountId("6212462040000650087");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         System.out.println(balanceQueryResponse);
     }
@@ -408,8 +408,8 @@ public class AplloApplicationTests {
 
     @Test
     public void test() {
-       /* Map<String,String> map = new HashMap<>();
-        map.put(MqConfig.MSG_BORROW_ID,"169922");
+        /*Map<String,String> map = new HashMap<>();
+        map.put(MqConfig.MSG_BORROW_ID,"169921");
         try {
             creditProvider.endThirdCredit(map,0);
         } catch (Exception e) {
@@ -461,7 +461,7 @@ public class AplloApplicationTests {
         //批次状态查询
         //batchQuery();
         //批次详情查询
-        batchDetailsQuery();
+        //batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调
@@ -483,7 +483,7 @@ public class AplloApplicationTests {
         System.out.println(creditDetailsQueryResponse);*/
 
 
-        /*CreditEndReq creditEndReq = new CreditEndReq();
+        CreditEndReq creditEndReq = new CreditEndReq();
         creditEndReq.setAccountId("6212462040000200123");
         creditEndReq.setProductId("169921");
         creditEndReq.setOrderId(JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX));
@@ -493,7 +493,7 @@ public class AplloApplicationTests {
         CreditEndResp creditEndResp = jixinManager.send(JixinTxCodeEnum.CREDIT_END,
                 creditEndReq,
                 CreditEndResp.class);
-        System.out.println(creditEndResp);*/
+        System.out.println(creditEndResp);
 
        /* List<Repay> repayList = new ArrayList<>();
         Repay repay = new Repay();
