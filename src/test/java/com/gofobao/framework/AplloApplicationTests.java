@@ -6,6 +6,8 @@ import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.CertHelper;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.helper.JixinTxDateHelper;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileRequest;
@@ -35,24 +37,32 @@ import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResponse;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
+import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.entity.RechargeDetailLog;
+import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.asset.vo.response.VoUserAssetInfoResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
-import com.gofobao.framework.common.assets.AssetsChangeEntity;
-import com.gofobao.framework.common.assets.AssetsChangeEnum;
-import com.gofobao.framework.common.assets.AssetsChangeHelper;
+import com.gofobao.framework.common.capital.CapitalChangeEntity;
+import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.BooleanHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
+import com.gofobao.framework.member.entity.UserThirdAccount;
+import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.service.UserService;
+import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.listener.providers.CreditProvider;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
@@ -63,9 +73,11 @@ import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.util.Lists;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,12 +87,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static com.gofobao.framework.listener.providers.NoticesMessageProvider.GSON;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -106,13 +117,22 @@ public class AplloApplicationTests {
     @Autowired
     private RepaymentBiz repaymentBiz;
     @Autowired
-    private AssetsChangeHelper assetsChangeHelper;
-    @Autowired
     private TenderService tenderService;
 
+    @Autowired
+    JixinTxDateHelper jixinTxDateHelper;
+
+    @Autowired
+    AssetService assetService;
+    @Autowired
+    UserThirdAccountService userThirdAccountService;
 
     @Autowired
     FundStatisticsBiz fundStatisticsBiz;
+
+
+    @Autowired
+    UserService userService;
 
     @Test
     public void testDownloadFile() throws Exception {
@@ -121,26 +141,98 @@ public class AplloApplicationTests {
 
 
     @Test
-    public void testAssetsChange() throws Exception {
+    public void testQueryFeeAccount() {
+        Users users = userService.findById(20L);
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(users.getId());
+        int pageSize = 20, pageIndex = 1, realSize = 0;
+        String accountId = userThirdAccount.getAccountId();  // 存管账户ID
+        List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
+        do {
+            AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
+            accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
+            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
+            accountDetailsQueryRequest.setStartDate(""); // 查询当天数据
+            accountDetailsQueryRequest.setEndDate("20160927");
+            accountDetailsQueryRequest.setType("0");
+            accountDetailsQueryRequest.setAccountId(accountId);
 
-        AssetsChangeEntity freeze = new AssetsChangeEntity();
-        freeze.setMoney(100 * 100 - 2 * 100);
-        freeze.setFee(2 * 100);
-        freeze.setType(AssetsChangeEnum.Frozen);
-        freeze.setUserId(41258);
-        freeze.setToUserId(0);
-        freeze.setRefId(12);
-        assetsChangeHelper.execute(freeze);
-        AssetsChangeEntity cash = new AssetsChangeEntity();
-        cash.setMoney(100 * 100 - 2 * 100);
-        cash.setFee(2 * 100);
-        cash.setType(AssetsChangeEnum.SmallCash);
-        cash.setUserId(41258);
-        cash.setToUserId(0);
-        cash.setRefId(12);
-        assetsChangeHelper.execute(cash);
+            AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
+                    accountDetailsQueryRequest,
+                    AccountDetailsQueryResponse.class);
+
+            if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
+                String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
+                log.error(msg);
+                break;
+            }
+
+            String subPacks = accountDetailsQueryResponse.getSubPacks();
+            if (StringUtils.isEmpty(subPacks)) {
+                break;
+            }
+
+            Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
+            }.getType()));
+            List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(com.google.common.collect.Lists.newArrayList());
+            realSize = accountDetailsQueryItems.size();
+            accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
+            pageIndex++;
+        } while (realSize == pageSize);
+
+        for (AccountDetailsQueryItem item : accountDetailsQueryItemList) {
+            log.error(GSON.toJson(item));
+        }
     }
 
+
+
+    @Test
+    public void testQueryUserInfo() {
+        List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findByAll();
+
+        List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
+        for (UserThirdAccount userThirdAccount : userThirdAccountList) {
+            // 查询当天充值记录
+            int pageSize = 20, pageIndex = 1, realSize = 0;
+            String accountId = userThirdAccount.getAccountId();  // 存管账户ID
+            do {
+                AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
+                accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
+                accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
+                accountDetailsQueryRequest.setStartDate(jixinTxDateHelper.getTxDateStr()); // 查询当天数据
+                accountDetailsQueryRequest.setEndDate(jixinTxDateHelper.getTxDateStr());
+                accountDetailsQueryRequest.setType("0");
+                accountDetailsQueryRequest.setAccountId(accountId);
+
+                AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
+                        accountDetailsQueryRequest,
+                        AccountDetailsQueryResponse.class);
+
+                if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
+                    String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
+                    log.error(msg);
+                    break;
+                }
+
+                String subPacks = accountDetailsQueryResponse.getSubPacks();
+                if (StringUtils.isEmpty(subPacks)) {
+                    break;
+                }
+
+                Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
+                }.getType()));
+                List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(com.google.common.collect.Lists.newArrayList());
+                realSize = accountDetailsQueryItems.size();
+                accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
+                pageIndex++;
+            } while (realSize == pageSize);
+        }
+
+        for (AccountDetailsQueryItem item : accountDetailsQueryItemList) {
+            log.error(GSON.toJson(item));
+        }
+
+    }
 
     @Test
     public void contextLoads() throws InterruptedException {

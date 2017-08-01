@@ -68,4 +68,6 @@ public class Users implements Serializable{
     private Integer platform ;
 
     private String ip ;
+
+    private String windmillId;
 }

@@ -1,5 +1,6 @@
 package com.gofobao.framework.asset.service;
 
+import com.gofobao.framework.asset.entity.CashDetailLog;
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.vo.request.VoPcRechargeReq;
 import com.gofobao.framework.asset.vo.response.pc.RechargeLogs;
@@ -33,6 +34,4 @@ public interface RechargeDetailLogService {
      * @return
      */
     List<RechargeLogs>toExcel(VoPcRechargeReq rechargeReq);
-
-
 }

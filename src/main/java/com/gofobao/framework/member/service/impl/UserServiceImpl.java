@@ -156,4 +156,18 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         Query query = entityManager.createNativeQuery(sql, Users.class);
         return query.getResultList();
     }
+
+    /**
+     * 验证身份证是否存在
+     * @param idCard
+     * @return
+     */
+    @Override
+    public boolean notExistsByIdCard(String idCard) {
+        Users users = new Users();
+        users.setCardId(idCard);
+        Example<Users> example = Example.of(users);
+        return !userRepository.exists(example);
+    }
+
 }

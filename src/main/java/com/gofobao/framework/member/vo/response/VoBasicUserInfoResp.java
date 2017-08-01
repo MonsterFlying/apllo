@@ -79,7 +79,7 @@ public class VoBasicUserInfoResp extends VoBaseResp{
     @ApiModelProperty("投资积分")
     private Long  tenderIntegral ;
 
-
+    private String target_url;
 
 
 }

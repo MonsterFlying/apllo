@@ -3,6 +3,7 @@ package com.gofobao.framework.listener;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnumContants;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.listener.providers.CommonSmsProvider;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
@@ -38,7 +39,13 @@ public class SmsMessageListener{
             Preconditions.checkNotNull(body.get(MqConfig.MSG_BODY), "SmsMessageListener process body is empty ") ;
             String tag = body.get(MqConfig.MSG_TAG).toString();
             Map<String, String> msg = (Map<String, String>)body.get(MqConfig.MSG_BODY) ;
-            boolean result  = commonSmsProvider.doSendMessageCode(tag, msg);
+            boolean result;
+            if(tag.equals(MqTagEnum.SMS_WINDMILL_USER_REGISTER)){
+                result = commonSmsProvider.doSmsWindmillRegister(tag, msg);
+
+            }else {
+                 result = commonSmsProvider.doSendMessageCode(tag, msg);
+            }
             if(!result){
                 log.error(String.format("SmsMessageListener process process error: %s", message));
             }

@@ -34,14 +34,6 @@ public class RechargeController {
         return assetBiz.rechargeOnline(request, voRechargeReq) ;
     }
 
-    @ApiOperation("充值 -- 此接口已放弃")
-    @PostMapping("/asset/recharge")
-    public ResponseEntity<VoHtmlResp> recharge(HttpServletRequest request, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoRechargeReq voRechargeReq){
-        voRechargeReq.setUserId(userId) ;
-        return assetBiz.recharge(request, voRechargeReq) ;
-    }
-
-
     @ApiOperation("充值回调")
     @PostMapping("/pub/asset/recharge/callback")
     public ResponseEntity<String> rechargeCallback(HttpServletRequest request, HttpServletResponse response) throws Exception{

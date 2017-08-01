@@ -29,6 +29,8 @@ public class MqConfig {
     public static final String SOURCE_ID = "sourceId";
     public static final String BATCH_NO = "batch_no";
     public static final String ACQ_RES = "acq_res";
+    public static final String PASSWORD = "password";
+
 
     private MqQueueEnum queue;
     private MqTagEnum tag;

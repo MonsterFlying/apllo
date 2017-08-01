@@ -29,6 +29,9 @@ import com.gofobao.framework.asset.vo.request.VoSynAssetsRep;
 import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.asset.vo.response.pc.AssetLogs;
 import com.gofobao.framework.asset.vo.response.pc.VoViewAssetLogsWarpRes;
+import com.gofobao.framework.common.assets.AssetChange;
+import com.gofobao.framework.common.assets.AssetChangeProvider;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
@@ -140,6 +143,9 @@ public class AssetBizImpl implements AssetBiz {
 
     @Autowired
     BankAccountBizImpl bankAccountBiz;
+
+    @Autowired
+    AssetChangeProvider assetChangeProvider ;
 
 
     LoadingCache<String, DictValue> bankLimitCache = CacheBuilder
@@ -280,7 +286,6 @@ public class AssetBizImpl implements AssetBiz {
         //userThirdAccount.setMobile("13662260509");
         String smsSeq = null;
         try {
-
             smsSeq = redisHelper.get(String.format("%s_%s", SrvTxCodeContants.DIRECT_RECHARGE_ONLINE, userThirdAccount.getMobile()), null);
             redisHelper.remove(String.format("%s_%s", SrvTxCodeContants.DIRECT_RECHARGE_ONLINE, userThirdAccount.getMobile()));
         } catch (Throwable e) {
@@ -292,10 +297,8 @@ public class AssetBizImpl implements AssetBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "短信验证码已过期，请重新获取"));
         }
-
-        // 提现额度判断
-        // 判断提现额度剩余
-        double[] rechargeCredit = bankAccountBiz.getCashCredit(voRechargeReq.getUserId());
+        // 充值额度
+        double[] rechargeCredit = bankAccountBiz.getRechargeCredit(voRechargeReq.getUserId());
         // 判断单笔额度
         double oneTimes = rechargeCredit[0];
         if (voRechargeReq.getMoney() > oneTimes) {
@@ -354,6 +357,7 @@ public class AssetBizImpl implements AssetBiz {
         Gson gson = new Gson();
         int state;
         String msg = "";
+        Date now = new Date();
         if (!directRechargeOnlineResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
             log.error(String.format("请求即信联机充值异常: %s", gson.toJson(directRechargeOnlineResponse)));
             state = 2;
@@ -361,16 +365,19 @@ public class AssetBizImpl implements AssetBiz {
         } else {
             log.info(String.format("充值成功: %s", gson.toJson(directRechargeOnlineResponse)));
             state = 1;
-            CapitalChangeEntity capitalChangeEntity = new CapitalChangeEntity();
-            capitalChangeEntity.setToUserId(userThirdAccount.getUserId());
-            capitalChangeEntity.setUserId(userThirdAccount.getUserId());
-            capitalChangeEntity.setMoney(new Double(voRechargeReq.getMoney() * 100).intValue());
-            capitalChangeEntity.setRemark("充值成功");
-            capitalChangeEntity.setType(CapitalChangeEnum.Recharge);
-            capitalChangeHelper.capitalChange(capitalChangeEntity);
+            AssetChange entity = new AssetChange() ;
+            String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+            String seqNo = String.format("%s%s%s", directRechargeOnlineResponse.getTxDate(), directRechargeOnlineResponse.getTxTime(), directRechargeOnlineResponse.getSeqNo()) ;
+            entity.setGroupSeqNo(groupSeqNo);
+            entity.setMoney(new Double(voRechargeReq.getMoney() * 100).longValue());
+            entity.setSeqNo(seqNo);
+            entity.setUserId(users.getId());
+            entity.setRemark(String.format("你在 %s 成功充值%s元", DateHelper.dateToString(now), voRechargeReq.getMoney()));
+            entity.setType(AssetChangeTypeEnum.onlineRecharge);
+            assetChangeProvider.commonAssetChange(entity) ;
         }
 
-        Date now = new Date();
+
         // 插入充值记录
         RechargeDetailLog rechargeDetailLog = new RechargeDetailLog();
         rechargeDetailLog.setUserId(users.getId());
@@ -571,7 +578,7 @@ public class AssetBizImpl implements AssetBiz {
 
         // 提现额度判断
         // 判断提现额度剩余
-        double[] rechargeCredit = bankAccountBiz.getCashCredit(voRechargeReq.getUserId());
+        double[] rechargeCredit = bankAccountBiz.getRechargeCredit(voRechargeReq.getUserId());
         // 判断单笔额度
         double oneTimes = rechargeCredit[0];
         if (voRechargeReq.getMoney() > oneTimes) {
