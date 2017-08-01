@@ -19,12 +19,17 @@ import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
+import com.gofobao.framework.api.model.batch_repay.BatchRepayReq;
+import com.gofobao.framework.api.model.batch_repay.BatchRepayResp;
+import com.gofobao.framework.api.model.batch_repay.Repay;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
 import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryRequest;
 import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryResponse;
+import com.gofobao.framework.api.model.credit_end.CreditEndReq;
+import com.gofobao.framework.api.model.credit_end.CreditEndResp;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResponse;
@@ -42,15 +47,21 @@ import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
+import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.BooleanHelper;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
+import com.gofobao.framework.listener.providers.CreditProvider;
+import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoAdvanceCall;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -58,15 +69,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.ObjectUtils;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -150,7 +160,7 @@ public class AplloApplicationTests {
     }
 
     public static void main(String[] args) {
-
+        System.out.println(BooleanHelper.isFalse(null));
 
         /*System.out.println("select t.id AS id,t. STATUS AS status,t.user_id AS userId,t.lowest AS lowest,t.borrow_types AS borrowTypes," +
                 "t.repay_fashions AS repayFashions,t.tender_0 AS tender0,t.tender_1 AS tender1,t.tender_3 AS tender3,t.tender_4 AS tender4,t.`mode` AS mode,t.tender_money AS tenderMoney,t.timelimit_first AS timelimitFirst,t.timelimit_last AS timelimitLast,t.timelimit_type AS timelimitType,t.apr_first AS aprFirst,t.apr_last AS aprLast,t.save_money AS saveMoney,t.`order` AS `order`,t.auto_at AS autoAt,t.created_at AS createdAt," +
@@ -269,8 +279,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("101710");
-        batchDetailsQueryReq.setBatchTxDate("20170726");
+        batchDetailsQueryReq.setBatchNo("093919");
+        batchDetailsQueryReq.setBatchTxDate("20170801");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -283,9 +293,9 @@ public class AplloApplicationTests {
 
     private void bidApplyQuery() {
         BidApplyQueryReq request = new BidApplyQueryReq();
-        request.setAccountId("6212462040000950073");
+        request.setAccountId("6212462040000650087");
         request.setChannel(ChannelContant.HTML);
-        request.setOrgOrderId("GFBT_1500954712351");
+        request.setOrgOrderId("GFBT_1501032966291");
         BidApplyQueryResp response = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, request, BidApplyQueryResp.class);
         System.out.println(response);
 
@@ -331,14 +341,14 @@ public class AplloApplicationTests {
     public void balanceQuery() {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId("6212462040000250094");
+        balanceQueryRequest.setAccountId("6212462040000950073");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         System.out.println(balanceQueryResponse);
     }
 
     public void accountDetailsQuery() {
         AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
-        request.setAccountId("6212462040000150070");
+        request.setAccountId("6212462040000750085");
         request.setStartDate("20161002");
         request.setEndDate("20171003");
         request.setChannel(ChannelContant.HTML);
@@ -387,10 +397,26 @@ public class AplloApplicationTests {
         }
     }
 
+    @Value("${gofobao.javaDomain}")
+    private String javaDomain;
+
+    @Autowired
+    private CreditProvider creditProvider;
+
+    @Autowired
+    private JixinHelper jixinHelper;
+
     @Test
     public void test() {
+       /* Map<String,String> map = new HashMap<>();
+        map.put(MqConfig.MSG_BORROW_ID,"169922");
+        try {
+            creditProvider.endThirdCredit(map,0);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
         //推送队列结束债权
-        MqConfig mqConfig = new MqConfig();
+/*        MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
         mqConfig.setTag(MqTagEnum.END_CREDIT_ALL);
         mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 5));
@@ -402,7 +428,10 @@ public class AplloApplicationTests {
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("repaymentBizImpl repayDeal send mq exception", e);
-        }
+        }*/
+
+
+
         //批次处理
         //batchDeal();
         //查询存管账户资金信息
@@ -432,7 +461,7 @@ public class AplloApplicationTests {
         //批次状态查询
         //batchQuery();
         //批次详情查询
-        //batchDetailsQuery();
+        batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调
@@ -441,17 +470,66 @@ public class AplloApplicationTests {
         //noTransferBorrowAgainVerify();
         // 查询债权关系
         /*CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
-        creditDetailsQueryRequest.setAccountId("6212462040000000077");
+        creditDetailsQueryRequest.setAccountId("6212462040000650087");
         creditDetailsQueryRequest.setStartDate("20161003");
-        creditDetailsQueryRequest.setProductId("169917");
+        creditDetailsQueryRequest.setProductId("169922");
         creditDetailsQueryRequest.setEndDate(DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM));
-        creditDetailsQueryRequest.setState("0");
+        creditDetailsQueryRequest.setState("1");
         creditDetailsQueryRequest.setPageNum("1");
         creditDetailsQueryRequest.setPageSize("10");
         CreditDetailsQueryResponse creditDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.CREDIT_DETAILS_QUERY,
                 creditDetailsQueryRequest,
                 CreditDetailsQueryResponse.class);
         System.out.println(creditDetailsQueryResponse);*/
+
+
+        /*CreditEndReq creditEndReq = new CreditEndReq();
+        creditEndReq.setAccountId("6212462040000200123");
+        creditEndReq.setProductId("169921");
+        creditEndReq.setOrderId(JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX));
+        creditEndReq.setForAccountId("6212462040000650087");
+        creditEndReq.setAuthCode("20161011093802281461");
+        creditEndReq.setChannel(ChannelContant.HTML);
+        CreditEndResp creditEndResp = jixinManager.send(JixinTxCodeEnum.CREDIT_END,
+                creditEndReq,
+                CreditEndResp.class);
+        System.out.println(creditEndResp);*/
+
+       /* List<Repay> repayList = new ArrayList<>();
+        Repay repay = new Repay();
+        repay.setAccountId("6212462040000200123");
+        repay.setOrderId(JixinHelper.getOrderId(JixinHelper.REPAY_PREFIX));
+        repay.setTxAmount("1000");
+        repay.setIntAmount("0");
+        repay.setTxFeeIn("0");
+        repay.setTxFeeOut("0");
+        repay.setProductId("169921");
+        repay.setAuthCode("20161011093649281458");
+        repay.setForAccountId("6212462040000650087");
+        repayList.add(repay);
+
+        repay = new Repay();
+        repay.setAccountId("6212462040000200123");
+        repay.setOrderId(JixinHelper.getOrderId(JixinHelper.REPAY_PREFIX));
+        repay.setTxAmount("1000");
+        repay.setIntAmount("0");
+        repay.setTxFeeIn("0");
+        repay.setTxFeeOut("0");
+        repay.setProductId("169921");
+        repay.setAuthCode("20161011093802281461");
+        repay.setForAccountId("6212462040000650087");
+        repayList.add(repay);
+
+        BatchRepayReq request = new BatchRepayReq();
+        request.setBatchNo(jixinHelper.getBatchNo());
+        request.setTxAmount("2000");
+        request.setRetNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/repayDeal/run");
+        request.setNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/repayDeal/check");
+        request.setSubPacks(GSON.toJson(repayList));
+        request.setChannel(ChannelContant.HTML);
+        request.setTxCounts(StringHelper.toString(repayList.size()));
+        BatchRepayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_REPAY, request, BatchRepayResp.class);
+        System.out.println(response);*/
     }
 
 }

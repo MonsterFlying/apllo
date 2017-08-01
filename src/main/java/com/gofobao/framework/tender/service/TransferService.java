@@ -1,7 +1,12 @@
 package com.gofobao.framework.tender.service;
 
+import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.vo.request.VoTransferReq;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
+import java.util.List;
 import java.util.Map;
 
 
@@ -11,6 +16,16 @@ import java.util.Map;
 
 public interface TransferService {
 
+    List<Transfer> findList(Specification<Transfer> specification);
+
+    List<Transfer> findList(Specification<Transfer> specification, Sort sort);
+
+    List<Transfer> findList(Specification<Transfer> specification, Pageable pageable);
+
+    long count(Specification<Transfer> specification);
+
+    Transfer findById(long id);
+
     Map<String, Object> transferOfList(VoTransferReq voTransferReq);
 
 
@@ -18,6 +33,6 @@ public interface TransferService {
 
     Map<String, Object> transferMayList(VoTransferReq voTransferReq);
 
-    Map<String,Object> transferBuyList(VoTransferReq voTransferReq);
+    Map<String, Object> transferBuyList(VoTransferReq voTransferReq);
 
 }

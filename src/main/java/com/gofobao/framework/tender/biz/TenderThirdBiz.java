@@ -1,6 +1,7 @@
 package com.gofobao.framework.tender.biz;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.tender.vo.request.VoBuyTransfer;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoThirdBatchCreditInvest;
@@ -19,30 +20,35 @@ public interface TenderThirdBiz {
 
     /**
      * 投资人批次购买债权
+     *
      * @return
      */
     ResponseEntity<VoBaseResp> thirdBatchCreditInvest(VoThirdBatchCreditInvest voThirdBatchCreditInvest) throws Exception;
 
     /**
      * 投资人批次购买债权参数验证回调
+     *
      * @return
      */
     void thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 投资人批次购买债权参数运行回调
+     *
      * @return
      */
     ResponseEntity<String> thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception;
 
     /**
      * 投资人批次结束债权参数验证回调
+     *
      * @return
      */
     void thirdBatchCreditEndCheckCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 投资人批次结束债权参数运行回调
+     *
      * @return
      */
     ResponseEntity<String> thirdBatchCreditEndRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception;

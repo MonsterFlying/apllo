@@ -10,6 +10,7 @@ import com.gofobao.framework.api.model.batch_credit_end.CreditEnd;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.helper.BooleanHelper;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -181,7 +182,7 @@ public class CreditProvider {
      * @param creditEndList
      * @param borrowId
      */
-    private void buildNotTransferCreditEndList(List<CreditEnd> creditEndList, String borrowUserThirdAccountId, String productId, Long borrowId) {
+    public void buildNotTransferCreditEndList(List<CreditEnd> creditEndList, String borrowUserThirdAccountId, String productId, Long borrowId) {
         do {
             Specification<Tender> ts = Specifications
                     .<Tender>and()
@@ -206,7 +207,7 @@ public class CreditProvider {
             });
 
             //排除已经在存管登记结束债权的投标记录
-            tenderList.stream().filter(tender -> (Boolean.FALSE.equals(tender.getThirdCreditEndFlag()))).forEach(tender -> {
+            tenderList.stream().filter(tender -> (BooleanHelper.isFalse(tender.getThirdCreditEndFlag()))).forEach(tender -> {
                 CreditEnd creditEnd = new CreditEnd();
                 String orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
 

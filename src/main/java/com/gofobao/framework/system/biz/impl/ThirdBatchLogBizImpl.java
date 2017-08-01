@@ -11,6 +11,7 @@ import com.gofobao.framework.asset.entity.AdvanceLog;
 import com.gofobao.framework.asset.service.AdvanceLogService;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.helper.BooleanHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
@@ -252,11 +253,19 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
 
         //筛选出已转让的投资记录
         tenderList.stream().filter(p -> p.getTransferFlag() == 2).forEach(tender -> {
-            existFailureCreditEnd(tender.getBorrowId());
+            //查询转让标的
+            Specification<Borrow> bs = Specifications
+                    .<Borrow>and()
+                    .eq("tenderId", tender.getId())
+                    .build();
+            List<Borrow> borrowList = borrowService.findList(bs);
+            if (!CollectionUtils.isEmpty(borrowList)) {
+                existFailureCreditEnd(borrowList.get(0).getId());
+            }
         });
 
         //判断投标记录里是否存在批次结束债权失败记录
-        return tenderList.stream().filter(tender -> Boolean.FALSE.equals(tender.getThirdCreditEndFlag())).count() > 0;
+        return tenderList.stream().filter(tender -> BooleanHelper.isFalse(tender.getThirdCreditEndFlag())).count() > 0;
 
     }
 }

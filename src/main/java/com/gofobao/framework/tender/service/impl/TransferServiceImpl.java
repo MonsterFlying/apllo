@@ -6,11 +6,14 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.repository.BorrowCollectionRepository;
+import com.gofobao.framework.helper.BooleanHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.repository.TenderRepository;
+import com.gofobao.framework.tender.repository.TransferRepository;
 import com.gofobao.framework.tender.service.TransferService;
 import com.gofobao.framework.tender.vo.request.VoTransferReq;
 import com.gofobao.framework.tender.vo.response.TransferMay;
@@ -22,6 +25,7 @@ import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
@@ -56,9 +60,31 @@ public class TransferServiceImpl implements TransferService {
 
     @Autowired
     private BorrowCollectionRepository borrowCollectionRepository;
+    @Autowired
+    private TransferRepository transferRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    public List<Transfer> findList(Specification<Transfer> specification) {
+        return transferRepository.findAll(specification);
+    }
+
+    public List<Transfer> findList(Specification<Transfer> specification, Sort sort) {
+        return transferRepository.findAll(specification, sort);
+    }
+
+    public List<Transfer> findList(Specification<Transfer> specification, Pageable pageable) {
+        return transferRepository.findAll(specification, pageable).getContent();
+    }
+
+    public long count(Specification<Transfer> specification) {
+        return transferRepository.count(specification);
+    }
+
+    public Transfer findById(long id) {
+        return transferRepository.getOne(id);
+    }
 
     /**
      * 转让中
@@ -112,7 +138,7 @@ public class TransferServiceImpl implements TransferService {
             transferOf.setPrincipal(StringHelper.formatMon(borrow.getMoney() / 100d));
             double spend = (double) borrow.getMoneyYes() / (double) borrow.getMoney();
             transferOf.setSpend(StringHelper.formatMon(spend));
-            transferOf.setCancel(spend != 1d && Boolean.FALSE.equals(borrow.getThirdTransferFlag()));
+            transferOf.setCancel(spend != 1d && BooleanHelper.isFalse(borrow.getThirdTransferFlag()));
             transferOf.setBorrowId(borrow.getId());
             transferOfs.add(transferOf);
         });
@@ -170,7 +196,7 @@ public class TransferServiceImpl implements TransferService {
             }
             transfered.setName(borrow.getName());
             double transferFeeRate = Math.min(0.004 + 0.0008 * (borrow.getTotalOrder() - 1), 0.0128);
-            transfered.setCost(StringHelper.formatMon(Math.round(borrow.getMoney() * transferFeeRate)/100D));
+            transfered.setCost(StringHelper.formatMon(Math.round(borrow.getMoney() * transferFeeRate) / 100D));
             transfered.setTime(DateHelper.dateToString(borrow.getCreatedAt()));
             transfered.setPrincipal(StringHelper.formatMon(borrow.getMoneyYes() / 100D));
             transfereds.add(transfered);
