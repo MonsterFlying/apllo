@@ -88,6 +88,14 @@ public interface UserService {
      */
     boolean notExistsByEmail(String email);
 
+
+    /**
+     * 驗證身份証是否存在
+     * @param idCard
+     * @return
+     */
+    boolean notExistsByIdCard(String idCard);
+
     List<Users> findList(Specification<Users> specification);
 
     List<Users> findList(Specification<Users> specification, Sort sort);
@@ -95,7 +103,6 @@ public interface UserService {
     List<Users> findList(Specification<Users> specification, Pageable pageable);
 
     long count(Specification<Users> specification);
-
 
 
     List<Users>serviceUser();

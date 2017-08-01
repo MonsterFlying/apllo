@@ -179,7 +179,7 @@ public class VirtualServiceImpl implements VirtualService {
         if (ObjectUtils.isEmpty(borrowVirtual)) {
             return false;
         }
-        //用户是否有可用体验金额
+        //当前有用户是否有可用体验金
         Specification specification = Specifications.<Asset>and()
                 .eq("userId", voVirtualReq.getUserId())
                 .ge("virtualMoney", borrowVirtual.getLowest())

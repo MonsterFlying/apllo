@@ -99,5 +99,13 @@ public interface UserBiz {
      * @return
      */
     ResponseEntity<VoBaseResp>restPayPassWord(VoRestPayPassWord restPayPassWord);
+
+    /**
+     * 注册后续操作
+     *
+     * @param userId
+     * @return
+     */
+    boolean registerExtend(Long userId)throws  Exception;
 }
 

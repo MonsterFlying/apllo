@@ -341,7 +341,7 @@ public class UserBizImpl implements UserBiz {
      * @param userId
      * @return
      */
-    private boolean registerExtend(Long userId) throws Exception {
+    public boolean registerExtend(Long userId) throws Exception {
         Date now = new Date();
         UserInfo userInfo = new UserInfo();
         userInfo.setUserId(userId);
