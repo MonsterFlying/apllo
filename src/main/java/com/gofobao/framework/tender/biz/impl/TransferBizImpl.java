@@ -32,6 +32,7 @@ import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.biz.StatisticBiz;
@@ -1045,7 +1046,7 @@ public class TransferBizImpl implements TransferBiz {
             voViewBorrowList = new VoViewBorrowList();
             borrow = borrowRef.get(item.getBorrowId());
             voViewBorrowList.setId(item.getId());  // ID
-            voViewBorrowList.setMoney(StringHelper.formatMon((item.getPrincipal() + item.getAlreadyInterest()) / 100d) + MoneyConstans.RMB);
+            voViewBorrowList.setMoney(StringHelper.formatMon(item.getTransferMoney() / 100d) + MoneyConstans.RMB);
             voViewBorrowList.setIsContinued(borrow.getIsContinued());
             voViewBorrowList.setLockStatus(borrow.getIsLock());
             voViewBorrowList.setIsImpawn(borrow.getIsImpawn());
@@ -1068,7 +1069,7 @@ public class TransferBizImpl implements TransferBiz {
             voViewBorrowList.setSpend(0d);
 
             if (item.getState() == 1) {  //债权转让进行中
-                double spend = Double.parseDouble(StringHelper.formatMon(item.getPrincipalYes().doubleValue() / item.getPrincipal()));
+                double spend = Double.parseDouble(StringHelper.formatMon(item.getTransferMoneyYes().doubleValue() / item.getTransferMoney()));
                 if (spend == 1) {
                     voViewBorrowList.setStatus(6);
                 } else {
