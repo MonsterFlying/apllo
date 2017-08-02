@@ -1143,7 +1143,7 @@ public class BorrowBizImpl implements BorrowBiz {
      */
     private void processBorrowAssetChange(Borrow borrow, List<Tender> tenderList, Date startAt, String groupSeqNo) throws Exception {
 
-       // 放款
+        // 放款
         AssetChange borrowAssetChangeEntity = new AssetChange();
         borrowAssetChangeEntity.setSourceId(borrow.getId());
         borrowAssetChangeEntity.setGroupSeqNo(groupSeqNo);
@@ -2303,7 +2303,7 @@ public class BorrowBizImpl implements BorrowBiz {
         Date releaseAt = borrow.getReleaseAt();
         borrow.setReleaseAt(ObjectUtils.isEmpty(releaseAt) ? nowDate : releaseAt);
         borrow = borrowService.save(borrow);    //更新借款状态
-        if (!borrowThirdBiz.registerBorrrowConditionCheck(borrow) && !borrow.isTransfer()) { // 判断没有在即信注册、并且类型为非转让标
+        if (!borrowThirdBiz.registerBorrrowConditionCheck(borrow)) { // 判断没有在即信注册、并且类型为非转让标
             int type = borrow.getType();
             if (type != 0 && type != 4) { // 判断是否是官标、官标不需要在这里登记标的
                 VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
@@ -2371,16 +2371,13 @@ public class BorrowBizImpl implements BorrowBiz {
         Date releaseAt = borrow.getReleaseAt();
         borrow.setReleaseAt(ObjectUtils.isEmpty(releaseAt) ? nowDate : releaseAt);
         borrow = borrowService.save(borrow);// 更改标的为可投标状态
-        if (!borrowThirdBiz.registerBorrrowConditionCheck(borrow) && !borrow.isTransfer()) { // 判断没有在即信注册、并且类型为非转让标
-            int type = borrow.getType();
-            if (type != 0 && type != 4) { // 判断是否是官标、官标不需要在这里登记标的
-                VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
-                voCreateThirdBorrowReq.setBorrowId(borrow.getId());
-                ResponseEntity<VoBaseResp> resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
-                if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) { //创建状态为失败时返回错误提示
-                    log.error(String.format("标的初审: 摘草报备标的信息失败 %s", new Gson().toJson(resp)));
-                    return false;
-                }
+        if (!borrowThirdBiz.registerBorrrowConditionCheck(borrow)) { // 判断没有在即信注册、并且类型为非转让标
+            VoCreateThirdBorrowReq voCreateThirdBorrowReq = new VoCreateThirdBorrowReq();
+            voCreateThirdBorrowReq.setBorrowId(borrow.getId());
+            ResponseEntity<VoBaseResp> resp = borrowThirdBiz.createThirdBorrow(voCreateThirdBorrowReq);
+            if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) { //创建状态为失败时返回错误提示
+                log.error(String.format("标的初审: 摘草报备标的信息失败 %s", new Gson().toJson(resp)));
+                return false;
             }
         }
 
@@ -2411,7 +2408,9 @@ public class BorrowBizImpl implements BorrowBiz {
 
         Map<String, String> paramMap = new Gson().fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         Long borrowId = NumberHelper.toLong(paramMap.get("borrowId"));
-        if (doFirstVerify(borrowId)) {
+
+        boolean verifyState = doFirstVerify(borrowId); // 初审标的
+        if (verifyState) {
             return ResponseEntity.ok(VoBaseResp.ok("初审成功!"));
         } else {
             return ResponseEntity.
