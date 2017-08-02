@@ -66,7 +66,7 @@ public class BorrowCollection {
     private Integer lateDays;
     @Basic
     @Column(name = "late_interest")
-    private Integer lateInterest;
+    private Long lateInterest;
     @Basic
     @Column(name = "transfer_flag")
     private Integer transferFlag;

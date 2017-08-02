@@ -55,4 +55,13 @@ public class BorrowHelper {
         }
         return condition.substring(0, condition.length() - 1);
     }
+
+    /**
+     * 获取债权转让费率
+     * @param leftOrder
+     * @return
+     */
+    public static double getTransferFeeRate(int leftOrder){
+        return Math.min(0.004 + 0.0008 * (leftOrder - 1), 0.0128); // 获取债权转让费用
+    }
 }

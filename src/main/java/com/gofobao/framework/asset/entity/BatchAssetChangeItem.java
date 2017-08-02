@@ -21,13 +21,13 @@ public class BatchAssetChangeItem {
     @Id
     @GeneratedValue
     private Long id;
-    private Integer batchAssetChangeId;
+    private Long batchAssetChangeId;
     private Integer state;
-    private Integer userId;
-    private Integer toUserId;
-    private Integer money;
-    private Integer principal;
-    private Integer interest;
+    private Long userId;
+    private Long toUserId;
+    private Long money;
+    private Long principal;
+    private Long interest;
     private String asset;
     private String type;
     private String remark;

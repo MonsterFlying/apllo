@@ -41,6 +41,7 @@ public class TenderProvider {
 
     /**
      * 自动投标
+     *
      * @param msg
      * @throws Exception
      */
@@ -81,7 +82,7 @@ public class TenderProvider {
             long money = 0;
             long lowest = 0;
             long useMoney = 0;
-            Integer borrowMoney = borrow.getMoney(); // 借款金额（分）
+            long borrowMoney = borrow.getMoney(); // 借款金额（分）
             Integer mostAuto = borrow.getMostAuto();
             Set<Long> tenderUserIds = new HashSet<>();
             Set<Long> autoTenderIds = new HashSet<>();

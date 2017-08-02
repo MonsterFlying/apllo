@@ -92,7 +92,7 @@ public interface BorrowRepaymentThirdBiz {
      * @return
      * @throws Exception
      */
-    void receivedRepay(List<Repay> repayList, Borrow borrow, String borrowAccountId, int order, double interestPercent, int lateDays, int lateInterest) throws Exception;
+    void receivedRepay(List<Repay> repayList, Borrow borrow, String borrowAccountId, int order, double interestPercent, int lateDays, long lateInterest) throws Exception;
 
     /**
      * 获取即信还款集合

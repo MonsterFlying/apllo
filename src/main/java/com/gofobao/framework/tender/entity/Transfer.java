@@ -18,10 +18,11 @@ public class Transfer {
     private Long id;
     private Integer state;
     private String title;
+    private Long transferMoney;
     private Long principal;
     private Long alreadyInterest;
     private Integer timeLimit;
-    private Long principalYes;
+    private Long transferMoneyYes;
     private Integer apr;
     private Date repayAt;
     private Long tenderId;
@@ -29,7 +30,7 @@ public class Transfer {
     private Integer tenderCount;
     private Long borrowId;
     private Long userId;
-    private Long lower;
+    private Long lowest;
     private Boolean del;
     private Date createdAt;
     private Date releaseAt;

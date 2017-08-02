@@ -31,9 +31,9 @@ public class Tender {
     @Column(name = "auto_order")
     private Integer autoOrder;
     @Column(name = "money")
-    private Integer money;
+    private Long money;
     @Column(name = "valid_money")
-    private Integer validMoney;
+    private Long validMoney;
     @Column(name = "transfer_flag")
     private Integer transferFlag;
     @Column(name = "created_at")

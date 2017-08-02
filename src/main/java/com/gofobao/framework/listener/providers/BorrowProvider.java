@@ -32,13 +32,15 @@ public class BorrowProvider {
 
     @Autowired
     private BorrowRepaymentThirdBiz borrowRepaymentThirdBiz;
+
     @Autowired
     private TenderThirdBiz tenderThirdBiz;
+
     @Autowired
     private BorrowService borrowService;
 
     /**
-     * 复审
+     * 正常放款流程(禁止流转标调用此方法)
      *
      * @param msg
      * @return
@@ -53,36 +55,23 @@ public class BorrowProvider {
             return false;
         }
 
-        if (borrow.isTransfer()) { // 批次债券转让
-            log.info(String.format("复审: 批量债权转让申请开始: %s", GSON.toJson(msg)));
-            VoThirdBatchCreditInvest voThirdBatchCreditInvest = new VoThirdBatchCreditInvest();
-            voThirdBatchCreditInvest.setBorrowId(borrowId);
-            ResponseEntity<VoBaseResp> resp = tenderThirdBiz.thirdBatchCreditInvest(voThirdBatchCreditInvest);
-            if (ObjectUtils.isEmpty(resp)) {
-                log.info(String.format("复审: 批量债权转让申请成功: %s", GSON.toJson(msg)));
-                return true;
-            } else {
-                log.error(String.format("复审: 批量债权转让申请失败: %s", GSON.toJson(resp)));
-                return false;
-            }
-        } else {  // 批次标准标的放款
-            log.info(String.format("复审: 批量正常放款申请开始: %s", GSON.toJson(msg)));
-            if (ObjectUtils.isEmpty(borrow.getSuccessAt())) {
-                borrow.setSuccessAt(new Date());
-                borrowService.save(borrow);
-            }
-
-            //批次放款
-            VoThirdBatchLendRepay voThirdBatchLendRepay = new VoThirdBatchLendRepay();
-            voThirdBatchLendRepay.setBorrowId(borrowId);
-            ResponseEntity<VoBaseResp> resp = borrowRepaymentThirdBiz.thirdBatchLendRepay(voThirdBatchLendRepay);
-            if (ObjectUtils.isEmpty(resp)) {
-                log.info(String.format("复审: 批量正常放款申请申请成功: %s", GSON.toJson(msg)));
-                return true;
-            } else {
-                log.info(String.format("复审: 批量正常放款申请申请失败: %s", GSON.toJson(resp)));
-                return false;
-            }
+        log.info(String.format("复审: 批量正常放款申请开始: %s", GSON.toJson(msg)));
+        if (ObjectUtils.isEmpty(borrow.getSuccessAt())) {
+            borrow.setSuccessAt(new Date());
+            borrowService.save(borrow);
         }
+
+        //批次放款
+        VoThirdBatchLendRepay voThirdBatchLendRepay = new VoThirdBatchLendRepay();
+        voThirdBatchLendRepay.setBorrowId(borrowId);
+        ResponseEntity<VoBaseResp> resp = borrowRepaymentThirdBiz.thirdBatchLendRepay(voThirdBatchLendRepay);
+        if (ObjectUtils.isEmpty(resp)) {
+            log.info(String.format("复审: 批量正常放款申请申请成功: %s", GSON.toJson(msg)));
+            return true;
+        } else {
+            log.info(String.format("复审: 批量正常放款申请申请失败: %s", GSON.toJson(resp)));
+            return false;
+        }
+
     }
 }

@@ -336,7 +336,7 @@ public class LendBizImpl implements LendBiz {
         tempBorrow.setType(1);
         tempBorrow.setRepayFashion(1);
         tempBorrow.setTimeLimit(lend.getTimeLimit());
-        tempBorrow.setMoney(money.intValue());
+        tempBorrow.setMoney(money.longValue());
         tempBorrow.setApr(lend.getApr());
         tempBorrow.setLowest(lend.getLowest());
         tempBorrow.setValidDay(1);
@@ -350,7 +350,7 @@ public class LendBizImpl implements LendBiz {
         tempBorrow.setAward(0);
         tempBorrow.setDescription("");
         tempBorrow.setPassword("");
-        tempBorrow.setMoneyYes(0);
+        tempBorrow.setMoneyYes(0l);
         tempBorrow.setTenderCount(0);
 
         borrowService.insert(tempBorrow);

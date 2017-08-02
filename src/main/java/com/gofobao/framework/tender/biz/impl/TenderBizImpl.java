@@ -15,6 +15,9 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
+import com.gofobao.framework.common.assets.AssetChange;
+import com.gofobao.framework.common.assets.AssetChangeProvider;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
@@ -22,11 +25,9 @@ import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.PasswordHelper;
+import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.helper.ThirdAccountHelper;
+import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -95,6 +96,9 @@ public class TenderBizImpl implements TenderBiz {
     @Autowired
     private TenderThirdBiz tenderThirdBiz;
 
+    @Autowired
+    AssetChangeProvider assetChangeProvider;
+
     /**
      * 新版投标
      *
@@ -106,31 +110,22 @@ public class TenderBizImpl implements TenderBiz {
         log.info(String.format("马上投资: 起步: %s", new Gson().toJson(voCreateTenderReq)));
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voCreateTenderReq.getUserId());
         ResponseEntity<VoBaseResp> thirdAccountConditionResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
-        if(!thirdAccountConditionResponse.getStatusCode().equals(HttpStatus.OK)){
-            return thirdAccountConditionResponse ;
+        if (!thirdAccountConditionResponse.getStatusCode().equals(HttpStatus.OK)) {
+            return thirdAccountConditionResponse;
         }
 
         Users user = userService.findByIdLock(voCreateTenderReq.getUserId());
         Preconditions.checkNotNull(user, "投标: 用户信息为空!");
 
-        if (voCreateTenderReq.getSource() == 1) { //PC端需要交易密码校验
-            if (StringUtils.isEmpty(voCreateTenderReq.getPayPassword())&&voCreateTenderReq.getPayPassword().length()>1) {
-                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "投标：交易密碼为空,请设置交易密码"));
-            }
-            Boolean flag = PasswordHelper.verifyPassword(user.getPayPassword(), voCreateTenderReq.getPayPassword());
-            if (!flag) {
-                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "投标：交易密码错误,请重新输入"));
-            }
-        }
-        Preconditions.checkNotNull(user, "投标: 用户信息为空!") ;
+        Preconditions.checkNotNull(user, "投标: 用户信息为空!");
         Borrow borrow = borrowService.findByIdLock(voCreateTenderReq.getBorrowId());
         Preconditions.checkNotNull(borrow, "投标: 标的信息为空!");
 
-        Preconditions.checkNotNull(borrow, "投标: 标的信息为空!") ;
+        Preconditions.checkNotNull(borrow, "投标: 标的信息为空!");
         Asset asset = assetService.findByUserIdLock(voCreateTenderReq.getUserId());
         Preconditions.checkNotNull(asset, "投标: 资金记录为空!");
 
-        Preconditions.checkNotNull(asset, "投标: 资金记录为空!") ;
+        Preconditions.checkNotNull(asset, "投标: 资金记录为空!");
         UserCache userCache = userCacheService.findByUserIdLock(voCreateTenderReq.getUserId());
         Preconditions.checkNotNull(userCache, "投标: 用户缓存信息为空!");
 
@@ -142,7 +137,7 @@ public class TenderBizImpl implements TenderBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, iterator.next()));
         }
 
-        state = verifyUserInfo4Borrow(user, borrow, asset, userCache, voCreateTenderReq, extendMessage); // 借款用户资产判断
+        state = verifyUserInfo4Borrow(user, borrow, asset, voCreateTenderReq, extendMessage); // 借款用户资产判断
         Set<String> errorSet = extendMessage.elementSet();
         Iterator<String> iterator = errorSet.iterator();
 
@@ -155,9 +150,8 @@ public class TenderBizImpl implements TenderBiz {
         Date nowDate = new Date();
         int validateMoney = Integer.parseInt(iterator.next());
         Tender borrowTender = createBorrowTenderRecord(voCreateTenderReq, user, nowDate, validateMoney);    // 生成投标记录
-        borrowTender = registerTender(borrow, borrowTender) ;  // 投标的存管报备
+        borrowTender = registerTender(borrow, borrowTender);  // 投标的存管报备
         updateAssetByTender(borrow, borrowTender); // 扣除用户投标金额
-
         borrow.setMoneyYes(borrow.getMoneyYes() + validateMoney);
         borrow.setTenderCount((borrow.getTenderCount() + 1));
         borrow.setId(borrow.getId());
@@ -178,18 +172,28 @@ public class TenderBizImpl implements TenderBiz {
         return ResponseEntity.ok(VoBaseResp.ok("投资成功"));
     }
 
+    /**
+     * 用户投标冻结
+     *
+     * @param borrow
+     * @param borrowTender
+     * @throws Exception
+     */
     private void updateAssetByTender(Borrow borrow, Tender borrowTender) throws Exception {
-        CapitalChangeEntity entity = new CapitalChangeEntity();
-        entity.setType(CapitalChangeEnum.Frozen);
-        entity.setUserId(borrowTender.getUserId());
-        entity.setToUserId(borrow.getUserId());
-        entity.setMoney(borrowTender.getValidMoney());
-        entity.setRemark("投标冻结资金");
-        capitalChangeHelper.capitalChange(entity);
+        AssetChange assetChange = new AssetChange();
+        assetChange.setForUserId(borrowTender.getUserId());
+        assetChange.setUserId(borrowTender.getUserId());
+        assetChange.setType(AssetChangeTypeEnum.freeze);
+        assetChange.setRemark(String.format("成功投资标的[%s]冻结资金%s元", borrow.getName(), StringHelper.formatDouble(borrowTender.getValidMoney() / 100D, true)));
+        assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+        assetChange.setMoney(borrowTender.getValidMoney());
+        assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+        assetChange.setSourceId(borrowTender.getId());
+        assetChangeProvider.commonAssetChange(assetChange);
     }
 
     private Tender registerTender(Borrow borrow, Tender borrowTender) throws Exception {
-        if (!borrow.isTransfer()) { //类型为非转让标
+        if (!borrow.isTransfer()) {
             log.info(String.format("马上投资: 投资报备: %s", new Gson().toJson(borrowTender)));
             VoCreateThirdTenderReq voCreateThirdTenderReq = new VoCreateThirdTenderReq();
             voCreateThirdTenderReq.setAcqRes(String.valueOf(borrowTender.getId()));
@@ -218,12 +222,12 @@ public class TenderBizImpl implements TenderBiz {
      * @param validateMoney
      * @return
      */
-    private Tender createBorrowTenderRecord(VoCreateTenderReq voCreateTenderReq, Users user, Date nowDate, int validateMoney) {
+    private Tender createBorrowTenderRecord(VoCreateTenderReq voCreateTenderReq, Users user, Date nowDate, long validateMoney) {
         Tender borrowTender = new Tender();
         borrowTender.setUserId(user.getId());
         borrowTender.setBorrowId(voCreateTenderReq.getBorrowId());
         borrowTender.setStatus(1);
-        borrowTender.setMoney(NumberHelper.toInt(voCreateTenderReq.getTenderMoney()));
+        borrowTender.setMoney(voCreateTenderReq.getTenderMoney().longValue());
         borrowTender.setValidMoney(validateMoney);
         borrowTender.setSource(voCreateTenderReq.getTenderSource());
         Integer autoOrder = voCreateTenderReq.getAutoOrder();
@@ -251,11 +255,10 @@ public class TenderBizImpl implements TenderBiz {
      * @param user
      * @param borrow
      * @param asset
-     * @param userCache
      * @param voCreateTenderReq
      * @param extendMessage     @return
      */
-    private boolean verifyUserInfo4Borrow(Users user, Borrow borrow, Asset asset, UserCache userCache, VoCreateTenderReq voCreateTenderReq, Multiset<String> extendMessage) {
+    private boolean verifyUserInfo4Borrow(Users user, Borrow borrow, Asset asset, VoCreateTenderReq voCreateTenderReq, Multiset<String> extendMessage) {
         // 判断用户是否已经锁定
         if (user.getIsLock()) {
             extendMessage.add("当前用户属于锁定状态, 如有问题请联系客户!");
@@ -263,16 +266,16 @@ public class TenderBizImpl implements TenderBiz {
         }
 
         // 判断最小投标金额
-        int realTenderMoney = borrow.getMoney() - borrow.getMoneyYes();  // 剩余金额
+        long realTenderMoney = borrow.getMoney() - borrow.getMoneyYes();  // 剩余金额
         int minLimitTenderMoney = ObjectUtils.isEmpty(borrow.getLowest()) ? 50 * 100 : borrow.getLowest();  // 最小投标金额
-        int realMiniTenderMoney = Math.min(realTenderMoney, minLimitTenderMoney);  // 获取最小投标金额
+        long realMiniTenderMoney = Math.min(realTenderMoney, minLimitTenderMoney);  // 获取最小投标金额
         if (realMiniTenderMoney > voCreateTenderReq.getTenderMoney()) {
             extendMessage.add("小于标的最小投标金额!");
             return false;
         }
 
         // 真实有效投标金额
-        int invaildataMoney = Math.min(realTenderMoney, voCreateTenderReq.getTenderMoney().intValue());
+        long invaildataMoney = Math.min(realTenderMoney, voCreateTenderReq.getTenderMoney().intValue());
         if (voCreateTenderReq.getIsAutoTender()) {
             // 对于设置最大自动投标金额进行判断
             if (borrow.getMostAuto() > 0) {
@@ -396,6 +399,19 @@ public class TenderBizImpl implements TenderBiz {
             Borrow tempBorrow = borrowService.findById(tender.getBorrowId());
             if (user.getId().equals(tempBorrow.getUserId())) {
                 errerMessage.add("不能投自己发布或转让的借款!");
+                return false;
+            }
+        }
+
+
+        if (voCreateTenderReq.getSource() == 1) { //PC端需要交易密码校验
+            if (StringUtils.isEmpty(voCreateTenderReq.getPayPassword()) && voCreateTenderReq.getPayPassword().length() > 1) {
+                errerMessage.add("交易密碼为空,请设置交易密码");
+                return false;
+            }
+            Boolean flag = PasswordHelper.verifyPassword(user.getPayPassword(), voCreateTenderReq.getPayPassword());
+            if (!flag) {
+                errerMessage.add("交易密码错误,请重新输入");
                 return false;
             }
         }

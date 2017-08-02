@@ -37,7 +37,7 @@ public class Borrow implements Serializable {
 
     private String name;
 
-    private Integer money;
+    private Long money;
 
     private Integer repayFashion;
 
@@ -80,7 +80,7 @@ public class Borrow implements Serializable {
 
     private Boolean isNovice;
 
-    private Integer moneyYes;
+    private Long moneyYes;
 
     private Date verifyAt;
 

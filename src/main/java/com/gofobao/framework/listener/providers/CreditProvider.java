@@ -63,6 +63,13 @@ public class CreditProvider {
     @Value("${gofobao.javaDomain}")
     String javaDomain;
 
+    /**
+     * @// TODO: 2017/8/2 结束债权需要变更
+     * @param msg
+     * @param type
+     * @return
+     * @throws Exception
+     */
     public boolean endThirdCredit(Map<String, String> msg, int type) throws Exception {
         Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
         Borrow borrow = borrowService.findById(borrowId);
