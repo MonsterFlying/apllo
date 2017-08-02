@@ -11,6 +11,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,11 +29,13 @@ import java.util.Map;
 @RequestMapping("/pub/windmill")
 @Slf4j
 @ApiModel(description = "风车理财用户注册")
-public class WindmillRegisterController {
+public class WindmillUserController {
 
 
     @Autowired
     private WindmillUserBiz windmillUserBiz;
+    @Value("${gofobao.webDomain}")
+    private String address;
 
 
     @Autowired
@@ -51,9 +54,9 @@ public class WindmillRegisterController {
         String paramStr = request.getParameter("param");
         Map<String, Object> paramMap = Maps.newHashMap();
         paramMap.put("param", paramStr);
+        paramMap.put("address", address);
         return thymeleafHelper.build("windmill/user/login", paramMap);
     }
-
 
     @ApiOperation("綁定登陸")
     @PostMapping("user/bind/login")
@@ -65,10 +68,14 @@ public class WindmillRegisterController {
 
     @ApiOperation("用户登录")
     @PostMapping("/user/login")
-    private ResponseEntity<VoBasicUserInfoResp>loginUser(HttpServletRequest request){
-        return null;
-
+    private String loginUser(HttpServletRequest request, HttpServletResponse response) {
+        return windmillUserBiz.login(request, response);
     }
 
+    @ApiOperation("查询用户账户信息")
+    @PostMapping("/user/basics/info")
+    public String userInfo(HttpServletRequest request) {
 
+        return "";
+    }
 }

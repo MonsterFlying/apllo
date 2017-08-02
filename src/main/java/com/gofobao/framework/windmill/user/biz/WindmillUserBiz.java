@@ -31,5 +31,11 @@ public interface WindmillUserBiz {
      */
    ResponseEntity<VoBasicUserInfoResp> bindLogin(HttpServletRequest request, HttpServletResponse response, BindLoginReq bindLoginReq);
 
+    /**
+     * 用户登录
+     * @param request
+     * @return
+     */
+   String login(HttpServletRequest request, HttpServletResponse response);
 
 }

@@ -1,5 +1,6 @@
 package com.gofobao.framework.windmill.user.biz.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -11,6 +12,7 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.enums.RegisterSourceEnum;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
+import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.gofobao.framework.security.vo.VoLoginReq;
 import com.gofobao.framework.windmill.user.biz.WindmillUserBiz;
 import com.gofobao.framework.windmill.user.constant.UserRegisterConstant;
@@ -25,17 +27,23 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+
+import static io.netty.handler.codec.http.multipart.DiskFileUpload.prefix;
 
 /**
  * Created by admin on 2017/7/31.
@@ -53,11 +61,27 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
     @Autowired
     private MqHelper mqHelper;
 
-    @Value("${windmill.key}")
-    private String key;
+    //加密key
+    @Value("${windmill.des-key}")
+    private String desKey;
 
+    //风车理财请求地址
+    @Value("${windmill.request-address}")
+    private String address;
+    //平台简介
+    @Value("${windmill.short-name}")
+    private String shortName;
 
-    static final Gson GSON = new Gson();
+    @Value("${from}")
+    private String from;
+
+    @Value("${jwt.header}")
+    private String tokenHeader;
+
+    private static final Gson GSON = new Gson();
+
+    @Autowired
+    private JwtTokenHelper jwtTokenHelper;
 
 
     @Transactional
@@ -216,7 +240,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
                                                          BindLoginReq bindLoginReq) {
 
         log.info("===============进入风车理绑定用户登录===============");
-        log.info("用户名："+bindLoginReq.getUserName()+",密文："+bindLoginReq.getParam());
+        log.info("用户名：" + bindLoginReq.getUserName() + ",密文：" + bindLoginReq.getParam());
         log.info("==================================================");
         VoLoginReq voLoginReq = new VoLoginReq();
         voLoginReq.setAccount(bindLoginReq.getUserName());
@@ -228,7 +252,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             VoBasicUserInfoResp userInfoResp = (VoBasicUserInfoResp) entity.getBody();
             try {
                 String desDecryptStr = commonDecryptStr(bindLoginReq.getParam());
-                log.info("解密后的参数：param:"+desDecryptStr);
+                log.info("解密后的参数：param:" + desDecryptStr);
                 UserRegisterReq userRegisterReq = JacksonHelper.json2pojo(desDecryptStr, UserRegisterReq.class);
                 Users user = userService.findByAccount(bindLoginReq.getUserName());
                 String userName = StringUtils.isEmpty(user.getUsername()) ? user.getPhone() : user.getUsername();
@@ -236,13 +260,13 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
                         "&pf_user_id=" + user.getId() +
                         "&pf_user_name=" + userName +
                         "&reg_time=" + DateHelper.dateToString(user.getCreatedAt());
-                String requestEncryptParam = WrbCoopDESUtil.desEncrypt(key, requestParam);
+                String requestEncryptParam = WrbCoopDESUtil.desEncrypt(desKey, requestParam);
                 Map<String, String> requestMaps = Maps.newHashMap();
                 requestMaps.put("from", "gfb");
                 requestMaps.put("param", requestEncryptParam);
 
                 log.info("请求风车理财 验证绑定是否成功，参数:", JacksonHelper.obj2json(requestMaps));
-                String result = OKHttpHelper.postForm("http://121.42.52.42/wrb/ps_bind.json", requestMaps, null);
+                String result = OKHttpHelper.postForm(address + "wrb/ps_bind.json", requestMaps, null);
                 try {
                     Map<String, Object> resultMap = JacksonHelper.json2map(result);
                     //绑定验证成功
@@ -271,7 +295,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             } catch (Exception e) {
                 return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "风车理财验证绑定失败", VoBasicUserInfoResp.class));
             }
-        }else{
+        } else {
             log.info("================用户登录失败===============");
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "用户登录失败", VoBasicUserInfoResp.class));
 
@@ -279,6 +303,78 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
 
     }
 
+    /**
+     * 用户登录
+     *
+     * @param request
+     * @return
+     */
+    @Override
+    public String login(HttpServletRequest request, HttpServletResponse response) {
+        String from = request.getParameter("from");
+        if (!from.equals(from)) {
+            return "/load_error";
+        }
+        String getParamStr = request.getParameter("param");
+        try {
+            log.info("=============风车理财用户登录请求=============");
+            String jsonStr = commonDecryptStr(getParamStr);
+            Map<String, Object> resultMaps = JacksonHelper.json2map(jsonStr);
+            String ticket = resultMaps.get("ticket").toString();
+            //用户要访问的链接
+            String targetUrl = resultMaps.get("target_url").toString();
+            //加密请亲请求参数 装配参数
+            String requestParam = "ticket=" + ticket;
+            String requestParamStr = WrbCoopDESUtil.desEncrypt(desKey, requestParam);
+            Map<String, String> checkTicketMap = Maps.newHashMap();
+            checkTicketMap.put("param", requestParamStr);
+            checkTicketMap.put("from", shortName);
+            //请求风车理财验证ticket
+            String checkResult = OKHttpHelper.postForm(address + "wrb/ps_check_ticket.json", checkTicketMap, null);
+            Map<String, Object> checkResultMap = JacksonHelper.json2map(checkResult);
+            //验证成功 ticket有效
+            if (Integer.valueOf(checkResultMap.get("retcode").toString()) != VoBaseResp.OK) {
+                log.info("风车理财检查ticket 返回失败");
+                log.info("返回信息:" + checkResult);
+                return "/load_error";
+            }
+            log.info("风车理财ticket检验成功");
+            log.info("打印成功信息:" + checkResult);
+            Long userId = Long.valueOf(checkResultMap.get("pf_user_id").toString());
+            //风车理财用户id
+            String wrbUserId = checkResultMap.get("wrb_user_id").toString();
+            Specification<Users> specification = Specifications.<Users>and()
+                    .eq("id", userId)
+                    .eq("windmillId", wrbUserId)
+                    .build();
+            List<Users> users = userService.findList(specification);
+            if (CollectionUtils.isEmpty(users)) {
+                log.info("本地数据中没有找到风车理财返回的用户");
+                return "/load_error";
+            }
+            Users tempUser = users.get(0);
+            final String token = jwtTokenHelper.generateToken(tempUser, 3);
+            response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
+            tempUser.setPlatform(3);
+            if (StringUtils.isEmpty(tempUser.getPushId())) {   // 产生一次永久保存
+                tempUser.setPushId(UUID.randomUUID().toString().replace("-", ""));  // 设置唯一标识
+            }
+            tempUser.setIp(IpHelper.getIpAddress(request)); // 设置ip
+            userService.save(tempUser);   // 记录登录信息
+
+            // 触发登录队列
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setTag(MqTagEnum.LOGIN);
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+            mqConfig.setSendTime(DateHelper.addSeconds(new Date(), 10));
+            ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_USER_ID, tempUser.getId().toString());
+            mqConfig.setMsg(body);
+            mqHelper.convertAndSend(mqConfig);
+            return targetUrl;
+        } catch (Exception e) {
+            return "load_error";
+        }
+    }
 
     /**
      * @param cipherStr
@@ -287,10 +383,10 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
     private String commonDecryptStr(String cipherStr) throws Exception {
         log.info("-==========进入解密请求参数方法========");
         try {
-            String desDecryptStr = WrbCoopDESUtil.desDecrypt(key, cipherStr);
+            String desDecryptStr = WrbCoopDESUtil.desDecrypt(desKey, cipherStr);
             if (StringUtils.isEmpty(desDecryptStr)) {
                 log.info("請求密文為空");
-                return "";
+                throw new Exception();
             }
             String jsonStr = desDecryptStr.replaceAll("&", ",").replaceAll("=", ":");
             StringBuilder sb = new StringBuilder(jsonStr);
@@ -299,7 +395,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             return sb.toString();
         } catch (Exception e) {
             log.info("密文解析失败");
-            return null;
+            throw new Exception();
         }
     }
 }
