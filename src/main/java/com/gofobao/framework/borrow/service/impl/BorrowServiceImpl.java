@@ -85,18 +85,18 @@ public class BorrowServiceImpl implements BorrowService {
      * @return
      */
     @Override
-    public List<VoViewBorrowList> findAll(VoBorrowListReq voBorrowListReq) {
+    public List<VoViewBorrowList> findNormalBorrow(VoBorrowListReq voBorrowListReq) {
         VoPcBorrowList warpRes = new VoPcBorrowList();
         Integer type = voBorrowListReq.getType();
         List<Integer> typeArray = Arrays.asList(-1, 1, 2, 0, 4, 5);
         Boolean flag = typeArray.contains(type);
         if (!flag) {  //用户非法访问
-
             return new ArrayList<>(0);
         }
         if (type == -1) {
             type = null;
         }
+
         //过滤掉 发标待审 初审不通过；复审不通过 已取消
         List statusArray = Lists.newArrayList(
                 new Integer(BorrowContants.CANCEL),
@@ -104,22 +104,16 @@ public class BorrowServiceImpl implements BorrowService {
                 new Integer(BorrowContants.RECHECK_NO_PASS),
                 new Integer(BorrowContants.PENDING));
 
-        StringBuilder pageSb = new StringBuilder(" SELECT b FROM Borrow b WHERE 1=1 ");
-        StringBuilder countSb = new StringBuilder(" SELECT COUNT(id) FROM Borrow b WHERE 1=1 ");
+        StringBuilder pageSb = new StringBuilder(" SELECT b FROM Borrow b WHERE 1 = 1 ");
+        StringBuilder countSb = new StringBuilder(" SELECT COUNT(id) FROM Borrow b WHERE 1 = 1 ");
         StringBuilder condtionSql = new StringBuilder("");
-        // 条件
         if (type != null) {  // 全部
-
-            if (type == 5) {
-                condtionSql.append(" AND b.tenderId is not null ");
-            } else {
-                condtionSql.append(" AND b.type=" + type);
-            }
+            condtionSql.append(" AND b.type = " + type);
         }
         condtionSql.append(" AND b.verifyAt IS Not NULL AND b.status NOT IN(:statusArray)");
         // 排序
         if (StringUtils.isEmpty(type)) {   // 全部
-            condtionSql.append(" ORDER BY b.status ASC , (b.moneyYes / b.money) DESC, FIELD(b.type,0, 4, 1, 2),b.id DESC");
+            condtionSql.append(" ORDER BY b.status ASC , (b.moneyYes / b.money) DESC, FIELD(b.type,0, 4, 1),b.id DESC");
         } else {
             if (type.equals(BorrowContants.INDEX_TYPE_CE_DAI)) {
                 condtionSql.append(" ORDER BY b.status ASC,(b.moneyYes / b.money) DESC, b.successAt DESC,b.id DESC");
@@ -160,7 +154,7 @@ public class BorrowServiceImpl implements BorrowService {
             item.setMoneyYes(StringHelper.formatMon(m.getMoneyYes() / 100d) + MoneyConstans.RMB);
             item.setIsNovice(m.getIsNovice());
             item.setIsMortgage(m.getIsMortgage());
-            item.setIsPassWord(StringUtils.isEmpty(m.getPassword())?false:true);
+            item.setIsPassWord(StringUtils.isEmpty(m.getPassword()) ? false : true);
             if (m.getType() == BorrowContants.REPAY_FASHION_ONCE) {
                 item.setTimeLimit(m.getTimeLimit() + BorrowContants.DAY);
             } else {
@@ -186,9 +180,9 @@ public class BorrowServiceImpl implements BorrowService {
                     item.setSurplusSecond(((releaseAt.getTime() - nowDate.getTime()) / 1000) + 5);
                 } else if (nowDate.getTime() >= endAt.getTime()) {  //当前时间大于招标有效时间
                     //流转标没有过期时间
-                    if(!StringUtils.isEmpty(m.getTenderId())){
+                    if (!StringUtils.isEmpty(m.getTenderId())) {
                         status = 3; //招标中
-                    }else {
+                    } else {
                         status = 5; //已过期
                     }
                 } else {
@@ -732,8 +726,8 @@ public class BorrowServiceImpl implements BorrowService {
         return borrowRepository.findByProductId(productId);
     }
 
-    @Transactional(rollbackFor = Exception.class,propagation = Propagation.NOT_SUPPORTED)
-    public Borrow flushSave(Borrow borrow){
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NOT_SUPPORTED)
+    public Borrow flushSave(Borrow borrow) {
         return borrowRepository.save(borrow);
     }
 }

@@ -11,10 +11,14 @@ import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
+import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
+import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.constans.MoneyConstans;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
@@ -25,6 +29,8 @@ import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
+import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.contants.BorrowContants;
@@ -41,24 +47,32 @@ import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
 import com.gofobao.framework.tender.vo.response.*;
 import com.gofobao.framework.tender.vo.response.web.TransferBuy;
 import com.gofobao.framework.tender.vo.response.web.VoViewTransferBuyWarpRes;
+import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.redis.connection.SortParameters;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created by admin on 2017/6/12.
@@ -87,6 +101,12 @@ public class TransferBizImpl implements TransferBiz {
     private CapitalChangeHelper capitalChangeHelper;
     @Autowired
     private MqHelper mqHelper;
+
+    @Autowired
+    UserService userService;
+
+    @Value("${gofobao.imageDomain}")
+    private String imageDomain;
 
     final Gson GSON = new GsonBuilder().create();
 
@@ -735,5 +755,110 @@ public class TransferBizImpl implements TransferBiz {
         voGoTenderInfo.setMoney(StringHelper.formatDouble(money, 100.0, true));
         voGoTenderInfo.setFee(StringHelper.formatDouble(fee, 100.0, true));
         return ResponseEntity.ok(voGoTenderInfo);
+    }
+
+    @Override
+    public List<VoViewBorrowList> findTransferList(VoBorrowListReq voBorrowListReq) {
+        Specification<Transfer> ts = Specifications
+                .<Transfer>and()
+                .in("state", ImmutableList.of(1, 2))
+                .build();
+        Pageable pageable = new PageRequest(voBorrowListReq.getPageIndex(), voBorrowListReq.getPageSize(), new Sort(Sort.Direction.ASC, "state"));
+        List<Transfer> transferList = transferService.findList(ts, pageable);
+        if (CollectionUtils.isEmpty(transferList)) {
+            return Lists.newArrayList();
+        }
+
+        Set<Long> borrowIds = transferList
+                .stream()
+                .map(transfer -> transfer.getBorrowId()).collect(Collectors.toSet());
+
+        Specification<Borrow> bs = Specifications
+                .<Borrow>and()
+                .in("id", borrowIds)
+                .build();
+
+        List<Borrow> borrowList = borrowService.findList(bs);
+        if (CollectionUtils.isEmpty(borrowList)) {
+            return Lists.newArrayList();
+        }
+
+        Map<Long, Borrow> borrowRef = borrowList
+                .stream()
+                .collect(Collectors.toMap(Borrow::getId, Function.identity()));
+        Set<Long> userIds = transferList
+                .stream()
+                .map(transfer -> transfer.getUserId()).collect(Collectors.toSet());
+        Specification<Users> us = Specifications
+                .<Users>and()
+                .in("id", userIds)
+                .build();
+
+        List<Users> userLists = userService.findList(us);
+        Map<Long, Users> userRef = userLists
+                .stream()
+                .collect(Collectors.toMap(Users::getId, Function.identity()));
+
+
+        List<VoViewBorrowList> voViewBorrowLists = new ArrayList<>(transferList.size());
+
+        VoViewBorrowList voViewBorrowList = null;
+        Borrow borrow = null;
+        for (Transfer item : transferList) {
+            voViewBorrowList = new VoViewBorrowList();
+            borrow = borrowRef.get(item.getBorrowId());
+            voViewBorrowList.setId(item.getId());  // ID
+            voViewBorrowList.setMoney(StringHelper.formatMon((item.getPrincipal() + item.getAlreadyInterest()) / 100d) + MoneyConstans.RMB);
+            voViewBorrowList.setIsContinued(borrow.getIsContinued());
+            voViewBorrowList.setLockStatus(borrow.getIsLock());
+            voViewBorrowList.setIsImpawn(borrow.getIsImpawn());
+            voViewBorrowList.setApr(StringHelper.formatMon(borrow.getApr() / 100d) + MoneyConstans.PERCENT);  //转换率
+            voViewBorrowList.setName(item.getTitle());
+            voViewBorrowList.setMoneyYes(StringHelper.formatMon(item.getPrincipal() / 100d) + MoneyConstans.RMB);
+            voViewBorrowList.setIsNovice(borrow.getIsNovice());
+            voViewBorrowList.setIsMortgage(borrow.getIsMortgage());
+            voViewBorrowList.setIsPassWord(false);
+
+            if (borrow.getType() == com.gofobao.framework.borrow.contants.BorrowContants.REPAY_FASHION_ONCE) {
+                voViewBorrowList.setTimeLimit(borrow.getTimeLimit() + BorrowContants.DAY);
+            } else {
+                voViewBorrowList.setTimeLimit(borrow.getTimeLimit() + BorrowContants.MONTH);
+            }
+
+            //待发布时间
+            voViewBorrowList.setSurplusSecond(0L);
+            //进度
+            voViewBorrowList.setSpend(0d);
+
+            if (item.getState() == 1) {  //债权转让进行中
+                double spend = Double.parseDouble(StringHelper.formatMon(item.getPrincipalYes().doubleValue() / item.getPrincipal()));
+                if (spend == 1) {
+                    voViewBorrowList.setStatus(6);
+                } else {
+                    voViewBorrowList.setStatus(3);
+                }
+                voViewBorrowList.setSpend(spend);
+            } else { // 回款中
+                if (ObjectUtils.isEmpty(borrow.getCloseAt())) {
+                    voViewBorrowList.setStatus(2);
+                    voViewBorrowList.setSpend(1D);
+                } else {
+                    voViewBorrowList.setStatus(4);
+                    voViewBorrowList.setSpend(1D);
+                }
+            }
+
+            Users user = userRef.get(item.getUserId());
+            voViewBorrowList.setUserName(!StringUtils.isEmpty(user.getUsername()) ? user.getUsername() : user.getPhone());
+            voViewBorrowList.setType(5);
+            voViewBorrowList.setIsFlow(true);
+            voViewBorrowList.setReleaseAt(DateHelper.dateToString(item.getReleaseAt()));
+            voViewBorrowList.setRepayFashion(borrow.getRepayFashion());
+            voViewBorrowList.setIsVouch(borrow.getIsVouch());
+            voViewBorrowList.setTenderCount(item.getTenderCount());
+            voViewBorrowList.setAvatar(imageDomain + "/data/images/avatar/" + item.getUserId() + "_avatar_middle.jpg");
+            voViewBorrowLists.add(voViewBorrowList);
+        }
+        return voViewBorrowLists;
     }
 }
