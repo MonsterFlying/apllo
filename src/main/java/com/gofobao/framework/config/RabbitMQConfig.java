@@ -67,6 +67,11 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue transferRabbitmq() {
+        return new Queue(MqQueueEnum.RABBITMQ_TRANSFER.getValue(), true);
+    }
+
+    @Bean
     DirectExchange delayExchange() {
         DirectExchange directExchange = new DirectExchange(MqExchangeContants.DELAY_EXCHANGE, true, false);
         directExchange.setDelayed(true);
@@ -126,4 +131,8 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(repaymentRabbitmq).to(delayExchange).with(MqQueueEnum.RABBITMQ_REPAYMENT.getValue()).noargs();
     }
 
+    @Bean
+    Binding transferRabbitmqBinding(Queue transferRabbitmq, Exchange delayExchange) {
+        return BindingBuilder.bind(transferRabbitmq).to(delayExchange).with(MqQueueEnum.RABBITMQ_TRANSFER.getValue()).noargs();
+    }
 }

@@ -38,7 +38,6 @@ public class CashController {
         return cashDetailLogBiz.preCash(userId, httpServletRequest) ;
     }
 
-
     @ApiOperation("提现")
     @PostMapping("/asset/cash")
     public ResponseEntity<VoHtmlResp> cash(HttpServletRequest httpServletRequest,  @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @Valid @ModelAttribute VoCashReq voCashReq) throws Exception{

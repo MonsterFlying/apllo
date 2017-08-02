@@ -282,8 +282,8 @@ public class AssetBizImpl implements AssetBiz {
         }
 
 
-        userThirdAccount.setMobile("13008875126");
-        //userThirdAccount.setMobile("13662260509");
+       // userThirdAccount.setMobile("13008875126");
+        userThirdAccount.setMobile("13662260509");
         String smsSeq = null;
         try {
             smsSeq = redisHelper.get(String.format("%s_%s", SrvTxCodeContants.DIRECT_RECHARGE_ONLINE, userThirdAccount.getMobile()), null);

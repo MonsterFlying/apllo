@@ -66,6 +66,14 @@ public class TransferServiceImpl implements TransferService {
     @PersistenceContext
     private EntityManager entityManager;
 
+    public Transfer save(Transfer transfer) {
+        return transferRepository.save(transfer);
+    }
+
+    public List<Transfer> save(List<Transfer> transferList) {
+        return transferRepository.save(transferList);
+    }
+
     public List<Transfer> findList(Specification<Transfer> specification) {
         return transferRepository.findAll(specification);
     }
@@ -84,6 +92,10 @@ public class TransferServiceImpl implements TransferService {
 
     public Transfer findById(long id) {
         return transferRepository.getOne(id);
+    }
+
+    public Transfer findByIdLock(long id) {
+        return transferRepository.findById(id);
     }
 
     /**

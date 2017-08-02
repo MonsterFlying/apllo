@@ -26,6 +26,8 @@ public interface TransferService {
 
     Transfer findById(long id);
 
+    Transfer findByIdLock(long id);
+
     Map<String, Object> transferOfList(VoTransferReq voTransferReq);
 
 
@@ -34,5 +36,9 @@ public interface TransferService {
     Map<String, Object> transferMayList(VoTransferReq voTransferReq);
 
     Map<String, Object> transferBuyList(VoTransferReq voTransferReq);
+
+    Transfer save(Transfer transfer);
+
+    List<Transfer> save(List<Transfer> transferList);
 
 }

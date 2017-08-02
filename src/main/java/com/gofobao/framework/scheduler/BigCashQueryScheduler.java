@@ -1,7 +1,6 @@
 package com.gofobao.framework.scheduler;
 
 import com.gofobao.framework.asset.biz.CashDetailLogBiz;
-import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.scheduler.biz.TaskSchedulerBiz;
 import com.gofobao.framework.scheduler.constants.TaskSchedulerConstants;
@@ -52,7 +51,7 @@ public class BigCashQueryScheduler {
 
                 boolean b = false;
                 try {
-                    b = cashDetailLogBiz.doFormCashMoney(cashId, p.getDoTaskNum(), p.getTaskNum());
+                    b = cashDetailLogBiz.doCancelCash(cashId, p.getDoTaskNum(), p.getTaskNum());
                 } catch (Exception e) {
                     log.error("大额提现资金确认扣减调度遗产", e);
                 }

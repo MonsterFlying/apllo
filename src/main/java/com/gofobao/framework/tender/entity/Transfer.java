@@ -19,17 +19,21 @@ public class Transfer {
     private Integer state;
     private String title;
     private Long principal;
-    private Integer alreadyInterest;
-    private Integer leftOrder;
-    private Long leftPrincipal;
+    private Long alreadyInterest;
+    private Integer timeLimit;
+    private Long principalYes;
     private Integer apr;
     private Date repayAt;
     private Long tenderId;
+    private Boolean lock;
+    private Integer tenderCount;
     private Long borrowId;
     private Long userId;
     private Long lower;
     private Boolean del;
     private Date createdAt;
+    private Date releaseAt;
     private Date updatedAt;
-
+    private Date verifyAt;
+    private Date successAt;
 }

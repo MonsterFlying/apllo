@@ -6,6 +6,7 @@ import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.service.AutoTenderService;
@@ -39,21 +40,6 @@ public class TenderProvider {
     TenderBiz tenderBiz;
 
     /**
-     * 自动债权转让
-     * @param msg
-     * @throws Exception
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public void autoTransfer(Map<String,String> msg) throws Exception{
-        /*
-         * 1.批次自动投标规则
-         * 2.筛选合适的自动投标规则进行购买债权
-         * 3.更新自动投标规则
-         */
-
-    }
-
-    /**
      * 自动投标
      * @param msg
      * @throws Exception
@@ -66,6 +52,7 @@ public class TenderProvider {
         Preconditions.checkNotNull(borrow, "自动投标异常：id为" + borrowId + "借款不存在");
         VoFindAutoTenderList voFindAutoTenderList = new VoFindAutoTenderList();
         List<Map<String, Object>> autoTenderList = null;
+        long moneyYes = borrow.getMoneyYes();
 
         int num = 0;
         int pageIndex = 0;
@@ -76,7 +63,7 @@ public class TenderProvider {
             pageIndex++;
             voFindAutoTenderList.setStatus("1");
             voFindAutoTenderList.setNotUserId(borrow.getUserId());
-            voFindAutoTenderList.setInRepayFashions(countRepayFashions(new Integer[]{borrow.getRepayFashion()}));
+            voFindAutoTenderList.setInRepayFashions(BorrowHelper.countRepayFashions(new Integer[]{borrow.getRepayFashion()}));
             voFindAutoTenderList.setPageIndex(pageIndex);
             voFindAutoTenderList.setPageSize(maxSize);
             voFindAutoTenderList.setBorrowId(borrowId);
@@ -95,7 +82,6 @@ public class TenderProvider {
             long lowest = 0;
             long useMoney = 0;
             Integer borrowMoney = borrow.getMoney(); // 借款金额（分）
-            long moneyYes = borrow.getMoneyYes();
             Integer mostAuto = borrow.getMostAuto();
             Set<Long> tenderUserIds = new HashSet<>();
             Set<Long> autoTenderIds = new HashSet<>();
@@ -131,7 +117,6 @@ public class TenderProvider {
                 voCreateBorrowTender.setUserId(NumberHelper.toLong(voFindAutoTender.get("userId"))); // 投标用户
                 voCreateBorrowTender.setTenderMoney(MathHelper.myRound(money / 100.0, 2));  // 投标金额
                 voCreateBorrowTender.setAutoOrder(NumberHelper.toInt(voFindAutoTender.get("order")));
-                voCreateBorrowTender.setLowest(MathHelper.myRound(NumberHelper.toInt(voFindAutoTender.get("lowest")) / 100.0, 2));
                 voCreateBorrowTender.setIsAutoTender(true);//自动标识
 
                 if ((!tenderUserIds.contains(NumberHelper.toLong(voFindAutoTender.get("userId"))))
@@ -164,38 +149,5 @@ public class TenderProvider {
         }
     }
 
-    /**
-     * 计算RepayFashions
-     *
-     * @param repayFashions borrow表的repayFashion字段
-     * @return
-     */
-    private static String countRepayFashions(Integer[] repayFashions) {
-        StringBuffer condition = new StringBuffer();//拼接条件
-        StringBuffer binary;
-        String tempStr;
-        char[] binaryChar;
-        for (int i = 1, len = MathHelper.pow(2, 3); i < len; i++) {
-            binary = new StringBuffer();
-            binaryChar = new char[3];
-            tempStr = Integer.toBinaryString(i) + "";
-            for (int j = 0; j < 3 - tempStr.length(); j++) {
-                binary.append("0");
-            }
-            binary.append(tempStr).reverse();
 
-            Set<Integer> num = new HashSet<>();
-            binary.getChars(0, binary.length(), binaryChar, 0);
-            for (Integer repayFashion : repayFashions) {
-                if (binaryChar[repayFashion] == '1') {
-                    num.add(i);
-                }
-            }
-
-            for (Integer tempNum : num) {
-                condition.append(tempNum).append(",");
-            }
-        }
-        return condition.substring(0, condition.length() - 1);
-    }
 }

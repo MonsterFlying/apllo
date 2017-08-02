@@ -5,6 +5,8 @@ import com.gofobao.framework.member.repository.UserThirdAccountRepository;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
@@ -92,5 +94,17 @@ public class UserThirdAccountServiceImpl implements UserThirdAccountService {
     @Override
     public List<UserThirdAccount> findList(Specification<UserThirdAccount> userThirderAccountSpe) {
         return userThirdAccountRepository.findAll(userThirderAccountSpe);
+    }
+
+    public List<UserThirdAccount> findList(Specification<UserThirdAccount> userThirderAccountSpe, Pageable pageable) {
+        return userThirdAccountRepository.findAll(userThirderAccountSpe, pageable).getContent();
+    }
+
+    public List<UserThirdAccount> findList(Specification<UserThirdAccount> userThirderAccountSpe, Sort sort) {
+        return userThirdAccountRepository.findAll(userThirderAccountSpe, sort);
+    }
+
+    public long count(Specification<UserThirdAccount> userThirderAccountSpe) {
+        return userThirdAccountRepository.count(userThirderAccountSpe);
     }
 }
