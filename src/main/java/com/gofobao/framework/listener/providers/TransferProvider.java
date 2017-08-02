@@ -129,8 +129,8 @@ public class TransferProvider {
         List<Long> userIds = null;/* 匹配上的自动投标规则 */
         Specification<Asset> as = null;/* 匹配资产规则 */
         Specification<UserThirdAccount> utas = null;/* 匹配存管账户记录规则 */
-        long principalYes = transfer.getPrincipalYes();/* 债权转让已购金额 */
-        long principal = transfer.getPrincipal();/* 债权转让金额 */
+        long transferMoneyYes = transfer.getTransferMoneyYes();/* 债权转让已购金额 */
+        long transferMoney = transfer.getTransferMoney();/* 债权转让金额 */
         List<Long> tenderUserIds = new ArrayList<>();/* 已经购买债权的用户id */
         List<Long> autoTenderIds = new ArrayList<>();/* 已经触发的自动投标id */
 
@@ -191,7 +191,7 @@ public class TransferProvider {
                     continue;
                 }
 
-                if ((principalYes >= principal)) {  // 判断是否满标或者 达到自动投标最大额度
+                if ((transferMoneyYes >= transferMoney)) {  // 判断是否满标或者 达到自动投标最大额度
                     flag = true;
                     break;
                 }
@@ -205,7 +205,7 @@ public class TransferProvider {
                 }
 
                 // 标的金额小于 最小投标金额
-                if (principal - principalYes < lowest) {
+                if (transferMoney - transferMoneyYes < lowest) {
                     continue;
                 }
 
@@ -219,7 +219,7 @@ public class TransferProvider {
                     voBuyTransfer.setAutoOrder(autoTender.getOrder());
                     ResponseEntity<VoBaseResp> response = transferBiz.buyTransfer(voBuyTransfer);
                     if (response.getStatusCode().equals(HttpStatus.OK)) { //购买债权转让成功后更新自动投标规则
-                        principalYes += lowest;
+                        transferMoneyYes += lowest;
                         autoTenderIds.add(autoTender.getId());
                         tenderUserIds.add(autoTender.getUserId());
                         autoTender.setAutoAt(nowDate);
@@ -238,7 +238,7 @@ public class TransferProvider {
         }
 
         // 解除锁定
-        if (principalYes != principal) { // 在自动投标中, 标的未满.马上将其解除.
+        if (transferMoneyYes != transferMoney) { // 在自动投标中, 标的未满.马上将其解除.
             transfer.setUpdatedAt(nowDate);
             transfer.setLock(false);
             transferService.save(transfer);
@@ -398,8 +398,8 @@ public class TransferProvider {
         request.setSubPacks(GSON.toJson(creditInvestList));
         request.setAcqRes(GSON.toJson(acqResMap));
         request.setChannel(ChannelContant.HTML);
-        request.setNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditinvestird/batch/creditinvest/new/run/new/check");
-        request.setRetNotifyURL(javaDomain + "/pub/tender/v2/th");
+        request.setNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditinvest/check");
+        request.setRetNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditinvest/run");
         BatchCreditInvestResp response = jixinManager.send(JixinTxCodeEnum.BATCH_CREDIT_INVEST, request, BatchCreditInvestResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
             log.error(String.format("复审: 批量债权转让申请失败: %s", response));

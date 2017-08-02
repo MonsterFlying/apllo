@@ -25,7 +25,7 @@ public interface TransferBiz {
      * @param transferId
      * @return
      */
-    ResponseEntity<VoBaseResp> againVerifyTransfer(long transferId) throws Exception;
+    ResponseEntity<VoBaseResp> againVerifyTransfer(long transferId,String batchNo) throws Exception;
 
     /**
      * 债权转让初审
