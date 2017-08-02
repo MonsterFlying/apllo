@@ -22,7 +22,7 @@ public class BatchAssetChange {
     @GeneratedValue
     private Long id;
     private Integer type;
-    private Integer sourceId;
+    private Long sourceId;
     private Integer state;
     private String batchNo;
 

@@ -40,6 +40,7 @@ import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.google.common.base.Preconditions;
@@ -657,6 +658,38 @@ public class ThirdBatchProvider {
                 log.error("ThirdBatchProvider creditInvestDeal send mq exception", e);
             }
         });
+    }
+
+    /**
+     * 新版债权转让处理
+     *
+     * @param batchNo
+     * @param transferId
+     * @param failureThirdTransferOrderIds
+     * @param successThirdTransferOrderIds
+     * @throws Exception
+     */
+    private void newCreditInvestDeal(long batchNo, long transferId, List<String> failureThirdTransferOrderIds, List<String> successThirdTransferOrderIds) throws Exception {
+        Date nowDate = new Date();
+        if (CollectionUtils.isEmpty(failureThirdTransferOrderIds)) {
+            log.info("================================================================================");
+            log.info("债权转让批次查询：未发现失败批次！transferId:" + transferId);
+            log.info("================================================================================");
+        }
+
+        if (!CollectionUtils.isEmpty(successThirdTransferOrderIds)) {
+            //成功批次对应债权
+            Specification<TransferBuyLog> ts = Specifications
+                    .<TransferBuyLog>and()
+                    .in("thirdTransferOrderId", successThirdTransferOrderIds.toArray())
+                    .build();
+            /*List<TransferBuyLog> success =
+            List<Tender> successTenderList = tenderService.findList(ts);
+            for (Tender tender : successTenderList) {
+                tender.setThirdTransferFlag(true);
+            }
+            tenderService.save(successTenderList);*/
+        }
     }
 
     /**

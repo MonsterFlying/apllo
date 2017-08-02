@@ -47,8 +47,8 @@ public class TenderThirdController {
      */
     @ApiOperation("投资人批次购买债权参数验证回调")
     @RequestMapping("/v2/third/batch/creditinvest/check")
-    public void thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse response) {
-        tenderThirdBiz.thirdBatchCreditInvestCheckCall(request, response);
+    public ResponseEntity<String> thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse response) {
+        return tenderThirdBiz.thirdBatchCreditInvestCheckCall(request, response);
     }
 
 
@@ -64,7 +64,7 @@ public class TenderThirdController {
             return tenderThirdBiz.thirdBatchCreditEndRunCall(request, response);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.ok("errror");
+            return ResponseEntity.ok("error");
         }
     }
 

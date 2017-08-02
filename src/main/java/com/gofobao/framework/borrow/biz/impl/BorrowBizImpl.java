@@ -154,9 +154,6 @@ public class BorrowBizImpl implements BorrowBiz {
     @Autowired
     JixinManager jixinManager;
 
-    @Autowired
-    AssetChangeProvider assetChangeProvider;
-
 
     @Autowired
     private DictItemService dictItemService;
@@ -285,9 +282,9 @@ public class BorrowBizImpl implements BorrowBiz {
                     borrowInfoRes.setSurplusSecond(((releaseAt.getTime() - nowDate.getTime()) / 1000) + 5);
                 } else if (nowDate.getTime() > endAt.getTime()) {  //当前时间大于招标有效时间
                     //流转标没有过期时间
-                    if (!StringUtils.isEmpty(borrow.getTenderId())) {
+                    if(!StringUtils.isEmpty(borrow.getTenderId())){
                         status = 3; //招标中
-                    } else {
+                    }else {
                         status = 5; //已过期
                     }
                 } else {
@@ -994,9 +991,9 @@ public class BorrowBizImpl implements BorrowBiz {
                 .build();
         List<Tender> tenderList = tenderService.findList(ts);
         Preconditions.checkNotNull(tenderList, "生成还款记录: 投标记录为空");
-        String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+
         // 这里涉及用户投标回款计划生成和平台资金的变动
-        generateBorrowCollectionAndAssetChange(borrow, tenderList, nowDate, groupSeqNo);
+        generateBorrowCollectionAndAssetChange(borrow, tenderList, nowDate);
 
         // 标的自身设置奖励信息:进行存管红包发放
         awardUserByBorrowTender(borrow, tenderList);
