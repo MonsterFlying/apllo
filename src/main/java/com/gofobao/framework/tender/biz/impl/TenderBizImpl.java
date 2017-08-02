@@ -15,6 +15,9 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
+import com.gofobao.framework.common.assets.AssetChange;
+import com.gofobao.framework.common.assets.AssetChangeProvider;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
@@ -22,11 +25,9 @@ import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.PasswordHelper;
+import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.helper.ThirdAccountHelper;
+import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -95,6 +96,9 @@ public class TenderBizImpl implements TenderBiz {
     @Autowired
     private TenderThirdBiz tenderThirdBiz;
 
+    @Autowired
+    AssetChangeProvider assetChangeProvider ;
+
     /**
      * 新版投标
      *
@@ -157,7 +161,6 @@ public class TenderBizImpl implements TenderBiz {
         Tender borrowTender = createBorrowTenderRecord(voCreateTenderReq, user, nowDate, validateMoney);    // 生成投标记录
         borrowTender = registerTender(borrow, borrowTender) ;  // 投标的存管报备
         updateAssetByTender(borrow, borrowTender); // 扣除用户投标金额
-
         borrow.setMoneyYes(borrow.getMoneyYes() + validateMoney);
         borrow.setTenderCount((borrow.getTenderCount() + 1));
         borrow.setId(borrow.getId());
@@ -178,18 +181,29 @@ public class TenderBizImpl implements TenderBiz {
         return ResponseEntity.ok(VoBaseResp.ok("投资成功"));
     }
 
+    /**
+     * 用户投标冻结
+     * @param borrow
+     * @param borrowTender
+     * @throws Exception
+     */
     private void updateAssetByTender(Borrow borrow, Tender borrowTender) throws Exception {
-        CapitalChangeEntity entity = new CapitalChangeEntity();
-        entity.setType(CapitalChangeEnum.Frozen);
-        entity.setUserId(borrowTender.getUserId());
-        entity.setToUserId(borrow.getUserId());
-        entity.setMoney(borrowTender.getValidMoney());
-        entity.setRemark("投标冻结资金");
-        capitalChangeHelper.capitalChange(entity);
+        Date nowDate = new Date() ;
+        AssetChange assetChange = new AssetChange() ;
+        assetChange.setForUserId(borrowTender.getUserId());
+        assetChange.setUserId(borrowTender.getUserId());
+        assetChange.setType(AssetChangeTypeEnum.freeze);
+        assetChange.setRemark(String.format("成功投资标的[%s]冻结%s元", borrow.getName(),  StringHelper.formatDouble(borrowTender.getValidMoney() / 100D, true)));
+        String seqNo = String.format("%s%s", DateHelper.dateToString(nowDate, DateHelper.DATE_FORMAT_YMDHMS_NUM), RandomHelper.generateNumberCode(6)) ;
+        assetChange.setSeqNo(seqNo);
+        assetChange.setMoney(borrowTender.getValidMoney());
+        assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+        assetChange.setSourceId(borrowTender.getId()) ;
+        assetChangeProvider.commonAssetChange(assetChange) ;
     }
 
     private Tender registerTender(Borrow borrow, Tender borrowTender) throws Exception {
-        if (!borrow.isTransfer()) { //类型为非转让标
+        if (!borrow.isTransfer()) {
             log.info(String.format("马上投资: 投资报备: %s", new Gson().toJson(borrowTender)));
             VoCreateThirdTenderReq voCreateThirdTenderReq = new VoCreateThirdTenderReq();
             voCreateThirdTenderReq.setAcqRes(String.valueOf(borrowTender.getId()));
