@@ -29,7 +29,9 @@ import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.service.TenderService;
+import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoThirdBatchCreditInvest;
@@ -75,24 +77,21 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
     @Autowired
     private BorrowService borrowService;
     @Autowired
-    private BorrowBiz borrowBiz;
-    @Autowired
     private JixinHelper jixinHelper;
     @Autowired
     private ThirdBatchLogService thirdBatchLogService;
     @Autowired
-    private CapitalChangeHelper capitalChangeHelper;
-    @Autowired
     private ThirdBatchLogBiz thirdBatchLogBiz;
     @Autowired
     private MqHelper mqHelper;
+    @Autowired
+    private TransferBuyLogService transferBuyLogService;
 
     @Value("${gofobao.webDomain}")
     private String webDomain;
 
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
-
 
 
     public ResponseEntity<VoBaseResp> createThirdTender(VoCreateThirdTenderReq voCreateThirdTenderReq) {
@@ -200,7 +199,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             }
 
             tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
-            Preconditions.checkNotNull(tenderUserThirdAccount, "投资人未开户!") ;
+            Preconditions.checkNotNull(tenderUserThirdAccount, "投资人未开户!");
 
             validMoney = tender.getValidMoney();  //投标有效金额
             sumCount += validMoney;
@@ -261,35 +260,31 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      *
      * @return
      */
-    public void thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse response) {
         BatchCreditInvestCheckCall batchCreditInvestCheckCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestCheckCall>() {
         });
 
         if (ObjectUtils.isEmpty(batchCreditInvestCheckCall)) {
             log.error("=============================即信投资人批次购买债权参数验证回调===========================");
             log.error("请求体为空!");
+            ResponseEntity.ok("error");
         }
 
         Map<String, Object> acqResMap = GSON.fromJson(batchCreditInvestCheckCall.getAcqRes(), TypeTokenContants.MAP_TOKEN);
-        Long borrowId = NumberHelper.toLong(acqResMap.get("borrowId"));
+        Long transferId = NumberHelper.toLong(acqResMap.get("transferId"));
         if (!JixinResultContants.SUCCESS.equals(batchCreditInvestCheckCall.getRetCode())) {
             log.error("=============================即信投资人批次购买债权参数验证回调===========================");
             log.error("回调失败! msg:" + batchCreditInvestCheckCall.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), borrowId, 2);
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 2);
+            ResponseEntity.ok("error");
         } else {
             log.error("=============================即信投资人批次购买债权参数验证回调===========================");
             log.error("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), borrowId, 1);
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 1);
         }
 
-        try {
-            PrintWriter out = response.getWriter();
-            out.print("success");
-            out.flush();
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
+        return ResponseEntity.ok("success");
     }
 
     /**
@@ -316,7 +311,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             Preconditions.checkNotNull(creditInvestRunList, "批量债权转让回调: 查询批次详情为空");
             saveThirdTransferAuthCode(creditInvestRunList);
         } catch (JsonSyntaxException e) {
-            log.error("保存第三方债权转让授权码!",e);
+            log.error("保存第三方债权转让授权码!", e);
         }
 
 
@@ -325,7 +320,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("borrowId")),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("transferId")),
                         MqConfig.BATCH_NO, StringHelper.toString(batchCreditInvestRunCall.getBatchNo()),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
@@ -346,22 +341,20 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
      */
     public void saveThirdTransferAuthCode(List<CreditInvestRun> creditInvestRunList) {
         List<String> orderIds = creditInvestRunList.stream().map(creditInvestRun -> creditInvestRun.getOrderId()).collect(Collectors.toList());
-        Specification<Tender> ts = Specifications
-                .<Tender>and()
-                .in("thirdTransferOrderId", orderIds.toArray())
+        Specification<TransferBuyLog> tbls = Specifications
+                .<TransferBuyLog>and()
+                .eq("thirdTransferOrderId", orderIds.toArray())
                 .build();
-
-        List<Tender> tenderList = tenderService.findList(ts);
-        Map<String, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getThirdTransferOrderId, Function.identity()));
+        List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
+        Map<String, TransferBuyLog> transferBuyLogMaps = transferBuyLogList.stream().
+                collect(Collectors.toMap(TransferBuyLog::getThirdTransferOrderId, Function.identity()));
         creditInvestRunList.forEach(creditInvestRun -> {
             String orderId = creditInvestRun.getOrderId();
-            Tender tender = tenderMap.get(orderId);
-            tender.setTransferAuthCode(creditInvestRun.getAuthCode());
+            TransferBuyLog transferBuyLog = transferBuyLogMaps.get(orderId);
+            transferBuyLog.setTransferAuthCode(creditInvestRun.getAuthCode());
         });
-
-        tenderService.save(tenderList);
+        transferBuyLogService.save(transferBuyLogList);
     }
-
 
 
     /**

@@ -30,7 +30,7 @@ public interface TenderThirdBiz {
      *
      * @return
      */
-    void thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> thirdBatchCreditInvestCheckCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 投资人批次购买债权参数运行回调

@@ -1083,16 +1083,23 @@ public class BorrowBizImpl implements BorrowBiz {
         //查询债权转让借款原投资
         Tender transferTender = tenderService.findById(borrow.getTenderId());
 
+
         // 这里涉及用户投标回款计划生成和平台资金的变动
         generateBorrowCollectionAndAssetChange(borrow, tenderList, oldBorrowCollections.get(0).getStartAt());
+
+
         // 标的自身设置奖励信息:进行存管红包发放
         awardUserByBorrowTender(borrow, tenderList);
         // 发送投资成功站内信
         sendNoticsByTender(borrow, tenderList);
         // 用户投标信息和每日统计
         userTenderStatistic(borrow, tenderList, oldBorrowCollections.get(0).getStartAt());
+
+
         // 借款人资金变动
         processBorrowAssetChange(borrow, tenderList, oldBorrowCollections.get(0).getStartAt());
+
+
         // 满标操作
         finishBorrow(borrow, tenderList);
         // 复审事件

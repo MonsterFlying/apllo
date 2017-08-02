@@ -29,5 +29,7 @@ public class TransferBuyLog {
     private Integer source;
     private Date createdAt;
     private Date updatedAt;
-
+    private Boolean thirdTransferFlag;
+    private String thirdTransferOrderId;
+    private String transferAuthCode;
 }

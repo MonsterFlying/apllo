@@ -1,36 +1,53 @@
 package com.gofobao.framework.listener.providers;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.contants.JixinResultContants;
+import com.gofobao.framework.api.helper.JixinManager;
+import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestReq;
+import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestResp;
+import com.gofobao.framework.api.model.batch_credit_invest.CreditInvest;
+import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
 import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.entity.BatchAssetChange;
+import com.gofobao.framework.asset.entity.BatchAssetChangeItem;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.asset.service.BatchAssetChangeItemService;
+import com.gofobao.framework.asset.service.BatchAssetChangeService;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.common.capital.CapitalChangeEntity;
+import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.data.DataObject;
 import com.gofobao.framework.common.data.GeSpecification;
 import com.gofobao.framework.common.data.LeSpecification;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.MathHelper;
-import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.helper.ThirdAccountHelper;
+import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.system.contants.ThirdBatchLogContants;
+import com.gofobao.framework.system.entity.ThirdBatchLog;
+import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.entity.AutoTender;
+import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.entity.Transfer;
+import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.service.AutoTenderService;
+import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.gofobao.framework.tender.vo.request.VoBuyTransfer;
-import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
-import com.gofobao.framework.tender.vo.request.VoThirdBatchCreditInvest;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -41,10 +58,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -67,6 +81,24 @@ public class TransferProvider {
     private UserThirdAccountService userThirdAccountService;
     @Autowired
     private TransferBiz transferBiz;
+    @Autowired
+    private TransferBuyLogService transferBuyLogService;
+    @Autowired
+    private TenderService tenderService;
+    @Autowired
+    private JixinHelper jixinHelper;
+    @Autowired
+    private ThirdBatchLogService thirdBatchLogService;
+    @Autowired
+    private BatchAssetChangeService batchAssetChangeService;
+    @Autowired
+    private BatchAssetChangeItemService batchAssetChangeItemService;
+
+    @Value("${gofobao.javaDomain}")
+    private String javaDomain;
+
+    @Autowired
+    private JixinManager jixinManager;
 
     final Gson GSON = new GsonBuilder().create();
 
@@ -225,25 +257,170 @@ public class TransferProvider {
         long transferId = NumberHelper.toLong(msg.get(MqConfig.MSG_TRANSFER_ID));/* 债权转让id */
         Transfer transfer = transferService.findByIdLock(transferId);
         Preconditions.checkNotNull(transfer, "债权转让记录不存在!");
-
         if (transfer.getState() != 1) {
             log.error("复审：债权转让状态已发生改变！transferId:" + transferId);
             return false;
         }
 
+        Specification<TransferBuyLog> tbls = Specifications
+                .<TransferBuyLog>and()
+                .eq("transferId", transfer.getId())
+                .eq("state", 0)
+                .build();
+        List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);/* 购买债权转让记录 */
+        Preconditions.checkNotNull(transferBuyLogList, "批量债权转让：购买债权记录不存在!");
+        Tender parentTender = tenderService.findById(transfer.getTenderId());/* 转让投资记录 */
+        Preconditions.checkNotNull(parentTender, "批量债权转让: 债权原始投标信息为空!");
+        UserThirdAccount transferUserThirdAccount = userThirdAccountService.findByUserId(transfer.getUserId());/* 债权转让人开户信息 */
+        Preconditions.checkNotNull(transferUserThirdAccount, "债权转让人开户记录不存在!");
+        Borrow parentBorrow = borrowService.findById(transfer.getBorrowId());
+        Preconditions.checkNotNull(parentBorrow, "债权转让原借款记录不存在!");
+
         log.info(String.format("复审: 批量债权转让申请开始: %s", GSON.toJson(msg)));
-        /**
-         * @// TODO: 2017/8/1
-         * 1.通知即信处理债权转让
-         * 2.记录资产变更
-         * 3.债权转让债权转让记录状态变成
-         */
-        if (1!=1) {
-            log.info(String.format("复审: 批量债权转让申请成功: %s", GSON.toJson(msg)));
-            return true;
-        } else {
-            log.error(String.format("复审: 批量债权转让申请失败: %s", null));
-            return false;
+
+        /* 债权转让管理费费率 */
+        double transferFeeRate = BorrowHelper.getTransferFeeRate(transfer.getTimeLimit());
+        double transferFee = transfer.getPrincipal() * transferFeeRate;  /* 转让管理费 */
+
+        //登记存管债权转让
+        String batchNo = registerThirdTransferTender(transfer, transferBuyLogList, parentTender, transferUserThirdAccount, parentBorrow, transferFee);
+
+        //增加批次资金变动记录
+        addBatchAssetChange(transferId, transfer, transferBuyLogList, transferFeeRate, batchNo);
+
+        log.info(String.format("复审: 批量债权转让申请成功: %s", GSON.toJson(msg)));
+        return true;
+
+    }
+
+    /**
+     * 增加批次资金变动记录
+     *
+     * @param transferId
+     * @param transfer
+     * @param transferBuyLogList
+     * @param transferFeeRate
+     * @param batchNo
+     */
+    private void addBatchAssetChange(long transferId, Transfer transfer, List<TransferBuyLog> transferBuyLogList, double transferFeeRate, String batchNo) {
+        // 扣除债权购买人冻结资金
+        BatchAssetChange batchAssetChange = new BatchAssetChange();
+        batchAssetChange.setBatchNo(batchNo);
+        batchAssetChange.setSourceId(transferId);
+        batchAssetChange.setType(BatchAssetChangeContants.BATCH_CREDIT_INVEST);
+        batchAssetChange.setState(0);
+        batchAssetChangeService.save(batchAssetChange);
+
+        //债权转让人收款
+        BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
+        batchAssetChangeItem.setState(0);
+        batchAssetChangeItem.setType(CapitalChangeEnum.Borrow.getValue());
+        batchAssetChangeItem.setUserId(transfer.getUserId());
+        batchAssetChangeItem.setMoney(transfer.getPrincipal());
+        batchAssetChangeItem.setRemark("通过[" + transfer.getTitle() + "]收到的债权转让款");
+        batchAssetChangeItemService.save(batchAssetChangeItem);
+
+        //收取债权转让人的转让管理费
+        batchAssetChangeItem = new BatchAssetChangeItem();
+        batchAssetChangeItem.setState(0);
+        batchAssetChangeItem.setType(CapitalChangeEnum.Fee.getValue());
+        batchAssetChangeItem.setUserId(transfer.getUserId());
+        batchAssetChangeItem.setMoney(NumberHelper.toLong(transfer.getPrincipal() * transferFeeRate));
+        batchAssetChangeItem.setRemark("扣除借款标[" + transfer.getTitle() + "]的转让管理费");
+        batchAssetChangeItemService.save(batchAssetChangeItem);
+
+        for (TransferBuyLog transferBuyLog : transferBuyLogList) {
+            //扣除债权转让购买人冻结资金
+            batchAssetChangeItem = new BatchAssetChangeItem();
+            batchAssetChangeItem.setState(0);
+            batchAssetChangeItem.setType(CapitalChangeEnum.Tender.getValue());
+            batchAssetChangeItem.setUserId(transferBuyLog.getUserId());
+            batchAssetChangeItem.setToUserId(transfer.getUserId());
+            batchAssetChangeItem.setMoney(transferBuyLog.getValidMoney());
+            batchAssetChangeItem.setRemark("成功投资[" + transfer.getTitle() + "]");
+            batchAssetChangeItemService.save(batchAssetChangeItem);
         }
     }
+
+    /**
+     * 登记存管债权转让
+     *
+     * @param transfer
+     * @param transferBuyLogList
+     * @param parentTender
+     * @param transferUserThirdAccount
+     * @param parentBorrow
+     * @param transferFee
+     * @throws Exception
+     */
+    private String registerThirdTransferTender(Transfer transfer, List<TransferBuyLog> transferBuyLogList, Tender parentTender, UserThirdAccount transferUserThirdAccount, Borrow parentBorrow, double transferFee) throws Exception {
+        Date nowDate = new Date();
+        List<CreditInvest> creditInvestList = new ArrayList<>();
+        CreditInvest creditInvest = null;
+        UserThirdAccount tenderUserThirdAccount = null;
+        int sumCount = 0;
+        for (TransferBuyLog transferBuyLog : transferBuyLogList) {
+            double txFee = 0;
+            if (BooleanHelper.isTrue(transferBuyLog.getThirdTransferFlag())) {  //判断标的已在存管登记转让
+                continue;
+            }
+            tenderUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());/* 债权转让购买人存管账户信息 */
+            Preconditions.checkNotNull(tenderUserThirdAccount, "投资人开户记录不存在!");
+            double txAmount = transferBuyLog.getValidMoney() + transferBuyLog.getAlreadyInterest();  //购买债权转让有效金额
+            sumCount += txAmount;
+            //收取转让人债权转让管理费
+            txFee += MathHelper.myRound((transferBuyLog.getValidMoney() / new Double(transfer.getPrincipal())) * transferFee, 0);
+            String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);/* 购买债权转让orderId */
+            creditInvest = new CreditInvest();
+            creditInvest.setAccountId(tenderUserThirdAccount.getAccountId());
+            creditInvest.setOrderId(transferOrderId);
+            creditInvest.setTxAmount(StringHelper.formatDouble(txAmount, 100, false));
+            creditInvest.setTxFee(StringHelper.formatDouble(txFee, 100, false));
+            creditInvest.setTsfAmount(StringHelper.formatDouble(transferBuyLog.getValidMoney(), 100, false));
+            creditInvest.setForAccountId(transferUserThirdAccount.getAccountId());
+            creditInvest.setOrgOrderId(parentTender.getThirdTenderOrderId());
+            creditInvest.setOrgTxAmount(StringHelper.formatDouble(parentTender.getValidMoney(), 100, false));
+            creditInvest.setProductId(parentBorrow.getProductId());
+            creditInvest.setContOrderId(tenderUserThirdAccount.getAutoTransferBondOrderId());
+            creditInvestList.add(creditInvest);
+            transferBuyLog.setThirdTransferOrderId(transferOrderId);
+            transferBuyLogService.save(transferBuyLogList);
+        }
+
+        //批次号
+        String batchNo = jixinHelper.getBatchNo();
+        //请求保留参数
+        Map<String, Object> acqResMap = new HashMap<>();
+        acqResMap.put("transferId", transfer.getId());
+        //调用存管批次债权转让接口
+        BatchCreditInvestReq request = new BatchCreditInvestReq();
+        request.setBatchNo(batchNo);
+        request.setTxAmount(StringHelper.formatDouble(sumCount, 100, false));
+        request.setTxCounts(StringHelper.toString(creditInvestList.size()));
+        request.setSubPacks(GSON.toJson(creditInvestList));
+        request.setAcqRes(GSON.toJson(acqResMap));
+        request.setChannel(ChannelContant.HTML);
+        request.setNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditinvest/new/check");
+        request.setRetNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditinvest/new/run");
+        BatchCreditInvestResp response = jixinManager.send(JixinTxCodeEnum.BATCH_CREDIT_INVEST, request, BatchCreditInvestResp.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
+            log.error(String.format("复审: 批量债权转让申请失败: %s", response));
+            throw new Exception("投资人批次购买债权失败!:" + response.getRetMsg());
+        }
+
+        //记录日志
+        ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
+        thirdBatchLog.setBatchNo(batchNo);
+        thirdBatchLog.setCreateAt(nowDate);
+        thirdBatchLog.setUpdateAt(nowDate);
+        thirdBatchLog.setSourceId(transfer.getId());
+        thirdBatchLog.setType(ThirdBatchLogContants.BATCH_CREDIT_INVEST);
+        thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
+        thirdBatchLog.setRemark("投资人批次购买债权");
+        thirdBatchLogService.save(thirdBatchLog);
+
+        return batchNo;
+    }
+
+
 }

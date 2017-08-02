@@ -21,7 +21,9 @@ import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.service.TenderService;
+import com.gofobao.framework.tender.service.TransferService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -53,6 +55,8 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
     private AdvanceLogService advanceLogService;
     @Autowired
     private TenderService tenderService;
+    @Autowired
+    private TransferService transferService;
 
     /**
      * 更新批次日志状态
@@ -141,21 +145,18 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
         Specification<Borrow> bs = null;
         Specification<BorrowRepayment> brs = null;
         Specification<AdvanceLog> als = null;
+        Specification<Transfer> ts = null;
         List<Borrow> borrowList = null;
         long rowNum = 0;
         switch (type) {
             case ThirdBatchLogContants.BATCH_CREDIT_INVEST: //投资人批次购买债权
-                bs = Specifications
-                        .<Borrow>and()
-                        .eq("status", 3)
+                ts = Specifications
+                        .<Transfer>and()
+                        .eq("state", 1)
                         .eq("id", sourceId)
                         .build();
-                borrowList = borrowService.findList(bs);
-                if (CollectionUtils.isEmpty(borrowList)) {
-                    return false;
-                }
-
-                if (!ObjectUtils.isEmpty(borrowList.get(0).getSuccessAt())) {//判断是否满标处理成功
+                List<Transfer> transferList = transferService.findList(ts);
+                if (!CollectionUtils.isEmpty(transferList)) {
                     return true;
                 }
                 break;
