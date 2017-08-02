@@ -21,8 +21,6 @@ public class VoCreateTenderReq extends VoBaseReq {
     @NotNull(message = "投标金额不能为空!")
     private Double tenderMoney;
 
-    @ApiModelProperty(name = "lowest", value = "最低投标额度(元)", hidden = true)
-    private Double lowest;
 
     @ApiModelProperty(name = "payPassword", value = "交易密码", dataType = "String", required = false)
     private String payPassword;
@@ -57,11 +55,5 @@ public class VoCreateTenderReq extends VoBaseReq {
         this.tenderMoney = MathHelper.myRound(tenderMoney * 100.0, 0);
     }
 
-    public Double getLowest() {
-        return MathHelper.myRound(lowest, 0);
-    }
 
-    public void setLowest(Double lowest) {
-        this.lowest = MathHelper.myRound(lowest * 100.0, 0);
-    }
 }

@@ -12,9 +12,6 @@ public class VoFindAutoTenderList extends Page{
     private Long userId;
     private Long notUserId;
     private String inRepayFashions;
-    private String timelimitType;
-    private String gtTimelimitLast;
-    private String ltTimelimitFirst;
     private Integer ltAprFirst;
     private Integer gtAprLast;
     private Long borrowId;

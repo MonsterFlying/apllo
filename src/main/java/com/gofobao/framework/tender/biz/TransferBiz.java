@@ -1,7 +1,9 @@
 package com.gofobao.framework.tender.biz;
 
+import com.gofobao.framework.borrow.vo.request.VoPcDoFirstVerity;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.tender.vo.request.VoBuyTransfer;
+import com.gofobao.framework.tender.vo.request.VoPcFirstVerityTransfer;
 import com.gofobao.framework.tender.vo.request.VoTransferReq;
 import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
 import com.gofobao.framework.tender.vo.response.VoGoTenderInfo;
@@ -10,12 +12,21 @@ import com.gofobao.framework.tender.vo.response.VoViewTransferOfWarpRes;
 import com.gofobao.framework.tender.vo.response.VoViewTransferedWarpRes;
 import com.gofobao.framework.tender.vo.response.web.VoViewTransferBuyWarpRes;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Created by admin on 2017/6/12.
  */
 public interface TransferBiz {
 
+    /**
+     * 债权转让初审
+     *
+     * @param voPcFirstVerityTransfer
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    ResponseEntity<VoBaseResp> firstVerifyTransfer(VoPcFirstVerityTransfer voPcFirstVerityTransfer) throws Exception;
 
     /**
      * 购买债权转让
