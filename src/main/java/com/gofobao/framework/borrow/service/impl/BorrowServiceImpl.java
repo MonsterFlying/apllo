@@ -544,7 +544,7 @@ public class BorrowServiceImpl implements BorrowService {
         repaymentBasisInfo.setEndAt(DateHelper.dateToString(DateHelper.addDays(borrow.getReleaseAt(), borrow.getValidDay())));
 
         //使用当前借款息信计算利息
-        Integer borrowMoney = 0;
+        long borrowMoney = 0;
         if (!StringUtils.isEmpty(borrow.getSuccessAt())) {
             borrowMoney = borrow.getMoneyYes();
         } else {

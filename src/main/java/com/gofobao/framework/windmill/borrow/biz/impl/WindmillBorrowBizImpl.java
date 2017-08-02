@@ -12,6 +12,7 @@ import com.gofobao.framework.windmill.borrow.vo.response.InvestListRes;
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -20,6 +21,7 @@ import java.util.List;
 /**
  * Created by admin on 2017/8/2.
  */
+@Service
 public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
 
     @Value("{gofobao.h5Domain}")
@@ -30,7 +32,12 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
     private WindmillBorrowService borrowService;
 
     /**
-     *
+     *#风车理财
+     windmill:
+     des-key: 2l0IYbNnRcShWOM9Q5Ej0A3gCEP07LBS #des加密key值
+     request-address: http://121.42.52.42  #风车理财请求地址
+     short-name: gfb #风车理财分配给平台的简称
+     from: wrb #风车理财简称
      * @param id
      * @return
      */

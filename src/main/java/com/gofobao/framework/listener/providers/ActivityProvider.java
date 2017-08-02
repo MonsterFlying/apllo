@@ -53,7 +53,7 @@ public class ActivityProvider {
             return;
         }
 
-        Integer validMoney = tender.getValidMoney();
+        Long validMoney = tender.getValidMoney();
         if (validMoney < 1000 * 100) {//单位：分
             log.error("赠送流量券MQ：有效投标金额没有达到活动最低要求");
         }

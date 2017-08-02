@@ -244,7 +244,7 @@ public class BorrowBizImpl implements BorrowBiz {
         try {
             borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
             borrowInfoRes.setLowest(StringHelper.formatMon(borrow.getLowest() / 100d));
-            Integer surplusMoney = borrow.getMoney() - borrow.getMoneyYes();
+            long surplusMoney = borrow.getMoney() - borrow.getMoneyYes();
             borrowInfoRes.setViewSurplusMoney(StringHelper.formatMon(surplusMoney / 100D));
             borrowInfoRes.setHideSurplusMoney(surplusMoney);
             if (borrow.getType() == BorrowContants.REPAY_FASHION_ONCE) {
@@ -523,7 +523,7 @@ public class BorrowBizImpl implements BorrowBiz {
         borrow.setIsVouch(false);
         borrow.setIsMortgage(false);
         borrow.setName(voAddNetWorthBorrow.getName());
-        borrow.setMoney((int) voAddNetWorthBorrow.getMoney());
+        borrow.setMoney(NumberHelper.toLong(voAddNetWorthBorrow.getMoney()));
         borrow.setRepayFashion(1);
         borrow.setTimeLimit(voAddNetWorthBorrow.getTimeLimit());
         borrow.setApr(voAddNetWorthBorrow.getApr());
@@ -539,7 +539,7 @@ public class BorrowBizImpl implements BorrowBiz {
         }
         borrow.setDescription("");
         borrow.setPassword("");
-        borrow.setMoneyYes(0);
+        borrow.setMoneyYes(0l);
         borrow.setTenderCount(0);
         borrow.setCreatedAt(new Date());
         borrow.setUpdatedAt(new Date());
@@ -1158,7 +1158,7 @@ public class BorrowBizImpl implements BorrowBiz {
             entity = new CapitalChangeEntity();
             entity.setType(CapitalChangeEnum.Fee);
             entity.setUserId(borrow.getUserId());
-            int money = borrow.getAward();
+            long money = borrow.getAward();
             if (borrow.getAwardType() == 2) {
                 money = borrow.getMoney() * borrow.getAward();
             }
@@ -1529,7 +1529,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 borrowCollection.setUpdatedAt(nowDate);
                 borrowCollection.setCollectionMoneyYes(0);
                 borrowCollection.setLateDays(0);
-                borrowCollection.setLateInterest(0);
+                borrowCollection.setLateInterest(0l);
                 borrowCollection.setBorrowId(borrow.getId());
                 borrowCollectionService.insert(borrowCollection);
             }
@@ -2271,7 +2271,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
         //全站统计
         Statistic statistic = new Statistic();
-        Integer borrowMoney = borrow.getMoney();
+        long borrowMoney = borrow.getMoney();
 
         statistic.setBorrowItems(1L);
         statistic.setBorrowTotal((long) borrowMoney);

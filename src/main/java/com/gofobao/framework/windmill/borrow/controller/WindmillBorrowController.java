@@ -25,12 +25,12 @@ import javax.servlet.http.HttpServletRequest;
 public class WindmillBorrowController {
 
     @Autowired
-    private WindmillBorrowBiz borrowBiz;
+    private WindmillBorrowBiz windmillBorrowBiz;
 
     @ApiOperation("标列表")
     @GetMapping("/invest/list")
     public InvestListRes list(HttpServletRequest request, @Param("borrowId") Long id) {
-        return borrowBiz.list(id);
+        return windmillBorrowBiz.list(id);
     }
 
     @ApiOperation("根据时间段查询用户的投资列表")

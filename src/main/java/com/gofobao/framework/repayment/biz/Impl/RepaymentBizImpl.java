@@ -631,7 +631,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      * @throws Exception
      */
-    private void receivedReapy(Borrow borrow, int order, double interestPercent, int lateDays, int lateInterest, boolean advance) throws Exception {
+    private void receivedReapy(Borrow borrow, int order, double interestPercent, int lateDays, long lateInterest, boolean advance) throws Exception {
         //会员用户集合
         Set<Long> collectionUserIds = new HashSet<>();
         Long borrowId = borrow.getId();
@@ -716,7 +716,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
                 Borrow tranferedBorrow = tranferedBorrowList.get(0);
                 int tranferedOrder = order + tranferedBorrow.getTotalOrder() - borrow.getTotalOrder();
-                int tranferedLateInterest = tender.getValidMoney() / borrow.getMoney() * lateInterest;
+                long tranferedLateInterest = tender.getValidMoney() / borrow.getMoney() * lateInterest;
                 int accruedInterest = 0;
                 if (tranferedOrder == 0) { //如果是转让后第一期回款, 则计算转让者首期应计利息
                     int interest = borrowCollection.getInterest();
@@ -1374,7 +1374,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      * @throws Exception
      */
-    private void receivedRepayBail(List<RepayBail> repayBails, Borrow borrow, String borrowUserThirdAccount, int order, double interestPercent, int lateInterest) throws Exception {
+    private void receivedRepayBail(List<RepayBail> repayBails, Borrow borrow, String borrowUserThirdAccount, int order, double interestPercent, long lateInterest) throws Exception {
         do {
             //===================================还款校验==========================================
             if (ObjectUtils.isEmpty(borrow)) {
@@ -1461,7 +1461,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
                     Borrow tempBorrow = borrowList.get(0);
                     int tempOrder = order + tempBorrow.getTotalOrder() - borrow.getTotalOrder();
-                    int tempLateInterest = tender.getValidMoney() / borrow.getMoney() * lateInterest;
+                    long tempLateInterest = tender.getValidMoney() / borrow.getMoney() * lateInterest;
 
                     //回调
                     receivedRepayBail(repayBails, tempBorrow, borrowUserThirdAccount, tempOrder, interestPercent, tempLateInterest);

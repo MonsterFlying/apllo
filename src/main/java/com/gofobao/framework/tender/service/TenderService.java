@@ -48,5 +48,5 @@ public interface TenderService {
      * 昨日 今日 成交统计
      * @return
      */
-    Map<String, Integer> statistic();
+    Map<String, Long> statistic();
 }

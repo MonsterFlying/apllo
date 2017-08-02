@@ -158,7 +158,7 @@ public class TenderServiceImpl implements TenderService {
     }
 
     @Override
-    public Map<String, Integer> statistic() {
+    public Map<String, Long> statistic() {
         Date todayAt=new Date();
         Date yesterdayAt=DateHelper.addDays(todayAt,1);
         Specification todaySpecificati=Specifications.<Tender>and()
@@ -172,9 +172,9 @@ public class TenderServiceImpl implements TenderService {
         List<Tender> todayTender=tenderRepository.findAll(todaySpecificati);
         List<Tender> yesterdayTender=tenderRepository.findAll(yesterdaySpecificati);
 
-        Map<String,Integer> statistic= Maps.newHashMap();
-        statistic.put("todayTender",CollectionUtils.isEmpty(todayTender)?0:todayTender.stream().mapToInt(p->p.getValidMoney()).sum());
-        statistic.put("yesterdayTender",CollectionUtils.isEmpty(yesterdayTender)?0:yesterdayTender.stream().mapToInt(p->p.getValidMoney()).sum());
+        Map<String,Long> statistic= Maps.newHashMap();
+        statistic.put("todayTender",CollectionUtils.isEmpty(todayTender)?0:todayTender.stream().mapToLong(p->p.getValidMoney()).sum());
+        statistic.put("yesterdayTender",CollectionUtils.isEmpty(yesterdayTender)?0:yesterdayTender.stream().mapToLong(p->p.getValidMoney()).sum());
 
         return statistic;
     }
