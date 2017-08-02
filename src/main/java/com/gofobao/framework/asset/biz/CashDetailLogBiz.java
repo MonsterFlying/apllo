@@ -23,6 +23,7 @@ public interface CashDetailLogBiz {
 
     /**
      * 提现前缀
+     *
      * @param userId
      * @param httpServletRequest
      * @return
@@ -37,7 +38,7 @@ public interface CashDetailLogBiz {
      * @param voCashReq
      * @return
      */
-    ResponseEntity<VoHtmlResp> cash(HttpServletRequest httpServletRequest, Long userId, VoCashReq voCashReq) throws  Exception;
+    ResponseEntity<VoHtmlResp> cash(HttpServletRequest httpServletRequest, Long userId, VoCashReq voCashReq) throws Exception;
 
     /**
      * 查询联行号
@@ -51,6 +52,7 @@ public interface CashDetailLogBiz {
 
     /**
      * 提现回调
+     *
      * @param request
      * @return
      */
@@ -59,6 +61,7 @@ public interface CashDetailLogBiz {
 
     /**
      * 提现日志
+     *
      * @param userId
      * @param pageIndex
      * @param pageSize
@@ -67,18 +70,18 @@ public interface CashDetailLogBiz {
     ResponseEntity<VoCashLogWrapResp> log(Long userId, int pageIndex, int pageSize);
 
 
-
-
     /**
      * 提现详情
+     *
      * @param id
      * @return
      */
-    ResponseEntity<VoCashLogDetailResp> logDetail(Long id,Long userId);
+    ResponseEntity<VoCashLogDetailResp> logDetail(Long id, Long userId);
 
 
     /**
      * 展示提现结果
+     *
      * @param seqNo
      * @param model
      * @return
@@ -87,6 +90,7 @@ public interface CashDetailLogBiz {
 
     /**
      * pc： 提现日志
+     *
      * @param cashLogs
      * @return
      */
@@ -94,6 +98,7 @@ public interface CashDetailLogBiz {
 
     /**
      * 后台提现
+     *
      * @param httpServletRequest
      * @param voAdminCashReq
      * @return
@@ -102,6 +107,7 @@ public interface CashDetailLogBiz {
 
     /**
      * PC 提现记录导出
+     *
      * @param cashLogs
      * @param response
      */
@@ -109,10 +115,9 @@ public interface CashDetailLogBiz {
 
 
     /**
+     * 自动判断取消提现
      * @param cashId
-     * @param curNum
-     * @param totalNum
      * @return
      */
-    boolean doFormCashMoney(Long cashId, Integer curNum, Integer totalNum) throws Exception;
+    boolean doCancelCash(Long cashId) throws Exception;
 }

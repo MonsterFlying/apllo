@@ -27,6 +27,9 @@ import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.asset.vo.response.pc.VoCashLog;
 import com.gofobao.framework.asset.vo.response.pc.VoCashLogWarpRes;
 import com.gofobao.framework.collection.vo.response.web.Collection;
+import com.gofobao.framework.common.assets.AssetChange;
+import com.gofobao.framework.common.assets.AssetChangeProvider;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
@@ -111,6 +114,8 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     @Autowired
     BankAccountBizImpl bankAccountBiz;
 
+    @Autowired
+    AssetChangeProvider assetChangeProvider;
 
     @Value("${gofobao.javaDomain}")
     String javaDomain;
@@ -449,26 +454,89 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             cashDetailLog.setState(3);
             cashDetailLog.setCallbackTime(nowDate);
             cashDetailLogService.save(cashDetailLog);
+
             // 更改用户资金
-            CapitalChangeEntity entity = new CapitalChangeEntity();
-            entity.setType(CapitalChangeEnum.Cash);
-            entity.setMoney(cashDetailLog.getMoney().intValue());
-            entity.setUserId(userId);
-            entity.setToUserId(userId);
-            capitalChangeHelper.capitalChange(entity);
-            log.info(String.format("提现成功: 交易流水: %s 返回状态/信息: %s/%s", seqNo, response.getRetCode(), response.getRetMsg()));
+            AssetChange entity = new AssetChange();
+            long realCashMoney = cashDetailLog.getMoney() - cashDetailLog.getFee();
+            String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+            entity.setGroupSeqNo(groupSeqNo);
+            entity.setMoney(realCashMoney);
+            entity.setSeqNo(seqNo);
+            entity.setUserId(users.getId());
+            entity.setRemark(String.format("你在 %s 成功提现%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(realCashMoney / 100D, true)));
+            entity.setType(AssetChangeTypeEnum.smallCash);
+            assetChangeProvider.commonAssetChange(entity);
+            if (cashDetailLog.getFee() > 0) {
+                // 扣除用户提现手续费
+                Long feeAccountId = assetChangeProvider.getFeeAccountId();
+                entity = new AssetChange();
+                entity.setGroupSeqNo(groupSeqNo);
+                entity.setMoney(cashDetailLog.getFee());
+                entity.setSeqNo(seqNo);
+                entity.setUserId(users.getId());
+                entity.setForUserId(feeAccountId);
+                entity.setRemark(String.format("你在 %s 成功扣除提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
+                entity.setType(AssetChangeTypeEnum.smallCashFee);
+                assetChangeProvider.commonAssetChange(entity);
+
+                // 平台收取提现手续费
+                entity = new AssetChange();
+                entity.setGroupSeqNo(groupSeqNo);
+                entity.setMoney(cashDetailLog.getFee());
+                entity.setSeqNo(seqNo);
+                entity.setUserId(feeAccountId);
+                entity.setForUserId(users.getId());
+                entity.setRemark(String.format("你在 %s 成功收取提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
+                entity.setType(AssetChangeTypeEnum.platformSmallCashFee);
+                assetChangeProvider.commonAssetChange(entity);
+            }
 
             titel = "提现成功";
             content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 处理成功! 如有疑问请致电客服.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
                     StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
         } else if ((JixinResultContants.CASH_RETRY.equals(response.getRetCode()))) {
             log.info(String.format("触发大额提现: 提现请求待确认: %s", GSON.toJson(response)));
-            // 此处考虑到资金安全, 我们使用 先扣除用户可用余额, 在由调取 5分钟 查询一次是是否提现成功或者失败
-            cashDetailLog.setState(2); // 等待结果
+            cashDetailLog.setState(3);
             cashDetailLog.setCallbackTime(nowDate);
-            cashDetailLog.setQueryCallbackTime(jixinTxDateHelper.getTxDateStr());
+            cashDetailLog.setQueryCallbackTime(jixinTxDateHelper.getTxDateStr());  // 查询时间
             cashDetailLogService.save(cashDetailLog);
-            // 5 分钟查询, 总共查询  2个小时
+
+            AssetChange entity = new AssetChange();
+            long realCashMoney = cashDetailLog.getMoney() - cashDetailLog.getFee();
+            String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+            entity.setGroupSeqNo(groupSeqNo);
+            entity.setMoney(realCashMoney);
+            entity.setSeqNo(seqNo);
+            entity.setUserId(userId);
+            entity.setRemark(String.format("你在 %s 成功提现%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(realCashMoney / 100D, true)));
+            entity.setType(AssetChangeTypeEnum.bigCash);
+            assetChangeProvider.commonAssetChange(entity);
+            if (cashDetailLog.getFee() > 0) {
+                // 扣除用户提现手续费
+                Long feeAccountId = assetChangeProvider.getFeeAccountId();
+                entity = new AssetChange();
+                entity.setGroupSeqNo(groupSeqNo);
+                entity.setMoney(cashDetailLog.getFee());
+                entity.setSeqNo(seqNo);
+                entity.setUserId(userId);
+                entity.setForUserId(feeAccountId);
+                entity.setRemark(String.format("你在 %s 成功扣除提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
+                entity.setType(AssetChangeTypeEnum.bigCashFee);
+                assetChangeProvider.commonAssetChange(entity);
+
+                // 平台收取提现手续费
+                entity = new AssetChange();
+                entity.setGroupSeqNo(groupSeqNo);
+                entity.setMoney(cashDetailLog.getFee());
+                entity.setSeqNo(seqNo);
+                entity.setUserId(feeAccountId);
+                entity.setForUserId(userId);
+                entity.setRemark(String.format("你在 %s 成功收取提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
+                entity.setType(AssetChangeTypeEnum.platformBigCashFee);
+                assetChangeProvider.commonAssetChange(entity);
+            }
+
+            // 10 分钟查询, 总共查询  2个小时
             TaskScheduler taskScheduler = new TaskScheduler();
             taskScheduler.setCreateAt(new Date());
             taskScheduler.setUpdateAt(new Date());
@@ -645,8 +713,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     }
 
     @Override
-    public boolean doFormCashMoney(Long cashId, Integer curNum, Integer totalNum) throws Exception {
-        // 查询当前标的信息
+    public boolean doCancelCash(Long cashId) throws Exception {
         CashDetailLog cashDetailLog = cashDetailLogService.findById(cashId);
         if (ObjectUtils.isEmpty(cashDetailLog)) {
             log.error(String.format("大额提现调度: 提现记录为空 %s", cashId));
@@ -659,24 +726,8 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(cashDetailLog.getUserId());
-        // 查询银行交易流水
-        BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
-        balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
-        BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
-        if ((ObjectUtils.isEmpty(balanceQueryResponse)) || !balanceQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
-            String msg = ObjectUtils.isEmpty(balanceQueryResponse) ? "当前网络异常, 请稍后尝试!" : balanceQueryResponse.getRetMsg();
-            log.error(String.format("大额提现调度: %s", msg));
-            return false;
-        }
-
-        double availBal = NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0;
-        double currBal = NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100.0;
-
         String cashTranType = cashDetailLog.getCashType() == 1 ? "2820" : "2616";  // 提现实际金额
         String cashFeeTranType = cashDetailLog.getCashType() == 1 ? "4820" : "4616";  // 提现费用金额
-        ImmutableList<String> contaits = ImmutableList.of(cashFeeTranType, cashTranType);
-
         List<AccountDetailsQueryItem> allAssetChangeLogs = findUserAssetChangeLog(cashDetailLog, userThirdAccount);
         if (CollectionUtils.isEmpty(allAssetChangeLogs)) {
             log.error("大额提现调度: 查询当天用户资金流水为空");
@@ -692,13 +743,13 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         List<Integer> cashIndexList = new ArrayList<>();
         for (int i = 0, len = filterAssetChangeLogs.size(); i < len; i++) {
             AccountDetailsQueryItem accountDetailsQueryItem = filterAssetChangeLogs.get(i);
-            if (accountDetailsQueryItem.getTranType().equals(cashTranType)) {
+            if (accountDetailsQueryItem.getTranType().equals(cashTranType) && accountDetailsQueryItem.getOrFlag().equals("R")) {   // 只获取拨正的提现流水
                 cashIndexList.add(i);
             }
         }
 
         if (CollectionUtils.isEmpty(cashIndexList)) {
-            log.error("大额提现调度: 查询当天用户提现流水为空");
+            log.error("大额提现调度: 查询当天用户提现拨正或者撤销流水为空");
             return false;
         }
 
@@ -720,7 +771,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             }
 
             for (int i = curr; i < next; i++) {
-                if (filterAssetChangeLogs.get(i).getTranType().equals(cashFeeTranType)) {
+                if (filterAssetChangeLogs.get(i).getTranType().equals(cashFeeTranType) && filterAssetChangeLogs.get(i).getOrFlag().equals("R")) {  // 拨正的流水
                     bean.put("fee", filterAssetChangeLogs.get(i));
                     break;
                 }
@@ -729,7 +780,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
         // 查询当天提现记录
-        ImmutableList<Integer> stateList = ImmutableList.of(2, 3);  // 成功和等待的
+        ImmutableList<Integer> stateList = ImmutableList.of(3, 4);  // 成功和失败
         Date startDate = DateHelper.beginOfDate(cashDetailLog.getCreateTime());
         Date endDate = DateHelper.beginOfDate(DateHelper.addDays(cashDetailLog.getCreateTime(), 1));
         List<CashDetailLog> cashDetailLogList = cashDetailLogService.findByUserIdAndStateInAndCreateTimeBetween(cashDetailLog.getUserId(), stateList, startDate, endDate);
@@ -739,7 +790,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                 .collect(Collectors.toList());  // 去除类型
 
         for (CashDetailLog item : cashDetailLogList) {  // 根据已经匹配的流水剔除用户交易记录
-            if (item.getState() == 3) {
+            if (item.getState() == 4) {
                 int i = 0;
                 boolean suitabilityState = false;
                 for (int len = leafAccountDetailQueryList.size(); i < len; i++) {
@@ -756,10 +807,12 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                 }
             }
         }
+
         if (CollectionUtils.isEmpty(leafAccountDetailQueryList)) {
             log.info("大额提现调度: 大额度匹配在线数据为零");
             return false;
         }
+
         for (Map<String, AccountDetailsQueryItem> item : leafAccountDetailQueryList) {
             AccountDetailsQueryItem cash = item.get("cash");
             AccountDetailsQueryItem fee = item.get("fee");
@@ -771,18 +824,11 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
             double _money = (cashDetailLog.getMoney() - cashDetailLog.getFee()) / 100D;
             double _fee = cashDetailLog.getFee() / 100D;
-            if ( (_money == cashMoney) && (_fee == feeMomey)) {
-                deductionAsset(cashDetailLog, cash);  // 扣除用户
-                return true ;
+            if ((_money == cashMoney) && (_fee == feeMomey)) {
+                log.info(String.format("大额提现调度: 进入归还用户提现资金: %s", GSON.toJson(cashDetailLog)));
+                deductionAsset(cashDetailLog, cash);  // 归还用户资金
+                return true;
             }
-        }
-        if(curNum +1 > totalNum){
-            log.info("===========================================");
-            log.info(String.format("大额提现: 系统调度取消大额提现: %s",  GSON.toJson(cashDetailLog)));
-            log.info("===========================================");
-            cashDetailLog.setState(4);
-            cashDetailLog.setCallbackTime(new Date());
-            cashDetailLogService.save(cashDetailLog) ;
         }
 
         return false;
@@ -841,24 +887,62 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         return accountDetailsQueryItemList;
     }
 
-    private void deductionAsset(CashDetailLog cashDetailLog, AccountDetailsQueryItem accountDetailsQueryItem) throws Exception {
+    /**
+     * 大额提现
+     *
+     * @param cashDetailLog
+     * @param cash
+     * @throws Exception
+     */
+    private void deductionAsset(CashDetailLog cashDetailLog, AccountDetailsQueryItem cash) throws Exception {
         Date nowDate = new Date();
-        String querySeqNo = String.format("%s%s%s", accountDetailsQueryItem.getInpDate(), accountDetailsQueryItem.getInpTime(), accountDetailsQueryItem.getTraceNo());
+        String querySeqNo = String.format("%s%s%s", cash.getInpDate(), cash.getInpTime(), cash.getTraceNo());
         // 更改用户提现记录
-        cashDetailLog.setState(3);
-        cashDetailLog.setCallbackTime(nowDate) ;
-        cashDetailLog.setQuerySeqNo(querySeqNo) ;
-        cashDetailLogService.save(cashDetailLog) ;
-        // 更改用户资金
+        cashDetailLog.setState(4);
+        cashDetailLog.setCallbackTime(nowDate);
+        cashDetailLog.setQuerySeqNo(querySeqNo);
+        cashDetailLogService.save(cashDetailLog);
+
+        String seqNo = cashDetailLog.getSeqNo();
         long userId = cashDetailLog.getUserId();
-        CapitalChangeEntity entity = new CapitalChangeEntity();
-        entity.setType(CapitalChangeEnum.Cash);
-        entity.setMoney(cashDetailLog.getMoney().intValue());
+
+        // 更改用户资金
+        AssetChange entity = new AssetChange();
+        long realCashMoney = cashDetailLog.getMoney() - cashDetailLog.getFee();
+        String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+        entity.setGroupSeqNo(groupSeqNo);
+        entity.setMoney(realCashMoney);
+        entity.setSeqNo(seqNo);
         entity.setUserId(userId);
-        entity.setToUserId(userId);
-        capitalChangeHelper.capitalChange(entity);
-        String titel = "提现成功";
-        String content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 处理成功! 如有疑问请致电客服.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
+        entity.setRemark(String.format("你在 %s 成功返还提现%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(realCashMoney / 100D, true)));
+        entity.setType(AssetChangeTypeEnum.cancelBigCash);
+        assetChangeProvider.commonAssetChange(entity);
+        if (cashDetailLog.getFee() > 0) {   // 扣除用户提现手续费
+            Long feeAccountId = assetChangeProvider.getFeeAccountId();
+            entity = new AssetChange();
+            entity.setGroupSeqNo(groupSeqNo);
+            entity.setMoney(cashDetailLog.getFee());
+            entity.setSeqNo(seqNo);
+            entity.setUserId(userId);
+            entity.setForUserId(feeAccountId);
+            entity.setRemark(String.format("你在 %s 成功返还提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
+            entity.setType(AssetChangeTypeEnum.cancelBigCashFee);
+            assetChangeProvider.commonAssetChange(entity);
+
+            // 平台收取提现手续费
+            entity = new AssetChange();
+            entity.setGroupSeqNo(groupSeqNo);
+            entity.setMoney(cashDetailLog.getFee());
+            entity.setSeqNo(seqNo);
+            entity.setUserId(feeAccountId);
+            entity.setForUserId(userId);
+            entity.setRemark(String.format("你在 %s 成功返还提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
+            entity.setType(AssetChangeTypeEnum.cancelPlatformBigCashFee);
+            assetChangeProvider.commonAssetChange(entity);
+        }
+
+        String titel = "提现失败";
+        String content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 由于已被银行拒绝受理, 现在归还提现资金. 如有疑问联系平台客服!", DateHelper.dateToString(cashDetailLog.getCreateTime()),
                 StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
         try {
             Notices notices = new Notices();
