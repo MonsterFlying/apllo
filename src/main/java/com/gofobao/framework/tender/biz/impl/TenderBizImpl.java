@@ -222,12 +222,12 @@ public class TenderBizImpl implements TenderBiz {
      * @param validateMoney
      * @return
      */
-    private Tender createBorrowTenderRecord(VoCreateTenderReq voCreateTenderReq, Users user, Date nowDate, int validateMoney) {
+    private Tender createBorrowTenderRecord(VoCreateTenderReq voCreateTenderReq, Users user, Date nowDate, long validateMoney) {
         Tender borrowTender = new Tender();
         borrowTender.setUserId(user.getId());
         borrowTender.setBorrowId(voCreateTenderReq.getBorrowId());
         borrowTender.setStatus(1);
-        borrowTender.setMoney(NumberHelper.toInt(voCreateTenderReq.getTenderMoney()));
+        borrowTender.setMoney(voCreateTenderReq.getTenderMoney().longValue());
         borrowTender.setValidMoney(validateMoney);
         borrowTender.setSource(voCreateTenderReq.getTenderSource());
         Integer autoOrder = voCreateTenderReq.getAutoOrder();
@@ -266,16 +266,16 @@ public class TenderBizImpl implements TenderBiz {
         }
 
         // 判断最小投标金额
-        int realTenderMoney = borrow.getMoney() - borrow.getMoneyYes();  // 剩余金额
+        long realTenderMoney = borrow.getMoney() - borrow.getMoneyYes();  // 剩余金额
         int minLimitTenderMoney = ObjectUtils.isEmpty(borrow.getLowest()) ? 50 * 100 : borrow.getLowest();  // 最小投标金额
-        int realMiniTenderMoney = Math.min(realTenderMoney, minLimitTenderMoney);  // 获取最小投标金额
+        long realMiniTenderMoney = Math.min(realTenderMoney, minLimitTenderMoney);  // 获取最小投标金额
         if (realMiniTenderMoney > voCreateTenderReq.getTenderMoney()) {
             extendMessage.add("小于标的最小投标金额!");
             return false;
         }
 
         // 真实有效投标金额
-        int invaildataMoney = Math.min(realTenderMoney, voCreateTenderReq.getTenderMoney().intValue());
+        long invaildataMoney = Math.min(realTenderMoney, voCreateTenderReq.getTenderMoney().intValue());
         if (voCreateTenderReq.getIsAutoTender()) {
             // 对于设置最大自动投标金额进行判断
             if (borrow.getMostAuto() > 0) {

@@ -159,7 +159,7 @@ public class InvestServiceImpl implements InvestService {
             } else {
                 voViewBiddingRes.setTimeLimit(timeLimit + BorrowContants.MONTH);
             }
-            Integer validMoney = p.getValidMoney();
+            Long validMoney = p.getValidMoney();
             Integer apr = borrow.getApr();
 
             //预期收益

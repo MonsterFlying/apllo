@@ -88,7 +88,7 @@ public class StatisticBizImpl implements StatisticBiz {
                 indexStatistics.setDueTotal(statistic.getWaitRepayTotal());
                 indexStatistics.setBorrowTotal(statistic.getBorrowItems());
                 indexStatistics.setEarnings(statistic.getUserIncomeTotal());
-                indexStatistics.setYesterdayDueTotal(0);
+                indexStatistics.setYesterdayDueTotal(0l);
                 //注册人数
                 BigDecimal registerTotal = incrStatisticService.registerTotal();
                 indexStatistics.setRegisterTotal(registerTotal);
@@ -100,7 +100,7 @@ public class StatisticBizImpl implements StatisticBiz {
                 indexStatistics.setApr(Integer.valueOf(dictValueMap.get("annualized").toString()));
                 indexStatistics.setStartMoney(Integer.valueOf(dictValueMap.get("startMoney").toString()));
 
-                Map<String, Integer> tenderStatistic = tenderService.statistic();
+                Map<String, Long> tenderStatistic = tenderService.statistic();
                 //昨日成交
                 indexStatistics.setYesterdayDueTotal(tenderStatistic.get("yesterdayTender"));
                 //今日成功

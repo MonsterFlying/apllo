@@ -72,7 +72,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
     @Value("${windmill.short-name}")
     private String shortName;
 
-    @Value("${from}")
+    @Value("${windmill.from}")
     private String from;
 
     @Value("${jwt.header}")

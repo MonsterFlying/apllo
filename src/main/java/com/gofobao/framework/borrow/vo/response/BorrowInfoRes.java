@@ -32,7 +32,7 @@ public class BorrowInfoRes extends VoBaseResp {
     private String viewSurplusMoney;
 
     @ApiModelProperty("不显示剩余金额")
-    private Integer hideSurplusMoney;
+    private Long hideSurplusMoney;
 
     @ApiModelProperty("进度")
     private double spend;

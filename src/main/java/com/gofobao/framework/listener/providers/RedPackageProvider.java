@@ -551,7 +551,7 @@ public class RedPackageProvider {
      * @param limit    期限
      * @return
      */
-    private static int getRandomRedpack(int money, Activity activity, int limit) {
+    private static int getRandomRedpack(long money, Activity activity, int limit) {
         if (ObjectUtils.isEmpty(activity)) {
             log.error("生成红包金额失败： 活动为空");
             return 0;

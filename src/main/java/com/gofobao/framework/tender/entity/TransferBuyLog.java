@@ -27,6 +27,7 @@ public class TransferBuyLog {
     private Boolean auto;
     private Integer autoOrder;
     private Integer source;
+    private Long principal;
     private Date createdAt;
     private Date updatedAt;
     private Boolean thirdTransferFlag;

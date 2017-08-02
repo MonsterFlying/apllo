@@ -1158,7 +1158,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * @return
      * @throws Exception
      */
-    public void receivedRepay(List<Repay> repayList, Borrow borrow, String borrowAccountId, int order, double interestPercent, int lateDays, int lateInterest) throws Exception {
+    public void receivedRepay(List<Repay> repayList, Borrow borrow, String borrowAccountId, int order, double interestPercent, int lateDays, long lateInterest) throws Exception {
         Long borrowId = borrow.getId();
         Specification<Tender> specification = Specifications
                 .<Tender>and()
@@ -1244,7 +1244,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 Borrow tempBorrow = borrowList.get(0);
 
                 int tempOrder = order + tempBorrow.getTotalOrder() - borrow.getTotalOrder();
-                int tempLateInterest = tender.getValidMoney() / borrow.getMoney() * lateInterest;  // 逾期收入
+                long tempLateInterest = tender.getValidMoney() / borrow.getMoney() * lateInterest;  // 逾期收入
                 receivedRepay(repayList, tempBorrow, borrowAccountId, tempOrder, interestPercent, lateDays, tempLateInterest); //递归处理
                 continue;
             }

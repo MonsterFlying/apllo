@@ -24,12 +24,19 @@ import java.util.List;
 public interface TransferBiz {
 
     /**
+     * 债权转让复审
+     *
+     * @param transferId
+     * @return
+     */
+    ResponseEntity<VoBaseResp> againVerifyTransfer(long transferId) throws Exception;
+
+    /**
      * 债权转让初审
      *
      * @param voPcFirstVerityTransfer
      * @return
      */
-    @Transactional(rollbackFor = Exception.class)
     ResponseEntity<VoBaseResp> firstVerifyTransfer(VoPcFirstVerityTransfer voPcFirstVerityTransfer) throws Exception;
 
     /**

@@ -561,7 +561,7 @@ public class AplloApplicationTests {
         //非转让标复审问题
         //noTransferBorrowAgainVerify();
         // 查询债权关系
-        /*CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
+        CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
         creditDetailsQueryRequest.setAccountId("6212462040000650087");
         creditDetailsQueryRequest.setStartDate("20161003");
         creditDetailsQueryRequest.setProductId("169922");
@@ -572,10 +572,10 @@ public class AplloApplicationTests {
         CreditDetailsQueryResponse creditDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.CREDIT_DETAILS_QUERY,
                 creditDetailsQueryRequest,
                 CreditDetailsQueryResponse.class);
-        System.out.println(creditDetailsQueryResponse);*/
+        System.out.println(creditDetailsQueryResponse);
 
 
-        CreditEndReq creditEndReq = new CreditEndReq();
+        /*CreditEndReq creditEndReq = new CreditEndReq();
         creditEndReq.setAccountId("6212462040000200123");
         creditEndReq.setProductId("169921");
         creditEndReq.setOrderId(JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX));
@@ -585,7 +585,7 @@ public class AplloApplicationTests {
         CreditEndResp creditEndResp = jixinManager.send(JixinTxCodeEnum.CREDIT_END,
                 creditEndReq,
                 CreditEndResp.class);
-        System.out.println(creditEndResp);
+        System.out.println(creditEndResp);*/
 
        /* List<Repay> repayList = new ArrayList<>();
         Repay repay = new Repay();
