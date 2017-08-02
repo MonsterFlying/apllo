@@ -29,6 +29,7 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.Date;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -74,8 +75,8 @@ public class AssetChangeProvider {
                         return null;
                     }
 
-                    DictValue dictValue = dictValueService.findTopByItemIdAndValue02(dictItem.getId(), jixinParamStr);
-                    return ObjectUtils.isEmpty(dictValue) ? null : Long.parseLong(dictValue.getValue02());
+                    DictValue dictValue = dictValueService.findTopByItemIdAndValue01(dictItem.getId(), jixinParamStr);
+                    return ObjectUtils.isEmpty(dictValue) ? null : Long.parseLong(dictValue.getValue03());
                 }
             });
 
@@ -87,7 +88,6 @@ public class AssetChangeProvider {
      */
     public void commonAssetChange(AssetChange entity) throws Exception{
         Preconditions.checkNotNull(entity, "AssetChangeProvider.commonAssetChange assetEntity is null ");
-        Preconditions.checkArgument(entity.getUserId() > 0, "AssetChangeProvider.commonAssetChange userId  <= 0");
         Preconditions.checkArgument(entity.getUserId() > 0, "AssetChangeProvider.commonAssetChange userId  <= 0");
         Preconditions.checkNotNull(entity.getType(), "AssetChangeProvider.commonAssetChange type is null");
 
@@ -151,7 +151,9 @@ public class AssetChangeProvider {
             newAssetLog.setUseMoney(asset.getUseMoney());
             newAssetLog.setCurrMoney(asset.getUseMoney() + asset.getNoUseMoney());
             newAssetLog.setDel(0);
-            newAssetLog.setForUserId(entity.getForUserId());
+            if(!ObjectUtils.isEmpty(entity.getForUserId())){
+                newAssetLog.setForUserId(entity.getForUserId());
+            }
             newAssetLog.setLocalSeqNo(entity.getSeqNo()) ;
             newAssetLog.setNoUseMoney(asset.getNoUseMoney());
             newAssetLog.setOpMoney(entity.getMoney());
@@ -162,6 +164,9 @@ public class AssetChangeProvider {
             newAssetLog.setTxFlag(entity.getType().getTxFlag());
             newAssetLog.setGroupOpSeqNo(entity.getGroupSeqNo());
             newAssetLog.setOpName(entity.getType().getOpName());
+            if(!ObjectUtils.isEmpty(entity.getSourceId())){
+                newAssetLog.setSourceId(entity.getSourceId()) ;
+            }
             newAssetLogService.save(newAssetLog) ;
         }
 
@@ -180,24 +185,24 @@ public class AssetChangeProvider {
      * 获取费用账户Id
      * @return
      */
-    public Long getFeeAccountId(){
-        return jixinConfigCache.getIfPresent("handlingChargeUserId") ;
+    public Long getFeeAccountId() throws ExecutionException {
+        return jixinConfigCache.get("handlingChargeUserId") ;
     }
 
     /**
      * 获取红包账户ID
      * @return
      */
-    public Long getRedpackAccountId(){
-        return jixinConfigCache.getIfPresent("redPacketUserId") ;
+    public Long getRedpackAccountId() throws ExecutionException {
+        return jixinConfigCache.get("redPacketUserId") ;
     }
 
     /**
      * 获取担保账户ID
      * @return
      */
-    public Long getBailAccountId(){
-        return jixinConfigCache.getIfPresent("bailUserId") ;
+    public Long getBailAccountId() throws ExecutionException {
+        return jixinConfigCache.get("bailUserId") ;
     }
 
     /**

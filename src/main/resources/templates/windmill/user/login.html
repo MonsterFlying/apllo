@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>广富宝金服</title>
     <meta name="viewport" content="initial-scale=1, maximum-scale=3, minimum-scale=1, user-scalable=no"/>
+    <script src="http://cdn.bootcss.com/zepto/1.2.0/zepto.min.js"></script>
     <style>
         html {
             background-color: #f8f8f8;
@@ -118,6 +119,18 @@
             margin: 25px 0 24px;
             margin: 2.5rem 0 2.4rem;
         }
+
+        .toast {
+            background-color: rgba(0, 0, 0, 0.6);
+            width: 24rem;
+            height: 2.8rem;
+            line-height: 2.8rem;
+            text-align: center;
+            margin: 0 auto;
+            border-radius: 4px;
+            font-size: 1.8rem;
+        }
+
     </style>
 </head>
 <body>
@@ -128,18 +141,61 @@
          alt="">
 </div>
 <div>
-    <form action="">
+    <form action="" id="LOGIN_BOX" >
         <p class="row">
             <input type="text" name="userName" placeholder="输入用户名">
         </p>
         <p class="row">
             <input type="password" name="passsword" placeholder="输入密码">
         </p>
-        <input type="hidden" name="param"  th:value="${param}"/>
+        <input type="hidden" name="param" th:value="${param}"/>
+        <input type="hidden" name="address" th:value="${address}"/>
         <div class="submitBox">
-            <input type="submit" value="登录">
+            <input type="button" value="登录">
         </div>
     </form>
 </div>
 </body>
+<script>
+    window.onload = function () {
+        $.toast = function (msg, duration, extraclass) {
+            console.log('test..')
+            var $toast = $('<div class="toast ' + (extraclass || '') + '">' + msg + '</div>').appendTo(document.body);
+            setTimeout(function () {
+                $toast.remove();
+            }, 2000);
+        };
+        var _login_btn = $('#LOGIN_BOX input[type=button]')[0];
+        var _username = $('#LOGIN_BOX input[name=userName]')[0];
+        var _password = $('#LOGIN_BOX input[name=passsword]')[0];
+        var _param = $('#LOGIN_BOX input[name=param]')[0];
+        var _address = $('#LOGIN_BOX input[name=address]')[0];
+
+        _login_btn.onclick = function () {
+            if (!_username.value || !_password.value) {
+                $.toast('请输入用户名和密码')
+                return
+            }
+            $.ajax({
+                type: 'POST',
+                url: _address.value + '/pub/windmill/user/bind/login',
+                data: {account: _username.value, password: _password.value, params: _param.value},
+                success: function (response) {
+                    const target_url = response.target_url;
+                    window.location.href = target_url;
+                },
+                error: function (response) {
+                    var targetUrl="www.gofobao.com";
+                    window.location.href = targetUrl;
+                    const res = JSON.parse(response.response)
+                    const msg = res.state.msg
+                    $.toast(msg)
+                }
+            })
+        }
+
+
+
+    }
+</script>
 </html>

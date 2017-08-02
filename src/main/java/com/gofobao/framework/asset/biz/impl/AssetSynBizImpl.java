@@ -126,10 +126,6 @@ public class AssetSynBizImpl implements AssetSynBiz {
             accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
             pageIndex++ ;
         } while (realSize == pageSize);
-        accountDetailsQueryItemList.forEach(item -> {
-            System.err.println(GSON.toJson(item));
-        });
-
         if(CollectionUtils.isEmpty(accountDetailsQueryItemList)){
             return asset ;
         }

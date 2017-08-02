@@ -250,7 +250,6 @@ public class UserBizImpl implements UserBiz {
             assetSynBiz.doAssetSyn(user.getId());
         }
 
-
         // 获取vip状态
         Vip vip = vipService.findTopByUserIdAndStatus(user.getId(), 1);
         voBasicUserInfoResp.setAvatarUrl(String.format("%S/data/images/avatar/$s_avatar_small.jpg", imageDomain, user.getId()));
@@ -278,7 +277,6 @@ public class UserBizImpl implements UserBiz {
 
     @Override
     public ResponseEntity<VoBasicUserInfoResp> login(HttpServletRequest httpServletRequest, HttpServletResponse response, VoLoginReq voLoginReq) {
-        // Perform the security
         final Authentication authentication;
         try {
             authentication = authenticationManager.authenticate(
