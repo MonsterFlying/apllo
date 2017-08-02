@@ -51,7 +51,7 @@ public class BigCashQueryScheduler {
 
                 boolean b = false;
                 try {
-                    b = cashDetailLogBiz.doCancelCash(cashId, p.getDoTaskNum(), p.getTaskNum());
+                    b = cashDetailLogBiz.doCancelCash(cashId);
                 } catch (Exception e) {
                     log.error("大额提现资金确认扣减调度遗产", e);
                 }
