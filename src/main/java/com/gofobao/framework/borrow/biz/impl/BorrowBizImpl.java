@@ -1115,7 +1115,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
     /**
      * 结束标的信息
-     *
+     * @// TODO: 2017/8/2 这里要跟着债权转让改变 
      * @param borrow
      * @param tenderList
      */
