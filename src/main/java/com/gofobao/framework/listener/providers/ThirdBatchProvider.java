@@ -117,7 +117,7 @@ public class ThirdBatchProvider {
                 .build();
         List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls);
         Preconditions.checkNotNull(thirdBatchLogList, "批处理回调: 查询批处理记录为空");
-        //主动查询未改变记录的批次状态，
+        // 主动查询未改变记录的批次状态，
         ThirdBatchLog thirdBatchLog = thirdBatchLogList.get(0);
         boolean flag = thirdBatchLogBiz.checkLocalSourceState(String.valueOf(thirdBatchLog.getSourceId()), thirdBatchLog.getType());//获取资源状态是否已完成状态
         if (flag) {
@@ -129,7 +129,7 @@ public class ThirdBatchProvider {
         List<DetailsQueryResp> detailsQueryRespList = new ArrayList<>();
         do {
             pageIndex++;
-            //1.查询批次交易明细
+            // 1.查询批次交易明细
             BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
             batchDetailsQueryReq.setBatchNo(String.valueOf(batchNo));
             batchDetailsQueryReq.setBatchTxDate(DateHelper.dateToString(thirdBatchLogList.get(0).getCreateAt(), DateHelper.DATE_FORMAT_YMD_NUM));
@@ -590,7 +590,7 @@ public class ThirdBatchProvider {
                     tender.setStatus(2); // 取消状态
                     tender.setUpdatedAt(nowDate);
 
-                    // 新版资金变动
+                    // 取消冻结
                     AssetChange assetChange = new AssetChange();
                     assetChange.setSourceId(tender.getId());
                     assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());

@@ -35,14 +35,14 @@ public class TransferController {
     private ThymeleafHelper thymeleafHelper;
 
     /**
-     * 新版债权转让
+     * 新版发布债权转让
      *
      * @param voTransferTenderReq
      * @return
      * @throws Exception
      */
-    @ApiOperation("新版债权转让")
-    @GetMapping("v2/transfer/new")
+    @ApiOperation("新版发布债权转让")
+    @GetMapping("v2/new/transfer/publish")
     public ResponseEntity<VoBaseResp> newTransferTender(@Valid VoTransferTenderReq voTransferTenderReq) {
         try {
             return transferBiz.newTransferTender(voTransferTenderReq);
@@ -54,8 +54,8 @@ public class TransferController {
     /**
      * 购买债权转让
      */
-    @ApiOperation("购买债权转让")
-    @GetMapping("v2/buy")
+    @ApiOperation("新版购买债权转让")
+    @GetMapping("v2/new/transfer/buy")
     public ResponseEntity<VoBaseResp> buyTransfer(@Valid VoBuyTransfer voBuyTransfer) {
         try {
             return transferBiz.buyTransfer(voBuyTransfer);

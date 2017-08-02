@@ -117,15 +117,6 @@ public class TenderBizImpl implements TenderBiz {
         Users user = userService.findByIdLock(voCreateTenderReq.getUserId());
         Preconditions.checkNotNull(user, "投标: 用户信息为空!");
 
-        if (voCreateTenderReq.getSource() == 1) { //PC端需要交易密码校验
-            if (StringUtils.isEmpty(voCreateTenderReq.getPayPassword()) && voCreateTenderReq.getPayPassword().length() > 1) {
-                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "投标：交易密碼为空,请设置交易密码"));
-            }
-            Boolean flag = PasswordHelper.verifyPassword(user.getPayPassword(), voCreateTenderReq.getPayPassword());
-            if (!flag) {
-                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "投标：交易密码错误,请重新输入"));
-            }
-        }
         Preconditions.checkNotNull(user, "投标: 用户信息为空!");
         Borrow borrow = borrowService.findByIdLock(voCreateTenderReq.getBorrowId());
         Preconditions.checkNotNull(borrow, "投标: 标的信息为空!");
@@ -146,7 +137,7 @@ public class TenderBizImpl implements TenderBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, iterator.next()));
         }
 
-        state = verifyUserInfo4Borrow(user, borrow, asset, userCache, voCreateTenderReq, extendMessage); // 借款用户资产判断
+        state = verifyUserInfo4Borrow(user, borrow, asset, voCreateTenderReq, extendMessage); // 借款用户资产判断
         Set<String> errorSet = extendMessage.elementSet();
         Iterator<String> iterator = errorSet.iterator();
 
@@ -264,11 +255,10 @@ public class TenderBizImpl implements TenderBiz {
      * @param user
      * @param borrow
      * @param asset
-     * @param userCache
      * @param voCreateTenderReq
      * @param extendMessage     @return
      */
-    private boolean verifyUserInfo4Borrow(Users user, Borrow borrow, Asset asset, UserCache userCache, VoCreateTenderReq voCreateTenderReq, Multiset<String> extendMessage) {
+    private boolean verifyUserInfo4Borrow(Users user, Borrow borrow, Asset asset, VoCreateTenderReq voCreateTenderReq, Multiset<String> extendMessage) {
         // 判断用户是否已经锁定
         if (user.getIsLock()) {
             extendMessage.add("当前用户属于锁定状态, 如有问题请联系客户!");
@@ -409,6 +399,19 @@ public class TenderBizImpl implements TenderBiz {
             Borrow tempBorrow = borrowService.findById(tender.getBorrowId());
             if (user.getId().equals(tempBorrow.getUserId())) {
                 errerMessage.add("不能投自己发布或转让的借款!");
+                return false;
+            }
+        }
+
+
+        if (voCreateTenderReq.getSource() == 1) { //PC端需要交易密码校验
+            if (StringUtils.isEmpty(voCreateTenderReq.getPayPassword()) && voCreateTenderReq.getPayPassword().length() > 1) {
+                errerMessage.add("交易密碼为空,请设置交易密码");
+                return false;
+            }
+            Boolean flag = PasswordHelper.verifyPassword(user.getPayPassword(), voCreateTenderReq.getPayPassword());
+            if (!flag) {
+                errerMessage.add("交易密码错误,请重新输入");
                 return false;
             }
         }
