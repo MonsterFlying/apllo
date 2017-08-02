@@ -7,6 +7,7 @@ import com.gofobao.framework.asset.entity.YesterdayAsset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.NewAssetLogService;
 import com.gofobao.framework.asset.service.YesterdayAssetService;
+import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -58,7 +59,7 @@ public class AssetChangeProvider {
     DictValueService dictValueService;
 
     @Autowired
-    NewAssetLogService newAssetLogService ;
+    NewAssetLogService newAssetLogService;
 
     /**
      * 即信参数
@@ -86,7 +87,7 @@ public class AssetChangeProvider {
      *
      * @param entity
      */
-    public void commonAssetChange(AssetChange entity) throws Exception{
+    public void commonAssetChange(AssetChange entity) throws Exception {
         Preconditions.checkNotNull(entity, "AssetChangeProvider.commonAssetChange assetEntity is null ");
         Preconditions.checkArgument(entity.getUserId() > 0, "AssetChangeProvider.commonAssetChange userId  <= 0");
         Preconditions.checkNotNull(entity.getType(), "AssetChangeProvider.commonAssetChange type is null");
@@ -95,7 +96,7 @@ public class AssetChangeProvider {
             entity.setMoney(entity.getPrincipal() + entity.getInterest());
         }
 
-        Preconditions.checkArgument(entity.getUserId() > 0,  "AssetChangeProvider.commonAssetChange moeny  <= 0");
+        Preconditions.checkArgument(entity.getUserId() > 0, "AssetChangeProvider.commonAssetChange moeny  <= 0");
         if (entity.getPrincipal() <= 0) {
             entity.setPrincipal(entity.getMoney() - entity.getInterest());
         }
@@ -140,21 +141,21 @@ public class AssetChangeProvider {
         }
 
         String assetChangeRule = entity.getType().getAssetChangeRule();
-        if(!StringUtils.isEmpty(assetChangeRule)) {  // 解析资金变动
+        if (!StringUtils.isEmpty(assetChangeRule)) {  // 解析资金变动
             log.info(String.format("资金变动: 解析资金变动规则: %s", assetChangeRule));
             AssetChangeRuleParse.parse(asset, assetChangeRule, entity.getPrincipal(), entity.getInterest());
             asset.setUpdatedAt(nowDate);
             assetService.save(asset);
             // 查询资金变动记录
-            NewAssetLog newAssetLog = new NewAssetLog() ;
+            NewAssetLog newAssetLog = new NewAssetLog();
             newAssetLog.setCreateTime(nowDate);
             newAssetLog.setUseMoney(asset.getUseMoney());
             newAssetLog.setCurrMoney(asset.getUseMoney() + asset.getNoUseMoney());
             newAssetLog.setDel(0);
-            if(!ObjectUtils.isEmpty(entity.getForUserId())){
+            if (!ObjectUtils.isEmpty(entity.getForUserId())) {
                 newAssetLog.setForUserId(entity.getForUserId());
             }
-            newAssetLog.setLocalSeqNo(entity.getSeqNo()) ;
+            newAssetLog.setLocalSeqNo(entity.getSeqNo());
             newAssetLog.setNoUseMoney(asset.getNoUseMoney());
             newAssetLog.setOpMoney(entity.getMoney());
             newAssetLog.setLocalType(entity.getType().getLocalType());
@@ -164,17 +165,17 @@ public class AssetChangeProvider {
             newAssetLog.setTxFlag(entity.getType().getTxFlag());
             newAssetLog.setGroupOpSeqNo(entity.getGroupSeqNo());
             newAssetLog.setOpName(entity.getType().getOpName());
-            if(!ObjectUtils.isEmpty(entity.getSourceId())){
-                newAssetLog.setSourceId(entity.getSourceId()) ;
+            if (!ObjectUtils.isEmpty(entity.getSourceId())) {
+                newAssetLog.setSourceId(entity.getSourceId());
             }
-            newAssetLogService.save(newAssetLog) ;
+            newAssetLogService.save(newAssetLog);
         }
 
 
         String userCacheChangeRule = entity.getType().getUserCacheChangeRule();
-        if(!StringUtils.isEmpty(userCacheChangeRule)){
+        if (!StringUtils.isEmpty(userCacheChangeRule)) {
             log.info(String.format("资金变动: 解析资金缓存变动规则: %s", assetChangeRule));
-            AssetChangeRuleParse.parse(userCache, userCacheChangeRule, entity.getPrincipal(), entity.getInterest()) ;
+            AssetChangeRuleParse.parse(userCache, userCacheChangeRule, entity.getPrincipal(), entity.getInterest());
             userCache.setUpdatedAt(nowDate);
             userCache.setYesterdayUseMoney(yesterdayMoney > 0 ? yesterdayMoney : 0);
             userCacheService.save(userCache);
@@ -183,33 +184,46 @@ public class AssetChangeProvider {
 
     /**
      * 获取费用账户Id
+     *
      * @return
      */
     public Long getFeeAccountId() throws ExecutionException {
-        return jixinConfigCache.get("handlingChargeUserId") ;
+        return jixinConfigCache.get("handlingChargeUserId");
     }
 
     /**
      * 获取红包账户ID
+     *
      * @return
      */
     public Long getRedpackAccountId() throws ExecutionException {
-        return jixinConfigCache.get("redPacketUserId") ;
+        return jixinConfigCache.get("redPacketUserId");
     }
 
     /**
      * 获取担保账户ID
+     *
      * @return
      */
     public Long getBailAccountId() throws ExecutionException {
-        return jixinConfigCache.get("bailUserId") ;
+        return jixinConfigCache.get("bailUserId");
     }
 
     /**
      * 获取组的序列
+     *
      * @return
      */
-    public String getGroupSeqNo(){
-        return String.valueOf(System.currentTimeMillis()) ;
+    public String getGroupSeqNo() {
+        return String.valueOf(System.currentTimeMillis());
+    }
+
+    /**
+     * 获取标准序列号
+     *
+     * @return
+     */
+    public String getSeqNo() {
+        return String.format("%s%s", DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMDHMS_NUM), RandomHelper.generateNumberCode(6));
     }
 }

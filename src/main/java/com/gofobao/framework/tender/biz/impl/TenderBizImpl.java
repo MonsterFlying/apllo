@@ -97,7 +97,7 @@ public class TenderBizImpl implements TenderBiz {
     private TenderThirdBiz tenderThirdBiz;
 
     @Autowired
-    AssetChangeProvider assetChangeProvider ;
+    AssetChangeProvider assetChangeProvider;
 
     /**
      * 新版投标
@@ -110,15 +110,15 @@ public class TenderBizImpl implements TenderBiz {
         log.info(String.format("马上投资: 起步: %s", new Gson().toJson(voCreateTenderReq)));
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voCreateTenderReq.getUserId());
         ResponseEntity<VoBaseResp> thirdAccountConditionResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
-        if(!thirdAccountConditionResponse.getStatusCode().equals(HttpStatus.OK)){
-            return thirdAccountConditionResponse ;
+        if (!thirdAccountConditionResponse.getStatusCode().equals(HttpStatus.OK)) {
+            return thirdAccountConditionResponse;
         }
 
         Users user = userService.findByIdLock(voCreateTenderReq.getUserId());
         Preconditions.checkNotNull(user, "投标: 用户信息为空!");
 
         if (voCreateTenderReq.getSource() == 1) { //PC端需要交易密码校验
-            if (StringUtils.isEmpty(voCreateTenderReq.getPayPassword())&&voCreateTenderReq.getPayPassword().length()>1) {
+            if (StringUtils.isEmpty(voCreateTenderReq.getPayPassword()) && voCreateTenderReq.getPayPassword().length() > 1) {
                 return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "投标：交易密碼为空,请设置交易密码"));
             }
             Boolean flag = PasswordHelper.verifyPassword(user.getPayPassword(), voCreateTenderReq.getPayPassword());
@@ -126,15 +126,15 @@ public class TenderBizImpl implements TenderBiz {
                 return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "投标：交易密码错误,请重新输入"));
             }
         }
-        Preconditions.checkNotNull(user, "投标: 用户信息为空!") ;
+        Preconditions.checkNotNull(user, "投标: 用户信息为空!");
         Borrow borrow = borrowService.findByIdLock(voCreateTenderReq.getBorrowId());
         Preconditions.checkNotNull(borrow, "投标: 标的信息为空!");
 
-        Preconditions.checkNotNull(borrow, "投标: 标的信息为空!") ;
+        Preconditions.checkNotNull(borrow, "投标: 标的信息为空!");
         Asset asset = assetService.findByUserIdLock(voCreateTenderReq.getUserId());
         Preconditions.checkNotNull(asset, "投标: 资金记录为空!");
 
-        Preconditions.checkNotNull(asset, "投标: 资金记录为空!") ;
+        Preconditions.checkNotNull(asset, "投标: 资金记录为空!");
         UserCache userCache = userCacheService.findByUserIdLock(voCreateTenderReq.getUserId());
         Preconditions.checkNotNull(userCache, "投标: 用户缓存信息为空!");
 
@@ -159,7 +159,7 @@ public class TenderBizImpl implements TenderBiz {
         Date nowDate = new Date();
         int validateMoney = Integer.parseInt(iterator.next());
         Tender borrowTender = createBorrowTenderRecord(voCreateTenderReq, user, nowDate, validateMoney);    // 生成投标记录
-        borrowTender = registerTender(borrow, borrowTender) ;  // 投标的存管报备
+        borrowTender = registerTender(borrow, borrowTender);  // 投标的存管报备
         updateAssetByTender(borrow, borrowTender); // 扣除用户投标金额
         borrow.setMoneyYes(borrow.getMoneyYes() + validateMoney);
         borrow.setTenderCount((borrow.getTenderCount() + 1));
@@ -183,23 +183,22 @@ public class TenderBizImpl implements TenderBiz {
 
     /**
      * 用户投标冻结
+     *
      * @param borrow
      * @param borrowTender
      * @throws Exception
      */
     private void updateAssetByTender(Borrow borrow, Tender borrowTender) throws Exception {
-        Date nowDate = new Date() ;
-        AssetChange assetChange = new AssetChange() ;
+        AssetChange assetChange = new AssetChange();
         assetChange.setForUserId(borrowTender.getUserId());
         assetChange.setUserId(borrowTender.getUserId());
         assetChange.setType(AssetChangeTypeEnum.freeze);
-        assetChange.setRemark(String.format("成功投资标的[%s]冻结%s元", borrow.getName(),  StringHelper.formatDouble(borrowTender.getValidMoney() / 100D, true)));
-        String seqNo = String.format("%s%s", DateHelper.dateToString(nowDate, DateHelper.DATE_FORMAT_YMDHMS_NUM), RandomHelper.generateNumberCode(6)) ;
-        assetChange.setSeqNo(seqNo);
+        assetChange.setRemark(String.format("成功投资标的[%s]冻结资金%s元", borrow.getName(), StringHelper.formatDouble(borrowTender.getValidMoney() / 100D, true)));
+        assetChange.setSeqNo(assetChangeProvider.getSeqNo());
         assetChange.setMoney(borrowTender.getValidMoney());
         assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-        assetChange.setSourceId(borrowTender.getId()) ;
-        assetChangeProvider.commonAssetChange(assetChange) ;
+        assetChange.setSourceId(borrowTender.getId());
+        assetChangeProvider.commonAssetChange(assetChange);
     }
 
     private Tender registerTender(Borrow borrow, Tender borrowTender) throws Exception {
