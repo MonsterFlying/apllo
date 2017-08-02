@@ -18,7 +18,7 @@ import java.util.Map;
  */
 public interface BorrowService {
 
-    List<VoViewBorrowList> findAll(VoBorrowListReq voBorrowListReq);
+    List<VoViewBorrowList> findNormalBorrow(VoBorrowListReq voBorrowListReq);
 
     VoPcBorrowList pcFindAll(VoBorrowListReq voBorrowListReq);
 

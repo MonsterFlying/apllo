@@ -59,6 +59,7 @@ import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
+import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.AutoTenderService;
@@ -155,6 +156,9 @@ public class BorrowBizImpl implements BorrowBiz {
     JixinManager jixinManager;
 
     @Autowired
+    TransferBiz transferBiz ;
+
+    @Autowired
     AssetChangeProvider assetChangeProvider;
 
 
@@ -193,12 +197,18 @@ public class BorrowBizImpl implements BorrowBiz {
     @Override
     public ResponseEntity<VoViewBorrowListWarpRes> findAll(VoBorrowListReq voBorrowListReq) {
         try {
-            List<VoViewBorrowList> borrowLists = borrowService.findAll(voBorrowListReq);
+            List<VoViewBorrowList> borrowLists = null ;
+            if(voBorrowListReq.getType() == 5){  // 债权转让
+                borrowLists = transferBiz.findTransferList(voBorrowListReq) ;
+            }else{  // 正常标的
+                borrowLists = borrowService.findNormalBorrow(voBorrowListReq);
+            }
+
             VoViewBorrowListWarpRes listWarpRes = VoBaseResp.ok("查询成功", VoViewBorrowListWarpRes.class);
             listWarpRes.setVoViewBorrowLists(borrowLists);
             return ResponseEntity.ok(listWarpRes);
         } catch (Throwable e) {
-            log.info("BorrowBizImpl findAll fail%s", e);
+            log.info("BorrowBizImpl findNormalBorrow fail%s", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,
@@ -206,6 +216,7 @@ public class BorrowBizImpl implements BorrowBiz {
                             VoViewBorrowListWarpRes.class));
         }
     }
+
 
     @Override
     public ResponseEntity<VoPcBorrowList> pcFindAll(VoBorrowListReq voBorrowListReq) {
@@ -219,7 +230,7 @@ public class BorrowBizImpl implements BorrowBiz {
             listWarpRes.setPageSize(borrowLists.getPageSize());
             return ResponseEntity.ok(listWarpRes);
         } catch (Throwable e) {
-            log.info("BorrowBizImpl findAll fail%s", e);
+            log.info("BorrowBizImpl findNormalBorrow fail%s", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,

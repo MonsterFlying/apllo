@@ -1,6 +1,8 @@
 package com.gofobao.framework.tender.biz;
 
+import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.request.VoPcDoFirstVerity;
+import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.tender.vo.request.VoBuyTransfer;
 import com.gofobao.framework.tender.vo.request.VoPcFirstVerityTransfer;
@@ -13,6 +15,8 @@ import com.gofobao.framework.tender.vo.response.VoViewTransferedWarpRes;
 import com.gofobao.framework.tender.vo.response.web.VoViewTransferBuyWarpRes;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * Created by admin on 2017/6/12.
@@ -74,4 +78,13 @@ public interface TransferBiz {
      * @return
      */
     ResponseEntity<VoGoTenderInfo> goTenderInfo(Long tenderId, Long userId);
+
+    /**
+     * 理财列表
+     * @param voBorrowListReq
+     * @return
+     */
+
+    List<VoViewBorrowList> findTransferList(VoBorrowListReq voBorrowListReq);
+
 }
