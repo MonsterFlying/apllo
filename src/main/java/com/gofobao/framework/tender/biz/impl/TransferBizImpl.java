@@ -300,13 +300,14 @@ public class TransferBizImpl implements TransferBiz {
      * 3.判断账户可用金额是否大于购入金额
      * 4.生成购买债权记录
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> buyTransfer(VoBuyTransfer voBuyTransfer) throws Exception {
         String msg = null;
-        long userId = voBuyTransfer.getUserId();/*购买人id*/
-        long transferId = voBuyTransfer.getTransferId();/*债权转让记录id*/
-        long buyMoney = voBuyTransfer.getBuyMoney().longValue();/*购买债权转让金额*/
-        boolean auto = voBuyTransfer.getAuto();/* 是否是自动购买债权转让 */
-        int autoOrder = voBuyTransfer.getAutoOrder();/* 自动投标order编号 */
+        long userId = voBuyTransfer.getUserId(); /*购买人id*/
+        long transferId = voBuyTransfer.getTransferId(); /*债权转让记录id*/
+        long buyMoney = voBuyTransfer.getBuyMoney().longValue(); /*购买债权转让金额*/
+        boolean auto = voBuyTransfer.getAuto(); /* 是否是自动购买债权转让 */
+        int autoOrder = voBuyTransfer.getAutoOrder(); /* 自动投标order编号 */
 
         UserThirdAccount buyUserThirdAccount = userThirdAccountService.findByUserId(userId);/*购买人存管信息*/
         ThirdAccountHelper.allConditionCheck(buyUserThirdAccount);
@@ -317,16 +318,15 @@ public class TransferBizImpl implements TransferBiz {
 
         //验证债权转让
         ImmutableMap<String, Object> verifyTransferMap = verifyTransfer(buyMoney, transfer);
-        long leftMoney = NumberHelper.toLong(verifyTransferMap.get(LEFT_MONEY));
         msg = StringHelper.toString(verifyTransferMap.get(MSG));
         if (!StringUtils.isEmpty(msg)) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
         }
-
+        long leftMoney = NumberHelper.toLong(verifyTransferMap.get(LEFT_MONEY));
         long validMoney = (long) MathHelper.min(leftMoney, buyMoney);/* 可购债权金额  */
         long alreadyInterest = validMoney / transfer.getPrincipal() * transfer.getAlreadyInterest();/* 应付给债权转让人的当期应计利息 */
 
-        //验证购买人账户
+        // 验证购买人账户
         ImmutableMap<String, Object> verifyBuyTransferUserMap = verifyBuyTransferUser(buyUserThirdAccount, asset, validMoney);
         msg = StringHelper.toString(verifyBuyTransferUserMap.get(MSG));
         if (!StringUtils.isEmpty(msg)) {
@@ -475,6 +475,7 @@ public class TransferBizImpl implements TransferBiz {
      * @return
      * @throws Exception
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> newTransferTender(VoTransferTenderReq voTransferTenderReq) throws Exception {
         long tenderId = voTransferTenderReq.getTenderId();/* 转让债权id */
         long userId = voTransferTenderReq.getUserId();/* 转让人id */
@@ -511,7 +512,6 @@ public class TransferBizImpl implements TransferBiz {
 
         //保存债权转让记录
         saveTransfer(tenderId, userId, tender, borrow, waitTimeLimit, leftCapital, borrowCollectionList.get(0));
-
         return ResponseEntity.ok(VoBaseResp.ok("购买成功!"));
     }
 
@@ -772,7 +772,7 @@ public class TransferBizImpl implements TransferBiz {
      * @return
      */
     private ResponseEntity<VoBaseResp> transferConditionCheck(Tender tender, Borrow borrow) {
-        if ((tender.getTransferFlag() != 0) || (borrow.isTransfer())) {
+        if (tender.getTransferFlag() != 0) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "操作失败: 你已经出让债权了!"));
@@ -783,7 +783,6 @@ public class TransferBizImpl implements TransferBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前系统出现异常, 麻烦通知平台客服人员!"));
         }
-
 
         if ((borrow.getType() != 0)) {
             return ResponseEntity
@@ -812,32 +811,7 @@ public class TransferBizImpl implements TransferBiz {
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
-        if (ObjectUtils.isEmpty(userThirdAccount)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你没有开通银行存管，请先开通银行存管！"));
-        }
-
-        Integer passwordState = userThirdAccount.getPasswordState();
-        if (passwordState == 0) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请先初始化江西银行存管账户交易密码！"));
-        }
-
-        if (userThirdAccount.getAutoTransferState() != 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoAutoTenderInfo.class));
-        }
-
-
-        if (userThirdAccount.getAutoTenderState() != 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoAutoTenderInfo.class));
-        }
-        return ResponseEntity.ok(VoBaseResp.ok("检测成功!"));
+        return ThirdAccountHelper.allConditionCheck(userThirdAccount);
     }
 
     /**

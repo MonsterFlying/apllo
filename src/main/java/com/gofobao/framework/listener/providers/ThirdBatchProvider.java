@@ -14,6 +14,9 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoRepayAll;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
+import com.gofobao.framework.common.assets.AssetChange;
+import com.gofobao.framework.common.assets.AssetChangeProvider;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
@@ -99,6 +102,9 @@ public class ThirdBatchProvider {
     @Autowired
     BorrowCollectionService borrowCollectionService;
 
+    @Autowired
+    AssetChangeProvider assetChangeProvider ;
+
 
     /**
      * 批次处理
@@ -118,7 +124,7 @@ public class ThirdBatchProvider {
                 .build();
         List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls);
         Preconditions.checkNotNull(thirdBatchLogList, "批处理回调: 查询批处理记录为空");
-        //主动查询未改变记录的批次状态，
+        // 主动查询未改变记录的批次状态，
         ThirdBatchLog thirdBatchLog = thirdBatchLogList.get(0);
         boolean flag = thirdBatchLogBiz.checkLocalSourceState(String.valueOf(thirdBatchLog.getSourceId()), thirdBatchLog.getType());//获取资源状态是否已完成状态
         if (flag) {
@@ -130,7 +136,7 @@ public class ThirdBatchProvider {
         List<DetailsQueryResp> detailsQueryRespList = new ArrayList<>();
         do {
             pageIndex++;
-            //1.查询批次交易明细
+            // 1.查询批次交易明细
             BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
             batchDetailsQueryReq.setBatchNo(String.valueOf(batchNo));
             batchDetailsQueryReq.setBatchTxDate(DateHelper.dateToString(thirdBatchLogList.get(0).getCreateAt(), DateHelper.DATE_FORMAT_YMD_NUM));
@@ -591,12 +597,16 @@ public class ThirdBatchProvider {
                     tender.setStatus(2); // 取消状态
                     tender.setUpdatedAt(nowDate);
 
-                    CapitalChangeEntity entity = new CapitalChangeEntity();
-                    entity.setType(CapitalChangeEnum.Unfrozen);
-                    entity.setUserId(tender.getUserId());
-                    entity.setMoney(tender.getValidMoney());
-                    entity.setRemark("借款 [" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "] 投标与存管通信失败，解除冻结资金。");
-                    capitalChangeHelper.capitalChange(entity);
+                    // 取消冻结
+                    AssetChange assetChange = new AssetChange();
+                    assetChange.setSourceId(tender.getId());
+                    assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+                    assetChange.setMoney(tender.getValidMoney());
+                    assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+                    assetChange.setRemark(String.format("存管系统审核投资标的[%s]资格失败, 解除资金冻结%s元", borrow.getName(), StringHelper.formatDouble(tender.getValidMoney() / 100D, true)));
+                    assetChange.setType(AssetChangeTypeEnum.unfreeze) ;
+                    assetChange.setUserId(tender.getUserId());
+                    assetChange.setForUserId(tender.getUserId());
                 }
 
                 // 发送取消债权通知

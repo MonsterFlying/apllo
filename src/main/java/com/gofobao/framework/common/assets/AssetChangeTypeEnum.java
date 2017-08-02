@@ -15,10 +15,20 @@ public enum AssetChangeTypeEnum {
      * 资金冻结冻结
      */
     freeze("资金冻结", "freeze", "0", "sub@useMoney,add@noUseMoney", "", "B"),
+
     /**
      * 资金解冻
      */
     unfreeze("资金解冻", "unfreeze", "0", "add@useMoney,sub@noUseMoney", "", "B"),
+
+    /**
+     * 添加待收
+     */
+    collectionAdd("添加待收", "collectionAdd", "0", "add@collection", "add@waitCollectionPrincipal#principal,add@waitCollectionInterest#interest", "B"),
+    /**
+     * 添加待还
+     */
+    paymentAdd("添加待还", "paymentAdd", "0", "add@payment", "add@waitRepayPrincipal#principal,add@waitRepayInterest#interest", "B"),
 
     /**
      * 借款人正常还款
@@ -83,6 +93,10 @@ public enum AssetChangeTypeEnum {
      */
     currencyExchangeRedpack("广富币兑换", "publishIntegralExchangeRedpack", "7833", "add@useMoney", "add@incomeOther", "D"),
 
+    /**
+     * 红包奖励
+     */
+    receiveRedpack("红包奖励", "receiveRedpack", "7833", "add@useMoney", "add@incomeOther", "D"),
     /**
      * 用户接受平台积分兑换红包
      */
@@ -177,6 +191,9 @@ public enum AssetChangeTypeEnum {
      * 活期收益
      */
     currentIncome("活期收益", "currentIncome", "5500", "add@useMoney", "", "D");
+
+
+
 
     /**
      * 本地类型

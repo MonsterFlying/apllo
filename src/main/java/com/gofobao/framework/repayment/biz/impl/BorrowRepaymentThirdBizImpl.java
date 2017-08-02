@@ -125,7 +125,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
 
     /**
-     * 即信批次放款  （满标后调用）
+     * 非流转标的 即信批次放款 （满标后调用）
      *
      * @param voThirdBatchLendRepay
      * @return
@@ -140,6 +140,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 .eq("borrowId", borrowId)
                 .eq("status", 1)
                 .build();
+
         List<Tender> tenderList = tenderService.findList(ts);
         Preconditions.checkNotNull(tenderList, "批次放款调用: 投标记录为空");
         Borrow borrow = borrowService.findById(borrowId);
@@ -151,14 +152,13 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
         }
 
-        //净值账户管理费
-        double fee = 0;
+        double totalManageFee = 0; // 净值标, 收取账户管理费
         if (borrow.getType() == 1) {
             double manageFeeRate = 0.0012;
             if (borrow.getRepayFashion() == 1) {
-                fee = MathHelper.myRound(borrow.getMoney() * manageFeeRate / 30 * borrow.getTimeLimit(), 2);
+                totalManageFee = MathHelper.myRound(borrow.getMoney() * manageFeeRate / 30 * borrow.getTimeLimit(), 2);
             } else {
-                fee = MathHelper.myRound(borrow.getMoney() * manageFeeRate * borrow.getTimeLimit(), 2);
+                totalManageFee = MathHelper.myRound(borrow.getMoney() * manageFeeRate * borrow.getTimeLimit(), 2);
             }
         }
 
@@ -177,18 +177,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             validMoney = tender.getValidMoney();//投标有效金额
             sumCount += validMoney; //放款总金额
 
-            //添加奖励
-            if (borrow.getAwardType() > 0) {
-                int money = (int) MathHelper.myRound((tender.getValidMoney() / borrow.getMoney()) * borrow.getAward(), 2);
-                if (borrow.getAwardType() == 2) {
-                    money = (int) MathHelper.myRound(tender.getValidMoney() * borrow.getAward() / 100, 2);
-                }
-                debtFee += money;
-            }
-
             //净值账户管理费
             if (borrow.getType() == 1) {
-                debtFee += MathHelper.myRound(validMoney / new Double(borrow.getMoney()) * fee, 2);
+                debtFee += MathHelper.myRound(validMoney / new Double(borrow.getMoney()) * totalManageFee, 2);
             }
 
             String lendPayOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
@@ -203,6 +194,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             lendPay.setProductId(borrow.getProductId());
             lendPayList.add(lendPay);
             tender.setThirdLendPayOrderId(lendPayOrderId);
+            tender.setUpdatedAt(nowDate);
         }
         tenderService.save(tenderList);
 
@@ -387,8 +379,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     public ResponseEntity<String> thirdBatchLendRepayRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
         BatchLendPayRunResp lendRepayRunResp = jixinManager.callback(request, new TypeToken<BatchLendPayRunResp>() {
         });
-        Map<String, Object> acqResMap = GSON.fromJson(lendRepayRunResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
-
         if (ObjectUtils.isEmpty(lendRepayRunResp)) {
             log.error("=========================================批次回调=========================================");
             log.error("=================================即信批次放款处理结果回调=================================");
@@ -412,6 +402,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("==========================================================================================");
             log.error("==========================================================================================");
         }
+
+        log.info(String.format("即信放款回调信息: %s", GSON.toJson(lendRepayRunResp)));
+        Map<String, Object> acqResMap = GSON.fromJson(lendRepayRunResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
 
         //触发处理批次放款处理结果队列
         MqConfig mqConfig = new MqConfig();
@@ -908,8 +901,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
     /**
      * 新版生成存管还款计划
-     * @// TODO: 2017/7/31
+     *
      * @return
+     * @// TODO: 2017/7/31
      */
     public List<Repay> newCalculateRepayPlan() {
         List<Repay> repayList = new ArrayList<>();

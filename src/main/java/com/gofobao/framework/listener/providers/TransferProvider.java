@@ -17,7 +17,6 @@ import com.gofobao.framework.asset.service.BatchAssetChangeItemService;
 import com.gofobao.framework.asset.service.BatchAssetChangeService;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
-import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.data.DataObject;
 import com.gofobao.framework.common.data.GeSpecification;
@@ -25,7 +24,6 @@ import com.gofobao.framework.common.data.LeSpecification;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
-import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
@@ -400,8 +398,8 @@ public class TransferProvider {
         request.setSubPacks(GSON.toJson(creditInvestList));
         request.setAcqRes(GSON.toJson(acqResMap));
         request.setChannel(ChannelContant.HTML);
-        request.setNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditinvest/new/check");
-        request.setRetNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditinvest/new/run");
+        request.setNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditinvestird/batch/creditinvest/new/run/new/check");
+        request.setRetNotifyURL(javaDomain + "/pub/tender/v2/th");
         BatchCreditInvestResp response = jixinManager.send(JixinTxCodeEnum.BATCH_CREDIT_INVEST, request, BatchCreditInvestResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
             log.error(String.format("复审: 批量债权转让申请失败: %s", response));

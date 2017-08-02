@@ -41,6 +41,7 @@ public class TenderProvider {
 
     /**
      * 自动投标
+     *
      * @param msg
      * @throws Exception
      */
