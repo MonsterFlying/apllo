@@ -49,7 +49,7 @@ public class WindmillUserController {
     }
 
     @ApiOperation("用户绑定请求登录页面")
-    @GetMapping("user/bind/html")
+    @PostMapping("user/bind/html")
     public String loginHtml(HttpServletRequest request) {
         String paramStr = request.getParameter("param");
         Map<String, Object> paramMap = Maps.newHashMap();

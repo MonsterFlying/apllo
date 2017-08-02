@@ -126,9 +126,7 @@ public class WrbCoopDESUtil {
     public static void main(String[] args) throws Exception {
         String deskey = genKey();
         System.out.println(deskey);
-        System.out.println(desEncrypt("wUP7IFtuBLbBNLCnUq1KRVFX/Xnf9PKe", "hello world"));
-        System.out.println(desDecrypt(deskey,desEncrypt(deskey, "test")));
-        System.out.println(desDecrypt("wUP7IFtuBLbBNLCnUq1KRVFX/Xnf9PKe","zCemmjp7Wv0ajfOMu4E+oA=="));
-    }
+        System.out.println(desDecrypt("2l0IYbNnRcShWOM9Q5Ej0A3gCEP07LBS", "IC2J4oG6pgqu8lima6RTpe6mB4ztr//oli+s7/m7U9yyzrXAwqrRDIbIOUeR+PiJ7vWVg2hzMP1c++WbtA5fV9UwCuY/bzlGsKPg7/XX7WiS0t47UU0oERoiucS9pMqfu07krL5eB9pSJXVQ28QLiViSGiHlIeTuUEkfIvOV4UTcjKpBTA/2yj5IP3r1F7vWm0Go3QSU2Womt0GnM5ogWfvVEktegtyZgtKV4Rj6++ZwyPWDanXL6g=="));
+           }
 
 }

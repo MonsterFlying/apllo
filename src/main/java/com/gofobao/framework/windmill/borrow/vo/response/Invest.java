@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 public class Invest {
 
-    private Long invest_id;
+    private String invest_id;
 
     private String invest_title;
 
