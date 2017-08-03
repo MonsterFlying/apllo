@@ -1108,7 +1108,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Preconditions.checkNotNull(borrowRepayment, "批量还款: 还款记录不存在");
         Borrow borrow = borrowService.findByIdLock(borrowRepayment.getBorrowId());
         Preconditions.checkNotNull(borrow, "批量还款: 还款标的信息不存在");
-        Date nowDate = new Date();
         ResponseEntity<VoBaseResp> conditionResponse = repayConditionCheck(repayUserThirdAccount, borrowRepayment);
         if (!conditionResponse.getStatusCode().equals(HttpStatus.OK)) {
             return conditionResponse;
@@ -1116,30 +1115,31 @@ public class RepaymentBizImpl implements RepaymentBiz {
         // 计算逾期产生的总费用
         int lateInterest = calculateLateInterest(borrowRepayment, borrow);
 
-        String batchNo = jixinHelper.getBatchNo();
+        String batchNo = jixinHelper.getBatchNo();/* 批次号 */
+
+
         if (ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) {
-            return normalRepay(userId, borrowRepaymentId, repayUserThirdAccount, borrowRepayment, borrow, nowDate, lateInterest, batchNo);
+            return normalRepay(userId, repayUserThirdAccount, borrowRepayment, borrow, lateInterest, batchNo);
         } else {
-            return repayGuarantor(userId, borrowRepaymentId, repayUserThirdAccount, borrowRepayment, borrow, nowDate, lateInterest, batchNo);
+            return repayGuarantor(userId, repayUserThirdAccount, borrowRepayment, borrow, lateInterest, batchNo);
         }
     }
 
 
     /**
      * @param userId
-     * @param borrowRepaymentId
      * @param repayUserThirdAccount
      * @param borrowRepayment
      * @param borrow
-     * @param nowDate
      * @param lateInterest
      * @return
      * @throws Exception
      */
-    private ResponseEntity<VoBaseResp> repayGuarantor(Long userId, Long borrowRepaymentId,
+    private ResponseEntity<VoBaseResp> repayGuarantor(Long userId,
                                                       UserThirdAccount repayUserThirdAccount, BorrowRepayment borrowRepayment,
-                                                      Borrow borrow, Date nowDate, int lateInterest,
+                                                      Borrow borrow, int lateInterest,
                                                       String batchNo) throws Exception {
+        Date nowDate = new Date();
         log.info("借款人还款垫付人开始");
         List<RepayBail> repayBails = borrowRepaymentThirdBiz.calculateRepayBailPlan(borrow, repayUserThirdAccount.getAccountId(), getLateDays(borrowRepayment), borrowRepayment.getOrder(), lateInterest);
         double txAmount = repayBails.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxAmount())).sum();
@@ -1171,7 +1171,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
         Map<String, Object> acqResMap = new HashMap<>();
         acqResMap.put("userId", userId);
-        acqResMap.put("repaymentId", borrowRepaymentId);
+        acqResMap.put("repaymentId", borrowRepayment.getId());
         acqResMap.put("interestPercent", 1d);
         acqResMap.put("isUserOpen", true);
         acqResMap.put("freezeOrderId", orderId);
@@ -1196,7 +1196,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         thirdBatchLog.setBatchNo(batchNo);
         thirdBatchLog.setCreateAt(nowDate);
         thirdBatchLog.setUpdateAt(nowDate);
-        thirdBatchLog.setSourceId(borrowRepaymentId);
+        thirdBatchLog.setSourceId(borrowRepayment.getId());
         thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY_BAIL);
         thirdBatchLog.setRemark("批次融资人还担保账户垫款");
         thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
@@ -1206,10 +1206,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
     }
 
-    private ResponseEntity<VoBaseResp> normalRepay(long userId, Long borrowRepaymentId,
+    private ResponseEntity<VoBaseResp> normalRepay(long userId,
                                                    UserThirdAccount repayUserThirdAccount, BorrowRepayment borrowRepayment,
-                                                   Borrow borrow, Date nowDate, int lateInterest,
+                                                   Borrow borrow, int lateInterest,
                                                    String batchNo) throws Exception {
+        Date nowDate = new Date();
         log.info("批次还款: 进入正常还款流程");
         List<Repay> repays = borrowRepaymentThirdBiz.calculateRepayPlan(borrow, repayUserThirdAccount.getAccountId(), borrowRepayment.getOrder(), getLateDays(borrowRepayment), lateInterest);
         //所有交易金额 交易金额指的是txAmount字段
@@ -1245,7 +1246,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //
         Map<String, Object> acqResMap = new HashMap<>();
         acqResMap.put("userId", userId);
-        acqResMap.put("repaymentId", borrowRepaymentId);
+        acqResMap.put("repaymentId", borrowRepayment.getId());
         acqResMap.put("interestPercent", 1d);
         acqResMap.put("isUserOpen", true);
         acqResMap.put("freezeOrderId", orderId);
@@ -1273,7 +1274,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         thirdBatchLog.setBatchNo(batchNo);
         thirdBatchLog.setCreateAt(nowDate);
         thirdBatchLog.setUpdateAt(nowDate);
-        thirdBatchLog.setSourceId(borrowRepaymentId);
+        thirdBatchLog.setSourceId(borrowRepayment.getId());
         thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY);
         thirdBatchLog.setRemark("即信批次还款");
         thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
