@@ -68,8 +68,8 @@ public class WindmillUserController {
 
     @ApiOperation("用户登录")
     @PostMapping("/user/login")
-    private String loginUser(HttpServletRequest request, HttpServletResponse response) {
-        return windmillUserBiz.login(request, response);
+    private void loginUser(HttpServletRequest request, HttpServletResponse response)throws Exception {
+        response.sendRedirect(windmillUserBiz.login(request, response));
     }
 
     @ApiOperation("查询用户账户信息")
