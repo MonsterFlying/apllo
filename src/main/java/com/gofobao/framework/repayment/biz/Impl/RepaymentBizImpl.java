@@ -475,46 +475,21 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //1.查询并判断还款记录是否存在!
         //2.处理资金还款人、收款人资金变动
         //3.判断是否是还担保人垫付，垫付需要改变垫付记录状态
-        //3.还款成功后变更改还款状态
-        //4.结束债权
-        //5.还款最后新增统计
+        //4.还款成功后变更改还款状态
+        //5.结束债权
+        //6.还款最后新增统计
         BorrowRepayment borrowRepayment = borrowRepaymentService.findById(repaymentId);/* 当期还款记录 */
-        Preconditions.checkNotNull(borrowRepayment,"还款记录不存在!");
+        Preconditions.checkNotNull(borrowRepayment, "还款记录不存在!");
 
-       /* //更改还款记录状态
-        borrowRepayment.setStatus(1);
-        borrowRepayment.setLateDays(NumberHelper.toInt(StringHelper.toString(lateDays)));
-        borrowRepayment.setLateInterest(lateInterest);
-        borrowRepayment.setRepayAtYes(nowDate);
-        borrowRepayment.setRepayMoneyYes(repayMoney);
-        borrowRepaymentService.updateById(borrowRepayment);
+        //3.判断是否是还担保人垫付，垫付需要改变垫付记录状态
+        //4.还款成功后变更改还款状态
+        changeRepaymentAndAdvanceStatus(borrowRepayment);
+        //结束第三方债权并更新借款状态（还款最后一期的时候）
+        endThirdTenderAndChangeBorrowStatus(borrowRepayment);
 
-        //====================================================================
-        //结束债权：最后一期还款时
-        //====================================================================
-        if (borrowRepayment.getOrder() == (borrow.getTotalOrder() - 1)) {
-            borrow.setCloseAt(borrowRepayment.getRepayAtYes());
-
-            //推送队列结束债权
-            MqConfig mqConfig = new MqConfig();
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
-            mqConfig.setTag(MqTagEnum.END_CREDIT_BY_NOT_TRANSFER);
-            mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
-            ImmutableMap<String, String> body = ImmutableMap
-                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-            mqConfig.setMsg(body);
-            try {
-                log.info(String.format("repaymentBizImpl repayDeal send mq %s", GSON.toJson(body)));
-                mqHelper.convertAndSend(mqConfig);
-            } catch (Throwable e) {
-                log.error("repaymentBizImpl repayDeal send mq exception", e);
-            }
-        }
-        borrow.setUpdatedAt(nowDate);
-        borrowService.updateById(borrow);
 
         //更新统计数据
-        try {
+        /*try {
             Statistic statistic = new Statistic();
             statistic.setWaitRepayTotal((long) -repayMoney);
             if (!borrow.isTransfer()) {//判断非转让标
@@ -537,6 +512,56 @@ public class RepaymentBizImpl implements RepaymentBiz {
             log.error(String.format("立即还款统计错误：", e));
         }*/
         return ResponseEntity.ok(VoBaseResp.ok("还款处理成功!"));
+    }
+
+    public void endThirdTenderAndChangeBorrowStatus(BorrowRepayment borrowRepayment) {
+        //====================================================================
+        //结束债权：最后一期还款时
+        //====================================================================
+        /*if (borrowRepayment.getOrder() == (borrow.getTotalOrder() - 1)) {
+            borrow.setCloseAt(borrowRepayment.getRepayAtYes());
+
+            //推送队列结束债权
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
+            mqConfig.setTag(MqTagEnum.END_CREDIT_BY_NOT_TRANSFER);
+            mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("repaymentBizImpl repayDeal send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("repaymentBizImpl repayDeal send mq exception", e);
+            }
+        }
+        borrow.setUpdatedAt(nowDate);
+        borrowService.updateById(borrow);*/
+    }
+
+    /**
+     * @param borrowRepayment
+     * @throws Exception
+     * @// TODO: 2017/8/3
+     * 3.判断是否是还担保人垫付，垫付需要改变垫付记录状态（逾期天数与日期应当在还款前计算完成）
+     * 4.还款成功后变更改还款状态（还款金额在还款前计算完成）
+     */
+    private void changeRepaymentAndAdvanceStatus(BorrowRepayment borrowRepayment) throws Exception {
+        //更改垫付记录、还款记录状态
+        borrowRepayment.setStatus(1);
+        borrowRepayment.setRepayAtYes(new Date());
+        borrowRepaymentService.updateById(borrowRepayment);
+
+        if (!ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) { //存在垫付时间则当条还款已经被垫付过
+            AdvanceLog advanceLog = advanceLogService.findByRepaymentId(borrowRepayment.getId());
+            Preconditions.checkNotNull(advanceLog, "RepaymentBizImpl changeRepaymentAndAdvanceStatus 垫付记录不存在!请联系客服。");
+
+            //更新垫付记录转状态
+            advanceLog.setStatus(1);
+            advanceLog.setRepayAtYes(new Date());
+            advanceLogService.updateById(advanceLog);
+        }
     }
 
     /**

@@ -224,7 +224,7 @@ public class TransferBizImpl implements TransferBiz {
      * @param transferId
      * @param batchNo
      */
-    private void batchAssetChange(long transferId, String batchNo) {
+    private void batchAssetChange(long transferId, long batchNo) {
         Specification<BatchAssetChange> bacs = Specifications
                 .<BatchAssetChange>and()
                 .eq("sourceId", transferId)
@@ -408,6 +408,7 @@ public class TransferBizImpl implements TransferBiz {
             BorrowCollection borrowCollection;
             int collectionMoney = 0;
             int collectionInterest = 0;
+            int startOrder = parentBorrow.getTotalOrder() - transfer.getTimeLimit();/* 获取开始转让期数 */
             for (int i = 0; i < repayDetailList.size(); i++) {
                 borrowCollection = new BorrowCollection();
                 Map<String, Object> repayDetailMap = repayDetailList.get(i);
@@ -415,7 +416,7 @@ public class TransferBizImpl implements TransferBiz {
                 collectionInterest += new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue();
                 borrowCollection.setTenderId(childTender.getId());
                 borrowCollection.setStatus(0);
-                borrowCollection.setOrder(i);
+                borrowCollection.setOrder(startOrder++);
                 borrowCollection.setUserId(childTender.getUserId());
                 borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : startAt);
                 borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : nowDate);
@@ -1274,7 +1275,7 @@ public class TransferBizImpl implements TransferBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "债权转让 原始标的信息为空", BorrowInfoRes.class));
         }
 
-        BorrowInfoRes borrowInfoRes = VoBaseResp.ok("查询成功", BorrowInfoRes.class) ;
+        BorrowInfoRes borrowInfoRes = VoBaseResp.ok("查询成功", BorrowInfoRes.class);
         borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
         borrowInfoRes.setLowest(StringHelper.formatMon(borrow.getLowest() / 100d));
         long surplusMoney = transfer.getTransferMoney() - transfer.getTransferMoneyYes();
