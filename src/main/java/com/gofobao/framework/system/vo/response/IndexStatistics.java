@@ -1,5 +1,6 @@
 package com.gofobao.framework.system.vo.response;
 
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -9,6 +10,7 @@ import java.math.BigDecimal;
  * Created by admin on 2017/6/14.
  */
 @Data
+@ApiModel
 public class IndexStatistics {
 
     @ApiModelProperty("交易总额")
