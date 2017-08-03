@@ -518,7 +518,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //====================================================================
         //结束债权：最后一期还款时
         //====================================================================
-        /*if (borrowRepayment.getOrder() == (borrow.getTotalOrder() - 1)) {
+        if (borrowRepayment.getOrder() == (borrow.getTotalOrder() - 1)) {
             borrow.setCloseAt(borrowRepayment.getRepayAtYes());
 
             //推送队列结束债权
@@ -537,7 +537,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             }
         }
         borrow.setUpdatedAt(nowDate);
-        borrowService.updateById(borrow);*/
+        borrowService.updateById(borrow);
     }
 
     /**
