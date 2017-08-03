@@ -2,18 +2,13 @@ package com.gofobao.framework.tender.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
-import com.gofobao.framework.api.contants.DesLineFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
-import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
-import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
 import com.gofobao.framework.asset.entity.Asset;
-import com.gofobao.framework.asset.entity.BatchAssetChange;
-import com.gofobao.framework.asset.entity.BatchAssetChangeItem;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.BatchAssetChangeItemService;
 import com.gofobao.framework.asset.service.BatchAssetChangeService;
@@ -24,9 +19,11 @@ import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
+import com.gofobao.framework.common.assets.AssetChange;
+import com.gofobao.framework.common.assets.AssetChangeProvider;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
-import com.gofobao.framework.common.constans.JixinContants;
 import com.gofobao.framework.common.constans.MoneyConstans;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
@@ -35,6 +32,7 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.BatchAssetChangeHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
@@ -57,10 +55,7 @@ import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
-import com.gofobao.framework.tender.vo.request.VoBuyTransfer;
-import com.gofobao.framework.tender.vo.request.VoPcFirstVerityTransfer;
-import com.gofobao.framework.tender.vo.request.VoTransferReq;
-import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
+import com.gofobao.framework.tender.vo.request.*;
 import com.gofobao.framework.tender.vo.response.*;
 import com.gofobao.framework.tender.vo.response.web.TransferBuy;
 import com.gofobao.framework.tender.vo.response.web.VoViewTransferBuyWarpRes;
@@ -71,7 +66,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -90,10 +84,9 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created by admin on 2017/6/12.
@@ -119,8 +112,6 @@ public class TransferBizImpl implements TransferBiz {
     @Autowired
     private JixinManager jixinManager;
     @Autowired
-    private CapitalChangeHelper capitalChangeHelper;
-    @Autowired
     private MqHelper mqHelper;
     @Autowired
     private StatisticBiz statisticBiz;
@@ -129,31 +120,12 @@ public class TransferBizImpl implements TransferBiz {
     @Autowired
     private IncrStatisticBiz incrStatisticBiz;
     @Autowired
-    private BatchAssetChangeService batchAssetChangeService;
-    @Autowired
-    private BatchAssetChangeItemService batchAssetChangeItemService;
-    @Autowired
     private UserService userService;
     @Autowired
-    private DictItemService dictItemService;
+    private BatchAssetChangeHelper batchAssetChangeHelper;
     @Autowired
-    private DictValueService dictValueService;
+    AssetChangeProvider assetChangeProvider;
 
-    LoadingCache<String, DictValue> jixinCache = CacheBuilder
-            .newBuilder()
-            .expireAfterWrite(60, TimeUnit.MINUTES)
-            .maximumSize(1024)
-            .build(new CacheLoader<String, DictValue>() {
-                @Override
-                public DictValue load(String bankName) throws Exception {
-                    DictItem dictItem = dictItemService.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
-                    if (ObjectUtils.isEmpty(dictItem)) {
-                        return null;
-                    }
-
-                    return dictValueService.findTopByItemIdAndValue01(dictItem.getId(), bankName);
-                }
-            });
 
     @Value("${gofobao.imageDomain}")
     private String imageDomain;
@@ -162,6 +134,17 @@ public class TransferBizImpl implements TransferBiz {
 
     public static final String MSG = "msg";
     public static final String LEFT_MONEY = "leftMoney";
+
+    /**
+     * 结束债权转让
+     *
+     * @param voEndTransfer
+     * @return
+     * @throws Exception
+     */
+    public ResponseEntity<VoBaseResp> endTransfer(VoEndTransfer voEndTransfer) throws Exception {
+        return ResponseEntity.ok(VoBaseResp.ok("结束债权转让成功!"));
+    }
 
 
     /**
@@ -194,92 +177,37 @@ public class TransferBizImpl implements TransferBiz {
                 .build();
         List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);/* 购买债权转让记录 */
         Preconditions.checkNotNull(transferBuyLogList, "购买债权转让记录不存在!");
-        long failure = transferBuyLogList.stream().filter(transferBuyLog -> BooleanHelper.isFalse(transferBuyLog.getThirdTransferFlag())).count();/* 登记即信存管失败条数 */
+        long failure = transferBuyLogList
+                .stream()
+                .filter(transferBuyLog -> BooleanHelper.isFalse(transferBuyLog.getThirdTransferFlag())).count(); /* 登记即信存管失败条数 */
         if (failure > 0) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "存在未登记即信存管的购买" + failure + "失败记录"));
         }
 
-        //新增子级投标记录
+        // 新增子级投标记录
         List<Tender> childTenderList = addChildTender(nowDate, transfer, parentTender, transferBuyLogList);
-        //生成子级债权回款记录，标注老债权回款已经转出
+
+        // 生成子级债权回款记录，标注老债权回款已经转出
         addChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList);
-        //发放债权转让资金
-        batchAssetChangeByTransfer(transferId, batchNo);
+
+        // 发放债权转让资金
+        batchAssetChangeHelper.batchAssetChange(transferId, batchNo, BatchAssetChangeContants.BATCH_CREDIT_INVEST);
+
         // 发送投资成功站内信
         sendNoticsByBuyTransfer(transfer, childTenderList);
+
         // 用户投标信息和每日统计
         userTenderStatistic(childTenderList);
+
         // 复审事件
         //如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
         updateUserCacheByTransferReview(parentBorrow, transfer);
+
         //更新全网网站统计
         updateStatisticByTransferReview(transfer);
-
         return ResponseEntity.ok(VoBaseResp.ok("债权转让复审成功!"));
     }
 
-    /**
-     * 发放债权转让资金
-     *
-     * @param transferId
-     * @param batchNo
-     */
-    private void batchAssetChangeByTransfer(long transferId, long batchNo) {
-        Specification<BatchAssetChange> bacs = Specifications
-                .<BatchAssetChange>and()
-                .eq("sourceId", transferId)
-                .eq("type", BatchAssetChangeContants.BATCH_CREDIT_INVEST)
-                .eq("batchNo", batchNo)
-                .build();
-        List<BatchAssetChange> batchAssetChangeList = batchAssetChangeService.findList(bacs);
-        Preconditions.checkNotNull(batchAssetChangeList, batchNo + "债权转让资金变动记录不存在!");
-        BatchAssetChange batchAssetChange = batchAssetChangeList.get(0);/* 债权转让资金变动记录 */
-
-        Specification<BatchAssetChangeItem> bacis = Specifications
-                .<BatchAssetChangeItem>and()
-                .eq("batchAssetChangeId", batchAssetChange.getId())
-                .eq("state", 0)
-                .build();
-        List<BatchAssetChangeItem> batchAssetChangeItemList = batchAssetChangeItemService.findList(bacis);
-        Preconditions.checkNotNull(batchAssetChangeItemList, batchNo + "债权转让资金变动子记录不存在!");
-        batchAssetChangeItemList.stream().forEach(batchAssetChangeItem -> {
-            //发送存管红包
-            if (BooleanHelper.isTrue(batchAssetChangeItem.getSendRedPacket())) {
-                UserThirdAccount transferUserThirdAccount = userThirdAccountService.findByUserId(batchAssetChangeItem.getUserId()); /* 债权转让人存管账号 */
-                //通过红包账户发放
-                //调用即信发放债权转让人应收利息
-                //查询红包账户
-                DictValue dictValue = null;
-                try {
-                    dictValue = jixinCache.get(JixinContants.RED_PACKET_USER_ID);
-                } catch (ExecutionException e) {
-                    log.error("transferBizImpl batchAssetChange 获取存管红包账户失败：", e);
-                }
-                UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
-
-                VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-                voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
-                voucherPayRequest.setTxAmount(StringHelper.toString(batchAssetChangeItem.getMoney()));//扣除手续费
-                voucherPayRequest.setForAccountId(transferUserThirdAccount.getAccountId());
-                voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
-                voucherPayRequest.setDesLine(batchAssetChangeItem.getRemark());
-                voucherPayRequest.setChannel(ChannelContant.HTML);
-                VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
-                if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
-                    String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-                    log.error("BorrowRepaymentThirdBizImpl 调用即信发送发放债权转让人应收利息异常:" + msg);
-                }
-            }
-            //扣减本地资金
-            CapitalChangeEntity capitalChangeEntity = GSON.fromJson(GSON.toJson(batchAssetChangeItem), new TypeToken<CapitalChangeEntity>() {
-            }.getType());
-            try {
-                capitalChangeHelper.capitalChange(capitalChangeEntity);
-            } catch (Exception e) {
-                log.error("transferBizImpl batchAssetChange assetChange error:", e);
-            }
-        });
-    }
 
     /**
      * 发送投资成功站内信
@@ -327,9 +255,7 @@ public class TransferBizImpl implements TransferBiz {
         Gson gson = new Gson();
         for (Tender tender : tenderList) {
             log.info(String.format("投标统计: %s", gson.toJson(tender)));
-
             UserCache userCache = userCacheService.findById(tender.getUserId());
-
             IncrStatistic incrStatistic = new IncrStatistic();
             if ((!userCache.getTenderTransfer()) && (!userCache.getTenderTuijian()) && (!userCache.getTenderJingzhi()) && (!userCache.getTenderMiao()) && (!userCache.getTenderQudao())) {
                 incrStatistic.setTenderCount(1);
@@ -392,11 +318,13 @@ public class TransferBizImpl implements TransferBiz {
      * @param parentBorrow
      * @param childTenderList
      */
-    private void addChildTenderCollection(Date nowDate, Transfer transfer, Borrow parentBorrow, List<Tender> childTenderList) {
+    private void addChildTenderCollection(Date nowDate, Transfer transfer, Borrow parentBorrow, List<Tender> childTenderList) throws Exception {
+        String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+        String seqNo = assetChangeProvider.getSeqNo();
         //生成子级债权回款记录，标注老债权回款已经转出
         Date repayAt = transfer.getRepayAt();/* 原借款下一期还款日期 */
         Date startAt = DateHelper.subMonths(repayAt, 1);/* 计息开始时间 */
-        childTenderList.stream().forEach(childTender -> {
+        for (Tender childTender : childTenderList) {
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
                     childTender.getValidMoney().doubleValue(),
                     transfer.getApr().doubleValue(),
@@ -421,12 +349,12 @@ public class TransferBizImpl implements TransferBiz {
                 borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : startAt);
                 borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : nowDate);
                 borrowCollection.setCollectionAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
-                borrowCollection.setCollectionMoney(new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue());
-                borrowCollection.setInterest(new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue());
-                borrowCollection.setPrincipal(new Double(NumberHelper.toDouble(repayDetailMap.get("principal"))).intValue());
+                borrowCollection.setCollectionMoney(NumberHelper.toLong(repayDetailMap.get("repayMoney")));
+                borrowCollection.setInterest(NumberHelper.toLong(repayDetailMap.get("interest")));
+                borrowCollection.setPrincipal(NumberHelper.toLong(repayDetailMap.get("principal")));
                 borrowCollection.setCreatedAt(nowDate);
                 borrowCollection.setUpdatedAt(nowDate);
-                borrowCollection.setCollectionMoneyYes(0);
+                borrowCollection.setCollectionMoneyYes(0l);
                 borrowCollection.setLateDays(0);
                 borrowCollection.setLateInterest(0l);
                 borrowCollection.setBorrowId(parentBorrow.getId());
@@ -445,20 +373,18 @@ public class TransferBizImpl implements TransferBiz {
             });
             borrowCollectionService.save(borrowCollectionList);
 
-            // 添加待收
-            CapitalChangeEntity entity = new CapitalChangeEntity();
-            entity.setType(CapitalChangeEnum.CollectionAdd);
-            entity.setUserId(childTender.getUserId());
-            entity.setToUserId(transfer.getUserId());
-            entity.setMoney(collectionMoney);
-            entity.setInterest(collectionInterest);
-            entity.setRemark("添加待收金额");
-            try {
-                capitalChangeHelper.capitalChange(entity);
-            } catch (Exception e) {
-                log.error("债权转让：新债权生成回款记录失败! tenderId:" + childTender.getId());
-            }
-        });
+            AssetChange assetChange = new AssetChange();
+            assetChange.setType(AssetChangeTypeEnum.collectionAdd);
+            assetChange.setSourceId(childTender.getId());
+            assetChange.setGroupSeqNo(groupSeqNo);
+            assetChange.setSeqNo(seqNo);
+            assetChange.setRemark(String.format("投资[%s]成功, 添加待还%s元", collectionMoney,
+                    StringHelper.formatDouble(childTender.getValidMoney() / 100D, true)));
+            assetChange.setUserId(childTender.getUserId());
+            assetChange.setMoney(childTender.getValidMoney());
+            assetChange.setInterest(collectionInterest);
+            assetChangeProvider.commonAssetChange(assetChange);
+        }
     }
 
     /**
@@ -682,13 +608,15 @@ public class TransferBizImpl implements TransferBiz {
      * @param transfer
      */
     private void updateAssetByBuyUser(TransferBuyLog transferBuyLog, Transfer transfer) throws Exception {
-        CapitalChangeEntity entity = new CapitalChangeEntity();
-        entity.setType(CapitalChangeEnum.Frozen);
-        entity.setUserId(transferBuyLog.getUserId());
-        entity.setToUserId(transfer.getUserId());
-        entity.setMoney(transferBuyLog.getValidMoney());
-        entity.setRemark("购买债权转让冻结资金");
-        capitalChangeHelper.capitalChange(entity);
+        AssetChange assetChange = new AssetChange();
+        assetChange.setSourceId(transferBuyLog.getId());
+        assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+        assetChange.setMoney(transferBuyLog.getValidMoney());
+        assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+        assetChange.setRemark(String.format("购买债权转让[%s], 成功冻结资金%s元", transfer.getTitle(), StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100D, true)));
+        assetChange.setType(AssetChangeTypeEnum.freeze);
+        assetChange.setUserId(transferBuyLog.getUserId());
+        assetChangeProvider.commonAssetChange(assetChange);
     }
 
     /**
@@ -812,7 +740,7 @@ public class TransferBizImpl implements TransferBiz {
      */
     private void saveTransfer(long tenderId, long userId, Tender tender, Borrow borrow, int waitTimeLimit, long leftCapital, BorrowCollection firstBorrowCollection) {
         //计算当期应计利息
-        int interest = firstBorrowCollection.getInterest();/* 当期理论应计利息 */
+        long interest = firstBorrowCollection.getInterest();/* 当期理论应计利息 */
         Date startAt = DateHelper.beginOfDate(firstBorrowCollection.getStartAt());//理论开始计息时间
         Date collectionAt = DateHelper.beginOfDate(firstBorrowCollection.getCollectionAt());//理论结束还款时间
         Date startAtYes = DateHelper.beginOfDate(firstBorrowCollection.getStartAtYes());//实际开始计息时间
@@ -989,7 +917,7 @@ public class TransferBizImpl implements TransferBiz {
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "order"));
         Preconditions.checkNotNull(borrowCollectionList, "立即转让: 查询转让用户还款计划为空");
         int waitTimeLimit = borrowCollectionList.size();  // 等待回款期数
-        int cantrCapital = borrowCollectionList.stream().mapToInt(borrowCollection -> borrowCollection.getPrincipal()).sum(); // 待汇款本金
+        long cantrCapital = borrowCollectionList.stream().mapToLong(borrowCollection -> borrowCollection.getPrincipal()).sum(); // 待汇款本金
         if (cantrCapital < (1000 * 100)) {
             return ResponseEntity
                     .badRequest()
@@ -1133,7 +1061,7 @@ public class TransferBizImpl implements TransferBiz {
             default:
         }
 
-        int money = borrowCollections.stream().mapToInt(borrowCollectionItem -> borrowCollectionItem.getPrincipal()).sum(); // 待汇款本金
+        long money = borrowCollections.stream().mapToLong(borrowCollectionItem -> borrowCollectionItem.getPrincipal()).sum(); // 待汇款本金
         // 0.4% + 0.08% * (剩余期限-1)  （费率最高上限为1.28%）
         double rate = 0.004 + 0.0008 * (borrowCollections.size() - 1);
         rate = Math.min(rate, 0.0128);

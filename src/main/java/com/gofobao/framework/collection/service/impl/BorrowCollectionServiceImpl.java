@@ -81,8 +81,8 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
                 borrowCollection.setId(Long.valueOf(p[0].toString()));
                 borrowCollection.setBorrowId(Long.valueOf(p[1].toString()) );
                 borrowCollection.setOrder(Integer.valueOf(p[2].toString()) );
-                borrowCollection.setCollectionMoney(Integer.valueOf(p[3].toString()) );
-                borrowCollection.setCollectionMoneyYes(Integer.valueOf(p[4].toString()));
+                borrowCollection.setCollectionMoney(NumberHelper.toLong(p[3].toString()) );
+                borrowCollection.setCollectionMoneyYes(NumberHelper.toLong(p[4].toString()));
                 borrowCollection.setStatus(Integer.valueOf(p[5].toString()));
                 borrowCollections.add(borrowCollection);
             });
@@ -233,8 +233,8 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         detailRes.setCollectionMoney(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100D));
         detailRes.setLateDays(borrowCollection.getLateDays());
         detailRes.setBorrowName(borrow.getName());
-        Integer interest = 0;  //利息
-        Integer principal = 0;//本金
+        long interest = 0;  //利息
+        long principal = 0;//本金
         if (borrowCollection.getStatus() == BorrowCollectionContants.STATUS_YES) {
             interest = borrowCollection.getInterest();
             principal = borrowCollection.getPrincipal();

@@ -35,4 +35,13 @@ public class BatchAssetChangeItem {
     private Boolean sendRedPacket;/* 是否需要发放存管红包 */
     private Date createdAt;
     private Date updatedAt;
+    /**
+     *  引用ID
+     */
+    private Long sourceId ;
+    /**
+     * 请求流水
+     */
+    private String seqNo ;
+    private String groupSeqNo ;
 }

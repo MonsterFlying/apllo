@@ -760,18 +760,20 @@ public class ThirdBatchProvider {
                     transferBuyLog.setState(2);
                     transferBuyLog.setUpdatedAt(nowDate);
 
-                    //解除购买债权转让冻结资金
-                    CapitalChangeEntity entity = new CapitalChangeEntity();
-                    entity.setType(CapitalChangeEnum.Unfrozen);
-                    entity.setUserId(transferBuyLog.getUserId());
-                    entity.setMoney(transferBuyLog.getValidMoney());
-                    entity.setRemark("借款 [" + transfer.getTitle() + "] 投标与存管通信失败，解除冻结资金。");
-                    capitalChangeHelper.capitalChange(entity);
+                    // 解除冻结资金
+                    AssetChange assetChange = new AssetChange();
+                    assetChange.setSourceId(transferBuyLog.getId());
+                    assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+                    assetChange.setMoney(transferBuyLog.getValidMoney());
+                    assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+                    assetChange.setRemark(String.format("存管系统审核债权转让[%s]不通过, 成功解冻资金%s元", transfer.getTitle(), StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100D, true)));
+                    assetChange.setType(AssetChangeTypeEnum.unfreeze) ;
+                    assetChange.setUserId(transferBuyLog.getUserId());
+                    assetChangeProvider.commonAssetChange(assetChange) ;
                 }
 
                 // 发送取消债权通知
                 sendCancelTransfer(nowDate, transfer, transferBuyLogList);
-
                 transfer.setTenderCount(transfer.getTenderCount() - transferBuyLogList.size());
                 long sum = transferBuyLogList.stream().mapToLong(transferBuyLog -> transferBuyLog.getValidMoney()).sum();  // 取消的总总债权
                 transfer.setTransferMoneyYes(transfer.getTransferMoneyYes() - sum);
@@ -786,7 +788,7 @@ public class ThirdBatchProvider {
         //2.判断borrowId不为空
         if (CollectionUtils.isEmpty(failureThirdTransferOrderIds)) {
             log.info(String.format("批量债权转让复审transfer: %s", transferId));
-            ResponseEntity<VoBaseResp> resp = transferBiz.againVerifyTransfer(transferId,batchNo);
+            ResponseEntity<VoBaseResp> resp = transferBiz.againVerifyTransfer(transferId, batchNo);
             if (resp.getBody().getState().getCode() == VoBaseResp.OK) {
                 //更新批次状态
                 thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), transferId, 3);

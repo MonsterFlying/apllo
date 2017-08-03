@@ -293,8 +293,8 @@ public class TransferServiceImpl implements TransferService {
             transferMay.setName(borrow.getName());
             transferMay.setTenderId(p.getId());
             List<BorrowCollection> borrowCollectionList1 = borrowCollectionMaps.get(p.getId());
-            Integer principalSum = borrowCollectionList1.stream().mapToInt(w -> w.getPrincipal()).sum();
-            Integer interestSum = borrowCollectionList1.stream().mapToInt(w -> w.getInterest()).sum();
+            long principalSum = borrowCollectionList1.stream().mapToLong(w -> w.getPrincipal()).sum();
+            long interestSum = borrowCollectionList1.stream().mapToLong(w -> w.getInterest()).sum();
             transferMay.setInterest(StringHelper.formatMon(interestSum / 100d));
             transferMay.setPrincipal(StringHelper.formatMon(principalSum / 100d));
             transferMay.setOrder(borrowCollectionList1.size());

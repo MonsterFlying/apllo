@@ -97,9 +97,9 @@ public class PaymentBizImpl implements PaymentBiz {
                 orderResList.add(item);
             });
 
-            Integer sumCollectionMoneyYes = borrowCollections.stream()
+            long sumCollectionMoneyYes = borrowCollections.stream()
                     .filter(p -> p.getStatus() == BorrowCollectionContants.STATUS_YES)
-                    .mapToInt(w -> w.getCollectionMoneyYes())
+                    .mapToLong(w -> w.getCollectionMoneyYes())
                     .sum();
             warpResp.setSumCollectionMoneyYes(StringHelper.formatMon(sumCollectionMoneyYes / 100d));
 
@@ -265,7 +265,7 @@ public class PaymentBizImpl implements PaymentBiz {
                     collectionDetail.setName(borrow.getName());
                     collectionDetail.setCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAt(), DateHelper.DATE_FORMAT_YMD));
                     collectionDetail.setPrincipal(StringHelper.formatDouble(borrowCollection.getPrincipal(), 100, false));
-                    int money = borrowCollection.getInterest();
+                    long money = borrowCollection.getInterest();
                     if (borrow.getType() == 0 || borrow.getType() == 4) {
                         money -= (int) MathHelper.myRound(borrowCollection.getInterest() * 0.9, 0);
                     }

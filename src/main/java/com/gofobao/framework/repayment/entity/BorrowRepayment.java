@@ -29,13 +29,13 @@ public class BorrowRepayment {
     private Integer order;
     @Basic
     @Column(name = "repay_money")
-    private Integer repayMoney;
+    private Long repayMoney;
     @Basic
     @Column(name = "principal")
-    private Integer principal;
+    private Long principal;
     @Basic
     @Column(name = "interest")
-    private Integer interest;
+    private Long interest;
     @Basic
     @Column(name = "repay_at")
     private Date repayAt;
@@ -47,16 +47,16 @@ public class BorrowRepayment {
     private Date advanceAtYes;
     @Basic
     @Column(name = "repay_money_yes")
-    private Integer repayMoneyYes;
+    private Long repayMoneyYes;
     @Basic
     @Column(name = "advance_money_yes")
-    private Integer advanceMoneyYes;
+    private Long advanceMoneyYes;
     @Basic
     @Column(name = "late_days")
     private Integer lateDays;
     @Basic
     @Column(name = "late_interest")
-    private Integer lateInterest;
+    private Long lateInterest;
     @Basic
     @Column(name = "created_at")
     private Date createdAt;
