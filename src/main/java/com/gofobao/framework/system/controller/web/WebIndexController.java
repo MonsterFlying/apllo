@@ -31,7 +31,8 @@ public class WebIndexController {
 
     @GetMapping("/v2/banner/list")
     public  ResponseEntity<VoViewIndexBannerWarpRes>index(){
-        return bannerBiz.index();
+        String terminal = "pc" ;
+        return bannerBiz.index(terminal);
     }
 
 

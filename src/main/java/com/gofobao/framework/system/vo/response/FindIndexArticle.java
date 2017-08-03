@@ -7,7 +7,7 @@ import lombok.Data;
 @ApiModel
 public class FindIndexArticle {
     private String imageUrl ;
-    private String id ;
+    private Long id ;
     private String titel ;
     private String time ;
 }

@@ -8,5 +8,5 @@ import org.springframework.http.ResponseEntity;
  */
 public interface BannerBiz {
 
-    ResponseEntity<VoViewIndexBannerWarpRes> index();
+    ResponseEntity<VoViewIndexBannerWarpRes> index(String terminal);
 }

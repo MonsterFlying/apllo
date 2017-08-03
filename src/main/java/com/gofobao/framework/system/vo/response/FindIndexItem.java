@@ -1,5 +1,9 @@
 package com.gofobao.framework.system.vo.response;
 
+
+import lombok.Data;
+
+@Data
 public class FindIndexItem {
     /**
      * 跳转链接

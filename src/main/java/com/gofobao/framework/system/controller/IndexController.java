@@ -30,8 +30,8 @@ public class IndexController {
     }
 
     @GetMapping("/v2/banner/list")
-    public  ResponseEntity<VoViewIndexBannerWarpRes>index(){
-        return bannerBiz.index();
+    public ResponseEntity<VoViewIndexBannerWarpRes> index() {
+        return bannerBiz.index("mobile");
     }
 
 

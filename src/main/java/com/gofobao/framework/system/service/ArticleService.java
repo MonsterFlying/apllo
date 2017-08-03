@@ -2,7 +2,9 @@ package com.gofobao.framework.system.service;
 
 import com.gofobao.framework.system.entity.Article;
 import com.gofobao.framework.system.vo.request.VoArticleReq;
+import com.gofobao.framework.system.vo.response.FindIndexArticle;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -24,5 +26,12 @@ public interface ArticleService {
      * @return
      */
     Article info(Long id);
+
+
+    /**
+     *  发现栏目
+     * @return
+     */
+    List<FindIndexArticle> findFindList();
 
 }

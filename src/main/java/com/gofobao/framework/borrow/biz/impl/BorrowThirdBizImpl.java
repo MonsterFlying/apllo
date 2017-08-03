@@ -362,7 +362,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
 
         int repaymentTotal = 0;
         List<VoThirdBatchRepay> voThirdBatchRepayList = new ArrayList<>();
-        int penalty = 0;
+        long penalty = 0;
         int lateInterest = 0;
         int lateDays = 0;
         int overPrincipal = 0;
@@ -421,7 +421,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             voThirdBatchRepayList.add(tempVoThirdBatchRepay);
         }
 
-        int repayMoney = repaymentTotal + penalty;
+        long repayMoney = repaymentTotal + penalty;
         if (borrowAsset.getUseMoney() < (repayMoney)) {
             return ResponseEntity
                     .badRequest()

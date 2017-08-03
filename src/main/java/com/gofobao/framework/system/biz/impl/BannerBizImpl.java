@@ -21,10 +21,10 @@ public class BannerBizImpl implements BannerBiz {
     private BannerService bannerService;
 
     @Override
-    public ResponseEntity<VoViewIndexBannerWarpRes> index() {
+    public ResponseEntity<VoViewIndexBannerWarpRes> index(String terminal) {
         VoViewIndexBannerWarpRes warpRes = VoBaseResp.ok("", VoViewIndexBannerWarpRes.class);
         try {
-            List<IndexBanner> bannerList = bannerService.index();
+            List<IndexBanner> bannerList = bannerService.index(terminal);
             warpRes.setBannerList(bannerList);
             return ResponseEntity.ok(warpRes);
         } catch (Throwable e) {

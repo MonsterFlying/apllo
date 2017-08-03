@@ -1061,15 +1061,15 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowRepayment.setStatus(0);
             borrowRepayment.setOrder(i);
             borrowRepayment.setRepayAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
-            borrowRepayment.setRepayMoney(new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue());
-            borrowRepayment.setPrincipal(new Double(NumberHelper.toDouble(repayDetailMap.get("principal"))).intValue());
-            borrowRepayment.setInterest(new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue());
-            borrowRepayment.setRepayMoneyYes(0);
+            borrowRepayment.setRepayMoney(new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).longValue());
+            borrowRepayment.setPrincipal(new Double(NumberHelper.toDouble(repayDetailMap.get("principal"))).longValue());
+            borrowRepayment.setInterest(new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).longValue());
+            borrowRepayment.setRepayMoneyYes(0L);
             borrowRepayment.setCreatedAt(nowDate);
             borrowRepayment.setUpdatedAt(nowDate);
-            borrowRepayment.setAdvanceMoneyYes(0);
+            borrowRepayment.setAdvanceMoneyYes(0L);
             borrowRepayment.setLateDays(0);
-            borrowRepayment.setLateInterest(0);
+            borrowRepayment.setLateInterest(0L);
             borrowRepayment.setUserId(borrow.getUserId());
             borrowRepaymentService.save(borrowRepayment);
         }
@@ -1719,7 +1719,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
         int repaymentTotal = 0;
         List<VoRepayReq> voRepayReqList = new ArrayList<>();
-        int penalty = 0;
+        long penalty = 0;
         int lateInterest = 0;
         int lateDays = 0;
         int overPrincipal = 0;
@@ -1775,7 +1775,7 @@ public class BorrowBizImpl implements BorrowBiz {
             voRepayReqList.add(voRepayReq);
         }
 
-        int repayMoney = repaymentTotal + penalty;
+        long repayMoney = repaymentTotal + penalty;
         if (borrowAsset.getUseMoney() < (repayMoney)) {
             return ResponseEntity
                     .badRequest()
@@ -1813,7 +1813,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @param borrow
      * @param penalty
      */
-    private void receivedPenalty(Borrow borrow, int penalty) throws Exception {
+    private void receivedPenalty(Borrow borrow, long penalty) throws Exception {
         Date nowDate = new Date();
         List<Long> collectionUserIds = new ArrayList<>();
         Specification<Tender> ts = Specifications
@@ -2232,8 +2232,8 @@ public class BorrowBizImpl implements BorrowBiz {
             return;
         }
 
-        Integer repayMoney = 0;
-        Integer principal = 0;
+        long repayMoney = 0;
+        long principal = 0;
         for (BorrowRepayment borrowRepayment : repaymentList) {
             repayMoney += borrowRepayment.getRepayMoney();
             principal += borrowRepayment.getPrincipal();
