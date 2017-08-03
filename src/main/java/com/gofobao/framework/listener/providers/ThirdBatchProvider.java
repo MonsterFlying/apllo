@@ -215,7 +215,7 @@ public class ThirdBatchProvider {
                 break;
             case ThirdBatchLogContants.BATCH_REPAY_ALL: //提前结清批次还款
                 //======================================================
-                //提前结清批次还款
+                // 提前结清批次还款
                 //======================================================
                 repayAllDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
                 break;

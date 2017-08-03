@@ -310,10 +310,11 @@ public class TransferProvider {
         batchAssetChange.setState(0);
         batchAssetChange.setCreatedAt(nowDate);
         batchAssetChange.setUpdatedAt(nowDate);
-        batchAssetChangeService.save(batchAssetChange);
+        batchAssetChange = batchAssetChangeService.save(batchAssetChange);
 
-        //债权转让人收款
+        // 债权转让人收款
         BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
+        batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
         batchAssetChangeItem.setState(0);
         batchAssetChangeItem.setType(CapitalChangeEnum.Borrow.getValue());
         batchAssetChangeItem.setUserId(transfer.getUserId());
@@ -323,8 +324,9 @@ public class TransferProvider {
         batchAssetChangeItem.setUpdatedAt(nowDate);
         batchAssetChangeItemService.save(batchAssetChangeItem);
 
-        //发放债权转让人当期应计利息
+        // 发放债权转让人当期应计利息
         batchAssetChangeItem = new BatchAssetChangeItem();
+        batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
         batchAssetChangeItem.setState(0);
         batchAssetChangeItem.setType(CapitalChangeEnum.ACCRUED_INTEREST.getValue());
         batchAssetChangeItem.setUserId(transfer.getUserId());
@@ -335,8 +337,9 @@ public class TransferProvider {
         batchAssetChangeItem.setUpdatedAt(nowDate);
         batchAssetChangeItemService.save(batchAssetChangeItem);
 
-        //收取债权转让人的转让管理费
+        // 收取债权转让人的转让管理费
         batchAssetChangeItem = new BatchAssetChangeItem();
+        batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
         batchAssetChangeItem.setState(0);
         batchAssetChangeItem.setType(CapitalChangeEnum.Fee.getValue());
         batchAssetChangeItem.setUserId(transfer.getUserId());
@@ -347,6 +350,7 @@ public class TransferProvider {
         batchAssetChangeItemService.save(batchAssetChangeItem);
 
         for (TransferBuyLog transferBuyLog : transferBuyLogList) {
+            batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
             //扣除债权转让购买人冻结资金
             batchAssetChangeItem = new BatchAssetChangeItem();
             batchAssetChangeItem.setState(0);
@@ -377,7 +381,7 @@ public class TransferProvider {
         List<CreditInvest> creditInvestList = new ArrayList<>();
         CreditInvest creditInvest = null;
         UserThirdAccount tenderUserThirdAccount = null;
-        int sumCount = 0;
+        int sumCount = 0;  // 全部有效投保金额
         for (TransferBuyLog transferBuyLog : transferBuyLogList) {
             double txFee = 0;
             if (BooleanHelper.isTrue(transferBuyLog.getThirdTransferFlag())) {  //判断标的已在存管登记转让
@@ -388,7 +392,7 @@ public class TransferProvider {
             double txAmount = transferBuyLog.getValidMoney();  //购买债权转让有效金额
             sumCount += txAmount;
             //收取转让人债权转让管理费
-            txFee += MathHelper.myRound((transferBuyLog.getValidMoney() / new Double(transfer.getPrincipal())) * transferFee, 0);
+            txFee += MathHelper.myRound((transferBuyLog.getValidMoney() / new Double(transfer.getPrincipal())) * transferFee, 0);  // 分摊转让费用到各项中
             String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);/* 购买债权转让orderId */
             creditInvest = new CreditInvest();
             creditInvest.setAccountId(tenderUserThirdAccount.getAccountId());
