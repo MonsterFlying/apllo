@@ -301,12 +301,15 @@ public class TransferProvider {
      * @param batchNo
      */
     private void addBatchAssetChange(long transferId, Transfer transfer, List<TransferBuyLog> transferBuyLogList, double transferFeeRate, String batchNo) {
+        Date nowDate = new Date();
         // 扣除债权购买人冻结资金
         BatchAssetChange batchAssetChange = new BatchAssetChange();
         batchAssetChange.setBatchNo(batchNo);
         batchAssetChange.setSourceId(transferId);
         batchAssetChange.setType(BatchAssetChangeContants.BATCH_CREDIT_INVEST);
         batchAssetChange.setState(0);
+        batchAssetChange.setCreatedAt(nowDate);
+        batchAssetChange.setUpdatedAt(nowDate);
         batchAssetChangeService.save(batchAssetChange);
 
         //债权转让人收款
@@ -316,6 +319,20 @@ public class TransferProvider {
         batchAssetChangeItem.setUserId(transfer.getUserId());
         batchAssetChangeItem.setMoney(transfer.getPrincipal());
         batchAssetChangeItem.setRemark("通过[" + transfer.getTitle() + "]收到的债权转让款");
+        batchAssetChangeItem.setCreatedAt(nowDate);
+        batchAssetChangeItem.setUpdatedAt(nowDate);
+        batchAssetChangeItemService.save(batchAssetChangeItem);
+
+        //发放债权转让人当期应计利息
+        batchAssetChangeItem = new BatchAssetChangeItem();
+        batchAssetChangeItem.setState(0);
+        batchAssetChangeItem.setType(CapitalChangeEnum.ACCRUED_INTEREST.getValue());
+        batchAssetChangeItem.setUserId(transfer.getUserId());
+        batchAssetChangeItem.setMoney(transfer.getAlreadyInterest());
+        batchAssetChangeItem.setRemark("通过[" + transfer.getTitle() + "]收到的债权转让当期应计利息");
+        batchAssetChangeItem.setSendRedPacket(true);
+        batchAssetChangeItem.setCreatedAt(nowDate);
+        batchAssetChangeItem.setUpdatedAt(nowDate);
         batchAssetChangeItemService.save(batchAssetChangeItem);
 
         //收取债权转让人的转让管理费
@@ -325,6 +342,8 @@ public class TransferProvider {
         batchAssetChangeItem.setUserId(transfer.getUserId());
         batchAssetChangeItem.setMoney(NumberHelper.toLong(transfer.getPrincipal() * transferFeeRate));
         batchAssetChangeItem.setRemark("扣除借款标[" + transfer.getTitle() + "]的转让管理费");
+        batchAssetChangeItem.setCreatedAt(nowDate);
+        batchAssetChangeItem.setUpdatedAt(nowDate);
         batchAssetChangeItemService.save(batchAssetChangeItem);
 
         for (TransferBuyLog transferBuyLog : transferBuyLogList) {
@@ -336,6 +355,8 @@ public class TransferProvider {
             batchAssetChangeItem.setToUserId(transfer.getUserId());
             batchAssetChangeItem.setMoney(transferBuyLog.getValidMoney());
             batchAssetChangeItem.setRemark("成功投资[" + transfer.getTitle() + "]");
+            batchAssetChangeItem.setCreatedAt(nowDate);
+            batchAssetChangeItem.setUpdatedAt(nowDate);
             batchAssetChangeItemService.save(batchAssetChangeItem);
         }
     }
@@ -364,7 +385,7 @@ public class TransferProvider {
             }
             tenderUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());/* 债权转让购买人存管账户信息 */
             Preconditions.checkNotNull(tenderUserThirdAccount, "投资人开户记录不存在!");
-            double txAmount = transferBuyLog.getValidMoney() + transferBuyLog.getAlreadyInterest();  //购买债权转让有效金额
+            double txAmount = transferBuyLog.getValidMoney();  //购买债权转让有效金额
             sumCount += txAmount;
             //收取转让人债权转让管理费
             txFee += MathHelper.myRound((transferBuyLog.getValidMoney() / new Double(transfer.getPrincipal())) * transferFee, 0);
@@ -374,7 +395,7 @@ public class TransferProvider {
             creditInvest.setOrderId(transferOrderId);
             creditInvest.setTxAmount(StringHelper.formatDouble(txAmount, 100, false));
             creditInvest.setTxFee(StringHelper.formatDouble(txFee, 100, false));
-            creditInvest.setTsfAmount(StringHelper.formatDouble(transferBuyLog.getValidMoney(), 100, false));
+            creditInvest.setTsfAmount(StringHelper.formatDouble(transferBuyLog.getPrincipal(), 100, false));
             creditInvest.setForAccountId(transferUserThirdAccount.getAccountId());
             creditInvest.setOrgOrderId(parentTender.getThirdTenderOrderId());
             creditInvest.setOrgTxAmount(StringHelper.formatDouble(parentTender.getValidMoney(), 100, false));
