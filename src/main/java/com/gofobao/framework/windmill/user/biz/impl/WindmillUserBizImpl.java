@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static io.netty.handler.codec.http.multipart.DiskFileUpload.prefix;
+import static java.net.URLDecoder.decode;
 
 /**
  * Created by admin on 2017/7/31.
@@ -77,6 +78,9 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
     @Value("${windmill.from}")
     private String from;
 
+    @Value("${gofobao.h5Domain}")
+    private String h5Domain;
+
     @Value("${jwt.header}")
     private String tokenHeader;
 
@@ -107,7 +111,8 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
         }
         do {
             try {
-                registerReq= GSON.fromJson(decryptStr, new TypeToken<UserRegisterReq>() {}.getType());
+                registerReq = GSON.fromJson(decryptStr, new TypeToken<UserRegisterReq>() {
+                }.getType());
             } catch (Exception e) {
                 registerRes.setRetcode(UserRegisterConstant.ORTHER_ERROR);
                 registerRes.setRetmsg("json转对象异常");
@@ -124,8 +129,15 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
                     if (users.getWindmillId().equals(registerReq.getWrb_user_id())) { //相同
                         registerRes.setRetcode(UserRegisterConstant.SUCCESS); //返回成功
                         registerRes.setRetmsg("注册成功");
+                        registerRes.setPf_user_name(StringUtils.isEmpty(users.getUsername()) ? users.getPhone().toString() : users.getUsername());
+                        try {
+                            registerRes.setPf_user_id(WrbCoopDESUtil.desEncrypt(localDesKey, users.getId().toString()));
+                        } catch (Exception e) {
+
+                        }
                         log.info("风车理财用户注册成功---->重入");
                         break;
+
                     } else {
                         registerRes.setRetcode(UserRegisterConstant.ORTHER_ERROR);
                         registerRes.setRetmsg("平台风车ID和传递的风车ID,不一致！");
@@ -214,10 +226,10 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
                 smsConfig.setMsg(smsBoby);
                 mqHelper.convertAndSend(smsConfig);
 
-                registerRes.setPf_user_id(users.getId());
+                registerRes.setPf_user_id(WrbCoopDESUtil.desEncrypt(localDesKey, users.getId().toString()));
                 registerRes.setRetmsg("风车理财用户注册:注册成功");
                 registerRes.setRetcode(UserRegisterConstant.SUCCESS);
-                registerRes.setPf_user_name(registerReq.getPf_user_name());
+                registerRes.setPf_user_name(StringUtils.isEmpty(users.getUsername()) ? users.getPhone() : users.getUsername());
                 log.info("风车理财：用户注册成功");
 
             } catch (Exception e) {
@@ -255,24 +267,25 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             try {
                 String desDecryptStr = commonDecryptStr(bindLoginReq.getParams());
                 log.info("解密后的参数：param:" + desDecryptStr);
-                UserRegisterReq userRegisterReq =GSON.fromJson(desDecryptStr, new TypeToken<UserRegisterReq>() {}.getType());
+                UserRegisterReq userRegisterReq = GSON.fromJson(desDecryptStr, new TypeToken<UserRegisterReq>() {
+                }.getType());
                 Users user = userService.findByAccount(bindLoginReq.getUserName());
                 String userName = StringUtils.isEmpty(user.getUsername()) ? user.getPhone() : user.getUsername();
                 //拼接参数
                 String requestParam = "wrb_user_id=" + userRegisterReq.getWrb_user_id() +
-                        "&pf_user_id=" + WrbCoopDESUtil.desEncrypt(localDesKey,user.getId().toString()) +
+                        "&pf_user_id=" + WrbCoopDESUtil.desEncrypt(localDesKey, user.getId().toString()) +
                         "&pf_user_name=" + userName +
                         "&reg_time=" + DateHelper.dateToString(user.getCreatedAt());
                 //加密参数
                 String requestEncryptParam = WrbCoopDESUtil.desEncrypt(desKey, requestParam);
                 Map<String, String> requestMaps = Maps.newHashMap();
                 requestMaps.put("from", "gfb");
-                requestMaps.put("param", URLEncoder.encode(requestEncryptParam,"utf-8"));
-                requestMaps.put("ts",System.currentTimeMillis()+"");
-                log.info("请求风车理财 验证绑定是否成功，参数:"+ JacksonHelper.obj2json(requestMaps));
+                requestMaps.put("param", URLEncoder.encode(requestEncryptParam, "utf-8"));
+                requestMaps.put("ts", System.currentTimeMillis() + "");
+                log.info("请求风车理财 验证绑定是否成功，参数:" + JacksonHelper.obj2json(requestMaps));
 
-                Map<String,String>headerMap=Maps.newHashMap();
-                headerMap.put("Content-Type","application/x-www-form-urlencoded; charset=UTF-8");
+                Map<String, String> headerMap = Maps.newHashMap();
+                headerMap.put("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
                 String result = OKHttpHelper.postForm(address + "/wrb/ps_bind.json", requestMaps, headerMap);
                 try {
                     Map<String, Object> resultMap = JacksonHelper.json2map(result);
@@ -318,7 +331,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
      */
     @Override
     public String login(HttpServletRequest request, HttpServletResponse response) {
-        String from = request.getParameter("from");
+        String from = request.getParameter("sign");
         if (!from.equals(from)) {
             return "/load_error";
         }
@@ -326,7 +339,9 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
         try {
             log.info("=============风车理财用户登录请求=============");
             String jsonStr = commonDecryptStr(getParamStr);
-            Map<String, Object> resultMaps = JacksonHelper.json2map(jsonStr);
+            Map<String, Object> resultMaps = GSON.fromJson(jsonStr, new TypeToken<Map<String, Object>>() {
+            }.getType());
+
             String ticket = resultMaps.get("ticket").toString();
             //用户要访问的链接
             String targetUrl = resultMaps.get("target_url").toString();
@@ -334,14 +349,18 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             String requestParam = "ticket=" + ticket;
             String requestParamStr = WrbCoopDESUtil.desEncrypt(desKey, requestParam);
             Map<String, String> checkTicketMap = Maps.newHashMap();
-            checkTicketMap.put("param", requestParamStr);
+            checkTicketMap.put("param", URLEncoder.encode(requestParamStr, "utf-8"));
             checkTicketMap.put("from", shortName);
-            checkTicketMap.put("ts",System.currentTimeMillis()+"");
+            checkTicketMap.put("ts", System.currentTimeMillis() + "");
+            Map<String, String> headerMap = Maps.newHashMap();
+            headerMap.put("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
             //请求风车理财验证ticket
-            String checkResult = OKHttpHelper.postForm(address + "wrb/ps_check_ticket.json", checkTicketMap, null);
-            Map<String, Object> checkResultMap = JacksonHelper.json2map(checkResult);
+            String checkResult = OKHttpHelper.get(address + "/wrb/ps_check_ticket.json", checkTicketMap, headerMap);
+
+            Map<String, Object> checkResultMap = GSON.fromJson(checkResult, new TypeToken<Map<String, Object>>() {
+            }.getType());
             //验证成功 ticket有效
-            if (Integer.valueOf(checkResultMap.get("retcode").toString()) != VoBaseResp.OK) {
+            if (new Double(checkResultMap.get("retcode").toString()).longValue() != VoBaseResp.OK) {
                 log.info("风车理财检查ticket 返回失败");
                 log.info("返回信息:" + checkResult);
                 return "/load_error";
@@ -349,7 +368,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             log.info("风车理财ticket检验成功");
             log.info("打印成功信息:" + checkResult);
             //解密用户id
-            Long userId = Long.valueOf(WrbCoopDESUtil.desDecrypt(localDesKey,checkResultMap.get("pf_user_id").toString()));
+            Long userId = Long.valueOf(WrbCoopDESUtil.desDecrypt(localDesKey, checkResultMap.get("pf_user_id").toString()));
             //风车理财用户id
             String wrbUserId = checkResultMap.get("wrb_user_id").toString();
             Specification<Users> specification = Specifications.<Users>and()
@@ -379,13 +398,21 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_USER_ID, tempUser.getId().toString());
             mqConfig.setMsg(body);
             mqHelper.convertAndSend(mqConfig);
-            if(StringUtils.isEmpty(targetUrl)){
-                targetUrl="index";
-            }else{
-                targetUrl=URLEncoder.encode(targetUrl,"utf-8");
+
+            log.info("token : "+token);
+            if (StringUtils.isEmpty(targetUrl)) {
+                targetUrl =h5Domain ;
+            } else {
+                targetUrl = decode(targetUrl, "utf-8");
             }
-            return targetUrl;
+            if(targetUrl.contains("?")){
+                return targetUrl + "&token=" + token;
+            }else{
+                return targetUrl + "?token=" + token;
+            }
+
         } catch (Exception e) {
+            e.printStackTrace();
             return "load_error";
         }
     }
@@ -405,7 +432,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             String jsonStr = desDecryptStr.replaceAll("&", ",").replaceAll("=", ":");
             log.info(jsonStr);
             StringBuilder sb = new StringBuilder(jsonStr);
-            return "{"+sb.toString()+"}";
+            return "{" + sb.toString() + "}";
         } catch (Exception e) {
             log.info("密文解析失败");
             throw new Exception();

@@ -12,7 +12,7 @@ public class UserRegisterRes {
 
     private String retmsg;
 
-    private Long pf_user_id;
+    private String pf_user_id;
 
     private String pf_user_name;
 
