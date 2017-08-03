@@ -44,6 +44,16 @@ public enum AssetChangeTypeEnum {
     repayment("还款", "repayment", "2781", "sub@noUseMoney", "add@expenditureInterest#interest", "C"),
 
     /**
+     * 还款滞纳金
+     */
+    repayMentPenaltyFee("扣除还款滞纳金", "repayMentPenaltyFee", "4781", "sub@noUseMoney", "add@expenditureOverdue", "C"),
+
+    /**
+     * 平台收取还款滞纳金
+     */
+    platformRepayMentPenaltyFee("收取还款滞纳金", "platformRepayMentPenaltyFee", "7722", "add@useMoney", "add@expenditureOverdue", "D"),
+
+    /**
      * 担保人代偿还款
      */
     compensatoryRepayment("代偿还款", "compensatoryRepayment", "2788", "sub@noUseMoney", "", "C"),
@@ -64,6 +74,11 @@ public enum AssetChangeTypeEnum {
     receivedPayments("正常回款", "receivedPayments", "7781", "add@useMoney", "add@incomeInterest#interest", "D"),
 
     /**
+     * 投资人收到滞纳金
+     */
+    receivedPaymentsPenalty("还款滞纳金", "receivedPayments", "7781", "add@useMoney", "add@incomeOverdue", "D"),
+
+    /**
      * 代偿账户收回代偿本息
      */
     compensatoryReceivedPayments("代偿账户代偿本息回款", "compensatoryReceivedPayments", "7788", "add@useMoney", "add@incomeInterest#interest", "D"),
@@ -77,10 +92,12 @@ public enum AssetChangeTypeEnum {
      * 平台发放贴息红包
      */
     publishDiscountRedpack("平台发放贴息红包", "publishDiscountRedpack", "2793", "sub@useMoney", "", "C"),
+
     /**
      * 用户红包撤销
      */
     revokedRedpack("撤销红包", "revokedRedpack", "2833", "sub@useMoney", "", "C"),
+
     /**
      * 平台发放红包
      */
@@ -129,6 +146,7 @@ public enum AssetChangeTypeEnum {
      * 利息管理费
      */
     interestManagementFee("利息管理费", "interestManagementFee", "9781", "sub@useMoney", "add@expenditureInterestManage", "C" ),
+
 
     /**
      * 平台收取小额提现手续费
