@@ -42,7 +42,7 @@ public interface RepaymentBiz {
      * @param listReq
      * @return
      */
-    void toExcel(HttpServletResponse response,VoOrderListReq listReq);
+    void toExcel(HttpServletResponse response, VoOrderListReq listReq);
 
     /**
      * 还款详情
@@ -76,6 +76,15 @@ public interface RepaymentBiz {
      * @throws Exception
      */
     ResponseEntity<VoBaseResp> newRepay(VoRepayReq voRepayReq) throws Exception;
+
+    /**
+     * 新还款处理
+     *
+     * @param repaymentId
+     * @return
+     * @throws Exception
+     */
+    ResponseEntity<VoBaseResp> newRepayDeal(long repaymentId) throws Exception;
 
     /**
      * 还款处理

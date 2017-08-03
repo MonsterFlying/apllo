@@ -8,6 +8,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.util.Date;
 
 /**
  * Created by Zeke on 2017/7/27.
@@ -31,4 +32,7 @@ public class BatchAssetChangeItem {
     private String asset;
     private String type;
     private String remark;
+    private Boolean sendRedPacket;/* 是否需要发放存管红包 */
+    private Date createdAt;
+    private Date updatedAt;
 }

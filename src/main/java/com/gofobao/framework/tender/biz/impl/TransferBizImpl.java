@@ -2,11 +2,14 @@ package com.gofobao.framework.tender.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.contants.DesLineFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.entity.BatchAssetChange;
@@ -17,11 +20,13 @@ import com.gofobao.framework.asset.service.BatchAssetChangeService;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
+import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.constans.JixinContants;
 import com.gofobao.framework.common.constans.MoneyConstans;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
@@ -41,9 +46,9 @@ import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.biz.IncrStatisticBiz;
 import com.gofobao.framework.system.biz.StatisticBiz;
-import com.gofobao.framework.system.entity.IncrStatistic;
-import com.gofobao.framework.system.entity.Notices;
-import com.gofobao.framework.system.entity.Statistic;
+import com.gofobao.framework.system.entity.*;
+import com.gofobao.framework.system.service.DictItemService;
+import com.gofobao.framework.system.service.DictValueService;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.entity.Tender;
@@ -60,6 +65,9 @@ import com.gofobao.framework.tender.vo.response.*;
 import com.gofobao.framework.tender.vo.response.web.TransferBuy;
 import com.gofobao.framework.tender.vo.response.web.VoViewTransferBuyWarpRes;
 import com.google.common.base.Preconditions;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -82,6 +90,8 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.function.Function;
 
@@ -122,9 +132,28 @@ public class TransferBizImpl implements TransferBiz {
     private BatchAssetChangeService batchAssetChangeService;
     @Autowired
     private BatchAssetChangeItemService batchAssetChangeItemService;
-
     @Autowired
-    UserService userService;
+    private UserService userService;
+    @Autowired
+    private DictItemService dictItemService;
+    @Autowired
+    private DictValueService dictValueService;
+
+    LoadingCache<String, DictValue> jixinCache = CacheBuilder
+            .newBuilder()
+            .expireAfterWrite(60, TimeUnit.MINUTES)
+            .maximumSize(1024)
+            .build(new CacheLoader<String, DictValue>() {
+                @Override
+                public DictValue load(String bankName) throws Exception {
+                    DictItem dictItem = dictItemService.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
+                    if (ObjectUtils.isEmpty(dictItem)) {
+                        return null;
+                    }
+
+                    return dictValueService.findTopByItemIdAndValue01(dictItem.getId(), bankName);
+                }
+            });
 
     @Value("${gofobao.imageDomain}")
     private String imageDomain;
@@ -142,7 +171,7 @@ public class TransferBizImpl implements TransferBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> againVerifyTransfer(long transferId, String batchNo) throws Exception {
+    public ResponseEntity<VoBaseResp> againVerifyTransfer(long transferId, long batchNo) throws Exception {
         Date nowDate = new Date();
         /*
         1.查询债权转让记录与购买记录
@@ -195,7 +224,7 @@ public class TransferBizImpl implements TransferBiz {
      * @param transferId
      * @param batchNo
      */
-    private void batchAssetChange(long transferId, String batchNo) {
+    private void batchAssetChange(long transferId, long batchNo) {
         Specification<BatchAssetChange> bacs = Specifications
                 .<BatchAssetChange>and()
                 .eq("sourceId", transferId)
@@ -214,6 +243,34 @@ public class TransferBizImpl implements TransferBiz {
         List<BatchAssetChangeItem> batchAssetChangeItemList = batchAssetChangeItemService.findList(bacis);
         Preconditions.checkNotNull(batchAssetChangeItemList, batchNo + "债权转让资金变动子记录不存在!");
         batchAssetChangeItemList.stream().forEach(batchAssetChangeItem -> {
+            //发送存管红包
+            if (BooleanHelper.isTrue(batchAssetChangeItem.getSendRedPacket())) {
+                UserThirdAccount transferUserThirdAccount = userThirdAccountService.findByUserId(batchAssetChangeItem.getUserId()); /* 债权转让人存管账号 */
+                //通过红包账户发放
+                //调用即信发放债权转让人应收利息
+                //查询红包账户
+                DictValue dictValue = null;
+                try {
+                    dictValue = jixinCache.get(JixinContants.RED_PACKET_USER_ID);
+                } catch (ExecutionException e) {
+                    log.error("transferBizImpl batchAssetChange 获取存管红包账户失败：", e);
+                }
+                UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
+
+                VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
+                voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
+                voucherPayRequest.setTxAmount(StringHelper.toString(batchAssetChangeItem.getMoney()));//扣除手续费
+                voucherPayRequest.setForAccountId(transferUserThirdAccount.getAccountId());
+                voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
+                voucherPayRequest.setDesLine(batchAssetChangeItem.getRemark());
+                voucherPayRequest.setChannel(ChannelContant.HTML);
+                VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
+                if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+                    String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+                    log.error("BorrowRepaymentThirdBizImpl 调用即信发送发放债权转让人应收利息异常:" + msg);
+                }
+            }
+            //扣减本地资金
             CapitalChangeEntity capitalChangeEntity = GSON.fromJson(GSON.toJson(batchAssetChangeItem), new TypeToken<CapitalChangeEntity>() {
             }.getType());
             try {
@@ -315,8 +372,6 @@ public class TransferBizImpl implements TransferBiz {
      * @param transfer
      */
     private void updateStatisticByTransferReview(Transfer transfer) {
-        Date nowDate = new Date();
-
         //全站统计
         Statistic statistic = new Statistic();
         statistic.setLzBorrowTotal(transfer.getPrincipal());
@@ -353,6 +408,7 @@ public class TransferBizImpl implements TransferBiz {
             BorrowCollection borrowCollection;
             int collectionMoney = 0;
             int collectionInterest = 0;
+            int startOrder = parentBorrow.getTotalOrder() - transfer.getTimeLimit() - 1;/* 获取开始转让期数,期数下标从0开始 */
             for (int i = 0; i < repayDetailList.size(); i++) {
                 borrowCollection = new BorrowCollection();
                 Map<String, Object> repayDetailMap = repayDetailList.get(i);
@@ -360,7 +416,7 @@ public class TransferBizImpl implements TransferBiz {
                 collectionInterest += new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue();
                 borrowCollection.setTenderId(childTender.getId());
                 borrowCollection.setStatus(0);
-                borrowCollection.setOrder(i);
+                borrowCollection.setOrder(startOrder++);
                 borrowCollection.setUserId(childTender.getUserId());
                 borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : startAt);
                 borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : nowDate);
@@ -1160,9 +1216,9 @@ public class TransferBizImpl implements TransferBiz {
             voViewBorrowList.setIsPassWord(false);
 
             if (borrow.getType() == com.gofobao.framework.borrow.contants.BorrowContants.REPAY_FASHION_ONCE) {
-                voViewBorrowList.setTimeLimit(borrow.getTimeLimit() + BorrowContants.DAY);
+                voViewBorrowList.setTimeLimit(item.getTimeLimit() + BorrowContants.DAY);
             } else {
-                voViewBorrowList.setTimeLimit(borrow.getTimeLimit() + BorrowContants.MONTH);
+                voViewBorrowList.setTimeLimit(item.getTimeLimit() + BorrowContants.MONTH);
             }
 
             //待发布时间
@@ -1200,5 +1256,90 @@ public class TransferBizImpl implements TransferBiz {
             voViewBorrowLists.add(voViewBorrowList);
         }
         return voViewBorrowLists;
+    }
+
+    @Override
+    public ResponseEntity<BorrowInfoRes> transferInfo(Long transferId) {
+        Transfer transfer = transferService.findById(transferId);
+        if (ObjectUtils.isEmpty(transfer)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "债权转让信息为空", BorrowInfoRes.class));
+        }
+
+        Long borrowId = transfer.getBorrowId();
+        Borrow borrow = borrowService.findById(borrowId);
+        if (ObjectUtils.isEmpty(borrow)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "债权转让 原始标的信息为空", BorrowInfoRes.class));
+        }
+
+        BorrowInfoRes borrowInfoRes = VoBaseResp.ok("查询成功", BorrowInfoRes.class);
+        borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
+        borrowInfoRes.setLowest(StringHelper.formatMon(borrow.getLowest() / 100d));
+        long surplusMoney = transfer.getTransferMoney() - transfer.getTransferMoneyYes();
+        borrowInfoRes.setViewSurplusMoney(StringHelper.formatMon(surplusMoney / 100D));
+        borrowInfoRes.setHideSurplusMoney(surplusMoney);
+
+        if (borrow.getType() == com.gofobao.framework.borrow.contants.BorrowContants.REPAY_FASHION_ONCE) {
+            borrowInfoRes.setTimeLimit(transfer.getTimeLimit() + com.gofobao.framework.borrow.contants.BorrowContants.DAY);
+        } else {
+            borrowInfoRes.setTimeLimit(transfer.getTimeLimit() + com.gofobao.framework.borrow.contants.BorrowContants.MONTH);
+        }
+
+        double principal = 10000D * 100;
+        double apr = NumberHelper.toDouble(StringHelper.toString(borrow.getApr()));
+        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(principal, apr, borrow.getTimeLimit(), borrow.getSuccessAt());
+        Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
+        Integer earnings = NumberHelper.toInt(calculatorMap.get("earnings"));
+        borrowInfoRes.setEarnings(StringHelper.formatMon(earnings / 100d) + MoneyConstans.RMB);
+        borrowInfoRes.setTenderCount(transfer.getTenderCount() + com.gofobao.framework.borrow.contants.BorrowContants.TIME);
+        borrowInfoRes.setMoney(StringHelper.formatMon(transfer.getTransferMoney() / 100d));
+        borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
+        borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatDouble(transfer.getTransferMoneyYes() / transfer.getTransferMoney().doubleValue(), false)));
+        //结束时间
+        Date endAt = DateHelper.addDays(DateHelper.beginOfDate(transfer.getReleaseAt()), 3 + 1);
+        borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
+        //进度
+        borrowInfoRes.setSurplusSecond(-1L);
+        //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
+        Integer status = borrow.getStatus();
+        Date nowDate = new Date(System.currentTimeMillis());
+        Date releaseAt = borrow.getReleaseAt();  //发布时间
+
+        if (status == 1) {//招标中
+            borrowInfoRes.setStatus(3);
+            if (borrowInfoRes.getSpend() == 1) {
+                borrowInfoRes.setStatus(6);
+            }
+        } else {
+            if (ObjectUtils.isEmpty(borrow.getCloseAt())) {
+                borrowInfoRes.setStatus(2);
+            } else {
+                borrowInfoRes.setStatus(4);
+            }
+        }
+
+        borrowInfoRes.setType(5);
+        borrowInfoRes.setPassWord(false);
+        Users users = userService.findById(borrow.getUserId());
+        borrowInfoRes.setUserName(!StringUtils.isEmpty(users.getUsername()) ? users.getUsername() : users.getPhone());
+        borrowInfoRes.setIsNovice(borrow.getIsNovice());
+        borrowInfoRes.setStatus(status);
+        borrowInfoRes.setSuccessAt(StringUtils.isEmpty(borrow.getSuccessAt()) ? "" : DateHelper.dateToString(borrow.getSuccessAt()));
+        borrowInfoRes.setBorrowName(borrow.getName());
+        borrowInfoRes.setIsConversion(borrow.getIsConversion());
+        borrowInfoRes.setIsNovice(borrow.getIsNovice());
+        borrowInfoRes.setIsContinued(borrow.getIsContinued());
+        borrowInfoRes.setIsImpawn(borrow.getIsImpawn());
+        borrowInfoRes.setIsMortgage(borrow.getIsMortgage());
+        borrowInfoRes.setIsVouch(borrow.getIsVouch());
+        borrowInfoRes.setHideLowMoney(borrow.getLowest());
+        borrowInfoRes.setIsFlow(true);
+        borrowInfoRes.setAvatar(imageDomain + "/data/images/avatar/" + borrow.getUserId() + "_avatar_small.jpg");
+        borrowInfoRes.setReleaseAt(status != 1 ? DateHelper.dateToString(borrow.getReleaseAt()) : "");
+        borrowInfoRes.setLockStatus(borrow.getIsLock());
+        return ResponseEntity.ok(borrowInfoRes);
     }
 }

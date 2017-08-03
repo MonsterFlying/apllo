@@ -12,6 +12,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
+import com.gofobao.framework.tender.biz.TransferBiz;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,10 @@ public class BorrowController {
 
     @Autowired
     private BorrowBiz borrowBiz;
+
+    @Autowired
+    TransferBiz transferBiz ;
+
     @Autowired
     private ThymeleafHelper thymeleafHelper;
     @Autowired
@@ -46,7 +51,6 @@ public class BorrowController {
     private String tokenHeader;
     @Value("${jwt.prefix}")
     private String prefix;
-
 
     @ApiOperation(value = "首页标列表; type:  -1：全部;   0：车贷标；  1：净值标；  2：秒标；  4：渠道标;  5: 流转标")
     @GetMapping("/pub/borrow/v2/list/{type}/{pageIndex}/{pageSize}")
@@ -61,10 +65,18 @@ public class BorrowController {
     }
 
 
-    @ApiOperation("标信息")
+    @ApiOperation("非流转标信息")
     @GetMapping("/pub/borrow/v2/info/{borrowId}")
-    public ResponseEntity<BorrowInfoRes> getByBorrowId(@PathVariable Long borrowId) {
+    public ResponseEntity<BorrowInfoRes> normalBorrowInfo(@PathVariable Long borrowId) {
         return borrowBiz.info(borrowId);
+    }
+
+
+
+    @ApiOperation("流转标信息")
+    @GetMapping("/pub/transfer/v2/info/{transferId}")
+    public ResponseEntity<BorrowInfoRes> transferInfo(@PathVariable Long transferId) {
+        return transferBiz.transferInfo(transferId);
     }
 
 
@@ -98,6 +110,7 @@ public class BorrowController {
         }
         return ResponseEntity.ok(content);
     }
+
 
     /**
      * 新增净值借款

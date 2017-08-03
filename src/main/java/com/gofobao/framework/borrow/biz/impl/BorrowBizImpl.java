@@ -257,7 +257,7 @@ public class BorrowBizImpl implements BorrowBiz {
                             BorrowInfoRes.class));
         }
 
-        BorrowInfoRes borrowInfoRes = VoBaseResp.ok("", BorrowInfoRes.class);
+        BorrowInfoRes borrowInfoRes = VoBaseResp.ok("查询成功", BorrowInfoRes.class);
         try {
             borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
             borrowInfoRes.setLowest(StringHelper.formatMon(borrow.getLowest() / 100d));
