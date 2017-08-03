@@ -96,7 +96,7 @@ public class TransferProvider {
     private BatchAssetChangeItemService batchAssetChangeItemService;
 
     @Autowired
-    private AssetChangeProvider assetChangeProvider ;
+    private AssetChangeProvider assetChangeProvider;
 
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
@@ -307,8 +307,8 @@ public class TransferProvider {
      * @param batchNo
      */
     private void addBatchAssetChange(long transferId, Transfer transfer, List<TransferBuyLog> transferBuyLogList, double transferFeeRate, String batchNo) throws ExecutionException {
-        String seqNo = assetChangeProvider.getSeqNo() ;
-        String groupSeqNo = assetChangeProvider.getGroupSeqNo() ;
+        String seqNo = assetChangeProvider.getSeqNo();
+        String groupSeqNo = assetChangeProvider.getGroupSeqNo();
         Date nowDate = new Date();
         // 扣除债权购买人冻结资金
         BatchAssetChange batchAssetChange = new BatchAssetChange();
@@ -332,7 +332,7 @@ public class TransferProvider {
         batchAssetChangeItem.setCreatedAt(nowDate);
         batchAssetChangeItem.setUpdatedAt(nowDate);
         batchAssetChangeItem.setSourceId(transferId);
-        batchAssetChangeItem.setSeqNo(seqNo) ;
+        batchAssetChangeItem.setSeqNo(seqNo);
         batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
         batchAssetChangeItemService.save(batchAssetChangeItem);
         Long feeAccountId = assetChangeProvider.getFeeAccountId();  // 平台ID
@@ -340,7 +340,7 @@ public class TransferProvider {
         batchAssetChangeItem = new BatchAssetChangeItem();
         batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
         batchAssetChangeItem.setState(0);
-        batchAssetChangeItem.setType(AssetChangeTypeEnum.batchSellBondsFee.getLocalType());  // 收取转让手续费
+        batchAssetChangeItem.setType(AssetChangeTypeEnum.batchSellBondsFee.getLocalType());  // 扣除债权转让人手续费
         batchAssetChangeItem.setUserId(transfer.getUserId());
         batchAssetChangeItem.setToUserId(feeAccountId);
         batchAssetChangeItem.setMoney(NumberHelper.toLong(transfer.getPrincipal() * transferFeeRate));
@@ -349,7 +349,7 @@ public class TransferProvider {
         batchAssetChangeItem.setCreatedAt(nowDate);
         batchAssetChangeItem.setUpdatedAt(nowDate);
         batchAssetChangeItem.setSourceId(transferId);
-        batchAssetChangeItem.setSeqNo(seqNo) ;
+        batchAssetChangeItem.setSeqNo(seqNo);
         batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
         batchAssetChangeItemService.save(batchAssetChangeItem);
 
@@ -357,7 +357,7 @@ public class TransferProvider {
         batchAssetChangeItem = new BatchAssetChangeItem();
         batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
         batchAssetChangeItem.setState(0);
-        batchAssetChangeItem.setType(AssetChangeTypeEnum.platformBatchSellBondsFee.getLocalType());  // 收取转让手续费
+        batchAssetChangeItem.setType(AssetChangeTypeEnum.platformBatchSellBondsFee.getLocalType());  // 收取债权转让人手续费
         batchAssetChangeItem.setUserId(feeAccountId);  // 平台收费人
         batchAssetChangeItem.setToUserId(transfer.getUserId());
         batchAssetChangeItem.setMoney(NumberHelper.toLong(transfer.getPrincipal() * transferFeeRate));
@@ -366,7 +366,7 @@ public class TransferProvider {
         batchAssetChangeItem.setCreatedAt(nowDate);
         batchAssetChangeItem.setUpdatedAt(nowDate);
         batchAssetChangeItem.setSourceId(transferId);
-        batchAssetChangeItem.setSeqNo(seqNo) ;
+        batchAssetChangeItem.setSeqNo(seqNo);
         batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
         batchAssetChangeItemService.save(batchAssetChangeItem);
 
@@ -383,7 +383,7 @@ public class TransferProvider {
                     StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100D, true)));
             batchAssetChangeItem.setCreatedAt(nowDate);
             batchAssetChangeItem.setUpdatedAt(nowDate);
-            batchAssetChangeItem.setSeqNo(seqNo) ;
+            batchAssetChangeItem.setSeqNo(seqNo);
             batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
             batchAssetChangeItem.setSourceId(transferBuyLog.getId());
             batchAssetChangeItemService.save(batchAssetChangeItem);

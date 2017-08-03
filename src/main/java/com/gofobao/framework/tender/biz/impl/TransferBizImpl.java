@@ -183,6 +183,7 @@ public class TransferBizImpl implements TransferBiz {
 
         // 生成子级债权回款记录，标注老债权回款已经转出
         addChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList);
+
         // 发放债权转让资金
         batchAssetChangeHelper.batchAssetChange(transferId, batchNo, BatchAssetChangeContants.BATCH_CREDIT_INVEST);
 
@@ -311,11 +312,13 @@ public class TransferBizImpl implements TransferBiz {
      * @param parentBorrow
      * @param childTenderList
      */
-    private void addChildTenderCollection(Date nowDate, Transfer transfer, Borrow parentBorrow, List<Tender> childTenderList) {
+    private void addChildTenderCollection(Date nowDate, Transfer transfer, Borrow parentBorrow, List<Tender> childTenderList) throws Exception {
+        String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+        String seqNo = assetChangeProvider.getSeqNo();
         //生成子级债权回款记录，标注老债权回款已经转出
         Date repayAt = transfer.getRepayAt();/* 原借款下一期还款日期 */
         Date startAt = DateHelper.subMonths(repayAt, 1);/* 计息开始时间 */
-        childTenderList.stream().forEach(childTender -> {
+        for(Tender childTender: childTenderList){
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
                     childTender.getValidMoney().doubleValue(),
                     transfer.getApr().doubleValue(),
@@ -364,20 +367,18 @@ public class TransferBizImpl implements TransferBiz {
             });
             borrowCollectionService.save(borrowCollectionList);
 
-            // 添加待收
-            CapitalChangeEntity entity = new CapitalChangeEntity();
-            entity.setType(CapitalChangeEnum.CollectionAdd);
-            entity.setUserId(childTender.getUserId());
-            entity.setToUserId(transfer.getUserId());
-            entity.setMoney(collectionMoney);
-            entity.setInterest(collectionInterest);
-            entity.setRemark("添加待收金额");
-            try {
-                capitalChangeHelper.capitalChange(entity);
-            } catch (Exception e) {
-                log.error("债权转让：新债权生成回款记录失败! tenderId:" + childTender.getId());
-            }
-        });
+            AssetChange assetChange = new AssetChange();
+            assetChange.setType(AssetChangeTypeEnum.collectionAdd);
+            assetChange.setSourceId(childTender.getId());
+            assetChange.setGroupSeqNo(groupSeqNo);
+            assetChange.setSeqNo(seqNo);
+            assetChange.setRemark(String.format("投资[%s]成功, 添加待还%s元", collectionMoney,
+                    StringHelper.formatDouble(childTender.getValidMoney() / 100D, true)));
+            assetChange.setUserId(childTender.getUserId());
+            assetChange.setMoney(childTender.getValidMoney());
+            assetChange.setInterest(collectionInterest);
+            assetChangeProvider.commonAssetChange(assetChange) ;
+        }
     }
 
     /**
