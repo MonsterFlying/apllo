@@ -1,13 +1,19 @@
 package com.gofobao.framework.windmill.borrow.controller;
 
 import com.gofobao.framework.windmill.borrow.biz.WindmillBorrowBiz;
+import com.gofobao.framework.windmill.borrow.biz.WindmillStatisticsBiz;
+import com.gofobao.framework.windmill.borrow.vo.response.BorrowTenderList;
+import com.gofobao.framework.windmill.borrow.vo.response.ByDayStatistics;
+import com.gofobao.framework.windmill.borrow.vo.response.BySomeDayRes;
 import com.gofobao.framework.windmill.borrow.vo.response.InvestListRes;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.query.Param;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -24,35 +30,32 @@ public class WindmillBorrowController {
     @Autowired
     private WindmillBorrowBiz windmillBorrowBiz;
 
+    @Autowired
+    private WindmillStatisticsBiz windmillStatisticsBiz;
+
     @ApiOperation("标列表")
     @GetMapping("/invest/list")
-    public InvestListRes list(HttpServletRequest request,@RequestParam(value = "invest_id",required = false) Long id) {
-
-        return windmillBorrowBiz.list(id);
+    public InvestListRes list(HttpServletRequest request) {
+        return windmillBorrowBiz.list(request);
     }
 
-    @ApiOperation("标详情")
+    @ApiOperation("标的投标记录")
     @GetMapping("/borrow/info")
-    public String info(HttpServletRequest request, @RequestParam("invest_id")  Long id) {
-
-        return "";
+    public BorrowTenderList info(HttpServletRequest request) {
+        return windmillBorrowBiz.tenderList(request);
     }
 
-
-
-    @ApiOperation("根据时间段查询用户的投资列表")
+    @ApiOperation("查询某天投资情况")
     @GetMapping("/invest/byTime/list")
-    public String byTime(HttpServletRequest request) {
-
-        return "";
+    public BySomeDayRes byTime(HttpServletRequest request) {
+        return windmillBorrowBiz.bySomeDayTenders(request);
     }
 
-    @ApiOperation("根据某天查询用户投资列表")
+    @ApiOperation("查询每日的汇总数据")
     @GetMapping("/invest/bySomeday/list")
-    public String bySomeday(HttpServletRequest request) {
-        return "";
+    public ByDayStatistics bySomeday(HttpServletRequest request) {
+        return windmillStatisticsBiz.byDayStatistics(request);
     }
-
 
     @ApiOperation("用户投资记录查询接口")
     @PostMapping("user/invest/list")
