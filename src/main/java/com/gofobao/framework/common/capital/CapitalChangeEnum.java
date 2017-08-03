@@ -39,6 +39,10 @@ public enum CapitalChangeEnum {
      */
     Borrow("borrow"),
     /**
+     * 借款
+     */
+    ACCRUED_INTEREST("accrued_interest"),
+    /**
      * 添加待还
      */
     PaymentAdd("payment_add"),
