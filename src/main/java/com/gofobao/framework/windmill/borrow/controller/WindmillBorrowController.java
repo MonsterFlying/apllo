@@ -26,14 +26,15 @@ public class WindmillBorrowController {
 
     @ApiOperation("标列表")
     @GetMapping("/invest/list")
-    public InvestListRes list(HttpServletRequest request, @Param("borrowId") Long id) {
-        return windmillBorrowBiz.list(id);
+    public InvestListRes list(HttpServletRequest request,@RequestParam(value = "invest_id",required = false) Long id) {
 
+        return windmillBorrowBiz.list(id);
     }
 
-    @ApiOperation("标列表")
+    @ApiOperation("标详情")
     @GetMapping("/borrow/info")
     public String info(HttpServletRequest request, @RequestParam("invest_id")  Long id) {
+
         return "";
     }
 
