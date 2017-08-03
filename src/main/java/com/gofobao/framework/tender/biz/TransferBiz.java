@@ -2,6 +2,7 @@ package com.gofobao.framework.tender.biz;
 
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.request.VoPcDoFirstVerity;
+import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.tender.vo.request.VoBuyTransfer;
@@ -86,5 +87,12 @@ public interface TransferBiz {
      */
 
     List<VoViewBorrowList> findTransferList(VoBorrowListReq voBorrowListReq);
+
+    /**
+     * 获取转让标详情
+     * @param transferId
+     * @return
+     */
+    ResponseEntity<BorrowInfoRes> transferInfo(Long transferId);
 
 }
