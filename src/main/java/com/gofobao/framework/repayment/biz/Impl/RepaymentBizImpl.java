@@ -94,6 +94,7 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
@@ -1131,10 +1132,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
         int lateInterest = calculateLateInterest(borrowRepayment, borrow);
 
         String batchNo = jixinHelper.getBatchNo();/* 批次号 */
-        addBatchAssetChangeByBorrower(borrowRepayment, borrow, batchNo,interestPercent,isUserOpen,lateInterest);
+        addBatchAssetChangeByBorrower(borrowRepayment, borrow, batchNo, interestPercent, isUserOpen, lateInterest);
         if (ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) {
             //创建还款主记录
-            addBatchAssetChangeByNormal(borrowRepayment, borrow, batchNo,interestPercent,isUserOpen,lateInterest);
+            addBatchAssetChangeByNormal(borrowRepayment, borrow, batchNo, interestPercent, isUserOpen, lateInterest);
             return normalRepay(userId, repayUserThirdAccount, borrowRepayment, borrow, lateInterest, batchNo);
         } else {
             addBatchAssetChangeByGuarantor(borrowRepaymentId, batchNo);
@@ -1149,9 +1150,18 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param batchNo
      */
     public void addBatchAssetChangeByNormal(BorrowRepayment borrowRepayment, Borrow borrow,
-                                              String batchNo,double interestPercent,boolean isUserOpen,
-                                              long lateInterest) {
-
+                                            String batchNo, double interestPercent, boolean isUserOpen,
+                                            long lateInterest) {
+        //1.直接查询投资记录
+        Specification<Tender> ts = Specifications
+                .<Tender>and()
+                .eq("status", 1)
+                .eq("borrowId", borrow.getId())
+                .build();
+        List<Tender> tenderList = tenderService.findList(ts);/* 还款对应的投标记录  包括债权转让在里面 */
+        Preconditions.checkNotNull(tenderList, "立即还款: 投标记录为空!");
+        Set<Long> userIds = tenderList.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet());/* 投标人会员id */
+        Set<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toSet());/* 投标记录id */
     }
 
     /**
@@ -1161,8 +1171,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param batchNo
      */
     public void addBatchAssetChangeByBorrower(BorrowRepayment borrowRepayment, Borrow borrow,
-                                            String batchNo,double interestPercent,boolean isUserOpen,
-                                            long lateInterest) {
+                                              String batchNo, double interestPercent, boolean isUserOpen,
+                                              long lateInterest) {
         Date nowDate = new Date();
         String seqNo = assetChangeProvider.getSeqNo();
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
@@ -1209,7 +1219,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         batchAssetChangeItem.setCreatedAt(nowDate);
         batchAssetChangeItem.setUpdatedAt(nowDate);
         batchAssetChangeItem.setSourceId(borrowRepayment.getId());
-        batchAssetChangeItem.setSeqNo(seqNo) ;
+        batchAssetChangeItem.setSeqNo(seqNo);
         batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
         batchAssetChangeItemService.save(batchAssetChangeItem);
 
@@ -1222,11 +1232,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
             batchAssetChangeItem.setUserId(borrow.getUserId());
             batchAssetChangeItem.setMoney(borrowRepayment.getRepayMoney());
             batchAssetChangeItem.setInterest(borrowRepayment.getInterest());
-            batchAssetChangeItem.setRemark(String.format("借款[%s]的逾期罚息",BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName())));
+            batchAssetChangeItem.setRemark(String.format("借款[%s]的逾期罚息", BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName())));
             batchAssetChangeItem.setCreatedAt(nowDate);
             batchAssetChangeItem.setUpdatedAt(nowDate);
             batchAssetChangeItem.setSourceId(borrowRepayment.getId());
-            batchAssetChangeItem.setSeqNo(seqNo) ;
+            batchAssetChangeItem.setSeqNo(seqNo);
             batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
 
             /*entity = new CapitalChangeEntity();
