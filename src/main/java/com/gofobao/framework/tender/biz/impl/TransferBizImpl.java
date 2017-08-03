@@ -24,6 +24,9 @@ import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
+import com.gofobao.framework.common.assets.AssetChange;
+import com.gofobao.framework.common.assets.AssetChangeProvider;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.JixinContants;
@@ -139,6 +142,9 @@ public class TransferBizImpl implements TransferBiz {
     @Autowired
     private DictValueService dictValueService;
 
+    @Autowired
+    AssetChangeProvider assetChangeProvider;
+
     LoadingCache<String, DictValue> jixinCache = CacheBuilder
             .newBuilder()
             .expireAfterWrite(60, TimeUnit.MINUTES)
@@ -194,27 +200,33 @@ public class TransferBizImpl implements TransferBiz {
                 .build();
         List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);/* 购买债权转让记录 */
         Preconditions.checkNotNull(transferBuyLogList, "购买债权转让记录不存在!");
-        long failure = transferBuyLogList.stream().filter(transferBuyLog -> BooleanHelper.isFalse(transferBuyLog.getThirdTransferFlag())).count();/* 登记即信存管失败条数 */
+        long failure = transferBuyLogList
+                .stream()
+                .filter(transferBuyLog -> BooleanHelper.isFalse(transferBuyLog.getThirdTransferFlag())).count(); /* 登记即信存管失败条数 */
         if (failure > 0) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "存在未登记即信存管的购买" + failure + "失败记录"));
         }
 
-        //新增子级投标记录
+        // 新增子级投标记录
         List<Tender> childTenderList = addChildTender(nowDate, transfer, parentTender, transferBuyLogList);
-        //生成子级债权回款记录，标注老债权回款已经转出
+
+        // 生成子级债权回款记录，标注老债权回款已经转出
         addChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList);
-        //发放债权转让资金
+        // 发放债权转让资金
         batchAssetChange(transferId, batchNo);
+
         // 发送投资成功站内信
         sendNoticsByBuyTransfer(transfer, childTenderList);
+
         // 用户投标信息和每日统计
         userTenderStatistic(childTenderList);
+
         // 复审事件
         //如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
         updateUserCacheByTransferReview(parentBorrow, transfer);
+
         //更新全网网站统计
         updateStatisticByTransferReview(transfer);
-
         return ResponseEntity.ok(VoBaseResp.ok("债权转让复审成功!"));
     }
 
@@ -224,7 +236,7 @@ public class TransferBizImpl implements TransferBiz {
      * @param transferId
      * @param batchNo
      */
-    private void batchAssetChange(long transferId, String batchNo) {
+    private void batchAssetChange(long transferId, long batchNo) throws Exception {
         Specification<BatchAssetChange> bacs = Specifications
                 .<BatchAssetChange>and()
                 .eq("sourceId", transferId)
@@ -242,43 +254,23 @@ public class TransferBizImpl implements TransferBiz {
                 .build();
         List<BatchAssetChangeItem> batchAssetChangeItemList = batchAssetChangeItemService.findList(bacis);
         Preconditions.checkNotNull(batchAssetChangeItemList, batchNo + "债权转让资金变动子记录不存在!");
-        batchAssetChangeItemList.stream().forEach(batchAssetChangeItem -> {
-            //发送存管红包
-            if (BooleanHelper.isTrue(batchAssetChangeItem.getSendRedPacket())) {
-                UserThirdAccount transferUserThirdAccount = userThirdAccountService.findByUserId(batchAssetChangeItem.getUserId()); /* 债权转让人存管账号 */
-                //通过红包账户发放
-                //调用即信发放债权转让人应收利息
-                //查询红包账户
-                DictValue dictValue = null;
-                try {
-                    dictValue = jixinCache.get(JixinContants.RED_PACKET_USER_ID);
-                } catch (ExecutionException e) {
-                    log.error("transferBizImpl batchAssetChange 获取存管红包账户失败：", e);
-                }
-                UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
 
-                VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-                voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
-                voucherPayRequest.setTxAmount(StringHelper.toString(batchAssetChangeItem.getMoney()));//扣除手续费
-                voucherPayRequest.setForAccountId(transferUserThirdAccount.getAccountId());
-                voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
-                voucherPayRequest.setDesLine(batchAssetChangeItem.getRemark());
-                voucherPayRequest.setChannel(ChannelContant.HTML);
-                VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
-                if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
-                    String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-                    log.error("BorrowRepaymentThirdBizImpl 调用即信发送发放债权转让人应收利息异常:" + msg);
-                }
-            }
-            //扣减本地资金
-            CapitalChangeEntity capitalChangeEntity = GSON.fromJson(GSON.toJson(batchAssetChangeItem), new TypeToken<CapitalChangeEntity>() {
-            }.getType());
-            try {
-                capitalChangeHelper.capitalChange(capitalChangeEntity);
-            } catch (Exception e) {
-                log.error("transferBizImpl batchAssetChange assetChange error:", e);
-            }
-        });
+        // 所有的资金变动
+        for (BatchAssetChangeItem item : batchAssetChangeItemList) {
+            AssetChange assetChange = new AssetChange();
+            assetChange.setInterest(item.getInterest());
+            assetChange.setPrincipal(item.getPrincipal());
+            assetChange.setMoney(item.getMoney());
+            assetChange.setForUserId(item.getToUserId());
+            assetChange.setUserId(item.getUserId());
+            assetChange.setRemark(item.getRemark());
+            assetChange.setSeqNo(item.getSeqNo());
+            assetChange.setGroupSeqNo(item.getGroupSeqNo());
+            assetChange.setSourceId(item.getSourceId());
+            assetChange.setType(AssetChangeTypeEnum.findType(item.getType()));
+            assetChangeProvider.commonAssetChange(assetChange);
+        }
+
     }
 
     /**
@@ -327,9 +319,7 @@ public class TransferBizImpl implements TransferBiz {
         Gson gson = new Gson();
         for (Tender tender : tenderList) {
             log.info(String.format("投标统计: %s", gson.toJson(tender)));
-
             UserCache userCache = userCacheService.findById(tender.getUserId());
-
             IncrStatistic incrStatistic = new IncrStatistic();
             if ((!userCache.getTenderTransfer()) && (!userCache.getTenderTuijian()) && (!userCache.getTenderJingzhi()) && (!userCache.getTenderMiao()) && (!userCache.getTenderQudao())) {
                 incrStatistic.setTenderCount(1);
@@ -681,13 +671,15 @@ public class TransferBizImpl implements TransferBiz {
      * @param transfer
      */
     private void updateAssetByBuyUser(TransferBuyLog transferBuyLog, Transfer transfer) throws Exception {
-        CapitalChangeEntity entity = new CapitalChangeEntity();
-        entity.setType(CapitalChangeEnum.Frozen);
-        entity.setUserId(transferBuyLog.getUserId());
-        entity.setToUserId(transfer.getUserId());
-        entity.setMoney(transferBuyLog.getValidMoney());
-        entity.setRemark("购买债权转让冻结资金");
-        capitalChangeHelper.capitalChange(entity);
+        AssetChange assetChange = new AssetChange();
+        assetChange.setSourceId(transferBuyLog.getId());
+        assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+        assetChange.setMoney(transferBuyLog.getValidMoney());
+        assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+        assetChange.setRemark(String.format("购买债权转让[%s], 成功冻结资金%s元", transfer.getTitle(), StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100D, true)));
+        assetChange.setType(AssetChangeTypeEnum.freeze);
+        assetChange.setUserId(transferBuyLog.getUserId());
+        assetChangeProvider.commonAssetChange(assetChange);
     }
 
     /**
@@ -1274,7 +1266,7 @@ public class TransferBizImpl implements TransferBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "债权转让 原始标的信息为空", BorrowInfoRes.class));
         }
 
-        BorrowInfoRes borrowInfoRes = VoBaseResp.ok("查询成功", BorrowInfoRes.class) ;
+        BorrowInfoRes borrowInfoRes = VoBaseResp.ok("查询成功", BorrowInfoRes.class);
         borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
         borrowInfoRes.setLowest(StringHelper.formatMon(borrow.getLowest() / 100d));
         long surplusMoney = transfer.getTransferMoney() - transfer.getTransferMoneyYes();
