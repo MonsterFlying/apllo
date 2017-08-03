@@ -84,7 +84,7 @@ public interface RepaymentBiz {
      * @return
      * @throws Exception
      */
-    ResponseEntity<VoBaseResp> newRepayDeal(Long repaymentId) throws Exception;
+    ResponseEntity<VoBaseResp> newRepayDeal(long repaymentId) throws Exception;
 
     /**
      * 还款处理
