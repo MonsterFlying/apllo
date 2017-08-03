@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 /**
  * Created by admin on 2017/8/2.
  */
+@Service
 public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
 
     @Value("${gofobao.h5Domain}")
