@@ -1131,6 +1131,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         int lateInterest = calculateLateInterest(borrowRepayment, borrow);
 
         String batchNo = jixinHelper.getBatchNo();/* 批次号 */
+        addBatchAssetChangeByBorrower(borrowRepayment, borrow, batchNo,interestPercent,isUserOpen,lateInterest);
         if (ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) {
             //创建还款主记录
             addBatchAssetChangeByNormal(borrowRepayment, borrow, batchNo,interestPercent,isUserOpen,lateInterest);
@@ -1148,6 +1149,18 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param batchNo
      */
     public void addBatchAssetChangeByNormal(BorrowRepayment borrowRepayment, Borrow borrow,
+                                              String batchNo,double interestPercent,boolean isUserOpen,
+                                              long lateInterest) {
+
+    }
+
+    /**
+     * 生成还款人还款批次资金改变记录
+     *
+     * @param borrowRepayment
+     * @param batchNo
+     */
+    public void addBatchAssetChangeByBorrower(BorrowRepayment borrowRepayment, Borrow borrow,
                                             String batchNo,double interestPercent,boolean isUserOpen,
                                             long lateInterest) {
         Date nowDate = new Date();
