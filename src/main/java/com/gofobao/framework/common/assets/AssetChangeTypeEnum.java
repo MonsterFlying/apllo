@@ -29,6 +29,14 @@ public enum AssetChangeTypeEnum {
      * 添加待还
      */
     paymentAdd("添加待还", "paymentAdd", "0", "add@payment", "add@waitRepayPrincipal#principal,add@waitRepayInterest#interest", "B"),
+    /**
+     * 减去待收
+     */
+    collectionSub("减去待收", "collectionSub", "0", "sub@collection", "sub@waitCollectionPrincipal#principal,sub@waitCollectionInterest#interest", "B"),
+    /**
+     * 减去待还
+     */
+    paymentSub("减去待还", "paymentSub", "0", "sub@payment", "sub@waitRepayPrincipal#principal,sub@waitRepayInterest#interest", "B"),
 
     /**
      * 借款人正常还款
