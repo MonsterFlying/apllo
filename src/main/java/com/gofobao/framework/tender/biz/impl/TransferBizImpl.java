@@ -2,18 +2,13 @@ package com.gofobao.framework.tender.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
-import com.gofobao.framework.api.contants.DesLineFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
-import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
-import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
 import com.gofobao.framework.asset.entity.Asset;
-import com.gofobao.framework.asset.entity.BatchAssetChange;
-import com.gofobao.framework.asset.entity.BatchAssetChangeItem;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.BatchAssetChangeItemService;
 import com.gofobao.framework.asset.service.BatchAssetChangeService;
@@ -29,7 +24,6 @@ import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
-import com.gofobao.framework.common.constans.JixinContants;
 import com.gofobao.framework.common.constans.MoneyConstans;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
@@ -38,6 +32,7 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.BatchAssetChangeHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
@@ -74,7 +69,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -93,10 +87,9 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created by admin on 2017/6/12.
@@ -132,34 +125,12 @@ public class TransferBizImpl implements TransferBiz {
     @Autowired
     private IncrStatisticBiz incrStatisticBiz;
     @Autowired
-    private BatchAssetChangeService batchAssetChangeService;
-    @Autowired
-    private BatchAssetChangeItemService batchAssetChangeItemService;
-    @Autowired
     private UserService userService;
     @Autowired
-    private DictItemService dictItemService;
-    @Autowired
-    private DictValueService dictValueService;
-
+    private BatchAssetChangeHelper batchAssetChangeHelper;
     @Autowired
     AssetChangeProvider assetChangeProvider;
 
-    LoadingCache<String, DictValue> jixinCache = CacheBuilder
-            .newBuilder()
-            .expireAfterWrite(60, TimeUnit.MINUTES)
-            .maximumSize(1024)
-            .build(new CacheLoader<String, DictValue>() {
-                @Override
-                public DictValue load(String bankName) throws Exception {
-                    DictItem dictItem = dictItemService.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
-                    if (ObjectUtils.isEmpty(dictItem)) {
-                        return null;
-                    }
-
-                    return dictValueService.findTopByItemIdAndValue01(dictItem.getId(), bankName);
-                }
-            });
 
     @Value("${gofobao.imageDomain}")
     private String imageDomain;
@@ -213,7 +184,7 @@ public class TransferBizImpl implements TransferBiz {
         // 生成子级债权回款记录，标注老债权回款已经转出
         addChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList);
         // 发放债权转让资金
-        batchAssetChange(transferId, batchNo);
+        batchAssetChangeHelper.batchAssetChange(transferId, batchNo, BatchAssetChangeContants.BATCH_CREDIT_INVEST);
 
         // 发送投资成功站内信
         sendNoticsByBuyTransfer(transfer, childTenderList);
@@ -230,48 +201,6 @@ public class TransferBizImpl implements TransferBiz {
         return ResponseEntity.ok(VoBaseResp.ok("债权转让复审成功!"));
     }
 
-    /**
-     * 发放债权转让资金
-     *
-     * @param transferId
-     * @param batchNo
-     */
-    private void batchAssetChange(long transferId, long batchNo) throws Exception {
-        Specification<BatchAssetChange> bacs = Specifications
-                .<BatchAssetChange>and()
-                .eq("sourceId", transferId)
-                .eq("type", BatchAssetChangeContants.BATCH_CREDIT_INVEST)
-                .eq("batchNo", batchNo)
-                .build();
-        List<BatchAssetChange> batchAssetChangeList = batchAssetChangeService.findList(bacs);
-        Preconditions.checkNotNull(batchAssetChangeList, batchNo + "债权转让资金变动记录不存在!");
-        BatchAssetChange batchAssetChange = batchAssetChangeList.get(0);/* 债权转让资金变动记录 */
-
-        Specification<BatchAssetChangeItem> bacis = Specifications
-                .<BatchAssetChangeItem>and()
-                .eq("batchAssetChangeId", batchAssetChange.getId())
-                .eq("state", 0)
-                .build();
-        List<BatchAssetChangeItem> batchAssetChangeItemList = batchAssetChangeItemService.findList(bacis);
-        Preconditions.checkNotNull(batchAssetChangeItemList, batchNo + "债权转让资金变动子记录不存在!");
-
-        // 所有的资金变动
-        for (BatchAssetChangeItem item : batchAssetChangeItemList) {
-            AssetChange assetChange = new AssetChange();
-            assetChange.setInterest(item.getInterest());
-            assetChange.setPrincipal(item.getPrincipal());
-            assetChange.setMoney(item.getMoney());
-            assetChange.setForUserId(item.getToUserId());
-            assetChange.setUserId(item.getUserId());
-            assetChange.setRemark(item.getRemark());
-            assetChange.setSeqNo(item.getSeqNo());
-            assetChange.setGroupSeqNo(item.getGroupSeqNo());
-            assetChange.setSourceId(item.getSourceId());
-            assetChange.setType(AssetChangeTypeEnum.findType(item.getType()));
-            assetChangeProvider.commonAssetChange(assetChange);
-        }
-
-    }
 
     /**
      * 发送投资成功站内信
@@ -1267,7 +1196,7 @@ public class TransferBizImpl implements TransferBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "债权转让 原始标的信息为空", BorrowInfoRes.class));
         }
 
-        BorrowInfoRes borrowInfoRes = VoBaseResp.ok("查询成功", BorrowInfoRes.class) ;
+        BorrowInfoRes borrowInfoRes = VoBaseResp.ok("查询成功", BorrowInfoRes.class);
         borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
         borrowInfoRes.setLowest(StringHelper.formatMon(borrow.getLowest() / 100d));
         long surplusMoney = transfer.getTransferMoney() - transfer.getTransferMoneyYes();

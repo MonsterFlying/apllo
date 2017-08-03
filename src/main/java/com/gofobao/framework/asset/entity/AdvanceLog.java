@@ -22,7 +22,7 @@ public class AdvanceLog {
     private Long repaymentId;
     private Integer status;
     private Date advanceAtYes;
-    private Integer advanceMoneyYes;
+    private Long advanceMoneyYes;
     private Date repayAtYes;
-    private Integer repayMoneyYes;
+    private Long repayMoneyYes;
 }

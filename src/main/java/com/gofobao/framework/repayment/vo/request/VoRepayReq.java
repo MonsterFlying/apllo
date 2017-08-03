@@ -22,7 +22,7 @@ public class VoRepayReq {
     private Long repaymentId;
     @ApiModelProperty(value = "利息百分比", dataType = "int", required = true)
     private Double interestPercent;
-    @ApiModelProperty(value = "是否是用户主动还款", dataType = "int", required = true)
-    private Boolean isUserOpen;
+    @ApiModelProperty(value = "是否是用户主动还款", required = true)
+    private Boolean isUserOpen = true;
 
 }

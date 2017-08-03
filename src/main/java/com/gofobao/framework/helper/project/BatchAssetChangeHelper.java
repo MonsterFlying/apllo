@@ -13,6 +13,9 @@ import com.gofobao.framework.asset.entity.BatchAssetChange;
 import com.gofobao.framework.asset.entity.BatchAssetChangeItem;
 import com.gofobao.framework.asset.service.BatchAssetChangeItemService;
 import com.gofobao.framework.asset.service.BatchAssetChangeService;
+import com.gofobao.framework.common.assets.AssetChange;
+import com.gofobao.framework.common.assets.AssetChangeProvider;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.constans.JixinContants;
 import com.gofobao.framework.helper.BooleanHelper;
@@ -37,6 +40,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -53,15 +57,11 @@ public class BatchAssetChangeHelper {
     @Autowired
     private BatchAssetChangeItemService batchAssetChangeItemService;
     @Autowired
-    private UserThirdAccountService userThirdAccountService;
-    @Autowired
     private DictItemService dictItemService;
     @Autowired
     private DictValueService dictValueService;
     @Autowired
-    private JixinManager jixinManager;
-    @Autowired
-    private CapitalChangeHelper capitalChangeHelper;
+    private AssetChangeProvider assetChangeProvider;
 
     final Gson GSON = new GsonBuilder().create();
 
@@ -87,12 +87,19 @@ public class BatchAssetChangeHelper {
      * @param sourceId
      * @param batchNo
      */
-    public void batchAssetChange(long sourceId, long batchNo) {
+    /**
+     * 发放债权转让资金
+     *
+     * @param sourceId
+     * @param batchNo
+     */
+    public void batchAssetChange(long sourceId, long batchNo, int type) throws Exception {
         Specification<BatchAssetChange> bacs = Specifications
                 .<BatchAssetChange>and()
                 .eq("sourceId", sourceId)
-                .eq("type", BatchAssetChangeContants.BATCH_CREDIT_INVEST)
+                .eq("type", type)
                 .eq("batchNo", batchNo)
+                .eq("state", 0)
                 .build();
         List<BatchAssetChange> batchAssetChangeList = batchAssetChangeService.findList(bacs);
         Preconditions.checkNotNull(batchAssetChangeList, batchNo + "债权转让资金变动记录不存在!");
@@ -105,42 +112,31 @@ public class BatchAssetChangeHelper {
                 .build();
         List<BatchAssetChangeItem> batchAssetChangeItemList = batchAssetChangeItemService.findList(bacis);
         Preconditions.checkNotNull(batchAssetChangeItemList, batchNo + "债权转让资金变动子记录不存在!");
-        batchAssetChangeItemList.stream().forEach(batchAssetChangeItem -> {
-            //发送存管红包
-            if (BooleanHelper.isTrue(batchAssetChangeItem.getSendRedPacket())) {
-                UserThirdAccount transferUserThirdAccount = userThirdAccountService.findByUserId(batchAssetChangeItem.getUserId()); /* 债权转让人存管账号 */
-                //通过红包账户发放
-                //调用即信发放债权转让人应收利息
-                //查询红包账户
-                DictValue dictValue = null;
-                try {
-                    dictValue = jixinCache.get(JixinContants.RED_PACKET_USER_ID);
-                } catch (ExecutionException e) {
-                    log.error("transferBizImpl batchAssetChange 获取存管红包账户失败：", e);
-                }
-                UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
 
-                VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-                voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
-                voucherPayRequest.setTxAmount(StringHelper.toString(batchAssetChangeItem.getMoney()));//扣除手续费
-                voucherPayRequest.setForAccountId(transferUserThirdAccount.getAccountId());
-                voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
-                voucherPayRequest.setDesLine(batchAssetChangeItem.getRemark());
-                voucherPayRequest.setChannel(ChannelContant.HTML);
-                VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
-                if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
-                    String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-                    log.error("BorrowRepaymentThirdBizImpl 调用即信发送发放债权转让人应收利息异常:" + msg);
-                }
-            }
-            //扣减本地资金
-            CapitalChangeEntity capitalChangeEntity = GSON.fromJson(GSON.toJson(batchAssetChangeItem), new TypeToken<CapitalChangeEntity>() {
-            }.getType());
-            try {
-                capitalChangeHelper.capitalChange(capitalChangeEntity);
-            } catch (Exception e) {
-                log.error("transferBizImpl batchAssetChange assetChange error:", e);
-            }
-        });
+        // 所有的资金变动
+        for (BatchAssetChangeItem item : batchAssetChangeItemList) {
+            AssetChange assetChange = new AssetChange();
+            assetChange.setInterest(item.getInterest());
+            assetChange.setPrincipal(item.getPrincipal());
+            assetChange.setMoney(item.getMoney());
+            assetChange.setForUserId(item.getToUserId());
+            assetChange.setUserId(item.getUserId());
+            assetChange.setRemark(item.getRemark());
+            assetChange.setSeqNo(item.getSeqNo());
+            assetChange.setGroupSeqNo(item.getGroupSeqNo());
+            assetChange.setSourceId(item.getSourceId());
+            assetChange.setType(AssetChangeTypeEnum.findType(item.getType()));
+            assetChangeProvider.commonAssetChange(assetChange);
+
+            item.setState(1);
+            item.setUpdatedAt(new Date());
+        }
+        //更新批次资金变动 与 子记录的状态
+        batchAssetChange.setState(1);
+        batchAssetChange.setUpdatedAt(new Date());
+        batchAssetChangeService.save(batchAssetChange);
+        batchAssetChangeItemService.save(batchAssetChangeItemList);
+
     }
+
 }

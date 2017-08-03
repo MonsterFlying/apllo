@@ -357,7 +357,7 @@ public class TransferProvider {
         batchAssetChangeItem = new BatchAssetChangeItem();
         batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
         batchAssetChangeItem.setState(0);
-        batchAssetChangeItem.setType(AssetChangeTypeEnum.batchSellBondsFee.getLocalType());  // 收取转让手续费
+        batchAssetChangeItem.setType(AssetChangeTypeEnum.platformBatchSellBondsFee.getLocalType());  // 收取转让手续费
         batchAssetChangeItem.setUserId(feeAccountId);  // 平台收费人
         batchAssetChangeItem.setToUserId(transfer.getUserId());
         batchAssetChangeItem.setMoney(NumberHelper.toLong(transfer.getPrincipal() * transferFeeRate));

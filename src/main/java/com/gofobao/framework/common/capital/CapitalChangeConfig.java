@@ -105,11 +105,12 @@ public class CapitalChangeConfig {
         //债权转让当期应计算利息
         CapitalChangeConfig accruedInterest = new CapitalChangeConfig();
         accruedInterest.setType(CapitalChangeEnum.ACCRUED_INTEREST);
-        accruedInterest.setName("债权转让当期应计算利息");
+        accruedInterest.setName("借款");
         accruedInterest.setAssetChangeRule("add@useMoney");
         accruedInterest.setUserCacheChangeRule(null);
-        accruedInterest.setRemark("债权转让当期应计算利息");
+        accruedInterest.setRemark("借款成功");
         capitalChangeList.add(accruedInterest);
+
         // 添加待还
         CapitalChangeConfig paymentAdd = new CapitalChangeConfig();
         paymentAdd.setType(CapitalChangeEnum.PaymentAdd);
