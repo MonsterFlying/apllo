@@ -204,7 +204,7 @@ public class TransferBizImpl implements TransferBiz {
         //生成子级债权回款记录，标注老债权回款已经转出
         addChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList);
         //发放债权转让资金
-        batchAssetChange(transferId, batchNo);
+        batchAssetChangeByTransfer(transferId, batchNo);
         // 发送投资成功站内信
         sendNoticsByBuyTransfer(transfer, childTenderList);
         // 用户投标信息和每日统计
@@ -224,7 +224,7 @@ public class TransferBizImpl implements TransferBiz {
      * @param transferId
      * @param batchNo
      */
-    private void batchAssetChange(long transferId, long batchNo) {
+    private void batchAssetChangeByTransfer(long transferId, long batchNo) {
         Specification<BatchAssetChange> bacs = Specifications
                 .<BatchAssetChange>and()
                 .eq("sourceId", transferId)

@@ -898,18 +898,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         return repayList;
     }
 
-
-    /**
-     * 新版生成存管还款计划
-     *
-     * @return
-     * @// TODO: 2017/7/31
-     */
-    public List<Repay> newCalculateRepayPlan() {
-        List<Repay> repayList = new ArrayList<>();
-        return repayList;
-    }
-
     /**
      * 生成存管还款计划(递归调用解决转让问题)
      *
