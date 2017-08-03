@@ -486,9 +486,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             UserThirdAccount tenderUserThirdAccount = null;
             BailRepay bailRepay = null;
             int txFeeIn = 0;//投资方手续费  利息管理费
-            int txAmount = 0;//融资人实际付出金额=交易金额+交易利息+还款手续费
+            long txAmount = 0;//融资人实际付出金额=交易金额+交易利息+还款手续费
             int intAmount = 0;//交易利息
-            int principal = 0;
+            long principal = 0;
             for (Tender tender : tenderList) {
                 bailRepay = new BailRepay();
                 txFeeIn = 0;
@@ -545,7 +545,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 //收到客户对借款还款
                 int interestLower = 0;//应扣除利息
                 if (borrow.isTransfer()) {
-                    int interest = borrowCollection.getInterest();
+                    long interest = borrowCollection.getInterest();
                     Date startAt = DateHelper.beginOfDate((Date) borrowCollection.getStartAt().clone());
                     Date collectionAt = DateHelper.beginOfDate((Date) borrowCollection.getCollectionAt().clone());
                     Date endAt = (Date) collectionAt.clone();
@@ -877,7 +877,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         int lateDays = DateHelper.diffInDays(nowDateOfBegin, repayDateOfBegin, false);
         lateDays = lateDays < 0 ? 0 : lateDays;
         if (0 < lateDays) {
-            int overPrincipal = borrowRepayment.getPrincipal();
+            long overPrincipal = borrowRepayment.getPrincipal();
             if (borrowRepayment.getOrder() < (borrow.getTotalOrder() - 1)) { //
                 Specification<BorrowRepayment> brs = Specifications
                         .<BorrowRepayment>and()
@@ -888,7 +888,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 Preconditions.checkNotNull(borrowRepayment, "还款不存在");
 
                 //叠加剩余本金
-                overPrincipal = borrowRepaymentList.stream().mapToInt(w -> w.getPrincipal()).sum();
+                overPrincipal = borrowRepaymentList.stream().mapToLong(w -> w.getPrincipal()).sum();
             }
             lateInterest = (int) MathHelper.myRound(overPrincipal * 0.004 * lateDays, 2);
         }
@@ -1004,6 +1004,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             }
 
             if ((lateDays > 0) && (lateInterest > 0)) {  //借款人逾期罚息
+                /**
+                 * @// TODO: 2017/8/3 手续费
+                 */
                 inFee += new Double(tender.getValidMoney() / new Double(borrow.getMoney()) * lateInterest / 2).intValue(); // 平台收取50% 逾期管理费
                 outFee += new Double(tender.getValidMoney() / new Double(borrow.getMoney()) * lateInterest / 2).intValue();  // 平台收取50% 逾期管理费
             }
@@ -1106,7 +1109,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
     private int calculateTranferFee(BorrowCollection borrowCollection) {
         int interestLower;
-        int tranferedInterest = borrowCollection.getInterest();
+        long tranferedInterest = borrowCollection.getInterest();
         Date startAt = DateHelper.beginOfDate(borrowCollection.getStartAt());  // 理论计息时间
         Date startAtYes = DateHelper.beginOfDate(borrowCollection.getStartAtYes()); // 实际计息时间
         Date collectionAt = DateHelper.beginOfDate(borrowCollection.getCollectionAt()); // 理论待收时间
@@ -1183,7 +1186,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         Repay repay;
         //融资人实际付出金额 = 交易金额 + 交易利息 + 还款手续费
         int txFeeIn = 0;    // 投资方手续费 利息管理费
-        int txAmount = 0;   // 还款本金
+        long txAmount = 0;   // 还款本金
         int intAmount = 0;  // 交易利息
         int txFeeOut = 0;   // 借款方手续费  逾期利息
         for (Tender tender : tenderList) {
@@ -1248,7 +1251,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             // 还款时: 直接使用手续费形式扣除新承接人的该部分利息.然后通过红包形式返还给原债权出借人该部分利息
             int interestLower = 0;  // 应扣除利息
             if (borrow.isTransfer()) {
-                int interest = borrowCollection.getInterest();
+                long interest = borrowCollection.getInterest();
                 Date startAt = DateHelper.beginOfDate(borrowCollection.getStartAt());
                 Date collectionAt = DateHelper.beginOfDate(borrowCollection.getCollectionAt());
                 Date startAtYes = DateHelper.beginOfDate(borrowCollection.getStartAtYes());

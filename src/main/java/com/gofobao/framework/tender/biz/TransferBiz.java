@@ -5,10 +5,8 @@ import com.gofobao.framework.borrow.vo.request.VoPcDoFirstVerity;
 import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.tender.vo.request.VoBuyTransfer;
-import com.gofobao.framework.tender.vo.request.VoPcFirstVerityTransfer;
-import com.gofobao.framework.tender.vo.request.VoTransferReq;
-import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
+import com.gofobao.framework.tender.entity.Transfer;
+import com.gofobao.framework.tender.vo.request.*;
 import com.gofobao.framework.tender.vo.response.VoGoTenderInfo;
 import com.gofobao.framework.tender.vo.response.VoViewTransferMayWarpRes;
 import com.gofobao.framework.tender.vo.response.VoViewTransferOfWarpRes;
@@ -23,6 +21,14 @@ import java.util.List;
  * Created by admin on 2017/6/12.
  */
 public interface TransferBiz {
+
+    /**
+     * 结束债权转让
+     * @param voEndTransfer
+     * @return
+     * @throws Exception
+     */
+    ResponseEntity<VoBaseResp> endTransfer(VoEndTransfer voEndTransfer)throws Exception;
 
     /**
      * 债权转让复审

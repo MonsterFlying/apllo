@@ -94,8 +94,8 @@ public class LoanServiceImpl implements LoanService {
             voViewRefundRes.setReleaseAt(DateHelper.dateToString(p.getReleaseAt()));
             voViewRefundRes.setMoney(StringHelper.formatMon(p.getMoneyYes() / 100D));
             voViewRefundRes.setBorrowId(p.getId());
-            Integer interest = borrowRepaymentList.stream().mapToInt(w -> w.getInterest()).sum();  //待还利息
-            Integer principal = borrowRepaymentList.stream().mapToInt(w -> w.getPrincipal()).sum();  //待还本金
+            long interest = borrowRepaymentList.stream().mapToLong(w -> w.getInterest()).sum();  //待还利息
+            long principal = borrowRepaymentList.stream().mapToLong(w -> w.getPrincipal()).sum();  //待还本金
             if (p.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE) {
                 voViewRefundRes.setTimeLimit(p.getTimeLimit() + BorrowContants.DAY);
             } else {
@@ -140,9 +140,9 @@ public class LoanServiceImpl implements LoanService {
         borrowList.stream().forEach(p -> {
             VoViewSettleRespc viewSettleRes = new VoViewSettleRespc();
             List<BorrowRepayment> borrowRepaymentList = borrowRepaymentMaps.get(p.getId());
-            Integer interest = borrowRepaymentList.stream().mapToInt(w -> w.getInterest()).sum();  //待还利息
-            Integer principal = borrowRepaymentList.stream().mapToInt(w -> w.getPrincipal()).sum();  //待还本金
-            Integer collectionMoneyYes = borrowRepaymentList.stream().mapToInt(w -> w.getRepayMoneyYes()).sum();
+            long interest = borrowRepaymentList.stream().mapToLong(w -> w.getInterest()).sum();  //待还利息
+            long principal = borrowRepaymentList.stream().mapToLong(w -> w.getPrincipal()).sum();  //待还本金
+            long collectionMoneyYes = borrowRepaymentList.stream().mapToLong(w -> w.getRepayMoneyYes()).sum();
             viewSettleRes.setPrincipal(StringHelper.formatMon(principal / 100D));
             viewSettleRes.setInterest(StringHelper.formatMon(interest / 100D));
             viewSettleRes.setMoney(StringHelper.formatMon(p.getMoneyYes() / 100D));
@@ -284,9 +284,9 @@ public class LoanServiceImpl implements LoanService {
             repayFashion = BorrowContants.REPAY_FASHION_MONTH_STR;
         }
         repaymentDetail.setRepayFashion(repayFashion);
-        Integer interest = 0;
-        Integer principal = 0;
-        Integer receivableInterest = 0;
+        long interest = 0;
+        long principal = 0;
+        long receivableInterest = 0;
         if (borrow.getStatus() == BorrowContants.PASS) {
             repaymentDetail.setMoney(StringHelper.formatMon(borrow.getMoneyYes() / 100D));
             List<BorrowRepayment> borrowRepayments = repaymentRepository.findByBorrowId(borrow.getId());
@@ -297,19 +297,19 @@ public class LoanServiceImpl implements LoanService {
             if (count > 0) {//未还清
                 interest = borrowRepayments.stream()
                         .filter(p -> p.getStatus() == RepaymentContants.STATUS_YES)
-                        .mapToInt(w -> w.getInterest())
+                        .mapToLong(w -> w.getInterest())
                         .sum();
                 principal = borrowRepayments.stream()
                         .filter(p -> p.getStatus() == RepaymentContants.STATUS_YES)
-                        .mapToInt(w -> w.getPrincipal())
+                        .mapToLong(w -> w.getPrincipal())
                         .sum();
                 repaymentDetail.setStatus(RepaymentContants.STATUS_NO);
             } else {   //以还清
                 interest = borrowRepayments.stream()
-                        .mapToInt(w -> w.getInterest())
+                        .mapToLong(w -> w.getInterest())
                         .sum();
                 principal = borrowRepayments.stream()
-                        .mapToInt(w -> w.getPrincipal())
+                        .mapToLong(w -> w.getPrincipal())
                         .sum();
                 repaymentDetail.setStatus(RepaymentContants.STATUS_YES);
             }
@@ -352,7 +352,7 @@ public class LoanServiceImpl implements LoanService {
         VoViewLoanList voViewLoanList = new VoViewLoanList();
 
 
-        Integer collectionMoney = repaymentList.stream().mapToInt(p -> p.getRepayMoney()).sum();
+        long collectionMoney = repaymentList.stream().mapToLong(p -> p.getRepayMoney()).sum();
         Integer countOrder = repaymentList.size();
 
         List<VoLoanInfo> voLoanInfoList = new ArrayList<>();

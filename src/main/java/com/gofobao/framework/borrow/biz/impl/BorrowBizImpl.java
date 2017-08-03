@@ -1061,15 +1061,15 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowRepayment.setStatus(0);
             borrowRepayment.setOrder(i);
             borrowRepayment.setRepayAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
-            borrowRepayment.setRepayMoney(new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue());
-            borrowRepayment.setPrincipal(new Double(NumberHelper.toDouble(repayDetailMap.get("principal"))).intValue());
-            borrowRepayment.setInterest(new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue());
-            borrowRepayment.setRepayMoneyYes(0);
+            borrowRepayment.setRepayMoney(NumberHelper.toLong(repayDetailMap.get("repayMoney")));
+            borrowRepayment.setPrincipal(NumberHelper.toLong(repayDetailMap.get("principal")));
+            borrowRepayment.setInterest(NumberHelper.toLong(repayDetailMap.get("interest")));
+            borrowRepayment.setRepayMoneyYes(0l);
             borrowRepayment.setCreatedAt(nowDate);
             borrowRepayment.setUpdatedAt(nowDate);
-            borrowRepayment.setAdvanceMoneyYes(0);
+            borrowRepayment.setAdvanceMoneyYes(0l);
             borrowRepayment.setLateDays(0);
-            borrowRepayment.setLateInterest(0);
+            borrowRepayment.setLateInterest(0l);
             borrowRepayment.setUserId(borrow.getUserId());
             borrowRepaymentService.save(borrowRepayment);
         }
@@ -1167,8 +1167,8 @@ public class BorrowBizImpl implements BorrowBiz {
 
         // 获取待还
         long feeId = assetChangeProvider.getFeeAccountId();  // 收费账户
-        int collectionMoney = 0;
-        int collectionInterest = 0;
+        long collectionMoney = 0;
+        long collectionInterest = 0;
         for (Tender tender : tenderList) {
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
                     NumberHelper.toDouble(StringHelper.toString(tender.getValidMoney())),
@@ -1178,8 +1178,8 @@ public class BorrowBizImpl implements BorrowBiz {
             Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
             for (int i = 0; i < repayDetailList.size(); i++) {
                 Map<String, Object> repayDetailMap = repayDetailList.get(i);
-                collectionMoney += new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue();
-                collectionInterest += new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue();
+                collectionMoney += NumberHelper.toLong(repayDetailMap.get("repayMoney"));
+                collectionInterest += NumberHelper.toLong(repayDetailMap.get("interest"));
             }
         }
 
@@ -1245,10 +1245,10 @@ public class BorrowBizImpl implements BorrowBiz {
             Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
             List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
             Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
-            Integer countInterest = 0;
+            long countInterest = 0;
             for (int i = 0; i < repayDetailList.size(); i++) {
                 Map<String, Object> repayDetailMap = repayDetailList.get(i);
-                countInterest += new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue();
+                countInterest += NumberHelper.toLong(repayDetailMap.get("interest"));
             }
 
             UserCache userCache = userCacheService.findById(tender.getUserId());
@@ -1477,8 +1477,8 @@ public class BorrowBizImpl implements BorrowBiz {
             for (int i = 0; i < repayDetailList.size(); i++) {
                 borrowCollection = new BorrowCollection();
                 Map<String, Object> repayDetailMap = repayDetailList.get(i);
-                collectionMoney += new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue();
-                collectionInterest += new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue();
+                collectionMoney += NumberHelper.toLong(repayDetailMap.get("repayMoney"));
+                collectionInterest += NumberHelper.toLong(repayDetailMap.get("interest"));
                 borrowCollection.setTenderId(tender.getId());
                 borrowCollection.setStatus(0);
                 borrowCollection.setOrder(i);
@@ -1486,12 +1486,12 @@ public class BorrowBizImpl implements BorrowBiz {
                 borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : borrowDate);
                 borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : nowDate);
                 borrowCollection.setCollectionAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
-                borrowCollection.setCollectionMoney(new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue());
-                borrowCollection.setPrincipal(new Double(NumberHelper.toDouble(repayDetailMap.get("principal"))).intValue());
-                borrowCollection.setInterest(new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue());
+                borrowCollection.setCollectionMoney(NumberHelper.toLong(repayDetailMap.get("repayMoney")));
+                borrowCollection.setPrincipal(NumberHelper.toLong(repayDetailMap.get("principal")));
+                borrowCollection.setInterest(NumberHelper.toLong(repayDetailMap.get("interest")));
                 borrowCollection.setCreatedAt(nowDate);
                 borrowCollection.setUpdatedAt(nowDate);
-                borrowCollection.setCollectionMoneyYes(0);
+                borrowCollection.setCollectionMoneyYes(0l);
                 borrowCollection.setLateDays(0);
                 borrowCollection.setLateInterest(0l);
                 borrowCollection.setBorrowId(borrow.getId());
@@ -1561,8 +1561,8 @@ public class BorrowBizImpl implements BorrowBiz {
                 .build();
         List<BorrowCollection> oldBorrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "order"));
         Preconditions.checkNotNull(oldBorrowCollections, "债权转让复审: 原始投标还款计划为空");
-        Integer collectionMoney = oldBorrowCollections.stream().mapToInt(borrowCollection1 -> borrowCollection1.getCollectionMoney()).sum();  // 待收
-        Integer collectionInterest = oldBorrowCollections.stream().mapToInt(borrowCollection1 -> borrowCollection1.getInterest()).sum(); //  待收利息
+        long collectionMoney = oldBorrowCollections.stream().mapToLong(borrowCollection1 -> borrowCollection1.getCollectionMoney()).sum();  // 待收
+        long collectionInterest = oldBorrowCollections.stream().mapToLong(borrowCollection1 -> borrowCollection1.getInterest()).sum(); //  待收利息
         CapitalChangeEntity entity = new CapitalChangeEntity();
         entity.setType(CapitalChangeEnum.CollectionLower);
         entity.setUserId(borrow.getUserId());
@@ -1606,10 +1606,10 @@ public class BorrowBizImpl implements BorrowBiz {
             }
         }
 
-        Integer countInterest = 0;
+        long countInterest = 0;
         for (int i = 0; i < repayDetailList.size(); i++) {
             Map<String, Object> repayDetailMap = repayDetailList.get(i);
-            countInterest += new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue();
+            countInterest += NumberHelper.toLong(repayDetailMap.get("interest"));
         }
 
         UserCache tempUserCache = new UserCache();
@@ -1719,7 +1719,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
         int repaymentTotal = 0;
         List<VoRepayReq> voRepayReqList = new ArrayList<>();
-        int penalty = 0;
+        long penalty = 0;
         int lateInterest = 0;
         int lateDays = 0;
         int overPrincipal = 0;
@@ -1775,7 +1775,7 @@ public class BorrowBizImpl implements BorrowBiz {
             voRepayReqList.add(voRepayReq);
         }
 
-        int repayMoney = repaymentTotal + penalty;
+        long repayMoney = repaymentTotal + penalty;
         if (borrowAsset.getUseMoney() < (repayMoney)) {
             return ResponseEntity
                     .badRequest()
@@ -1813,7 +1813,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @param borrow
      * @param penalty
      */
-    private void receivedPenalty(Borrow borrow, int penalty) throws Exception {
+    private void receivedPenalty(Borrow borrow, long penalty) throws Exception {
         Date nowDate = new Date();
         List<Long> collectionUserIds = new ArrayList<>();
         Specification<Tender> ts = Specifications
@@ -2199,7 +2199,7 @@ public class BorrowBizImpl implements BorrowBiz {
             if (CollectionUtils.isEmpty(borrowCollectionList)) {
                 return;
             }
-            Integer countInterest = 0;
+            long countInterest = 0;
             for (BorrowCollection borrowCollection : borrowCollectionList) {
                 countInterest += borrowCollection.getInterest();
             }
@@ -2232,8 +2232,8 @@ public class BorrowBizImpl implements BorrowBiz {
             return;
         }
 
-        Integer repayMoney = 0;
-        Integer principal = 0;
+        long repayMoney = 0;
+        long principal = 0;
         for (BorrowRepayment borrowRepayment : repaymentList) {
             repayMoney += borrowRepayment.getRepayMoney();
             principal += borrowRepayment.getPrincipal();

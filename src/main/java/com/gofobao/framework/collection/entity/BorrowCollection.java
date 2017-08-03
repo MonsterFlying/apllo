@@ -31,15 +31,15 @@ public class BorrowCollection {
 
     @Basic
     @Column(name = "collection_money")
-    private Integer collectionMoney;
+    private Long collectionMoney;
 
     @Basic
     @Column(name = "principal")
-    private Integer principal;
+    private Long principal;
 
     @Basic
     @Column(name = "interest")
-    private Integer interest;
+    private Long interest;
 
     @Basic
     @Column(name = "start_at")
@@ -59,7 +59,7 @@ public class BorrowCollection {
 
     @Basic
     @Column(name = "collection_money_yes")
-    private Integer collectionMoneyYes;
+    private Long collectionMoneyYes;
 
     @Basic
     @Column(name = "late_days")
