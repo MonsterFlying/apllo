@@ -17,6 +17,8 @@ import com.gofobao.framework.asset.service.BatchAssetChangeItemService;
 import com.gofobao.framework.asset.service.BatchAssetChangeService;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.common.assets.AssetChangeProvider;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.data.DataObject;
 import com.gofobao.framework.common.data.GeSpecification;
@@ -57,6 +59,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -91,6 +94,9 @@ public class TransferProvider {
     private BatchAssetChangeService batchAssetChangeService;
     @Autowired
     private BatchAssetChangeItemService batchAssetChangeItemService;
+
+    @Autowired
+    private AssetChangeProvider assetChangeProvider ;
 
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
@@ -300,7 +306,9 @@ public class TransferProvider {
      * @param transferFeeRate
      * @param batchNo
      */
-    private void addBatchAssetChange(long transferId, Transfer transfer, List<TransferBuyLog> transferBuyLogList, double transferFeeRate, String batchNo) {
+    private void addBatchAssetChange(long transferId, Transfer transfer, List<TransferBuyLog> transferBuyLogList, double transferFeeRate, String batchNo) throws ExecutionException {
+        String seqNo = assetChangeProvider.getSeqNo() ;
+        String groupSeqNo = assetChangeProvider.getGroupSeqNo() ;
         Date nowDate = new Date();
         // 扣除债权购买人冻结资金
         BatchAssetChange batchAssetChange = new BatchAssetChange();
@@ -312,55 +320,72 @@ public class TransferProvider {
         batchAssetChange.setUpdatedAt(nowDate);
         batchAssetChange = batchAssetChangeService.save(batchAssetChange);
 
-        // 债权转让人收款
+        // 债权转让人收款 = 转让本金加应收利息
         BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
         batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
         batchAssetChangeItem.setState(0);
-        batchAssetChangeItem.setType(CapitalChangeEnum.Borrow.getValue());
+        batchAssetChangeItem.setType(AssetChangeTypeEnum.batchSellBonds.getLocalType());  // 出售债权
         batchAssetChangeItem.setUserId(transfer.getUserId());
-        batchAssetChangeItem.setMoney(transfer.getPrincipal());
-        batchAssetChangeItem.setRemark("通过[" + transfer.getTitle() + "]收到的债权转让款");
+        batchAssetChangeItem.setMoney(transfer.getPrincipal() + transfer.getAlreadyInterest());
+        batchAssetChangeItem.setRemark(String.format("出售债权[%s]获得待收本金和应计利息%s元", transfer.getTitle(),
+                StringHelper.formatDouble((transfer.getPrincipal() + transfer.getAlreadyInterest()) / 100D, true)));
         batchAssetChangeItem.setCreatedAt(nowDate);
         batchAssetChangeItem.setUpdatedAt(nowDate);
+        batchAssetChangeItem.setSourceId(transferId);
+        batchAssetChangeItem.setSeqNo(seqNo) ;
+        batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
         batchAssetChangeItemService.save(batchAssetChangeItem);
-
-        // 发放债权转让人当期应计利息
+        Long feeAccountId = assetChangeProvider.getFeeAccountId();  // 平台ID
+        // 扣除原始债权转让人转让费
         batchAssetChangeItem = new BatchAssetChangeItem();
         batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
         batchAssetChangeItem.setState(0);
-        batchAssetChangeItem.setType(CapitalChangeEnum.ACCRUED_INTEREST.getValue());
+        batchAssetChangeItem.setType(AssetChangeTypeEnum.batchSellBondsFee.getLocalType());  // 收取转让手续费
         batchAssetChangeItem.setUserId(transfer.getUserId());
-        batchAssetChangeItem.setMoney(transfer.getAlreadyInterest());
-        batchAssetChangeItem.setRemark("通过[" + transfer.getTitle() + "]收到的债权转让当期应计利息");
-        batchAssetChangeItem.setSendRedPacket(true);
-        batchAssetChangeItem.setCreatedAt(nowDate);
-        batchAssetChangeItem.setUpdatedAt(nowDate);
-        batchAssetChangeItemService.save(batchAssetChangeItem);
-
-        // 收取债权转让人的转让管理费
-        batchAssetChangeItem = new BatchAssetChangeItem();
-        batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
-        batchAssetChangeItem.setState(0);
-        batchAssetChangeItem.setType(CapitalChangeEnum.Fee.getValue());
-        batchAssetChangeItem.setUserId(transfer.getUserId());
+        batchAssetChangeItem.setToUserId(feeAccountId);
         batchAssetChangeItem.setMoney(NumberHelper.toLong(transfer.getPrincipal() * transferFeeRate));
-        batchAssetChangeItem.setRemark("扣除借款标[" + transfer.getTitle() + "]的转让管理费");
+        batchAssetChangeItem.setRemark(String.format("扣除出售债权[%s]手续费%s元", transfer.getTitle(),
+                StringHelper.formatDouble(NumberHelper.toLong(transfer.getPrincipal() * transferFeeRate) / 100D, true)));
         batchAssetChangeItem.setCreatedAt(nowDate);
         batchAssetChangeItem.setUpdatedAt(nowDate);
+        batchAssetChangeItem.setSourceId(transferId);
+        batchAssetChangeItem.setSeqNo(seqNo) ;
+        batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+        batchAssetChangeItemService.save(batchAssetChangeItem);
+
+        // 收费账户添加债权转让费用
+        batchAssetChangeItem = new BatchAssetChangeItem();
+        batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
+        batchAssetChangeItem.setState(0);
+        batchAssetChangeItem.setType(AssetChangeTypeEnum.batchSellBondsFee.getLocalType());  // 收取转让手续费
+        batchAssetChangeItem.setUserId(feeAccountId);  // 平台收费人
+        batchAssetChangeItem.setToUserId(transfer.getUserId());
+        batchAssetChangeItem.setMoney(NumberHelper.toLong(transfer.getPrincipal() * transferFeeRate));
+        batchAssetChangeItem.setRemark(String.format("收取出售债权[%s]手续费%s元", transfer.getTitle(),
+                StringHelper.formatDouble(NumberHelper.toLong(transfer.getPrincipal() * transferFeeRate) / 100D, true)));
+        batchAssetChangeItem.setCreatedAt(nowDate);
+        batchAssetChangeItem.setUpdatedAt(nowDate);
+        batchAssetChangeItem.setSourceId(transferId);
+        batchAssetChangeItem.setSeqNo(seqNo) ;
+        batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
         batchAssetChangeItemService.save(batchAssetChangeItem);
 
         for (TransferBuyLog transferBuyLog : transferBuyLogList) {
             batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
-            //扣除债权转让购买人冻结资金
+            // 扣除债权转让购买人冻结资金
             batchAssetChangeItem = new BatchAssetChangeItem();
             batchAssetChangeItem.setState(0);
-            batchAssetChangeItem.setType(CapitalChangeEnum.Tender.getValue());
+            batchAssetChangeItem.setType(AssetChangeTypeEnum.batchBuyClaims.getLocalType());
             batchAssetChangeItem.setUserId(transferBuyLog.getUserId());
             batchAssetChangeItem.setToUserId(transfer.getUserId());
             batchAssetChangeItem.setMoney(transferBuyLog.getValidMoney());
-            batchAssetChangeItem.setRemark("成功投资[" + transfer.getTitle() + "]");
+            batchAssetChangeItem.setRemark(String.format("购买债权[%s], 成功扣除资金%s元", transfer.getTitle(),
+                    StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100D, true)));
             batchAssetChangeItem.setCreatedAt(nowDate);
             batchAssetChangeItem.setUpdatedAt(nowDate);
+            batchAssetChangeItem.setSeqNo(seqNo) ;
+            batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+            batchAssetChangeItem.setSourceId(transferBuyLog.getId());
             batchAssetChangeItemService.save(batchAssetChangeItem);
         }
     }

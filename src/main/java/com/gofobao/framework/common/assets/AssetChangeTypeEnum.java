@@ -258,4 +258,15 @@ public enum AssetChangeTypeEnum {
         this.userCacheChangeRule = userCacheChangeRule;
         this.txFlag = txFlag ;
     }
+
+    public static AssetChangeTypeEnum findType(String localType) throws Exception{
+        AssetChangeTypeEnum[] values = AssetChangeTypeEnum.values();
+        for(AssetChangeTypeEnum typeEnum: values){
+            if(typeEnum.getLocalType().equals(localType)){
+                return typeEnum ;
+            }
+        }
+
+        throw new Exception(String.format("没有该种类型的资金变动: %s", localType)) ;
+    }
 }
