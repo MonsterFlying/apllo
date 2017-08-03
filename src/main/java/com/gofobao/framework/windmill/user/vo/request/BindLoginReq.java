@@ -11,6 +11,6 @@ public class BindLoginReq {
 
     private String password;
 
-    private String param;
+    private String params;
 
 }

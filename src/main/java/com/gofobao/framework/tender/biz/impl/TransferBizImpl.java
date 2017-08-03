@@ -7,8 +7,13 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
+import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
 import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.entity.BatchAssetChange;
+import com.gofobao.framework.asset.entity.BatchAssetChangeItem;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.asset.service.BatchAssetChangeItemService;
+import com.gofobao.framework.asset.service.BatchAssetChangeService;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
@@ -16,7 +21,6 @@ import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
-import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.MoneyConstans;
@@ -36,7 +40,10 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.system.biz.IncrStatisticBiz;
 import com.gofobao.framework.system.biz.StatisticBiz;
+import com.gofobao.framework.system.entity.IncrStatistic;
+import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.entity.Statistic;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.contants.BorrowContants;
@@ -53,11 +60,11 @@ import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
 import com.gofobao.framework.tender.vo.response.*;
 import com.gofobao.framework.tender.vo.response.web.TransferBuy;
 import com.gofobao.framework.tender.vo.response.web.VoViewTransferBuyWarpRes;
-import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -67,7 +74,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.redis.connection.SortParameters;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -77,8 +83,8 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.function.Function;
 
 /**
  * Created by admin on 2017/6/12.
@@ -111,6 +117,12 @@ public class TransferBizImpl implements TransferBiz {
     private StatisticBiz statisticBiz;
     @Autowired
     private UserCacheService userCacheService;
+    @Autowired
+    private IncrStatisticBiz incrStatisticBiz;
+    @Autowired
+    private BatchAssetChangeService batchAssetChangeService;
+    @Autowired
+    private BatchAssetChangeItemService batchAssetChangeItemService;
 
     @Autowired
     UserService userService;
@@ -131,7 +143,7 @@ public class TransferBizImpl implements TransferBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> againVerifyTransfer(long transferId) throws Exception {
+    public ResponseEntity<VoBaseResp> againVerifyTransfer(long transferId, String batchNo) throws Exception {
         Date nowDate = new Date();
         /*
         1.查询债权转让记录与购买记录
@@ -161,24 +173,14 @@ public class TransferBizImpl implements TransferBiz {
 
         //新增子级投标记录
         List<Tender> childTenderList = addChildTender(nowDate, transfer, parentTender, transferBuyLogList);
-
         //生成子级债权回款记录，标注老债权回款已经转出
         addChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList);
-
-        //查询债权转让借款原投资
-        /*Tender transferTender = tenderService.findById(borrow.getTenderId());
-        String groupSeqNo = assetChangeProvider.getGroupSeqNo();*/
-        /*// 这里涉及用户投标回款计划生成和平台资金的变动
-        generateBorrowCollectionAndAssetChange(borrow, tenderList, oldBorrowCollections.get(0).getStartAt(), groupSeqNo);
-        // 标的自身设置奖励信息:进行存管红包发放
-        awardUserByBorrowTender(borrow, tenderList);
+        //发放债权转让资金
+        batchAssetChange(transferId, batchNo);
         // 发送投资成功站内信
-        sendNoticsByTender(borrow, tenderList);
+        sendNoticsByBuyTransfer(transfer, childTenderList);
         // 用户投标信息和每日统计
-        userTenderStatistic(borrow, tenderList, oldBorrowCollections.get(0).getStartAt());
-        // 借款人资金变动
-        processBorrowAssetChange(borrow, tenderList, oldBorrowCollections.get(0).getStartAt(), groupSeqNo);*/
-
+        userTenderStatistic(childTenderList);
         // 复审事件
         //如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
         updateUserCacheByTransferReview(parentBorrow, transfer);
@@ -188,6 +190,106 @@ public class TransferBizImpl implements TransferBiz {
         return ResponseEntity.ok(VoBaseResp.ok("债权转让复审成功!"));
     }
 
+    /**
+     * 发放债权转让资金
+     *
+     * @param transferId
+     * @param batchNo
+     */
+    private void batchAssetChange(long transferId, String batchNo) {
+        Specification<BatchAssetChange> bacs = Specifications
+                .<BatchAssetChange>and()
+                .eq("sourceId", transferId)
+                .eq("type", BatchAssetChangeContants.BATCH_CREDIT_INVEST)
+                .eq("batchNo", batchNo)
+                .build();
+        List<BatchAssetChange> batchAssetChangeList = batchAssetChangeService.findList(bacs);
+        Preconditions.checkNotNull(batchAssetChangeList, batchNo + "债权转让资金变动记录不存在!");
+        BatchAssetChange batchAssetChange = batchAssetChangeList.get(0);/* 债权转让资金变动记录 */
+
+        Specification<BatchAssetChangeItem> bacis = Specifications
+                .<BatchAssetChangeItem>and()
+                .eq("batchAssetChangeId", batchAssetChange.getId())
+                .eq("state", 0)
+                .build();
+        List<BatchAssetChangeItem> batchAssetChangeItemList = batchAssetChangeItemService.findList(bacis);
+        Preconditions.checkNotNull(batchAssetChangeItemList, batchNo + "债权转让资金变动子记录不存在!");
+        batchAssetChangeItemList.stream().forEach(batchAssetChangeItem -> {
+            CapitalChangeEntity capitalChangeEntity = GSON.fromJson(GSON.toJson(batchAssetChangeItem), new TypeToken<CapitalChangeEntity>() {
+            }.getType());
+            try {
+                capitalChangeHelper.capitalChange(capitalChangeEntity);
+            } catch (Exception e) {
+                log.error("transferBizImpl batchAssetChange assetChange error:", e);
+            }
+        });
+    }
+
+    /**
+     * 发送投资成功站内信
+     *
+     * @param transfer
+     * @param tenderList
+     */
+    private void sendNoticsByBuyTransfer(Transfer transfer, List<Tender> tenderList) {
+        Gson gson = new Gson();
+        log.info(String.format("发送投标成功站内信开始: %s", gson.toJson(tenderList)));
+        Date nowDate = new Date();
+        Set<Long> userIdSet = tenderList.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet());
+        for (Long userId : userIdSet) {
+            Notices notices = new Notices();
+            notices.setFromUserId(1L);
+            notices.setUserId(userId);
+            notices.setRead(false);
+            notices.setName("投资的借款满标审核通过");
+            notices.setContent("您所投资的债权转让借款[" + transfer.getTitle() + " 已满标审核通过");
+            notices.setType("system");
+            notices.setCreatedAt(nowDate);
+            notices.setUpdatedAt(nowDate);
+            //发送站内信
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
+            mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
+            Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("transferBizImpl sendNoticsByTender send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("transferBizImpl sendNoticsByTender send mq exception", e);
+            }
+        }
+        log.info(String.format("发送投标成功站内信结束:  %s", gson.toJson(tenderList)));
+    }
+
+    /**
+     * 用户投标统计
+     *
+     * @param tenderList
+     */
+    private void userTenderStatistic(List<Tender> tenderList) throws Exception {
+        Gson gson = new Gson();
+        for (Tender tender : tenderList) {
+            log.info(String.format("投标统计: %s", gson.toJson(tender)));
+
+            UserCache userCache = userCacheService.findById(tender.getUserId());
+
+            IncrStatistic incrStatistic = new IncrStatistic();
+            if ((!userCache.getTenderTransfer()) && (!userCache.getTenderTuijian()) && (!userCache.getTenderJingzhi()) && (!userCache.getTenderMiao()) && (!userCache.getTenderQudao())) {
+                incrStatistic.setTenderCount(1);
+                incrStatistic.setTenderTotal(1);
+            }
+
+            incrStatistic.setTenderLzCount(1);
+            incrStatistic.setTenderLzTotalCount(1);
+            userCache.setTenderTransfer(true);
+
+            userCacheService.save(userCache);
+            if (!ObjectUtils.isEmpty(incrStatistic)) {
+                incrStatisticBiz.caculate(incrStatistic);
+            }
+        }
+    }
 
     /**
      * 如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金

@@ -39,6 +39,7 @@ import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
+import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.entity.TransferBuyLog;
@@ -95,6 +96,8 @@ public class ThirdBatchProvider {
     TransferBuyLogService transferBuyLogService;
     @Autowired
     private TransferService transferService;
+    @Autowired
+    private TransferBiz transferBiz;
 
     @Autowired
     MqHelper mqHelper;
@@ -710,7 +713,7 @@ public class ThirdBatchProvider {
      * @param successThirdTransferOrderIds
      * @throws Exception
      */
-    private void newCreditInvestDeal(long batchNo, long transferId, List<String> failureThirdTransferOrderIds, List<String> successThirdTransferOrderIds) throws Exception {
+    private void newCreditInvestDeal(String batchNo, long transferId, List<String> failureThirdTransferOrderIds, List<String> successThirdTransferOrderIds) throws Exception {
         Date nowDate = new Date();
         if (CollectionUtils.isEmpty(failureThirdTransferOrderIds)) {
             log.info("================================================================================");
@@ -771,7 +774,7 @@ public class ThirdBatchProvider {
 
                 transfer.setTenderCount(transfer.getTenderCount() - transferBuyLogList.size());
                 long sum = transferBuyLogList.stream().mapToLong(transferBuyLog -> transferBuyLog.getValidMoney()).sum();  // 取消的总总债权
-                transfer.setPrincipalYes(transfer.getPrincipalYes() - sum);
+                transfer.setTransferMoneyYes(transfer.getTransferMoneyYes() - sum);
                 transfer.setUpdatedAt(nowDate);
             }
 
@@ -779,16 +782,14 @@ public class ThirdBatchProvider {
             transferBuyLogService.save(failureTransferBuyLogList);
         }
 
-        /*//1.判断失败orderId集合为空
+        //1.判断失败orderId集合为空
         //2.判断borrowId不为空
         if (CollectionUtils.isEmpty(failureThirdTransferOrderIds)) {
-            Borrow borrow = borrowService.findById(borrowId);
-            Preconditions.checkNotNull(borrow, "摘取批次处理: 查询复审标的失败");
-            log.info(String.format("批量债权转让复审: %s", gson.toJson(borrow)));
-            boolean b = borrowBiz.transferBorrowAgainVerify(borrow);
-            if (b) {
+            log.info(String.format("批量债权转让复审transfer: %s", transferId));
+            ResponseEntity<VoBaseResp> resp = transferBiz.againVerifyTransfer(transferId,batchNo);
+            if (resp.getBody().getState().getCode() == VoBaseResp.OK) {
                 //更新批次状态
-                thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), borrowId, 3);
+                thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), transferId, 3);
 
                 //推送队列结束债权
                 MqConfig mqConfig = new MqConfig();
@@ -796,7 +797,7 @@ public class ThirdBatchProvider {
                 mqConfig.setTag(MqTagEnum.END_CREDIT_BY_TRANSFER);
                 mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
                 ImmutableMap<String, String> body = ImmutableMap
-                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(transferId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
                 mqConfig.setMsg(body);
                 try {
                     log.info(String.format("thirdBatchProvider creditInvestDeal send mq %s", GSON.toJson(body)));
@@ -809,7 +810,7 @@ public class ThirdBatchProvider {
             } else {
                 log.error("批量债权转让复审: 失败");
             }
-        }*/
+        }
     }
 
     /**

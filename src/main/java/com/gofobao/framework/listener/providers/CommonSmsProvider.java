@@ -110,7 +110,7 @@ public class CommonSmsProvider {
         Date nowDate = new Date() ;
         SmsEntity smsEntity = new SmsEntity();
         smsEntity.setIp(ip) ;
-        smsEntity.setType(tag) ;
+        smsEntity.setType("windmillRegister") ;
         smsEntity.setContent(message) ;
         smsEntity.setPhone(phone) ;
         smsEntity.setCreatedAt(nowDate) ;

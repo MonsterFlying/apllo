@@ -1,5 +1,6 @@
 package com.gofobao.framework.windmill.user.vo.request;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
@@ -8,6 +9,7 @@ import javax.validation.constraints.NotNull;
  * Created by admin on 2017/7/31.
  */
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserRegisterReq {
 
     @NotNull

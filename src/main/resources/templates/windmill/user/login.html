@@ -179,7 +179,7 @@
             $.ajax({
                 type: 'POST',
                 url: _address.value + '/pub/windmill/user/bind/login',
-                data: {account: _username.value, password: _password.value, params: _param.value},
+                data: {userName: _username.value, password: _password.value, params: _param.value},
                 success: function (response) {
                     const target_url = response.target_url;
                     window.location.href = target_url;

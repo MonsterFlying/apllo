@@ -23,6 +23,7 @@ import com.gofobao.framework.windmill.util.PassWordCreate;
 import com.gofobao.framework.windmill.util.WrbCoopDESUtil;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,7 @@ import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.net.URLEncoder;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -83,6 +85,9 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
     @Autowired
     private JwtTokenHelper jwtTokenHelper;
 
+    @Value("${windmill.local-des-key}")
+    private String localDesKey;
+
 
     @Transactional
     @Override
@@ -102,7 +107,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
         }
         do {
             try {
-                registerReq = JacksonHelper.json2pojo(decryptStr, UserRegisterReq.class);
+                registerReq= GSON.fromJson(decryptStr, new TypeToken<UserRegisterReq>() {}.getType());
             } catch (Exception e) {
                 registerRes.setRetcode(UserRegisterConstant.ORTHER_ERROR);
                 registerRes.setRetmsg("json转对象异常");
@@ -110,7 +115,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             }
             // 1.手机号验证
             boolean notPhoneState = userService.notExistsByPhone(registerReq.getMobile());
-            if (notPhoneState) {//该手机号已存在
+            if (!notPhoneState) {//该手机号已存在
                 //
                 Users users = userService.findByAccount(registerReq.getMobile());
                 //当前用户是否有关联风车理财
@@ -137,7 +142,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             }
             //身份证是否存在
             boolean existsByIdCard = userService.notExistsByIdCard(registerReq.getId_no());
-            if (existsByIdCard) {
+            if (!existsByIdCard) {
                 registerRes.setRetcode(UserRegisterConstant.IDCARD_REP);
                 registerRes.setRetmsg("身份证已存在");
                 log.info("风车理财用户注册:注册失败---->身份证已存在");
@@ -178,8 +183,6 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
                     log.info("风车理财用户注册：注册失败---->平台添加用户信息异常");
                     break;
                 }
-
-
                 // 4.触发注册事件
                 MqConfig mqConfig = new MqConfig();
                 mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
@@ -238,9 +241,8 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
     public ResponseEntity<VoBasicUserInfoResp> bindLogin(HttpServletRequest request,
                                                          HttpServletResponse response,
                                                          BindLoginReq bindLoginReq) {
-
         log.info("===============进入风车理绑定用户登录===============");
-        log.info("用户名：" + bindLoginReq.getUserName() + ",密文：" + bindLoginReq.getParam());
+        log.info("用户名：" + bindLoginReq.getUserName() + ",密文：" + bindLoginReq.getParams());
         log.info("==================================================");
         VoLoginReq voLoginReq = new VoLoginReq();
         voLoginReq.setAccount(bindLoginReq.getUserName());
@@ -251,22 +253,27 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             log.info("================用户登录成功===============");
             VoBasicUserInfoResp userInfoResp = (VoBasicUserInfoResp) entity.getBody();
             try {
-                String desDecryptStr = commonDecryptStr(bindLoginReq.getParam());
+                String desDecryptStr = commonDecryptStr(bindLoginReq.getParams());
                 log.info("解密后的参数：param:" + desDecryptStr);
-                UserRegisterReq userRegisterReq = JacksonHelper.json2pojo(desDecryptStr, UserRegisterReq.class);
+                UserRegisterReq userRegisterReq =GSON.fromJson(desDecryptStr, new TypeToken<UserRegisterReq>() {}.getType());
                 Users user = userService.findByAccount(bindLoginReq.getUserName());
                 String userName = StringUtils.isEmpty(user.getUsername()) ? user.getPhone() : user.getUsername();
+                //拼接参数
                 String requestParam = "wrb_user_id=" + userRegisterReq.getWrb_user_id() +
-                        "&pf_user_id=" + user.getId() +
+                        "&pf_user_id=" + WrbCoopDESUtil.desEncrypt(localDesKey,user.getId().toString()) +
                         "&pf_user_name=" + userName +
                         "&reg_time=" + DateHelper.dateToString(user.getCreatedAt());
+                //加密参数
                 String requestEncryptParam = WrbCoopDESUtil.desEncrypt(desKey, requestParam);
                 Map<String, String> requestMaps = Maps.newHashMap();
                 requestMaps.put("from", "gfb");
-                requestMaps.put("param", requestEncryptParam);
+                requestMaps.put("param", URLEncoder.encode(requestEncryptParam,"utf-8"));
+                requestMaps.put("ts",System.currentTimeMillis()+"");
+                log.info("请求风车理财 验证绑定是否成功，参数:"+ JacksonHelper.obj2json(requestMaps));
 
-                log.info("请求风车理财 验证绑定是否成功，参数:", JacksonHelper.obj2json(requestMaps));
-                String result = OKHttpHelper.postForm(address + "wrb/ps_bind.json", requestMaps, null);
+                Map<String,String>headerMap=Maps.newHashMap();
+                headerMap.put("Content-Type","application/x-www-form-urlencoded; charset=UTF-8");
+                String result = OKHttpHelper.postForm(address + "/wrb/ps_bind.json", requestMaps, headerMap);
                 try {
                     Map<String, Object> resultMap = JacksonHelper.json2map(result);
                     //绑定验证成功
@@ -329,6 +336,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             Map<String, String> checkTicketMap = Maps.newHashMap();
             checkTicketMap.put("param", requestParamStr);
             checkTicketMap.put("from", shortName);
+            checkTicketMap.put("ts",System.currentTimeMillis()+"");
             //请求风车理财验证ticket
             String checkResult = OKHttpHelper.postForm(address + "wrb/ps_check_ticket.json", checkTicketMap, null);
             Map<String, Object> checkResultMap = JacksonHelper.json2map(checkResult);
@@ -340,7 +348,8 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             }
             log.info("风车理财ticket检验成功");
             log.info("打印成功信息:" + checkResult);
-            Long userId = Long.valueOf(checkResultMap.get("pf_user_id").toString());
+            //解密用户id
+            Long userId = Long.valueOf(WrbCoopDESUtil.desDecrypt(localDesKey,checkResultMap.get("pf_user_id").toString()));
             //风车理财用户id
             String wrbUserId = checkResultMap.get("wrb_user_id").toString();
             Specification<Users> specification = Specifications.<Users>and()
@@ -370,6 +379,11 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_USER_ID, tempUser.getId().toString());
             mqConfig.setMsg(body);
             mqHelper.convertAndSend(mqConfig);
+            if(StringUtils.isEmpty(targetUrl)){
+                targetUrl="index";
+            }else{
+                targetUrl=URLEncoder.encode(targetUrl,"utf-8");
+            }
             return targetUrl;
         } catch (Exception e) {
             return "load_error";
@@ -389,10 +403,9 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
                 throw new Exception();
             }
             String jsonStr = desDecryptStr.replaceAll("&", ",").replaceAll("=", ":");
+            log.info(jsonStr);
             StringBuilder sb = new StringBuilder(jsonStr);
-            sb.append("{", 0, 1);
-            sb.append("}", sb.length() - 1, sb.length());
-            return sb.toString();
+            return "{"+sb.toString()+"}";
         } catch (Exception e) {
             log.info("密文解析失败");
             throw new Exception();

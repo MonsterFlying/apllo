@@ -7,10 +7,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -31,7 +28,16 @@ public class WindmillBorrowController {
     @GetMapping("/invest/list")
     public InvestListRes list(HttpServletRequest request, @Param("borrowId") Long id) {
         return windmillBorrowBiz.list(id);
+
     }
+
+    @ApiOperation("标列表")
+    @GetMapping("/borrow/info")
+    public String info(HttpServletRequest request, @RequestParam("invest_id")  Long id) {
+        return "";
+    }
+
+
 
     @ApiOperation("根据时间段查询用户的投资列表")
     @GetMapping("/invest/byTime/list")
