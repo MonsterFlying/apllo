@@ -1005,6 +1005,17 @@ public class RepaymentBizImpl implements RepaymentBiz {
     }
 
     /**
+     * 新还款处理
+     *
+     * @param repaymentId
+     * @return
+     * @throws Exception
+     */
+    public ResponseEntity<VoBaseResp> newRepayDeal(Long repaymentId) throws Exception{
+        return ResponseEntity.ok(VoBaseResp.ok("还款处理成功!"));
+    }
+
+    /**
      * @param userId
      * @param borrowRepaymentId
      * @param repayUserThirdAccount
