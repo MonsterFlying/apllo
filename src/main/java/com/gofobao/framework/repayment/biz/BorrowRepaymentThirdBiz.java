@@ -5,6 +5,7 @@ import com.gofobao.framework.api.model.batch_repay.Repay;
 import com.gofobao.framework.api.model.batch_repay_bail.RepayBail;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.repayment.entity.RepayAssetChange;
 import com.gofobao.framework.repayment.vo.request.VoBatchBailRepayReq;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchRepay;
@@ -120,10 +121,11 @@ public interface BorrowRepaymentThirdBiz {
      * @param order
      * @param lateDays
      * @param lateInterest
+     * @param repayAssetChanges
      * @return
      * @throws Exception
      */
-    List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest) throws Exception ;
+    List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest, List<RepayAssetChange> repayAssetChanges) throws Exception ;
 
 
     /**
