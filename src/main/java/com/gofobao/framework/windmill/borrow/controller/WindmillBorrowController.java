@@ -54,11 +54,6 @@ public class WindmillBorrowController {
         return windmillStatisticsBiz.byDayStatistics(request);
     }
 
-    @ApiOperation("用户投资记录查询接口")
-    @PostMapping("user/invest/list")
-    public UserAccountStatistics userInvestList(HttpServletRequest request) {
-        return windmillStatisticsBiz.userStatistics(request);
-    }
 
 
 }

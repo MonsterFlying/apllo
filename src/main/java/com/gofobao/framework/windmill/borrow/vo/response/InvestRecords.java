@@ -12,9 +12,11 @@ public class InvestRecords {
 
     private String invest_money;
 
-    private String all_back_principal;
+    private String all_back_principal="0";
 
-    private String all_back_interest;
+    private String all_back_interest="0";
+
+    private String all_interest;
 
     private String invest_record_id;
 
@@ -24,17 +26,17 @@ public class InvestRecords {
 
     private String project_title;
 
-    private String project_id;
+    private Long project_id;
 
     private String project_rate;
 
-    private String project_timelimit;
+    private Integer project_timelimit;
 
     private String project_timelimit_desc;
 
-    private String invest_status;
+    private Integer invest_status;
 
-    private String is_auto_bid0;
+    private Integer is_auto_bid0;
 
     private String monthly_back_date;
 
@@ -46,7 +48,9 @@ public class InvestRecords {
 
     private String next_back_interest;
 
-    private String attorn_state;
+    private String payback_way;
+
+    private Integer attorn_state;
 
     private String attorn_time;
 

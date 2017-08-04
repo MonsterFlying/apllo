@@ -105,7 +105,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
         log.info("============================================");
         String decryptStr = "";
         try {
-            decryptStr =StrToJsonStrUtil. commonDecryptStr(param);
+            decryptStr = StrToJsonStrUtil.commonDecryptStr(param);
             log.info("解密参数成功param:" + decryptStr);
         } catch (Exception e) {
             log.info("=====解密参数失败:param:" + param);
