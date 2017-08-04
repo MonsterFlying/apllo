@@ -2345,7 +2345,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //生成垫付还款主记录
         addBatchAssetChangeByAdvance(repaymentId, batchNo);
         //生成担保人垫付批次资产变更记录
+        //addBatchAssetChangeByAdvanceBail();
         //生成投资人垫付批次资产变更记录
+        //addBatchAssetChangeByAdvanceTender();
         return ResponseEntity.ok(VoBaseResp.ok("垫付成功!"));
     }
 
