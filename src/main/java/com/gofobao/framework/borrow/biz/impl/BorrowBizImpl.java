@@ -156,7 +156,7 @@ public class BorrowBizImpl implements BorrowBiz {
     JixinManager jixinManager;
 
     @Autowired
-    TransferBiz transferBiz ;
+    TransferBiz transferBiz;
 
     @Autowired
     AssetChangeProvider assetChangeProvider;
@@ -197,10 +197,10 @@ public class BorrowBizImpl implements BorrowBiz {
     @Override
     public ResponseEntity<VoViewBorrowListWarpRes> findAll(VoBorrowListReq voBorrowListReq) {
         try {
-            List<VoViewBorrowList> borrowLists = null ;
-            if(voBorrowListReq.getType() == 5){  // 债权转让
-                borrowLists = transferBiz.findTransferList(voBorrowListReq) ;
-            }else{  // 正常标的
+            List<VoViewBorrowList> borrowLists = null;
+            if (voBorrowListReq.getType() == 5) {  // 债权转让
+                borrowLists = transferBiz.findTransferList(voBorrowListReq);
+            } else {  // 正常标的
                 borrowLists = borrowService.findNormalBorrow(voBorrowListReq);
             }
 
@@ -988,7 +988,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Throwable.class)
-    public boolean notTransferBorrowAgainVerify(Borrow borrow) throws Exception {
+    public boolean borrowAgainVerify(Borrow borrow) throws Exception {
         if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1)
                 || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
             return false;
@@ -1024,7 +1024,7 @@ public class BorrowBizImpl implements BorrowBiz {
         processBorrowAssetChange(borrow, tenderList, nowDate, groupSeqNo);
 
         // 满标操作
-        finishBorrow(borrow, tenderList);
+        finishBorrow(borrow);
 
         // 复审事件
         //如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
@@ -1076,71 +1076,15 @@ public class BorrowBizImpl implements BorrowBiz {
     }
 
     /**
-     * 转让标复审
-     *
-     * @return
-     */
-    @Transactional(rollbackFor = Throwable.class)
-    public boolean transferBorrowAgainVerify(Borrow borrow) throws Exception {
-        if ((borrow.getStatus() != 1)
-                || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
-            return false;
-        }
-
-        // 原标的信息更改
-        List<BorrowCollection> oldBorrowCollections = processOldTenderAndBorrowCollection(borrow);
-        //查询当前借款的所有 状态为1的 tender记录
-        Specification<Tender> ts = Specifications.<Tender>and()
-                .eq("borrowId", borrow.getId())
-                .eq("status", 1)
-                .build();
-        List<Tender> tenderList = tenderService.findList(ts);
-        Preconditions.checkNotNull(tenderList, "生成还款记录: 投标记录为空");
-        //查询债权转让借款原投资
-        Tender transferTender = tenderService.findById(borrow.getTenderId());
-        String groupSeqNo = assetChangeProvider.getGroupSeqNo();
-        // 这里涉及用户投标回款计划生成和平台资金的变动
-        generateBorrowCollectionAndAssetChange(borrow, tenderList, oldBorrowCollections.get(0).getStartAt(), groupSeqNo);
-        // 标的自身设置奖励信息:进行存管红包发放
-        awardUserByBorrowTender(borrow, tenderList);
-        // 发送投资成功站内信
-        sendNoticsByTender(borrow, tenderList);
-        // 用户投标信息和每日统计
-        userTenderStatistic(borrow, tenderList, oldBorrowCollections.get(0).getStartAt());
-        // 借款人资金变动
-        processBorrowAssetChange(borrow, tenderList, oldBorrowCollections.get(0).getStartAt(), groupSeqNo);
-        // 满标操作
-        finishBorrow(borrow, tenderList);
-        // 复审事件
-        //如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
-        updateUserCacheByBorrowReview(borrow);
-        //更新全网网站统计
-        updateStatisticByBorrowReview(borrow);
-        //借款成功发送通知短信
-        smsNoticeByBorrowReview(borrow);
-        //发送借款协议
-        sendBorrowProtocol(borrow);
-        return true;
-
-    }
-
-    /**
      * 结束标的信息
-     * @// TODO: 2017/8/2 这里要跟着债权转让改变 
+     *
      * @param borrow
-     * @param tenderList
      */
-    private void finishBorrow(Borrow borrow, List<Tender> tenderList) {
+    private void finishBorrow(Borrow borrow) {
         log.info(String.format("批处理: 更改标的为满标 %s", new Gson().toJson(borrow)));
         borrow.setStatus(3);
         borrow.setSuccessAt(new Date());
         borrowService.updateById(borrow);
-        tenderList.forEach(tender -> {
-            tender.setState(2);
-            tender.setUpdatedAt(new Date());
-        });
-        tenderService.save(tenderList);
-
     }
 
     /**

@@ -17,8 +17,6 @@ import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
-import com.gofobao.framework.common.capital.CapitalChangeEntity;
-import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
@@ -622,7 +620,7 @@ public class ThirdBatchProvider {
         if (CollectionUtils.isEmpty(failureThirdLendPayOrderIds)) {
             Borrow borrow = borrowService.findById(borrowId);
             log.info(String.format("正常标的放款回调: %s", gson.toJson(borrow)));
-            boolean flag = borrowBiz.notTransferBorrowAgainVerify(borrow);
+            boolean flag = borrowBiz.borrowAgainVerify(borrow);
             if (!flag) {
                 log.error("标的放款失败！标的id：" + borrowId);
             } else {

@@ -71,17 +71,7 @@ public interface BorrowBiz {
      * @return
      * @throws Exception
      */
-    boolean notTransferBorrowAgainVerify(Borrow borrow) throws Exception;
-
-    /**
-     * 转让标复审
-     *
-     * @param borrow
-     * @return
-     * @throws Exception
-     */
-    boolean transferBorrowAgainVerify(Borrow borrow) throws Exception;
-
+    boolean borrowAgainVerify(Borrow borrow) throws Exception;
 
     /**
      * 标信息
