@@ -100,14 +100,14 @@ public class InvestServiceImpl implements InvestService {
             Long count = borrowCollectionList.stream().map(s -> s.getId()).count();
             voViewBackMoney.setOrder(count.intValue());
             //待收本金
-            Integer principal = tempCollection.stream()
-                    .mapToInt(s -> s.getPrincipal()).sum();
+            long principal = tempCollection.stream()
+                    .mapToLong(s -> s.getPrincipal()).sum();
             //待收利息
-            Integer interest = tempCollection.stream()
-                    .mapToInt(s -> s.getInterest()).sum();
+            long interest = tempCollection.stream()
+                    .mapToLong(s -> s.getInterest()).sum();
             //待收本息
-            Integer collectionMoney = tempCollection.stream()
-                    .mapToInt(w -> w.getCollectionMoney()).sum();
+            long collectionMoney = tempCollection.stream()
+                    .mapToLong(w -> w.getCollectionMoney()).sum();
 
             voViewBackMoney.setCollectionMoney(StringHelper.formatMon(collectionMoney / 100D));
             voViewBackMoney.setInterest(StringHelper.formatMon(interest / 100D));
@@ -220,12 +220,12 @@ public class InvestServiceImpl implements InvestService {
             List<BorrowCollection> borrowCollections1 = borrowCollectionList.stream()
                     .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
                     .collect(Collectors.toList());
-            Integer interest = borrowCollections1.stream()
-                    .mapToInt(s -> s.getInterest()).sum();
-            Integer principal = borrowCollections1.stream().
-                    mapToInt(s -> s.getPrincipal()).sum();
-            Integer collectionMoneyYes = borrowCollections1.stream()
-                    .mapToInt(s -> s.getCollectionMoneyYes()).sum();
+            long interest = borrowCollections1.stream()
+                    .mapToLong(s -> s.getInterest()).sum();
+            long principal = borrowCollections1.stream().
+                    mapToLong(s -> s.getPrincipal()).sum();
+            long collectionMoneyYes = borrowCollections1.stream()
+                    .mapToLong(s -> s.getCollectionMoneyYes()).sum();
             voViewSettleRes.setInterest(StringHelper.formatMon(interest / 100D));
             voViewSettleRes.setPrincipal(StringHelper.formatMon(principal / 100D));
             voViewSettleRes.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
@@ -314,25 +314,25 @@ public class InvestServiceImpl implements InvestService {
             item.setRepayFashion(BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL_STR);
         }
 
-        Integer receivableInterest = 0;
-        Integer principal = 0;
-        Integer interest = 0;
+        long receivableInterest = 0;
+        long principal = 0;
+        long interest = 0;
 
         if (tender.getState() == TenderConstans.BACK_MONEY || tender.getState() == TenderConstans.SETTLE) {
             List<BorrowCollection> borrowCollectionList = borrowCollectionRepository.findByTenderId(tender.getId());
             //利息
             interest = borrowCollectionList.stream()
                     .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
-                    .mapToInt(s -> s.getInterest())
+                    .mapToLong(s -> s.getInterest())
                     .sum();
             //本金
             principal = borrowCollectionList.stream()
                     .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
-                    .mapToInt(s -> s.getPrincipal())
+                    .mapToLong(s -> s.getPrincipal())
                     .sum();
             //应收利息
             receivableInterest = borrowCollectionList.stream()
-                    .mapToInt(s -> s.getInterest())
+                    .mapToLong(s -> s.getInterest())
                     .sum();
 
             item.setInterest(StringHelper.formatMon(interest / 100D));
@@ -367,7 +367,7 @@ public class InvestServiceImpl implements InvestService {
         VoViewReturnedMoney viewReturnedMoney = new VoViewReturnedMoney();
 
         viewReturnedMoney.setOrderCount(borrowCollectionList.size());
-        Integer collectionMoneySum = borrowCollectionList.stream().mapToInt(p -> p.getCollectionMoney()).sum();
+        long collectionMoneySum = borrowCollectionList.stream().mapToLong(p -> p.getCollectionMoney()).sum();
         viewReturnedMoney.setCollectionMoneySum(NumberHelper.to2DigitString(collectionMoneySum));
 
         List<ReturnedMoney> returnedMonies = new ArrayList<>(0);

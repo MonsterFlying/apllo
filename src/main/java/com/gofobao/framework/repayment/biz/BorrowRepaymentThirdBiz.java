@@ -123,7 +123,7 @@ public interface BorrowRepaymentThirdBiz {
      * @return
      * @throws Exception
      */
-    List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, int lateInterest) throws Exception ;
+    List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest) throws Exception ;
 
 
     /**
@@ -135,5 +135,5 @@ public interface BorrowRepaymentThirdBiz {
      * @param lateInterest
      * @return
      */
-    List<RepayBail> calculateRepayBailPlan(Borrow borrow, String repayAccountId, int lateDays, Integer order, int lateInterest) throws Exception;
+    List<RepayBail> calculateRepayBailPlan(Borrow borrow, String repayAccountId, int lateDays, Integer order, long lateInterest) throws Exception;
 }

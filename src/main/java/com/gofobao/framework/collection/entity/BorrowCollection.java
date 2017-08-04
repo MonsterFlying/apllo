@@ -24,14 +24,14 @@ public class BorrowCollection {
     @Column(name = "`order`")
     private Integer order;
     private Long tenderId;
-    private Integer collectionMoney;
-    private Integer principal;
-    private Integer interest;
+    private Long collectionMoney;
+    private Long principal;
+    private Long interest;
     private Date startAt;
     private Date startAtYes;
     private Date collectionAt;
     private Date collectionAtYes;
-    private Integer collectionMoneyYes;
+    private Long collectionMoneyYes;
     private Integer lateDays;
     private Long lateInterest;
     private Integer transferFlag;

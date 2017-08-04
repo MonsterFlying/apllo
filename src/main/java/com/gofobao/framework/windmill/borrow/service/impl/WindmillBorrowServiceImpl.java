@@ -4,12 +4,16 @@ import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
+import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.repository.TenderRepository;
 import com.gofobao.framework.windmill.borrow.service.WindmillBorrowService;
+import com.gofobao.framework.windmill.borrow.vo.request.BySomeDayReq;
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Range;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
@@ -18,6 +22,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -71,6 +76,23 @@ public class WindmillBorrowServiceImpl implements WindmillBorrowService {
     }
 
     /**
+     * 查询某天投资情况
+     *
+     * @param someDayReq
+     * @return
+     */
+    @Override
+    public List<Tender> bySomeDayTenders(BySomeDayReq someDayReq) {
+        Date date = DateHelper.stringToDate(someDayReq.getInvest_date(), DateHelper.DATE_FORMAT_YMD);
+
+        Specification<Tender> specification = Specifications.<Tender>and()
+                .between("created_at",new Range<>(DateHelper.beginOfDate(date),DateHelper.endOfDate(date)))
+                .eq("status",TenderConstans.SUCCESS)
+                .build();
+       return tenderRepository.findAll(specification,new PageRequest(someDayReq.getLimit(),someDayReq.getLimit())).getContent();
+    }
+
+    /**
      * @param borrowId
      * @param date
      * @return
@@ -79,8 +101,8 @@ public class WindmillBorrowServiceImpl implements WindmillBorrowService {
     public List<Tender> tenderList(Long borrowId, String date) {
         StringBuilder sql = new StringBuilder("SELECT t FROM Tender t WHERE t.borrowId=:borrowId AND t.status=:status AND t.createdAt>='" + date + "' ORDER BY t.id ASC");
         Query query = entityManager.createQuery(sql.toString(), Tender.class);
-        query.setParameter("borrowId",borrowId);
-        query.setParameter("status",TenderConstans.SUCCESS);
+        query.setParameter("borrowId", borrowId);
+        query.setParameter("status", TenderConstans.SUCCESS);
         return query.getResultList();
     }
 }

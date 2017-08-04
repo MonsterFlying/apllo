@@ -12,19 +12,21 @@ import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.windmill.borrow.biz.WindmillBorrowBiz;
 import com.gofobao.framework.windmill.borrow.service.WindmillBorrowService;
-import com.gofobao.framework.windmill.borrow.vo.response.BorrowTenderList;
-import com.gofobao.framework.windmill.borrow.vo.response.Invest;
-import com.gofobao.framework.windmill.borrow.vo.response.InvestListRes;
-import com.gofobao.framework.windmill.borrow.vo.response.VoTender;
+import com.gofobao.framework.windmill.borrow.vo.request.BySomeDayReq;
+import com.gofobao.framework.windmill.borrow.vo.response.*;
+import com.gofobao.framework.windmill.user.vo.request.UserRegisterReq;
+import com.gofobao.framework.windmill.util.StrToJsonStrUtil;
 import com.gofobao.framework.windmill.util.WrbCoopDESUtil;
 import com.google.common.collect.Lists;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.net.URLDecoder;
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -54,16 +56,29 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
     @Autowired
     private BorrowService borrowService;
 
+    private static final Gson GSON = new Gson();
+
     /**
-     * @param id
+     * @param request
      * @return
      */
     @Override
-    public InvestListRes list(Long id) {
+    public InvestListRes list(HttpServletRequest request) {
         InvestListRes investListRes = new InvestListRes();
         do {
+            Map<String, String> paramMap;
             try {
-                List<Borrow> borrows = windmillBorrowService.list(id);
+                String paramStr = StrToJsonStrUtil.commonDecryptStr(request.getParameter("param").toString());
+                paramMap = GSON.fromJson(paramStr, new TypeToken<UserRegisterReq>() {
+                }.getType());
+
+            } catch (Exception e) {
+                investListRes.setRetcode(VoBaseResp.ERROR);
+                investListRes.setRetmsg("平台转json失败");
+                break;
+            }
+            try {
+                List<Borrow> borrows = windmillBorrowService.list(Long.valueOf(paramMap.get("invest_id").toString()));
                 if (CollectionUtils.isEmpty(borrows)) {
                     investListRes.setRetcode(VoBaseResp.ERROR);
                     investListRes.setRetmsg("当前没可投标");
@@ -73,7 +88,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
                 borrows.stream().forEach(p -> {
                     try {
                         Invest invest = new Invest();
-                        invest.setInvest_id(WrbCoopDESUtil.desEncrypt(localDesKey,p.getId().toString()));
+                        invest.setInvest_id(WrbCoopDESUtil.desEncrypt(localDesKey, p.getId().toString()));
                         invest.setInvest_title(p.getName());
                         invest.setInvest_url(h5Address + "#/borrow/" + p.getId());
                         invest.setTime_limit(p.getTimeLimit());
@@ -124,15 +139,29 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
     }
 
     /**
-     * @param borrowId
-     * @param date
+     * @param request
      * @return
      */
     @Override
-    public BorrowTenderList tenderList(Long borrowId, String date) {
-        List<Tender> tenders = windmillBorrowService.tenderList(borrowId, date);
+    public BorrowTenderList tenderList(HttpServletRequest request) {
 
         BorrowTenderList borrowTenderList = new BorrowTenderList();
+
+        Map<String, String> paramMap;
+        try {
+            String paramStr = StrToJsonStrUtil.commonDecryptStr(request.getParameter("param").toString());
+            paramMap = GSON.fromJson(paramStr, new TypeToken<Map<String, String>>() {
+            }.getType());
+
+        } catch (Exception e) {
+            borrowTenderList.setRetcode(VoBaseResp.ERROR);
+            borrowTenderList.setRetmsg("平台转json失败");
+            return borrowTenderList;
+        }
+
+        Long borrowId = Long.valueOf(paramMap.get("id"));
+        List<Tender> tenders = windmillBorrowService.tenderList(borrowId, paramMap.get("start_time"));
+
         if (CollectionUtils.isEmpty(tenders)) {
             borrowTenderList.setRetcode(VoBaseResp.OK);
             borrowTenderList.setRetmsg("没有查询到当前标的投标记录");
@@ -171,4 +200,69 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
         borrowTenderList.setInvest_list(invest_list);
         return borrowTenderList;
     }
+
+    /**
+     * @param request
+     * @return
+     */
+    @Override
+    public BySomeDayRes bySomeDayTenders(HttpServletRequest request) {
+        BySomeDayRes bySomeDayRes = new BySomeDayRes();
+        BySomeDayReq someDayReq;
+        try {
+            String paramStr = StrToJsonStrUtil.commonDecryptStr(request.getParameter("param").toString());
+            someDayReq = GSON.fromJson(paramStr, new TypeToken<BySomeDayReq>() {
+            }.getType());
+
+        } catch (Exception e) {
+            bySomeDayRes.setRetcode(VoBaseResp.ERROR);
+            bySomeDayRes.setRetmsg("平台转json处理失败");
+            return bySomeDayRes;
+        }
+        List<Tender> tenders = windmillBorrowService.bySomeDayTenders(someDayReq);
+
+        if (CollectionUtils.isEmpty(tenders)) {
+            bySomeDayRes.setRetcode(VoBaseResp.OK);
+            bySomeDayRes.setRetmsg("当前没有用户投资");
+            return bySomeDayRes;
+        }
+
+        Set<Long> userIds = tenders.stream().map(p -> p.getUserId()).collect(Collectors.toSet());
+        List<Users> usersList = usersRepository.findByIdIn(new ArrayList<>(userIds));
+        Map<Long, Users> usersMap = usersList.stream().collect(Collectors.toMap(Users::getId, Function.identity()));
+        List<BySomeDay> invest_list = Lists.newArrayList();
+        do {
+            tenders.forEach(p -> {
+                try {
+                    BySomeDay bySomeDay = new BySomeDay();
+                    bySomeDay.setBorrowId(p.getBorrowId());
+                    bySomeDay.setIndex(WrbCoopDESUtil.desEncrypt(p.getId().toString(), localDesKey));
+                    bySomeDay.setInvest_money(StringHelper.formatDouble(p.getValidMoney(), false));
+                    bySomeDay.setInvest_time(DateHelper.dateToString(p.getCreatedAt()));
+                    bySomeDay.setBid_id(h5Address + "#/borrow/" + p.getBorrowId());
+                    Users user = usersMap.get(p.getUserId());
+                    bySomeDay.setInvest_user(StringUtils.isEmpty(user.getUsername()) ? UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM) : UserHelper.hideChar(user.getUsername(), UserHelper.USERNAME_NUM));
+                    invest_list.add(bySomeDay);
+                } catch (Exception e) {
+                    return;
+                }
+
+            });
+        } while (false);
+        if (CollectionUtils.isEmpty(invest_list)) {
+            bySomeDayRes.setRetcode(VoBaseResp.ERROR);
+            bySomeDayRes.setRetmsg("平台查询处理失败");
+            return bySomeDayRes;
+        }
+        bySomeDayRes.setRetcode(VoBaseResp.OK);
+        bySomeDayRes.setRetmsg("当前没有用户投资");
+        bySomeDayRes.setInvest_list(invest_list);
+        return bySomeDayRes;
+    }
+
+
+
+
+
+
 }

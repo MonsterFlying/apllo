@@ -141,7 +141,7 @@
          alt="">
 </div>
 <div>
-    <form action="" id="LOGIN_BOX" >
+    <form action="" id="LOGIN_BOX">
         <p class="row">
             <input type="text" name="userName" placeholder="输入用户名">
         </p>
@@ -185,7 +185,7 @@
                     window.location.href = target_url;
                 },
                 error: function (response) {
-                    var targetUrl="www.gofobao.com";
+                    var targetUrl = "http://www.gofobao.com";
                     window.location.href = targetUrl;
                     const res = JSON.parse(response.response)
                     const msg = res.state.msg
@@ -193,7 +193,6 @@
                 }
             })
         }
-
 
 
     }

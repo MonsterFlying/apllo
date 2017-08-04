@@ -27,7 +27,6 @@ import com.gofobao.framework.asset.entity.BatchAssetChangeItem;
 import com.gofobao.framework.asset.service.AdvanceLogService;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.BatchAssetChangeItemService;
-import com.gofobao.framework.asset.service.BatchAssetChangeService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
@@ -83,8 +82,12 @@ import com.gofobao.framework.system.entity.*;
 import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
+import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.service.TenderService;
+import com.gofobao.framework.tender.service.TransferService;
+import com.gofobao.framework.tender.vo.request.VoEndTransfer;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -94,7 +97,6 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
@@ -160,11 +162,13 @@ public class RepaymentBizImpl implements RepaymentBiz {
     @Autowired
     private BatchAssetChangeHelper batchAssetChangeHelper;
     @Autowired
-    private BatchAssetChangeService batchAssetChangeService;
-    @Autowired
     private BatchAssetChangeItemService batchAssetChangeItemService;
     @Autowired
     private AssetChangeProvider assetChangeProvider;
+    @Autowired
+    private TransferService transferService;
+    @Autowired
+    private TransferBiz transferBiz;
 
     @Value("${gofobao.webDomain}")
     private String webDomain;
@@ -485,7 +489,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * 3.判断是否是还担保人垫付，垫付需要改变垫付记录状态
      * 4.还款成功后变更改还款状态
      * 5.结束债权
-     * 6.还款最后新增统计
+     * 6.发送投资人收到还款站内信
+     * 7.投资人收到积分
+     * 8.还款最后新增统计
      *
      * @param repaymentId
      * @return
@@ -497,6 +503,28 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Preconditions.checkNotNull(borrowRepayment, "还款记录不存在!");
         Borrow parentBorrow = borrowService.findById(borrowRepayment.getBorrowId());/* 还款记录对应的借款记录 */
         Preconditions.checkNotNull(parentBorrow, "借款记录不存在!");
+        /* 还款对应的投标记录  包括债权转让在里面 */
+        Specification<Tender> ts = Specifications
+                .<Tender>and()
+                .eq("status", 1)
+                .eq("borrowId", parentBorrow.getId())
+                .build();
+        List<Tender> tenderList = tenderService.findList(ts);/* 还款对应的投标记录  包括债权转让在里面 */
+        Preconditions.checkNotNull(tenderList, "立即还款: 投标记录为空!");
+        /* 投标记录id */
+        Set<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toSet());
+        /* 查询未转让的投标记录回款记录 */
+        Specification<BorrowCollection> bcs = Specifications
+                .<BorrowCollection>and()
+                .in("tenderId", tenderIds.toArray())
+                .eq("status", 0)
+                .eq("order", borrowRepayment.getOrder())
+                .eq("transferFlag", 0)
+                .build();
+        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
+        Preconditions.checkNotNull(borrowCollectionList, "立即还款: 回款记录为空!");
+        /* 是否垫付 */
+        boolean advance = ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
         //2.处理资金还款人、收款人资金变动
         batchAssetChangeHelper.batchAssetChange(repaymentId, batchNo, BatchAssetChangeContants.BATCH_LEND_REPAY);
         //3.判断是否是还担保人垫付，垫付需要改变垫付记录状态
@@ -504,10 +532,82 @@ public class RepaymentBizImpl implements RepaymentBiz {
         changeRepaymentAndAdvanceStatus(borrowRepayment);
         //5.结束第三方债权并更新借款状态（还款最后一期的时候）
         endThirdTenderAndChangeBorrowStatus(parentBorrow, borrowRepayment);
-        //6.还款最后新增统计
+        //6.发送投资人收到还款站内信
+        sendCollectionNotices(borrowCollectionList, advance, parentBorrow);
+        //7.发放积分
+        giveInterest(borrowCollectionList, parentBorrow);
+        //8.还款最后新增统计
         updateRepaymentStatistics(parentBorrow, borrowRepayment);
 
         return ResponseEntity.ok(VoBaseResp.ok("还款处理成功!"));
+    }
+
+    /**
+     * 给投资人发放积分
+     *
+     * @param borrowCollectionList
+     * @param parentBorrow
+     */
+    private void giveInterest(List<BorrowCollection> borrowCollectionList, Borrow parentBorrow) {
+        borrowCollectionList.stream().forEach(borrowCollection -> {
+            long actualInterest = borrowCollection.getCollectionMoneyYes() - borrowCollection.getPrincipal();/* 实收利息 */
+            //投资积分
+            long integral = actualInterest / 100 * 10;
+            if ((parentBorrow.getType() == 0 || parentBorrow.getType() == 4) && 0 < integral) {
+                IntegralChangeEntity integralChangeEntity = new IntegralChangeEntity();
+                integralChangeEntity.setType(IntegralChangeEnum.TENDER);
+                integralChangeEntity.setValue(integral);
+                integralChangeEntity.setUserId(borrowCollection.getUserId());
+                try {
+                    integralChangeHelper.integralChange(integralChangeEntity);
+                } catch (Exception e) {
+                    log.error("投资人回款积分发放失败：", e);
+                }
+            }
+        });
+    }
+
+    /**
+     * 发送回款站内信
+     *
+     * @param borrowCollectionList
+     * @param advance
+     * @param parentBorrow
+     */
+    private void sendCollectionNotices(List<BorrowCollection> borrowCollectionList, boolean advance, Borrow parentBorrow) {
+
+        //迭代投标人记录
+        borrowCollectionList.stream().forEach(borrowCollection -> {
+            long actualInterest = borrowCollection.getCollectionMoneyYes() - borrowCollection.getPrincipal();/* 实收利息 */
+            String noticeContent = String.format("客户在%s已将借款[%s]第%s期还款,还款金额为%s元", DateHelper.dateToString(new Date(), "yyyy-MM-dd HH:mm:ss"), BorrowHelper.getBorrowLink(parentBorrow.getId()
+                    , parentBorrow.getName()), (borrowCollection.getOrder() + 1), StringHelper.formatDouble(actualInterest, 100, true));
+            if (advance) {
+                noticeContent = "广富宝在" + DateHelper.dateToString(new Date(), "yyyy-MM-dd HH:mm:ss") + " 已将借款[" + BorrowHelper.getBorrowLink(parentBorrow.getId(), parentBorrow.getName()) +
+                        "]第" + (borrowCollection.getOrder() + 1) + "期垫付还款,垫付金额为" + StringHelper.formatDouble(actualInterest, 100, true) + "元";
+            }
+
+            Notices notices = new Notices();
+            notices.setFromUserId(1L);
+            notices.setUserId(borrowCollection.getUserId());
+            notices.setRead(false);
+            notices.setName("客户还款");
+            notices.setContent(noticeContent);
+            notices.setType("system");
+            notices.setCreatedAt(new Date());
+            notices.setUpdatedAt(new Date());
+            //发送站内信
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
+            mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
+            Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("repaymentBizImpl sendCollectionNotices send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("repaymentBizImpl sendCollectionNotices send mq exception", e);
+            }
+        });
     }
 
     /**
@@ -848,9 +948,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 Borrow tranferedBorrow = tranferedBorrowList.get(0);
                 int tranferedOrder = order + tranferedBorrow.getTotalOrder() - borrow.getTotalOrder();
                 long tranferedLateInterest = tender.getValidMoney() / borrow.getMoney() * lateInterest;
-                int accruedInterest = 0;
+                long accruedInterest = 0;
                 if (tranferedOrder == 0) { //如果是转让后第一期回款, 则计算转让者首期应计利息
-                    int interest = borrowCollection.getInterest();
+                    long interest = borrowCollection.getInterest();
                     Date startAt = DateHelper.beginOfDate(borrowCollection.getStartAt());//获取00点00分00秒
                     Date collectionAt = DateHelper.beginOfDate(borrowCollection.getCollectionAt());
                     Date startAtYes = DateHelper.beginOfDate(borrowCollection.getStartAtYes());
@@ -925,7 +1025,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             }
 
             int collectionInterest = (int) (borrowCollection.getInterest() * interestPercent);
-            int collectionMoney = borrowCollection.getPrincipal() + collectionInterest;
+            long collectionMoney = borrowCollection.getPrincipal() + collectionInterest;
 
             CapitalChangeEntity entity = new CapitalChangeEntity();
             entity.setType(CapitalChangeEnum.IncomeRepayment);
@@ -946,7 +1046,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
             int interestLower = 0;//应扣除利息
             if (borrow.isTransfer()) {
-                int interest = borrowCollection.getInterest();
+                long interest = borrowCollection.getInterest();
                 Date startAt = DateHelper.beginOfDate((Date) borrowCollection.getStartAt().clone());
                 Date collectionAt = DateHelper.beginOfDate((Date) borrowCollection.getCollectionAt().clone());
                 Date startAtYes = DateHelper.beginOfDate((Date) borrowCollection.getStartAtYes().clone());
@@ -1122,72 +1222,291 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Preconditions.checkNotNull(repayUserThirdAccount, "批量还款: 还款用户存管账户不存在");
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(borrowRepaymentId);
         Preconditions.checkNotNull(borrowRepayment, "批量还款: 还款记录不存在");
-        Borrow borrow = borrowService.findByIdLock(borrowRepayment.getBorrowId());
-        Preconditions.checkNotNull(borrow, "批量还款: 还款标的信息不存在");
+        Borrow parentBorrow = borrowService.findByIdLock(borrowRepayment.getBorrowId());
+        Preconditions.checkNotNull(parentBorrow, "批量还款: 还款标的信息不存在");
         ResponseEntity<VoBaseResp> conditionResponse = repayConditionCheck(repayUserThirdAccount, borrowRepayment);
         if (!conditionResponse.getStatusCode().equals(HttpStatus.OK)) {
             return conditionResponse;
         }
+        //计算逾期天数
+        int lateDays = getLateDays(borrowRepayment);
         // 计算逾期产生的总费用
-        int lateInterest = calculateLateInterest(borrowRepayment, borrow);
+        long lateInterest = calculateLateInterest(lateDays, borrowRepayment, parentBorrow);
+        //是否是垫付
+        boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
+        /* 批次号 */
+        String batchNo = jixinHelper.getBatchNo();
+        /* 资产记录流水号 */
+        String seqNo = assetChangeProvider.getSeqNo();
+        /* 资产记录分组流水号 */
+        String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+        //生成还款主记录
+        BatchAssetChange batchAssetChange = addBatchAssetChange(batchNo, borrowRepayment.getId(), advance);
+        //生成还款人还款批次资金改变记录
+        addBatchAssetChangeByBorrower(batchAssetChange.getId(), borrowRepayment, parentBorrow, interestPercent, isUserOpen, lateInterest);
 
-        String batchNo = jixinHelper.getBatchNo();/* 批次号 */
-        addBatchAssetChangeByBorrower(borrowRepayment, borrow, batchNo, interestPercent, isUserOpen, lateInterest);
-        if (ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) {
+        if (advance) {
             //创建还款主记录
-            addBatchAssetChangeByNormal(borrowRepayment, borrow, batchNo, interestPercent, isUserOpen, lateInterest);
-            return normalRepay(userId, repayUserThirdAccount, borrowRepayment, borrow, lateInterest, batchNo);
+            resp = repayGuarantor(userId, repayUserThirdAccount, borrowRepayment, parentBorrow, lateInterest, batchNo);
+            //生成担保人还垫付资产变更记录
+            addBatchAssetChangeByGuarantor(borrowRepayment.getId(), borrowRepayment, parentBorrow, lateInterest, seqNo, groupSeqNo);
         } else {
-            addBatchAssetChangeByGuarantor(borrowRepaymentId, batchNo);
-            return repayGuarantor(userId, repayUserThirdAccount, borrowRepayment, borrow, lateInterest, batchNo);
+            resp = normalRepay(userId, repayUserThirdAccount, borrowRepayment, parentBorrow, lateInterest, batchNo);
+            // 生成非垫付还款生成批次资产变更记录
+            addBatchAssetChangeByRepay(batchAssetChange.getId(), borrowRepayment, parentBorrow, interestPercent, lateInterest, false, seqNo, groupSeqNo);
         }
+
+        //改变还款与垫付记录的值
+        changeRepaymentAndAdvanceRecord(borrowRepayment, lateDays, lateInterest, advance);
+        return resp;
+    }
+
+    /**
+     * 改变还款与垫付记录的值
+     *
+     * @param borrowRepayment
+     * @param lateDays
+     * @param lateInterest
+     * @param advance
+     */
+    public void changeRepaymentAndAdvanceRecord(BorrowRepayment borrowRepayment, int lateDays, long lateInterest, boolean advance) {
+        Date nowDate = new Date();
+        borrowRepayment.setLateDays(lateDays);
+        borrowRepayment.setLateInterest(lateInterest);
+        borrowRepayment.setRepayMoneyYes(borrowRepayment.getRepayMoney());
+        borrowRepayment.setUpdatedAt(nowDate);
+        borrowRepaymentService.save(borrowRepayment);
+        if (advance) {
+            AdvanceLog advanceLog = advanceLogService.findByRepaymentId(borrowRepayment.getId());/* 担保人还款记录 */
+            Preconditions.checkNotNull(advanceLog, "垫付记录不存在!请联系客服");
+            //更新垫付记录
+            advanceLog.setRepayMoneyYes(borrowRepayment.getRepayMoney() + lateInterest);
+            advanceLogService.updateById(advanceLog);
+        }
+    }
+
+
+    /**
+     * 新增资产更改记录
+     *
+     * @param batchNo
+     * @param id
+     * @param advance
+     * @return
+     */
+    private BatchAssetChange addBatchAssetChange(String batchNo, Long id, boolean advance) {
+        BatchAssetChange batchAssetChange = new BatchAssetChange();
+        batchAssetChange.setSourceId(id);
+        batchAssetChange.setState(0);
+        if (advance) { //还款人还垫付
+            batchAssetChange.setType(BatchAssetChangeContants.BATCH_BAIL_REPAY);
+        } else { //正常还款
+            batchAssetChange.setType(BatchAssetChangeContants.BATCH_REPAY);
+        }
+        batchAssetChange.setCreatedAt(new Date());
+        batchAssetChange.setUpdatedAt(new Date());
+        batchAssetChange.setBatchNo(batchNo);
+        return batchAssetChange;
     }
 
     /**
      * 生成正常还款批次资金改变记录
      *
      * @param borrowRepayment
-     * @param batchNo
+     * @param parentBorrow
+     * @param interestPercent
+     * @param lateInterest
+     * @param advance
+     * @throws Exception
      */
-    public void addBatchAssetChangeByNormal(BorrowRepayment borrowRepayment, Borrow borrow,
-                                            String batchNo, double interestPercent, boolean isUserOpen,
-                                            long lateInterest) {
+    public void addBatchAssetChangeByRepay(long batchAssetChangeId, BorrowRepayment borrowRepayment, Borrow parentBorrow,
+                                           double interestPercent,
+                                           long lateInterest, boolean advance,
+                                           String seqNo, String groupSeqNo) throws Exception {
+        Date nowDate = new Date();
         //1.直接查询投资记录
         Specification<Tender> ts = Specifications
                 .<Tender>and()
                 .eq("status", 1)
-                .eq("borrowId", borrow.getId())
+                .eq("borrowId", parentBorrow.getId())
                 .build();
         List<Tender> tenderList = tenderService.findList(ts);/* 还款对应的投标记录  包括债权转让在里面 */
         Preconditions.checkNotNull(tenderList, "立即还款: 投标记录为空!");
         Set<Long> userIds = tenderList.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet());/* 投标人会员id */
         Set<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toSet());/* 投标记录id */
+
+        Specification<BorrowCollection> bcs = Specifications
+                .<BorrowCollection>and()
+                .in("tenderId", tenderIds.toArray())
+                .eq("status", 0)
+                .eq("order", borrowRepayment.getOrder())
+                .eq("transferFlag", 0)
+                .build();
+        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);/* 查询未转让的投标记录回款记录 */
+        Preconditions.checkNotNull(borrowCollectionList, "立即还款: 回款记录为空!");
+
+        Map<Long /** tenderId */, BorrowCollection /** tender 对应的待收*/> borrowCollectionMap = borrowCollectionList
+                .stream()
+                .collect(Collectors.toMap(BorrowCollection::getTenderId, Function.identity()));
+
+        Specification<UserThirdAccount> uta = Specifications
+                .<UserThirdAccount>and()
+                .in("userId", userIds.toArray())
+                .build();
+        List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findList(uta);/* 投资人存管账号信息 */
+        Preconditions.checkNotNull(userThirdAccountList, "立即还款: 用户存管信息列表为空!");
+        Map<Long /** userId */, UserThirdAccount /** tender 对应的待收*/> userThirdAccountMap = userThirdAccountList
+                .stream()
+                .collect(Collectors.toMap(UserThirdAccount::getUserId, Function.identity()));
+
+        for (Tender tender : tenderList) { //循环迭代投标记录
+            UserThirdAccount userThirdAccount = userThirdAccountMap.get(tender.getUserId());/* 投标人存管账户记录 */
+            Preconditions.checkNotNull(userThirdAccount, "立即还款: 用户存管信息为空!");
+            BorrowCollection borrowCollection = borrowCollectionMap.get(tender.getId());   /* 获取当前借款的回款记录 */
+            if (ObjectUtils.isEmpty(borrowCollection)) { //出现回款记录为空的状况一般是转让标
+                continue;
+            }
+
+            if (tender.getTransferFlag() == 1) {//查询正在转让中的记录，存在则取消
+                Specification<Transfer> transferSpecification = Specifications
+                        .<Transfer>and()
+                        .in("status", 0, 1)
+                        .eq("tenderId", tender.getId())
+                        .build();
+
+                List<Transfer> transferList = transferService.findList(transferSpecification);
+                if (!CollectionUtils.isEmpty(transferList)) {
+                    VoEndTransfer voEndTransfer = new VoEndTransfer();
+                    voEndTransfer.setTransferId(transferList.get(0).getId());
+                    voEndTransfer.setUserId(transferList.get(0).getUserId());
+                    //取消债权转让
+                    transferBiz.endTransfer(voEndTransfer);
+                }
+                tender.setTransferFlag(0);//设置转让标识
+            }
+
+
+            long collectionInterest = NumberHelper.toLong(borrowCollection.getInterest() * interestPercent);/* 当期应计利息 */
+            long collectionMoney = borrowCollection.getPrincipal() + collectionInterest;//当期应还金额
+
+            BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
+            batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
+            batchAssetChangeItem.setState(0);
+            batchAssetChangeItem.setType(AssetChangeTypeEnum.receivedPayments.getLocalType());  // 投资人收到还款
+            batchAssetChangeItem.setUserId(tender.getUserId());
+            batchAssetChangeItem.setToUserId(parentBorrow.getUserId());
+            batchAssetChangeItem.setMoney(collectionMoney);
+            batchAssetChangeItem.setInterest(collectionInterest);
+            batchAssetChangeItem.setRemark(String.format("收到客户对借款[%s]第%s期的还款", BorrowHelper.getBorrowLink(parentBorrow.getId(), parentBorrow.getName()), (borrowCollection.getOrder() + 1)));
+            if (advance) {
+                batchAssetChangeItem.setRemark(String.format("收到广富宝对借款[%s]第%s期的垫付还款", BorrowHelper.getBorrowLink(parentBorrow.getId(), parentBorrow.getName()), (borrowCollection.getOrder() + 1)));
+            }
+            if (interestPercent < 1) {
+                batchAssetChangeItem.setRemark("（提前结清）");
+            }
+            batchAssetChangeItem.setCreatedAt(nowDate);
+            batchAssetChangeItem.setUpdatedAt(nowDate);
+            batchAssetChangeItem.setSourceId(borrowRepayment.getId());
+            batchAssetChangeItem.setSeqNo(seqNo);
+            batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+            batchAssetChangeItemService.save(batchAssetChangeItem);
+
+            //扣除投资人待收
+            batchAssetChangeItem = new BatchAssetChangeItem();
+            batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
+            batchAssetChangeItem.setState(0);
+            batchAssetChangeItem.setType(AssetChangeTypeEnum.collectionSub.getLocalType());  // 扣除债权转让人手续费
+            batchAssetChangeItem.setUserId(tender.getUserId());
+            batchAssetChangeItem.setToUserId(parentBorrow.getUserId());
+            batchAssetChangeItem.setMoney(borrowCollection.getCollectionMoney());
+            batchAssetChangeItem.setRemark(String.format("收到客户对[%s]借款的还款,扣除待收", BorrowHelper.getBorrowLink(parentBorrow.getId(), parentBorrow.getName())));
+            batchAssetChangeItem.setCreatedAt(nowDate);
+            batchAssetChangeItem.setUpdatedAt(nowDate);
+            batchAssetChangeItem.setSourceId(borrowRepayment.getId());
+            batchAssetChangeItem.setSeqNo(seqNo);
+            batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+            batchAssetChangeItemService.save(batchAssetChangeItem);
+
+
+            //利息管理费
+            if ((parentBorrow.getType() == 0) || (parentBorrow.getType() == 4) || parentBorrow.getType() == 3) {
+                /**
+                 * '2480 : 好人好梦',1753 : 红运当头',1699 : tasklist',3966 : 苗苗606',1413 : ljc_201',1857 : fanjunle',183 : 54435410',2327 : 栗子',2432 : 高翠西'2470 : sadfsaag',2552 : sadfsaag1',2739 : sadfsaag3',3939 : TinsonCheung',893 : kobayashi',608 : 0211',1216 : zqc9988'
+                 */
+                Set<String> stockholder = new HashSet<>(Arrays.asList("2480", "1753", "1699", "3966", "1413", "1857", "183", "2327", "2432", "2470", "2552", "2739", "3939", "893", "608", "1216"));
+                if (!stockholder.contains(tender.getUserId())) {
+                    Long feeAccountId = assetChangeProvider.getFeeAccountId();  // 平台ID
+                    batchAssetChangeItem = new BatchAssetChangeItem();
+                    batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
+                    batchAssetChangeItem.setState(0);
+                    batchAssetChangeItem.setType(AssetChangeTypeEnum.interestManagementFee.getLocalType());  // 扣除投资人利息管理费
+                    batchAssetChangeItem.setUserId(tender.getUserId());
+                    batchAssetChangeItem.setToUserId(feeAccountId);
+                    batchAssetChangeItem.setMoney(collectionInterest);
+                    batchAssetChangeItem.setRemark(String.format("收到借款标[%s]利息管理费", BorrowHelper.getBorrowLink(parentBorrow.getId(), parentBorrow.getName())));
+                    batchAssetChangeItem.setCreatedAt(nowDate);
+                    batchAssetChangeItem.setUpdatedAt(nowDate);
+                    batchAssetChangeItem.setSourceId(borrowRepayment.getId());
+                    batchAssetChangeItem.setSeqNo(seqNo);
+                    batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+                    batchAssetChangeItemService.save(batchAssetChangeItem);
+                    // 收费账户添加利息管理费用
+                    batchAssetChangeItem = new BatchAssetChangeItem();
+                    batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
+                    batchAssetChangeItem.setState(0);
+                    batchAssetChangeItem.setType(AssetChangeTypeEnum.platformInterestManagementFee.getLocalType());  // 收费账户添加利息管理费用
+                    batchAssetChangeItem.setUserId(feeAccountId);
+                    batchAssetChangeItem.setToUserId(tender.getUserId());
+                    batchAssetChangeItem.setMoney(collectionInterest);
+                    batchAssetChangeItem.setRemark(String.format("收到借款标[%s]利息管理费", BorrowHelper.getBorrowLink(parentBorrow.getId(), parentBorrow.getName())));
+                    batchAssetChangeItem.setCreatedAt(nowDate);
+                    batchAssetChangeItem.setUpdatedAt(nowDate);
+                    batchAssetChangeItem.setSourceId(borrowRepayment.getId());
+                    batchAssetChangeItem.setSeqNo(seqNo);
+                    batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+                    batchAssetChangeItemService.save(batchAssetChangeItem);
+                }
+            }
+
+            //逾期收入
+            if (lateInterest > 0) {
+                /* 投资人收入逾期利息 */
+                long tempLateInterest = NumberHelper.toLong(tender.getValidMoney().doubleValue() / parentBorrow.getMoney().doubleValue() * lateInterest);
+
+                batchAssetChangeItem = new BatchAssetChangeItem();
+                batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
+                batchAssetChangeItem.setState(0);
+                batchAssetChangeItem.setType(AssetChangeTypeEnum.receivedPaymentsPenalty.getLocalType());  // 收费账户添加利息管理费用
+                batchAssetChangeItem.setUserId(tender.getUserId());
+                batchAssetChangeItem.setToUserId(parentBorrow.getUserId());
+                batchAssetChangeItem.setMoney(tempLateInterest);
+                batchAssetChangeItem.setRemark(String.format("收到借款标[%s]的逾期罚息", BorrowHelper.getBorrowLink(parentBorrow.getId(), parentBorrow.getName())));
+                batchAssetChangeItem.setCreatedAt(nowDate);
+                batchAssetChangeItem.setUpdatedAt(nowDate);
+                batchAssetChangeItem.setSourceId(borrowRepayment.getId());
+                batchAssetChangeItem.setSeqNo(seqNo);
+                batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+                batchAssetChangeItemService.save(batchAssetChangeItem);
+            }
+        }
     }
 
     /**
      * 生成还款人还款批次资金改变记录
      *
      * @param borrowRepayment
-     * @param batchNo
+     * @param
      */
-    public void addBatchAssetChangeByBorrower(BorrowRepayment borrowRepayment, Borrow borrow,
-                                              String batchNo, double interestPercent, boolean isUserOpen,
-                                              long lateInterest) {
+    public void addBatchAssetChangeByBorrower(long batchAssetChangeId, BorrowRepayment borrowRepayment,
+                                              Borrow borrow, double interestPercent,
+                                              boolean isUserOpen, long lateInterest) {
         Date nowDate = new Date();
         String seqNo = assetChangeProvider.getSeqNo();
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
-        //生成还款主记录
-        BatchAssetChange batchAssetChange = new BatchAssetChange();
-        batchAssetChange.setSourceId(borrowRepayment.getId());
-        batchAssetChange.setState(0);
-        batchAssetChange.setType(BatchAssetChangeContants.BATCH_REPAY);
-        batchAssetChange.setCreatedAt(nowDate);
-        batchAssetChange.setUpdatedAt(nowDate);
-        batchAssetChange.setBatchNo(batchNo);
 
         // 借款人还款
         BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
-        batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
+        batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
         batchAssetChangeItem.setState(0);
         batchAssetChangeItem.setType(AssetChangeTypeEnum.repayment.getLocalType());  // 还款
         batchAssetChangeItem.setUserId(borrow.getUserId());
@@ -1209,7 +1528,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
         // 扣除借款人待还
         batchAssetChangeItem = new BatchAssetChangeItem();
-        batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
+        batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
         batchAssetChangeItem.setState(0);
         batchAssetChangeItem.setType(AssetChangeTypeEnum.paymentSub.getLocalType());  // 扣除待还
         batchAssetChangeItem.setUserId(borrow.getUserId());
@@ -1224,14 +1543,13 @@ public class RepaymentBizImpl implements RepaymentBiz {
         batchAssetChangeItemService.save(batchAssetChangeItem);
 
         if ((lateInterest > 0)) {
-            //扣除借款人逾期利息
+            //扣除借款人还款滞纳金
             batchAssetChangeItem = new BatchAssetChangeItem();
-            batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
+            batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
             batchAssetChangeItem.setState(0);
-            batchAssetChangeItem.setType(AssetChangeTypeEnum.paymentSub.getLocalType());  // 扣除待还
+            batchAssetChangeItem.setType(AssetChangeTypeEnum.repayMentPenaltyFee.getLocalType());  // 扣除借款人还款滞纳金
             batchAssetChangeItem.setUserId(borrow.getUserId());
-            batchAssetChangeItem.setMoney(borrowRepayment.getRepayMoney());
-            batchAssetChangeItem.setInterest(borrowRepayment.getInterest());
+            batchAssetChangeItem.setMoney(lateInterest);
             batchAssetChangeItem.setRemark(String.format("借款[%s]的逾期罚息", BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName())));
             batchAssetChangeItem.setCreatedAt(nowDate);
             batchAssetChangeItem.setUpdatedAt(nowDate);
@@ -1239,34 +1557,35 @@ public class RepaymentBizImpl implements RepaymentBiz {
             batchAssetChangeItem.setSeqNo(seqNo);
             batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
 
-            /*entity = new CapitalChangeEntity();
-            entity.setType(CapitalChangeEnum.NewOverdue);
-            entity.setUserId(borrowUserId);
-            entity.setMoney(lateInterest);
-            entity.setRemark("借款[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]的逾期罚息");
-            capitalChangeHelper.capitalChange(entity);*/
         }
     }
 
     /**
      * 生成担保人代偿批次资金改变记录
-     *
-     * @param borrowRepaymentId
-     * @param batchNo
      */
-    public void addBatchAssetChangeByGuarantor(long borrowRepaymentId, String batchNo) {
+    public void addBatchAssetChangeByGuarantor(long batchAssetChangeId, BorrowRepayment borrowRepayment, Borrow parentBorrow,
+                                               long lateInterest, String seqNo, String groupSeqNo) {
         Date nowDate = new Date();
-        String seqNo = assetChangeProvider.getSeqNo();
-        String groupSeqNo = assetChangeProvider.getGroupSeqNo();
-        //生成担保人代偿主记录
-        BatchAssetChange batchAssetChange = new BatchAssetChange();
-        batchAssetChange.setSourceId(borrowRepaymentId);
-        batchAssetChange.setState(0);
-        batchAssetChange.setType(BatchAssetChangeContants.BATCH_BAIL_REPAY);
-        batchAssetChange.setCreatedAt(nowDate);
-        batchAssetChange.setUpdatedAt(nowDate);
-        batchAssetChange.setBatchNo(batchNo);
-        batchAssetChangeService.save(batchAssetChange);
+        AdvanceLog advanceLog = advanceLogService.findByRepaymentId(borrowRepayment.getId());/* 还款垫付记录 */
+        Preconditions.checkNotNull(advanceLog, "垫付记录不存在!");
+
+        // 借款人偿还担保人代偿款
+        BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
+        batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
+        batchAssetChangeItem.setState(0);
+        batchAssetChangeItem.setType(AssetChangeTypeEnum.compensatoryReceivedPayments.getLocalType());  // 借款人偿还担保人代偿款
+        batchAssetChangeItem.setUserId(advanceLog.getUserId());
+        batchAssetChangeItem.setToUserId(parentBorrow.getUserId());
+        batchAssetChangeItem.setMoney(borrowRepayment.getRepayMoney() + lateInterest);/* 还款金额加上逾期利息 */
+        batchAssetChangeItem.setRemark(String.format("收到客户对借款[%s]第%s期垫付的还款",
+                BorrowHelper.getBorrowLink(parentBorrow.getId(), parentBorrow.getName()),
+                (borrowRepayment.getOrder() + 1)));
+        batchAssetChangeItem.setCreatedAt(nowDate);
+        batchAssetChangeItem.setUpdatedAt(nowDate);
+        batchAssetChangeItem.setSourceId(borrowRepayment.getId());
+        batchAssetChangeItem.setSeqNo(seqNo);
+        batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+        batchAssetChangeItemService.save(batchAssetChangeItem);
     }
 
     /**
@@ -1280,7 +1599,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      */
     private ResponseEntity<VoBaseResp> repayGuarantor(Long userId,
                                                       UserThirdAccount repayUserThirdAccount, BorrowRepayment borrowRepayment,
-                                                      Borrow borrow, int lateInterest,
+                                                      Borrow borrow, long lateInterest,
                                                       String batchNo) throws Exception {
         Date nowDate = new Date();
         log.info("借款人还款垫付人开始");
@@ -1349,9 +1668,24 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
     }
 
+    /**
+     * @// TODO: 2017/8/3 在存管逾期收入加入到当期回款利息中  类型也需要修改
+     */
+    /**
+     * 正常还款流程
+     *
+     * @param userId
+     * @param repayUserThirdAccount
+     * @param borrowRepayment
+     * @param borrow
+     * @param lateInterest
+     * @param batchNo
+     * @return
+     * @throws Exception
+     */
     private ResponseEntity<VoBaseResp> normalRepay(long userId,
                                                    UserThirdAccount repayUserThirdAccount, BorrowRepayment borrowRepayment,
-                                                   Borrow borrow, int lateInterest,
+                                                   Borrow borrow, long lateInterest,
                                                    String batchNo) throws Exception {
         Date nowDate = new Date();
         log.info("批次还款: 进入正常还款流程");
@@ -1434,8 +1768,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param repaymentBorrow
      * @return
      */
-    private int calculateLateInterest(BorrowRepayment borrowRepayment, Borrow repaymentBorrow) {
-        int lateDays = getLateDays(borrowRepayment);
+    private int calculateLateInterest(int lateDays, BorrowRepayment borrowRepayment, Borrow repaymentBorrow) {
+
         if (0 == lateDays) {
             return 0;
         }
@@ -1688,9 +2022,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
             }
             //==================================================================================
             RepayBail repayBail = null;
-            int txAmount = 0;//融资人实际付出金额=交易金额+交易利息+还款手续费
+            long txAmount = 0;//融资人实际付出金额=交易金额+交易利息+还款手续费
             int intAmount = 0;//交易利息
-            int principal = 0;
+            long principal = 0;
             int txFeeOut = 0;
             for (Tender tender : tenderList) {
                 repayBail = new RepayBail();

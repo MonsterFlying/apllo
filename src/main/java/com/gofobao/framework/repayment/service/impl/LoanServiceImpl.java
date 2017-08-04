@@ -286,7 +286,7 @@ public class LoanServiceImpl implements LoanService {
         repaymentDetail.setRepayFashion(repayFashion);
         long interest = 0;
         long principal = 0;
-        Integer receivableInterest = 0;
+        long receivableInterest = 0;
         if (borrow.getStatus() == BorrowContants.PASS) {
             repaymentDetail.setMoney(StringHelper.formatMon(borrow.getMoneyYes() / 100D));
             List<BorrowRepayment> borrowRepayments = repaymentRepository.findByBorrowId(borrow.getId());
@@ -352,7 +352,7 @@ public class LoanServiceImpl implements LoanService {
         VoViewLoanList voViewLoanList = new VoViewLoanList();
 
 
-        long collectionMoney = repaymentList.stream().mapToLong(p -> p.getRepayMoney()).sum();
+        Integer collectionMoney = repaymentList.stream().mapToInt(p -> p.getRepayMoney()).sum();
         Integer countOrder = repaymentList.size();
 
         List<VoLoanInfo> voLoanInfoList = new ArrayList<>();

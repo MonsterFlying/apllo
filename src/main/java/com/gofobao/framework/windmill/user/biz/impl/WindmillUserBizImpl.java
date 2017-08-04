@@ -20,6 +20,7 @@ import com.gofobao.framework.windmill.user.vo.request.BindLoginReq;
 import com.gofobao.framework.windmill.user.vo.request.UserRegisterReq;
 import com.gofobao.framework.windmill.user.vo.respones.UserRegisterRes;
 import com.gofobao.framework.windmill.util.PassWordCreate;
+import com.gofobao.framework.windmill.util.StrToJsonStrUtil;
 import com.gofobao.framework.windmill.util.WrbCoopDESUtil;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -66,7 +67,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
 
     //加密key
     @Value("${windmill.des-key}")
-    private String desKey;
+    private static String desKey;
 
     //风车理财请求地址
     @Value("${windmill.request-address}")
@@ -104,7 +105,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
         log.info("============================================");
         String decryptStr = "";
         try {
-            decryptStr = commonDecryptStr(param);
+            decryptStr =StrToJsonStrUtil. commonDecryptStr(param);
             log.info("解密参数成功param:" + decryptStr);
         } catch (Exception e) {
             log.info("=====解密参数失败:param:" + param);
@@ -260,12 +261,14 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
         voLoginReq.setAccount(bindLoginReq.getUserName());
         voLoginReq.setPassword(bindLoginReq.getPassword());
         ResponseEntity entity = userBiz.login(request, response, voLoginReq);
+
+
         //登陸成功
         if (entity.getStatusCode() == HttpStatus.OK) {
             log.info("================用户登录成功===============");
             VoBasicUserInfoResp userInfoResp = (VoBasicUserInfoResp) entity.getBody();
             try {
-                String desDecryptStr = commonDecryptStr(bindLoginReq.getParams());
+                String desDecryptStr = StrToJsonStrUtil.commonDecryptStr(bindLoginReq.getParams());
                 log.info("解密后的参数：param:" + desDecryptStr);
                 UserRegisterReq userRegisterReq = GSON.fromJson(desDecryptStr, new TypeToken<UserRegisterReq>() {
                 }.getType());
@@ -303,16 +306,40 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
                             user.setEmail(userRegisterReq.getEmail());
                         }
                         userService.save(user);
-                        userInfoResp.setTarget_url(userRegisterReq.getTarget_url());
-                        return ResponseEntity.ok(userInfoResp);
+
+
+                        final String token = jwtTokenHelper.generateToken(user, 3);
+                        response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
+
+
+                        // 触发登录队列
+                        MqConfig mqConfig = new MqConfig();
+                        mqConfig.setTag(MqTagEnum.LOGIN);
+                        mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+                        mqConfig.setSendTime(DateHelper.addSeconds(new Date(), 10));
+                        ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_USER_ID, user.getId().toString());
+                        mqConfig.setMsg(body);
+                        mqHelper.convertAndSend(mqConfig);
+
+                        VoBasicUserInfoResp voBasicUserInfoResp = VoBaseResp.ok("操作成功", VoBasicUserInfoResp.class);
+                        //
+                        if (StringUtils.isEmpty(userRegisterReq.getTarget_url())) {
+                            voBasicUserInfoResp.setTarget_url(h5Domain + "?token=" + token);
+                        } else {
+                            voBasicUserInfoResp.setTarget_url(userRegisterReq.getTarget_url() + "?token=" + token);
+                        }
+
+                        return ResponseEntity.ok(voBasicUserInfoResp);
                     } else {
                         log.info("风车理财绑定失败原因:" + resultMap.get("retmsg").toString());
                         return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "风车理财验证绑定失败", VoBasicUserInfoResp.class));
                     }
                 } catch (Exception e) {
+                    e.printStackTrace();
                     return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "风车理财验证绑定失败", VoBasicUserInfoResp.class));
                 }
             } catch (Exception e) {
+                e.printStackTrace();
                 return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "风车理财验证绑定失败", VoBasicUserInfoResp.class));
             }
         } else {
@@ -338,7 +365,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
         String getParamStr = request.getParameter("param");
         try {
             log.info("=============风车理财用户登录请求=============");
-            String jsonStr = commonDecryptStr(getParamStr);
+            String jsonStr = StrToJsonStrUtil.commonDecryptStr(getParamStr);
             Map<String, Object> resultMaps = GSON.fromJson(jsonStr, new TypeToken<Map<String, Object>>() {
             }.getType());
 
@@ -399,15 +426,15 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             mqConfig.setMsg(body);
             mqHelper.convertAndSend(mqConfig);
 
-            log.info("token : "+token);
+            log.info("token : " + token);
             if (StringUtils.isEmpty(targetUrl)) {
-                targetUrl =h5Domain ;
+                targetUrl = h5Domain;
             } else {
                 targetUrl = decode(targetUrl, "utf-8");
             }
-            if(targetUrl.contains("?")){
+            if (targetUrl.contains("?")) {
                 return targetUrl + "&token=" + token;
-            }else{
+            } else {
                 return targetUrl + "?token=" + token;
             }
 
@@ -417,25 +444,5 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
         }
     }
 
-    /**
-     * @param cipherStr
-     * @return
-     */
-    private String commonDecryptStr(String cipherStr) throws Exception {
-        log.info("-==========进入解密请求参数方法========");
-        try {
-            String desDecryptStr = WrbCoopDESUtil.desDecrypt(desKey, cipherStr);
-            if (StringUtils.isEmpty(desDecryptStr)) {
-                log.info("請求密文為空");
-                throw new Exception();
-            }
-            String jsonStr = desDecryptStr.replaceAll("&", ",").replaceAll("=", ":");
-            log.info(jsonStr);
-            StringBuilder sb = new StringBuilder(jsonStr);
-            return "{" + sb.toString() + "}";
-        } catch (Exception e) {
-            log.info("密文解析失败");
-            throw new Exception();
-        }
-    }
+
 }

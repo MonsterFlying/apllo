@@ -17,8 +17,6 @@ import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
-import com.gofobao.framework.common.capital.CapitalChangeEntity;
-import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
@@ -106,7 +104,7 @@ public class ThirdBatchProvider {
     BorrowCollectionService borrowCollectionService;
 
     @Autowired
-    AssetChangeProvider assetChangeProvider ;
+    AssetChangeProvider assetChangeProvider;
 
 
     /**
@@ -521,9 +519,7 @@ public class ThirdBatchProvider {
         // 批次还款处理
         //==================================================================
         if (CollectionUtils.isEmpty(failureTRepayOrderIds)) {
-            VoRepayReq voRepayReq = GSON.fromJson(acqRes, new TypeToken<VoRepayReq>() {
-            }.getType());
-            ResponseEntity<VoBaseResp> resp = repaymentBiz.repayDeal(voRepayReq);
+            ResponseEntity<VoBaseResp> resp = repaymentBiz.newRepayDeal(repaymentId,batchNo);
             if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
                 log.error("批次还款处理:" + resp.getBody().getState().getMsg());
             } else {
@@ -607,7 +603,7 @@ public class ThirdBatchProvider {
                     assetChange.setMoney(tender.getValidMoney());
                     assetChange.setSeqNo(assetChangeProvider.getSeqNo());
                     assetChange.setRemark(String.format("存管系统审核投资标的[%s]资格失败, 解除资金冻结%s元", borrow.getName(), StringHelper.formatDouble(tender.getValidMoney() / 100D, true)));
-                    assetChange.setType(AssetChangeTypeEnum.unfreeze) ;
+                    assetChange.setType(AssetChangeTypeEnum.unfreeze);
                     assetChange.setUserId(tender.getUserId());
                     assetChange.setForUserId(tender.getUserId());
                 }
@@ -624,7 +620,7 @@ public class ThirdBatchProvider {
         if (CollectionUtils.isEmpty(failureThirdLendPayOrderIds)) {
             Borrow borrow = borrowService.findById(borrowId);
             log.info(String.format("正常标的放款回调: %s", gson.toJson(borrow)));
-            boolean flag = borrowBiz.notTransferBorrowAgainVerify(borrow);
+            boolean flag = borrowBiz.borrowAgainVerify(borrow);
             if (!flag) {
                 log.error("标的放款失败！标的id：" + borrowId);
             } else {
@@ -767,9 +763,9 @@ public class ThirdBatchProvider {
                     assetChange.setMoney(transferBuyLog.getValidMoney());
                     assetChange.setSeqNo(assetChangeProvider.getSeqNo());
                     assetChange.setRemark(String.format("存管系统审核债权转让[%s]不通过, 成功解冻资金%s元", transfer.getTitle(), StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100D, true)));
-                    assetChange.setType(AssetChangeTypeEnum.unfreeze) ;
+                    assetChange.setType(AssetChangeTypeEnum.unfreeze);
                     assetChange.setUserId(transferBuyLog.getUserId());
-                    assetChangeProvider.commonAssetChange(assetChange) ;
+                    assetChangeProvider.commonAssetChange(assetChange);
                 }
 
                 // 发送取消债权通知

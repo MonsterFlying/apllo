@@ -55,10 +55,7 @@ import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
-import com.gofobao.framework.tender.vo.request.VoBuyTransfer;
-import com.gofobao.framework.tender.vo.request.VoPcFirstVerityTransfer;
-import com.gofobao.framework.tender.vo.request.VoTransferReq;
-import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
+import com.gofobao.framework.tender.vo.request.*;
 import com.gofobao.framework.tender.vo.response.*;
 import com.gofobao.framework.tender.vo.response.web.TransferBuy;
 import com.gofobao.framework.tender.vo.response.web.VoViewTransferBuyWarpRes;
@@ -115,8 +112,6 @@ public class TransferBizImpl implements TransferBiz {
     @Autowired
     private JixinManager jixinManager;
     @Autowired
-    private CapitalChangeHelper capitalChangeHelper;
-    @Autowired
     private MqHelper mqHelper;
     @Autowired
     private StatisticBiz statisticBiz;
@@ -139,6 +134,17 @@ public class TransferBizImpl implements TransferBiz {
 
     public static final String MSG = "msg";
     public static final String LEFT_MONEY = "leftMoney";
+
+    /**
+     * 结束债权转让
+     *
+     * @param voEndTransfer
+     * @return
+     * @throws Exception
+     */
+    public ResponseEntity<VoBaseResp> endTransfer(VoEndTransfer voEndTransfer) throws Exception {
+        return ResponseEntity.ok(VoBaseResp.ok("结束债权转让成功!"));
+    }
 
 
     /**
@@ -178,7 +184,7 @@ public class TransferBizImpl implements TransferBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "存在未登记即信存管的购买" + failure + "失败记录"));
         }
 
-        // 新增子级投标记录
+        // 新增子级投标记录,更新老债权记录
         List<Tender> childTenderList = addChildTender(nowDate, transfer, parentTender, transferBuyLogList);
 
         // 生成子级债权回款记录，标注老债权回款已经转出
@@ -318,7 +324,7 @@ public class TransferBizImpl implements TransferBiz {
         //生成子级债权回款记录，标注老债权回款已经转出
         Date repayAt = transfer.getRepayAt();/* 原借款下一期还款日期 */
         Date startAt = DateHelper.subMonths(repayAt, 1);/* 计息开始时间 */
-        for(Tender childTender: childTenderList){
+        for (Tender childTender : childTenderList) {
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
                     childTender.getValidMoney().doubleValue(),
                     transfer.getApr().doubleValue(),
@@ -343,12 +349,12 @@ public class TransferBizImpl implements TransferBiz {
                 borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : startAt);
                 borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : nowDate);
                 borrowCollection.setCollectionAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
-                borrowCollection.setCollectionMoney(new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue());
-                borrowCollection.setInterest(new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue());
-                borrowCollection.setPrincipal(new Double(NumberHelper.toDouble(repayDetailMap.get("principal"))).intValue());
+                borrowCollection.setCollectionMoney(NumberHelper.toLong(repayDetailMap.get("repayMoney")));
+                borrowCollection.setInterest(NumberHelper.toLong(repayDetailMap.get("interest")));
+                borrowCollection.setPrincipal(NumberHelper.toLong(repayDetailMap.get("principal")));
                 borrowCollection.setCreatedAt(nowDate);
                 borrowCollection.setUpdatedAt(nowDate);
-                borrowCollection.setCollectionMoneyYes(0);
+                borrowCollection.setCollectionMoneyYes(0l);
                 borrowCollection.setLateDays(0);
                 borrowCollection.setLateInterest(0l);
                 borrowCollection.setBorrowId(parentBorrow.getId());
@@ -377,7 +383,7 @@ public class TransferBizImpl implements TransferBiz {
             assetChange.setUserId(childTender.getUserId());
             assetChange.setMoney(childTender.getValidMoney());
             assetChange.setInterest(collectionInterest);
-            assetChangeProvider.commonAssetChange(assetChange) ;
+            assetChangeProvider.commonAssetChange(assetChange);
         }
     }
 
@@ -734,7 +740,7 @@ public class TransferBizImpl implements TransferBiz {
      */
     private void saveTransfer(long tenderId, long userId, Tender tender, Borrow borrow, int waitTimeLimit, long leftCapital, BorrowCollection firstBorrowCollection) {
         //计算当期应计利息
-        int interest = firstBorrowCollection.getInterest();/* 当期理论应计利息 */
+        long interest = firstBorrowCollection.getInterest();/* 当期理论应计利息 */
         Date startAt = DateHelper.beginOfDate(firstBorrowCollection.getStartAt());//理论开始计息时间
         Date collectionAt = DateHelper.beginOfDate(firstBorrowCollection.getCollectionAt());//理论结束还款时间
         Date startAtYes = DateHelper.beginOfDate(firstBorrowCollection.getStartAtYes());//实际开始计息时间
@@ -911,7 +917,7 @@ public class TransferBizImpl implements TransferBiz {
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "order"));
         Preconditions.checkNotNull(borrowCollectionList, "立即转让: 查询转让用户还款计划为空");
         int waitTimeLimit = borrowCollectionList.size();  // 等待回款期数
-        int cantrCapital = borrowCollectionList.stream().mapToInt(borrowCollection -> borrowCollection.getPrincipal()).sum(); // 待汇款本金
+        long cantrCapital = borrowCollectionList.stream().mapToLong(borrowCollection -> borrowCollection.getPrincipal()).sum(); // 待汇款本金
         if (cantrCapital < (1000 * 100)) {
             return ResponseEntity
                     .badRequest()
@@ -1055,7 +1061,7 @@ public class TransferBizImpl implements TransferBiz {
             default:
         }
 
-        int money = borrowCollections.stream().mapToInt(borrowCollectionItem -> borrowCollectionItem.getPrincipal()).sum(); // 待汇款本金
+        long money = borrowCollections.stream().mapToLong(borrowCollectionItem -> borrowCollectionItem.getPrincipal()).sum(); // 待汇款本金
         // 0.4% + 0.08% * (剩余期限-1)  （费率最高上限为1.28%）
         double rate = 0.004 + 0.0008 * (borrowCollections.size() - 1);
         rate = Math.min(rate, 0.0128);
