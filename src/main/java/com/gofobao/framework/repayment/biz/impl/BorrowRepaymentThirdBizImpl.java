@@ -877,7 +877,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         int lateDays = DateHelper.diffInDays(nowDateOfBegin, repayDateOfBegin, false);
         lateDays = lateDays < 0 ? 0 : lateDays;
         if (0 < lateDays) {
-            int overPrincipal = borrowRepayment.getPrincipal();
+            long overPrincipal = borrowRepayment.getPrincipal();
             if (borrowRepayment.getOrder() < (borrow.getTotalOrder() - 1)) { //
                 Specification<BorrowRepayment> brs = Specifications
                         .<BorrowRepayment>and()
@@ -888,7 +888,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 Preconditions.checkNotNull(borrowRepayment, "还款不存在");
 
                 //叠加剩余本金
-                overPrincipal = borrowRepaymentList.stream().mapToInt(w -> w.getPrincipal()).sum();
+                overPrincipal = borrowRepaymentList.stream().mapToLong(w -> w.getPrincipal()).sum();
             }
             lateInterest = (int) MathHelper.myRound(overPrincipal * 0.004 * lateDays, 2);
         }

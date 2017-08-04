@@ -1,6 +1,7 @@
 package com.gofobao.framework.system.biz;
 
 import com.gofobao.framework.system.entity.Statistic;
+import com.gofobao.framework.system.vo.response.NewIndexStatisics;
 import com.gofobao.framework.system.vo.response.VoViewIndexStatisticsWarpRes;
 import org.springframework.http.ResponseEntity;
 
@@ -19,5 +20,11 @@ public interface StatisticBiz {
 
 
     ResponseEntity<VoViewIndexStatisticsWarpRes> query();
+
+    /**
+     * 查询移动端首页统计数据
+     * @return
+     */
+    NewIndexStatisics queryMobileIndexData();
 
 }
