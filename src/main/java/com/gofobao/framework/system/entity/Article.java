@@ -1,6 +1,8 @@
 package com.gofobao.framework.system.entity;
 
 import lombok.Data;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
@@ -11,34 +13,19 @@ import java.sql.Timestamp;
 @Entity(name = "Article")
 @Table(name = "gfb_article")
 @Data
+@DynamicUpdate
+@DynamicInsert
 public class Article {
-
     @Id
-    @Column(name = "id", nullable = false)
+    @GeneratedValue
     private Long id;
-    @Basic
-    @Column(name = "type", nullable = false, length = 20)
     private String type;
-    @Basic
-    @Column(name = "title", nullable = false, length = 255)
     private String title;
-    @Basic
-    @Column(name = "status", nullable = false)
     private Byte status;
-    @Basic
-    @Column(name = "author_id", nullable = false)
     private Integer authorId;
-    @Basic
-    @Column(name = "content", nullable = false, length = -1)
     private String content;
-    @Basic
-    @Column(name = "order", nullable = false)
     private Integer order;
-    @Basic
-    @Column(name = "created_at", nullable = true)
     private Timestamp createdAt;
-    @Basic
-    @Column(name = "updated_at", nullable = true)
     private Timestamp updatedAt;
-
+    private String previewImg ;
 }

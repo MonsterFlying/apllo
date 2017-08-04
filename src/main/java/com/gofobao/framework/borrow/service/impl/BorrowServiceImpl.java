@@ -7,6 +7,7 @@ import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.response.*;
+import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.common.constans.MoneyConstans;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
@@ -18,15 +19,21 @@ import com.gofobao.framework.member.entity.UserAttachment;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UserAttachmentRepository;
 import com.gofobao.framework.member.repository.UsersRepository;
+import com.gofobao.framework.system.entity.Statistic;
+import com.gofobao.framework.system.vo.response.NewIndexStatisics;
 import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.repository.TenderRepository;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -41,6 +48,8 @@ import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -77,6 +86,28 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Value("${gofobao.imageDomain}")
     private String imageDomain;
+
+
+    LoadingCache<String, Borrow> newBorrow = CacheBuilder
+            .newBuilder()
+            .expireAfterWrite(60, TimeUnit.MINUTES)
+            .maximumSize(1024)
+            .build(new CacheLoader<String, Borrow>() {
+                @Override
+                public Borrow load(String type) throws Exception {
+                    Specification<Borrow> specification = Specifications
+                            .<Borrow>and()
+                            .eq("isNovice", true).build() ;
+                    Page<Borrow> page = borrowRepository.findAll(specification,
+                            new PageRequest(0, 1, new Sort(new Sort.Order(Sort.Direction.DESC, "id")))) ;
+                    List<Borrow> content = page.getContent();
+                    if(CollectionUtils.isEmpty(content)){
+                        return null ;
+                    }else{
+                        return content.get(0) ;
+                    }
+                }
+            });
 
     /**
      * 首页标列表
@@ -729,5 +760,14 @@ public class BorrowServiceImpl implements BorrowService {
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.NOT_SUPPORTED)
     public Borrow flushSave(Borrow borrow) {
         return borrowRepository.save(borrow);
+    }
+
+    @Override
+    public Borrow findNoviceBorrow() {
+        try {
+            return newBorrow.get("new") ;
+        } catch (ExecutionException e) {
+            return null ;
+        }
     }
 }

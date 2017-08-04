@@ -20,6 +20,10 @@ public class MqConfig {
     public static final String MSG_TENDER_ID = "tenderId";
     public static final String MSG_REPAYMENT_ID = "repaymentId";
     public static final String MSG_ID = "id";
+    public static final String MSG_NAME = "name";
+    public static final String MSG_ORDER = "order";
+    public static final String MSG_MONEY = "money";
+    public static final String MSG_INTEREST = "interest";
 
     public static final String IP = "ip";
     public static final String PHONE = "phone";

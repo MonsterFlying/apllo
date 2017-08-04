@@ -10,8 +10,6 @@ import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
-import com.gofobao.framework.asset.service.BatchAssetChangeItemService;
-import com.gofobao.framework.asset.service.BatchAssetChangeService;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
@@ -22,8 +20,6 @@ import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
-import com.gofobao.framework.common.capital.CapitalChangeEntity;
-import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.MoneyConstans;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
@@ -34,7 +30,6 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.BatchAssetChangeHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
-import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -44,9 +39,9 @@ import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.biz.IncrStatisticBiz;
 import com.gofobao.framework.system.biz.StatisticBiz;
-import com.gofobao.framework.system.entity.*;
-import com.gofobao.framework.system.service.DictItemService;
-import com.gofobao.framework.system.service.DictValueService;
+import com.gofobao.framework.system.entity.IncrStatistic;
+import com.gofobao.framework.system.entity.Notices;
+import com.gofobao.framework.system.entity.Statistic;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.entity.Tender;
@@ -60,9 +55,6 @@ import com.gofobao.framework.tender.vo.response.*;
 import com.gofobao.framework.tender.vo.response.web.TransferBuy;
 import com.gofobao.framework.tender.vo.response.web.VoViewTransferBuyWarpRes;
 import com.google.common.base.Preconditions;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -84,7 +76,6 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -142,7 +133,53 @@ public class TransferBizImpl implements TransferBiz {
      * @return
      * @throws Exception
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> endTransfer(VoEndTransfer voEndTransfer) throws Exception {
+        long userId = voEndTransfer.getUserId();/* 转让人id */
+        long transferId = voEndTransfer.getTransferId();/* 债权转让id */
+        //1.获取债权转让记录
+        Transfer transfer = transferService.findByIdLock(transferId);/* 债权转让记录 */
+        Preconditions.checkNotNull(transfer, "债权转让记录不存在!");
+        if (!transfer.getUserId().equals(userId)) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非本人操作结束债权转让。"));
+        }
+        //2.判断是否存在已经与存管通信的记录
+        Specification<TransferBuyLog> tbls = Specifications
+                .<TransferBuyLog>and()
+                .eq("transferId", transfer.getId())
+                .build();
+        List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
+        Preconditions.checkNotNull(transferBuyLogList, "购买债权转让记录为空!");
+        /* 已跟即信通信的债权转让记录条数 */
+        long count = transferBuyLogList.stream().filter(transferBuyLog -> BooleanHelper.isTrue(transferBuyLog.getThirdTransferFlag())).count();
+        if (count > 0) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "已存在售出的债权，无法取消债权转让!"));
+        }
+        //3.更改债权转让与购买债权转让记录状态
+        transfer.setState(4);
+        transfer.setUpdatedAt(new Date());
+        transferService.save(transfer);
+        //4.取消购买债权并解冻金额
+        transferBuyLogList.stream().forEach(transferBuyLog -> {
+            transferBuyLog.setState(2);
+            transferBuyLog.setUpdatedAt(new Date());
+            //解冻债权转让人购买债权转让冻结资金
+            AssetChange assetChange = new AssetChange();
+            assetChange.setSourceId(transferBuyLog.getId());
+            assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+            assetChange.setMoney(transferBuyLog.getValidMoney());
+            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+            assetChange.setRemark(String.format("购买债权转让[%s]失败, 冻结解冻资金%s元", transfer.getTitle(), StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100D, true)));
+            assetChange.setType(AssetChangeTypeEnum.unfreeze);
+            assetChange.setUserId(transferBuyLog.getUserId());
+            try {
+                assetChangeProvider.commonAssetChange(assetChange);
+            } catch (Exception e) {
+                log.error("结束债权转让解冻直接失败!", e);
+            }
+        });
+        transferBuyLogService.save(transferBuyLogList);
+
         return ResponseEntity.ok(VoBaseResp.ok("结束债权转让成功!"));
     }
 
@@ -184,7 +221,7 @@ public class TransferBizImpl implements TransferBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "存在未登记即信存管的购买" + failure + "失败记录"));
         }
 
-        // 新增子级投标记录
+        // 新增子级投标记录,更新老债权记录
         List<Tender> childTenderList = addChildTender(nowDate, transfer, parentTender, transferBuyLogList);
 
         // 生成子级债权回款记录，标注老债权回款已经转出
@@ -372,7 +409,7 @@ public class TransferBizImpl implements TransferBiz {
                 bc.setTransferFlag(1);
             });
             borrowCollectionService.save(borrowCollectionList);
-
+            //添加待还
             AssetChange assetChange = new AssetChange();
             assetChange.setType(AssetChangeTypeEnum.collectionAdd);
             assetChange.setSourceId(childTender.getId());
@@ -1269,5 +1306,84 @@ public class TransferBizImpl implements TransferBiz {
         borrowInfoRes.setReleaseAt(status != 1 ? DateHelper.dateToString(borrow.getReleaseAt()) : "");
         borrowInfoRes.setLockStatus(borrow.getIsLock());
         return ResponseEntity.ok(borrowInfoRes);
+    }
+
+    @Override
+    public void cancelTransferByTenderId(Long id) throws Exception {
+        // 获取转让信息
+        Specification<Transfer> ts = Specifications
+                .<Transfer>and()
+                .eq("tenderId", id)
+                .in("state", 0, 1)
+                .build();
+        List<Transfer> list = transferService.findList(ts);
+        Preconditions.checkNotNull(list, "取消债权转让: 查询转让记录为空");
+        Transfer transfer = list.get(0);
+
+        // 获取投标记录
+        Specification<TransferBuyLog> tbs = Specifications
+                .<TransferBuyLog>and()
+                .eq("transferId", transfer.getId())
+                .eq("state", 0)
+                .build();
+
+        List<TransferBuyLog> transferBuyLogs = transferBuyLogService.findList(tbs);
+
+        Date nowDate = new Date() ;
+        // 取消借款
+        if(!CollectionUtils.isEmpty(transferBuyLogs)){
+            for(TransferBuyLog item: transferBuyLogs){
+                item.setState(3);
+                item.setUpdatedAt(nowDate);
+                AssetChange assetChange = new AssetChange();
+                assetChange.setSourceId(item.getId());
+                assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+                assetChange.setMoney(item.getValidMoney());
+                assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+                assetChange.setRemark(String.format("你购买债权转让[%s]已被取消, 成功解冻资金%s元", transfer.getTitle(), StringHelper.formatDouble(item.getValidMoney() / 100D, true)));
+                assetChange.setType(AssetChangeTypeEnum.unfreeze);
+                assetChange.setUserId(item.getUserId());
+                assetChangeProvider.commonAssetChange(assetChange);
+            }
+
+            // 发送站内信通知
+            Set<Long> userIds = transferBuyLogs
+                    .stream()
+                    .map(item-> item.getUserId()).collect(Collectors.toSet()) ;
+            Notices notices ;
+            for(Long userId: userIds){
+                notices = new Notices();
+                notices.setFromUserId(1L);
+                notices.setUserId(userId);
+                notices.setRead(false);
+                notices.setName("债权转让取消通知");
+                notices.setContent(String.format("你购买的债权[%s]已被系统取消", transfer.getTitle()));
+                notices.setType("system");
+                notices.setCreatedAt(nowDate);
+                notices.setUpdatedAt(nowDate);
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
+                mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
+                Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
+                mqConfig.setMsg(body);
+                try {
+                    log.info(String.format("borrowBizImpl cancelBorrow send mq %s", GSON.toJson(body)));
+                    mqHelper.convertAndSend(mqConfig);
+                } catch (Throwable e) {
+                    log.error("borrowBizImpl cancelBorrow send mq exception", e);
+                }
+            }
+        }
+
+        // 取消债权转让
+        transfer.setState(4);
+        transfer.setUpdatedAt(nowDate);
+        transferService.save(transfer);
+
+        // 更新投标记录状态
+        Tender tender = tenderService.findById(id) ;
+        tender.setTransferFlag(0);
+        tender.setUpdatedAt(nowDate);
+        tenderService.save(tender) ;
     }
 }

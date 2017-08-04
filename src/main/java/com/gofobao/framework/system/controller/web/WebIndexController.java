@@ -2,7 +2,7 @@ package com.gofobao.framework.system.controller.web;
 
 import com.gofobao.framework.system.biz.BannerBiz;
 import com.gofobao.framework.system.biz.StatisticBiz;
-import com.gofobao.framework.system.vo.response.VoViewIndexBannerWarpRes;
+import com.gofobao.framework.system.vo.response.VoIndexResp;
 import com.gofobao.framework.system.vo.response.VoViewIndexStatisticsWarpRes;
 import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,8 +30,9 @@ public class WebIndexController {
     }
 
     @GetMapping("/v2/banner/list")
-    public  ResponseEntity<VoViewIndexBannerWarpRes>index(){
-        return bannerBiz.index();
+    public  ResponseEntity<VoIndexResp>index(){
+        String terminal = "pc" ;
+        return bannerBiz.index(terminal);
     }
 
 

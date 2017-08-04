@@ -41,6 +41,7 @@ import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.entity.RepayAssetChange;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoBatchBailRepayReq;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
@@ -49,6 +50,7 @@ import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
+import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
@@ -116,6 +118,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     private ThirdBatchLogBiz thirdBatchLogBiz;
     @Autowired
     private CapitalChangeHelper capitalChangeHelper;
+
+    @Autowired
+    private TransferBiz transferBiz;
 
     @Value("${gofobao.webDomain}")
     private String webDomain;
@@ -906,12 +911,13 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * @param order
      * @param lateDays
      * @param lateInterest
+     * @param repayAssetChanges
      * @return
      * @throws Exception
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, int lateInterest) throws Exception {
+    public List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest, List<RepayAssetChange> repayAssetChanges) throws Exception {
         List<Repay> repayList = new ArrayList<>();
         Specification<Tender> specification = Specifications
                 .<Tender>and()
@@ -938,6 +944,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 .<BorrowCollection>and()
                 .in("tenderId", tenderIds.toArray())
                 .eq("status", 0)
+                .eq("transferFlag", 0)
                 .eq("order", order)
                 .build();
 
@@ -949,41 +956,25 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                         Function.identity()));
 
         for (Tender tender : tenderList) {
-            int inIn = 0; // 出借人的利息
-            int inPr = 0; // 出借人的本金
+            RepayAssetChange repayAssetChange = new RepayAssetChange();
+            repayAssetChanges.add(repayAssetChange) ;
+            long inIn = 0; // 出借人的利息
+            long inPr = 0; // 出借人的本金
             int inFee = 0; // 出借人利息费用
             int outFee = 0; // 借款人管理费
             BorrowCollection borrowCollection = borrowCollectionMap.get(tender.getId());  // 还款计划
-            if (BooleanHelper.isTrue(borrowCollection.getThirdRepayFlag())) {  // 判断还款是否已经在即信登记
-                continue;
-            }
             if (tender.getTransferFlag() == 1) {
-                doCancelBorrowByRepay(tender); // 标的转让中时, 需要取消出让信息
+                doCancelTransfer(tender); // 标的转让中时, 需要取消出让信息
             }
 
-            if (tender.getTransferFlag() == 2) {  // 出现转让后, 需要递归处理
-                Specification<Borrow> bs = Specifications
-                        .<Borrow>and()
-                        .eq("tenderId", tender.getId())
-                        .eq("status", 3)
-                        .build();
-                List<Borrow> borrowTranferedList = borrowService.findList(bs);
-                Preconditions.checkNotNull(borrowTranferedList, "生成即信还款计划: 查询转让标的为空");
-                Borrow borrowTranfered = borrowTranferedList.get(0);
-                int tranferedOrder = order + borrowTranfered.getTotalOrder() - borrow.getTotalOrder();
-                int tranferedInterest = new Double(tender.getValidMoney() / new Double(borrow.getMoney()) * lateInterest).intValue();  // 本期分到的逾期收益
-                List<Repay> tranferedRepayList = calculateRepayPlan(borrowTranfered, repayAccountId, lateDays, tranferedOrder, tranferedInterest);
-                repayList.addAll(tranferedRepayList);
+            if (tender.getTransferFlag() == 2) {  // 已经转让的债权, 可以跳过还款
                 continue;
             }
-
-            int interestLower = 0;  // 应扣除利息
-            inIn += borrowCollection.getInterest();  // 本期还款利息
-            inPr += borrowCollection.getPrincipal(); // 本期划款本金
-            if (borrow.isTransfer()) {  // 针对转让标的
-                interestLower = calculateTranferFee(borrowCollection);
-                inFee += interestLower;  // 收款人利息
-            }
+            inIn = borrowCollection.getInterest(); // 还款利息
+            inPr = borrowCollection.getPrincipal(); // 还款本金
+            repayAssetChange.setUserId(tender.getUserId());
+            repayAssetChange.setInterest(inIn);
+            repayAssetChange.setPrincipal(inPr);
 
             ImmutableSet<Integer> borrowTypeSet = ImmutableSet.of(0, 4);
             if (borrowTypeSet.contains(borrow.getType())) {  // 车贷标和渠道标利息管理费
@@ -998,17 +989,18 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 if ((stockholder.contains(tender.getUserId())) && (between)) {
                     inFee += 0;
                 } else {
-                    int feePr = inIn - interestLower > 0 ? inIn - interestLower : 0; // 获取真实利息
-                    inFee += new Double(MathHelper.myRound(feePr * 0.1, 2)).intValue();
+                    inFee += new Double(MathHelper.myRound(inIn * 0.1, 2)).intValue();
                 }
             }
 
+            repayAssetChange.setInterestFee(inFee);
             if ((lateDays > 0) && (lateInterest > 0)) {  //借款人逾期罚息
-                /**
-                 * @// TODO: 2017/8/3 手续费
-                 */
-                inFee += new Double(tender.getValidMoney() / new Double(borrow.getMoney()) * lateInterest / 2).intValue(); // 平台收取50% 逾期管理费
-                outFee += new Double(tender.getValidMoney() / new Double(borrow.getMoney()) * lateInterest / 2).intValue();  // 平台收取50% 逾期管理费
+                int overdueFee = new Double(tender.getValidMoney() / new Double(borrow.getMoney()) * lateInterest / 2).intValue();// 出借人收取50% 逾期管理费 ;
+                repayAssetChange.setOverdueFee(overdueFee);
+                inIn += overdueFee;
+                int platformOverdueFee = new Double(tender.getValidMoney() / new Double(borrow.getMoney()) * lateInterest / 2).intValue(); // 平台收取50% 逾期管理费
+                repayAssetChange.setPlatformOverdueFee(platformOverdueFee);
+                outFee += platformOverdueFee;
             }
 
             String orderId = JixinHelper.getOrderId(JixinHelper.REPAY_PREFIX);
@@ -1028,13 +1020,11 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             borrowCollection.setTRepayOrderId(orderId);
             borrowCollectionService.updateById(borrowCollection);
         }
-        tenderService.save(tenderList);
         return repayList;
     }
 
-    @Override
     @Transactional(rollbackFor = Exception.class)
-    public List<RepayBail> calculateRepayBailPlan(Borrow borrow, String repayAccountId, int lateDays, Integer order, int lateInterest) throws Exception {
+    public List<RepayBail> calculateRepayBailPlan(Borrow borrow, String repayAccountId, int lateDays, Integer order, long lateInterest) throws Exception {
         List<RepayBail> repayBailList = new ArrayList<>();
         Specification<Tender> specification = Specifications
                 .<Tender>and()
@@ -1066,7 +1056,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             int outFee = 0;
             BorrowCollection borrowCollection = borrowCollectionMap.get(tender.getId()); // 已经还款金额
             if (tender.getTransferFlag() == 1) { // 标的转让中时, 需要取消出让信息
-                doCancelBorrowByRepay(tender);
+                doCancelTransfer(tender);
             }
 
             if (tender.getTransferFlag() == 2) {  // 出现转让后, 需要递归处理
@@ -1121,19 +1111,14 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         return interestLower;
     }
 
-    private void doCancelBorrowByRepay(Tender tender) throws Exception {
-        Specification<Borrow> bs = Specifications
-                .<Borrow>and()
-                .eq("tenderId", tender.getId())
-                .in("status", 0, 1)
-                .build();
-        List<Borrow> borrowTranferingList = borrowService.findList(bs);
-        Preconditions.checkNotNull(borrowTranferingList, "生成即信还款计划: 查询转让标的信息为空");
-        VoCancelBorrow voCancelBorrow = new VoCancelBorrow();
-        voCancelBorrow.setBorrowId(borrowTranferingList.get(0).getId());
-        borrowBiz.cancelBorrow(voCancelBorrow);
-        tender.setTransferFlag(0);//设置转让标识
-        tender.setUpdatedAt(new Date());
+    /**
+     * 结束正在债权转让的接口
+     *
+     * @param tender
+     * @throws Exception
+     */
+    private void doCancelTransfer(Tender tender) throws Exception {
+        transferBiz.cancelTransferByTenderId(tender.getId());
     }
 
     /**

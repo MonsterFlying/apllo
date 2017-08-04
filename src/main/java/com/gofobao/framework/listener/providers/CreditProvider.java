@@ -64,7 +64,6 @@ public class CreditProvider {
     String javaDomain;
 
     /**
-     * @// TODO: 2017/8/2 结束债权需要变更
      * @param msg
      * @param type
      * @return
@@ -145,9 +144,10 @@ public class CreditProvider {
             Specification<Tender> ts = Specifications
                     .<Tender>and()
                     .eq("borrowId", borrowId)
+                    .eq("transferFlag", 2)
                     .eq("status", 1)
                     .build();
-            List<Tender> tenderList = tenderService.findList(ts);
+            List<Tender> tenderList = tenderService.findList(ts); /* 成功投资记录 */
             if (CollectionUtils.isEmpty(tenderList)) {
                 log.info("creditProvider buildCreditEndList: 借款" + borrowId + " 未找到投递成功债权！");
             }

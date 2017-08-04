@@ -108,4 +108,11 @@ public interface BorrowService {
     Borrow getLastBorrowLock();
 
     Borrow flushSave(Borrow borrow);
+
+    /**
+     * 查找新手标
+     * @return
+     */
+    Borrow findNoviceBorrow();
+
 }

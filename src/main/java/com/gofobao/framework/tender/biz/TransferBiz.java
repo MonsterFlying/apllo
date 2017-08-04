@@ -101,4 +101,9 @@ public interface TransferBiz {
      */
     ResponseEntity<BorrowInfoRes> transferInfo(Long transferId);
 
+    /**
+     * 通过投标记录ID取消债权转让
+     * @param id
+     */
+    void cancelTransferByTenderId(Long id) throws Exception;
 }
