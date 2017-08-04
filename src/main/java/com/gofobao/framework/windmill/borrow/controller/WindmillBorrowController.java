@@ -2,10 +2,7 @@ package com.gofobao.framework.windmill.borrow.controller;
 
 import com.gofobao.framework.windmill.borrow.biz.WindmillBorrowBiz;
 import com.gofobao.framework.windmill.borrow.biz.WindmillStatisticsBiz;
-import com.gofobao.framework.windmill.borrow.vo.response.BorrowTenderList;
-import com.gofobao.framework.windmill.borrow.vo.response.ByDayStatistics;
-import com.gofobao.framework.windmill.borrow.vo.response.BySomeDayRes;
-import com.gofobao.framework.windmill.borrow.vo.response.InvestListRes;
+import com.gofobao.framework.windmill.borrow.vo.response.*;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -59,9 +56,8 @@ public class WindmillBorrowController {
 
     @ApiOperation("用户投资记录查询接口")
     @PostMapping("user/invest/list")
-    public String userInvestList(HttpServletRequest request) {
-        return "";
-
+    public UserAccountStatistics userInvestList(HttpServletRequest request) {
+        return windmillStatisticsBiz.userStatistics(request);
     }
 
 
