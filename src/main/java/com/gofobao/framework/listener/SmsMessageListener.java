@@ -40,7 +40,9 @@ public class SmsMessageListener{
             String tag = body.get(MqConfig.MSG_TAG).toString();
             Map<String, String> msg = (Map<String, String>)body.get(MqConfig.MSG_BODY) ;
             boolean result;
-            if(tag.equals(MqTagEnum.SMS_WINDMILL_USER_REGISTER.getValue())){
+            if (tag.equals(MqTagEnum.SMS_RECEIVED_REPAY.getValue())){
+                result = commonSmsProvider.doSmsNoticeByReceivedRepay(tag,msg);
+            }else if(tag.equals(MqTagEnum.SMS_WINDMILL_USER_REGISTER.getValue())){
                 result = commonSmsProvider.doSmsWindmillRegister(tag, msg);
             }else {
                 result = commonSmsProvider.doSendMessageCode(tag, msg);

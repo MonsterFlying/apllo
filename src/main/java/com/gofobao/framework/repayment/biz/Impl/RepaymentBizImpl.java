@@ -60,7 +60,9 @@ import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.*;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
+import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
+import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
@@ -83,6 +85,7 @@ import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TransferBiz;
+import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.service.TenderService;
@@ -113,6 +116,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toSet;
+
 /**
  * Created by admin on 2017/6/6.
  */
@@ -135,8 +141,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private BorrowCollectionService borrowCollectionService;
     @Autowired
     private BorrowBiz borrowBiz;
-    @Autowired
-    private MqHelper mqHelper;
     @Autowired
     private IntegralChangeHelper integralChangeHelper;
     @Autowired
@@ -169,6 +173,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private TransferService transferService;
     @Autowired
     private TransferBiz transferBiz;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private MqHelper mqHelper;
 
     @Value("${gofobao.webDomain}")
     private String webDomain;
@@ -538,12 +546,101 @@ public class RepaymentBizImpl implements RepaymentBiz {
         giveInterest(borrowCollectionList, parentBorrow);
         //8.还款最后新增统计
         updateRepaymentStatistics(parentBorrow, borrowRepayment);
-        /**
-         * //updateUserCacheByReceivedRepay(borrowCollection, tender, borrow);
-         //项目回款短信通知
-         //smsNoticeByReceivedRepay(borrowCollection, tender, borrow);
-         */
+        //9.更新投资人缓存
+        updateUserCacheByReceivedRepay(borrowCollectionList, parentBorrow);
+        //10.项目回款短信通知
+        smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
+
         return ResponseEntity.ok(VoBaseResp.ok("还款处理成功!"));
+    }
+
+    /**
+     * 项目回款短信通知
+     *
+     * @param borrowCollectionList
+     * @param parentBorrow
+     * @param borrowRepayment
+     */
+    private void smsNoticeByReceivedRepay(List<BorrowCollection> borrowCollectionList, Borrow parentBorrow, BorrowRepayment borrowRepayment) {
+        Set<Long> userIds = borrowCollectionList.stream().map(borrowCollection -> borrowCollection.getUserId()).collect(toSet());/* 回款用户id */
+        Map<Long /* 投资会员id */, List<BorrowCollection>> borrowCollrctionMaps = borrowCollectionList.stream().collect(groupingBy(BorrowCollection::getUserId)); /* 回款记录集合 */
+        Specification<Users> us = Specifications
+                .<Users>and()
+                .in("id", userIds.toArray())
+                .build();
+        List<Users> usersList = userService.findList(us);/* 回款用户缓存记录列表 */
+        Map<Long /* 投资会员id */, Users> userMaps = usersList.stream().collect(Collectors.toMap(Users::getId, Function.identity()));/* 回款用户记录列表*/
+        userIds.stream().forEach(userId -> {
+            List<BorrowCollection> borrowCollections = borrowCollrctionMaps.get(userId);/* 当前用户的所有回款 */
+            Users users = userMaps.get(userId);//投资人会员记录
+            long principal = borrowCollections.stream().mapToLong(BorrowCollection::getPrincipal).sum(); /* 当前用户的所有回款本金 */
+            long interest = borrowCollections.stream().mapToLong(BorrowCollection::getInterest).sum();/* 当前用户的所有回款本金 */
+            String phone = users.getPhone();/* 投资人手机号 */
+            String name = "";
+            if (ObjectUtils.isEmpty(phone)) {
+                MqConfig config = new MqConfig();
+                config.setQueue(MqQueueEnum.RABBITMQ_SMS);
+                config.setTag(MqTagEnum.SMS_REGISTER);
+                switch (parentBorrow.getType()) {
+                    case BorrowContants.CE_DAI:
+                        name = "车贷标";
+                        break;
+                    case BorrowContants.JING_ZHI:
+                        name = "净值标";
+                        break;
+                    case BorrowContants.QU_DAO:
+                        name = "渠道标";
+                        break;
+                    default:
+                        name = "投标还款";
+                }
+                Map<String, String> body = new HashMap<>();
+                body.put(MqConfig.PHONE, phone);
+                body.put(MqConfig.IP, "127.0.0.1");
+                body.put(MqConfig.MSG_ID, StringHelper.toString(parentBorrow.getId()));
+                body.put(MqConfig.MSG_NAME, name);
+                body.put(MqConfig.MSG_ORDER, StringHelper.toString(borrowRepayment.getOrder() + 1));
+                body.put(MqConfig.MSG_MONEY, StringHelper.formatDouble(principal, 100, true));
+                body.put(MqConfig.MSG_INTEREST, StringHelper.formatDouble(interest, 100, true));
+                config.setMsg(body);
+
+                boolean state = mqHelper.convertAndSend(config);
+                if (!state) {
+                    log.error(String.format("发送投资人收到还款短信失败:%s", config));
+                }
+            }
+        });
+    }
+
+    /**
+     * 更新用户缓存
+     *
+     * @param borrowCollectionList
+     * @param parentBorrow
+     */
+    private void updateUserCacheByReceivedRepay(List<BorrowCollection> borrowCollectionList, Borrow parentBorrow) {
+        Set<Long> userIds = borrowCollectionList.stream().map(borrowCollection -> borrowCollection.getUserId()).collect(toSet());/* 回款用户id */
+        Map<Long, List<BorrowCollection>> borrowCollrctionMaps = borrowCollectionList.stream().collect(groupingBy(BorrowCollection::getUserId)); /* 回款记录集合 */
+        Specification<UserCache> ucs = Specifications
+                .<UserCache>and()
+                .in("userId", userIds.toArray())
+                .build();
+        List<UserCache> userCaches = userCacheService.findList(ucs);/* 回款用户缓存记录列表 */
+        Map<Long, UserCache> userCacheMaps = userCaches.stream().collect(Collectors.toMap(UserCache::getUserId, Function.identity()));/* 回款用户缓存记录列表*/
+        userIds.stream().forEach(userId -> {
+            List<BorrowCollection> borrowCollections = borrowCollrctionMaps.get(userId);/* 当前用户的所有回款 */
+            long principal = borrowCollections.stream().mapToLong(BorrowCollection::getPrincipal).sum(); /* 当前用户的所有回款本金 */
+            long interest = borrowCollections.stream().mapToLong(BorrowCollection::getInterest).sum();/* 当前用户的所有回款本金 */
+            UserCache userCache = userCacheMaps.get(userId);
+            if (parentBorrow.getType() == 0) {
+                userCache.setTjWaitCollectionPrincipal(userCache.getTjWaitCollectionPrincipal() - principal);
+                userCache.setTjWaitCollectionInterest(userCache.getTjWaitCollectionInterest() - interest);
+            } else if (parentBorrow.getType() == 4) {
+                userCache.setQdWaitCollectionPrincipal(userCache.getQdWaitCollectionPrincipal() - principal);
+                userCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() - interest);
+            }
+            userCacheService.save(userCache);
+        });
     }
 
     /**
@@ -677,9 +774,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
     /**
      * @param borrowRepayment
-     * @throws Exception
-     * 3.判断是否是还担保人垫付，垫付需要改变垫付记录状态（逾期天数与日期应当在还款前计算完成）
-     * 4.还款成功后变更改还款状态（还款金额在还款前计算完成）
+     * @throws Exception 3.判断是否是还担保人垫付，垫付需要改变垫付记录状态（逾期天数与日期应当在还款前计算完成）
+     *                   4.还款成功后变更改还款状态（还款金额在还款前计算完成）
      */
     private void changeRepaymentAndAdvanceStatus(BorrowRepayment borrowRepayment) throws Exception {
         //更改垫付记录、还款记录状态
@@ -1793,7 +1889,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
     }
 
     /**
-     *  获取逾期天数
+     * 获取逾期天数
+     *
      * @param borrowRepayment
      * @return
      */

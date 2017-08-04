@@ -958,9 +958,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             if (BooleanHelper.isTrue(borrowCollection.getThirdRepayFlag())) {  // 判断还款是否已经在即信登记
                 continue;
             }
-            if (tender.getTransferFlag() == 1) {
-                doCancelBorrowByRepay(tender); // 标的转让中时, 需要取消出让信息
-            }
+
 
             ImmutableSet<Integer> borrowTypeSet = ImmutableSet.of(0, 4);
             if (borrowTypeSet.contains(borrow.getType())) {  // 车贷标和渠道标利息管理费
