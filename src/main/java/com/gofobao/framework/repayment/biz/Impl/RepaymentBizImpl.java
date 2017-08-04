@@ -27,6 +27,7 @@ import com.gofobao.framework.asset.entity.BatchAssetChangeItem;
 import com.gofobao.framework.asset.service.AdvanceLogService;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.BatchAssetChangeItemService;
+import com.gofobao.framework.asset.service.BatchAssetChangeService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
@@ -177,6 +178,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private UserService userService;
     @Autowired
     private MqHelper mqHelper;
+    @Autowired
+    private BatchAssetChangeService batchAssetChangeService;
 
     @Value("${gofobao.webDomain}")
     private String webDomain;
@@ -1405,6 +1408,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         batchAssetChange.setCreatedAt(new Date());
         batchAssetChange.setUpdatedAt(new Date());
         batchAssetChange.setBatchNo(batchNo);
+        batchAssetChangeService.save(batchAssetChange);
         return batchAssetChange;
     }
 
@@ -2331,6 +2335,35 @@ public class RepaymentBizImpl implements RepaymentBiz {
         VoAdvanceReq voAdvanceReq = new VoAdvanceReq();
         voAdvanceReq.setRepaymentId(repaymentId);
         return advance(voAdvanceReq);
+    }
+
+    public ResponseEntity<VoBaseResp> newAdvance(VoAdvanceReq voAdvanceReq) {
+        long repaymentId = voAdvanceReq.getRepaymentId();/* 垫付还款id */
+        BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);/* 垫付还款记录 */
+        Preconditions.checkNotNull(borrowRepayment, "垫付还款记录!");
+        String batchNo = jixinHelper.getBatchNo();/* 批次号 */
+        //生成垫付还款主记录
+        addBatchAssetChangeByAdvance(repaymentId, batchNo);
+        //生成担保人垫付批次资产变更记录
+        //生成投资人垫付批次资产变更记录
+        return ResponseEntity.ok(VoBaseResp.ok("垫付成功!"));
+    }
+
+    /**
+     * 生成垫付还款主记录
+     *
+     * @param repaymentId
+     * @param batchNo
+     */
+    private void addBatchAssetChangeByAdvance(long repaymentId, String batchNo) {
+        BatchAssetChange batchAssetChange = new BatchAssetChange();
+        batchAssetChange.setSourceId(repaymentId);
+        batchAssetChange.setState(0);
+        batchAssetChange.setType(BatchAssetChangeContants.BATCH_BAIL_REPAY);/* 担保人垫付 */
+        batchAssetChange.setCreatedAt(new Date());
+        batchAssetChange.setUpdatedAt(new Date());
+        batchAssetChange.setBatchNo(batchNo);
+        batchAssetChangeService.save(batchAssetChange);
     }
 
     /**
