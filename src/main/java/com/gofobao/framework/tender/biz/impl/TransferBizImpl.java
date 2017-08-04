@@ -1307,4 +1307,83 @@ public class TransferBizImpl implements TransferBiz {
         borrowInfoRes.setLockStatus(borrow.getIsLock());
         return ResponseEntity.ok(borrowInfoRes);
     }
+
+    @Override
+    public void cancelTransferByTenderId(Long id) throws Exception {
+        // 获取转让信息
+        Specification<Transfer> ts = Specifications
+                .<Transfer>and()
+                .eq("tenderId", id)
+                .in("state", 0, 1)
+                .build();
+        List<Transfer> list = transferService.findList(ts);
+        Preconditions.checkNotNull(list, "取消债权转让: 查询转让记录为空");
+        Transfer transfer = list.get(0);
+
+        // 获取投标记录
+        Specification<TransferBuyLog> tbs = Specifications
+                .<TransferBuyLog>and()
+                .eq("transferId", transfer.getId())
+                .eq("state", 0)
+                .build();
+
+        List<TransferBuyLog> transferBuyLogs = transferBuyLogService.findList(tbs);
+
+        Date nowDate = new Date() ;
+        // 取消借款
+        if(!CollectionUtils.isEmpty(transferBuyLogs)){
+            for(TransferBuyLog item: transferBuyLogs){
+                item.setState(3);
+                item.setUpdatedAt(nowDate);
+                AssetChange assetChange = new AssetChange();
+                assetChange.setSourceId(item.getId());
+                assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+                assetChange.setMoney(item.getValidMoney());
+                assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+                assetChange.setRemark(String.format("你购买债权转让[%s]已被取消, 成功解冻资金%s元", transfer.getTitle(), StringHelper.formatDouble(item.getValidMoney() / 100D, true)));
+                assetChange.setType(AssetChangeTypeEnum.unfreeze);
+                assetChange.setUserId(item.getUserId());
+                assetChangeProvider.commonAssetChange(assetChange);
+            }
+
+            // 发送站内信通知
+            Set<Long> userIds = transferBuyLogs
+                    .stream()
+                    .map(item-> item.getUserId()).collect(Collectors.toSet()) ;
+            Notices notices ;
+            for(Long userId: userIds){
+                notices = new Notices();
+                notices.setFromUserId(1L);
+                notices.setUserId(userId);
+                notices.setRead(false);
+                notices.setName("债权转让取消通知");
+                notices.setContent(String.format("你购买的债权[%s]已被系统取消", transfer.getTitle()));
+                notices.setType("system");
+                notices.setCreatedAt(nowDate);
+                notices.setUpdatedAt(nowDate);
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
+                mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
+                Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
+                mqConfig.setMsg(body);
+                try {
+                    log.info(String.format("borrowBizImpl cancelBorrow send mq %s", GSON.toJson(body)));
+                    mqHelper.convertAndSend(mqConfig);
+                } catch (Throwable e) {
+                    log.error("borrowBizImpl cancelBorrow send mq exception", e);
+                }
+            }
+        }
+
+        // 取消债权转让
+        transfer.setState(4);
+        transfer.setUpdatedAt(nowDate);
+        transferService.save(transfer);
+
+        // 更新投标记录状态
+        Tender tender = tenderService.findById(id) ;
+        tender.setTransferFlag(0);
+        tender.setUpdatedAt(nowDate);
+        tenderService.save(tender) ;
+    }
 }
