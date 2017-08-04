@@ -4,7 +4,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.system.biz.BannerBiz;
 import com.gofobao.framework.system.service.BannerService;
 import com.gofobao.framework.system.vo.response.IndexBanner;
-import com.gofobao.framework.system.vo.response.VoViewIndexBannerWarpRes;
+import com.gofobao.framework.system.vo.response.VoIndexResp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -21,15 +21,15 @@ public class BannerBizImpl implements BannerBiz {
     private BannerService bannerService;
 
     @Override
-    public ResponseEntity<VoViewIndexBannerWarpRes> index() {
-        VoViewIndexBannerWarpRes warpRes = VoBaseResp.ok("", VoViewIndexBannerWarpRes.class);
+    public ResponseEntity<VoIndexResp> index(String terminal) {
+        VoIndexResp warpRes = VoBaseResp.ok("", VoIndexResp.class);
         try {
-            List<IndexBanner> bannerList = bannerService.index();
+            List<IndexBanner> bannerList = bannerService.index(terminal);
             warpRes.setBannerList(bannerList);
             return ResponseEntity.ok(warpRes);
         } catch (Throwable e) {
             return ResponseEntity.badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoViewIndexBannerWarpRes.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoIndexResp.class));
         }
     }
 }
