@@ -80,7 +80,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.gofobao.framework.helper.DateHelper.isBetween;
-import static com.gofobao.framework.helper.DateHelper.max;
 
 /**
  * Created by Zeke on 2017/6/8.
@@ -971,7 +970,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             if (tender.getTransferFlag() == 2) {  // 已经转让的债权, 可以跳过还款
                 continue;
             }
-
             inIn = borrowCollection.getInterest(); // 还款利息
             inPr = borrowCollection.getPrincipal(); // 还款本金
             repayAssetChange.setUserId(tender.getUserId());
