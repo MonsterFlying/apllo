@@ -538,7 +538,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
         giveInterest(borrowCollectionList, parentBorrow);
         //8.还款最后新增统计
         updateRepaymentStatistics(parentBorrow, borrowRepayment);
-
+        /**
+         * //updateUserCacheByReceivedRepay(borrowCollection, tender, borrow);
+         //项目回款短信通知
+         //smsNoticeByReceivedRepay(borrowCollection, tender, borrow);
+         */
         return ResponseEntity.ok(VoBaseResp.ok("还款处理成功!"));
     }
 
@@ -674,7 +678,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
     /**
      * @param borrowRepayment
      * @throws Exception
-     * @// TODO: 2017/8/3
      * 3.判断是否是还担保人垫付，垫付需要改变垫付记录状态（逾期天数与日期应当在还款前计算完成）
      * 4.还款成功后变更改还款状态（还款金额在还款前计算完成）
      */

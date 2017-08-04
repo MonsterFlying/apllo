@@ -142,7 +142,53 @@ public class TransferBizImpl implements TransferBiz {
      * @return
      * @throws Exception
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> endTransfer(VoEndTransfer voEndTransfer) throws Exception {
+        long userId = voEndTransfer.getUserId();/* 转让人id */
+        long transferId = voEndTransfer.getTransferId();/* 债权转让id */
+        //1.获取债权转让记录
+        Transfer transfer = transferService.findByIdLock(transferId);/* 债权转让记录 */
+        Preconditions.checkNotNull(transfer, "债权转让记录不存在!");
+        if (!transfer.getUserId().equals(userId)) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非本人操作结束债权转让。"));
+        }
+        //2.判断是否存在已经与存管通信的记录
+        Specification<TransferBuyLog> tbls = Specifications
+                .<TransferBuyLog>and()
+                .eq("transferId", transfer.getId())
+                .build();
+        List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
+        Preconditions.checkNotNull(transferBuyLogList, "购买债权转让记录为空!");
+        /* 已跟即信通信的债权转让记录条数 */
+        long count = transferBuyLogList.stream().filter(transferBuyLog -> BooleanHelper.isTrue(transferBuyLog.getThirdTransferFlag())).count();
+        if (count > 0) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "已存在售出的债权，无法取消债权转让!"));
+        }
+        //3.更改债权转让与购买债权转让记录状态
+        transfer.setState(4);
+        transfer.setUpdatedAt(new Date());
+        transferService.save(transfer);
+        //4.取消购买债权并解冻金额
+        transferBuyLogList.stream().forEach(transferBuyLog -> {
+            transferBuyLog.setState(2);
+            transferBuyLog.setUpdatedAt(new Date());
+            //解冻债权转让人购买债权转让冻结资金
+            AssetChange assetChange = new AssetChange();
+            assetChange.setSourceId(transferBuyLog.getId());
+            assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+            assetChange.setMoney(transferBuyLog.getValidMoney());
+            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+            assetChange.setRemark(String.format("购买债权转让[%s]失败, 冻结解冻资金%s元", transfer.getTitle(), StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100D, true)));
+            assetChange.setType(AssetChangeTypeEnum.unfreeze);
+            assetChange.setUserId(transferBuyLog.getUserId());
+            try {
+                assetChangeProvider.commonAssetChange(assetChange);
+            } catch (Exception e) {
+                log.error("结束债权转让解冻直接失败!", e);
+            }
+        });
+        transferBuyLogService.save(transferBuyLogList);
+
         return ResponseEntity.ok(VoBaseResp.ok("结束债权转让成功!"));
     }
 

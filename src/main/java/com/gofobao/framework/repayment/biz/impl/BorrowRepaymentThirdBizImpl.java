@@ -938,6 +938,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 .<BorrowCollection>and()
                 .in("tenderId", tenderIds.toArray())
                 .eq("status", 0)
+                .eq("transferFlag", "0")
                 .eq("order", order)
                 .build();
 
@@ -961,30 +962,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 doCancelBorrowByRepay(tender); // 标的转让中时, 需要取消出让信息
             }
 
-            if (tender.getTransferFlag() == 2) {  // 出现转让后, 需要递归处理
-                Specification<Borrow> bs = Specifications
-                        .<Borrow>and()
-                        .eq("tenderId", tender.getId())
-                        .eq("status", 3)
-                        .build();
-                List<Borrow> borrowTranferedList = borrowService.findList(bs);
-                Preconditions.checkNotNull(borrowTranferedList, "生成即信还款计划: 查询转让标的为空");
-                Borrow borrowTranfered = borrowTranferedList.get(0);
-                int tranferedOrder = order + borrowTranfered.getTotalOrder() - borrow.getTotalOrder();
-                int tranferedInterest = new Double(tender.getValidMoney() / new Double(borrow.getMoney()) * lateInterest).intValue();  // 本期分到的逾期收益
-                List<Repay> tranferedRepayList = calculateRepayPlan(borrowTranfered, repayAccountId, lateDays, tranferedOrder, tranferedInterest);
-                repayList.addAll(tranferedRepayList);
-                continue;
-            }
-
-            int interestLower = 0;  // 应扣除利息
-            inIn += borrowCollection.getInterest();  // 本期还款利息
-            inPr += borrowCollection.getPrincipal(); // 本期划款本金
-            if (borrow.isTransfer()) {  // 针对转让标的
-                interestLower = calculateTranferFee(borrowCollection);
-                inFee += interestLower;  // 收款人利息
-            }
-
             ImmutableSet<Integer> borrowTypeSet = ImmutableSet.of(0, 4);
             if (borrowTypeSet.contains(borrow.getType())) {  // 车贷标和渠道标利息管理费
                 ImmutableSet<Long> stockholder = ImmutableSet.of(2480L, 1753L, 1699L,
@@ -998,14 +975,13 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 if ((stockholder.contains(tender.getUserId())) && (between)) {
                     inFee += 0;
                 } else {
-                    int feePr = inIn - interestLower > 0 ? inIn - interestLower : 0; // 获取真实利息
-                    inFee += new Double(MathHelper.myRound(feePr * 0.1, 2)).intValue();
+                    inFee += new Double(MathHelper.myRound(inIn * 0.1, 2)).intValue();
                 }
             }
 
             if ((lateDays > 0) && (lateInterest > 0)) {  //借款人逾期罚息
                 /**
-                 * @// TODO: 2017/8/3 手续费
+                 * @// TODO: 2017/8/3 逾期手续费
                  */
                 inFee += new Double(tender.getValidMoney() / new Double(borrow.getMoney()) * lateInterest / 2).intValue(); // 平台收取50% 逾期管理费
                 outFee += new Double(tender.getValidMoney() / new Double(borrow.getMoney()) * lateInterest / 2).intValue();  // 平台收取50% 逾期管理费

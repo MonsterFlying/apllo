@@ -5,6 +5,7 @@ import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.vo.request.VoBuyTransfer;
+import com.gofobao.framework.tender.vo.request.VoEndTransfer;
 import com.gofobao.framework.tender.vo.request.VoTransferReq;
 import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
 import com.gofobao.framework.tender.vo.response.VoGoTenderInfo;
@@ -33,6 +34,23 @@ public class TransferController {
 
     @Autowired
     private ThymeleafHelper thymeleafHelper;
+
+    /**
+     * 结束债权转让
+     *
+     * @param voEndTransfer
+     * @return
+     * @throws Exception
+     */
+    @ApiOperation("新版发布债权转让")
+    @GetMapping("v2/new/transfer/end")
+    public ResponseEntity<VoBaseResp> endTransfer(@Valid VoEndTransfer voEndTransfer){
+        try {
+            return transferBiz.endTransfer(voEndTransfer);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后重试!"));
+        }
+    }
 
     /**
      * 新版发布债权转让
