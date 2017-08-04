@@ -12,7 +12,7 @@ public class NewIndexStatisics {
     private String totalTransaction = "0";
 
     @ApiModelProperty("待收金额")
-    private String receivedAmount = "0";
+    private String regsiterCount = "0";
 
     @ApiModelProperty("安全运营")
     private String  safeOperation = "0";

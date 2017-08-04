@@ -434,7 +434,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("还款处理中，请勿重复点击!")));
         } else if (flag == ThirdBatchLogContants.SUCCESS) {
-            //批次放款队列参数
+            // 批次放款队列参数
             Map<String, Object> acqResMap = new HashMap<>();
             acqResMap.put("userId", userId);
             acqResMap.put("repaymentId", repaymentId);
@@ -1232,7 +1232,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         int lateDays = getLateDays(borrowRepayment);
         // 计算逾期产生的总费用
         long lateInterest = calculateLateInterest(lateDays, borrowRepayment, parentBorrow);
-        //是否是垫付
+        // 是否是垫付
         boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
         /* 批次号 */
         String batchNo = jixinHelper.getBatchNo();
@@ -1240,9 +1240,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
         String seqNo = assetChangeProvider.getSeqNo();
         /* 资产记录分组流水号 */
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
-        //生成还款主记录
+        // 生成还款主记录
         BatchAssetChange batchAssetChange = addBatchAssetChange(batchNo, borrowRepayment.getId(), advance);
-        //生成还款人还款批次资金改变记录
+        // 生成还款人还款批次资金改变记录
         addBatchAssetChangeByBorrower(batchAssetChange.getId(), borrowRepayment, parentBorrow, interestPercent, isUserOpen, lateInterest);
 
         if (advance) {
@@ -1250,7 +1250,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             resp = repayGuarantor(userId, repayUserThirdAccount, borrowRepayment, parentBorrow, lateInterest, batchNo);
             //生成担保人还垫付资产变更记录
             addBatchAssetChangeByGuarantor(borrowRepayment.getId(), borrowRepayment, parentBorrow, lateInterest, seqNo, groupSeqNo);
-        } else {
+        } else {  //正常还款
             resp = normalRepay(userId, repayUserThirdAccount, borrowRepayment, parentBorrow, lateInterest, batchNo);
             // 生成非垫付还款生成批次资产变更记录
             addBatchAssetChangeByRepay(batchAssetChange.getId(), borrowRepayment, parentBorrow, interestPercent, lateInterest, false, seqNo, groupSeqNo);
@@ -1299,7 +1299,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         batchAssetChange.setSourceId(id);
         batchAssetChange.setState(0);
         if (advance) { //还款人还垫付
-            batchAssetChange.setType(BatchAssetChangeContants.BATCH_BAIL_REPAY);
+            batchAssetChange.setType(BatchAssetChangeContants.BATCH_REPAY_BAIL);
         } else { //正常还款
             batchAssetChange.setType(BatchAssetChangeContants.BATCH_REPAY);
         }
@@ -1769,7 +1769,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      */
     private int calculateLateInterest(int lateDays, BorrowRepayment borrowRepayment, Borrow repaymentBorrow) {
-
         if (0 == lateDays) {
             return 0;
         }
@@ -1790,6 +1789,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
         return new Double(MathHelper.myRound(overPrincipal * 0.004 * lateDays, 2)).intValue();
     }
 
+    /**
+     *  获取逾期天数
+     * @param borrowRepayment
+     * @return
+     */
     private int getLateDays(BorrowRepayment borrowRepayment) {
         Date nowDateOfBegin = DateHelper.beginOfDate(new Date());
         Date repayDateOfBegin = DateHelper.beginOfDate(borrowRepayment.getRepayAt());

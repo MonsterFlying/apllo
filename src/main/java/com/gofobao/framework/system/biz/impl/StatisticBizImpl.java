@@ -98,7 +98,10 @@ public class StatisticBizImpl implements StatisticBiz {
                     Date currYearDate = DateHelper.addYears(startDate, years);
                     int days = DateHelper.diffInDays(currCalender.getTime(), currYearDate, false);
                     newIndexStatisics.setSafeOperation(String.format("%s年%s天", years, days));
-                    newIndexStatisics.setReceivedAmount(String.format("%s元", formatNumber(waitRepayTotal))); // 待收
+                    //注册人数
+                    BigDecimal registerTotal = incrStatisticService.registerTotal();
+                    long register = registerTotal.longValue();
+                    newIndexStatisics.setRegsiterCount(formatNumber(register));
                     newIndexStatisics.setTotalTransaction(String.format("%s元", formatNumber(borrowTotal))); // 交易总额
                     return newIndexStatisics;
                 }
