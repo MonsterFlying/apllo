@@ -352,7 +352,7 @@ public class LoanServiceImpl implements LoanService {
         VoViewLoanList voViewLoanList = new VoViewLoanList();
 
 
-        Integer collectionMoney = repaymentList.stream().mapToInt(p -> p.getRepayMoney()).sum();
+        long collectionMoney = repaymentList.stream().mapToLong(p -> p.getRepayMoney()).sum();
         Integer countOrder = repaymentList.size();
 
         List<VoLoanInfo> voLoanInfoList = new ArrayList<>();
