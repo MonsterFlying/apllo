@@ -911,7 +911,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, int lateInterest) throws Exception {
+    public List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest) throws Exception {
         List<Repay> repayList = new ArrayList<>();
         Specification<Tender> specification = Specifications
                 .<Tender>and()
@@ -1032,9 +1032,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         return repayList;
     }
 
-    @Override
     @Transactional(rollbackFor = Exception.class)
-    public List<RepayBail> calculateRepayBailPlan(Borrow borrow, String repayAccountId, int lateDays, Integer order, int lateInterest) throws Exception {
+    public List<RepayBail> calculateRepayBailPlan(Borrow borrow, String repayAccountId, int lateDays, Integer order, long lateInterest) throws Exception {
         List<RepayBail> repayBailList = new ArrayList<>();
         Specification<Tender> specification = Specifications
                 .<Tender>and()

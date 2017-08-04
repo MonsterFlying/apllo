@@ -37,6 +37,7 @@ public class BorrowCollection {
     @Column(name = "principal")
     private Long principal;
 
+
     @Basic
     @Column(name = "interest")
     private Long interest;
