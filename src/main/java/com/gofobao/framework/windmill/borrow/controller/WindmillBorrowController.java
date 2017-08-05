@@ -2,13 +2,15 @@ package com.gofobao.framework.windmill.borrow.controller;
 
 import com.gofobao.framework.windmill.borrow.biz.WindmillBorrowBiz;
 import com.gofobao.framework.windmill.borrow.biz.WindmillStatisticsBiz;
-import com.gofobao.framework.windmill.borrow.vo.response.*;
+import com.gofobao.framework.windmill.borrow.vo.response.BorrowTenderList;
+import com.gofobao.framework.windmill.borrow.vo.response.ByDayStatistics;
+import com.gofobao.framework.windmill.borrow.vo.response.BySomeDayRes;
+import com.gofobao.framework.windmill.borrow.vo.response.InvestListRes;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 

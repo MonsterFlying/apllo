@@ -261,8 +261,6 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
         voLoginReq.setAccount(bindLoginReq.getUserName());
         voLoginReq.setPassword(bindLoginReq.getPassword());
         ResponseEntity entity = userBiz.login(request, response, voLoginReq);
-
-
         //登陸成功
         if (entity.getStatusCode() == HttpStatus.OK) {
             log.info("================用户登录成功===============");
@@ -442,7 +440,10 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             e.printStackTrace();
             return "load_error";
         }
+
+
     }
+
 
 
 }

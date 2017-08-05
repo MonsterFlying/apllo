@@ -3,6 +3,7 @@ package com.gofobao.framework.windmill.user.controller;
 import com.gofobao.framework.windmill.borrow.biz.impl.WindmillStatisticsBizImpl;
 import com.gofobao.framework.windmill.borrow.vo.response.ByDayStatistics;
 import com.gofobao.framework.windmill.borrow.vo.response.UserAccountStatistics;
+import com.gofobao.framework.windmill.user.vo.respones.VoNoticesRes;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -40,8 +41,8 @@ public class WindmillStatisticsController {
     
     @ApiOperation("平台公告查询接口")
     @GetMapping("/notice/info/list")
-    public String string() {
-        return "";
+    public VoNoticesRes string(HttpServletRequest request) {
+        return statisticsBiz.noticesList(request);
     }
 
 

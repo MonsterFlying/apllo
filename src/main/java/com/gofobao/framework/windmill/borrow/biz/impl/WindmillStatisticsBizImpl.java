@@ -10,16 +10,23 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.service.UserCacheService;
+import com.gofobao.framework.system.entity.Article;
+import com.gofobao.framework.system.repository.ArticleRepository;
 import com.gofobao.framework.windmill.borrow.biz.WindmillStatisticsBiz;
 import com.gofobao.framework.windmill.borrow.service.WindmillStatisticsService;
 import com.gofobao.framework.windmill.borrow.vo.response.ByDayStatistics;
 import com.gofobao.framework.windmill.borrow.vo.response.UserAccountStatistics;
+import com.gofobao.framework.windmill.user.vo.respones.Notices;
+import com.gofobao.framework.windmill.user.vo.respones.VoNoticesRes;
+import com.gofobao.framework.windmill.util.StrToJsonStrUtil;
 import com.gofobao.framework.windmill.util.WrbCoopDESUtil;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -56,7 +63,9 @@ public class WindmillStatisticsBizImpl implements WindmillStatisticsBiz {
 
     @Autowired
     private AssetService assetService;
-
+    
+    @Autowired
+    private ArticleRepository articleRepository;
     /**
      * 查询每日的汇总数据
      *
@@ -69,7 +78,7 @@ public class WindmillStatisticsBizImpl implements WindmillStatisticsBiz {
         ByDayStatistics byDayStatistics = new ByDayStatistics();
         Map<String, String> paramMap;
         try {
-            String paramStr = WrbCoopDESUtil.desDecrypt(desKey, request.getParameter("param"));
+            String paramStr =StrToJsonStrUtil.commonDecryptStr(WrbCoopDESUtil.desDecrypt(desKey, request.getParameter("param"))) ;
             paramMap = GSON.fromJson(paramStr, new TypeToken<Map<String, String>>() {
             }.getType());
         } catch (Exception e) {
@@ -92,7 +101,7 @@ public class WindmillStatisticsBizImpl implements WindmillStatisticsBiz {
         Map<String, String> paramMap;
         Long userId;
         try {
-            String paramStr = WrbCoopDESUtil.desDecrypt(desKey, request.getParameter("param"));
+            String paramStr = StrToJsonStrUtil.commonDecryptStr(WrbCoopDESUtil.desDecrypt(desKey, request.getParameter("param")));
             paramMap = GSON.fromJson(paramStr, new TypeToken<Map<String, String>>() {
             }.getType());
             userId = Long.valueOf(paramMap.get("pf_user_id"));
@@ -153,4 +162,61 @@ public class WindmillStatisticsBizImpl implements WindmillStatisticsBiz {
         }
         return accountStatistics;
     }
+
+
+
+
+    /**
+     * 平臺公告
+     * @param request )
+     * @return
+     */
+    @Override
+    public VoNoticesRes noticesList(HttpServletRequest request) {
+
+        VoNoticesRes voNoticesRes = new VoNoticesRes();
+
+        Map<String, String> paramMap;
+        try {
+            String param = request.getParameter("param");
+            paramMap = GSON.fromJson(StrToJsonStrUtil.commonDecryptStr(WrbCoopDESUtil.desDecrypt(localDesKey, param)), new TypeToken<Map<String, String>>() {
+            }.getType());
+        } catch (Exception e) {
+            voNoticesRes.setRetmsg("平台转json失败");
+            voNoticesRes.setRetcode(VoBaseResp.ERROR);
+            return voNoticesRes;
+        }
+
+        Specification specification = Specifications.<Article>and()
+                .eq("type", "notice")
+                .build();
+        List<Article> articles = articleRepository.findAll(specification,
+                new PageRequest(
+                        Integer.valueOf(paramMap.get("page")),
+                        Integer.valueOf(paramMap.get("limit")),
+                        new Sort(Sort.Direction.DESC, "id")))
+                .getContent();
+
+        if (CollectionUtils.isEmpty(articles)) {
+            voNoticesRes.setRetmsg("平台公告为空");
+            voNoticesRes.setRetcode(VoBaseResp.OK);
+            return voNoticesRes;
+        }
+        List<Notices> all_notices = Lists.newArrayList();
+        articles.stream().forEach(p -> {
+            Notices notices = new Notices();
+            notices.setContent(p.getContent());
+            notices.setId(p.getId());
+            notices.setRelease_time(DateHelper.dateToString(p.getCreatedAt()));
+            notices.setTitle(p.getTitle());
+            notices.setUrl("");
+            all_notices.add(notices);
+        });
+        voNoticesRes.setRetcode(VoBaseResp.OK);
+        voNoticesRes.setRetmsg("查询成功");
+        voNoticesRes.setAll_notices(all_notices);
+        return voNoticesRes;
+    }
+
+
 }

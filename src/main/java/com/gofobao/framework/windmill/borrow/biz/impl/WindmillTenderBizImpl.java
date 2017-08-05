@@ -20,6 +20,7 @@ import com.gofobao.framework.windmill.borrow.vo.response.BackRecords;
 import com.gofobao.framework.windmill.borrow.vo.response.BackRecordsRes;
 import com.gofobao.framework.windmill.borrow.vo.response.InvestRecords;
 import com.gofobao.framework.windmill.borrow.vo.response.InvestRecordsRes;
+import com.gofobao.framework.windmill.util.StrToJsonStrUtil;
 import com.gofobao.framework.windmill.util.WrbCoopDESUtil;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
@@ -79,7 +80,7 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
         InvestRecordsRes investRecordsRes = new InvestRecordsRes();
         UserTenderLogReq userTenderLogReq;
         try {
-            String paramSt = WrbCoopDESUtil.desDecrypt(desKey, request.getParameter("param"));
+            String paramSt = StrToJsonStrUtil.commonDecryptStr(WrbCoopDESUtil.desDecrypt(desKey, request.getParameter("param")));
             userTenderLogReq = GSON.fromJson(paramSt, new TypeToken<UserTenderLogReq>() {
             }.getType());
         } catch (Exception e) {
@@ -216,7 +217,7 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
         BackRecordsRes backRecordsRes = new BackRecordsRes();
         BackRecordsReq backRecordsReq;
         try {
-            String paramSt = WrbCoopDESUtil.desDecrypt(desKey, request.getParameter("param"));
+            String paramSt = StrToJsonStrUtil.commonDecryptStr(WrbCoopDESUtil.desDecrypt(desKey, request.getParameter("param")));
             backRecordsReq = GSON.fromJson(paramSt, new TypeToken<BackRecordsReq>() {
             }.getType());
         } catch (Exception e) {
@@ -261,9 +262,17 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
      */
     @Override
     public void tenderNotify(Map<String, String> paramMap) {
-
+        log.info("================进入用戶投资成功平台通知到风车理财================");
         String result = OKHttpHelper.get("", paramMap, null);
-
+        log.info("参数 param:" + GSON.toJson(paramMap));
+        String reulstStr = OKHttpHelper.get("", paramMap, null);
+        log.info("打印通知风车返回的结果:" + reulstStr);
+        Map<String, String> resultMap = GSON.fromJson(result, new TypeToken<Map<String, String>>() {
+        }.getType());
+        if (Integer.valueOf(resultMap.get("retcode")) == VoBaseResp.OK)
+            log.info("平台通知风车理财成功");
+        else
+            log.info("平台通知风车理财失败");
     }
 
     /**
@@ -273,21 +282,21 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
      */
     @Override
     public void backMoneyNotify(Map<String, String> paramMap) {
-        log.info("================进入平台回款通知到风车理财================");
+        log.info("================进入用户回款成功 平台通知到风车理财================");
         try {
             log.info("参数 param:" + JacksonHelper.obj2json(paramMap));
             String result = OKHttpHelper.get("", paramMap, null);
-            Map<String,String>resultMap=GSON.fromJson(result,new TypeToken<Map<String,String>>() {
+            log.info("打印通知风车返回的结果:" + result);
+            Map<String, String> resultMap = GSON.fromJson(result, new TypeToken<Map<String, String>>() {
             }.getType());
             //通知失敗
-         /*   if(Long.valueOf(resultMap.get("retcode"))!=VoBaseResp.OK)
+            if (Long.valueOf(resultMap.get("retcode")) != VoBaseResp.OK)
+                log.info("平台通知风车理财成功");
+            else
+                log.info("平台通知风车理财失败");
 
-
-            else*/
-
-        }catch (Exception e){
-
-
+        } catch (Exception e) {
+            log.info("用户回款成功,平台通知风车理财异常");
         }
     }
 }
