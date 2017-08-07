@@ -43,7 +43,7 @@ import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
-import com.gofobao.framework.repayment.vo.request.VoThirdBatchRepay;
+import com.gofobao.framework.repayment.vo.request.VoRepayAll;
 import com.gofobao.framework.scheduler.biz.TaskSchedulerBiz;
 import com.gofobao.framework.scheduler.constants.TaskSchedulerConstants;
 import com.gofobao.framework.scheduler.entity.TaskScheduler;
@@ -283,7 +283,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     public boolean registerBorrrowConditionCheck(Borrow borrow) {
         Long userId = borrow.getUserId();
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        Preconditions.checkNotNull(userThirdAccount, "查询标的登记情况异常: 借款人未开户") ;
+        Preconditions.checkNotNull(userThirdAccount, "查询标的登记情况异常: 借款人未开户");
         String productId = StringUtils.isEmpty(borrow.getProductId()) ? StringHelper.toString(borrow.getId()) : borrow.getProductId();
         DebtDetailsQueryRequest debtDetailsQueryRequest = new DebtDetailsQueryRequest();
         debtDetailsQueryRequest.setChannel(ChannelContant.HTML);
@@ -327,6 +327,8 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         return true;
     }
 
+
+
     /**
      * 即信批次还款(提前结清)
      *
@@ -361,7 +363,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         }
 
         int repaymentTotal = 0;
-        List<VoThirdBatchRepay> voThirdBatchRepayList = new ArrayList<>();
+        List<VoRepayAll> voRepayAllList = new ArrayList<>();
         long penalty = 0;
         int lateInterest = 0;
         int lateDays = 0;
@@ -370,7 +372,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         Date endAt = null;
         BorrowRepayment borrowRepayment = null;
         double interestPercent = 0;
-        VoThirdBatchRepay tempVoThirdBatchRepay = null;
+        VoRepayAll tempVoRepayAll = null;
         Specification<BorrowRepayment> brs = Specifications
                 .<BorrowRepayment>and()
                 .eq("borrowId", borrowId)
@@ -413,12 +415,12 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             }
             //累加金额用于判断还款账余额是否充足
             repaymentTotal += borrowRepayment.getPrincipal() + borrowRepayment.getInterest() * interestPercent + lateInterest;
-            tempVoThirdBatchRepay = new VoThirdBatchRepay();
-            tempVoThirdBatchRepay.setInterestPercent(interestPercent);   // 赔偿利息
-            tempVoThirdBatchRepay.setRepaymentId(borrowRepayment.getId());
-            tempVoThirdBatchRepay.setUserId(borrowRepayment.getUserId());
-            tempVoThirdBatchRepay.setIsUserOpen(false);
-            voThirdBatchRepayList.add(tempVoThirdBatchRepay);
+            tempVoRepayAll = new VoRepayAll();
+            tempVoRepayAll.setInterestPercent(interestPercent);   // 赔偿利息
+            tempVoRepayAll.setRepaymentId(borrowRepayment.getId());
+            tempVoRepayAll.setUserId(borrowRepayment.getUserId());
+            tempVoRepayAll.setIsUserOpen(false);
+            voRepayAllList.add(tempVoRepayAll);
         }
 
         long repayMoney = repaymentTotal + penalty;
@@ -429,8 +431,8 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         }
 
         List<Repay> repayList = new ArrayList<>(); // 往后每期未还回款集合
-        for (VoThirdBatchRepay tempVoRepayReq : voThirdBatchRepayList) {
-            repayList.addAll(borrowRepaymentThirdBiz.getRepayList(tempVoRepayReq));
+        for (VoRepayAll tempVoRepayReq : voRepayAllList) {
+            //repayList.addAll(borrowRepaymentThirdBiz.getRepayList(tempVoRepayReq));
         }
 
         if (CollectionUtils.isEmpty(repayList)) {

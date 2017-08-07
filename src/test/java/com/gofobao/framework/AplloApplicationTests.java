@@ -299,15 +299,7 @@ public class AplloApplicationTests {
         System.out.println(response);
     }
 
-    private void advanceCall() {
-        VoAdvanceCall voAdvanceCall = new VoAdvanceCall();
-        voAdvanceCall.setRepaymentId(173795L);
-        try {
-            repaymentBiz.advanceDeal(voAdvanceCall);
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-    }
+
 
 
     private void doFirstVerify() {

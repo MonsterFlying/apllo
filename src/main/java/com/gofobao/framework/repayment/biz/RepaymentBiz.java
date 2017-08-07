@@ -105,24 +105,6 @@ public interface RepaymentBiz {
     ResponseEntity<VoViewCollectionDaysWarpRes> days(Long userId, String time);
 
     /**
-     * 垫付
-     *
-     * @param voAdvanceReq
-     * @return
-     * @throws Exception
-     */
-    ResponseEntity<VoBaseResp> advance(VoAdvanceReq voAdvanceReq) throws Exception;
-
-    /**
-     * 垫付处理
-     *
-     * @param voAdvanceCall
-     * @return
-     * @throws Exception
-     */
-    ResponseEntity<VoBaseResp> advanceDeal(VoAdvanceCall voAdvanceCall) throws Exception;
-
-    /**
      * pc 垫付
      *
      * @param voPcAdvanceReq
@@ -130,6 +112,24 @@ public interface RepaymentBiz {
      * @throws Exception
      */
     ResponseEntity<VoBaseResp> pcAdvance(VoPcAdvanceReq voPcAdvanceReq) throws Exception;
+
+    /**
+     * 新版垫付处理
+     *
+     * @param repaymentId
+     * @return
+     * @throws Exception
+     */
+    ResponseEntity<VoBaseResp> newAdvanceDeal(long repaymentId, long batchNo) throws Exception;
+
+    /**
+     * 新版垫付
+     *
+     * @param voAdvanceReq
+     * @return
+     * @throws Exception
+     */
+    ResponseEntity<VoBaseResp> newAdvance(VoAdvanceReq voAdvanceReq) throws Exception;
 
     /**
      * pc 立即还款

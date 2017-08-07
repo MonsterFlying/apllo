@@ -52,8 +52,11 @@ import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
+import com.gofobao.framework.repayment.vo.request.VoRepayAll;
 import com.gofobao.framework.system.biz.IncrStatisticBiz;
 import com.gofobao.framework.system.biz.StatisticBiz;
+import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
+import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.*;
 import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
@@ -151,6 +154,8 @@ public class BorrowBizImpl implements BorrowBiz {
     private LendService lendService;
     @Autowired
     private TenderBiz tenderBiz;
+    @Autowired
+    private ThirdBatchLogBiz thirdBatchLogBiz;
 
     @Autowired
     JixinManager jixinManager;
@@ -187,6 +192,137 @@ public class BorrowBizImpl implements BorrowBiz {
     @Value("${gofobao.imageDomain}")
     private String imageDomain;
 
+    /**
+     * 提前结清
+     *
+     * @param voRepayAllReq
+     * @return
+     * @throws Exception
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq) throws Exception {
+        String paramStr = voRepayAllReq.getParamStr();/* pc请求提前结清参数 */
+        if (!SecurityHelper.checkSign(voRepayAllReq.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc取消借款 签名验证不通过!"));
+        }
+        Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        /* 借款id */
+        long borrowId = NumberHelper.toLong(paramMap.get("borrowId"));
+        Borrow borrow = borrowService.findByIdLock(borrowId);/* 借款记录 */
+        Preconditions.checkNotNull(borrow, "借款记录不存在!");
+        UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());  /* 借款人存管账户不存在 */
+        ResponseEntity<VoBaseResp> resp = ThirdAccountHelper.allConditionCheck(borrowUserThirdAccount);
+        if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
+            return resp;
+        }
+        Asset borrowAsset = assetService.findByUserId(borrow.getUserId());/* 借款人资产账户 */
+        Preconditions.checkNotNull(borrowAsset, "借款人资产记录不存在!");
+
+        //判断提交还款批次是否多次重复提交
+        int flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(borrowId), ThirdBatchLogContants.BATCH_REPAY);
+        if (flag == ThirdBatchLogContants.AWAIT) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("还款处理中，请勿重复点击!")));
+        } else if (flag == ThirdBatchLogContants.SUCCESS) {
+            //更新状态
+            /**
+             * @// TODO: 2017/8/7
+             */
+        }
+        /* 有效未还的还款记录 */
+        Specification<BorrowRepayment> brs = Specifications
+                .<BorrowRepayment>and()
+                .eq("borrowId", borrowId)
+                .build();
+        List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
+        long penalty = 0;/* 违约金 */
+        long repaymentTotal = 0;/* 提前结清需要总金额 */
+        List<VoRepayReq> voRepayReqList = new ArrayList<>();/* 还款请求集合 */
+        for (int i = 0; i < borrowRepaymentList.size(); i++) {
+            BorrowRepayment borrowRepayment = borrowRepaymentList.get(i);
+            if (borrowRepayment.getStatus() != 0) {
+                continue;
+            }
+            /* 开始时间 */
+            Date startAt;
+            if (borrowRepayment.getOrder() == 0) {
+                startAt = DateHelper.beginOfDate(borrow.getSuccessAt());
+            } else {
+                startAt = DateHelper.beginOfDate(borrowRepaymentList.get(i - 1).getRepayAt());
+            }
+            /* 结束时间 */
+            Date endAt = DateHelper.beginOfDate(borrowRepayment.getRepayAt());
+
+            //以结清第一期的14天利息作为违约金
+            if (penalty == 0) { // 违约金
+                penalty = borrowRepayment.getInterest() / DateHelper.diffInDays(endAt, startAt, false) * 14;
+            }
+
+            Date nowStartDate = DateHelper.beginOfDate(new Date());  // 现在的凌晨时间
+            double interestPercent;/* 利息百分比 */
+            if (nowStartDate.getTime() <= startAt.getTime()) {
+                interestPercent = 0;
+            } else {
+                interestPercent = MathHelper.min(DateHelper.diffInDays(nowStartDate, startAt, false) / DateHelper.diffInDays(endAt, startAt, false), 1);
+            }
+            /* 逾期天数 */
+            int lateDays = DateHelper.diffInDays(nowStartDate, endAt, false);
+            /* 逾期利息 */
+            long lateInterest = calculateLateInterest(lateDays, borrowRepayment, borrow);
+            //累加金额用于判断还款账余额是否充足
+            repaymentTotal += borrowRepayment.getPrincipal() + borrowRepayment.getInterest() * interestPercent + lateInterest;
+            /* 还款请求 */
+            VoRepayReq voRepayReq = new VoRepayReq();
+            voRepayReq.setInterestPercent(interestPercent);   // 赔偿利息
+            voRepayReq.setRepaymentId(borrowRepayment.getId());
+            voRepayReq.setUserId(borrowRepayment.getUserId());
+            voRepayReq.setIsUserOpen(false);
+            voRepayReqList.add(voRepayReq);
+        }
+        long repayMoney = repaymentTotal + penalty;/* 提前结清需还总金额 */
+        if (borrowAsset.getUseMoney() < (repayMoney)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "结清总共需要还款 " + repayMoney + " 元，您的账户余额不足，请先充值!！"));
+        }
+
+        //生成批次资产改变主记录
+        //生成提前结清记录
+        //提前结清操作
+        return ResponseEntity.ok(VoBaseResp.ok("提前结清成功!"));
+    }
+
+    /**
+     * 获取用户逾期费用
+     * 逾期规则: 未还款本金之和 * 0.4$ 的费用, 平台收取 0.2%, 出借人 0.2%
+     *
+     * @param borrowRepayment
+     * @param repaymentBorrow
+     * @return
+     */
+    private int calculateLateInterest(int lateDays, BorrowRepayment borrowRepayment, Borrow repaymentBorrow) {
+        if (0 == lateDays) {
+            return 0;
+        }
+
+        long overPrincipal = borrowRepayment.getPrincipal();
+        if (borrowRepayment.getOrder() < (repaymentBorrow.getTotalOrder() - 1)) { //
+            Specification<BorrowRepayment> brs = Specifications
+                    .<BorrowRepayment>and()
+                    .eq("borrowId", repaymentBorrow.getId())
+                    .eq("status", 0)
+                    .build();
+            List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
+            Preconditions.checkNotNull(borrowRepayment, "批量放款: 计算逾期费用时还款计划为空");
+            //剩余未还本金
+            overPrincipal = borrowRepaymentList.stream().mapToLong(w -> w.getPrincipal()).sum();
+        }
+
+        return new Double(MathHelper.myRound(overPrincipal * 0.004 * lateDays, 2)).intValue();
+    }
 
     /**
      * 理财首页标列表
@@ -1620,7 +1756,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @param voRepayAll
      * @return
      */
-    public ResponseEntity<VoBaseResp> checkRepayAll(VoRepayAll voRepayAll) {
+    public ResponseEntity<VoBaseResp> checkRepayAll(com.gofobao.framework.borrow.vo.request.VoRepayAll voRepayAll) {
         Long borrowId = voRepayAll.getBorrowId();
         Borrow borrow = borrowService.findByIdLock(borrowId);
         if ((borrow.getStatus() != 3) || (borrow.getType() != 0 && borrow.getType() != 4)) {
@@ -1649,7 +1785,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> repayAll(VoRepayAll voRepayAll) {
+    public ResponseEntity<VoBaseResp> repayAll(com.gofobao.framework.borrow.vo.request.VoRepayAll voRepayAll) {
 
         ResponseEntity resp = checkRepayAll(voRepayAll);
         if (!ObjectUtils.isEmpty(resp)) {

@@ -5,10 +5,9 @@ import com.gofobao.framework.api.model.batch_repay.Repay;
 import com.gofobao.framework.api.model.batch_repay_bail.RepayBail;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.repayment.entity.AdvanceAssetChange;
 import com.gofobao.framework.repayment.entity.RepayAssetChange;
-import com.gofobao.framework.repayment.vo.request.VoBatchBailRepayReq;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
-import com.gofobao.framework.repayment.vo.request.VoThirdBatchRepay;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
@@ -96,26 +95,18 @@ public interface BorrowRepaymentThirdBiz {
     void receivedRepay(List<Repay> repayList, Borrow borrow, String borrowAccountId, int order, double interestPercent, int lateDays, long lateInterest) throws Exception;
 
     /**
-     * 获取即信还款集合
+     * 生成担保人代偿记录
      *
-     * @param voThirdBatchRepay
+     * @param borrow
+     * @param order
+     * @param advanceAssetChanges
      * @return
-     * @throws Exception
      */
-    List<Repay> getRepayList(VoThirdBatchRepay voThirdBatchRepay) throws Exception;
+    List<BailRepay> calculateAdvancePlan(Borrow borrow, int order, List<AdvanceAssetChange> advanceAssetChanges) throws Exception;
 
     /**
-     * 获取担保人代偿集合
+     * 新版生成还款计划
      *
-     * @param voBatchBailRepayReq
-     * @return
-     * @throws Exception
-     */
-    List<BailRepay> getBailRepayList(VoBatchBailRepayReq voBatchBailRepayReq) throws Exception;
-
-
-    /**
-     *  新版生成还款计划
      * @param borrow
      * @param repayAccountId
      * @param order
@@ -125,11 +116,12 @@ public interface BorrowRepaymentThirdBiz {
      * @return
      * @throws Exception
      */
-    List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest, List<RepayAssetChange> repayAssetChanges) throws Exception ;
+    List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest, List<RepayAssetChange> repayAssetChanges) throws Exception;
 
 
     /**
-     *  生成借款人偿还担保人计划
+     * 生成借款人偿还担保人计划
+     *
      * @param borrow
      * @param repayAccountId
      * @param lateDays

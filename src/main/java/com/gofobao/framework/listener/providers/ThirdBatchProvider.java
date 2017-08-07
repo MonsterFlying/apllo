@@ -456,9 +456,7 @@ public class ThirdBatchProvider {
         // 批次担保人代偿操作
         //==================================================================
         if (CollectionUtils.isEmpty(failureTBailRepayOrderIds)) {
-            VoAdvanceCall voAdvanceCall = new VoAdvanceCall();
-            voAdvanceCall.setRepaymentId(repaymentId);
-            ResponseEntity<VoBaseResp> resp = repaymentBiz.advanceDeal(voAdvanceCall);
+            ResponseEntity<VoBaseResp> resp = repaymentBiz.newAdvanceDeal(repaymentId,batchNo);
             if (!ObjectUtils.isEmpty(resp)) {
                 log.error("批次担保人代偿操作：" + resp.getBody().getState().getMsg());
             } else {

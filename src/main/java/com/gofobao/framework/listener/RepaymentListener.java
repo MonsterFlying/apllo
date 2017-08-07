@@ -81,7 +81,7 @@ public class RepaymentListener {
                 try {
                     VoAdvanceReq voAdvanceReq = new VoAdvanceReq();
                     voAdvanceReq.setRepaymentId(NumberHelper.toLong(repaymentId));
-                    repaymentBiz.advance(voAdvanceReq);
+                    repaymentBiz.newAdvance(voAdvanceReq);
                 } catch (Exception e) {
                     log.error("RepaymentListener process error:", e);
                 }
