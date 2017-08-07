@@ -106,17 +106,17 @@ public enum AssetChangeTypeEnum {
     /**
      * 平台发放广富币兑换红包
      */
-    publishCurrencyExchangeRedpack("平台发放广富币兑换红包", "publishCurrencyExchangeRedpack", "2833", "sub@useMoney", "", "C"),
+    platformPublishCurrencyExchangeRedpack("平台发放广富币兑换红包", "publishCurrencyExchangeRedpack", "2833", "sub@useMoney", "", "C"),
 
     /**
      * 平台发放积分兑换红包
      */
-    publishIntegralExchangeRedpack("平台发放积分兑换红包", "publishIntegralExchangeRedpack", "2833", "sub@useMoney", "", "C"),
+    platformPublishIntegralExchangeRedpack("平台发放积分兑换红包", "platformPublishIntegralExchangeRedpack", "2833", "sub@useMoney", "", "C"),
 
     /**
      * 用户接受平台广富币兑换红包
      */
-    currencyExchangeRedpack("广富币兑换", "publishIntegralExchangeRedpack", "7833", "add@useMoney", "add@incomeOther", "D"),
+    currencyExchangeRedpack("广富币兑换", "platformPublishIntegralExchangeRedpack", "7833", "add@useMoney", "add@incomeOther", "D"),
 
     /**
      * 红包奖励

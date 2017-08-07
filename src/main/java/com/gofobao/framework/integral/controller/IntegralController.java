@@ -9,6 +9,7 @@ import com.gofobao.framework.integral.vo.response.VoListIntegralResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,7 @@ import java.util.Map;
 @RestController
 @RequestMapping
 @Api(description = "积分模块")
+@Slf4j
 public class IntegralController {
 
     @Autowired
@@ -63,7 +65,7 @@ public class IntegralController {
         try {
             return integralBiz.doTakeRates(voIntegralTakeReq);
         } catch (Throwable e) {
-            e.printStackTrace();
+            log.error("积分兑换", e);
         }
         return ResponseEntity
                 .badRequest()

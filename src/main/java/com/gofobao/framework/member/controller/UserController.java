@@ -10,6 +10,7 @@ import com.gofobao.framework.member.vo.request.VoBindEmailReq;
 import com.gofobao.framework.member.vo.request.VoBindPhone;
 import com.gofobao.framework.member.vo.request.VoBindSwitchPhoneReq;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
+import com.gofobao.framework.member.vo.response.VoOpenAccountInfo;
 import com.gofobao.framework.member.vo.response.VoSignInfoResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.ApiOperation;
@@ -38,8 +39,6 @@ public class UserController {
 
     @Autowired
     UserBiz userBiz ;
-
-
 
     @ApiOperation("更改手机号")
     @PostMapping("/user/phone/switch")
@@ -78,17 +77,25 @@ public class UserController {
     }
 
 
-
     @ApiOperation("更换手机下一步短信判断")
     @GetMapping("/user/phone/switchVerify/{smsCode}")
     public ResponseEntity<VoBaseResp> verfyUnBindPhoneMessage(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable("smsCode") String smsCode){
         return userPhoneBiz.verfyUnBindPhoneMessage(userId, smsCode) ;
     }
 
-
     @ApiOperation("获取用户配置信息")
     @PostMapping("/user/configInfo")
     public ResponseEntity<VoBasicUserInfoResp> getUserInfo(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         return userBiz.userInfo(userId) ;
     }
+
+
+    @ApiOperation("获取存管信息")
+    @PostMapping("/user/openAccountInfo")
+    public ResponseEntity<VoOpenAccountInfo> getOpenAccountInfo(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+        return userBiz.openAccountInfo(userId) ;
+    }
+
+
+
 }
