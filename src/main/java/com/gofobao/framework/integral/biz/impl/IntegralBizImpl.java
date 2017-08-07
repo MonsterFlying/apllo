@@ -9,6 +9,7 @@ import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.JixinContants;
@@ -61,19 +62,24 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Slf4j
 public class IntegralBizImpl implements IntegralBiz {
-
     @Autowired
     private IntegralService integralService;
+
     @Autowired
     private IntegralLogService integralLogService;
+
     @Autowired
     private AssetService assetService;
+
     @Autowired
     private DictService dictService;
+
     @Autowired
     private CapitalChangeHelper capitalChangeHelper;
+
     @Autowired
     private UserThirdAccountService userThirdAccountService;
+
     @Autowired
     private JixinManager jixinManager;
 
@@ -260,9 +266,6 @@ public class IntegralBizImpl implements IntegralBiz {
         }
 
         if (ObjectUtils.isEmpty(userThirdAccount)) {
-            log.error("================================积分兑换===================================");
-            log.error("当前用户未开户：用户id:" + userId);
-            log.error("===========================================================================");
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍候重试！"));
@@ -293,6 +296,7 @@ public class IntegralBizImpl implements IntegralBiz {
         String takeRatesStr = getTakeRates(collection, sumIntegral, integralRule);
         double takeRates = Double.parseDouble(takeRatesStr);//折现系数
         long money = Math.round(takeRates * integer);  // 可兑换金额
+
         //资金变动
         CapitalChangeEntity capitalChangeEntity = new CapitalChangeEntity();
         capitalChangeEntity.setType(CapitalChangeEnum.IntegralCash);

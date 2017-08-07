@@ -10,13 +10,13 @@ import lombok.Data;
  */
 @Data
 @ApiModel
-public class VoRechargeBankInfoResp extends VoBaseResp{
+public class VoAliPayRechargeInfo extends VoBaseResp{
     @ApiModelProperty("开户银行")
     private String bankName ;
 
     @ApiModelProperty("收款账号")
     private String name ;
 
-    @ApiModelProperty("开户银行")
+    @ApiModelProperty("账号")
     private String bankCardNo;
 }
