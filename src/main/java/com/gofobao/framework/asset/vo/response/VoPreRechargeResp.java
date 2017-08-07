@@ -28,4 +28,7 @@ public class VoPreRechargeResp extends VoBaseResp {
 
     @ApiModelProperty("银行logo")
     private String logo ;
+
+    @ApiModelProperty("充值至")
+    private String toRechargeBankNo ;
 }

@@ -260,9 +260,4 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
         return bySomeDayRes;
     }
 
-
-
-
-
-
 }

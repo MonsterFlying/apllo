@@ -12,7 +12,7 @@ public interface CurrencyLogService {
 
     List<CurrencyLog> findListByUserId(Long userId, Pageable pageable);
 
-    boolean insert(CurrencyLog currencyLog);
+    CurrencyLog insert(CurrencyLog currencyLog);
 
     boolean updateById(CurrencyLog currencyLog);
 }

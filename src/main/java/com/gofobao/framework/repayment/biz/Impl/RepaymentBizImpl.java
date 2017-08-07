@@ -539,8 +539,13 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Preconditions.checkNotNull(borrowCollectionList, "立即还款: 回款记录为空!");
         /* 是否垫付 */
         boolean advance = ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
+<<<<<<< HEAD
         //2.处理资金还款人、收款人资金变动
         batchAssetChangeHelper.batchAssetChangeAndCollection(repaymentId, batchNo, BatchAssetChangeContants.BATCH_LEND_REPAY);
+=======
+        // 2.处理资金还款人、收款人资金变动
+        batchAssetChangeHelper.batchAssetChange(repaymentId, batchNo, BatchAssetChangeContants.BATCH_LEND_REPAY);
+>>>>>>> a13e7a2db0cc85827be1dc1a5d594729bdad4e83
         //3.判断是否是还担保人垫付，垫付需要改变垫付记录状态
         //4.还款成功后变更改还款状态
         changeRepaymentAndAdvanceStatus(borrowRepayment);
@@ -556,8 +561,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
         updateUserCacheByReceivedRepay(borrowCollectionList, parentBorrow);
         //10.项目回款短信通知
         smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
+<<<<<<< HEAD
         //11.
 
+=======
+>>>>>>> a13e7a2db0cc85827be1dc1a5d594729bdad4e83
         return ResponseEntity.ok(VoBaseResp.ok("还款处理成功!"));
     }
 
@@ -1626,19 +1634,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
         // 生成还款记录
         doGenerateAssetChangeRecode(borrow, borrowRepayment, borrowRepayment.getUserId(), repayAssetChanges, batchAssetChange);
-        // 冻结还款金额
-        long money = new Double((freezeMoney) * 100).longValue();
-        AssetChange freezeAssetChange = new AssetChange();
-        freezeAssetChange.setForUserId(borrowRepayment.getUserId());
-        freezeAssetChange.setUserId(borrowRepayment.getUserId());
-        freezeAssetChange.setType(AssetChangeTypeEnum.freeze);
-        freezeAssetChange.setRemark(String.format("成功还款标的[%s]冻结资金%s元", borrow.getName(), StringHelper.formatDouble(money / 100D, true)));
-        freezeAssetChange.setSeqNo(assetChangeProvider.getSeqNo());
-        freezeAssetChange.setMoney(money);
-        freezeAssetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-        freezeAssetChange.setSourceId(borrowRepayment.getId());
-        assetChangeProvider.commonAssetChange(freezeAssetChange);
-
         // 申请即信还款冻结
         String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);
         BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
@@ -1652,6 +1647,18 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, balanceFreezeResp.getRetMsg()));
         }
+        // 冻结还款金额
+        long money = new Double((freezeMoney) * 100).longValue();
+        AssetChange freezeAssetChange = new AssetChange();
+        freezeAssetChange.setForUserId(borrowRepayment.getUserId());
+        freezeAssetChange.setUserId(borrowRepayment.getUserId());
+        freezeAssetChange.setType(AssetChangeTypeEnum.freeze);
+        freezeAssetChange.setRemark(String.format("成功还款标的[%s]冻结资金%s元", borrow.getName(), StringHelper.formatDouble(money / 100D, true)));
+        freezeAssetChange.setSeqNo(assetChangeProvider.getSeqNo());
+        freezeAssetChange.setMoney(money);
+        freezeAssetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+        freezeAssetChange.setSourceId(borrowRepayment.getId());
+        assetChangeProvider.commonAssetChange(freezeAssetChange);
 
         //批量放款
         Map<String, Object> acqResMap = new HashMap<>();

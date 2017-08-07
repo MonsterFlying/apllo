@@ -23,12 +23,9 @@ public class CurrencyLogServiceImpl implements CurrencyLogService {
         return currencyLogRepository.findByUserId(userId,pageable);
     }
 
-    public boolean insert(CurrencyLog currencyLog){
-        if (ObjectUtils.isEmpty(currencyLog)){
-            return false;
-        }
-        currencyLog.setId(null);
-        return !ObjectUtils.isEmpty(currencyLogRepository.save(currencyLog));
+    public CurrencyLog insert(CurrencyLog currencyLog){
+
+        return  currencyLogRepository.save(currencyLog);
     }
 
     public boolean updateById(CurrencyLog currencyLog){

@@ -25,6 +25,9 @@ public class UserAccountStatistics {
 
     private String investing_interest;
 
+    private String investing_principal;
+
+
     private String earned_interest;
 
     private String   current_money;

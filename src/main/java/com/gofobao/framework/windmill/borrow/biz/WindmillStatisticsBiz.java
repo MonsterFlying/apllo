@@ -2,6 +2,7 @@ package com.gofobao.framework.windmill.borrow.biz;
 
 import com.gofobao.framework.windmill.borrow.vo.response.ByDayStatistics;
 import com.gofobao.framework.windmill.borrow.vo.response.UserAccountStatistics;
+import com.gofobao.framework.windmill.user.vo.respones.VoNoticesRes;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -27,4 +28,11 @@ public interface WindmillStatisticsBiz {
      */
     UserAccountStatistics userStatistics(HttpServletRequest request);
 
+
+    /**
+     * 平台公告
+     * @param request )
+     * @return
+     */
+    VoNoticesRes noticesList(HttpServletRequest request);
 }
