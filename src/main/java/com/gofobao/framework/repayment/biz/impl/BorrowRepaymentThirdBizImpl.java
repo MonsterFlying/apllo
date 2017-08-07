@@ -944,7 +944,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 .<BorrowCollection>and()
                 .in("tenderId", tenderIds.toArray())
                 .eq("status", 0)
-                .eq("transferFlag", "0")
+                .eq("transferFlag", 0)
                 .eq("order", order)
                 .build();
 

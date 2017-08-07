@@ -105,7 +105,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
         log.info("============================================");
         String decryptStr = "";
         try {
-            decryptStr =StrToJsonStrUtil. commonDecryptStr(param);
+            decryptStr = StrToJsonStrUtil.commonDecryptStr(param);
             log.info("解密参数成功param:" + decryptStr);
         } catch (Exception e) {
             log.info("=====解密参数失败:param:" + param);
@@ -244,7 +244,6 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
 
     /**
      * 风车理财登录绑定
-     *
      * @param request
      * @param response
      * @param bindLoginReq
@@ -261,8 +260,6 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
         voLoginReq.setAccount(bindLoginReq.getUserName());
         voLoginReq.setPassword(bindLoginReq.getPassword());
         ResponseEntity entity = userBiz.login(request, response, voLoginReq);
-
-
         //登陸成功
         if (entity.getStatusCode() == HttpStatus.OK) {
             log.info("================用户登录成功===============");
@@ -442,7 +439,10 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             e.printStackTrace();
             return "load_error";
         }
+
+
     }
+
 
 
 }

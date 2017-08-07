@@ -71,10 +71,6 @@ public class WindmillUserController {
         response.sendRedirect(windmillUserBiz.login(request, response));
     }
 
-    @ApiOperation("查询用户账户信息")
-    @PostMapping("/user/basics/info")
-    public String userInfo(HttpServletRequest request) {
 
-        return "";
-    }
+
 }
