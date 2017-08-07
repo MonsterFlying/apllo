@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.servlet.http.HttpServletRequest;
@@ -47,6 +48,7 @@ import static java.util.stream.Collectors.groupingBy;
  */
 @SuppressWarnings("all")
 @Slf4j
+@Service
 public class WindmillTenderBizImpl implements WindmillTenderBiz {
     @Autowired
     private WindmillTenderService windmillTenderService;

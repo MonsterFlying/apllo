@@ -244,7 +244,6 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
 
     /**
      * 风车理财登录绑定
-     *
      * @param request
      * @param response
      * @param bindLoginReq
