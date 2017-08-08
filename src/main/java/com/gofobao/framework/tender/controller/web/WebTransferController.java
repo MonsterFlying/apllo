@@ -105,7 +105,11 @@ public class WebTransferController {
     public ResponseEntity<VoBaseResp> pcTransferTender(@ModelAttribute @Valid VoTransferTenderReq voTransferTenderReq,
                                                        @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voTransferTenderReq.setUserId(userId);
-        return transferBiz.transferTender(voTransferTenderReq);
+        try {
+            return transferBiz.newTransferTender(voTransferTenderReq);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后重试!"));
+        }
     }
 
     /**

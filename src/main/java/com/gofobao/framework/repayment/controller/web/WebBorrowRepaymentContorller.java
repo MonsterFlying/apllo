@@ -1,5 +1,6 @@
 package com.gofobao.framework.repayment.controller.web;
 
+import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
 import com.gofobao.framework.collection.vo.request.VoCollectionListReq;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
@@ -65,6 +66,16 @@ public class WebBorrowRepaymentContorller {
         return repaymentBiz.orderList(voCollectionListReq);
     }
 
+    @PostMapping("/pub/pc/repay/all")
+    @ApiOperation("提前还款")
+    public ResponseEntity<VoBaseResp> pcRepayAll(@Valid @ModelAttribute VoRepayAllReq voRepayAllReq) {
+        try {
+            return repaymentBiz.pcRepayAll(voRepayAllReq);
+        } catch (Throwable e) {
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "提前还款失败！"));
+        }
+    }
 
     /**
      * 立即还款

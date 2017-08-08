@@ -1,5 +1,8 @@
 package com.gofobao.framework.repayment.biz;
 
+import com.gofobao.framework.asset.entity.BatchAssetChange;
+import com.gofobao.framework.borrow.entity.Borrow;
+import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
 import com.gofobao.framework.collection.vo.request.VoCollectionListReq;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
@@ -11,6 +14,7 @@ import com.gofobao.framework.repayment.vo.response.VoViewRepaymentOrderDetailWar
 import com.gofobao.framework.repayment.vo.response.pc.VoViewCollectionWarpRes;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewOrderListWarpRes;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -18,6 +22,33 @@ import javax.servlet.http.HttpServletResponse;
  * Created by admin on 2017/6/5.
  */
 public interface RepaymentBiz {
+
+    /**
+     * 提前结清处理
+     *
+     * @param borrowId
+     */
+    ResponseEntity<VoBaseResp> repayAllDeal(long borrowId,long batchNo) throws Exception;
+
+    /**
+     * pc提前结清
+     *
+     * @param voRepayAllReq
+     * @return
+     * @throws Exception
+     */
+    ResponseEntity<VoBaseResp> pcRepayAll(VoRepayAllReq voRepayAllReq) throws Exception;
+
+    /**
+     * 提前结清
+     *
+     * @param borrowId
+     * @return
+     * @throws Exception
+     */
+    @Transactional(rollbackFor = Exception.class)
+    ResponseEntity<VoBaseResp> repayAll(long borrowId) throws Exception;
+
 
     /**
      * 还款计划列表
@@ -130,6 +161,7 @@ public interface RepaymentBiz {
      * @throws Exception
      */
     ResponseEntity<VoBaseResp> newAdvance(VoAdvanceReq voAdvanceReq) throws Exception;
+
 
     /**
      * pc 立即还款

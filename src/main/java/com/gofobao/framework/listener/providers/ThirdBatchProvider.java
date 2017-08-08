@@ -307,7 +307,7 @@ public class ThirdBatchProvider {
         //处理失败批次
         //五分钟处理一次
         if (!CollectionUtils.isEmpty(failureTRepayAllOrderIds)) {
-            //推送队列结束债权
+            //推送队列重新发起全部结清
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_REPAYMENT);
             mqConfig.setTag(MqTagEnum.REPAY_ALL);
@@ -328,9 +328,12 @@ public class ThirdBatchProvider {
         //==================================================================
         if (CollectionUtils.isEmpty(failureTRepayAllOrderIds)) {
             //提前结清操作
-            VoRepayAll voRepayAll = new VoRepayAll();
-            voRepayAll.setBorrowId(borrowId);
-            ResponseEntity<VoBaseResp> resp = borrowBiz.repayAll(voRepayAll);
+            ResponseEntity<VoBaseResp> resp = null;
+            try {
+                resp = repaymentBiz.repayAll(borrowId);
+            } catch (Exception e) {
+                log.error("批次还款处理(提前结清)异常:",e);
+            }
             if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
                 log.error("批次还款处理(提前结清)异常:" + resp.getBody().getState().getMsg());
             } else {
@@ -434,9 +437,9 @@ public class ThirdBatchProvider {
             borrowCollectionService.save(successBorrowCollectionList);
         }
 
-        //处理失败批次
+        //推送垫付队列
         if (!CollectionUtils.isEmpty(failureTBailRepayOrderIds)) {
-            //推送队列结束债权
+            //推送垫付队列
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_REPAYMENT);
             mqConfig.setTag(MqTagEnum.ADVANCE);
@@ -456,7 +459,7 @@ public class ThirdBatchProvider {
         // 批次担保人代偿操作
         //==================================================================
         if (CollectionUtils.isEmpty(failureTBailRepayOrderIds)) {
-            ResponseEntity<VoBaseResp> resp = repaymentBiz.newAdvanceDeal(repaymentId,batchNo);
+            ResponseEntity<VoBaseResp> resp = repaymentBiz.newAdvanceDeal(repaymentId, batchNo);
             if (!ObjectUtils.isEmpty(resp)) {
                 log.error("批次担保人代偿操作：" + resp.getBody().getState().getMsg());
             } else {
@@ -516,7 +519,7 @@ public class ThirdBatchProvider {
         // 批次还款处理
         //==================================================================
         if (CollectionUtils.isEmpty(failureTRepayOrderIds)) {
-            ResponseEntity<VoBaseResp> resp = repaymentBiz.newRepayDeal(repaymentId,batchNo);
+            ResponseEntity<VoBaseResp> resp = repaymentBiz.newRepayDeal(repaymentId, batchNo);
             if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
                 log.error("批次还款处理:" + resp.getBody().getState().getMsg());
             } else {

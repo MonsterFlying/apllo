@@ -1,7 +1,7 @@
 package com.gofobao.framework.listener;
 
 import com.gofobao.framework.borrow.biz.BorrowBiz;
-import com.gofobao.framework.borrow.vo.request.VoRepayAll;
+import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnumContants;
@@ -53,14 +53,17 @@ public class RepaymentListener {
 
         String borrowId = StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID));
         String repaymentId = StringHelper.toString(msg.get(MqConfig.MSG_REPAYMENT_ID));
-        if (tag.equals(MqTagEnum.REPAY_ALL.getValue())) {  // 自动投标
+        if (tag.equals(MqTagEnum.REPAY_ALL.getValue())) {  // 提前结清
             if (!StringUtils.isEmpty(borrowId)) {
                 //=========================================
                 // 提前结清
                 //=========================================
-                VoRepayAll voRepayAll = new VoRepayAll();
-                voRepayAll.setBorrowId(NumberHelper.toLong(borrowId));
-                borrowBiz.repayAll(voRepayAll);
+                try {
+                    repaymentBiz.repayAll(NumberHelper.toLong(borrowId));
+                } catch (Exception e) {
+                    log.error(String.format("提前结清异常：borrowId%s", borrowId));
+                    log.error("repaymentListener process error:", e);
+                }
             }
         } else if (tag.equals(MqTagEnum.REPAY_ADVANCE.getValue())) {
             if (!StringUtils.isEmpty(repaymentId)) {
@@ -87,7 +90,7 @@ public class RepaymentListener {
                 }
             }
         } else if (tag.equals(MqTagEnum.REPAY.getValue())) {
-            if (!StringUtils.isEmpty(repaymentId)){
+            if (!StringUtils.isEmpty(repaymentId)) {
                 try {
                     BorrowRepayment borrowRepayment = borrowRepaymentService.findById(NumberHelper.toLong(repaymentId));
                     VoRepayReq voRepayReq = new VoRepayReq();
