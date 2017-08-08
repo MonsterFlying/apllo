@@ -122,15 +122,6 @@ public interface RepaymentBiz {
     ResponseEntity<VoBaseResp> newRepayDeal(long repaymentId, long batchNo) throws Exception;
 
     /**
-     * 还款处理
-     *
-     * @param voRepayReq
-     * @return
-     * @throws Exception
-     */
-    ResponseEntity<VoBaseResp> repayDeal(VoRepayReq voRepayReq) throws Exception;
-
-    /**
      * 当前应还款日期
      *
      * @param userId

@@ -11,9 +11,8 @@ import java.util.List;
  * Created by Zeke on 2017/6/7.
  */
 public interface AdvanceLogService {
-    boolean insert(AdvanceLog advanceLog);
 
-    boolean updateById(AdvanceLog advanceLog);
+    AdvanceLog save(AdvanceLog advanceLog);
 
     AdvanceLog findById(Long id);
 

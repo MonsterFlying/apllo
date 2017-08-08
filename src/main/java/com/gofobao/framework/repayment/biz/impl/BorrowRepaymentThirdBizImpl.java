@@ -24,8 +24,9 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
-import com.gofobao.framework.common.capital.CapitalChangeEntity;
-import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.assets.AssetChange;
+import com.gofobao.framework.common.assets.AssetChangeProvider;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
@@ -39,7 +40,6 @@ import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
-import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.AdvanceAssetChange;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.entity.RepayAssetChange;
@@ -117,6 +117,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     private ThirdBatchLogBiz thirdBatchLogBiz;
     @Autowired
     private CapitalChangeHelper capitalChangeHelper;
+    @Autowired
+    private AssetChangeProvider assetChangeProvider;
 
     @Autowired
     private TransferBiz transferBiz;
@@ -254,11 +256,12 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         }
 
         Map<String, Object> acqResMap = GSON.fromJson(repayCheckResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
+        long repaymentId = NumberHelper.toLong(acqResMap.get("repaymentId"));
         if (!JixinResultContants.SUCCESS.equals(repayCheckResp.getRetCode())) {
             log.error("=============================即信批次还款检验参数回调===========================");
             log.error("回调失败! msg:" + repayCheckResp.getRetMsg());
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), NumberHelper.toLong(acqResMap.get("repaymentId")), 2);
+            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), repaymentId, 2);
             long userId = NumberHelper.toLong(acqResMap.get("userId"));
             UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(userId);
             String freezeOrderId = StringHelper.toString(acqResMap.get("freezeOrderId"));
@@ -279,15 +282,17 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 log.error("===========================================================================");
                 return ResponseEntity.ok("error");
             }
-            //解除本地冻结
             //立即还款冻结
-            CapitalChangeEntity entity = new CapitalChangeEntity();
-            entity.setType(CapitalChangeEnum.Unfrozen);
-            entity.setUserId(userId);
-            entity.setMoney(new Double(NumberHelper.toDouble(freezeMoney) * 100).longValue());
-            entity.setRemark("即信批次还款解除冻结可用资金");
+            AssetChange assetChange = new AssetChange();
+            assetChange.setType(AssetChangeTypeEnum.unfreeze);  // 招标失败解除冻结资金
+            assetChange.setUserId(userId);
+            assetChange.setMoney(new Double(NumberHelper.toDouble(freezeMoney) * 100).longValue());
+            assetChange.setRemark("即信批次还款解除冻结可用资金");
+            assetChange.setSourceId(repaymentId);
+            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+            assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
             try {
-                capitalChangeHelper.capitalChange(entity);
+                assetChangeProvider.commonAssetChange(assetChange);
             } catch (Exception e) {
                 log.error("即信批次还款解除冻结可用资金异常:", e);
             }
@@ -431,6 +436,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
     /**
      * 生成担保人代偿记录
+     *
      * @param borrow
      * @param order
      * @param advanceAssetChanges
@@ -518,6 +524,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         }
         return bailRepayList;
     }
+
     /**
      * 获取担保人代偿集合
      *
@@ -725,13 +732,16 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             //解除本地冻结
             //立即还款冻结
             long frozenMoney = new Double(NumberHelper.toDouble(txAmount) * 100).longValue();
-            CapitalChangeEntity entity = new CapitalChangeEntity();
-            entity.setType(CapitalChangeEnum.Unfrozen);
-            entity.setUserId(bailUserThirdAccount.getUserId());
-            entity.setMoney(frozenMoney);
-            entity.setRemark("担保人垫付解除冻结可用资金");
+            AssetChange assetChange = new AssetChange();
+            assetChange.setType(AssetChangeTypeEnum.unfreeze);  // 招标失败解除冻结资金
+            assetChange.setUserId(bailUserThirdAccount.getUserId());
+            assetChange.setMoney(frozenMoney);
+            assetChange.setRemark("担保人垫付解除冻结可用资金");
+            assetChange.setSourceId(repaymentId);
+            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+            assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
             try {
-                capitalChangeHelper.capitalChange(entity);
+                assetChangeProvider.commonAssetChange(assetChange);
             } catch (Exception e) {
                 log.error("担保人垫付解除冻结可用资金异常:", e);
             }
@@ -876,14 +886,16 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 return ResponseEntity.ok("error");
             }
             //解除本地冻结
-            //立即还款冻结
-            CapitalChangeEntity entity = new CapitalChangeEntity();
-            entity.setType(CapitalChangeEnum.Unfrozen);
-            entity.setUserId(userId);
-            entity.setMoney(new Double(NumberHelper.toDouble(freezeMoney) * 100).longValue());
-            entity.setRemark("批次融资人还担保账户垫款解除冻结可用资金");
+            AssetChange assetChange = new AssetChange();
+            assetChange.setType(AssetChangeTypeEnum.unfreeze);  // 招标失败解除冻结资金
+            assetChange.setUserId(userId);
+            assetChange.setMoney(new Double(NumberHelper.toDouble(freezeMoney) * 100).longValue());
+            assetChange.setRemark("批次融资人还担保账户垫款解除冻结可用资金");
+            assetChange.setSourceId(repaymentId);
+            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+            assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
             try {
-                capitalChangeHelper.capitalChange(entity);
+                assetChangeProvider.commonAssetChange(assetChange) ;
             } catch (Exception e) {
                 log.error("批次融资人还担保账户垫款解除冻结可用资金异常:", e);
             }
@@ -1004,7 +1016,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Exception.class)
-    public List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest,double interestPercent, List<RepayAssetChange> repayAssetChanges) throws Exception {
+    public List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest, double interestPercent, List<RepayAssetChange> repayAssetChanges) throws Exception {
         List<Repay> repayList = new ArrayList<>();
         Specification<Tender> specification = Specifications
                 .<Tender>and()
@@ -1057,7 +1069,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             if (tender.getTransferFlag() == 2) {  // 已经转让的债权, 可以跳过还款
                 continue;
             }
-            inIn = (long) MathHelper.myRound(borrowCollection.getInterest() * interestPercent,0); // 还款利息
+            inIn = (long) MathHelper.myRound(borrowCollection.getInterest() * interestPercent, 0); // 还款利息
             inPr = borrowCollection.getPrincipal(); // 还款本金
             repayAssetChange.setUserId(tender.getUserId());
             repayAssetChange.setInterest(inIn);
@@ -1147,18 +1159,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             }
 
             if (tender.getTransferFlag() == 2) {  // 出现转让后, 需要递归处理
-                Specification<Borrow> bs = Specifications
-                        .<Borrow>and()
-                        .eq("tenderId", tender.getId())
-                        .eq("status", 3)
-                        .build();
-                List<Borrow> borrowTranferedList = borrowService.findList(bs);
-                Preconditions.checkNotNull(borrowTranferedList, "借款人向到担保人还款计划: 查询转让标的为空");
-                Borrow borrowTranfered = borrowTranferedList.get(0);
-                int tranferedOrder = order + borrowTranfered.getTotalOrder() - borrow.getTotalOrder();
-                int tranferedInterest = new Double(tender.getValidMoney() / new Double(borrow.getMoney()) * lateInterest).intValue();  // 本期分到的逾期收益
-                List<RepayBail> tranferedRepayBailList = calculateRepayBailPlan(borrowTranfered, repayAccountId, lateDays, tranferedOrder, tranferedInterest);
-                repayBailList.addAll(tranferedRepayBailList);
                 continue;
             }
 

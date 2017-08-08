@@ -39,7 +39,7 @@ public interface VirtualService {
     List<VirtualBorrowRes>list();
 
 
-    Boolean tenderCreate(VoVirtualReq voVirtualReq);
+    Boolean tenderCreate(VoVirtualReq voVirtualReq) throws Exception;
 
     /**
      * 奖励统计
