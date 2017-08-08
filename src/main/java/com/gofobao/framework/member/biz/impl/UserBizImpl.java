@@ -104,6 +104,9 @@ public class UserBizImpl implements UserBiz {
     @Value("${gofobao.imageDomain}")
     String imageDomain;
 
+    @Value("${gofobao.javaDomain}")
+    String javaDomain;
+
     @Autowired
     AuthenticationManager authenticationManager;
 
@@ -398,9 +401,10 @@ public class UserBizImpl implements UserBiz {
         voOpenAccountInfo.setRealName(String.format("*%s", userThirdAccount.getName()));
         voOpenAccountInfo.setPasswordState(userThirdAccount.getPasswordState() == 1);
         voOpenAccountInfo.setPhone(userThirdAccount.getMobile().replaceAll("(\\d{3})\\d{4}(\\d{4})", "$1****$2"));
+        voOpenAccountInfo.setSignedState(userThirdAccount.getAutoTransferState() == 1 && userThirdAccount.getAutoTransferState() == 1);
         if (userThirdAccount.getCardNoBindState() == 1) {
             voOpenAccountInfo.setBankName(userThirdAccount.getBankName());
-            voOpenAccountInfo.setBankLogo(userThirdAccount.getBankLogo());
+            voOpenAccountInfo.setBankLogo(String.format("%s%s", javaDomain, userThirdAccount.getBankLogo()));
             voOpenAccountInfo.setBankNo(userThirdAccount.getCardNo().substring(userThirdAccount.getCardNo().length() - 5));
         } else {
             voOpenAccountInfo.setBankName("");

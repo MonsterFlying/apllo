@@ -10,7 +10,7 @@ public class BySomeDay {
 
     private Long borrowId;
 
-    private String index;
+    private Long index;
 
     private String invest_user;
 

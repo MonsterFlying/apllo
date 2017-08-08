@@ -9,7 +9,9 @@ import com.gofobao.framework.tender.repository.TenderRepository;
 import com.gofobao.framework.windmill.borrow.service.WindmillTenderService;
 import com.gofobao.framework.windmill.borrow.vo.request.BackRecordsReq;
 import com.gofobao.framework.windmill.borrow.vo.request.UserTenderLogReq;
+import com.gofobao.framework.windmill.util.WrbCoopDESUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -18,6 +20,7 @@ import org.springframework.util.StringUtils;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,12 +36,15 @@ public class WindmillTenderServiceImpl implements WindmillTenderService {
     @Autowired
     private TenderRepository tenderRepository;
 
+    @Value("${windmill.local-des-key}")
+    private String localDesKey;
 
     @Autowired
     private BorrowCollectionRepository borrowCollectionRepository;
 
     /**
      * 5.6投资记录查询接口
+     *
      * @param tenderLogReq
      * @return
      */
@@ -47,10 +53,9 @@ public class WindmillTenderServiceImpl implements WindmillTenderService {
 
         List<Tender> resultTenders;
 
-        StringBuilder sql = new StringBuilder("SELECT t from Tender t WHERE 1=1 AND t.userId=:userId t.status=:status ");
+        StringBuilder sql = new StringBuilder("SELECT t FROM Tender t WHERE 1=1 AND t.userId=:userId AND t.status=:status ");
         //  如果传了id，只查询该用户这个id的记录
-        if (!StringUtils.isEmpty(tenderLogReq.getInvest_record_id())) {
-
+        if (StringUtils.isEmpty(tenderLogReq.getInvest_record_id())) {
             //時間條件的判斷
             String startAt = "";
             String endAt = "";
@@ -86,26 +91,35 @@ public class WindmillTenderServiceImpl implements WindmillTenderService {
                 } else {//已回款
                     state = TenderConstans.SETTLE;
                 }
-                sql.append(" AND t.status= " + state);
+                sql.append(" AND t.state= " + state);
             }
+            sql.append(" order by id desc ");
             Query query = entityManager.createQuery(sql.toString(), Tender.class);
             query.setParameter("status", TenderConstans.SUCCESS);
             query.setParameter("userId", tenderLogReq.getPf_user_id());
-            if (tenderLogReq.getInvest_status() != 2) {
-                query.setFirstResult(tenderLogReq.getLimit());
-                query.setMaxResults(tenderLogReq.getOffset());
+
+            if (StringUtils.isEmpty(tenderLogReq.getInvest_status()) || tenderLogReq.getInvest_status() != 2) {
+                query.setFirstResult(tenderLogReq.getOffset());
+                query.setMaxResults(tenderLogReq.getLimit());
             }
             resultTenders = query.getResultList();
         } else {
             sql.append(" AND t.id=:id");
+            sql.append(" order by id desc ");
             Query query = entityManager.createQuery(sql.toString(), Tender.class);
             query.setParameter("status", TenderConstans.SUCCESS);
             query.setParameter("userId", tenderLogReq.getPf_user_id());
-            query.setParameter("id", tenderLogReq.getInvest_record_id());
+            try {
+                query.setParameter("id", Long.valueOf(WrbCoopDESUtil.desDecrypt(localDesKey, tenderLogReq.getInvest_record_id())));
+            } catch (Exception e) {
+            }
             resultTenders = query.getResultList();
         }
+        if (CollectionUtils.isEmpty(resultTenders)) {
+            return Collections.EMPTY_LIST;
+        }
         //预期中的标
-        if (tenderLogReq.getInvest_status() == 2) {
+        if (!StringUtils.isEmpty(tenderLogReq.getInvest_status()) && tenderLogReq.getInvest_status() == 2) {
             List<Long> ids = resultTenders.stream().map(m -> m.getId()).collect(Collectors.toList());
             Specification specification = Specifications.<BorrowCollection>and()
                     .in("tenderId", ids.toArray())
@@ -122,7 +136,8 @@ public class WindmillTenderServiceImpl implements WindmillTenderService {
     }
 
     /**
-     *  5.7投资记录回款计划
+     * 5.7投资记录回款计划
+     *
      * @param backRecordsReq
      * @return
      */

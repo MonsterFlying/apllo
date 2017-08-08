@@ -33,7 +33,7 @@ public class BorrowCancelScheduler {
     @Autowired
     private BorrowBiz borrowBiz;
 
-    @Scheduled(cron = "0 2 0 * * ? ")
+    @Scheduled(fixedRate=50000)
     public void process() {
         Specification<Borrow> bs = Specifications
                 .<Borrow>and()

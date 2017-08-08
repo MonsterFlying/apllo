@@ -14,10 +14,10 @@ import com.gofobao.framework.windmill.borrow.biz.WindmillBorrowBiz;
 import com.gofobao.framework.windmill.borrow.service.WindmillBorrowService;
 import com.gofobao.framework.windmill.borrow.vo.request.BySomeDayReq;
 import com.gofobao.framework.windmill.borrow.vo.response.*;
-import com.gofobao.framework.windmill.user.vo.request.UserRegisterReq;
 import com.gofobao.framework.windmill.util.StrToJsonStrUtil;
 import com.gofobao.framework.windmill.util.WrbCoopDESUtil;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,7 +56,11 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
     @Autowired
     private BorrowService borrowService;
 
+    @Value("${windmill.des-key}")
+    private String desKey;
+
     private static final Gson GSON = new Gson();
+
 
     /**
      * @param request
@@ -66,19 +70,20 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
     public InvestListRes list(HttpServletRequest request) {
         InvestListRes investListRes = new InvestListRes();
         do {
-            Map<String, String> paramMap;
+            Map<String, Object> paramMap = Maps.newHashMap();
             try {
-                String paramStr = StrToJsonStrUtil.commonDecryptStr(request.getParameter("param").toString());
-                paramMap = GSON.fromJson(paramStr, new TypeToken<UserRegisterReq>() {
-                }.getType());
+                String paramStr = request.getParameter("param").toString();
+                if (!StringUtils.isEmpty(paramStr)) {
+                    paramMap = StrToJsonStrUtil.commonUrlParamToMap(paramStr, desKey);
 
+                }
             } catch (Exception e) {
                 investListRes.setRetcode(VoBaseResp.ERROR);
                 investListRes.setRetmsg("平台转json失败");
                 break;
             }
             try {
-                List<Borrow> borrows = windmillBorrowService.list(Long.valueOf(paramMap.get("invest_id").toString()));
+                List<Borrow> borrows = windmillBorrowService.list(StringUtils.isEmpty(paramMap.get("invest_id")) ? null : Long.valueOf(paramMap.get("invest_id").toString()));
                 if (CollectionUtils.isEmpty(borrows)) {
                     investListRes.setRetcode(VoBaseResp.ERROR);
                     investListRes.setRetmsg("当前没可投标");
@@ -88,13 +93,13 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
                 borrows.stream().forEach(p -> {
                     try {
                         Invest invest = new Invest();
-                        invest.setInvest_id(WrbCoopDESUtil.desEncrypt(localDesKey, p.getId().toString()));
+                        invest.setInvest_id(p.getId().toString());
                         invest.setInvest_title(p.getName());
                         invest.setInvest_url(h5Address + "#/borrow/" + p.getId());
                         invest.setTime_limit(p.getTimeLimit());
                         invest.setTime_limit_desc(p.getTimeLimit() + BorrowContants.DAY);
                         invest.setBuy_limit(p.getMost() == 0 ? "" : StringHelper.formatDouble(p.getMost() / 100D, false));
-                        invest.setBuy_unit(p.getMost() == 0 ? "" : StringHelper.formatDouble(p.getMost() / 100D, false));
+                        invest.setBuy_unit(p.getLowest() == 0 ? "" : StringHelper.formatDouble(p.getLowest() / 100D, false));
                         invest.setInvested_amount(StringHelper.formatMon(p.getMoneyYes() / 100D));
                         invest.setTotal_amount(StringHelper.formatMon(p.getMoney() / 100D));
                         invest.setRate(StringHelper.formatDouble(p.getApr() / 100D, false));
@@ -147,21 +152,20 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
 
         BorrowTenderList borrowTenderList = new BorrowTenderList();
 
-        Map<String, String> paramMap;
+        Map<String, Object> paramMap;
         try {
-            String paramStr = StrToJsonStrUtil.commonDecryptStr(request.getParameter("param").toString());
-            paramMap = GSON.fromJson(paramStr, new TypeToken<Map<String, String>>() {
-            }.getType());
+            String paramStr = request.getParameter("param").toString();
+            paramMap = StrToJsonStrUtil.commonUrlParamToMap(paramStr, desKey);
+
 
         } catch (Exception e) {
+            e.printStackTrace();
             borrowTenderList.setRetcode(VoBaseResp.ERROR);
             borrowTenderList.setRetmsg("平台转json失败");
             return borrowTenderList;
         }
-
-        Long borrowId = Long.valueOf(paramMap.get("id"));
-        List<Tender> tenders = windmillBorrowService.tenderList(borrowId, paramMap.get("start_time"));
-
+        Long borrowId = Long.valueOf(paramMap.get("id").toString());
+        List<Tender> tenders = windmillBorrowService.tenderList(borrowId, paramMap.get("start_time").toString());
         if (CollectionUtils.isEmpty(tenders)) {
             borrowTenderList.setRetcode(VoBaseResp.OK);
             borrowTenderList.setRetmsg("没有查询到当前标的投标记录");
@@ -175,7 +179,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
         tenders.forEach(p -> {
             VoTender tender = new VoTender();
             try {
-                tender.setIndex(WrbCoopDESUtil.desEncrypt(localDesKey, p.getId().toString()));
+                tender.setIndex( p.getId());
                 tender.setInvest_money(StringHelper.formatDouble(p.getValidMoney(), false));
                 tender.setInvest_time(DateHelper.dateToString(p.getCreatedAt()));
                 Users tempUser = usersMap.get(p.getUserId());
@@ -210,8 +214,9 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
         BySomeDayRes bySomeDayRes = new BySomeDayRes();
         BySomeDayReq someDayReq;
         try {
-            String paramStr = StrToJsonStrUtil.commonDecryptStr(request.getParameter("param").toString());
-            someDayReq = GSON.fromJson(paramStr, new TypeToken<BySomeDayReq>() {
+            String paramStr = request.getParameter("param").toString();
+            Map<String,Object>paramMap= StrToJsonStrUtil.commonUrlParamToMap(paramStr, desKey);
+            someDayReq = GSON.fromJson(GSON.toJson(paramMap), new TypeToken<BySomeDayReq>() {
             }.getType());
 
         } catch (Exception e) {
@@ -236,7 +241,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
                 try {
                     BySomeDay bySomeDay = new BySomeDay();
                     bySomeDay.setBorrowId(p.getBorrowId());
-                    bySomeDay.setIndex(WrbCoopDESUtil.desEncrypt(p.getId().toString(), localDesKey));
+                    bySomeDay.setIndex(p.getId());
                     bySomeDay.setInvest_money(StringHelper.formatDouble(p.getValidMoney(), false));
                     bySomeDay.setInvest_time(DateHelper.dateToString(p.getCreatedAt()));
                     bySomeDay.setBid_id(h5Address + "#/borrow/" + p.getBorrowId());
@@ -255,7 +260,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
             return bySomeDayRes;
         }
         bySomeDayRes.setRetcode(VoBaseResp.OK);
-        bySomeDayRes.setRetmsg("当前没有用户投资");
+        bySomeDayRes.setRetmsg("查询成功");
         bySomeDayRes.setInvest_list(invest_list);
         return bySomeDayRes;
     }

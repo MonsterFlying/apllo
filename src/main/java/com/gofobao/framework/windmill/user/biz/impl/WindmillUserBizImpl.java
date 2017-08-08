@@ -67,7 +67,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
 
     //加密key
     @Value("${windmill.des-key}")
-    private static String desKey;
+    private  String desKey;
 
     //风车理财请求地址
     @Value("${windmill.request-address}")
@@ -103,16 +103,17 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
         log.info("============================================");
         log.info("===============风车理财用户注册===============");
         log.info("============================================");
-        String decryptStr = "";
+
+        Map<String,Object>decryptMap=Maps.newHashMap();
         try {
-            decryptStr = StrToJsonStrUtil.commonDecryptStr(param);
-            log.info("解密参数成功param:" + decryptStr);
+            decryptMap = StrToJsonStrUtil.commonUrlParamToMap(param,desKey);
+            log.info("解密参数成功param:" + GSON.toJson(decryptMap));
         } catch (Exception e) {
             log.info("=====解密参数失败:param:" + param);
         }
         do {
             try {
-                registerReq = GSON.fromJson(decryptStr, new TypeToken<UserRegisterReq>() {
+                registerReq = GSON.fromJson(GSON.toJson(decryptMap), new TypeToken<UserRegisterReq>() {
                 }.getType());
             } catch (Exception e) {
                 registerRes.setRetcode(UserRegisterConstant.ORTHER_ERROR);
@@ -265,15 +266,16 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             log.info("================用户登录成功===============");
             VoBasicUserInfoResp userInfoResp = (VoBasicUserInfoResp) entity.getBody();
             try {
-                String desDecryptStr = StrToJsonStrUtil.commonDecryptStr(bindLoginReq.getParams());
-                log.info("解密后的参数：param:" + desDecryptStr);
-                UserRegisterReq userRegisterReq = GSON.fromJson(desDecryptStr, new TypeToken<UserRegisterReq>() {
+                Map<String,Object> desDecryptMap = StrToJsonStrUtil.commonUrlParamToMap(bindLoginReq.getParams(),desKey);
+
+                log.info("解密后的参数：param:" + GSON.toJson(desDecryptMap));
+                UserRegisterReq userRegisterReq = GSON.fromJson(GSON.toJson(desDecryptMap), new TypeToken<UserRegisterReq>() {
                 }.getType());
                 Users user = userService.findByAccount(bindLoginReq.getUserName());
                 String userName = StringUtils.isEmpty(user.getUsername()) ? user.getPhone() : user.getUsername();
                 //拼接参数
                 String requestParam = "wrb_user_id=" + userRegisterReq.getWrb_user_id() +
-                        "&pf_user_id=" + WrbCoopDESUtil.desEncrypt(localDesKey, user.getId().toString()) +
+                        "&pf_user_id=" +user.getId() +
                         "&pf_user_name=" + userName +
                         "&reg_time=" + DateHelper.dateToString(user.getCreatedAt());
                 //加密参数
@@ -303,12 +305,8 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
                             user.setEmail(userRegisterReq.getEmail());
                         }
                         userService.save(user);
-
-
                         final String token = jwtTokenHelper.generateToken(user, 3);
                         response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
-
-
                         // 触发登录队列
                         MqConfig mqConfig = new MqConfig();
                         mqConfig.setTag(MqTagEnum.LOGIN);
@@ -362,10 +360,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
         String getParamStr = request.getParameter("param");
         try {
             log.info("=============风车理财用户登录请求=============");
-            String jsonStr = StrToJsonStrUtil.commonDecryptStr(getParamStr);
-            Map<String, Object> resultMaps = GSON.fromJson(jsonStr, new TypeToken<Map<String, Object>>() {
-            }.getType());
-
+            Map<String,Object> resultMaps= StrToJsonStrUtil.commonUrlParamToMap(getParamStr,desKey);
             String ticket = resultMaps.get("ticket").toString();
             //用户要访问的链接
             String targetUrl = resultMaps.get("target_url").toString();

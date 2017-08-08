@@ -10,7 +10,7 @@ import java.util.List;
  */
 @Data
 public class InvestRecordsRes {
-    private String pf_user_id;
+    private Long pf_user_id;
 
     private Long retcode;
 

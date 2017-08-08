@@ -175,13 +175,13 @@ public class ThirdBatchProvider {
 
         //不存在失败批次进行后续操作
         switch (thirdBatchLog.getType()) {
-            case ThirdBatchLogContants.BATCH_CREDIT_INVEST: //投资人批次购买债权
+            case ThirdBatchLogContants.BATCH_CREDIT_INVEST: // 投资人批次购买债权
                 //=====================================================
                 // 批次债权转让结果处理
                 //=====================================================
                 newCreditInvestDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
                 break;
-            case ThirdBatchLogContants.BATCH_LEND_REPAY: //即信批次放款
+            case ThirdBatchLogContants.BATCH_LEND_REPAY: // 即信批次放款
                 //=====================================================
                 // 即信批次放款结果处理
                 //=====================================================

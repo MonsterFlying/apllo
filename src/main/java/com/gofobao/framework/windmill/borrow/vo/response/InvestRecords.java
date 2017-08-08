@@ -18,7 +18,7 @@ public class InvestRecords {
 
     private String all_interest;
 
-    private String invest_record_id;
+    private Long invest_record_id;
 
     private String project_url;
 
@@ -38,7 +38,7 @@ public class InvestRecords {
 
     private Integer is_auto_bid0;
 
-    private String monthly_back_date;
+    private Integer monthly_back_date;
 
     private String next_back_date;
 
