@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 public class VoTender {
 
-    private String index;
+    private Long index;
 
     private String  invest_user;
 
