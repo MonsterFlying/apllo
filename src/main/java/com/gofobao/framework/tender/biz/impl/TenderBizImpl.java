@@ -18,16 +18,16 @@ import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
-import com.gofobao.framework.common.capital.CapitalChangeEntity;
-import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.PasswordHelper;
-import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.ThirdAccountHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -43,6 +43,7 @@ import com.gofobao.framework.tender.vo.request.TenderUserReq;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
+import com.gofobao.framework.windmill.borrow.biz.WindmillTenderBiz;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableMap;
@@ -98,6 +99,9 @@ public class TenderBizImpl implements TenderBiz {
 
     @Autowired
     AssetChangeProvider assetChangeProvider;
+
+    @Autowired
+    private WindmillTenderBiz windmillTenderBiz;
 
     /**
      * 新版投标
@@ -167,6 +171,11 @@ public class TenderBizImpl implements TenderBiz {
             mqConfig.setMsg(body);
             log.info(String.format("tenderBizImpl tender send mq %s", GSON.toJson(body)));
             mqHelper.convertAndSend(mqConfig);
+        }
+
+        //如果当前用户是风车理财用户
+        if(StringUtils.isEmpty(user.getWindmillId())){
+            windmillTenderBiz.tenderNotify(borrowTender);
         }
 
         return ResponseEntity.ok(VoBaseResp.ok("投资成功"));

@@ -15,6 +15,7 @@ import org.springframework.data.domain.Range;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -51,23 +52,23 @@ public class WindmillStatisticsServiceImpl implements WindmillStatisticsService 
         //装配结果集
         sumWaitPrincipalResult.stream().forEach(p -> {
             Object[] objects = (Object[]) p;
-            sumWaitPrincipal[0] += Long.valueOf(objects[0].toString()) + Long.valueOf(objects[1].toString()) + Long.valueOf(objects[2].toString()) + Long.valueOf(objects[3].toString());
+            sumWaitPrincipal[0] += Long.valueOf(objects[0].toString()) + Long.valueOf(objects[1].toString()) + Long.valueOf(objects[2].toString());
         });
         byDayStatistics.setAll_wait_back_money(StringHelper.formatDouble(sumWaitPrincipal[0] / 100D, false));
 
         //投资总额
-        String todayTenderSumSql = "SELECT SUM(t.validMoney) FROM Tender t WHERE DATE_FORMAT(t.createAt,'%Y-%m-%d')=:date AND t.status=:status";
+        String todayTenderSumSql = "SELECT SUM(t.validMoney) FROM Tender t WHERE DATE_FORMAT(t.createdAt,'%Y-%m-%d')='"+date+"' AND t.status=:status";
         Query todayTenderQuery = entityManager.createQuery(todayTenderSumSql, Long.class);
-        todayTenderQuery.setParameter("createAt", date);
         todayTenderQuery.setParameter("status", TenderConstans.SUCCESS);
         List<Long> tenderMoneySum = todayTenderQuery.getResultList();
-        byDayStatistics.setInvest_all_money(StringHelper.formatDouble(tenderMoneySum.get(0) / 100D, false));
-
+        if(!StringUtils.isEmpty(tenderMoneySum.get(0))){
+            byDayStatistics.setInvest_all_money(StringHelper.formatDouble(tenderMoneySum.get(0) / 100D, false));
+        }
 
         Date date1 = DateHelper.stringToDate(date, DateHelper.DATE_FORMAT_YMD);
 
         Specification<Tender> specification = Specifications.<Tender>and()
-                .between("createAt", new Range<>(DateHelper.beginOfDate(date1), DateHelper.endOfDate(date1)))
+                .between("createdAt", new Range<>(DateHelper.beginOfDate(date1), DateHelper.endOfDate(date1)))
                 .eq("status", TenderConstans.SUCCESS)
                 .build();
 

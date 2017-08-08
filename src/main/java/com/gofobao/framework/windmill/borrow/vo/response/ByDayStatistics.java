@@ -16,8 +16,8 @@ public class ByDayStatistics {
 
     private Long borrow_count=0L;
 
-    private String invest_all_money;
+    private String invest_all_money="0";
 
-    private String all_wait_back_money;
+    private String all_wait_back_money="0";
 
 }

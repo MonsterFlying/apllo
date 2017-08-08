@@ -437,11 +437,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * @param borrow
      * @param order
      * @param advanceAssetChanges
-     * @param lateInterest
-     * @param lateDays
      * @return
      */
-    public List<BailRepay> calculateAdvancePlan(Borrow borrow, int order, List<AdvanceAssetChange> advanceAssetChanges, long lateInterest, int lateDays) throws Exception {
+    public List<BailRepay> calculateAdvancePlan(Borrow borrow, int order,List<AdvanceAssetChange> advanceAssetChanges) throws Exception {
         /* 代偿记录集合 */
         List<BailRepay> bailRepayList = new ArrayList<>();
         /* 查询投资列表 */
@@ -464,22 +462,24 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 .build();
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
         Preconditions.checkNotNull("投资回款记录不存在!");
-        Map<Long/* tenderId */, BorrowCollection> borrowCollectionMaps = borrowCollectionList
-                .stream()
-                .collect(Collectors.toMap(BorrowCollection::getTenderId, Function.identity()));
+        Map<Long/* tenderId */, BorrowCollection> borrowCollectionMaps = borrowCollectionList.stream().collect(Collectors.toMap(BorrowCollection::getTenderId, Function.identity()));
 
-        long txFeeIn = 0; //投资方手续费  利息管理费
+        long txFeeIn = 0;//投资方手续费  利息管理费
         long txAmount = 0;/* 垫付金额 = 垫付本金 + 垫付利息 */
         long intAmount = 0;/* 交易利息 */
         long principal = 0;/* 还款本金 */
         for (Tender tender : tenderList) {
             txFeeIn = 0;
-            // 投标人银行存管账户
+            //垫付资金变动
+            AdvanceAssetChange advanceAssetChange = new AdvanceAssetChange();
+            advanceAssetChanges.add(advanceAssetChange);
+            //投标人银行存管账户
             UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
             Preconditions.checkNotNull(tenderUserThirdAccount, "投资人存管账户未开户!");
-            // 当前投资的回款记录
+            //当前投资的回款记录
             BorrowCollection borrowCollection = borrowCollectionMaps.get(tender.getId());
-            // 判断这笔回款是否已经在即信登记过批次垫付
+
+            //判断这笔回款是否已经在即信登记过批次垫付
             if (BooleanHelper.isTrue(borrowCollection.getThirdBailRepayFlag())) {
                 continue;
             }
@@ -492,41 +492,26 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
             intAmount = borrowCollection.getInterest();//还款利息
             principal = borrowCollection.getPrincipal(); //还款本金
-            // 垫付资金变动
-            AdvanceAssetChange advanceAssetChange = new AdvanceAssetChange();
-            advanceAssetChanges.add(advanceAssetChange);
             advanceAssetChange.setUserId(borrowCollection.getUserId());
             advanceAssetChange.setInterest(intAmount);
             advanceAssetChange.setPrincipal(principal);
 
-            ImmutableSet<Integer> borrowTypeSet = ImmutableSet.of(0, 4);
-            if (borrowTypeSet.contains(borrow.getType())) {  // 车贷标和渠道标利息管理费
-                ImmutableSet<Long> stockholder = ImmutableSet.of(2480L, 1753L, 1699L,
-                        3966L, 1413L, 1857L,
-                        183L, 2327L, 2432L,
-                        2470L, 2552L, 2739L,
-                        3939L, 893L, 608L,
-                        1216L);
-                boolean between = isBetween(new Date(), DateHelper.stringToDate("2015-12-25 00:00:00"),
-                        DateHelper.stringToDate("2017-12-25 23:59:59"));
-                if ((stockholder.contains(tender.getUserId())) && (between)) {
-                    txFeeIn += 0;
-                }else{
-                    long interestFee =  new Double(MathHelper.myRound(intAmount * 0.1, 2)).longValue();
+            //利息管理费
+            if (((borrow.getType() == 0) || (borrow.getType() == 4))) {
+                /**
+                 * '2480 : 好人好梦',1753 : 红运当头',1699 : tasklist',3966 : 苗苗606',1413 : ljc_201',1857 : fanjunle',183 : 54435410',2327 : 栗子',2432 : 高翠西'2470 : sadfsaag',2552 : sadfsaag1',2739 : sadfsaag3',3939 : TinsonCheung',893 : kobayashi',608 : 0211',1216 : zqc9988'
+                 */
+                Set<String> stockholder = new HashSet<>(Arrays.asList("2480", "1753", "1699", "3966", "1413", "1857", "183", "2327", "2432", "2470", "2552", "2739", "3939", "893", "608", "1216"));
+                if (!stockholder.contains(tender.getUserId())) {
+                    /* 利息管理费 */
+                    long interestFee = (long) MathHelper.myRound(intAmount * 0.1, 2);
                     advanceAssetChange.setInterestFee(interestFee);
                     txFeeIn += interestFee;
                 }
             }
-
-            // 给还款人添加 逾期费
-            if ((lateDays > 0) && (lateInterest > 0)) {  // 担保人代偿
-                int overdueFee = new Double(tender.getValidMoney() / new Double(borrow.getMoney()) * lateInterest / 2).intValue();// 出借人收取50% 逾期管理费 ;
-                intAmount += overdueFee;
-                advanceAssetChange.setOverdueFee(overdueFee) ;
-            }
-
             /* 垫付金额 */
-            txAmount = principal + intAmount - txFeeIn; // (垫付本金 + 垫付利息 - 减去利息管理费)
+            txAmount = principal + intAmount; //= 垫付本金 + 垫付利息
+
             String orderId = JixinHelper.getOrderId(JixinHelper.REPAY_BAIL_PREFIX);
             BailRepay bailRepay = new BailRepay();
             bailRepay.setOrderId(orderId);
@@ -1027,13 +1012,11 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * @param lateDays
      * @param lateInterest
      * @param repayAssetChanges
-     * @param seqNo
-     *@param groupSeqNo @return
+     * @return
      * @throws Exception
      */
-    @Override
     @Transactional(rollbackFor = Exception.class)
-    public List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest, List<RepayAssetChange> repayAssetChanges, String seqNo, String groupSeqNo) throws Exception {
+    public List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest,double interestPercent, List<RepayAssetChange> repayAssetChanges) throws Exception {
         List<Repay> repayList = new ArrayList<>();
         Specification<Tender> specification = Specifications
                 .<Tender>and()
@@ -1072,17 +1055,13 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                         Function.identity()));
 
         for (Tender tender : tenderList) {
-
+            RepayAssetChange repayAssetChange = new RepayAssetChange();
+            repayAssetChanges.add(repayAssetChange);
             long inIn = 0; // 出借人的利息
             long inPr = 0; // 出借人的本金
             int inFee = 0; // 出借人利息费用
             int outFee = 0; // 借款人管理费
             BorrowCollection borrowCollection = borrowCollectionMap.get(tender.getId());  // 还款计划
-            // 判断这笔回款是否已经在即信登记过批次垫付
-            if (BooleanHelper.isTrue(borrowCollection.getThirdBailRepayFlag())) {
-                continue;
-            }
-
             if (tender.getTransferFlag() == 1) {
                 doCancelTransfer(tender); // 标的转让中时, 需要取消出让信息
             }
@@ -1090,10 +1069,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             if (tender.getTransferFlag() == 2) {  // 已经转让的债权, 可以跳过还款
                 continue;
             }
-            inIn = borrowCollection.getInterest(); // 还款利息
+            inIn = (long) MathHelper.myRound(borrowCollection.getInterest() * interestPercent,0); // 还款利息
             inPr = borrowCollection.getPrincipal(); // 还款本金
-            RepayAssetChange repayAssetChange = new RepayAssetChange();
-            repayAssetChanges.add(repayAssetChange);
             repayAssetChange.setUserId(tender.getUserId());
             repayAssetChange.setInterest(inIn);
             repayAssetChange.setPrincipal(inPr);

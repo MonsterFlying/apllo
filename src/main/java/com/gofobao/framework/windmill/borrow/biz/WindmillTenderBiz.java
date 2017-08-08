@@ -1,9 +1,12 @@
 package com.gofobao.framework.windmill.borrow.biz;
 
+import com.gofobao.framework.collection.entity.BorrowCollection;
+import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.windmill.borrow.vo.response.BackRecordsRes;
 import com.gofobao.framework.windmill.borrow.vo.response.InvestRecordsRes;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,12 +32,12 @@ public interface WindmillTenderBiz {
     /**
      * 4.1投资通知
      */
-    void tenderNotify(Map<String,String>paramMap);
+    void tenderNotify(Tender tender);
 
 
     /**
-     * 4.1投资通知
+     * 4.回款通知
      */
-    void  backMoneyNotify(Map<String,String>paramMap);
+    void  backMoneyNotify(List<BorrowCollection> borrowCollections);
 
 }

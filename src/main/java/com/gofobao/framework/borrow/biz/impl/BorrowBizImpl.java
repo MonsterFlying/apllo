@@ -6,12 +6,22 @@ import com.gofobao.framework.api.contants.DesLineFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeReq;
+import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeResp;
+import com.gofobao.framework.api.model.batch_repay.BatchRepayReq;
+import com.gofobao.framework.api.model.batch_repay.BatchRepayResp;
+import com.gofobao.framework.api.model.batch_repay.Repay;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
+import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
 import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.entity.BatchAssetChange;
+import com.gofobao.framework.asset.entity.BatchAssetChangeItem;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.asset.service.BatchAssetChangeItemService;
+import com.gofobao.framework.asset.service.BatchAssetChangeService;
 import com.gofobao.framework.award.contants.RedPacketContants;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
@@ -48,11 +58,13 @@ import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
+import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.entity.RepayAssetChange;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
+import com.gofobao.framework.repayment.vo.request.VoBuildThirdRepayReq;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
-import com.gofobao.framework.repayment.vo.request.VoRepayAll;
 import com.gofobao.framework.system.biz.IncrStatisticBiz;
 import com.gofobao.framework.system.biz.StatisticBiz;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
@@ -60,6 +72,7 @@ import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.*;
 import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
+import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.biz.TransferBiz;
@@ -156,22 +169,29 @@ public class BorrowBizImpl implements BorrowBiz {
     private TenderBiz tenderBiz;
     @Autowired
     private ThirdBatchLogBiz thirdBatchLogBiz;
-
+    @Autowired
+    private JixinHelper jixinHelper;
+    @Autowired
+    private BatchAssetChangeService batchAssetChangeService;
+    @Autowired
+    private BatchAssetChangeItemService batchAssetChangeItemService;
     @Autowired
     JixinManager jixinManager;
-
     @Autowired
     TransferBiz transferBiz;
-
     @Autowired
     AssetChangeProvider assetChangeProvider;
-
-
     @Autowired
-    private DictItemService dictItemService;
-
+    DictItemService dictItemService;
     @Autowired
-    private DictValueService dictValueService;
+    DictValueService dictValueService;
+    @Autowired
+    BorrowRepaymentThirdBiz borrowRepaymentThirdBiz;
+    @Autowired
+    ThirdBatchLogService thirdBatchLogService;
+
+    @Value("${gofobao.javaDomain}")
+    private String javaDomain;
 
     LoadingCache<String, DictValue> jixinCache = CacheBuilder
             .newBuilder()
@@ -200,7 +220,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> repayAll(VoRepayAllReq voRepayAllReq) throws Exception {
+    public ResponseEntity<VoBaseResp> doRepayAll(VoRepayAllReq voRepayAllReq) throws Exception {
         String paramStr = voRepayAllReq.getParamStr();/* pc请求提前结清参数 */
         if (!SecurityHelper.checkSign(voRepayAllReq.getSign(), paramStr)) {
             return ResponseEntity
@@ -238,9 +258,73 @@ public class BorrowBizImpl implements BorrowBiz {
                 .eq("borrowId", borrowId)
                 .build();
         List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
+        Map<Long/* repaymentId */, BorrowRepayment> borrowRepaymentMaps = borrowRepaymentList.stream().collect(Collectors.toMap(BorrowRepayment::getId, Function.identity()));
+        /* 还款请求集合 */
+        List<VoBuildThirdRepayReq> voBuildThirdRepayReqs = new ArrayList<>();
+        //构建还款请求集合
+        ImmutableSet<Long> resultSet = buildRepayReqList(voBuildThirdRepayReqs, borrow, borrowRepaymentList);
+        Iterator<Long> iterator = resultSet.iterator();
+        long penalty = iterator.next();/* 违约金 */
+        long repayMoney = iterator.next();/* 提前结清需还总金额 */
+        if (borrowAsset.getUseMoney() < (repayMoney)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "结清总共需要还款 " + repayMoney + " 元，您的账户余额不足，请先充值!！"));
+        }
+        /* 批次号 */
+        String batchNo = jixinHelper.getBatchNo();
+                /* 资产记录流水号 */
+        String seqNo = assetChangeProvider.getSeqNo();
+        /* 资产记录分组流水号 */
+        String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+        //生成批次资产改变主记录
+        BatchAssetChange batchAssetChange = addBatchAssetChangeByRepayAll(batchNo, borrowId);
+        //扣除提前结清的违约金
+        addBatchAssetChangeByBorrowPenalty(borrowId, borrow, penalty, seqNo, groupSeqNo, batchAssetChange);
+        //提前结清操作
+        repayAll(borrowId, borrow, borrowUserThirdAccount, voBuildThirdRepayReqs, batchNo, seqNo, groupSeqNo, penalty, batchAssetChange, borrowRepaymentMaps);
+        //提前结清操作
+        return ResponseEntity.ok(VoBaseResp.ok("提前结清成功!"));
+    }
+
+    /**
+     * 扣除提前结清的违约金
+     *
+     * @param borrowId
+     * @param borrow
+     * @param penalty
+     * @param seqNo
+     * @param groupSeqNo
+     * @param batchAssetChange
+     */
+    private void addBatchAssetChangeByBorrowPenalty(long borrowId, Borrow borrow, long penalty, String seqNo, String groupSeqNo, BatchAssetChange batchAssetChange) {
+        //扣除提前结清的违约金
+        if (penalty > 0) {
+            BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
+            batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
+            batchAssetChangeItem.setState(0);
+            batchAssetChangeItem.setType(AssetChangeTypeEnum.interestManagementFee.getLocalType());  // 扣除借款人违约金
+            batchAssetChangeItem.setUserId(borrow.getUserId());
+            batchAssetChangeItem.setMoney(penalty);
+            batchAssetChangeItem.setRemark("扣除提前结清的违约金");
+            batchAssetChangeItem.setCreatedAt(new Date());
+            batchAssetChangeItem.setUpdatedAt(new Date());
+            batchAssetChangeItem.setSourceId(borrowId);
+            batchAssetChangeItem.setSeqNo(seqNo);
+            batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+            batchAssetChangeItemService.save(batchAssetChangeItem);
+        }
+    }
+
+    /**
+     * 构建还款请求集合
+     *
+     * @param voBuildThirdRepayReqs 还款请求
+     */
+    private ImmutableSet<Long> buildRepayReqList(List<VoBuildThirdRepayReq> voBuildThirdRepayReqs, Borrow borrow, List<BorrowRepayment> borrowRepaymentList) {
+        long repaymentTotal = 0;/* 还款总金额 */
         long penalty = 0;/* 违约金 */
-        long repaymentTotal = 0;/* 提前结清需要总金额 */
-        List<VoRepayReq> voRepayReqList = new ArrayList<>();/* 还款请求集合 */
+        long repayMoney = 0;/* 还款总金额+违约金 */
         for (int i = 0; i < borrowRepaymentList.size(); i++) {
             BorrowRepayment borrowRepayment = borrowRepaymentList.get(i);
             if (borrowRepayment.getStatus() != 0) {
@@ -275,24 +359,137 @@ public class BorrowBizImpl implements BorrowBiz {
             //累加金额用于判断还款账余额是否充足
             repaymentTotal += borrowRepayment.getPrincipal() + borrowRepayment.getInterest() * interestPercent + lateInterest;
             /* 还款请求 */
-            VoRepayReq voRepayReq = new VoRepayReq();
-            voRepayReq.setInterestPercent(interestPercent);   // 赔偿利息
-            voRepayReq.setRepaymentId(borrowRepayment.getId());
-            voRepayReq.setUserId(borrowRepayment.getUserId());
-            voRepayReq.setIsUserOpen(false);
-            voRepayReqList.add(voRepayReq);
+            VoBuildThirdRepayReq voBuildThirdRepayReq = new VoBuildThirdRepayReq();
+            voBuildThirdRepayReq.setInterestPercent(interestPercent);   // 赔偿利息
+            voBuildThirdRepayReq.setRepaymentId(borrowRepayment.getId());
+            voBuildThirdRepayReq.setUserId(borrowRepayment.getUserId());
+            voBuildThirdRepayReq.setIsUserOpen(false);
+            voBuildThirdRepayReq.setLateDays(lateDays);
+            voBuildThirdRepayReq.setLateInterest(lateInterest);
+            voBuildThirdRepayReqs.add(voBuildThirdRepayReq);
         }
-        long repayMoney = repaymentTotal + penalty;/* 提前结清需还总金额 */
-        if (borrowAsset.getUseMoney() < (repayMoney)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "结清总共需要还款 " + repayMoney + " 元，您的账户余额不足，请先充值!！"));
+        repayMoney = repaymentTotal + penalty;/* 提前结清需还总金额 */
+        return ImmutableSet.of(penalty, repayMoney);
+    }
+
+    /**
+     * 提前结清操作
+     *
+     * @param borrowId
+     * @param borrow
+     * @param borrowUserThirdAccount
+     * @param voBuildThirdRepayReqs
+     * @param batchNo
+     * @param seqNo
+     * @param groupSeqNo
+     * @param batchAssetChange
+     * @param borrowRepaymentMaps
+     * @throws Exception
+     */
+    private void repayAll(long borrowId, Borrow borrow, UserThirdAccount borrowUserThirdAccount, List<VoBuildThirdRepayReq> voBuildThirdRepayReqs, String batchNo,
+                          String seqNo, String groupSeqNo, long penalty, BatchAssetChange batchAssetChange, Map<Long/* repaymentId */, BorrowRepayment> borrowRepaymentMaps) throws Exception {
+        Date nowDate = new Date();
+        List<Repay> repays = new ArrayList<>();/* 生成存管还款记录(提前结清) */
+        for (VoBuildThirdRepayReq voBuildThirdRepayReq : voBuildThirdRepayReqs) {
+            BorrowRepayment borrowRepayment = borrowRepaymentMaps.get(voBuildThirdRepayReq.getRepaymentId());/* 还款记录 */
+            List<RepayAssetChange> repayAssetChangeList = new ArrayList<>();
+            // 生成存管投资人还款记录(提前结清)
+            List<Repay> tempRepays = borrowRepaymentThirdBiz.calculateRepayPlan(borrow, borrowUserThirdAccount.getAccountId(),
+                    borrowRepayment.getOrder(), voBuildThirdRepayReq.getLateDays(), voBuildThirdRepayReq.getLateInterest(),
+                    voBuildThirdRepayReq.getInterestPercent(), repayAssetChangeList);
+            repays.addAll(tempRepays);
+            // 生成还款记录
+            repaymentBiz.doGenerateAssetChangeRecodeByRepay(borrow, borrowRepayment, borrowRepayment.getUserId(), repayAssetChangeList, batchAssetChange);
+        }
+        /* 总还款本金 */
+        double sumTxAmount = repays.stream().mapToDouble(repay -> NumberHelper.toDouble(repay.getTxAmount())).sum();
+        for (Repay repay : repays) {
+            double partPenalty = NumberHelper.toDouble(repay.getTxAmount()) * sumTxAmount * penalty;/*分摊违约金*/
+            //给每期回款分摊违约金
+            repay.setTxFeeOut(StringHelper.formatDouble(NumberHelper.toDouble(repay.getTxFeeOut()) + partPenalty / 100.0, false));
         }
 
-        //生成批次资产改变主记录
-        //生成提前结清记录
-        //提前结清操作
-        return ResponseEntity.ok(VoBaseResp.ok("提前结清成功!"));
+        //所有交易利息
+        double intAmount = repays.stream().mapToDouble(r -> NumberHelper.toDouble(r.getIntAmount())).sum();
+        //所有还款手续费
+        double txFeeOut = repays.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxFeeOut())).sum();
+        //冻结金额
+        double freezeMoney = sumTxAmount + intAmount + txFeeOut;
+
+        //====================================================================
+        //冻结借款人账户资金
+        //====================================================================
+        String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);
+        BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
+        balanceFreezeReq.setAccountId(borrowUserThirdAccount.getAccountId());
+        balanceFreezeReq.setTxAmount(StringHelper.formatDouble(freezeMoney, false));
+        balanceFreezeReq.setOrderId(orderId);
+        balanceFreezeReq.setChannel(ChannelContant.HTML);
+        BalanceFreezeResp balanceFreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BalanceFreezeResp.class);
+        if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceFreezeResp.getRetCode()))) {
+            throw new Exception("即信批次还款冻结资金失败：" + balanceFreezeResp.getRetMsg());
+        }
+
+        //请求保留参数
+        Map<String, Object> acqResMap = new HashMap<>();
+        acqResMap.put("borrowId", borrowId);
+        acqResMap.put("freezeMoney", freezeMoney);
+        acqResMap.put("freezeOrderId", orderId);
+        acqResMap.put("userId", borrow.getUserId());
+
+        //立即还款冻结
+        long frozenMoney = new Double((freezeMoney) * 100).longValue();
+        CapitalChangeEntity entity = new CapitalChangeEntity();
+        entity.setType(CapitalChangeEnum.Frozen);
+        entity.setUserId(borrow.getUserId());
+        entity.setMoney(frozenMoney);
+        entity.setRemark("立即还款冻结可用资金");
+        capitalChangeHelper.capitalChange(entity);
+
+        BatchRepayReq request = new BatchRepayReq();
+        request.setBatchNo(batchNo);
+        request.setTxAmount(StringHelper.formatDouble(sumTxAmount, false));
+        request.setRetNotifyURL(javaDomain + "/pub/borrow/v2/third/repayall/run");
+        request.setNotifyURL(javaDomain + "/pub/borrow/v2/third/repayall/check");
+        request.setAcqRes(GSON.toJson(acqResMap));
+        request.setSubPacks(GSON.toJson(repays));
+        request.setChannel(ChannelContant.HTML);
+        request.setTxCounts(StringHelper.toString(repays.size()));
+        BatchRepayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_REPAY, request, BatchRepayResp.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
+            throw new Exception("即信批次还款失败：" + response.getRetMsg());
+        }
+
+        //记录日志
+        ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
+        thirdBatchLog.setBatchNo(batchNo);
+        thirdBatchLog.setCreateAt(nowDate);
+        thirdBatchLog.setUpdateAt(nowDate);
+        thirdBatchLog.setSourceId(borrowId);
+        thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY_ALL);
+        thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
+        thirdBatchLog.setRemark("(提前结清)即信批次还款");
+        thirdBatchLogService.save(thirdBatchLog);
+    }
+
+
+    /**
+     * 新增资产更改记录
+     *
+     * @param batchNo
+     * @param borrowId
+     * @return
+     */
+    private BatchAssetChange addBatchAssetChangeByRepayAll(String batchNo, long borrowId) {
+        BatchAssetChange batchAssetChange = new BatchAssetChange();
+        batchAssetChange.setSourceId(borrowId);
+        batchAssetChange.setState(0);
+        batchAssetChange.setType(BatchAssetChangeContants.BATCH_REPAY_ALL);/* 提前结清 */
+        batchAssetChange.setCreatedAt(new Date());
+        batchAssetChange.setUpdatedAt(new Date());
+        batchAssetChange.setBatchNo(batchNo);
+        batchAssetChangeService.save(batchAssetChange);
+        return batchAssetChange;
     }
 
     /**
