@@ -114,12 +114,13 @@ public interface BorrowRepaymentThirdBiz {
      * @param order
      * @param lateDays
      * @param lateInterest
+     * @param InterestPercent
      * @param repayAssetChanges
      * @param seqNo
      *@param groupSeqNo @return
      * @throws Exception
      */
-    List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest, List<RepayAssetChange> repayAssetChanges, String seqNo, String groupSeqNo) throws Exception;
+    List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest, double InterestPercent,  List<RepayAssetChange> repayAssetChanges, String seqNo, String groupSeqNo) throws Exception;
 
 
     /**

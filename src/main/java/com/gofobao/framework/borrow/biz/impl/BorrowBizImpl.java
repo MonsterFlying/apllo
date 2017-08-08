@@ -397,7 +397,7 @@ public class BorrowBizImpl implements BorrowBiz {
             // 生成存管投资人还款记录(提前结清)
             List<Repay> tempRepays = borrowRepaymentThirdBiz.calculateRepayPlan(borrow, borrowUserThirdAccount.getAccountId(),
                     borrowRepayment.getOrder(), voBuildThirdRepayReq.getLateDays(), voBuildThirdRepayReq.getLateInterest(),
-                    voBuildThirdRepayReq.getInterestPercent(), repayAssetChangeList);
+                    voBuildThirdRepayReq.getInterestPercent(), repayAssetChangeList, seqNo, groupSeqNo);
             repays.addAll(tempRepays);
             // 生成还款记录
             repaymentBiz.doGenerateAssetChangeRecodeByRepay(borrow, borrowRepayment, borrowRepayment.getUserId(), repayAssetChangeList, batchAssetChange);
