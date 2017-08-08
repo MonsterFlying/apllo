@@ -1,10 +1,11 @@
 package com.gofobao.framework.tender.entity;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import lombok.Data;
 
-import javax.persistence.*;
-import java.sql.Timestamp;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.util.Date;
 
 /**

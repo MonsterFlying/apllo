@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.LockModeType;
+import java.util.List;
 
 /**
  * Created by Zeke on 2017/7/31.
@@ -15,4 +16,8 @@ import javax.persistence.LockModeType;
 public interface TransferRepository extends JpaSpecificationExecutor<Transfer>, JpaRepository<Transfer, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Transfer findById(long id);
+
+
+    List<Transfer> findByIdIn(List<Long> ids);
+
 }

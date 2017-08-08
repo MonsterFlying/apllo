@@ -3,7 +3,6 @@ package com.gofobao.framework.tender.entity;
 import lombok.Data;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
 import java.util.Date;
 
 /**
@@ -26,6 +25,7 @@ public class Transfer {
     private Integer apr;
     private Date repayAt;
     private Long tenderId;
+    @Column(name = "is_lock")
     private Boolean lock;
     private Integer tenderCount;
     private Long borrowId;

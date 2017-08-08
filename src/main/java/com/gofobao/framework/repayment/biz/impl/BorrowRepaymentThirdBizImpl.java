@@ -45,8 +45,8 @@ import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.entity.RepayAssetChange;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoBatchBailRepayReq;
-import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
 import com.gofobao.framework.repayment.vo.request.VoRepayAll;
+import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
@@ -81,7 +81,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.gofobao.framework.helper.DateHelper.isBetween;
-import static java.util.stream.Collectors.groupingBy;
 
 /**
  * Created by Zeke on 2017/6/8.

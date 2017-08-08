@@ -1,7 +1,6 @@
 package com.gofobao.framework.asset.biz.impl;
 
 import com.gofobao.framework.asset.biz.BankAccountBiz;
-import com.gofobao.framework.asset.entity.CashDetailLog;
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.CashDetailLogService;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
