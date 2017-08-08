@@ -1,12 +1,10 @@
 package com.gofobao.framework.system.service.impl;
 
 import com.github.wenhao.jpa.Specifications;
-import com.gofobao.framework.system.entity.Banner;
 import com.gofobao.framework.system.entity.Find;
 import com.gofobao.framework.system.repository.FindRepository;
 import com.gofobao.framework.system.service.FindService;
 import com.gofobao.framework.system.vo.response.FindIndexItem;
-import com.gofobao.framework.system.vo.response.IndexBanner;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;

@@ -2,7 +2,6 @@ package com.gofobao.framework.tender.vo.request;
 
 import com.gofobao.framework.helper.MathHelper;
 import io.swagger.annotations.ApiModelProperty;
-import io.swagger.models.auth.In;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;

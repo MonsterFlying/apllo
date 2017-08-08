@@ -8,7 +8,6 @@ import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
-import com.gofobao.framework.tender.vo.request.VoThirdBatchCreditInvest;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;

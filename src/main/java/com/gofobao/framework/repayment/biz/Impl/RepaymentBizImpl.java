@@ -87,6 +87,7 @@ import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferService;
+import com.gofobao.framework.windmill.borrow.biz.WindmillTenderBiz;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -1240,7 +1241,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param lateInterest
      * @param advance
      */
-
     public void changeRepaymentAndAdvanceRecord(BorrowRepayment borrowRepayment, int lateDays, long lateInterest, boolean advance) {
         Date nowDate = new Date();
         borrowRepayment.setLateDays(lateDays);
@@ -1281,7 +1281,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
         batchAssetChangeService.save(batchAssetChange);
         return batchAssetChange;
     }
-
     /**
      * 生成还款人还款批次资金改变记录
      *
@@ -1362,7 +1361,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
     /**
      * 生成担保人代偿批次资金改变记录
      */
-
     public void addBatchAssetChangeByGuarantor(long batchAssetChangeId, BorrowRepayment borrowRepayment, Borrow parentBorrow,
                                                long lateInterest, String seqNo, String groupSeqNo) {
         Date nowDate = new Date();
