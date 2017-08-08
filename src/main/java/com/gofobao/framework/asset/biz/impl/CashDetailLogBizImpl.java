@@ -39,7 +39,6 @@ import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
-import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -104,9 +103,6 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
     @Autowired
     JixinManager jixinManager;
-
-    @Autowired
-    CapitalChangeHelper capitalChangeHelper;
 
     @Autowired
     BankAccountBizImpl bankAccountBiz;

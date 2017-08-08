@@ -53,7 +53,10 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
-import com.gofobao.framework.helper.project.*;
+import com.gofobao.framework.helper.project.BatchAssetChangeHelper;
+import com.gofobao.framework.helper.project.BorrowHelper;
+import com.gofobao.framework.helper.project.IntegralChangeHelper;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -87,7 +90,6 @@ import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferService;
-import com.gofobao.framework.windmill.borrow.biz.WindmillTenderBiz;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -161,18 +163,14 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private DictValueService dictValueService;
     @Autowired
     private BorrowRepaymentThirdBiz borrowRepaymentThirdBiz;
-    @Autowired
-    private CapitalChangeHelper capitalChangeHelper;
+
     @Autowired
     private BatchAssetChangeHelper batchAssetChangeHelper;
     @Autowired
     private BatchAssetChangeItemService batchAssetChangeItemService;
     @Autowired
     private AssetChangeProvider assetChangeProvider;
-    @Autowired
-    private TransferService transferService;
-    @Autowired
-    private TransferBiz transferBiz;
+
     @Autowired
     private UserService userService;
     @Autowired
@@ -2243,7 +2241,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         advanceLog.setRepaymentId(borrowRepayment.getId());
         advanceLog.setAdvanceAtYes(new Date());
         advanceLog.setAdvanceMoneyYes((borrowRepayment.getRepayMoney() + lateInterest));
-        advanceLogService.insert(advanceLog);
+        advanceLogService.save(advanceLog);
         //更改付款记录
         borrowRepayment.setLateDays(lateDays);
         borrowRepayment.setLateInterest(lateInterest);

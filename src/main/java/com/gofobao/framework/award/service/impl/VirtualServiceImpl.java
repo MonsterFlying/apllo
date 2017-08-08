@@ -20,13 +20,14 @@ import com.gofobao.framework.award.vo.response.VirtualTenderRes;
 import com.gofobao.framework.borrow.contants.BorrowVirtualContants;
 import com.gofobao.framework.borrow.entity.BorrowVirtual;
 import com.gofobao.framework.collection.entity.VirtualCollection;
-import com.gofobao.framework.common.capital.CapitalChangeEntity;
+import com.gofobao.framework.common.assets.AssetChange;
+import com.gofobao.framework.common.assets.AssetChangeProvider;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
-import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.tender.contants.VirtualTenderContants;
@@ -71,9 +72,6 @@ public class VirtualServiceImpl implements VirtualService {
     @Autowired
     private VirtualCollectionRepository virtualCollectionRepository;
 
-    @Autowired
-    private CapitalChangeHelper capitalChangeHelper;
-
 
     @Autowired
     private RedPackageRepository redPackageRepository;
@@ -83,6 +81,9 @@ public class VirtualServiceImpl implements VirtualService {
 
     @Autowired
     private UserThirdAccountService userThirdAccountService;
+
+    @Autowired
+    AssetChangeProvider assetChangeProvider ;
 
     /**
      * 体验金统计
@@ -167,7 +168,7 @@ public class VirtualServiceImpl implements VirtualService {
 
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     @Override
-    public Boolean tenderCreate(VoVirtualReq voVirtualReq) {
+    public Boolean tenderCreate(VoVirtualReq voVirtualReq) throws Exception {
 
         //当前用户是否开通存款
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voVirtualReq.getUserId());
@@ -196,12 +197,7 @@ public class VirtualServiceImpl implements VirtualService {
         virtualTender.setCreatedAt(date);
         virtualTender.setUpdatedAt(date);
         virtualTender.setMoney(asset.getVirtualMoney());
-        try {
-            virtualTenderRepository.save(virtualTender);
-        } catch (Throwable e) {
-            log.info("tenderCreate list  virtualTenderRepository.save  fail", e);
-            return false;
-        }
+        virtualTender = virtualTenderRepository.save(virtualTender);
 
         BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(virtualTender.getMoney().doubleValue(), borrowVirtual.getApr().doubleValue(), borrowVirtual.getTimeLimit(), new Date());
         Map<String, Object> resultMap = borrowCalculatorHelper.ycxhbfx();
@@ -224,29 +220,19 @@ public class VirtualServiceImpl implements VirtualService {
         virtualCollection.setCollectionMoneyYes(0);
         virtualCollection.setUpdatedAt(date);
         virtualCollection.setCreatedAt(date);
-        try {
-            virtualCollectionRepository.save(virtualCollection);
-        } catch (Throwable e) {
-            log.info("tenderCreate list  virtualCollectionRepository.save  fail", e);
-            return false;
-        }
-        //=========================================
-        //资金变动
-        //=========================================
-        CapitalChangeEntity capitalChangeEntity = new CapitalChangeEntity();
-        capitalChangeEntity.setType(CapitalChangeEnum.VirtualTender);
-        capitalChangeEntity.setMoney(asset.getVirtualMoney());
-        capitalChangeEntity.setUserId(voVirtualReq.getUserId());
-        capitalChangeEntity.setToUserId(voVirtualReq.getUserId());
-        capitalChangeEntity.setRemark("投资体验标扣除体验金");
-        boolean flag = true;
-        try {
-            flag = capitalChangeHelper.capitalChange(capitalChangeEntity);
-        } catch (Throwable e) {
-            e.printStackTrace();
-            log.info(" VirtualServiceImpl tenderCreate capitalChangeHelper.capitalChange fail", e);
-        }
-        return flag;
+        virtualCollectionRepository.save(virtualCollection);
+
+        AssetChange assetChange = new AssetChange() ;
+        assetChange.setType(AssetChangeTypeEnum.virtualTender) ;
+        assetChange.setMoney(asset.getVirtualMoney());
+        assetChange.setSourceId(virtualTender.getId());
+        assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+        assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+        assetChange.setUserId(asset.getUserId()) ;
+        assetChange.setRemark("投资体验标扣除体验金") ;
+        assetChangeProvider.commonAssetChange(assetChange) ;
+
+        return true;
     }
 
     @Override

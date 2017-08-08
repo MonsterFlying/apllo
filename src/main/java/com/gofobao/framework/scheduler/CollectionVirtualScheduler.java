@@ -3,12 +3,10 @@ package com.gofobao.framework.scheduler;
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.award.service.VirtualService;
 import com.gofobao.framework.collection.entity.VirtualCollection;
-import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.data.DataObject;
 import com.gofobao.framework.common.data.LeSpecification;
 import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import lombok.extern.slf4j.Slf4j;
@@ -38,8 +36,7 @@ public class CollectionVirtualScheduler {
     @Autowired
     private TenderService tenderService;
 
-    @Autowired
-    private CapitalChangeHelper capitalChangeHelper;
+
 
     @Scheduled(cron = "0 00 22 * * ? ")
     public void process() {
@@ -58,7 +55,8 @@ public class CollectionVirtualScheduler {
             int pageSize = 50;
             List<VirtualCollection> virtualCollectionList = null;
             List<Tender> tenderList = null;
-            CapitalChangeEntity entity = null;
+            // TODO 红包
+            /*CapitalChangeEntity entity = null;
             do {
                 tenderIds = new ArrayList<>();
                 pageable = new PageRequest(pageIndex++, pageSize, new Sort(Sort.Direction.ASC, "id"));
@@ -113,7 +111,7 @@ public class CollectionVirtualScheduler {
                         }
                     }
                 }
-            } while (virtualCollectionList.size() >= pageSize);
+            } while (virtualCollectionList.size() >= pageSize);*/
         } while (false);
     }
 }

@@ -26,7 +26,9 @@ import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.*;
-import com.gofobao.framework.common.capital.CapitalChangeEntity;
+import com.gofobao.framework.common.assets.AssetChange;
+import com.gofobao.framework.common.assets.AssetChangeProvider;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
@@ -35,7 +37,6 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
-import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
@@ -103,10 +104,11 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     private ThirdBatchLogBiz thirdBatchLogBiz;
     @Autowired
     private ThirdAccountPasswordHelper thirdAccountPasswordHelper;
-    @Autowired
-    private CapitalChangeHelper capitalChangeHelper;
+
     @Autowired
     TaskSchedulerBiz taskSchedulerBiz;
+    @Autowired
+    AssetChangeProvider assetChangeProvider ;
 
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
@@ -483,12 +485,15 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
 
         //立即还款冻结
         long frozenMoney = new Double((freezeMoney) * 100).longValue();
-        CapitalChangeEntity entity = new CapitalChangeEntity();
-        entity.setType(CapitalChangeEnum.Frozen);
-        entity.setUserId(borrow.getUserId());
-        entity.setMoney(frozenMoney);
-        entity.setRemark("立即还款冻结可用资金");
-        capitalChangeHelper.capitalChange(entity);
+        AssetChange freezeAssetChange = new AssetChange();
+        freezeAssetChange.setUserId(borrow.getUserId());
+        freezeAssetChange.setType(AssetChangeTypeEnum.freeze);
+        freezeAssetChange.setRemark("立即还款冻结可用资金");
+        freezeAssetChange.setSeqNo(assetChangeProvider.getSeqNo());
+        freezeAssetChange.setMoney(frozenMoney);
+        freezeAssetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+        freezeAssetChange.setSourceId(borrowRepayment.getId());
+        assetChangeProvider.commonAssetChange(freezeAssetChange);;
 
         BatchRepayReq request = new BatchRepayReq();
         request.setBatchNo(batchNo);
@@ -524,7 +529,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
      *
      * @return
      */
-    public ResponseEntity<String> thirdBatchRepayAllCheckCall(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> thirdBatchRepayAllCheckCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
         BatchRepayCheckResp repayCheckResp = jixinManager.callback(request, new TypeToken<BatchRepayCheckResp>() {
         });
 
@@ -560,18 +565,17 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
                 log.error("===========================================================================");
                 return ResponseEntity.ok("error");
             }
+
             //解除本地冻结
-            //立即还款冻结
-            CapitalChangeEntity entity = new CapitalChangeEntity();
-            entity.setType(CapitalChangeEnum.Unfrozen);
-            entity.setUserId(userId);
-            entity.setMoney(new Double(NumberHelper.toDouble(freezeMoney) * 100).longValue());
-            entity.setRemark("(提前结清)即信批次还款解除冻结可用资金");
-            try {
-                capitalChangeHelper.capitalChange(entity);
-            } catch (Exception e) {
-                log.error("(提前结清)即信批次还款解除冻结可用资金异常:", e);
-            }
+            AssetChange assetChange = new AssetChange();
+            assetChange.setSourceId(borrowId);
+            assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+            assetChange.setMoney(new Double(NumberHelper.toDouble(freezeMoney) * 100).longValue());
+            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+            assetChange.setRemark("(提前结清)即信批次还款解除冻结可用资金");
+            assetChange.setType(AssetChangeTypeEnum.unfreeze);
+            assetChange.setUserId(userId);
+            assetChangeProvider.commonAssetChange(assetChange) ;
         } else {
             log.info("=============================(提前结清)即信批次放款检验参数回调===========================");
             log.info("回调成功!");

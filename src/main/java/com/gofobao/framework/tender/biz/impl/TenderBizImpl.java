@@ -28,7 +28,6 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.ThirdAccountHelper;
-import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -80,8 +79,7 @@ public class TenderBizImpl implements TenderBiz {
     private UserCacheService userCacheService;
     @Autowired
     private AssetService assetService;
-    @Autowired
-    private CapitalChangeHelper capitalChangeHelper;
+
     @Autowired
     private MqHelper mqHelper;
     @Autowired
