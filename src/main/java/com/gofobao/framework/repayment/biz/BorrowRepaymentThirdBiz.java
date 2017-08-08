@@ -100,9 +100,11 @@ public interface BorrowRepaymentThirdBiz {
      * @param borrow
      * @param order
      * @param advanceAssetChanges
+     * @param lateInterest
+     * @param lateDays
      * @return
      */
-    List<BailRepay> calculateAdvancePlan(Borrow borrow, int order, List<AdvanceAssetChange> advanceAssetChanges) throws Exception;
+    List<BailRepay> calculateAdvancePlan(Borrow borrow, int order, List<AdvanceAssetChange> advanceAssetChanges, long lateInterest, int lateDays) throws Exception;
 
     /**
      * 新版生成还款计划
@@ -113,10 +115,11 @@ public interface BorrowRepaymentThirdBiz {
      * @param lateDays
      * @param lateInterest
      * @param repayAssetChanges
-     * @return
+     * @param seqNo
+     *@param groupSeqNo @return
      * @throws Exception
      */
-    List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest, List<RepayAssetChange> repayAssetChanges) throws Exception;
+    List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest, List<RepayAssetChange> repayAssetChanges, String seqNo, String groupSeqNo) throws Exception;
 
 
     /**

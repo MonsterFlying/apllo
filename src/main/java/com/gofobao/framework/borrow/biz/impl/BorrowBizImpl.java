@@ -1233,7 +1233,6 @@ public class BorrowBizImpl implements BorrowBiz {
      * @throws Exception
      */
     private void processBorrowAssetChange(Borrow borrow, List<Tender> tenderList, Date startAt, String groupSeqNo) throws Exception {
-
         // 放款
         AssetChange borrowAssetChangeEntity = new AssetChange();
         borrowAssetChangeEntity.setSourceId(borrow.getId());
