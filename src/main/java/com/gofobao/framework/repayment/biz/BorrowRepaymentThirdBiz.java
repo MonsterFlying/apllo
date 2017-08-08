@@ -94,7 +94,7 @@ public interface BorrowRepaymentThirdBiz {
      */
     void receivedRepay(List<Repay> repayList, Borrow borrow, String borrowAccountId, int order, double interestPercent, int lateDays, long lateInterest) throws Exception;
 
-    /**
+/**
      * 生成担保人代偿记录
      *
      * @param borrow
@@ -121,7 +121,6 @@ public interface BorrowRepaymentThirdBiz {
      * @throws Exception
      */
     List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest, double InterestPercent,  List<RepayAssetChange> repayAssetChanges, String seqNo, String groupSeqNo) throws Exception;
-
 
     /**
      * 生成借款人偿还担保人计划
