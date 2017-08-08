@@ -58,6 +58,12 @@ public enum AssetChangeTypeEnum {
      */
     compensatoryRepayment("代偿还款", "compensatoryRepayment", "2788", "sub@noUseMoney", "", "C"),
 
+
+    /**
+     * 代偿还款滞纳金
+     */
+    compensatoryRepaymentOverdueFee("代偿还款滞纳金", "compensatoryRepaymentOverdueFee", "2788", "sub@noUseMoney", "", "C"),
+
     /**
      * 出借人投标
      */

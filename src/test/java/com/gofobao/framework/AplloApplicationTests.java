@@ -466,6 +466,20 @@ public class AplloApplicationTests {
 
     @Test
     public void test() {
+
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
+        mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(1), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            log.info(String.format("transferBizImpl buyTransfer send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("transferBizImpl buyTransfer send mq exception", e);
+        }
+
         /*Map<String,String> map = new HashMap<>();
         map.put(MqConfig.MSG_BORROW_ID,"169921");
         try {
@@ -527,7 +541,7 @@ public class AplloApplicationTests {
         //非转让标复审问题
         //noTransferBorrowAgainVerify();
         // 查询债权关系
-        CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
+        /*CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
         creditDetailsQueryRequest.setAccountId("6212462040000650087");
         creditDetailsQueryRequest.setStartDate("20161003");
         creditDetailsQueryRequest.setProductId("169922");
@@ -538,7 +552,7 @@ public class AplloApplicationTests {
         CreditDetailsQueryResponse creditDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.CREDIT_DETAILS_QUERY,
                 creditDetailsQueryRequest,
                 CreditDetailsQueryResponse.class);
-        System.out.println(creditDetailsQueryResponse);
+        System.out.println(creditDetailsQueryResponse);*/
 
 
         /*CreditEndReq creditEndReq = new CreditEndReq();

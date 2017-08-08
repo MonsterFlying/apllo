@@ -148,18 +148,6 @@ public class WebBorrowController {
         return borrowBiz.addNetWorth(voAddNetWorthBorrow);
     }
 
-
-    @PostMapping("/pub/pc/borrow/repayAll")
-    @ApiOperation("提前还款")
-    public ResponseEntity<VoBaseResp> pcRepayAll(@Valid @ModelAttribute VoRepayAllReq voRepayAllReq) {
-        try {
-            return borrowThirdBiz.thirdBatchRepayAll(voRepayAllReq);
-        } catch (Throwable e) {
-            return ResponseEntity.badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "提前还款失败！"));
-        }
-    }
-
     /**
      * 登记官方借款（车贷标、渠道标）
      *

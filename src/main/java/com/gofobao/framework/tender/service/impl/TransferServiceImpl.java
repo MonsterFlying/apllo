@@ -131,7 +131,7 @@ public class TransferServiceImpl implements TransferService {
             transferOf.setName(borrow.getName());
             transferOf.setSpend(StringHelper.formatMon((p.getTransferMoneyYes() / 100D) / (p.getTransferMoney() / 100D)));
             transferOf.setApr(StringHelper.formatMon(p.getApr() / 100D));
-            transferOf.setCancel(p.getLock());
+            transferOf.setCancel(p.getIsLock());
             transferOf.setCreateTime(DateHelper.dateToString(p.getCreatedAt()));
             transferOf.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
             transferOfs.add(transferOf);

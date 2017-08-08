@@ -516,7 +516,7 @@ public class TransferBizImpl implements TransferBiz {
         // 1.标的年化率为 800 以上
         int apr = transfer.getApr();
         if (apr > 800) {
-            transfer.setLock(true);
+            transfer.setIsLock(true);
             transferService.save(transfer);  // 锁住债权转让,禁止手动购买
 
             //触发自动投标队列
@@ -589,17 +589,19 @@ public class TransferBizImpl implements TransferBiz {
         updateAssetByBuyUser(transferBuyLog, transfer);
 
         //判断是否满标，满标触发债权转让复审
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
-        mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            log.info(String.format("transferBizImpl buyTransfer send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("transferBizImpl buyTransfer send mq exception", e);
+        if (transfer.getTransferMoney() == transfer.getTransferMoneyYes()) {
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
+            mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("transferBizImpl buyTransfer send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("transferBizImpl buyTransfer send mq exception", e);
+            }
         }
 
         return ResponseEntity.ok(VoBaseResp.ok("购买成功!"));
@@ -738,7 +740,7 @@ public class TransferBizImpl implements TransferBiz {
         Preconditions.checkNotNull(borrow, "立即转让: 查询用户投标标的信息为空!");
 
         // 前期债权转让检测
-        ResponseEntity<VoBaseResp> transferConditionCheckResponse = transferConditionCheck(tender, borrow);
+        ResponseEntity<VoBaseResp> transferConditionCheckResponse = transferConditionCheck(tender, borrow, userId);
         if (!transferConditionCheckResponse.getStatusCode().equals(HttpStatus.OK)) {
             return transferConditionCheckResponse;
         }
@@ -764,7 +766,7 @@ public class TransferBizImpl implements TransferBiz {
 
         //保存债权转让记录
         saveTransfer(tenderId, userId, tender, borrow, waitTimeLimit, leftCapital, borrowCollectionList.get(0));
-        return ResponseEntity.ok(VoBaseResp.ok("购买成功!"));
+        return ResponseEntity.ok(VoBaseResp.ok("债权转让成功!"));
     }
 
     /**
@@ -796,7 +798,8 @@ public class TransferBizImpl implements TransferBiz {
         Transfer transfer = new Transfer();
         transfer.setUpdatedAt(nowDate);
         transfer.setUserId(userId);
-        transfer.setTransferMoneyYes(leftCapital + alreadyInterest);
+        transfer.setTransferMoney(leftCapital + alreadyInterest);
+        transfer.setTransferMoneyYes(0l);
         transfer.setDel(false);
         transfer.setBorrowId(borrow.getId());
         transfer.setPrincipal(leftCapital);
@@ -923,97 +926,6 @@ public class TransferBizImpl implements TransferBiz {
     }
 
     /**
-     * 债权转让
-     *
-     * @param voTransferTenderReq
-     * @return
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> transferTender(VoTransferTenderReq voTransferTenderReq) {
-        Date nowDate = new Date();
-        Long userId = voTransferTenderReq.getUserId();
-        Long tenderId = voTransferTenderReq.getTenderId();
-
-        Tender tender = tenderService.findById(tenderId);
-        Preconditions.checkNotNull(tender, "立即转让: 查询用户投标记录为空!");
-        Borrow borrow = borrowService.findByIdLock(tender.getBorrowId());
-        Preconditions.checkNotNull(borrow, "立即转让: 查询用户投标标的信息为空!");
-
-        // 前期债权转让检测
-        ResponseEntity<VoBaseResp> transferConditionCheck = transferConditionCheck(tender, borrow);
-        if (!transferConditionCheck.getStatusCode().equals(HttpStatus.OK)) {
-            return transferConditionCheck;
-        }
-
-        // 计算债权本金之和
-        // 判断本金必须大于 1000元
-        Specification<BorrowCollection> bcs = Specifications
-                .<BorrowCollection>and()
-                .eq("transferFlag", 0)
-                .eq("status", 0)
-                .eq("tenderId", tenderId)
-                .build();
-
-        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "order"));
-        Preconditions.checkNotNull(borrowCollectionList, "立即转让: 查询转让用户还款计划为空");
-        int waitTimeLimit = borrowCollectionList.size();  // 等待回款期数
-        long cantrCapital = borrowCollectionList.stream().mapToLong(borrowCollection -> borrowCollection.getPrincipal()).sum(); // 待汇款本金
-        if (cantrCapital < (1000 * 100)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "可转本金必须大于1000元才能转让"));
-        }
-
-        saveTranferBorrow(nowDate, userId, tender, borrow, waitTimeLimit, cantrCapital);
-        return ResponseEntity.ok(VoBaseResp.ok("操作成功"));
-    }
-
-    /**
-     * 保存债权,并且更改投标记录为转让中
-     *
-     * @param nowDate
-     * @param userId
-     * @param tender
-     * @param borrow
-     * @param waitTimeLimit
-     * @param cantrCapital
-     */
-    private void saveTranferBorrow(Date nowDate, Long userId, Tender tender, Borrow borrow, int waitTimeLimit, long cantrCapital) {
-        // 转让借款
-        Borrow tranferBorrow = new Borrow();
-        tranferBorrow.setType(3); // 3 转让标
-        tranferBorrow.setUse(borrow.getUse());
-        tranferBorrow.setIsLock(false);
-        tranferBorrow.setRepayFashion(borrow.getRepayFashion());
-        tranferBorrow.setTimeLimit(borrow.getRepayFashion() == 1 ? borrow.getTimeLimit() : waitTimeLimit);
-        tranferBorrow.setMoney(cantrCapital);
-        tranferBorrow.setApr(borrow.getApr());
-        tranferBorrow.setLowest(1000 * 100);
-        tranferBorrow.setValidDay(1);
-        tranferBorrow.setName(borrow.getName());
-        tranferBorrow.setDescription(borrow.getDescription());
-        tranferBorrow.setIsVouch(borrow.getIsVouch());
-        tranferBorrow.setIsMortgage(borrow.getIsMortgage());
-        tranferBorrow.setIsConversion(borrow.getIsConversion());
-        tranferBorrow.setUserId(userId);
-        tranferBorrow.setTenderId(tender.getId());
-        tranferBorrow.setCreatedAt(nowDate);
-        tranferBorrow.setUpdatedAt(nowDate);
-        tranferBorrow.setMost(0);
-        tranferBorrow.setMostAuto(0);
-        tranferBorrow.setAwardType(0);
-        tranferBorrow.setAward(0);
-        tranferBorrow.setPassword("");
-        tranferBorrow.setMoneyYes(0l);
-        tranferBorrow.setTenderCount(0);
-        borrowService.insert(tranferBorrow);//插入转让标
-
-        tender.setTransferFlag(1);
-        tender.setUpdatedAt(nowDate);
-        tenderService.updateById(tender);
-    }
-
-    /**
      * 债权装让前期检测
      * 1. 当期债权是否已经发生转让行为
      * 2. 当前待还是否为官方标的
@@ -1023,7 +935,13 @@ public class TransferBizImpl implements TransferBiz {
      * @param borrow
      * @return
      */
-    private ResponseEntity<VoBaseResp> transferConditionCheck(Tender tender, Borrow borrow) {
+    private ResponseEntity<VoBaseResp> transferConditionCheck(Tender tender, Borrow borrow, long userId) {
+        if (userId != tender.getUserId()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "操作失败: 非债权投资人不能转让!"));
+        }
+
         if (tender.getTransferFlag() != 0) {
             return ResponseEntity
                     .badRequest()
@@ -1125,7 +1043,7 @@ public class TransferBizImpl implements TransferBiz {
     public List<VoViewBorrowList> findTransferList(VoBorrowListReq voBorrowListReq) {
         Specification<Transfer> ts = Specifications
                 .<Transfer>and()
-                .in("state", ImmutableList.of(1, 2))
+                .in("state", ImmutableList.of(1, 2).toArray())
                 .build();
         Pageable pageable = new PageRequest(voBorrowListReq.getPageIndex(), voBorrowListReq.getPageSize(), new Sort(Sort.Direction.ASC, "state"));
         List<Transfer> transferList = transferService.findList(ts, pageable);

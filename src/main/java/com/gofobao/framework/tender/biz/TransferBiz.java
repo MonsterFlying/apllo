@@ -68,14 +68,6 @@ public interface TransferBiz {
     ResponseEntity<VoViewTransferBuyWarpRes> tranferBuyList(VoTransferReq voTransferReq);
 
     /**
-     * 债权转让
-     *
-     * @param voTransferTenderReq
-     * @return
-     */
-    ResponseEntity<VoBaseResp> transferTender(VoTransferTenderReq voTransferTenderReq);
-
-    /**
      * 获取立即转让详情
      *
      * @param tenderId 投标记录Id
