@@ -42,7 +42,6 @@ import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
-import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -127,8 +126,6 @@ public class AssetBizImpl implements AssetBiz {
     @Autowired
     RechargeDetailLogService rechargeDetailLogService;
 
-    @Autowired
-    CapitalChangeHelper capitalChangeHelper;
 
     @Autowired
     MqHelper mqHelper;

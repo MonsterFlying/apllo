@@ -2,12 +2,13 @@ package com.gofobao.framework.listener.providers;
 
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
-import com.gofobao.framework.common.capital.CapitalChangeEntity;
-import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.assets.AssetChange;
+import com.gofobao.framework.common.assets.AssetChangeProvider;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.helper.project.CapitalChangeHelper;
+import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.member.biz.UserThirdBiz;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
@@ -35,9 +36,6 @@ public class UserActiveProvider {
     UserThirdBiz userThirdBiz ;
 
     @Autowired
-    CapitalChangeHelper capitalChangeHelper ;
-
-    @Autowired
     IncrStatisticBiz incrStatisticBiz ;
 
     @Autowired
@@ -48,6 +46,8 @@ public class UserActiveProvider {
 
     @Autowired
     UserThirdAccountService userThirdAccountService  ;
+    @Autowired
+    AssetChangeProvider assetChangeProvider;
 
 
 
@@ -78,12 +78,16 @@ public class UserActiveProvider {
      */
     private void awardVirtualMoney(Long userId, Integer money ) throws Exception{
         log.info(String.format("award VirtualMoney: %s", userId));
-        CapitalChangeEntity entity = new CapitalChangeEntity();
-        entity.setType(CapitalChangeEnum.AwardVirtualMoney);
-        entity.setUserId(userId);
-        entity.setMoney(money * 100);
-        entity.setRemark("赠送体验金");
-        capitalChangeHelper.capitalChange(entity);
+        //赠送体验金
+        AssetChange assetChange = new AssetChange();
+        assetChange.setType(AssetChangeTypeEnum.unfreeze);  // 招标失败解除冻结资金
+        assetChange.setUserId(userId);
+        assetChange.setMoney(money * 100);
+        assetChange.setRemark("赠送体验金");
+        assetChange.setSourceId(userId);
+        assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+        assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
+        assetChangeProvider.commonAssetChange(assetChange) ;
         log.info("award virtualMoney success");
     }
 

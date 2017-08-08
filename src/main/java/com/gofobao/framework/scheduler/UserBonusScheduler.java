@@ -1,10 +1,13 @@
 package com.gofobao.framework.scheduler;
 
+import com.gofobao.framework.common.assets.AssetChange;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.BrokerBouns;
 import com.gofobao.framework.member.service.BrokerBounsService;
@@ -28,8 +31,6 @@ public class UserBonusScheduler {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
-    @Autowired
-    private CapitalChangeHelper capitalChangeHelper;
     @Autowired
     private BrokerBounsService brokerBounsService;
 
@@ -55,7 +56,6 @@ public class UserBonusScheduler {
             int level = 0;
             double awardApr = 0;
             double bounsAward = 0;
-            CapitalChangeEntity entity = null;
             List<Map<String, Object>> resultList = null;
             do {
                 sql.append(" limit " + (pageIndex++ - 1) * pageSize + "," + pageIndex * pageSize);
@@ -77,6 +77,7 @@ public class UserBonusScheduler {
                         continue;
                     }
 
+                    //提成
                     entity = new CapitalChangeEntity();
                     entity.setUserId(NumberHelper.toInt(map.get("user_id")));
                     entity.setMoney((int) bounsAward);
