@@ -26,13 +26,13 @@ public class WindmillTenderColltroller {
     private WindmillTenderBiz windmillTenderBiz;
 
     @ApiOperation("用户投资回款查询")
-    @PostMapping("/user/payBack/list")
+    @RequestMapping("/user/payBack/list")
     public BackRecordsRes payBacK(HttpServletRequest request) {
         return windmillTenderBiz.backRecordList(request) ;
     }
 
     @ApiOperation("用户投资记录查询接口")
-    @PostMapping("user/invest/list")
+    @RequestMapping("user/invest/list")
     public InvestRecordsRes userInvestList(HttpServletRequest request) {
         return windmillTenderBiz.investRecordList(request);
     }

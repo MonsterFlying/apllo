@@ -11,6 +11,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -33,25 +34,25 @@ public class WindmillBorrowController {
     private WindmillStatisticsBiz windmillStatisticsBiz;
 
     @ApiOperation("标列表")
-    @GetMapping("/invest/list")
+    @RequestMapping("/invest/list")
     public InvestListRes list(HttpServletRequest request) {
         return windmillBorrowBiz.list(request);
     }
 
     @ApiOperation("标的投标记录")
-    @GetMapping("/borrow/info")
+    @RequestMapping("/borrow/info")
     public BorrowTenderList info(HttpServletRequest request) {
         return windmillBorrowBiz.tenderList(request);
     }
 
     @ApiOperation("查询某天投资情况")
-    @GetMapping("/invest/byTime/list")
+    @RequestMapping("/invest/byTime/list")
     public BySomeDayRes byTime(HttpServletRequest request) {
         return windmillBorrowBiz.bySomeDayTenders(request);
     }
 
     @ApiOperation("查询每日的汇总数据")
-    @GetMapping("/invest/bySomeday/list")
+    @RequestMapping("/invest/bySomeday/list")
     public ByDayStatistics bySomeday(HttpServletRequest request) {
         return windmillStatisticsBiz.byDayStatistics(request);
     }

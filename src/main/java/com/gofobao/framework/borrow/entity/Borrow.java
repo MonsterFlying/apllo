@@ -118,6 +118,9 @@ public class Borrow implements Serializable {
 
     private Boolean thirdTransferFlag;
 
+    @Column(name = "is_windmill")
+    private Boolean isWindmill;
+
 
     /**
      * 判断是否是转让标

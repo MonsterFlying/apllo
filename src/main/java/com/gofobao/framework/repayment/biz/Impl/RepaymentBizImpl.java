@@ -94,6 +94,8 @@ import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.gofobao.framework.tender.vo.request.VoEndTransfer;
+import com.gofobao.framework.windmill.borrow.biz.WindmillTenderBiz;
+import com.gofobao.framework.windmill.util.WrbCoopDESUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -497,6 +499,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
         return ResponseEntity.ok(VoBaseResp.ok("验证成功!"));
     }
 
+
+    @Autowired
+    private WindmillTenderBiz windmillTenderBiz;
+
     /**
      * 新还款处理
      * 1.查询并判断还款记录是否存在!
@@ -557,6 +563,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
         updateUserCacheByReceivedRepay(borrowCollectionList, parentBorrow);
         //10.项目回款短信通知
         smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
+        //通知风车理财用户回款成功g
+
+        windmillTenderBiz.backMoneyNotify(borrowCollectionList);
 
         return ResponseEntity.ok(VoBaseResp.ok("还款处理成功!"));
     }
@@ -1412,6 +1421,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         batchAssetChangeService.save(batchAssetChange);
         return batchAssetChange;
     }
+
     /**
      * 生成还款人还款批次资金改变记录
      *

@@ -63,12 +63,13 @@ public class WindmillBorrowServiceImpl implements WindmillBorrowService {
                 new Integer(BorrowContants.MIAO_BIAO));
         StringBuilder sql = new StringBuilder("SELECT b FROM Borrow  AS b WHERE 1=1 ");
         //条件
-        StringBuilder condition = new StringBuilder("AND b.status NOT IN(:statusArray) AND b.type NOT IN (:typeArray) AND b.closeAt IS NULL AND b.tenderId IS NULL");
+        StringBuilder condition = new StringBuilder("AND b.status NOT IN(:statusArray) AND b.type NOT IN (:typeArray) AND b.closeAt IS NULL AND b.tenderId IS NULL AND isWindmill=:isWindmill ");
         if (!ObjectUtils.isEmpty(borrowId)) {
             condition.append(" AND  b.id=" + borrowId);
         }
         Query query = entityManager.createQuery(sql.append(condition).toString(), Borrow.class);
         query.setParameter("statusArray", statusArray);
+        query.setParameter("isWindmill", true);
         query.setParameter("typeArray", typeArray);
         List<Borrow> borrowList = query.getResultList();
         Optional<List<Borrow>> result = Optional.empty();

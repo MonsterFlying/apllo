@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 public class UserTenderLogReq {
 
-    private String pf_user_id;
+    private Long pf_user_id;
 
     private String start_time;
 
@@ -20,6 +20,6 @@ public class UserTenderLogReq {
 
     private Integer limit;
 
-    private Long invest_record_id;
+    private String invest_record_id;
 
 }

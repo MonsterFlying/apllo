@@ -28,19 +28,19 @@ public class WindmillStatisticsController {
     private WindmillStatisticsBizImpl statisticsBiz;
 
     @ApiOperation("每日平台数据统计")
-    @GetMapping("statistics/show")
+    @RequestMapping("statistics/show")
     public ByDayStatistics statistics(HttpServletRequest request) {
         return statisticsBiz.byDayStatistics(request);
     }
 
     @ApiOperation("查询用户账户信息")
-    @PostMapping("/user/basics/info")
+    @RequestMapping("/user/basics/info")
     public UserAccountStatistics userInfo(HttpServletRequest request) {
         return statisticsBiz.userStatistics(request);
     }
     
     @ApiOperation("平台公告查询接口")
-    @GetMapping("/notice/info/list")
+    @RequestMapping("/notice/info/list")
     public VoNoticesRes string(HttpServletRequest request) {
         return statisticsBiz.noticesList(request);
     }

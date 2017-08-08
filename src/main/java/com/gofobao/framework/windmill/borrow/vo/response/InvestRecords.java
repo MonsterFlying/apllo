@@ -38,7 +38,7 @@ public class InvestRecords {
 
     private Integer is_auto_bid0;
 
-    private String monthly_back_date;
+    private Integer monthly_back_date;
 
     private String next_back_date;
 

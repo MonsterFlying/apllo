@@ -19,9 +19,7 @@ import com.gofobao.framework.windmill.borrow.vo.response.UserAccountStatistics;
 import com.gofobao.framework.windmill.user.vo.respones.Notices;
 import com.gofobao.framework.windmill.user.vo.respones.VoNoticesRes;
 import com.gofobao.framework.windmill.util.StrToJsonStrUtil;
-import com.gofobao.framework.windmill.util.WrbCoopDESUtil;
 import com.google.common.collect.Lists;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -63,9 +61,10 @@ public class WindmillStatisticsBizImpl implements WindmillStatisticsBiz {
 
     @Autowired
     private AssetService assetService;
-    
+
     @Autowired
     private ArticleRepository articleRepository;
+
     /**
      * 查询每日的汇总数据
      *
@@ -74,19 +73,17 @@ public class WindmillStatisticsBizImpl implements WindmillStatisticsBiz {
      */
     @Override
     public ByDayStatistics byDayStatistics(HttpServletRequest request) {
-
         ByDayStatistics byDayStatistics = new ByDayStatistics();
-        Map<String, String> paramMap;
+        Map<String, Object> paramMap;
         try {
-            String paramStr =StrToJsonStrUtil.commonDecryptStr(WrbCoopDESUtil.desDecrypt(desKey, request.getParameter("param"))) ;
-            paramMap = GSON.fromJson(paramStr, new TypeToken<Map<String, String>>() {
-            }.getType());
+            String paramStr = request.getParameter("param");
+            paramMap = StrToJsonStrUtil.commonUrlParamToMap(paramStr, desKey);
         } catch (Exception e) {
             byDayStatistics.setRetcode(VoBaseResp.ERROR);
             byDayStatistics.setRetmsg("平台转json失败");
             return byDayStatistics;
         }
-        return windmillStatisticsService.bySomeDayStatistics(paramMap.get("date"));
+        return windmillStatisticsService.bySomeDayStatistics(paramMap.get("date").toString());
     }
 
     /**
@@ -97,14 +94,15 @@ public class WindmillStatisticsBizImpl implements WindmillStatisticsBiz {
      */
     @Override
     public UserAccountStatistics userStatistics(HttpServletRequest request) {
+
         UserAccountStatistics accountStatistics = new UserAccountStatistics();
-        Map<String, String> paramMap;
+        Map<String, Object> paramMap;
         Long userId;
         try {
-            String paramStr = StrToJsonStrUtil.commonDecryptStr(WrbCoopDESUtil.desDecrypt(desKey, request.getParameter("param")));
-            paramMap = GSON.fromJson(paramStr, new TypeToken<Map<String, String>>() {
-            }.getType());
-            userId = Long.valueOf(paramMap.get("pf_user_id"));
+            String paramStr = request.getParameter("param");
+            paramMap = StrToJsonStrUtil.commonUrlParamToMap(paramStr, desKey);
+
+            userId = Long.valueOf(paramMap.get("pf_user_id").toString());
         } catch (Exception e) {
             accountStatistics.setRetcode(VoBaseResp.ERROR);
             accountStatistics.setRetmsg("平台转json失败");
@@ -143,7 +141,7 @@ public class WindmillStatisticsBizImpl implements WindmillStatisticsBiz {
             accountStatistics.setFrozen_money(StringHelper.formatDouble(frozen_money / 100D, false));
 
             //平台用户id
-            accountStatistics.setPf_user_id(WrbCoopDESUtil.desEncrypt(localDesKey, asset.getUserId().toString()));
+            accountStatistics.setPf_user_id( asset.getUserId().toString());
             //账户总额
             accountStatistics.setAll_balance(StringHelper.formatDouble((frozen_money + investing_interest + investing_principal + available_balance + earned_interest) / 100D, false));
             String reward = "";
@@ -154,6 +152,8 @@ public class WindmillStatisticsBizImpl implements WindmillStatisticsBiz {
                 }
                 reward = reward.substring(0, reward.length() - 1);
             }
+            accountStatistics.setRetcode(VoBaseResp.OK);
+            accountStatistics.setRetmsg("查询成功");
             accountStatistics.setReward(reward);
         } catch (Exception e) {
             accountStatistics.setRetcode(VoBaseResp.ERROR);
@@ -164,23 +164,20 @@ public class WindmillStatisticsBizImpl implements WindmillStatisticsBiz {
     }
 
 
-
-
     /**
      * 平臺公告
+     *
      * @param request )
      * @return
      */
     @Override
     public VoNoticesRes noticesList(HttpServletRequest request) {
-
         VoNoticesRes voNoticesRes = new VoNoticesRes();
-
-        Map<String, String> paramMap;
+        Map<String, Object> paramMap;
         try {
             String param = request.getParameter("param");
-            paramMap = GSON.fromJson(StrToJsonStrUtil.commonDecryptStr(WrbCoopDESUtil.desDecrypt(localDesKey, param)), new TypeToken<Map<String, String>>() {
-            }.getType());
+            paramMap = StrToJsonStrUtil.commonUrlParamToMap(param, desKey);
+
         } catch (Exception e) {
             voNoticesRes.setRetmsg("平台转json失败");
             voNoticesRes.setRetcode(VoBaseResp.ERROR);
@@ -192,8 +189,8 @@ public class WindmillStatisticsBizImpl implements WindmillStatisticsBiz {
                 .build();
         List<Article> articles = articleRepository.findAll(specification,
                 new PageRequest(
-                        Integer.valueOf(paramMap.get("page")),
-                        Integer.valueOf(paramMap.get("limit")),
+                        Integer.valueOf(paramMap.get("page").toString()),
+                        Integer.valueOf(paramMap.get("limit").toString()),
                         new Sort(Sort.Direction.DESC, "id")))
                 .getContent();
 
