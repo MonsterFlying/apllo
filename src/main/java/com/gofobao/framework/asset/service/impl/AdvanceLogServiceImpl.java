@@ -23,21 +23,10 @@ public class AdvanceLogServiceImpl implements AdvanceLogService{
     @Autowired
     private AdvanceLogRepository advanceLogRepository;
 
-    public boolean insert(AdvanceLog advanceLog){
-        if (ObjectUtils.isEmpty(advanceLog)){
-            return false;
-        }
-        advanceLog.setId(null);
-        advanceLogRepository.save(advanceLog);
-        return true;
-    }
 
-    public boolean updateById(AdvanceLog advanceLog){
-        if (ObjectUtils.isEmpty(advanceLog) || ObjectUtils.isEmpty(advanceLog.getId())){
-            return false;
-        }
-        advanceLogRepository.save(advanceLog);
-        return true;
+
+    public AdvanceLog save(AdvanceLog advanceLog){
+        return advanceLogRepository.save(advanceLog);
     }
 
     public AdvanceLog findById(Long id){
