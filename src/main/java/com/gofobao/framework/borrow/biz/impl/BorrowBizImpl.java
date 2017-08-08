@@ -76,6 +76,7 @@ import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.biz.TransferBiz;
+import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.AutoTenderService;
@@ -1027,7 +1028,7 @@ public class BorrowBizImpl implements BorrowBiz {
     /**
      * @param borrows
      */
-    @Transactional(readOnly = true)
+    @Transactional
     @Override
     public void schedulerCancelBorrow(List<Borrow> borrows) {
         Date nowDate = new Date();
@@ -1042,6 +1043,10 @@ public class BorrowBizImpl implements BorrowBiz {
             log.info("调度取消过期标的失败----->查询标的为空");
             return;
         }
+        borrows.stream().forEach(p->p.setStatus(BorrowContants.CANCEL));
+
+        borrowService.save(borrows);
+
         Specification borrowSpecification = Specifications
                 .<Tender>and()
                 .eq("status", 1)
@@ -1071,9 +1076,10 @@ public class BorrowBizImpl implements BorrowBiz {
                 tender.setStatus(2); // 取消状态
                 tender.setUpdatedAt(nowDate);
                 tenderService.save(tender);
-
+                //取消标的
                 Borrow borrow = borrowMap.get(tender.getBorrowId());
-
+                borrow.setStatus(BorrowContants.CANCEL);
+                borrowService.save(borrow);
                 //==================================================================
                 //取消即信投资人投标记录
                 //==================================================================
@@ -1088,13 +1094,18 @@ public class BorrowBizImpl implements BorrowBiz {
                     }
                 }
 
-                CapitalChangeEntity entity = new CapitalChangeEntity();
-                entity.setType(CapitalChangeEnum.Unfrozen);
-                entity.setUserId(tender.getUserId());
-                entity.setMoney(tender.getValidMoney());
-                entity.setRemark("借款 [" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "] 招标失败解除冻结资金。");
+                // 冻结还款金额
+                long money = new Double((tender.getValidMoney()) * 100).longValue();
+                AssetChange freezeAssetChange = new AssetChange();
+                freezeAssetChange.setForUserId(tender.getUserId());
+                freezeAssetChange.setUserId(tender.getUserId());
+                freezeAssetChange.setType(AssetChangeTypeEnum.unfreeze);
+                freezeAssetChange.setRemark(String.format("标的取消成功[%s]解冻资金%s元", borrow.getName(), StringHelper.formatDouble(money / 100D, true)));
+                freezeAssetChange.setSeqNo(assetChangeProvider.getSeqNo());
+                freezeAssetChange.setMoney(money);
+                freezeAssetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
                 try {
-                    capitalChangeHelper.capitalChange(entity);
+                    assetChangeProvider.commonAssetChange(freezeAssetChange);
                 } catch (Exception e) {
                     log.error(String.format("取消借款:资金变动失败"));
                 }

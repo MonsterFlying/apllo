@@ -260,7 +260,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
             return bySomeDayRes;
         }
         bySomeDayRes.setRetcode(VoBaseResp.OK);
-        bySomeDayRes.setRetmsg("当前没有用户投资");
+        bySomeDayRes.setRetmsg("查询成功");
         bySomeDayRes.setInvest_list(invest_list);
         return bySomeDayRes;
     }
