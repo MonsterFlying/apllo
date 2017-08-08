@@ -14,6 +14,7 @@ import com.gofobao.framework.tender.vo.response.VoViewTransferOfWarpRes;
 import com.gofobao.framework.tender.vo.response.VoViewTransferedWarpRes;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +28,7 @@ import javax.validation.Valid;
 @RestController
 @RequestMapping("pub/transfer")
 @Api(description = "债权相关控制器")
+@Slf4j
 public class TransferController {
 
     @Autowired
@@ -73,11 +75,13 @@ public class TransferController {
      * 购买债权转让
      */
     @ApiOperation("新版购买债权转让")
-    @GetMapping("v2/new/transfer/buy")
-    public ResponseEntity<VoBaseResp> buyTransfer(@Valid VoBuyTransfer voBuyTransfer) {
+    @PostMapping("v2/new/transfer/buy")
+    public ResponseEntity<VoBaseResp> buyTransfer(@Valid VoBuyTransfer voBuyTransfer, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         try {
+            voBuyTransfer.setUserId(userId);
             return transferBiz.buyTransfer(voBuyTransfer);
         } catch (Exception e) {
+            log.error("购买债权转让异常：",e);
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后重试!"));
         }
     }
@@ -144,7 +148,12 @@ public class TransferController {
     public ResponseEntity<VoBaseResp> transferTender(@ModelAttribute @Valid VoTransferTenderReq voTransferTenderReq,
                                                      @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voTransferTenderReq.setUserId(userId);
-        return transferBiz.transferTender(voTransferTenderReq);
+        try {
+            return transferBiz.newTransferTender(voTransferTenderReq);
+        } catch (Exception e) {
+            log.error("债权转让异常：",e);
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后重试!"));
+        }
     }
 
     /**

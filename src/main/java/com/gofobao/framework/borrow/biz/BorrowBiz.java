@@ -6,6 +6,7 @@ import com.gofobao.framework.borrow.vo.response.*;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -18,6 +19,7 @@ public interface BorrowBiz {
 
     /**
      * 取消借款
+     *
      * @param voCancelBorrow
      * @return
      */
@@ -26,6 +28,7 @@ public interface BorrowBiz {
 
     /**
      * 调度取消过期的标
+     *
      * @param borrowList
      * @return
      */
@@ -33,6 +36,7 @@ public interface BorrowBiz {
 
     /**
      * pc取消借款
+     *
      * @param voPcCancelThirdBorrow
      * @return
      */
@@ -105,15 +109,6 @@ public interface BorrowBiz {
     Map<String, Object> pcContract(Long borrowId, Long userId);
 
     /**
-     * 提前结清
-     *
-     * @param voRepayAll
-     * @return
-     */
-    ResponseEntity<VoBaseResp> repayAll(VoRepayAll voRepayAll);
-
-
-    /**
      * pc:招标中统计
      *
      * @param
@@ -146,6 +141,7 @@ public interface BorrowBiz {
 
     /**
      * 执行受托支付状态查询
+     *
      * @param borrowId
      * @return
      */
@@ -153,6 +149,7 @@ public interface BorrowBiz {
 
     /**
      * 初审
+     *
      * @param borrowId
      * @return
      * @throws Exception
@@ -161,6 +158,7 @@ public interface BorrowBiz {
 
     /**
      * pc初审
+     *
      * @param voPcDoFirstVerity
      * @return
      */

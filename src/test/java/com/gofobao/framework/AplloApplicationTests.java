@@ -467,6 +467,12 @@ public class AplloApplicationTests {
 
     @Test
     public void test() {
+
+        /*Borrow borrow = borrowService.findById(169954L);
+        borrow.setStatus(3);
+        borrow.setSuccessAt(new Date());
+        borrowService.save(borrow);*/
+
         /*Map<String,String> map = new HashMap<>();
         map.put(MqConfig.MSG_BORROW_ID,"169921");
         try {
@@ -528,7 +534,7 @@ public class AplloApplicationTests {
         //非转让标复审问题
         //noTransferBorrowAgainVerify();
         // 查询债权关系
-        CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
+        /*CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
         creditDetailsQueryRequest.setAccountId("6212462040000650087");
         creditDetailsQueryRequest.setStartDate("20161003");
         creditDetailsQueryRequest.setProductId("169922");
@@ -539,7 +545,7 @@ public class AplloApplicationTests {
         CreditDetailsQueryResponse creditDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.CREDIT_DETAILS_QUERY,
                 creditDetailsQueryRequest,
                 CreditDetailsQueryResponse.class);
-        System.out.println(creditDetailsQueryResponse);
+        System.out.println(creditDetailsQueryResponse);*/
 
 
         /*CreditEndReq creditEndReq = new CreditEndReq();

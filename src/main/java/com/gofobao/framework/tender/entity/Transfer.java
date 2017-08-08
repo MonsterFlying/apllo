@@ -26,7 +26,7 @@ public class Transfer {
     private Integer apr;
     private Date repayAt;
     private Long tenderId;
-    private Boolean lock;
+    private Boolean isLock;
     private Integer tenderCount;
     private Long borrowId;
     private Long userId;

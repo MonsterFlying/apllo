@@ -246,7 +246,7 @@ public class TransferProvider {
         // 解除锁定
         if (transferMoneyYes != transferMoney) { // 在自动投标中, 标的未满.马上将其解除.
             transfer.setUpdatedAt(nowDate);
-            transfer.setLock(false);
+            transfer.setIsLock(false);
             transferService.save(transfer);
         }
     }
