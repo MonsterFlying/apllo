@@ -437,9 +437,9 @@ public class ThirdBatchProvider {
             borrowCollectionService.save(successBorrowCollectionList);
         }
 
-        //推送垫付队列
-        if (!CollectionUtils.isEmpty(failureTBailRepayOrderIds)) {
-            //推送垫付队列
+
+        if (!CollectionUtils.isEmpty(failureTBailRepayOrderIds)) {  //推送垫付队列
+            // 推送垫付队列
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_REPAYMENT);
             mqConfig.setTag(MqTagEnum.ADVANCE);

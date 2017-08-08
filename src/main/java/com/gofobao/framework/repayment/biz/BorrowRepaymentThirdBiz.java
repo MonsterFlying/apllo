@@ -100,9 +100,10 @@ public interface BorrowRepaymentThirdBiz {
      * @param borrow
      * @param order
      * @param advanceAssetChanges
-     * @return
+     * @param lateDays
+ *@param lateInterest @return
      */
-    List<BailRepay> calculateAdvancePlan(Borrow borrow, int order,  List<AdvanceAssetChange> advanceAssetChanges) throws Exception;
+    List<BailRepay> calculateAdvancePlan(Borrow borrow, int order, List<AdvanceAssetChange> advanceAssetChanges, int lateDays, long lateInterest) throws Exception;
 
     /**
      * 新版生成还款计划
