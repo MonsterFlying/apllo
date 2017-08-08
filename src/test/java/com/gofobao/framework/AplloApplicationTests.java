@@ -25,8 +25,6 @@ import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
-import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryRequest;
-import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryResponse;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResponse;
@@ -304,19 +302,6 @@ public class AplloApplicationTests {
     private void doFirstVerify() {
         try {
             borrowBiz.doFirstVerify(169853L);
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void repayDeal() {
-        VoRepayReq voRepayReq = new VoRepayReq();
-        voRepayReq.setRepaymentId(173823L);
-        voRepayReq.setUserId(37243L);
-        voRepayReq.setIsUserOpen(false);
-        voRepayReq.setInterestPercent(1d);
-        try {
-            repaymentBiz.repayDeal(voRepayReq);
         } catch (Throwable e) {
             e.printStackTrace();
         }
