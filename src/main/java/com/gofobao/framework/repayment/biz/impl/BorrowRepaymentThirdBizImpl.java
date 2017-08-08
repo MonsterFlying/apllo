@@ -436,8 +436,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * 生成担保人代偿记录
      * @param borrow
      * @param order
-     * @param lateDays
-     * @param lateInterest
      * @param advanceAssetChanges
      * @return
      */
