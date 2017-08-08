@@ -18,7 +18,7 @@ public class InvestRecords {
 
     private String all_interest;
 
-    private String invest_record_id;
+    private Long invest_record_id;
 
     private String project_url;
 

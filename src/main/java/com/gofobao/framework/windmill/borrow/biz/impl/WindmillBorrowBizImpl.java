@@ -179,7 +179,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
         tenders.forEach(p -> {
             VoTender tender = new VoTender();
             try {
-                tender.setIndex(WrbCoopDESUtil.desEncrypt(localDesKey, p.getId().toString()));
+                tender.setIndex( p.getId());
                 tender.setInvest_money(StringHelper.formatDouble(p.getValidMoney(), false));
                 tender.setInvest_time(DateHelper.dateToString(p.getCreatedAt()));
                 Users tempUser = usersMap.get(p.getUserId());
@@ -241,7 +241,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
                 try {
                     BySomeDay bySomeDay = new BySomeDay();
                     bySomeDay.setBorrowId(p.getBorrowId());
-                    bySomeDay.setIndex(WrbCoopDESUtil.desEncrypt(p.getId().toString(), localDesKey));
+                    bySomeDay.setIndex(p.getId());
                     bySomeDay.setInvest_money(StringHelper.formatDouble(p.getValidMoney(), false));
                     bySomeDay.setInvest_time(DateHelper.dateToString(p.getCreatedAt()));
                     bySomeDay.setBid_id(h5Address + "#/borrow/" + p.getBorrowId());
@@ -260,7 +260,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
             return bySomeDayRes;
         }
         bySomeDayRes.setRetcode(VoBaseResp.OK);
-        bySomeDayRes.setRetmsg("当前没有用户投资");
+        bySomeDayRes.setRetmsg("查询成功");
         bySomeDayRes.setInvest_list(invest_list);
         return bySomeDayRes;
     }

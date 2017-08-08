@@ -1,6 +1,8 @@
 package com.gofobao.framework.windmill.util;
 
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
@@ -12,6 +14,7 @@ import java.util.Map;
 @Slf4j
 public class StrToJsonStrUtil {
 
+    private static final Gson GSON = new Gson();
     /**
      * @param cipherStr
      * @return
@@ -49,6 +52,7 @@ public class StrToJsonStrUtil {
                 map.put(p[0], StringUtils.isEmpty(p[1])?"":p[1]);
             }
         }
+        log.info("风车理财请求平台 解密后的param参数:"+GSON.toJson(map));
         return map;
     }
 

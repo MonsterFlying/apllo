@@ -147,7 +147,7 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
                     //投资金额
                     investRecords.setInvest_money(StringHelper.formatDouble(w.getValidMoney() / 100D, false));
                     //投资记录id
-                    investRecords.setInvest_record_id(WrbCoopDESUtil.desEncrypt(localDesKey, w.getId().toString()));
+                    investRecords.setInvest_record_id( w.getId());
                     //项目id
                     investRecords.setProject_id(borrow.getId());
                     //项目标题
@@ -274,7 +274,7 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
         try {
             //解密
             backRecordsReq.setPf_user_id( backRecordsReq.getPf_user_id());
-            backRecordsReq.setInvest_record_id(WrbCoopDESUtil.desDecrypt(localDesKey, backRecordsReq.getInvest_record_id()));
+            backRecordsReq.setInvest_record_id( backRecordsReq.getInvest_record_id());
             //查询
             List<BorrowCollection> borrowCollections = windmillTenderService.backCollectionList(backRecordsReq);
             List<BackRecords> back_records = Lists.newArrayList();
@@ -316,9 +316,9 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
         do {
             try {
                 Borrow borrow = borrowService.findById(tender.getBorrowId());
-                requestParamStr = "pf_user_id=" + WrbCoopDESUtil.desEncrypt(localDesKey, tender.getUserId().toString()) +
+                requestParamStr = "pf_user_id=" + tender.getUserId() +
                         "&invest_time=" + DateHelper.dateToString(tender.getCreatedAt()) +
-                        "&invest_sno=" + WrbCoopDESUtil.desEncrypt(localDesKey, tender.getId().toString()) +
+                        "&invest_sno=" +  tender.getId() +
                         "&invest_money=" + StringHelper.formatDouble(tender.getValidMoney() / 100D, false) +
                         "&invest_limit=" + (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE ? borrow.getTimeLimit() : (borrow.getTimeLimit() * 30)) +
                         "&invest_rate=" + borrow.getApr() +
@@ -382,9 +382,9 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
                     //拼接参数并加密
                     String requestParamStr = "";
                     try {
-                        requestParamStr = "pf_user_id=" + WrbCoopDESUtil.desEncrypt(localDesKey, p.getUserId().toString()) +
+                        requestParamStr = "pf_user_id=" + p.getUserId() +
                                 "&invest_time=" + DateHelper.dateToString(tender.getCreatedAt()) +
-                                "&invest_sno=" + WrbCoopDESUtil.desEncrypt(localDesKey, tender.getId().toString()) +
+                                "&invest_sno=" + tender.getId() +
                                 "&invest_money" + StringHelper.formatDouble(tender.getValidMoney() / 100D, false) +
                                 "&invest_limit=" + (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE ? borrow.getTimeLimit() : (borrow.getTimeLimit() * 30)) +
                                 "&invest_rate=" + StringHelper.formatDouble(borrow.getApr() / 100D, false) +

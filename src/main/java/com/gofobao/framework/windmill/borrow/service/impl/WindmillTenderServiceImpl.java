@@ -91,7 +91,7 @@ public class WindmillTenderServiceImpl implements WindmillTenderService {
                 } else {//已回款
                     state = TenderConstans.SETTLE;
                 }
-                sql.append(" AND t.status= " + state);
+                sql.append(" AND t.state= " + state);
             }
             sql.append(" order by id desc ");
             Query query = entityManager.createQuery(sql.toString(), Tender.class);
