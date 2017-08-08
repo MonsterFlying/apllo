@@ -34,7 +34,6 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
-import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserCacheService;
@@ -115,8 +114,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     private MqHelper mqHelper;
     @Autowired
     private ThirdBatchLogBiz thirdBatchLogBiz;
-    @Autowired
-    private CapitalChangeHelper capitalChangeHelper;
     @Autowired
     private AssetChangeProvider assetChangeProvider;
 
