@@ -146,8 +146,6 @@ public class BorrowBizImpl implements BorrowBiz {
     @Autowired
     private BorrowRepaymentService borrowRepaymentService;
     @Autowired
-    private RepaymentBiz repaymentBiz;
-    @Autowired
     private BorrowProvider borrowProvider;
     @Autowired
     private BorrowThirdBiz borrowThirdBiz;
@@ -167,14 +165,6 @@ public class BorrowBizImpl implements BorrowBiz {
     private LendService lendService;
     @Autowired
     private TenderBiz tenderBiz;
-    @Autowired
-    private ThirdBatchLogBiz thirdBatchLogBiz;
-    @Autowired
-    private JixinHelper jixinHelper;
-    @Autowired
-    private BatchAssetChangeService batchAssetChangeService;
-    @Autowired
-    private BatchAssetChangeItemService batchAssetChangeItemService;
     @Autowired
     JixinManager jixinManager;
     @Autowired
