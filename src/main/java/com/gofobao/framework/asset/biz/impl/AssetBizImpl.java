@@ -32,8 +32,6 @@ import com.gofobao.framework.asset.vo.response.pc.VoViewAssetLogsWarpRes;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
-import com.gofobao.framework.common.capital.CapitalChangeEntity;
-import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.jxl.ExcelException;
 import com.gofobao.framework.common.jxl.ExcelUtil;
@@ -97,7 +95,7 @@ import static com.gofobao.framework.helper.project.UserHelper.getAssetTypeStr;
 public class AssetBizImpl implements AssetBiz {
 
     @Autowired
-    JixinTxDateHelper jixinTxDateHelper ;
+    JixinTxDateHelper jixinTxDateHelper;
 
     @Autowired
     AssetService assetService;
@@ -145,7 +143,7 @@ public class AssetBizImpl implements AssetBiz {
     BankAccountBizImpl bankAccountBiz;
 
     @Autowired
-    AssetChangeProvider assetChangeProvider ;
+    AssetChangeProvider assetChangeProvider;
 
 
     LoadingCache<String, DictValue> bankLimitCache = CacheBuilder
@@ -362,16 +360,16 @@ public class AssetBizImpl implements AssetBiz {
         } else {
             log.info(String.format("充值成功: %s", gson.toJson(directRechargeOnlineResponse)));
             state = 1;
-            AssetChange entity = new AssetChange() ;
+            AssetChange entity = new AssetChange();
             String groupSeqNo = assetChangeProvider.getGroupSeqNo();
-            String seqNo = String.format("%s%s%s", directRechargeOnlineResponse.getTxDate(), directRechargeOnlineResponse.getTxTime(), directRechargeOnlineResponse.getSeqNo()) ;
+            String seqNo = String.format("%s%s%s", directRechargeOnlineResponse.getTxDate(), directRechargeOnlineResponse.getTxTime(), directRechargeOnlineResponse.getSeqNo());
             entity.setGroupSeqNo(groupSeqNo);
             entity.setMoney(new Double(voRechargeReq.getMoney() * 100).longValue());
             entity.setSeqNo(seqNo);
             entity.setUserId(users.getId());
             entity.setRemark(String.format("你在 %s 成功充值%s元", DateHelper.dateToString(now), voRechargeReq.getMoney()));
             entity.setType(AssetChangeTypeEnum.onlineRecharge);
-            assetChangeProvider.commonAssetChange(entity) ;
+            assetChangeProvider.commonAssetChange(entity);
         }
 
 
@@ -514,13 +512,15 @@ public class AssetBizImpl implements AssetBiz {
                 rechargeDetailLog.setSeqNo(seqNo);
                 rechargeDetailLogService.save(rechargeDetailLog);
 
-                CapitalChangeEntity entity = new CapitalChangeEntity();
-                entity.setMoney(money.intValue());
-                entity.setType(CapitalChangeEnum.Recharge);
-                entity.setUserId(userId);
-                entity.setToUserId(userId);
-                entity.setRemark("线下充值成功！");
-                capitalChangeHelper.capitalChange(entity);
+                AssetChange assetChange = new AssetChange();
+                assetChange.setType(AssetChangeTypeEnum.offlineRecharge);  // 招标失败解除冻结资金
+                assetChange.setUserId(userId);
+                assetChange.setMoney(money.longValue());
+                assetChange.setRemark(String.format("成功充值%s元", StringHelper.formatDouble(money.longValue() / 100D, true)));
+                assetChange.setSourceId(rechargeDetailLog.getId());
+                assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+                assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
+                assetChangeProvider.commonAssetChange(assetChange);
 
                 // 触发用户充值
                 MqConfig mqConfig = new MqConfig();
@@ -730,14 +730,17 @@ public class AssetBizImpl implements AssetBiz {
             rechargeDetailLog.setState(1);
             rechargeDetailLogService.save(rechargeDetailLog);
 
-            // 修改资金记录
-            CapitalChangeEntity entity = new CapitalChangeEntity();
-            entity.setMoney(money.intValue());
-            entity.setType(CapitalChangeEnum.Recharge);
-            entity.setUserId(userId);
-            entity.setToUserId(userId);
-            entity.setRemark("充值成功！");
-            capitalChangeHelper.capitalChange(entity);
+
+            AssetChange assetChange = new AssetChange();
+            assetChange.setType(AssetChangeTypeEnum.offlineRecharge);  // 招标失败解除冻结资金
+            assetChange.setUserId(userId);
+            assetChange.setMoney(money.longValue());
+            assetChange.setRemark(String.format("成功充值%s元", StringHelper.formatDouble(money.longValue() / 100D, true)));
+            assetChange.setSourceId(rechargeDetailLog.getId());
+            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+            assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
+            assetChangeProvider.commonAssetChange(assetChange);
+
 
             // 触发用户充值
             MqConfig mqConfig = new MqConfig();
@@ -879,7 +882,7 @@ public class AssetBizImpl implements AssetBiz {
         voPreRechargeResp.setBankName(userThirdAccount.getBankName());
         voPreRechargeResp.setCardNo(userThirdAccount.getCardNo().substring(userThirdAccount.getCardNo().length() - 4));
         voPreRechargeResp.setLogo(String.format("%s/%s", javaDomain, userThirdAccount.getBankLogo()));
-        voPreRechargeResp.setToRechargeBankNo(String.format("江西银行电子账户(%s)", userThirdAccount.getAccountId().substring(userThirdAccount.getAccountId().length() - 5))) ;
+        voPreRechargeResp.setToRechargeBankNo(String.format("江西银行电子账户(%s)", userThirdAccount.getAccountId().substring(userThirdAccount.getAccountId().length() - 5)));
         DictValue bank = null;
         try {
             bank = bankLimitCache.get(userThirdAccount.getBankName());
@@ -963,17 +966,17 @@ public class AssetBizImpl implements AssetBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoAvailableAssetInfoResp.class));
         }
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        if(!ObjectUtils.isEmpty(userThirdAccount)){
+        if (!ObjectUtils.isEmpty(userThirdAccount)) {
             // 查询用户资金
             BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
             balanceQueryRequest.setChannel(ChannelContant.HTML);
             balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
             BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
             if ((ObjectUtils.isEmpty(balanceQueryResponse)) || !balanceQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
-                String msg = ObjectUtils.isEmpty(balanceQueryResponse) ? "当前网络异常, 请稍后尝试!": balanceQueryResponse.getRetMsg() ;
+                String msg = ObjectUtils.isEmpty(balanceQueryResponse) ? "当前网络异常, 请稍后尝试!" : balanceQueryResponse.getRetMsg();
                 return ResponseEntity
                         .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR, msg, VoAvailableAssetInfoResp.class)) ;
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, msg, VoAvailableAssetInfoResp.class));
             }
 
             double availBal = NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0;// 可用余额  账面余额-可用余额=冻结金额
@@ -1012,7 +1015,7 @@ public class AssetBizImpl implements AssetBiz {
                 }.getType()));
                 List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
                 realSize = accountDetailsQueryItems.size();
-                pageIndex++ ;
+                pageIndex++;
             } while (realSize == pageSize);
         }
         VoAvailableAssetInfoResp resp = VoBaseResp.ok("查询成功", VoAvailableAssetInfoResp.class);
@@ -1052,105 +1055,6 @@ public class AssetBizImpl implements AssetBiz {
         return ResponseEntity.ok(response);
     }
 
-    @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> synchronizedAsset(Long userId) throws Exception {
-        Users users = userService.findByIdLock(userId);
-        if (ObjectUtils.isEmpty(users)){
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "错误"));
-        }
-        Boolean isLock = users.getIsLock();
-        if (isLock){
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "错误"));
-        }
-
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        if (ObjectUtils.isEmpty(userThirdAccount)){
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "错误"));
-        }
-
-        Asset asset = assetService.findByUserIdLock(userId);
-        if (ObjectUtils.isEmpty(asset)){
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "错误"));
-        }
-
-        int pageIndex = 1;
-        int pageSize = 10;
-        boolean looperState = true;
-        Gson gson = new Gson();
-        do {
-            //  查询线下充值
-            AccountDetailsQueryResponse response = doOffLineRecharge(pageIndex, pageSize, userThirdAccount.getAccountId());
-            if (ObjectUtils.isEmpty(response)) break;
-            if (StringUtils.isEmpty(response.getSubPacks())) break;
-            List<AccountDetailsQueryItem> accountDetailsQueryItems = gson.fromJson(response.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
-            }.getType());
-            if (CollectionUtils.isEmpty(accountDetailsQueryItems)) break;
-            if (accountDetailsQueryItems.size() < 10) {
-                looperState = false;
-            }
-
-
-            for (AccountDetailsQueryItem item : accountDetailsQueryItems) {
-                String traceNo = item.getInpDate() + item.getInpTime() + item.getTraceNo();
-                // 查询用户资金
-                RechargeDetailLog record = rechargeDetailLogService.findTopBySeqNo(traceNo);
-                if (!ObjectUtils.isEmpty(record)) {
-                    break;
-                }
-
-                doOffLineAssetSynchronizedAsset(users, item, traceNo);
-            }
-            pageIndex++;
-        } while (looperState);
-        return ResponseEntity.ok(VoBaseResp.ok("成功"));
-    }
-
-
-    /**
-     * 线下转账资金同步
-     *
-     * @param users
-     * @param item
-     * @param traceNo
-     * @throws Exception
-     */
-    private void doOffLineAssetSynchronizedAsset(Users users, AccountDetailsQueryItem item, String traceNo) throws Exception {
-        Date now = new Date();
-        // 添加重置记录
-        RechargeDetailLog rechargeDetailLog = new RechargeDetailLog();
-        rechargeDetailLog.setState(1); // 充值成功
-        rechargeDetailLog.setUpdateTime(now);
-        rechargeDetailLog.setCreateTime(now);
-        rechargeDetailLog.setCallbackTime(now);
-        rechargeDetailLog.setSeqNo(traceNo);
-        rechargeDetailLog.setRechargeChannel(1); // 线下通道
-        Double money = new Double(item.getTxAmount()) * 100;
-        rechargeDetailLog.setMoney(money.longValue());
-        rechargeDetailLog.setMobile(users.getPhone());
-        rechargeDetailLog.setDel(0);
-        rechargeDetailLog.setBankName("线下转账");
-        rechargeDetailLog.setUserId(users.getId());
-        rechargeDetailLog.setRechargeType(1);  // 线下充值
-        rechargeDetailLog.setRechargeSource(4); // 充值
-        rechargeDetailLog.setCardNo(item.getForAccountId());
-        rechargeDetailLogService.save(rechargeDetailLog);
-        // 资金变动
-        CapitalChangeEntity capitalChangeEntity = new CapitalChangeEntity();
-        capitalChangeEntity.setType(CapitalChangeEnum.Recharge);
-        capitalChangeEntity.setUserId(users.getId());
-        capitalChangeEntity.setRemark("线下充值成功");
-        capitalChangeEntity.setMoney(money.intValue());
-        capitalChangeEntity.setToUserId(users.getId());
-        capitalChangeHelper.capitalChange(capitalChangeEntity);
-        // 触发用户充值
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setTag(MqTagEnum.RECHARGE);
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
-        mqConfig.setSendTime(DateHelper.addSeconds(now, 30));
-        ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
-        mqConfig.setMsg(body);
-        mqHelper.convertAndSend(mqConfig);
-    }
 
     /**
      * 查询线下充值

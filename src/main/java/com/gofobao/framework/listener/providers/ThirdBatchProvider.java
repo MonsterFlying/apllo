@@ -330,9 +330,9 @@ public class ThirdBatchProvider {
             //提前结清操作
             ResponseEntity<VoBaseResp> resp = null;
             try {
-                resp = repaymentBiz.repayAllDeal(borrowId,batchNo);
+                resp = repaymentBiz.repayAllDeal(borrowId, batchNo);
             } catch (Exception e) {
-                log.error("批次还款处理(提前结清)异常:",e);
+                log.error("批次还款处理(提前结清)异常:", e);
             }
             if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
                 log.error("批次还款处理(提前结清)异常:" + resp.getBody().getState().getMsg());
@@ -397,7 +397,7 @@ public class ThirdBatchProvider {
             VoRepayReq voRepayReq = GSON.fromJson(acqRes, new TypeToken<VoRepayReq>() {
             }.getType());
             try {
-                ResponseEntity<VoBaseResp> resp = repaymentBiz.repayDeal(voRepayReq);
+                ResponseEntity<VoBaseResp> resp = repaymentBiz.newRepayDeal(voRepayReq.getRepaymentId(), batchNo);
                 if (!ObjectUtils.isEmpty(resp)) {
                     log.error("批次融资人还担保账户垫款：" + resp.getBody().getState().getMsg());
                 } else {
