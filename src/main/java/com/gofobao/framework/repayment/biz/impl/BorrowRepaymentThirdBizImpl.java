@@ -438,7 +438,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * @param advanceAssetChanges
      * @return
      */
-    public List<BailRepay> calculateAdvancePlan(Borrow borrow, int order,List<AdvanceAssetChange> advanceAssetChanges) throws Exception {
+    public List<BailRepay> calculateAdvancePlan(Borrow borrow, int order,  List<AdvanceAssetChange> advanceAssetChanges) throws Exception {
         /* 代偿记录集合 */
         List<BailRepay> bailRepayList = new ArrayList<>();
         /* 查询投资列表 */
@@ -525,7 +525,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         }
         return bailRepayList;
     }
-
     /**
      * 获取担保人代偿集合
      *
