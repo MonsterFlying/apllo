@@ -228,7 +228,7 @@ public class TransferBizImpl implements TransferBiz {
         addChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList);
 
         // 发放债权转让资金
-        batchAssetChangeHelper.batchAssetChange(transferId, batchNo, BatchAssetChangeContants.BATCH_CREDIT_INVEST);
+        batchAssetChangeHelper.batchAssetChangeAndCollection(transferId, batchNo, BatchAssetChangeContants.BATCH_CREDIT_INVEST);
 
         // 发送投资成功站内信
         sendNoticsByBuyTransfer(transfer, childTenderList);
@@ -556,7 +556,10 @@ public class TransferBizImpl implements TransferBiz {
         int autoOrder = voBuyTransfer.getAutoOrder(); /* 自动投标order编号 */
 
         UserThirdAccount buyUserThirdAccount = userThirdAccountService.findByUserId(userId);/*购买人存管信息*/
-        ThirdAccountHelper.allConditionCheck(buyUserThirdAccount);
+        ResponseEntity<VoBaseResp> resp = ThirdAccountHelper.allConditionCheck(buyUserThirdAccount);
+        if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
+            return resp;
+        }
         Transfer transfer = transferService.findByIdLock(transferId);/*债权转让记录*/
         Preconditions.checkNotNull(transfer, "债权转让记录不存在!");
         Asset asset = assetService.findByUserIdLock(userId);/* 购买人资产记录 */
@@ -1329,10 +1332,10 @@ public class TransferBizImpl implements TransferBiz {
 
         List<TransferBuyLog> transferBuyLogs = transferBuyLogService.findList(tbs);
 
-        Date nowDate = new Date() ;
+        Date nowDate = new Date();
         // 取消借款
-        if(!CollectionUtils.isEmpty(transferBuyLogs)){
-            for(TransferBuyLog item: transferBuyLogs){
+        if (!CollectionUtils.isEmpty(transferBuyLogs)) {
+            for (TransferBuyLog item : transferBuyLogs) {
                 item.setState(3);
                 item.setUpdatedAt(nowDate);
                 AssetChange assetChange = new AssetChange();
@@ -1349,9 +1352,9 @@ public class TransferBizImpl implements TransferBiz {
             // 发送站内信通知
             Set<Long> userIds = transferBuyLogs
                     .stream()
-                    .map(item-> item.getUserId()).collect(Collectors.toSet()) ;
-            Notices notices ;
-            for(Long userId: userIds){
+                    .map(item -> item.getUserId()).collect(Collectors.toSet());
+            Notices notices;
+            for (Long userId : userIds) {
                 notices = new Notices();
                 notices.setFromUserId(1L);
                 notices.setUserId(userId);
@@ -1381,9 +1384,9 @@ public class TransferBizImpl implements TransferBiz {
         transferService.save(transfer);
 
         // 更新投标记录状态
-        Tender tender = tenderService.findById(id) ;
+        Tender tender = tenderService.findById(id);
         tender.setTransferFlag(0);
         tender.setUpdatedAt(nowDate);
-        tenderService.save(tender) ;
+        tenderService.save(tender);
     }
 }

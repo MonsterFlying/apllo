@@ -9,7 +9,7 @@ import javax.validation.constraints.NotNull;
  * Created by Zeke on 2017/6/8.
  */
 @Data
-public class VoThirdBatchRepay {
+public class VoRepayAll {
     @ApiModelProperty(hidden = true)
     private Long userId;
     @ApiModelProperty(value = "借款还款id", dataType = "int", required = true)

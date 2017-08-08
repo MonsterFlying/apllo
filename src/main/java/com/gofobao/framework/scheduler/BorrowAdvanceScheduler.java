@@ -52,7 +52,7 @@ public class BorrowAdvanceScheduler {
         do {
             borrowIds = new ArrayList<>();
             Query query = entityManager.createNativeQuery(sql.toString(), BorrowRepayment.class);
-            query.setFirstResult(pageIndex++  * pageSize);
+            query.setFirstResult(pageIndex++ * pageSize);
             query.setMaxResults(pageSize);
             borrowRepaymentList = query.getResultList();
             for (BorrowRepayment borrowRepayment : borrowRepaymentList) {
@@ -66,14 +66,14 @@ public class BorrowAdvanceScheduler {
             borrowList = borrowService.findList(bs);
 
             for (BorrowRepayment borrowRepayment : borrowRepaymentList) {
-                for (Borrow borrow : borrowList){
-                    if (String.valueOf(borrowRepayment.getBorrowId()).equals(String.valueOf(borrow.getId()))){
-                        VoAdvanceReq voAdvanceReq = new VoAdvanceReq();
-                        voAdvanceReq.setRepaymentId(borrowRepayment.getId());
+                for (Borrow borrow : borrowList) {
+                    if (String.valueOf(borrowRepayment.getBorrowId()).equals(String.valueOf(borrow.getId()))) {
                         try {
-                            repaymentBiz.advance(voAdvanceReq);
+                            VoAdvanceReq voAdvanceReq = new VoAdvanceReq();
+                            voAdvanceReq.setRepaymentId(borrowRepayment.getId());
+                            repaymentBiz.newAdvance(voAdvanceReq);
                         } catch (Exception e) {
-                            log.error("borrowAdvanceScheduler error:",e);
+                            log.error("borrowAdvanceScheduler error:", e);
                         }
                     }
                 }

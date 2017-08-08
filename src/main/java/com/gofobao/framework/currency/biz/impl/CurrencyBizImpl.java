@@ -8,6 +8,9 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
+import com.gofobao.framework.common.assets.AssetChange;
+import com.gofobao.framework.common.assets.AssetChangeProvider;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.capital.CapitalChangeEntity;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.JixinContants;
@@ -25,6 +28,7 @@ import com.gofobao.framework.currency.vo.response.VoListCurrencyResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.ThirdAccountHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
@@ -35,6 +39,7 @@ import com.gofobao.framework.system.service.DictValueService;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +48,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,8 +74,9 @@ public class CurrencyBizImpl implements CurrencyBiz {
     private CurrencyService currencyService;
     @Autowired
     private CurrencyLogService currencyLogService;
+
     @Autowired
-    private CapitalChangeHelper capitalChangeHelper;
+    AssetChangeProvider assetChangeProvider;
     @Autowired
     private UserThirdAccountService userThirdAccountService;
     @Autowired
@@ -123,12 +130,12 @@ public class CurrencyBizImpl implements CurrencyBiz {
 
         Pageable pageable = new PageRequest(pageIndex, pageSize, sort);
 
-        Specification specification= Specifications.<Currency>and()
-                .eq("userId",userId)
+        Specification specification = Specifications.<Currency>and()
+                .eq("userId", userId)
                 .build();
-        Page<CurrencyLog> logPage=currencyLogRepository.findAll(specification,pageable);
+        Page<CurrencyLog> logPage = currencyLogRepository.findAll(specification, pageable);
 
-        List<CurrencyLog> currencyLogs =  logPage.getContent();
+        List<CurrencyLog> currencyLogs = logPage.getContent();
 
         VoListCurrencyResp voListCurrencyResp = VoBaseResp.ok("查询成功!", VoListCurrencyResp.class);
         voListCurrencyResp.setAvailableCurrency(currency.getUseCurrency());
@@ -147,7 +154,7 @@ public class CurrencyBizImpl implements CurrencyBiz {
             voCurrency.setNoCurrency(currencyLog.getNoUseCurrency());
             currencyList.add(voCurrency);
         }));
-        Long totalCount=logPage.getTotalElements();
+        Long totalCount = logPage.getTotalElements();
         voListCurrencyResp.setTotalCount(totalCount.intValue());
         voListCurrencyResp.setVoCurrencyList(currencyList);
         return ResponseEntity.ok(voListCurrencyResp);
@@ -163,6 +170,10 @@ public class CurrencyBizImpl implements CurrencyBiz {
         Long userId = voConvertCurrencyReq.getUserId();
         Integer currency = voConvertCurrencyReq.getCurrency();
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        ResponseEntity<VoBaseResp> checkResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
+        if (!checkResponse.getStatusCode().equals(HttpStatus.OK)) {
+            return checkResponse;
+        }
 
         Currency currencyObj = currencyService.findByUserIdLock(userId);
         if (ObjectUtils.isEmpty(currencyObj)) {
@@ -183,10 +194,28 @@ public class CurrencyBizImpl implements CurrencyBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前兑换数量最小兑换数量!"));
         }
 
+        //查询红包账户
+        DictValue dictValue = jixinCache.get(JixinContants.RED_PACKET_USER_ID);
+        UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
+
+        //调用即信发送红包接口
+        VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
+        voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
+        voucherPayRequest.setTxAmount(StringHelper.formatDouble(currency, 100, false));
+        voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
+        voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
+        voucherPayRequest.setChannel(ChannelContant.HTML);
+        voucherPayRequest.setDesLine("用户广富币兑换");
+        VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+            log.error(String.format("广富币兑换失败: %s", new Gson().toJson(voucherPayRequest)));
+            String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+            throw new Exception("广富币兑换异常：" + msg);
+        }
         currencyObj.setUseCurrency(currencyObj.getUseCurrency() - currency);
         currencyObj.setNoUseCurrency(currencyObj.getNoUseCurrency() + currency);
         currencyObj.setUpdatedAt(new Date());
-        currencyService.updateById(currencyObj);
+        currencyService.save(currencyObj);
         CurrencyLog currencyLog = new CurrencyLog();
         currencyLog.setUseCurrency(currencyObj.getUseCurrency());
         currencyLog.setNoUseCurrency(currencyObj.getNoUseCurrency());
@@ -194,49 +223,41 @@ public class CurrencyBizImpl implements CurrencyBiz {
         currencyLog.setType("convert");
         currencyLog.setValue(currency);
         currencyLog.setCreatedAt(new Date());
+        long money = currency; //金额
+        currencyLog = currencyLogService.insert(currencyLog);
+        String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+        long redId = assetChangeProvider.getRedpackAccountId();
+        Date nowDate = new Date();
 
-        if (!currencyLogService.insert(currencyLog)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "广富币兑换失败!"));
-        }
+        // 平台发放广富币兑换金额
+        AssetChange redpackPublish = new AssetChange();
+        redpackPublish.setMoney(money);
+        redpackPublish.setType(AssetChangeTypeEnum.platformPublishCurrencyExchangeRedpack);  // 广富币兑换
+        redpackPublish.setUserId(userId);
+        redpackPublish.setRemark(String.format("派发用户在%s, 使用广富币(%s)兑换%s元",
+                DateHelper.dateToString(nowDate),
+                voConvertCurrencyReq.getCurrency(),
+                StringHelper.formatDouble(money / 100D, true)));
+        redpackPublish.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
+        redpackPublish.setGroupSeqNo(groupSeqNo);
+        redpackPublish.setForUserId(redId);
+        redpackPublish.setSourceId(currencyLog.getId());
+        assetChangeProvider.commonAssetChange(redpackPublish);
 
-        CapitalChangeEntity capitalChangeEntity = new CapitalChangeEntity();
-        capitalChangeEntity.setUserId(userId);
-        capitalChangeEntity.setType(CapitalChangeEnum.IncomeOther);
-        capitalChangeEntity.setMoney(currency);
-        capitalChangeEntity.setRemark("广富币兑换可用金额!");
-
-        boolean flag = false;
-        try {
-            flag = capitalChangeHelper.capitalChange(capitalChangeEntity);
-        } catch (Throwable e) {
-            log.error("兑换广富币异常:", e);
-        }
-
-        if (!flag) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "广富币兑换失败!"));
-        } else {
-            //查询红包账户
-            DictValue dictValue =  jixinCache.get(JixinContants.RED_PACKET_USER_ID);
-            UserThirdAccount redPacketAccount =  userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
-
-            //调用即信发送红包接口
-            VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-            voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
-            voucherPayRequest.setTxAmount(StringHelper.formatDouble(currency , 100,false));
-            voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
-            voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
-            voucherPayRequest.setChannel(ChannelContant.HTML);
-            voucherPayRequest.setDesLine("用户广富币兑换");
-            VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
-            if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
-                String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-                throw new Exception("广富币兑换异常："+ msg);
-            }
-        }
+        // 接收红包
+        AssetChange redpackR = new AssetChange();
+        redpackR.setMoney(money);
+        redpackR.setType(AssetChangeTypeEnum.currencyExchangeRedpack);  // 积分兑换
+        redpackR.setUserId(userId);
+        redpackR.setRemark(String.format("你在%s, 成功使用广富币(%s)兑换%s元",
+                DateHelper.dateToString(nowDate),
+                voConvertCurrencyReq.getCurrency(),
+                StringHelper.formatDouble(money / 100D, true)));
+        redpackR.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
+        redpackR.setGroupSeqNo(groupSeqNo);
+        redpackR.setForUserId(redId);
+        redpackR.setSourceId(currencyLog.getId());
+        assetChangeProvider.commonAssetChange(redpackR);
         return ResponseEntity.ok(VoBaseResp.ok("广富币兑换成功!"));
     }
 

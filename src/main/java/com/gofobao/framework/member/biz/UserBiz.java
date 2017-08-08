@@ -8,6 +8,7 @@ import com.gofobao.framework.member.vo.request.VoRestPayPassWord;
 import com.gofobao.framework.member.vo.request.VoSettingTranPassWord;
 import com.gofobao.framework.member.vo.request.VoUserInfoUpdateReq;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
+import com.gofobao.framework.member.vo.response.VoOpenAccountInfo;
 import com.gofobao.framework.member.vo.response.pc.UserInfoExt;
 import com.gofobao.framework.member.vo.response.pc.VipInfoRes;
 import com.gofobao.framework.member.vo.response.pc.VoViewServiceUserListWarpRes;
@@ -107,5 +108,12 @@ public interface UserBiz {
      * @return
      */
     boolean registerExtend(Long userId)throws  Exception;
+
+    /**
+     * 获取存管信息
+     * @param userId
+     * @return
+     */
+    ResponseEntity<VoOpenAccountInfo> openAccountInfo(Long userId);
 }
 

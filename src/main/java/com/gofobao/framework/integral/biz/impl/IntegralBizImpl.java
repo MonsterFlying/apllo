@@ -9,14 +9,16 @@ import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
-import com.gofobao.framework.common.capital.CapitalChangeEntity;
-import com.gofobao.framework.common.capital.CapitalChangeEnum;
+import com.gofobao.framework.common.assets.AssetChange;
+import com.gofobao.framework.common.assets.AssetChangeProvider;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.constans.JixinContants;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.ThirdAccountHelper;
 import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.integral.biz.IntegralBiz;
 import com.gofobao.framework.integral.entity.Integral;
@@ -39,6 +41,7 @@ import com.gofobao.framework.system.service.DictValueService;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +49,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,19 +65,24 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Slf4j
 public class IntegralBizImpl implements IntegralBiz {
-
     @Autowired
     private IntegralService integralService;
+
     @Autowired
     private IntegralLogService integralLogService;
+
     @Autowired
     private AssetService assetService;
+
     @Autowired
     private DictService dictService;
+
     @Autowired
     private CapitalChangeHelper capitalChangeHelper;
+
     @Autowired
     private UserThirdAccountService userThirdAccountService;
+
     @Autowired
     private JixinManager jixinManager;
 
@@ -82,6 +91,9 @@ public class IntegralBizImpl implements IntegralBiz {
 
     @Value("${gofobao.webDomain}")
     private String webDomain;
+
+    @Autowired
+    AssetChangeProvider assetChangeProvider;
 
 
     @Autowired
@@ -170,7 +182,7 @@ public class IntegralBizImpl implements IntegralBiz {
         }
         voListIntegralResp.setTakeRates(takeRates);
         //APP请求需要返回积分列表
-        if(voListIntegralReq.getType()==0) {
+        if (voListIntegralReq.getType() == 0) {
             List<VoIntegral> voIntegralList = new ArrayList<>();
             //分页和排序
             Sort sort = new Sort(new Sort.Order(Sort.Direction.DESC, "id"));
@@ -190,26 +202,25 @@ public class IntegralBizImpl implements IntegralBiz {
             }));
             voListIntegralResp.setVoIntegralList(voIntegralList);
         }
-        voListIntegralResp.setDescImage(webDomain+"/images/integral/desc.png");
-        voListIntegralResp.setCollectionMoney(StringHelper.formatMon(asset.getCollection()/100D));
+        voListIntegralResp.setDescImage(webDomain + "/images/integral/desc.png");
+        voListIntegralResp.setCollectionMoney(StringHelper.formatMon(asset.getCollection() / 100D));
 
         return ResponseEntity.ok(voListIntegralResp);
     }
 
 
-
     @Override
     public ResponseEntity<VoViewIntegralWarpRes> pcIntegralList(VoListIntegralReq integralReq) {
         try {
-            VoViewIntegralWarpRes warpRes=VoBaseResp.ok("查询成功",VoViewIntegralWarpRes.class);
+            VoViewIntegralWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewIntegralWarpRes.class);
 
-            Map<String,Object>resultMaps=integralLogService.pcIntegralList(integralReq);
-            Integer totalCount=Integer.valueOf(resultMaps.get("totalCount").toString());
+            Map<String, Object> resultMaps = integralLogService.pcIntegralList(integralReq);
+            Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
             warpRes.setTotalCount(totalCount);
-            List<IntegralLog>integralLogs=(List<IntegralLog>) resultMaps.get("integralLogs");
+            List<IntegralLog> integralLogs = (List<IntegralLog>) resultMaps.get("integralLogs");
             List<VoIntegral> voIntegralList = new ArrayList<>();
-            if(!CollectionUtils.isEmpty(integralLogs)){
-                integralLogs.stream().forEach(p->{
+            if (!CollectionUtils.isEmpty(integralLogs)) {
+                integralLogs.stream().forEach(p -> {
                     VoIntegral voIntegral = new VoIntegral();
                     voIntegral.setId(p.getId());
                     voIntegral.setTotalIntegral(p.getNoUseIntegral() + p.getUseIntegral());
@@ -226,7 +237,7 @@ public class IntegralBizImpl implements IntegralBiz {
             }
             warpRes.setIntegrals(voIntegralList);
             return ResponseEntity.ok(warpRes);
-        }catch (Exception e){
+        } catch (Exception e) {
             return ResponseEntity.
                     badRequest().
                     body(VoBaseResp.error(VoBaseResp.ERROR,
@@ -247,6 +258,10 @@ public class IntegralBizImpl implements IntegralBiz {
 
         Integral integral = integralService.findByUserIdLock(userId);
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        ResponseEntity<VoBaseResp> checkResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
+        if (!checkResponse.getStatusCode().equals(HttpStatus.OK)) {
+            return checkResponse;
+        }
 
         Integer integer = voIntegralTakeReq.getInteger();
         if ((integer < 10000) || (integer % 1000 != 0)) {
@@ -260,9 +275,6 @@ public class IntegralBizImpl implements IntegralBiz {
         }
 
         if (ObjectUtils.isEmpty(userThirdAccount)) {
-            log.error("================================积分兑换===================================");
-            log.error("当前用户未开户：用户id:" + userId);
-            log.error("===========================================================================");
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍候重试！"));
@@ -289,33 +301,40 @@ public class IntegralBizImpl implements IntegralBiz {
         }
 
         Long collection = asset.getCollection();
-        Long sumIntegral=useIntegral+integral.getNoUseIntegral();
+        Long sumIntegral = useIntegral + integral.getNoUseIntegral();
         String takeRatesStr = getTakeRates(collection, sumIntegral, integralRule);
-        double takeRates = Double.parseDouble(takeRatesStr);//折现系数
+        double takeRates = Double.parseDouble(takeRatesStr); //折现系数
         long money = Math.round(takeRates * integer);  // 可兑换金额
-        //资金变动
-        CapitalChangeEntity capitalChangeEntity = new CapitalChangeEntity();
-        capitalChangeEntity.setType(CapitalChangeEnum.IntegralCash);
-        capitalChangeEntity.setMoney((int) money);
-        capitalChangeEntity.setUserId(new Long(userId).intValue());
 
-        boolean b = false;
-        try {
-            b = capitalChangeHelper.capitalChange(capitalChangeEntity);
-        } catch (Throwable e) {
-            e.printStackTrace();
+        // 查询红包账户
+        DictValue dictValue = jixinCache.get(JixinContants.RED_PACKET_USER_ID);
+        UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
+
+        // 调用即信发送红包接口
+        VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
+        voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
+        voucherPayRequest.setTxAmount(StringHelper.formatDouble(money, 100, false));
+        voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
+        voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
+        voucherPayRequest.setDesLine(String.format("使用积分(%s)兑换%s元", voIntegralTakeReq.getInteger(), StringHelper.formatDouble(money / 100D, true)));
+        voucherPayRequest.setChannel(ChannelContant.HTML);
+        VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+            log.error(String.format("积分兑换 红包发放失败: %s", new Gson().toJson(voucherPayRequest)));
+            String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+            throw new Exception("积分折现异常:" + msg);
         }
-        if (!b) {
-            throw new Exception("用户资产变更失败!");
-        }
-        Long noUseIntegral=integral.getNoUseIntegral() + integer;
-        Long userInteger1=integral.getUseIntegral() - integer;
+
+        // 更新记录
+        Long noUseIntegral = integral.getNoUseIntegral() + integer;
+        Long userInteger1 = integral.getUseIntegral() - integer;
         Integral saveIntegral = new Integral();
         saveIntegral.setUserId(userId);
         saveIntegral.setNoUseIntegral(noUseIntegral);
         saveIntegral.setUseIntegral(userInteger1);
         saveIntegral.setUpdatedAt(new Date());
         integralService.updateById(saveIntegral);
+
         IntegralLog integralLog = new IntegralLog();
         integralLog.setUseIntegral(userInteger1);
         integralLog.setNoUseIntegral(noUseIntegral);
@@ -323,32 +342,43 @@ public class IntegralBizImpl implements IntegralBiz {
         integralLog.setCreatedAt(new Date());
         integralLog.setValue(new Long(integer));
         integralLog.setType("convert");
-
         integralLog = integralLogService.insert(integralLog);
-        if (ObjectUtils.isEmpty(integralLog)) {
-            throw new Exception("积分日志表插入失败!");
-        } else {
-            //查询红包账户
-            DictValue dictValue =  jixinCache.get(JixinContants.RED_PACKET_USER_ID);
-            UserThirdAccount redPacketAccount =  userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
 
-            //调用即信发送红包接口
-            VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-            voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
-            voucherPayRequest.setTxAmount(StringHelper.formatDouble(money , 100,false));
-            voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
-            voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
-            voucherPayRequest.setDesLine("用户积分兑换");
-            voucherPayRequest.setChannel(ChannelContant.HTML);
-            VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
-            if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
-                String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-                throw new Exception("积分折现异常:"+ msg);
-            }
-        }
+
+        String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+        long redId = assetChangeProvider.getRedpackAccountId();
+        Date nowDate = new Date();
+        // 平台发放积分
+        AssetChange redpackPublish = new AssetChange();
+        redpackPublish.setMoney(money);
+        redpackPublish.setType(AssetChangeTypeEnum.platformPublishIntegralExchangeRedpack);  // 积分兑换
+        redpackPublish.setUserId(userId);
+        redpackPublish.setRemark(String.format("派发用户在%s, 使用积分(%s)兑换%s元",
+                DateHelper.dateToString(nowDate),
+                voIntegralTakeReq.getInteger(),
+                StringHelper.formatDouble(money / 100D, true)));
+        redpackPublish.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
+        redpackPublish.setGroupSeqNo(groupSeqNo);
+        redpackPublish.setForUserId(redId);
+        redpackPublish.setSourceId(integralLog.getId());
+        assetChangeProvider.commonAssetChange(redpackPublish);
+
+        // 接收红包
+        AssetChange redpackR = new AssetChange();
+        redpackR.setMoney(money);
+        redpackR.setType(AssetChangeTypeEnum.integralExchangeRedpack);  // 积分兑换
+        redpackR.setUserId(userId);
+        redpackR.setRemark(String.format("你在%s, 成功使用积分(%s)兑换%s元",
+                DateHelper.dateToString(nowDate),
+                voIntegralTakeReq.getInteger(),
+                StringHelper.formatDouble(money / 100D, true)));
+        redpackR.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
+        redpackR.setGroupSeqNo(groupSeqNo);
+        redpackR.setForUserId(redId);
+        redpackR.setSourceId(integralLog.getId());
+        assetChangeProvider.commonAssetChange(redpackR);
         return ResponseEntity.ok(VoBaseResp.ok("积分折现成功!"));
     }
-
 
 
     /**

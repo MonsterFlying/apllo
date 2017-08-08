@@ -503,8 +503,8 @@ public class MessageBizImpl implements MessageBiz {
     }
 
     @Override
-    public ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest httpServletRequest, VoUserSmsReq voUserSmsReq) {
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voUserSmsReq.getUserId());
+    public ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest httpServletRequest, VoAnonSmsReq voUserSmsReq, Long userId) {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         if (ObjectUtils.isEmpty(userThirdAccount)) {
             log.error("MessageBizImpl.rechargeOnline 当前用户未开通存管");
             return ResponseEntity
@@ -519,11 +519,9 @@ public class MessageBizImpl implements MessageBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请先初始化江西银行存管账户交易密码！"));
         }
-        // userThirdAccount.setMobile("13008875126");
-        userThirdAccount.setMobile("13662260509");
         SmsCodeApplyRequest request = new SmsCodeApplyRequest();
         request.setSrvTxCode(SrvTxCodeContants.DIRECT_RECHARGE_ONLINE);
-        request.setMobile(userThirdAccount.getMobile());
+        request.setMobile(voUserSmsReq.getPhone());
         request.setReqType("2");
         request.setChannel(ChannelContant.getchannel(httpServletRequest));
         request.setCardNo(userThirdAccount.getCardNo());
@@ -547,7 +545,7 @@ public class MessageBizImpl implements MessageBiz {
         // 5.将授权码放入redis中
         try {
             redisHelper.put(
-                    String.format("%s_%s", SrvTxCodeContants.DIRECT_RECHARGE_ONLINE, userThirdAccount.getMobile()),
+                    String.format("%s_%s", SrvTxCodeContants.DIRECT_RECHARGE_ONLINE, voUserSmsReq.getPhone()),
                     body.getSmsSeq(),
                     15 * 60);
 

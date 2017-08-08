@@ -456,9 +456,7 @@ public class ThirdBatchProvider {
         // 批次担保人代偿操作
         //==================================================================
         if (CollectionUtils.isEmpty(failureTBailRepayOrderIds)) {
-            VoAdvanceCall voAdvanceCall = new VoAdvanceCall();
-            voAdvanceCall.setRepaymentId(repaymentId);
-            ResponseEntity<VoBaseResp> resp = repaymentBiz.advanceDeal(voAdvanceCall);
+            ResponseEntity<VoBaseResp> resp = repaymentBiz.newAdvanceDeal(repaymentId,batchNo);
             if (!ObjectUtils.isEmpty(resp)) {
                 log.error("批次担保人代偿操作：" + resp.getBody().getState().getMsg());
             } else {
@@ -476,7 +474,6 @@ public class ThirdBatchProvider {
      * @param successTRepayOrderIds
      */
     private void repayDeal(long batchNo, long repaymentId, String acqRes, List<String> failureTRepayOrderIds, List<String> successTRepayOrderIds) throws Exception {
-
         if (CollectionUtils.isEmpty(failureTRepayOrderIds)) {
             log.info("================================================================================");
             log.info("即信批次还款查询：未发现失败批次！");
@@ -497,7 +494,7 @@ public class ThirdBatchProvider {
         }
 
         //处理失败批次
-        if (!CollectionUtils.isEmpty(failureTRepayOrderIds)) { //不处理失败！
+        if (!CollectionUtils.isEmpty(failureTRepayOrderIds)) {  //不处理失败！
             log.info(String.format("批量还款出现还款失败: %s", gson.toJson(failureTRepayOrderIds)));
             //推送队列结束债权
             MqConfig mqConfig = new MqConfig();

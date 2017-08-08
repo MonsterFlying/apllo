@@ -24,6 +24,7 @@ import com.gofobao.framework.member.vo.request.VoRestPayPassWord;
 import com.gofobao.framework.member.vo.request.VoSettingTranPassWord;
 import com.gofobao.framework.member.vo.request.VoUserInfoUpdateReq;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
+import com.gofobao.framework.member.vo.response.VoOpenAccountInfo;
 import com.gofobao.framework.member.vo.response.pc.ServiceUser;
 import com.gofobao.framework.member.vo.response.pc.UserInfoExt;
 import com.gofobao.framework.member.vo.response.pc.VipInfoRes;
@@ -91,7 +92,7 @@ public class UserBizImpl implements UserBiz {
     MacthHelper macthHelper;
 
     @Autowired
-    AssetSynBiz assetSynBiz ;
+    AssetSynBiz assetSynBiz;
 
 
     @Value("${jwt.header}")
@@ -384,6 +385,29 @@ public class UserBizImpl implements UserBiz {
         }
 
         return true;
+    }
+
+    @Override
+    public ResponseEntity<VoOpenAccountInfo> openAccountInfo(Long userId) {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "你还没有开通银行存管!", VoOpenAccountInfo.class));
+        }
+        VoOpenAccountInfo voOpenAccountInfo = VoBaseResp.ok("查询成功", VoOpenAccountInfo.class);
+        voOpenAccountInfo.setAccountId(userThirdAccount.getAccountId());
+        voOpenAccountInfo.setRealName(String.format("*%s", userThirdAccount.getName()));
+        voOpenAccountInfo.setPasswordState(userThirdAccount.getPasswordState() == 1);
+        voOpenAccountInfo.setPhone(userThirdAccount.getMobile().replaceAll("(\\d{3})\\d{4}(\\d{4})", "$1****$2"));
+        if (userThirdAccount.getCardNoBindState() == 1) {
+            voOpenAccountInfo.setBankName(userThirdAccount.getBankName());
+            voOpenAccountInfo.setBankLogo(userThirdAccount.getBankLogo());
+            voOpenAccountInfo.setBankNo(userThirdAccount.getCardNo().substring(userThirdAccount.getCardNo().length() - 5));
+        } else {
+            voOpenAccountInfo.setBankName("");
+            voOpenAccountInfo.setBankLogo("");
+            voOpenAccountInfo.setBankNo("");
+        }
+        return ResponseEntity.ok(voOpenAccountInfo);
     }
 
     /**

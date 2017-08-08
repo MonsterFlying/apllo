@@ -8,6 +8,7 @@ import com.gofobao.framework.currency.vo.response.VoListCurrencyResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +22,7 @@ import javax.validation.Valid;
 @RestController
 @RequestMapping
 @Api(description = "广富币模块")
+@Slf4j
 public class CurrencyController {
 
     @Autowired
@@ -51,7 +53,7 @@ public class CurrencyController {
         try {
             return currencyBiz.convert(voConvertCurrencyReq);
         } catch (Throwable e) {
-            e.printStackTrace();
+            log.error("广富币兑换失败", e);
         }
         return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"兑换广富币失败!"));
     }

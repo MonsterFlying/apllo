@@ -3,10 +3,10 @@ package com.gofobao.framework.asset.controller;
 import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.vo.request.VoRechargeReq;
 import com.gofobao.framework.asset.vo.response.VoPreRechargeResp;
-import com.gofobao.framework.asset.vo.response.VoRechargeBankInfoResp;
+import com.gofobao.framework.asset.vo.response.VoAliPayRechargeInfo;
 import com.gofobao.framework.asset.vo.response.VoRechargeEntityWrapResp;
+import com.gofobao.framework.asset.vo.response.VoUnionRechargeInfo;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,10 +40,16 @@ public class RechargeController {
         return assetBiz.rechargeCallback(request, response) ;
     }
 
-    @ApiOperation("获取转账的银行账户信息")
-    @GetMapping("/asset/recharge/bankAcount")
-    public ResponseEntity<VoRechargeBankInfoResp> bankAcount(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
-        return assetBiz.bankAcount(userId) ;
+    @ApiOperation("支付宝转账信息")
+    @GetMapping("/asset/recharge/alipay")
+    public ResponseEntity<VoAliPayRechargeInfo> alipayRechargeInfo(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+        return assetBiz.alipayBankInfo(userId) ;
+    }
+
+    @ApiOperation("银行转账")
+    @GetMapping("/asset/recharge/union")
+    public ResponseEntity<VoUnionRechargeInfo> unionRechargeInfo(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+        return assetBiz.unionBankInfo(userId) ;
     }
 
     @ApiOperation("充值记录")

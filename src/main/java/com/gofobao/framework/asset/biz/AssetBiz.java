@@ -61,7 +61,7 @@ public interface AssetBiz {
      * @param userId
      * @return
      */
-    ResponseEntity<VoRechargeBankInfoResp> bankAcount(Long userId);
+    ResponseEntity<VoAliPayRechargeInfo> alipayBankInfo(Long userId);
 
 
     /**
@@ -176,4 +176,10 @@ public interface AssetBiz {
      */
     ResponseEntity<VoUserAssetInfoResp> adminSynOffLineRecharge(VoSynAssetsRep voSynAssetsRep) throws Exception;
 
+    /**
+     * 银行转账
+     * @param userId
+     * @return
+     */
+    ResponseEntity<VoUnionRechargeInfo> unionBankInfo(Long userId);
 }

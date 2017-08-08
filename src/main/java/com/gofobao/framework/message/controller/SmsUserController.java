@@ -38,9 +38,9 @@ public class SmsUserController {
     @PostMapping("/rechargeOnline")
     public ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest request,
                                                      @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
-                                                     @Valid @ModelAttribute VoUserSmsReq voUserSmsReq) {
-        voUserSmsReq.setUserId(userId);
-        ResponseEntity<VoBaseResp> result = messageBiz.rechargeOnline(request, voUserSmsReq);
+                                                     @Valid @ModelAttribute VoAnonSmsReq voAnonSmsReq) {
+
+        ResponseEntity<VoBaseResp> result = messageBiz.rechargeOnline(request, voAnonSmsReq, userId);
         return result;
     }
 

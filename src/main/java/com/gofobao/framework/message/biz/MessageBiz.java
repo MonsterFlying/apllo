@@ -89,9 +89,10 @@ public interface MessageBiz {
      * 联机充值短信发送
      * @param httpServletRequest
      * @param voUserSmsReq
+     * @param userId
      * @return
      */
-    ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest httpServletRequest, VoUserSmsReq voUserSmsReq);
+    ResponseEntity<VoBaseResp> rechargeOnline(HttpServletRequest httpServletRequest, VoAnonSmsReq voUserSmsReq, Long userId);
 
     ResponseEntity<VoBaseResp> sendBindPhone4Switch(HttpServletRequest request, VoAnonSmsReq voAnonSmsReq, Long userId);
 

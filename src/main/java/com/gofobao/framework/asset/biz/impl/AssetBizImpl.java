@@ -281,12 +281,9 @@ public class AssetBizImpl implements AssetBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！"));
         }
 
-
-       // userThirdAccount.setMobile("13008875126");
-        userThirdAccount.setMobile("13662260509");
         String smsSeq = null;
         try {
-            smsSeq = redisHelper.get(String.format("%s_%s", SrvTxCodeContants.DIRECT_RECHARGE_ONLINE, userThirdAccount.getMobile()), null);
+            smsSeq = redisHelper.get(String.format("%s_%s", SrvTxCodeContants.DIRECT_RECHARGE_ONLINE, voRechargeReq.getPhone()), null);
             redisHelper.remove(String.format("%s_%s", SrvTxCodeContants.DIRECT_RECHARGE_ONLINE, userThirdAccount.getMobile()));
         } catch (Throwable e) {
             log.error("UserThirdBizImpl rechargeOnline get redis exception ", e);
@@ -340,7 +337,7 @@ public class AssetBizImpl implements AssetBiz {
         directRechargeOnlineRequest.setIdType(IdTypeContant.ID_CARD);
         directRechargeOnlineRequest.setIdNo(userThirdAccount.getIdNo());
         directRechargeOnlineRequest.setName(userThirdAccount.getName());
-        directRechargeOnlineRequest.setMobile(userThirdAccount.getMobile());
+        directRechargeOnlineRequest.setMobile(voRechargeReq.getPhone());
         directRechargeOnlineRequest.setCardNo(userThirdAccount.getCardNo());
         directRechargeOnlineRequest.setCurrency("156");
         directRechargeOnlineRequest.setSmsSeq(smsSeq);
@@ -388,7 +385,7 @@ public class AssetBizImpl implements AssetBiz {
         rechargeDetailLog.setCardNo(userThirdAccount.getCardNo());
         rechargeDetailLog.setDel(0);
         rechargeDetailLog.setIp(IpHelper.getIpAddress(request));
-        rechargeDetailLog.setMobile(users.getPhone());
+        rechargeDetailLog.setMobile(voRechargeReq.getPhone());
         rechargeDetailLog.setMoney(new Double(voRechargeReq.getMoney() * 100).longValue());
         rechargeDetailLog.setRechargeChannel(0);
         rechargeDetailLog.setState(state); // 充值成功
@@ -767,33 +764,33 @@ public class AssetBizImpl implements AssetBiz {
     }
 
     @Override
-    public ResponseEntity<VoRechargeBankInfoResp> bankAcount(Long userId) {
+    public ResponseEntity<VoAliPayRechargeInfo> alipayBankInfo(Long userId) {
         Users users = userService.findById(userId);
         Preconditions.checkNotNull(users, "当前用户不存在");
         if (users.getIsLock()) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoRechargeBankInfoResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoAliPayRechargeInfo.class));
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         if (ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoRechargeBankInfoResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoAliPayRechargeInfo.class));
         }
 
         if (userThirdAccount.getPasswordState() != 1) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoRechargeBankInfoResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoAliPayRechargeInfo.class));
         }
 
-        VoRechargeBankInfoResp voRechargeBankInfoResp = VoBaseResp.ok("查询成功!", VoRechargeBankInfoResp.class);
-        voRechargeBankInfoResp.setBankCardNo(userThirdAccount.getAccountId());
-        voRechargeBankInfoResp.setName(users.getRealname());
-        voRechargeBankInfoResp.setBankName("江西银行");
-        return ResponseEntity.ok(voRechargeBankInfoResp);
+        VoAliPayRechargeInfo voAliPayRechargeInfo = VoBaseResp.ok("查询成功!", VoAliPayRechargeInfo.class);
+        voAliPayRechargeInfo.setBankCardNo(userThirdAccount.getAccountId());
+        voAliPayRechargeInfo.setName(users.getRealname());
+        voAliPayRechargeInfo.setBankName("江西银行");
+        return ResponseEntity.ok(voAliPayRechargeInfo);
     }
 
     @Override
@@ -882,6 +879,7 @@ public class AssetBizImpl implements AssetBiz {
         voPreRechargeResp.setBankName(userThirdAccount.getBankName());
         voPreRechargeResp.setCardNo(userThirdAccount.getCardNo().substring(userThirdAccount.getCardNo().length() - 4));
         voPreRechargeResp.setLogo(String.format("%s/%s", javaDomain, userThirdAccount.getBankLogo()));
+        voPreRechargeResp.setToRechargeBankNo(String.format("江西银行电子账户(%s)", userThirdAccount.getAccountId().substring(userThirdAccount.getAccountId().length() - 5))) ;
         DictValue bank = null;
         try {
             bank = bankLimitCache.get(userThirdAccount.getBankName());
@@ -1240,6 +1238,37 @@ public class AssetBizImpl implements AssetBiz {
         Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         Long userId = Long.parseLong(paramMap.get("userId"));
         return synOffLineRecharge(userId);
+    }
+
+    @Override
+    public ResponseEntity<VoUnionRechargeInfo> unionBankInfo(Long userId) {
+        Users users = userService.findById(userId);
+        Preconditions.checkNotNull(users, "当前用户不存在");
+        if (users.getIsLock()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoUnionRechargeInfo.class));
+        }
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoUnionRechargeInfo.class));
+        }
+
+        if (userThirdAccount.getPasswordState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoUnionRechargeInfo.class));
+        }
+
+        VoUnionRechargeInfo voUnionRechargeInfo = VoBaseResp.ok("查询成功!", VoUnionRechargeInfo.class);
+        voUnionRechargeInfo.setBankCardNo(userThirdAccount.getAccountId());
+        voUnionRechargeInfo.setName(users.getRealname());
+        voUnionRechargeInfo.setBankName("江西银行");
+        voUnionRechargeInfo.setBranchName("江西银行总行营业部");
+        return ResponseEntity.ok(voUnionRechargeInfo);
     }
 
 
