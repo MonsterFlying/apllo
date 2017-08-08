@@ -15,4 +15,8 @@ public class VoBuildThirdRepayReq {
     private Long repaymentId;
     /* 是否用户操作 */
     private Boolean isUserOpen;
+    /* 逾期天数 */
+    private Integer lateDays;
+    /* 逾期利息 */
+    private Long lateInterest;
 }

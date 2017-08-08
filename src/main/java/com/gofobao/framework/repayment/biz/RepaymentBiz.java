@@ -1,10 +1,14 @@
 package com.gofobao.framework.repayment.biz;
 
+import com.gofobao.framework.asset.entity.BatchAssetChange;
+import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.collection.vo.request.VoCollectionListReq;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.entity.RepayAssetChange;
 import com.gofobao.framework.repayment.vo.request.*;
 import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
 import com.gofobao.framework.repayment.vo.response.VoViewRepaymentOrderDetailWarpRes;
@@ -13,6 +17,8 @@ import com.gofobao.framework.repayment.vo.response.pc.VoViewOrderListWarpRes;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by admin on 2017/6/5.
@@ -84,7 +90,7 @@ public interface RepaymentBiz {
      * @return
      * @throws Exception
      */
-    ResponseEntity<VoBaseResp> newRepayDeal(long repaymentId,long batchNo) throws Exception;
+    ResponseEntity<VoBaseResp> newRepayDeal(long repaymentId, long batchNo) throws Exception;
 
     /**
      * 还款处理
@@ -130,6 +136,27 @@ public interface RepaymentBiz {
      * @throws Exception
      */
     ResponseEntity<VoBaseResp> newAdvance(VoAdvanceReq voAdvanceReq) throws Exception;
+
+    /**
+     * 生成还款记录
+     *
+     * @param borrow
+     * @param borrowRepayment
+     * @param userId
+     * @param repayAssetChanges
+     * @param batchAssetChange
+     */
+    void doGenerateAssetChangeRecodeByRepay(Borrow borrow, BorrowRepayment borrowRepayment, Long userId, List<RepayAssetChange> repayAssetChanges, BatchAssetChange batchAssetChange) throws ExecutionException;
+
+    /**
+     * 生成还款人还款批次资金改变记录
+     *
+     * @param borrowRepayment
+     * @param
+     */
+    void addBatchAssetChangeByBorrower(long batchAssetChangeId, BorrowRepayment borrowRepayment,
+                                              Borrow borrow, double interestPercent,
+                                              boolean isUserOpen, long lateInterest);
 
     /**
      * pc 立即还款
