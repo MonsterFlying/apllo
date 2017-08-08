@@ -246,12 +246,56 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Borrow borrow = borrowService.findByIdLock(borrowId);/* 提前结清操作的借款记录 */
         Preconditions.checkNotNull(borrow, "借款记录不存在!");
         //2.查询提前结清需要回款记录
+        Specification<BorrowRepayment> brs = Specifications
+                .<BorrowRepayment>and()
+                .eq("borrowId", borrowId)
+                .eq("status", 0)
+                .build();
+        List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
+        Preconditions.checkNotNull(borrowRepaymentList,"还款记录(提前结清)不存在！");
+        //2.1/* 还款对应的投标记录  包括债权转让在里面 */
+        Specification<Tender> ts = Specifications
+                .<Tender>and()
+                .eq("status", 1)
+                .eq("borrowId", borrow.getId())
+                .build();
+        List<Tender> tenderList = tenderService.findList(ts);/* 还款对应的投标记录  包括债权转让在里面 */
+        Preconditions.checkNotNull(tenderList, "立即还款: 投标记录为空!");
+        /* 投标记录id集合 */
+        Set<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toSet());
+        //迭代还款集合,逐期还款
+        for (BorrowRepayment borrowRepayment : borrowRepaymentList){
+            /* 是否垫付 */
+            boolean advance = ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
+                    /* 查询未转让的投标记录回款记录 */
+            Specification<BorrowCollection> bcs = Specifications
+                    .<BorrowCollection>and()
+                    .in("tenderId", tenderIds.toArray())
+                    .eq("status", 0)
+                    .eq("order", borrowRepayment.getOrder())
+                    .eq("transferFlag", 0)
+                    .build();
+            List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
+            Preconditions.checkNotNull(borrowCollectionList, "立即还款: 回款记录为空!");
 
-
+            //4.还款成功后变更改还款状态
+            changeRepaymentAndAdvanceStatus(borrowRepayment);
+            //5.结束第三方债权并更新借款状态（还款最后一期的时候）
+            endThirdTenderAndChangeBorrowStatus(borrow, borrowRepayment);
+            //6.发送投资人收到还款站内信
+            sendCollectionNotices(borrowCollectionList, advance, borrow);
+            //7.发放积分
+            giveInterest(borrowCollectionList, borrow);
+            //8.还款最后新增统计
+            updateRepaymentStatistics(borrow, borrowRepayment);
+            //9.更新投资人缓存
+            updateUserCacheByReceivedRepay(borrowCollectionList, borrow);
+            //10.项目回款短信通知
+            smsNoticeByReceivedRepay(borrowCollectionList, borrow, borrowRepayment);
+        }
         //2.进行批次资产改变
         //2.处理资金还款人、收款人资金变动
         batchAssetChangeHelper.batchAssetChangeAndCollection(borrowId, batchNo, BatchAssetChangeContants.BATCH_REPAY_ALL);
-        //3.统计并且发送消息
         return ResponseEntity.ok(VoBaseResp.ok("提前结清处理成功!"));
     }
 
@@ -298,6 +342,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Specification<BorrowRepayment> brs = Specifications
                 .<BorrowRepayment>and()
                 .eq("borrowId", borrowId)
+                .eq("status", 0)
                 .build();
         List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
         Map<Long/* repaymentId */, BorrowRepayment> borrowRepaymentMaps = borrowRepaymentList.stream().collect(Collectors.toMap(BorrowRepayment::getId, Function.identity()));
@@ -444,7 +489,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     voBuildThirdRepayReq.getLateInterest(),
                     voBuildThirdRepayReq.getInterestPercent(),
                     repayAssetChangeList
-                    );
+            );
             repays.addAll(tempRepays);
             // 生成还款记录
             doGenerateAssetChangeRecodeByRepay(borrow, borrowRepayment, borrowRepayment.getUserId(), repayAssetChangeList, seqNo, groupSeqNo, batchAssetChange);
@@ -1688,14 +1733,14 @@ public class RepaymentBizImpl implements RepaymentBiz {
         return resp;
     }
 
-        /**
-         * 改变还款与垫付记录的值
-         *
-         * @param borrowRepayment
-         * @param lateDays
-         * @param lateInterest
-         * @param advance
-         */
+    /**
+     * 改变还款与垫付记录的值
+     *
+     * @param borrowRepayment
+     * @param lateDays
+     * @param lateInterest
+     * @param advance
+     */
 
     public void changeRepaymentAndAdvanceRecord(BorrowRepayment borrowRepayment, int lateDays, long lateInterest, boolean advance) {
         Date nowDate = new Date();

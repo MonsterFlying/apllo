@@ -589,17 +589,19 @@ public class TransferBizImpl implements TransferBiz {
         updateAssetByBuyUser(transferBuyLog, transfer);
 
         //判断是否满标，满标触发债权转让复审
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
-        mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            log.info(String.format("transferBizImpl buyTransfer send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("transferBizImpl buyTransfer send mq exception", e);
+        if (transfer.getTransferMoney() == transfer.getTransferMoneyYes()) {
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
+            mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("transferBizImpl buyTransfer send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("transferBizImpl buyTransfer send mq exception", e);
+            }
         }
 
         return ResponseEntity.ok(VoBaseResp.ok("购买成功!"));
@@ -738,7 +740,7 @@ public class TransferBizImpl implements TransferBiz {
         Preconditions.checkNotNull(borrow, "立即转让: 查询用户投标标的信息为空!");
 
         // 前期债权转让检测
-        ResponseEntity<VoBaseResp> transferConditionCheckResponse = transferConditionCheck(tender, borrow,userId);
+        ResponseEntity<VoBaseResp> transferConditionCheckResponse = transferConditionCheck(tender, borrow, userId);
         if (!transferConditionCheckResponse.getStatusCode().equals(HttpStatus.OK)) {
             return transferConditionCheckResponse;
         }
@@ -933,8 +935,8 @@ public class TransferBizImpl implements TransferBiz {
      * @param borrow
      * @return
      */
-    private ResponseEntity<VoBaseResp> transferConditionCheck(Tender tender, Borrow borrow,long userId) {
-        if (userId!=tender.getUserId()){
+    private ResponseEntity<VoBaseResp> transferConditionCheck(Tender tender, Borrow borrow, long userId) {
+        if (userId != tender.getUserId()) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "操作失败: 非债权投资人不能转让!"));
