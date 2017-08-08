@@ -7,6 +7,8 @@ import org.springframework.util.StringUtils;
 
 import java.util.Date;
 
+import static com.gofobao.framework.common.capital.CapitalChangeEnum.*;
+
 /**
  * 用户模块 工具类
  * created by max on 2017/2/24.

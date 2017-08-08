@@ -1,14 +1,6 @@
 package com.gofobao.framework.helper.project;
 
 import com.github.wenhao.jpa.Specifications;
-import com.gofobao.framework.api.contants.ChannelContant;
-import com.gofobao.framework.api.contants.DesLineFlagContant;
-import com.gofobao.framework.api.contants.JixinResultContants;
-import com.gofobao.framework.api.helper.JixinManager;
-import com.gofobao.framework.api.helper.JixinTxCodeEnum;
-import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
-import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
-import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
 import com.gofobao.framework.asset.entity.BatchAssetChange;
 import com.gofobao.framework.asset.entity.BatchAssetChangeItem;
 import com.gofobao.framework.asset.service.BatchAssetChangeItemService;
@@ -16,13 +8,6 @@ import com.gofobao.framework.asset.service.BatchAssetChangeService;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
-import com.gofobao.framework.common.capital.CapitalChangeEntity;
-import com.gofobao.framework.common.constans.JixinContants;
-import com.gofobao.framework.helper.BooleanHelper;
-import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.member.entity.UserThirdAccount;
-import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.service.DictItemService;
@@ -31,7 +16,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -42,7 +26,6 @@ import org.springframework.util.ObjectUtils;
 
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**

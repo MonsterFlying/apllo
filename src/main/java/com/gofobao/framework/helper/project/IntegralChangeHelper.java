@@ -1,6 +1,6 @@
 package com.gofobao.framework.helper.project;
 
-import com.gofobao.framework.common.capital.CapitalChangeRulePaser;
+import com.gofobao.framework.common.assets.AssetChangeRuleParse;
 import com.gofobao.framework.common.integral.IntegralChangeConfig;
 import com.gofobao.framework.common.integral.IntegralChangeEntity;
 import com.gofobao.framework.common.integral.IntegralChangeEnum;
@@ -47,10 +47,7 @@ public class IntegralChangeHelper {
         integralLog.setCreatedAt(new Date());
 
         IntegralChangeConfig config = findIntegralChangeConfig(type);
-        boolean flag = CapitalChangeRulePaser.paser(integralLog,config.getIntegralChangeRule(),value,0);
-        if (!flag){
-            throw new Exception("获取积分变动配置失败!");
-        }
+        AssetChangeRuleParse.parse(integralLog,config.getIntegralChangeRule(),value,0);
 
         integralLog = integralLogService.insert(integralLog);
 

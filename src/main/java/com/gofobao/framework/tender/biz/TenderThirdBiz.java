@@ -1,10 +1,8 @@
 package com.gofobao.framework.tender.biz;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.tender.vo.request.VoBuyTransfer;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
-import com.gofobao.framework.tender.vo.request.VoThirdBatchCreditInvest;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
