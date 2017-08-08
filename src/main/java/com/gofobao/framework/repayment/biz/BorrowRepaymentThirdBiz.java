@@ -112,6 +112,7 @@ public interface BorrowRepaymentThirdBiz {
      * @param order
      * @param lateDays
      * @param lateInterest
+     * @param interestPercent
      * @param repayAssetChanges
      * @throws Exception
      */

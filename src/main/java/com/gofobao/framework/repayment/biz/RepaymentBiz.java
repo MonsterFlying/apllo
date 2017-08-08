@@ -27,6 +27,14 @@ import java.util.concurrent.ExecutionException;
  */
 public interface RepaymentBiz {
 
+    void doGenerateAssetChangeRecodeByRepay(Borrow borrow,
+                                                   BorrowRepayment borrowRepayment,
+                                                   Long userId,
+                                                   List<RepayAssetChange> repayAssetChanges,
+                                                   String seqNo,
+                                                   String groupSeqNo,
+                                                   BatchAssetChange batchAssetChange) throws ExecutionException ;
+
     /**
      * 提前结清处理
      *

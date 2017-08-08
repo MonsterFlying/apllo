@@ -437,9 +437,15 @@ public class RepaymentBizImpl implements RepaymentBiz {
             BorrowRepayment borrowRepayment = borrowRepaymentMaps.get(voBuildThirdRepayReq.getRepaymentId());/* 还款记录 */
             List<RepayAssetChange> repayAssetChangeList = new ArrayList<>();
             // 生成存管投资人还款记录(提前结清)
-            List<Repay> tempRepays = borrowRepaymentThirdBiz.calculateRepayPlan(borrow, borrowUserThirdAccount.getAccountId(),
-                    borrowRepayment.getOrder(), voBuildThirdRepayReq.getLateDays(), voBuildThirdRepayReq.getLateInterest(),
-                    voBuildThirdRepayReq.getInterestPercent(), repayAssetChangeList);
+            List<Repay> tempRepays = borrowRepaymentThirdBiz.calculateRepayPlan(borrow,
+                    borrowUserThirdAccount.getAccountId(),
+                    borrowRepayment.getOrder(),
+                    voBuildThirdRepayReq.getLateDays(),
+                    voBuildThirdRepayReq.getLateInterest(),
+                    voBuildThirdRepayReq.getInterestPercent(),
+                    repayAssetChangeList,
+                    seqNo,
+                    groupSeqNo);
             repays.addAll(tempRepays);
             // 生成还款记录
             doGenerateAssetChangeRecodeByRepay(borrow, borrowRepayment, borrowRepayment.getUserId(), repayAssetChangeList, seqNo, groupSeqNo, batchAssetChange);
@@ -1676,7 +1682,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
             //生成担保人还垫付资产变更记录
             addBatchAssetChangeByGuarantor(borrowRepayment.getId(), borrowRepayment, parentBorrow, lateInterest, seqNo, groupSeqNo);
         } else {  //正常还款
+<<<<<<< HEAD
             resp = normalRepay(userId, repayUserThirdAccount, borrowRepayment, parentBorrow, lateInterest,interestPercent, batchNo, batchAssetChange,  seqNo, groupSeqNo);
+=======
+            resp = normalRepay(userId, repayUserThirdAccount, borrowRepayment, parentBorrow, lateInterest, interestPercent, batchNo, batchAssetChange,  seqNo, groupSeqNo);
+>>>>>>> 1aada18dd15de73ce1a5e507d89f5cc1c292e28d
         }
 
         //改变还款与垫付记录的值
@@ -1735,9 +1745,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
     /**
      * 生成还款人还款批次资金改变记录
-     *
-     * @param
+     *  @param batchAssetChangeId
      * @param borrowRepayment
+     * @param borrow
+     * @param interestPercent
+     * @param isUserOpen
+     * @param lateInterest
      * @param seqNo
      * @param groupSeqNo
      */
@@ -1746,9 +1759,13 @@ public class RepaymentBizImpl implements RepaymentBiz {
                                               Borrow borrow,
                                               double interestPercent,
                                               boolean isUserOpen,
+<<<<<<< HEAD
                                               long lateInterest,
                                               String seqNo,
                                               String groupSeqNo) {
+=======
+                                              long lateInterest, String seqNo, String groupSeqNo) {
+>>>>>>> 1aada18dd15de73ce1a5e507d89f5cc1c292e28d
         Date nowDate = new Date();
         // 借款人还款
         BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
@@ -1925,7 +1942,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param batchNo
      * @param batchAssetChange
      * @param seqNo
-     *@param groupSeqNo @return
+     * @param groupSeqNo
+     * @return
      * @throws Exception
      * @// TODO: 2017/8/3 在存管逾期收入加入到当期回款利息中  类型也需要修改
      */
@@ -1948,7 +1966,13 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 getLateDays(borrowRepayment),
                 lateInterest,
                 interestPercent,
+<<<<<<< HEAD
                 repayAssetChanges);
+=======
+                repayAssetChanges,
+                seqNo,
+                groupSeqNo);
+>>>>>>> 1aada18dd15de73ce1a5e507d89f5cc1c292e28d
 
         //所有交易金额 交易金额指的是txAmount字段
         double txAmount = repays.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxAmount())).sum();
@@ -1957,7 +1981,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //所有还款手续费
         double txFeeOut = repays.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxFeeOut())).sum();
         double freezeMoney = txAmount + txFeeOut + intAmount;/* 冻结金额 */
+<<<<<<< HEAD
 
+=======
+>>>>>>> 1aada18dd15de73ce1a5e507d89f5cc1c292e28d
         // 生成还款记录
         doGenerateAssetChangeRecodeByRepay(borrow, borrowRepayment, borrowRepayment.getUserId(), repayAssetChanges, seqNo, groupSeqNo, batchAssetChange);
         // 申请即信还款冻结
@@ -2027,15 +2054,25 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
     /**
      * 生成还款记录
-     *  @param borrow
+     *
+     * @param borrow
      * @param borrowRepayment
      * @param userId
      * @param repayAssetChanges
      * @param batchAssetChange
-     * @param seqNo
-     * @param groupSeqNo
      */
+<<<<<<< HEAD
     private void doGenerateAssetChangeRecodeByRepay(Borrow borrow, BorrowRepayment borrowRepayment, Long userId, List<RepayAssetChange> repayAssetChanges, String seqNo, String groupSeqNo, BatchAssetChange batchAssetChange) throws ExecutionException {
+=======
+    @Override
+    public void doGenerateAssetChangeRecodeByRepay(Borrow borrow,
+                                                    BorrowRepayment borrowRepayment,
+                                                    Long userId,
+                                                    List<RepayAssetChange> repayAssetChanges,
+                                                    String seqNo,
+                                                    String groupSeqNo,
+                                                    BatchAssetChange batchAssetChange) throws ExecutionException {
+>>>>>>> 1aada18dd15de73ce1a5e507d89f5cc1c292e28d
         long batchAssetChangeId = batchAssetChange.getId();
         Long feeAccountId = assetChangeProvider.getFeeAccountId();  // 平台收费账户ID
         Date nowDate = new Date();
