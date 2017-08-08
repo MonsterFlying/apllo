@@ -8,6 +8,8 @@ import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.entity.RepayAssetChange;
 import com.gofobao.framework.repayment.vo.request.*;
 import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
 import com.gofobao.framework.repayment.vo.response.VoViewRepaymentOrderDetailWarpRes;
@@ -17,11 +19,21 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by admin on 2017/6/5.
  */
 public interface RepaymentBiz {
+
+    void doGenerateAssetChangeRecodeByRepay(Borrow borrow,
+                                                   BorrowRepayment borrowRepayment,
+                                                   Long userId,
+                                                   List<RepayAssetChange> repayAssetChanges,
+                                                   String seqNo,
+                                                   String groupSeqNo,
+                                                   BatchAssetChange batchAssetChange) throws ExecutionException ;
 
     /**
      * 提前结清处理
