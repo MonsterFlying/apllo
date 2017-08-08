@@ -53,7 +53,10 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
-import com.gofobao.framework.helper.project.*;
+import com.gofobao.framework.helper.project.BatchAssetChangeHelper;
+import com.gofobao.framework.helper.project.BorrowHelper;
+import com.gofobao.framework.helper.project.IntegralChangeHelper;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -87,7 +90,6 @@ import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferService;
-import com.gofobao.framework.windmill.borrow.biz.WindmillTenderBiz;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -161,8 +163,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private DictValueService dictValueService;
     @Autowired
     private BorrowRepaymentThirdBiz borrowRepaymentThirdBiz;
-    @Autowired
-    private CapitalChangeHelper capitalChangeHelper;
     @Autowired
     private BatchAssetChangeHelper batchAssetChangeHelper;
     @Autowired
@@ -536,7 +536,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         assetChange.setSourceId(borrow.getId());
         assetChange.setSeqNo(assetChangeProvider.getSeqNo());
         assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
-        assetChangeProvider.commonAssetChange(assetChange) ;
+        assetChangeProvider.commonAssetChange(assetChange);
 
         BatchRepayReq request = new BatchRepayReq();
         request.setBatchNo(batchNo);
@@ -882,7 +882,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param repaymentId
      * @return
      * @throws Exception
-     * @// TODO: 2017/8/7 还垫付时不需要更新统计一类的东西
      */
     public ResponseEntity<VoBaseResp> newRepayDeal(long repaymentId, long batchNo) throws Exception {
         //1.查询并判断还款记录是否存在!
@@ -915,19 +914,21 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //2.处理资金还款人、收款人资金变动
         batchAssetChangeHelper.batchAssetChangeAndCollection(repaymentId, batchNo, BatchAssetChangeContants.BATCH_LEND_REPAY);
         //4.还款成功后变更改还款状态
-        changeRepaymentAndAdvanceStatus(borrowRepayment);
-        //5.结束第三方债权并更新借款状态（还款最后一期的时候）
-        endThirdTenderAndChangeBorrowStatus(parentBorrow, borrowRepayment);
-        //6.发送投资人收到还款站内信
-        sendCollectionNotices(borrowCollectionList, advance, parentBorrow);
-        //7.发放积分
-        giveInterest(borrowCollectionList, parentBorrow);
-        //8.还款最后新增统计
-        updateRepaymentStatistics(parentBorrow, borrowRepayment);
-        //9.更新投资人缓存
-        updateUserCacheByReceivedRepay(borrowCollectionList, parentBorrow);
-        //10.项目回款短信通知
-        smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
+        changeRepaymentAndAdvanceStatus(borrowRepayment, advance);
+        if (!advance) { //非转让标需要统计与发放短信
+            //5.结束第三方债权并更新借款状态（还款最后一期的时候）
+            endThirdTenderAndChangeBorrowStatus(parentBorrow, borrowRepayment);
+            //6.发送投资人收到还款站内信
+            sendCollectionNotices(borrowCollectionList, advance, parentBorrow);
+            //7.发放积分
+            giveInterest(borrowCollectionList, parentBorrow);
+            //8.还款最后新增统计
+            updateRepaymentStatistics(parentBorrow, borrowRepayment);
+            //9.更新投资人缓存
+            updateUserCacheByReceivedRepay(borrowCollectionList, parentBorrow);
+            //10.项目回款短信通知
+            smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
+        }
         return ResponseEntity.ok(VoBaseResp.ok("还款处理成功!"));
     }
 
@@ -1153,13 +1154,13 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @throws Exception 3.判断是否是还担保人垫付，垫付需要改变垫付记录状态（逾期天数与日期应当在还款前计算完成）
      *                   4.还款成功后变更改还款状态（还款金额在还款前计算完成）
      */
-    private void changeRepaymentAndAdvanceStatus(BorrowRepayment borrowRepayment) throws Exception {
+    private void changeRepaymentAndAdvanceStatus(BorrowRepayment borrowRepayment, boolean advance) throws Exception {
         //更改垫付记录、还款记录状态
         borrowRepayment.setStatus(1);
         borrowRepayment.setRepayAtYes(new Date());
         borrowRepaymentService.updateById(borrowRepayment);
 
-        if (!ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) { //存在垫付时间则当条还款已经被垫付过
+        if (advance) { //存在垫付时间则当条还款已经被垫付过
             AdvanceLog advanceLog = advanceLogService.findByRepaymentId(borrowRepayment.getId());
             Preconditions.checkNotNull(advanceLog, "RepaymentBizImpl changeRepaymentAndAdvanceStatus 垫付记录不存在!请联系客服。");
 
@@ -1281,6 +1282,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         batchAssetChangeService.save(batchAssetChange);
         return batchAssetChange;
     }
+
     /**
      * 生成还款人还款批次资金改变记录
      *
@@ -1431,7 +1433,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         assetChange.setSourceId(borrow.getId());
         assetChange.setSeqNo(assetChangeProvider.getSeqNo());
         assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
-        assetChangeProvider.commonAssetChange(assetChange) ;
+        assetChangeProvider.commonAssetChange(assetChange);
 
         Map<String, Object> acqResMap = new HashMap<>();
         acqResMap.put("userId", userId);

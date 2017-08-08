@@ -57,14 +57,32 @@ public interface TransferBiz {
      */
     ResponseEntity<VoBaseResp> newTransferTender(VoTransferTenderReq voTransferTenderReq) throws Exception;
 
+    /**
+     * 转让中
+     * @param voTransferReq
+     * @return
+     */
     ResponseEntity<VoViewTransferOfWarpRes> tranferOfList(VoTransferReq voTransferReq);
 
-
+    /**
+     * 已转让
+     * @param voTransferReq
+     * @return
+     */
     ResponseEntity<VoViewTransferedWarpRes> transferedlist(VoTransferReq voTransferReq);
 
-
+    /**
+     * 可转让
+     * @param voTransferReq
+     * @return
+     */
     ResponseEntity<VoViewTransferMayWarpRes> transferMayList(VoTransferReq voTransferReq);
 
+    /**
+     * 已购买
+     * @param voTransferReq
+     * @return
+     */
     ResponseEntity<VoViewTransferBuyWarpRes> tranferBuyList(VoTransferReq voTransferReq);
 
     /**
