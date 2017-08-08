@@ -14,8 +14,8 @@ import java.util.Date;
 @Table(name = "gfb_transfer_buy_log")
 @Data
 public class TransferBuyLog {
-    @GeneratedValue
     @Id
+    @GeneratedValue
     private Long id;
     private Integer state;
     private Long transferId;

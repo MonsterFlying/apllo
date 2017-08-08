@@ -257,6 +257,7 @@ public class TransferProvider {
      * @param msg
      * @throws Exception
      */
+    @Transactional(rollbackFor = Exception.class)
     public boolean againVerifyTransfer(Map<String, String> msg) throws Exception {
         long transferId = NumberHelper.toLong(msg.get(MqConfig.MSG_TRANSFER_ID));/* 债权转让id */
         Transfer transfer = transferService.findByIdLock(transferId);
@@ -320,9 +321,10 @@ public class TransferProvider {
         batchAssetChange.setUpdatedAt(nowDate);
         batchAssetChange = batchAssetChangeService.save(batchAssetChange);
 
-        // 债权转让人收款 = 转让本金加应收利息
+        long batchAssetChangeId = batchAssetChange.getId();
+                // 债权转让人收款 = 转让本金加应收利息
         BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
-        batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
+        batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
         batchAssetChangeItem.setState(0);
         batchAssetChangeItem.setType(AssetChangeTypeEnum.batchSellBonds.getLocalType());  // 出售债权
         batchAssetChangeItem.setUserId(transfer.getUserId());
@@ -338,7 +340,7 @@ public class TransferProvider {
         Long feeAccountId = assetChangeProvider.getFeeAccountId();  // 平台ID
         // 扣除原始债权转让人转让费
         batchAssetChangeItem = new BatchAssetChangeItem();
-        batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
+        batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
         batchAssetChangeItem.setState(0);
         batchAssetChangeItem.setType(AssetChangeTypeEnum.batchSellBondsFee.getLocalType());  // 扣除债权转让人手续费
         batchAssetChangeItem.setUserId(transfer.getUserId());
@@ -355,7 +357,7 @@ public class TransferProvider {
 
         // 收费账户添加债权转让费用
         batchAssetChangeItem = new BatchAssetChangeItem();
-        batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
+        batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
         batchAssetChangeItem.setState(0);
         batchAssetChangeItem.setType(AssetChangeTypeEnum.platformBatchSellBondsFee.getLocalType());  // 收取债权转让人手续费
         batchAssetChangeItem.setUserId(feeAccountId);  // 平台收费人
@@ -371,7 +373,7 @@ public class TransferProvider {
         batchAssetChangeItemService.save(batchAssetChangeItem);
 
         for (TransferBuyLog transferBuyLog : transferBuyLogList) {
-            batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
+            batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
             // 扣除债权转让购买人冻结资金
             batchAssetChangeItem = new BatchAssetChangeItem();
             batchAssetChangeItem.setState(0);

@@ -330,7 +330,7 @@ public class ThirdBatchProvider {
             //提前结清操作
             ResponseEntity<VoBaseResp> resp = null;
             try {
-                resp = repaymentBiz.repayAll(borrowId);
+                resp = repaymentBiz.repayAllDeal(borrowId,batchNo);
             } catch (Exception e) {
                 log.error("批次还款处理(提前结清)异常:",e);
             }

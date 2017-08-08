@@ -107,8 +107,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     @Autowired
     private BorrowRepaymentService borrowRepaymentService;
     @Autowired
-    private RepaymentBiz repaymentBiz;
-    @Autowired
     private BorrowCollectionService borrowCollectionService;
     @Autowired
     private UserCacheService userCacheService;

@@ -468,10 +468,18 @@ public class AplloApplicationTests {
     @Test
     public void test() {
 
-        /*Borrow borrow = borrowService.findById(169954L);
-        borrow.setStatus(3);
-        borrow.setSuccessAt(new Date());
-        borrowService.save(borrow);*/
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
+        mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(1), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            log.info(String.format("transferBizImpl buyTransfer send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("transferBizImpl buyTransfer send mq exception", e);
+        }
 
         /*Map<String,String> map = new HashMap<>();
         map.put(MqConfig.MSG_BORROW_ID,"169921");
