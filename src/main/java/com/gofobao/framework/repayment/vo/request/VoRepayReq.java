@@ -21,7 +21,7 @@ public class VoRepayReq {
     @NotNull(message = "借款还款Id不能为空!")
     private Long repaymentId;
     @ApiModelProperty(value = "利息百分比", dataType = "int", required = true)
-    private Double interestPercent;
+    private Double interestPercent = 1d;
     @ApiModelProperty(value = "是否是用户主动还款", required = true)
     private Boolean isUserOpen = true;
 

@@ -1069,7 +1069,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             if (tender.getTransferFlag() == 2) {  // 已经转让的债权, 可以跳过还款
                 continue;
             }
-            inIn = borrowCollection.getInterest() * interestPercent; // 还款利息
+            inIn = (long) MathHelper.myRound(borrowCollection.getInterest() * interestPercent,0); // 还款利息
             inPr = borrowCollection.getPrincipal(); // 还款本金
             repayAssetChange.setUserId(tender.getUserId());
             repayAssetChange.setInterest(inIn);

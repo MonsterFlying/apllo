@@ -1354,7 +1354,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             //生成担保人还垫付资产变更记录
             addBatchAssetChangeByGuarantor(borrowRepayment.getId(), borrowRepayment, parentBorrow, lateInterest, seqNo, groupSeqNo);
         } else {  //正常还款
-            resp = normalRepay(userId, repayUserThirdAccount, borrowRepayment, parentBorrow, lateInterest, batchNo, batchAssetChange);
+            resp = normalRepay(userId, repayUserThirdAccount, borrowRepayment, parentBorrow, lateInterest, interestPercent, batchNo, batchAssetChange);
         }
 
         //改变还款与垫付记录的值
@@ -1607,12 +1607,13 @@ public class RepaymentBizImpl implements RepaymentBiz {
                                                    BorrowRepayment borrowRepayment,
                                                    Borrow borrow,
                                                    long lateInterest,
+                                                   double interestPercent,
                                                    String batchNo,
                                                    BatchAssetChange batchAssetChange) throws Exception {
         Date nowDate = new Date();
         log.info("批次还款: 进入正常还款流程");
         List<RepayAssetChange> repayAssetChanges = new ArrayList<>();
-        List<Repay> repays = borrowRepaymentThirdBiz.calculateRepayPlan(borrow, repayUserThirdAccount.getAccountId(), borrowRepayment.getOrder(), getLateDays(borrowRepayment), lateInterest, repayAssetChanges);
+        List<Repay> repays = borrowRepaymentThirdBiz.calculateRepayPlan(borrow, repayUserThirdAccount.getAccountId(), borrowRepayment.getOrder(), getLateDays(borrowRepayment), lateInterest, interestPercent, repayAssetChanges);
 
         //所有交易金额 交易金额指的是txAmount字段
         double txAmount = repays.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxAmount())).sum();
