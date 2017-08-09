@@ -42,7 +42,7 @@ public class TransferController {
      * @throws Exception
      */
     @ApiOperation("结束债权转让")
-    @GetMapping("v2/new/transfer/end")
+    @PostMapping("v2/new/transfer/end")
     public ResponseEntity<VoBaseResp> endTransfer(@Valid VoEndTransfer voEndTransfer) {
         try {
             return transferBiz.endTransfer(voEndTransfer);

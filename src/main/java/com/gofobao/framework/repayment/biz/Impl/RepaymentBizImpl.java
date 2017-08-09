@@ -1358,7 +1358,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param groupSeqNo
      * @return
      * @throws Exception
-     * @// TODO: 2017/8/3 在存管逾期收入加入到当期回款利息中  类型也需要修改
      */
     private ResponseEntity<VoBaseResp> normalRepay(long userId,
                                                    UserThirdAccount repayUserThirdAccount,
