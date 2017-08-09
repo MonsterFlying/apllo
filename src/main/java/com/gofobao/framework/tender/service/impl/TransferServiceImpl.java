@@ -265,7 +265,11 @@ public class TransferServiceImpl implements TransferService {
         return resultMaps;
     }
 
-
+    /**
+     * 已购买债券
+     * @param voTransferReq
+     * @return
+     */
     @Override
     public Map<String, Object> transferBuyList(VoTransferReq voTransferReq) {
         Map<String, Object> resultMaps = commonQuery(voTransferReq);
@@ -298,7 +302,7 @@ public class TransferServiceImpl implements TransferService {
             Transfer transfer = transferMap.get(p.getTransferId());
             Borrow borrow = borrowMap.get(transfer.getBorrowId());
             transferBuy.setBorrowName(borrow.getName());
-            transferBuy.setBorrowId(borrow.getId());
+            transferBuy.setTransferId(p.getId());
             transferBuy.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
             transferBuy.setCreateAt(DateHelper.dateToString(p.getCreatedAt()));
             transferBuys.add(transferBuy);
