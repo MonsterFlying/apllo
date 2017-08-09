@@ -13,16 +13,11 @@ import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.tender.contants.TenderConstans;
-import com.gofobao.framework.tender.contants.TransferBuyLogContants;
-import com.gofobao.framework.tender.contants.TransferContants;
 import com.gofobao.framework.tender.entity.Tender;
-import com.gofobao.framework.tender.entity.Transfer;
-import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.repository.TenderRepository;
 import com.gofobao.framework.tender.repository.TransferBuyLogRepository;
 import com.gofobao.framework.tender.repository.TransferRepository;
 import com.gofobao.framework.tender.service.TenderService;
-import com.gofobao.framework.tender.service.TransferService;
 import com.gofobao.framework.tender.vo.request.TenderUserReq;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
@@ -35,8 +30,6 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Created by admin on 2017/5/19.
@@ -48,8 +41,6 @@ public class TenderServiceImpl implements TenderService {
     @Autowired
     private TenderRepository tenderRepository;
 
-    @Autowired
-    private TransferBuyLogRepository transferBuyLogRepository;
 
     @Autowired
     private BorrowRepository borrowRepository;
@@ -58,8 +49,6 @@ public class TenderServiceImpl implements TenderService {
     @Autowired
     private UsersRepository usersRepository;
 
-    @Autowired
-    private TransferRepository transferRepository;
 
     /**
      * 投标用户列表
@@ -75,36 +64,27 @@ public class TenderServiceImpl implements TenderService {
             return Collections.EMPTY_LIST;
         }
         List<VoBorrowTenderUserRes> tenderUserResList = new ArrayList<>();
-        //债券集合
-        List<Transfer> transfers = transferRepository.findByBorrowId(borrowId);
-        if (CollectionUtils.isEmpty(transfers)) {
+        Tender tender = new Tender();
+        tender.setBorrowId(borrowId);
+        tender.setStatus(TenderConstans.SUCCESS);
+
+        ExampleMatcher matcher = ExampleMatcher.matching().withIgnorePaths("isAuto");
+        Example<Tender> ex = Example.of(tender, matcher);
+        Page<Tender> tenderPage = tenderRepository.findAll(ex, new PageRequest(tenderUserReq.getPageIndex(), tenderUserReq.getPageSize(), new Sort(Sort.Direction.DESC, "id")));
+        //Optional<List<Tender>> listOptional = Optional.ofNullable(tenderList);
+        List<Tender> tenderList = tenderPage.getContent();
+        if (CollectionUtils.isEmpty(tenderList)) {
             return Collections.EMPTY_LIST;
         }
 
-        //购买的债券集合
-        List<Long> transferIds = transfers.stream().map(p -> p.getBorrowId()).collect(Collectors.toList());
-        Specification<TransferBuyLog> specification = Specifications.<TransferBuyLog>and()
-                .in("transferId", transferIds)
-                .eq("state", TransferBuyLogContants.SUCCESS)
-                .build();
-        List<TransferBuyLog> transferBuyLogs = transferBuyLogRepository.findAll(specification);
-
-        if (CollectionUtils.isEmpty(transferBuyLogs)) {
-            return Collections.EMPTY_LIST;
-        }
-        //购买债券的用户集合
-        Set<Long> userIds = transferBuyLogs.stream().map(p -> p.getUserId()).collect(Collectors.toSet());
-        List<Users> usersList = usersRepository.findByIdIn(new ArrayList<>(userIds));
-        Map<Long, Users> usersMap = usersList.stream().collect(Collectors.toMap(Users::getId, Function.identity()));
-        //数据装配
-        transferBuyLogs.stream().forEach(item -> {
+        tenderList.stream().forEach(item -> {
             VoBorrowTenderUserRes tenderUserRes = new VoBorrowTenderUserRes();
-            tenderUserRes.setValidMoney(StringHelper.formatMon(item.getValidMoney() / 100D) + MoneyConstans.RMB);
+            tenderUserRes.setValidMoney(StringHelper.formatMon(item.getValidMoney() / 100d) + MoneyConstans.RMB);
             tenderUserRes.setDate(DateHelper.dateToString(item.getCreatedAt(), DateHelper.DATE_FORMAT_YMDHMS));
-            tenderUserRes.setType(item.getAuto() ? TenderConstans.AUTO : TenderConstans.MANUAL);
-            Users user = usersMap.get(item.getUserId());
+            tenderUserRes.setType(item.getIsAuto() ? TenderConstans.AUTO : TenderConstans.MANUAL);
+            Users user = usersRepository.findOne(new Long(item.getUserId()));
 
-            // TODO 此处没有考虑到 用户名不存在 手机号不存在 只有邮箱的情况 
+            // TODO 此处没有考虑到 用户名不存在 手机号不存在 只有邮箱的情况
             String userName = StringUtils.isEmpty(user.getUsername()) ?
                     UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM) :
                     UserHelper.hideChar(user.getUsername(), UserHelper.USERNAME_NUM);

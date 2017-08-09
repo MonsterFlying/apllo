@@ -29,9 +29,6 @@ public class TenderController {
     @Autowired
     private TenderBiz tenderBiz;
 
-    @Autowired
-    private AutoTenderBiz autoTenderBiz;
-
 
     @ApiOperation("标的详情-投标记录")
     @GetMapping("/v2/user/list/{pageIndex}/{pageSize}/{borrowId}")

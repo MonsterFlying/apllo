@@ -14,6 +14,7 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
+import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
@@ -31,9 +32,11 @@ import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.BatchAssetChangeHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
+import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
@@ -44,6 +47,8 @@ import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.entity.Statistic;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.contants.BorrowContants;
+import com.gofobao.framework.tender.contants.TransferBuyLogContants;
+import com.gofobao.framework.tender.contants.TransferContants;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.entity.TransferBuyLog;
@@ -116,6 +121,9 @@ public class TransferBizImpl implements TransferBiz {
     private BatchAssetChangeHelper batchAssetChangeHelper;
     @Autowired
     AssetChangeProvider assetChangeProvider;
+
+    @Autowired
+    private UsersRepository usersRepository;
 
 
     @Value("${gofobao.imageDomain}")
@@ -936,6 +944,57 @@ public class TransferBizImpl implements TransferBiz {
                             "查询失败",
                             VoViewTransferBuyWarpRes.class));
         }
+    }
+
+    /**
+     * 债券购买记录列表
+     *
+     * @param borrowId
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(Long borrowId) {
+
+        VoBorrowTenderUserWarpListRes warpListRes = VoBaseResp.ok("查询成功", VoBorrowTenderUserWarpListRes.class);
+        //债券
+        Specification<Transfer> specification = Specifications.<Transfer>and()
+                .eq("borrowId", borrowId)
+                .in("state", Lists.newArrayList(TransferContants.CHECKPENDING, TransferContants.TRANSFERED))
+                .build();
+        List<Transfer> transfers = transferService.findList(specification);
+        if (CollectionUtils.isEmpty(transfers)) {
+            return ResponseEntity.ok(warpListRes);
+        }
+        List<Long> transferIds = transfers.stream().map(m -> m.getId()).collect(Collectors.toList());
+        //购买记录
+        Specification<TransferBuyLog> specification1 = Specifications.<TransferBuyLog>and()
+                .eq("state", TransferBuyLogContants.SUCCESS)
+                .in("transferId", transferIds)
+                .build();
+        List<TransferBuyLog> transferBuyLogs = transferBuyLogService.findList(specification1);
+        if (CollectionUtils.isEmpty(transferBuyLogs)) {
+            return ResponseEntity.ok(warpListRes);
+        }
+        //投标用户
+        Set<Long> userIds = transferBuyLogs.stream().map(m -> m.getUserId()).collect(Collectors.toSet());
+        List<Users> usersList = usersRepository.findByIdIn(new ArrayList<>(userIds));
+        Map<Long, Users> usersMap = usersList.stream().collect(Collectors.toMap(Users::getId, Function.identity()));
+        //装配结果集
+        List<VoBorrowTenderUserRes> tenderUserResList = Lists.newArrayList();
+        transferBuyLogs.forEach(p -> {
+            VoBorrowTenderUserRes transfer = new VoBorrowTenderUserRes();
+            transfer.setDate(DateHelper.dateToString(p.getCreatedAt()));
+            transfer.setValidMoney(StringHelper.formatMon(p.getValidMoney() / 100D));
+            transfer.setType(p.getAuto() == true ? "自动" : "手动");
+            Users user = usersMap.get(p.getId());
+            String userName = StringUtils.isEmpty(user.getUsername()) ?
+                    UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM) :
+                    UserHelper.hideChar(user.getUsername(), UserHelper.USERNAME_NUM);
+            transfer.setUserName(userName);
+            tenderUserResList.add(transfer);
+        });
+        warpListRes.setVoBorrowTenderUser(tenderUserResList);
+        return ResponseEntity.ok(warpListRes);
     }
 
     /**

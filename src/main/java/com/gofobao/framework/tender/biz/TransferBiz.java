@@ -5,10 +5,7 @@ import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.tender.vo.request.*;
-import com.gofobao.framework.tender.vo.response.VoGoTenderInfo;
-import com.gofobao.framework.tender.vo.response.VoViewTransferMayWarpRes;
-import com.gofobao.framework.tender.vo.response.VoViewTransferOfWarpRes;
-import com.gofobao.framework.tender.vo.response.VoViewTransferedWarpRes;
+import com.gofobao.framework.tender.vo.response.*;
 import com.gofobao.framework.tender.vo.response.web.VoViewTransferBuyWarpRes;
 import org.springframework.http.ResponseEntity;
 
@@ -113,4 +110,12 @@ public interface TransferBiz {
      * @param id
      */
     void cancelTransferByTenderId(Long id) throws Exception;
+
+
+    /**
+     * 投标记录列表
+     * @return
+     */
+    ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(Long borrowId);
+
 }
