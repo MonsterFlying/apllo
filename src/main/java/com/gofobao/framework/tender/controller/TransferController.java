@@ -8,10 +8,7 @@ import com.gofobao.framework.tender.vo.request.VoBuyTransfer;
 import com.gofobao.framework.tender.vo.request.VoEndTransfer;
 import com.gofobao.framework.tender.vo.request.VoTransferReq;
 import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
-import com.gofobao.framework.tender.vo.response.VoGoTenderInfo;
-import com.gofobao.framework.tender.vo.response.VoViewTransferMayWarpRes;
-import com.gofobao.framework.tender.vo.response.VoViewTransferOfWarpRes;
-import com.gofobao.framework.tender.vo.response.VoViewTransferedWarpRes;
+import com.gofobao.framework.tender.vo.response.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +43,7 @@ public class TransferController {
      */
     @ApiOperation("新版发布债权转让")
     @GetMapping("v2/new/transfer/end")
-    public ResponseEntity<VoBaseResp> endTransfer(@Valid VoEndTransfer voEndTransfer){
+    public ResponseEntity<VoBaseResp> endTransfer(@Valid VoEndTransfer voEndTransfer) {
         try {
             return transferBiz.endTransfer(voEndTransfer);
         } catch (Exception e) {
@@ -81,7 +78,7 @@ public class TransferController {
             voBuyTransfer.setUserId(userId);
             return transferBiz.buyTransfer(voBuyTransfer);
         } catch (Exception e) {
-            log.error("购买债权转让异常：",e);
+            log.error("购买债权转让异常：", e);
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后重试!"));
         }
     }
@@ -151,7 +148,7 @@ public class TransferController {
         try {
             return transferBiz.newTransferTender(voTransferTenderReq);
         } catch (Exception e) {
-            log.error("债权转让异常：",e);
+            log.error("债权转让异常：", e);
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后重试!"));
         }
     }
@@ -168,4 +165,19 @@ public class TransferController {
                                                        @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return transferBiz.goTenderInfo(tenderId, userId);
     }
+
+    @ApiOperation("购买债券记录")
+    @GetMapping("v2/transfer/user/list/{borrowId}")
+    private ResponseEntity<VoBorrowTenderUserWarpListRes> tenderList(@PathVariable Long borrowId) {
+        return transferBiz.transferUserList(borrowId);
+    }
+
+
+    @Autowired
+    @ApiOperation("债券购买次数")
+    @GetMapping("v2/transfer/buyCount/{borrowId}")
+    private ResponseEntity<Integer> buyCount(@PathVariable Long borrowId) {
+        return transferBiz.transferBuyCount(borrowId);
+    }
+
 }

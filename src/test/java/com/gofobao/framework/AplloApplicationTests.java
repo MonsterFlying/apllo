@@ -331,8 +331,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("093919");
-        batchDetailsQueryReq.setBatchTxDate("20170801");
+        batchDetailsQueryReq.setBatchNo("102323");
+        batchDetailsQueryReq.setBatchTxDate("20170809");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -384,14 +384,14 @@ public class AplloApplicationTests {
     public void balanceQuery() {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId("6212462040000650087");
+        balanceQueryRequest.setAccountId("6212462040000650103");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         System.out.println(balanceQueryResponse);
     }
 
     public void accountDetailsQuery() {
         AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
-        request.setAccountId("6212462040000750085");
+        request.setAccountId("6212462040000800104");
         request.setStartDate("20161002");
         request.setEndDate("20171003");
         request.setChannel(ChannelContant.HTML);
@@ -452,19 +452,6 @@ public class AplloApplicationTests {
     @Test
     public void test() {
 
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
-        mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(1), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            log.info(String.format("transferBizImpl buyTransfer send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("transferBizImpl buyTransfer send mq exception", e);
-        }
-
         /*Map<String,String> map = new HashMap<>();
         map.put(MqConfig.MSG_BORROW_ID,"169921");
         try {
@@ -486,8 +473,6 @@ public class AplloApplicationTests {
         } catch (Throwable e) {
             log.error("repaymentBizImpl repayDeal send mq exception", e);
         }*/
-
-
 
         //批次处理
         //batchDeal();
@@ -518,7 +503,7 @@ public class AplloApplicationTests {
         //批次状态查询
         //batchQuery();
         //批次详情查询
-        //batchDetailsQuery();
+        batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调
