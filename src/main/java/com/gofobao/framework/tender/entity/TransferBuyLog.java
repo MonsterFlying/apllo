@@ -1,6 +1,8 @@
 package com.gofobao.framework.tender.entity;
 
 import lombok.Data;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -13,6 +15,8 @@ import java.util.Date;
  */
 @Entity
 @Table(name = "gfb_transfer_buy_log")
+@DynamicInsert
+@DynamicUpdate
 @Data
 public class TransferBuyLog {
     @Id

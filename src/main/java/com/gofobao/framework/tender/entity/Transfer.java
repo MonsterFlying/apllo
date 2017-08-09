@@ -1,6 +1,8 @@
 package com.gofobao.framework.tender.entity;
 
 import lombok.Data;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
@@ -11,6 +13,8 @@ import java.util.Date;
  */
 @Entity
 @Data
+@DynamicInsert
+@DynamicUpdate
 @Table(name = "gfb_transfer")
 public class Transfer {
     @GeneratedValue
