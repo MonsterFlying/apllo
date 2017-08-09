@@ -172,7 +172,7 @@ public class TenderBizImpl implements TenderBiz {
         }
 
         //如果当前用户是风车理财用户
-        if(StringUtils.isEmpty(user.getWindmillId())){
+        if(!StringUtils.isEmpty(user.getWindmillId())){
             windmillTenderBiz.tenderNotify(borrowTender);
         }
 

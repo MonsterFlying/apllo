@@ -4,10 +4,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.TransferBiz;
-import com.gofobao.framework.tender.vo.request.VoBuyTransfer;
-import com.gofobao.framework.tender.vo.request.VoEndTransfer;
-import com.gofobao.framework.tender.vo.request.VoTransferReq;
-import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
+import com.gofobao.framework.tender.vo.request.*;
 import com.gofobao.framework.tender.vo.response.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -167,16 +164,15 @@ public class TransferController {
     }
 
     @ApiOperation("购买债券记录")
-    @GetMapping("v2/transfer/user/list/{transferId}")
-    public ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(@PathVariable Long transferId ) {
-        return transferBiz.transferUserList(transferId);
-    }
-
-
-    @ApiOperation("债券购买次数")
-    @GetMapping("v2/transfer/buyCount/{transferId}")
-    public ResponseEntity<Integer> buyCount(@PathVariable Long transferId) {
-        return transferBiz.transferBuyCount(transferId);
+    @GetMapping("v2/transfer/user/list/{pageIndex}/{pageSize}/{transferId}")
+    public ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(@PathVariable Long transferId,
+                                                                          @PathVariable Integer pageIndex,
+                                                                          @PathVariable Integer pageSize) {
+        VoTransferUserListReq transferUserListReq=new VoTransferUserListReq();
+        transferUserListReq.setPageSize(pageSize);
+        transferUserListReq.setPageIndex(pageIndex);
+        transferUserListReq.setTransferId(transferId);
+        return transferBiz.transferUserList(transferUserListReq);
     }
 
 }
