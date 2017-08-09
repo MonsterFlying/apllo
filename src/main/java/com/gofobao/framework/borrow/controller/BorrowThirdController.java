@@ -30,7 +30,7 @@ public class BorrowThirdController {
      * @return
      */
     @RequestMapping("/v2/third/repayall/check")
-    public ResponseEntity<String> thirdBatchRepayAllCheckCall(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> thirdBatchRepayAllCheckCall(HttpServletRequest request, HttpServletResponse response) throws Exception{
         return borrowThirdBiz.thirdBatchRepayAllCheckCall(request, response);
     }
 

@@ -25,8 +25,6 @@ import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
-import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryRequest;
-import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryResponse;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResponse;
@@ -309,7 +307,6 @@ public class AplloApplicationTests {
         }
     }
 
-
     private void findThirdBorrowList() {
         VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
         voQueryThirdBorrowList.setProductId("169917");
@@ -334,8 +331,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("161003");
-        batchDetailsQueryReq.setBatchTxDate("20170808");
+        batchDetailsQueryReq.setBatchNo("093919");
+        batchDetailsQueryReq.setBatchTxDate("20170801");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -428,8 +425,8 @@ public class AplloApplicationTests {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(1),
-                        MqConfig.BATCH_NO, StringHelper.toString(161003),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(169919),
+                        MqConfig.BATCH_NO, StringHelper.toString(174806),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
                        /* MqConfig.ACQ_RES, GSON.toJson(acqMap)*/
                 );
@@ -454,6 +451,19 @@ public class AplloApplicationTests {
 
     @Test
     public void test() {
+
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
+        mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(1), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            log.info(String.format("transferBizImpl buyTransfer send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("transferBizImpl buyTransfer send mq exception", e);
+        }
 
         /*Map<String,String> map = new HashMap<>();
         map.put(MqConfig.MSG_BORROW_ID,"169921");
@@ -480,7 +490,7 @@ public class AplloApplicationTests {
 
 
         //批次处理
-        batchDeal();
+        //batchDeal();
         //查询存管账户资金信息
         //balanceQuery();
         //查询资金流水
