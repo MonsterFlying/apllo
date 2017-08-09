@@ -48,6 +48,7 @@ import com.gofobao.framework.system.entity.Statistic;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.contants.TransferBuyLogContants;
+import com.gofobao.framework.tender.contants.TransferContants;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.entity.TransferBuyLog;
@@ -953,16 +954,16 @@ public class TransferBizImpl implements TransferBiz {
      */
     @Override
     public ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(VoTransferUserListReq transferUserListReq) {
-        VoBorrowTenderUserWarpListRes warpListRes = VoBaseResp.ok("查询成功", VoBorrowTenderUserWarpListRes.class);
+        VoBorrowTenderUserWarpListRes warpListRes=VoBaseResp.ok("查询成功",VoBorrowTenderUserWarpListRes.class);
         //购买记录
         Specification<TransferBuyLog> specification1 = Specifications.<TransferBuyLog>and()
-                .eq("state",Lists.newArrayList(TransferBuyLogContants.SUCCESS,TransferBuyLogContants.BUYING) )
+                .in("state", Lists.newArrayList(TransferBuyLogContants.SUCCESS,TransferBuyLogContants.BUYING).toArray())
                 .eq("transferId", transferUserListReq.getTransferId())
                 .build();
         List<TransferBuyLog> transferBuyLogs = transferBuyLogService.findList(specification1,
-                new PageRequest(transferUserListReq.getPageIndex(),
-                                transferUserListReq.getPageSize(),
-                                new Sort(Sort.Direction.DESC,"id")));
+                            new PageRequest(transferUserListReq.getPageIndex(),
+                                    transferUserListReq.getPageSize(),
+                                    new Sort(Sort.Direction.DESC,"id")));
         if (CollectionUtils.isEmpty(transferBuyLogs)) {
             return ResponseEntity.ok(warpListRes);
         }
@@ -977,7 +978,7 @@ public class TransferBizImpl implements TransferBiz {
             transfer.setDate(DateHelper.dateToString(p.getCreatedAt()));
             transfer.setValidMoney(StringHelper.formatMon(p.getValidMoney() / 100D));
             transfer.setType(p.getAuto() == true ? "自动" : "手动");
-            Users user = usersMap.get(p.getId());
+            Users user = usersMap.get(p.getUserId());
             String userName = StringUtils.isEmpty(user.getUsername()) ?
                     UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM) :
                     UserHelper.hideChar(user.getUsername(), UserHelper.USERNAME_NUM);
@@ -987,6 +988,8 @@ public class TransferBizImpl implements TransferBiz {
         warpListRes.setVoBorrowTenderUser(tenderUserResList);
         return ResponseEntity.ok(warpListRes);
     }
+
+
 
 
     /**
@@ -1251,7 +1254,6 @@ public class TransferBizImpl implements TransferBiz {
         //结束时间
         Date endAt = DateHelper.addDays(DateHelper.beginOfDate(transfer.getReleaseAt()), 3 + 1);
         borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
-        borrowInfoRes.setTransferId(transferId);
         //进度
         borrowInfoRes.setSurplusSecond(-1L);
         //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
