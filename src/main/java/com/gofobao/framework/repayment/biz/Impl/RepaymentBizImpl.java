@@ -255,7 +255,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //迭代还款集合,逐期还款
         for (BorrowRepayment borrowRepayment : borrowRepaymentList) {
             /* 是否垫付 */
-            boolean advance = ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
+            boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
                     /* 查询未转让的投标记录回款记录 */
             Specification<BorrowCollection> bcs = Specifications
                     .<BorrowCollection>and()
@@ -791,7 +791,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
         Preconditions.checkNotNull(borrowCollectionList, "立即还款: 回款记录为空!");
         /* 是否垫付 */
-        boolean advance = ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
+        boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
         //2.处理资金还款人、收款人资金变动
         batchAssetChangeHelper.batchAssetChangeAndCollection(repaymentId, batchNo, BatchAssetChangeContants.BATCH_REPAY);
         //4.还款成功后变更改还款状态
@@ -2354,7 +2354,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
         Preconditions.checkNotNull(borrowCollectionList, "立即还款: 回款记录为空!");
         /* 是否垫付 */
-        boolean advance = ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
+        boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
         //2.处理资金还款人、收款人资金变动
         batchAssetChangeHelper.batchAssetChangeAndCollection(repaymentId, batchNo, BatchAssetChangeContants.BATCH_LEND_REPAY);
         /* 逾期天数 */
