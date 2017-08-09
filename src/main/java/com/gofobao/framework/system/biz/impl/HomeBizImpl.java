@@ -38,11 +38,11 @@ public class HomeBizImpl implements HomeBiz {
         Borrow borrow = borrowService.findNoviceBorrow();
         IndexBorrow indexBorrow = new IndexBorrow();
         if (!ObjectUtils.isEmpty(borrow)) {
-            indexBorrow.setApr( StringHelper.formatMon(borrow.getApr() / 100d) + "%");   // 年化收益
+            indexBorrow.setApr(StringHelper.formatMon(borrow.getApr() / 100d) + "%");   // 年化收益
             indexBorrow.setBorrowId(borrow.getId());
             indexBorrow.setLimit(borrow.getTimeLimit() + BorrowContants.MONTH);
             indexBorrow.setTitle(borrow.getName());
-            indexBorrow.setStartLimit(String.format("%s元", StringHelper.formatDouble(borrow.getLowest() / 100D, true)));
+            indexBorrow.setStartLimit(String.format("%s元", new Double(borrow.getLowest() / 100D).longValue()));
         }
         result.setIndexBorrow(indexBorrow);
         return ResponseEntity.ok(result);
