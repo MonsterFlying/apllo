@@ -864,10 +864,10 @@ public class TransferBizImpl implements TransferBiz {
     public ResponseEntity<VoViewTransferOfWarpRes> tranferOfList(VoTransferReq voTransferReq) {
         try {
             Map<String, Object> resultMaps = transferService.transferOfList(voTransferReq);
-            List<TransferOf> transferOfs = (List<TransferOf>) resultMaps.get("transferOfList");
+            List<TransferOf> transferingList = (List<TransferOf>) resultMaps.get("transferOfList");
             Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
             VoViewTransferOfWarpRes voViewTransferOfWarpRes = VoBaseResp.ok("查询成功", VoViewTransferOfWarpRes.class);
-            voViewTransferOfWarpRes.setTransferOfs(transferOfs);
+            voViewTransferOfWarpRes.setTransferOfs(transferingList);
             voViewTransferOfWarpRes.setTotalCount(totalCount);
             return ResponseEntity.ok(voViewTransferOfWarpRes);
         } catch (Throwable e) {
@@ -1170,7 +1170,7 @@ public class TransferBizImpl implements TransferBiz {
 
         Specification<Borrow> bs = Specifications
                 .<Borrow>and()
-                .in("id", borrowIds)
+                .in("id", borrowIds.toArray())
                 .build();
 
         List<Borrow> borrowList = borrowService.findList(bs);
@@ -1186,7 +1186,7 @@ public class TransferBizImpl implements TransferBiz {
                 .map(transfer -> transfer.getUserId()).collect(Collectors.toSet());
         Specification<Users> us = Specifications
                 .<Users>and()
-                .in("id", userIds)
+                .in("id", userIds.toArray())
                 .build();
 
         List<Users> userLists = userService.findList(us);

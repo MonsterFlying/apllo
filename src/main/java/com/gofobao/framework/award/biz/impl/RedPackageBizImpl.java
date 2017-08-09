@@ -112,7 +112,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
     public ResponseEntity<VoViewRedPackageWarpRes> list(VoRedPackageReq voRedPackageReq) {
         try {
             List<RedPackageRes> redPackageRes = redPackageService.list(voRedPackageReq);
-            VoViewRedPackageWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewRedPackageWarpRes.class);
+            VoViewRedPackageWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewRedPackageWarpRes.class) ;
             warpRes.setResList(redPackageRes);
             return ResponseEntity.ok(warpRes);
         } catch (Throwable e) {
@@ -131,7 +131,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
             openRedPackage.setFlag(true);
             do {
                 if (CollectionUtils.isEmpty(redPackages)) {
-                    log.info("打开红包失败,该红包id不存在 或者已过期: {redPackageId:" + packageReq.getRedPackageId() + "," +
+                    log.error("打开红包失败,该红包id不存在 或者已过期: {redPackageId:" + packageReq.getRedPackageId() + "," +
                             "userId:" + packageReq.getUserId() + "," +
                             "nowTime:" + DateHelper.dateToString(new Date()) + "}");
                     openRedPackage.setFlag(false);
@@ -140,47 +140,10 @@ public class RedPackageBizImpl implements RedPackageBiz {
                 ActivityRedPacket redPacket = redPackages.get(0);
                 try {
                     String groupSeqNo = assetChangeProvider.getGroupSeqNo();
-                    String seqNo = assetChangeProvider.getSeqNo() ;
                     long redId = assetChangeProvider.getRedpackAccountId() ;
-                    // 平台发放广富币兑换金额
-                    AssetChange redpackPublish = new AssetChange();
-                    redpackPublish.setMoney(redPacket.getMoney());
-                    redpackPublish.setType(AssetChangeTypeEnum.publishRedpack);  // 广富币兑换
-                    redpackPublish.setUserId(packageReq.getUserId());
-                    redpackPublish.setRemark("派发奖励红包");
-                    redpackPublish.setGroupSeqNo(groupSeqNo);
-                    redpackPublish.setForUserId(redId);
-                    redpackPublish.setSourceId(redPacket.getId());
-                    assetChangeProvider.commonAssetChange(redpackPublish);
-
-                    // 接收红包
-                    AssetChange redpackR = new AssetChange();
-                    redpackR.setMoney(redPacket.getMoney());
-                    redpackR.setType(AssetChangeTypeEnum.receiveRedpack);  // 积分兑换
-                    redpackR.setUserId(packageReq.getUserId());
-                    redpackR.setRemark("领取红包");
-                    redpackR.setGroupSeqNo(groupSeqNo);
-                    redpackR.setForUserId(redId);
-                    redpackR.setSourceId(redPacket.getId());
-                    assetChangeProvider.commonAssetChange(redpackR);
-
-                    //红包更新
-                    ActivityRedPacketLog redPacketLog = new ActivityRedPacketLog();
-                    redPacketLog.setUserId(packageReq.getUserId());
-                    redPacketLog.setCreateTime(new Date());
-                    redPacketLog.setRedPacketId(packageReq.getRedPackageId());
-                    redPacketLog.setIparam1(0);
-                    redPacketLog.setIparam2(0);
-                    redPackageLogRepository.save(redPacketLog);
-                    redPacket.setStatus(RedPacketContants.used);
-                    redPacket.setUpdateDate(new Date());
-                    redPackageRepository.save(redPacket);
-                    double money = redPacket.getMoney() / 100d;
-
                     //查询红包账户
                     DictValue dictValue =  jixinCache.get(JixinContants.RED_PACKET_USER_ID);
                     UserThirdAccount redPacketAccount =  userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
-
                     //请求即信红包
                     UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(redPacket.getUserId());
                     VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
@@ -193,10 +156,51 @@ public class RedPackageBizImpl implements RedPackageBiz {
                     VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
                     if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
                         String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-                        log.info("拆开红包异常:" + msg);
+                        log.error("用户拆红包异常:" + msg);
                         openRedPackage.setFlag(false);
                         break;
                     }
+
+
+                    // 红包账户发送红包
+                    AssetChange redpackPublish = new AssetChange();
+                    redpackPublish.setMoney(redPacket.getMoney());
+                    redpackPublish.setType(AssetChangeTypeEnum.publishRedpack);  //  扣除红包
+                    redpackPublish.setUserId(redId);
+                    redpackPublish.setForUserId(redPacket.getUserId());
+                    redpackPublish.setRemark(String.format("派发奖励红包 %s元", StringHelper.formatDouble( redPacket.getMoney() / 100D , true)));
+                    redpackPublish.setGroupSeqNo(groupSeqNo);
+                    redpackPublish.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
+                    redpackPublish.setForUserId(redId);
+                    redpackPublish.setSourceId(redPacket.getId());
+                    assetChangeProvider.commonAssetChange(redpackPublish);
+
+                    // 用户接收红包
+                    AssetChange redpackR = new AssetChange();
+                    redpackR.setMoney(redPacket.getMoney());
+                    redpackR.setType(AssetChangeTypeEnum.receiveRedpack);
+                    redpackR.setUserId(packageReq.getUserId());
+                    redpackR.setForUserId(redId);
+                    redpackR.setRemark(String.format("领取奖励红包 %s元", StringHelper.formatDouble( redPacket.getMoney() / 100D , true)));
+                    redpackR.setGroupSeqNo(groupSeqNo);
+                    redpackR.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
+                    redpackR.setForUserId(redId);
+                    redpackR.setSourceId(redPacket.getId());
+                    assetChangeProvider.commonAssetChange(redpackR);
+
+                    // 红包更新
+                    ActivityRedPacketLog redPacketLog = new ActivityRedPacketLog();
+                    redPacketLog.setUserId(packageReq.getUserId());
+                    redPacketLog.setCreateTime(new Date());
+                    redPacketLog.setRedPacketId(packageReq.getRedPackageId());
+                    redPacketLog.setIparam1(0);
+                    redPacketLog.setIparam2(0);
+                    redPackageLogRepository.save(redPacketLog);
+                    redPacket.setStatus(RedPacketContants.used);
+                    redPacket.setUpdateDate(new Date());
+                    redPackageRepository.save(redPacket);
+                    double money = redPacket.getMoney() / 100d;
+
                     //站内信数据装配
                     Notices notices = new Notices();
                     notices.setFromUserId(1L);
@@ -231,7 +235,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
 
                 } catch (Throwable e) {
                     //日志记录
-                    log.info("打开红包失败: {redPackageId:" + redPacket.getId() + "," +
+                    log.error("打开红包失败: {redPackageId:" + redPacket.getId() + "," +
                             "userId:" + redPacket.getUserId() + "," +
                             "money:" + redPacket.getMoney() / 100d + " ," +
                             "nowTime:" + DateHelper.dateToString(new Date()) + "}");
@@ -254,7 +258,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
                                 VoViewOpenRedPackageWarpRes.class));
             }
         } catch (Throwable e) {
-            log.info("RedPackageBizImpl openRedPackage fail", e);
+            log.error("RedPackageBizImpl openRedPackage fail", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,

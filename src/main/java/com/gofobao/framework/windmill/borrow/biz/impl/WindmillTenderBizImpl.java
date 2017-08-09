@@ -147,7 +147,7 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
                     //投资金额
                     investRecords.setInvest_money(StringHelper.formatDouble(w.getValidMoney() / 100D, false));
                     //投资记录id
-                    investRecords.setInvest_record_id( w.getId());
+                    investRecords.setInvest_record_id(w.getId());
                     //项目id
                     investRecords.setProject_id(borrow.getId());
                     //项目标题
@@ -171,12 +171,12 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
                         if (w.getState() == 1) {
                             investRecords.setInvest_status(-1);
                         }
-                       // 0:收益中
-                        else if(w.getState() == 2){
+                        // 0:收益中
+                        else if (w.getState() == 2) {
                             investRecords.setInvest_status(0);
                         }
                         // 0:收益中
-                        else if(w.getState() == 3){
+                        else if (w.getState() == 3) {
                             investRecords.setInvest_status(1);
                         }
 
@@ -273,8 +273,8 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
         }
         try {
             //解密
-            backRecordsReq.setPf_user_id( backRecordsReq.getPf_user_id());
-            backRecordsReq.setInvest_record_id( backRecordsReq.getInvest_record_id());
+            backRecordsReq.setPf_user_id(backRecordsReq.getPf_user_id());
+            backRecordsReq.setInvest_record_id(backRecordsReq.getInvest_record_id());
             //查询
             List<BorrowCollection> borrowCollections = windmillTenderService.backCollectionList(backRecordsReq);
             List<BackRecords> back_records = Lists.newArrayList();
@@ -313,22 +313,23 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
         log.info("打印当前用户的投资信息:" + GSON.toJson(tender));
         //拼接请求参数
         String requestParamStr = "";
-        do {
-            try {
-                Borrow borrow = borrowService.findById(tender.getBorrowId());
-                requestParamStr = "pf_user_id=" + tender.getUserId() +
-                        "&invest_time=" + DateHelper.dateToString(tender.getCreatedAt()) +
-                        "&invest_sno=" +  tender.getId() +
-                        "&invest_money=" + StringHelper.formatDouble(tender.getValidMoney() / 100D, false) +
-                        "&invest_limit=" + (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE ? borrow.getTimeLimit() : (borrow.getTimeLimit() * 30)) +
-                        "&invest_rate=" + borrow.getApr() +
-                        "&back_way=" + getBorrowBackWay(borrow.getRepayFashion()) +
-                        "&invest_title=" + borrow.getName();
-                requestParamStr = WrbCoopDESUtil.desEncrypt(desKey, requestParamStr);
-            } catch (Exception e) {
-                log.info("风车理财用户投资成功通知:失败 通知发送请求 封装参数时失败");
-                break;
-            }
+        try {
+            Borrow borrow = borrowService.findById(tender.getBorrowId());
+            requestParamStr = "pf_user_id=" + tender.getUserId() +
+                    "&invest_time=" + DateHelper.dateToString(tender.getCreatedAt()) +
+                    "&invest_sno=" + tender.getId() +
+                    "&invest_money=" + StringHelper.formatDouble(tender.getValidMoney() / 100D, false) +
+                    "&invest_limit=" + (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE ? borrow.getTimeLimit() : (borrow.getTimeLimit() * 30)) +
+                    "&invest_rate=" + borrow.getApr() +
+                    "&back_way=" + getBorrowBackWay(borrow.getRepayFashion()) +
+                    "&invest_title=" + borrow.getName();
+            requestParamStr = WrbCoopDESUtil.desEncrypt(desKey, requestParamStr);
+
+        } catch (Exception e) {
+            log.error("风车理财用户投资成功通知:失败 通知发送请求 封装参数时失败", e);
+            return;
+        }
+        try {
             //封装请求参数
             Map<String, String> paramMap = Maps.newHashMap();
             paramMap.put("from", shortName);
@@ -338,11 +339,15 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
             log.info("打印通知风车返回的结果:" + reulstStr);
             Map<String, String> resultMap = GSON.fromJson(reulstStr, new TypeToken<Map<String, String>>() {
             }.getType());
-            if (Integer.valueOf(resultMap.get("retcode")) == VoBaseResp.OK)
+            if (Integer.valueOf(resultMap.get("retcode")) == VoBaseResp.OK) {
                 log.info("平台通知风车理财成功");
-            else
+            } else {
                 log.info("平台通知风车理财失败");
-        } while (false);
+            }
+        } catch (Exception e) {
+            log.error("平台通知风车理财失败", e);
+        }
+
     }
 
 

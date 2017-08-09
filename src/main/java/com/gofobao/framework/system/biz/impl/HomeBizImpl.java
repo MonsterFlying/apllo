@@ -1,6 +1,5 @@
 package com.gofobao.framework.system.biz.impl;
 
-import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.core.vo.VoBaseResp;
@@ -38,11 +37,11 @@ public class HomeBizImpl implements HomeBiz {
         Borrow borrow = borrowService.findNoviceBorrow();
         IndexBorrow indexBorrow = new IndexBorrow();
         if (!ObjectUtils.isEmpty(borrow)) {
-            indexBorrow.setApr(StringHelper.formatMon(borrow.getApr() / 100d) + "%");   // 年化收益
+            indexBorrow.setApr(StringHelper.formatMon(borrow.getApr() / 100d));   // 年化收益
             indexBorrow.setBorrowId(borrow.getId());
-            indexBorrow.setLimit(borrow.getTimeLimit() + BorrowContants.MONTH);
+            indexBorrow.setLimit(String.valueOf(borrow.getTimeLimit()));
             indexBorrow.setTitle(borrow.getName());
-            indexBorrow.setStartLimit(String.format("%s元", new Double(borrow.getLowest() / 100D).longValue()));
+            indexBorrow.setStartLimit(  String.valueOf(new Double(borrow.getLowest() / 100D).longValue()));
         }
         result.setIndexBorrow(indexBorrow);
         return ResponseEntity.ok(result);

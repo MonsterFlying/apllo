@@ -118,6 +118,11 @@ public enum AssetChangeTypeEnum {
     publishRedpack("平台派发红包", "publishRedpack", "2833", "sub@useMoney", "", "C"),
 
     /**
+     * 平台发放提成
+     */
+    publishCommissions("平台发放提成", "publishCommissions", "2833", "sub@useMoney", "", "C"),
+
+    /**
      * 平台发放广富币兑换红包
      */
     platformPublishCurrencyExchangeRedpack("平台发放广富币兑换红包", "publishCurrencyExchangeRedpack", "2833", "sub@useMoney", "", "C"),
@@ -136,6 +141,12 @@ public enum AssetChangeTypeEnum {
      * 红包奖励
      */
     receiveRedpack("红包奖励", "receiveRedpack", "7833", "add@useMoney", "add@incomeOther", "D"),
+
+    /**
+     * 接收提成
+     */
+    receiveCommissions("接收提成", "receiveCommissions", "7833", "add@useMoney", "add@incomeBonus", "D"),
+
     /**
      * 用户接受平台积分兑换红包
      */
