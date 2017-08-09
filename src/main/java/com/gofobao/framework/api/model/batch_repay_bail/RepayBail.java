@@ -8,11 +8,11 @@ import lombok.Data;
 @Data
 public class RepayBail {
     /**
-     *
+     *  账户名
      */
     private String accountId;
     /**
-     *
+     *  订单号
      */
     private String orderId;
     /**
@@ -20,7 +20,7 @@ public class RepayBail {
      */
     private String txAmount;
     /**
-     *
+     * 利息
      */
     private String intAmount;
     /**

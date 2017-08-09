@@ -14,7 +14,7 @@ import java.util.Map;
 public class StrToJsonStrUtil {
 
     private static final Gson GSON = new Gson();
-    /**
+    /**解密并封装参数
      * @param cipherStr
      * @return
      */
