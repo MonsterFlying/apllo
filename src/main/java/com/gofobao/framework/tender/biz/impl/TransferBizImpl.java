@@ -1021,9 +1021,8 @@ public class TransferBizImpl implements TransferBiz {
                 .eq("state", TransferBuyLogContants.SUCCESS)
                 .in("transferId", transferIds)
                 .build();
-        List<TransferBuyLog> transferBuyLogs = transferBuyLogService.findList(specification1);
-
-        return ResponseEntity.ok(transferBuyLogs.size());
+        Long count=transferBuyLogService.count(specification1);
+        return ResponseEntity.ok(count.intValue());
     }
 
 
