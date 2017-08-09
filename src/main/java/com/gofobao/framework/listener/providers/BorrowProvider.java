@@ -33,9 +33,6 @@ public class BorrowProvider {
     private BorrowRepaymentThirdBiz borrowRepaymentThirdBiz;
 
     @Autowired
-    private TenderThirdBiz tenderThirdBiz;
-
-    @Autowired
     private BorrowService borrowService;
 
     /**
