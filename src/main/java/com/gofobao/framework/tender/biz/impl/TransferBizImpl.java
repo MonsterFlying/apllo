@@ -1158,7 +1158,7 @@ public class TransferBizImpl implements TransferBiz {
 
         Specification<Borrow> bs = Specifications
                 .<Borrow>and()
-                .in("id", borrowIds)
+                .in("id", borrowIds.toArray())
                 .build();
 
         List<Borrow> borrowList = borrowService.findList(bs);
@@ -1174,7 +1174,7 @@ public class TransferBizImpl implements TransferBiz {
                 .map(transfer -> transfer.getUserId()).collect(Collectors.toSet());
         Specification<Users> us = Specifications
                 .<Users>and()
-                .in("id", userIds)
+                .in("id", userIds.toArray())
                 .build();
 
         List<Users> userLists = userService.findList(us);

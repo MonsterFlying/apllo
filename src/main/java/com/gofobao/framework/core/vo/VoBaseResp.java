@@ -50,6 +50,12 @@ public class VoBaseResp implements Serializable {
      */
     public static final long ERROR_CREDIT = -3;
 
+    /**
+     * 请先绑定银行
+     */
+    public static final long ERROR_BIND_BANK_CARD = -4;
+
+
 
 
 
