@@ -99,9 +99,12 @@ public class BatchAssetChangeHelper {
         // 所有的资金变动
         for (BatchAssetChangeItem item : batchAssetChangeItemList) {
             AssetChange assetChange = new AssetChange();
-            assetChange.setInterest(item.getInterest());
-            assetChange.setPrincipal(item.getPrincipal());
-            assetChange.setMoney(item.getMoney());
+            Long interest = item.getInterest();
+            assetChange.setInterest(ObjectUtils.isEmpty(interest) ? 0 : interest);
+            Long principal = item.getPrincipal();
+            assetChange.setPrincipal(ObjectUtils.isEmpty(principal) ? 0 : principal);
+            Long moeny = item.getMoney();
+            assetChange.setMoney(ObjectUtils.isEmpty(moeny) ? 0 : moeny);
             assetChange.setForUserId(item.getToUserId());
             assetChange.setUserId(item.getUserId());
             assetChange.setRemark(item.getRemark());

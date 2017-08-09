@@ -28,7 +28,7 @@ public class BatchAssetChangeItem {
     private Long toUserId;
     private Long money;
     private Long principal;
-    private Long interest;
+    private Long interest ;
     private String asset;
     private String type;
     private String remark;
@@ -44,4 +44,6 @@ public class BatchAssetChangeItem {
      */
     private String seqNo ;
     private String groupSeqNo ;
+
+
 }

@@ -1,10 +1,12 @@
 package com.gofobao.framework.windmill.borrow.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.entity.AssetLog;
 import com.gofobao.framework.asset.repository.AssetLogRepository;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.asset.vo.response.VoAssetIndexResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -26,6 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -64,6 +67,10 @@ public class WindmillStatisticsBizImpl implements WindmillStatisticsBiz {
 
     @Autowired
     private ArticleRepository articleRepository;
+
+    @Autowired
+    private AssetBiz assetBiz;
+
 
     /**
      * 查询每日的汇总数据
@@ -109,41 +116,34 @@ public class WindmillStatisticsBizImpl implements WindmillStatisticsBiz {
             return accountStatistics;
         }
         try {
-            Asset asset = assetService.findByUserId(userId);
-
+            ResponseEntity<VoAssetIndexResp> asset = assetBiz.asset(userId);
+            VoAssetIndexResp voAssetIndexResp = asset.getBody();
+            //资产
+            Asset userAsset = assetService.findByUserId(userId);
+            //用户信息
             UserCache userCache = userCacheService.findById(userId);
+            //资产记录
             List<String> typeArray = Lists.newArrayList("integral_cash", "virtual_tender", "bonus", "red_package");
-
             Specification specification = Specifications.<AssetLog>and()
                     .eq("userId", userId)
                     .in("type", typeArray.toArray())
                     .build();
             List<AssetLog> assetLogs = assetLogRepository.findAll(specification);
-
-            //冻结金额
-            Long frozen_money = asset.getNoUseMoney();
-            //待收本金
-            Long investing_principal = userCache.getWaitCollectionPrincipal();
-            //待收利息
-            Long investing_interest = userCache.getWaitCollectionInterest();
+            //  账户总额
+            accountStatistics.setAll_balance(voAssetIndexResp.getAccountMoney());
             //可用余额
-            Long available_balance = asset.getUseMoney();
+            accountStatistics.setAvailable_balance(StringHelper.formatDouble(userAsset.getUseMoney() / 100D, false));
+            //冻结金额
+            accountStatistics.setFrozen_money(StringHelper.formatDouble(userAsset.getNoUseMoney() / 100D, false));
+            //待收本金
+            accountStatistics.setInvesting_principal(StringHelper.formatDouble(userCache.getWaitCollectionPrincipal() / 100D, false));
+            //待收利息
+            accountStatistics.setInvesting_interest(StringHelper.formatDouble(userCache.getWaitCollectionInterest() / 100D, false));
             //累计已回款收益
-            Long earned_interest = userCache.getIncomeInterest();
-
+            accountStatistics.setEarned_interest(voAssetIndexResp.getAccruedMoney());
             //活期金额
             accountStatistics.setCurrent_money("0");
-
-            accountStatistics.setAvailable_balance(StringHelper.formatDouble(available_balance / 100D, false));
-            accountStatistics.setEarned_interest(StringHelper.formatDouble(earned_interest / 100D, false));
-            accountStatistics.setInvesting_interest(StringHelper.formatDouble(investing_interest / 100D, false));
-            accountStatistics.setInvesting_principal(StringHelper.formatDouble(investing_principal / 100D, false));
-            accountStatistics.setFrozen_money(StringHelper.formatDouble(frozen_money / 100D, false));
-
-            //平台用户id
-            accountStatistics.setPf_user_id( asset.getUserId().toString());
-            //账户总额
-            accountStatistics.setAll_balance(StringHelper.formatDouble((frozen_money + investing_interest + investing_principal + available_balance + earned_interest) / 100D, false));
+            //奖励余额
             String reward = "";
             if (!CollectionUtils.isEmpty(assetLogs)) {
                 for (AssetLog assetLog : assetLogs
@@ -152,13 +152,13 @@ public class WindmillStatisticsBizImpl implements WindmillStatisticsBiz {
                 }
                 reward = reward.substring(0, reward.length() - 1);
             }
+            accountStatistics.setReward(reward);
             accountStatistics.setRetcode(VoBaseResp.OK);
             accountStatistics.setRetmsg("查询成功");
             accountStatistics.setReward(reward);
         } catch (Exception e) {
             accountStatistics.setRetcode(VoBaseResp.ERROR);
             accountStatistics.setRetmsg("平台查询异常");
-
         }
         return accountStatistics;
     }

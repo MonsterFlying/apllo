@@ -114,7 +114,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     private MqHelper mqHelper;
     @Autowired
     private ThirdBatchLogBiz thirdBatchLogBiz;
-
     @Autowired
     private AssetChangeProvider assetChangeProvider;
 

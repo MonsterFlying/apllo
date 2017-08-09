@@ -19,5 +19,5 @@ public class RedPackageRes {
     @ApiModelProperty("1：注册；2：新手标 ；3：老用户投资送红包 4：邀请好友投资送红包 ,")
     private Integer type;
     @ApiModelProperty("红包id 查询未领取和已过期红包时 请忽略该字段")
-    private Integer redPackageId;
+    private Long redPackageId;
 }

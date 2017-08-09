@@ -20,4 +20,6 @@ public interface TransferRepository extends JpaSpecificationExecutor<Transfer>, 
 
     List<Transfer> findByIdIn(List<Long> ids);
 
+
+    List<Transfer>findByBorrowId(Long borrowId);
 }

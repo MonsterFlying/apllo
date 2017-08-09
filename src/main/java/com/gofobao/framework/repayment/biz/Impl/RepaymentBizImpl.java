@@ -142,8 +142,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
     @Autowired
     private BorrowCollectionService borrowCollectionService;
     @Autowired
-    private BorrowBiz borrowBiz;
-    @Autowired
     private IntegralChangeHelper integralChangeHelper;
     @Autowired
     private BorrowRepaymentService borrowRepaymentService;
@@ -163,7 +161,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private DictValueService dictValueService;
     @Autowired
     private BorrowRepaymentThirdBiz borrowRepaymentThirdBiz;
-
     @Autowired
     private BatchAssetChangeHelper batchAssetChangeHelper;
     @Autowired
@@ -271,7 +268,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             Preconditions.checkNotNull(borrowCollectionList, "立即还款: 回款记录为空!");
 
             //4.还款成功后变更改还款状态
-            changeRepaymentAndAdvanceStatus(borrowRepayment);
+            changeRepaymentAndAdvanceStatus(borrowRepayment,advance);
             //5.结束第三方债权并更新借款状态（还款最后一期的时候）
             endThirdTenderAndChangeBorrowStatus(borrow, borrowRepayment);
             //6.发送投资人收到还款站内信
@@ -765,7 +762,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param repaymentId
      * @return
      * @throws Exception
-     * @// TODO: 2017/8/7 还垫付时不需要更新统计一类的东西
      */
     public ResponseEntity<VoBaseResp> newRepayDeal(long repaymentId, long batchNo) throws Exception {
         //1.查询并判断还款记录是否存在!
@@ -798,19 +794,21 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //2.处理资金还款人、收款人资金变动
         batchAssetChangeHelper.batchAssetChangeAndCollection(repaymentId, batchNo, BatchAssetChangeContants.BATCH_LEND_REPAY);
         //4.还款成功后变更改还款状态
-        changeRepaymentAndAdvanceStatus(borrowRepayment);
-        //5.结束第三方债权并更新借款状态（还款最后一期的时候）
-        endThirdTenderAndChangeBorrowStatus(parentBorrow, borrowRepayment);
-        //6.发送投资人收到还款站内信
-        sendCollectionNotices(borrowCollectionList, advance, parentBorrow);
-        //7.发放积分
-        giveInterest(borrowCollectionList, parentBorrow);
-        //8.还款最后新增统计
-        updateRepaymentStatistics(parentBorrow, borrowRepayment);
-        //9.更新投资人缓存
-        updateUserCacheByReceivedRepay(borrowCollectionList, parentBorrow);
-        //10.项目回款短信通知
-        smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
+        changeRepaymentAndAdvanceStatus(borrowRepayment, advance);
+        if (!advance) { //非转让标需要统计与发放短信
+            //5.结束第三方债权并更新借款状态（还款最后一期的时候）
+            endThirdTenderAndChangeBorrowStatus(parentBorrow, borrowRepayment);
+            //6.发送投资人收到还款站内信
+            sendCollectionNotices(borrowCollectionList, advance, parentBorrow);
+            //7.发放积分
+            giveInterest(borrowCollectionList, parentBorrow);
+            //8.还款最后新增统计
+            updateRepaymentStatistics(parentBorrow, borrowRepayment);
+            //9.更新投资人缓存
+            updateUserCacheByReceivedRepay(borrowCollectionList, parentBorrow);
+            //10.项目回款短信通知
+            smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
+        }
         return ResponseEntity.ok(VoBaseResp.ok("还款处理成功!"));
     }
 
@@ -1036,13 +1034,13 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @throws Exception 3.判断是否是还担保人垫付，垫付需要改变垫付记录状态（逾期天数与日期应当在还款前计算完成）
      *                   4.还款成功后变更改还款状态（还款金额在还款前计算完成）
      */
-    private void changeRepaymentAndAdvanceStatus(BorrowRepayment borrowRepayment) throws Exception {
+    private void changeRepaymentAndAdvanceStatus(BorrowRepayment borrowRepayment, boolean advance) throws Exception {
         //更改垫付记录、还款记录状态
         borrowRepayment.setStatus(1);
         borrowRepayment.setRepayAtYes(new Date());
         borrowRepaymentService.updateById(borrowRepayment);
 
-        if (!ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) { //存在垫付时间则当条还款已经被垫付过
+        if (advance) { //存在垫付时间则当条还款已经被垫付过
             AdvanceLog advanceLog = advanceLogService.findByRepaymentId(borrowRepayment.getId());
             Preconditions.checkNotNull(advanceLog, "RepaymentBizImpl changeRepaymentAndAdvanceStatus 垫付记录不存在!请联系客服。");
 
