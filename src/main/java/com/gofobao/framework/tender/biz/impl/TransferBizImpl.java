@@ -949,16 +949,16 @@ public class TransferBizImpl implements TransferBiz {
     /**
      * 债券购买记录列表
      *
-     * @param borrowId
+     * @param transferId
      * @return
      */
     @Override
-    public ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(Long borrowId) {
+    public ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(Long transferId) {
 
         VoBorrowTenderUserWarpListRes warpListRes = VoBaseResp.ok("查询成功", VoBorrowTenderUserWarpListRes.class);
         //债券
         Specification<Transfer> specification = Specifications.<Transfer>and()
-                .eq("borrowId", borrowId)
+                .eq("id", transferId)
                 .in("state", Lists.newArrayList(TransferContants.CHECKPENDING, TransferContants.TRANSFERED))
                 .build();
         List<Transfer> transfers = transferService.findList(specification);
@@ -1001,14 +1001,14 @@ public class TransferBizImpl implements TransferBiz {
     /**
      * 债券购买次数
      *
-     * @param borrowId
+     * @param transferId
      * @return
      */
     @Override
-    public ResponseEntity<Integer> transferBuyCount(Long borrowId) {
+    public ResponseEntity<Integer> transferBuyCount(Long transferId) {
         //债券
         Specification<Transfer> specification = Specifications.<Transfer>and()
-                .eq("borrowId", borrowId)
+                .eq("id", transferId)
                 .in("state", Lists.newArrayList(TransferContants.CHECKPENDING, TransferContants.TRANSFERED))
                 .build();
         List<Transfer> transfers = transferService.findList(specification);
