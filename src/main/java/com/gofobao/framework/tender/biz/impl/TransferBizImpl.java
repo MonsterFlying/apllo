@@ -385,7 +385,7 @@ public class TransferBizImpl implements TransferBiz {
             BorrowCollection borrowCollection;
             int collectionMoney = 0;
             int collectionInterest = 0;
-            int startOrder = parentBorrow.getTotalOrder() - transfer.getTimeLimit() - 1;/* 获取开始转让期数,期数下标从0开始 */
+            int startOrder = parentBorrow.getTotalOrder() - transfer.getTimeLimit();/* 获取开始转让期数,期数下标从0开始 */
             for (int i = 0; i < repayDetailList.size(); i++) {
                 borrowCollection = new BorrowCollection();
                 Map<String, Object> repayDetailMap = repayDetailList.get(i);

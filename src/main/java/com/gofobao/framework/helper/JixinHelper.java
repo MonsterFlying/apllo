@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import java.util.Date;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -62,7 +63,7 @@ public class JixinHelper {
 
 
     public static String getOrderId(String prefix) {
-        return prefix + new Date().getTime();
+        return prefix + new Date().getTime() + new Random().nextInt(100) + 1;
     }
 
 
