@@ -35,13 +35,13 @@ public class TransferController {
     private ThymeleafHelper thymeleafHelper;
 
     /**
-     * 结束债权转让
+     * 新版结束债权
      *
      * @param voEndTransfer
      * @return
      * @throws Exception
      */
-    @ApiOperation("新版发布债权转让")
+    @ApiOperation("新版结束债权")
     @GetMapping("v2/new/transfer/end")
     public ResponseEntity<VoBaseResp> endTransfer(@Valid VoEndTransfer voEndTransfer) {
         try {
@@ -71,7 +71,7 @@ public class TransferController {
     /**
      * 购买债权转让
      */
-    @ApiOperation("新版购买债权转让")
+    @ApiOperation("购买债权转让")
     @PostMapping("v2/new/transfer/buy")
     public ResponseEntity<VoBaseResp> buyTransfer(@Valid VoBuyTransfer voBuyTransfer, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         try {
