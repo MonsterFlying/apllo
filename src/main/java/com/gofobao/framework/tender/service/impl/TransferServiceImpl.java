@@ -127,7 +127,7 @@ public class TransferServiceImpl implements TransferService {
         tenderList.forEach(p -> {
             TransferOf transferOf = new TransferOf();
             Borrow borrow = borrowMap.get(p.getBorrowId());
-            transferOf.setBorrowId(borrow.getId());
+            transferOf.setTransferId(p.getId());
             transferOf.setName(borrow.getName());
             transferOf.setSpend(StringHelper.formatMon((p.getTransferMoneyYes() / 100D) / (p.getTransferMoney() / 100D)));
             transferOf.setApr(StringHelper.formatMon(p.getApr() / 100D));
@@ -343,7 +343,7 @@ public class TransferServiceImpl implements TransferService {
      */
     public Map<String, Object> commonQueryTemp(VoTransferReq voTransferReq) {
         Map<String, Object> resultMap = Maps.newHashMap();
-        Specification specification = Specifications.<Transfer>and()
+        Specification<Transfer> specification = Specifications.<Transfer>and()
                 .eq("userId", voTransferReq.getUserId())
                 .eq("state", voTransferReq.getStatus())
                 .build();
