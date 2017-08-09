@@ -12,8 +12,8 @@ public class TransferBuy {
     @ApiModelProperty("标名")
     private String borrowName;
 
-    @ApiModelProperty("标id")
-    private Long borrowId;
+    @ApiModelProperty("债权id")
+    private Long transferId;
 
     @ApiModelProperty("购买本金")
     private String principal;
