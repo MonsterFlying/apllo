@@ -169,7 +169,6 @@ public class CommonEmaiProvider {
             return true;
         } catch (Throwable e) {
             log.error("邮件发送失败:", e);
-            log.error("参数:toEmail-->" + toEmail + ",subject-->" + subject + "text-->" + text + ",isHtml-->" + isHtml);
             return false;
         }
     }

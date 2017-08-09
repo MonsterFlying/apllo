@@ -30,14 +30,12 @@ public class VirtualController {
     @ApiOperation("收益统计")
     @PostMapping(value = "virtual/v2/statistics")
     public ResponseEntity<VoViewVirtualStatisticsWarpRes> query(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-
         return virtualBiz.query(userId);
     }
 
     @ApiOperation("用户投标体验金列表")
     @PostMapping(value = "virtual/v2/userTenderList")
     public ResponseEntity<VoViewVirtualTenderResWarpRes> userTenderList(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-
         return virtualBiz.userTenderList(userId);
     }
 
