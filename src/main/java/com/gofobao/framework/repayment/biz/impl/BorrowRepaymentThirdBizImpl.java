@@ -495,9 +495,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             advanceAssetChange.setInterest(intAmount);
             advanceAssetChange.setPrincipal(principal);
 
-
             if ((lateDays > 0) && (lateInterest > 0)) {  //借款人逾期罚息
-                int overdueFee = new Double(tender.getValidMoney() / new Double(borrow.getMoney()) * lateInterest / 2).intValue();// 出借人收取50% 逾期管理费 ;
+                int overdueFee = new Double(tender.getValidMoney() / new Double(borrow.getMoney()) * lateInterest / 2D).intValue();// 出借人收取50% 逾期管理费 ;
                 advanceAssetChange.setOverdueFee(overdueFee);
                 intAmount += overdueFee ;
             }
@@ -701,10 +700,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(batchBailRepayCheckResp.getRetCode())) {
             log.error("=============================批次担保账户代偿参数检查回调===========================");
             log.error("回调失败! msg:" + batchBailRepayCheckResp.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(batchBailRepayCheckResp.getBatchNo(), repaymentId, 2);
-        } else {
-            log.info("=============================批次担保账户代偿参数成功回调===========================");
-            log.info("回调成功!");
             String freezeOrderId = StringHelper.toString(acqResMap.get("freezeOrderId"));//担保人代偿冻结订单id
             String accountId = StringHelper.toString(acqResMap.get("accountId"));//担保人账户id
             String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);
@@ -742,6 +737,10 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             } catch (Exception e) {
                 log.error("担保人垫付解除冻结可用资金异常:", e);
             }
+            thirdBatchLogBiz.updateBatchLogState(batchBailRepayCheckResp.getBatchNo(), repaymentId, 2);
+        } else {
+            log.info("=============================批次担保账户代偿参数成功回调===========================");
+            log.info("回调成功!");
         }
 
         return ResponseEntity.ok("success");
