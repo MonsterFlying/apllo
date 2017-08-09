@@ -997,6 +997,35 @@ public class TransferBizImpl implements TransferBiz {
         return ResponseEntity.ok(warpListRes);
     }
 
+
+    /**
+     * 债券购买次数
+     *
+     * @param borrowId
+     * @return
+     */
+    @Override
+    public ResponseEntity<Integer> transferBuyCount(Long borrowId) {
+        //债券
+        Specification<Transfer> specification = Specifications.<Transfer>and()
+                .eq("borrowId", borrowId)
+                .in("state", Lists.newArrayList(TransferContants.CHECKPENDING, TransferContants.TRANSFERED))
+                .build();
+        List<Transfer> transfers = transferService.findList(specification);
+        if (CollectionUtils.isEmpty(transfers)) {
+            return ResponseEntity.ok(0);
+        }
+        List<Long> transferIds = transfers.stream().map(m -> m.getId()).collect(Collectors.toList());
+        //购买记录
+        Specification<TransferBuyLog> specification1 = Specifications.<TransferBuyLog>and()
+                .eq("state", TransferBuyLogContants.SUCCESS)
+                .in("transferId", transferIds)
+                .build();
+        Long count=transferBuyLogService.count(specification1);
+        return ResponseEntity.ok(count.intValue());
+    }
+
+
     /**
      * 债权装让前期检测
      * 1. 当期债权是否已经发生转让行为
