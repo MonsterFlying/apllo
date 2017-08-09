@@ -387,7 +387,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             log.info("风车理财ticket检验成功");
             log.info("打印成功信息:" + checkResult);
             //解密用户id
-            Long userId = Long.valueOf(WrbCoopDESUtil.desDecrypt(localDesKey, checkResultMap.get("pf_user_id").toString()));
+            Long userId = Long.valueOf(checkResultMap.get("pf_user_id").toString());
             //风车理财用户id
             String wrbUserId = checkResultMap.get("wrb_user_id").toString();
             Specification<Users> specification = Specifications.<Users>and()
