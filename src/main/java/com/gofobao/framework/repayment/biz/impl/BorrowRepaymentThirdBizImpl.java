@@ -182,7 +182,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
             //净值账户管理费
             if (borrow.getType() == 1) {
-                debtFee += MathHelper.myRound(validMoney / new Double(borrow.getMoney()) * totalManageFee, 2);
+                debtFee += MathHelper.myRound(validMoney / borrow.getMoney().doubleValue() * totalManageFee, 2);
             }
 
             String lendPayOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
@@ -438,7 +438,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      * @param order
      * @param advanceAssetChanges
      * @param lateDays
-     *@param lateInterest @return
+     * @param lateInterest        @return
      */
     public List<BailRepay> calculateAdvancePlan(Borrow borrow, int order, List<AdvanceAssetChange> advanceAssetChanges, int lateDays, long lateInterest) throws Exception {
         /* 代偿记录集合 */
@@ -499,7 +499,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             if ((lateDays > 0) && (lateInterest > 0)) {  //借款人逾期罚息
                 int overdueFee = new Double(tender.getValidMoney() / new Double(borrow.getMoney()) * lateInterest / 2).intValue();// 出借人收取50% 逾期管理费 ;
                 advanceAssetChange.setOverdueFee(overdueFee);
-                intAmount += overdueFee ;
+                intAmount += overdueFee;
             }
 
             /* 垫付金额 */
@@ -892,7 +892,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             assetChange.setSeqNo(assetChangeProvider.getSeqNo());
             assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
             try {
-                assetChangeProvider.commonAssetChange(assetChange) ;
+                assetChangeProvider.commonAssetChange(assetChange);
             } catch (Exception e) {
                 log.error("批次融资人还担保账户垫款解除冻结可用资金异常:", e);
             }
@@ -1063,7 +1063,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 doCancelTransfer(tender); // 标的转让中时, 需要取消出让信息
             }
 
-            if (tender.getTransferFlag() == 2) {  // 已经转让的债权, 可以跳过还款
+            if (tender.getTransferFlag() == 2 || ObjectUtils.isEmpty(borrowCollection)) {  // 已经转让的债权, 可以跳过还款
                 continue;
             }
             inIn = (long) MathHelper.myRound(borrowCollection.getInterest() * interestPercent, 0); // 还款利息
@@ -1100,6 +1100,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             }
 
             String orderId = JixinHelper.getOrderId(JixinHelper.REPAY_PREFIX);
+
             Repay repay = new Repay();
             repay.setAccountId(repayAccountId);
             repay.setOrderId(orderId);
@@ -1108,7 +1109,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             repay.setTxFeeIn(StringHelper.formatDouble(inFee, 100, false));
             repay.setTxFeeOut(StringHelper.formatDouble(outFee, 100, false));
             repay.setProductId(borrow.getProductId());
-            repay.setAuthCode(tender.getAuthCode());
+            repay.setAuthCode(tender.isTransferTender() ? tender.getTransferAuthCode() : tender.getAuthCode());
             UserThirdAccount userThirdAccount = userThirdAccountMap.get(tender.getUserId());
             Preconditions.checkNotNull(userThirdAccount, "投资人未开户!");
             repay.setForAccountId(userThirdAccount.getAccountId());

@@ -268,7 +268,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             Preconditions.checkNotNull(borrowCollectionList, "立即还款: 回款记录为空!");
 
             //4.还款成功后变更改还款状态
-            changeRepaymentAndAdvanceStatus(borrowRepayment,advance);
+            changeRepaymentAndAdvanceStatus(borrowRepayment, advance);
             //5.结束第三方债权并更新借款状态（还款最后一期的时候）
             endThirdTenderAndChangeBorrowStatus(borrow, borrowRepayment);
             //6.发送投资人收到还款站内信
@@ -1435,9 +1435,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         request.setTxCounts(StringHelper.toString(repays.size()));
         BatchRepayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_REPAY, request, BatchRepayResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, response.getRetMsg()));
+            throw new Exception(response.getRetMsg());
         }
 
         //记录日志

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
+import org.springframework.util.ObjectUtils;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -80,4 +81,14 @@ public class Tender {
      * 付给债权转让人的当期应计算利息，（债权转让时使用）
      */
     private Long alreadyInterest;
+
+    /**
+     * 是否是债权转让投标
+     *
+     * @return
+     */
+    public boolean isTransferTender() {
+        return !ObjectUtils.isEmpty(parentId) && parentId != 0;
+    }
+
 }
