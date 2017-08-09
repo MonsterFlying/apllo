@@ -167,7 +167,6 @@ public class TransferController {
     }
 
     @ApiOperation("购买债券记录")
-    @Autowired
     @GetMapping("v2/transfer/user/list/{transferId}")
     private ResponseEntity<VoBorrowTenderUserWarpListRes> tenderList(@PathVariable Long borrowId) {
         return transferBiz.transferUserList(borrowId);
