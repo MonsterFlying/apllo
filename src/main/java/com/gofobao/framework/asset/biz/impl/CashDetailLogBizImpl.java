@@ -66,6 +66,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -155,16 +156,10 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        if (ObjectUtils.isEmpty(userThirdAccount)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoPreCashResp.class));
-        }
-
-        if (userThirdAccount.getPasswordState() != 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoPreCashResp.class));
+        ResponseEntity<VoBaseResp> checkResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
+        if(!checkResponse.getStatusCode().equals(HttpStatus.OK)){
+            VoPreCashResp voPreCashResp = VoBaseResp.error(checkResponse.getBody().getState().getCode(), checkResponse.getBody().getState().getMsg(), VoPreCashResp.class);
+            return ResponseEntity.badRequest().body(voPreCashResp) ;
         }
 
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
@@ -192,14 +187,21 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
         // 判断当前用户资金是否一直
         Asset asset = assetService.findByUserIdLock(userId);
+        // 本地资金大于存管资金
+        Long currBal =  new Double(new Double(balanceQueryResponse.getCurrBal()) * 100).longValue()   ;
+        if(currBal < asset.getNoUseMoney() + asset.getUseMoney()) {
+            log.error("当前客户本地金额大于存管金额");
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "提现系统开小差了, 请联系平台客服", VoPreCashResp.class));
+        }
+        Long realCashMoney = getRealCashMoney(userId);
         VoPreCashResp resp = VoBaseResp.ok("查询成功", VoPreCashResp.class);
         resp.setBankName(userThirdAccount.getBankName());
         resp.setLogo(String.format("%s/%s", javaDomain, userThirdAccount.getBankLogo()));
         resp.setCardNo(userThirdAccount.getCardNo().substring(userThirdAccount.getCardNo().length() - 4));
-
-
-        resp.setUseMoneyShow(StringHelper.formatDouble(getRealCashMoney(userId) / 100D, true));
-        resp.setUseMoney(getRealCashMoney(userId) / 100D);
+        resp.setUseMoneyShow(StringHelper.formatDouble( realCashMoney/ 100D, true));
+        resp.setUseMoney(realCashMoney / 100D);
         int time = queryFreeTime(userId);
         resp.setFreeTime(time);
         return ResponseEntity.ok(resp);
