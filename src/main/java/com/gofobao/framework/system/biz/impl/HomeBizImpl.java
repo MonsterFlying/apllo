@@ -37,7 +37,7 @@ public class HomeBizImpl implements HomeBiz {
         Borrow borrow = borrowService.findNoviceBorrow();
         IndexBorrow indexBorrow = new IndexBorrow();
         if (!ObjectUtils.isEmpty(borrow)) {
-            indexBorrow.setApr(StringHelper.formatMon(borrow.getApr() / 100d) + "%");   // 年化收益
+            indexBorrow.setApr(StringHelper.formatMon(borrow.getApr() / 100d));   // 年化收益
             indexBorrow.setBorrowId(borrow.getId());
             indexBorrow.setLimit(String.valueOf(borrow.getTimeLimit()));
             indexBorrow.setTitle(borrow.getName());

@@ -96,14 +96,14 @@ public class StatisticBizImpl implements StatisticBiz {
                     //注册人数
                     BigDecimal registerTotal = incrStatisticService.registerTotal();
                     long register = registerTotal.longValue();
-                    String titel = formatNumber(register);
-                    if(titel.contains("亿")){
-                        titel = titel.substring(0, titel.indexOf("亿") + 1) ;
-                    }else if(titel.contains("万")){
-                        titel = titel.substring(0, titel.indexOf("万") + 1) ;
+                    String titel = formatNumber(borrowTotal / 100);
+                    if (titel.contains("亿")) {
+                        titel = titel.substring(0, titel.indexOf("亿") + 1);
+                    } else if (titel.contains("万")) {
+                        titel = titel.substring(0, titel.indexOf("万") + 1);
                     }
-                    newIndexStatisics.setRegsiterCount(titel);
-                    newIndexStatisics.setTotalTransaction(String.format("%s元", formatNumber(borrowTotal))); // 交易总额
+                    newIndexStatisics.setRegsiterCount(formatNumber(register));
+                    newIndexStatisics.setTotalTransaction(String.format("%s元", titel)); // 交易总额
                     return newIndexStatisics;
                 }
             });
