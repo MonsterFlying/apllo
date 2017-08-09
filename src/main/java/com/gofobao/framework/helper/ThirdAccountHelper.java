@@ -53,7 +53,4 @@ public class ThirdAccountHelper {
         return ResponseEntity.ok(VoBaseResp.ok("搜索成功")) ;
     }
 
-
-
-
 }
