@@ -528,7 +528,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
      *
      * @return
      */
-    public ResponseEntity<String> thirdBatchRepayAllCheckCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public ResponseEntity<String> thirdBatchRepayAllCheckCall(HttpServletRequest request, HttpServletResponse response) {
         BatchRepayCheckResp repayCheckResp = jixinManager.callback(request, new TypeToken<BatchRepayCheckResp>() {
         });
 
@@ -574,7 +574,11 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             assetChange.setRemark("(提前结清)即信批次还款解除冻结可用资金");
             assetChange.setType(AssetChangeTypeEnum.unfreeze);
             assetChange.setUserId(userId);
-            assetChangeProvider.commonAssetChange(assetChange) ;
+            try {
+                assetChangeProvider.commonAssetChange(assetChange) ;
+            } catch (Exception e) {
+                log.error("即信批次还款(提前结清)异常：",e);
+            }
         } else {
             log.info("=============================(提前结清)即信批次放款检验参数回调===========================");
             log.info("回调成功!");
