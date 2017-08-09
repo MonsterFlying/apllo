@@ -42,7 +42,7 @@ public interface BorrowThirdBiz {
      *
      * @return
      */
-    ResponseEntity<String> thirdBatchRepayAllCheckCall(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> thirdBatchRepayAllCheckCall(HttpServletRequest request, HttpServletResponse response) ;
 
     /**
      * 即信批次还款

@@ -114,8 +114,7 @@ public class BorrowBizImpl implements BorrowBiz {
     private MqHelper mqHelper;
     @Autowired
     private TenderService tenderService;
-    @Autowired
-    private CapitalChangeHelper capitalChangeHelper;
+
     @Autowired
     private BorrowCollectionService borrowCollectionService;
     @Autowired

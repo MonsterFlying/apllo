@@ -152,7 +152,7 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
             case ThirdBatchLogContants.BATCH_CREDIT_INVEST: //投资人批次购买债权
                 ts = Specifications
                         .<Transfer>and()
-                        .eq("state", 1)
+                        .eq("state", 2)
                         .eq("id", sourceId)
                         .build();
                 List<Transfer> transferList = transferService.findList(ts);

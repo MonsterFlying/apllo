@@ -19,7 +19,7 @@ public class ActivityRedPacketLog {
     private Integer id;
     @Basic
     @Column(name = "RED_PACKET_ID", nullable = true)
-    private Integer redPacketId;
+    private Long redPacketId;
     @Basic
     @Column(name = "USER_ID", nullable = true)
     private Long userId;

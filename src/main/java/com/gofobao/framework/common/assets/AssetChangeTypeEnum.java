@@ -1,6 +1,8 @@
 package com.gofobao.framework.common.assets;
 
 
+import com.gofobao.framework.common.capital.CapitalChangeEnum;
+
 public enum AssetChangeTypeEnum {
     /**
      * 联机充值
@@ -29,6 +31,12 @@ public enum AssetChangeTypeEnum {
      * 添加待还
      */
     paymentAdd("添加待还", "paymentAdd", "0", "add@payment", "add@waitRepayPrincipal#principal,add@waitRepayInterest#interest", "B"),
+
+    /**
+     * 体验金投标
+     */
+    virtualTender("投资体验标", "virtualTender", "0", "sub@virtualMoney", "", "B"),
+
     /**
      * 减去待收
      */

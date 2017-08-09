@@ -11,7 +11,6 @@ import com.gofobao.framework.api.model.batch_details_query.DetailsQueryResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
-import com.gofobao.framework.borrow.vo.request.VoRepayAll;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.assets.AssetChange;
@@ -27,7 +26,6 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BorrowHelper;
-import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
@@ -81,8 +79,7 @@ public class ThirdBatchProvider {
     TenderService tenderService;
     @Autowired
     BorrowService borrowService;
-    @Autowired
-    CapitalChangeHelper capitalChangeHelper;
+
     @Autowired
     BorrowBiz borrowBiz;
     @Autowired

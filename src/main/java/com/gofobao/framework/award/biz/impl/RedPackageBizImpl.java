@@ -20,7 +20,9 @@ import com.gofobao.framework.award.vo.response.OpenRedPackage;
 import com.gofobao.framework.award.vo.response.RedPackageRes;
 import com.gofobao.framework.award.vo.response.VoViewOpenRedPackageWarpRes;
 import com.gofobao.framework.award.vo.response.VoViewRedPackageWarpRes;
-import com.gofobao.framework.common.capital.CapitalChangeEntity;
+import com.gofobao.framework.common.assets.AssetChange;
+import com.gofobao.framework.common.assets.AssetChangeProvider;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.common.constans.JixinContants;
 import com.gofobao.framework.common.constans.TypeTokenContants;
@@ -32,7 +34,6 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.entity.DictItem;
@@ -71,9 +72,6 @@ public class RedPackageBizImpl implements RedPackageBiz {
     private RedPackageLogRepository redPackageLogRepository;
 
     @Autowired
-    private CapitalChangeHelper changeHelper;
-
-    @Autowired
     private RedPackageRepository redPackageRepository;
 
     @Autowired
@@ -87,6 +85,9 @@ public class RedPackageBizImpl implements RedPackageBiz {
 
     @Autowired
     private DictValueService dictValueService;
+
+    @Autowired
+    AssetChangeProvider assetChangeProvider;
 
     LoadingCache<String, DictValue> jixinCache = CacheBuilder
             .newBuilder()
@@ -138,22 +139,31 @@ public class RedPackageBizImpl implements RedPackageBiz {
                 }
                 ActivityRedPacket redPacket = redPackages.get(0);
                 try {
-                    //增加资金
-                    CapitalChangeEntity entity = new CapitalChangeEntity();
-                    entity.setType(CapitalChangeEnum.RedPackage);
-                    entity.setUserId(packageReq.getUserId());
-                    entity.setMoney(redPacket.getMoney());
-                    entity.setRemark("红包收入");
+                    String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+                    String seqNo = assetChangeProvider.getSeqNo() ;
+                    long redId = assetChangeProvider.getRedpackAccountId() ;
+                    // 平台发放广富币兑换金额
+                    AssetChange redpackPublish = new AssetChange();
+                    redpackPublish.setMoney(redPacket.getMoney());
+                    redpackPublish.setType(AssetChangeTypeEnum.publishRedpack);  // 广富币兑换
+                    redpackPublish.setUserId(packageReq.getUserId());
+                    redpackPublish.setRemark("派发奖励红包");
+                    redpackPublish.setGroupSeqNo(groupSeqNo);
+                    redpackPublish.setForUserId(redId);
+                    redpackPublish.setSourceId(redPacket.getId());
+                    assetChangeProvider.commonAssetChange(redpackPublish);
 
-                    if (!changeHelper.capitalChange(entity)) {
-                        log.info("红包资金变动失败: " +
-                                "{redPackageId:" + redPacket.getId() + "," +
-                                "userId:" + redPacket.getUserId() + "," +
-                                "money:" + redPacket.getMoney() + "," +
-                                "nowTime:" + DateHelper.dateToString(new Date()) + "}");
-                        openRedPackage.setFlag(false);
-                        break;
-                    }
+                    // 接收红包
+                    AssetChange redpackR = new AssetChange();
+                    redpackR.setMoney(redPacket.getMoney());
+                    redpackR.setType(AssetChangeTypeEnum.receiveRedpack);  // 积分兑换
+                    redpackR.setUserId(packageReq.getUserId());
+                    redpackR.setRemark("领取红包");
+                    redpackR.setGroupSeqNo(groupSeqNo);
+                    redpackR.setForUserId(redId);
+                    redpackR.setSourceId(redPacket.getId());
+                    assetChangeProvider.commonAssetChange(redpackR);
+
                     //红包更新
                     ActivityRedPacketLog redPacketLog = new ActivityRedPacketLog();
                     redPacketLog.setUserId(packageReq.getUserId());

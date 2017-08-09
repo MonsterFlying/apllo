@@ -19,7 +19,6 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.ThirdAccountHelper;
-import com.gofobao.framework.helper.project.CapitalChangeHelper;
 import com.gofobao.framework.integral.biz.IntegralBiz;
 import com.gofobao.framework.integral.entity.Integral;
 import com.gofobao.framework.integral.entity.IntegralLog;
@@ -77,8 +76,6 @@ public class IntegralBizImpl implements IntegralBiz {
     @Autowired
     private DictService dictService;
 
-    @Autowired
-    private CapitalChangeHelper capitalChangeHelper;
 
     @Autowired
     private UserThirdAccountService userThirdAccountService;

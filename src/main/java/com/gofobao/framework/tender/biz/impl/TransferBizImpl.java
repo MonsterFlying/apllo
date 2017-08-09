@@ -221,6 +221,10 @@ public class TransferBizImpl implements TransferBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "存在未登记即信存管的购买" + failure + "失败记录"));
         }
 
+        /**
+         * @// TODO: 2017/8/8 需要更新转让记录，与购买转让记录 
+         */
+
         // 新增子级投标记录,更新老债权记录
         List<Tender> childTenderList = addChildTender(nowDate, transfer, parentTender, transferBuyLogList);
 
@@ -460,13 +464,22 @@ public class TransferBizImpl implements TransferBiz {
             childTender.setCreatedAt(nowDate);
             childTender.setUpdatedAt(nowDate);
             childTenderList.add(childTender);
+
+            //更新购买净值标状态为成功购买
+            transferBuyLog.setState(1);
+            transferBuyLog.setUpdatedAt(new Date());
         });
         tenderService.save(childTenderList);
+        transferBuyLogService.save(transferBuyLogList);
 
         //更新老债权为已转让
         parentTender.setTransferFlag(2);
         parentTender.setUpdatedAt(nowDate);
         tenderService.save(parentTender);
+        //更新债权转让为已转让
+        transfer.setState(2);
+        transfer.setUpdatedAt(new Date());
+        transferService.save(transfer);
         return childTenderList;
     }
 

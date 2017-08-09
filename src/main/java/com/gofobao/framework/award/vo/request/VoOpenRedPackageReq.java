@@ -16,7 +16,7 @@ public class VoOpenRedPackageReq {
 
     @ApiModelProperty(value = "红包id",readOnly = true)
     @Pattern(regexp = RegexHelper.ONLY_IS_NUM,message = "非法访问")
-    private Integer redPackageId;
+    private Long redPackageId;
 
     @ApiModelProperty(hidden = true)
     private Long userId;
