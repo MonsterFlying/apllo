@@ -118,4 +118,11 @@ public interface TransferBiz {
      */
     ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(Long borrowId);
 
+
+    /**
+     * 购买次数
+     * @param borrowId
+     * @return
+     */
+    ResponseEntity<Integer>transferBuyCount(Long borrowId);
 }

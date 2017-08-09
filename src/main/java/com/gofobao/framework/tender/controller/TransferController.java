@@ -173,4 +173,12 @@ public class TransferController {
         return transferBiz.transferUserList(borrowId);
     }
 
+
+    @ApiOperation("债券购买次数")
+    @Autowired
+    @GetMapping("v2/transfer/buyCount/{borrowId}")
+    private ResponseEntity<Integer> buyCount(@PathVariable Long borrowId) {
+        return transferBiz.transferBuyCount(borrowId);
+    }
+
 }
