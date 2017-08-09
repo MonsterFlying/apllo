@@ -325,6 +325,11 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
                     "&invest_title=" + borrow.getName();
             requestParamStr = WrbCoopDESUtil.desEncrypt(desKey, requestParamStr);
 
+        } catch (Exception e) {
+            log.error("风车理财用户投资成功通知:失败 通知发送请求 封装参数时失败", e);
+            return;
+        }
+        try {
             //封装请求参数
             Map<String, String> paramMap = Maps.newHashMap();
             paramMap.put("from", shortName);
@@ -339,10 +344,8 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
             } else {
                 log.info("平台通知风车理财失败");
             }
-
         } catch (Exception e) {
-            log.error("风车理财用户投资成功通知:失败 通知发送请求 封装参数时失败", e);
-            return;
+            log.error("平台通知风车理财失败", e);
         }
 
     }

@@ -852,10 +852,10 @@ public class TransferBizImpl implements TransferBiz {
     public ResponseEntity<VoViewTransferOfWarpRes> tranferOfList(VoTransferReq voTransferReq) {
         try {
             Map<String, Object> resultMaps = transferService.transferOfList(voTransferReq);
-            List<TransferOf> transferOfs = (List<TransferOf>) resultMaps.get("transferOfList");
+            List<TransferOf> transferingList = (List<TransferOf>) resultMaps.get("transferOfList");
             Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
             VoViewTransferOfWarpRes voViewTransferOfWarpRes = VoBaseResp.ok("查询成功", VoViewTransferOfWarpRes.class);
-            voViewTransferOfWarpRes.setTransferOfs(transferOfs);
+            voViewTransferOfWarpRes.setTransferOfs(transferingList);
             voViewTransferOfWarpRes.setTotalCount(totalCount);
             return ResponseEntity.ok(voViewTransferOfWarpRes);
         } catch (Throwable e) {
