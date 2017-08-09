@@ -331,8 +331,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("102323");
-        batchDetailsQueryReq.setBatchTxDate("20170809");
+        batchDetailsQueryReq.setBatchNo("112822");
+        batchDetailsQueryReq.setBatchTxDate("20170808");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");

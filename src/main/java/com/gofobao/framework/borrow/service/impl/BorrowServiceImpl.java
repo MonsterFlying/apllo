@@ -8,10 +8,7 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.response.*;
 import com.gofobao.framework.common.constans.MoneyConstans;
-import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.helper.ThymeleafHelper;
+import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.member.entity.UserAttachment;
@@ -94,14 +91,14 @@ public class BorrowServiceImpl implements BorrowService {
                 public Borrow load(String type) throws Exception {
                     Specification<Borrow> specification = Specifications
                             .<Borrow>and()
-                            .eq("isNovice", true).build() ;
+                            .eq("isNovice", true).build();
                     Page<Borrow> page = borrowRepository.findAll(specification,
-                            new PageRequest(0, 1, new Sort(new Sort.Order(Sort.Direction.DESC, "id")))) ;
+                            new PageRequest(0, 1, new Sort(new Sort.Order(Sort.Direction.DESC, "id"))));
                     List<Borrow> content = page.getContent();
-                    if(CollectionUtils.isEmpty(content)){
-                        return null ;
-                    }else{
-                        return content.get(0) ;
+                    if (CollectionUtils.isEmpty(content)) {
+                        return null;
+                    } else {
+                        return content.get(0);
                     }
                 }
             });
@@ -216,7 +213,7 @@ public class BorrowServiceImpl implements BorrowService {
                 } else {
                     status = 3; //招标中
                     //  进度
-                    double spend = Double.parseDouble(StringHelper.formatMon(m.getMoneyYes().doubleValue() / m.getMoney()));
+                    double spend = MathHelper.myRound(m.getMoneyYes().doubleValue() / m.getMoney() * 100, 2);
                     if (spend == 1) {
                         status = 6;
                     }
@@ -762,9 +759,9 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     public Borrow findNoviceBorrow() {
         try {
-            return newBorrow.get("new") ;
+            return newBorrow.get("new");
         } catch (ExecutionException e) {
-            return null ;
+            return null;
         }
     }
 }

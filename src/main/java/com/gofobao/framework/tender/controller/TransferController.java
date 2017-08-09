@@ -173,7 +173,6 @@ public class TransferController {
     }
 
 
-    @Autowired
     @ApiOperation("债券购买次数")
     @GetMapping("v2/transfer/buyCount/{borrowId}")
     private ResponseEntity<Integer> buyCount(@PathVariable Long borrowId) {
