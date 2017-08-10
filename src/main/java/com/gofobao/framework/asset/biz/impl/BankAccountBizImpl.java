@@ -240,16 +240,16 @@ public class BankAccountBizImpl implements BankAccountBiz {
         result[0] = bankCredit[0];  // 每笔限额
 
         // 今天充值金额
-        long dayRechargeSum = rechargeDetailLogs
+        double dayRechargeSum = rechargeDetailLogs
                 .stream()
                 .filter(bean -> DateHelper.diffInDays(dayStartDate, bean.getCreateTime(), false) > 0)
-                .mapToLong(bean -> new Double(bean.getMoney() / 100D).longValue() )
+                .mapToDouble(bean -> bean.getMoney() / 100D)
                 .sum();
 
         // 这个月充值金额
-        long mouthRechargeSum = rechargeDetailLogs
+        double mouthRechargeSum = rechargeDetailLogs
                 .stream()
-                .mapToLong(bean -> new Double(bean.getMoney() / 100D).longValue() )
+                .mapToDouble(bean -> bean.getMoney() / 100D)
                 .sum();
 
         result[1] = bankCredit[1] - dayRechargeSum;
