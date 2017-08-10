@@ -44,7 +44,7 @@ public class FindController {
     }
 
 
-    @ApiOperation("联系客户")
+    @ApiOperation("联系我们")
     @GetMapping("/pub/find/service")
     public ResponseEntity<VoServiceResp> service() {
         return  dictBiz.service() ;
