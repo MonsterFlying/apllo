@@ -43,8 +43,9 @@ public class TransferController {
      */
     @ApiOperation("结束债权转让")
     @PostMapping("v2/new/transfer/end")
-    public ResponseEntity<VoBaseResp> endTransfer(@Valid VoEndTransfer voEndTransfer) {
+    public ResponseEntity<VoBaseResp> endTransfer(@Valid VoEndTransfer voEndTransfer, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         try {
+            voEndTransfer.setUserId(userId);
             return transferBiz.endTransfer(voEndTransfer);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后重试!"));
@@ -60,8 +61,9 @@ public class TransferController {
      */
     @ApiOperation("新版发布债权转让")
     @PostMapping("v2/new/transfer/publish")
-    public ResponseEntity<VoBaseResp> newTransferTender(@Valid VoTransferTenderReq voTransferTenderReq) {
+    public ResponseEntity<VoBaseResp> newTransferTender(@Valid VoTransferTenderReq voTransferTenderReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         try {
+            voTransferTenderReq.setUserId(userId);
             return transferBiz.newTransferTender(voTransferTenderReq);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后重试!"));
@@ -149,7 +151,7 @@ public class TransferController {
 
     @ApiOperation("购买债券记录")
     @GetMapping("v2/transfer/user/list/{transferId}")
-    public ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(@PathVariable Long transferId ) {
+    public ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(@PathVariable Long transferId) {
         return transferBiz.transferUserList(transferId);
     }
 
