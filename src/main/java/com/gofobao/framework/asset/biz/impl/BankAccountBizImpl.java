@@ -243,13 +243,13 @@ public class BankAccountBizImpl implements BankAccountBiz {
         long dayRechargeSum = rechargeDetailLogs
                 .stream()
                 .filter(bean -> DateHelper.diffInDays(dayStartDate, bean.getCreateTime(), false) > 0)
-                .mapToLong(bean -> bean.getMoney())
+                .mapToLong(bean -> new Double(bean.getMoney() / 100D).longValue() )
                 .sum();
 
         // 这个月充值金额
         long mouthRechargeSum = rechargeDetailLogs
                 .stream()
-                .mapToLong(bean -> bean.getMoney())
+                .mapToLong(bean -> new Double(bean.getMoney() / 100D).longValue() )
                 .sum();
 
         result[1] = bankCredit[1] - dayRechargeSum;
