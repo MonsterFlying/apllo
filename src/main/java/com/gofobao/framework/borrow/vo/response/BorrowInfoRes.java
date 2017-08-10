@@ -100,5 +100,9 @@ public class BorrowInfoRes extends VoBaseResp {
     @ApiModelProperty("债权id; 如果当前是普通标；忽略此字段")
     private Long transferId;
 
+    @ApiModelProperty("tenderId")
+    private Long tenderId;
 
+    @ApiModelProperty
+    private Long borrowId;
 }

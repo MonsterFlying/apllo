@@ -1318,6 +1318,8 @@ public class TransferBizImpl implements TransferBiz {
                 borrowInfoRes.setStatus(4);
             }
         }
+        borrowInfoRes.setBorrowId(borrowId);
+        borrowInfoRes.setTenderId(transfer.getTenderId());
         borrowInfoRes.setTransferId(transfer.getId());
         borrowInfoRes.setType(5);
         borrowInfoRes.setPassWord(false);
