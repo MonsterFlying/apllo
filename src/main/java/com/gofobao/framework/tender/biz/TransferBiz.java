@@ -116,13 +116,7 @@ public interface TransferBiz {
      * 投标记录列表
      * @return
      */
-    ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(Long borrowId);
+    ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(VoTransferUserListReq transferUserListReq);
 
 
-    /**
-     * 购买次数
-     * @param borrowId
-     * @return
-     */
-    ResponseEntity<Integer>transferBuyCount(Long borrowId);
 }

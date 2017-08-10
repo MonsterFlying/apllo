@@ -113,25 +113,33 @@ public class TransferServiceImpl implements TransferService {
     public Map<String, Object> transferOfList(VoTransferReq voTransferReq) {
         voTransferReq.setStatus(TransferContants.CHECKPENDING);
         Map<String, Object> resultMaps = commonQueryTemp(voTransferReq);
-        List<Transfer> tenderList = (List<Transfer>) resultMaps.get("transfers");
-        if (CollectionUtils.isEmpty(tenderList)) {
+        List<Transfer> transferList = (List<Transfer>) resultMaps.get("transfers");
+        if (CollectionUtils.isEmpty(transferList)) {
             resultMaps.put("transferOfList", new ArrayList<>());
             return resultMaps;
         }
         //标集合
-        Set<Long> borrowIds = tenderList.stream().map(p -> p.getBorrowId()).collect(Collectors.toSet());
+        Set<Long> borrowIds = transferList.stream().map(p -> p.getBorrowId()).collect(Collectors.toSet());
         List<Borrow> borrowList = borrowRepository.findByIdIn(new ArrayList<>(borrowIds));
         Map<Long, Borrow> borrowMap = borrowList.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
 
         List<TransferOf> TransferOfs = Lists.newArrayList();
-        tenderList.forEach(p -> {
+        transferList.forEach(p -> {
+            //查询债权转让购买记录
+            Specification<TransferBuyLog> tbls = Specifications
+                    .<TransferBuyLog>and()
+                    .eq("transferId", 0)
+                    .eq("thirdTransferFlag", 1)
+                    .build();
+            long count = transferBuyLogService.count(tbls);/* 已经跟存管通信的债权转让购买记录 */
+
             TransferOf transfering = new TransferOf();
             Borrow borrow = borrowMap.get(p.getBorrowId());
             transfering.setTransferId(p.getId());
             transfering.setName(borrow.getName());
             transfering.setSpend(StringHelper.formatMon((p.getTransferMoneyYes() / 100D) / (p.getTransferMoney() / 100D)));
             transfering.setApr(StringHelper.formatMon(p.getApr() / 100D));
-            transfering.setCancel(p.getIsLock());
+            transfering.setCancel(count < 1);
             transfering.setCreateTime(DateHelper.dateToString(p.getCreatedAt()));
             transfering.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
             TransferOfs.add(transfering);
@@ -267,6 +275,7 @@ public class TransferServiceImpl implements TransferService {
 
     /**
      * 已购买债券
+     *
      * @param voTransferReq
      * @return
      */

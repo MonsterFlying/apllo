@@ -97,4 +97,8 @@ public class BorrowInfoRes extends VoBaseResp {
     @ApiModelProperty("隱藏最低投標金額")
     private Integer hideLowMoney;
 
+    @ApiModelProperty("债权id; 如果当前是普通标；忽略此字段")
+    private Long transferId;
+
+
 }

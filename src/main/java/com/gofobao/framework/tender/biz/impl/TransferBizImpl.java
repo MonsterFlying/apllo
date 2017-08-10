@@ -148,6 +148,8 @@ public class TransferBizImpl implements TransferBiz {
         //1.获取债权转让记录
         Transfer transfer = transferService.findByIdLock(transferId);/* 债权转让记录 */
         Preconditions.checkNotNull(transfer, "债权转让记录不存在!");
+        Tender tender = tenderService.findById(transfer.getTenderId());
+        Preconditions.checkNotNull(tender, "投资记录不存在!");
         if (!transfer.getUserId().equals(userId)) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非本人操作结束债权转让。"));
         }
@@ -187,6 +189,10 @@ public class TransferBizImpl implements TransferBiz {
             }
         });
         transferBuyLogService.save(transferBuyLogList);
+
+        tender.setTransferFlag(0);
+        tender.setUpdatedAt(new Date());
+        tenderService.save(tender);
 
         return ResponseEntity.ok(VoBaseResp.ok("结束债权转让成功!"));
     }
@@ -229,10 +235,6 @@ public class TransferBizImpl implements TransferBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "存在未登记即信存管的购买" + failure + "失败记录"));
         }
 
-        /**
-         * @// TODO: 2017/8/8 需要更新转让记录，与购买转让记录 
-         */
-
         // 新增子级投标记录,更新老债权记录
         List<Tender> childTenderList = addChildTender(nowDate, transfer, parentTender, transferBuyLogList);
 
@@ -261,6 +263,7 @@ public class TransferBizImpl implements TransferBiz {
 
     /**
      * 更新购买债权人用户缓存
+     *
      * @param parentBorrow
      * @param childTenderList
      * @param childBorrowCollectionList
@@ -990,29 +993,21 @@ public class TransferBizImpl implements TransferBiz {
     /**
      * 债券购买记录列表
      *
-     * @param transferId
+     * @param transferUserListReq
      * @return
      */
     @Override
-    public ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(Long transferId) {
-
-        VoBorrowTenderUserWarpListRes warpListRes = VoBaseResp.ok("查询成功", VoBorrowTenderUserWarpListRes.class);
-        //债券
-        Specification<Transfer> specification = Specifications.<Transfer>and()
-                .eq("id", transferId)
-                .in("state", Lists.newArrayList(TransferContants.CHECKPENDING, TransferContants.TRANSFERED))
-                .build();
-        List<Transfer> transfers = transferService.findList(specification);
-        if (CollectionUtils.isEmpty(transfers)) {
-            return ResponseEntity.ok(warpListRes);
-        }
-        List<Long> transferIds = transfers.stream().map(m -> m.getId()).collect(Collectors.toList());
+    public ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(VoTransferUserListReq transferUserListReq) {
+        VoBorrowTenderUserWarpListRes warpListRes=VoBaseResp.ok("查询成功",VoBorrowTenderUserWarpListRes.class);
         //购买记录
         Specification<TransferBuyLog> specification1 = Specifications.<TransferBuyLog>and()
-                .eq("state", TransferBuyLogContants.SUCCESS)
-                .in("transferId", transferIds)
+                .in("state", Lists.newArrayList(TransferBuyLogContants.SUCCESS,TransferBuyLogContants.BUYING).toArray())
+                .eq("transferId", transferUserListReq.getTransferId())
                 .build();
-        List<TransferBuyLog> transferBuyLogs = transferBuyLogService.findList(specification1);
+        List<TransferBuyLog> transferBuyLogs = transferBuyLogService.findList(specification1,
+                            new PageRequest(transferUserListReq.getPageIndex(),
+                                    transferUserListReq.getPageSize(),
+                                    new Sort(Sort.Direction.DESC,"id")));
         if (CollectionUtils.isEmpty(transferBuyLogs)) {
             return ResponseEntity.ok(warpListRes);
         }
@@ -1027,7 +1022,7 @@ public class TransferBizImpl implements TransferBiz {
             transfer.setDate(DateHelper.dateToString(p.getCreatedAt()));
             transfer.setValidMoney(StringHelper.formatMon(p.getValidMoney() / 100D));
             transfer.setType(p.getAuto() == true ? "自动" : "手动");
-            Users user = usersMap.get(p.getId());
+            Users user = usersMap.get(p.getUserId());
             String userName = StringUtils.isEmpty(user.getUsername()) ?
                     UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM) :
                     UserHelper.hideChar(user.getUsername(), UserHelper.USERNAME_NUM);
@@ -1039,32 +1034,6 @@ public class TransferBizImpl implements TransferBiz {
     }
 
 
-    /**
-     * 债券购买次数
-     *
-     * @param transferId
-     * @return
-     */
-    @Override
-    public ResponseEntity<Integer> transferBuyCount(Long transferId) {
-        //债券
-        Specification<Transfer> specification = Specifications.<Transfer>and()
-                .eq("id", transferId)
-                .in("state", Lists.newArrayList(TransferContants.CHECKPENDING, TransferContants.TRANSFERED))
-                .build();
-        List<Transfer> transfers = transferService.findList(specification);
-        if (CollectionUtils.isEmpty(transfers)) {
-            return ResponseEntity.ok(0);
-        }
-        List<Long> transferIds = transfers.stream().map(m -> m.getId()).collect(Collectors.toList());
-        //购买记录
-        Specification<TransferBuyLog> specification1 = Specifications.<TransferBuyLog>and()
-                .eq("state", TransferBuyLogContants.SUCCESS)
-                .in("transferId", transferIds)
-                .build();
-        Long count = transferBuyLogService.count(specification1);
-        return ResponseEntity.ok(count.intValue());
-    }
 
 
     /**
@@ -1276,6 +1245,7 @@ public class TransferBizImpl implements TransferBiz {
             voViewBorrowList.setUserName(!StringUtils.isEmpty(user.getUsername()) ? user.getUsername() : user.getPhone());
             voViewBorrowList.setType(5);
             voViewBorrowList.setIsFlow(true);
+            voViewBorrowList.setIsConversion(borrow.getIsConversion());
             voViewBorrowList.setReleaseAt(DateHelper.dateToString(item.getReleaseAt()));
             voViewBorrowList.setRepayFashion(borrow.getRepayFashion());
             voViewBorrowList.setIsVouch(borrow.getIsVouch());
@@ -1348,7 +1318,7 @@ public class TransferBizImpl implements TransferBiz {
                 borrowInfoRes.setStatus(4);
             }
         }
-
+        borrowInfoRes.setTransferId(transfer.getId());
         borrowInfoRes.setType(5);
         borrowInfoRes.setPassWord(false);
         Users users = userService.findById(borrow.getUserId());
