@@ -1154,7 +1154,8 @@ public class TransferBizImpl implements TransferBiz {
     public List<VoViewBorrowList> findTransferList(VoBorrowListReq voBorrowListReq) {
         Specification<Transfer> ts = Specifications
                 .<Transfer>and()
-                .in("state", ImmutableList.of(1, 2).toArray())
+                .in("state", ImmutableList.of(TransferContants.TRANSFERIND, TransferContants.TRANSFERIND).toArray())
+                .eq("type",0)
                 .build();
         Pageable pageable = new PageRequest(voBorrowListReq.getPageIndex(), voBorrowListReq.getPageSize(), new Sort(Sort.Direction.ASC, "state"));
         List<Transfer> transferList = transferService.findList(ts, pageable);
@@ -1318,6 +1319,8 @@ public class TransferBizImpl implements TransferBiz {
                 borrowInfoRes.setStatus(4);
             }
         }
+        borrowInfoRes.setBorrowId(borrowId);
+        borrowInfoRes.setTenderId(transfer.getTenderId());
         borrowInfoRes.setTransferId(transfer.getId());
         borrowInfoRes.setType(5);
         borrowInfoRes.setPassWord(false);

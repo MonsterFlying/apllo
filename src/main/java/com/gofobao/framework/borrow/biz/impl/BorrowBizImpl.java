@@ -581,7 +581,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "借款状态已发生更改!"));
         }
 
-        if (voCancelBorrow.getUserId() != borrow.getUserId()) {
+        if (voCancelBorrow.getUserId().intValue()!= borrow.getUserId().intValue()) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "非法操作!"));
