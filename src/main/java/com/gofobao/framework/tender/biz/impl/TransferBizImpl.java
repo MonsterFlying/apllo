@@ -148,6 +148,8 @@ public class TransferBizImpl implements TransferBiz {
         //1.获取债权转让记录
         Transfer transfer = transferService.findByIdLock(transferId);/* 债权转让记录 */
         Preconditions.checkNotNull(transfer, "债权转让记录不存在!");
+        Tender tender = tenderService.findById(transfer.getTenderId());
+        Preconditions.checkNotNull(tender, "投资记录不存在!");
         if (!transfer.getUserId().equals(userId)) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非本人操作结束债权转让。"));
         }
@@ -187,6 +189,10 @@ public class TransferBizImpl implements TransferBiz {
             }
         });
         transferBuyLogService.save(transferBuyLogList);
+
+        tender.setTransferFlag(0);
+        tender.setUpdatedAt(new Date());
+        tenderService.save(tender);
 
         return ResponseEntity.ok(VoBaseResp.ok("结束债权转让成功!"));
     }
@@ -257,6 +263,7 @@ public class TransferBizImpl implements TransferBiz {
 
     /**
      * 更新购买债权人用户缓存
+     *
      * @param parentBorrow
      * @param childTenderList
      * @param childBorrowCollectionList
