@@ -1201,6 +1201,7 @@ public class TransferBizImpl implements TransferBiz {
             voViewBorrowList.setUserName(!StringUtils.isEmpty(user.getUsername()) ? user.getUsername() : user.getPhone());
             voViewBorrowList.setType(5);
             voViewBorrowList.setIsFlow(true);
+            voViewBorrowList.setIsConversion(borrow.getIsConversion());
             voViewBorrowList.setReleaseAt(DateHelper.dateToString(item.getReleaseAt()));
             voViewBorrowList.setRepayFashion(borrow.getRepayFashion());
             voViewBorrowList.setIsVouch(borrow.getIsVouch());
@@ -1273,7 +1274,7 @@ public class TransferBizImpl implements TransferBiz {
                 borrowInfoRes.setStatus(4);
             }
         }
-
+        borrowInfoRes.setTransferId(transfer.getId());
         borrowInfoRes.setType(5);
         borrowInfoRes.setPassWord(false);
         Users users = userService.findById(borrow.getUserId());

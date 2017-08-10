@@ -14,6 +14,12 @@ public class ArticleModle {
     @ApiModelProperty("时间")
     private String time;
 
+    @ApiModelProperty("内容")
+    private String content;
+
+    @ApiModelProperty("文章图片")
+    private String imgUrl;
+
     @ApiModelProperty("id")
     private Long id;
 }

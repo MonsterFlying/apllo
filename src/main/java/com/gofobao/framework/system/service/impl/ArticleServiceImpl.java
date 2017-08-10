@@ -70,15 +70,13 @@ public class ArticleServiceImpl implements ArticleService {
     public Map<String, Object> list(VoArticleReq voArticleReq) {
         Specification specification = Specifications.<Article>and()
                 .eq("type", voArticleReq.getType())
-                .eq("state", 1)
+                .eq("status", 1)
                 .build();
         Page<Article> articlePage = articleRepository.findAll(specification,
                 new PageRequest(voArticleReq.getPageIndex(),
                         voArticleReq.getPageSize(),
                         new Sort("id")));
-
         Long totalCount = articlePage.getTotalElements();
-
         List<Article> articles = articlePage.getContent();
         List<ArticleModle> articleModles = Lists.newArrayList();
         articles.stream().forEach(p -> {
@@ -86,6 +84,9 @@ public class ArticleServiceImpl implements ArticleService {
             articleModle.setTime(DateHelper.dateToString(p.getCreatedAt(), DateHelper.DATE_FORMAT_YMD));
             articleModle.setTitle(p.getTitle());
             articleModle.setId(p.getId());
+            //如果是公告
+            articleModle.setContent(voArticleReq.getType().equals("notice") ? p.getContent() : "");
+            articleModle.setImgUrl(p.getPreviewImg());
             articleModles.add(articleModle);
         });
         Map<String, Object> resultMaps = Maps.newHashMap();

@@ -3,6 +3,7 @@ package com.gofobao.framework.system.biz.impl;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.ThymeleafHelper;
+import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.system.biz.ArticleBiz;
 import com.gofobao.framework.system.entity.Article;
 import com.gofobao.framework.system.service.ArticleService;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
+import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.List;
 import java.util.Map;
@@ -25,6 +27,9 @@ import java.util.Map;
 public class ArticleBizImpl implements ArticleBiz {
     @Autowired
     private ArticleService articleService;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private ThymeleafHelper thymeleafHelper;

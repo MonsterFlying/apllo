@@ -13,7 +13,7 @@ import javax.validation.constraints.Pattern;
 @Data
 public class VoArticleReq extends Page {
 
-    @ApiModelProperty("类型:notice;media;news;help")
+    @ApiModelProperty("类型:常见问题:help; 公告:notice; 媒体报道:media; 公司动态:dynamic; 理财百科:wiki; 行业资讯:information; 发现:find;")
     @Pattern(regexp = RegexHelper.ONLY_IS_NUM,message = "类型不能为空,")
     private  String type;
 }
