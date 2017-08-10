@@ -398,7 +398,7 @@ public class UserBizImpl implements UserBiz {
         }
         VoOpenAccountInfo voOpenAccountInfo = VoBaseResp.ok("查询成功", VoOpenAccountInfo.class);
         voOpenAccountInfo.setAccountId(userThirdAccount.getAccountId());
-        voOpenAccountInfo.setRealName(String.format("*%s", userThirdAccount.getName()));
+        voOpenAccountInfo.setRealName(String.format("*%s", userThirdAccount.getName().substring(1)));
         voOpenAccountInfo.setPasswordState(userThirdAccount.getPasswordState() == 1);
         voOpenAccountInfo.setPhone(userThirdAccount.getMobile().replaceAll("(\\d{3})\\d{4}(\\d{4})", "$1****$2"));
         voOpenAccountInfo.setSignedState(userThirdAccount.getAutoTransferState() == 1 && userThirdAccount.getAutoTransferState() == 1);

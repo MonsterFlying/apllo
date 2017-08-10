@@ -91,8 +91,6 @@ public class TenderBizImpl implements TenderBiz {
     @Autowired
     private JixinManager jixinManager;
     @Autowired
-    private BorrowThirdBiz borrowThirdBiz;
-    @Autowired
     private TenderThirdBiz tenderThirdBiz;
 
     @Autowired

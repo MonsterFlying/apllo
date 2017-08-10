@@ -15,6 +15,7 @@ public class VoEndTransfer {
     @ApiModelProperty("债权转让id")
     @NotNull(message = "债权转让id不能为空!")
     private long transferId;
+
     @ApiModelProperty(hidden = true)
     private long userId;
 }

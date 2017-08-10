@@ -32,16 +32,17 @@ public class TransferController {
     private ThymeleafHelper thymeleafHelper;
 
     /**
-     * 结束债权转让
+     * 新版结束债权
      *
      * @param voEndTransfer
      * @return
      * @throws Exception
      */
-    @ApiOperation("新版发布债权转让")
-    @GetMapping("v2/new/transfer/end")
-    public ResponseEntity<VoBaseResp> endTransfer(@Valid VoEndTransfer voEndTransfer) {
+    @ApiOperation("结束债权转让")
+    @PostMapping("v2/new/transfer/end")
+    public ResponseEntity<VoBaseResp> endTransfer(@Valid VoEndTransfer voEndTransfer, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         try {
+            voEndTransfer.setUserId(userId);
             return transferBiz.endTransfer(voEndTransfer);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后重试!"));
@@ -56,9 +57,10 @@ public class TransferController {
      * @throws Exception
      */
     @ApiOperation("新版发布债权转让")
-    @GetMapping("v2/new/transfer/publish")
-    public ResponseEntity<VoBaseResp> newTransferTender(@Valid VoTransferTenderReq voTransferTenderReq) {
+    @PostMapping("v2/new/transfer/publish")
+    public ResponseEntity<VoBaseResp> newTransferTender(@Valid VoTransferTenderReq voTransferTenderReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         try {
+            voTransferTenderReq.setUserId(userId);
             return transferBiz.newTransferTender(voTransferTenderReq);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后重试!"));
@@ -68,7 +70,7 @@ public class TransferController {
     /**
      * 购买债权转让
      */
-    @ApiOperation("新版购买债权转让")
+    @ApiOperation("购买债权转让")
     @PostMapping("v2/new/transfer/buy")
     public ResponseEntity<VoBaseResp> buyTransfer(@Valid VoBuyTransfer voBuyTransfer, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         try {
@@ -129,25 +131,6 @@ public class TransferController {
             content = thymeleafHelper.build("load_error", null);
         }
         return ResponseEntity.ok(content);
-    }
-
-    /**
-     * 债权转让
-     *
-     * @param voTransferTenderReq
-     * @return
-     */
-    @ApiOperation("债权转让")
-    @PostMapping("v2/transfer")
-    public ResponseEntity<VoBaseResp> transferTender(@ModelAttribute @Valid VoTransferTenderReq voTransferTenderReq,
-                                                     @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        voTransferTenderReq.setUserId(userId);
-        try {
-            return transferBiz.newTransferTender(voTransferTenderReq);
-        } catch (Exception e) {
-            log.error("债权转让异常：", e);
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后重试!"));
-        }
     }
 
     /**

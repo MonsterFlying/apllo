@@ -44,7 +44,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean doEVE() throws Exception {
-        String fileName = String.format("%s-EVE%s-%s", bankNo, productNo, /*jixinTxDateHelper.getSubDateStr(1)*/ "20161003");
+        String fileName = String.format("%s-EVE%s-%s", bankNo, productNo, jixinTxDateHelper.getSubDateStr(1));
         boolean downloadState = jixinFileManager.download(fileName);
         if (!downloadState) {
             log.info(String.format("EVE: %s下载失败", fileName));
@@ -53,7 +53,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
         File file = new File(String.format("%s%s%s", filePath, File.separator, fileName));
         BufferedReader bufferedReader = Files.newReader(file, Charsets.UTF_8);
         XSSFWorkbook xwb = new XSSFWorkbook();//创建excel表格的工作空间
-        XSSFSheet sheet = xwb.createSheet();
+        XSSFSheet sheet = xwb.createSheet("data");
         CellStyle numberCellStyle = xwb.createCellStyle();
         DataFormat format = xwb.createDataFormat();
         numberCellStyle.setDataFormat(format.getFormat("0.00"));

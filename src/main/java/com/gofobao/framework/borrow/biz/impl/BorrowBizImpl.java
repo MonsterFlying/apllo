@@ -1038,10 +1038,6 @@ public class BorrowBizImpl implements BorrowBiz {
         // 满标操作
         finishBorrow(borrow);
 
-        // 复审事件
-        //如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
-        updateUserCacheByBorrowReview(borrow);
-
         //更新网站统计
         updateStatisticByBorrowReview(borrow);
 
@@ -1210,9 +1206,7 @@ public class BorrowBizImpl implements BorrowBiz {
             if (borrow.getType() == 0) {
                 userCache.setTjWaitCollectionPrincipal(userCache.getTjWaitCollectionPrincipal() + tender.getValidMoney());
                 userCache.setTjWaitCollectionInterest(userCache.getTjWaitCollectionInterest() + countInterest);
-            }
-
-            if (borrow.getType() == 4) {
+            }else if (borrow.getType() == 4) {
                 userCache.setQdWaitCollectionPrincipal(userCache.getQdWaitCollectionPrincipal() + tender.getValidMoney());
                 userCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() + countInterest);
             }
@@ -1790,46 +1784,11 @@ public class BorrowBizImpl implements BorrowBiz {
     }
 
     /**
-     * 如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
-     *
-     * @param borrow
-     */
-    private void updateUserCacheByBorrowReview(Borrow borrow) throws Exception {
-        UserCache userCache = userCacheService.findById(borrow.getUserId());
-        if (borrow.isTransfer()) {
-            Specification<BorrowCollection> bcs = Specifications
-                    .<BorrowCollection>and()
-                    .eq("status", 0)
-                    .eq("tenderId", borrow.getTenderId())
-                    .build();
-
-            List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
-            if (CollectionUtils.isEmpty(borrowCollectionList)) {
-                return;
-            }
-            long countInterest = 0;
-            for (BorrowCollection borrowCollection : borrowCollectionList) {
-                countInterest += borrowCollection.getInterest();
-            }
-            userCache.setUserId(userCache.getUserId());
-            if (borrow.getType() == 0) {
-                userCache.setTjWaitCollectionPrincipal(userCache.getTjWaitCollectionPrincipal() - borrow.getMoney());
-                userCache.setTjWaitCollectionInterest(userCache.getTjWaitCollectionInterest() - countInterest);
-            } else if (borrow.getType() == 4) {
-                userCache.setQdWaitCollectionPrincipal(userCache.getQdWaitCollectionPrincipal() - borrow.getMoney());
-                userCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() - countInterest);
-            }
-            userCacheService.save(userCache);
-        }
-    }
-
-    /**
      * 更新网站统计
      *
      * @param borrow
      */
     private void updateStatisticByBorrowReview(Borrow borrow) {
-        Date nowDate = new Date();
         Specification<BorrowRepayment> brs = Specifications
                 .<BorrowRepayment>and()
                 .eq("borrowId", borrow.getId())

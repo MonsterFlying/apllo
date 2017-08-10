@@ -148,6 +148,8 @@ public class TransferBizImpl implements TransferBiz {
         //1.获取债权转让记录
         Transfer transfer = transferService.findByIdLock(transferId);/* 债权转让记录 */
         Preconditions.checkNotNull(transfer, "债权转让记录不存在!");
+        Tender tender = tenderService.findById(transfer.getTenderId());
+        Preconditions.checkNotNull(tender, "投资记录不存在!");
         if (!transfer.getUserId().equals(userId)) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非本人操作结束债权转让。"));
         }
@@ -187,6 +189,10 @@ public class TransferBizImpl implements TransferBiz {
             }
         });
         transferBuyLogService.save(transferBuyLogList);
+
+        tender.setTransferFlag(0);
+        tender.setUpdatedAt(new Date());
+        tenderService.save(tender);
 
         return ResponseEntity.ok(VoBaseResp.ok("结束债权转让成功!"));
     }
@@ -229,15 +235,11 @@ public class TransferBizImpl implements TransferBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "存在未登记即信存管的购买" + failure + "失败记录"));
         }
 
-        /**
-         * @// TODO: 2017/8/8 需要更新转让记录，与购买转让记录 
-         */
-
         // 新增子级投标记录,更新老债权记录
         List<Tender> childTenderList = addChildTender(nowDate, transfer, parentTender, transferBuyLogList);
 
         // 生成子级债权回款记录，标注老债权回款已经转出
-        addChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList);
+        List<BorrowCollection> childBorrowCollectionList = addChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList);
 
         // 发放债权转让资金
         batchAssetChangeHelper.batchAssetChangeAndCollection(transferId, batchNo, BatchAssetChangeContants.BATCH_CREDIT_INVEST);
@@ -248,13 +250,38 @@ public class TransferBizImpl implements TransferBiz {
         // 用户投标信息和每日统计
         userTenderStatistic(childTenderList);
 
-        // 复审事件
-        //如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
-        updateUserCacheByTransferReview(parentBorrow, transfer);
+        //更新债权转让人用户缓存记录
+        updateUserCacheByTransfer(parentBorrow, transfer);
+
+        //更新购买债权人用户缓存
+        updateUserCacheByByTransfer(parentBorrow, childTenderList, childBorrowCollectionList);
 
         //更新全网网站统计
         updateStatisticByTransferReview(transfer);
         return ResponseEntity.ok(VoBaseResp.ok("债权转让复审成功!"));
+    }
+
+    /**
+     * 更新购买债权人用户缓存
+     *
+     * @param parentBorrow
+     * @param childTenderList
+     * @param childBorrowCollectionList
+     */
+    private void updateUserCacheByByTransfer(Borrow parentBorrow, List<Tender> childTenderList, List<BorrowCollection> childBorrowCollectionList) {
+        Map<Long/* 投资id */, List<BorrowCollection>> childBorrowCollectionMaps = childBorrowCollectionList.stream().collect(Collectors.groupingBy(BorrowCollection::getTenderId));
+        childTenderList.stream().forEach(tender -> {
+            List<BorrowCollection> borrowCollectionList = childBorrowCollectionMaps.get(tender.getId());
+            UserCache userCache = userCacheService.findById(tender.getUserId());
+            long countInterest = borrowCollectionList.stream().mapToLong(BorrowCollection::getInterest).sum();/* 购买转让标 每期还款利息 */
+            if (parentBorrow.getType() == 0) {
+                userCache.setTjWaitCollectionInterest(userCache.getTjWaitCollectionInterest() + countInterest);
+                userCache.setTjWaitCollectionPrincipal(userCache.getTjWaitCollectionPrincipal() + tender.getValidMoney());
+            } else if (parentBorrow.getType() == 4) {
+                userCache.setQdWaitCollectionPrincipal(userCache.getQdWaitCollectionPrincipal() + tender.getValidMoney());
+                userCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() + countInterest);
+            }
+        });
     }
 
 
@@ -323,11 +350,11 @@ public class TransferBizImpl implements TransferBiz {
     }
 
     /**
-     * 如果是流转标则扣除 自身车贷标待收本金 和 推荐人的邀请用户车贷标总待收本金
+     * 更新债权转让人用户缓存记录
      *
      * @param transfer
      */
-    private void updateUserCacheByTransferReview(Borrow parentBorrow, Transfer transfer) throws Exception {
+    private void updateUserCacheByTransfer(Borrow parentBorrow, Transfer transfer) throws Exception {
         UserCache userCache = userCacheService.findById(transfer.getUserId());
         userCache.setUserId(userCache.getUserId());
         if (parentBorrow.getType() == 0) {
@@ -349,7 +376,8 @@ public class TransferBizImpl implements TransferBiz {
     private void updateStatisticByTransferReview(Transfer transfer) {
         //全站统计
         Statistic statistic = new Statistic();
-        statistic.setLzBorrowTotal(transfer.getPrincipal());
+        /*statistic.setLzBorrowTotal(transfer.getPrincipal());*/
+
         if (!ObjectUtils.isEmpty(statistic)) {
             try {
                 statisticBiz.caculate(statistic);
@@ -367,13 +395,24 @@ public class TransferBizImpl implements TransferBiz {
      * @param parentBorrow
      * @param childTenderList
      */
-    private void addChildTenderCollection(Date nowDate, Transfer transfer, Borrow parentBorrow, List<Tender> childTenderList) throws Exception {
+    private List<BorrowCollection> addChildTenderCollection(Date nowDate, Transfer transfer, Borrow parentBorrow, List<Tender> childTenderList) throws Exception {
+        List<BorrowCollection> childTenderCollectionList = new ArrayList<>();/* 债权子记录回款记录 */
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
         String seqNo = assetChangeProvider.getSeqNo();
         //生成子级债权回款记录，标注老债权回款已经转出
+        Specification<BorrowCollection> bcs = Specifications
+                .<BorrowCollection>and()
+                .eq("tenderId", transfer.getTenderId())
+                .eq("status", 0)
+                .build();
+        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);/* 债权转让原投资回款记录 */
+        long transferInterest = borrowCollectionList.stream().mapToLong(BorrowCollection::getInterest).sum();/* 债权转让总利息 */
         Date repayAt = transfer.getRepayAt();/* 原借款下一期还款日期 */
         Date startAt = DateHelper.subMonths(repayAt, 1);/* 计息开始时间 */
-        for (Tender childTender : childTenderList) {
+        long sumCollectionInterest = 0;//总回款利息
+        for (int j = 0; j < childTenderList.size(); j++) {
+            Tender childTender = childTenderList.get(j);/* 购买债权转让子投资记录 */
+            //生成购买债权转让新的回款记录
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
                     childTender.getValidMoney().doubleValue(),
                     transfer.getApr().doubleValue(),
@@ -383,14 +422,21 @@ public class TransferBizImpl implements TransferBiz {
             List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
             Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
             BorrowCollection borrowCollection;
-            int collectionMoney = 0;
-            int collectionInterest = 0;
+            long collectionMoney = 0;
+            long collectionInterest = 0;
             int startOrder = parentBorrow.getTotalOrder() - transfer.getTimeLimit();/* 获取开始转让期数,期数下标从0开始 */
             for (int i = 0; i < repayDetailList.size(); i++) {
                 borrowCollection = new BorrowCollection();
                 Map<String, Object> repayDetailMap = repayDetailList.get(i);
-                collectionMoney += new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).intValue();
-                collectionInterest += new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).intValue();
+                collectionMoney += new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).longValue();
+                long interest = new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).longValue();
+                collectionInterest += interest;
+                sumCollectionInterest += interest;
+                //最后一个购买债权转让的最后一期回款，需要把还款溢出的利息补给新的回款记录
+                if ((j == childTenderList.size() - 1) && (i == repayDetailList.size() - 1)) {
+                    interest += transferInterest - sumCollectionInterest;/* 新的回款利息添加溢出的利息 */
+                }
+
                 borrowCollection.setTenderId(childTender.getId());
                 borrowCollection.setStatus(0);
                 borrowCollection.setOrder(startOrder++);
@@ -399,28 +445,18 @@ public class TransferBizImpl implements TransferBiz {
                 borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : nowDate);
                 borrowCollection.setCollectionAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
                 borrowCollection.setCollectionMoney(NumberHelper.toLong(repayDetailMap.get("repayMoney")));
-                borrowCollection.setInterest(NumberHelper.toLong(repayDetailMap.get("interest")));
                 borrowCollection.setPrincipal(NumberHelper.toLong(repayDetailMap.get("principal")));
+                borrowCollection.setInterest(interest);
                 borrowCollection.setCreatedAt(nowDate);
                 borrowCollection.setUpdatedAt(nowDate);
                 borrowCollection.setCollectionMoneyYes(0l);
                 borrowCollection.setLateDays(0);
                 borrowCollection.setLateInterest(0l);
                 borrowCollection.setBorrowId(parentBorrow.getId());
-                borrowCollectionService.insert(borrowCollection);
+                childTenderCollectionList.add(borrowCollection);
             }
+            borrowCollectionService.save(childTenderCollectionList);
 
-            //更新转出投资记录回款状态
-            Specification<BorrowCollection> bcs = Specifications
-                    .<BorrowCollection>and()
-                    .eq("tenderId", transfer.getTenderId())
-                    .eq("status", 0)
-                    .build();
-            List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
-            borrowCollectionList.stream().forEach(bc -> {
-                bc.setTransferFlag(1);
-            });
-            borrowCollectionService.save(borrowCollectionList);
             //添加待还
             AssetChange assetChange = new AssetChange();
             assetChange.setType(AssetChangeTypeEnum.collectionAdd);
@@ -434,6 +470,14 @@ public class TransferBizImpl implements TransferBiz {
             assetChange.setInterest(collectionInterest);
             assetChangeProvider.commonAssetChange(assetChange);
         }
+
+        //更新转出投资记录回款状态
+        borrowCollectionList.stream().forEach(bc -> {
+            bc.setTransferFlag(1);
+        });
+        borrowCollectionService.save(borrowCollectionList);
+
+        return childTenderCollectionList;
     }
 
     /**
