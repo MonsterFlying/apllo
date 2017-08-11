@@ -21,6 +21,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,33 +41,33 @@ import java.util.concurrent.TimeUnit;
  */
 @Service
 @Slf4j
-public class BankAccountBizImpl implements BankAccountBiz{
+public class BankAccountBizImpl implements BankAccountBiz {
     @Value("${gofobao.aliyun-bankinfo-url}")
-    String aliyunQueryBankUrl ;
+    String aliyunQueryBankUrl;
 
     @Value("${gofobao.aliyun-bankinfo-appcode}")
-    String aliyunQueryAppcode ;
+    String aliyunQueryAppcode;
 
     @Value("${gofobao.javaDomain}")
-    String javaDomain ;
+    String javaDomain;
 
     @Autowired
-    BankBinHelper bankBinHelper ;
+    BankBinHelper bankBinHelper;
 
     @Autowired
-    DictValueService dictValueServcie ;
+    DictValueService dictValueServcie;
 
     @Autowired
     DictItemService dictItemService;
 
     @Autowired
-    RechargeDetailLogService rechargeDetailLogService ;
+    RechargeDetailLogService rechargeDetailLogService;
 
     @Autowired
-    UserThirdAccountService userThirdAccountService ;
+    UserThirdAccountService userThirdAccountService;
 
     @Autowired
-    CashDetailLogService cashDetailLogService ;
+    CashDetailLogService cashDetailLogService;
 
     LoadingCache<String, DictValue> bankLimitCache = CacheBuilder
             .newBuilder()
@@ -75,53 +76,53 @@ public class BankAccountBizImpl implements BankAccountBiz{
             .build(new CacheLoader<String, DictValue>() {
                 @Override
                 public DictValue load(String bankName) throws Exception {
-                    DictItem dictItem = dictItemService.findTopByAliasCodeAndDel("PLATFORM_BANK", 0) ;
-                    if(ObjectUtils.isEmpty(dictItem)){
-                        return null ;
+                    DictItem dictItem = dictItemService.findTopByAliasCodeAndDel("PLATFORM_BANK", 0);
+                    if (ObjectUtils.isEmpty(dictItem)) {
+                        return null;
                     }
 
                     return dictValueServcie.findTopByItemIdAndValue02(dictItem.getId(), bankName);
                 }
-            }) ;
+            });
 
 
     @Override
     public ResponseEntity<VoBankTypeInfoResp> findTypeInfo(Long userId, String account) {
-        if( StringUtils.isEmpty(account) ){
+        if (StringUtils.isEmpty(account)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前银行账号为空", VoBankTypeInfoResp.class)) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前银行账号为空", VoBankTypeInfoResp.class));
         }
 
         UserThirdAccount thirdAccount = userThirdAccountService.findByUserId(userId);
-        if( (!ObjectUtils.isEmpty(thirdAccount)) && (!StringUtils.isEmpty(thirdAccount.getCardNo()))){
+        if ((!ObjectUtils.isEmpty(thirdAccount)) && (!StringUtils.isEmpty(thirdAccount.getCardNo()))) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前账户已经绑定银行卡！", VoBankTypeInfoResp.class)) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前账户已经绑定银行卡！", VoBankTypeInfoResp.class));
         }
 
         // 判断当前银行卡是否存在
-        UserThirdAccount userThirdAccount = userThirdAccountService.findTopByCardNo(account) ;
+        UserThirdAccount userThirdAccount = userThirdAccountService.findTopByCardNo(account);
 
-        if(!ObjectUtils.isEmpty(userThirdAccount)){
+        if (!ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前银行卡已被使用", VoBankTypeInfoResp.class)) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前银行卡已被使用", VoBankTypeInfoResp.class));
         }
 
         BankBinHelper.BankInfo bankInfo = bankBinHelper.find(account);
-        if(ObjectUtils.isEmpty(bankInfo)){
+        if (ObjectUtils.isEmpty(bankInfo)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查无此卡,如有问题请联系平台客户!", VoBankTypeInfoResp.class)) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查无此卡,如有问题请联系平台客户!", VoBankTypeInfoResp.class));
         }
         if (!"借记卡".equals(bankInfo.getCardType())) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "平台暂不支持信用卡", VoBankTypeInfoResp.class)) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "平台暂不支持信用卡", VoBankTypeInfoResp.class));
         }
 
-        String bankname = bankInfo.getBankName() ;
+        String bankname = bankInfo.getBankName();
         // 获取银行
         DictValue bank = null;
         try {
@@ -129,10 +130,10 @@ public class BankAccountBizImpl implements BankAccountBiz{
         } catch (Throwable e) {
             log.error("BankAccountBizImpl.findTypeInfo: bank type is exists ");
         }
-        if(ObjectUtils.isEmpty(bank)){
+        if (ObjectUtils.isEmpty(bank)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, String.format("平台暂不支持%s, 请尝试其他银行卡！", bankname), VoBankTypeInfoResp.class)) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, String.format("平台暂不支持%s, 请尝试其他银行卡！", bankname), VoBankTypeInfoResp.class));
         }
 
         // 返回银行信息
@@ -141,9 +142,9 @@ public class BankAccountBizImpl implements BankAccountBiz{
         resp.setTimesLimitMoney(bank.getValue04().split(",")[0]);
         resp.setDayLimitMoney(bank.getValue05().split(",")[0]);
         resp.setMonthLimitMonty(bank.getValue06().split(",")[0]);
-        resp.setBankIcon( String.format("%s/%s", javaDomain, bank.getValue03()) );
+        resp.setBankIcon(String.format("%s/%s", javaDomain, bank.getValue03()));
 
-        return ResponseEntity.ok(resp) ;
+        return ResponseEntity.ok(resp);
 
     }
 
@@ -154,60 +155,60 @@ public class BankAccountBizImpl implements BankAccountBiz{
 
     @Override
     public void showDesc(Model model) {
-        DictItem dictItem = dictItemService.findTopByAliasCodeAndDel("PLATFORM_BANK", 0) ;
-        if(ObjectUtils.isEmpty(dictItem)){
+        DictItem dictItem = dictItemService.findTopByAliasCodeAndDel("PLATFORM_BANK", 0);
+        if (ObjectUtils.isEmpty(dictItem)) {
             throw new RuntimeException("BankAccountBizImpl.showDesc： 查询平台支持银行卡列表异常， 请联系平台客服!");
         }
 
-        List<DictValue>  list = dictValueServcie.findByItemId(dictItem.getId()) ;
-        List<Map<String, String>> bankList = new ArrayList<>() ;
-        list.forEach(bean ->{
-            Map<String, String> rs = new HashMap<>() ;
-            rs.put("logo", String.format("%s/%s", javaDomain, bean.getValue03())) ; // logo
-            rs.put("name", bean.getName()) ;
+        List<DictValue> list = dictValueServcie.findByItemId(dictItem.getId());
+        List<Map<String, String>> bankList = new ArrayList<>();
+        list.forEach(bean -> {
+            Map<String, String> rs = new HashMap<>();
+            rs.put("logo", String.format("%s/%s", javaDomain, bean.getValue03())); // logo
+            rs.put("name", bean.getName());
             rs.put("desc", String.format("单笔限额%s元，每日限额%s元，每月限额%s元"
                     , bean.getValue04().split(",")[0]
                     , bean.getValue05().split(",")[0]
-                    , bean.getValue06().split(",")[0])) ;
-            bankList.add(rs) ;
+                    , bean.getValue06().split(",")[0]));
+            bankList.add(rs);
         });
 
-        model.addAttribute("bankList", bankList) ;
+        model.addAttribute("bankList", bankList);
 
     }
 
     @Override
     public ResponseEntity<VoBankListResp> list(Long userId) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        if(ObjectUtils.isEmpty(userThirdAccount)){
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你没有开通银行存管，请先开通银行存管！", VoBankListResp.class)) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你没有开通银行存管，请先开通银行存管！", VoBankListResp.class));
         }
 
-        if(userThirdAccount.getPasswordState() == 0){
+        if (userThirdAccount.getPasswordState() == 0) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请先初始化江西银行存管账户交易密码！", VoBankListResp.class)) ;
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请先初始化江西银行存管账户交易密码！", VoBankListResp.class));
         }
 
-        VoBankListResp response = VoBaseResp.ok("查询成功", VoBankListResp.class) ;
-        response.setBankCard(UserHelper.hideChar(userThirdAccount.getCardNo(), UserHelper.BANK_ACCOUNT_NUM ));
-        response.setBankLogo(String.format("%s/%s", javaDomain, userThirdAccount.getBankLogo())) ;
+        VoBankListResp response = VoBaseResp.ok("查询成功", VoBankListResp.class);
+        response.setBankCard(UserHelper.hideChar(userThirdAccount.getCardNo(), UserHelper.BANK_ACCOUNT_NUM));
+        response.setBankLogo(String.format("%s/%s", javaDomain, userThirdAccount.getBankLogo()));
         response.setBankName(userThirdAccount.getBankName());
         response.setBankType("储蓄卡");
-        response.setMobile(UserHelper.hideChar(userThirdAccount.getMobile(),UserHelper.PHONE_NUM));
-        return ResponseEntity.ok(response) ;
+        response.setMobile(UserHelper.hideChar(userThirdAccount.getMobile(), UserHelper.PHONE_NUM));
+        return ResponseEntity.ok(response);
     }
 
     @Override
     public int getCashCredit4Day(Long userId) {
-        Date endDate = new Date() ;
+        Date endDate = new Date();
         Date startDate = DateHelper.beginOfDate(endDate);
-        ImmutableList<Integer> stateList = ImmutableList.of(3) ; // 充值成功
+        ImmutableList<Integer> stateList = ImmutableList.of(3); // 充值成功
         List<RechargeDetailLog> rechargeDetailLogs = rechargeDetailLogService.findByUserIdAndDelAndStateInAndCreateTimeBetween(userId, 0, stateList, startDate, endDate);
-        if(CollectionUtils.isEmpty(rechargeDetailLogs)){
-            return 0 ;
+        if (CollectionUtils.isEmpty(rechargeDetailLogs)) {
+            return 0;
         }
 
         return rechargeDetailLogs.size();
@@ -216,8 +217,8 @@ public class BankAccountBizImpl implements BankAccountBiz{
 
     /**
      * 充值额度说明
+     *
      * @param userId
-
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
@@ -226,38 +227,40 @@ public class BankAccountBizImpl implements BankAccountBiz{
         String bankName = userThirdAccount.getBankName();
         double[] bankCredit = getBankCredit(bankName);  // 银行卡充值额度说明
 
-        Date endDate = new Date() ;
-        Date dayStartDate = DateHelper.beginOfYear(endDate) ;
+        Date endDate = new Date();
+        Date dayStartDate = DateHelper.beginOfYear(endDate);
         Date startDate = DateHelper.beginOfMonth(endDate);
-        ImmutableList<Integer> stateList = ImmutableList.of(0, 1) ; // 充值成功和申请充值中的
+        ImmutableList<Integer> stateList = ImmutableList.of(1); // 充值成功和申请充值中的
         List<RechargeDetailLog> rechargeDetailLogs = rechargeDetailLogService.findByUserIdAndDelAndStateInAndCreateTimeBetween(userId, 0, stateList, startDate, endDate);
-        if(CollectionUtils.isEmpty(rechargeDetailLogs)){
-            return bankCredit ;
+        log.error(new Gson().toJson(rechargeDetailLogs));
+        if (CollectionUtils.isEmpty(rechargeDetailLogs)) {
+            return bankCredit;
         }
-        double [] result = new double[3];
-        result[0] = bankCredit[0] ;  // 每笔限额
+        double[] result = new double[3];
+        result[0] = bankCredit[0];  // 每笔限额
 
         // 今天充值金额
-        long dayRechargeSum = rechargeDetailLogs
+        double dayRechargeSum = rechargeDetailLogs
                 .stream()
-                .filter( bean ->  DateHelper.diffInDays(dayStartDate, bean.getCreateTime(), false) > 0)
-                .mapToLong(bean->bean.getMoney())
-                .sum() ;
+                .filter(bean -> DateHelper.diffInDays(dayStartDate, bean.getCreateTime(), false) > 0)
+                .mapToDouble(bean -> bean.getMoney() / 100D)
+                .sum();
 
         // 这个月充值金额
-        long mouthRechargeSum = rechargeDetailLogs
+        double mouthRechargeSum = rechargeDetailLogs
                 .stream()
-                .mapToLong(bean->bean.getMoney())
-                .sum() ;
+                .mapToDouble(bean -> bean.getMoney() / 100D)
+                .sum();
 
-        result[1] = bankCredit[1] - dayRechargeSum ;
-        result[2] = bankCredit[2] - mouthRechargeSum ;
+        result[1] = bankCredit[1] - dayRechargeSum;
+        result[2] = bankCredit[2] - mouthRechargeSum;
 
-        return result ;
+        return result;
     }
 
     /**
      * 获取银行额度
+     *
      * @param bankName
      * @return
      */
@@ -269,10 +272,10 @@ public class BankAccountBizImpl implements BankAccountBiz{
         } catch (Throwable e) {
             log.error("BankAccountBizImpl.findTypeInfo: bank type is exists ");
         }
-        double [] money = {Double.parseDouble(bank.getValue04().split(",")[1]),
+        double[] money = {Double.parseDouble(bank.getValue04().split(",")[1]),
                 Double.parseDouble(bank.getValue05().split(",")[1]),
                 Double.parseDouble(bank.getValue06().split(",")[1])};
-        return money ;
+        return money;
     }
 
 }
