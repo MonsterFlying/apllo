@@ -86,8 +86,6 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     @Autowired
     private BorrowService borrowService;
     @Autowired
-    private BorrowRepaymentThirdBiz borrowRepaymentThirdBiz;
-    @Autowired
     private BorrowRepaymentService borrowRepaymentService;
     @Autowired
     private AssetService assetService;

@@ -1736,7 +1736,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         int flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(borrowRepayment.getId()),
                 ThirdBatchLogContants.BATCH_REPAY_BAIL,
                 ThirdBatchLogContants.BATCH_REPAY);
-        if (flag > 1) {
+        if (flag > 0) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("还款处理中，请勿重复点击!")));
