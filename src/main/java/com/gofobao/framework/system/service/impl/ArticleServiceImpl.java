@@ -75,7 +75,7 @@ public class ArticleServiceImpl implements ArticleService {
         Page<Article> articlePage = articleRepository.findAll(specification,
                 new PageRequest(voArticleReq.getPageIndex(),
                         voArticleReq.getPageSize(),
-                        new Sort("id")));
+                        new Sort(Sort.Direction.DESC,"id")));
         Long totalCount = articlePage.getTotalElements();
         List<Article> articles = articlePage.getContent();
         List<ArticleModle> articleModles = Lists.newArrayList();
