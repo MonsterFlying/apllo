@@ -53,7 +53,9 @@ jixin: #银行存管
   keysPath: D:/sign/guangfubao_uat.p12 #私钥路径
   keysPassword: guangfubao_uat@2016 #私钥密码
   crtPath: D:/sign/fdep.crt #服务端证书文件路径
-  url: https://access.credit2go.cn #即信服务器路径
+  url: http://uat.gofobao.com #即信服务器路径
+  htmlUrl: https://access.credit2go.cn #即信服务器路径
+
   version: 10 #版本号
   instCode: "00960001" #机构代码
   bankCode: "30050000" #交易机构代码
@@ -64,7 +66,8 @@ gofobao:
   webDomain:  http://lang.hk1.mofasuidao.cn
   h5Domain:  http://ng.hk1.mofasuidao.cn
   imageDomain : http://www.gofobao.com
-  file-url: https://access.credit2go.cn/escrow/file/download #文件请求下载链接
+  file-url: http://uat.gofobao.com/escrow/file/download #文件请求下载链接
+
   save-file-path: D:/statistice/   #文件本地保存的路径
   captcha: false # 全站是否开启图形验证码验证
   close-email-send: true # 关闭邮箱发送

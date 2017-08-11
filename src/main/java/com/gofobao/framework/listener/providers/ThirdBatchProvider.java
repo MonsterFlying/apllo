@@ -120,7 +120,7 @@ public class ThirdBatchProvider {
                 .eq("batchNo", batchNo)
                 .build();
         List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls);
-        Preconditions.checkNotNull(thirdBatchLogList, "批处理回调: 查询批处理记录为空");
+        Preconditions.checkState(!CollectionUtils.isEmpty(thirdBatchLogList), "批处理回调: 查询批处理记录为空");
         // 主动查询未改变记录的批次状态，
         ThirdBatchLog thirdBatchLog = thirdBatchLogList.get(0);
         boolean flag = thirdBatchLogBiz.checkLocalSourceState(String.valueOf(thirdBatchLog.getSourceId()), thirdBatchLog.getType());//获取资源状态是否已完成状态

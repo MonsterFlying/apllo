@@ -276,7 +276,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         request.setName(voOpenAccountReq.getName());
         request.setMobile(voOpenAccountReq.getMobile());
         request.setIdNo(voOpenAccountReq.getIdNo());
-        request.setAcctUse(AcctUseContant.GUARANTEE_RED_PACKET_ACCOUNT);//todo
+        request.setAcctUse(AcctUseContant.GUARANTEE_MEMBER_ACCOUNT);//todo
         request.setAcqRes(String.valueOf(user.getId()));
         request.setLastSrvAuthCode(srvTxCode);
         request.setChannel(ChannelContant.getchannel(httpServletRequest));

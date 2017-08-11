@@ -103,6 +103,27 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         }
         /*购买债权有效金额*/
         long validMoney = (long) MathHelper.min(transfer.getTransferMoney() - transfer.getTransferMoneyYes(), money);
+
+        //理财计划购买债权转让
+        financePlanBuyTransfer(nowDate, money, transferId, userId, financePlanBuyer, transfer, validMoney);
+
+        /* gfb_asset finance_plan_money 成功后需要扣减 */
+        // /更改购买计划状态、资金信息
+        return ResponseEntity.ok(VoBaseResp.ok("理财计划投标成功!"));
+    }
+
+    /**
+     * 理财计划购买债权转让
+     *
+     * @param nowDate
+     * @param money
+     * @param transferId
+     * @param userId
+     * @param financePlanBuyer
+     * @param transfer
+     * @param validMoney
+     */
+    private void financePlanBuyTransfer(Date nowDate, long money, long transferId, long userId, FinancePlanBuyer financePlanBuyer, Transfer transfer, long validMoney) {
         long alreadyInterest = validMoney / transfer.getTransferMoney() * transfer.getAlreadyInterest();/* 当期应计利息 */
         long principal = validMoney - alreadyInterest;/* 债权份额 */
         /* 债权购买记录 */
@@ -125,7 +146,9 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         transfer.setUpdatedAt(nowDate);
         transfer.setTransferMoneyYes(transfer.getTransferMoney() + validMoney);
         transferService.save(transfer);
-        // /更改购买计划状态、资金信息
-        return ResponseEntity.ok(VoBaseResp.ok("理财计划投标成功!"));
+        /* 更新债权转让购买记录 */
+        financePlanBuyer.setLeftMoney(financePlanBuyer.getLeftMoney() - validMoney);
+        financePlanBuyer.setUpdatedAt(nowDate);
+        financePlanBuyerService.save(financePlanBuyer);
     }
 }

@@ -44,6 +44,9 @@ public class JixinManager {
     @Value("${jixin.url}")
     String prefixUrl;
 
+    @Value("${jixin.htmlUrl}")
+    String htmlPrefixUrl;
+
     @Value("${jixin.version}")
     String version;
 
@@ -79,7 +82,7 @@ public class JixinManager {
             req.setChannel(ChannelContant.HTML);
         }
         req.setTxCode(txCodeEnum.getValue());
-        String url = prefixUrl + txCodeEnum.getUrl();
+        String url = htmlPrefixUrl + txCodeEnum.getUrl();
         String json = gson.toJson(req);
         Map<String, String> params = gson.fromJson(json, new TypeToken<Map<String, String>>() {
         }.getType());

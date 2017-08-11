@@ -52,8 +52,9 @@ jixin: #银行存管
   keysPath: /root/jenkins/certs/guangfubao_uat.p12 #私钥路径
   keysPassword: guangfubao_uat@2016 #私钥密码
   crtPath: /root/jenkins/certs/fdep.crt #服务端证书文件路径
-  url: https://access.credit2go.cn #即信服务器路径
-  file-url: https://access.credit2go.cn/escrow/file/download #文件请求下载链接
+  url: http://uat.gofobao.com #https://access.credit2go.cn #即信服务器路径
+  htmlUrl: https://access.credit2go.cn #即信服务器路径
+  file-url: http://uat.gofobao.com/escrow/file/download #https://access.credit2go.cn/escrow/file/download #文件请求下载链接
   save-file-path: D:/statistice/   #文件本地保存的路径
   version: 10 #版本号
   instCode: "00960001" #机构代码
