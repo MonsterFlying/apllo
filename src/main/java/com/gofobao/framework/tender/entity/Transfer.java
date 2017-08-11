@@ -41,4 +41,5 @@ public class Transfer {
     private Date updatedAt;
     private Date verifyAt;
     private Date successAt;
+    private Integer type;
 }

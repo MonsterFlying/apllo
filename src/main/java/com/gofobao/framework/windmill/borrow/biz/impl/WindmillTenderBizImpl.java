@@ -323,7 +323,7 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
                     "&invest_rate=" + borrow.getApr() +
                     "&back_way=" + getBorrowBackWay(borrow.getRepayFashion()) +
                     "&invest_title=" + borrow.getName();
-            requestParamStr = WrbCoopDESUtil.desEncrypt(desKey, requestParamStr);
+            requestParamStr = URLEncoder.encode(WrbCoopDESUtil.desEncrypt(desKey, requestParamStr), "utf-8");
 
         } catch (Exception e) {
             log.error("风车理财用户投资成功通知:失败 通知发送请求 封装参数时失败", e);
@@ -334,6 +334,7 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
             Map<String, String> paramMap = Maps.newHashMap();
             paramMap.put("from", shortName);
             paramMap.put("param", requestParamStr);
+            paramMap.put("ts",System.currentTimeMillis()+"");
             //发送通知请求
             String reulstStr = OKHttpHelper.get(notifyAddress, paramMap, null);
             log.info("打印通知风车返回的结果:" + reulstStr);
@@ -404,6 +405,7 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
                     Map<String, String> paramMap = Maps.newHashMap();
                     paramMap.put("from", shortName);
                     paramMap.put("param", requestParamStr);
+                    paramMap.put("ts",System.currentTimeMillis()+"");
                     log.info("参数 param:" + GSON.toJson(paramMap));
                     //发送通知请求
                     String result = OKHttpHelper.get(notifyAddress, paramMap, null);

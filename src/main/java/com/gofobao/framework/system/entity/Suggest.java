@@ -1,0 +1,30 @@
+package com.gofobao.framework.system.entity;
+
+import lombok.Data;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+
+import javax.persistence.*;
+import java.util.Date;
+
+/**
+ * Created by admin on 2017/8/10.
+ */
+@Entity(name = "Suggest")
+@Table(name = "gfb_suggest")
+@DynamicUpdate
+@DynamicInsert
+@Data
+public class Suggest {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+
+    private Long userId;
+
+    private String content;
+
+    private Date createdAt;
+
+}

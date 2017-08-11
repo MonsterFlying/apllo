@@ -2,12 +2,10 @@ package com.gofobao.framework.system.controller;
 
 
 import com.gofobao.framework.system.biz.ArticleBiz;
+import com.gofobao.framework.system.biz.DictBiz;
 import com.gofobao.framework.system.biz.FindBiz;
 import com.gofobao.framework.system.vo.request.VoArticleReq;
-import com.gofobao.framework.system.vo.response.ArticleModle;
-import com.gofobao.framework.system.vo.response.VoFindIndexResp;
-import com.gofobao.framework.system.vo.response.VoViewArticleInfoWarpRes;
-import com.gofobao.framework.system.vo.response.VoViewArticleWarpRes;
+import com.gofobao.framework.system.vo.response.*;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +18,9 @@ public class FindController {
 
     @Autowired
     FindBiz findBiz ;
+
+    @Autowired
+    DictBiz dictBiz ;
 
     @Autowired
     private ArticleBiz articleBiz;
@@ -42,5 +43,11 @@ public class FindController {
         return articleBiz.info(id);
     }
 
+
+    @ApiOperation("联系我们")
+    @GetMapping("/pub/find/service")
+    public ResponseEntity<VoServiceResp> service() {
+        return  dictBiz.service() ;
+    }
 
 }

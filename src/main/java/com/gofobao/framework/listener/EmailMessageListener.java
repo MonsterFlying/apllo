@@ -49,7 +49,7 @@ public class EmailMessageListener {
             }
 
             if (!result) {
-                log.error(String.format("EmailMessageListener process process error: %s", message));
+                log.error("EmailMessageListener process process error ");
             }
 
         } catch (Throwable e) {
