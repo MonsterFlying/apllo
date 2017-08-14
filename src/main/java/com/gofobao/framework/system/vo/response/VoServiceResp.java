@@ -35,5 +35,7 @@ public class VoServiceResp extends VoBaseResp {
     @ApiModelProperty("显示客服电话")
     private String  servicePhoneView;
 
+    @ApiModelProperty("总经理微信")
+    private String managementWeChat;
 
 }

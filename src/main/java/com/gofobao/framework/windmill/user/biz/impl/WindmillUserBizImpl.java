@@ -177,7 +177,6 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
                 String password = pwc.createPassWord(8);
                 users.setPassword(PasswordHelper.encodingPassword(password)); // 设置密码
                 users.setPayPassword("");
-                users.setRealname("");
                 users.setRealname(registerReq.getTrue_name());
                 users.setType("");
                 users.setBranch(0);

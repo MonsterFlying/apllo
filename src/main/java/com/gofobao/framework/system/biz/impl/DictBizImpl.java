@@ -79,7 +79,8 @@ public class DictBizImpl implements DictBiz {
                         voServiceResp.setServicePhoneView(bean.getValue03());
                     } else if (bean.getValue01().equals("weiboCode")) {
                         voServiceResp.setWeiboCode(bean.getValue03());
-
+                    } else  if(bean.getValue01().equals("managementWeChat")){
+                        voServiceResp.setManagementWeChat(bean.getValue03());
                     }
                 }
         );
