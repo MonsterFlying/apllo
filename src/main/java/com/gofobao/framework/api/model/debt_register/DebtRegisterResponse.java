@@ -35,7 +35,7 @@ public class DebtRegisterResponse extends JixinBaseResponse {
     /**
      * 名义借款人电子账号
      */
-    private String nominalAcctountId;
+    private String nominalAccountId;
 
     /**
      * 收款人电子帐户
