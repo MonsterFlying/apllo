@@ -10,6 +10,7 @@ import java.util.List;
 
 @Repository
 public interface MarketingRepository extends JpaRepository<Marketing, Long>, JpaSpecificationExecutor<Marketing>{
-    List<Marketing> findByDelAndOpenStateAndBeginTimeGreaterThanEqualAndEndTimeLessThanEqualAndIdIn(int del, int openState, Date startTime, Date endTime, List<Long> marketingIdList);
 
+
+    List<Marketing> findByDelAndOpenStateAndIdIn(int del, int openState, List<Long> marketingIdList);
 }

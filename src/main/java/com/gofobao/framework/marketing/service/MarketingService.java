@@ -10,7 +10,6 @@ public interface MarketingService {
 
     List<Marketing> findAll(Specification<Marketing> marketingSpecification);
 
+    List<Marketing> findByDelAndOpenStateAndIdIn(int del, int openState, List<Long> marketingIdList);
 
-
-    List<Marketing> findByDelAndOpenStateAndBeginTimeGreaterThanEqualAndEndTimeLessThanEqualAndIdIn(int del, int openState, Date startTime, Date endTime, List<Long> marketingIdList);
 }
