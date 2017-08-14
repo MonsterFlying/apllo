@@ -189,7 +189,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
         VoPreOpenAccountResp voPreOpenAccountResp = VoBaseResp.ok("查询成功", VoPreOpenAccountResp.class);
-        voPreOpenAccountResp.setMobile(StringUtils.isEmpty(user.getPhone())?"":user.getPhone());
+        voPreOpenAccountResp.setMobile(StringUtils.isEmpty(user.getPhone()) ? "" : user.getPhone());
         voPreOpenAccountResp.setIdType("01"); //证件类型：身份证
         voPreOpenAccountResp.setIdNo(ObjectUtils.isEmpty(user.getCardId()) ? "" : user.getCardId());
         voPreOpenAccountResp.setName(user.getRealname());
@@ -268,7 +268,6 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "短信验证码已过期，请重新获取", VoOpenAccountResp.class));
         }
-
 
         // 8.提交开户
         AccountOpenPlusRequest request = new AccountOpenPlusRequest();

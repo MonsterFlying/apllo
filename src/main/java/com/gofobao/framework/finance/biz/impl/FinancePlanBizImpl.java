@@ -75,7 +75,6 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
     @Autowired
     private AssetChangeProvider assetChangeProvider;
 
-
     /**
      * 理财计划投标
      *

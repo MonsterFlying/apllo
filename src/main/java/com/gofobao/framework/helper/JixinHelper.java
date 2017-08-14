@@ -77,7 +77,7 @@ public class JixinHelper {
     }
 
     /**
-     * 获取担保账户
+     * 获取名义账户
      *
      * @param borrowId
      * @return
