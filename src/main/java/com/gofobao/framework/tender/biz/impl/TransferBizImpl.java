@@ -730,7 +730,7 @@ public class TransferBizImpl implements TransferBiz {
         assetChange.setType(AssetChangeTypeEnum.freeze);
         assetChange.setUserId(transferBuyLog.getUserId());
         assetChangeProvider.commonAssetChange(assetChange);
-        //冻结购买债权转让人资金账户
+        /*//冻结购买债权转让人资金账户
         String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);
         BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
         balanceFreezeReq.setAccountId(buyUserThirdAccount.getAccountId());
@@ -740,10 +740,10 @@ public class TransferBizImpl implements TransferBiz {
         BalanceFreezeResp balanceFreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BalanceFreezeResp.class);
         if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceFreezeResp.getRetCode()))) {
             throw new Exception("即信批次还款冻结资金失败：" + balanceFreezeResp.getRetMsg());
-        }
+        }*/
         //保存存管冻结orderId
-        transferBuyLog.setFreezeOrderId(orderId);
-        transferBuyLogService.save(transferBuyLog);
+    /*    transferBuyLog.setFreezeOrderId(orderId);
+        transferBuyLogService.save(transferBuyLog);*/
     }
 
     /**
@@ -794,7 +794,7 @@ public class TransferBizImpl implements TransferBiz {
         }
 
         long leftMoney = transfer.getTransferMoney() - transfer.getTransferMoneyYes();/*债权转让剩余可购买金额*/
-        double mayBuyMoney = MathHelper.min(leftMoney, transfer.getLowest());//获取剩余可购买金额
+        double mayBuyMoney =Math.min(leftMoney, transfer.getLowest());//获取剩余可购买金额
         if (buyMoney < mayBuyMoney) {
             msg = "购买金额小于最小购买金额";
         }
