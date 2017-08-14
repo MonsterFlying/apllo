@@ -649,6 +649,10 @@ public class TransferBizImpl implements TransferBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
         }
 
+        if(transfer.getUserId().intValue()==userId){
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "不能购买自己的债权"));
+        }
+
         //生成购买债权记录
         TransferBuyLog transferBuyLog = saveTransferAndTransferLog(userId, transferId, buyMoney, transfer, validMoney, alreadyInterest, auto, autoOrder);
 
