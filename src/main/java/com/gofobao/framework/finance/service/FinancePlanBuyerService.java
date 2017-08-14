@@ -1,6 +1,5 @@
 package com.gofobao.framework.finance.service;
 
-import com.gofobao.framework.finance.entity.FinancePlan;
 import com.gofobao.framework.finance.entity.FinancePlanBuyer;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -12,6 +11,16 @@ import java.util.List;
  * Created by Zeke on 2017/8/10.
  */
 public interface FinancePlanBuyerService {
+
+    /**
+     * 检查投标是否太频繁
+     *
+     * @param borrowId
+     * @param userId
+     * @return
+     */
+    boolean checkFinancePlanBuyNimiety(Long borrowId, Long userId);
+
     FinancePlanBuyer findById(long id);
 
     FinancePlanBuyer findByIdLock(long id);

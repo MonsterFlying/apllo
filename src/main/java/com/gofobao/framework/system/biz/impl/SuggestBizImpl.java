@@ -1,5 +1,6 @@
 package com.gofobao.framework.system.biz.impl;
 
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.system.biz.SuggestBiz;
 import com.gofobao.framework.system.entity.Suggest;
 import com.gofobao.framework.system.service.SuggestService;
@@ -17,7 +18,12 @@ public class SuggestBizImpl implements SuggestBiz {
     private SuggestService suggestService;
 
     @Override
-    public ResponseEntity<Boolean> save(Suggest suggest) {
-        return ResponseEntity.ok(suggestService.save(suggest));
+    public ResponseEntity<VoBaseResp> save(Suggest suggest) {
+        try {
+            suggestService.save(suggest);
+            return ResponseEntity.ok(VoBaseResp.ok("反馈成功"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "反馈异常"));
+        }
     }
 }

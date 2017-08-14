@@ -4,7 +4,10 @@ import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.util.Date;
 
 /**
@@ -19,6 +22,7 @@ public class FinancePlanBuyer {
     @Id
     @GeneratedValue
     private Long id;
+    private Long planId;
     private Long userId;
     private Integer status;
     private Integer baseApr;
@@ -31,6 +35,7 @@ public class FinancePlanBuyer {
     private Integer finishedState;
     private Integer source;
     private String remark;
+    private String freezeOrderId;
     private Date createdAt;
     private Date updatedAt;
 }

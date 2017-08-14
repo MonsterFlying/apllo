@@ -4,7 +4,10 @@ import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.util.Date;
 
 /**
@@ -31,7 +34,7 @@ public class FinancePlan {
     private Long most;
     private Date successAt;
     private Date endLockAt;
-    private Integer finishedState;
+    private Boolean finishedState;
     private Integer totalSubPoint;
     private Integer subPointCount;
     private Integer createId;

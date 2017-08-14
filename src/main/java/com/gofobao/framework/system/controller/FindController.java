@@ -1,17 +1,22 @@
 package com.gofobao.framework.system.controller;
 
 
+import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.system.biz.ArticleBiz;
 import com.gofobao.framework.system.biz.DictBiz;
 import com.gofobao.framework.system.biz.FindBiz;
+import com.gofobao.framework.system.biz.SuggestBiz;
+import com.gofobao.framework.system.entity.Suggest;
 import com.gofobao.framework.system.vo.request.VoArticleReq;
 import com.gofobao.framework.system.vo.response.*;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
+
+import java.util.Date;
 
 @RestController
 public class FindController {
@@ -24,6 +29,10 @@ public class FindController {
 
     @Autowired
     private ArticleBiz articleBiz;
+
+    @Autowired
+    private SuggestBiz suggestBiz;
+
 
     @GetMapping("/pub/find/index")
     public ResponseEntity<VoFindIndexResp> index() {
@@ -49,5 +58,16 @@ public class FindController {
     public ResponseEntity<VoServiceResp> service() {
         return  dictBiz.service() ;
     }
+
+
+    @ApiOperation("反馈")
+    @PostMapping("/pub/find/suggest/add")
+    public ResponseEntity<VoBaseResp> add(VoSuggestAddReq suggestAddReq) {
+        Suggest suggest = new Suggest();
+        suggest.setContent(suggestAddReq.getContent());
+        suggest.setCreatedAt(new Date());
+        return suggestBiz.save(suggest);
+    }
+
 
 }
