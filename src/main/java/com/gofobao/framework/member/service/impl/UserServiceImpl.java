@@ -170,4 +170,11 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         return !userRepository.exists(example);
     }
 
+
+    @Override
+    public List<Users> findByIdIn(List<Long> ids) {
+
+
+        return userRepository.findByIdIn(ids);
+    }
 }

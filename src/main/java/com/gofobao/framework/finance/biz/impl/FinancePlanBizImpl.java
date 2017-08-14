@@ -1,35 +1,42 @@
 package com.gofobao.framework.finance.biz.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.common.constans.TypeTokenContants;
+import com.gofobao.framework.common.page.Page;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.finance.biz.FinancePlanBiz;
+import com.gofobao.framework.finance.constants.FinannceContants;
 import com.gofobao.framework.finance.entity.FinancePlan;
 import com.gofobao.framework.finance.entity.FinancePlanBuyer;
 import com.gofobao.framework.finance.service.FinancePlanBuyerService;
 import com.gofobao.framework.finance.service.FinancePlanService;
 import com.gofobao.framework.finance.vo.request.VoFinancePlanTender;
-import com.gofobao.framework.helper.MathHelper;
-import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.ThirdAccountHelper;
+import com.gofobao.framework.finance.vo.response.PlanBuyUserListWarpRes;
+import com.gofobao.framework.finance.vo.response.PlanDetail;
+import com.gofobao.framework.finance.vo.response.PlanList;
+import com.gofobao.framework.finance.vo.response.PlanListWarpRes;
+import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
-import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
-import com.gofobao.framework.tender.vo.response.VoFindAutoTender;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.Date;
 import java.util.List;
@@ -151,4 +158,135 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         financePlanBuyer.setUpdatedAt(nowDate);
         financePlanBuyerService.save(financePlanBuyer);
     }
+
+
+    /**
+     * 理财列表
+     *
+     * @param page
+     * @return
+     */
+    @Override
+    public ResponseEntity<PlanListWarpRes> list(Page page) {
+
+        PlanListWarpRes warpRes = VoBaseResp.ok("查询成功", PlanListWarpRes.class);
+
+        //过滤掉 状态; 1:发标待审 ；2：初审不通过；4：复审不通过；5：已取消
+        List<Integer> statusArray = Lists.newArrayList(FinannceContants.CANCEL,
+                FinannceContants.CHECKED_NO_PASS,
+                FinannceContants.NO_PASS,
+                FinannceContants.PURCJASE);
+
+        Specification<FinancePlan> specification = Specifications.<FinancePlan>and()
+                .ne("status", statusArray.toArray())
+                .build();
+        List<FinancePlan> financePlans = financePlanService.findList(specification, new Sort(Sort.Direction.DESC, "id"));
+
+        if (CollectionUtils.isEmpty(financePlans)) {
+            return ResponseEntity.ok(warpRes);
+        }
+        List<PlanList> planLists = Lists.newArrayList();
+        //装配结果集
+        financePlans.stream().forEach(p -> {
+            PlanList plan = new PlanList();
+            plan.setApr(StringHelper.formatMon(p.getBaseApr() / 100D));
+            plan.setId(p.getId());
+            plan.setMoney(StringHelper.formatMon(p.getMoney() / 100D));
+            plan.setSpend(p.getMoneyYes() / p.getMoney().doubleValue());
+            plan.setTimeLimit(p.getTimeLimit());
+            plan.setStatus(handleStatus(p));
+            plan.setPlanName(p.getName());
+            planLists.add(plan);
+        });
+        warpRes.setPlanLists(planLists);
+        return ResponseEntity.ok(warpRes);
+    }
+
+    /**
+     * 理财详情
+     *
+     * @param id
+     * @return
+     */
+    @Override
+    public ResponseEntity<PlanDetail> details(Long id) {
+        FinancePlan financePlan = financePlanService.findById(id);
+        if (ObjectUtils.isEmpty(financePlan)) {
+            return ResponseEntity.badRequest()
+                    .body(PlanDetail.error(
+                            VoBaseResp.ERROR,
+                            "非法访问",
+                            PlanDetail.class));
+        }
+
+        PlanDetail planDetail = VoBaseResp.ok("查询成功", PlanDetail.class);
+        //年利率
+        Integer apr = financePlan.getBaseApr();
+        planDetail.setApr(StringHelper.formatMon(apr / 100D));
+        //购买次数
+        planDetail.setBuyCount(financePlan.getTotalSubPoint());
+        //计划金额
+        Long money = financePlan.getMoney();
+        planDetail.setMoney(StringHelper.formatMon(financePlan.getMoney() / 100D));
+        //id
+        planDetail.setId(financePlan.getId());
+        //名称
+        planDetail.setName(financePlan.getName());
+        //起投金额
+        planDetail.setLowMoney(StringHelper.formatMon(financePlan.getLowest() / 100D));
+        //已投金额
+        Long moneyYes = financePlan.getMoneyYes();
+        //剩余金额
+        planDetail.setSurplusMoney(StringHelper.formatMon((money - moneyYes) / 100D));
+        planDetail.setSpend(moneyYes / money.doubleValue());
+        Integer timeLimit = financePlan.getTimeLimit();
+        //预期收益
+        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(money), new Double(apr), timeLimit, financePlan.getCreatedAt());
+        Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(2);
+        Integer earnings = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("earnings")));
+        planDetail.setEarnings(StringHelper.formatMon(earnings / 100D));
+        //状态、
+        Integer status = handleStatus(financePlan);
+        //剩余时间
+        Date endDate = DateHelper.endOfDate(financePlan.getCreatedAt());
+        Date nowDate = new Date();
+        if (status.intValue() == FinannceContants.PURCJASE) {
+            planDetail.setSurplusSecond(endDate.getTime() - nowDate.getTime());
+        }
+        //截至日期
+        planDetail.setEndAt(DateHelper.dateToString(endDate));
+        //起始日期
+        planDetail.setStartAt(DateHelper.dateToString(financePlan.getCreatedAt()));
+        planDetail.setStatus(status);
+        return ResponseEntity.ok(planDetail);
+    }
+
+    /**
+     * 状态处理
+     *
+     * @param financePlan
+     * @return
+     */
+    private Integer handleStatus(FinancePlan financePlan) {
+        Integer status = financePlan.getStatus();
+        //购买中
+        if (status.intValue() == FinannceContants.PURCJASE) {
+            //未满标
+            if (!StringUtils.isEmpty(financePlan.getSuccessAt())) {
+                return 2;   //售罄
+            }
+            return status;
+            //满标
+        } else if (status.intValue() == FinannceContants.END) {
+            //已结清
+            if (!financePlan.getFinishedState()) {
+                return 3;//还款中
+            } else {
+                return 4; //已完成
+            }
+        }
+        return status;
+    }
+
+
 }

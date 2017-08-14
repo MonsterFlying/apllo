@@ -16,12 +16,9 @@ import java.util.Date;
 @DynamicInsert
 @Data
 public class Suggest {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue
     private Long id;
-
-    private Long userId;
 
     private String content;
 
