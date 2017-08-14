@@ -55,7 +55,6 @@ jixin: #银行存管
   crtPath: D:/sign/fdep.crt #服务端证书文件路径
   url: http://uat.gofobao.com #即信服务器路径
   htmlUrl: https://access.credit2go.cn #即信服务器路径
-
   version: 10 #版本号
   instCode: "00960001" #机构代码
   bankCode: "30050000" #交易机构代码
