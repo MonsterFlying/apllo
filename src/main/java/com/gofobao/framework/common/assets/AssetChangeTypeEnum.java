@@ -19,6 +19,17 @@ public enum AssetChangeTypeEnum {
     freeze("资金冻结", "freeze", "0", "sub@useMoney,add@noUseMoney", "", "B"),
 
     /**
+     * 理财计划冻结
+     */
+    financePlanFreeze("理财计划资金冻结", "finance_plan_freeze", "", "sub@useMoney,add@financePlanMoney", "", "B"),
+
+    /**
+     * 理财计划接触冻结
+     */
+    financePlanUnFreeze("理财计划资金解除冻结", "finance_plan_unfreeze", "", "add@useMoney,sub@financePlanMoney", "", "B"),
+
+
+    /**
      * 资金解冻
      */
     unfreeze("资金解冻", "unfreeze", "0", "add@useMoney,sub@noUseMoney", "", "B"),
@@ -170,7 +181,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 利息管理费
      */
-    interestManagementFee("利息管理费", "interestManagementFee", "9781", "sub@useMoney", "add@expenditureInterestManage", "C" ),
+    interestManagementFee("利息管理费", "interestManagementFee", "9781", "sub@useMoney", "add@expenditureInterestManage", "C"),
 
 
     /**
@@ -244,8 +255,6 @@ public enum AssetChangeTypeEnum {
     currentIncome("活期收益", "currentIncome", "5500", "add@useMoney", "", "D");
 
 
-
-
     /**
      * 本地类型
      */
@@ -270,7 +279,7 @@ public enum AssetChangeTypeEnum {
      */
     private String opName;
 
-    private String txFlag ;
+    private String txFlag;
 
     public String getLocalType() {
         return localType;
@@ -307,17 +316,17 @@ public enum AssetChangeTypeEnum {
         this.platformType = platformType;
         this.assetChangeRule = assetChangeRule;
         this.userCacheChangeRule = userCacheChangeRule;
-        this.txFlag = txFlag ;
+        this.txFlag = txFlag;
     }
 
-    public static AssetChangeTypeEnum findType(String localType) throws Exception{
+    public static AssetChangeTypeEnum findType(String localType) throws Exception {
         AssetChangeTypeEnum[] values = AssetChangeTypeEnum.values();
-        for(AssetChangeTypeEnum typeEnum: values){
-            if(typeEnum.getLocalType().equals(localType)){
-                return typeEnum ;
+        for (AssetChangeTypeEnum typeEnum : values) {
+            if (typeEnum.getLocalType().equals(localType)) {
+                return typeEnum;
             }
         }
 
-        throw new Exception(String.format("没有该种类型的资金变动: %s", localType)) ;
+        throw new Exception(String.format("没有该种类型的资金变动: %s", localType));
     }
 }

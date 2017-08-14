@@ -3,6 +3,7 @@ package com.gofobao.framework.finance.biz;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.finance.vo.request.VoFinancePlanTender;
 import com.gofobao.framework.finance.vo.request.VoTenderFinancePlan;
+import com.gofobao.framework.finance.vo.response.VoViewFinancePlanTender;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -16,7 +17,7 @@ public interface FinancePlanBiz {
      * @param voFinancePlanTender
      * @return
      */
-    ResponseEntity<VoBaseResp> financePlanTender(VoFinancePlanTender voFinancePlanTender);
+    ResponseEntity<VoViewFinancePlanTender>  financePlanTender(VoFinancePlanTender voFinancePlanTender) ;
 
     /**
      * 理财计划投标
@@ -24,5 +25,5 @@ public interface FinancePlanBiz {
      * @param voTenderFinancePlan
      * @return
      */
-    ResponseEntity<VoBaseResp> tenderFinancePlan(VoTenderFinancePlan voTenderFinancePlan);
+    ResponseEntity<VoBaseResp> tenderFinancePlan(VoTenderFinancePlan voTenderFinancePlan) throws Exception;
 }

@@ -5,6 +5,8 @@ import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeReq;
+import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeResp;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
@@ -651,7 +653,7 @@ public class TransferBizImpl implements TransferBiz {
         TransferBuyLog transferBuyLog = saveTransferAndTransferLog(userId, transferId, buyMoney, transfer, validMoney, alreadyInterest, auto, autoOrder);
 
         //更新购买人账户金额
-        updateAssetByBuyUser(transferBuyLog, transfer);
+        updateAssetByBuyUser(transferBuyLog, transfer, buyUserThirdAccount);
 
         //判断是否满标，满标触发债权转让复审
         if (transfer.getTransferMoney() == transfer.getTransferMoneyYes()) {
@@ -714,7 +716,7 @@ public class TransferBizImpl implements TransferBiz {
      * @param transferBuyLog
      * @param transfer
      */
-    private void updateAssetByBuyUser(TransferBuyLog transferBuyLog, Transfer transfer) throws Exception {
+    private void updateAssetByBuyUser(TransferBuyLog transferBuyLog, Transfer transfer, UserThirdAccount buyUserThirdAccount) throws Exception {
         AssetChange assetChange = new AssetChange();
         assetChange.setSourceId(transferBuyLog.getId());
         assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
@@ -724,6 +726,20 @@ public class TransferBizImpl implements TransferBiz {
         assetChange.setType(AssetChangeTypeEnum.freeze);
         assetChange.setUserId(transferBuyLog.getUserId());
         assetChangeProvider.commonAssetChange(assetChange);
+        //冻结购买债权转让人资金账户
+        String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);
+        BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
+        balanceFreezeReq.setAccountId(buyUserThirdAccount.getAccountId());
+        balanceFreezeReq.setTxAmount(StringHelper.formatDouble(transferBuyLog.getValidMoney(), false));
+        balanceFreezeReq.setOrderId(orderId);
+        balanceFreezeReq.setChannel(ChannelContant.HTML);
+        BalanceFreezeResp balanceFreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BalanceFreezeResp.class);
+        if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceFreezeResp.getRetCode()))) {
+            throw new Exception("即信批次还款冻结资金失败：" + balanceFreezeResp.getRetMsg());
+        }
+        //保存存管冻结orderId
+        transferBuyLog.setFreezeOrderId(orderId);
+        transferBuyLogService.save(transferBuyLog);
     }
 
     /**
@@ -998,16 +1014,16 @@ public class TransferBizImpl implements TransferBiz {
      */
     @Override
     public ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(VoTransferUserListReq transferUserListReq) {
-        VoBorrowTenderUserWarpListRes warpListRes=VoBaseResp.ok("查询成功",VoBorrowTenderUserWarpListRes.class);
+        VoBorrowTenderUserWarpListRes warpListRes = VoBaseResp.ok("查询成功", VoBorrowTenderUserWarpListRes.class);
         //购买记录
         Specification<TransferBuyLog> specification1 = Specifications.<TransferBuyLog>and()
-                .in("state", Lists.newArrayList(TransferBuyLogContants.SUCCESS,TransferBuyLogContants.BUYING).toArray())
+                .in("state", Lists.newArrayList(TransferBuyLogContants.SUCCESS, TransferBuyLogContants.BUYING).toArray())
                 .eq("transferId", transferUserListReq.getTransferId())
                 .build();
         List<TransferBuyLog> transferBuyLogs = transferBuyLogService.findList(specification1,
-                            new PageRequest(transferUserListReq.getPageIndex(),
-                                    transferUserListReq.getPageSize(),
-                                    new Sort(Sort.Direction.DESC,"id")));
+                new PageRequest(transferUserListReq.getPageIndex(),
+                        transferUserListReq.getPageSize(),
+                        new Sort(Sort.Direction.DESC, "id")));
         if (CollectionUtils.isEmpty(transferBuyLogs)) {
             return ResponseEntity.ok(warpListRes);
         }
@@ -1032,8 +1048,6 @@ public class TransferBizImpl implements TransferBiz {
         warpListRes.setVoBorrowTenderUser(tenderUserResList);
         return ResponseEntity.ok(warpListRes);
     }
-
-
 
 
     /**
@@ -1155,7 +1169,7 @@ public class TransferBizImpl implements TransferBiz {
         Specification<Transfer> ts = Specifications
                 .<Transfer>and()
                 .in("state", ImmutableList.of(TransferContants.TRANSFERIND, TransferContants.TRANSFERIND).toArray())
-                .eq("type",0)
+                .eq("type", 0)
                 .build();
         Pageable pageable = new PageRequest(voBorrowListReq.getPageIndex(), voBorrowListReq.getPageSize(), new Sort(Sort.Direction.ASC, "state"));
         List<Transfer> transferList = transferService.findList(ts, pageable);

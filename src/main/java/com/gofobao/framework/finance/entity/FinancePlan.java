@@ -31,7 +31,7 @@ public class FinancePlan {
     private Long most;
     private Date successAt;
     private Date endLockAt;
-    private Integer finishedState;
+    private Boolean finishedState;
     private Integer totalSubPoint;
     private Integer subPointCount;
     private Integer createId;

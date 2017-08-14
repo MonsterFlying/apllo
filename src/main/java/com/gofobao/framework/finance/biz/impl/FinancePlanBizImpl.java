@@ -4,11 +4,15 @@ import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeReq;
+import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeResp;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
-import com.gofobao.framework.borrow.entity.Borrow;
+import com.gofobao.framework.common.assets.AssetChange;
+import com.gofobao.framework.common.assets.AssetChangeProvider;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.finance.biz.FinancePlanBiz;
@@ -18,9 +22,8 @@ import com.gofobao.framework.finance.service.FinancePlanBuyerService;
 import com.gofobao.framework.finance.service.FinancePlanService;
 import com.gofobao.framework.finance.vo.request.VoFinancePlanTender;
 import com.gofobao.framework.finance.vo.request.VoTenderFinancePlan;
-import com.gofobao.framework.helper.MathHelper;
-import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.ThirdAccountHelper;
+import com.gofobao.framework.finance.vo.response.VoViewFinancePlanTender;
+import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -30,24 +33,21 @@ import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
-import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
-import com.gofobao.framework.tender.vo.response.VoFindAutoTender;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import java.util.Date;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by Zeke on 2017/8/10.
@@ -72,9 +72,9 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
     private JixinManager jixinManager;
     @Autowired
     private UserService userService;
+    @Autowired
+    private AssetChangeProvider assetChangeProvider;
 
-    public static final String MSG = "msg";
-    public static final String MONEY = "money";
 
     /**
      * 理财计划投标
@@ -82,7 +82,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      * @param voTenderFinancePlan
      * @return
      */
-    public ResponseEntity<VoBaseResp> tenderFinancePlan(VoTenderFinancePlan voTenderFinancePlan) {
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoBaseResp> tenderFinancePlan(VoTenderFinancePlan voTenderFinancePlan) throws Exception {
         //前置判断计划可购金额是否充足
         long financePlanId = voTenderFinancePlan.getFinancePlanId();/* 理财计划id */
         long userId = voTenderFinancePlan.getUserId();/* 理财计划购买人id */
@@ -91,12 +92,126 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         Users users = userService.findById(userId);
         UserThirdAccount buyUserAccount = userThirdAccountService.findByUserId(userId);/* 理财计划购买人id */
         ThirdAccountHelper.allConditionCheck(buyUserAccount);
-        //判断购买人资金是否充足
-        Asset asset = assetService.findByUserId(userId);/* 购买人账户 */
-//        verifyUserInfo4Finance()
-        //获取有效的资金
+        Asset asset = assetService.findByUserIdLock(userId);/* 购买人账户 */
+        Preconditions.checkNotNull(asset, "购买人账户记录不存在!");
+        //验证理财用户账户
+        Multiset<String> errerMessage = HashMultiset.create();
+        boolean flag = verifyUserByFinancePlan(users, financePlan, asset, voTenderFinancePlan, errerMessage);
+        Set<String> errorSet = errerMessage.elementSet();
+        Iterator<String> iterator = errorSet.iterator();
+        if (!flag) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, iterator.next(), VoViewFinancePlanTender.class));
+        }
+        /* 购买理财计划有效金额 */
+        long validateMoney = NumberHelper.toLong(iterator.next());
+        //验证理财计划
+        flag = verifyFinancePlan(errerMessage, financePlanId, userId, financePlan);
+        errorSet = errerMessage.elementSet();
+        iterator = errorSet.iterator();
+        if (flag) {
+            ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, iterator.next(), VoViewFinancePlanTender.class));
+        }
+        //生成理财计划购买记录
+        FinancePlanBuyer financePlanBuyer = addFinancePlanBuyer(voTenderFinancePlan, userId, financePlan, validateMoney);
+        //更新理财计划购买人的资金账户
+        updateAssetByBuyFinancePlan(financePlan, buyUserAccount, validateMoney, financePlanBuyer);
 
-        return ResponseEntity.ok(VoBaseResp.ok("理财计划投标!"));
+        VoViewFinancePlanTender voViewFinancePlanTender = VoBaseResp.ok("购买成功!", VoViewFinancePlanTender.class);
+        voViewFinancePlanTender.setFinancePlanBuyer(financePlanBuyer);
+        return ResponseEntity.ok(voViewFinancePlanTender);
+    }
+
+    /**
+     * 生成理财计划购买记录
+     *
+     * @param voTenderFinancePlan
+     * @param userId
+     * @param financePlan
+     * @param validateMoney
+     * @return
+     */
+    private FinancePlanBuyer addFinancePlanBuyer(VoTenderFinancePlan voTenderFinancePlan, long userId, FinancePlan financePlan, long validateMoney) {
+        FinancePlanBuyer financePlanBuyer = new FinancePlanBuyer();
+        financePlanBuyer.setUserId(userId);
+        financePlanBuyer.setLeftMoney(validateMoney);
+        financePlanBuyer.setMoney(validateMoney);
+        financePlanBuyer.setUpdatedAt(new Date());
+        financePlanBuyer.setApr(financePlan.getBaseApr());
+        financePlanBuyer.setRemark(voTenderFinancePlan.getRemark());
+        financePlanBuyer.setCreatedAt(new Date());
+        financePlanBuyer.setRightMoney(0L);
+        financePlanBuyer.setApr(financePlan.getBaseApr());
+        financePlanBuyer.setStatus(1);
+        financePlanBuyer.setSource(1);
+        financePlanBuyerService.save(financePlanBuyer);
+        return financePlanBuyer;
+    }
+
+    /**
+     * 更新理财计划购买人的资金账户
+     *
+     * @param financePlan
+     * @param buyUserAccount
+     * @param validateMoney
+     * @param financePlanBuyer
+     * @throws Exception
+     */
+    private void updateAssetByBuyFinancePlan(FinancePlan financePlan, UserThirdAccount buyUserAccount, long validateMoney, FinancePlanBuyer financePlanBuyer) throws Exception {
+        //冻结资金，将购买资金划到计划冻结
+        AssetChange assetChange = new AssetChange();
+        assetChange.setForUserId(financePlanBuyer.getUserId());
+        assetChange.setUserId(financePlanBuyer.getUserId());
+        assetChange.setType(AssetChangeTypeEnum.financePlanFreeze);
+        assetChange.setRemark(String.format("成功购买理财计划[%s]冻结资金%s元", financePlan.getName(), StringHelper.formatDouble(validateMoney / 100D, true)));
+        assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+        assetChange.setMoney(validateMoney);
+        assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+        assetChange.setSourceId(financePlanBuyer.getId());
+        assetChangeProvider.commonAssetChange(assetChange);
+        //冻结购买债权转让人资金账户
+        String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);
+        BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
+        balanceFreezeReq.setAccountId(buyUserAccount.getAccountId());
+        balanceFreezeReq.setTxAmount(StringHelper.formatDouble(validateMoney, false));
+        balanceFreezeReq.setOrderId(orderId);
+        balanceFreezeReq.setChannel(ChannelContant.HTML);
+        BalanceFreezeResp balanceFreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BalanceFreezeResp.class);
+        if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceFreezeResp.getRetCode()))) {
+            throw new Exception("即信批次还款冻结资金失败：" + balanceFreezeResp.getRetMsg());
+        }
+        //保存存管冻结orderId
+        financePlanBuyer.setFreezeOrderId(orderId);
+        financePlanBuyerService.save(financePlanBuyer);
+    }
+
+    /**
+     * 验证理财计划
+     *
+     * @param errerMessage
+     * @param financePlanId
+     * @param userId
+     * @param financePlan
+     * @return
+     */
+    private boolean verifyFinancePlan(Multiset<String> errerMessage, long financePlanId, long userId, FinancePlan financePlan) {
+        //验证理财计划
+        int status = financePlan.getStatus();/* 理财计划状态 */
+        if (status != 1 || financePlan.getMoneyYes() == financePlan.getMoney()) {
+            errerMessage.add("理财计划不可购买!");
+            return true;
+        }
+        //判断理财计划是否结束
+        if (financePlan.getFinishedState()) {
+            errerMessage.add("理财计划已结束!");
+            return true;
+        }
+        //判断是否频繁购买
+        boolean bool = financePlanBuyerService.checkFinancePlanBuyNimiety(financePlanId, userId);
+        if (bool) {
+            errerMessage.add("理财计划购买频繁!");
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -115,11 +230,10 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      * @param voTenderFinancePlan
      * @return
      */
-    private boolean verifyUserInfo4Finance(Users user, FinancePlan financePlan, Asset asset, VoTenderFinancePlan voTenderFinancePlan, ImmutableMap<String, Object> immutableMap) {
-        String msg = "";
+    private boolean verifyUserByFinancePlan(Users user, FinancePlan financePlan, Asset asset, VoTenderFinancePlan voTenderFinancePlan, Multiset<String> errerMessage) {
         // 判断用户是否已经锁定
         if (user.getIsLock()) {
-            msg = "当前用户属于锁定状态, 如有问题请联系客户!";
+            errerMessage.add("当前用户属于锁定状态, 如有问题请联系客户!");
             return false;
         }
 
@@ -128,14 +242,14 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         long minLimitTenderMoney = ObjectUtils.isEmpty(financePlan.getLowest()) ? 50 * 100 : financePlan.getLowest();  // 最小投标金额
         long realMiniTenderMoney = Math.min(realTenderMoney, minLimitTenderMoney);  // 获取最小投标金额
         if (realMiniTenderMoney > voTenderFinancePlan.getMoney()) {
-            msg = "小于标的最小投标金额!";
+            errerMessage.add("小于标的最小投标金额!");
             return false;
         }
 
         // 真实有效投标金额
         long invaildataMoney = Math.min(realTenderMoney, voTenderFinancePlan.getMoney().intValue());
         if (invaildataMoney > asset.getUseMoney()) {
-            msg = "您的账户可用余额不足,请先充值!";
+            errerMessage.add("您的账户可用余额不足,请先充值!");
             return false;
         }
 
@@ -146,16 +260,16 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         if ((ObjectUtils.isEmpty(balanceQueryResponse)) || !balanceQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
-            msg = "当前网络不稳定,请稍后重试!";
+            errerMessage.add("当前网络不稳定,请稍后重试!");
             return false;
         }
 
         double availBal = NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0;// 可用余额  账面余额-可用余额=冻结金额
         if (availBal < invaildataMoney) {
-            msg = "资金账户未同步，请先在个人中心进行资金同步操作!";
+            errerMessage.add("资金账户未同步，请先在个人中心进行资金同步操作!");
             return false;
         }
-        immutableMap = ImmutableMap.of(MSG, msg, MONEY, invaildataMoney);
+        errerMessage.add(String.valueOf(invaildataMoney));
         return true;
     }
 
@@ -165,14 +279,15 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      * @param voFinancePlanTender
      * @return
      */
-    public ResponseEntity<VoBaseResp> financePlanTender(VoFinancePlanTender voFinancePlanTender) {
+    public ResponseEntity<VoViewFinancePlanTender> financePlanTender(VoFinancePlanTender voFinancePlanTender) {
         Date nowDate = new Date();
         //获取paramStr参数、校验参数有效性
         String paramStr = voFinancePlanTender.getParamStr();/* 理财计划投标 */
         if (!SecurityHelper.checkSign(voFinancePlanTender.getSign(), paramStr)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "理财计划投标 签名验证不通过!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "理财计划投标 签名验证不通过!", VoViewFinancePlanTender.class));
+
         }
         Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         /* 购买债权转让金额 分 */
@@ -199,11 +314,11 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         ThirdAccountHelper.allConditionCheck(buyUserAccount);
         //判断是否是购买人操作
         if (financePlanBuyer.getUserId() != userId) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "操作人非理财计划购买人!"));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "操作人非理财计划购买人!", VoViewFinancePlanTender.class));
         }
         //进行购买债权操作（部分债权转让），并推送到存管系统
         if (transfer.getTransferMoney() == transfer.getTransferMoneyYes()) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "债权转让已全部转出!"));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "债权转让已全部转出!", VoViewFinancePlanTender.class));
         }
         /*购买债权有效金额*/
         long validMoney = (long) MathHelper.min(transfer.getTransferMoney() - transfer.getTransferMoneyYes(), money);
@@ -213,7 +328,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
 
         /* gfb_asset finance_plan_money 成功后需要扣减 */
         // /更改购买计划状态、资金信息
-        return ResponseEntity.ok(VoBaseResp.ok("理财计划投标成功!"));
+        return ResponseEntity.ok(VoBaseResp.ok("理财计划投标成功!", VoViewFinancePlanTender.class));
     }
 
     /**
@@ -252,6 +367,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         transferService.save(transfer);
         /* 更新债权转让购买记录 */
         financePlanBuyer.setLeftMoney(financePlanBuyer.getLeftMoney() - validMoney);
+        financePlanBuyer.setRightMoney(financePlanBuyer.getRightMoney() + validMoney);
         financePlanBuyer.setUpdatedAt(nowDate);
         financePlanBuyerService.save(financePlanBuyer);
     }

@@ -601,6 +601,7 @@ public class ThirdBatchProvider {
                     assetChange.setUserId(tender.getUserId());
                     assetChange.setForUserId(tender.getUserId());
                 }
+                tenderService.save(tenders);
 
                 // 发送取消债权通知
                 sendCancelTender(nowDate, borrow, tenders);

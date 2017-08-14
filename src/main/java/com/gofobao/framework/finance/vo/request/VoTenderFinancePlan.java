@@ -16,4 +16,6 @@ public class VoTenderFinancePlan {
     private Long financePlanId;
     @ApiModelProperty("购买理财计划金额")
     private Long money;
+    @ApiModelProperty
+    private String remark;
 }
