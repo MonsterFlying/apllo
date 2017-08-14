@@ -112,6 +112,8 @@ public class Borrow implements Serializable {
 
     private String bailAccountId;
 
+    private String titularBorrowAccountId;
+
     private Long takeUserId;
 
     private String productId;

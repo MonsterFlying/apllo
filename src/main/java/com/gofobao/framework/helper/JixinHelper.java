@@ -103,6 +103,34 @@ public class JixinHelper {
         return null;
     }
 
+
+    /**
+     * 获取名义账户
+     *
+     * @param borrowId
+     * @return
+     */
+    public String getTitularBorrowAccount(long borrowId) {
+        Borrow borrow = borrowService.findById(borrowId);
+        if (ObjectUtils.isEmpty(borrow)) {
+            return null;
+        }
+
+        String titularBorrowAccountId = borrow.getTitularBorrowAccountId();
+        if (!ObjectUtils.isEmpty(titularBorrowAccountId)) {
+            return titularBorrowAccountId;
+        } else {
+            try {
+                DictValue dictValue = jixinCache.get("titularBorrowUserId");
+                UserThirdAccount bailAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
+                return bailAccount.getAccountId();
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
     /**
      * 获取身份证类型
      *
