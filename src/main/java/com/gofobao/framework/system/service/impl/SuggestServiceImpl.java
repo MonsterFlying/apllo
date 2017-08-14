@@ -21,6 +21,7 @@ public class SuggestServiceImpl implements SuggestService {
             suggestRepository.save(suggest);
             return true;
         } catch (Exception e) {
+            e.printStackTrace();
             return false;
         }
     }

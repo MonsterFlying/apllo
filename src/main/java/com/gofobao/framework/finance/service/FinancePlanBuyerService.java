@@ -1,6 +1,5 @@
 package com.gofobao.framework.finance.service;
 
-import com.gofobao.framework.finance.entity.FinancePlan;
 import com.gofobao.framework.finance.entity.FinancePlanBuyer;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;

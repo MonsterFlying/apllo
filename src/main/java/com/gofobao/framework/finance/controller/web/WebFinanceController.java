@@ -2,11 +2,9 @@ package com.gofobao.framework.finance.controller.web;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.finance.biz.FinancePlanBiz;
-import com.gofobao.framework.finance.entity.FinancePlan;
 import com.gofobao.framework.finance.vo.request.VoFinancePlanTender;
 import com.gofobao.framework.finance.vo.response.VoViewFinancePlanTender;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
