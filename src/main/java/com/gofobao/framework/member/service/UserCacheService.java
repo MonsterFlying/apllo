@@ -1,6 +1,7 @@
 package com.gofobao.framework.member.service;
 
 import com.gofobao.framework.member.entity.UserCache;
+import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.vo.response.pc.AssetStatistic;
 import com.gofobao.framework.member.vo.response.pc.ExpenditureDetail;
 import com.gofobao.framework.member.vo.response.pc.IncomeEarnedDetail;
@@ -60,4 +61,11 @@ public interface UserCacheService {
      */
     ResponseEntity<ExpenditureDetail>expenditureDetail(Long userId);
 
+    /**
+     * 判断用户是佛为新用户
+     * 是否投过官方标或者渠道标
+     * @param user
+     * @return
+     */
+    boolean isNew(Users user);
 }
