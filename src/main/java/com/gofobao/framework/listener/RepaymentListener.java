@@ -103,7 +103,7 @@ public class RepaymentListener {
                 }
             }
         } else {
-            log.error("AutoTenderListener 未找到对应的type");
+            log.error("RepaymentListener 未找到对应的type");
         }
     }
 }

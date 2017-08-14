@@ -1,6 +1,10 @@
 package com.gofobao.framework.tender.controller;
 
+import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeReq;
+import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.TransferBiz;
@@ -39,8 +43,8 @@ public class TransferController {
      * @throws Exception
      */
     @ApiOperation("结束债权转让")
-    @PostMapping("v2/new/transfer/end")
-    public ResponseEntity<VoBaseResp> endTransfer(@Valid VoEndTransfer voEndTransfer, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    @PostMapping("/v2/new/transfer/end")
+    public ResponseEntity<VoBaseResp> endTransfer(@Valid @ModelAttribute VoEndTransfer voEndTransfer, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         try {
             voEndTransfer.setUserId(userId);
             return transferBiz.endTransfer(voEndTransfer);
@@ -57,8 +61,8 @@ public class TransferController {
      * @throws Exception
      */
     @ApiOperation("新版发布债权转让")
-    @PostMapping("v2/new/transfer/publish")
-    public ResponseEntity<VoBaseResp> newTransferTender(@Valid VoTransferTenderReq voTransferTenderReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    @PostMapping("/v2/new/transfer/publish")
+    public ResponseEntity<VoBaseResp> newTransferTender(@Valid @ModelAttribute VoTransferTenderReq voTransferTenderReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         try {
             voTransferTenderReq.setUserId(userId);
             return transferBiz.newTransferTender(voTransferTenderReq);
@@ -71,8 +75,8 @@ public class TransferController {
      * 购买债权转让
      */
     @ApiOperation("购买债权转让")
-    @PostMapping("v2/new/transfer/buy")
-    public ResponseEntity<VoBaseResp> buyTransfer(@Valid VoBuyTransfer voBuyTransfer, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    @PostMapping("/v2/new/transfer/buy")
+    public ResponseEntity<VoBaseResp> buyTransfer(@Valid  @ModelAttribute VoBuyTransfer voBuyTransfer, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         try {
             voBuyTransfer.setUserId(userId);
             return transferBiz.buyTransfer(voBuyTransfer);
@@ -83,7 +87,7 @@ public class TransferController {
     }
 
     @ApiOperation("转让中列表")
-    @GetMapping("v2/transferOf/list/{pageIndex}/{pageSize}")
+    @GetMapping("/v2/transferOf/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewTransferOfWarpRes> tranferOfList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                                  @PathVariable Integer pageIndex,
                                                                  @PathVariable Integer pageSize) {
