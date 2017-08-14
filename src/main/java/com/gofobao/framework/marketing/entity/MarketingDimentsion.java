@@ -1,5 +1,6 @@
 package com.gofobao.framework.marketing.entity;
 
+import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
@@ -13,6 +14,7 @@ import java.util.Date;
 @Table(name = "gfb_marketing_dimension")
 @DynamicUpdate
 @DynamicInsert
+@Data
 public class MarketingDimentsion {
     @Id
     @GeneratedValue

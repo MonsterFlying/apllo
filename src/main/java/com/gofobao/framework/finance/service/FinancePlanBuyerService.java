@@ -11,6 +11,16 @@ import java.util.List;
  * Created by Zeke on 2017/8/10.
  */
 public interface FinancePlanBuyerService {
+
+    /**
+     * 检查投标是否太频繁
+     *
+     * @param borrowId
+     * @param userId
+     * @return
+     */
+    boolean checkFinancePlanBuyNimiety(Long borrowId, Long userId);
+
     FinancePlanBuyer findById(long id);
 
     FinancePlanBuyer findByIdLock(long id);

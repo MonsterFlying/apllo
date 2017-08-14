@@ -4,6 +4,7 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.security.entity.JwtUserFactory;
+import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
@@ -155,6 +156,14 @@ public class UserServiceImpl implements UserDetailsService, UserService {
                 "FROM `gfb_users` t1 JOIN gfb_role_user t2 ON t1.id = t2.user_id WHERE t2.role_id in (3, 4)";
         Query query = entityManager.createNativeQuery(sql, Users.class);
         return query.getResultList();
+    }
+
+    @Override
+    public Users findUserByUserId(Long userId) {
+        Users users = userRepository.findById(userId);
+        Preconditions.checkNotNull(users, "UserServiceImpl.findUserByUserId: data is null") ;
+
+        return users;
     }
 
     /**

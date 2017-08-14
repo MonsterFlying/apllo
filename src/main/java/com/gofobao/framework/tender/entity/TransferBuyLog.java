@@ -38,4 +38,5 @@ public class TransferBuyLog {
     private Boolean thirdTransferFlag;
     private String thirdTransferOrderId;
     private String transferAuthCode;
+    private String freezeOrderId;
 }

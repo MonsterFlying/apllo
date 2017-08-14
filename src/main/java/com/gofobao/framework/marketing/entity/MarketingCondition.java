@@ -1,5 +1,6 @@
 package com.gofobao.framework.marketing.entity;
 
+import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
@@ -13,6 +14,7 @@ import java.util.Date;
 @Table(name = "gfb_marketing_condition")
 @DynamicUpdate
 @DynamicInsert
+@Data
 public class MarketingCondition {
     @Id
     @GeneratedValue
@@ -21,6 +23,8 @@ public class MarketingCondition {
     private Long tenderMoneyMin;
     private Date registerMinTime;
     private Date openAccountMinTime;
+    private Long rechargeMoneyMin ;
+    private Date loginMinTime ;
     private Integer del;
     private Date createTime;
 }

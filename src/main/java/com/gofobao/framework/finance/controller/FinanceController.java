@@ -1,26 +1,26 @@
 package com.gofobao.framework.finance.controller;
 
 import com.gofobao.framework.common.page.Page;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.finance.biz.FinancePlanBiz;
 import com.gofobao.framework.finance.biz.FinancePlanBuyerBiz;
+import com.gofobao.framework.finance.vo.request.VoTenderFinancePlan;
 import com.gofobao.framework.finance.vo.response.PlanBuyUserListWarpRes;
 import com.gofobao.framework.finance.vo.response.PlanDetail;
 import com.gofobao.framework.finance.vo.response.PlanListWarpRes;
+import com.gofobao.framework.finance.vo.response.VoViewFinancePlanTender;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * Created by Zeke on 2017/8/10.
  */
 @RestController
-@RequestMapping("/pub/finance")
 @Api(description = "理财")
+@RequestMapping("/pub/finance")
 public class FinanceController {
 
     @Autowired
@@ -52,4 +52,19 @@ public class FinanceController {
     }
 
 
+    /**
+     * 购买理财计划
+     *
+     * @param voTenderFinancePlan
+     * @return
+     */
+    @ApiOperation("购买理财计划")
+    @PostMapping("/v2/tender/finance/plan")
+    public ResponseEntity<VoBaseResp> tenderFinancePlan(VoTenderFinancePlan voTenderFinancePlan) {
+        try {
+            return financePlanBiz.tenderFinancePlan(voTenderFinancePlan);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后再试!", VoViewFinancePlanTender.class));
+        }
+    }
 }

@@ -1,14 +1,20 @@
 package com.gofobao.framework.finance.service.impl;
 
+import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.common.data.DataObject;
+import com.gofobao.framework.common.data.GeSpecification;
 import com.gofobao.framework.finance.entity.FinancePlanBuyer;
 import com.gofobao.framework.finance.repository.FinancePlanBuyerRepository;
 import com.gofobao.framework.finance.service.FinancePlanBuyerService;
+import com.gofobao.framework.helper.DateHelper;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -20,11 +26,31 @@ public class FinancePlanBuyerServiceImpl implements FinancePlanBuyerService {
     @Autowired
     private FinancePlanBuyerRepository financePlanBuyerRepository;
 
-    public FinancePlanBuyer findById(long id){
+    /**
+     * 检查投标是否太频繁
+     *
+     * @param planId
+     * @param userId
+     * @return
+     */
+    public boolean checkFinancePlanBuyNimiety(Long planId, Long userId) {
+
+        Specification<FinancePlanBuyer> specification = Specifications
+                .<FinancePlanBuyer>and()
+                .eq("userId", userId)
+                .eq("planId", planId)
+                .eq("status", 1)
+                .predicate(new GeSpecification<FinancePlanBuyer>("updatedAt", new DataObject(DateHelper.subMinutes(new Date(), 1))))
+                .build();
+        List<FinancePlanBuyer> tenderList = financePlanBuyerRepository.findAll(specification);
+        return !CollectionUtils.isEmpty(tenderList);
+    }
+
+    public FinancePlanBuyer findById(long id) {
         return financePlanBuyerRepository.getOne(id);
     }
 
-    public FinancePlanBuyer findByIdLock(long id){
+    public FinancePlanBuyer findByIdLock(long id) {
         return financePlanBuyerRepository.findById(id);
     }
 

@@ -25,6 +25,8 @@ import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
+import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryRequest;
+import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryResponse;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResponse;
@@ -321,7 +323,7 @@ public class AplloApplicationTests {
 
     private void doAgainVerify() {
         Map<String, String> msg = new HashMap<>();
-        msg.put("borrowId", "169914");
+        msg.put("borrowId", "169976");
         try {
             borrowProvider.doAgainVerify(msg);
         } catch (Throwable e) {
@@ -331,8 +333,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("112822");
-        batchDetailsQueryReq.setBatchTxDate("20170809");
+        batchDetailsQueryReq.setBatchNo("145017");
+        batchDetailsQueryReq.setBatchTxDate("20170814");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -473,11 +475,11 @@ public class AplloApplicationTests {
         //查询存管账户资金信息
         //balanceQuery();
         //查询资金流水
-        accountDetailsQuery();
+        //accountDetailsQuery();
         //根据手机号查询存管账户
         //findAccountByMobile();
         //受托支付
-        trusteePay();
+        //trusteePay();
         //签约查询
         //creditAuthQuery();
         //取消批次
@@ -493,7 +495,7 @@ public class AplloApplicationTests {
         //查询标的集合
         //findThirdBorrowList();
         //复审
-        //doAgainVerify();
+        doAgainVerify();
         //批次状态查询
         //batchQuery();
         //批次详情查询

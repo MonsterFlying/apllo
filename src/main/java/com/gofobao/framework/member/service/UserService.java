@@ -110,4 +110,7 @@ public interface UserService {
 
 
     List<Users> findByIdIn(List<Long> ids);
+
+    Users findUserByUserId(Long userId);
+
 }

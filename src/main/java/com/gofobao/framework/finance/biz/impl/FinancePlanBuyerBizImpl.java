@@ -14,7 +14,6 @@ import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
-import com.gofobao.framework.tender.vo.response.VoBorrowTenderUser;
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;

@@ -105,7 +105,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
     @Autowired
     TaskSchedulerBiz taskSchedulerBiz;
     @Autowired
-    AssetChangeProvider assetChangeProvider ;
+    AssetChangeProvider assetChangeProvider;
 
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
@@ -153,8 +153,9 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         debtRegisterRequest.setTxAmount(StringHelper.formatDouble(borrow.getMoney(), 100, false));
         debtRegisterRequest.setRate(StringHelper.formatDouble(borrow.getApr(), 100, false));
         debtRegisterRequest.setTxFee("0");
-        String bailAccountId = jixinHelper.getBailAccountId(borrowId);
-        debtRegisterRequest.setBailAccountId(bailAccountId);
+        /* 名义借款人id */
+        String titularBorrowAccount = jixinHelper.getTitularBorrowAccount(borrowId);
+        debtRegisterRequest.setNominalAccountId(titularBorrowAccount);
         debtRegisterRequest.setAcqRes(StringHelper.toString(borrowId));
         debtRegisterRequest.setChannel(ChannelContant.HTML);
         if (entrustFlag && !ObjectUtils.isEmpty(takeUserThirdAccount)) { //判断是否是受托支付标的
@@ -179,7 +180,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
                 return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
             }
         }
-        borrow.setBailAccountId(bailAccountId);
+        borrow.setTitularBorrowAccountId(titularBorrowAccount);
         borrow.setProductId(productId);
         borrowService.updateById(borrow);
         try {
@@ -325,7 +326,6 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         }
         return true;
     }
-
 
 
     /**
@@ -490,7 +490,8 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         freezeAssetChange.setMoney(frozenMoney);
         freezeAssetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
         freezeAssetChange.setSourceId(borrowRepayment.getId());
-        assetChangeProvider.commonAssetChange(freezeAssetChange);;
+        assetChangeProvider.commonAssetChange(freezeAssetChange);
+        ;
 
         BatchRepayReq request = new BatchRepayReq();
         request.setBatchNo(batchNo);
@@ -573,9 +574,9 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             assetChange.setType(AssetChangeTypeEnum.unfreeze);
             assetChange.setUserId(userId);
             try {
-                assetChangeProvider.commonAssetChange(assetChange) ;
+                assetChangeProvider.commonAssetChange(assetChange);
             } catch (Exception e) {
-                log.error("即信批次还款(提前结清)异常：",e);
+                log.error("即信批次还款(提前结清)异常：", e);
             }
         } else {
             log.info("=============================(提前结清)即信批次放款检验参数回调===========================");
