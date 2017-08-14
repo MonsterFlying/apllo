@@ -107,4 +107,6 @@ public interface UserService {
 
     List<Users>serviceUser();
 
+    Users findUserByUserId(Long userId);
+
 }

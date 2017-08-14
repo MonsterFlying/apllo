@@ -5,6 +5,7 @@ import com.gofobao.framework.asset.repository.AssetRepository;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.member.entity.UserCache;
+import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UserCacheRepository;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.vo.response.pc.*;
@@ -264,5 +265,11 @@ public class UserCacheServiceImpl implements UserCacheService {
 
         return ResponseEntity.ok(expenditureDetail);
 
+    }
+
+    @Override
+    public boolean isNew(Users user) {
+        UserCache userCache = userCacheRepository.findByUserId(user.getId());
+        return !userCache.getTenderQudao() && !userCache.getTenderTuijian() ;
     }
 }

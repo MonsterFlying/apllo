@@ -1,5 +1,6 @@
 package com.gofobao.framework.marketing.entity;
 
+import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
@@ -13,6 +14,7 @@ import java.util.Date;
 @Table(name = "gfb_marketing")
 @DynamicUpdate
 @DynamicInsert
+@Data
 public class Marketing {
     @Id
     @GeneratedValue
@@ -23,9 +25,10 @@ public class Marketing {
     private String targerUrl ;
     private String viewUrl ;
     private Date beginTime ;
-    private Date startTime ;
+    private Date endTime ;
     private Integer openState ;
     private Integer del ;
     private Date createTime ;
     private Date updateTime ;
+    private Integer parentState ;
 }
