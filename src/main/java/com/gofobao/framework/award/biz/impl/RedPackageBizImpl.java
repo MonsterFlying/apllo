@@ -92,22 +92,6 @@ public class RedPackageBizImpl implements RedPackageBiz {
     @Autowired
     MarketingRedpackRecordService marketingRedpackRecordService;
 
-    LoadingCache<String, DictValue> jixinCache = CacheBuilder
-            .newBuilder()
-            .expireAfterWrite(60, TimeUnit.MINUTES)
-            .maximumSize(1024)
-            .build(new CacheLoader<String, DictValue>() {
-                @Override
-                public DictValue load(String bankName) throws Exception {
-                    DictItem dictItem = dictItemService.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
-                    if (ObjectUtils.isEmpty(dictItem)) {
-                        return null;
-                    }
-
-                    return dictValueService.findTopByItemIdAndValue01(dictItem.getId(), bankName);
-                }
-            });
-
     @Autowired
     private JixinManager jixinManager;
 
@@ -155,9 +139,9 @@ public class RedPackageBizImpl implements RedPackageBiz {
                     .body(VoViewOpenRedPackageWarpRes.error(VoViewOpenRedPackageWarpRes.ERROR, "不要调皮了, 当前红包已经被领取了!", VoViewOpenRedPackageWarpRes.class));
         }
 
-        Date nowDate = new Date() ;
+        Date nowDate = new Date();
         // 判断时间
-        if(DateHelper.diffInDays(nowDate, marketingRedpackRecord.getCancelTime(), false) > 0){
+        if (DateHelper.diffInDays(nowDate, marketingRedpackRecord.getCancelTime(), false) > 0) {
             // 更新红包
             marketingRedpackRecord.setState(2);
             marketingRedpackRecordService.save(marketingRedpackRecord);
@@ -166,17 +150,13 @@ public class RedPackageBizImpl implements RedPackageBiz {
                     .body(VoViewOpenRedPackageWarpRes.error(VoViewOpenRedPackageWarpRes.ERROR, "对不起, 当前红包已过期!", VoViewOpenRedPackageWarpRes.class));
         }
 
-
         try {
             String groupSeqNo = assetChangeProvider.getGroupSeqNo();
             long redId = assetChangeProvider.getRedpackAccountId();
-            //查询红包账户
-            DictValue dictValue = jixinCache.get(JixinContants.RED_PACKET_USER_ID);
-            UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
-            //请求即信红包
+            UserThirdAccount redpackThirdAccount = userThirdAccountService.findByUserId(redId); //查询红包账户
             UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(marketingRedpackRecord.getUserId());
             VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-            voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
+            voucherPayRequest.setAccountId(redpackThirdAccount.getAccountId());
             voucherPayRequest.setTxAmount(StringHelper.formatDouble(marketingRedpackRecord.getMoney(), 100, false));
             voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
             voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
@@ -190,7 +170,6 @@ public class RedPackageBizImpl implements RedPackageBiz {
                         .badRequest()
                         .body(VoViewOpenRedPackageWarpRes.error(VoViewOpenRedPackageWarpRes.ERROR, "存管系统发放红包异常!", VoViewOpenRedPackageWarpRes.class));
             }
-
 
             // 红包账户发送红包
             AssetChange redpackPublish = new AssetChange();
