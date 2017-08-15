@@ -52,10 +52,8 @@ public class BorrowProvider {
         }
 
         log.info(String.format("复审: 批量正常放款申请开始: %s", GSON.toJson(msg)));
-        if (ObjectUtils.isEmpty(borrow.getSuccessAt())) {
-            borrow.setSuccessAt(new Date());
-            borrowService.save(borrow);
-        }
+        borrow.setSuccessAt(new Date());
+        borrowService.save(borrow);
 
         //批次放款
         VoThirdBatchLendRepay voThirdBatchLendRepay = new VoThirdBatchLendRepay();
