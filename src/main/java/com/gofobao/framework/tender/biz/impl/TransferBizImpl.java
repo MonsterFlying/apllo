@@ -516,7 +516,7 @@ public class TransferBizImpl implements TransferBiz {
             childTender.setTransferBuyId(transferBuyLog.getId());
             childTender.setAlreadyInterest(transferBuyLog.getAlreadyInterest());
             childTender.setThirdTransferOrderId(transferBuyLog.getThirdTransferOrderId());
-            childTender.setThirdAdvanceFlag(transferBuyLog.getThirdTransferFlag());
+            childTender.setThirdTransferFlag(transferBuyLog.getThirdTransferFlag());
             childTender.setTransferAuthCode(transferBuyLog.getTransferAuthCode());
             childTender.setCreatedAt(nowDate);
             childTender.setUpdatedAt(nowDate);
