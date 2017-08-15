@@ -502,6 +502,7 @@ public class TransferBizImpl implements TransferBiz {
 
             childTender.setUserId(transferBuyLog.getUserId());
             childTender.setStatus(1);
+            childTender.setType(transferBuyLog.getType());
             childTender.setBorrowId(transfer.getBorrowId());
             childTender.setSource(transferBuyLog.getSource());
             childTender.setIsAuto(transferBuyLog.getAuto());
@@ -652,7 +653,7 @@ public class TransferBizImpl implements TransferBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
         }
 
-        if(transfer.getUserId().intValue()==userId){
+        if (transfer.getUserId().intValue() == userId) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "不能购买自己的债权"));
         }
 
@@ -710,6 +711,7 @@ public class TransferBizImpl implements TransferBiz {
         //新增购买债权记录
         TransferBuyLog transferBuyLog = new TransferBuyLog();
         transferBuyLog.setUserId(userId);
+        transferBuyLog.setType(0);
         transferBuyLog.setState(0);
         transferBuyLog.setAuto(auto);
         transferBuyLog.setBuyMoney(buyMoney);
@@ -722,6 +724,7 @@ public class TransferBizImpl implements TransferBiz {
         transferBuyLog.setTransferId(transferId);
         transferBuyLog.setAlreadyInterest(NumberHelper.toLong(alreadyInterest));
         transferBuyLog.setSource(0);
+
         transferBuyLogService.save(transferBuyLog);
 
         //更新债权抓让信息

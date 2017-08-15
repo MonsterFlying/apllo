@@ -1,5 +1,6 @@
 package com.gofobao.framework.asset.biz.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.IdTypeContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
@@ -19,9 +20,11 @@ import com.gofobao.framework.api.model.direct_recharge_plus.DirectRechargePlusRe
 import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.entity.AssetLog;
+import com.gofobao.framework.asset.entity.NewAssetLog;
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.AssetLogService;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.asset.service.NewAssetLogService;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
 import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.request.VoRechargeReq;
@@ -29,6 +32,7 @@ import com.gofobao.framework.asset.vo.request.VoSynAssetsRep;
 import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.asset.vo.response.pc.AssetLogs;
 import com.gofobao.framework.asset.vo.response.pc.VoViewAssetLogsWarpRes;
+import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
@@ -70,6 +74,8 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -160,6 +166,9 @@ public class AssetBizImpl implements AssetBiz {
             });
 
     private final Gson GSON = new Gson();
+
+    @Autowired
+    NewAssetLogService newAssetLogService;
 
     /**
      * 获取用户资产详情
@@ -1170,6 +1179,57 @@ public class AssetBizImpl implements AssetBiz {
         voUnionRechargeInfo.setBankName("江西银行");
         voUnionRechargeInfo.setBranchName("江西银行总行营业部");
         return ResponseEntity.ok(voUnionRechargeInfo);
+    }
+
+
+    @Override
+    public ResponseEntity<VoViewAssetLogWarpRes> newAssetLogResList(VoAssetLogReq voAssetLogReq) {
+        String startTimeStr = voAssetLogReq.getStartTime();
+        if (StringUtils.isEmpty(startTimeStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询时间错误", VoViewAssetLogWarpRes.class));
+        }
+
+        String endTimeStr = voAssetLogReq.getEndTime();
+        if (StringUtils.isEmpty(endTimeStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询时间错误", VoViewAssetLogWarpRes.class));
+        }
+
+        Sort sort = new Sort(
+                new Sort.Order(Sort.Direction.DESC, "id"));
+        Pageable pageable = new PageRequest(voAssetLogReq.getPageIndex()
+                , voAssetLogReq.getPageSize()
+                , sort);
+        Date startTime = DateHelper.beginOfDate(DateHelper.stringToDate(voAssetLogReq.getStartTime(), DateHelper.DATE_FORMAT_YMD));
+        Date endTime = DateHelper.endOfDate(DateHelper.stringToDate(voAssetLogReq.getEndTime(), DateHelper.DATE_FORMAT_YMD));
+        Specification<NewAssetLog> specification = Specifications.<NewAssetLog>and()
+                .eq(!StringUtils.isEmpty(voAssetLogReq.getType()), "type", voAssetLogReq.getType())
+                .between("createdTime",
+                        new Range<>(
+                                DateHelper.beginOfDate(startTime),
+                                DateHelper.endOfDate(endTime)))
+                .eq("userId", voAssetLogReq.getUserId())
+                .build();
+        Page<NewAssetLog> assetLogPage = newAssetLogService.findAll(specification, pageable);
+        List<NewAssetLog> assetLogs = assetLogPage.getContent();
+        VoViewAssetLogWarpRes voViewAssetLogWarpRes = VoBaseResp.ok("查询成功", VoViewAssetLogWarpRes.class);
+        if (CollectionUtils.isEmpty(assetLogs)) {
+            return ResponseEntity.ok(voViewAssetLogWarpRes) ;
+        }
+
+        VoViewAssetLogRes voViewAssetLogRes = null ;
+        for(NewAssetLog newAssetLog : assetLogs){
+            voViewAssetLogRes = new VoViewAssetLogRes() ;
+            voViewAssetLogRes.setCreatedAt(DateHelper.dateToString(newAssetLog.getCreateTime()));
+            voViewAssetLogRes.setMoney(new Double(newAssetLog.getOpMoney() / 100D).toString());
+            voViewAssetLogRes.setShowMoney(StringHelper.formatDouble(newAssetLog.getOpMoney() / 100D, true));
+            voViewAssetLogRes.setTypeName(newAssetLog.getOpName());
+            voViewAssetLogWarpRes.getResList().add(voViewAssetLogRes) ;
+        }
+        return ResponseEntity.ok(voViewAssetLogWarpRes);
     }
 
 
