@@ -229,7 +229,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         detailRes.setInterest(StringHelper.formatMon(interest / 100d));
         detailRes.setPrincipal(StringHelper.formatMon(principal / 100d));
         detailRes.setBorrowName(borrow.getName());
-        detailRes.setCollectionMoney(StringHelper.formatMon(borrowRepayment.getRepayMoneyYes() / 100d));
+        detailRes.setCollectionMoney(StringHelper.formatMon(borrowRepayment.getRepayMoney()/ 100d));
         detailRes.setLateDays(borrowRepayment.getLateDays());
         detailRes.setOrder(borrowRepayment.getOrder() + 1);
 

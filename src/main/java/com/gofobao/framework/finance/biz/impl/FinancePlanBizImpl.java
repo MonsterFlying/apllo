@@ -492,7 +492,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         List<Integer> statusArray = Lists.newArrayList(FinannceContants.CANCEL,
                 FinannceContants.CHECKED_NO_PASS,
                 FinannceContants.NO_PASS,
-                FinannceContants.PURCJASE);
+                FinannceContants.PENDINGTRIAL);
 
         Specification<FinancePlan> specification = Specifications.<FinancePlan>and()
                 .ne("status", statusArray.toArray())
@@ -551,6 +551,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         planDetail.setName(financePlan.getName());
         //起投金额
         planDetail.setLowMoney(StringHelper.formatMon(financePlan.getLowest() / 100D));
+        planDetail.setHideLowMoney(financePlan.getLowest() / 100D);
         //已投金额
         Long moneyYes = financePlan.getMoneyYes();
         //剩余金额
