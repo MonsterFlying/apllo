@@ -34,6 +34,5 @@ public class MarketingRedpackRecord {
     private Integer del;
     private String remark;
 
-    public List<MarketingRedpackRecord> findByUserIdAndState(Long userId, Integer status, Pageable pageable) {
-    }
+
 }

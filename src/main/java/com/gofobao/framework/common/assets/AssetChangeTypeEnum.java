@@ -71,15 +71,15 @@ public enum AssetChangeTypeEnum {
     platformRepayMentPenaltyFee("收取还款滞纳金", "platformRepayMentPenaltyFee", "7722", "add@useMoney", "add@expenditureOverdue", "D"),
 
     /**
-     * 担保人代偿还款
+     * 名义借款人垫付还款
      */
-    compensatoryRepayment("代偿还款", "compensatoryRepayment", "2788", "sub@noUseMoney", "", "C"),
+    compensatoryRepayment("垫付还款", "compensatoryRepayment", "2788", "sub@noUseMoney", "", "C"),
 
 
     /**
-     * 代偿还款滞纳金
+     * 垫付还款滞纳金
      */
-    compensatoryRepaymentOverdueFee("代偿还款滞纳金", "compensatoryRepaymentOverdueFee", "2788", "sub@noUseMoney", "", "C"),
+    compensatoryRepaymentOverdueFee("垫付还款滞纳金", "compensatoryRepaymentOverdueFee", "2788", "sub@noUseMoney", "", "C"),
 
     /**
      * 出借人投标
@@ -102,9 +102,9 @@ public enum AssetChangeTypeEnum {
     receivedPaymentsPenalty("还款滞纳金", "receivedPayments", "7781", "add@useMoney", "add@incomeOverdue", "D"),
 
     /**
-     * 代偿账户收回代偿本息
+     * 垫付账户收回垫付本息
      */
-    compensatoryReceivedPayments("代偿账户代偿本息回款", "compensatoryReceivedPayments", "7788", "add@useMoney", "add@incomeInterest#interest", "D"),
+    compensatoryReceivedPayments("垫付账户垫付本息回款", "compensatoryReceivedPayments", "7788", "add@useMoney", "add@incomeInterest#interest", "D"),
 
     /**
      * 平台派发收益红包

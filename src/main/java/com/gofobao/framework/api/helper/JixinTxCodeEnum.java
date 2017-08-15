@@ -200,12 +200,12 @@ public enum JixinTxCodeEnum {
             "批次融资人还担保账户垫款"
     ),
     /**
-     * 批次担保账户代偿
+     * 批次名义借款人垫付
      */
     BATCH_BAIL_REPAY(
             "batchBailRepay",
             "/escrow/p2p/online",
-            "批次担保账户代偿"
+            "批次名义借款人垫付"
     ),
     /**
      * 借款人受托支付申请

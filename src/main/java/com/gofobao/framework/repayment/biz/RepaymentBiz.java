@@ -157,16 +157,6 @@ public interface RepaymentBiz {
      */
     ResponseEntity<VoBaseResp> newAdvance(VoAdvanceReq voAdvanceReq) throws Exception;
 
-
-    /**
-     * pc 立即还款
-     *
-     * @param voPcInstantlyRepaymentReq
-     * @return
-     * @throws Exception
-     */
-    ResponseEntity<VoBaseResp> pcRepay(VoPcInstantlyRepaymentReq voPcInstantlyRepaymentReq) throws Exception;
-
     /**
      * 批次融资人还担保账户垫款
      *
