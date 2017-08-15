@@ -28,7 +28,6 @@ import com.gofobao.framework.asset.service.AdvanceLogService;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.BatchAssetChangeItemService;
 import com.gofobao.framework.asset.service.BatchAssetChangeService;
-import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.borrow.service.BorrowService;
@@ -91,9 +90,7 @@ import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.entity.Tender;
-import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.service.TenderService;
-import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -122,7 +119,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.gofobao.framework.helper.DateHelper.isBetween;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toSet;
 

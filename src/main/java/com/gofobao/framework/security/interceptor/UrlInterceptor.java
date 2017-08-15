@@ -1,4 +1,4 @@
-package com.gofobao.framework.security;
+package com.gofobao.framework.security.interceptor;
 
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.member.entity.Users;
@@ -60,18 +60,19 @@ public class UrlInterceptor implements HandlerInterceptor {
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
             //当前用户是理财用户
-            if (userType.equals("finance")) {
+            if (!StringUtils.isEmpty(userType) && userType.equals("finance")) {
                 //理财用户非法访问金服用户的url资源
                 if (!urlPath.contains("finance"))
                     response.setStatus(HttpStatus.SC_BAD_REQUEST);
-                errorMap.put("time", DateHelper.dateToString(new Date()));
-                String json = new Gson().toJson(errorMap);
-                response.getWriter().write(json);
-                return false;
+                    errorMap.put("time", DateHelper.dateToString(new Date()));
+                    String json = new Gson().toJson(errorMap);
+                    response.getWriter().write(json);
+                    return false;
             } else {
                 //金服用户访问 非法访问理财用户的url资源
                 if (urlPath.contains("finance")) {
                     response.setStatus(HttpStatus.SC_BAD_REQUEST);
+                    errorMap.put("time", DateHelper.dateToString(new Date()));
                     String json = new Gson().toJson(errorMap);
                     response.getWriter().write(json);
                     return false;

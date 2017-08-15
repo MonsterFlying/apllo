@@ -1,6 +1,5 @@
 package com.gofobao.framework.marketing.biz.impl;
 
-import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.marketing.biz.MarketingBiz;
 import com.gofobao.framework.marketing.entity.MarketingRedpackRecord;
@@ -10,7 +9,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
 
 import java.util.Date;
 import java.util.List;

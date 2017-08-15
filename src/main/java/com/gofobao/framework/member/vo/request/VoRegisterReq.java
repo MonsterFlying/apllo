@@ -39,4 +39,7 @@ public class VoRegisterReq  extends VoBaseReq {
     @ApiModelProperty(value = "推荐码")
     private String inviteCode ;
 
+    @ApiModelProperty(hidden = true)
+    private String type;
+
 }

@@ -182,4 +182,12 @@ public interface AssetBiz {
      * @return
      */
     ResponseEntity<VoUnionRechargeInfo> unionBankInfo(Long userId);
+
+    /**
+     * 新版资金流水
+     * @param voAssetLogReq
+     * @return
+     */
+    ResponseEntity<VoViewAssetLogWarpRes> newAssetLogResList(VoAssetLogReq voAssetLogReq);
+
 }

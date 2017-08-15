@@ -1,15 +1,11 @@
 package com.gofobao.framework.repayment.biz;
 
-import com.gofobao.framework.asset.entity.BatchAssetChange;
-import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
 import com.gofobao.framework.collection.vo.request.VoCollectionListReq;
 import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.repayment.entity.BorrowRepayment;
-import com.gofobao.framework.repayment.entity.RepayAssetChange;
 import com.gofobao.framework.repayment.vo.request.*;
 import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
 import com.gofobao.framework.repayment.vo.response.VoViewRepaymentOrderDetailWarpRes;
@@ -19,8 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Created by admin on 2017/6/5.

@@ -1,6 +1,6 @@
 package com.gofobao.framework.config;
 
-import com.gofobao.framework.security.UrlInterceptor;
+import com.gofobao.framework.security.interceptor.UrlInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.HandlerInterceptor;

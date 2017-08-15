@@ -2,9 +2,7 @@ package com.gofobao.framework.listener;
 
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnumContants;
-import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.JacksonHelper;
-import com.gofobao.framework.marketing.biz.MarketingBiz;
 import com.gofobao.framework.marketing.biz.MarketingProcessBiz;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
