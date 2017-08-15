@@ -63,7 +63,7 @@ public class JixinHelper {
 
 
     public static String getOrderId(String prefix) {
-        return prefix + new Date().getTime() + new Random().nextInt(100) + 1;
+        return prefix + new Date().getTime() + NumberHelper.toInt(Math.random() * 100 + 1);
     }
 
 
@@ -110,7 +110,7 @@ public class JixinHelper {
      * @param borrowId
      * @return
      */
-    public String getTitularBorrowAccount(long borrowId) {
+    public UserThirdAccount getTitularBorrowAccount(long borrowId) {
         Borrow borrow = borrowService.findById(borrowId);
         if (ObjectUtils.isEmpty(borrow)) {
             return null;
@@ -118,12 +118,12 @@ public class JixinHelper {
 
         String titularBorrowAccountId = borrow.getTitularBorrowAccountId();
         if (!ObjectUtils.isEmpty(titularBorrowAccountId)) {
-            return titularBorrowAccountId;
+            return userThirdAccountService.findByAccountId(titularBorrowAccountId);
         } else {
             try {
                 DictValue dictValue = jixinCache.get("titularBorrowUserId");
                 UserThirdAccount bailAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
-                return bailAccount.getAccountId();
+                return bailAccount;
             } catch (Throwable e) {
                 e.printStackTrace();
             }

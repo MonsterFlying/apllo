@@ -153,7 +153,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         debtRegisterRequest.setRate(StringHelper.formatDouble(borrow.getApr(), 100, false));
         debtRegisterRequest.setTxFee("0");
         /* 名义借款人id */
-        String titularBorrowAccount = jixinHelper.getTitularBorrowAccount(borrowId);
+        String titularBorrowAccount = jixinHelper.getTitularBorrowAccount(borrowId).getAccountId();
         debtRegisterRequest.setNominalAccountId(titularBorrowAccount);
         debtRegisterRequest.setAcqRes(StringHelper.toString(borrowId));
         debtRegisterRequest.setChannel(ChannelContant.HTML);

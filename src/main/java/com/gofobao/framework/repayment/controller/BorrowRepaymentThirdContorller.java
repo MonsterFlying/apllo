@@ -51,16 +51,16 @@ public class BorrowRepaymentThirdContorller {
         return borrowRepaymentThirdBiz.thirdBatchRepayRunCall(request, response);
     }
 
-    @RequestMapping("/v2/third/batch/bailrepay/check")
-    @ApiOperation("批次担保账户代偿参数检查回调")
-    public ResponseEntity<String> thirdBatchBailRepayCheckCall(HttpServletRequest request, HttpServletResponse response) {
-        return borrowRepaymentThirdBiz.thirdBatchBailRepayCheckCall(request, response);
+    @RequestMapping("/v2/third/batch/advance/check")
+    @ApiOperation("批次名义借款人垫付参数检查回调")
+    public ResponseEntity<String> thirdBatchAdvanceCheckCall(HttpServletRequest request, HttpServletResponse response) {
+        return borrowRepaymentThirdBiz.thirdBatchAdvanceCheckCall(request, response);
     }
 
-    @RequestMapping("/v2/third/batch/bailrepay/run")
-    @ApiOperation("批次担保账户代偿业务处理回调")
-    public ResponseEntity<String> thirdBatchBailRepayRunCall(HttpServletRequest request, HttpServletResponse response) {
-        return borrowRepaymentThirdBiz.thirdBatchBailRepayRunCall(request, response);
+    @RequestMapping("/v2/third/batch/advance/run")
+    @ApiOperation("批次名义借款人垫付业务处理回调")
+    public ResponseEntity<String> thirdBatchAdvanceRunCall(HttpServletRequest request, HttpServletResponse response) {
+        return borrowRepaymentThirdBiz.thirdBatchAdvanceRunCall(request, response);
     }
 
     @RequestMapping("/v2/third/batch/repaybail/check")

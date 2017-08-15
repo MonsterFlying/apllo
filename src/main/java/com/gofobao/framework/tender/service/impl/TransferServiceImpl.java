@@ -129,7 +129,7 @@ public class TransferServiceImpl implements TransferService {
             Specification<TransferBuyLog> tbls = Specifications
                     .<TransferBuyLog>and()
                     .eq("transferId", 0)
-                    .eq("thirdTransferFlag", 1)
+                    .eq("thirdAdvanceFlag", 1)
                     .build();
             long count = transferBuyLogService.count(tbls);/* 已经跟存管通信的债权转让购买记录 */
 
