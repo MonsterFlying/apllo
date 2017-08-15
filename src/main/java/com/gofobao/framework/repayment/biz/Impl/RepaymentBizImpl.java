@@ -2174,7 +2174,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param borrowRepayment
      * @param advanceAsserChange
      * @param batchAssetChange
-     * @param bailUserThirdAccount
+     * @param titularBorrowAccount
      * @param seqNo
      * @param groupSeqNo
      */
