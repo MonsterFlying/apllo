@@ -1,6 +1,5 @@
 package com.gofobao.framework.repayment.biz;
 
-import com.gofobao.framework.api.model.batch_bail_repay.BailRepay;
 import com.gofobao.framework.api.model.batch_credit_invest.CreditInvest;
 import com.gofobao.framework.api.model.batch_repay.Repay;
 import com.gofobao.framework.api.model.batch_repay_bail.RepayBail;

@@ -2,7 +2,6 @@ package com.gofobao.framework.system.controller;
 
 
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.system.biz.ArticleBiz;
 import com.gofobao.framework.system.biz.DictBiz;
 import com.gofobao.framework.system.biz.FindBiz;
@@ -13,8 +12,10 @@ import com.gofobao.framework.system.vo.response.*;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import springfox.documentation.annotations.ApiIgnore;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Date;
 

@@ -15,8 +15,6 @@ import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.repository.TenderRepository;
-import com.gofobao.framework.tender.repository.TransferBuyLogRepository;
-import com.gofobao.framework.tender.repository.TransferRepository;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.TenderUserReq;
 import com.google.common.collect.Maps;

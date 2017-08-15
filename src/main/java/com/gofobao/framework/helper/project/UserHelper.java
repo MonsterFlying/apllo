@@ -1,4 +1,5 @@
 package com.gofobao.framework.helper.project;
+
 import com.gofobao.framework.common.capital.CapitalChangeEnum;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.member.entity.Users;
@@ -6,8 +7,6 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.Date;
-
-import static com.gofobao.framework.common.capital.CapitalChangeEnum.*;
 
 /**
  * 用户模块 工具类
