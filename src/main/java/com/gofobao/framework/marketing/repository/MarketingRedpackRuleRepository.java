@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface MarketingRedpackRuleRepository extends JpaRepository<MarketingRedpackRule, Long> {
+    MarketingRedpackRule findTopByMarketingIdAndDel(Long marketingId, int del);
 }

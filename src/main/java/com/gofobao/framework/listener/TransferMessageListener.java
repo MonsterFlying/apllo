@@ -50,7 +50,7 @@ public class TransferMessageListener {
             } catch (Throwable throwable) {
                 log.error("债权转让复审异常:", throwable);
             }
-        } else if (tag.equals(MqTagEnum.AUTO_TENDER.getValue())) {  // 自动投标
+        } else if (tag.equals(MqTagEnum.AUTO_TRANSFER.getValue())) {  // 自动投标
             try {
                 transferProvider.autoTransfer(msg);
                 log.info("===========================AutoTenderListener===========================");
@@ -60,7 +60,7 @@ public class TransferMessageListener {
                 log.error("自动投递债权转让异常:", throwable);
             }
         } else {
-            log.error("AutoTenderListener 未找到对应的type");
+            log.error("TransferMessageListener 未找到对应的type");
         }
     }
 }

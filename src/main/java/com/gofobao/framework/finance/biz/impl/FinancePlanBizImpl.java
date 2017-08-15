@@ -9,6 +9,8 @@ import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeReq;
 import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeResp;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
+import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeReq;
+import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeResp;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.common.assets.AssetChange;
@@ -92,6 +94,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> tenderFinancePlan(VoTenderFinancePlan voTenderFinancePlan) throws Exception {
+        String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);/* 购买理财计划解冻id */
         //前置判断计划可购金额是否充足
         long financePlanId = voTenderFinancePlan.getFinancePlanId();/* 理财计划id */
         long userId = voTenderFinancePlan.getUserId();/* 理财计划购买人id */
@@ -122,8 +125,21 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         //生成理财计划购买记录
         FinancePlanBuyer financePlanBuyer = addFinancePlanBuyer(voTenderFinancePlan, userId, financePlan, validateMoney);
         //更新理财计划购买人的资金账户
-        updateAssetByBuyFinancePlan(financePlan, buyUserAccount, validateMoney, financePlanBuyer);
-
+        try {
+            updateAssetByBuyFinancePlan(financePlan, buyUserAccount, validateMoney, financePlanBuyer, orderId);
+        } catch (Exception e) {
+            //解除存管资金冻结
+            BalanceUnfreezeReq balanceUnfreezeReq = new BalanceUnfreezeReq();
+            balanceUnfreezeReq.setAccountId(buyUserAccount.getAccountId());
+            balanceUnfreezeReq.setTxAmount(StringHelper.formatDouble(validateMoney, 100.0, false));
+            balanceUnfreezeReq.setChannel(ChannelContant.HTML);
+            balanceUnfreezeReq.setOrderId(orderId);
+            balanceUnfreezeReq.setOrgOrderId(orderId);
+            BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
+            if ((ObjectUtils.isEmpty(balanceUnfreezeResp)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
+                throw new Exception("理财计划投标解冻资金失败：" + balanceUnfreezeResp.getRetMsg());
+            }
+        }
         VoViewFinancePlanTender voViewFinancePlanTender = VoBaseResp.ok("购买成功!", VoViewFinancePlanTender.class);
         voViewFinancePlanTender.setFinancePlanBuyer(financePlanBuyer);
         return ResponseEntity.ok(voViewFinancePlanTender);
@@ -164,7 +180,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      * @param financePlanBuyer
      * @throws Exception
      */
-    private void updateAssetByBuyFinancePlan(FinancePlan financePlan, UserThirdAccount buyUserAccount, long validateMoney, FinancePlanBuyer financePlanBuyer) throws Exception {
+    private void updateAssetByBuyFinancePlan(FinancePlan financePlan, UserThirdAccount buyUserAccount, long validateMoney, FinancePlanBuyer financePlanBuyer, String orderId) throws Exception {
         //冻结资金，将购买资金划到计划冻结
         AssetChange assetChange = new AssetChange();
         assetChange.setForUserId(financePlanBuyer.getUserId());
@@ -177,10 +193,9 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         assetChange.setSourceId(financePlanBuyer.getId());
         assetChangeProvider.commonAssetChange(assetChange);
         //冻结购买债权转让人资金账户
-        String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);
         BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
         balanceFreezeReq.setAccountId(buyUserAccount.getAccountId());
-        balanceFreezeReq.setTxAmount(StringHelper.formatDouble(validateMoney, false));
+        balanceFreezeReq.setTxAmount(StringHelper.formatDouble(validateMoney, 100, false));
         balanceFreezeReq.setOrderId(orderId);
         balanceFreezeReq.setChannel(ChannelContant.HTML);
         BalanceFreezeResp balanceFreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BalanceFreezeResp.class);

@@ -11,7 +11,7 @@ import javax.persistence.Table;
 import java.util.Date;
 
 @Entity
-@Table(name = "gfb_marketing_redpack_record")
+@Table(name = "gfb_marketing_redpack_rule")
 @DynamicUpdate
 @DynamicInsert
 @Data

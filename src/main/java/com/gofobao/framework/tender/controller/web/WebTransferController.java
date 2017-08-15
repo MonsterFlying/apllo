@@ -39,8 +39,8 @@ public class WebTransferController {
      * @return
      */
     @ApiOperation("债权转让初审")
-    @GetMapping("v2/verify/first")
-    public ResponseEntity<VoBaseResp> firstVerifyTransfer(@Valid VoPcFirstVerityTransfer voPcFirstVerityTransfer) {
+    @PostMapping("/v2/pub/verify/first")
+    public ResponseEntity<VoBaseResp> firstVerifyTransfer(@Valid @ModelAttribute VoPcFirstVerityTransfer voPcFirstVerityTransfer) {
         try {
             return transferBiz.firstVerifyTransfer(voPcFirstVerityTransfer);
         } catch (Exception e) {

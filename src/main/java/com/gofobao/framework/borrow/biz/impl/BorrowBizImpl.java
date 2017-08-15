@@ -181,7 +181,6 @@ public class BorrowBizImpl implements BorrowBiz {
     private String imageDomain;
 
 
-
     /**
      * 理财首页标列表
      *
@@ -581,7 +580,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "借款状态已发生更改!"));
         }
 
-        if (voCancelBorrow.getUserId().intValue()!= borrow.getUserId().intValue()) {
+        if (voCancelBorrow.getUserId().intValue() != borrow.getUserId().intValue()) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "非法操作!"));
@@ -639,11 +638,11 @@ public class BorrowBizImpl implements BorrowBiz {
             assetChange.setType(AssetChangeTypeEnum.unfreeze);  // 招标失败解除冻结资金
             assetChange.setUserId(borrow.getUserId());
             assetChange.setMoney(tender.getValidMoney());
-            assetChange.setRemark(String.format("借款 [%s] 招标失败解除冻结资金。",BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName())));
+            assetChange.setRemark(String.format("借款 [%s] 招标失败解除冻结资金。", BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName())));
             assetChange.setSourceId(borrow.getId());
             assetChange.setSeqNo(assetChangeProvider.getSeqNo());
             assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
-            assetChangeProvider.commonAssetChange(assetChange) ;
+            assetChangeProvider.commonAssetChange(assetChange);
         }
 
         //==================================================================
@@ -707,7 +706,7 @@ public class BorrowBizImpl implements BorrowBiz {
             log.info("调度取消过期标的失败----->查询标的为空");
             return;
         }
-        borrows.stream().forEach(p->p.setStatus(BorrowContants.CANCEL));
+        borrows.stream().forEach(p -> p.setStatus(BorrowContants.CANCEL));
 
         borrowService.save(borrows);
 
@@ -914,11 +913,11 @@ public class BorrowBizImpl implements BorrowBiz {
             assetChange.setType(AssetChangeTypeEnum.unfreeze);  // 招标失败解除冻结资金
             assetChange.setUserId(borrow.getUserId());
             assetChange.setMoney(tender.getValidMoney());
-            assetChange.setRemark(String.format("借款 [%s] 招标失败解除冻结资金。",BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName())));
+            assetChange.setRemark(String.format("借款 [%s] 招标失败解除冻结资金。", BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName())));
             assetChange.setSourceId(borrow.getId());
             assetChange.setSeqNo(assetChangeProvider.getSeqNo());
             assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-            assetChangeProvider.commonAssetChange(assetChange) ;
+            assetChangeProvider.commonAssetChange(assetChange);
         }
 
         //==================================================================
@@ -1206,7 +1205,7 @@ public class BorrowBizImpl implements BorrowBiz {
             if (borrow.getType() == 0) {
                 userCache.setTjWaitCollectionPrincipal(userCache.getTjWaitCollectionPrincipal() + tender.getValidMoney());
                 userCache.setTjWaitCollectionInterest(userCache.getTjWaitCollectionInterest() + countInterest);
-            }else if (borrow.getType() == 4) {
+            } else if (borrow.getType() == 4) {
                 userCache.setQdWaitCollectionPrincipal(userCache.getQdWaitCollectionPrincipal() + tender.getValidMoney());
                 userCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() + countInterest);
             }
@@ -1471,7 +1470,11 @@ public class BorrowBizImpl implements BorrowBiz {
             collectionAddChangeEntity.setUserId(tender.getUserId());
             collectionAddChangeEntity.setForUserId(tender.getUserId());
             assetChangeProvider.commonAssetChange(collectionAddChangeEntity);
+
+            tender.setState(2);
+            tender.setUpdatedAt(new Date());
         }
+        tenderService.save(tenderList);
     }
 
     /**
