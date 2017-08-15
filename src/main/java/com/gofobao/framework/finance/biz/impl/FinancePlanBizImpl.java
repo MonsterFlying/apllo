@@ -25,6 +25,7 @@ import com.gofobao.framework.finance.entity.FinancePlan;
 import com.gofobao.framework.finance.entity.FinancePlanBuyer;
 import com.gofobao.framework.finance.service.FinancePlanBuyerService;
 import com.gofobao.framework.finance.service.FinancePlanService;
+import com.gofobao.framework.finance.vo.request.VoFinancePlanAssetChange;
 import com.gofobao.framework.finance.vo.request.VoFinancePlanTender;
 import com.gofobao.framework.finance.vo.request.VoTenderFinancePlan;
 import com.gofobao.framework.finance.vo.response.PlanDetail;
@@ -86,6 +87,30 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
     @Autowired
     private AssetChangeProvider assetChangeProvider;
 
+
+    /**
+     * 理财计划资金变动
+     * @param voFinancePlanAssetChange
+     * @return
+     * @throws Exception
+     */
+    public ResponseEntity<VoBaseResp> financePlanAssetChangeByCollection(VoFinancePlanAssetChange voFinancePlanAssetChange) throws Exception{
+
+    //理财计划资金变动
+        /*AssetChange assetChange = new AssetChange();
+        assetChange.setForUserId(financePlanBuyer.getUserId());
+        assetChange.setUserId(financePlanBuyer.getUserId());
+        assetChange.setType(AssetChangeTypeEnum.financePlanFreeze);
+        assetChange.setRemark(String.format("成功购买理财计划[%s]冻结资金%s元", financePlan.getName(), StringHelper.formatDouble(validateMoney / 100D, true)));
+        assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+        assetChange.setMoney(validateMoney);
+        assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+        assetChange.setSourceId(financePlanBuyer.getId());
+        assetChangeProvider.commonAssetChange(assetChange);
+        */
+        return ResponseEntity.ok(VoBaseResp.ok("理财计划资金变动!"));
+    }
+
     /**
      * 理财计划投标
      *
@@ -128,12 +153,13 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         try {
             updateAssetByBuyFinancePlan(financePlan, buyUserAccount, validateMoney, financePlanBuyer, orderId);
         } catch (Exception e) {
+            String newOrderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);/* 购买债权转让冻结金额 orderid */
             //解除存管资金冻结
             BalanceUnfreezeReq balanceUnfreezeReq = new BalanceUnfreezeReq();
             balanceUnfreezeReq.setAccountId(buyUserAccount.getAccountId());
             balanceUnfreezeReq.setTxAmount(StringHelper.formatDouble(validateMoney, 100.0, false));
             balanceUnfreezeReq.setChannel(ChannelContant.HTML);
-            balanceUnfreezeReq.setOrderId(orderId);
+            balanceUnfreezeReq.setOrderId(newOrderId);
             balanceUnfreezeReq.setOrgOrderId(orderId);
             BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
             if ((ObjectUtils.isEmpty(balanceUnfreezeResp)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
