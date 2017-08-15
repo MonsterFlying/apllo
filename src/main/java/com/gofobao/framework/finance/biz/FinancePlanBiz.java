@@ -2,6 +2,7 @@ package com.gofobao.framework.finance.biz;
 
 import com.gofobao.framework.common.page.Page;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.finance.vo.request.VoFinancePlanAssetChange;
 import com.gofobao.framework.finance.vo.request.VoFinancePlanTender;
 import com.gofobao.framework.finance.vo.request.VoTenderFinancePlan;
 import com.gofobao.framework.finance.vo.response.PlanDetail;
@@ -15,6 +16,14 @@ import org.springframework.http.ResponseEntity;
 public interface FinancePlanBiz {
 
     /**
+     * 理财计划资金变动
+     * @param voFinancePlanAssetChange
+     * @return
+     * @throws Exception
+     */
+    ResponseEntity<VoBaseResp> financePlanAssetChangeByCollection(VoFinancePlanAssetChange voFinancePlanAssetChange) throws Exception;
+
+    /**
      * 理财计划匹配债权转让
      *
      * @param voFinancePlanTender
@@ -24,19 +33,20 @@ public interface FinancePlanBiz {
 
     /**
      * 理财列表
+     *
      * @param page
      * @return
      */
-    ResponseEntity<PlanListWarpRes>list(Page page);
+    ResponseEntity<PlanListWarpRes> list(Page page);
 
 
     /**
      * 理财详情
+     *
      * @param id
      * @return
      */
     ResponseEntity<PlanDetail> details(Long id);
-
 
 
     /**
