@@ -69,6 +69,18 @@ public interface UserBiz {
 
 
     /**
+     * 登录
+     *
+     * @param httpServletRequest
+     * @param response
+     * @param voLoginReq
+     * @return
+     */
+    ResponseEntity<VoBasicUserInfoResp> financeLogin(HttpServletRequest httpServletRequest, HttpServletResponse response, VoLoginReq voLoginReq);
+
+
+
+    /**
      *开启vip
      * @param vip
      * @return
@@ -115,5 +127,8 @@ public interface UserBiz {
      * @return
      */
     ResponseEntity<VoOpenAccountInfo> openAccountInfo(Long userId);
+
+
+
 }
 

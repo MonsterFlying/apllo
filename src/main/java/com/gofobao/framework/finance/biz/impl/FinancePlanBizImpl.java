@@ -570,6 +570,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         if (status.intValue() == FinannceContants.PURCJASE) {
             planDetail.setSurplusSecond(endDate.getTime() - nowDate.getTime());
         }
+
+        planDetail.setTimeLimit(financePlan.getTimeLimit());
         //截至日期
         planDetail.setEndAt(DateHelper.dateToString(endDate));
         //起始日期

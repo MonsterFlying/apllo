@@ -139,6 +139,34 @@ public class AplloApplicationTests {
         }
     }
 
+    @Test
+    public void testLoginPublicRedpack() {
+        MarketingData marketingData = new MarketingData() ;
+        marketingData.setUserId(44799L);
+        marketingData.setMarketingType(MarketingTypeEnum.LOGIN) ;
+        marketingData.setSourceId(44799L);
+        marketingData.setTransTime(new Date());
+        try {
+            marketingProcessBiz.process(new Gson().toJson(marketingData)) ;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testTenderPublicRedpack() {
+        MarketingData marketingData = new MarketingData() ;
+        marketingData.setUserId(44884L);
+        marketingData.setMarketingType(MarketingTypeEnum.TENDER) ;
+        marketingData.setSourceId(261540L);
+        marketingData.setTransTime(new Date());
+        try {
+            marketingProcessBiz.process(new Gson().toJson(marketingData)) ;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 
     @Test
     public void testDownloadFile() throws Exception {
@@ -185,7 +213,7 @@ public class AplloApplicationTests {
             pageIndex++;
         } while (realSize == pageSize);
 
-        for (AccountDetailsQueryItem item : accountDetailsQueryItemList) {
+         for (AccountDetailsQueryItem item : accountDetailsQueryItemList) {
             log.error(GSON.toJson(item));
         }
     }

@@ -665,7 +665,7 @@ public class TransferBizImpl implements TransferBiz {
             updateAssetByBuyUser(transferBuyLog, transfer, buyUserThirdAccount, orderId);
 
             //判断是否满标，满标触发债权转让复审
-            if (transfer.getTransferMoney() == transfer.getTransferMoneyYes()) {
+            if (transfer.getTransferMoney().intValue() == transfer.getTransferMoneyYes().intValue()) {
                 MqConfig mqConfig = new MqConfig();
                 mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
                 mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
@@ -693,9 +693,10 @@ public class TransferBizImpl implements TransferBiz {
                 throw new Exception("购买债权转让解冻资金失败：" + balanceUnfreezeResp.getRetMsg());
             }
         }
+
+        transfer.setTenderCount(transfer.getTenderCount()+1);
         return ResponseEntity.ok(VoBaseResp.ok("购买成功!"));
     }
-
     /**
      * 保存债权转让与购买债权转让记录
      *

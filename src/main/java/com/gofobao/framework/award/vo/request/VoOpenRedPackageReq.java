@@ -14,7 +14,7 @@ import javax.validation.constraints.Pattern;
 @ApiModel("开启红包")
 public class VoOpenRedPackageReq {
     @ApiModelProperty(value = "红包id",readOnly = true)
-    @Pattern(regexp = RegexHelper.ONLY_IS_NUM,message = "非法访问")
+    @Pattern(regexp = RegexHelper.ONLY_IS_NUM, message = "非法访问")
     private Long redPackageId;
 
     @ApiModelProperty(hidden = true)

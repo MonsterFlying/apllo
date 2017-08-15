@@ -33,6 +33,9 @@ public class PlanDetail extends VoBaseResp {
     @ApiModelProperty("进度")
     private Double spend;
 
+    @ApiModelProperty("期限: 以月为单位")
+    private Integer timeLimit;
+
     @ApiModelProperty("收益")
     private String earnings;
 

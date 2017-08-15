@@ -35,6 +35,8 @@ import com.gofobao.framework.helper.project.*;
 import com.gofobao.framework.lend.entity.Lend;
 import com.gofobao.framework.lend.service.LendService;
 import com.gofobao.framework.listener.providers.BorrowProvider;
+import com.gofobao.framework.marketing.entity.MarketingData;
+import com.gofobao.framework.marketing.enums.MarketingTypeEnum;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -70,6 +72,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.beanutils.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Example;
@@ -297,7 +300,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 } else {
                     status = 3; //招标中
                     //  进度
-                    double spend = Double.parseDouble(StringHelper.formatMon(borrow.getMoneyYes().doubleValue() / borrow.getMoney()));
+                    double spend = MathHelper.myRound(borrow.getMoneyYes().doubleValue() / borrow.getMoney() * 100, 2);
                     if (spend == 1) {
                         status = 6;
                     }
@@ -1029,7 +1032,7 @@ public class BorrowBizImpl implements BorrowBiz {
         userTenderStatistic(borrow, tenderList, nowDate);
 
         //用戶投資送紅包
-        userTenderRedPackage(borrow, tenderList, nowDate, groupSeqNo);
+        userTenderRedPackage(tenderList);
 
         // 借款人资金变动
         processBorrowAssetChange(borrow, tenderList, nowDate, groupSeqNo);
@@ -1248,81 +1251,38 @@ public class BorrowBizImpl implements BorrowBiz {
     /**
      * 用戶投資送紅包處理
      *
-     * @param borrow
      * @param tenderList
-     * @param nowDate
-     * @param groupSeqNo
      */
-    public void userTenderRedPackage(Borrow borrow, List<Tender> tenderList, Date nowDate, String groupSeqNo) {
-        log.info("红包-----即信放款处理成功,进入红包条件判断中-----------");
-        Gson gson = new Gson();
-        tenderList.forEach(p -> {
-            UserCache userCache = userCacheService.findById(p.getUserId());
-            Map<String, Object> paramsMap = new HashMap<>();
-            //=================================
-            // 非新手标  是新手标但是老用投
-            //===================================
-            boolean access = (!borrow.getIsNovice()) || (borrow.getIsNovice() && (userCache.getTenderTuijian() || userCache.getTenderQudao()));
-            if (access) {
-                try {
-                    paramsMap.put("type", RedPacketContants.OLD_USER_TENDER_BORROW_REDPACKAGE);
-                    paramsMap.put("tenderId", p.getId());
-                    paramsMap.put("time", DateHelper.dateToString(nowDate));
-                    MqConfig mqConfig = new MqConfig();
-                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
-                    mqConfig.setTag(MqTagEnum.OLD_USER_TENDER);
-                    Map<String, String> body = GSON.fromJson(GSON.toJson(paramsMap), TypeTokenContants.MAP_TOKEN);
-                    mqConfig.setMsg(body);
-                    mqHelper.convertAndSend(mqConfig);
-                    log.info(String.format("触发老手投标红包MQ %s", gson.toJson(paramsMap)));
-                } catch (Exception e) {
-                    log.error(String.format("老用户投资红包推送异常：%s", gson.toJson(paramsMap)), e);
-                }
-            }
-
-            //======================================
-            // 推荐用户投资红包
-            //======================================
-            paramsMap.clear();
-            paramsMap.put("type", RedPacketContants.INVITE_USER_TENDER_BORROW_REDPACKAGE);
-            paramsMap.put("tenderId", p.getId());
-            paramsMap.put("time", DateHelper.dateToString(nowDate));
-            try {
-                MqConfig mqConfig = new MqConfig();
-                mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
-                mqConfig.setTag(MqTagEnum.INVITE_USER_TENDER);
-                Map<String, String> body = GSON.fromJson(GSON.toJson(paramsMap), TypeTokenContants.MAP_TOKEN);
-                mqConfig.setMsg(body);
-                mqHelper.convertAndSend(mqConfig);
-                log.info(String.format("触发邀请用户投资红包MQ%s", gson.toJson(paramsMap)));
-            } catch (Exception e) {
-                log.error(String.format("邀请用户投资红包推送异常：%s", gson.toJson(paramsMap)), e);
-            }
-            paramsMap.clear();
-            boolean accessState = userCache.getTenderTuijian() || userCache.getTenderQudao();
-            //=========================
-            // 新手标，而且未投标过
-            //======================
-            if ((borrow.getIsNovice()) && (!accessState)) {
-                paramsMap.put("type", RedPacketContants.NEW_USER_BORROW_REDPACKAGE);
-                paramsMap.put("tenderId", p.getId());
-                String tranId = RandomHelper.generateNumberCode(4) + System.currentTimeMillis();
-                paramsMap.put("transactionId", tranId);
-                paramsMap.put("time", DateHelper.dateToString(nowDate));
-                try {
-                    MqConfig mqConfig = new MqConfig();
-                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
-                    mqConfig.setTag(MqTagEnum.NEW_USER_TENDER);
-                    Map<String, String> body = GSON.fromJson(GSON.toJson(paramsMap), TypeTokenContants.MAP_TOKEN);
-                    mqConfig.setMsg(body);
-                    mqHelper.convertAndSend(mqConfig);
-                    log.info(String.format("触发新手投标红包MQ %s", gson.toJson(paramsMap)));
-                } catch (Exception e) {
-                    log.error(String.format("新手投标红包推送异常：%s", gson.toJson(paramsMap)), e);
-                }
-            }
+    public void userTenderRedPackage(List<Tender> tenderList) {
+        tenderList.forEach(tender -> {
+            touchMarketingByTender(tender);
         });
+    }
 
+
+    /**
+     * 触发开户活动
+     *
+     * @param tender
+     */
+    private void touchMarketingByTender(Tender tender) {
+        MarketingData marketingData = new MarketingData();
+        marketingData.setTransTime(new Date());
+        marketingData.setUserId(tender.getUserId());
+        marketingData.setSourceId(tender.getId());
+        marketingData.setMarketingType(MarketingTypeEnum.TENDER);
+        try {
+            Map<String, String> body = new HashMap<>();
+            BeanUtils.populate(marketingData, body);
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setMsg(body);
+            mqConfig.setTag(MqTagEnum.MARKETING_TENDER);
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_MARKETING);
+            mqHelper.convertAndSend(mqConfig);
+            log.info(String.format("投资营销节点触发: %s", new Gson().toJson(marketingData)));
+        } catch (Throwable e) {
+            log.error(String.format("投资营销节点触发异常：%s", new Gson().toJson(marketingData)), e);
+        }
     }
 
 
