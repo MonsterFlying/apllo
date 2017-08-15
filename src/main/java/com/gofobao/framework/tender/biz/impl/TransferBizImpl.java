@@ -9,6 +9,8 @@ import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeReq;
 import com.gofobao.framework.api.model.balance_freeze.BalanceFreezeResp;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
+import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeReq;
+import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeResp;
 import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
@@ -616,6 +618,7 @@ public class TransferBizImpl implements TransferBiz {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> buyTransfer(VoBuyTransfer voBuyTransfer) throws Exception {
         String msg = null;
+        String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);/* 购买债权转让冻结金额 orderid */
         long userId = voBuyTransfer.getUserId(); /*购买人id*/
         long transferId = voBuyTransfer.getTransferId(); /*债权转让记录id*/
         long buyMoney = voBuyTransfer.getBuyMoney().longValue(); /*购买债权转让金额*/
@@ -656,25 +659,38 @@ public class TransferBizImpl implements TransferBiz {
         //生成购买债权记录
         TransferBuyLog transferBuyLog = saveTransferAndTransferLog(userId, transferId, buyMoney, transfer, validMoney, alreadyInterest, auto, autoOrder);
 
-        //更新购买人账户金额
-        updateAssetByBuyUser(transferBuyLog, transfer, buyUserThirdAccount);
+        try {
+            //更新购买人账户金额
+            updateAssetByBuyUser(transferBuyLog, transfer, buyUserThirdAccount, orderId);
 
-        //判断是否满标，满标触发债权转让复审
-        if (transfer.getTransferMoney() == transfer.getTransferMoneyYes()) {
-            MqConfig mqConfig = new MqConfig();
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
-            mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
-            ImmutableMap<String, String> body = ImmutableMap
-                    .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-            mqConfig.setMsg(body);
-            try {
-                log.info(String.format("transferBizImpl buyTransfer send mq %s", GSON.toJson(body)));
-                mqHelper.convertAndSend(mqConfig);
-            } catch (Throwable e) {
-                log.error("transferBizImpl buyTransfer send mq exception", e);
+            //判断是否满标，满标触发债权转让复审
+            if (transfer.getTransferMoney() == transfer.getTransferMoneyYes()) {
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
+                mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
+                ImmutableMap<String, String> body = ImmutableMap
+                        .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                mqConfig.setMsg(body);
+                try {
+                    log.info(String.format("transferBizImpl buyTransfer send mq %s", GSON.toJson(body)));
+                    mqHelper.convertAndSend(mqConfig);
+                } catch (Throwable e) {
+                    log.error("transferBizImpl buyTransfer send mq exception", e);
+                }
+            }
+        } catch (Exception e) {
+            //解除存管资金冻结
+            BalanceUnfreezeReq balanceUnfreezeReq = new BalanceUnfreezeReq();
+            balanceUnfreezeReq.setAccountId(buyUserThirdAccount.getAccountId());
+            balanceUnfreezeReq.setTxAmount(StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100.0, false));
+            balanceUnfreezeReq.setChannel(ChannelContant.HTML);
+            balanceUnfreezeReq.setOrderId(orderId);
+            balanceUnfreezeReq.setOrgOrderId(orderId);
+            BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
+            if ((ObjectUtils.isEmpty(balanceUnfreezeResp)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
+                throw new Exception("购买债权转让解冻资金失败：" + balanceUnfreezeResp.getRetMsg());
             }
         }
-
         return ResponseEntity.ok(VoBaseResp.ok("购买成功!"));
     }
 
@@ -720,7 +736,7 @@ public class TransferBizImpl implements TransferBiz {
      * @param transferBuyLog
      * @param transfer
      */
-    private void updateAssetByBuyUser(TransferBuyLog transferBuyLog, Transfer transfer, UserThirdAccount buyUserThirdAccount) throws Exception {
+    private void updateAssetByBuyUser(TransferBuyLog transferBuyLog, Transfer transfer, UserThirdAccount buyUserThirdAccount, String orderId) throws Exception {
         AssetChange assetChange = new AssetChange();
         assetChange.setSourceId(transferBuyLog.getId());
         assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
@@ -731,10 +747,9 @@ public class TransferBizImpl implements TransferBiz {
         assetChange.setUserId(transferBuyLog.getUserId());
         assetChangeProvider.commonAssetChange(assetChange);
         //冻结购买债权转让人资金账户
-        String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);
         BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
         balanceFreezeReq.setAccountId(buyUserThirdAccount.getAccountId());
-        balanceFreezeReq.setTxAmount(StringHelper.formatDouble(transferBuyLog.getValidMoney(), false));
+        balanceFreezeReq.setTxAmount(StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100.0, false));
         balanceFreezeReq.setOrderId(orderId);
         balanceFreezeReq.setChannel(ChannelContant.HTML);
         BalanceFreezeResp balanceFreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BalanceFreezeResp.class);
