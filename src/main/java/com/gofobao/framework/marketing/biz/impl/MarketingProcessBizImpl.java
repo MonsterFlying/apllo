@@ -313,10 +313,21 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             default:
                 throw new Exception("MarketingProcessBizImpl.filterDataByDimension: not found marketingType");
         }
+        marketingRedpackRecord.setMarketingId(marketing.getId());
         marketingRedpackRecord.setUserId(opUser.getId());
         marketingRedpackRecord.setMoney(money);
         marketingRedpackRecord.setRemark(remark.toString());
-        marketingRedpackRecordService.save(marketingRedpackRecord);
+        // 查询记录是否存在
+        List<MarketingRedpackRecord> marketingRedpackRecords = marketingRedpackRecordService.findByMarketingIdAndRedpackRuleIdAndUserIdAndSourceId(marketingRedpackRecord.getMarketingId(),
+                marketingRedpackRecord.getRedpackRuleId(),
+                marketingRedpackRecord.getUserId(),
+                marketingRedpackRecord.getSourceId()) ;
+
+        if(!CollectionUtils.isEmpty(marketingRedpackRecords)){
+            log.error("红包被重复派发");
+        }else{
+            marketingRedpackRecordService.save(marketingRedpackRecord);
+        }
     }
 
     /**
