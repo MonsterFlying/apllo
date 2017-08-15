@@ -31,6 +31,7 @@ public interface UserBiz {
      */
     ResponseEntity<VoBaseResp> register(HttpServletRequest request, VoRegisterReq voRegisterReq) throws Exception;
 
+
     Users findByAccount(String account);
 
     ResponseEntity<VoBasicUserInfoResp> getUserInfoResp(Users user);

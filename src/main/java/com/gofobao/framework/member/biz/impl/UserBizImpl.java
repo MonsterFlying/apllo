@@ -119,7 +119,13 @@ public class UserBizImpl implements UserBiz {
     @Autowired
     private IntegralService integralService;
 
-
+    /**
+     *
+     * @param request 请求
+     * @param voRegisterReq 注册实体
+     * @return
+     * @throws Exception
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> register(HttpServletRequest request, VoRegisterReq voRegisterReq) throws Exception {
