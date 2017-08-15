@@ -674,7 +674,7 @@ public class TransferBizImpl implements TransferBiz {
                 log.error("transferBizImpl buyTransfer send mq exception", e);
             }
         }
-
+        transfer.setTenderCount(transfer.getTenderCount()+1);
         return ResponseEntity.ok(VoBaseResp.ok("购买成功!"));
     }
 
@@ -1243,7 +1243,7 @@ public class TransferBizImpl implements TransferBiz {
             voViewBorrowList.setSpend(0d);
 
             if (item.getState() == 1) {  //债权转让进行中
-                double spend = Double.parseDouble(StringHelper.formatMon(item.getTransferMoneyYes().doubleValue() / item.getTransferMoney()));
+                double spend = Double.parseDouble(StringHelper.formatMon(item.getTransferMoneyYes().doubleValue() / item.getTransferMoney()))*100;
                 if (spend == 1) {
                     voViewBorrowList.setStatus(6);
                 } else {
@@ -1293,8 +1293,8 @@ public class TransferBizImpl implements TransferBiz {
         }
 
         BorrowInfoRes borrowInfoRes = VoBaseResp.ok("查询成功", BorrowInfoRes.class);
-        borrowInfoRes.setApr(StringHelper.formatMon(borrow.getApr() / 100d));
-        borrowInfoRes.setLowest(StringHelper.formatMon(borrow.getLowest() / 100d));
+        borrowInfoRes.setApr(StringHelper.formatMon(transfer.getApr() / 100d));
+        borrowInfoRes.setLowest(StringHelper.formatMon(transfer.getLowest() / 100d));
         long surplusMoney = transfer.getTransferMoney() - transfer.getTransferMoneyYes();
         borrowInfoRes.setViewSurplusMoney(StringHelper.formatMon(surplusMoney / 100D));
         borrowInfoRes.setHideSurplusMoney(surplusMoney);
@@ -1314,7 +1314,7 @@ public class TransferBizImpl implements TransferBiz {
         borrowInfoRes.setTenderCount(transfer.getTenderCount() + com.gofobao.framework.borrow.contants.BorrowContants.TIME);
         borrowInfoRes.setMoney(StringHelper.formatMon(transfer.getTransferMoney() / 100d));
         borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
-        borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatDouble(transfer.getTransferMoneyYes() / transfer.getTransferMoney().doubleValue(), false)));
+        borrowInfoRes.setSpend(MathHelper.myRound(transfer.getTransferMoneyYes().doubleValue() / transfer.getTransferMoney() * 100, 2));
         //结束时间
         Date endAt = DateHelper.addDays(DateHelper.beginOfDate(transfer.getReleaseAt()), 3 + 1);
         borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
