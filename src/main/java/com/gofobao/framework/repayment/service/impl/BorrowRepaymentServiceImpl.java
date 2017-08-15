@@ -217,11 +217,11 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         long principal = 0;
         long interest = 0;
         if (borrowRepayment.getStatus() == 0) {
-            interest = borrowRepayment.getInterest();
-            principal = borrowRepayment.getPrincipal();
             detailRes.setRepayAt(DateHelper.dateToString(borrowRepayment.getRepayAt()));
             detailRes.setStatusStr(RepaymentContants.STATUS_NO_STR);
         } else {
+            interest = borrowRepayment.getInterest();
+            principal = borrowRepayment.getPrincipal();
             detailRes.setStatusStr(RepaymentContants.STATUS_YES_STR);
             detailRes.setRepayAt(DateHelper.dateToString(borrowRepayment.getRepayAtYes()));
         }

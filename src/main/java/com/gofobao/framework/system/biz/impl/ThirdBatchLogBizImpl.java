@@ -186,7 +186,7 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
                     return true;
                 }
                 break;
-            case ThirdBatchLogContants.BATCH_BAIL_REPAY: //担保人垫付
+            case ThirdBatchLogContants.BATCH_BAIL_REPAY: //名义借款人垫付
                 als = Specifications
                         .<AdvanceLog>and()
                         .eq("repaymentId", sourceId)

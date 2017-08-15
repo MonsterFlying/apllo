@@ -1,10 +1,6 @@
 package com.gofobao.framework.tender.controller;
 
-import com.gofobao.framework.api.contants.ChannelContant;
-import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeReq;
-import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.TransferBiz;

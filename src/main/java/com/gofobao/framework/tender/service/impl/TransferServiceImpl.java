@@ -111,7 +111,7 @@ public class TransferServiceImpl implements TransferService {
      */
     @Override
     public Map<String, Object> transferOfList(VoTransferReq voTransferReq) {
-        voTransferReq.setStatus(TransferContants.CHECKPENDING);
+        voTransferReq.setStatus(TransferContants.TRANSFERIND);
         Map<String, Object> resultMaps = commonQueryTemp(voTransferReq);
         List<Transfer> transferList = (List<Transfer>) resultMaps.get("transfers");
         if (CollectionUtils.isEmpty(transferList)) {
@@ -131,7 +131,10 @@ public class TransferServiceImpl implements TransferService {
                     .eq("transferId", 0)
                     .eq("thirdTransferFlag", 1)
                     .build();
-            long count = transferBuyLogService.count(tbls);/* 已经跟存管通信的债权转让购买记录 */
+            long count = transferBuyLogService.count(tbls);/* 已.
+
+
+            经跟存管通信的债权转让购买记录 */
 
             TransferOf transfering = new TransferOf();
             Borrow borrow = borrowMap.get(p.getBorrowId());

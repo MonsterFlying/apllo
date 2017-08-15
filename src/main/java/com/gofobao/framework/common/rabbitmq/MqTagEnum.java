@@ -39,7 +39,7 @@ public enum MqTagEnum {
     BATCH_DEAL("batchDeal"),//批次处理
     REPAY_ALL("repayAll"),//提前结清
     REPAY_ADVANCE("repayAdvance"),//提前结清
-    ADVANCE("advance"),//担保人垫付
+    ADVANCE("advance"),//名义借款人垫付
     REPAY("repay");//立即还款
 
 

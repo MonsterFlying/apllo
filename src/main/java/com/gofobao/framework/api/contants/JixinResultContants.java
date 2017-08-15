@@ -1521,7 +1521,7 @@ public class JixinResultContants {
         result.put("JX900690", "批次投资人购买债权失败" );
         result.put("JX900691", "该批次交易中存在有债权无法获取锁，请稍后重试" );
         result.put("JX900692", "批次投资人购买债权系统异常" );
-        result.put("JX900693", "批次担保账户代偿系统异常" );
+        result.put("JX900693", "批次名义借款人垫付系统异常" );
         result.put("JX900694", "无债权信息，请核对电子账号、订单号、标的号是否一致" );
         result.put("JX900695", "验证功能码错误" );
         result.put("JX900696", "相同订单包中同一电子账号投一个标的只能投一次" );

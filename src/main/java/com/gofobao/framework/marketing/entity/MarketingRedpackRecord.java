@@ -3,14 +3,12 @@ package com.gofobao.framework.marketing.entity;
 import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
-import org.springframework.data.domain.Pageable;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.util.Date;
-import java.util.List;
 
 @Entity
 @Table(name = "gfb_marketing_redpack_record")
@@ -33,5 +31,6 @@ public class MarketingRedpackRecord {
     private Date cancelTime;
     private Integer del;
     private String remark;
+
 
 }

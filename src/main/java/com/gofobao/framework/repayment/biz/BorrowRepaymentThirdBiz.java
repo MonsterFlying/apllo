@@ -1,11 +1,11 @@
 package com.gofobao.framework.repayment.biz;
 
-import com.gofobao.framework.api.model.batch_bail_repay.BailRepay;
 import com.gofobao.framework.api.model.batch_credit_invest.CreditInvest;
 import com.gofobao.framework.api.model.batch_repay.Repay;
 import com.gofobao.framework.api.model.batch_repay_bail.RepayBail;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.repayment.entity.AdvanceAssetChange;
 import com.gofobao.framework.repayment.entity.RepayAssetChange;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
@@ -56,14 +56,14 @@ public interface BorrowRepaymentThirdBiz {
     ResponseEntity<String> thirdBatchLendRepayRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception;
 
     /**
-     * 批次担保账户代偿参数检查回调
+     * 批次名义借款人垫付参数检查回调
      */
-    ResponseEntity<String> thirdBatchBailRepayCheckCall(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> thirdBatchAdvanceCheckCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
-     * 批次担保账户代偿业务处理回调
+     * 批次名义借款人垫付业务处理回调
      */
-    ResponseEntity<String> thirdBatchBailRepayRunCall(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> thirdBatchAdvanceRunCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 批次融资人还担保账户垫款参数检查回调
@@ -95,14 +95,14 @@ public interface BorrowRepaymentThirdBiz {
      */
     void receivedRepay(List<Repay> repayList, Borrow borrow, String borrowAccountId, int order, double interestPercent, int lateDays, long lateInterest) throws Exception;
 
-/**
-     * 生成担保人代偿记录
+    /**
+     * 生成名义借款人垫付记录
      *
      * @param borrow
      * @param order
      * @param advanceAssetChanges
      */
-List<CreditInvest> calculateAdvancePlan(Borrow borrow, int order, List<AdvanceAssetChange> advanceAssetChanges, int lateDays, long lateInterest) throws Exception;
+    List<CreditInvest> calculateAdvancePlan(Borrow borrow, int order, UserThirdAccount titularBorrowAccount, List<AdvanceAssetChange> advanceAssetChanges, int lateDays, long lateInterest) throws Exception;
 
     /**
      * 新版生成还款计划
@@ -116,7 +116,7 @@ List<CreditInvest> calculateAdvancePlan(Borrow borrow, int order, List<AdvanceAs
      * @param repayAssetChanges
      * @throws Exception
      */
-    List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest,double interestPercent,String orderId, List<RepayAssetChange> repayAssetChanges) throws Exception;
+    List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest, double interestPercent, List<RepayAssetChange> repayAssetChanges) throws Exception;
 
     /**
      * 生成借款人偿还担保人计划

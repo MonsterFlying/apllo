@@ -40,7 +40,6 @@ import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
-import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoRepayAll;
@@ -154,7 +153,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         debtRegisterRequest.setRate(StringHelper.formatDouble(borrow.getApr(), 100, false));
         debtRegisterRequest.setTxFee("0");
         /* 名义借款人id */
-        String titularBorrowAccount = jixinHelper.getTitularBorrowAccount(borrowId);
+        String titularBorrowAccount = jixinHelper.getTitularBorrowAccount(borrowId).getAccountId();
         debtRegisterRequest.setNominalAccountId(titularBorrowAccount);
         debtRegisterRequest.setAcqRes(StringHelper.toString(borrowId));
         debtRegisterRequest.setChannel(ChannelContant.HTML);
