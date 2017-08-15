@@ -23,12 +23,11 @@ public class MarketingServiceImpl implements MarketingService {
         return Optional.fromNullable(all).or(Lists.newArrayList());
     }
 
+
     @Override
-    public List<Marketing> findByDelAndOpenStateAndBeginTimeGreaterThanEqualAndEndTimeLessThanEqualAndIdIn(int del, int openState, Date startTime, Date endTime, List<Long> marketingIdList) {
+    public List<Marketing> findByDelAndOpenStateAndIdIn(int del, int openState, List<Long> marketingIdList) {
         return Optional
-                .fromNullable(marketingRepository.findByDelAndOpenStateAndBeginTimeGreaterThanEqualAndEndTimeLessThanEqualAndIdIn(del, openState, startTime, endTime, marketingIdList))
+                .fromNullable(marketingRepository.findByDelAndOpenStateAndIdIn(del, openState, marketingIdList))
                 .or(Lists.newArrayList());
     }
-
-
 }

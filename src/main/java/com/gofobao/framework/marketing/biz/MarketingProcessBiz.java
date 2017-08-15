@@ -7,6 +7,6 @@ public interface MarketingProcessBiz {
      * @param marketingDataStr
      * @return
      */
-    boolean process(String marketingDataStr) ;
+    boolean process(String marketingDataStr) throws Exception;
 
 }

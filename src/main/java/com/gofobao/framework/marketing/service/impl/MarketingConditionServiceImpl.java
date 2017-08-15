@@ -22,4 +22,9 @@ public class MarketingConditionServiceImpl implements MarketingConditionService 
         Optional<List<MarketingCondition>> listOptional = Optional.fromNullable(collection);
         return listOptional.or(Lists.newArrayList());
     }
+
+    @Override
+    public List<MarketingCondition> findBymarketingIdInAndDel(List<Long> marketingidList, int del) {
+        return marketingConditionRepository.findBymarketingIdInAndDel(marketingidList, del);
+    }
 }
