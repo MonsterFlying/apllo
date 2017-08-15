@@ -25,7 +25,7 @@ public class MarketingRedpackRule {
     private Double tenderMoneyMax;
     private Long moneyMin;
     private Long moneyMax;
-    private Integer apr;
+    private Double apr;
     private Integer del;
     private Date createTime;
 }

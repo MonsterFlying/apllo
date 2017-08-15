@@ -33,7 +33,6 @@ import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.entity.BankAccount;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.BankAccountService;
-import com.gofobao.framework.award.contants.RedPacketContants;
 import com.gofobao.framework.borrow.vo.request.VoAdminModifyPasswordResp;
 import com.gofobao.framework.borrow.vo.request.VoAdminOpenAccountResp;
 import com.gofobao.framework.common.constans.TypeTokenContants;
@@ -45,6 +44,8 @@ import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.SecurityHelper;
+import com.gofobao.framework.marketing.entity.MarketingData;
+import com.gofobao.framework.marketing.enums.MarketingTypeEnum;
 import com.gofobao.framework.member.biz.UserThirdBiz;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -64,6 +65,7 @@ import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.beanutils.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -320,33 +322,39 @@ public class UserThirdBizImpl implements UserThirdBiz {
         user.setUpdatedAt(nowDate);
         userService.save(user);
 
-        //=======================
-        // 推送红包活动通道
-        //=======================
-        if (sources.contains(user.getSource()) && user.getParentId() > 0) {
-            Map<String, String> paramsMap = new HashMap<>();
-            paramsMap.put("type", RedPacketContants.REGISTER_REDPACKAGE);
-            paramsMap.put("userId", user.getId().toString());
-            paramsMap.put("parentId", user.getParentId().toString());
-            paramsMap.put("time", DateHelper.dateToString(new Date(System.currentTimeMillis())));
-            MqConfig mqConfig = new MqConfig();
-            mqConfig.setMsg(paramsMap);
-            mqConfig.setTag(MqTagEnum.INVITE_USER_REAL_NAME);
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_RED_PACKAGE);
-            try {
-                mqHelper.convertAndSend(mqConfig);
-                log.info("实名赠送红包触发");
-            } catch (Throwable e) {
-                log.error(String.format("实名注册红包推送异常：%s", new Gson().toJson(paramsMap)), e);
-            }
-
-        }
-
         VoOpenAccountResp voOpenAccountResp = VoBaseResp.ok("开户成功", VoOpenAccountResp.class);
         voOpenAccountResp.setOpenAccountBankName("江西银行");
         voOpenAccountResp.setAccount(accountId);
         voOpenAccountResp.setName(voOpenAccountReq.getName());
+        // 开户成功
+        touchMarketingByOpenAccount(userThirdAccount);
+
         return ResponseEntity.ok(voOpenAccountResp);
+    }
+
+    /**
+     * 触发开户活动
+     *
+     * @param userThirdAccount
+     */
+    private void touchMarketingByOpenAccount(UserThirdAccount userThirdAccount) {
+        MarketingData marketingData = new MarketingData();
+        marketingData.setTransTime(new Date());
+        marketingData.setUserId(userThirdAccount.getUserId());
+        marketingData.setSourceId(userThirdAccount.getId());
+        marketingData.setMarketingType(MarketingTypeEnum.OPEN_ACCOUNT);
+        try {
+            Map<String, String> body = new HashMap<>();
+            BeanUtils.populate(marketingData, body);
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setMsg(body);
+            mqConfig.setTag(MqTagEnum.MARKETING_OPEN_ACCOUNT);
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_MARKETING);
+            mqHelper.convertAndSend(mqConfig);
+            log.info(String.format("开户营销节点触发: %s", new Gson().toJson(marketingData)));
+        } catch (Throwable e) {
+            log.error(String.format("开户营销节点触发异常：%s", new Gson().toJson(marketingData)), e);
+        }
     }
 
     @Override

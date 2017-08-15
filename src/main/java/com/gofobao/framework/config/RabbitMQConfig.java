@@ -47,8 +47,8 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Queue redPackageRabbitmq() {
-        return new Queue(MqQueueEnum.RABBITMQ_RED_PACKAGE.getValue(), true);
+    public Queue marketingRabbitmq() {
+        return new Queue(MqQueueEnum.RABBITMQ_MARKETING.getValue(), true);
     }
 
     @Bean
@@ -117,8 +117,8 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    Binding redPackageRabbitmqBinding(Queue redPackageRabbitmq, Exchange delayExchange) {
-        return BindingBuilder.bind(redPackageRabbitmq).to(delayExchange).with(MqQueueEnum.RABBITMQ_RED_PACKAGE.getValue()).noargs();
+    Binding marketingRabbitmqBinding(Queue marketingRabbitmq, Exchange delayExchange) {
+        return BindingBuilder.bind(marketingRabbitmq).to(delayExchange).with(MqQueueEnum.RABBITMQ_MARKETING.getValue()).noargs();
     }
 
     @Bean
