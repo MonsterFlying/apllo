@@ -1,6 +1,7 @@
 package com.gofobao.framework.award.vo.response;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 /**
@@ -8,6 +9,6 @@ import lombok.Data;
  */
 @Data
 public class VoViewOpenRedPackageWarpRes extends VoBaseResp{
-
-    private OpenRedPackage openRedPackage;
+    @ApiModelProperty("红包金额")
+    private Double money;
 }

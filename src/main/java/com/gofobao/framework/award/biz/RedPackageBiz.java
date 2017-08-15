@@ -23,5 +23,5 @@ public interface RedPackageBiz {
      * @param voOpenRedPackageReq
      * @return
      */
-    ResponseEntity<VoViewOpenRedPackageWarpRes> openRedPackage(VoOpenRedPackageReq voOpenRedPackageReq);
+    ResponseEntity<VoViewOpenRedPackageWarpRes> openRedPackage(VoOpenRedPackageReq voOpenRedPackageReq) throws Exception;
 }
