@@ -111,7 +111,7 @@ public class TransferServiceImpl implements TransferService {
      */
     @Override
     public Map<String, Object> transferOfList(VoTransferReq voTransferReq) {
-        voTransferReq.setStatus(TransferContants.CHECKPENDING);
+        voTransferReq.setStatus(TransferContants.TRANSFERIND);
         Map<String, Object> resultMaps = commonQueryTemp(voTransferReq);
         List<Transfer> transferList = (List<Transfer>) resultMaps.get("transfers");
         if (CollectionUtils.isEmpty(transferList)) {

@@ -44,7 +44,7 @@ public class UrlInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object o) throws Exception {
         String authToken = request.getHeader(this.tokenHeader);
         //判断token是否为空
-        if (StringUtils.isEmpty(authToken)) {
+        if (StringUtils.isEmpty(authToken)||authToken.equals("null")) {
             //理财||金服都通过
             return true;
         } else {
