@@ -98,18 +98,6 @@ public class Borrow implements Serializable {
 
     private Integer txFee;
 
-    private Integer iparam1;
-
-    private Integer iparam2;
-
-    private Integer iparam3;
-
-    private String vparam1;
-
-    private String vparam2;
-
-    private String vparam3;
-
     private String bailAccountId;
 
     private String titularBorrowAccountId;
