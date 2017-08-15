@@ -49,6 +49,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multiset;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -90,24 +91,77 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
 
     /**
      * 理财计划资金变动
+     *
      * @param voFinancePlanAssetChange
      * @return
      * @throws Exception
      */
-    public ResponseEntity<VoBaseResp> financePlanAssetChangeByCollection(VoFinancePlanAssetChange voFinancePlanAssetChange) throws Exception{
+    public ResponseEntity<VoBaseResp> financePlanAssetChange(VoFinancePlanAssetChange voFinancePlanAssetChange) throws Exception {
+        String paramStr = voFinancePlanAssetChange.getParamStr();
+        if (!SecurityHelper.checkSign(voFinancePlanAssetChange.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "债权转让初审 签名验证不通过!"));
+        }
 
-    //理财计划资金变动
-        /*AssetChange assetChange = new AssetChange();
-        assetChange.setForUserId(financePlanBuyer.getUserId());
-        assetChange.setUserId(financePlanBuyer.getUserId());
-        assetChange.setType(AssetChangeTypeEnum.financePlanFreeze);
-        assetChange.setRemark(String.format("成功购买理财计划[%s]冻结资金%s元", financePlan.getName(), StringHelper.formatDouble(validateMoney / 100D, true)));
-        assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-        assetChange.setMoney(validateMoney);
-        assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-        assetChange.setSourceId(financePlanBuyer.getId());
-        assetChangeProvider.commonAssetChange(assetChange);
-        */
+        Map<String, String> paramMap = new Gson().fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        long money = NumberHelper.toLong(paramMap.get("money"));/* 资金变动金额 */
+        long userId = NumberHelper.toLong(paramMap.get("userId"));/* 资金变动会员id */
+        long planBuyId = NumberHelper.toLong(paramMap.get("planBuyId"));/* 理财计划购买id */
+        String type = StringHelper.toString(paramMap.get("type"));/* 资金变动类型 */
+        String remark = paramMap.get("remark");/* 备注 */
+        boolean freezeFlag = BooleanUtils.toBoolean(paramMap.get("freezeFlag"));/* 是否冻结标识 */
+        /* 理财计划购买记录 */
+        FinancePlanBuyer financePlanBuyer = financePlanBuyerService.findByIdLock(planBuyId);
+        Preconditions.checkNotNull(financePlanBuyer, "理财计划购买记录不存在!");
+        /* 理财计划购买人 */
+        UserThirdAccount buyUserThirdAccount = userThirdAccountService.findByUserId(userId);
+        ThirdAccountHelper.allConditionCheck(buyUserThirdAccount);
+        /* 资金变动类型 */
+        AssetChangeTypeEnum typeEnum = AssetChangeTypeEnum.findType(type);
+        Preconditions.checkNotNull(typeEnum, "资金变动类型不存在!");
+        /* 购买理财计划解冻id */
+        String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);
+        try {
+            //理财计划资金变动
+            AssetChange assetChange = new AssetChange();
+            assetChange.setForUserId(userId);
+            assetChange.setUserId(financePlanBuyer.getUserId());
+            assetChange.setType(typeEnum);
+            assetChange.setRemark(remark);
+            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+            assetChange.setMoney(money);
+            assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+            assetChange.setSourceId(financePlanBuyer.getId());
+            assetChangeProvider.commonAssetChange(assetChange);
+            //冻结存管金额
+            if (freezeFlag) {
+                //冻结购买债权转让人资金账户
+                BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
+                balanceFreezeReq.setAccountId(buyUserThirdAccount.getAccountId());
+                balanceFreezeReq.setTxAmount(StringHelper.formatDouble(money, 100, false));
+                balanceFreezeReq.setOrderId(orderId);
+                balanceFreezeReq.setChannel(ChannelContant.HTML);
+                BalanceFreezeResp balanceFreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BalanceFreezeResp.class);
+                if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceFreezeResp.getRetCode()))) {
+                    throw new Exception("理财计划资金变动冻结资金失败：" + balanceFreezeResp.getRetMsg());
+                }
+            }
+        } catch (Throwable t) {
+            String newOrderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);/* 购买债权转让冻结金额 orderid */
+            //解除存管资金冻结
+            BalanceUnfreezeReq balanceUnfreezeReq = new BalanceUnfreezeReq();
+            balanceUnfreezeReq.setAccountId(buyUserThirdAccount.getAccountId());
+            balanceUnfreezeReq.setTxAmount(StringHelper.formatDouble(money, 100.0, false));
+            balanceUnfreezeReq.setChannel(ChannelContant.HTML);
+            balanceUnfreezeReq.setOrderId(newOrderId);
+            balanceUnfreezeReq.setOrgOrderId(orderId);
+            BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
+            if ((ObjectUtils.isEmpty(balanceUnfreezeResp)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
+                throw new Exception("理财计划资金变动解冻资金失败：" + balanceUnfreezeResp.getRetMsg());
+            }
+        }
+
         return ResponseEntity.ok(VoBaseResp.ok("理财计划资金变动!"));
     }
 
@@ -407,6 +461,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         transferBuyLog.setAutoOrder(0);
         transferBuyLog.setDel(false);
         transferBuyLog.setSource(0);
+        transferBuyLog.setType(1);
         transferBuyLog.setCreatedAt(nowDate);
         transferBuyLog.setUpdatedAt(nowDate);
         transferBuyLogService.save(transferBuyLog);

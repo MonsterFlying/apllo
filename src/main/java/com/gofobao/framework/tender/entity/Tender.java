@@ -21,39 +21,23 @@ import java.util.Date;
 public class Tender {
     @Id
     @GeneratedValue
-    @Column(name = "id")
     private Long id;
-    @Column(name = "status")
+    private Integer type;
     private Integer status;
-    @Column(name = "source")
     private Integer source;
-    @Column(name = "isAuto")
     private Boolean isAuto;
-    @Column(name = "auto_order")
     private Integer autoOrder;
-    @Column(name = "money")
     private Long money;
-    @Column(name = "valid_money")
     private Long validMoney;
-    @Column(name = "transfer_flag")
     private Integer transferFlag;
-    @Column(name = "created_at")
     private Date createdAt;
-    @Column(name = "updated_at")
     private Date updatedAt;
-    @Column(name = "borrow_id")
     private Long borrowId;
-    @Column(name = "user_id")
     private Long userId;
-    @Column(name = "state")
     private Integer state;
-    @Column(name = "auth_code")
     private String authCode;
-    @Column(name = "t_user_id")
     private Long tUserId;
-    @Column(name = "third_tender_order_id")
     private String thirdTenderOrderId;
-    @Column(name = "third_transfer_order_id")
     private String thirdTransferOrderId;
     private String thirdTenderCancelOrderId;
     private String transferAuthCode;

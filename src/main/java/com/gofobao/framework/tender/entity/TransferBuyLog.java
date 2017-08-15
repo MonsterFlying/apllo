@@ -22,6 +22,7 @@ public class TransferBuyLog {
     @Id
     @GeneratedValue
     private Long id;
+    private Integer type;
     private Integer state;
     private Long transferId;
     private Long userId;
