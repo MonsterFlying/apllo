@@ -279,6 +279,13 @@ public class UserBizImpl implements UserBiz {
         return getUserInfoResp(user);
     }
 
+    /**
+     * 金服用户登录
+     * @param httpServletRequest
+     * @param response
+     * @param voLoginReq
+     * @return
+     */
     @Override
     public ResponseEntity<VoBasicUserInfoResp> login(HttpServletRequest httpServletRequest, HttpServletResponse response, VoLoginReq voLoginReq) {
         final Authentication authentication;
@@ -310,6 +317,74 @@ public class UserBizImpl implements UserBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "账户已被系统冻结，如有问题请联系客服！", VoBasicUserInfoResp.class));
         }
+        //理财用户非法登录
+        if(user.getType().equals("finance")){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "对不起,系统拒绝了你的非法访问", VoBasicUserInfoResp.class));
+
+        }
+        loginHandle(user,httpServletRequest,response,voLoginReq);
+        return getUserInfoResp(user);
+    }
+
+    /**
+     * 理财用户登录
+     * @param httpServletRequest
+     * @param response
+     * @param voLoginReq
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoBasicUserInfoResp> financeLogin(HttpServletRequest httpServletRequest, HttpServletResponse response, VoLoginReq voLoginReq) {
+        final Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            voLoginReq.getAccount(),
+                            voLoginReq.getPassword()
+                    )
+            );
+        } catch (Throwable e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "账户/密码错误", VoBasicUserInfoResp.class));
+        }
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        // Reload password_reset post-security so we can generate captchaToken
+        Users user = findByAccount(voLoginReq.getAccount());
+
+        // 保存登录信息
+        if (ObjectUtils.isEmpty(user)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "账户/密码错误", VoBasicUserInfoResp.class));
+        }
+
+        if (user.getIsLock()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "账户已被系统冻结，如有问题请联系客服！", VoBasicUserInfoResp.class));
+        }
+        //金服用户非法登录
+        if(!user.getType().equals("finance")){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "不对起,系统拒绝了你的非法访问！", VoBasicUserInfoResp.class));
+        }
+        loginHandle(user,httpServletRequest,response,voLoginReq);
+        return getUserInfoResp(user);
+
+    }
+
+    /**
+     * 理财 || 金服用户 登录的公共处理
+     * @param user
+     * @param request
+     * @param response
+     * @param voLoginReq
+     */
+    private void loginHandle(Users user,HttpServletRequest request,HttpServletResponse response,VoLoginReq voLoginReq){
 
         String username = user.getUsername();
         if (StringUtils.isEmpty(username)) username = user.getPhone();
@@ -322,7 +397,7 @@ public class UserBizImpl implements UserBiz {
         if (StringUtils.isEmpty(user.getPushId())) {   // 产生一次永久保存
             user.setPushId(UUID.randomUUID().toString().replace("-", ""));  // 设置唯一标识
         }
-        user.setIp(IpHelper.getIpAddress(httpServletRequest)); // 设置ip
+        user.setIp(IpHelper.getIpAddress(request)); // 设置ip
         userService.save(user);   // 记录登录信息
 
         // 触发登录队列
@@ -333,9 +408,8 @@ public class UserBizImpl implements UserBiz {
         ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_USER_ID, user.getId().toString());
         mqConfig.setMsg(body);
         mqHelper.convertAndSend(mqConfig);
-
-        return getUserInfoResp(user);
     }
+
 
     /**
      * 注册后续操作

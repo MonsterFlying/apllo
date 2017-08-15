@@ -21,7 +21,7 @@ public interface FinancePlanBiz {
      * @return
      * @throws Exception
      */
-    ResponseEntity<VoBaseResp> financePlanAssetChangeByCollection(VoFinancePlanAssetChange voFinancePlanAssetChange) throws Exception;
+    ResponseEntity<VoBaseResp> financePlanAssetChange(VoFinancePlanAssetChange voFinancePlanAssetChange) throws Exception;
 
     /**
      * 理财计划匹配债权转让

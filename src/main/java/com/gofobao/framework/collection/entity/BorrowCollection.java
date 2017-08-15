@@ -39,18 +39,10 @@ public class BorrowCollection {
     private Date updatedAt;
     private Long borrowId;
     private Long userId;
-    private Integer iparam1;
-    private Integer iparam2;
-    private Integer iparam3;
-    private String vparam1;
-    private String vparam2;
-    private String vparam3;
     private Long tUserId;
     private String tRepayOrderId;
-    private String tBailRepayOrderId;
-    private String tRepayBailOrderId;
+    private String tTransferOrderId;
     private String tBailAuthCode;
     private Boolean thirdRepayFlag;
-    private Boolean thirdRepayBailFlag; //第三方是否借款人还担保人 0否 1是
-    private Boolean thirdBailRepayFlag; //第三方是否登记担保人垫付 0否 1是
+    private Boolean thirdTransferFlag;
 }

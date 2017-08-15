@@ -1,8 +1,6 @@
 package com.gofobao.framework.common.assets;
 
 
-import com.gofobao.framework.common.capital.CapitalChangeEnum;
-
 public enum AssetChangeTypeEnum {
     /**
      * 联机充值
