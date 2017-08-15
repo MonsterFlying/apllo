@@ -2362,7 +2362,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //3.新增垫付记录与更改还款状态
         addAdvanceLogAndChangeBorrowRepayment(bailAccountId, borrowRepayment, lateDays, lateInterest);
         //4.结束第三方债权并更新借款状态（还款最后一期的时候）
-        endThirdTenderAndChangeBorrowStatus(parentBorrow, borrowRepayment);
+        //endThirdTenderAndChangeBorrowStatus(parentBorrow, borrowRepayment);
         //5.发送投资人收到还款站内信
         sendCollectionNotices(borrowCollectionList, advance, parentBorrow);
         //6.发放积分

@@ -432,7 +432,7 @@ public class ThirdBatchProvider {
         if (!CollectionUtils.isEmpty(successTBailRepayOrderIds)) {
             Specification<BorrowCollection> bcs = Specifications
                     .<BorrowCollection>and()
-                    .in("tBailRepayOrderId", successTBailRepayOrderIds.toArray())
+                    .in("tAdvanceOrderId", successTBailRepayOrderIds.toArray())
                     .build();
             List<BorrowCollection> successBorrowCollectionList = borrowCollectionService.findList(bcs);
             successBorrowCollectionList.stream().forEach(borrowCollection -> {

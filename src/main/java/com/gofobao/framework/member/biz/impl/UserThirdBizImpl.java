@@ -327,7 +327,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         voOpenAccountResp.setAccount(accountId);
         voOpenAccountResp.setName(voOpenAccountReq.getName());
         // 开户成功
-        touchMarketingByOpenAccount(userThirdAccount);
+        touchMarketingByOpenAccount(entity);
 
         return ResponseEntity.ok(voOpenAccountResp);
     }
