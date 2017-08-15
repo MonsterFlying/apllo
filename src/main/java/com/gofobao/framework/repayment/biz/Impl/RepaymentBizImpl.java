@@ -1881,10 +1881,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 repayBail.setIntAmount(StringHelper.formatDouble(intAmount, 100, false));
                 repayBail.setForAccountId(borrow.getBailAccountId());
                 repayBail.setTxFeeOut(StringHelper.formatDouble(txFeeOut, 100, false));
-                repayBail.setOrgOrderId(borrowCollection.getTTransferOrderId());
-                repayBail.setAuthCode(borrowCollection.getTBailAuthCode());
+                repayBail.setOrgOrderId(borrowCollection.getTAdvanceOrderId());
+                repayBail.setAuthCode(borrowCollection.getTAdvanceAuthCode());
                 repayBails.add(repayBail);
-                borrowCollection.setTTransferOrderId(orderId);
+                borrowCollection.setTAdvanceOrderId(orderId);
                 borrowCollectionService.updateById(borrowCollection);
             }
         } while (false);

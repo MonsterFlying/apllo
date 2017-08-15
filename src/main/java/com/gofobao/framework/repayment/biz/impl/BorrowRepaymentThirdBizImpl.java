@@ -480,7 +480,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             BorrowCollection borrowCollection = borrowCollectionMaps.get(tender.getId());
 
             //判断这笔回款是否已经在即信登记过批次垫付
-            if (BooleanHelper.isTrue(borrowCollection.getThirdTransferFlag())) {
+            if (BooleanHelper.isTrue(borrowCollection.getThirdAdvanceFlag())) {
                 continue;
             }
             if (tender.getTransferFlag() == 1) {
@@ -520,7 +520,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
             creditInvestList.add(creditInvest);
             //更新回款记录
-            borrowCollection.setTTransferOrderId(orderId);
+            borrowCollection.setTAdvanceOrderId(orderId);
             borrowCollection.setUpdatedAt(new Date());
             borrowCollectionService.updateById(borrowCollection);
 
@@ -605,7 +605,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 BorrowCollection borrowCollection = borrowCollectionList.stream().filter(bc -> StringHelper.toString(bc.getTenderId()).equals(StringHelper.toString(tender.getId()))).collect(Collectors.toList()).get(0);
 
                 //判断这笔回款是否已经在即信登记过批次垫付
-                if (BooleanHelper.isTrue(borrowCollection.getThirdTransferFlag())) {
+                if (BooleanHelper.isTrue(borrowCollection.getThirdAdvanceFlag())) {
                     continue;
                 }
 
@@ -685,7 +685,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                 bailRepay.setForAccountId(tenderUserThirdAccount.getAccountId());
                 repayList.add(bailRepay);
 
-                borrowCollection.setTTransferOrderId(orderId);
+                borrowCollection.setTAdvanceOrderId(orderId);
                 borrowCollectionService.updateById(borrowCollection);
             }
         } while (false);
@@ -821,7 +821,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         List<String> orderList = creditInvests.stream().map(creditInvest -> creditInvest.getOrderId()).collect(Collectors.toList());
         Specification<BorrowCollection> bcs = Specifications
                 .<BorrowCollection>and()
-                .eq("tBailRepayOrderId", orderList.toArray())
+                .eq("tAdvanceOrderId", orderList.toArray())
                 .build();
         int pageIndex = 0;
         int maxPageSize = 50;
@@ -833,10 +833,10 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             if (CollectionUtils.isEmpty(borrowCollectionList)) {
                 break;
             }
-            Map<String, BorrowCollection> borrowCollectionMap = borrowCollectionList.stream().collect(Collectors.toMap(BorrowCollection::getTTransferOrderId, Function.identity()));
+            Map<String, BorrowCollection> borrowCollectionMap = borrowCollectionList.stream().collect(Collectors.toMap(BorrowCollection::getTAdvanceOrderId, Function.identity()));
             creditInvests.stream().forEach(creditInvest -> {
                 BorrowCollection borrowCollection = borrowCollectionMap.get(creditInvest.getOrderId());
-                borrowCollection.setTBailAuthCode(creditInvest.getAuthCode());
+                borrowCollection.setTAdvanceAuthCode(creditInvest.getAuthCode());
             });
             borrowCollectionService.save(borrowCollectionList);
         } while (borrowCollectionList.size() >= maxPageSize);
@@ -1134,8 +1134,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             repayBail.setIntAmount(StringHelper.formatDouble(inIn, 100, false));
             repayBail.setForAccountId(borrow.getBailAccountId());
             repayBail.setTxFeeOut(StringHelper.formatDouble(outFee, 100, false));
-            repayBail.setOrgOrderId(borrowCollection.getTTransferOrderId());
-            repayBail.setAuthCode(borrowCollection.getTBailAuthCode());
+            repayBail.setOrgOrderId(borrowCollection.getTAdvanceOrderId());
+            repayBail.setAuthCode(borrowCollection.getTAdvanceAuthCode());
             repayBailList.add(repayBail);
         }
         tenderService.save(tenderList);

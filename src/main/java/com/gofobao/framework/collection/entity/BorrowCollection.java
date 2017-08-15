@@ -41,8 +41,8 @@ public class BorrowCollection {
     private Long userId;
     private Long tUserId;
     private String tRepayOrderId;
-    private String tTransferOrderId;
-    private String tBailAuthCode;
+    private String tAdvanceOrderId;
+    private String tAdvanceAuthCode;
     private Boolean thirdRepayFlag;
-    private Boolean thirdTransferFlag;
+    private Boolean thirdAdvanceFlag;
 }
