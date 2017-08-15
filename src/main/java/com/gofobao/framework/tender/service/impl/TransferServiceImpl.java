@@ -131,7 +131,10 @@ public class TransferServiceImpl implements TransferService {
                     .eq("transferId", 0)
                     .eq("thirdTransferFlag", 1)
                     .build();
-            long count = transferBuyLogService.count(tbls);/* 已经跟存管通信的债权转让购买记录 */
+            long count = transferBuyLogService.count(tbls);/* 已.
+
+
+            经跟存管通信的债权转让购买记录 */
 
             TransferOf transfering = new TransferOf();
             Borrow borrow = borrowMap.get(p.getBorrowId());
