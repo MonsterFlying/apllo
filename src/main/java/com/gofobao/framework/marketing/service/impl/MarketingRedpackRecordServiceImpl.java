@@ -3,9 +3,13 @@ package com.gofobao.framework.marketing.service.impl;
 import com.gofobao.framework.marketing.entity.MarketingRedpackRecord;
 import com.gofobao.framework.marketing.repository.MarketingRedpackRecordRepository;
 import com.gofobao.framework.marketing.service.MarketingRedpackRecordService;
+import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -21,5 +25,25 @@ public class MarketingRedpackRecordServiceImpl implements MarketingRedpackRecord
     @Override
     public List<MarketingRedpackRecord> findByMarketingIdAndRedpackRuleIdAndUserIdAndSourceId(Long marketingId, Long redpackRuleId, Long userId, Long sourceId) {
         return marketingRedpackRecordRepository.findByMarketingIdAndRedpackRuleIdAndUserIdAndSourceId(marketingId, redpackRuleId, userId, sourceId);
+    }
+
+    @Override
+    public List<MarketingRedpackRecord> findByCancelTimeBetween(Date startDate, Date nowDate, Pageable pageable) {
+        return Optional.fromNullable(marketingRedpackRecordRepository.findByCancelTimeBetween(startDate, nowDate, pageable)).or(Lists.newArrayList()) ;
+    }
+
+    @Override
+    public void save(List<MarketingRedpackRecord> marketingRedpackRecordList) {
+        marketingRedpackRecordRepository.save(marketingRedpackRecordList) ;
+    }
+
+    @Override
+    public List<MarketingRedpackRecord> findByUserIdAndState(Long userId, Integer status, Pageable pageable) {
+        return Optional.fromNullable(marketingRedpackRecordRepository.findByUserIdAndState(userId, status, pageable)).or(Lists.newArrayList()) ;
+    }
+
+    @Override
+    public MarketingRedpackRecord findTopByIdAndUserIdAndDel(Long redPackageId, Long userId, int del) {
+        return marketingRedpackRecordRepository.findTopByIdAndUserIdAndDel(redPackageId, userId, del);
     }
 }

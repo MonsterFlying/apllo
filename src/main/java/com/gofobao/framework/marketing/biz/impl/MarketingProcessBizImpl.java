@@ -171,6 +171,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         MarketingRedpackRecord marketingRedpackRecord = new MarketingRedpackRecord();
         marketingRedpackRecord.setMarkeingTitel(marketing.getTitel());
         marketingRedpackRecord.setPublishTime(nowDate);
+        marketingRedpackRecord.setCancelTime(DateHelper.addDays(nowDate, 60));
         marketingRedpackRecord.setRedpackRuleId(rule.getId());
         marketingRedpackRecord.setSourceId(marketingData.getSourceId());
         long money = 0;
