@@ -106,6 +106,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         try {
             filterDataByDimension(marketings, marketingData);
         } catch (Exception e) {
+            log.error("筛选范围", e);
             return false;
         }
 
@@ -228,7 +229,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                         Long borrowId = tender.getBorrowId();
                         Borrow borrow = borrowService.findById(borrowId);
                         Integer timeLimit = borrow.getTimeLimit();
-                        tempMoney = validMoney * (timeLimit / 12D) * validMoney;
+                        tempMoney = validMoney * (timeLimit / 12D) * rule.getApr();
                         money = tempMoney.longValue();
                         remark.append(StringHelper.formatDouble(money / 100D, true));
                         remark.append("元");
@@ -700,7 +701,9 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         }
 
         for (String item : platformArr) {
-            if (Integer.parseInt(item) == tender.getSource()) {
+            Integer source = tender.getSource();
+            int i = Integer.parseInt(item);
+            if ( (!ObjectUtils.isEmpty(source)) && (i == source)) {
                 return true;
             }
         }
