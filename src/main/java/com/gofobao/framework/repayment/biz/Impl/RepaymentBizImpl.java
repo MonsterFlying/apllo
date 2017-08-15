@@ -88,6 +88,7 @@ import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.base.Preconditions;
@@ -118,6 +119,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.gofobao.framework.helper.DateHelper.isBetween;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toSet;
 
@@ -167,7 +169,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private BatchAssetChangeItemService batchAssetChangeItemService;
     @Autowired
     private AssetChangeProvider assetChangeProvider;
-
+    @Autowired
+    private TransferBiz transferBiz;
     @Autowired
     private UserService userService;
     @Autowired
@@ -466,6 +469,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private void repayAllProcess(long borrowId, Borrow borrow, UserThirdAccount borrowUserThirdAccount, List<VoBuildThirdRepayReq> voBuildThirdRepayReqs, String batchNo,
                                  String seqNo, String groupSeqNo, long penalty, BatchAssetChange batchAssetChange, Map<Long/* repaymentId */, BorrowRepayment> borrowRepaymentMaps) throws Exception {
         Date nowDate = new Date();
+        /* 还款orderId */
+        String orderId = JixinHelper.getOrderId(JixinHelper.REPAY_PREFIX);
         List<Repay> repays = new ArrayList<>();/* 生成存管还款记录(提前结清) */
         for (VoBuildThirdRepayReq voBuildThirdRepayReq : voBuildThirdRepayReqs) {
             BorrowRepayment borrowRepayment = borrowRepaymentMaps.get(voBuildThirdRepayReq.getRepaymentId());/* 还款记录 */
@@ -477,6 +482,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     voBuildThirdRepayReq.getLateDays(),
                     voBuildThirdRepayReq.getLateInterest(),
                     voBuildThirdRepayReq.getInterestPercent(),
+                    orderId,
                     repayAssetChangeList
             );
             repays.addAll(tempRepays);
@@ -501,11 +507,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //====================================================================
         //冻结借款人账户资金
         //====================================================================
-        String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);
+        String freezeOrderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);
         BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
         balanceFreezeReq.setAccountId(borrowUserThirdAccount.getAccountId());
         balanceFreezeReq.setTxAmount(StringHelper.formatDouble(freezeMoney, false));
-        balanceFreezeReq.setOrderId(orderId);
+        balanceFreezeReq.setOrderId(freezeOrderId);
         balanceFreezeReq.setChannel(ChannelContant.HTML);
         BalanceFreezeResp balanceFreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BalanceFreezeResp.class);
         if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceFreezeResp.getRetCode()))) {
@@ -516,7 +522,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Map<String, Object> acqResMap = new HashMap<>();
         acqResMap.put("borrowId", borrowId);
         acqResMap.put("freezeMoney", freezeMoney);
-        acqResMap.put("freezeOrderId", orderId);
+        acqResMap.put("freezeOrderId", freezeOrderId);
         acqResMap.put("userId", borrow.getUserId());
 
         /* 需要冻结资金 */
@@ -1094,9 +1100,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         ResponseEntity resp;
         if (advance) {
             // 创建还款主记录
-            resp = repayGuarantor(userId, repayUserThirdAccount, borrowRepayment, parentBorrow, lateInterest, batchNo, batchAssetChange.getId(), seqNo, groupSeqNo);
-            //生成担保人还垫付资产变更记录
-            addBatchAssetChangeByGuarantor(borrowRepayment.getId(), borrowRepayment, parentBorrow, lateInterest, seqNo, groupSeqNo);
+            resp = repayGuarantor(userId, repayUserThirdAccount, borrowRepayment, parentBorrow, lateInterest, batchNo, seqNo, groupSeqNo);
         } else {  //正常还款
             resp = normalRepay(userId, repayUserThirdAccount, borrowRepayment, parentBorrow, lateInterest, interestPercent, batchNo, batchAssetChange, seqNo, groupSeqNo);
         }
@@ -1263,28 +1267,27 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param userId
      * @param repayUserThirdAccount
      * @param borrowRepayment
-     * @param borrow
+     * @param parentBorrow
      * @param lateInterest
      * @return
      * @throws Exception
      */
     private ResponseEntity<VoBaseResp> repayGuarantor(Long userId,
                                                       UserThirdAccount repayUserThirdAccount, BorrowRepayment borrowRepayment,
-                                                      Borrow borrow, long lateInterest,
-                                                      String batchNo,
-                                                      long batchAssetChangeId,
-                                                      String seqNo,
-                                                      String groupSeqNo) throws Exception {
+                                                      Borrow parentBorrow, long lateInterest,
+                                                      String batchNo, String seqNo, String groupSeqNo) throws Exception {
         Date nowDate = new Date();
 
 
         log.info("借款人还款垫付人开始");
-        List<RepayBail> repayBails = borrowRepaymentThirdBiz.calculateRepayBailPlan(borrow, repayUserThirdAccount.getAccountId(), getLateDays(borrowRepayment), borrowRepayment.getOrder(), lateInterest);
+        List<RepayBail> repayBails = borrowRepaymentThirdBiz.calculateRepayBailPlan(parentBorrow, repayUserThirdAccount.getAccountId(), getLateDays(borrowRepayment), borrowRepayment.getOrder(), lateInterest);
         double txAmount = repayBails.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxAmount())).sum();
         double intAmount = repayBails.stream().mapToDouble(r -> NumberHelper.toDouble(r.getIntAmount())).sum();  //所有交易利息
         double txFeeOut = repayBails.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxFeeOut())).sum();   //所有还款手续费
         double freezeMoney = txAmount + intAmount + txFeeOut;  //冻结金额
-
+        //生成担保人还垫付资产变更记录
+        addBatchAssetChangeByGuarantor(borrowRepayment.getId(), borrowRepayment, parentBorrow, lateInterest, seqNo, groupSeqNo);
+        /* 冻结orderId */
         String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);
         BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
         balanceFreezeReq.setAccountId(repayUserThirdAccount.getAccountId());
@@ -1299,10 +1302,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //立即还款冻结可用资金
         AssetChange assetChange = new AssetChange();
         assetChange.setType(AssetChangeTypeEnum.freeze);  // 立即还款冻结可用资金
-        assetChange.setUserId(borrow.getUserId());
+        assetChange.setUserId(parentBorrow.getUserId());
         assetChange.setMoney(new Double(freezeMoney * 100).longValue());
         assetChange.setRemark("借款人还款垫付人冻结可用资金");
-        assetChange.setSourceId(borrow.getId());
+        assetChange.setSourceId(parentBorrow.getId());
         assetChange.setSeqNo(assetChangeProvider.getSeqNo());
         assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
         assetChangeProvider.commonAssetChange(assetChange);
@@ -1370,6 +1373,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
                                                    String seqNo,
                                                    String groupSeqNo) throws Exception {
         Date nowDate = new Date();
+        /* 还款orderId */
+        String orderId = JixinHelper.getOrderId(JixinHelper.REPAY_PREFIX);
         log.info("批次还款: 进入正常还款流程");
         List<RepayAssetChange> repayAssetChanges = new ArrayList<>();
         List<Repay> repays = borrowRepaymentThirdBiz.calculateRepayPlan(borrow,
@@ -1378,7 +1383,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 getLateDays(borrowRepayment),
                 lateInterest,
                 interestPercent,
+                orderId,
                 repayAssetChanges);
+        log.info("批次还款：开始处理理财计划还款");
+        // 生成资金变动记录
+        doGenerateAssetChangeRecodeByRepay(borrow, borrowRepayment, borrowRepayment.getUserId(), repayAssetChanges, seqNo, groupSeqNo, batchAssetChange);
 
         //所有交易金额 交易金额指的是txAmount字段
         double txAmount = repays.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxAmount())).sum();
@@ -1387,14 +1396,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //所有还款手续费
         double txFeeOut = repays.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxFeeOut())).sum();
         double freezeMoney = txAmount + txFeeOut + intAmount;/* 冻结金额 */
-        // 生成还款记录
-        doGenerateAssetChangeRecodeByRepay(borrow, borrowRepayment, borrowRepayment.getUserId(), repayAssetChanges, seqNo, groupSeqNo, batchAssetChange);
         // 申请即信还款冻结
-        String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);
+        String freezeOrderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);
         BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
         balanceFreezeReq.setAccountId(repayUserThirdAccount.getAccountId());
         balanceFreezeReq.setTxAmount(StringHelper.formatDouble(freezeMoney, false));
-        balanceFreezeReq.setOrderId(orderId);
+        balanceFreezeReq.setOrderId(freezeOrderId);
         balanceFreezeReq.setChannel(ChannelContant.HTML);
         BalanceFreezeResp balanceFreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BalanceFreezeResp.class);
         if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceFreezeResp.getRetCode()))) {
@@ -1421,7 +1428,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         acqResMap.put("repaymentId", borrowRepayment.getId());
         acqResMap.put("interestPercent", 1d);
         acqResMap.put("isUserOpen", true);
-        acqResMap.put("freezeOrderId", orderId);
+        acqResMap.put("freezeOrderId", freezeOrderId);
         acqResMap.put("freezeMoney", freezeMoney);
 
         //批次还款操作
@@ -1882,10 +1889,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 repayBail.setIntAmount(StringHelper.formatDouble(intAmount, 100, false));
                 repayBail.setForAccountId(borrow.getBailAccountId());
                 repayBail.setTxFeeOut(StringHelper.formatDouble(txFeeOut, 100, false));
-                repayBail.setOrgOrderId(borrowCollection.getTBailRepayOrderId());
+                repayBail.setOrgOrderId(borrowCollection.getTTransferOrderId());
                 repayBail.setAuthCode(borrowCollection.getTBailAuthCode());
                 repayBails.add(repayBail);
-                borrowCollection.setTRepayBailOrderId(orderId);
+                borrowCollection.setTTransferOrderId(orderId);
                 borrowCollectionService.updateById(borrowCollection);
             }
         } while (false);
@@ -2099,7 +2106,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //垫付资产改变集合
         List<AdvanceAssetChange> advanceAssetChangeList = new ArrayList<>();
         //获取担保人代偿记录
-        List<BailRepay> bailRepayList = borrowRepaymentThirdBiz.calculateAdvancePlan(borrow, borrowRepayment.getOrder(), advanceAssetChangeList, lateDays, lateInterest);
+        List<BailRepay> bailRepayList = null;
+        borrowRepaymentThirdBiz.calculateAdvancePlan(borrow, borrowRepayment.getOrder(), advanceAssetChangeList, lateDays, lateInterest);
         Preconditions.checkNotNull(bailRepayList, "存管垫付记录不存在!");
         /* 担保人存管信息 */
         UserThirdAccount bailUserThirdAccount = userThirdAccountService.findByAccountId(borrow.getBailAccountId());

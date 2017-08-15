@@ -368,7 +368,7 @@ public class ThirdBatchProvider {
                     .build();
             List<BorrowCollection> successBorrowCollectionList = borrowCollectionService.findList(bcs);
             successBorrowCollectionList.stream().forEach(borrowCollection -> {
-                borrowCollection.setThirdRepayBailFlag(true);
+                borrowCollection.setThirdTransferFlag(true);
             });
             borrowCollectionService.save(successBorrowCollectionList);
         }
@@ -436,7 +436,7 @@ public class ThirdBatchProvider {
                     .build();
             List<BorrowCollection> successBorrowCollectionList = borrowCollectionService.findList(bcs);
             successBorrowCollectionList.stream().forEach(borrowCollection -> {
-                borrowCollection.setThirdBailRepayFlag(true);
+                borrowCollection.setThirdTransferFlag(true);
             });
             borrowCollectionService.save(successBorrowCollectionList);
         }

@@ -1,6 +1,7 @@
 package com.gofobao.framework.repayment.biz;
 
 import com.gofobao.framework.api.model.batch_bail_repay.BailRepay;
+import com.gofobao.framework.api.model.batch_credit_invest.CreditInvest;
 import com.gofobao.framework.api.model.batch_repay.Repay;
 import com.gofobao.framework.api.model.batch_repay_bail.RepayBail;
 import com.gofobao.framework.borrow.entity.Borrow;
@@ -101,7 +102,7 @@ public interface BorrowRepaymentThirdBiz {
      * @param order
      * @param advanceAssetChanges
      */
-    List<BailRepay> calculateAdvancePlan(Borrow borrow, int order, List<AdvanceAssetChange> advanceAssetChanges,int lateDays,long lateInterest) throws Exception;
+List<CreditInvest> calculateAdvancePlan(Borrow borrow, int order, List<AdvanceAssetChange> advanceAssetChanges, int lateDays, long lateInterest) throws Exception;
 
     /**
      * 新版生成还款计划
@@ -115,7 +116,7 @@ public interface BorrowRepaymentThirdBiz {
      * @param repayAssetChanges
      * @throws Exception
      */
-    List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest,double interestPercent, List<RepayAssetChange> repayAssetChanges) throws Exception;
+    List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest,double interestPercent,String orderId, List<RepayAssetChange> repayAssetChanges) throws Exception;
 
     /**
      * 生成借款人偿还担保人计划
