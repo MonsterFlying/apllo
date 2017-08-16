@@ -266,7 +266,7 @@ public class TenderBizImpl implements TenderBiz {
     private boolean verifyUserInfo4Borrow(Users user, Borrow borrow, Asset asset, VoCreateTenderReq voCreateTenderReq, Multiset<String> extendMessage) {
         // 判断用户是否已经锁定
         if (user.getIsLock()) {
-            extendMessage.add("当前用户属于锁定状态, 如有问题请联系客户!");
+            extendMessage.add("当前用户属于锁定状态, 如有问题请联系客服!");
             return false;
         }
 

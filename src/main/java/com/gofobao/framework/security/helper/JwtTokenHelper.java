@@ -2,17 +2,17 @@ package com.gofobao.framework.security.helper;
 
 import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.member.entity.Users;
-import com.gofobao.framework.security.entity.JwtUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
@@ -26,6 +26,7 @@ public class JwtTokenHelper implements Serializable {
     static final String CLAIM_KEY_AUDIENCE = "audience";
     static final String CLAIM_KEY_CREATED = "created";
     static final String CLAIM_KEY_ID = "id";
+    static final String CLAIM_KEY_TYPE = "type" ;
 
     private static final String AUDIENCE_UNKNOWN = "UNKNOWN";
     private static final String AUDIENCE_PC = "PC";
@@ -42,6 +43,12 @@ public class JwtTokenHelper implements Serializable {
 
     @Value("${jwt.expiration}")
     private Long expiration;
+
+    @Value("${jwt.header}")
+    private String tokenHeader ;
+
+    @Value("${jwt.prefix}")
+    private String prefix ;
 
     public String getUsernameFromToken(String token){
         String username;
@@ -63,6 +70,17 @@ public class JwtTokenHelper implements Serializable {
             created = null;
         }
         return created;
+    }
+
+    public String getType(String token) {
+        String type;
+        try {
+            final Claims claims = getClaimsFromToken(token);
+            type = (String)claims.get(CLAIM_KEY_TYPE) ;
+        } catch (Throwable e) {
+            type = null;
+        }
+        return type;
     }
 
     public Long getUserIdFromToken(String token) {
@@ -149,6 +167,7 @@ public class JwtTokenHelper implements Serializable {
         claims.put(CLAIM_KEY_ID, user.getId());
         claims.put(CLAIM_KEY_AUDIENCE, generateAudience(source));
         claims.put(CLAIM_KEY_CREATED, new Date());
+        claims.put(CLAIM_KEY_TYPE, user.getType()) ;
         return generateToken(claims);
     }
 
@@ -184,15 +203,13 @@ public class JwtTokenHelper implements Serializable {
         return refreshedToken;
     }
 
-    public Boolean validateToken(String token, UserDetails userDetails) {
-        JwtUser user = (JwtUser) userDetails;
-        final String username = getUsernameFromToken(token);
-        final Date created = getCreatedDateFromToken(token);
-        //final Date expiration = getExpirationDateFromToken(captchaToken);
-        return (
-                username.equals(user.getUsername())
-                        && !isTokenExpired(token)
-                        && !isCreatedBeforeLastPasswordReset(created, user.getUpdateAt()));
+    public String getToken(HttpServletRequest httpServletRequest) throws Exception {
+        String authToken = httpServletRequest.getHeader(this.tokenHeader);
+        if(!StringUtils.isEmpty(authToken) && (authToken.contains(prefix))){
+            return authToken.substring(7) ;
+        }
+
+        throw new Exception("非法访问");
     }
 
     public void validateSign(String authToken) throws  Exception{

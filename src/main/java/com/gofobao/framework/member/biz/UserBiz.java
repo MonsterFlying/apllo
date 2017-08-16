@@ -64,20 +64,11 @@ public interface UserBiz {
      * @param httpServletRequest
      * @param response
      * @param voLoginReq
+     * @param financeState 理财用户为true
      * @return
      */
-    ResponseEntity<VoBasicUserInfoResp> login(HttpServletRequest httpServletRequest, HttpServletResponse response, VoLoginReq voLoginReq);
+    ResponseEntity<VoBasicUserInfoResp> login(HttpServletRequest httpServletRequest, HttpServletResponse response, VoLoginReq voLoginReq, boolean financeState);
 
-
-    /**
-     * 登录
-     *
-     * @param httpServletRequest
-     * @param response
-     * @param voLoginReq
-     * @return
-     */
-    ResponseEntity<VoBasicUserInfoResp> financeLogin(HttpServletRequest httpServletRequest, HttpServletResponse response, VoLoginReq voLoginReq);
 
 
 

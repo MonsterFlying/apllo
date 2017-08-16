@@ -27,16 +27,16 @@ public class PasswordHelper {
     /**
      * 验证用户密码是否正确
      *
-     * @param origPassword 用户密码
+     * @param dbPassword 用户密码
      * @param password     待验证密码
-     * @return treu：密码验证通过； false： 密码验证失败
+     * @return true：密码验证通过； false： 密码验证失败
      * @throws Exception
      */
-    public static boolean verifyPassword(String origPassword, String password) throws Exception {
-        if ((StringUtils.isEmpty(origPassword)) || (StringUtils.isEmpty(password))) {
+    public static boolean verifyPassword(String dbPassword, String password) throws Exception {
+        if ((StringUtils.isEmpty(dbPassword)) || (StringUtils.isEmpty(password))) {
             throw new NullPointerException("用户密码/待验证密码为空");
         }
-        return BCrypt.checkpw(password, origPassword);
+        return BCrypt.checkpw(password, dbPassword);
     }
 
 

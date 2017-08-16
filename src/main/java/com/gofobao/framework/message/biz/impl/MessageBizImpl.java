@@ -566,7 +566,7 @@ public class MessageBizImpl implements MessageBiz {
         if ((ObjectUtils.isEmpty(user) || (user.getIsLock().equals(1)))) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前账户已经被系统锁定。如有疑问，请联系客户！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前账户已经被系统锁定。如有疑问，请联系客服！"));
         }
 
         if (StringUtils.isEmpty(user.getPhone())) {

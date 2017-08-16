@@ -27,7 +27,7 @@ public class WebAuthenticationRestController {
 
     @PostMapping("/login")
     public ResponseEntity<VoBasicUserInfoResp> login(HttpServletRequest httpServletRequest, HttpServletResponse response, @ModelAttribute VoLoginReq voLoginReq){
-        return userBiz.login(httpServletRequest, response, voLoginReq) ;
+        return userBiz.login(httpServletRequest, response, voLoginReq, false) ;
     }
 
 }
