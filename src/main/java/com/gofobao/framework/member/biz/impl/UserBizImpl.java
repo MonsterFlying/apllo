@@ -318,13 +318,13 @@ public class UserBizImpl implements UserBiz {
             if(!user.getType().equals("finance")){  // 理财用户
                 return ResponseEntity
                         .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR, "对不起,系统拒绝了你的非法访问", VoBasicUserInfoResp.class));
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "系统拒绝了你的访问请求", VoBasicUserInfoResp.class));
             }
         }else{
             if(user.getType().equals("finance")){  // 金服用户
                 return ResponseEntity
                         .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR, "对不起,系统拒绝了你的非法访问", VoBasicUserInfoResp.class));
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "系统拒绝了你的访问请求", VoBasicUserInfoResp.class));
             }
         }
 

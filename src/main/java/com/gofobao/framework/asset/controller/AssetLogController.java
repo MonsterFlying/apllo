@@ -23,7 +23,7 @@ public class AssetLogController {
     private AssetBiz assetBiz;
 
     @ApiOperation("老版本资金流水")
-    @RequestMapping(value = "pub/assetLog/v2/list/old",method = RequestMethod.POST)
+    @RequestMapping(value = "/assetLog/v2/list/old",method = RequestMethod.POST)
     public ResponseEntity<VoViewAssetLogWarpRes> assetLogResList(@ModelAttribute VoAssetLogReq voAssetLogReq,
                                                                  @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voAssetLogReq.setUserId(userId);
@@ -32,7 +32,7 @@ public class AssetLogController {
 
 
     @ApiOperation("新版资金流水")
-    @RequestMapping(value = "pub/assetLog/v2/list",method = RequestMethod.POST)
+    @RequestMapping(value = "/assetLog/v2/list",method = RequestMethod.POST)
     public ResponseEntity<VoViewAssetLogWarpRes> newAssetLogResList(@ModelAttribute VoAssetLogReq voAssetLogReq,
                                                                  @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voAssetLogReq.setUserId(userId);

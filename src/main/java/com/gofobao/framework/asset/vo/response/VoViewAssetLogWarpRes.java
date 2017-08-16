@@ -3,6 +3,7 @@ package com.gofobao.framework.asset.vo.response;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -11,5 +12,5 @@ import java.util.List;
  */
 @Data
 public class VoViewAssetLogWarpRes extends VoBaseResp {
-    private List<VoViewAssetLogRes>  resList= Collections.EMPTY_LIST;
+    private List<VoViewAssetLogRes>  resList= new ArrayList<>() ;
 }
