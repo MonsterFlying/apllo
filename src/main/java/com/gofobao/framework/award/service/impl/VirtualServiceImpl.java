@@ -250,8 +250,8 @@ public class VirtualServiceImpl implements VirtualService {
                 .eq("status", CouponContants.VALID)
                 .build();
 
-        List<Coupon> couponList = couponRepository.findAll(specification);
-        awardStatistics.setCouponCount(couponList.size());
+        Long couponSize = couponRepository.count(specification);
+        awardStatistics.setCouponCount(couponSize.intValue());
         Asset asset = assetRepository.findOne(userId);
         awardStatistics.setVirtualMoney(asset.getVirtualMoney() / 100d);
         return awardStatistics;
