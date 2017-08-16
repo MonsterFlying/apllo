@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -23,7 +24,7 @@ import java.util.Map;
  * Created by admin on 2017/8/15.
  */
 @Component
-public class UrlInterceptor implements HandlerInterceptor {
+public class UrlInterceptor extends HandlerInterceptorAdapter {
 
     @Autowired
     private JwtTokenHelper jwtTokenHelper;
@@ -42,6 +43,12 @@ public class UrlInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object o) throws Exception {
+
+        String urlPath = request.getRequestURI();
+        if(urlPath.contains("swagger")||urlPath.contains("/v2/api-docs")){
+            return  super.preHandle(request,response,o);
+        }
+
         String authToken = request.getHeader(this.tokenHeader);
         //判断token是否为空
         if (StringUtils.isEmpty(authToken)||authToken.equals("null")) {
@@ -55,7 +62,6 @@ public class UrlInterceptor implements HandlerInterceptor {
             Long userId = jwtTokenHelper.getUserIdFromToken(authToken);
             Users users = userService.findById(userId);
             String userType = users.getType();
-            String urlPath = request.getContextPath();
 
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
@@ -82,13 +88,4 @@ public class UrlInterceptor implements HandlerInterceptor {
         }
     }
 
-    @Override
-    public void postHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o, ModelAndView modelAndView) throws Exception {
-
-    }
-
-    @Override
-    public void afterCompletion(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o, Exception e) throws Exception {
-
-    }
 }

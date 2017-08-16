@@ -3,6 +3,7 @@ package com.gofobao.framework.security.controller.finance;
 import com.gofobao.framework.member.biz.UserBiz;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.security.vo.VoLoginReq;
+import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -21,6 +22,7 @@ import javax.servlet.http.HttpServletResponse;
  * Created by Max on 2017/5/16.
  */
 @RestController
+@Api(description = "理财登录")
 @RequestMapping("/pub/auth/finance")
 public class FinanceAuthenticationRestController {
 

@@ -44,6 +44,7 @@ public class FinancePlanBuyerBizImpl implements FinancePlanBuyerBiz {
 
     @Override
     public ResponseEntity<PlanBuyUserListWarpRes> buyUserList(Long id) {
+        PlanBuyUserListWarpRes warpRes = VoBaseResp.ok("查询成功", PlanBuyUserListWarpRes.class);
 
         Specification<FinancePlanBuyer> specification = Specifications.<FinancePlanBuyer>and()
                 .eq("planId", id)
@@ -51,14 +52,9 @@ public class FinancePlanBuyerBizImpl implements FinancePlanBuyerBiz {
                 .build();
         List<FinancePlanBuyer> financePlanBuyers = financePlanBuyerService.findList(specification);
         if (CollectionUtils.isEmpty(financePlanBuyers)) {
-            return ResponseEntity.badRequest()
-                    .body(PlanDetail.error(
-                            VoBaseResp.ERROR,
-                            "查询成功",
-                            PlanBuyUserListWarpRes.class));
+            return ResponseEntity.ok(warpRes);
         }
 
-        PlanBuyUserListWarpRes warpRes = VoBaseResp.ok("查询成功", PlanBuyUserListWarpRes.class);
         Set<Long> userIds = financePlanBuyers.stream().map(m -> m.getUserId()).collect(Collectors.toSet());
         List<Users> usersList = userService.findByIdIn(new ArrayList<>(userIds));
         Map<Long, Users> usersMap = usersList.stream().collect(Collectors.toMap(Users::getId, Function.identity()));

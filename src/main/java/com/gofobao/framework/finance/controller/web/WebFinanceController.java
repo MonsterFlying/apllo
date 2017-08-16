@@ -19,7 +19,7 @@ import javax.validation.Valid;
  * Created by Zeke on 2017/8/10.
  */
 @RestController
-@RequestMapping("/tender/pc")
+@RequestMapping("/plan/pc")
 @Api(description = "理财计划功能模块")
 public class WebFinanceController {
 
