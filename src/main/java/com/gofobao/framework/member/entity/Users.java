@@ -70,4 +70,5 @@ public class Users implements Serializable{
     private String ip ;
 
     private String windmillId;
+    private Date loginTime ;
 }

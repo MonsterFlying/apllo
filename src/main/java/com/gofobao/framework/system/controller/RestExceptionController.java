@@ -1,7 +1,7 @@
 package com.gofobao.framework.system.controller;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.security.exception.UserLoginException;
+import com.gofobao.framework.security.exception.LoginException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -18,18 +18,18 @@ import javax.servlet.http.HttpServletRequest;
 public class RestExceptionController {
     @ExceptionHandler(value = {Exception.class})
     public ResponseEntity<VoBaseResp> restExceptionHandler(HttpServletRequest request, Throwable e) throws Exception {
-        VoBaseResp voBaseResp = VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了, 麻烦轻声提醒一下客户!");
+        VoBaseResp voBaseResp = VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了, 麻烦轻声提醒一下客服!");
         log.error("全局参数检测异常", e);
         return ResponseEntity
                 .badRequest()
                 .body(voBaseResp);
     }
 
-
-    @ExceptionHandler(value = UserLoginException.class)
-    public ResponseEntity<VoBaseResp> handleHtmlException(Exception e) {
-        log.error("「捕捉到异常」：", e);
-        return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.RELOGIN, "请登陆"));
+    @ExceptionHandler(value = {LoginException.class})
+    public ResponseEntity<VoBaseResp> restLoginExceptionHandler(HttpServletRequest request, Throwable e) throws Exception {
+        VoBaseResp voBaseResp = VoBaseResp.error(VoBaseResp.RELOGIN, e.getMessage());
+        return ResponseEntity
+                .badRequest()
+                .body(voBaseResp);
     }
-
 }

@@ -803,10 +803,10 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
         try {
-            log.info(String.format("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq %s", GSON.toJson(body)));
+            log.info(String.format("borrowRepaymentThirdBizImpl thirdBatchCreditInvestRunCall send mq %s", GSON.toJson(body)));
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
-            log.error("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq exception", e);
+            log.error("borrowRepaymentThirdBizImpl thirdBatchCreditInvestRunCall send mq exception", e);
         }
 
         return ResponseEntity.ok("success");
