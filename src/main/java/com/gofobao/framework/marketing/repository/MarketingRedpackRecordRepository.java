@@ -4,6 +4,7 @@ import com.gofobao.framework.marketing.entity.MarketingRedpackRecord;
 import com.gofobao.framework.marketing.entity.MarketingRedpackRule;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Repository;
 
@@ -12,7 +13,7 @@ import java.util.Date;
 import java.util.List;
 
 @Repository
-public interface MarketingRedpackRecordRepository extends JpaRepository<MarketingRedpackRecord, Long> {
+public interface MarketingRedpackRecordRepository extends JpaRepository<MarketingRedpackRecord, Long>, JpaSpecificationExecutor<MarketingRedpackRecord> {
 
     MarketingRedpackRule findTopByMarketingIdAndDel(Long marketingId, int del);
 

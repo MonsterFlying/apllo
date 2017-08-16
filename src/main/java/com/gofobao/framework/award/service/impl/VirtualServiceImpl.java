@@ -27,6 +27,8 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
+import com.gofobao.framework.marketing.entity.MarketingRedpackRecord;
+import com.gofobao.framework.marketing.repository.MarketingRedpackRecordRepository;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.tender.contants.VirtualTenderContants;
@@ -73,7 +75,7 @@ public class VirtualServiceImpl implements VirtualService {
 
 
     @Autowired
-    private RedPackageRepository redPackageRepository;
+    private MarketingRedpackRecordRepository marketingRedpackRecordRepository;
 
     @Autowired
     private CouponRepository couponRepository;
@@ -82,7 +84,7 @@ public class VirtualServiceImpl implements VirtualService {
     private UserThirdAccountService userThirdAccountService;
 
     @Autowired
-    AssetChangeProvider assetChangeProvider ;
+    AssetChangeProvider assetChangeProvider;
 
     /**
      * 体验金统计
@@ -171,7 +173,7 @@ public class VirtualServiceImpl implements VirtualService {
 
         //当前用户是否开通存款
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voVirtualReq.getUserId());
-        if(ObjectUtils.isEmpty(userThirdAccount)){
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
             return false;
         }
         //体验标是否存在
@@ -221,15 +223,15 @@ public class VirtualServiceImpl implements VirtualService {
         virtualCollection.setCreatedAt(date);
         virtualCollectionRepository.save(virtualCollection);
 
-        AssetChange assetChange = new AssetChange() ;
-        assetChange.setType(AssetChangeTypeEnum.virtualTender) ;
+        AssetChange assetChange = new AssetChange();
+        assetChange.setType(AssetChangeTypeEnum.virtualTender);
         assetChange.setMoney(asset.getVirtualMoney());
         assetChange.setSourceId(virtualTender.getId());
         assetChange.setSeqNo(assetChangeProvider.getSeqNo());
         assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-        assetChange.setUserId(asset.getUserId()) ;
-        assetChange.setRemark("投资体验标扣除体验金") ;
-        assetChangeProvider.commonAssetChange(assetChange) ;
+        assetChange.setUserId(asset.getUserId());
+        assetChange.setRemark("投资体验标扣除体验金");
+        assetChangeProvider.commonAssetChange(assetChange);
 
         return true;
     }
@@ -237,44 +239,45 @@ public class VirtualServiceImpl implements VirtualService {
     @Override
     public AwardStatistics query(Long userId) {
         AwardStatistics awardStatistics = new AwardStatistics();
-        Specification redPackageSpec = Specifications.<Coupon>and()
+        Specification<MarketingRedpackRecord> redPackageSpec = Specifications.<MarketingRedpackRecord>and()
                 .eq("userId", userId)
                 .eq("status", RedPacketContants.unUsed)
                 .build();
-        List<ActivityRedPacket> activityRedPackets=redPackageRepository.findAll(redPackageSpec);
-        awardStatistics.setRedPackageCount(activityRedPackets.size());
+        Long redpackSize = marketingRedpackRecordRepository.count(redPackageSpec);
+        awardStatistics.setRedPackageCount(redpackSize.intValue());
         Specification specification = Specifications.<Coupon>and()
                 .eq("userId", userId)
                 .eq("status", CouponContants.VALID)
                 .build();
+
         List<Coupon> couponList = couponRepository.findAll(specification);
         awardStatistics.setCouponCount(couponList.size());
         Asset asset = assetRepository.findOne(userId);
-        awardStatistics.setVirtualMoney(asset.getVirtualMoney()/100d);
+        awardStatistics.setVirtualMoney(asset.getVirtualMoney() / 100d);
         return awardStatistics;
     }
 
-    public VirtualCollection save(VirtualCollection virtualCollection){
+    public VirtualCollection save(VirtualCollection virtualCollection) {
         return virtualCollectionRepository.save(virtualCollection);
     }
 
-    public List<VirtualCollection> save(List<VirtualCollection> virtualCollectionList){
+    public List<VirtualCollection> save(List<VirtualCollection> virtualCollectionList) {
         return virtualCollectionRepository.save(virtualCollectionList);
     }
 
-    public List<VirtualCollection> findList(Specification<VirtualCollection> specification){
+    public List<VirtualCollection> findList(Specification<VirtualCollection> specification) {
         return virtualCollectionRepository.findAll(specification);
     }
 
-    public List<VirtualCollection> findList(Specification<VirtualCollection> specification, Sort sort){
-        return virtualCollectionRepository.findAll(specification,sort);
+    public List<VirtualCollection> findList(Specification<VirtualCollection> specification, Sort sort) {
+        return virtualCollectionRepository.findAll(specification, sort);
     }
 
-    public List<VirtualCollection> findList(Specification<VirtualCollection> specification, Pageable pageable){
-        return virtualCollectionRepository.findAll(specification,pageable).getContent();
+    public List<VirtualCollection> findList(Specification<VirtualCollection> specification, Pageable pageable) {
+        return virtualCollectionRepository.findAll(specification, pageable).getContent();
     }
 
-    public long count(Specification<VirtualCollection> specification){
+    public long count(Specification<VirtualCollection> specification) {
         return virtualCollectionRepository.count(specification);
     }
 }
