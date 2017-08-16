@@ -297,7 +297,7 @@ public class AssetBizImpl implements AssetBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "短信验证码已过期，请重新获取"));
         }
-        // 充值额度
+       /* // 充值额度
         double[] rechargeCredit = bankAccountBiz.getRechargeCredit(voRechargeReq.getUserId());
         // 判断单笔额度
         double oneTimes = rechargeCredit[0];
@@ -330,7 +330,7 @@ public class AssetBizImpl implements AssetBiz {
                             String.format("当月你在%s的剩余充值额度%s元",
                                     userThirdAccount.getBankName(),
                                     StringHelper.formatDouble(mouthTimes < 0 ? 0 : mouthTimes, true))));
-        }
+        }*/
 
         DirectRechargeOnlineRequest directRechargeOnlineRequest = new DirectRechargeOnlineRequest();
         directRechargeOnlineRequest.setSeqNo(RandomHelper.generateNumberCode(6));
