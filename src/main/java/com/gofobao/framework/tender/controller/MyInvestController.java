@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 /**
  * Created by admin on 2017/6/1.
  */
-@RequestMapping("pub/invest")
+@RequestMapping("invest")
 @Api(description = "我的投资")
 @RestController
 public class MyInvestController {

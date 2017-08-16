@@ -15,22 +15,7 @@ public class SecurityAdapter extends WebMvcConfigurerAdapter {
                 .excludePathPatterns("/pub/**")
                 .excludePathPatterns("/swagger-resources/**", "/v2/**")
                 .excludePathPatterns("/*.html", "/favicon.ico", "/**/*.html", "/**/*.css", "/**/*.js", "/**/*.png", "/**/*.jpg")
-                .excludePathPatterns("/borrow/**")
                 .excludePathPatterns("/pc/**")
-                .excludePathPatterns("/redPackage/**")
-                .excludePathPatterns("/autoTender/**")
-                .excludePathPatterns("/award/**")
-                .excludePathPatterns("/payment/**")
-                .excludePathPatterns("/repayment/**")
-                .excludePathPatterns("/transfer/**")
-                .excludePathPatterns("/lend/**")
-                .excludePathPatterns("/notices/**")
-                .excludePathPatterns("/coupon/**")
-                .excludePathPatterns("/loan/**")
-                .excludePathPatterns("/invite/**")
-                .excludePathPatterns("/smmSetting/**")
-                .excludePathPatterns("/user/**")
-                .excludePathPatterns("/tender/**")
                 .excludePathPatterns("/index/**") ;
 
         super.addInterceptors(registry);
