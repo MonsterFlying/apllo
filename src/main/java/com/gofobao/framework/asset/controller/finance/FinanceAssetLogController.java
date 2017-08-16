@@ -1,4 +1,4 @@
-package com.gofobao.framework.asset.controller;
+package com.gofobao.framework.asset.controller.finance;
 
 import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
@@ -17,22 +17,13 @@ import org.springframework.web.bind.annotation.*;
 @Api(description = "资金流水")
 @RestController
 @Slf4j
-public class AssetLogController {
+public class FinanceAssetLogController {
 
     @Autowired
     private AssetBiz assetBiz;
 
-    @ApiOperation("老版本资金流水")
-    @RequestMapping(value = "/assetLog/v2/list/old",method = RequestMethod.POST)
-    public ResponseEntity<VoViewAssetLogWarpRes> assetLogResList(@ModelAttribute VoAssetLogReq voAssetLogReq,
-                                                                 @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        voAssetLogReq.setUserId(userId);
-        return assetBiz.assetLogResList(voAssetLogReq);
-    }
-
-
     @ApiOperation("新版资金流水")
-    @RequestMapping(value = "/assetLog/v2/list",method = RequestMethod.POST)
+    @RequestMapping(value = "pub/finance/assetLog/v2/list",method = RequestMethod.POST)
     public ResponseEntity<VoViewAssetLogWarpRes> newAssetLogResList(@ModelAttribute VoAssetLogReq voAssetLogReq,
                                                                  @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voAssetLogReq.setUserId(userId);

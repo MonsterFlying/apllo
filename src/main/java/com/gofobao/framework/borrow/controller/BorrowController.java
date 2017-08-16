@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
@@ -88,7 +87,7 @@ public class BorrowController {
 
 
     @ApiOperation(value = "标合同")
-    @GetMapping(value = "/borrow/pub/borrowProtocol/{borrowId}")
+    @GetMapping(value = "pub/borrow/pub/borrowProtocol/{borrowId}")
     public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId, HttpServletRequest request) {
         Long userId = 0L;
         String authToken = request.getHeader(this.tokenHeader);
@@ -96,7 +95,7 @@ public class BorrowController {
             authToken = authToken.substring(7);
         }
         String username = jwtTokenHelper.getUsernameFromToken(authToken);
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        if (!StringUtils.isEmpty(username)) {
             userId = jwtTokenHelper.getUserIdFromToken(authToken);
         }
 
@@ -145,7 +144,7 @@ public class BorrowController {
      * @param voDoAgainVerifyReq
      * @return
      */
-    @PostMapping("/borrow/doAgainVerify")
+    @PostMapping("pub/borrow/doAgainVerify")
     @ApiOperation("复审")
     public ResponseEntity<VoBaseResp> doAgainVerify(VoDoAgainVerifyReq voDoAgainVerifyReq) {
         return borrowBiz.doAgainVerify(voDoAgainVerifyReq);

@@ -114,7 +114,7 @@ public class BankAccountBizImpl implements BankAccountBiz {
         if (ObjectUtils.isEmpty(bankInfo)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查无此卡,如有问题请联系平台客户!", VoBankTypeInfoResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查无此卡,如有问题请联系平台客服!", VoBankTypeInfoResp.class));
         }
         if (!"借记卡".equals(bankInfo.getCardType())) {
             return ResponseEntity

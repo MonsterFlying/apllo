@@ -82,6 +82,14 @@ public class BorrowServiceImpl implements BorrowService {
     private String imageDomain;
 
 
+    //过滤掉 发标待审 初审不通过；复审不通过 已取消
+  private static   List statusArray = Lists.newArrayList(
+            new Integer(BorrowContants.CANCEL),
+            new Integer(BorrowContants.NO_PASS),
+            new Integer(BorrowContants.RECHECK_NO_PASS),
+            new Integer(BorrowContants.PENDING));
+
+
     LoadingCache<String, Borrow> newBorrow = CacheBuilder
             .newBuilder()
             .expireAfterWrite(60, TimeUnit.MINUTES)
@@ -122,31 +130,23 @@ public class BorrowServiceImpl implements BorrowService {
             type = null;
         }
 
-        //过滤掉 发标待审 初审不通过；复审不通过 已取消
-        List statusArray = Lists.newArrayList(
-                new Integer(BorrowContants.CANCEL),
-                new Integer(BorrowContants.NO_PASS),
-                new Integer(BorrowContants.RECHECK_NO_PASS),
-                new Integer(BorrowContants.PENDING));
-
-        StringBuilder pageSb = new StringBuilder(" SELECT b FROM Borrow b WHERE 1 = 1 ");
-        StringBuilder countSb = new StringBuilder(" SELECT COUNT(id) FROM Borrow b WHERE 1 = 1 ");
+        StringBuilder pageSb = new StringBuilder(" SELECT b.* FROM gfb_borrow  b  JOIN gfb_transfer t ON t.borrow_id!=b.id  WHERE 1 = 1 ");
         StringBuilder condtionSql = new StringBuilder("");
         if (type != null) {  // 全部
             condtionSql.append(" AND b.type = " + type);
         }
-        condtionSql.append(" AND b.verifyAt IS Not NULL AND b.status NOT IN(:statusArray)");
+        condtionSql.append(" AND b.verify_at IS Not NULL AND b.status NOT IN(:statusArray)");
         // 排序
         if (StringUtils.isEmpty(type)) {   // 全部
-            condtionSql.append(" ORDER BY b.status ASC , (b.moneyYes / b.money) DESC, FIELD(b.type,0, 4, 1),b.id DESC");
+            condtionSql.append(" ORDER BY b.status ASC , (b.money_yes / b.money) DESC, FIELD(b.type,0, 4, 1),b.id DESC");
         } else {
             if (type.equals(BorrowContants.INDEX_TYPE_CE_DAI)) {
-                condtionSql.append(" ORDER BY b.status ASC,(b.moneyYes / b.money) DESC, b.successAt DESC,b.id DESC");
+                condtionSql.append(" ORDER BY b.status ASC,(b.money_yes / b.money) DESC, b.success_at DESC,b.id DESC");
             } else {
-                condtionSql.append(" ORDER BY b.status, b.successAt DESC, b.id DESC");
+                condtionSql.append(" ORDER BY b.status, b.success_at DESC, b.id DESC");
             }
         }
-        Query pageQuery = entityManager.createQuery(pageSb.append(condtionSql).toString(), Borrow.class);
+        Query pageQuery = entityManager.createNativeQuery(pageSb.append(condtionSql).toString(), Borrow.class);
         pageQuery.setParameter("statusArray", statusArray);
         int firstResult = voBorrowListReq.getPageIndex() * voBorrowListReq.getPageSize();
         List<Borrow> borrowLists = pageQuery
@@ -273,12 +273,7 @@ public class BorrowServiceImpl implements BorrowService {
         if (type == -1) {
             type = null;
         }
-        //过滤掉 发标待审 初审不通过；复审不通过 已取消
-        List statusArray = Lists.newArrayList(
-                new Integer(BorrowContants.CANCEL),
-                new Integer(BorrowContants.NO_PASS),
-                new Integer(BorrowContants.RECHECK_NO_PASS),
-                new Integer(BorrowContants.PENDING));
+
 
         StringBuilder pageSb = new StringBuilder(" SELECT b FROM Borrow b WHERE 1=1 ");
         StringBuilder countSb = new StringBuilder(" SELECT COUNT(id) FROM Borrow b WHERE 1=1 ");

@@ -20,7 +20,7 @@ import javax.validation.Valid;
  * Created by admin on 2017/6/12.
  */
 @RestController
-@RequestMapping("pub/transfer")
+@RequestMapping
 @Api(description = "债权相关控制器")
 @Slf4j
 public class TransferController {
@@ -39,7 +39,7 @@ public class TransferController {
      * @throws Exception
      */
     @ApiOperation("结束债权转让")
-    @PostMapping("/v2/new/transfer/end")
+    @PostMapping("transfer/v2/new/transfer/end")
     public ResponseEntity<VoBaseResp> endTransfer(@Valid @ModelAttribute VoEndTransfer voEndTransfer, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         try {
             voEndTransfer.setUserId(userId);
@@ -57,7 +57,7 @@ public class TransferController {
      * @throws Exception
      */
     @ApiOperation("新版发布债权转让")
-    @PostMapping("/v2/new/transfer/publish")
+    @PostMapping("transfer/v2/new/transfer/publish")
     public ResponseEntity<VoBaseResp> newTransferTender(@Valid @ModelAttribute VoTransferTenderReq voTransferTenderReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         try {
             voTransferTenderReq.setUserId(userId);
@@ -71,7 +71,7 @@ public class TransferController {
      * 购买债权转让
      */
     @ApiOperation("购买债权转让")
-    @PostMapping("/v2/new/transfer/buy")
+    @PostMapping("transfer/v2/new/transfer/buy")
     public ResponseEntity<VoBaseResp> buyTransfer(@Valid  @ModelAttribute VoBuyTransfer voBuyTransfer, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         try {
             voBuyTransfer.setUserId(userId);
@@ -83,7 +83,7 @@ public class TransferController {
     }
 
     @ApiOperation("转让中列表")
-    @GetMapping("/v2/transferOf/list/{pageIndex}/{pageSize}")
+    @GetMapping("transfer/v2/transferOf/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewTransferOfWarpRes> tranferOfList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                                  @PathVariable Integer pageIndex,
                                                                  @PathVariable Integer pageSize) {
@@ -96,7 +96,7 @@ public class TransferController {
     }
 
     @ApiOperation("已转让列表")
-    @GetMapping("v2/transfered/list/{pageIndex}/{pageSize}")
+    @GetMapping("transfer/v2/transfered/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewTransferedWarpRes> transferedlist(@PathVariable Integer pageIndex,
                                                                   @PathVariable Integer pageSize,
                                                                   @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
@@ -109,7 +109,7 @@ public class TransferController {
     }
 
     @ApiOperation("可转让列表")
-    @GetMapping("v2/transferMay/list/{pageIndex}/{pageSize}")
+    @GetMapping("transfer/v2/transferMay/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewTransferMayWarpRes> transferMayList(@PathVariable Integer pageIndex,
                                                                     @PathVariable Integer pageSize,
                                                                     @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
@@ -122,7 +122,7 @@ public class TransferController {
 
 
     @ApiOperation("债券转让说明")
-    @GetMapping("/v2/transfer/desc")
+    @GetMapping("pub/transfer/v2/transfer/desc")
     public ResponseEntity<String> desc() {
         String content;
         try {
@@ -140,14 +140,14 @@ public class TransferController {
      * @return
      */
     @ApiOperation("获取立即转让详情")
-    @GetMapping("v2/transfer/info/{tenderId}")
+    @GetMapping("transfer/v2/transfer/info/{tenderId}")
     public ResponseEntity<VoGoTenderInfo> goTenderInfo(@PathVariable Long tenderId,
                                                        @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return transferBiz.goTenderInfo(tenderId, userId);
     }
 
     @ApiOperation("购买债券记录")
-    @GetMapping("v2/transfer/user/list/{pageIndex}/{pageSize}/{transferId}")
+    @GetMapping("transfer/v2/transfer/user/list/{pageIndex}/{pageSize}/{transferId}")
     public ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(@PathVariable Long transferId,
                                                                           @PathVariable Integer pageIndex,
                                                                           @PathVariable Integer pageSize) {

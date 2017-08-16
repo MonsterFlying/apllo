@@ -1,4 +1,4 @@
-package com.gofobao.framework.tender.controller;
+package com.gofobao.framework.tender.controller.finance;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.*;
 /**
  * Created by admin on 2017/6/1.
  */
-@RequestMapping("invest")
+@RequestMapping("pub/invest/finance")
 @Api(description = "我的投资")
 @RestController
-public class MyInvestController {
+public class FinanceMyInvestController {
 
     @Autowired
     private MyInvestBiz investBiz;

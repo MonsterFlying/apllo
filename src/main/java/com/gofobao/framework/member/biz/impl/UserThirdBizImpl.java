@@ -228,7 +228,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             if (ObjectUtils.isEmpty(bankInfo)) {
                 return ResponseEntity
                         .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR, "查无此银行卡号, 如有问题请联系平台客户!", VoOpenAccountResp.class));
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "查无此银行卡号, 如有问题请联系平台客服!", VoOpenAccountResp.class));
             }
 
             if (!bankInfo.getCardType().equals("借记卡")) {
@@ -925,7 +925,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             if (ObjectUtils.isEmpty(bankInfo)) {
                 return ResponseEntity
                         .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR, "查无此银行卡号, 如有问题请联系平台客户!", VoHtmlResp.class));
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "查无此银行卡号, 如有问题请联系平台客服!", VoHtmlResp.class));
             }
 
             if (!bankInfo.getCardType().equals("借记卡")) {
@@ -1296,7 +1296,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             try {
                 BankBinHelper.BankInfo bankInfo = bankBinHelper.find(cardNo);
                 if (ObjectUtils.isEmpty(bankInfo)) {
-                    log.error("银行卡绑定前置: 查无此银行卡号, 如有问题请联系平台客户!");
+                    log.error("银行卡绑定前置: 查无此银行卡号, 如有问题请联系平台客服!");
                     return ResponseEntity
                             .badRequest()
                             .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "系统异常, 请联系客户", VoHtmlResp.class));
@@ -1344,10 +1344,10 @@ public class UserThirdBizImpl implements UserThirdBiz {
         try {
             BankBinHelper.BankInfo bankInfo = bankBinHelper.find(bankNo);
             if (ObjectUtils.isEmpty(bankInfo)) {
-                log.error("银行卡绑定: 查无此银行卡号, 如有问题请联系平台客户!");
+                log.error("银行卡绑定: 查无此银行卡号, 如有问题请联系平台客服!");
                 return ResponseEntity
                         .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR, "查无此银行卡号, 如有问题请联系平台客户!", VoHtmlResp.class));
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "查无此银行卡号, 如有问题请联系平台客服!", VoHtmlResp.class));
             }
 
             if (!bankInfo.getCardType().equals("借记卡")) {
@@ -1424,7 +1424,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         try {
             BankBinHelper.BankInfo bankInfo = bankBinHelper.find(cardNo);
             if (ObjectUtils.isEmpty(bankInfo)) {
-                log.error("银行卡绑定: 查无此银行卡号, 如有问题请联系平台客户!");
+                log.error("银行卡绑定: 查无此银行卡号, 如有问题请联系平台客服!");
                 return ResponseEntity.ok("success");
             }
 

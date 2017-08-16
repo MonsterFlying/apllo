@@ -88,6 +88,11 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
     @Autowired
     private AssetChangeProvider assetChangeProvider;
 
+    //过滤掉 状态; 1:发标待审 ；2：初审不通过；4：复审不通过；5：已取消
+    private static List<Integer> statusArray = Lists.newArrayList(FinannceContants.CANCEL,
+            FinannceContants.CHECKED_NO_PASS,
+            FinannceContants.NO_PASS,
+            FinannceContants.PENDINGTRIAL);
 
     /**
      * 理财计划资金变动
@@ -488,14 +493,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
 
         PlanListWarpRes warpRes = VoBaseResp.ok("查询成功", PlanListWarpRes.class);
 
-        //过滤掉 状态; 1:发标待审 ；2：初审不通过；4：复审不通过；5：已取消
-        List<Integer> statusArray = Lists.newArrayList(FinannceContants.CANCEL,
-                FinannceContants.CHECKED_NO_PASS,
-                FinannceContants.NO_PASS,
-                FinannceContants.PENDINGTRIAL);
-
         Specification<FinancePlan> specification = Specifications.<FinancePlan>and()
-                .ne("status", statusArray.toArray())
+                .notIn("status", statusArray.toArray())
                 .build();
         List<FinancePlan> financePlans = financePlanService.findList(specification, new Sort(Sort.Direction.DESC, "id"));
 
@@ -528,7 +527,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
     @Override
     public ResponseEntity<PlanDetail> details(Long id) {
         FinancePlan financePlan = financePlanService.findById(id);
-        if (ObjectUtils.isEmpty(financePlan)) {
+        if (ObjectUtils.isEmpty(financePlan) || statusArray.contains(financePlan.getStatus())) {
             return ResponseEntity.badRequest()
                     .body(PlanDetail.error(
                             VoBaseResp.ERROR,

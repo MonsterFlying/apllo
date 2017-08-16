@@ -37,10 +37,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
@@ -106,9 +102,6 @@ public class UserBizImpl implements UserBiz {
 
     @Value("${gofobao.javaDomain}")
     String javaDomain;
-
-    @Autowired
-    AuthenticationManager authenticationManager;
 
     @Autowired
     JwtTokenHelper jwtTokenHelper;
@@ -293,29 +286,27 @@ public class UserBizImpl implements UserBiz {
      * @return
      */
     @Override
-    public ResponseEntity<VoBasicUserInfoResp> login(HttpServletRequest httpServletRequest, HttpServletResponse response, VoLoginReq voLoginReq) {
-        final Authentication authentication;
-        try {
-            authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            voLoginReq.getAccount(),
-                            voLoginReq.getPassword()
-                    )
-            );
-        } catch (Throwable e) {
+    public ResponseEntity<VoBasicUserInfoResp> login(HttpServletRequest httpServletRequest, HttpServletResponse response, VoLoginReq voLoginReq, boolean financeState) {
+        // 登录验证
+        Users user = userService.findByAccount(voLoginReq.getAccount());
+        if(ObjectUtils.isEmpty(user)){
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "账户/密码错误", VoBasicUserInfoResp.class));
         }
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        // Reload password_reset post-security so we can generate captchaToken
-        Users user = findByAccount(voLoginReq.getAccount());
 
-        // 保存登录信息
-        if (ObjectUtils.isEmpty(user)) {
+        // 验证密码
+        try {
+            boolean assetState = PasswordHelper.verifyPassword(user.getPassword(), voLoginReq.getPassword());
+            if (!assetState) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "账户/密码错误", VoBasicUserInfoResp.class));
+            }
+        } catch (Exception e) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "账户/密码错误", VoBasicUserInfoResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了, 请轻声联系客服!", VoBasicUserInfoResp.class));
         }
 
         if (user.getIsLock()) {
@@ -323,99 +314,51 @@ public class UserBizImpl implements UserBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "账户已被系统冻结，如有问题请联系客服！", VoBasicUserInfoResp.class));
         }
-        //理财用户非法登录
-        if(user.getType().equals("finance")){
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "对不起,系统拒绝了你的非法访问", VoBasicUserInfoResp.class));
-
+        if(financeState){
+            if(!user.getType().equals("finance")){  // 理财用户
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "系统拒绝了你的访问请求", VoBasicUserInfoResp.class));
+            }
+        }else{
+            if(user.getType().equals("finance")){  // 金服用户
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "系统拒绝了你的访问请求", VoBasicUserInfoResp.class));
+            }
         }
-        loginHandle(user,httpServletRequest,response,voLoginReq);
-        return getUserInfoResp(user);
-    }
-
-    /**
-     * 理财用户登录
-     * @param httpServletRequest
-     * @param response
-     * @param voLoginReq
-     * @return
-     */
-    @Override
-    public ResponseEntity<VoBasicUserInfoResp> financeLogin(HttpServletRequest httpServletRequest, HttpServletResponse response, VoLoginReq voLoginReq) {
-        final Authentication authentication;
-        try {
-            authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            voLoginReq.getAccount(),
-                            voLoginReq.getPassword()
-                    )
-            );
-        } catch (Throwable e) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "账户/密码错误", VoBasicUserInfoResp.class));
-        }
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        // Reload password_reset post-security so we can generate captchaToken
-        Users user = findByAccount(voLoginReq.getAccount());
 
         // 保存登录信息
-        if (ObjectUtils.isEmpty(user)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "账户/密码错误", VoBasicUserInfoResp.class));
+        user.setIp(IpHelper.getIpAddress(httpServletRequest)); // 设置ip
+        user.setSource(voLoginReq.getSource()) ;
+        user.setLoginTime(new Date());
+        if (StringUtils.isEmpty(user.getPushId())) {   // 推送
+            user.setPushId(UUID.randomUUID().toString().replace("-", ""));
         }
+        user = userService.save(user);// 记录登录信息
 
-        if (user.getIsLock()) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "账户已被系统冻结，如有问题请联系客服！", VoBasicUserInfoResp.class));
-        }
-        //金服用户非法登录
-        if(!user.getType().equals("finance")){
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "不对起,系统拒绝了你的非法访问！", VoBasicUserInfoResp.class));
-        }
-        loginHandle(user,httpServletRequest,response,voLoginReq);
-        return getUserInfoResp(user);
-
-    }
-
-    /**
-     * 理财 || 金服用户 登录的公共处理
-     * @param user
-     * @param request
-     * @param response
-     * @param voLoginReq
-     */
-    private void loginHandle(Users user,HttpServletRequest request,HttpServletResponse response,VoLoginReq voLoginReq){
-
+        // 生成jwt
         String username = user.getUsername();
         if (StringUtils.isEmpty(username)) username = user.getPhone();
         if (StringUtils.isEmpty(username)) username = user.getEmail();
         user.setUsername(username);
-
         final String token = jwtTokenHelper.generateToken(user, voLoginReq.getSource());
         response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
-        user.setPlatform(voLoginReq.getSource());
-        if (StringUtils.isEmpty(user.getPushId())) {   // 产生一次永久保存
-            user.setPushId(UUID.randomUUID().toString().replace("-", ""));  // 设置唯一标识
+        try{
+            // 触发登录队列
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setTag(MqTagEnum.LOGIN);
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+            mqConfig.setSendTime(DateHelper.addSeconds(new Date(), 10));
+            ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_USER_ID, user.getId().toString());
+            mqConfig.setMsg(body);
+            mqHelper.convertAndSend(mqConfig);
+        }catch (Exception e){
+            log.error("触发登录队列异常", e);
         }
-        user.setIp(IpHelper.getIpAddress(request)); // 设置ip
-        userService.save(user);   // 记录登录信息
 
-        // 触发登录队列
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setTag(MqTagEnum.LOGIN);
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
-        mqConfig.setSendTime(DateHelper.addSeconds(new Date(), 10));
-        ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_USER_ID, user.getId().toString());
-        mqConfig.setMsg(body);
-        mqHelper.convertAndSend(mqConfig);
+        return getUserInfoResp(user);
     }
-
 
     /**
      * 注册后续操作

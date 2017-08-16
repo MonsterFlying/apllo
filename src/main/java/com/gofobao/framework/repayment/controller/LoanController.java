@@ -20,7 +20,7 @@ import springfox.documentation.annotations.ApiIgnore;
 
 @Api(description = "我的借款")
 @RestController
-@RequestMapping("pub/loan")
+@RequestMapping("loan")
 public class LoanController {
     @Autowired
     private LoanBiz loanBiz;
