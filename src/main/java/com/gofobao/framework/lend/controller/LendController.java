@@ -20,7 +20,6 @@ import javax.validation.Valid;
  */
 @Api(description = "出借")
 @RestController
-@RequestMapping
 public class LendController {
 
     @Autowired
