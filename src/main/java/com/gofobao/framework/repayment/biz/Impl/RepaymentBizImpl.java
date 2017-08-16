@@ -1095,9 +1095,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
         addBatchAssetChangeByBorrower(batchAssetChange.getId(), borrowRepayment, parentBorrow, interestPercent, isUserOpen, lateInterest, seqNo, groupSeqNo);
         ResponseEntity resp;
         if (advance) {
-            // 创建还款主记录
+            // 垫付还款
             resp = repayGuarantor(userId, repayUserThirdAccount, borrowRepayment, parentBorrow, lateInterest, batchNo, seqNo, groupSeqNo);
-        } else {  //正常还款
+        } else {
+            // 正常还款
             resp = normalRepay(userId, repayUserThirdAccount, borrowRepayment, parentBorrow, lateInterest, interestPercent, batchNo, batchAssetChange, seqNo, groupSeqNo);
         }
 
@@ -1475,7 +1476,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             batchAssetChangeItem.setMoney(repayAssetChange.getPrincipal() + repayAssetChange.getInterest());   // 本金加利息
             batchAssetChangeItem.setInterest(repayAssetChange.getInterest());  // 利息
             batchAssetChangeItem.setRemark(String.format("收到客户对借款[%s]第%s期的还款", borrow.getName(), (borrowRepayment.getOrder() + 1)));
-
+            batchAssetChangeItemService.save(batchAssetChangeItem);
             // 扣除利息管理费
             if (repayAssetChange.getInterestFee() > 0) {
                 batchAssetChangeItem = new BatchAssetChangeItem();
@@ -1542,6 +1543,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             batchAssetChangeItem.setSourceId(borrowRepayment.getId());
             batchAssetChangeItem.setSeqNo(seqNo);
             batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+            batchAssetChangeItemService.save(batchAssetChangeItem);
         }
     }
 
@@ -2371,10 +2373,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
         long bailAccountId = assetChangeProvider.getBailAccountId();  // 平台担保人ID
         //3.新增垫付记录与更改还款状态
         addAdvanceLogAndChangeBorrowRepayment(bailAccountId, borrowRepayment, lateDays, lateInterest);
-        //4.结束投资人第三方债权并更新借款状态（还款最后一期的时候）
-        /**
-         * @// TODO: 2017/8/15
-         */
+        //4.结束垫付投资人债权
+        endAdvanceCredit(parentBorrow);
         //5.发送投资人收到还款站内信
         sendCollectionNotices(borrowCollectionList, advance, parentBorrow);
         //6.发放积分
@@ -2387,6 +2387,23 @@ public class RepaymentBizImpl implements RepaymentBiz {
         smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
 
         return ResponseEntity.ok(VoBaseResp.ok("垫付处理成功!"));
+    }
+
+    private void endAdvanceCredit(Borrow parentBorrow) {
+        //推送队列结束债权
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
+        mqConfig.setTag(MqTagEnum.END_CREDIT_BY_ADVANCE);
+        mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(parentBorrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            log.info(String.format("repaymentBizImpl endThirdTenderAndChangeBorrowStatus send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("repaymentBizImpl endThirdTenderAndChangeBorrowStatus send mq exception", e);
+        }
     }
 
     /**

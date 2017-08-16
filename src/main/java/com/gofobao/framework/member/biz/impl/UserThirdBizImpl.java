@@ -178,7 +178,6 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "你的账户已经开户！", VoPreOpenAccountResp.class));
         }
 
-
         // 4.查询银行卡
         List<BankAccount> bankAccountList = bankAccountService.listBankByUserId(userId);
         List<VoBankResp> voBankResps = new ArrayList<>(bankAccountList.size());
@@ -1171,7 +1170,6 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "不满足解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零"));
         }
-
         // 查询即信账户余额
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);

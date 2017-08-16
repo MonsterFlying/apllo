@@ -9,6 +9,8 @@ import com.gofobao.framework.api.model.batch_credit_end.BatchCreditEndResp;
 import com.gofobao.framework.api.model.batch_credit_end.CreditEnd;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.collection.entity.BorrowCollection;
+import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.BooleanHelper;
@@ -34,6 +36,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
@@ -55,6 +58,8 @@ public class CreditProvider {
     private JixinManager jixinManager;
     @Autowired
     private JixinHelper jixinHelper;
+    @Autowired
+    private BorrowCollectionService borrowCollectionService;
     @Autowired
     private ThirdBatchLogService thirdBatchLogService;
     @Value("${gofobao.javaDomain}")
@@ -81,6 +86,12 @@ public class CreditProvider {
         } else if (tag.equals(MqTagEnum.END_CREDIT_ALL.getValue())) { //结束所有
             buildTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
             buildNotTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
+        } else if (tag.equals(MqTagEnum.END_CREDIT_BY_ADVANCE.getValue())) {
+            //结束垫付 投资方债权
+            buildAdvanceCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
+        } else {
+            log.error("未找到对应类型!");
+            return false;
         }
 
         if (CollectionUtils.isEmpty(creditEndList)) {
@@ -125,6 +136,51 @@ public class CreditProvider {
 
     }
 
+    /**
+     * 构建结束垫付债权集合
+     *
+     * @param creditEndList
+     * @param borrowUserThirdAccountId
+     * @param productId
+     * @param borrowId
+     */
+    private void buildAdvanceCreditEndList(List<CreditEnd> creditEndList, String borrowUserThirdAccountId, String productId, long borrowId) {
+        do {
+            /* 未转让投标集合 */
+            Specification<Tender> ts = Specifications
+                    .<Tender>and()
+                    .eq("borrowId", borrowId)
+                    .eq("status", 1)
+                    .build();
+            List<Tender> tenderList = tenderService.findList(ts);
+            Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "creditProvider buildCreditEndList: 借款" + borrowId + " 未找到投递成功债权！");
+            List<Long/* tenderId */> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toList());
+            /* 查询已垫付回款 */
+            Specification<BorrowCollection> bcs = Specifications
+                    .<BorrowCollection>and()
+                    .eq("thirdAdvanceFlag", true)
+                    .eq("thirdCreditEndFlag", false)
+                    .in("tenderId", tenderIds.toArray())
+                    .build();
+            List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
+            Preconditions.checkState(!CollectionUtils.isEmpty(borrowCollectionList), String.format("已垫付回款不存在,借款id%s", borrowId));
+            borrowCollectionList.stream().forEach(borrowCollection -> {
+                CreditEnd creditEnd = new CreditEnd();
+                String orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
+                UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(borrowCollection.getUserId());
+                creditEnd.setAccountId(borrowUserThirdAccountId);
+                creditEnd.setOrderId(orderId);
+                creditEnd.setAuthCode(borrowCollection.getTAdvanceAuthCode());
+                creditEnd.setForAccountId(tenderUserThirdAccount.getAccountId());
+                creditEnd.setProductId(productId);
+                creditEndList.add(creditEnd);
+                //保存结束债权id
+                borrowCollection.setThirdCreditEndOrderId(orderId);
+                borrowCollection.setThirdCreditEndFlag(false);
+                borrowCollectionService.save(borrowCollection);
+            });
+        } while (false);
+    }
 
     /**
      * 构建结束已转让债权集合
@@ -158,7 +214,7 @@ public class CreditProvider {
                 creditEndList.add(creditEnd);
                 //保存结束债权id
                 tender.setThirdCreditEndOrderId(orderId);
-                tender.setThirdCreditEndFlag(true);
+                tender.setThirdCreditEndFlag(false);
                 tenderService.save(tender);
 
                 //查询转让标的

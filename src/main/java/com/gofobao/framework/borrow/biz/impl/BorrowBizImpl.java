@@ -629,8 +629,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 ResponseEntity<VoBaseResp> resp = tenderThirdBiz.cancelThirdTender(voCancelThirdTenderReq);
                 log.info(String.format("取消借款: 发起即信存管投资取消!"));
                 if (!resp.getStatusCode().equals(HttpStatus.OK)) {
-                    log.error(String.format("取消借款:取消即信投标记录失败: %s", new Gson().toJson(resp)));
-                    throw new Exception("borrowBizImpl cancelBorrow:" + resp.getBody().getState().getMsg());
+                    log.info(String.format("取消借款:已在即信登记投标不能取消: %s", new Gson().toJson(resp)));
                 }
             }
 
@@ -986,8 +985,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     throw new Exception("borrowBizImpl cancelThirdBorrow:" + resp.getBody().getState().getMsg());
                 }
             } else {
-                log.error("当前标定中还存在未取消投标申请记录");
-                throw new Exception("borrowBizImpl cancelThirdBorrow: 当前标定中还存在未取消投标申请记录");
+                log.info("当前标定中还存在未取消投标申请记录,无需在即信取消");
             }
         }
     }

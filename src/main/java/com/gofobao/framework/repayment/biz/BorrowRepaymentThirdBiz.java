@@ -71,7 +71,7 @@ public interface BorrowRepaymentThirdBiz {
      * @param request
      * @param response
      */
-    ResponseEntity<String> thirdBatchRepayBailCheckCall(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> thirdBatchRepayAdvanceCheckCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 批次融资人还担保账户垫款业务处理回调
@@ -79,7 +79,7 @@ public interface BorrowRepaymentThirdBiz {
      * @param request
      * @param response
      */
-    ResponseEntity<String> thirdBatchRepayBailRunCall(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> thirdBatchRepayAdvanceRunCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 获取存管 收到还款 数据集合

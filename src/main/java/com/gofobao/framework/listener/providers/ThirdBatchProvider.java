@@ -233,29 +233,42 @@ public class ThirdBatchProvider {
             log.info("================================================================================");
         }
 
+        Map<String, Object> acqMap = GSON.fromJson(acqRes, TypeTokenContants.MAP_TOKEN);
+        /**
+         * 结束债权类型
+         */
+            /* 结束在债权标签 */
+        String tag = StringHelper.toString(acqMap.get("tag"));
+
         //登记成功批次
-        Specification<Tender> ts = null;
         if (!CollectionUtils.isEmpty(successThirdCreditEndOrderIds)) {
-            ts = Specifications
-                    .<Tender>and()
-                    .in("thirdCreditEndOrderId", successThirdCreditEndOrderIds.toArray())
-                    .build();
-            List<Tender> successTenderList = tenderService.findList(ts);
-            successTenderList.stream().forEach(collection -> {
-                collection.setThirdCreditEndFlag(true);
-            });
-            tenderService.save(successTenderList);
+            if (tag.equals(MqTagEnum.END_CREDIT_BY_ADVANCE.getValue())) {
+                Specification<BorrowCollection> bcs = Specifications
+                        .<BorrowCollection>and()
+                        .eq("thirdCreditEndOrderId",successThirdCreditEndOrderIds.toArray())
+                        .build();
+                List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
+                borrowCollectionList.stream().forEach(collection -> {
+                    collection.setThirdCreditEndFlag(true);
+                });
+                borrowCollectionService.save(borrowCollectionList);
+            } else {
+                Specification<Tender> ts = Specifications
+                        .<Tender>and()
+                        .in("thirdCreditEndOrderId", successThirdCreditEndOrderIds.toArray())
+                        .build();
+                List<Tender> successTenderList = tenderService.findList(ts);
+                successTenderList.stream().forEach(tender -> {
+                    tender.setThirdCreditEndFlag(true);
+                });
+                tenderService.save(successTenderList);
+            }
         }
 
         //处理失败批次
         //5分钟处理一次
         if (!CollectionUtils.isEmpty(failureThirdCreditEndOrderIds)) {
-            Map<String, Object> acqMap = GSON.fromJson(acqRes, TypeTokenContants.MAP_TOKEN);
-            /**
-             * 结束债权类型
-             */
-            /* 结束在债权标签 */
-            String tag = StringHelper.toString(acqMap.get("tag"));
+
             //更新批次日志状态
             updateThirdBatchLogState(batchNo, borrowId, ThirdBatchLogContants.BATCH_CREDIT_END, 4);
 
@@ -353,7 +366,7 @@ public class ThirdBatchProvider {
 
     /**
      * 批次融资人还担保账户垫款
-     *
+     * @// TODO: 2017/8/16 需要修改 
      * @param acqRes
      * @param failureTRepayBailOrderIds
      * @param successTRepayBailOrderIds
