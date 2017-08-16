@@ -20,7 +20,6 @@ import javax.validation.Valid;
  */
 @Api(description = "出借")
 @RestController
-@RequestMapping("lend")
 public class LendController {
 
     @Autowired
@@ -28,7 +27,7 @@ public class LendController {
 
     private VoUserLendReq voUserLendReq = new VoUserLendReq();
 
-    @RequestMapping(value = "/v2/list/{pageIndex}/{pageSize}", method = RequestMethod.GET)
+    @RequestMapping(value = "pub/lend/v2/list/{pageIndex}/{pageSize}", method = RequestMethod.GET)
     @ApiOperation("出借列表")
     public ResponseEntity<VoViewLendListWarpRes> list(@PathVariable Integer pageIndex,
                                                       @PathVariable Integer pageSize) {
@@ -39,14 +38,14 @@ public class LendController {
     }
 
 
-    @RequestMapping(value = "/v2/info/{lendId}", method = RequestMethod.GET)
+    @RequestMapping(value = "lend/v2/info/{lendId}", method = RequestMethod.GET)
     @ApiOperation("出借详情")
     public ResponseEntity<VoViewLendInfoWarpRes> info(@PathVariable Long lendId,
                                                       @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return lendBiz.info(userId, lendId);
     }
 
-    @RequestMapping(value = "/v2/list/byUser/{pageIndex}/{pageSize}", method = RequestMethod.GET)
+    @RequestMapping(value = "lend/v2/list/byUser/{pageIndex}/{pageSize}", method = RequestMethod.GET)
     @ApiOperation("我的出借列表")
     public ResponseEntity<VoViewUserLendInfoWarpRes> byUser(
             @PathVariable Integer pageIndex,
@@ -65,7 +64,7 @@ public class LendController {
      * @param voCreateLend
      * @return
      */
-    @PostMapping(value = "/v2/create")
+    @PostMapping(value = "lend/v2/create")
     @ApiOperation("发布有草出借")
     public ResponseEntity<VoBaseResp> create(@ModelAttribute @Valid VoCreateLend voCreateLend,
                                              @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
@@ -80,7 +79,7 @@ public class LendController {
      * @param voEndLend
      * @return
      */
-    @PostMapping(value = "/v2/end")
+    @PostMapping(value = "lend/v2/end")
     @ApiOperation("结束有草出借")
     public ResponseEntity<VoBaseResp> end(@ModelAttribute @Valid VoEndLend voEndLend,
                                           @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
@@ -94,7 +93,7 @@ public class LendController {
      * @param voLend
      * @return
      */
-    @PostMapping(value = "/v2/lend")
+    @PostMapping(value = "lend/v2/lend")
     @ApiOperation("有草出借摘草")
     public ResponseEntity<VoBaseResp> lend(@ModelAttribute @Valid VoLend voLend,
                                            @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
@@ -110,7 +109,7 @@ public class LendController {
      * @throws Exception
      */
     @ApiOperation(value = "获取当前用户黑名单列表", notes = "获取当前用户黑名单列表")
-    @PostMapping(value = "/userLendBlacklist")
+    @PostMapping(value = "lend/v2/userLendBlacklist")
     public ResponseEntity<VoViewLendBlacklists> getLendBlacklists(@ModelAttribute @Valid VoGetLendBlacklists voGetLendBlacklists,
                                                                   @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voGetLendBlacklists.setUserId(userId);
@@ -125,7 +124,7 @@ public class LendController {
      * @throws Exception
      */
     @ApiOperation(value = "添加有草出借黑名单", notes = "添加有草出借黑名单")
-    @PostMapping(value = "/v2/blacklist/add")
+    @PostMapping(value = "lend/v2/blacklist/add")
     public ResponseEntity<VoBaseResp> addLendBlacklist(@ModelAttribute @Valid VoAddLendBlacklist voAddLendBlacklist,
                                                        @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voAddLendBlacklist.setUserId(userId);
@@ -140,7 +139,7 @@ public class LendController {
      * @throws Exception
      */
     @ApiOperation(value = "移除有草出借黑名单", notes = "移除有草出借黑名单")
-    @PostMapping(value = "/v2/blacklist/remove")
+    @PostMapping(value = "lend/v2/blacklist/remove")
     public ResponseEntity<VoBaseResp> delLendBlacklist(@ModelAttribute @Valid VoDelLendBlacklist voDelLendBlacklist,
                                                        @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voDelLendBlacklist.setUserId(userId);
@@ -154,7 +153,7 @@ public class LendController {
      * @return
      * @throws Exception
      */
-    @PostMapping(value = "/v2/lend/list/pick")
+    @PostMapping(value = "lend/v2/lend/list/pick")
     @ApiOperation("获取有草出借借款列表")
     public ResponseEntity<VoViewPickLendList> getPickLendList(@ModelAttribute @Valid VoGetPickLendList voGetPickLendList,
                                                               @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
