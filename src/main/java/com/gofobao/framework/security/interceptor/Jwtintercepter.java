@@ -6,13 +6,13 @@ import com.gofobao.framework.security.helper.JwtTokenHelper;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.context.support.WebApplicationContextUtils;
-import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class Jwtintercepter implements HandlerInterceptor {
+public class Jwtintercepter extends HandlerInterceptorAdapter {
 
     private JwtTokenHelper jwtTokenHelper;
 
@@ -30,6 +30,9 @@ public class Jwtintercepter implements HandlerInterceptor {
             throw new LoginException(e.getMessage());
         }
 
+        Long userId = jwtTokenHelper.getUserIdFromToken(token);  // 用户ID
+        httpServletRequest.setAttribute(SecurityContants.USERID_KEY, userId);
+
         // 判断当前用户路劲
         String url = httpServletRequest.getRequestURI();
         String type = jwtTokenHelper.getType(token);
@@ -42,9 +45,6 @@ public class Jwtintercepter implements HandlerInterceptor {
                 throw new Exception("系统拒绝当前请求");
             }
         }
-
-        Long userId = jwtTokenHelper.getUserIdFromToken(token);  // 用户ID
-        httpServletRequest.setAttribute(SecurityContants.USERID_KEY, userId);
         return true;
     }
 

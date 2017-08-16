@@ -19,7 +19,6 @@ public class SecurityAdapter extends WebMvcConfigurerAdapter {
                 .excludePathPatterns("/pc/**")
                 .excludePathPatterns("/redPackage/**")
                 .excludePathPatterns("/autoTender/**")
-                .excludePathPatterns("/award/**")
                 .excludePathPatterns("/payment/**")
                 .excludePathPatterns("/repayment/**")
                 .excludePathPatterns("/transfer/**")

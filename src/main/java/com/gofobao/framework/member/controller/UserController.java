@@ -85,7 +85,7 @@ public class UserController {
 
     @ApiOperation("获取用户配置信息")
     @PostMapping("/user/configInfo")
-    public ResponseEntity<VoBasicUserInfoResp> getUserInfo(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+    public ResponseEntity<VoBasicUserInfoResp> getUserInfo(@ApiIgnore @RequestAttribute(value = SecurityContants.USERID_KEY) Long userId){
         return userBiz.userInfo(userId) ;
     }
 
