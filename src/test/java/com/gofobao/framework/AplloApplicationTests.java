@@ -498,7 +498,18 @@ public class AplloApplicationTests {
 
     @Test
     public void test() {
-
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
+        mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(5), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            log.info(String.format("transferBizImpl buyTransfer send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("transferBizImpl buyTransfer send mq exception", e);
+        }
 
         //推送队列结束债权
 /*        MqConfig mqConfig = new MqConfig();
@@ -540,7 +551,7 @@ public class AplloApplicationTests {
         //查询标的集合
         //findThirdBorrowList();
         //复审
-        doAgainVerify();
+        //doAgainVerify();
         //批次状态查询
         //batchQuery();
         //批次详情查询

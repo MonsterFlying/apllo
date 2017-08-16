@@ -27,6 +27,8 @@ import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.constans.MoneyConstans;
 import com.gofobao.framework.common.constans.TypeTokenContants;
+import com.gofobao.framework.common.data.DataObject;
+import com.gofobao.framework.common.data.GeSpecification;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -665,19 +667,15 @@ public class TransferBizImpl implements TransferBiz {
             updateAssetByBuyUser(transferBuyLog, transfer, buyUserThirdAccount, orderId);
 
             //判断是否满标，满标触发债权转让复审
-            if (transfer.getTransferMoney().intValue() == transfer.getTransferMoneyYes().intValue()) {
+            if (transfer.getTransferMoney().intValue() <= transfer.getTransferMoneyYes().intValue()) {
                 MqConfig mqConfig = new MqConfig();
                 mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
                 mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
                 ImmutableMap<String, String> body = ImmutableMap
                         .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
                 mqConfig.setMsg(body);
-                try {
-                    log.info(String.format("transferBizImpl buyTransfer send mq %s", GSON.toJson(body)));
-                    mqHelper.convertAndSend(mqConfig);
-                } catch (Throwable e) {
-                    log.error("transferBizImpl buyTransfer send mq exception", e);
-                }
+                log.info(String.format("transferBizImpl buyTransfer send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
             }
         } catch (Exception e) {
             String newOrderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);/* 购买债权转让冻结金额 orderid */
@@ -694,9 +692,9 @@ public class TransferBizImpl implements TransferBiz {
             }
         }
 
-        transfer.setTenderCount(transfer.getTenderCount()+1);
         return ResponseEntity.ok(VoBaseResp.ok("购买成功!"));
     }
+
     /**
      * 保存债权转让与购买债权转让记录
      *
@@ -857,10 +855,11 @@ public class TransferBizImpl implements TransferBiz {
                 .eq("transferFlag", 0)
                 .eq("status", 0)
                 .eq("tenderId", tenderId)
+                .predicate(new GeSpecification("collectionAt", new DataObject(DateHelper.endOfDate(DateHelper.addDays(new Date(), 3)))))
                 .build();
 
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "order"));
-        Preconditions.checkNotNull(borrowCollectionList, "立即转让: 查询转让用户还款计划为空");
+        Preconditions.checkState(!CollectionUtils.isEmpty(borrowCollectionList), "立即转让: 剩余还款不足3天，无法转让!");
         int waitTimeLimit = borrowCollectionList.size();  // 等待回款期数
         long leftCapital = borrowCollectionList.stream().mapToLong(borrowCollection -> borrowCollection.getPrincipal()).sum(); // 待回款本金
         if (leftCapital < (1000 * 100)) {

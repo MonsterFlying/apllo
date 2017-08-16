@@ -205,7 +205,7 @@ public class ThirdBatchProvider {
                 //=====================================================
                 // 批次结束债权
                 //=====================================================
-                creditEndDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
+                creditEndDeal(batchNo, sourceId, acqRes, failureOrderIds, successOrderIds);
                 break;
             case ThirdBatchLogContants.BATCH_REPAY_ALL: //提前结清批次还款
                 //======================================================
@@ -226,7 +226,7 @@ public class ThirdBatchProvider {
      * @param failureThirdCreditEndOrderIds
      * @param successThirdCreditEndOrderIds
      */
-    private void creditEndDeal(long batchNo, long borrowId, List<String> failureThirdCreditEndOrderIds, List<String> successThirdCreditEndOrderIds) {
+    private void creditEndDeal(long batchNo, long borrowId, String acqRes, List<String> failureThirdCreditEndOrderIds, List<String> successThirdCreditEndOrderIds) {
         if (CollectionUtils.isEmpty(failureThirdCreditEndOrderIds)) {
             log.info("================================================================================");
             log.info("即信批次还款查询：未发现失败批次！");
@@ -250,13 +250,19 @@ public class ThirdBatchProvider {
         //处理失败批次
         //5分钟处理一次
         if (!CollectionUtils.isEmpty(failureThirdCreditEndOrderIds)) {
+            Map<String, Object> acqMap = GSON.fromJson(acqRes, TypeTokenContants.MAP_TOKEN);
+            /**
+             * 结束债权类型
+             */
+            /* 结束在债权标签 */
+            String tag = StringHelper.toString(acqMap.get("tag"));
             //更新批次日志状态
             updateThirdBatchLogState(batchNo, borrowId, ThirdBatchLogContants.BATCH_CREDIT_END, 4);
 
             //推送队列结束债权
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
-            mqConfig.setTag(MqTagEnum.END_CREDIT_ALL);
+            mqConfig.setTag(MqTagEnum.getMqTagEnum(tag));
             mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 5));
             ImmutableMap<String, String> body = ImmutableMap
                     .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrowId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
@@ -432,7 +438,7 @@ public class ThirdBatchProvider {
         if (!CollectionUtils.isEmpty(successTBailRepayOrderIds)) {
             Specification<BorrowCollection> bcs = Specifications
                     .<BorrowCollection>and()
-                    .in("tBailRepayOrderId", successTBailRepayOrderIds.toArray())
+                    .in("tAdvanceOrderId", successTBailRepayOrderIds.toArray())
                     .build();
             List<BorrowCollection> successBorrowCollectionList = borrowCollectionService.findList(bcs);
             successBorrowCollectionList.stream().forEach(borrowCollection -> {

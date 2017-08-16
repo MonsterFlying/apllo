@@ -10,6 +10,7 @@ import com.gofobao.framework.api.model.batch_credit_end.CreditEnd;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.BooleanHelper;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.NumberHelper;
@@ -42,10 +43,6 @@ import java.util.*;
 @Slf4j
 public class CreditProvider {
 
-    public static final int ALL = 0;
-    public static final int NOT_TRANSFER = 1;
-    public static final int TRANSFER = 2;
-
     final Gson gson = new GsonBuilder().create();
 
     @Autowired
@@ -65,11 +62,11 @@ public class CreditProvider {
 
     /**
      * @param msg
-     * @param type
+     * @param tag
      * @return
      * @throws Exception
      */
-    public boolean endThirdCredit(Map<String, String> msg, int type) throws Exception {
+    public boolean endThirdCredit(Map<String, String> msg, String tag) throws Exception {
         Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
         Borrow borrow = borrowService.findById(borrowId);
         Preconditions.checkNotNull(borrow, "creditProvider endThirdCredit: 借款不能为空!");
@@ -77,18 +74,13 @@ public class CreditProvider {
         Preconditions.checkNotNull(userThirdAccount, "creditProvider endThirdCredit: 借款人未开户!");
         //构建结束债权集合
         List<CreditEnd> creditEndList = new ArrayList<>();
-        switch (type) {
-            case NOT_TRANSFER://未转让投标记录
-                buildNotTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
-                break;
-            case TRANSFER://已转让投标记录
-                buildTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
-                break;
-            case ALL:
-                buildTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
-                buildNotTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
-                break;
-            default:
+        if (tag.equals(MqTagEnum.END_CREDIT_BY_NOT_TRANSFER.getValue())) {  // 结束债权by非转让标
+            buildNotTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
+        } else if (tag.equals(MqTagEnum.END_CREDIT_BY_TRANSFER.getValue())) { // 结束债权by转让标
+            buildTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
+        } else if (tag.equals(MqTagEnum.END_CREDIT_ALL.getValue())) { //结束所有
+            buildTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
+            buildNotTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
         }
 
         if (CollectionUtils.isEmpty(creditEndList)) {
@@ -104,6 +96,7 @@ public class CreditProvider {
         //请求保留参数
         Map<String, Object> acqResMap = new HashMap<>();
         acqResMap.put("borrowId", borrowId);
+        acqResMap.put("tag", tag);
 
         BatchCreditEndReq request = new BatchCreditEndReq();
         request.setBatchNo(batchNo);
