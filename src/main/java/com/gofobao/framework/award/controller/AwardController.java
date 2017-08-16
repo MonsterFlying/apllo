@@ -23,8 +23,8 @@ public class AwardController {
     private VirtualBiz virtualBiz;
 
     @ApiOperation("奖励统计")
-    @GetMapping("/award/v2/statistics")
-    public ResponseEntity<VoViewAwardStatisticsWarpRes> statistics(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+    @GetMapping("award/v2/statistics")
+    public ResponseEntity<VoViewAwardStatisticsWarpRes> statistics(@RequestAttribute(SecurityContants.USERID_KEY) Long userId){
        return virtualBiz.statistics(userId);
     }
 
