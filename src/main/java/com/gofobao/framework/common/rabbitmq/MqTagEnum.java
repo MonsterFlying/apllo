@@ -36,11 +36,11 @@ public enum MqTagEnum {
     END_CREDIT_BY_NOT_TRANSFER("END_CREDIT_BY_NOT_TRANSFER"),//结束债权非转让
     END_CREDIT_BY_TRANSFER("END_CREDIT_BY_TRANSFER"),//结束债权
     END_CREDIT_ALL("END_CREDIT_ALL"),//结束债权
-    BATCH_DEAL("batchDeal"),//批次处理
-    REPAY_ALL("repayAll"),//提前结清
-    REPAY_ADVANCE("repayAdvance"),//提前结清
-    ADVANCE("advance"),//名义借款人垫付
-    REPAY("repay");//立即还款
+    BATCH_DEAL("BATCH_DEAL"),//批次处理
+    REPAY_ALL("REPAY_ALL"),//提前结清
+    REPAY_ADVANCE("REPAY_ADVANCE"),//提前结清
+    ADVANCE("ADVANCE"),//名义借款人垫付
+    REPAY("REPAY");//立即还款
 
 
     private String value;
@@ -55,6 +55,16 @@ public enum MqTagEnum {
 
     public void setValue(String value) {
         this.value = value;
+    }
+
+    // 普通方法
+    public static MqTagEnum getMqTagEnum(String type) {
+        for (MqTagEnum c : MqTagEnum.values()) {
+            if (c.getValue().equals(type)) {
+                return c;
+            }
+        }
+        return null;
     }
 }
 

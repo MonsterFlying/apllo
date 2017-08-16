@@ -44,19 +44,19 @@ public class CreditListener {
         boolean bool = false;
         if (tag.equals(MqTagEnum.END_CREDIT_BY_NOT_TRANSFER.getValue())) {  // 结束债权by非转让标
             try {
-                bool = creditProvider.endThirdCredit(msg, CreditProvider.NOT_TRANSFER);
+                bool = creditProvider.endThirdCredit(msg, tag);
             } catch (Throwable throwable) {
                 log.error("结束存管债权异常:", throwable);
             }
         } else if (tag.equals(MqTagEnum.END_CREDIT_BY_TRANSFER.getValue())) { // 结束债权by转让标
             try {
-                bool = creditProvider.endThirdCredit(msg, CreditProvider.TRANSFER);
+                bool = creditProvider.endThirdCredit(msg, tag);
             } catch (Throwable throwable) {
                 log.error("结束存管债权异常:", throwable);
             }
         } else if(tag.equals(MqTagEnum.END_CREDIT_ALL.getValue())){
             try {
-                bool = creditProvider.endThirdCredit(msg, CreditProvider.ALL);
+                bool = creditProvider.endThirdCredit(msg,tag);
             } catch (Throwable throwable) {
                 log.error("结束存管债权异常:", throwable);
             }

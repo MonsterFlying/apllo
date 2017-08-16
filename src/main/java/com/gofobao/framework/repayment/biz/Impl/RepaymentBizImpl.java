@@ -1755,6 +1755,16 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("该借款上一期还未还!")));
         }
 
+        //4.判断是否在晚上9点30前还款
+        Date endDate = DateHelper.beginOfDate(new Date());
+        endDate = DateHelper.setHours(endDate, 21);
+        endDate = DateHelper.setMinutes(endDate, 30);
+        if (new Date().getTime() > endDate.getTime()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("还款截止时间为每天晚上9点30!")));
+        }
+
         return ResponseEntity.ok(VoBaseResp.ok("验证成功"));
 
     }
@@ -2361,8 +2371,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
         long bailAccountId = assetChangeProvider.getBailAccountId();  // 平台担保人ID
         //3.新增垫付记录与更改还款状态
         addAdvanceLogAndChangeBorrowRepayment(bailAccountId, borrowRepayment, lateDays, lateInterest);
-        //4.结束第三方债权并更新借款状态（还款最后一期的时候）
-        //endThirdTenderAndChangeBorrowStatus(parentBorrow, borrowRepayment);
+        //4.结束投资人第三方债权并更新借款状态（还款最后一期的时候）
+        /**
+         * @// TODO: 2017/8/15
+         */
         //5.发送投资人收到还款站内信
         sendCollectionNotices(borrowCollectionList, advance, parentBorrow);
         //6.发放积分
