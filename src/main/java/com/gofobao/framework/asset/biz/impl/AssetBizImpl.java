@@ -1205,8 +1205,7 @@ public class AssetBizImpl implements AssetBiz {
         Date startTime = DateHelper.beginOfDate(DateHelper.stringToDate(voAssetLogReq.getStartTime(), DateHelper.DATE_FORMAT_YMD));
         Date endTime = DateHelper.endOfDate(DateHelper.stringToDate(voAssetLogReq.getEndTime(), DateHelper.DATE_FORMAT_YMD));
         Specification<NewAssetLog> specification = Specifications.<NewAssetLog>and()
-                .eq(!StringUtils.isEmpty(voAssetLogReq.getType()), "type", voAssetLogReq.getType())
-                .between("createdTime",
+                .between("createTime",
                         new Range<>(
                                 DateHelper.beginOfDate(startTime),
                                 DateHelper.endOfDate(endTime)))
@@ -1223,8 +1222,17 @@ public class AssetBizImpl implements AssetBiz {
         for(NewAssetLog newAssetLog : assetLogs){
             voViewAssetLogRes = new VoViewAssetLogRes() ;
             voViewAssetLogRes.setCreatedAt(DateHelper.dateToString(newAssetLog.getCreateTime()));
-            voViewAssetLogRes.setMoney(new Double(newAssetLog.getOpMoney() / 100D).toString());
-            voViewAssetLogRes.setShowMoney(StringHelper.formatDouble(newAssetLog.getOpMoney() / 100D, true));
+            if(newAssetLog.getTxFlag().equals("C")){
+                voViewAssetLogRes.setMoney("-" + new Double(newAssetLog.getOpMoney() / 100D).toString());
+                voViewAssetLogRes.setShowMoney("-" + StringHelper.formatDouble(newAssetLog.getOpMoney() / 100D, true));
+            }else if(newAssetLog.getTxFlag().equals("D")){
+                voViewAssetLogRes.setMoney(new Double(newAssetLog.getOpMoney() / 100D).toString());
+                voViewAssetLogRes.setShowMoney( "+" + StringHelper.formatDouble(newAssetLog.getOpMoney() / 100D, true));
+            }else{
+                voViewAssetLogRes.setMoney(new Double(newAssetLog.getOpMoney() / 100D).toString());
+                voViewAssetLogRes.setShowMoney(StringHelper.formatDouble(newAssetLog.getOpMoney() / 100D, true));
+            }
+
             voViewAssetLogRes.setTypeName(newAssetLog.getOpName());
             voViewAssetLogWarpRes.getResList().add(voViewAssetLogRes) ;
         }
