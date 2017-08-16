@@ -22,7 +22,10 @@ public class PlanDetail extends VoBaseResp {
     private Integer buyCount;
 
     @ApiModelProperty("起投金额")
-    private String lowMoney;
+    private  String lowMoney;
+
+    @ApiModelProperty("起投金额")
+    private Double hideLowMoney;
 
     @ApiModelProperty("投资总额")
     private String money;
