@@ -434,7 +434,7 @@ public class AplloApplicationTests {
     public void balanceQuery() {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId("6212462190000000229");
+        balanceQueryRequest.setAccountId("6212462190000000021");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         System.out.println(balanceQueryResponse);
     }
@@ -530,7 +530,7 @@ public class AplloApplicationTests {
         //批次处理
         //batchDeal();
         //查询存管账户资金信息
-        //balanceQuery();
+        balanceQuery();
         //查询资金流水
         //accountDetailsQuery();
         //根据手机号查询存管账户
@@ -558,7 +558,7 @@ public class AplloApplicationTests {
         //批次详情查询
         //batchDetailsQuery();
         //查询投标申请
-        bidApplyQuery();
+        //bidApplyQuery();
         //转让标复审回调
         //transferBorrowAgainVerify();
         //非转让标复审问题

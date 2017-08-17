@@ -8,7 +8,6 @@ import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeReq;
 import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeResp;
 import com.gofobao.framework.api.model.batch_bail_repay.BailRepay;
-import com.gofobao.framework.api.model.batch_bail_repay.BailRepayRun;
 import com.gofobao.framework.api.model.batch_bail_repay.BatchBailRepayCheckResp;
 import com.gofobao.framework.api.model.batch_bail_repay.BatchBailRepayRunResp;
 import com.gofobao.framework.api.model.batch_credit_invest.CreditInvest;
@@ -42,10 +41,8 @@ import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
 import com.gofobao.framework.repayment.entity.AdvanceAssetChange;
-import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.entity.RepayAssetChange;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
-import com.gofobao.framework.repayment.vo.request.VoBatchBailRepayReq;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
@@ -480,9 +477,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             BorrowCollection borrowCollection = borrowCollectionMaps.get(tender.getId());
 
             //判断这笔回款是否已经在即信登记过批次垫付
-            /*if (BooleanHelper.isTrue(borrowCollection.getThirdAdvanceFlag())) {
+            if (BooleanHelper.isTrue(borrowCollection.getThirdTransferFlag())) {
                 continue;
-            }*/
+            }
             if (tender.getTransferFlag() == 1) {
                 doCancelTransfer(tender); // 标的转让中时, 需要取消出让信息
             }
@@ -518,7 +515,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             creditInvest.setContOrderId(tenderUserThirdAccount.getAutoTransferBondOrderId());
             creditInvestList.add(creditInvest);
             //更新回款记录
-            /*borrowCollection.setTAdvanceOrderId(orderId);*/
+            borrowCollection.setTTransferOrderId(orderId);
             borrowCollection.setUpdatedAt(new Date());
             borrowCollectionService.updateById(borrowCollection);
 

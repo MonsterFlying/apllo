@@ -2461,6 +2461,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .eq("transferFlag", 0)
                 .build();
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
+        Map<Long/* tenderId */, BorrowCollection> borrowCollectionMaps = borrowCollectionList.stream().collect(Collectors.toMap(BorrowCollection::getTenderId, Function.identity()));
         Preconditions.checkNotNull(borrowCollectionList, "立即还款: 回款记录为空!");
         /* 是否垫付 */
         boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
@@ -2472,8 +2473,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
         long titularBorrowUserId = assetChangeProvider.getTitularBorrowUserId();  // 平台担保人ID
         //3.新增垫付记录与更改还款状态
         addAdvanceLogAndChangeBorrowRepayment(titularBorrowUserId, borrowRepayment, lateDays, lateInterest);
+        //3.5完成垫付债权转让操作
+        updateTransferTenderByAdvance(borrowRepayment, tenderList, tenderIds, borrowCollectionMaps);
         //4.结束垫付投资人债权
         endAdvanceCredit(parentBorrow);
+
         //5.发送投资人收到还款站内信
         sendCollectionNotices(borrowCollectionList, advance, parentBorrow);
         //6.发放积分
@@ -2486,6 +2490,35 @@ public class RepaymentBizImpl implements RepaymentBiz {
         smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
 
         return ResponseEntity.ok(VoBaseResp.ok("垫付处理成功!"));
+    }
+
+    /**
+     * 5完成垫付债权转让操作
+     *
+     * @param borrowRepayment
+     * @param tenderList
+     * @param tenderIds
+     * @param borrowCollectionMaps
+     */
+    public void updateTransferTenderByAdvance(BorrowRepayment borrowRepayment, List<Tender> tenderList, Set<Long> tenderIds, Map<Long/* tenderId */, BorrowCollection> borrowCollectionMaps) {
+        /* 查询债权转让记录 */
+        Specification<Transfer> ts = Specifications
+                .<Transfer>and()
+                .eq("userId", tenderIds.toArray())
+                .eq("state", 1)
+                .eq("type", 2)
+                .build();
+        List<Transfer> transferList = transferService.findList(ts);
+        Preconditions.checkState(!CollectionUtils.isEmpty(transferList), "转让记录不存在!");
+        /* 债权转让id */
+        List<Long> transferIds = transferList.stream().map(Transfer::getId).collect(Collectors.toList());
+        Specification<TransferBuyLog> tbls = Specifications
+                .<TransferBuyLog>and()
+                .eq("transferId", transferIds.toArray())
+                .build();
+        /* 债权转让购买记录 */
+        List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
+
     }
 
     private void endAdvanceCredit(Borrow parentBorrow) {
