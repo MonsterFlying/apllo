@@ -137,7 +137,7 @@ public class BorrowServiceImpl implements BorrowService {
             //全部
             condtionSql.append(" AND b.status=:statusArray AND b.success_at is null  ");
         }
-        condtionSql.append(" AND b.verify_at IS Not NULL AND b.colse_at is null");
+        condtionSql.append(" AND b.verify_at IS Not NULL AND b.close_at is null");
         // 排序
         if (StringUtils.isEmpty(type)) {   // 全部
             condtionSql.append(" ORDER BY b.status ASC , (b.money_yes / b.money) DESC, FIELD(b.type,0, 4, 1),b.id DESC");
