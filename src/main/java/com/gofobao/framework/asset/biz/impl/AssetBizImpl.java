@@ -277,7 +277,11 @@ public class AssetBizImpl implements AssetBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！"));
         }
-
+        if(StringUtils.isEmpty(userThirdAccount.getCardNo())){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_BIND_BANK_CARD, "对不起!你的账号还没绑定银行卡呢"));
+        }
         if (userThirdAccount.getPasswordState() != 1) {
             return ResponseEntity
                     .badRequest()
@@ -874,6 +878,12 @@ public class AssetBizImpl implements AssetBiz {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoPreRechargeResp.class));
+        }
+
+        if(StringUtils.isEmpty(userThirdAccount.getCardNo())){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_BIND_BANK_CARD, "对不起!你的账号还没绑定银行卡呢", VoPreRechargeResp.class));
         }
 
         if (userThirdAccount.getPasswordState() != 1) {

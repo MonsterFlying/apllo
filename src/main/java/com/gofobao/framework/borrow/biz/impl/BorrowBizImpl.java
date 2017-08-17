@@ -437,6 +437,7 @@ public class BorrowBizImpl implements BorrowBiz {
         Asset asset = assetService.findByUserIdLock(userId);
         Preconditions.checkNotNull(asset, "净值标的发布: 当前用户资金账户为空!");
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+
         ResponseEntity<VoBaseResp> conditionCheckResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
         if (!conditionCheckResponse.getStatusCode().equals(HttpStatus.OK)) {
             return conditionCheckResponse;

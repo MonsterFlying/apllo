@@ -126,7 +126,7 @@ public class BorrowServiceImpl implements BorrowService {
         if (!flag) {  //用户非法访问
             return new ArrayList<>(0);
         }
-        if (type == -1) {
+        if (type.intValue() == -1) {
             type = null;
         }
 
@@ -270,62 +270,64 @@ public class BorrowServiceImpl implements BorrowService {
     public VoPcBorrowList pcFindAll(VoBorrowListReq voBorrowListReq) {
         VoPcBorrowList warpRes = new VoPcBorrowList();
         Integer type = voBorrowListReq.getType();
-        List<Integer> typeArray = Arrays.asList(-1, 1, 2, 0, 4, 5);
+        List<Integer> typeArray = Arrays.asList(-1, 1, 2, 0, 4);
         Boolean flag = typeArray.contains(type);
         if (!flag) {  //用户非法访问
-            warpRes.setBorrowLists(Collections.EMPTY_LIST);
             return warpRes;
         }
-        if (type == -1) {
+        //全部
+        if (type.intValue() == -1) {
             type = null;
         }
-
-
         StringBuilder pageSb = new StringBuilder(" SELECT b FROM Borrow b WHERE 1=1 ");
         StringBuilder countSb = new StringBuilder(" SELECT COUNT(id) FROM Borrow b WHERE 1=1 ");
         StringBuilder condtionSql = new StringBuilder("");
-
         // 条件
-        if (type != null) {  // 全部
-
-            if (type == 5) {
-                condtionSql.append(" AND b.tenderId is not null ");
-            } else {
-                condtionSql.append(" AND b.type=" + type);
-            }
-
+        if (StringUtils.isEmpty(type)) {  // 全部
+            condtionSql.append("AND b.successAt is null AND  b.status=:statusArray ");  // 可投
+        } else {
+            //未结清
+            condtionSql.append(" AND b.closeAt is null AND b.status NOT IN(:statusArray ) AND  b.type=" + type);  //
         }
-        condtionSql.append(" AND b.verifyAt IS Not NULL AND b.status NOT IN(:statusArray)");
+        condtionSql.append(" AND b.verifyAt IS Not NULL  )");
         // 排序
         if (StringUtils.isEmpty(type)) {   // 全部
-            condtionSql.append(" ORDER BY (b.moneyYes / b.money) DESC,b.status ASC , FIELD(b.type,0, 4, 1, 2),b.id DESC");
+            condtionSql.append(" ORDER BY (b.moneyYes / b.money) ASC ,b.status ASC , FIELD(b.type,0, 4, 1, 2),b.id DESC");
         } else {
             if (type.equals(BorrowContants.INDEX_TYPE_CE_DAI)) {
-                condtionSql.append(" ORDER BY b.status ASC,(b.moneyYes / b.money) DESC, b.successAt DESC,b.id DESC");
+                condtionSql.append(" ORDER BY b.status ASC,(b.moneyYes / b.money) ASC, b.successAt DESC,b.id DESC");
             } else {
                 condtionSql.append(" ORDER BY b.status, b.successAt DESC, b.id DESC");
             }
         }
         //分页
         Query pageQuery = entityManager.createQuery(pageSb.append(condtionSql).toString(), Borrow.class);
-        pageQuery.setParameter("statusArray", statusArray);
+        if (StringUtils.isEmpty(type)) {
+            pageQuery.setParameter("statusArray", BorrowContants.BIDDING);
+        } else {
+            pageQuery.setParameter("statusArray", statusArray);
+        }
+
         List<Borrow> borrowLists = pageQuery
                 .setFirstResult(voBorrowListReq.getPageIndex() * voBorrowListReq.getPageSize())
                 .setMaxResults(voBorrowListReq.getPageSize())
                 .getResultList();
 
         if (CollectionUtils.isEmpty(borrowLists)) {
-            return null;
+            return warpRes;
         }
-
         List<VoViewBorrowList> borrowListList = commonHandle(borrowLists, voBorrowListReq);
-
         warpRes.setBorrowLists(borrowListList);
         warpRes.setPageIndex(voBorrowListReq.getPageIndex() + 1);
         warpRes.setPageSize(voBorrowListReq.getPageSize());
         //总记录数
         Query countQuery = entityManager.createQuery(countSb.append(condtionSql).toString(), Long.class);
-        countQuery.setParameter("statusArray", statusArray);
+        if (StringUtils.isEmpty(type)) {
+            countQuery.setParameter("statusArray", BorrowContants.BIDDING);
+        } else {
+            countQuery.setParameter("statusArray", statusArray);
+
+        }
         Long count = (Long) countQuery.getSingleResult();
         warpRes.setTotalCount(count.intValue());
         return warpRes;
