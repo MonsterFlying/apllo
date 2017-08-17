@@ -3,7 +3,7 @@ package com.gofobao.framework.asset.controller.web;
 import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.repository.AssetLogRepository;
 import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
-import com.gofobao.framework.asset.vo.response.pc.VoViewAssetLogsWarpRes;
+import com.gofobao.framework.asset.vo.response.VoViewAssetLogWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -25,14 +25,12 @@ public class WebAssetLogController {
     @Autowired
     private AssetBiz assetBiz;
 
-@Autowired
-private AssetLogRepository assetRepository;
 
     @RequestMapping(value = "assetLog/pc/v2/list", method = RequestMethod.POST)
-    public ResponseEntity<VoViewAssetLogsWarpRes> pcAssetLogResList(@ModelAttribute VoAssetLogReq voAssetLogReq,
-                                                                    @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoViewAssetLogWarpRes> pcAssetLogResList(@ModelAttribute VoAssetLogReq voAssetLogReq,
+                                                                   @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voAssetLogReq.setUserId(userId);
-        return assetBiz.pcAssetLogs(voAssetLogReq);
+        return assetBiz.newAssetLogResList(voAssetLogReq);
     }
 
 
