@@ -39,7 +39,7 @@ public class WebIntegralController {
      * @return
      */
     @ApiOperation("获取积分统计")
-    @PostMapping("pub/pc/integral/statistics")
+    @PostMapping("integral/pc/statistics")
     public ResponseEntity<VoListIntegralResp> list(@Valid @ModelAttribute VoListIntegralReq voListIntegralReq,
                                                    @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         //pc 请求
@@ -54,7 +54,7 @@ public class WebIntegralController {
      * @return
      */
     @ApiOperation("获取积分列表")
-    @PostMapping("pub/pc/integral/list")
+    @PostMapping("integral/pc/list")
     public ResponseEntity<VoViewIntegralWarpRes> pcList(@Valid @ModelAttribute VoListIntegralReq voListIntegralReq,
                                                    @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         voListIntegralReq.setUserId(userId);
@@ -71,7 +71,7 @@ public class WebIntegralController {
      * @throws Exception
      */
     @ApiOperation(value = "积分兑换")
-    @PostMapping(value = "pub/pc/integral/doTakeRates")
+    @PostMapping(value = "integral/pc/doTakeRates")
     public ResponseEntity<VoBaseResp> doTakeRates(@Valid @ModelAttribute VoIntegralTakeReq voIntegralTakeReq,
                                                   @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voIntegralTakeReq.setUserId(userId);

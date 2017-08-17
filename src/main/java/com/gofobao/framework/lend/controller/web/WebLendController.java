@@ -23,7 +23,7 @@ import javax.validation.Valid;
  */
 @Api(description = "pc：出借")
 @RestController
-@RequestMapping("pub/pc/lend")
+@RequestMapping("")
 public class WebLendController {
 
     @Autowired
@@ -31,7 +31,7 @@ public class WebLendController {
 
     private VoUserLendReq voUserLendReq = new VoUserLendReq();
 
-    @RequestMapping(value = "/v2/list/{pageIndex}/{pageSize}", method = RequestMethod.GET)
+    @RequestMapping(value = "pub/lend/pc/v2/list/{pageIndex}/{pageSize}", method = RequestMethod.GET)
     @ApiOperation("pc：出借列表")
     public ResponseEntity<VoViewLendListWarpRes> list(@PathVariable Integer pageIndex,
                                                       @PathVariable Integer pageSize) {
@@ -42,21 +42,21 @@ public class WebLendController {
     }
 
 
-    @RequestMapping(value = "/v2/info/{lendId}", method = RequestMethod.GET)
+    @RequestMapping(value = "lend/pc/v2/info/{lendId}", method = RequestMethod.GET)
     @ApiOperation("pc：出借详情")
     public ResponseEntity<VoViewLendInfoWarpRes> info(@PathVariable Long lendId,
                                                       @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return lendBiz.info(userId, lendId);
     }
 
-    @RequestMapping(value = "/v2/info/list/{lendId}", method = RequestMethod.GET)
+    @RequestMapping(value = "lend/pc/v2/info/list/{lendId}", method = RequestMethod.GET)
     @ApiOperation("pc：出借详情列表")
     public ResponseEntity<VoViewLendInfoListWarpRes> infoList(@PathVariable Long lendId ,
                                                       @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return lendBiz.infoList(userId, lendId);
     }
 
-    @RequestMapping(value = "/v2/list/byUser/{pageIndex}/{pageSize}", method = RequestMethod.GET)
+    @RequestMapping(value = "lend/pc/v2/list/byUser/{pageIndex}/{pageSize}", method = RequestMethod.GET)
     @ApiOperation("pc：我的出借列表")
     public ResponseEntity<VoViewUserLendInfoWarpRes> byUser(
             @PathVariable Integer pageIndex,
@@ -76,7 +76,7 @@ public class WebLendController {
      * @throws Exception
      */
     @ApiOperation(value = "获取当前用户黑名单列表", notes = "获取当前用户黑名单列表")
-    @PostMapping(value = "/userLendBlacklist")
+    @PostMapping(value = "lend/pc/userLendBlacklist")
     public ResponseEntity<VoViewLendBlacklists> getLendBlacklists(@ModelAttribute @Valid VoGetLendBlacklists voGetLendBlacklists,
                                                                   @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voGetLendBlacklists.setUserId(userId);
@@ -91,7 +91,7 @@ public class WebLendController {
      * @throws Exception
      */
     @ApiOperation(value = "添加有草出借黑名单", notes = "添加有草出借黑名单")
-    @PostMapping(value = "/v2/blacklist/add")
+    @PostMapping(value = "lend/pc/v2/blacklist/add")
     public ResponseEntity<VoBaseResp> addLendBlacklist(@ModelAttribute @Valid VoAddLendBlacklist voAddLendBlacklist,
                                                        @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voAddLendBlacklist.setUserId(userId);
@@ -106,7 +106,7 @@ public class WebLendController {
      * @throws Exception
      */
     @ApiOperation(value = "移除有草出借黑名单", notes = "移除有草出借黑名单")
-    @PostMapping(value = "/v2/blacklist/remove")
+    @PostMapping(value = "lend/pc/v2/blacklist/remove")
     public ResponseEntity<VoBaseResp> delLendBlacklist(@ModelAttribute @Valid VoDelLendBlacklist voDelLendBlacklist,
                                                        @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voDelLendBlacklist.setUserId(userId);

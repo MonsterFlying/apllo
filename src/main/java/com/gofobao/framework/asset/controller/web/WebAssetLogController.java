@@ -28,7 +28,7 @@ public class WebAssetLogController {
 @Autowired
 private AssetLogRepository assetRepository;
 
-    @RequestMapping(value = "pub/assetLog/pc/v2/list", method = RequestMethod.POST)
+    @RequestMapping(value = "assetLog/pc/v2/list", method = RequestMethod.POST)
     public ResponseEntity<VoViewAssetLogsWarpRes> pcAssetLogResList(@ModelAttribute VoAssetLogReq voAssetLogReq,
                                                                     @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voAssetLogReq.setUserId(userId);
@@ -37,7 +37,7 @@ private AssetLogRepository assetRepository;
 
 
     @ApiOperation("资金流水导出")
-    @RequestMapping(value = "pub/assetLog/pc/v2/toExcel", method = RequestMethod.GET)
+    @RequestMapping(value = "assetLog/pc/v2/toExcel", method = RequestMethod.GET)
     public void pcAssetLogToExcel(HttpServletResponse response, @ModelAttribute VoAssetLogReq voAssetLogReq,
                                             @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voAssetLogReq.setUserId(userId);
