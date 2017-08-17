@@ -282,6 +282,7 @@ public class BorrowBizImpl implements BorrowBiz {
             Integer status = borrow.getStatus();
             Date nowDate = new Date(System.currentTimeMillis());
             Date releaseAt = borrow.getReleaseAt();  //发布时间
+            double spend = MathHelper.myRound(borrow.getMoneyYes().doubleValue() / borrow.getMoney() * 100, 2);
 
             if (status == BorrowContants.BIDDING) {//招标中
                 //待发布
@@ -298,7 +299,6 @@ public class BorrowBizImpl implements BorrowBiz {
                 } else {
                     status = 3; //招标中
                     //  进度
-                    double spend = MathHelper.myRound(borrow.getMoneyYes().doubleValue() / borrow.getMoney() * 100, 2);
                     if (spend == 100) {
                         status = 6;
                     }
@@ -306,16 +306,14 @@ public class BorrowBizImpl implements BorrowBiz {
                 }
             } else if (!ObjectUtils.isEmpty(borrow.getSuccessAt()) && !ObjectUtils.isEmpty(borrow.getCloseAt())) {   //满标时间 结清
                 status = 4; //已完成
-                borrowInfoRes.setSpend(new Double(1));
             } else if (status == BorrowContants.PASS && ObjectUtils.isEmpty(borrow.getCloseAt())) {
                 status = 2; //还款中
-                borrowInfoRes.setSpend(new Double(1));
             }
             borrowInfoRes.setType(borrow.getType());
             if (!StringUtils.isEmpty(borrow.getTenderId())) {
                 borrowInfoRes.setType(5);
             }
-
+            borrowInfoRes.setSpend(spend);
             borrowInfoRes.setPassWord(StringUtils.isEmpty(borrow.getPassword()) ? false : true);
             Users users = userService.findById(borrow.getUserId());
             borrowInfoRes.setUserName(!StringUtils.isEmpty(users.getUsername()) ? users.getUsername() : users.getPhone());
