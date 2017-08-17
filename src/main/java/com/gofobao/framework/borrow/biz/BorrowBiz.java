@@ -34,14 +34,6 @@ public interface BorrowBiz {
     void schedulerCancelBorrow(List<Borrow> borrowList);
 
     /**
-     * pc取消借款
-     *
-     * @param voPcCancelThirdBorrow
-     * @return
-     */
-    ResponseEntity<VoBaseResp> pcCancelBorrow(VoPcCancelThirdBorrow voPcCancelThirdBorrow) throws Exception;
-
-    /**
      * 新增净值借款
      *
      * @param voAddNetWorthBorrow

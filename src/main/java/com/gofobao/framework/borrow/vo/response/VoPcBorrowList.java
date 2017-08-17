@@ -1,6 +1,7 @@
 package com.gofobao.framework.borrow.vo.response;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.google.common.collect.Lists;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -22,5 +23,5 @@ public class VoPcBorrowList extends VoBaseResp{
     private Integer totalCount=0;
 
     @ApiModelProperty("集合")
-    private List<VoViewBorrowList> borrowLists;
+    private List<VoViewBorrowList> borrowLists= Lists.newArrayList();
 }

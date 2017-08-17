@@ -129,8 +129,9 @@ public class WebBorrowController {
      */
     @PostMapping("borrow/pc/cancelBorrow")
     @ApiOperation("pc取消借款")
-    public ResponseEntity<VoBaseResp> pcCancelBorrow(@Valid @ModelAttribute VoPcCancelThirdBorrow voPcCancelThirdBorrow) throws Exception {
-        return borrowBiz.pcCancelBorrow(voPcCancelThirdBorrow);
+    public ResponseEntity<VoBaseResp> pcCancelBorrow(@Valid @ModelAttribute VoCancelBorrow voCancelBorrow, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
+        voCancelBorrow.setUserId(userId);
+        return borrowBiz.cancelBorrow(voCancelBorrow);
     }
 
 
