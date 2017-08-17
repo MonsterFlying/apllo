@@ -381,7 +381,7 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("151514");
+        batchDetailsQueryReq.setBatchNo("174548");
         batchDetailsQueryReq.setBatchTxDate("20170816");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
@@ -434,7 +434,7 @@ public class AplloApplicationTests {
     public void balanceQuery() {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId("6212462190000000021");
+        balanceQueryRequest.setAccountId("6212462190000000229");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         System.out.println(balanceQueryResponse);
     }
@@ -465,20 +465,18 @@ public class AplloApplicationTests {
     }
 
     public void batchDeal() {
-        /*Map<String,Object> acqMap = new HashMap<>();
-        acqMap.put("repaymentId","173855");
-        acqMap.put("interestPercent","1d");
-        acqMap.put("isUserOpen",true);
-        acqMap.put("userId",44833);*/
+        Map<String,Object> acqMap = new HashMap<>();
+        acqMap.put("borrowId", 169979);
+        acqMap.put("tag", MqTagEnum.END_CREDIT_BY_TRANSFER);
 
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(21),
-                        MqConfig.BATCH_NO, StringHelper.toString(151514),
-                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
-                       /* MqConfig.ACQ_RES, GSON.toJson(acqMap)*/
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(169979),
+                        MqConfig.BATCH_NO, StringHelper.toString(174548),
+                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()),
+                       MqConfig.ACQ_RES, GSON.toJson(acqMap)
                 );
 
         mqConfig.setMsg(body);
@@ -513,7 +511,7 @@ public class AplloApplicationTests {
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("transferBizImpl buyTransfer send mq exception", e);
-        }*/
+        }  */
 
         //推送队列结束债权
 /*        MqConfig mqConfig = new MqConfig();
@@ -533,7 +531,7 @@ public class AplloApplicationTests {
         //批次处理
         //batchDeal();
         //查询存管账户资金信息
-        //balanceQuery();
+        balanceQuery();
         //查询资金流水
         //accountDetailsQuery();
         //根据手机号查询存管账户
@@ -580,14 +578,16 @@ public class AplloApplicationTests {
                 CreditDetailsQueryResponse.class);
         System.out.println(creditDetailsQueryResponse);*/
 
-        VoRepayReq voRepayReq = new VoRepayReq();
+        /*VoRepayReq voRepayReq = new VoRepayReq();
         voRepayReq.setRepaymentId(1l);
         voRepayReq.setUserId(44912L);
         try {
             repaymentBiz.newRepay(voRepayReq);
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        } 【原始技术】澳洲小哥真人MC：篱笆泥墙（1）
+
+        */
 
         /*CreditEndReq creditEndReq = new CreditEndReq();
         creditEndReq.setAccountId("6212462040000200123");
