@@ -377,7 +377,6 @@ public class AssetBizImpl implements AssetBiz {
             assetChangeProvider.commonAssetChange(entity);
         }
 
-
         // 插入充值记录
         RechargeDetailLog rechargeDetailLog = new RechargeDetailLog();
         rechargeDetailLog.setUserId(users.getId());

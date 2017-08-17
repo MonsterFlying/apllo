@@ -843,17 +843,17 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     }
 
     /**
-     * 批次融资人还担保账户垫款参数检查回调
+     * 批次融资人还名义借款人账户垫款参数检查回调
      *
      * @param request
      * @param response
      */
 
-    public ResponseEntity<String> thirdBatchRepayBailCheckCall(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> thirdBatchRepayAdvanceCheckCall(HttpServletRequest request, HttpServletResponse response) {
         BatchRepayBailCheckResp batchRepayBailCheckResp = jixinManager.callback(request, new TypeToken<BatchRepayBailCheckResp>() {
         });
         if (ObjectUtils.isEmpty(batchRepayBailCheckResp)) {
-            log.error("=============================批次融资人还担保账户垫款参数检查回调===========================");
+            log.error("=============================批次融资人还名义借款人账户垫款参数检查回调===========================");
             log.error("请求体为空!");
         }
 
@@ -861,11 +861,11 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         //更新批次状态
         Long repaymentId = NumberHelper.toLong(acqResMap.get("repaymentId"));
         if (!JixinResultContants.SUCCESS.equals(batchRepayBailCheckResp.getRetCode())) {
-            log.error("=============================批次融资人还担保账户垫款参数检查回调===========================");
+            log.error("=============================批次融资人还名义借款人账户垫款参数检查回调===========================");
             log.error("回调失败! msg:" + batchRepayBailCheckResp.getRetMsg());
             thirdBatchLogBiz.updateBatchLogState(batchRepayBailCheckResp.getBatchNo(), repaymentId, 2);
         } else {
-            log.error("=============================批次融资人还担保账户垫款参数检查成功===========================");
+            log.error("=============================批次融资人还名义借款人账户垫款参数检查成功===========================");
             thirdBatchLogBiz.updateBatchLogState(batchRepayBailCheckResp.getBatchNo(), repaymentId, 1);
 
             long userId = NumberHelper.toLong(acqResMap.get("userId"));
@@ -884,7 +884,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
             if ((ObjectUtils.isEmpty(balanceUnfreezeResp)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
                 log.error("===========================================================================");
-                log.error("批次融资人还担保账户垫款解除冻结资金失败：" + balanceUnfreezeResp.getRetMsg());
+                log.error("批次融资人还名义借款人账户垫款解除冻结资金失败：" + balanceUnfreezeResp.getRetMsg());
                 log.error("===========================================================================");
                 return ResponseEntity.ok("error");
             }
@@ -893,14 +893,14 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             assetChange.setType(AssetChangeTypeEnum.unfreeze);  // 招标失败解除冻结资金
             assetChange.setUserId(userId);
             assetChange.setMoney(new Double(NumberHelper.toDouble(freezeMoney) * 100).longValue());
-            assetChange.setRemark("批次融资人还担保账户垫款解除冻结可用资金");
+            assetChange.setRemark("批次融资人还名义借款人账户垫款解除冻结可用资金");
             assetChange.setSourceId(repaymentId);
             assetChange.setSeqNo(assetChangeProvider.getSeqNo());
             assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
             try {
                 assetChangeProvider.commonAssetChange(assetChange);
             } catch (Exception e) {
-                log.error("批次融资人还担保账户垫款解除冻结可用资金异常:", e);
+                log.error("批次融资人还名义借款人账户垫款解除冻结可用资金异常:", e);
             }
         }
 
@@ -908,19 +908,19 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     }
 
     /**
-     * 批次融资人还担保账户垫款业务处理回调
+     * 批次融资人还名义借款人账户垫款业务处理回调
      *
      * @param request
      * @param response
      */
-    public ResponseEntity<String> thirdBatchRepayBailRunCall(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> thirdBatchRepayAdvanceRunCall(HttpServletRequest request, HttpServletResponse response) {
         BatchRepayBailRunResp batchRepayBailRunResp = jixinManager.callback(request, new TypeToken<BatchRepayBailRunResp>() {
         });
         Map<String, Object> acqResMap = GSON.fromJson(batchRepayBailRunResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
 
         if (ObjectUtils.isEmpty(batchRepayBailRunResp)) {
             log.error("========================================批次回调============================================");
-            log.error("=============================批次融资人还担保账户垫款业务处理回调===========================");
+            log.error("=============================批次融资人还名义借款人账户垫款业务处理回调===========================");
             log.error("请求体为空!");
             log.error("============================================================================================");
             log.error("============================================================================================");
@@ -928,19 +928,19 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
         if (!JixinResultContants.SUCCESS.equals(batchRepayBailRunResp.getRetCode())) {
             log.error("========================================批次回调============================================");
-            log.error("=============================批次融资人还担保账户垫款业务处理回调===========================");
+            log.error("=============================批次融资人还名义借款人账户垫款业务处理回调===========================");
             log.error("回调失败! msg:" + batchRepayBailRunResp.getRetMsg());
             log.error("============================================================================================");
             log.error("============================================================================================");
         } else {
             log.error("========================================批次回调============================================");
-            log.error("=============================批次融资人还担保账户垫款业务处理回调===========================");
+            log.error("=============================批次融资人还名义借款人账户垫款业务处理回调===========================");
             log.info("回调成功!");
             log.error("============================================================================================");
             log.error("============================================================================================");
         }
 
-        //触发处理批次放款处理结果队列
+        //触发处理批次处理结果队列
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
@@ -951,10 +951,10 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
         try {
-            log.info(String.format("tenderThirdBizImpl thirdBatchRepayBailRunCall send mq %s", GSON.toJson(body)));
+            log.info(String.format("tenderThirdBizImpl thirdBatchRepayAdvanceRunCall send mq %s", GSON.toJson(body)));
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
-            log.error("tenderThirdBizImpl thirdBatchRepayBailRunCall send mq exception", e);
+            log.error("tenderThirdBizImpl thirdBatchRepayAdvanceRunCall send mq exception", e);
         }
 
         return ResponseEntity.ok("success");
