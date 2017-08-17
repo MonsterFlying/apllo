@@ -1250,6 +1250,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
         userThirdAccount.setCardNo("");
+        userThirdAccount.setBankName("");
+        userThirdAccount.setBankLogo("");
         userThirdAccount.setCardNoBindState(1);
         userThirdAccount.setUpdateAt(nowDate);
         userThirdAccountService.save(userThirdAccount);

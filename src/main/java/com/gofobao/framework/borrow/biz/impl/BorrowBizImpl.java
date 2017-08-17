@@ -299,7 +299,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     status = 3; //招标中
                     //  进度
                     double spend = MathHelper.myRound(borrow.getMoneyYes().doubleValue() / borrow.getMoney() * 100, 2);
-                    if (spend == 1) {
+                    if (spend == 100) {
                         status = 6;
                     }
                     borrowInfoRes.setSpend(spend);

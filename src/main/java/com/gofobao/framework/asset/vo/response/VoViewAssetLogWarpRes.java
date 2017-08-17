@@ -13,4 +13,7 @@ import java.util.List;
 @Data
 public class VoViewAssetLogWarpRes extends VoBaseResp {
     private List<VoViewAssetLogRes>  resList= new ArrayList<>() ;
+
+
+    private Long totalCount=0L;
 }

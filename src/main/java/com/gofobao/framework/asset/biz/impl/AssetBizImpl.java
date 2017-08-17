@@ -1192,6 +1192,8 @@ public class AssetBizImpl implements AssetBiz {
 
     @Override
     public ResponseEntity<VoViewAssetLogWarpRes> newAssetLogResList(VoAssetLogReq voAssetLogReq) {
+        VoViewAssetLogWarpRes voViewAssetLogWarpRes = VoBaseResp.ok("查询成功", VoViewAssetLogWarpRes.class);
+
         String startTimeStr = voAssetLogReq.getStartTime();
         if (StringUtils.isEmpty(startTimeStr)) {
             return ResponseEntity
@@ -1221,8 +1223,9 @@ public class AssetBizImpl implements AssetBiz {
                 .eq("userId", voAssetLogReq.getUserId())
                 .build();
         Page<NewAssetLog> assetLogPage = newAssetLogService.findAll(specification, pageable);
+        voViewAssetLogWarpRes.setTotalCount(assetLogPage.getTotalElements());
+
         List<NewAssetLog> assetLogs = assetLogPage.getContent();
-        VoViewAssetLogWarpRes voViewAssetLogWarpRes = VoBaseResp.ok("查询成功", VoViewAssetLogWarpRes.class);
         if (CollectionUtils.isEmpty(assetLogs)) {
             return ResponseEntity.ok(voViewAssetLogWarpRes) ;
         }
@@ -1241,7 +1244,9 @@ public class AssetBizImpl implements AssetBiz {
                 voViewAssetLogRes.setMoney(new Double(newAssetLog.getOpMoney() / 100D).toString());
                 voViewAssetLogRes.setShowMoney(StringHelper.formatDouble(newAssetLog.getOpMoney() / 100D, true));
             }
-
+            voViewAssetLogRes.setUseMoney(StringHelper.formatMon(newAssetLog.getUseMoney()/100D));
+            voViewAssetLogRes.setHideUseMoney(newAssetLog.getUseMoney()/100D);
+            voViewAssetLogRes.setRemark(newAssetLog.getRemark());
             voViewAssetLogRes.setTypeName(newAssetLog.getOpName());
             voViewAssetLogWarpRes.getResList().add(voViewAssetLogRes) ;
         }
