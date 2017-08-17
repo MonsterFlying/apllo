@@ -191,7 +191,7 @@ public class BorrowBizImpl implements BorrowBiz {
     @Override
     public ResponseEntity<VoViewBorrowListWarpRes> findAll(VoBorrowListReq voBorrowListReq) {
         try {
-            List<VoViewBorrowList> borrowLists = null;
+            List<VoViewBorrowList> borrowLists;
             if (voBorrowListReq.getType() == 5) {  // 债权转让
                 borrowLists = transferBiz.findTransferList(voBorrowListReq);
             } else {  // 正常标的
