@@ -56,6 +56,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.gofobao.framework.listener.providers.NoticesMessageProvider.GSON;
@@ -465,21 +466,28 @@ public class ThirdBatchProvider {
             //取消失败批次的债权转让记录与购买债权转让记录
             Specification<BorrowCollection> bcs = Specifications
                     .<BorrowCollection>and()
-                    .eq("tTransferOrderId",failureTransferOrderIds.toArray())
+                    .eq("tTransferOrderId", failureTransferOrderIds.toArray())
                     .build();
             List<BorrowCollection> failureBorrowCollectionList = borrowCollectionService.findList(bcs);
             /* 投标记录id */
             List<Long> tenderIds = failureBorrowCollectionList.stream().map(BorrowCollection::getTenderId).collect(Collectors.toList());
-            Preconditions.checkState(!CollectionUtils.isEmpty(failureBorrowCollectionList),"失败回款记录不存在!");
+            Preconditions.checkState(!CollectionUtils.isEmpty(failureBorrowCollectionList), "失败回款记录不存在!");
             /* 投标记录 */
             Specification<Tender> ts = Specifications
                     .<Tender>and()
-                    .eq("id",tenderIds.toArray())
+                    .eq("id", tenderIds.toArray())
                     .build();
             List<Tender> tenderList = tenderService.findList(ts);
+            Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "投标记录不存在!");
+            Map<Long,Tender> tenderMaps = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
             failureBorrowCollectionList.stream().forEach(borrowCollection -> {
-
+                //更新tender状态
+                Tender tender = tenderMaps.get(borrowCollection.getTenderId());
+                tender.setTransferFlag(0);
+                tender.setUpdatedAt(new Date());
+                //更新
             });
+            tenderService.save(tenderList);
 
 
             //更新批次日志状态
