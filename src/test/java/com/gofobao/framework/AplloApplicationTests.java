@@ -381,7 +381,7 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("174548");
+        batchDetailsQueryReq.setBatchNo("200019");
         batchDetailsQueryReq.setBatchTxDate("20170816");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
@@ -395,9 +395,9 @@ public class AplloApplicationTests {
 
     private void bidApplyQuery() {
         BidApplyQueryReq request = new BidApplyQueryReq();
-        request.setAccountId("6212462190000000427");
+        request.setAccountId("6212462190000000476");
         request.setChannel(ChannelContant.HTML);
-        request.setOrgOrderId("GFBT_150279156766529");
+        request.setOrgOrderId("GFBT_150288481816451");
         BidApplyQueryResp response = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, request, BidApplyQueryResp.class);
         System.out.println(response);
 
@@ -465,18 +465,17 @@ public class AplloApplicationTests {
     }
 
     public void batchDeal() {
-        Map<String,Object> acqMap = new HashMap<>();
+       /* Map<String,Object> acqMap = new HashMap<>();
         acqMap.put("borrowId", 169979);
-        acqMap.put("tag", MqTagEnum.END_CREDIT_BY_TRANSFER);
+        acqMap.put("tag", MqTagEnum.END_CREDIT_BY_TRANSFER);*/
 
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(169979),
-                        MqConfig.BATCH_NO, StringHelper.toString(174548),
-                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()),
-                       MqConfig.ACQ_RES, GSON.toJson(acqMap)
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(169997),
+                        MqConfig.BATCH_NO, StringHelper.toString(200019),
+                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
                 );
 
         mqConfig.setMsg(body);
@@ -531,7 +530,7 @@ public class AplloApplicationTests {
         //批次处理
         //batchDeal();
         //查询存管账户资金信息
-        balanceQuery();
+        //balanceQuery();
         //查询资金流水
         //accountDetailsQuery();
         //根据手机号查询存管账户
@@ -559,7 +558,7 @@ public class AplloApplicationTests {
         //批次详情查询
         //batchDetailsQuery();
         //查询投标申请
-        //bidApplyQuery();
+        bidApplyQuery();
         //转让标复审回调
         //transferBorrowAgainVerify();
         //非转让标复审问题

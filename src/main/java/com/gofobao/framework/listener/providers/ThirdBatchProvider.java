@@ -249,7 +249,7 @@ public class ThirdBatchProvider {
                         .build();
                 List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
                 borrowCollectionList.stream().forEach(collection -> {
-                    collection.setThirdCreditEndFlag(true);
+                   /* collection.setThirdCreditEndFlag(true);*/
                 });
                 borrowCollectionService.save(borrowCollectionList);
             } else {
@@ -388,7 +388,7 @@ public class ThirdBatchProvider {
                     .build();
             List<BorrowCollection> successBorrowCollectionList = borrowCollectionService.findList(bcs);
             successBorrowCollectionList.stream().forEach(borrowCollection -> {
-                borrowCollection.setThirdAdvanceFlag(true);
+                /*borrowCollection.setThirdAdvanceFlag(true);*/
             });
             borrowCollectionService.save(successBorrowCollectionList);
         }
@@ -456,7 +456,7 @@ public class ThirdBatchProvider {
                     .build();
             List<BorrowCollection> successBorrowCollectionList = borrowCollectionService.findList(bcs);
             successBorrowCollectionList.stream().forEach(borrowCollection -> {
-                borrowCollection.setThirdAdvanceFlag(true);
+                /*borrowCollection.setThirdAdvanceFlag(true);*/
             });
             borrowCollectionService.save(successBorrowCollectionList);
         }

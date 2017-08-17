@@ -405,12 +405,23 @@ public class TransferBizImpl implements TransferBiz {
         List<BorrowCollection> childTenderCollectionList = new ArrayList<>();/* 债权子记录回款记录 */
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
         String seqNo = assetChangeProvider.getSeqNo();
+        String borrowCollectionIds = transfer.getBorrowCollectionIds();
         //生成子级债权回款记录，标注老债权回款已经转出
-        Specification<BorrowCollection> bcs = Specifications
-                .<BorrowCollection>and()
-                .eq("tenderId", transfer.getTenderId())
-                .eq("status", 0)
-                .build();
+        Specification<BorrowCollection> bcs = null;
+        if (transfer.getIsAll()) {
+            bcs = Specifications
+                    .<BorrowCollection>and()
+                    .eq("tenderId", transfer.getTenderId())
+                    .eq("id", borrowCollectionIds.split(","))
+                    .eq("status", 0)
+                    .build();
+        } else {
+            bcs = Specifications
+                    .<BorrowCollection>and()
+                    .eq("tenderId", transfer.getTenderId())
+                    .eq("status", 0)
+                    .build();
+        }
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);/* 债权转让原投资回款记录 */
         long transferInterest = borrowCollectionList.stream().mapToLong(BorrowCollection::getInterest).sum();/* 债权转让总利息 */
         Date repayAt = transfer.getRepayAt();/* 原借款下一期还款日期 */
@@ -430,7 +441,7 @@ public class TransferBizImpl implements TransferBiz {
             BorrowCollection borrowCollection;
             long collectionMoney = 0;
             long collectionInterest = 0;
-            int startOrder = parentBorrow.getTotalOrder() - transfer.getTimeLimit();/* 获取开始转让期数,期数下标从0开始 */
+            int startOrder = borrowCollectionList.get(0).getOrder();/* 获取开始转让期数,期数下标从0开始 */
             for (int i = 0; i < repayDetailList.size(); i++) {
                 borrowCollection = new BorrowCollection();
                 Map<String, Object> repayDetailMap = repayDetailList.get(i);
@@ -532,7 +543,7 @@ public class TransferBizImpl implements TransferBiz {
         transferBuyLogService.save(transferBuyLogList);
 
         //更新老债权为已转让
-        parentTender.setTransferFlag(2);
+        parentTender.setTransferFlag(transfer.getIsAll() ? 3 : 2);
         parentTender.setUpdatedAt(nowDate);
         tenderService.save(parentTender);
         //更新债权转让为已转让
@@ -836,6 +847,9 @@ public class TransferBizImpl implements TransferBiz {
     public ResponseEntity<VoBaseResp> newTransferTender(VoTransferTenderReq voTransferTenderReq) throws Exception {
         long tenderId = voTransferTenderReq.getTenderId();/* 转让债权id */
         long userId = voTransferTenderReq.getUserId();/* 转让人id */
+        boolean isAll = voTransferTenderReq.getIsAll();/* 是否是部分转让 */
+        String borrowCollectionIdsStr = voTransferTenderReq.getBorrowCollectionIds();/* 部分期数转让 回款id */
+        List<String> borrowCollectionIds = null;
 
         Tender tender = tenderService.findById(tenderId);
         Preconditions.checkNotNull(tender, "立即转让: 查询用户投标记录为空!");
@@ -857,6 +871,18 @@ public class TransferBizImpl implements TransferBiz {
                 .eq("tenderId", tenderId)
                 .predicate(new GeSpecification("collectionAt", new DataObject(DateHelper.endOfDate(DateHelper.addDays(new Date(), 3)))))
                 .build();
+        if (isAll) { //部分转让
+            borrowCollectionIds = Arrays.asList(borrowCollectionIdsStr.split(","));
+
+            bcs = Specifications
+                    .<BorrowCollection>and()
+                    .eq("transferFlag", 0)
+                    .eq("status", 0)
+                    .eq("id", borrowCollectionIds.toArray())
+                    .eq("tenderId", tenderId)
+                    .predicate(new GeSpecification("collectionAt", new DataObject(DateHelper.endOfDate(DateHelper.addDays(new Date(), 3)))))
+                    .build();
+        }
 
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "order"));
         Preconditions.checkState(!CollectionUtils.isEmpty(borrowCollectionList), "立即转让: 剩余还款不足3天，无法转让!");
@@ -869,7 +895,7 @@ public class TransferBizImpl implements TransferBiz {
         }
 
         //保存债权转让记录
-        saveTransfer(tenderId, userId, tender, borrow, waitTimeLimit, leftCapital, borrowCollectionList.get(0));
+        saveTransfer(tenderId, userId, tender, borrow, waitTimeLimit, leftCapital, borrowCollectionList, isAll, borrowCollectionIdsStr);
         return ResponseEntity.ok(VoBaseResp.ok("债权转让成功!"));
     }
 
@@ -882,9 +908,11 @@ public class TransferBizImpl implements TransferBiz {
      * @param borrow
      * @param waitTimeLimit
      * @param leftCapital
-     * @param firstBorrowCollection
+     * @param borrowCollectionList
      */
-    private void saveTransfer(long tenderId, long userId, Tender tender, Borrow borrow, int waitTimeLimit, long leftCapital, BorrowCollection firstBorrowCollection) {
+    private void saveTransfer(long tenderId, long userId, Tender tender, Borrow borrow, int waitTimeLimit, long leftCapital, List<BorrowCollection> borrowCollectionList, boolean isAll, String borrowCollectionIdsStr) {
+        BorrowCollection firstBorrowCollection = borrowCollectionList.get(0);
+        BorrowCollection lastBorrowCollection = borrowCollectionList.get(borrowCollectionList.size() - 1);
         //计算当期应计利息
         long interest = firstBorrowCollection.getInterest();/* 当期理论应计利息 */
         Date startAt = DateHelper.beginOfDate(firstBorrowCollection.getStartAt());//理论开始计息时间
@@ -901,12 +929,15 @@ public class TransferBizImpl implements TransferBiz {
         Date nowDate = new Date();
         Transfer transfer = new Transfer();
         transfer.setUpdatedAt(nowDate);
+        transfer.setType(0);
         transfer.setUserId(userId);
         transfer.setTransferMoney(leftCapital + alreadyInterest);
         transfer.setTransferMoneyYes(0l);
         transfer.setDel(false);
         transfer.setBorrowId(borrow.getId());
         transfer.setPrincipal(leftCapital);
+        transfer.setStartOrder(firstBorrowCollection.getOrder());
+        transfer.setEndOrder(lastBorrowCollection.getOrder());
         transfer.setAlreadyInterest(alreadyInterest);
         transfer.setApr(borrow.getApr());
         transfer.setCreatedAt(nowDate);
@@ -915,6 +946,8 @@ public class TransferBizImpl implements TransferBiz {
         transfer.setState(0);
         transfer.setTenderCount(0);
         transfer.setTenderId(tenderId);
+        transfer.setIsAll(isAll);
+        transfer.setBorrowCollectionIds(borrowCollectionIdsStr);
         transfer.setTitle(borrow.getName() + "转");
         transfer.setRepayAt(collectionAt);
         transferService.save(transfer);

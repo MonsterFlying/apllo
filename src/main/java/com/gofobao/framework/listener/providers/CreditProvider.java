@@ -170,13 +170,13 @@ public class CreditProvider {
                 UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(borrowCollection.getUserId());
                 creditEnd.setAccountId(borrowUserThirdAccountId);
                 creditEnd.setOrderId(orderId);
-                creditEnd.setAuthCode(borrowCollection.getTAdvanceAuthCode());
+                /*creditEnd.setAuthCode(borrowCollection.getTAdvanceAuthCode());*/
                 creditEnd.setForAccountId(tenderUserThirdAccount.getAccountId());
                 creditEnd.setProductId(productId);
                 creditEndList.add(creditEnd);
                 //保存结束债权id
-                borrowCollection.setThirdCreditEndOrderId(orderId);
-                borrowCollection.setThirdCreditEndFlag(false);
+                /*borrowCollection.setThirdCreditEndOrderId(orderId);
+                borrowCollection.setThirdCreditEndFlag(false);*/
                 borrowCollectionService.save(borrowCollection);
             });
         } while (false);
