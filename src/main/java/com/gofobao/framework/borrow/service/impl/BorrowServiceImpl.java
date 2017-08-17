@@ -83,7 +83,7 @@ public class BorrowServiceImpl implements BorrowService {
 
 
     //过滤掉 发标待审 初审不通过；复审不通过 已取消
-  private static   List statusArray = Lists.newArrayList(
+    private static List statusArray = Lists.newArrayList(
             new Integer(BorrowContants.CANCEL),
             new Integer(BorrowContants.NO_PASS),
             new Integer(BorrowContants.RECHECK_NO_PASS),
@@ -130,12 +130,14 @@ public class BorrowServiceImpl implements BorrowService {
             type = null;
         }
 
-        StringBuilder pageSb = new StringBuilder(" SELECT b.* FROM gfb_borrow  b  JOIN gfb_transfer t ON t.borrow_id!=b.id  WHERE 1 = 1 ");
-        StringBuilder condtionSql = new StringBuilder("");
-        if (type != null) {  // 全部
-            condtionSql.append(" AND b.type = " + type);
+        StringBuilder condtionSql = new StringBuilder(" SELECT b.* FROM gfb_borrow  b   WHERE 1 = 1 ");
+        if (!StringUtils.isEmpty(type)) {
+            condtionSql.append(" AND b.type = " + type + " AND  b.status NOT IN(:statusArray)  ");
+        } else {
+            //全部
+            condtionSql.append(" AND b.status=:statusArray AND b.success_at is null  ");
         }
-        condtionSql.append(" AND b.verify_at IS Not NULL AND b.status NOT IN(:statusArray)");
+        condtionSql.append(" AND b.verify_at IS Not NULL AND b.colse_at is null");
         // 排序
         if (StringUtils.isEmpty(type)) {   // 全部
             condtionSql.append(" ORDER BY b.status ASC , (b.money_yes / b.money) DESC, FIELD(b.type,0, 4, 1),b.id DESC");
@@ -146,8 +148,12 @@ public class BorrowServiceImpl implements BorrowService {
                 condtionSql.append(" ORDER BY b.status, b.success_at DESC, b.id DESC");
             }
         }
-        Query pageQuery = entityManager.createNativeQuery(pageSb.append(condtionSql).toString(), Borrow.class);
-        pageQuery.setParameter("statusArray", statusArray);
+        Query pageQuery = entityManager.createNativeQuery(condtionSql.toString(), Borrow.class);
+        if (StringUtils.isEmpty(type)) {
+            pageQuery.setParameter("statusArray", BorrowContants.BIDDING);
+        } else {
+            pageQuery.setParameter("statusArray", statusArray);
+        }
         int firstResult = voBorrowListReq.getPageIndex() * voBorrowListReq.getPageSize();
         List<Borrow> borrowLists = pageQuery
                 .setFirstResult(firstResult)
