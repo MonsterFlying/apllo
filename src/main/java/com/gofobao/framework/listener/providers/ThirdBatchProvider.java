@@ -245,7 +245,7 @@ public class ThirdBatchProvider {
             if (tag.equals(MqTagEnum.END_CREDIT_BY_ADVANCE.getValue())) {
                 Specification<BorrowCollection> bcs = Specifications
                         .<BorrowCollection>and()
-                        .eq("thirdCreditEndOrderId",successThirdCreditEndOrderIds.toArray())
+                        .eq("thirdCreditEndOrderId", successThirdCreditEndOrderIds.toArray())
                         .build();
                 List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
                 borrowCollectionList.stream().forEach(collection -> {
@@ -366,10 +366,11 @@ public class ThirdBatchProvider {
 
     /**
      * 批次融资人还担保账户垫款
-     * @// TODO: 2017/8/16 需要修改 
+     *
      * @param acqRes
      * @param failureTRepayBailOrderIds
      * @param successTRepayBailOrderIds
+     * @// TODO: 2017/8/16 需要修改
      */
     private void repayBailDeal(long batchNo, long repaymentId, String acqRes, List<String> failureTRepayBailOrderIds, List<String> successTRepayBailOrderIds) {
 
@@ -639,6 +640,7 @@ public class ThirdBatchProvider {
                 sendCancelTender(nowDate, borrow, tenders);
                 borrow.setTenderCount(borrow.getTenderCount() - failureNum.intValue());
                 borrow.setMoneyYes(borrow.getMoneyYes() - failureAmount.intValue());
+                borrow.setSuccessAt(null);
                 borrow.setUpdatedAt(nowDate);
 
             }
@@ -804,6 +806,8 @@ public class ThirdBatchProvider {
                 long sum = transferBuyLogList.stream().mapToLong(transferBuyLog -> transferBuyLog.getValidMoney()).sum();  // 取消的总总债权
                 transfer.setTransferMoneyYes(transfer.getTransferMoneyYes() - sum);
                 transfer.setUpdatedAt(nowDate);
+                transfer.setSuccessAt(null);
+                transferService.save(transfer);
             }
             //更新批次日志状态
             updateThirdBatchLogState(batchNo, transferId, ThirdBatchLogContants.BATCH_CREDIT_INVEST, 4);
