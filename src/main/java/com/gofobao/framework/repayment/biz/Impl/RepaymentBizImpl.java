@@ -2163,7 +2163,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             transfer.setRepayAt(collectionAt);
             transferService.save(transfer);
             //生成债权购买记录
-            TransferBuyLog transferBuyLog = new TransferBuyLog();
+            TransferBuyLog transferBuyLog = new TransferBuyLog(); 
             transferBuyLog.setUserId(titularBorrowUserId);
             transferBuyLog.setType(0);
             transferBuyLog.setState(0);
@@ -2473,6 +2473,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
         long titularBorrowUserId = assetChangeProvider.getTitularBorrowUserId();  // 平台担保人ID
         //3.新增垫付记录与更改还款状态
         addAdvanceLogAndChangeBorrowRepayment(titularBorrowUserId, borrowRepayment, lateDays, lateInterest);
+        /**
+         * @// TODO: 2017/8/17 待做 
+         */
         //3.5完成垫付债权转让操作
         updateTransferTenderByAdvance(borrowRepayment, tenderList, tenderIds, borrowCollectionMaps);
         //4.结束垫付投资人债权
@@ -2514,7 +2517,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         List<Long> transferIds = transferList.stream().map(Transfer::getId).collect(Collectors.toList());
         Specification<TransferBuyLog> tbls = Specifications
                 .<TransferBuyLog>and()
-                .eq("transferId", transferIds.toArray())
+                .in("transferId", transferIds.toArray())
                 .build();
         /* 债权转让购买记录 */
         List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);

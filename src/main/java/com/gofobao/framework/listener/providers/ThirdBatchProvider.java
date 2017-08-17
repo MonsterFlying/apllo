@@ -42,6 +42,7 @@ import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
+import com.gofobao.framework.tender.vo.request.VoEndTransfer;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
@@ -466,7 +467,7 @@ public class ThirdBatchProvider {
             //取消失败批次的债权转让记录与购买债权转让记录
             Specification<BorrowCollection> bcs = Specifications
                     .<BorrowCollection>and()
-                    .eq("tTransferOrderId", failureTransferOrderIds.toArray())
+                    .in("tTransferOrderId", failureTransferOrderIds.toArray())
                     .build();
             List<BorrowCollection> failureBorrowCollectionList = borrowCollectionService.findList(bcs);
             /* 投标记录id */
@@ -475,17 +476,42 @@ public class ThirdBatchProvider {
             /* 投标记录 */
             Specification<Tender> ts = Specifications
                     .<Tender>and()
-                    .eq("id", tenderIds.toArray())
+                    .in("id", tenderIds.toArray())
                     .build();
             List<Tender> tenderList = tenderService.findList(ts);
             Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "投标记录不存在!");
-            Map<Long,Tender> tenderMaps = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
+            Map<Long, Tender> tenderMaps = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
+            //查询债权转让记录
+            Specification<Transfer> transferSpecification = Specifications
+                    .<Transfer>and()
+                    .in("tenderId", tenderIds.toArray())
+                    .build();
+            List<Transfer> transferList = transferService.findList(transferSpecification);
+            Preconditions.checkState(!CollectionUtils.isEmpty(transferList), "债权转让记录不存在!");
+            List<Long> transferIds = transferList.stream().map(Transfer::getId).collect(Collectors.toList());
+            Map<Long/* 投标id */, Transfer> transferMaps = transferList.stream().collect(Collectors.toMap(Transfer::getTenderId, Function.identity()));
+            /* 购买债权转让记录 */
+            Specification<TransferBuyLog> tbls = Specifications
+                    .<TransferBuyLog>and()
+                    .in("transferId", transferIds.toArray())
+                    .build();
+            List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
+            Preconditions.checkState(!CollectionUtils.isEmpty(transferBuyLogList), "购买债权转让记录不能为空!");
             failureBorrowCollectionList.stream().forEach(borrowCollection -> {
                 //更新tender状态
                 Tender tender = tenderMaps.get(borrowCollection.getTenderId());
                 tender.setTransferFlag(0);
                 tender.setUpdatedAt(new Date());
-                //更新
+                //取消债权转让
+                Transfer transfer = transferMaps.get(tender.getId());
+                VoEndTransfer voEndTransfer = new VoEndTransfer();
+                voEndTransfer.setUserId(transfer.getUserId());
+                voEndTransfer.setTransferId(transfer.getId());
+                try {
+                    transferBiz.endTransfer(voEndTransfer);
+                } catch (Exception e) {
+                    log.error("thirdBatchProvider bailRepayDeal error:", e);
+                }
             });
             tenderService.save(tenderList);
 
