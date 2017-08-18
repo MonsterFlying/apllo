@@ -64,12 +64,7 @@ public class BatchAssetChangeHelper {
                 }
             });
 
-    /**
-     * 发放债权转让资金
-     *
-     * @param sourceId
-     * @param batchNo
-     */
+
     /**
      * 发放债权转让资金
      *

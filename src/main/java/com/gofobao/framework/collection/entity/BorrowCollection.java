@@ -2,6 +2,7 @@ package com.gofobao.framework.collection.entity;
 
 import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -13,12 +14,11 @@ import java.util.Date;
 @Data
 @Table(name = "gfb_borrow_collection")
 @DynamicInsert
+@DynamicUpdate
 public class BorrowCollection {
     @Id
     @GeneratedValue
-
     private Long id;
-
     private Integer status;
     @Basic
     @Column(name = "`order`")
@@ -41,8 +41,7 @@ public class BorrowCollection {
     private Long userId;
     private Long tUserId;
     private String tRepayOrderId;
-    private String tAdvanceOrderId;
-    private String tAdvanceAuthCode;
+    private String tCreditEndOrderId;
     private Boolean thirdRepayFlag;
-    private Boolean thirdAdvanceFlag;
+    private Boolean thirdCreditEndFlag;
 }

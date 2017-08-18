@@ -38,7 +38,7 @@ public class WebRechargeController {
     private RechargeLogsBiz rechargeLogsBiz;
 
     @ApiOperation("pc:充值记录")
-    @RequestMapping(value = "/pub/recharge/pc/v2/list",method = RequestMethod.POST)
+    @RequestMapping(value = "recharge/pc/v2/list",method = RequestMethod.POST)
     public ResponseEntity<VoViewRechargeWarpRes> list(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                       @ModelAttribute VoPcRechargeReq rechargeReq) {
         rechargeReq.setUserId(userId);
@@ -64,7 +64,7 @@ public class WebRechargeController {
 
 
     @ApiOperation("资金流水导出")
-    @RequestMapping(value = "pub/recharge/pc/v2/toExcel", method = RequestMethod.GET)
+    @RequestMapping(value = "asset/recharge/pc/v2/toExcel", method = RequestMethod.GET)
     public void pcAssetLogToExcel(HttpServletResponse response, @ModelAttribute VoPcRechargeReq rechargeReq,
                                   @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         rechargeReq.setUserId(userId);

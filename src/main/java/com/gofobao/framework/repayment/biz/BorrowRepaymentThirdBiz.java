@@ -71,7 +71,7 @@ public interface BorrowRepaymentThirdBiz {
      * @param request
      * @param response
      */
-    ResponseEntity<String> thirdBatchRepayBailCheckCall(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> thirdBatchRepayAdvanceCheckCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 批次融资人还担保账户垫款业务处理回调
@@ -79,7 +79,7 @@ public interface BorrowRepaymentThirdBiz {
      * @param request
      * @param response
      */
-    ResponseEntity<String> thirdBatchRepayBailRunCall(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> thirdBatchRepayAdvanceRunCall(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * 获取存管 收到还款 数据集合
@@ -94,15 +94,6 @@ public interface BorrowRepaymentThirdBiz {
      * @throws Exception
      */
     void receivedRepay(List<Repay> repayList, Borrow borrow, String borrowAccountId, int order, double interestPercent, int lateDays, long lateInterest) throws Exception;
-
-    /**
-     * 生成名义借款人垫付记录
-     *
-     * @param borrow
-     * @param order
-     * @param advanceAssetChanges
-     */
-    List<CreditInvest> calculateAdvancePlan(Borrow borrow, int order, UserThirdAccount titularBorrowAccount, List<AdvanceAssetChange> advanceAssetChanges, int lateDays, long lateInterest) throws Exception;
 
     /**
      * 新版生成还款计划

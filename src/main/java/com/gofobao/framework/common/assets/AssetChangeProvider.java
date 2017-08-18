@@ -199,13 +199,14 @@ public class AssetChangeProvider {
         return jixinConfigCache.get("redPacketUserId");
     }
 
+
     /**
-     * 获取担保账户ID
+     * 获取名义借款人id
      *
      * @return
      */
-    public Long getBailAccountId() throws ExecutionException {
-        return jixinConfigCache.get("bailUserId");
+    public Long getTitularBorrowUserId() throws ExecutionException {
+        return jixinConfigCache.get("titularBorrowUserId");
     }
 
     /**

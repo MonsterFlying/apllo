@@ -81,6 +81,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.gofobao.framework.core.vo.VoBaseResp.ERROR_BIND_BANK_CARD;
+
 /**
  * Created by Administrator on 2017/6/12 0012.
  */
@@ -156,6 +158,9 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if(StringUtils.isEmpty(userThirdAccount.getCardNo())){
+            return  ResponseEntity.badRequest().body(VoBaseResp.error(ERROR_BIND_BANK_CARD,"对不起,您的账号还未绑定银行卡",VoPreCashResp.class));
+        }
         ResponseEntity<VoBaseResp> checkResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
         if(!checkResponse.getStatusCode().equals(HttpStatus.OK)){
             VoPreCashResp voPreCashResp = VoBaseResp.error(checkResponse.getBody().getState().getCode(), checkResponse.getBody().getState().getMsg(), VoPreCashResp.class);
@@ -236,6 +241,11 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoHtmlResp.class));
+        }
+        if(StringUtils.isEmpty(userThirdAccount.getCardNo())){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_BIND_BANK_CARD, "对不起!你的账号还未绑定银行卡号", VoHtmlResp.class));
         }
 
         if (userThirdAccount.getPasswordState() != 1) {

@@ -26,7 +26,6 @@ import javax.validation.Valid;
 @Api(description = "pc:提现")
 @RestController
 @Slf4j
-@RequestMapping("")
 public class WebCashController {
 
     @Autowired
@@ -42,7 +41,7 @@ public class WebCashController {
 
 
     @ApiOperation("资金流水导出")
-    @RequestMapping(value = "pub/cash/pc/v2/toExcel", method = RequestMethod.GET)
+    @RequestMapping(value = "cash/pc/v2/toExcel", method = RequestMethod.GET)
     public void pcAssetLogToExcel(HttpServletResponse response, @ModelAttribute VoPcCashLogs cashLogs,
                                   @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         cashLogs.setUserId(userId);

@@ -191,7 +191,7 @@ public class BorrowBizImpl implements BorrowBiz {
     @Override
     public ResponseEntity<VoViewBorrowListWarpRes> findAll(VoBorrowListReq voBorrowListReq) {
         try {
-            List<VoViewBorrowList> borrowLists = null;
+            List<VoViewBorrowList> borrowLists;
             if (voBorrowListReq.getType() == 5) {  // 债权转让
                 borrowLists = transferBiz.findTransferList(voBorrowListReq);
             } else {  // 正常标的
@@ -282,6 +282,7 @@ public class BorrowBizImpl implements BorrowBiz {
             Integer status = borrow.getStatus();
             Date nowDate = new Date(System.currentTimeMillis());
             Date releaseAt = borrow.getReleaseAt();  //发布时间
+            double spend = MathHelper.myRound(borrow.getMoneyYes().doubleValue() / borrow.getMoney() * 100, 2);
 
             if (status == BorrowContants.BIDDING) {//招标中
                 //待发布
@@ -298,24 +299,21 @@ public class BorrowBizImpl implements BorrowBiz {
                 } else {
                     status = 3; //招标中
                     //  进度
-                    double spend = MathHelper.myRound(borrow.getMoneyYes().doubleValue() / borrow.getMoney() * 100, 2);
-                    if (spend == 1) {
+                    if (spend == 100) {
                         status = 6;
                     }
                     borrowInfoRes.setSpend(spend);
                 }
             } else if (!ObjectUtils.isEmpty(borrow.getSuccessAt()) && !ObjectUtils.isEmpty(borrow.getCloseAt())) {   //满标时间 结清
                 status = 4; //已完成
-                borrowInfoRes.setSpend(new Double(1));
             } else if (status == BorrowContants.PASS && ObjectUtils.isEmpty(borrow.getCloseAt())) {
                 status = 2; //还款中
-                borrowInfoRes.setSpend(new Double(1));
             }
             borrowInfoRes.setType(borrow.getType());
             if (!StringUtils.isEmpty(borrow.getTenderId())) {
                 borrowInfoRes.setType(5);
             }
-
+            borrowInfoRes.setSpend(spend);
             borrowInfoRes.setPassWord(StringUtils.isEmpty(borrow.getPassword()) ? false : true);
             Users users = userService.findById(borrow.getUserId());
             borrowInfoRes.setUserName(!StringUtils.isEmpty(users.getUsername()) ? users.getUsername() : users.getPhone());
@@ -437,6 +435,7 @@ public class BorrowBizImpl implements BorrowBiz {
         Asset asset = assetService.findByUserIdLock(userId);
         Preconditions.checkNotNull(asset, "净值标的发布: 当前用户资金账户为空!");
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+
         ResponseEntity<VoBaseResp> conditionCheckResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
         if (!conditionCheckResponse.getStatusCode().equals(HttpStatus.OK)) {
             return conditionCheckResponse;
@@ -629,8 +628,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 ResponseEntity<VoBaseResp> resp = tenderThirdBiz.cancelThirdTender(voCancelThirdTenderReq);
                 log.info(String.format("取消借款: 发起即信存管投资取消!"));
                 if (!resp.getStatusCode().equals(HttpStatus.OK)) {
-                    log.error(String.format("取消借款:取消即信投标记录失败: %s", new Gson().toJson(resp)));
-                    throw new Exception("borrowBizImpl cancelBorrow:" + resp.getBody().getState().getMsg());
+                    log.info(String.format("取消借款:已在即信登记投标不能取消: %s", new Gson().toJson(resp)));
                 }
             }
 
@@ -986,8 +984,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     throw new Exception("borrowBizImpl cancelThirdBorrow:" + resp.getBody().getState().getMsg());
                 }
             } else {
-                log.error("当前标定中还存在未取消投标申请记录");
-                throw new Exception("borrowBizImpl cancelThirdBorrow: 当前标定中还存在未取消投标申请记录");
+                log.info("当前标定中还存在未取消投标申请记录,无需在即信取消");
             }
         }
     }

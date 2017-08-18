@@ -59,7 +59,7 @@ public class WebBorrowController {
 
 
     @ApiOperation(value = "pc:首页标列表; type:-1：全部 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
-    @GetMapping("pub/pc/borrow/v2/list/{type}/{pageIndex}/{pageSize}")
+    @GetMapping("pub/borrow/pc/v2/list/{type}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoPcBorrowList> pcList(@PathVariable Integer pageIndex,
                                                  @PathVariable Integer pageSize,
                                                  @PathVariable Integer type) {
@@ -72,21 +72,21 @@ public class WebBorrowController {
 
 
     @ApiOperation("标信息")
-    @GetMapping("pub/pc/borrow/v2/info/{borrowId}")
+    @GetMapping("pub/borrow/pc/v2/info/{borrowId}")
     public ResponseEntity<BorrowInfoRes> pcgetByBorrowId(@PathVariable Long borrowId) {
         return borrowBiz.info(borrowId);
     }
 
 
     @ApiOperation("pc：标简介")
-    @GetMapping("pub/pc/borrow/v2/desc/{borrowId}")
+    @GetMapping("pub/borrow/pc/v2/desc/{borrowId}")
     public ResponseEntity<VoViewVoBorrowDescWarpRes> pcDesc(@PathVariable Long borrowId) {
         return borrowBiz.desc(borrowId);
     }
 
 
     @ApiOperation(value = "pc:标合同")
-    @GetMapping(value = "pub/pc/borrow/v2/borrowProtocol/{borrowId}")
+    @GetMapping(value = "pub/borrow/pc/v2/borrowProtocol/{borrowId}")
     public ResponseEntity<String> pcTakeRatesDesc(HttpServletRequest request, @PathVariable Long borrowId) {
         Long userId = 0L;
         String authToken = request.getHeader(this.tokenHeader);
@@ -108,7 +108,7 @@ public class WebBorrowController {
         return ResponseEntity.ok(content);
     }
 
-    @RequestMapping(value = "pub/pc/borrow/v2/repayment/logs/{borrowId}", method = RequestMethod.GET)
+    @RequestMapping(value = "pub/borrow/pc/v2/repayment/logs/{borrowId}", method = RequestMethod.GET)
     @ApiOperation("还款记录")
     public ResponseEntity<VoViewRepayCollectionLogWarpRes> info(@PathVariable("borrowId") Long borrowId) {
         return repaymentBiz.logs(borrowId);
@@ -116,7 +116,7 @@ public class WebBorrowController {
 
 
     @ApiOperation(value = "pc：招标中统计")
-    @GetMapping(value = "pub/pc/borrow/v2/statistics")
+    @GetMapping(value = "pub/borrow/pc/v2/statistics")
     public ResponseEntity<VoViewBorrowStatisticsWarpRes> pcStatistics() {
         return borrowBiz.statistics();
     }
@@ -127,10 +127,11 @@ public class WebBorrowController {
      * @param voPcCancelThirdBorrow
      * @return
      */
-    @PostMapping("/pub/pc/borrow/cancelBorrow")
+    @PostMapping("borrow/pc/cancelBorrow")
     @ApiOperation("pc取消借款")
-    public ResponseEntity<VoBaseResp> pcCancelBorrow(@Valid @ModelAttribute VoPcCancelThirdBorrow voPcCancelThirdBorrow) throws Exception {
-        return borrowBiz.pcCancelBorrow(voPcCancelThirdBorrow);
+    public ResponseEntity<VoBaseResp> pcCancelBorrow(@Valid @ModelAttribute VoCancelBorrow voCancelBorrow, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
+        voCancelBorrow.setUserId(userId);
+        return borrowBiz.cancelBorrow(voCancelBorrow);
     }
 
 

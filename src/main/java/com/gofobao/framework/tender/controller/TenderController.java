@@ -20,7 +20,7 @@ import javax.validation.Valid;
  * Created by Max on 17/5/16.
  */
 @Api(description = "投标相关接口")
-@RequestMapping("/tender")
+@RequestMapping("")
 @RestController
 @Slf4j
 public class TenderController {
@@ -30,7 +30,7 @@ public class TenderController {
 
 
     @ApiOperation("标的详情-投标记录")
-    @GetMapping("/v2/user/list/{pageIndex}/{pageSize}/{borrowId}")
+    @GetMapping("pub/tender/v2/user/list/{pageIndex}/{pageSize}/{borrowId}")
     public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(@PathVariable Integer pageIndex,
                                                                               @PathVariable Integer pageSize,
                                                                               @PathVariable Long borrowId) {
@@ -42,7 +42,7 @@ public class TenderController {
     }
 
     @ApiOperation("借款投标")
-    @PostMapping("/v2/create")
+    @PostMapping("tender/v2/create")
     public ResponseEntity<VoBaseResp> tender(@ModelAttribute @Valid VoCreateTenderReq voCreateTenderReq,
                                              @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
         voCreateTenderReq.setUserId(userId);

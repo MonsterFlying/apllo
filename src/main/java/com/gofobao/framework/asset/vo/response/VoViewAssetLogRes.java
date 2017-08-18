@@ -18,4 +18,12 @@ public class VoViewAssetLogRes {
         private String money;
         @ApiModelProperty("显示金额")
         private String showMoney;
+        @ApiModelProperty("备注")
+        private String remark;
+        @ApiModelProperty("可用金额")
+        private String useMoney;
+        @ApiModelProperty("隐藏可用金额")
+        private Double hideUseMoney;
+
+
 }

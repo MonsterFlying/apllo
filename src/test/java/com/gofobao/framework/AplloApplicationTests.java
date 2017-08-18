@@ -25,6 +25,8 @@ import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
+import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryRequest;
+import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryResponse;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResponse;
@@ -55,6 +57,7 @@ import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.migrate.MigrateBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
+import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
@@ -386,8 +389,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("145017");
-        batchDetailsQueryReq.setBatchTxDate("20170814");
+        batchDetailsQueryReq.setBatchNo("170107");
+        batchDetailsQueryReq.setBatchTxDate("20170817");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -400,9 +403,9 @@ public class AplloApplicationTests {
 
     private void bidApplyQuery() {
         BidApplyQueryReq request = new BidApplyQueryReq();
-        request.setAccountId("6212462040000650087");
+        request.setAccountId("6212462190000000476");
         request.setChannel(ChannelContant.HTML);
-        request.setOrgOrderId("GFBT_1501032966291");
+        request.setOrgOrderId("GFBT_150288481816451");
         BidApplyQueryResp response = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, request, BidApplyQueryResp.class);
         System.out.println(response);
 
@@ -439,14 +442,14 @@ public class AplloApplicationTests {
     public void balanceQuery() {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId("6212462040000500118");
+        balanceQueryRequest.setAccountId("6212462190000000021");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         System.out.println(balanceQueryResponse);
     }
 
     public void accountDetailsQuery() {
         AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
-        request.setAccountId("6212462040000500118");
+        request.setAccountId("6212462190000000310");
         request.setStartDate("20161002");
         request.setEndDate("20171003");
         request.setChannel(ChannelContant.HTML);
@@ -470,20 +473,17 @@ public class AplloApplicationTests {
     }
 
     public void batchDeal() {
-        /*Map<String,Object> acqMap = new HashMap<>();
-        acqMap.put("repaymentId","173855");
-        acqMap.put("interestPercent","1d");
-        acqMap.put("isUserOpen",true);
-        acqMap.put("userId",44833);*/
+       /* Map<String,Object> acqMap = new HashMap<>();
+        acqMap.put("borrowId", 169979);
+        acqMap.put("tag", MqTagEnum.END_CREDIT_BY_TRANSFER);*/
 
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(173880),
-                        MqConfig.BATCH_NO, StringHelper.toString(112822),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(170001),
+                        MqConfig.BATCH_NO, StringHelper.toString(170107),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
-                       /* MqConfig.ACQ_RES, GSON.toJson(acqMap)*/
                 );
 
         mqConfig.setMsg(body);
@@ -506,18 +506,19 @@ public class AplloApplicationTests {
 
     @Test
     public void test() {
-        MqConfig mqConfig = new MqConfig();
+       /* MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
         mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
         ImmutableMap<String, String> body = ImmutableMap
                 .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(5), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
         try {
+
             log.info(String.format("transferBizImpl buyTransfer send mq %s", GSON.toJson(body)));
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("transferBizImpl buyTransfer send mq exception", e);
-        }
+        }  */
 
         //推送队列结束债权
 /*        MqConfig mqConfig = new MqConfig();
@@ -535,7 +536,7 @@ public class AplloApplicationTests {
         }*/
 
         //批次处理
-        //batchDeal();
+        batchDeal();
         //查询存管账户资金信息
         //balanceQuery();
         //查询资金流水
@@ -572,11 +573,11 @@ public class AplloApplicationTests {
         //noTransferBorrowAgainVerify();
         // 查询债权关系
         /*CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
-        creditDetailsQueryRequest.setAccountId("6212462040000650087");
-        creditDetailsQueryRequest.setStartDate("20161003");
-        creditDetailsQueryRequest.setProductId("169922");
+        creditDetailsQueryRequest.setAccountId("6212462190000000229");
+        creditDetailsQueryRequest.setStartDate("20170417");
+        creditDetailsQueryRequest.setProductId("169979");
         creditDetailsQueryRequest.setEndDate(DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM));
-        creditDetailsQueryRequest.setState("1");
+        creditDetailsQueryRequest.setState("0");
         creditDetailsQueryRequest.setPageNum("1");
         creditDetailsQueryRequest.setPageSize("10");
         CreditDetailsQueryResponse creditDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.CREDIT_DETAILS_QUERY,
@@ -584,6 +585,16 @@ public class AplloApplicationTests {
                 CreditDetailsQueryResponse.class);
         System.out.println(creditDetailsQueryResponse);*/
 
+        /*VoRepayReq voRepayReq = new VoRepayReq();
+        voRepayReq.setRepaymentId(1l);
+        voRepayReq.setUserId(44912L);
+        try {
+            repaymentBiz.newRepay(voRepayReq);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } 【原始技术】澳洲小哥真人MC：篱笆泥墙（1）
+
+        */
 
         /*CreditEndReq creditEndReq = new CreditEndReq();
         creditEndReq.setAccountId("6212462040000200123");

@@ -38,6 +38,10 @@ public class Transfer {
     private Long userId;
     private Long lowest;
     private Boolean del;
+    private Boolean isAll;
+    private Integer startOrder;
+    private Integer endOrder;
+    private String borrowCollectionIds;
     private Date createdAt;
     private Date releaseAt;
     private Date updatedAt;

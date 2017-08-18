@@ -42,6 +42,7 @@ import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
+import com.gofobao.framework.tender.vo.request.VoEndTransfer;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
@@ -56,6 +57,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.gofobao.framework.listener.providers.NoticesMessageProvider.GSON;
@@ -233,29 +235,42 @@ public class ThirdBatchProvider {
             log.info("================================================================================");
         }
 
+        Map<String, Object> acqMap = GSON.fromJson(acqRes, TypeTokenContants.MAP_TOKEN);
+        /**
+         * 结束债权类型
+         */
+            /* 结束在债权标签 */
+        String tag = StringHelper.toString(acqMap.get("tag"));
+
         //登记成功批次
-        Specification<Tender> ts = null;
         if (!CollectionUtils.isEmpty(successThirdCreditEndOrderIds)) {
-            ts = Specifications
-                    .<Tender>and()
-                    .in("thirdCreditEndOrderId", successThirdCreditEndOrderIds.toArray())
-                    .build();
-            List<Tender> successTenderList = tenderService.findList(ts);
-            successTenderList.stream().forEach(collection -> {
-                collection.setThirdCreditEndFlag(true);
-            });
-            tenderService.save(successTenderList);
+            if (tag.equals(MqTagEnum.END_CREDIT_BY_ADVANCE.getValue())) {
+                Specification<BorrowCollection> bcs = Specifications
+                        .<BorrowCollection>and()
+                        .eq("thirdCreditEndOrderId", successThirdCreditEndOrderIds.toArray())
+                        .build();
+                List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
+                borrowCollectionList.stream().forEach(collection -> {
+                   /* collection.setThirdCreditEndFlag(true);*/
+                });
+                borrowCollectionService.save(borrowCollectionList);
+            } else {
+                Specification<Tender> ts = Specifications
+                        .<Tender>and()
+                        .in("thirdCreditEndOrderId", successThirdCreditEndOrderIds.toArray())
+                        .build();
+                List<Tender> successTenderList = tenderService.findList(ts);
+                successTenderList.stream().forEach(tender -> {
+                    tender.setThirdCreditEndFlag(true);
+                });
+                tenderService.save(successTenderList);
+            }
         }
 
         //处理失败批次
         //5分钟处理一次
         if (!CollectionUtils.isEmpty(failureThirdCreditEndOrderIds)) {
-            Map<String, Object> acqMap = GSON.fromJson(acqRes, TypeTokenContants.MAP_TOKEN);
-            /**
-             * 结束债权类型
-             */
-            /* 结束在债权标签 */
-            String tag = StringHelper.toString(acqMap.get("tag"));
+
             //更新批次日志状态
             updateThirdBatchLogState(batchNo, borrowId, ThirdBatchLogContants.BATCH_CREDIT_END, 4);
 
@@ -357,6 +372,7 @@ public class ThirdBatchProvider {
      * @param acqRes
      * @param failureTRepayBailOrderIds
      * @param successTRepayBailOrderIds
+     * @// TODO: 2017/8/16 需要修改
      */
     private void repayBailDeal(long batchNo, long repaymentId, String acqRes, List<String> failureTRepayBailOrderIds, List<String> successTRepayBailOrderIds) {
 
@@ -374,7 +390,7 @@ public class ThirdBatchProvider {
                     .build();
             List<BorrowCollection> successBorrowCollectionList = borrowCollectionService.findList(bcs);
             successBorrowCollectionList.stream().forEach(borrowCollection -> {
-                borrowCollection.setThirdAdvanceFlag(true);
+                /*borrowCollection.setThirdAdvanceFlag(true);*/
             });
             borrowCollectionService.save(successBorrowCollectionList);
         }
@@ -424,31 +440,82 @@ public class ThirdBatchProvider {
      * 批次名义借款人垫付处理
      *
      * @param repaymentId
-     * @param failureTBailRepayOrderIds
-     * @param successTBailRepayOrderIds
+     * @param failureTransferOrderIds
+     * @param successTransferOrderIds
      */
-    private void bailRepayDeal(long batchNo, long repaymentId, List<String> failureTBailRepayOrderIds, List<String> successTBailRepayOrderIds) throws Exception {
-        if (CollectionUtils.isEmpty(failureTBailRepayOrderIds)) {
+    private void bailRepayDeal(long batchNo, long repaymentId, List<String> failureTransferOrderIds, List<String> successTransferOrderIds) throws Exception {
+        if (CollectionUtils.isEmpty(failureTransferOrderIds)) {
             log.info("================================================================================");
             log.info("即信批次还款查询：未发现失败批次！");
             log.info("================================================================================");
         }
 
         //登记成功批次
-        if (!CollectionUtils.isEmpty(successTBailRepayOrderIds)) {
+        if (!CollectionUtils.isEmpty(successTransferOrderIds)) {
             Specification<BorrowCollection> bcs = Specifications
                     .<BorrowCollection>and()
-                    .in("tAdvanceOrderId", successTBailRepayOrderIds.toArray())
+                    .in("tTransferOrderId", successTransferOrderIds.toArray())
                     .build();
             List<BorrowCollection> successBorrowCollectionList = borrowCollectionService.findList(bcs);
             successBorrowCollectionList.stream().forEach(borrowCollection -> {
-                borrowCollection.setThirdAdvanceFlag(true);
+                borrowCollection.setThirdTransferFlag(true);
             });
             borrowCollectionService.save(successBorrowCollectionList);
         }
 
+        if (!CollectionUtils.isEmpty(failureTransferOrderIds)) {  //推送垫付队列
+            //取消失败批次的债权转让记录与购买债权转让记录
+            Specification<BorrowCollection> bcs = Specifications
+                    .<BorrowCollection>and()
+                    .in("tTransferOrderId", failureTransferOrderIds.toArray())
+                    .build();
+            List<BorrowCollection> failureBorrowCollectionList = borrowCollectionService.findList(bcs);
+            /* 投标记录id */
+            List<Long> tenderIds = failureBorrowCollectionList.stream().map(BorrowCollection::getTenderId).collect(Collectors.toList());
+            Preconditions.checkState(!CollectionUtils.isEmpty(failureBorrowCollectionList), "失败回款记录不存在!");
+            /* 投标记录 */
+            Specification<Tender> ts = Specifications
+                    .<Tender>and()
+                    .in("id", tenderIds.toArray())
+                    .build();
+            List<Tender> tenderList = tenderService.findList(ts);
+            Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "投标记录不存在!");
+            Map<Long, Tender> tenderMaps = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
+            //查询债权转让记录
+            Specification<Transfer> transferSpecification = Specifications
+                    .<Transfer>and()
+                    .in("tenderId", tenderIds.toArray())
+                    .build();
+            List<Transfer> transferList = transferService.findList(transferSpecification);
+            Preconditions.checkState(!CollectionUtils.isEmpty(transferList), "债权转让记录不存在!");
+            List<Long> transferIds = transferList.stream().map(Transfer::getId).collect(Collectors.toList());
+            Map<Long/* 投标id */, Transfer> transferMaps = transferList.stream().collect(Collectors.toMap(Transfer::getTenderId, Function.identity()));
+            /* 购买债权转让记录 */
+            Specification<TransferBuyLog> tbls = Specifications
+                    .<TransferBuyLog>and()
+                    .in("transferId", transferIds.toArray())
+                    .build();
+            List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
+            Preconditions.checkState(!CollectionUtils.isEmpty(transferBuyLogList), "购买债权转让记录不能为空!");
+            failureBorrowCollectionList.stream().forEach(borrowCollection -> {
+                //更新tender状态
+                Tender tender = tenderMaps.get(borrowCollection.getTenderId());
+                tender.setTransferFlag(0);
+                tender.setUpdatedAt(new Date());
+                //取消债权转让
+                Transfer transfer = transferMaps.get(tender.getId());
+                VoEndTransfer voEndTransfer = new VoEndTransfer();
+                voEndTransfer.setUserId(transfer.getUserId());
+                voEndTransfer.setTransferId(transfer.getId());
+                try {
+                    transferBiz.endTransfer(voEndTransfer);
+                } catch (Exception e) {
+                    log.error("thirdBatchProvider bailRepayDeal error:", e);
+                }
+            });
+            tenderService.save(tenderList);
 
-        if (!CollectionUtils.isEmpty(failureTBailRepayOrderIds)) {  //推送垫付队列
+
             //更新批次日志状态
             updateThirdBatchLogState(batchNo, repaymentId, ThirdBatchLogContants.BATCH_BAIL_REPAY, 4);
 
@@ -470,7 +537,7 @@ public class ThirdBatchProvider {
         //==================================================================
         // 批次名义借款人垫付操作
         //==================================================================
-        if (CollectionUtils.isEmpty(failureTBailRepayOrderIds)) {
+        if (CollectionUtils.isEmpty(failureTransferOrderIds)) {
             ResponseEntity<VoBaseResp> resp = repaymentBiz.newAdvanceDeal(repaymentId, batchNo);
             if (!ObjectUtils.isEmpty(resp)) {
                 log.error("批次名义借款人垫付操作：" + resp.getBody().getState().getMsg());
@@ -626,6 +693,7 @@ public class ThirdBatchProvider {
                 sendCancelTender(nowDate, borrow, tenders);
                 borrow.setTenderCount(borrow.getTenderCount() - failureNum.intValue());
                 borrow.setMoneyYes(borrow.getMoneyYes() - failureAmount.intValue());
+                borrow.setSuccessAt(null);
                 borrow.setUpdatedAt(nowDate);
 
             }
@@ -791,6 +859,8 @@ public class ThirdBatchProvider {
                 long sum = transferBuyLogList.stream().mapToLong(transferBuyLog -> transferBuyLog.getValidMoney()).sum();  // 取消的总总债权
                 transfer.setTransferMoneyYes(transfer.getTransferMoneyYes() - sum);
                 transfer.setUpdatedAt(nowDate);
+                transfer.setSuccessAt(null);
+                transferService.save(transfer);
             }
             //更新批次日志状态
             updateThirdBatchLogState(batchNo, transferId, ThirdBatchLogContants.BATCH_CREDIT_INVEST, 4);
