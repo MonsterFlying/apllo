@@ -185,13 +185,16 @@ public class BankAccountBizImpl implements BankAccountBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你没有开通银行存管，请先开通银行存管！", VoBankListResp.class));
         }
-
+        if(StringUtils.isEmpty(userThirdAccount.getCardNo())) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_BIND_BANK_CARD, "对不起!你的账户还未绑定银行卡呢", VoBankListResp.class));
+        }
         if (userThirdAccount.getPasswordState() == 0) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请先初始化江西银行存管账户交易密码！", VoBankListResp.class));
         }
-
         VoBankListResp response = VoBaseResp.ok("查询成功", VoBankListResp.class);
         response.setBankCard(UserHelper.hideChar(userThirdAccount.getCardNo(), UserHelper.BANK_ACCOUNT_NUM));
         response.setBankLogo(String.format("%s/%s", javaDomain, userThirdAccount.getBankLogo()));
