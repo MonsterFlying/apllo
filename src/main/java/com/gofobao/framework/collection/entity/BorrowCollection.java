@@ -44,4 +44,5 @@ public class BorrowCollection {
     private String tCreditEndOrderId;
     private Boolean thirdRepayFlag;
     private Boolean thirdCreditEndFlag;
+    private Boolean thirdTransferFlag;
 }

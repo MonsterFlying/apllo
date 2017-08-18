@@ -120,6 +120,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.gofobao.framework.helper.DateHelper.isBetween;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toSet;
 
@@ -263,7 +264,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         for (BorrowRepayment borrowRepayment : borrowRepaymentList) {
             /* 是否垫付 */
             boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
-                    /* 查询未转让的投标记录回款记录 */
+            /* 查询未转让的投标记录回款记录 */
             Specification<BorrowCollection> bcs = Specifications
                     .<BorrowCollection>and()
                     .in("tenderId", tenderIds.toArray())
@@ -275,7 +276,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             Preconditions.checkNotNull(borrowCollectionList, "立即还款: 回款记录为空!");
 
             //4.还款成功后变更改还款状态
-            changeRepaymentAndAdvanceStatus(borrowRepayment, advance);
+            changeRepaymentAndAdvanceStatus(borrowRepayment, borrowCollectionList, advance);
             //5.结束第三方债权并更新借款状态（还款最后一期的时候）
             endThirdTenderAndChangeBorrowStatus(borrow, borrowRepayment);
             //6.发送投资人收到还款站内信
@@ -476,12 +477,33 @@ public class RepaymentBizImpl implements RepaymentBiz {
         List<Repay> repays = new ArrayList<>();/* 生成存管还款记录(提前结清) */
         for (VoBuildThirdRepayReq voBuildThirdRepayReq : voBuildThirdRepayReqs) {
             BorrowRepayment borrowRepayment = borrowRepaymentMaps.get(voBuildThirdRepayReq.getRepaymentId());/* 还款记录 */
+            /* 投资记录：不包含理财计划 */
+            Specification<Tender> specification = Specifications
+                    .<Tender>and()
+                    .eq("status", 1)
+                    .eq("borrowId", borrow.getId())
+                    .build();
+            List<Tender> tenderList = tenderService.findList(specification);
+            Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "投资记录不存在!");
+            /* 投资id集合 */
+            List<Long> tenderIds = tenderList.stream().map(p -> p.getId()).collect(Collectors.toList());
+            /* 投资人回款记录 */
+            Specification<BorrowCollection> bcs = Specifications
+                    .<BorrowCollection>and()
+                    .in("tenderId", tenderIds.toArray())
+                    .eq("status", 0)
+                    .eq("transferFlag", 0)
+                    .eq("order", borrowRepayment.getOrder())
+                    .build();
+            List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
+            Preconditions.checkNotNull(borrowCollectionList, "生成即信还款计划: 获取回款计划列表为空!");
             List<RepayAssetChange> repayAssetChangeList = new ArrayList<>();
             // 生成存管投资人还款记录(提前结清)
-            List<Repay> tempRepays = borrowRepaymentThirdBiz.calculateRepayPlan(borrow,
+            List<Repay> tempRepays = calculateRepayPlan(borrow,
                     borrowUserThirdAccount.getAccountId(),
-                    borrowRepayment.getOrder(),
-                    voBuildThirdRepayReq.getLateDays(),
+                    borrowRepayment,
+                    tenderList,
+                    borrowCollectionList,
                     voBuildThirdRepayReq.getLateInterest(),
                     voBuildThirdRepayReq.getInterestPercent(),
                     repayAssetChangeList
@@ -802,7 +824,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //2.处理资金还款人、收款人资金变动
         batchAssetChangeHelper.batchAssetChangeAndCollection(repaymentId, batchNo, BatchAssetChangeContants.BATCH_REPAY);
         //4.还款成功后变更改还款状态
-        changeRepaymentAndAdvanceStatus(borrowRepayment, advance);
+        changeRepaymentAndAdvanceStatus(borrowRepayment, borrowCollectionList, advance);
         if (!advance) { //非转让标需要统计与发放短信
             //5.结束第三方债权并更新借款状态（还款最后一期的时候）
             endThirdTenderAndChangeBorrowStatus(parentBorrow, borrowRepayment);
@@ -1042,11 +1064,18 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @throws Exception 3.判断是否是还名义借款人垫付，垫付需要改变垫付记录状态（逾期天数与日期应当在还款前计算完成）
      *                   4.还款成功后变更改还款状态（还款金额在还款前计算完成）
      */
-    private void changeRepaymentAndAdvanceStatus(BorrowRepayment borrowRepayment, boolean advance) throws Exception {
+    private void changeRepaymentAndAdvanceStatus(BorrowRepayment borrowRepayment, List<BorrowCollection> borrowCollectionList, boolean advance) throws Exception {
         //更改垫付记录、还款记录状态
         borrowRepayment.setStatus(1);
         borrowRepayment.setRepayAtYes(new Date());
         borrowRepaymentService.updateById(borrowRepayment);
+
+        //改变回款状态
+        borrowCollectionList.stream().forEach(borrowCollection -> {
+            borrowCollection.setStatus(1);
+            borrowCollection.setUpdatedAt(new Date());
+        });
+        borrowCollectionService.save(borrowCollectionList);
 
         if (advance) { //存在垫付时间则当条还款已经被垫付过
             AdvanceLog advanceLog = advanceLogService.findByRepaymentId(borrowRepayment.getId());
@@ -1279,9 +1308,33 @@ public class RepaymentBizImpl implements RepaymentBiz {
                                                       Borrow parentBorrow, long lateInterest,
                                                       String batchNo, String seqNo, String groupSeqNo) throws Exception {
         Date nowDate = new Date();
+        Specification<Tender> specification = Specifications
+                .<Tender>and()
+                .eq("status", 1)
+                .eq("borrowId", parentBorrow.getId())
+                .build();
+
+        List<Tender> tenderList = tenderService.findList(specification);
+        Preconditions.checkNotNull(tenderList, "借款人向到担保人还款计划: 获取投资记录为空");
+        List<Long> tenderIds = tenderList.stream().map(p -> p.getId()).collect(Collectors.toList());
+
+        //查询已经回款的
+        Specification<BorrowCollection> bcs = Specifications
+                .<BorrowCollection>and()
+                .in("tenderId", tenderIds.toArray())
+                .eq("status", 1)
+                .eq("order", borrowRepayment.getOrder())
+                .build();
+
+        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
+        Preconditions.checkNotNull(borrowCollectionList, "借款人向到担保人还款计划: 获取回款计划列表为空!");
+        Map<Long/** 投资记录*/, BorrowCollection/** 对应的还款计划*/> borrowCollectionMap = borrowCollectionList
+                .stream()
+                .collect(Collectors.toMap(BorrowCollection::getTenderId,
+                        Function.identity()));
 
         log.info("借款人还款垫付人开始");
-        List<RepayBail> repayBails = borrowRepaymentThirdBiz.calculateRepayBailPlan(parentBorrow, repayUserThirdAccount.getAccountId(), getLateDays(borrowRepayment), borrowRepayment.getOrder(), lateInterest);
+        List<RepayBail> repayBails = calculateRepayBailPlan(parentBorrow, repayUserThirdAccount.getAccountId(), getLateDays(borrowRepayment), borrowRepayment.getOrder(), lateInterest);
         double txAmount = repayBails.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxAmount())).sum();
         double intAmount = repayBails.stream().mapToDouble(r -> NumberHelper.toDouble(r.getIntAmount())).sum();  //所有交易利息
         double txFeeOut = repayBails.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxFeeOut())).sum();   //所有还款手续费
@@ -1349,13 +1402,84 @@ public class RepaymentBizImpl implements RepaymentBiz {
     }
 
     /**
+     * 生成借款人偿还担保人计划
+     *
+     * @param borrow
+     * @param repayAccountId
+     * @param lateDays
+     * @param order
+     * @param lateInterest
+     * @return
+     * @throws Exception
+     */
+    public List<RepayBail> calculateRepayBailPlan(Borrow borrow, String repayAccountId, int lateDays, Integer order, long lateInterest) throws Exception {
+        List<RepayBail> repayBailList = new ArrayList<>();
+        Specification<Tender> specification = Specifications
+                .<Tender>and()
+                .eq("status", 1)
+                .eq("borrowId", borrow.getId())
+                .build();
+
+        List<Tender> tenderList = tenderService.findList(specification);
+        Preconditions.checkNotNull(tenderList, "借款人向到担保人还款计划: 获取投资记录为空");
+        List<Long> tenderIds = tenderList.stream().map(p -> p.getId()).collect(Collectors.toList());
+
+        //查询已经回款的
+        Specification<BorrowCollection> bcs = Specifications
+                .<BorrowCollection>and()
+                .in("tenderId", tenderIds.toArray())
+                .eq("status", 1)
+                .eq("order", order)
+                .build();
+
+        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
+        Preconditions.checkNotNull(borrowCollectionList, "借款人向到担保人还款计划: 获取回款计划列表为空!");
+        Map<Long/** 投资记录*/, BorrowCollection/** 对应的还款计划*/> borrowCollectionMap = borrowCollectionList
+                .stream()
+                .collect(Collectors.toMap(BorrowCollection::getTenderId,
+                        Function.identity()));
+        for (Tender tender : tenderList) {
+            int inIn = 0;
+            int inPr = 0;
+            int outFee = 0;
+            BorrowCollection borrowCollection = borrowCollectionMap.get(tender.getId()); // 已经还款金额
+            if (tender.getTransferFlag() == 1) { // 标的转让中时, 需要取消出让信息
+                transferBiz.cancelTransferByTenderId(tender.getId());
+            }
+
+            if (tender.getTransferFlag() == 2) {  // 出现转让后, 需要递归处理
+                continue;
+            }
+
+            // 生成还款计划
+            inIn += borrowCollection.getInterest(); // 利息
+            inPr += borrowCollection.getPrincipal(); // 本金
+            if ((lateDays > 0) && (lateInterest > 0)) {  //借款人逾期罚息
+                inIn += new Double(tender.getValidMoney() / new Double(borrow.getMoney()) * lateInterest).intValue();
+            }
+            String orderId = JixinHelper.getOrderId(JixinHelper.BAIL_REPAY_PREFIX);
+            RepayBail repayBail = new RepayBail();
+            repayBail.setOrderId(orderId);
+            repayBail.setAccountId(repayAccountId);
+            repayBail.setTxAmount(StringHelper.formatDouble(inPr, 100, false));
+            repayBail.setIntAmount(StringHelper.formatDouble(inIn, 100, false));
+            repayBail.setForAccountId(borrow.getBailAccountId());
+            repayBail.setTxFeeOut(StringHelper.formatDouble(outFee, 100, false));
+            /*repayBail.setOrgOrderId(borrowCollection.getTAdvanceOrderId());
+            repayBail.setAuthCode(borrowCollection.getTAdvanceAuthCode());*/
+            repayBailList.add(repayBail);
+        }
+        tenderService.save(tenderList);
+        return repayBailList;
+    }
+
+    /**
      * 正常还款流程
      *
      * @param userId
      * @param repayUserThirdAccount
      * @param borrowRepayment
      * @param borrow
-     * @param lateInterest
      * @param batchNo
      * @param batchAssetChange
      * @param seqNo
@@ -1375,18 +1499,38 @@ public class RepaymentBizImpl implements RepaymentBiz {
                                                    String groupSeqNo) throws Exception {
         Date nowDate = new Date();
         log.info("批次还款: 进入正常还款流程");
+        /* 投资记录：不包含理财计划 */
+        Specification<Tender> specification = Specifications
+                .<Tender>and()
+                .eq("status", 1)
+                .eq("borrowId", borrow.getId())
+                .build();
+        List<Tender> tenderList = tenderService.findList(specification);
+        Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "投资记录不存在!");
+        /* 投资id集合 */
+        List<Long> tenderIds = tenderList.stream().map(p -> p.getId()).collect(Collectors.toList());
+        /* 投资人回款记录 */
+        Specification<BorrowCollection> bcs = Specifications
+                .<BorrowCollection>and()
+                .in("tenderId", tenderIds.toArray())
+                .eq("status", 0)
+                .eq("transferFlag", 0)
+                .eq("order", borrowRepayment.getOrder())
+                .build();
+        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
+        Preconditions.checkNotNull(borrowCollectionList, "生成即信还款计划: 获取回款计划列表为空!");
+        /* 资金变动集合 */
         List<RepayAssetChange> repayAssetChanges = new ArrayList<>();
-        List<Repay> repays = borrowRepaymentThirdBiz.calculateRepayPlan(borrow,
+        List<Repay> repays = calculateRepayPlan(borrow,
                 repayUserThirdAccount.getAccountId(),
-                borrowRepayment.getOrder(),
-                getLateDays(borrowRepayment),
+                borrowRepayment,
+                tenderList,
+                borrowCollectionList,
                 lateInterest,
                 interestPercent,
                 repayAssetChanges);
-        log.info("批次还款：开始处理理财计划还款");
         // 生成资金变动记录
         doGenerateAssetChangeRecodeByRepay(borrow, borrowRepayment, borrowRepayment.getUserId(), repayAssetChanges, seqNo, groupSeqNo, batchAssetChange);
-
         //所有交易金额 交易金额指的是txAmount字段
         double txAmount = repays.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxAmount())).sum();
         //所有交易利息
@@ -1455,6 +1599,116 @@ public class RepaymentBizImpl implements RepaymentBiz {
         thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
         thirdBatchLogService.save(thirdBatchLog);
         return ResponseEntity.ok(VoBaseResp.ok("还款正常"));
+    }
+
+    /**
+     * 生成存管还款计划(递归调用解决转让问题)
+     *
+     * @param borrow
+     * @param repayAccountId
+     * @param borrowRepayment
+     * @param lateInterest
+     * @param repayAssetChanges
+     * @return
+     * @throws Exception
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, BorrowRepayment borrowRepayment, List<Tender> tenderList,
+                                          List<BorrowCollection> borrowCollectionList,
+                                          long lateInterest, double interestPercent, List<RepayAssetChange> repayAssetChanges) throws Exception {
+        List<Repay> repayList = new ArrayList<>();
+        Map<Long/* 投资记录*/, BorrowCollection/* 对应的还款计划*/> borrowCollectionMap = borrowCollectionList.stream().collect(Collectors.toMap(BorrowCollection::getTenderId, Function.identity()));
+        /* 投资会员id集合 */
+        Set<Long> userIds = tenderList.stream().map(p -> p.getUserId()).collect(Collectors.toSet());
+        /* 逾期日期 */
+        int lateDays = getLateDays(borrowRepayment);
+        /* 投资人存管记录列表 */
+        Specification<UserThirdAccount> uts = Specifications
+                .<UserThirdAccount>and()
+                .in("userId", userIds.toArray())
+                .build();
+        List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findList(uts);
+        Preconditions.checkNotNull(userThirdAccountList, "生成即信还款计划: 查询用户存管开户记录列表为空!");
+        Map<Long/* 用户ID*/, UserThirdAccount /* 用户存管*/> userThirdAccountMap = userThirdAccountList
+                .stream()
+                .collect(Collectors.toMap(UserThirdAccount::getUserId, Function.identity()));
+        /* 当期回款总利息 */
+        long sumCollectionInterest = borrowCollectionList.stream().mapToLong(BorrowCollection::getInterest).sum();
+        for (Tender tender : tenderList) {
+            RepayAssetChange repayAssetChange = new RepayAssetChange();
+            repayAssetChanges.add(repayAssetChange);
+            long inIn = 0; // 出借人的利息
+            long inPr = 0; // 出借人的本金
+            int inFee = 0; // 出借人利息费用
+            int outFee = 0; // 借款人管理费
+            BorrowCollection borrowCollection = borrowCollectionMap.get(tender.getId());  // 还款计划
+            if (tender.getTransferFlag() == 1) {
+                transferBiz.cancelTransferByTenderId(tender.getId()); // 标的转让中时, 需要取消出让信息
+            }
+            /**
+             * @// TODO: 2017/8/18 资金变动有问题
+             */
+            if (tender.getTransferFlag() == 2 || ObjectUtils.isEmpty(borrowCollection)) {  // 已经转让的债权, 可以跳过还款
+                continue;
+            }
+            inIn = (long) MathHelper.myRound(borrowCollection.getInterest() * interestPercent, 0); // 还款利息
+            inPr = borrowCollection.getPrincipal(); // 还款本金
+            repayAssetChange.setUserId(tender.getUserId());
+            repayAssetChange.setInterest(inIn);
+            repayAssetChange.setPrincipal(inPr);
+
+            ImmutableSet<Integer> borrowTypeSet = ImmutableSet.of(0, 4);
+            if (borrowTypeSet.contains(borrow.getType())) {  // 车贷标和渠道标利息管理费
+                ImmutableSet<Long> stockholder = ImmutableSet.of(2480L, 1753L, 1699L,
+                        3966L, 1413L, 1857L,
+                        183L, 2327L, 2432L,
+                        2470L, 2552L, 2739L,
+                        3939L, 893L, 608L,
+                        1216L);
+                boolean between = isBetween(new Date(), DateHelper.stringToDate("2015-12-25 00:00:00"),
+                        DateHelper.stringToDate("2017-12-25 23:59:59"));
+                if ((stockholder.contains(tender.getUserId())) && (between)) {
+                    inFee += 0;
+                } else {
+                    inFee += new Double(MathHelper.myRound(inIn * 0.1, 2)).intValue();
+                }
+            }
+
+            repayAssetChange.setInterestFee(inFee);
+            long overdueFee = 0;
+            long platformOverdueFee = 0;
+            if ((lateDays > 0) && (lateInterest > 0)) {  //借款人逾期罚息
+                overdueFee = new Double(borrowCollection.getInterest() / new Double(sumCollectionInterest) * lateInterest / 2).intValue();// 出借人收取50% 逾期管理费 ;
+                repayAssetChange.setOverdueFee(overdueFee);
+                inIn += overdueFee;
+                platformOverdueFee = new Double(borrowCollection.getInterest() / new Double(sumCollectionInterest) * lateInterest / 2).intValue(); // 平台收取50% 逾期管理费
+                repayAssetChange.setPlatformOverdueFee(platformOverdueFee);
+                outFee += platformOverdueFee;
+            }
+
+            /* 还款orderId */
+            String orderId = JixinHelper.getOrderId(JixinHelper.REPAY_PREFIX);
+            Repay repay = new Repay();
+            repay.setAccountId(repayAccountId);
+            repay.setOrderId(orderId);
+            repay.setTxAmount(StringHelper.formatDouble(inPr, 100, false));
+            repay.setIntAmount(StringHelper.formatDouble(inIn, 100, false));
+            repay.setTxFeeIn(StringHelper.formatDouble(inFee, 100, false));
+            repay.setTxFeeOut(StringHelper.formatDouble(outFee, 100, false));
+            repay.setProductId(borrow.getProductId());
+            repay.setAuthCode(tender.isTransferTender() ? tender.getTransferAuthCode() : tender.getAuthCode());
+            UserThirdAccount userThirdAccount = userThirdAccountMap.get(tender.getUserId());
+            Preconditions.checkNotNull(userThirdAccount, "投资人未开户!");
+            repay.setForAccountId(userThirdAccount.getAccountId());
+            repayList.add(repay);
+            //改变回款状态
+            borrowCollection.setTRepayOrderId(orderId);
+            borrowCollection.setLateInterest(overdueFee);
+            borrowCollection.setCollectionMoneyYes(borrowCollection.getCollectionMoney());
+            borrowCollection.setUpdatedAt(new Date());
+            borrowCollectionService.updateById(borrowCollection);
+        }
+        return repayList;
     }
 
     /**
