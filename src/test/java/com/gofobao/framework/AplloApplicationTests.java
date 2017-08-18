@@ -381,8 +381,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("200019");
-        batchDetailsQueryReq.setBatchTxDate("20170816");
+        batchDetailsQueryReq.setBatchNo("170107");
+        batchDetailsQueryReq.setBatchTxDate("20170817");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -473,8 +473,8 @@ public class AplloApplicationTests {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(169997),
-                        MqConfig.BATCH_NO, StringHelper.toString(200019),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(170001),
+                        MqConfig.BATCH_NO, StringHelper.toString(170107),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
                 );
 
@@ -528,9 +528,9 @@ public class AplloApplicationTests {
         }*/
 
         //批次处理
-        //batchDeal();
+        batchDeal();
         //查询存管账户资金信息
-        balanceQuery();
+        //balanceQuery();
         //查询资金流水
         //accountDetailsQuery();
         //根据手机号查询存管账户

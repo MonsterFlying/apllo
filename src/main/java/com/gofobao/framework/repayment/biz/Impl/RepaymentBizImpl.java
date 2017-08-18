@@ -179,6 +179,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private BatchAssetChangeService batchAssetChangeService;
     @Autowired
     private TransferBuyLogService transferBuyLogService;
+    @Autowired
+    private TransferBiz transferBiz;
 
     @Value("${gofobao.webDomain}")
     private String webDomain;
@@ -1749,7 +1751,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //  3. 判断是否跳跃还款
         Specification<BorrowRepayment> borrowRepaymentSpe = Specifications
                 .<BorrowRepayment>and()
-                .eq("id", borrowRepayment.getId())
+                .eq("borrowId", borrowRepayment.getBorrowId())
                 .eq("status", 0)
                 .predicate(new LtSpecification<BorrowRepayment>("order", new DataObject(borrowRepayment.getOrder())))
                 .build();
@@ -2084,8 +2086,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
         BatchAssetChange batchAssetChange = addBatchAssetChangeByAdvance(repaymentId, batchNo);
         // 生成名义借款人垫付批次资产变更记录
         addBatchAssetChangeByAdvance(batchAssetChange.getId(), titularBorrowUserId, borrowRepayment, parentBorrow, lateInterest, seqNo, groupSeqNo);
-        // 生成债权转让记录
-        addTransferTenderByAdvance(parentBorrow, borrowRepayment, titularBorrowUserId);
         // 存管系统登记垫付
         newAdvanceProcess(parentBorrow, borrowRepayment, batchAssetChange, lateInterest, lateDays, seqNo, groupSeqNo);
         return ResponseEntity.ok(VoBaseResp.ok("垫付成功!"));
@@ -2095,30 +2095,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * 生成债权转让记录
      *
      * @param borrow
-     * @param borrowRepayment
+     * @param tenderList
+     * @param borrowCollectionMaps
+     * @param titularBorrowUserId
      */
-    private void addTransferTenderByAdvance(Borrow borrow, BorrowRepayment borrowRepayment, long titularBorrowUserId) {
-        /* 查询投资列表 */
-        Specification<Tender> specification = Specifications
-                .<Tender>and()
-                .eq("status", 1)
-                .eq("borrowId", borrow.getId())
-                .build();
-        List<Tender> tenderList = tenderService.findList(specification);
-        Preconditions.checkNotNull(tenderList, "投资人投标信息不存在!");
-        /* 投资记录id集合 */
-        List<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toList());
-        /* 查询未转让的回款记录 */
-        Specification<BorrowCollection> bcs = Specifications
-                .<BorrowCollection>and()
-                .in("tenderId", tenderIds.toArray())
-                .eq("status", 0)
-                .eq("order", borrowRepayment.getOrder())
-                .eq("transferFlag", 0)
-                .build();
-        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
-        Preconditions.checkNotNull("投资回款记录不存在!");
-        Map<Long/* tenderId */, BorrowCollection> borrowCollectionMaps = borrowCollectionList.stream().collect(Collectors.toMap(BorrowCollection::getTenderId, Function.identity()));
+    private void addTransferTenderByAdvance(Borrow borrow, List<Transfer> transferList, List<TransferBuyLog> transferBuyLogList, List<Tender> tenderList, Map<Long/* tenderId */, BorrowCollection> borrowCollectionMaps, long titularBorrowUserId) {
         //创建债权转让信息，生成债权转让购买记录
         tenderList.stream().forEach(tender -> {
             BorrowCollection borrowCollection = borrowCollectionMaps.get(tender.getId());
@@ -2161,9 +2142,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
             transfer.setBorrowCollectionIds(String.valueOf(borrowCollection.getId()));
             transfer.setTitle(borrow.getName() + "转");
             transfer.setRepayAt(collectionAt);
-            transferService.save(transfer);
+            transferList.add(transfer);
             //生成债权购买记录
-            TransferBuyLog transferBuyLog = new TransferBuyLog(); 
+            TransferBuyLog transferBuyLog = new TransferBuyLog();
             transferBuyLog.setUserId(titularBorrowUserId);
             transferBuyLog.setType(0);
             transferBuyLog.setState(0);
@@ -2178,11 +2159,14 @@ public class RepaymentBizImpl implements RepaymentBiz {
             transferBuyLog.setTransferId(transfer.getId());
             transferBuyLog.setAlreadyInterest(NumberHelper.toLong(alreadyInterest));
             transferBuyLog.setSource(0);
-            transferBuyLogService.save(transferBuyLog);
+            transferBuyLogList.add(transferBuyLog);
+
             //改变tender状态
             tender.setTransferFlag(1);
             tender.setUpdatedAt(nowDate);
         });
+        transferService.save(transferList);
+        transferBuyLogService.save(transferBuyLogList);
     }
 
     /**
@@ -2205,14 +2189,40 @@ public class RepaymentBizImpl implements RepaymentBiz {
                                                          String seqNo,
                                                          String groupSeqNo) throws Exception {
         log.info("垫付流程: 进入新的垫付流程");
+        /* 查询投资列表 */
+        Specification<Tender> specification = Specifications
+                .<Tender>and()
+                .eq("status", 1)
+                .eq("borrowId", borrow.getId())
+                .build();
+        List<Tender> tenderList = tenderService.findList(specification);
+        Preconditions.checkNotNull(tenderList, "投资人投标信息不存在!");
+        /* 投资记录id集合 */
+        List<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toList());
+        /* 查询未转让的回款记录 */
+        Specification<BorrowCollection> bcs = Specifications
+                .<BorrowCollection>and()
+                .in("tenderId", tenderIds.toArray())
+                .eq("status", 0)
+                .eq("order", borrowRepayment.getOrder())
+                .eq("transferFlag", 0)
+                .build();
+        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
+        Preconditions.checkNotNull("投资回款记录不存在!");
+        Map<Long/* tenderId */, BorrowCollection> borrowCollectionMaps = borrowCollectionList.stream().collect(Collectors.toMap(BorrowCollection::getTenderId, Function.identity()));
         Date nowDate = new Date();
         /* 名义借款人id */
         UserThirdAccount titularBorrowAccount = jixinHelper.getTitularBorrowAccount(borrow.getId());
-
         //垫付资产改变集合
         List<AdvanceAssetChange> advanceAssetChangeList = new ArrayList<>();
+        // 生成债权转让记录
+        List<Transfer> transferList = new ArrayList<>();
+        List<TransferBuyLog> transferBuyLogList = new ArrayList<>();
+        addTransferTenderByAdvance(borrow, transferList, transferBuyLogList, tenderList, borrowCollectionMaps, titularBorrowAccount.getUserId());
+        Map<Long, Transfer> transferMaps = transferList.stream().collect(Collectors.toMap(Transfer::getTenderId, Function.identity()));
+        Map<Long, TransferBuyLog> transferBuyLogMaps = transferBuyLogList.stream().collect(Collectors.toMap(TransferBuyLog::getTransferId, Function.identity()));
         //获取名义借款人垫付记录
-        List<CreditInvest> creditInvestList = borrowRepaymentThirdBiz.calculateAdvancePlan(borrow, borrowRepayment.getOrder(), titularBorrowAccount, advanceAssetChangeList, lateDays, lateInterest);
+        List<CreditInvest> creditInvestList = calculateAdvancePlan(borrow, titularBorrowAccount, transferMaps, transferBuyLogMaps, tenderList, borrowCollectionMaps, advanceAssetChangeList, lateDays, lateInterest);
         Preconditions.checkNotNull(creditInvestList, "存管垫付记录不存在!");
         // 生成还款记录
         doGenerateAssetChangeRecodeByAdvance(borrow, borrowRepayment, advanceAssetChangeList, batchAssetChange, titularBorrowAccount, seqNo, groupSeqNo);
@@ -2276,6 +2286,86 @@ public class RepaymentBizImpl implements RepaymentBiz {
         thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
         thirdBatchLogService.save(thirdBatchLog);
         return ResponseEntity.ok(VoBaseResp.ok("批次名义借款人垫付成功!"));
+    }
+
+    /**
+     * 生成名义借款人垫付记录
+     *
+     * @param borrow
+     * @param titularBorrowAccount
+     * @param tenderList
+     * @param borrowCollectionMaps
+     * @param advanceAssetChanges
+     * @param lateDays
+     * @param lateInterest
+     * @return
+     * @throws Exception
+     */
+    public List<CreditInvest> calculateAdvancePlan(Borrow borrow, UserThirdAccount titularBorrowAccount, Map<Long, Transfer> transferMaps, Map<Long, TransferBuyLog> transferBuyLogMaps, List<Tender> tenderList, Map<Long/* tenderId */, BorrowCollection> borrowCollectionMaps, List<AdvanceAssetChange> advanceAssetChanges, int lateDays, long lateInterest) throws Exception {
+
+        /* 垫付记录集合 */
+        List<CreditInvest> creditInvestList = new ArrayList<>();
+
+        long txAmount = 0;/* 垫付金额 = 垫付本金 + 垫付利息 */
+        long intAmount = 0;/* 交易利息 */
+        long principal = 0;/* 还款本金 */
+        for (Tender tender : tenderList) {
+            Transfer transfer = transferMaps.get(tender.getId());
+            TransferBuyLog transferBuyLog = transferBuyLogMaps.get(transfer.getId());
+
+            //垫付资金变动
+            AdvanceAssetChange advanceAssetChange = new AdvanceAssetChange();
+            advanceAssetChanges.add(advanceAssetChange);
+            //投标人银行存管账户
+            UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
+            Preconditions.checkNotNull(tenderUserThirdAccount, "投资人存管账户未开户!");
+            //当前投资的回款记录
+            BorrowCollection borrowCollection = borrowCollectionMaps.get(tender.getId());
+
+            //判断这笔回款是否已经在即信登记过批次垫付
+            if (BooleanHelper.isTrue(transferBuyLog.getThirdTransferFlag())) {
+                continue;
+            }
+            if (tender.getTransferFlag() == 1) {
+                transferBiz.cancelTransferByTenderId(tender.getId()); // 标的转让中时, 需要取消出让信息
+            }
+            if (tender.getTransferFlag() == 2) {  // 已经转让的债权, 可以跳过还款
+                continue;
+            }
+
+            intAmount = borrowCollection.getInterest();//还款利息
+            principal = borrowCollection.getPrincipal(); //还款本金
+            advanceAssetChange.setUserId(borrowCollection.getUserId());
+            advanceAssetChange.setInterest(intAmount);
+            advanceAssetChange.setPrincipal(principal);
+
+            if ((lateDays > 0) && (lateInterest > 0)) {  //借款人逾期罚息
+                int overdueFee = new Double(tender.getValidMoney() / new Double(borrow.getMoney()) * lateInterest / 2D).intValue();// 出借人收取50% 逾期管理费 ;
+                advanceAssetChange.setOverdueFee(overdueFee);
+                intAmount += overdueFee;
+            }
+            /* 垫付金额 */
+            txAmount = principal + intAmount; //= 垫付本金 + 垫付利息
+            String orderId = JixinHelper.getOrderId(JixinHelper.REPAY_BAIL_PREFIX);
+            /* 存管垫付记录 */
+            CreditInvest creditInvest = new CreditInvest();
+            creditInvest.setAccountId(titularBorrowAccount.getAccountId());
+            creditInvest.setOrderId(orderId);
+            creditInvest.setTxAmount(StringHelper.formatDouble(txAmount, 100, false));
+            creditInvest.setTxFee("0");
+            creditInvest.setTsfAmount(StringHelper.formatDouble(principal, 100, false));
+            creditInvest.setForAccountId(tenderUserThirdAccount.getAccountId());
+            creditInvest.setOrgOrderId(tender.getThirdTenderOrderId());
+            creditInvest.setOrgTxAmount(StringHelper.formatDouble(tender.getValidMoney(), 100, false));
+            creditInvest.setProductId(borrow.getProductId());
+            creditInvest.setContOrderId(tenderUserThirdAccount.getAutoTransferBondOrderId());
+            creditInvestList.add(creditInvest);
+            //更新回款记录
+            transferBuyLog.setThirdTransferOrderId(orderId);
+            transferBuyLog.setUpdatedAt(new Date());
+            transferBuyLogService.save(transferBuyLog);
+        }
+        return creditInvestList;
     }
 
     /**
@@ -2450,6 +2540,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .build();
         List<Tender> tenderList = tenderService.findList(ts);/* 还款对应的投标记录  包括债权转让在里面 */
         Preconditions.checkNotNull(tenderList, "立即还款: 投标记录为空!");
+        Map<Long, Tender> tenderMaps = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
         /* 投标记录id */
         Set<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toSet());
         /* 查询未转让的投标记录回款记录 */
@@ -2473,14 +2564,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
         long titularBorrowUserId = assetChangeProvider.getTitularBorrowUserId();  // 平台担保人ID
         //3.新增垫付记录与更改还款状态
         addAdvanceLogAndChangeBorrowRepayment(titularBorrowUserId, borrowRepayment, lateDays, lateInterest);
-        /**
-         * @// TODO: 2017/8/17 待做 
-         */
         //3.5完成垫付债权转让操作
-        updateTransferTenderByAdvance(borrowRepayment, tenderList, tenderIds, borrowCollectionMaps);
+        transferTenderByAdvance(parentBorrow, tenderMaps, tenderIds);
         //4.结束垫付投资人债权
         endAdvanceCredit(parentBorrow);
-
         //5.发送投资人收到还款站内信
         sendCollectionNotices(borrowCollectionList, advance, parentBorrow);
         //6.发放积分
@@ -2498,12 +2585,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
     /**
      * 5完成垫付债权转让操作
      *
-     * @param borrowRepayment
-     * @param tenderList
+     * @param tenderMaps
      * @param tenderIds
-     * @param borrowCollectionMaps
      */
-    public void updateTransferTenderByAdvance(BorrowRepayment borrowRepayment, List<Tender> tenderList, Set<Long> tenderIds, Map<Long/* tenderId */, BorrowCollection> borrowCollectionMaps) {
+    public void transferTenderByAdvance(Borrow parentBorrow, Map<Long, Tender> tenderMaps, Set<Long> tenderIds) {
         /* 查询债权转让记录 */
         Specification<Transfer> ts = Specifications
                 .<Transfer>and()
@@ -2521,6 +2606,19 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .build();
         /* 债权转让购买记录 */
         List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
+        Preconditions.checkState(!CollectionUtils.isEmpty(transferBuyLogList), "购买债权转让记录不存在!");
+        // 新增子级投标记录,更新老债权记录
+        Date nowDate = new Date();
+        transferList.stream().forEach(transfer -> {
+            Tender parentTender = tenderMaps.get(transfer.getTenderId());
+            List<Tender> childTenderList = transferBiz.addChildTender(nowDate, transfer, parentTender, transferBuyLogList);
+            // 生成子级债权回款记录，标注老债权回款已经转出
+            try {
+                transferBiz.addChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList);
+            } catch (Exception e) {
+                log.error("repaymentBizImpl updateTransferTenderByAdvance error", e);
+            }
+        });
 
     }
 
