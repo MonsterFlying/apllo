@@ -314,25 +314,22 @@ public class InvestServiceImpl implements InvestService {
             item.setRepayFashion(BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL_STR);
         }
 
-        long receivableInterest = 0;
-        long principal = 0;
-        long interest = 0;
 
         if (tender.getState() == TenderConstans.BACK_MONEY || tender.getState() == TenderConstans.SETTLE) {
             List<BorrowCollection> borrowCollectionList = borrowCollectionRepository.findByTenderId(tender.getId());
             //利息
-            interest = borrowCollectionList.stream()
+            Long interest = borrowCollectionList.stream()
                     .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
                     .mapToLong(s -> s.getInterest())
                     .sum();
             //本金
-            principal = borrowCollectionList.stream()
+            Long principal = borrowCollectionList.stream()
                     .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
                     .mapToLong(s -> s.getPrincipal())
                     .sum();
             //应收利息
-            receivableInterest = borrowCollectionList.stream()
-                    .mapToLong(s -> s.getInterest())
+           Long receivableInterest = borrowCollectionList.stream()
+                    .mapToLong(s -> s.getCollectionMoney())
                     .sum();
 
             item.setInterest(StringHelper.formatMon(interest / 100D));

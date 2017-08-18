@@ -269,7 +269,7 @@ public class BorrowBizImpl implements BorrowBiz {
             Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
             Integer earnings = NumberHelper.toInt(calculatorMap.get("earnings"));
             borrowInfoRes.setEarnings(StringHelper.formatMon(earnings / 100d) + MoneyConstans.RMB);
-            borrowInfoRes.setTenderCount(borrow.getTenderCount() + BorrowContants.TIME);
+            borrowInfoRes.setTenderCount(borrow.getTenderCount()+BorrowContants.TIME);
             borrowInfoRes.setMoney(StringHelper.formatMon(borrow.getMoney() / 100d));
             borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
             borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatDouble(borrow.getMoneyYes() / borrow.getMoney().doubleValue(), false)));
