@@ -401,7 +401,7 @@ public class TransferBizImpl implements TransferBiz {
      * @param parentBorrow
      * @param childTenderList
      */
-    private List<BorrowCollection> addChildTenderCollection(Date nowDate, Transfer transfer, Borrow parentBorrow, List<Tender> childTenderList) throws Exception {
+    public List<BorrowCollection> addChildTenderCollection(Date nowDate, Transfer transfer, Borrow parentBorrow, List<Tender> childTenderList) throws Exception {
         List<BorrowCollection> childTenderCollectionList = new ArrayList<>();/* 债权子记录回款记录 */
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
         String seqNo = assetChangeProvider.getSeqNo();
@@ -506,7 +506,7 @@ public class TransferBizImpl implements TransferBiz {
      * @param transferBuyLogList
      * @return
      */
-    private List<Tender> addChildTender(Date nowDate, Transfer transfer, Tender parentTender, List<TransferBuyLog> transferBuyLogList) {
+    public List<Tender> addChildTender(Date nowDate, Transfer transfer, Tender parentTender, List<TransferBuyLog> transferBuyLogList) {
         //生成债权记录与回款记录
         List<Tender> childTenderList = new ArrayList<>();
         transferBuyLogList.stream().forEach(transferBuyLog -> {

@@ -1,14 +1,20 @@
 package com.gofobao.framework.tender.biz;
 
+import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
+import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.entity.Transfer;
+import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.vo.request.*;
 import com.gofobao.framework.tender.vo.response.*;
 import com.gofobao.framework.tender.vo.response.web.VoViewTransferBuyWarpRes;
 import org.springframework.http.ResponseEntity;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -117,6 +123,27 @@ public interface TransferBiz {
      * @return
      */
     ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(VoTransferUserListReq transferUserListReq);
+
+    /**
+     * 新增子级标的
+     *
+     * @param nowDate
+     * @param transfer
+     * @param parentTender
+     * @param transferBuyLogList
+     * @return
+     */
+    List<Tender> addChildTender(Date nowDate, Transfer transfer, Tender parentTender, List<TransferBuyLog> transferBuyLogList);
+
+    /**
+     * 生成子级债权回款记录，标注老债权回款已经转出
+     *
+     * @param nowDate
+     * @param transfer
+     * @param parentBorrow
+     * @param childTenderList
+     */
+    List<BorrowCollection> addChildTenderCollection(Date nowDate, Transfer transfer, Borrow parentBorrow, List<Tender> childTenderList) throws Exception;
 
 
 }

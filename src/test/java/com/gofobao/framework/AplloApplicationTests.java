@@ -42,10 +42,8 @@ import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
-import com.gofobao.framework.helper.BooleanHelper;
-import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.JixinHelper;
-import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.listener.providers.CreditProvider;
 import com.gofobao.framework.marketing.biz.MarketingProcessBiz;
@@ -55,6 +53,7 @@ import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.migrate.MigrateBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
@@ -84,7 +83,6 @@ import java.util.stream.Collectors;
 @Slf4j
 
 public class AplloApplicationTests {
-
     final Gson GSON = new GsonBuilder().create();
 
     @Autowired
@@ -109,6 +107,9 @@ public class AplloApplicationTests {
     JixinTxDateHelper jixinTxDateHelper;
 
     @Autowired
+    MigrateBiz migrateBiz ;
+
+    @Autowired
     AssetService assetService;
     @Autowired
     UserThirdAccountService userThirdAccountService;
@@ -121,6 +122,11 @@ public class AplloApplicationTests {
 
     @Autowired
     MarketingProcessBiz marketingProcessBiz ;
+
+    @Test
+    public void testMigrateBiz(){
+        migrateBiz.getMemberMigrateFile();
+    }
 
     /**
      * 发送注册红包
@@ -285,7 +291,11 @@ public class AplloApplicationTests {
     }
 
     public static void main(String[] args) {
-        System.out.println(BooleanHelper.isFalse(null));
+        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
+                NumberHelper.toDouble(StringHelper.toString(999.9)),
+                NumberHelper.toDouble(StringHelper.toString(2100)), 3, new Date());
+        Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(0);
+        System.out.println(rsMap);
 
         /*System.out.println("select t.id AS id,t. STATUS AS status,t.user_id AS userId,t.lowest AS lowest,t.borrow_types AS borrowTypes," +
                 "t.repay_fashions AS repayFashions,t.tender_0 AS tender0,t.tender_1 AS tender1,t.tender_3 AS tender3,t.tender_4 AS tender4,t.`mode` AS mode,t.tender_money AS tenderMoney,t.timelimit_first AS timelimitFirst,t.timelimit_last AS timelimitLast,t.timelimit_type AS timelimitType,t.apr_first AS aprFirst,t.apr_last AS aprLast,t.save_money AS saveMoney,t.`order` AS `order`,t.auto_at AS autoAt,t.created_at AS createdAt," +
@@ -381,8 +391,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("200019");
-        batchDetailsQueryReq.setBatchTxDate("20170816");
+        batchDetailsQueryReq.setBatchNo("170107");
+        batchDetailsQueryReq.setBatchTxDate("20170817");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -473,8 +483,8 @@ public class AplloApplicationTests {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(169997),
-                        MqConfig.BATCH_NO, StringHelper.toString(200019),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(170001),
+                        MqConfig.BATCH_NO, StringHelper.toString(170107),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
                 );
 
@@ -530,7 +540,7 @@ public class AplloApplicationTests {
         //批次处理
         //batchDeal();
         //查询存管账户资金信息
-        balanceQuery();
+        //balanceQuery();
         //查询资金流水
         //accountDetailsQuery();
         //根据手机号查询存管账户

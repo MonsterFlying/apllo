@@ -1,6 +1,7 @@
 package com.gofobao.framework.member.service;
 
 import com.gofobao.framework.member.entity.Users;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -113,4 +114,5 @@ public interface UserService {
 
     Users findUserByUserId(Long userId);
 
+    Page<Users> findAll(Pageable pageable);
 }

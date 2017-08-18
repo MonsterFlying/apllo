@@ -95,38 +95,4 @@ public interface BorrowRepaymentThirdBiz {
      */
     void receivedRepay(List<Repay> repayList, Borrow borrow, String borrowAccountId, int order, double interestPercent, int lateDays, long lateInterest) throws Exception;
 
-    /**
-     * 生成名义借款人垫付记录
-     *
-     * @param borrow
-     * @param order
-     * @param advanceAssetChanges
-     */
-    List<CreditInvest> calculateAdvancePlan(Borrow borrow, int order, UserThirdAccount titularBorrowAccount, List<AdvanceAssetChange> advanceAssetChanges, int lateDays, long lateInterest) throws Exception;
-
-    /**
-     * 新版生成还款计划
-     *
-     * @param borrow
-     * @param repayAccountId
-     * @param order
-     * @param lateDays
-     * @param lateInterest
-     * @param interestPercent
-     * @param repayAssetChanges
-     * @throws Exception
-     */
-    List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest, double interestPercent, List<RepayAssetChange> repayAssetChanges) throws Exception;
-
-    /**
-     * 生成借款人偿还担保人计划
-     *
-     * @param borrow
-     * @param repayAccountId
-     * @param lateDays
-     * @param order
-     * @param lateInterest
-     * @return
-     */
-    List<RepayBail> calculateRepayBailPlan(Borrow borrow, String repayAccountId, int lateDays, Integer order, long lateInterest) throws Exception;
 }
