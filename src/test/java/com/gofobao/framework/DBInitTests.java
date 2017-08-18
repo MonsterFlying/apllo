@@ -21,6 +21,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.CollectionUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RunWith(SpringRunner.class)
@@ -29,92 +30,91 @@ import java.util.List;
 
 public class DBInitTests {
     @Autowired
-    BorrowService borrowService ;
+    BorrowService borrowService;
 
     @Autowired
-    BorrowRepaymentService borrowRepaymentService ;
+    BorrowRepaymentService borrowRepaymentService;
 
     @Autowired
-    TenderService tenderService ;
+    TenderService tenderService;
 
     @Autowired
-    BorrowCollectionService borrowCollectionService ;
+    BorrowCollectionService borrowCollectionService;
 
     @Test
     public void contextLoads() {
-        int pageSize = 30;
-        int pageIndex = 1 ;
+        int pageSize = 2000, pageIndex = 1, realSize = 0;
         // 查询标的记录
-
-        do{
-            Specification<Borrow> borrowSpecification =  Specifications.<Borrow>and()
+        do {
+            Specification<Borrow> borrowSpecification = Specifications.<Borrow>and()
                     .build();
-            Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "id"))) ;
+            Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "id")));
             List<Borrow> borrowList = borrowService.findList(borrowSpecification, pageable);
-            if(CollectionUtils.isEmpty(borrowList)){
+            if (CollectionUtils.isEmpty(borrowList)) {
                 break;
             }
 
+            realSize = borrowList.size();
+            pageIndex++;
+
             // 查询标的记录信息
-            for(Borrow borrow : borrowList){
-                String borrowName = borrow.getName() ;  // 标的信息
-                int repayTotal = borrow.getRepayFashion().equals(1) ? 1 : borrow.getTimeLimit() ;  // 还款期数
-                long borrowId = borrow.getId() ;
-                int borrowState  = 0;
-                if(borrow.getSuccessAt() == null ){
-                    borrowState = 0 ;
-                }else if(borrow.getCloseAt() != null) {
-                    borrowState = 2 ;
-                }else{
-                    borrowState = 1 ;
+            List<Tender> allTender = new ArrayList<>() ;
+            List<BorrowRepayment> allBorrowRepaymentList = new ArrayList<>() ;
+            List<BorrowCollection> allBorrowCollectionList = new ArrayList<>() ;
+            for (Borrow borrow : borrowList) {
+                long borrowId = borrow.getId();
+                int borrowState = 0;
+                if (borrow.getSuccessAt() == null) {
+                    borrowState = 0;
+                } else if (borrow.getCloseAt() != null) {
+                    borrowState = 2;
+                } else {
+                    borrowState = 1;
                 }
 
-
-                Long repaymentUserId = borrow.getUserId() ;
-
+                Long repaymentUserId = borrow.getUserId();
                 // 查询还款记录
-                Specification<BorrowRepayment> borrowRepaymentSpecification =  Specifications.<BorrowRepayment>and()
-                        .eq("borrowId",  borrowId)
+                Specification<BorrowRepayment> borrowRepaymentSpecification = Specifications.<BorrowRepayment>and()
+                        .eq("borrowId", borrowId)
                         .build();
                 List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(borrowRepaymentSpecification);
-                if(!CollectionUtils.isEmpty(borrowRepaymentList)){
-                    for(BorrowRepayment borrowRepayment : borrowRepaymentList){
+                if (!CollectionUtils.isEmpty(borrowRepaymentList)) {
+                    for (BorrowRepayment borrowRepayment : borrowRepaymentList) {
                         borrowRepayment.setUserId(repaymentUserId);
-                        borrowRepaymentService.save(borrowRepayment) ;
                     }
+                    allBorrowRepaymentList.addAll(borrowRepaymentList) ;
                 }
-
-
 
                 // 查询投标信息
-                Specification<Tender> tenderSpecification =  Specifications.<Tender>and()
-                        .eq("borrowId",  borrowId)
+                Specification<Tender> tenderSpecification = Specifications.<Tender>and()
+                        .eq("borrowId", borrowId)
                         .build();
                 List<Tender> tenderList = tenderService.findList(tenderSpecification);
-                if(!CollectionUtils.isEmpty(tenderList)){
-                    for (Tender tender: tenderList){
-                        long tenderUserId = tender.getUserId() ;
-                        long tenderId = tender.getId() ;
+                if (!CollectionUtils.isEmpty(tenderList)) {
+                    for (Tender tender : tenderList) {
+                        long tenderUserId = tender.getUserId();
+                        long tenderId = tender.getId();
                         tender.setStatus(borrowState);
-                        tenderService.save(tender) ;
                         // 查询回款记录
-
-                        // 查询投标信息
-                        Specification<BorrowCollection> borrowCollectionSpecification =  Specifications.<BorrowCollection>and()
-                                .eq("tenderId",  tenderId)
+                        Specification<BorrowCollection> borrowCollectionSpecification = Specifications.<BorrowCollection>and()
+                                .eq("tenderId", tenderId)
                                 .build();
                         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(borrowCollectionSpecification);
-                        if(!CollectionUtils.isEmpty(borrowCollectionList)){
-                            for(BorrowCollection borrowCollection: borrowCollectionList){
-                                borrowCollection.setUserId(tenderUserId) ;
-                                borrowCollection.setBorrowId(borrowId) ;
-                                borrowCollectionService.save(borrowCollection) ;
+                        if (!CollectionUtils.isEmpty(borrowCollectionList)) {
+                            for (BorrowCollection borrowCollection : borrowCollectionList) {
+                                borrowCollection.setUserId(tenderUserId);
+                                borrowCollection.setBorrowId(borrowId);
                             }
+                            allBorrowCollectionList.addAll(borrowCollectionList) ;
                         }
                     }
+                    allTender.addAll(tenderList) ;
                 }
             }
-            pageIndex++ ;
-        }while (true) ;
+
+            tenderService.save(allTender) ;
+            borrowRepaymentService.save(allBorrowRepaymentList) ;
+            borrowCollectionService.save(allBorrowCollectionList) ;
+        } while (realSize == pageSize);
     }
 }

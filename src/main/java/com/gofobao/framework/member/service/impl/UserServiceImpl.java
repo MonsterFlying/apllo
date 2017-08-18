@@ -7,6 +7,7 @@ import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -62,8 +63,8 @@ public class UserServiceImpl implements UserService {
     public boolean notExistsByPhone(String phone) {
         List<Users> usersList = userRepository.findByPhone(phone);
         return CollectionUtils.isEmpty(usersList);
-    }
 
+    }
 
     /**
      * 带锁查询会员
@@ -146,13 +147,19 @@ public class UserServiceImpl implements UserService {
     @Override
     public Users findUserByUserId(Long userId) {
         Users users = userRepository.findById(userId);
-        Preconditions.checkNotNull(users, "UserServiceImpl.findUserByUserId: data is null") ;
+        Preconditions.checkNotNull(users, "UserServiceImpl.findUserByUserId: data is null");
 
         return users;
     }
 
+    @Override
+    public Page<Users> findAll(Pageable pageable) {
+        return userRepository.findAll(pageable);
+    }
+
     /**
      * 验证身份证是否存在
+     *
      * @param idCard
      * @return
      */

@@ -53,6 +53,7 @@ import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.migrate.MigrateBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
@@ -82,7 +83,6 @@ import java.util.stream.Collectors;
 @Slf4j
 
 public class AplloApplicationTests {
-
     final Gson GSON = new GsonBuilder().create();
 
     @Autowired
@@ -107,6 +107,9 @@ public class AplloApplicationTests {
     JixinTxDateHelper jixinTxDateHelper;
 
     @Autowired
+    MigrateBiz migrateBiz ;
+
+    @Autowired
     AssetService assetService;
     @Autowired
     UserThirdAccountService userThirdAccountService;
@@ -119,6 +122,11 @@ public class AplloApplicationTests {
 
     @Autowired
     MarketingProcessBiz marketingProcessBiz ;
+
+    @Test
+    public void testMigrateBiz(){
+        migrateBiz.getMemberMigrateFile();
+    }
 
     /**
      * 发送注册红包
