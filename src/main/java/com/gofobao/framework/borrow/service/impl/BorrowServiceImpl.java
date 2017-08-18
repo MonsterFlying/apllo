@@ -16,8 +16,11 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UserAttachmentRepository;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.tender.contants.TenderConstans;
+import com.gofobao.framework.tender.contants.TransferContants;
 import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.repository.TenderRepository;
+import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -201,6 +204,7 @@ public class BorrowServiceImpl implements BorrowService {
             Integer status = m.getStatus();
             Date nowDate = new Date(System.currentTimeMillis());
             Date releaseAt = m.getReleaseAt();  //发布时间
+            double spend = MathHelper.myRound(m.getMoneyYes().doubleValue() / m.getMoney() * 100, 2);
 
             if (status == BorrowContants.BIDDING) {//招标中
                 Integer validDay = m.getValidDay();
@@ -219,20 +223,17 @@ public class BorrowServiceImpl implements BorrowService {
                 } else {
                     status = 3; //招标中
                     //  进度
-                    double spend = MathHelper.myRound(m.getMoneyYes().doubleValue() / m.getMoney() * 100, 2);
-                    if (spend == 1) {
+                    if (spend == 100) {
                         status = 6;
                     }
-                    item.setSpend(spend);
+
                 }
             } else if (!ObjectUtils.isEmpty(m.getSuccessAt()) && !ObjectUtils.isEmpty(m.getCloseAt())) {   //满标时间 结清
                 status = 4; //已完成
-                item.setSpend(new Double(1));
             } else if (status == BorrowContants.PASS && ObjectUtils.isEmpty(m.getCloseAt())) {
                 status = 2; //还款中
-                item.setSpend(new Double(1));
             }
-
+            item.setSpend(spend);
             Long userId = m.getUserId();
             Users user = usersMap.get(userId);
             item.setUserName(!StringUtils.isEmpty(user.getUsername()) ? user.getUsername() : user.getPhone());
@@ -486,6 +487,9 @@ public class BorrowServiceImpl implements BorrowService {
         return templateMap;
     }
 
+    @Autowired
+    private TransferService transferService;
+
     /**
      * pc:招标统计
      *
@@ -497,10 +501,11 @@ public class BorrowServiceImpl implements BorrowService {
         List<BorrowStatistics> borrowStatisticss = Lists.newArrayList();
         StringBuilder sql = new StringBuilder("SELECT b  FROM Borrow AS b where 1=1 " +
                 "AND  " +
-                "b.status=3 " +
+                "b.status=:status " +
                 "AND " +
                 "b.successAt is null ");
-        TypedQuery query1 = entityManager.createQuery(sql + " and b.tenderId is null", Borrow.class);
+        TypedQuery query1 = entityManager.createQuery(sql+"", Borrow.class);
+        query1.setParameter("status", BorrowContants.BIDDING);
         BorrowStatistics borrowStatistics = new BorrowStatistics();
         Integer cheDai = 0;
         Integer jingZhi = 0;
@@ -510,9 +515,8 @@ public class BorrowServiceImpl implements BorrowService {
         List<Borrow> borrowList = query1.getResultList();
         Date nowDate = new Date();
         if (!CollectionUtils.isEmpty(borrowList)) {
-            List<Borrow> tempBorrowList = borrowList.stream().filter(p -> nowDate.getTime() < DateHelper.addDays(p.getReleaseAt(), p.getValidDay()).getTime()).collect(Collectors.toList());
-            sum1 = tempBorrowList.size();
-            Map<Integer, List<Borrow>> borrowMaps = tempBorrowList.stream().collect(groupingBy(Borrow::getType));
+            sum1=borrowList.size();
+            Map<Integer, List<Borrow>> borrowMaps = borrowList.stream().collect(groupingBy(Borrow::getType));
             borrowList = borrowMaps.get(BorrowContants.CE_DAI);
             cheDai = CollectionUtils.isEmpty(borrowList) ? 0 : borrowList.size();
             borrowList = borrowMaps.get(BorrowContants.JING_ZHI);
@@ -522,10 +526,11 @@ public class BorrowServiceImpl implements BorrowService {
             borrowList = borrowMaps.get(BorrowContants.MIAO_BIAO);
             miaoBiao = CollectionUtils.isEmpty(borrowList) ? 0 : borrowList.size();
         }
-        TypedQuery query2 = entityManager.createQuery(sql + " and b.tenderId IS NOT NULL", Borrow.class);
-        List<Borrow> liuZhuanBorrow = query2.getResultList();
-        List<Borrow> borrowList1 = liuZhuanBorrow.stream().filter(p -> nowDate.getTime() < DateHelper.addDays(p.getReleaseAt(), p.getValidDay()).getTime()).collect(Collectors.toList());
-        Integer liuZhuanCount = borrowList1.size();
+
+        Specification<Transfer> specification = Specifications.<Transfer>and()
+                .eq("state", TransferContants.TRANSFERIND)
+                .build();
+        Integer liuZhuanCount = transferService.findList(specification).size();
         borrowStatistics.setJingZhi(jingZhi);
         borrowStatistics.setCheDai(cheDai);
         borrowStatistics.setMiaoBiao(miaoBiao);

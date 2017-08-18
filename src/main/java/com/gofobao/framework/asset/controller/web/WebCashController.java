@@ -26,7 +26,6 @@ import javax.validation.Valid;
 @Api(description = "pc:提现")
 @RestController
 @Slf4j
-@RequestMapping("")
 public class WebCashController {
 
     @Autowired
