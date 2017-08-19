@@ -10,6 +10,7 @@ import com.gofobao.framework.common.qiniu.storage.model.DefaultPutRet;
 import com.gofobao.framework.common.qiniu.storage.persistent.FileRecorder;
 import com.gofobao.framework.common.qiniu.util.Auth;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.member.biz.UserBiz;
 import com.gofobao.framework.member.biz.UserEmailBiz;
 import com.gofobao.framework.member.biz.UserPhoneBiz;
@@ -21,9 +22,12 @@ import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.member.vo.response.VoOpenAccountInfo;
 import com.gofobao.framework.member.vo.response.VoSignInfoResp;
 import com.gofobao.framework.security.contants.SecurityContants;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.qiniu.storage.Recorder;
 import io.swagger.annotations.ApiOperation;
+import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +39,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.util.Date;
+import java.util.Map;
 
 /**
  * Created by Max on 17/5/16.
@@ -132,32 +138,54 @@ public class UserController {
                              HttpServletRequest request,
                              HttpServletResponse response,
                              @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
+/*
+        Map<String, Object> errorMap = Maps.newHashMap();
 
 
-        Configuration cfg = new Configuration(Zone.autoZone());
-
-        UploadManager uploadManager = new UploadManager(cfg);
-
-        //默认不指定key的情况下，以文件内容的hash值作为文件名
-        String key = null;
         Auth auth = Auth.create(accessKey, secretKey);
-        String upToken = auth.uploadToken(bucket);
-        Response qresponse;
-        try {
-            qresponse = uploadManager.put(file.getInputStream(), key, upToken, null, null);
-            //解析上传成功的结果
-            DefaultPutRet putRet = new Gson().fromJson(qresponse.bodyString(), DefaultPutRet.class);
-            System.out.println(putRet.key);
-            System.out.println(putRet.hash);
-            String url = qiNiuDomain + putRet.key;
 
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        //第二种方式: 自动识别要上传的空间(bucket)的存储区域是华东、华北、华南。
+        Zone z = Zone.autoZone();
+        Configuration c = new Configuration(z);
+
+        //创建上传对象
+        UploadManager uploadManager = new UploadManager(c);
+
+        String authStr=auth.uploadToken(bucketname, key, 3600);
+
+        // 覆盖上传
+        public String getUpToken() {
+            //<bucket>:<key>，表示只允许用户上传指定key的文件。在这种格式下文件默认允许“修改”，已存在同名资源则会被本次覆盖。
+            //如果希望只能上传指定key的文件，并且不允许修改，那么可以将下面的 insertOnly 属性值设为 1。
+            //第三个参数是token的过期时间
+            return auth.uploadToken(bucketname, key, 3600, new StringMap().put("insertOnly", 1));
         }
 
-
+        public void upload() throws IOException {
+            try {
+                //调用put方法上传，这里指定的key和上传策略中的key要一致
+                Response res = uploadManager.put(filePath, key, getUpToken());
+                //打印返回的信息
+                System.out.println(res.bodyString());
+            } catch (QiniuException e) {
+                Response r = e.response;
+                // 请求失败时打印的异常的信息
+                System.out.println(r.toString());
+                try {
+                    //响应的文本信息
+                    System.out.println(r.bodyString());
+                } catch (QiniuException e1) {
+                    //ignore
+                }
+            }
+        }
     }
-
+    // 覆盖上传
+    public String getUpToken(Auth auth) {
+        //<bucket>:<key>，表示只允许用户上传指定key的文件。在这种格式下文件默认允许“修改”，已存在同名资源则会被本次覆盖。
+        //如果希望只能上传指定key的文件，并且不允许修改，那么可以将下面的 insertOnly 属性值设为 1。
+        //第三个参数是token的过期时间
+        return ;*/
+    }
 
 }
