@@ -138,36 +138,54 @@ public class UserController {
                              HttpServletRequest request,
                              HttpServletResponse response,
                              @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
-
+/*
         Map<String, Object> errorMap = Maps.newHashMap();
-        Configuration cfg = new Configuration(Zone.autoZone());
 
-        UploadManager uploadManager = new UploadManager(cfg);
 
-        //默认不指定key的情况下，以文件内容的hash值作为文件名
-        String key = null;
         Auth auth = Auth.create(accessKey, secretKey);
-        String upToken = auth.uploadToken(bucket);
-        Response qresponse;
-        try {
-            qresponse = uploadManager.put(file.getInputStream(), key, upToken, null, null);
-            //解析上传成功的结果
-            DefaultPutRet putRet = new Gson().fromJson(qresponse.bodyString(), DefaultPutRet.class);
-            String url = qiNiuDomain + putRet.key;
-            response.setStatus(HttpStatus.SC_OK);
-            errorMap.put("url", url);
-            errorMap.put("msg", "上传成功");
 
-        } catch (IOException e) {
-            errorMap.put("msg", "上传失败");
-            response.setStatus(HttpStatus.SC_BAD_REQUEST);
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        //第二种方式: 自动识别要上传的空间(bucket)的存储区域是华东、华北、华南。
+        Zone z = Zone.autoZone();
+        Configuration c = new Configuration(z);
+
+        //创建上传对象
+        UploadManager uploadManager = new UploadManager(c);
+
+        String authStr=auth.uploadToken(bucketname, key, 3600);
+
+        // 覆盖上传
+        public String getUpToken() {
+            //<bucket>:<key>，表示只允许用户上传指定key的文件。在这种格式下文件默认允许“修改”，已存在同名资源则会被本次覆盖。
+            //如果希望只能上传指定key的文件，并且不允许修改，那么可以将下面的 insertOnly 属性值设为 1。
+            //第三个参数是token的过期时间
+            return auth.uploadToken(bucketname, key, 3600, new StringMap().put("insertOnly", 1));
         }
-        errorMap.put("time", DateHelper.dateToString(new Date()));
-        String json = new Gson().toJson(errorMap);
-        response.getWriter().write(json);
-    }
 
+        public void upload() throws IOException {
+            try {
+                //调用put方法上传，这里指定的key和上传策略中的key要一致
+                Response res = uploadManager.put(filePath, key, getUpToken());
+                //打印返回的信息
+                System.out.println(res.bodyString());
+            } catch (QiniuException e) {
+                Response r = e.response;
+                // 请求失败时打印的异常的信息
+                System.out.println(r.toString());
+                try {
+                    //响应的文本信息
+                    System.out.println(r.bodyString());
+                } catch (QiniuException e1) {
+                    //ignore
+                }
+            }
+        }
+    }
+    // 覆盖上传
+    public String getUpToken(Auth auth) {
+        //<bucket>:<key>，表示只允许用户上传指定key的文件。在这种格式下文件默认允许“修改”，已存在同名资源则会被本次覆盖。
+        //如果希望只能上传指定key的文件，并且不允许修改，那么可以将下面的 insertOnly 属性值设为 1。
+        //第三个参数是token的过期时间
+        return ;*/
+    }
 
 }
