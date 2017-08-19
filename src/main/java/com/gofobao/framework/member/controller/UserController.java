@@ -10,6 +10,7 @@ import com.gofobao.framework.common.qiniu.storage.model.DefaultPutRet;
 import com.gofobao.framework.common.qiniu.storage.persistent.FileRecorder;
 import com.gofobao.framework.common.qiniu.util.Auth;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.member.biz.UserBiz;
 import com.gofobao.framework.member.biz.UserEmailBiz;
 import com.gofobao.framework.member.biz.UserPhoneBiz;
@@ -21,9 +22,12 @@ import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.member.vo.response.VoOpenAccountInfo;
 import com.gofobao.framework.member.vo.response.VoSignInfoResp;
 import com.gofobao.framework.security.contants.SecurityContants;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.qiniu.storage.Recorder;
 import io.swagger.annotations.ApiOperation;
+import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +39,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.util.Date;
+import java.util.Map;
 
 /**
  * Created by Max on 17/5/16.
@@ -133,7 +139,7 @@ public class UserController {
                              HttpServletResponse response,
                              @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
 
-
+        Map<String, Object> errorMap = Maps.newHashMap();
         Configuration cfg = new Configuration(Zone.autoZone());
 
         UploadManager uploadManager = new UploadManager(cfg);
@@ -147,16 +153,20 @@ public class UserController {
             qresponse = uploadManager.put(file.getInputStream(), key, upToken, null, null);
             //解析上传成功的结果
             DefaultPutRet putRet = new Gson().fromJson(qresponse.bodyString(), DefaultPutRet.class);
-            System.out.println(putRet.key);
-            System.out.println(putRet.hash);
             String url = qiNiuDomain + putRet.key;
+            response.setStatus(HttpStatus.SC_OK);
+            errorMap.put("url", url);
+            errorMap.put("msg", "上传成功");
 
         } catch (IOException e) {
+            errorMap.put("msg", "上传失败");
+            response.setStatus(HttpStatus.SC_BAD_REQUEST);
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-
-
+        errorMap.put("time", DateHelper.dateToString(new Date()));
+        String json = new Gson().toJson(errorMap);
+        response.getWriter().write(json);
     }
 
 
