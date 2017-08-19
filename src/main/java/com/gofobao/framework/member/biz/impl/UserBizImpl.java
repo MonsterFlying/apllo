@@ -109,16 +109,16 @@ public class UserBizImpl implements UserBiz {
     String javaDomain;
 
     @Value("${qiniu.sk}")
-    private String SECRET_KEY;
+     String SECRET_KEY;
 
     @Value("${qiniu.ak}")
-    private String ACCESS_KEY;
+     String ACCESS_KEY;
 
     @Value("${qiniu.domain}")
-    private String qiNiuDomain;
+     String qiNiuDomain;
 
     @Value("${qiniu.bucket}")
-    private String bucketname;
+     String bucketname;
 
 
     @Autowired
@@ -607,26 +607,20 @@ public class UserBizImpl implements UserBiz {
             return ResponseEntity.ok(VoBaseResp.ok("重置密码成功"));
 
     }
-
-
-    //密钥配置
-    Auth auth = Auth.create(ACCESS_KEY, SECRET_KEY);
-    //创建上传对象
-
-    Zone z = Zone.autoZone();
-    Configuration c = new Configuration(z);
-    UploadManager uploadManager = new UploadManager(c);
-
-    //简单上传，使用默认策略，只需要设置上传的空间名就可以了
-    public String getUpToken() {
-        return auth.uploadToken(bucketname);
-    }
-
+    
     public Map<String,Object> upload(byte[] file, String key) throws IOException {
+        //密钥配置
+        Auth auth = Auth.create(ACCESS_KEY, SECRET_KEY);
+        //创建上传对象
+
+        Zone z = Zone.autoZone();
+        Configuration c = new Configuration(z);
+        UploadManager uploadManager = new UploadManager(c);
+        String token=auth.uploadToken(bucketname);
         Map<String, Object> resultMap = Maps.newHashMap();
         try {
             //调用put方法上传
-            Response res = uploadManager.put(file, key, getUpToken());
+            Response res = uploadManager.put(file, key, token);
             resultMap.put("result",Boolean.TRUE);
             resultMap.put("code", VoBaseResp.ERROR);
             resultMap.put("msg", res.bodyString());
