@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Map;
 
 /**
  * Created by Zeke on 2017/5/19.
@@ -121,6 +122,7 @@ public interface UserBiz {
     ResponseEntity<VoOpenAccountInfo> openAccountInfo(Long userId);
 
 
+     Map<String, Object> uploadAvatar(byte[] fileBty, String filePath) throws Exception;
 
 }
 
