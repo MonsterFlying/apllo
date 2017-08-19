@@ -2618,6 +2618,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             transferBuyLog.setThirdTransferOrderId(orderId);
             transferBuyLog.setUpdatedAt(new Date());
             transferBuyLogService.save(transferBuyLog);
+
         }
         return creditInvestList;
     }

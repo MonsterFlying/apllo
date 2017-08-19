@@ -16,7 +16,6 @@ import com.gofobao.framework.api.model.batch_repay.BatchRepayRunResp;
 import com.gofobao.framework.api.model.batch_repay.Repay;
 import com.gofobao.framework.api.model.batch_repay_bail.BatchRepayBailCheckResp;
 import com.gofobao.framework.api.model.batch_repay_bail.BatchRepayBailRunResp;
-import com.gofobao.framework.api.model.batch_repay_bail.RepayBail;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
@@ -38,7 +37,8 @@ import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
-import com.gofobao.framework.repayment.entity.RepayAssetChange;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
@@ -46,7 +46,12 @@ import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.entity.Transfer;
+import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.service.TenderService;
+import com.gofobao.framework.tender.service.TransferBuyLogService;
+import com.gofobao.framework.tender.service.TransferService;
+import com.gofobao.framework.tender.vo.request.VoEndTransfer;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -63,7 +68,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
@@ -108,9 +112,15 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     private ThirdBatchLogBiz thirdBatchLogBiz;
     @Autowired
     private AssetChangeProvider assetChangeProvider;
-
+    @Autowired
+    private BorrowRepaymentService borrowRepaymentService;
+    @Autowired
+    private TransferService transferService;
+    @Autowired
+    private TransferBuyLogService transferBuyLogService;
     @Autowired
     private TransferBiz transferBiz;
+
 
     @Value("${gofobao.webDomain}")
     private String webDomain;
@@ -439,43 +449,15 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(batchBailRepayCheckResp.getRetCode())) {
             log.error("=============================批次名义借款人垫付参数检查回调===========================");
             log.error("回调失败! msg:" + batchBailRepayCheckResp.getRetMsg());
-            String freezeOrderId = StringHelper.toString(acqResMap.get("freezeOrderId"));//名义借款人垫付冻结订单id
-            String accountId = StringHelper.toString(acqResMap.get("accountId"));//担保人账户id
-            String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);
-            String txAmount = batchBailRepayCheckResp.getTxAmount();
-            UserThirdAccount titularUserThirdAccount = userThirdAccountService.findByAccountId(accountId);//担保人存管信息
-            //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(batchBailRepayCheckResp.getBatchNo(), repaymentId, 1);
-            //解除存管资金冻结
-            BalanceUnfreezeReq balanceUnfreezeReq = new BalanceUnfreezeReq();
-            balanceUnfreezeReq.setAccountId(accountId);
-            balanceUnfreezeReq.setTxAmount(txAmount);
-            balanceUnfreezeReq.setChannel(ChannelContant.HTML);
-            balanceUnfreezeReq.setOrderId(orderId);
-            balanceUnfreezeReq.setOrgOrderId(freezeOrderId);
-            BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
-            if ((ObjectUtils.isEmpty(balanceUnfreezeResp)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
-                log.error("===========================================================================");
-                log.error("即信批次名义借款人垫付接除冻结资金失败：" + balanceUnfreezeResp.getRetMsg());
-                log.error("===========================================================================");
+            BorrowRepayment borrowRepayment = borrowRepaymentService.findById(repaymentId);
+
+            //垫付失败解冻账户资金
+            if (unfreezeAssetByAdvance(batchBailRepayCheckResp, acqResMap, repaymentId)) {
                 return ResponseEntity.ok("error");
             }
-            //解除本地冻结
-            //立即还款冻结
-            long frozenMoney = new Double(NumberHelper.toDouble(txAmount) * 100).longValue();
-            AssetChange assetChange = new AssetChange();
-            assetChange.setType(AssetChangeTypeEnum.unfreeze);  // 招标失败解除冻结资金
-            assetChange.setUserId(titularUserThirdAccount.getUserId());
-            assetChange.setMoney(frozenMoney);
-            assetChange.setRemark("名义借款人垫付解除冻结可用资金");
-            assetChange.setSourceId(repaymentId);
-            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-            assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
-            try {
-                assetChangeProvider.commonAssetChange(assetChange);
-            } catch (Exception e) {
-                log.error("名义借款人垫付解除冻结可用资金异常:", e);
-            }
+            //取消垫付债权转让
+            cancelAdvanceTransfer(borrowRepayment);
+
             thirdBatchLogBiz.updateBatchLogState(batchBailRepayCheckResp.getBatchNo(), repaymentId, 2);
         } else {
             log.info("=============================批次名义借款人垫付参数成功回调===========================");
@@ -483,6 +465,119 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         }
 
         return ResponseEntity.ok("success");
+    }
+
+    /**
+     * 取消垫付债权转让
+     *
+     * @param borrowRepayment
+     */
+    private void cancelAdvanceTransfer(BorrowRepayment borrowRepayment) {
+    /* 查询投资列表 */
+        Specification<Tender> specification = Specifications
+                .<Tender>and()
+                .eq("status", 1)
+                .eq("borrowId", borrowRepayment.getBorrowId())
+                .build();
+        List<Tender> tenderList = tenderService.findList(specification);
+        Preconditions.checkNotNull(tenderList, "投资人投标信息不存在!");
+            /* 投资记录id集合 */
+        List<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toList());
+        Map<Long, Tender> tenderMaps = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
+            /* 查询未转让的回款记录 */
+        Specification<BorrowCollection> bcs = Specifications
+                .<BorrowCollection>and()
+                .in("tenderId", tenderIds.toArray())
+                .eq("status", 0)
+                .eq("order", borrowRepayment.getOrder())
+                .eq("transferFlag", 0)
+                .build();
+        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
+        Preconditions.checkNotNull("投资回款记录不存在!");
+        //查询债权转让记录
+        Specification<Transfer> transferSpecification = Specifications
+                .<Transfer>and()
+                .in("tenderId", tenderIds.toArray())
+                .build();
+        List<Transfer> transferList = transferService.findList(transferSpecification);
+        Preconditions.checkState(!CollectionUtils.isEmpty(transferList), "债权转让记录不存在!");
+        List<Long> transferIds = transferList.stream().map(Transfer::getId).collect(Collectors.toList());
+        Map<Long/* 投标id */, Transfer> transferMaps = transferList.stream().collect(Collectors.toMap(Transfer::getTenderId, Function.identity()));
+            /* 购买债权转让记录 */
+        Specification<TransferBuyLog> tbls = Specifications
+                .<TransferBuyLog>and()
+                .in("transferId", transferIds.toArray())
+                .build();
+        List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
+        Preconditions.checkState(!CollectionUtils.isEmpty(transferBuyLogList), "购买债权转让记录不能为空!");
+        //
+        borrowCollectionList.stream().forEach(borrowCollection -> {
+            //更新tender状态
+            Tender tender = tenderMaps.get(borrowCollection.getTenderId());
+            tender.setTransferFlag(0);
+
+            tender.setUpdatedAt(new Date());
+            //取消债权转让
+            Transfer transfer = transferMaps.get(tender.getId());
+            VoEndTransfer voEndTransfer = new VoEndTransfer();
+            voEndTransfer.setUserId(transfer.getUserId());
+            voEndTransfer.setTransferId(transfer.getId());
+            try {
+                transferBiz.endTransfer(voEndTransfer);
+            } catch (Exception e) {
+                log.error("borrowRepaymentThirdBiz thirdBatchAdvanceCheckCall error:", e);
+            }
+        });
+        tenderService.save(tenderList);
+    }
+
+    /**
+     * 垫付失败解冻账户资金
+     *
+     * @param batchBailRepayCheckResp
+     * @param acqResMap
+     * @param repaymentId
+     * @return
+     */
+    private boolean unfreezeAssetByAdvance(BatchBailRepayCheckResp batchBailRepayCheckResp, Map<String, Object> acqResMap, Long repaymentId) {
+        String freezeOrderId = StringHelper.toString(acqResMap.get("freezeOrderId"));//名义借款人垫付冻结订单id
+        String accountId = StringHelper.toString(acqResMap.get("accountId"));//担保人账户id
+        String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);
+        String txAmount = batchBailRepayCheckResp.getTxAmount();
+        UserThirdAccount titularUserThirdAccount = userThirdAccountService.findByAccountId(accountId);//担保人存管信息
+        //更新批次状态
+        thirdBatchLogBiz.updateBatchLogState(batchBailRepayCheckResp.getBatchNo(), repaymentId, 1);
+        //解除存管资金冻结
+        BalanceUnfreezeReq balanceUnfreezeReq = new BalanceUnfreezeReq();
+        balanceUnfreezeReq.setAccountId(accountId);
+        balanceUnfreezeReq.setTxAmount(txAmount);
+        balanceUnfreezeReq.setChannel(ChannelContant.HTML);
+        balanceUnfreezeReq.setOrderId(orderId);
+        balanceUnfreezeReq.setOrgOrderId(freezeOrderId);
+        BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
+        if ((ObjectUtils.isEmpty(balanceUnfreezeResp)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
+            log.error("===========================================================================");
+            log.error("即信批次名义借款人垫付接除冻结资金失败：" + balanceUnfreezeResp.getRetMsg());
+            log.error("===========================================================================");
+            return true;
+        }
+        //解除本地冻结
+        //立即还款冻结
+        long frozenMoney = new Double(NumberHelper.toDouble(txAmount) * 100).longValue();
+        AssetChange assetChange = new AssetChange();
+        assetChange.setType(AssetChangeTypeEnum.unfreeze);  // 招标失败解除冻结资金
+        assetChange.setUserId(titularUserThirdAccount.getUserId());
+        assetChange.setMoney(frozenMoney);
+        assetChange.setRemark("名义借款人垫付解除冻结可用资金");
+        assetChange.setSourceId(repaymentId);
+        assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+        assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
+        try {
+            assetChangeProvider.commonAssetChange(assetChange);
+        } catch (Exception e) {
+            log.error("名义借款人垫付解除冻结可用资金异常:", e);
+        }
+        return false;
     }
 
     /**
@@ -551,27 +646,27 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      */
     public void saveThirdAdvanceAuthCode(List<CreditInvestRun> creditInvests) {
         List<String> orderList = creditInvests.stream().map(creditInvest -> creditInvest.getOrderId()).collect(Collectors.toList());
-        Specification<BorrowCollection> bcs = Specifications
-                .<BorrowCollection>and()
-                .eq("tTransferOrderId", orderList.toArray())
+        Specification<TransferBuyLog> bcs = Specifications
+                .<TransferBuyLog>and()
+                .eq("thirdTransferOrderId", orderList.toArray())
                 .build();
         int pageIndex = 0;
         int maxPageSize = 50;
         Pageable pageable = null;
-        List<BorrowCollection> borrowCollectionList = null;
+        List<TransferBuyLog> transferBuyLogList = null;
         do {
             pageable = new PageRequest(pageIndex++, maxPageSize, new Sort(Sort.Direction.ASC, "id"));
-            borrowCollectionList = borrowCollectionService.findList(bcs, pageable);
-            if (CollectionUtils.isEmpty(borrowCollectionList)) {
+            transferBuyLogList = transferBuyLogService.findList(bcs, pageable);
+            if (CollectionUtils.isEmpty(transferBuyLogList)) {
                 break;
             }
-            /*Map<String, BorrowCollection> borrowCollectionMap = borrowCollectionList.stream().collect(Collectors.toMap(BorrowCollection::getTTransferOrderId, Function.identity()));
+            Map<String, TransferBuyLog> transferBuyLogMaps = transferBuyLogList.stream().collect(Collectors.toMap(TransferBuyLog::getThirdTransferOrderId, Function.identity()));
             creditInvests.stream().forEach(creditInvest -> {
-                BorrowCollection borrowCollection = borrowCollectionMap.get(creditInvest.getOrderId());
-                borrowCollection.setTransferAuthCode(creditInvest.getAuthCode());
-            });*/
-            borrowCollectionService.save(borrowCollectionList);
-        } while (borrowCollectionList.size() >= maxPageSize);
+                TransferBuyLog transferBuyLog = transferBuyLogMaps.get(creditInvest.getOrderId());
+                transferBuyLog.setTransferAuthCode(creditInvest.getAuthCode());
+            });
+            transferBuyLogService.save(transferBuyLogList);
+        } while (transferBuyLogList.size() >= maxPageSize);
     }
 
     /**
