@@ -3,6 +3,12 @@ package com.gofobao.framework.member.biz.impl;
 import com.gofobao.framework.asset.biz.AssetSynBiz;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.common.qiniu.common.Zone;
+import com.gofobao.framework.common.qiniu.http.Response;
+import com.gofobao.framework.common.qiniu.storage.Configuration;
+import com.gofobao.framework.common.qiniu.storage.UploadManager;
+import com.gofobao.framework.common.qiniu.storage.model.DefaultPutRet;
+import com.gofobao.framework.common.qiniu.util.Auth;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -41,14 +47,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
+import sun.misc.BASE64Decoder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -113,8 +118,7 @@ public class UserBizImpl implements UserBiz {
     private IntegralService integralService;
 
     /**
-     *
-     * @param request 请求
+     * @param request       请求
      * @param voRegisterReq 注册实体
      * @return
      * @throws Exception
@@ -280,6 +284,7 @@ public class UserBizImpl implements UserBiz {
 
     /**
      * 金服用户登录
+     *
      * @param httpServletRequest
      * @param response
      * @param voLoginReq
@@ -289,7 +294,7 @@ public class UserBizImpl implements UserBiz {
     public ResponseEntity<VoBasicUserInfoResp> login(HttpServletRequest httpServletRequest, HttpServletResponse response, VoLoginReq voLoginReq, boolean financeState) {
         // 登录验证
         Users user = userService.findByAccount(voLoginReq.getAccount());
-        if(ObjectUtils.isEmpty(user)){
+        if (ObjectUtils.isEmpty(user)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "账户/密码错误", VoBasicUserInfoResp.class));
@@ -314,14 +319,14 @@ public class UserBizImpl implements UserBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "账户已被系统冻结，如有问题请联系客服！", VoBasicUserInfoResp.class));
         }
-        if(financeState){
-            if(!user.getType().equals("finance")){  // 理财用户
+        if (financeState) {
+            if (!user.getType().equals("finance")) {  // 理财用户
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "系统拒绝了你的访问请求", VoBasicUserInfoResp.class));
             }
-        }else{
-            if(user.getType().equals("finance")){  // 金服用户
+        } else {
+            if (user.getType().equals("finance")) {  // 金服用户
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "系统拒绝了你的访问请求", VoBasicUserInfoResp.class));
@@ -330,7 +335,7 @@ public class UserBizImpl implements UserBiz {
 
         // 保存登录信息
         user.setIp(IpHelper.getIpAddress(httpServletRequest)); // 设置ip
-        user.setSource(voLoginReq.getSource()) ;
+        user.setSource(voLoginReq.getSource());
         user.setLoginTime(new Date());
         if (StringUtils.isEmpty(user.getPushId())) {   // 推送
             user.setPushId(UUID.randomUUID().toString().replace("-", ""));
@@ -344,7 +349,7 @@ public class UserBizImpl implements UserBiz {
         user.setUsername(username);
         final String token = jwtTokenHelper.generateToken(user, voLoginReq.getSource());
         response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
-        try{
+        try {
             // 触发登录队列
             MqConfig mqConfig = new MqConfig();
             mqConfig.setTag(MqTagEnum.LOGIN);
@@ -353,7 +358,7 @@ public class UserBizImpl implements UserBiz {
             ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_USER_ID, user.getId().toString());
             mqConfig.setMsg(body);
             mqHelper.convertAndSend(mqConfig);
-        }catch (Exception e){
+        } catch (Exception e) {
             log.error("触发登录队列异常", e);
         }
 
@@ -589,4 +594,5 @@ public class UserBizImpl implements UserBiz {
             return ResponseEntity.ok(VoBaseResp.ok("重置密码成功"));
 
     }
+
 }
