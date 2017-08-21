@@ -1,5 +1,6 @@
 package com.gofobao.framework.security.helper;
 
+import com.gofobao.framework.helper.IpHelper;
 import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.member.entity.Users;
 import com.google.common.collect.Maps;
@@ -222,6 +223,7 @@ public class JwtTokenHelper implements Serializable {
         resultMap.put("msg","用户未登录");
         result.put("state",resultMap);
         pw.write(new Gson().toJson(result));
+        log.info("记录非法访问ip:"+ IpHelper.getIpAddress(httpServletRequest));
         throw new Exception("非法访问");
     }
 
