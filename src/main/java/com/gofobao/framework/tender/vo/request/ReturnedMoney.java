@@ -14,7 +14,7 @@ public class ReturnedMoney {
     @ApiModelProperty("逾期天数")
     private Integer lateDays;
 
-    @ApiModelProperty("标状态 1:回款中 2:已结清")
+    @ApiModelProperty("标状态 0:回款中 1:已结清")
     private Integer status;
 
     @ApiModelProperty("回款日")

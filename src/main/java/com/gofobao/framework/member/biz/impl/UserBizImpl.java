@@ -3,11 +3,11 @@ package com.gofobao.framework.member.biz.impl;
 import com.gofobao.framework.asset.biz.AssetSynBiz;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.common.qiniu.common.QiniuException;
 import com.gofobao.framework.common.qiniu.common.Zone;
 import com.gofobao.framework.common.qiniu.http.Response;
 import com.gofobao.framework.common.qiniu.storage.Configuration;
 import com.gofobao.framework.common.qiniu.storage.UploadManager;
-import com.gofobao.framework.common.qiniu.storage.model.DefaultPutRet;
 import com.gofobao.framework.common.qiniu.util.Auth;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
@@ -38,6 +38,7 @@ import com.gofobao.framework.member.vo.response.pc.VoViewServiceUserListWarpRes;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.gofobao.framework.security.vo.VoLoginReq;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,11 +48,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
-import sun.misc.BASE64Decoder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -107,6 +107,19 @@ public class UserBizImpl implements UserBiz {
 
     @Value("${gofobao.javaDomain}")
     String javaDomain;
+
+    @Value("${qiniu.sk}")
+     String SECRET_KEY;
+
+    @Value("${qiniu.ak}")
+     String ACCESS_KEY;
+
+    @Value("${qiniu.domain}")
+     String qiNiuDomain;
+
+    @Value("${qiniu.bucket}")
+     String bucketname;
+
 
     @Autowired
     JwtTokenHelper jwtTokenHelper;
@@ -594,5 +607,40 @@ public class UserBizImpl implements UserBiz {
             return ResponseEntity.ok(VoBaseResp.ok("重置密码成功"));
 
     }
+    
+    public Map<String,Object> upload(byte[] file, String key) throws IOException {
+        //密钥配置
+        Auth auth = Auth.create(ACCESS_KEY, SECRET_KEY);
+        //创建上传对象
 
+        Zone z = Zone.autoZone();
+        Configuration c = new Configuration(z);
+        UploadManager uploadManager = new UploadManager(c);
+        String token=auth.uploadToken(bucketname);
+        Map<String, Object> resultMap = Maps.newHashMap();
+        try {
+            //调用put方法上传
+            Response res = uploadManager.put(file, key, token);
+            resultMap.put("result",Boolean.TRUE);
+            resultMap.put("code", VoBaseResp.ERROR);
+            resultMap.put("msg", res.bodyString());
+
+        } catch (QiniuException e) {
+            Response r = e.response;
+            // 请求失败时打印的异常的信息
+            System.out.println(r.toString());
+            resultMap.put("result",Boolean.FALSE);
+            resultMap.put("code", VoBaseResp.ERROR);
+            resultMap.put("msg", r.bodyString());
+
+        }
+       return resultMap;
+    }
+
+
+    @Override
+    public Map<String, Object> uploadAvatar(byte[] file, String filePath)throws Exception {
+           return upload(file, filePath);
+
+    }
 }

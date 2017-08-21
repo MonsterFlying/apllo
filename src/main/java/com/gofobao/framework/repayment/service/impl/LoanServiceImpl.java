@@ -313,15 +313,16 @@ public class LoanServiceImpl implements LoanService {
                         .sum();
                 repaymentDetail.setStatus(RepaymentContants.STATUS_YES);
             }
-            //预期收益
-            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(borrow.getMoneyYes()), new Double(borrow.getApr()), borrow.getTimeLimit(), borrow.getSuccessAt());
-            Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
-            receivableInterest = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("repayTotal")));
+
         }
         repaymentDetail.setBorrowId(borrow.getId());
         if (borrow.getStatus() == BorrowContants.BIDDING) {
             repaymentDetail.setStatus(2);
         }
+        //预期收益
+        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(borrow.getMoneyYes()), new Double(borrow.getApr()), borrow.getTimeLimit(), borrow.getSuccessAt());
+        Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
+        receivableInterest = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("earnings")));
         repaymentDetail.setInterest(StringHelper.formatMon(interest / 100D));
         repaymentDetail.setPrincipal(StringHelper.formatMon(principal / 100D));
         repaymentDetail.setReceivableInterest(StringHelper.formatMon(receivableInterest / 100D));

@@ -1,12 +1,15 @@
 package com.gofobao.framework.asset.controller.web;
 
+import com.gofobao.framework.asset.biz.AreaBiz;
 import com.gofobao.framework.asset.biz.BankAccountBiz;
 import com.gofobao.framework.asset.vo.response.VoBankListResp;
+import com.gofobao.framework.asset.vo.response.pc.VoAreaWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.biz.UserThirdBiz;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +28,8 @@ public class WebBankAccountController {
     private BankAccountBiz bankAccountBiz;
     @Autowired
     private UserThirdBiz userThirdBiz;
+    @Autowired
+    private AreaBiz areaBiz;
 
     @GetMapping("/bank/pc/V2/list")
     @ApiOperation("银行卡列表")
@@ -37,6 +42,12 @@ public class WebBankAccountController {
     @PostMapping("/user/third/pc/v2/del/bank")
     public ResponseEntity<VoBaseResp> delBank(HttpServletRequest httpServletRequest, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return userThirdBiz.delBank(httpServletRequest, userId);
+    }
+
+    @ApiOperation("省市")
+    @GetMapping("pub/area/list")
+    public ResponseEntity<VoAreaWarpRes> areaList(@Param("id") Integer id){
+        return areaBiz.list(id);
     }
 
 

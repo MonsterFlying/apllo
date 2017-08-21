@@ -364,8 +364,8 @@ public class InvestServiceImpl implements InvestService {
         VoViewReturnedMoney viewReturnedMoney = new VoViewReturnedMoney();
 
         viewReturnedMoney.setOrderCount(borrowCollectionList.size());
-        long collectionMoneySum = borrowCollectionList.stream().mapToLong(p -> p.getCollectionMoney()).sum();
-        viewReturnedMoney.setCollectionMoneySum(NumberHelper.to2DigitString(collectionMoneySum));
+        Long collectionMoneySum = borrowCollectionList.stream().mapToLong(p -> p.getCollectionMoney()).sum();
+        viewReturnedMoney.setCollectionMoneySum(StringHelper.formatMon(collectionMoneySum/100D));
 
         List<ReturnedMoney> returnedMonies = new ArrayList<>(0);
         borrowCollectionList.stream().forEach(p -> {
