@@ -76,6 +76,10 @@ public class VoBasicUserInfoResp extends VoBaseResp{
     @ApiModelProperty("注册时间")
     private String  registerAt ;
 
+    @ApiModelProperty("开户行")
+    private String  bankName ;
+
+
     @ApiModelProperty("投资积分")
     private Long  tenderIntegral ;
 
