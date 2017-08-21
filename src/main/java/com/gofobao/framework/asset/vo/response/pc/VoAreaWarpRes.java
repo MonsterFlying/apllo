@@ -11,6 +11,6 @@ import java.util.List;
  */
 @Data
 public class VoAreaWarpRes extends VoBaseResp {
-    List<AreaRes> areaRes = Lists.newArrayList();
+   private List<AreaRes> areaRes = Lists.newArrayList();
 
 }

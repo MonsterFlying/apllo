@@ -2,6 +2,7 @@ package com.gofobao.framework.system.controller;
 
 
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.marketing.biz.MarketingBiz;
 import com.gofobao.framework.system.biz.ArticleBiz;
 import com.gofobao.framework.system.biz.DictBiz;
 import com.gofobao.framework.system.biz.FindBiz;
@@ -33,6 +34,9 @@ public class FindController {
 
     @Autowired
     private SuggestBiz suggestBiz;
+
+    @Autowired
+    private MarketingBiz marketingBiz;
 
 
     @GetMapping("/pub/find/index")
@@ -70,5 +74,10 @@ public class FindController {
         return suggestBiz.save(suggest);
     }
 
+    @ApiOperation("活动列表")
+    @GetMapping("pub/find/event/list")
+    public ResponseEntity<VoEventWarpRes> eventList(){
+      return   marketingBiz.list();
 
+    }
 }
