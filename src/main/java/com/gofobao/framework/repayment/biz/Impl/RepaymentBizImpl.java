@@ -1591,8 +1591,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
             // 冻结还款金额
             long money = new Double((freezeMoney) * 100).longValue();
             AssetChange freezeAssetChange = new AssetChange();
-            freezeAssetChange.setForUserId(borrowRepayment.getUserId());
-            freezeAssetChange.setUserId(borrowRepayment.getUserId());
+            freezeAssetChange.setForUserId(repayUserThirdAccount.getUserId());
+            freezeAssetChange.setUserId(repayUserThirdAccount.getUserId());
             freezeAssetChange.setType(AssetChangeTypeEnum.freeze);
             freezeAssetChange.setRemark(String.format("成功还款标的[%s]冻结资金%s元", borrow.getName(), StringHelper.formatDouble(money / 100D, true)));
             freezeAssetChange.setSeqNo(assetChangeProvider.getSeqNo());
