@@ -318,11 +318,15 @@ public class AplloApplicationTests {
     }
 
     public static void main(String[] args) {
-        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
+        List<Long> sumPrincipals = new ArrayList<>(2);
+        List<Long> sumInterests = new ArrayList<>();
+        long i = (sumInterests.size() - 2) != 1 ? 0 : sumPrincipals.get(2);
+
+        /*BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
                 NumberHelper.toDouble(StringHelper.toString(999.9)),
                 NumberHelper.toDouble(StringHelper.toString(2100)), 3, new Date());
         Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(0);
-        System.out.println(rsMap);
+        System.out.println(rsMap);*/
 
         /*System.out.println("select t.id AS id,t. STATUS AS status,t.user_id AS userId,t.lowest AS lowest,t.borrow_types AS borrowTypes," +
                 "t.repay_fashions AS repayFashions,t.tender_0 AS tender0,t.tender_1 AS tender1,t.tender_3 AS tender3,t.tender_4 AS tender4,t.`mode` AS mode,t.tender_money AS tenderMoney,t.timelimit_first AS timelimitFirst,t.timelimit_last AS timelimitLast,t.timelimit_type AS timelimitType,t.apr_first AS aprFirst,t.apr_last AS aprLast,t.save_money AS saveMoney,t.`order` AS `order`,t.auto_at AS autoAt,t.created_at AS createdAt," +
@@ -772,8 +776,8 @@ public class AplloApplicationTests {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(170005),
-                        MqConfig.BATCH_NO, StringHelper.toString(104512),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(170006),
+                        MqConfig.BATCH_NO, StringHelper.toString(110355),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
                 );
 

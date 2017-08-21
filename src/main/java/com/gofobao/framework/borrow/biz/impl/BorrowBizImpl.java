@@ -1385,11 +1385,11 @@ public class BorrowBizImpl implements BorrowBiz {
             int collectionMoney = 0;
             int collectionInterest = 0;
             for (int j = 0; j < repayDetailList.size(); j++) {
-                Map<String, Object> repayDetailMap = repayDetailList.get(i);
+                Map<String, Object> repayDetailMap = repayDetailList.get(j);
                 long principal = NumberHelper.toLong(repayDetailMap.get("principal"));
                 long interest = NumberHelper.toLong(repayDetailMap.get("interest"));
-                sumPrincipals.set(j, sumPrincipals.get(j) + principal);
-                sumInterests.set(j, sumInterests.get(j) + interest);
+                sumPrincipals.add(j, (sumInterests.size() - j) != 1 ? 0 : sumPrincipals.get(j) + principal);
+                sumInterests.add(j, (sumInterests.size() - j) != 1 ? 0 : sumInterests.get(j) + interest);
                 if (i == (tenderList.size() - 1)) { //给回款最后一期补上多出的本金与利息
                     BorrowRepayment borrowRepayment = borrowRepaymentMaps.get(j);
                     principal += (borrowRepayment.getPrincipal() - sumPrincipals.get(j));
