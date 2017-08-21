@@ -1908,32 +1908,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
     }
 
     /**
-     * 查询投标记录中是否存在债权转让进行中的记录, 如果存在则进行取消债权转让
-     *
-     * @param tenderList
-     */
-    private void findTranferAndCancelTranfer(List<Tender> tenderList) throws Exception {
-        // 债转进行中的记录
-        List<Tender> tranferingTender = tenderList
-                .stream()
-                .filter(p -> p.getTransferFlag() == 1)
-                .collect(Collectors.toList());
-        for (Tender tender : tranferingTender) {
-            doCancelTranfer(tender);
-        }
-    }
-
-    /**
-     * 取消债权转让
-     *
-     * @param tender
-     * @throws Exception
-     */
-    private void doCancelTranfer(Tender tender) throws Exception {
-
-    }
-
-    /**
      * 查询还款计划
      *
      * @param order
