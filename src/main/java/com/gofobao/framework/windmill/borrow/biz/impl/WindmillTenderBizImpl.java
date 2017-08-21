@@ -10,6 +10,7 @@ import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
+import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
@@ -362,9 +363,12 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
         log.info("================进入用户回款成功 平台通知到风车理财================");
         try {
             do {
-                //过滤不是风车理财的用户
+                //获取回款用户集合
                 Set<Long> userIds = borrowCollections.stream().map(m -> m.getUserId()).collect(Collectors.toSet());
-                if (CollectionUtils.isEmpty(userIds)) {
+                List<Users> usersList=userService.findByIdIn(new ArrayList<>(userIds));
+                //过滤不是风车理财的用户
+                List<Users> tempUsers=usersList.stream().filter(users -> !StringUtils.isEmpty(users.getWindmillId())).collect(Collectors.toList());
+                if(CollectionUtils.isEmpty(tempUsers)){
                     log.info("当前批量中没有风车理财的用户");
                     log.info("回款信息:" + JacksonHelper.obj2json(borrowCollections));
                     break;
