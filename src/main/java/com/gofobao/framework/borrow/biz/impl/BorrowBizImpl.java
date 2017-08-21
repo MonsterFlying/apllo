@@ -269,7 +269,7 @@ public class BorrowBizImpl implements BorrowBiz {
             Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
             Integer earnings = NumberHelper.toInt(calculatorMap.get("earnings"));
             borrowInfoRes.setEarnings(StringHelper.formatMon(earnings / 100d) + MoneyConstans.RMB);
-            borrowInfoRes.setTenderCount(borrow.getTenderCount()+BorrowContants.TIME);
+            borrowInfoRes.setTenderCount(borrow.getTenderCount() + BorrowContants.TIME);
             borrowInfoRes.setMoney(StringHelper.formatMon(borrow.getMoney() / 100d));
             borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
             borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatDouble(borrow.getMoneyYes() / borrow.getMoney().doubleValue(), false)));
@@ -1370,8 +1370,8 @@ public class BorrowBizImpl implements BorrowBiz {
         Gson gson = new Gson();
         Date nowDate = new Date();
         log.info(String.format("生成用户回款计划开始: %s", gson.toJson(tenderList)));
-        Long[] sumPrincipals = new Long[]{};
-        Long[] sumInterests = new Long[]{};
+        List<Long> sumPrincipals = new ArrayList<>();
+        List<Long> sumInterests = new ArrayList<>();
         Map<Integer/* ORDER */, BorrowRepayment> borrowRepaymentMaps = borrowRepaymentList.stream().collect(Collectors.toMap(BorrowRepayment::getOrder, Function.identity()));
         for (int i = 0; i < tenderList.size(); i++) {
             Tender tender = tenderList.get(i);
@@ -1388,12 +1388,12 @@ public class BorrowBizImpl implements BorrowBiz {
                 Map<String, Object> repayDetailMap = repayDetailList.get(i);
                 long principal = NumberHelper.toLong(repayDetailMap.get("principal"));
                 long interest = NumberHelper.toLong(repayDetailMap.get("interest"));
-                sumPrincipals[j] += principal;
-                sumInterests[j] += interest;
+                sumPrincipals.set(j, sumPrincipals.get(j) + principal);
+                sumInterests.set(j, sumInterests.get(j) + interest);
                 if (i == (tenderList.size() - 1)) { //给回款最后一期补上多出的本金与利息
                     BorrowRepayment borrowRepayment = borrowRepaymentMaps.get(j);
-                    principal += (borrowRepayment.getPrincipal() - sumPrincipals[j]);
-                    interest += (borrowRepayment.getInterest() - sumInterests[j]);
+                    principal += (borrowRepayment.getPrincipal() - sumPrincipals.get(j));
+                    interest += (borrowRepayment.getInterest() - sumInterests.get(j));
                 }
                 long repayMoney = principal + interest;
 

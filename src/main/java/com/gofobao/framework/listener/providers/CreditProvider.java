@@ -23,7 +23,11 @@ import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.entity.Transfer;
+import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.service.TenderService;
+import com.gofobao.framework.tender.service.TransferBuyLogService;
+import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -59,9 +63,9 @@ public class CreditProvider {
     @Autowired
     private JixinHelper jixinHelper;
     @Autowired
-    private BorrowCollectionService borrowCollectionService;
-    @Autowired
     private ThirdBatchLogService thirdBatchLogService;
+    @Autowired
+    private TransferBuyLogService transferBuyLogService;
     @Value("${gofobao.javaDomain}")
     String javaDomain;
 
@@ -154,40 +158,36 @@ public class CreditProvider {
                     .eq("transferFlag", 3)
                     .build();
             List<Tender> tenderList = tenderService.findList(ts);
-            Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "creditProvider buildCreditEndList: 借款" + borrowId + " 未找到投递成功债权！");
+            Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "creditProvider buildAdvanceCreditEndList: 借款" + borrowId + " 未找到投递成功债权！");
             List<Long> tenderIds = tenderList.stream().map(Tender::getId).collect(Collectors.toList());
-            /* 部分转让回款记录 */
-            Specification<BorrowCollection> bcs = Specifications
-                    .<BorrowCollection>and()
-                    .eq("parentId")
+            /* 债权转让记录 */
+            Specification<Transfer> transferSpecification = Specifications
+                    .<Transfer>and()
+                    .eq("state", 2)
+                    .eq("type", 2)
+                    .in("tenderId", tenderIds.toArray())
                     .build();
-
-            //筛选出已转让的投资记录
-            tenderList.stream().filter(p -> p.getTransferFlag() == 3).forEach(tender -> {
+            /* 债权转让购买记录 */
+            Specification<TransferBuyLog> tbls = Specifications
+                    .<TransferBuyLog>and()
+                    .eq("state", 1)
+                    .eq("thirdCreditEndFlag", false)
+                    .build();
+            List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
+            transferBuyLogList.stream().forEach(transferBuyLog -> {
                 CreditEnd creditEnd = new CreditEnd();
                 String orderId = JixinHelper.getOrderId(JixinHelper.END_CREDIT_PREFIX);
-                UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
+                UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
                 creditEnd.setAccountId(borrowUserThirdAccountId);
                 creditEnd.setOrderId(orderId);
-                creditEnd.setAuthCode(tender.getAuthCode());
+                creditEnd.setAuthCode(transferBuyLog.getTransferAuthCode());
                 creditEnd.setForAccountId(tenderUserThirdAccount.getAccountId());
                 creditEnd.setProductId(productId);
                 creditEndList.add(creditEnd);
                 //保存结束债权id
-                tender.setThirdCreditEndOrderId(orderId);
-                tender.setThirdCreditEndFlag(false);
-                tenderService.save(tender);
-
-                //查询转让标的
-                Specification<Borrow> bs = Specifications
-                        .<Borrow>and()
-                        .eq("tenderId", tender.getId())
-                        .build();
-                List<Borrow> borrowList = borrowService.findList(bs);
-                if (!CollectionUtils.isEmpty(borrowList)) {
-                    buildTransferCreditEndList(creditEndList, borrowUserThirdAccountId, productId, borrowList.get(0).getId());
-                }
-
+                transferBuyLog.setTCreditEndOrderId(orderId);
+                transferBuyLog.setThirdCreditEndFlag(false);
+                transferBuyLogService.save(transferBuyLog);
             });
         } while (false);
     }
@@ -204,6 +204,7 @@ public class CreditProvider {
                     .<Tender>and()
                     .eq("borrowId", borrowId)
                     .eq("transferFlag", 2)
+                    .eq("type", 1)
                     .eq("status", 1)
                     .build();
             List<Tender> tenderList = tenderService.findList(ts); /* 成功投资记录 */
@@ -226,17 +227,6 @@ public class CreditProvider {
                 tender.setThirdCreditEndOrderId(orderId);
                 tender.setThirdCreditEndFlag(false);
                 tenderService.save(tender);
-
-                //查询转让标的
-                Specification<Borrow> bs = Specifications
-                        .<Borrow>and()
-                        .eq("tenderId", tender.getId())
-                        .build();
-                List<Borrow> borrowList = borrowService.findList(bs);
-                if (!CollectionUtils.isEmpty(borrowList)) {
-                    buildTransferCreditEndList(creditEndList, borrowUserThirdAccountId, productId, borrowList.get(0).getId());
-                }
-
             });
 
         } while (false);

@@ -452,15 +452,15 @@ public class ThirdBatchProvider {
 
         //登记成功批次
         if (!CollectionUtils.isEmpty(successTransferOrderIds)) {
-            Specification<TransferBuyLog> tbls = Specifications
-                    .<TransferBuyLog>and()
+            Specification<BorrowCollection> tbls = Specifications
+                    .<BorrowCollection>and()
                     .in("thirdTransferOrderId", successTransferOrderIds.toArray())
                     .build();
-            List<TransferBuyLog> successTransferBuyLogList = transferBuyLogService.findList(tbls);
-            successTransferBuyLogList.stream().forEach(borrowCollection -> {
+            List<BorrowCollection> successBorrowCollectionList = borrowCollectionService.findList(tbls);
+            successBorrowCollectionList.stream().forEach(borrowCollection -> {
                 borrowCollection.setThirdTransferFlag(true);
             });
-            transferBuyLogService.save(successTransferBuyLogList);
+            borrowCollectionService.save(successBorrowCollectionList);
         }
 
         if (!CollectionUtils.isEmpty(failureTransferOrderIds)) {  //推送垫付队列

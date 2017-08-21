@@ -772,8 +772,8 @@ public class AplloApplicationTests {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(170001),
-                        MqConfig.BATCH_NO, StringHelper.toString(170107),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(170005),
+                        MqConfig.BATCH_NO, StringHelper.toString(104512),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
                 );
 
@@ -797,7 +797,7 @@ public class AplloApplicationTests {
 
     @Test
     public void test() {
-        dataMigration();
+        //dataMigration();
 
        /* MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
@@ -829,7 +829,7 @@ public class AplloApplicationTests {
         }*/
 
         //批次处理
-        //batchDeal();
+        batchDeal();
         //查询存管账户资金信息
         //balanceQuery();
         //查询资金流水
