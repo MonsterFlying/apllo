@@ -263,7 +263,7 @@ public class UserBizImpl implements UserBiz {
         } else {
             voBasicUserInfoResp.setThirdAccountState(true);
             voBasicUserInfoResp.setBankPassworState(userThirdAccount.getPasswordState() == 1);
-            voBasicUserInfoResp.setBankAccout(UserHelper.hideChar(userThirdAccount.getCardNo(), UserHelper.BANK_ACCOUNT_NUM));
+            voBasicUserInfoResp.setBankAccout(userThirdAccount.getCardNo());
             voBasicUserInfoResp.setBankName("江西银行总行营业部");
             voBasicUserInfoResp.setBankState(!StringUtils.isEmpty(userThirdAccount.getCardNo()));
             voBasicUserInfoResp.setAutoTenderState(userThirdAccount.getAutoTenderState().equals(1));

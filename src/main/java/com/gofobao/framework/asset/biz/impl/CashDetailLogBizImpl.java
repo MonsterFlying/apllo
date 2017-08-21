@@ -184,7 +184,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
 
-        if (!balanceQueryResponse.getWithdrawFlag().equals("1")) {
+        if (!balanceQueryResponse.getWithdrawFlag().equals("0")) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前存管账户被银行禁止提现, 如有问题请联系广富宝金服客服!", VoPreCashResp.class));
