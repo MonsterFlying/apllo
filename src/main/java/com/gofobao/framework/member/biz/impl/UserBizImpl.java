@@ -608,7 +608,7 @@ public class UserBizImpl implements UserBiz {
 
     }
     
-    public Map<String,Object> upload(byte[] file, String key) throws IOException {
+    public Map<String,Object> upload(byte[] file, String key,Users users) throws IOException {
         //密钥配置
         Auth auth = Auth.create(ACCESS_KEY, SECRET_KEY);
         //创建上传对象
@@ -624,7 +624,8 @@ public class UserBizImpl implements UserBiz {
             resultMap.put("result",Boolean.TRUE);
             resultMap.put("code", VoBaseResp.ERROR);
             resultMap.put("msg", res.bodyString());
-
+            users.setAvatarPath(qiNiuDomain+key);
+            userService.save(users);
         } catch (QiniuException e) {
             Response r = e.response;
             // 请求失败时打印的异常的信息
@@ -639,8 +640,8 @@ public class UserBizImpl implements UserBiz {
 
 
     @Override
-    public Map<String, Object> uploadAvatar(byte[] file, String filePath)throws Exception {
-           return upload(file, filePath);
+    public Map<String, Object> uploadAvatar(byte[] file, String filePath,Users users)throws Exception {
+           return upload(file, filePath,users);
 
     }
 }

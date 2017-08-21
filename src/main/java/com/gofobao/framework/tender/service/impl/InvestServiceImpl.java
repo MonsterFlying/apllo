@@ -97,7 +97,7 @@ public class InvestServiceImpl implements InvestService {
             List<BorrowCollection> tempCollection = borrowCollectionList.stream()
                     .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_NO)
                     .collect(Collectors.toList());
-            Long count = borrowCollectionList.stream().map(s -> s.getId()).count();
+            Long count = borrowCollectionList.stream().map(s -> s.getStatus()==BorrowCollectionContants.STATUS_YES).count();
             voViewBackMoney.setOrder(count.intValue());
             //待收本金
             long principal = tempCollection.stream()
@@ -329,7 +329,7 @@ public class InvestServiceImpl implements InvestService {
                     .sum();
             //应收利息
            Long receivableInterest = borrowCollectionList.stream()
-                    .mapToLong(s -> s.getCollectionMoney())
+                    .mapToLong(s -> s.getInterest())
                     .sum();
 
             item.setInterest(StringHelper.formatMon(interest / 100D));

@@ -2,7 +2,10 @@ package com.gofobao.framework.asset.controller.web;
 
 import com.gofobao.framework.asset.biz.AreaBiz;
 import com.gofobao.framework.asset.biz.BankAccountBiz;
+import com.gofobao.framework.asset.biz.UnionLineNumberBiz;
+import com.gofobao.framework.asset.vo.request.VoUnionLineNoReq;
 import com.gofobao.framework.asset.vo.response.VoBankListResp;
+import com.gofobao.framework.asset.vo.response.pc.UnionLineNoWarpRes;
 import com.gofobao.framework.asset.vo.response.pc.VoAreaWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.biz.UserThirdBiz;
@@ -30,6 +33,8 @@ public class WebBankAccountController {
     private UserThirdBiz userThirdBiz;
     @Autowired
     private AreaBiz areaBiz;
+    @Autowired
+    private UnionLineNumberBiz lineNumberBiz;
 
     @GetMapping("/bank/pc/V2/list")
     @ApiOperation("银行卡列表")
@@ -46,9 +51,14 @@ public class WebBankAccountController {
 
     @ApiOperation("省市")
     @GetMapping("pub/area/list")
-    public ResponseEntity<VoAreaWarpRes> areaList(@Param("id") Integer id){
+    public ResponseEntity<VoAreaWarpRes> areaList(@Param("id") Integer id) {
         return areaBiz.list(id);
     }
 
+    @ApiOperation("联行号")
+    @GetMapping("pub/unionLineNo/list")
+    public ResponseEntity<UnionLineNoWarpRes> unionLineNOList(VoUnionLineNoReq unionLineNoReq) {
+        return lineNumberBiz.list(unionLineNoReq);
+    }
 
 }

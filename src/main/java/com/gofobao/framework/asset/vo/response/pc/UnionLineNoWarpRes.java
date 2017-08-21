@@ -7,10 +7,14 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * Created by admin on 2017/8/19.
+ * Created by admin on 2017/8/21.
  */
 @Data
-public class VoAreaWarpRes extends VoBaseResp {
-   private List<AreaRes> areaRes = Lists.newArrayList();
+public class UnionLineNoWarpRes extends VoBaseResp{
+
+    private List<UnionLineNo> unionLineNos = Lists.newArrayList();
+
+    private Long totalCount =0L;
+
 
 }

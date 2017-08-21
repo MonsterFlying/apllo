@@ -1,7 +1,5 @@
 package com.gofobao.framework.common.qiniu.storage.model;
 
-import com.qiniu.storage.model.*;
-
 /**
  * 定义批量请求的状态码
  * 参考文档：<a href="https://developer.qiniu.com/kodo/api/batch">批量操作</a>

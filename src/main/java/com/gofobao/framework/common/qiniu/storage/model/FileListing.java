@@ -1,6 +1,5 @@
 package com.gofobao.framework.common.qiniu.storage.model;
 
-import com.qiniu.storage.model.*;
 import com.qiniu.util.StringUtils;
 
 /**

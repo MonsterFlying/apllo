@@ -1,7 +1,6 @@
 package com.gofobao.framework.common.qiniu.util;
 
 import com.qiniu.common.Constants;
-import com.qiniu.util.*;
 
 /**
  * URL安全的Base64编码和解码

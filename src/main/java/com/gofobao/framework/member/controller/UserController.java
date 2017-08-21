@@ -1,16 +1,7 @@
 package com.gofobao.framework.member.controller;
 
 import com.gofobao.framework.asset.vo.request.VoJudgmentAvailableReq;
-import com.gofobao.framework.common.qiniu.common.QiniuException;
-import com.gofobao.framework.common.qiniu.common.Zone;
-import com.gofobao.framework.common.qiniu.http.Response;
-import com.gofobao.framework.common.qiniu.storage.Configuration;
-import com.gofobao.framework.common.qiniu.storage.UploadManager;
-import com.gofobao.framework.common.qiniu.storage.model.DefaultPutRet;
-import com.gofobao.framework.common.qiniu.storage.persistent.FileRecorder;
-import com.gofobao.framework.common.qiniu.util.Auth;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.member.biz.UserBiz;
 import com.gofobao.framework.member.biz.UserEmailBiz;
 import com.gofobao.framework.member.biz.UserPhoneBiz;
@@ -22,10 +13,7 @@ import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.member.vo.response.VoOpenAccountInfo;
 import com.gofobao.framework.member.vo.response.VoSignInfoResp;
 import com.gofobao.framework.security.contants.SecurityContants;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
-import com.qiniu.storage.Recorder;
 import io.swagger.annotations.ApiOperation;
 import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,12 +24,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import springfox.documentation.annotations.ApiIgnore;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Date;
 import java.util.Map;
 
 /**
@@ -134,26 +119,6 @@ public class UserController {
     }
 
 
-    @ApiOperation("上传头像")
-    @PostMapping(value = "/user/uploading/avatar")
-    public void uploadAvatar(@RequestParam("file") MultipartFile upfile,
-                             HttpServletResponse response,
-                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
-        if (StringUtils.isEmpty(upfile)) {
-            //循环获取file数组中得文件
 
-            String fileName = upfile.getOriginalFilename();
-            byte[] fileByte = upfile.getBytes();
-            Map<String, Object> result = userBiz.uploadAvatar(fileByte, fileName);
-            if ((Boolean) result.get("result")) {
-                response.setStatus(HttpStatus.SC_OK);
-            } else {
-                response.setStatus(HttpStatus.SC_BAD_REQUEST);
-            }
-            PrintWriter printWriter = response.getWriter();
-            printWriter.print(new Gson().toJson(result));
-
-        }
-    }
 }
 

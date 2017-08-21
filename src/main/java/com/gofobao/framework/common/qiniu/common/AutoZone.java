@@ -1,6 +1,8 @@
 package com.gofobao.framework.common.qiniu.common;
+
 import com.gofobao.framework.common.qiniu.http.Client;
 import com.gofobao.framework.common.qiniu.http.Response;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

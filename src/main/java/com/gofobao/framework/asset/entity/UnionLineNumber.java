@@ -5,10 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.Date;
 
 /**
@@ -29,6 +26,8 @@ public class UnionLineNumber {
 
     private Integer bank;
 
+    @Basic
+    @Column(name = "bankname")
     private String bankName;
 
     private String tel;
@@ -39,8 +38,8 @@ public class UnionLineNumber {
 
     private String address;
 
-    private Date createAt;
+    private Date createdAt;
 
-    private Date updateAt;
+    private Date updatedAt;
 
 }

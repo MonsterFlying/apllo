@@ -122,7 +122,7 @@ public interface UserBiz {
     ResponseEntity<VoOpenAccountInfo> openAccountInfo(Long userId);
 
 
-     Map<String, Object> uploadAvatar(byte[] fileBty, String filePath) throws Exception;
+     Map<String, Object> uploadAvatar(byte[] fileBty, String filePath,Users users) throws Exception;
 
 }
 

@@ -92,6 +92,7 @@ import com.gofobao.framework.tender.entity.TransferBuyLog;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
+import com.gofobao.framework.windmill.borrow.biz.WindmillTenderBiz;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -182,6 +183,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private TransferBuyLogService transferBuyLogService;
     @Autowired
     private TransferBiz transferBiz;
+    @Autowired
+    private WindmillTenderBiz windmillTenderBiz;
 
     @Value("${gofobao.webDomain}")
     private String webDomain;
@@ -839,6 +842,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
             //10.项目回款短信通知
             smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
         }
+        //通知风车理财用户 回款成功
+        windmillTenderBiz.backMoneyNotify(borrowCollectionList);
+
         return ResponseEntity.ok(VoBaseResp.ok("还款处理成功!"));
     }
 

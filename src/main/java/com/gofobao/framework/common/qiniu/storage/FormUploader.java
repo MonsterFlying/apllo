@@ -1,11 +1,11 @@
 package com.gofobao.framework.common.qiniu.storage;
+
 import com.gofobao.framework.common.qiniu.common.QiniuException;
 import com.gofobao.framework.common.qiniu.http.AsyncCallback;
 import com.gofobao.framework.common.qiniu.http.Client;
 import com.gofobao.framework.common.qiniu.http.Response;
 import com.gofobao.framework.common.qiniu.util.Crc32;
 import com.gofobao.framework.common.qiniu.util.StringMap;
-
 
 import java.io.File;
 import java.io.IOException;

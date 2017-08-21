@@ -1,13 +1,8 @@
 package com.gofobao.framework.repayment.biz;
 
-import com.gofobao.framework.api.model.batch_credit_invest.CreditInvest;
 import com.gofobao.framework.api.model.batch_repay.Repay;
-import com.gofobao.framework.api.model.batch_repay_bail.RepayBail;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.member.entity.UserThirdAccount;
-import com.gofobao.framework.repayment.entity.AdvanceAssetChange;
-import com.gofobao.framework.repayment.entity.RepayAssetChange;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
 import org.springframework.http.ResponseEntity;
 
