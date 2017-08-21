@@ -100,8 +100,4 @@ logging:
 #    org.hibernate: DEBUG
 #    com.gofobao: DEBUG
     root: INFO
-qiniu:
-  domain: test.img.gofobao.com
-  bucket: test
-  ak : yevGNMoheNL4EGIencz8E-ohrPzMqLwchW9SvX9e
-  sk : GjGZAJBUpe8UzPoWmKeKBPSi7Kq_IshmuW-UC89o
+
