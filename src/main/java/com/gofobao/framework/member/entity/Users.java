@@ -71,4 +71,6 @@ public class Users implements Serializable{
 
     private String windmillId;
     private Date loginTime ;
+
+    private String avatarPath;
 }

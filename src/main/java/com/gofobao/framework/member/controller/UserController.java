@@ -119,26 +119,6 @@ public class UserController {
     }
 
 
-    @ApiOperation("上传头像")
-    @PostMapping(value = "/user/uploading/avatar")
-    public void uploadAvatar(@RequestParam("file") MultipartFile upfile,
-                             HttpServletResponse response,
-                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
-        if (StringUtils.isEmpty(upfile)) {
-            //循环获取file数组中得文件
 
-            String fileName = upfile.getOriginalFilename();
-            byte[] fileByte = upfile.getBytes();
-            Map<String, Object> result = userBiz.uploadAvatar(fileByte, fileName);
-            if ((Boolean) result.get("result")) {
-                response.setStatus(HttpStatus.SC_OK);
-            } else {
-                response.setStatus(HttpStatus.SC_BAD_REQUEST);
-            }
-            PrintWriter printWriter = response.getWriter();
-            printWriter.print(new Gson().toJson(result));
-
-        }
-    }
 }
 

@@ -7,7 +7,9 @@ import com.gofobao.framework.member.biz.UserBiz;
 import com.gofobao.framework.member.biz.UserEmailBiz;
 import com.gofobao.framework.member.biz.UserPhoneBiz;
 import com.gofobao.framework.member.biz.UserThirdBiz;
+import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.entity.Vip;
+import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.vo.request.*;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.member.vo.response.VoSignInfoResp;
@@ -15,14 +17,22 @@ import com.gofobao.framework.member.vo.response.pc.UserInfoExt;
 import com.gofobao.framework.member.vo.response.pc.VipInfoRes;
 import com.gofobao.framework.member.vo.response.pc.VoViewServiceUserListWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
+import com.google.gson.Gson;
 import io.swagger.annotations.ApiOperation;
+import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import springfox.documentation.annotations.ApiIgnore;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.PrintWriter;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Created by Max on 17/5/16.
@@ -39,7 +49,8 @@ public class WebUserController {
 
     @Autowired
     UserThirdBiz userThirdBiz;
-
+    @Autowired
+    private UserService userService;
     @Autowired
     UserBiz userBiz;
 
@@ -156,4 +167,27 @@ public class WebUserController {
         return userBiz.vipInfo(userId);
     }
 
+    @ApiOperation("上传头像")
+    @PostMapping(value = "/user/uploading/avatar")
+    public void uploadAvatar(@RequestParam("file") MultipartFile upfile,
+                             HttpServletResponse response,
+                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
+        Users users=userService.findById(userId);
+        if(ObjectUtils.isEmpty(users)){
+            response.setStatus(HttpStatus.SC_BAD_REQUEST);
+        }else if (StringUtils.isEmpty(upfile)) {
+            //循环获取file数组中得文件
+            String fileName = upfile.getOriginalFilename();
+            byte[] fileByte = upfile.getBytes();
+            Map<String, Object> result = userBiz.uploadAvatar(fileByte, fileName,users);
+            if ((Boolean) result.get("result")) {
+                response.setStatus(HttpStatus.SC_OK);
+            } else {
+                response.setStatus(HttpStatus.SC_BAD_REQUEST);
+            }
+            PrintWriter printWriter = response.getWriter();
+            printWriter.print(new Gson().toJson(result));
+
+        }
+    }
 }
