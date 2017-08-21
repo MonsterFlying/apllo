@@ -615,7 +615,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         try {
             List<CreditInvestRun> creditInvestRunList = GSON.fromJson(batchBailRepayRunResp.getSubPacks(), new TypeToken<List<CreditInvestRun>>() {
             }.getType());
-            saveThirdAdvanceAuthCode(creditInvestRunList);
+            saveThirdTransferAuthCode(creditInvestRunList);
         } catch (JsonSyntaxException e) {
             log.error("保存批次名义借款人垫付授权号!", e);
         }
@@ -644,7 +644,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      *
      * @param creditInvests
      */
-    public void saveThirdAdvanceAuthCode(List<CreditInvestRun> creditInvests) {
+    public void saveThirdTransferAuthCode(List<CreditInvestRun> creditInvests) {
         List<String> orderList = creditInvests.stream().map(creditInvest -> creditInvest.getOrderId()).collect(Collectors.toList());
         Specification<TransferBuyLog> bcs = Specifications
                 .<TransferBuyLog>and()

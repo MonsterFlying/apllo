@@ -457,8 +457,8 @@ public class ThirdBatchProvider {
                     .in("thirdTransferOrderId", successTransferOrderIds.toArray())
                     .build();
             List<TransferBuyLog> successTransferBuyLogList = transferBuyLogService.findList(tbls);
-            successTransferBuyLogList.stream().forEach(borrowCollection -> {
-                borrowCollection.setThirdTransferFlag(true);
+            successTransferBuyLogList.stream().forEach(transferBuyLog -> {
+                transferBuyLog.setThirdTransferFlag(true);
             });
             transferBuyLogService.save(successTransferBuyLogList);
         }

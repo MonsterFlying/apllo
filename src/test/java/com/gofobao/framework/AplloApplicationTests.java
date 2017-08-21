@@ -316,11 +316,15 @@ public class AplloApplicationTests {
     }
 
     public static void main(String[] args) {
-        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
+        List<Long> sumPrincipals = new ArrayList<>(2);
+        List<Long> sumInterests = new ArrayList<>();
+        long i = (sumInterests.size() - 2) != 1 ? 0 : sumPrincipals.get(2);
+
+        /*BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
                 NumberHelper.toDouble(StringHelper.toString(999.9)),
                 NumberHelper.toDouble(StringHelper.toString(2100)), 3, new Date());
         Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(0);
-        System.out.println(rsMap);
+        System.out.println(rsMap);*/
 
         /*System.out.println("select t.id AS id,t. STATUS AS status,t.user_id AS userId,t.lowest AS lowest,t.borrow_types AS borrowTypes," +
                 "t.repay_fashions AS repayFashions,t.tender_0 AS tender0,t.tender_1 AS tender1,t.tender_3 AS tender3,t.tender_4 AS tender4,t.`mode` AS mode,t.tender_money AS tenderMoney,t.timelimit_first AS timelimitFirst,t.timelimit_last AS timelimitLast,t.timelimit_type AS timelimitType,t.apr_first AS aprFirst,t.apr_last AS aprLast,t.save_money AS saveMoney,t.`order` AS `order`,t.auto_at AS autoAt,t.created_at AS createdAt," +
@@ -678,8 +682,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("110355");
-        batchDetailsQueryReq.setBatchTxDate("20170819");
+        batchDetailsQueryReq.setBatchNo("150420");
+        batchDetailsQueryReq.setBatchTxDate("20170821");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -770,8 +774,8 @@ public class AplloApplicationTests {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(170001),
-                        MqConfig.BATCH_NO, StringHelper.toString(170107),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(170010),
+                        MqConfig.BATCH_NO, StringHelper.toString(150420),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
                 );
 
@@ -795,7 +799,7 @@ public class AplloApplicationTests {
 
     @Test
     public void test() {
-        dataMigration();
+        //dataMigration();
 
        /* MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
@@ -827,7 +831,7 @@ public class AplloApplicationTests {
         }*/
 
         //批次处理
-        //batchDeal();
+        batchDeal();
         //查询存管账户资金信息
         //balanceQuery();
         //查询资金流水

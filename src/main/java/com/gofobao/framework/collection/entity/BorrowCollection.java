@@ -41,7 +41,5 @@ public class BorrowCollection {
     private Long userId;
     private Long tUserId;
     private String tRepayOrderId;
-    private String tCreditEndOrderId;
     private Boolean thirdRepayFlag;
-    private Boolean thirdCreditEndFlag;
 }
