@@ -1,6 +1,5 @@
 package com.gofobao.framework.common.qiniu.cdn;
 
-import com.qiniu.cdn.*;
 import com.qiniu.common.Constants;
 import com.qiniu.common.QiniuException;
 import com.qiniu.http.Client;

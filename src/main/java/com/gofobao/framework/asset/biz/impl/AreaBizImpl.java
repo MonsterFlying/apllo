@@ -7,7 +7,6 @@ import com.gofobao.framework.asset.vo.response.pc.AreaRes;
 import com.gofobao.framework.asset.vo.response.pc.VoAreaWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.RedisHelper;
-import com.gofobao.framework.marketing.entity.MarketingData;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;

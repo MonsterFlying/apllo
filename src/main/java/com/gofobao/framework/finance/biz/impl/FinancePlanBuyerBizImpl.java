@@ -8,7 +8,6 @@ import com.gofobao.framework.finance.entity.FinancePlanBuyer;
 import com.gofobao.framework.finance.service.FinancePlanBuyerService;
 import com.gofobao.framework.finance.vo.response.PlanBuyUserListWarpRes;
 import com.gofobao.framework.finance.vo.response.PlanBuyer;
-import com.gofobao.framework.finance.vo.response.PlanDetail;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.UserHelper;

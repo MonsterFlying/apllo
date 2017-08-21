@@ -1,7 +1,6 @@
 package com.gofobao.framework.asset.controller.web;
 
 import com.gofobao.framework.asset.biz.AssetBiz;
-import com.gofobao.framework.asset.repository.AssetLogRepository;
 import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.response.VoViewAssetLogWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
