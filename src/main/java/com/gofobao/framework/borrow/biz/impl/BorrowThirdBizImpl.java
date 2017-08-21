@@ -357,7 +357,9 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("还款处理中，请勿重复点击!")));
         } else if (flag == ThirdBatchLogContants.SUCCESS) {
-            //更新状态
+            /**
+             * @// TODO: 2017/8/21  直接调用批次回调
+             */
         }
 
         int repaymentTotal = 0;
