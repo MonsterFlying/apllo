@@ -54,7 +54,7 @@ public class WebNoticesController {
     @ApiOperation("批量删除")
     @RequestMapping(value = "/delete",method = RequestMethod.POST)
     public ResponseEntity<VoBaseResp> pcDelete(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
-                                             VoNoticesTranReq voNoticesTranReq) {
+                                          @ModelAttribute  VoNoticesTranReq voNoticesTranReq) {
         voNoticesTranReq.setUserId(userId);
         return noticesBiz.delete(voNoticesTranReq);
 
