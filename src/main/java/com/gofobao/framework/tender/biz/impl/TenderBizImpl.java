@@ -408,19 +408,6 @@ public class TenderBizImpl implements TenderBiz {
             }
         }
 
-
-        if (voCreateTenderReq.getSource() == 1) { //PC端需要交易密码校验
-            if (StringUtils.isEmpty(voCreateTenderReq.getPayPassword()) && voCreateTenderReq.getPayPassword().length() > 1) {
-                errerMessage.add("交易密碼为空,请设置交易密码");
-                return false;
-            }
-            Boolean flag = PasswordHelper.verifyPassword(user.getPayPassword(), voCreateTenderReq.getPayPassword());
-            if (!flag) {
-                errerMessage.add("交易密码错误,请重新输入");
-                return false;
-            }
-        }
-
         return true;
     }
 

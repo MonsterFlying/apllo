@@ -17,6 +17,8 @@ public class Event {
 
     private String targerUrl;
 
+    private String viewUrl;
+
     private String beginAt;
 
     private String endAt;

@@ -66,8 +66,7 @@ public class MarketingBizImpl implements MarketingBiz {
         VoEventWarpRes warpRes = VoBaseResp.ok("查询成功", VoEventWarpRes.class);
         Specification<Marketing> specification = Specifications.<Marketing>and()
                 .eq("openState", MarketingConstans.open)
-                .eq("del", MarketingConstans.invalid)
-                .gt("beginTime",new Date().getTime())
+                .eq("del", MarketingConstans.valid)
                 .build();
         List<Marketing> marketings = marketingService.findAll(specification);
 
@@ -82,8 +81,8 @@ public class MarketingBizImpl implements MarketingBiz {
             event.setMarketingType(f.getMarketingType());
             event.setIntroduction(f.getIntroduction());
             event.setTargerUrl(f.getTargerUrl());
-            event.setBeginAt(DateHelper.dateToString(f.getBeginTime()));
-            event.setEndAt(DateHelper.dateToString(f.getEndTime()));
+            event.setBeginAt(DateHelper.dateToString(f.getBeginTime(),DateHelper.DATE_FORMAT_YMD));
+            event.setViewUrl(f.getViewUrl());
             events.add(event);
         });
         warpRes.setEvents(events);
