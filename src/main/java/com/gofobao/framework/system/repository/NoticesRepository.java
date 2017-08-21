@@ -1,6 +1,7 @@
 package com.gofobao.framework.system.repository;
 
 import com.gofobao.framework.system.entity.Notices;
+import com.google.common.collect.Lists;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -27,7 +28,7 @@ public interface NoticesRepository extends JpaRepository<Notices, Long>,JpaSpeci
     @Transactional
     @Modifying
     @Query("update Notices n set n.deletedAt =?1  WHERE  n.userId=?2 AND  n.id IN ?3")
-    int delete(Date date,Long userId, List<Long> id);
+    int delete(Date date, Long userId, List<Long> list);
 
     /**
      *批量已读

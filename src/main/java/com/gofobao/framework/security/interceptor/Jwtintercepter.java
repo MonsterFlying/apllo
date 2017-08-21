@@ -23,7 +23,7 @@ public class Jwtintercepter extends HandlerInterceptorAdapter {
             jwtTokenHelper = (JwtTokenHelper) ac.getBean("jwtTokenHelper");
         }
 
-        String token = jwtTokenHelper.getToken(httpServletRequest);
+        String token = jwtTokenHelper.getToken(httpServletRequest,httpServletResponse);
         try {
             jwtTokenHelper.validateSign(token);
         } catch (Exception e) {
