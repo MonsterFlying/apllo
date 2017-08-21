@@ -557,7 +557,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             balanceUnfreezeReq.setChannel(ChannelContant.HTML);
             balanceUnfreezeReq.setOrderId(orderId);
             balanceUnfreezeReq.setOrgOrderId(freezeOrderId);
-            BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
+            BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_UN_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
             if ((ObjectUtils.isEmpty(balanceUnfreezeResp)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
                 log.error("===========================================================================");
                 log.error("(提前结清)即信批次还款解除冻结资金失败：" + balanceUnfreezeResp.getRetMsg());

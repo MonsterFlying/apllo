@@ -697,7 +697,7 @@ public class TransferBizImpl implements TransferBiz {
             balanceUnfreezeReq.setChannel(ChannelContant.HTML);
             balanceUnfreezeReq.setOrderId(newOrderId);
             balanceUnfreezeReq.setOrgOrderId(orderId);
-            BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
+            BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_UN_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
             if ((ObjectUtils.isEmpty(balanceUnfreezeResp)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
                 throw new Exception("购买债权转让解冻资金失败：" + balanceUnfreezeResp.getRetMsg());
             }
