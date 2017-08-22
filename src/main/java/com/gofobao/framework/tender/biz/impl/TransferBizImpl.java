@@ -141,6 +141,18 @@ public class TransferBizImpl implements TransferBiz {
     public static final String LEFT_MONEY = "leftMoney";
 
     /**
+     * 查询债权转让购买记录
+     *
+     * @return
+     */
+    public ResponseEntity<VoViewTransferBuyLog> findTransferBuyLog(VoFindTransferBuyLog voFindTransferBuyLog) {
+        List<TransferBuyLog> transferBuyLogList = new ArrayList<>();
+
+        VoViewTransferBuyLog resp = VoBaseResp.ok("查询成功", VoViewTransferBuyLog.class);
+        return ResponseEntity.ok(resp);
+    }
+
+    /**
      * 结束债权转让
      *
      * @param voEndTransfer

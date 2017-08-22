@@ -23,6 +23,12 @@ import java.util.List;
 public interface TransferBiz {
 
     /**
+     * 查询债权转让购买记录
+     * @return
+     */
+    ResponseEntity<VoViewTransferBuyLog> findTransferBuyLog(VoFindTransferBuyLog voFindTransferBuyLog);
+
+    /**
      * 结束债权转让
      * @param voEndTransfer
      * @return

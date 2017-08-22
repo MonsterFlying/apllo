@@ -146,7 +146,7 @@ public class TransferController {
         return transferBiz.goTenderInfo(tenderId, userId);
     }
 
-    @ApiOperation("购买债券记录")
+    @ApiOperation("购买债权记录")
     @GetMapping("transfer/v2/transfer/user/list/{pageIndex}/{pageSize}/{transferId}")
     public ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(@PathVariable Long transferId,
                                                                           @PathVariable Integer pageIndex,

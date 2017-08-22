@@ -830,8 +830,17 @@ public class AplloApplicationTests {
             log.error("repaymentBizImpl repayDeal send mq exception", e);
         }*/
 
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
+        mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(23), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        log.info(String.format("transferBizImpl buyTransfer send mq %s", GSON.toJson(body)));
+        mqHelper.convertAndSend(mqConfig);
+
         //批次处理
-        batchDeal();
+        //batchDeal();
         //查询存管账户资金信息
         //balanceQuery();
         //查询资金流水
