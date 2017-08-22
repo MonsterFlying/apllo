@@ -1224,7 +1224,7 @@ public class TransferBizImpl implements TransferBiz {
     public List<VoViewBorrowList> findTransferList(VoBorrowListReq voBorrowListReq) {
         Specification<Transfer> ts = Specifications
                 .<Transfer>and()
-                .in("state", ImmutableList.of(TransferContants.TRANSFERIND, TransferContants.TRANSFERIND).toArray())
+                .in("state", ImmutableList.of(TransferContants.TRANSFERIND, TransferContants.TRANSFERED).toArray())
                 .eq("type", 0)
                 .build();
         Pageable pageable = new PageRequest(voBorrowListReq.getPageIndex(), voBorrowListReq.getPageSize(), new Sort(Sort.Direction.ASC, "state"));
