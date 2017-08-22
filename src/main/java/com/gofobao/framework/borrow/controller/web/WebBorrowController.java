@@ -134,6 +134,20 @@ public class WebBorrowController {
         return borrowBiz.cancelBorrow(voCancelBorrow);
     }
 
+    /**
+     * 后台结束借款
+     * @param voPcCancelThirdBorrow
+     * @return
+     */
+    @PostMapping("/pub/pc/borrow/cancelBorrow")
+    @ApiOperation("pc取消借款")
+    public ResponseEntity<VoBaseResp> cancelBorrow(@Valid @ModelAttribute VoPcCancelThirdBorrow voPcCancelThirdBorrow) {
+        try {
+            return borrowBiz.pcCancelBorrow(voPcCancelThirdBorrow);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后再试!"));
+        }
+    }
 
     /**
      * pc 新增净值借款

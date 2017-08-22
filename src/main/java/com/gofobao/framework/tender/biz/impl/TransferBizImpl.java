@@ -1435,6 +1435,7 @@ public class TransferBizImpl implements TransferBiz {
 
         List<TransferBuyLog> transferBuyLogs = transferBuyLogService.findList(tbs);
 
+
         Date nowDate = new Date();
         // 取消借款
         if (!CollectionUtils.isEmpty(transferBuyLogs)) {

@@ -364,6 +364,14 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "结清总共需要还款 " + repayMoney + " 元，您的账户余额不足，请先充值!！"));
         }
+
+        //5.判断是否有在即信处理的债权转让，有不让还款
+        if (checkTransferDealing(borrowId, null)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前还款包含已提交存管系统处理的债权转让，请等待处理完成后在进行操作！"));
+        }
+
         /* 批次号 */
         String batchNo = jixinHelper.getBatchNo();
                 /* 资产记录流水号 */
@@ -1159,7 +1167,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         acqResMap.put("isUserOpen", true);
         acqResMap.put("freezeOrderId", freezeOrderId);
 
-        ResponseEntity<VoBaseResp> conditionResponse = repayConditionCheck(repayUserThirdAccount, borrowRepayment,acqResMap);  // 验证参数
+        ResponseEntity<VoBaseResp> conditionResponse = repayConditionCheck(repayUserThirdAccount, borrowRepayment, acqResMap);  // 验证参数
         if (!conditionResponse.getStatusCode().equals(HttpStatus.OK)) {
             return conditionResponse;
         }
@@ -2016,7 +2024,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param borrowRepayment  还款计划
      * @return
      */
-    private ResponseEntity<VoBaseResp> repayConditionCheck(UserThirdAccount userThirdAccount, BorrowRepayment borrowRepayment, Map<String, Object> acqResMap ) {
+    private ResponseEntity<VoBaseResp> repayConditionCheck(UserThirdAccount userThirdAccount, BorrowRepayment borrowRepayment, Map<String, Object> acqResMap) {
         // 1. 还款用户是否与还款计划用户一致
         if (!userThirdAccount.getUserId().equals(borrowRepayment.getUserId())) {
             log.error("批量还款: 还款前期判断, 还款计划用户与主动请求还款用户不匹配");
@@ -2082,6 +2090,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("还款截止时间为每天晚上9点30!")));
         }
 
+        //5.判断是否有在即信处理的债权转让，有不让还款
+        if (checkTransferDealing(borrowRepayment.getBorrowId(), borrowRepayment.getOrder())) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前还款包含已提交存管系统处理的债权转让，请等待处理完成后在进行操作！"));
+        }
         return ResponseEntity.ok(VoBaseResp.ok("验证成功"));
     }
 
@@ -2212,7 +2226,67 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "账户余额不足，请先充值"));
         }
 
+        //5.判断是否有在即信处理的债权转让，有不让还款
+        if (checkTransferDealing(borrow.getId(), borrowRepayment.getOrder())) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前还款包含已提交存管系统处理的债权转让，请等待处理完成后在进行操作！"));
+        }
         return ResponseEntity.ok(VoBaseResp.ok("垫付成功!"));
+    }
+
+    /**
+     * 检查是否存在处理中债权转让
+     *
+     * @param borrowId
+     * @return
+     */
+    private boolean checkTransferDealing(long borrowId, Integer order) {
+        Specification<Tender> ts = null;
+        if (ObjectUtils.isEmpty(order)) {
+            ts = Specifications
+                    .<Tender>and()
+                    .eq("borrowId", borrowId)
+                    .eq("status", 1)
+                    .eq("order", order) /*单期还款*/
+                    .eq("transferFlag", 1)
+                    .build();
+        } else {
+            ts = Specifications
+                    .<Tender>and()
+                    .eq("borrowId", borrowId)
+                    .eq("status", 1)
+                    .eq("transferFlag", 1)
+                    .build();
+        }
+
+        List<Tender> tenderList = tenderService.findList(ts);
+        if (!CollectionUtils.isEmpty(tenderList))
+
+        {
+            List<Long> tenderIds = tenderList.stream().map(Tender::getId).collect(Collectors.toList());
+            Specification<Transfer> transferSpecification = Specifications
+                    .<Transfer>and()
+                    .in("tenderId", tenderIds.toArray())
+                    .eq("state", 1)
+                    .build();
+            List<Transfer> transferList = transferService.findList(transferSpecification);
+            if (!CollectionUtils.isEmpty(transferList)) {
+                List<Long> transferIds = transferList.stream().map(Transfer::getId).collect(Collectors.toList());
+                //查询即信批次记录
+                Specification<ThirdBatchLog> tbls = Specifications
+                        .<ThirdBatchLog>and()
+                        .in("state", 0, 1)
+                        .in("sourceId", transferIds.toArray())
+                        .eq("type", ThirdBatchLogContants.BATCH_CREDIT_INVEST)
+                        .build();
+                long count = thirdBatchLogService.count(tbls);
+                if (count > 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
