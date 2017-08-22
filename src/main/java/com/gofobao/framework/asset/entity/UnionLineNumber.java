@@ -24,6 +24,7 @@ public class UnionLineNumber {
 
     private String number;
 
+    @Column(name = "bank_id")
     private Integer bank;
 
     @Basic
@@ -32,8 +33,10 @@ public class UnionLineNumber {
 
     private String tel;
 
+    @Column(name = "province_id")
     private Integer province;
 
+    @Column(name = "city_id")
     private Integer city;
 
     private String address;
