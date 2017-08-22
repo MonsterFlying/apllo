@@ -50,13 +50,13 @@ public class WebBankAccountController {
     }
 
     @ApiOperation("省市")
-    @GetMapping("pub/area/list")
+    @GetMapping("pub/area/pc/list")
     public ResponseEntity<VoAreaWarpRes> areaList(@Param("id") Integer id) {
         return areaBiz.list(id);
     }
 
     @ApiOperation("联行号")
-    @GetMapping("pub/unionLineNo/list")
+    @GetMapping("pub/unionLineNo/pc/list")
     public ResponseEntity<UnionLineNoWarpRes> unionLineNOList(VoUnionLineNoReq unionLineNoReq) {
         return lineNumberBiz.list(unionLineNoReq);
     }

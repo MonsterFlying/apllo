@@ -1378,20 +1378,18 @@ public class TransferBizImpl implements TransferBiz {
         borrowInfoRes.setTenderCount(transfer.getTenderCount() + com.gofobao.framework.borrow.contants.BorrowContants.TIME);
         borrowInfoRes.setMoney(StringHelper.formatMon(transfer.getTransferMoney() / 100d));
         borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
-        borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatDouble(transfer.getTransferMoneyYes() / transfer.getTransferMoney().doubleValue(), false)));
+        borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatDouble(transfer.getTransferMoneyYes() / transfer.getTransferMoney().doubleValue(), false))*100);
         //结束时间
         Date endAt = DateHelper.addDays(DateHelper.beginOfDate(transfer.getReleaseAt()), 3 + 1);
         borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
+        borrowInfoRes.setStatus(transfer.getState());
         //进度
         borrowInfoRes.setSurplusSecond(-1L);
         //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
-        Integer status = borrow.getStatus();
-        Date nowDate = new Date(System.currentTimeMillis());
-        Date releaseAt = borrow.getReleaseAt();  //发布时间
-
+        Integer status = transfer.getState();
         if (status == 1) {//招标中
             borrowInfoRes.setStatus(3);
-            if (borrowInfoRes.getSpend() == 1) {
+            if (transfer.getTransferMoneyYes() / transfer.getTransferMoney().doubleValue() == 1) {
                 borrowInfoRes.setStatus(6);
             }
         } else {
@@ -1409,7 +1407,6 @@ public class TransferBizImpl implements TransferBiz {
         Users users = userService.findById(borrow.getUserId());
         borrowInfoRes.setUserName(!StringUtils.isEmpty(users.getUsername()) ? users.getUsername() : users.getPhone());
         borrowInfoRes.setIsNovice(borrow.getIsNovice());
-        borrowInfoRes.setStatus(status);
         borrowInfoRes.setSuccessAt(StringUtils.isEmpty(borrow.getSuccessAt()) ? "" : DateHelper.dateToString(borrow.getSuccessAt()));
         borrowInfoRes.setBorrowName(borrow.getName());
         borrowInfoRes.setIsConversion(borrow.getIsConversion());

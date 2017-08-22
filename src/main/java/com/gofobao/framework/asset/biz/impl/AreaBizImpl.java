@@ -11,6 +11,7 @@ import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -77,18 +78,15 @@ public class AreaBizImpl implements AreaBiz {
         });
 
         //将结果存放redis中
-        String areaJson = new Gson().toJson(areas);
+        String areaJson = new Gson().toJson(areaResList);
         try {
             redisHelper.put("area", areaJson);
         } catch (Exception e) {
             log.error("地区添加到redis报错", areaJson);
         }
-
         Integer finalId1 = id;
-/*        List<AreaRes> areaRes=areas.stream()
-                .filter(w-> w.getPid().intValue()== finalId1.intValue())
-                .collect(Collectors.toList());
-        warpRes.setAreaRes(areas);*/
+        List<AreaRes>areaRes=areaResList.stream().filter(w->w.getPid()== finalId1).collect(Collectors.toList());
+        warpRes.setAreaRes(areaRes);
         return ResponseEntity.ok(warpRes);
     }
 }
