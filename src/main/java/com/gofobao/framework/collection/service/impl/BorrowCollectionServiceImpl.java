@@ -240,8 +240,8 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
             detailRes.setStatusStr(BorrowCollectionContants.STATUS_NO_STR);
             detailRes.setCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAt()));
         }
-        detailRes.setPrincipal(NumberHelper.to2DigitString(borrowCollection.getPrincipal() / 100D));
-        detailRes.setInterest(NumberHelper.to2DigitString( borrowCollection.getInterest()/ 100D));
+        detailRes.setPrincipal(StringHelper.formatMon(borrowCollection.getPrincipal() / 100D));
+        detailRes.setInterest(StringHelper.formatMon( borrowCollection.getInterest()/ 100D));
         return detailRes;
     }
 
