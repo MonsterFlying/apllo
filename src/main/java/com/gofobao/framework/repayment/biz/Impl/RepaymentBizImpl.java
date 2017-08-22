@@ -66,6 +66,7 @@ import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
+import com.gofobao.framework.repayment.contants.RepaymentContants;
 import com.gofobao.framework.repayment.entity.AdvanceAssetChange;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.entity.RepayAssetChange;
@@ -688,7 +689,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 collectionOrderRes.setCollectionId(p.getId());
                 collectionOrderRes.setBorrowName(borrow.getName());
                 collectionOrderRes.setOrder(p.getOrder() + 1);
-                collectionOrderRes.setCollectionMoneyYes(StringHelper.formatMon(p.getRepayMoneyYes() / 100d));
+                if(p.getStatus().intValue()==RepaymentContants.STATUS_YES){
+                    collectionOrderRes.setCollectionMoneyYes(StringHelper.formatMon(p.getRepayMoneyYes() / 100d));
+                }
                 collectionOrderRes.setCollectionMoney(StringHelper.formatMon(p.getRepayMoney() / 100d));
                 collectionOrderRes.setTimeLime(borrow.getTimeLimit());
                 orderResList.add(collectionOrderRes);
@@ -700,7 +703,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             collectionOrder.setOrder(orderResList.size());
             //已还款
             long moneyYesSum = repaymentList.stream()
-                    .filter(p -> p.getStatus() == 1)
+                    .filter(p -> p.getStatus() == RepaymentContants.STATUS_YES)
                     .mapToLong(w -> w.getRepayMoneyYes())
                     .sum();
             collectionOrder.setSumCollectionMoneyYes(StringHelper.formatMon(moneyYesSum / 100d));

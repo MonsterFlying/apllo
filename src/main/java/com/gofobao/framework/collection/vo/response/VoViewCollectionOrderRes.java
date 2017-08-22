@@ -15,7 +15,7 @@ public class VoViewCollectionOrderRes {
     private String collectionMoney;
 
     @ApiModelProperty("已还本息(元)")
-    private String collectionMoneyYes;
+    private String collectionMoneyYes="0";
 
     @ApiModelProperty("标名")
     private String borrowName;

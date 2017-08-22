@@ -75,14 +75,20 @@ public class AreaBizImpl implements AreaBiz {
             item.setPid(p.getPid());
             areaResList.add(item);
         });
+
         //将结果存放redis中
-        String areaJson = new Gson().toJson(areaResList);
+        String areaJson = new Gson().toJson(areas);
         try {
             redisHelper.put("area", areaJson);
         } catch (Exception e) {
             log.error("地区添加到redis报错", areaJson);
         }
-        warpRes.setAreaRes(areaResList);
+
+        Integer finalId1 = id;
+/*        List<AreaRes> areaRes=areas.stream()
+                .filter(w-> w.getPid().intValue()== finalId1.intValue())
+                .collect(Collectors.toList());
+        warpRes.setAreaRes(areas);*/
         return ResponseEntity.ok(warpRes);
     }
 }
