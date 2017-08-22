@@ -1801,6 +1801,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
             batchAssetChangeItem.setToUserId(userId);  // 出借人
             batchAssetChangeItem.setMoney(repayAssetChange.getPrincipal() + repayAssetChange.getInterest());   // 本金加利息
             batchAssetChangeItem.setInterest(repayAssetChange.getInterest());  // 利息
+            batchAssetChangeItem.setCreatedAt(nowDate);
+            batchAssetChangeItem.setUpdatedAt(nowDate);
             batchAssetChangeItem.setRemark(String.format("收到客户对借款[%s]第%s期的还款", borrow.getName(), (borrowRepayment.getOrder() + 1)));
             batchAssetChangeItemService.save(batchAssetChangeItem);
             // 扣除利息管理费
