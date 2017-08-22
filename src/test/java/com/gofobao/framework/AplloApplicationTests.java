@@ -633,8 +633,7 @@ public class AplloApplicationTests {
             childTender.setParentId(parentTender.getId());
             childTender.setTransferBuyId(transferBuyLog.getId());
             childTender.setAlreadyInterest(transferBuyLog.getAlreadyInterest());
-            childTender.setThirdTransferOrderId(transferBuyLog.getThirdTransferOrderId());
-            childTender.setThirdTransferFlag(transferBuyLog.getThirdTransferFlag());
+            childTender.setThirdTenderOrderId(transferBuyLog.getThirdTransferOrderId());
             childTender.setAuthCode(transferBuyLog.getTransferAuthCode());
             childTender.setCreatedAt(nowDate);
             childTender.setUpdatedAt(nowDate);
@@ -716,21 +715,6 @@ public class AplloApplicationTests {
     @Autowired
     CertHelper certHelper;
 
-    public void saveThirdTransferAuthCode(List<CreditInvestRun> creditInvestRunList) {
-        List<String> orderIds = creditInvestRunList.stream().map(creditInvestRun -> creditInvestRun.getOrderId()).collect(Collectors.toList());
-        Specification<Tender> ts = Specifications
-                .<Tender>and()
-                .in("thirdTransferOrderId", orderIds.toArray())
-                .build();
-
-        List<Tender> tenderList = tenderService.findList(ts);
-        Map<String, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getThirdTransferOrderId, Function.identity()));
-        creditInvestRunList.stream().forEach(creditInvestRun -> {
-            String orderId = creditInvestRun.getOrderId();
-            Tender tender = tenderMap.get(orderId);
-            tender.setTransferAuthCode(creditInvestRun.getAuthCode());
-        });
-    }
 
     public void balanceQuery() {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
@@ -829,15 +813,6 @@ public class AplloApplicationTests {
         } catch (Throwable e) {
             log.error("repaymentBizImpl repayDeal send mq exception", e);
         }*/
-
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
-        mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(23), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        log.info(String.format("transferBizImpl buyTransfer send mq %s", GSON.toJson(body)));
-        mqHelper.convertAndSend(mqConfig);
 
         //批次处理
         //batchDeal();

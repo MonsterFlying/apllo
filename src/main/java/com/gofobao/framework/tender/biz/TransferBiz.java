@@ -26,7 +26,7 @@ public interface TransferBiz {
      * 查询债权转让购买记录
      * @return
      */
-    ResponseEntity<VoViewTransferBuyLog> findTransferBuyLog(VoFindTransferBuyLog voFindTransferBuyLog);
+    ResponseEntity<VoViewTransferBuyLogList> findTransferBuyLog(VoFindTransferBuyLog voFindTransferBuyLog);
 
     /**
      * 结束债权转让

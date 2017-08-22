@@ -1766,7 +1766,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             repay.setTxFeeIn(StringHelper.formatDouble(inFee, 100, false));
             repay.setTxFeeOut(StringHelper.formatDouble(outFee, 100, false));
             repay.setProductId(borrow.getProductId());
-            repay.setAuthCode(tender.isTransferTender() ? tender.getTransferAuthCode() : tender.getAuthCode());
+            repay.setAuthCode(tender.getAuthCode());
             UserThirdAccount userThirdAccount = userThirdAccountMap.get(tender.getUserId());
             Preconditions.checkNotNull(userThirdAccount, "投资人未开户!");
             repay.setForAccountId(userThirdAccount.getAccountId());
