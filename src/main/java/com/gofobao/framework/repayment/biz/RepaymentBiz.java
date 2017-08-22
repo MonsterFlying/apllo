@@ -44,7 +44,6 @@ public interface RepaymentBiz {
      * @return
      * @throws Exception
      */
-    @Transactional(rollbackFor = Exception.class)
     ResponseEntity<VoBaseResp> repayAll(long borrowId) throws Exception;
 
 
@@ -150,11 +149,4 @@ public interface RepaymentBiz {
      * @throws Exception
      */
     ResponseEntity<VoBaseResp> newAdvance(VoAdvanceReq voAdvanceReq) throws Exception;
-
-    /**
-     * 批次融资人还担保账户垫款
-     *
-     * @param voRepayReq
-     */
-    ResponseEntity<VoBaseResp> thirdBatchRepayBail(VoRepayReq voRepayReq) throws Exception;
 }

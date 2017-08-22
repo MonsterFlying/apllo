@@ -67,13 +67,10 @@ public class RepaymentListener {
         } else if (tag.equals(MqTagEnum.REPAY_ADVANCE.getValue())) {
             if (!StringUtils.isEmpty(repaymentId)) {
                 BorrowRepayment borrowRepayment = borrowRepaymentService.findById(NumberHelper.toLong(repaymentId));
-                VoRepayReq voRepayReq = new VoRepayReq();
-                voRepayReq.setRepaymentId(borrowRepayment.getId());
-                voRepayReq.setUserId(borrowRepayment.getUserId());
-                voRepayReq.setInterestPercent(1d);
-                voRepayReq.setIsUserOpen(true);
+                VoAdvanceReq voAdvanceReq = new VoAdvanceReq();
+                voAdvanceReq.setRepaymentId(borrowRepayment.getId());
                 try {
-                    repaymentBiz.thirdBatchRepayBail(voRepayReq);
+                    repaymentBiz.newAdvance(voAdvanceReq);
                 } catch (Exception e) {
                     log.error("RepaymentListener process error:", e);
                 }
