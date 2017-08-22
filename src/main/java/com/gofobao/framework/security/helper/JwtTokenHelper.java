@@ -209,10 +209,18 @@ public class JwtTokenHelper implements Serializable {
     }
 
     public String getToken(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws Exception {
+        //从头部中获取token
         String authToken = httpServletRequest.getHeader(this.tokenHeader);
         if(!StringUtils.isEmpty(authToken) && (authToken.contains(prefix))){
             return authToken.substring(7) ;
+        }else {
+            //从参数中获取token
+            String requestToken = httpServletRequest.getParameter(this.tokenHeader);
+            if (!StringUtils.isEmpty(requestToken) && requestToken.contains(prefix)) {
+                return authToken.substring(7);
+            }
         }
+        //该用户没有登录非法访问
         httpServletResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         httpServletResponse.setCharacterEncoding("utf-8");
         httpServletResponse.setContentType("text/html; charset=utf-8");
