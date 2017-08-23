@@ -23,6 +23,9 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -43,9 +46,12 @@ public class DBInitTests {
 
     @Test
     public void contextLoads() {
-        int pageSize = 2000, pageIndex = 1, realSize = 0;
+        int pageSize = 2000, pageIndex = 0, realSize = 0;
         // 查询标的记录
         do {
+            log.info("=========================================");
+            log.info("进入主循环");
+            log.info("=========================================");
             Specification<Borrow> borrowSpecification = Specifications.<Borrow>and()
                     .build();
             Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "id")));
@@ -61,23 +67,42 @@ public class DBInitTests {
             List<Tender> allTender = new ArrayList<>() ;
             List<BorrowRepayment> allBorrowRepaymentList = new ArrayList<>() ;
             List<BorrowCollection> allBorrowCollectionList = new ArrayList<>() ;
-            for (Borrow borrow : borrowList) {
-                long borrowId = borrow.getId();
-                int borrowState = 0;
-                if (borrow.getSuccessAt() == null) {
-                    borrowState = 0;
-                } else if (borrow.getCloseAt() != null) {
-                    borrowState = 2;
-                } else {
-                    borrowState = 1;
-                }
+            Set<Long> borrowIdSet = borrowList.stream().map(borrow -> borrow.getId()).collect(Collectors.toSet());
+            // 查询还款记录
+            Specification<BorrowRepayment> borrowRepaymentSpecification = Specifications.<BorrowRepayment>and()
+                    .in("borrowId", borrowIdSet.toArray())
+                    .build();
 
+            List<BorrowRepayment> borrowRepaymentsAll = borrowRepaymentService.findList(borrowRepaymentSpecification);
+            Map<Long, List<BorrowRepayment>> borrowRepaymentMap = borrowRepaymentsAll.stream().collect(Collectors.groupingBy(BorrowRepayment::getBorrowId));
+
+
+
+            // 查询投标信息
+            Specification<Tender> tenderSpecification = Specifications.<Tender>and()
+                    .in("borrowId", borrowIdSet.toArray())
+                    .build();
+
+            List<Tender> tenderAll = tenderService.findList(tenderSpecification) ;
+            Map<Long, List<Tender>> tenderMap = tenderAll.stream().collect(Collectors.groupingBy(Tender::getBorrowId));
+            for (Borrow borrow : borrowList) {
+                log.info("=========================================");
+                log.info("进入标循环" + borrow.getId());
+                log.info("=========================================");
+                long borrowId = borrow.getId();
+                int borrowState;
+                if( borrow.getCloseAt() != null){
+                    borrowState = 3 ;  // 已结清
+                }else {
+                    if(borrow.getSuccessAt() != null && borrow.getStatus() == 3){
+                        borrowState = 2 ; // 回款中
+                    }else{
+                        borrowState = 1 ; // 投标中
+                    }
+                }
                 Long repaymentUserId = borrow.getUserId();
                 // 查询还款记录
-                Specification<BorrowRepayment> borrowRepaymentSpecification = Specifications.<BorrowRepayment>and()
-                        .eq("borrowId", borrowId)
-                        .build();
-                List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(borrowRepaymentSpecification);
+                List<BorrowRepayment> borrowRepaymentList = borrowRepaymentMap.get(borrowId);
                 if (!CollectionUtils.isEmpty(borrowRepaymentList)) {
                     for (BorrowRepayment borrowRepayment : borrowRepaymentList) {
                         borrowRepayment.setUserId(repaymentUserId);
@@ -85,11 +110,7 @@ public class DBInitTests {
                     allBorrowRepaymentList.addAll(borrowRepaymentList) ;
                 }
 
-                // 查询投标信息
-                Specification<Tender> tenderSpecification = Specifications.<Tender>and()
-                        .eq("borrowId", borrowId)
-                        .build();
-                List<Tender> tenderList = tenderService.findList(tenderSpecification);
+                List<Tender> tenderList = tenderMap.get(borrowId);
                 if (!CollectionUtils.isEmpty(tenderList)) {
                     for (Tender tender : tenderList) {
                         long tenderUserId = tender.getUserId();

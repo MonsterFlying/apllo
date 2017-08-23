@@ -63,7 +63,7 @@ jixin: #银行存管
   version: 10 #版本号
   instCode: "00960001" #机构代码
   bankCode: "30050000" #交易机构代码
-  query-time-init: "20170418" # 与存管系统查询时间
+  query-time-init: "20170419" # 与存管系统查询时间
 gofobao:
   dev: true # 开发环境
   javaDomain:  http://lang.hk1.mofasuidao.cn
