@@ -16,7 +16,6 @@ import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
-import com.gofobao.framework.api.model.batch_credit_invest.CreditInvestRun;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
@@ -56,7 +55,6 @@ import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
-import com.gofobao.framework.migrate.MigrateBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.gofobao.framework.tender.entity.Tender;
@@ -132,9 +130,6 @@ public class AplloApplicationTests {
     private BorrowCollectionService borrowCollectionService;
 
     @Autowired
-    MigrateBiz migrateBiz;
-
-    @Autowired
     AssetService assetService;
     @Autowired
     UserThirdAccountService userThirdAccountService;
@@ -148,10 +143,6 @@ public class AplloApplicationTests {
     @Autowired
     MarketingProcessBiz marketingProcessBiz;
 
-    @Test
-    public void testMigrateBiz() {
-        migrateBiz.getMemberMigrateFile();
-    }
 
     /**
      * 发送注册红包

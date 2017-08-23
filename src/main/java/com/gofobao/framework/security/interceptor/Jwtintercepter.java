@@ -5,6 +5,7 @@ import com.gofobao.framework.security.exception.LoginException;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
@@ -24,6 +25,9 @@ public class Jwtintercepter extends HandlerInterceptorAdapter {
         }
 
         String token = jwtTokenHelper.getToken(httpServletRequest,httpServletResponse);
+        if(StringUtils.isEmpty(token)){
+            return false;
+        }
         try {
             jwtTokenHelper.validateSign(token);
         } catch (Exception e) {
