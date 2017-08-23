@@ -1360,15 +1360,14 @@ public class TransferBizImpl implements TransferBiz {
             voViewBorrowList.setSurplusSecond(0L);
             //进度
             voViewBorrowList.setSpend(0d);
-
-            if (item.getState() == 1) {  //债权转让进行中
-                double spend = Double.parseDouble(StringHelper.formatMon(item.getTransferMoneyYes().doubleValue() / item.getTransferMoney()));
-                if (spend == 1) {
+            //债权转让进行中
+            if (item.getState() == 1) {
+                if (item.getTransferMoneyYes()/item.getTransferMoney()==1) {
                     voViewBorrowList.setStatus(6);
                 } else {
                     voViewBorrowList.setStatus(3);
                 }
-                voViewBorrowList.setSpend(spend);
+
             } else { // 回款中
                 if (ObjectUtils.isEmpty(borrow.getCloseAt())) {
                     voViewBorrowList.setStatus(2);
@@ -1378,7 +1377,8 @@ public class TransferBizImpl implements TransferBiz {
                     voViewBorrowList.setSpend(1D);
                 }
             }
-
+            double spend = Double.parseDouble(StringHelper.formatMon(item.getTransferMoneyYes().doubleValue() / item.getTransferMoney()));
+            voViewBorrowList.setSpend(spend);
             Users user = userRef.get(item.getUserId());
             voViewBorrowList.setUserName(!StringUtils.isEmpty(user.getUsername()) ? user.getUsername() : user.getPhone());
             voViewBorrowList.setType(5);
@@ -1444,7 +1444,7 @@ public class TransferBizImpl implements TransferBiz {
         Integer status = transfer.getState();
         if (status == 1) {//招标中
             borrowInfoRes.setStatus(3);
-            if (transfer.getTransferMoneyYes() / transfer.getTransferMoney().doubleValue() == 1) {
+            if (transfer.getTransferMoneyYes() / transfer.getTransferMoney() == 1) {
                 borrowInfoRes.setStatus(6);
             }
         } else {
