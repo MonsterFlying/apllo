@@ -321,7 +321,7 @@ public class TransferProvider {
         batchAssetChange = batchAssetChangeService.save(batchAssetChange);
 
         long batchAssetChangeId = batchAssetChange.getId();
-                // 债权转让人收款 = 转让本金加应收利息
+        // 债权转让人收款 = 转让本金加应收利息
         BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
         batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
         batchAssetChangeItem.setState(0);
@@ -372,13 +372,13 @@ public class TransferProvider {
         batchAssetChangeItemService.save(batchAssetChangeItem);
 
         for (TransferBuyLog transferBuyLog : transferBuyLogList) {
-            batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
             // 扣除债权转让购买人冻结资金
             batchAssetChangeItem = new BatchAssetChangeItem();
             batchAssetChangeItem.setState(0);
             batchAssetChangeItem.setType(AssetChangeTypeEnum.batchBuyClaims.getLocalType());
             batchAssetChangeItem.setUserId(transferBuyLog.getUserId());
             batchAssetChangeItem.setToUserId(transfer.getUserId());
+            batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
             batchAssetChangeItem.setMoney(transferBuyLog.getValidMoney());
             batchAssetChangeItem.setRemark(String.format("购买债权[%s], 成功扣除资金%s元", transfer.getTitle(),
                     StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100D, true)));

@@ -46,7 +46,8 @@ qiniu:
     ak : yevGNMoheNL4EGIencz8E-ohrPzMqLwchW9SvX9e
     sk : GjGZAJBUpe8UzPoWmKeKBPSi7Kq_IshmuW-UC89o
 
-
+server:
+  port: 8080
 #风车理财
 windmill:
   des-key: 2l0IYbNnRcShWOM9Q5Ej0A3gCEP07LBS #des加密key值
@@ -60,7 +61,11 @@ jixin: #银行存管
   keysPassword: guangfubao_uat@2016 #私钥密码
   url: http://uat.gofobao.com #即信服务器路径
   htmlUrl: https://access.credit2go.cn #即信服务器路径
+  file-url: https://uat.credit2go.cn/escrow/file/download #文件请求下载链接
+  save-file-path: D:/statistice/   #文件本地保存的路径
   version: 10 #版本号
+  product-no: "0105" # 产品编号
+  bank-no: "3005" #产品编号
   instCode: "00960001" #机构代码
   bankCode: "30050000" #交易机构代码
   query-time-init: "20170418" # 与存管系统查询时间
