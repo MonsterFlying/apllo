@@ -22,10 +22,10 @@ public class RepaymentOrderDetail {
     @ApiModelProperty("应还本息")
     private String collectionMoney;
 
-    @ApiModelProperty("应还本金")
+    @ApiModelProperty("已还本金")
     private String principal;
 
-    @ApiModelProperty("应还利息")
+    @ApiModelProperty("已还利息")
     private String interest;
 
     @ApiModelProperty("项目名")
@@ -34,7 +34,7 @@ public class RepaymentOrderDetail {
     @ApiModelProperty("状态描述")
     private String statusStr;
 
-    @ApiModelProperty("还款状态 0未还 1已还")
+    @ApiModelProperty("还款状态： 0：未还 1已还")
     private Integer status;
 
 

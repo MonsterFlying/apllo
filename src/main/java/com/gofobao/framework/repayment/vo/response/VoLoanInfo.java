@@ -20,13 +20,13 @@ public class VoLoanInfo {
     @ApiModelProperty("逾期天数")
     private Integer lateDays;
 
-    @ApiModelProperty("status==0:应还本息; status==1： 以还本息")
+    @ApiModelProperty("status==0:应还本息; status==1： 已还本息")
     private String repayMoney;
 
-    @ApiModelProperty("status==0:应还本金; status==1 以还本金")
+    @ApiModelProperty("status==0:待还本金; status==1 已还本金")
     private String principal;
 
-    @ApiModelProperty("status==0:应还利息; status==1 以还利息 ")
+    @ApiModelProperty("status==0:待还利息; status==1 已还利息 ")
     private String interest;
 
     @ApiModelProperty("状态")

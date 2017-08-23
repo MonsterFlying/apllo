@@ -327,13 +327,13 @@ public class InvestServiceImpl implements InvestService {
                     .mapToLong(s -> s.getPrincipal())
                     .sum();
             //应收利息
-           Long receivableInterest = borrowCollectionList.stream()
-                    .mapToLong(s -> s.getInterest())
-                    .sum();
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(tender.getValidMoney()), new Double(borrow.getApr()), borrow.getTimeLimit(), borrow.getSuccessAt());
+            Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
+            Integer earnings = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("earnings")));
 
             item.setInterest(StringHelper.formatMon(interest / 100D));
             item.setPrincipal(StringHelper.formatMon(principal / 100D));
-            item.setReceivableInterest(StringHelper.formatMon(receivableInterest / 100D));
+            item.setReceivableInterest(StringHelper.formatMon(earnings / 100D));
         }
 
         return item;
