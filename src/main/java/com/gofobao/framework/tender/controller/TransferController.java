@@ -32,6 +32,18 @@ public class TransferController {
     private ThymeleafHelper thymeleafHelper;
 
     /**
+     * 查询债权转让购买记录
+     *
+     * @return
+     */
+    @ApiOperation("查询债权转让购买记录")
+    @PostMapping("transfer/v2/buy/list")
+    public ResponseEntity<VoViewTransferBuyLogList> findTransferBuyLog(@Valid @ModelAttribute VoFindTransferBuyLog voFindTransferBuyLog, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        voFindTransferBuyLog.setUserId(userId);
+        return transferBiz.findTransferBuyLog(voFindTransferBuyLog);
+    }
+
+    /**
      * 新版结束债权
      *
      * @param voEndTransfer
@@ -72,7 +84,7 @@ public class TransferController {
      */
     @ApiOperation("购买债权转让")
     @PostMapping("transfer/v2/new/transfer/buy")
-    public ResponseEntity<VoBaseResp> buyTransfer(@Valid  @ModelAttribute VoBuyTransfer voBuyTransfer, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoBaseResp> buyTransfer(@Valid @ModelAttribute VoBuyTransfer voBuyTransfer, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         try {
             voBuyTransfer.setUserId(userId);
             return transferBiz.buyTransfer(voBuyTransfer);
@@ -151,7 +163,7 @@ public class TransferController {
     public ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(@PathVariable Long transferId,
                                                                           @PathVariable Integer pageIndex,
                                                                           @PathVariable Integer pageSize) {
-        VoTransferUserListReq transferUserListReq=new VoTransferUserListReq();
+        VoTransferUserListReq transferUserListReq = new VoTransferUserListReq();
         transferUserListReq.setPageSize(pageSize);
         transferUserListReq.setPageIndex(pageIndex);
         transferUserListReq.setTransferId(transferId);

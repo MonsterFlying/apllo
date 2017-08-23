@@ -681,8 +681,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("103129");
-        batchDetailsQueryReq.setBatchTxDate("20170821");
+        batchDetailsQueryReq.setBatchNo("165416");
+        batchDetailsQueryReq.setBatchTxDate("20170822");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -843,7 +843,7 @@ public class AplloApplicationTests {
         //批次状态查询
         //batchQuery();
         //批次详情查询
-        //batchDetailsQuery();
+        batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调
@@ -871,7 +871,7 @@ public class AplloApplicationTests {
             repaymentBiz.newRepay(voRepayReq);
         } catch (Exception e) {
             e.printStackTrace();
-        } 【原始技术】澳洲小哥真人MC：篱笆泥墙（1）
+        }
 
         */
 

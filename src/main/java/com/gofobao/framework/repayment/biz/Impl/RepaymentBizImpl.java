@@ -2949,6 +2949,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
     }
 
+    /**
+     * 结束垫付债权
+     * @param parentBorrow
+     */
     private void endAdvanceCredit(Borrow parentBorrow) {
         //推送队列结束债权
         MqConfig mqConfig = new MqConfig();

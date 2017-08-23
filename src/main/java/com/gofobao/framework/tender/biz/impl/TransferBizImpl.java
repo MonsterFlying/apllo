@@ -174,6 +174,7 @@ public class TransferBizImpl implements TransferBiz {
             Specification<Transfer> ts = Specifications
                     .<Transfer>and()
                     .in("id", transferIds.toArray())
+                    .eq("state",0)
                     .build();
             List<Transfer> transferList = transferService.findList(ts);
             Preconditions.checkState(!CollectionUtils.isEmpty(transferList), "债权转让不存在!");
