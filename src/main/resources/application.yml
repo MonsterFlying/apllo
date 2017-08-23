@@ -91,7 +91,7 @@ gofobao:
     AppKey: ce7616b0fc76f923a1b53b30
     MasterSecre : d4b742ae7cc3e4be1d6a95c3
 logging:
-  file: /tmp/log
+  file: /var/logs/gofobao/log
   pattern:
     console: "%d %-5level %logger : %msg%n"
   level:
