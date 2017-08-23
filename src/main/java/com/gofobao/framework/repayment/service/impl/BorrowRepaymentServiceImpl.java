@@ -216,7 +216,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         Borrow borrow = borrowRepository.findOne(borrowId);
         Long interest=0L;
         Long principal=0L;
-        if (borrowRepayment.getStatus() == 0) {
+        if (borrowRepayment.getStatus() == RepaymentContants.STATUS_NO) {
             detailRes.setRepayAt(DateHelper.dateToString(borrowRepayment.getRepayAt(),DateHelper.DATE_FORMAT_YMD));
             detailRes.setStatusStr(RepaymentContants.STATUS_NO_STR);
         } else {

@@ -8,7 +8,7 @@ import lombok.Data;
  * Created by admin on 2017/6/2.
  */
 @Data
-@ApiModel("已回款列表")
+@ApiModel("回款列表")
 public class ReturnedMoney {
 
     @ApiModelProperty("逾期天数")
@@ -23,7 +23,7 @@ public class ReturnedMoney {
     @ApiModelProperty("期数")
     private Integer order;
 
-    @ApiModelProperty("应收本金")
+    @ApiModelProperty("应收本息")
     private String collectionMoney;
 
     @ApiModelProperty("当回款状态为：0:待收本金;  当回款状态为：1 ：已收本金")
