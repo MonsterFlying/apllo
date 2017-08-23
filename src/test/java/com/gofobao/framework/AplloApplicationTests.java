@@ -16,7 +16,6 @@ import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
-import com.gofobao.framework.api.model.batch_credit_invest.CreditInvestRun;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
@@ -129,7 +128,6 @@ public class AplloApplicationTests {
     JixinTxDateHelper jixinTxDateHelper;
     @Autowired
     private BorrowCollectionService borrowCollectionService;
-
 
     @Autowired
     AssetService assetService;
@@ -310,20 +308,9 @@ public class AplloApplicationTests {
 
     public static void main(String[] args) {
         List<Long> sumPrincipals = new ArrayList<>(2);
-        List<Long> sumInterests = new ArrayList<>(2);
+        List<Long> sumInterests = new ArrayList<>();
+        long i = (sumInterests.size() - 2) != 1 ? 0 : sumPrincipals.get(2);
 
-        for (int i = 0;i <2;i++) {
-            for (int j = 0; j < 2; j++) {
-                if (sumPrincipals.size()!=2){
-                    sumPrincipals.add(0+100l);
-                }else {
-                    sumPrincipals.set(j,sumPrincipals.get(j) + 100);
-                }
-            }
-        }
-
-        System.out.println(sumPrincipals.get(0));
-        System.out.println(sumPrincipals.get(1));
         /*BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
                 NumberHelper.toDouble(StringHelper.toString(999.9)),
                 NumberHelper.toDouble(StringHelper.toString(2100)), 3, new Date());
@@ -685,8 +672,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("095111");
-        batchDetailsQueryReq.setBatchTxDate("20170823");
+        batchDetailsQueryReq.setBatchNo("165416");
+        batchDetailsQueryReq.setBatchTxDate("20170822");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");

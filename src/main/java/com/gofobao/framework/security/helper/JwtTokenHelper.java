@@ -31,7 +31,7 @@ public class JwtTokenHelper implements Serializable {
     static final String CLAIM_KEY_AUDIENCE = "audience";
     static final String CLAIM_KEY_CREATED = "created";
     static final String CLAIM_KEY_ID = "id";
-    static final String CLAIM_KEY_TYPE = "type" ;
+    static final String CLAIM_KEY_TYPE = "type";
 
     private static final String AUDIENCE_UNKNOWN = "UNKNOWN";
     private static final String AUDIENCE_PC = "PC";
@@ -50,12 +50,12 @@ public class JwtTokenHelper implements Serializable {
     private Long expiration;
 
     @Value("${jwt.header}")
-    private String tokenHeader ;
+    private String tokenHeader;
 
     @Value("${jwt.prefix}")
-    private String prefix ;
+    private String prefix;
 
-    public String getUsernameFromToken(String token){
+    public String getUsernameFromToken(String token) {
         String username;
         try {
             final Claims claims = getClaimsFromToken(token);
@@ -81,7 +81,7 @@ public class JwtTokenHelper implements Serializable {
         String type;
         try {
             final Claims claims = getClaimsFromToken(token);
-            type = (String)claims.get(CLAIM_KEY_TYPE) ;
+            type = (String) claims.get(CLAIM_KEY_TYPE);
         } catch (Throwable e) {
             type = null;
         }
@@ -172,7 +172,7 @@ public class JwtTokenHelper implements Serializable {
         claims.put(CLAIM_KEY_ID, user.getId());
         claims.put(CLAIM_KEY_AUDIENCE, generateAudience(source));
         claims.put(CLAIM_KEY_CREATED, new Date());
-        claims.put(CLAIM_KEY_TYPE, user.getType()) ;
+        claims.put(CLAIM_KEY_TYPE, user.getType());
         return generateToken(claims);
     }
 
@@ -211,9 +211,9 @@ public class JwtTokenHelper implements Serializable {
     public String getToken(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws Exception {
         //从头部中获取token
         String authToken = httpServletRequest.getHeader(this.tokenHeader);
-        if(!StringUtils.isEmpty(authToken) && (authToken.contains(prefix))){
-            return authToken.substring(7) ;
-        }else {
+        if (!StringUtils.isEmpty(authToken) && (authToken.contains(prefix))) {
+            return authToken.substring(7);
+        } else {
             //从参数中获取token
             String requestToken = httpServletRequest.getParameter(this.tokenHeader);
             if (!StringUtils.isEmpty(requestToken) && requestToken.contains(prefix)) {
@@ -224,18 +224,18 @@ public class JwtTokenHelper implements Serializable {
         httpServletResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         httpServletResponse.setCharacterEncoding("utf-8");
         httpServletResponse.setContentType("text/html; charset=utf-8");
-        PrintWriter pw= httpServletResponse.getWriter();
-        Map<String,Object>resultMap= Maps.newHashMap();
-        Map<String,Object>result=Maps.newHashMap();
-        resultMap.put("code",5);
-        resultMap.put("msg","用户未登录");
-        result.put("state",resultMap);
+        PrintWriter pw = httpServletResponse.getWriter();
+        Map<String, Object> resultMap = Maps.newHashMap();
+        Map<String, Object> result = Maps.newHashMap();
+        resultMap.put("code", 5);
+        resultMap.put("msg", "用户未登录");
+        result.put("state", resultMap);
         pw.write(new Gson().toJson(result));
-        log.info("记录非法访问ip:"+ IpHelper.getIpAddress(httpServletRequest));
-        throw new Exception("非法访问");
+        log.info("记录非法访问ip:" + IpHelper.getIpAddress(httpServletRequest));
+        return null;
     }
 
-    public void validateSign(String authToken) throws  Exception{
+    public void validateSign(String authToken) throws Exception {
         // 从redis 中获取
         Long userId = getUserIdFromToken(authToken);
         String redisToken = redisHelper.get(String.format("JWT_TOKEN_%s", userId), null);
