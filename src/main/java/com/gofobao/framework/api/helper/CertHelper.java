@@ -2,6 +2,7 @@ package com.gofobao.framework.api.helper;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Base64Utils;
 import org.springframework.util.StringUtils;
@@ -29,16 +30,17 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Slf4j
 public class CertHelper {
     private static final String ENCODING = "UTF-8";
-
     private static final String ALGORITHM = "SHA1withRSA";// 加密算法  or "MD5withRSA"
-    @Value("${jixin.keysPath}")
-    String keyPath;
+
+    @Value(value = "classpath:certs/guangfubao_uat.p12")
+    Resource p12Resource;  // p12 文件
 
     @Value("${jixin.keysPassword}")
     String keyPassword;
 
-    @Value("${jixin.crtPath}")
-    String certPath;
+    @Value(value = "classpath:certs/fdep.crt")
+    Resource crtResource;  // 即信公钥文件
+
 
     /**
      * 公约
@@ -52,27 +54,23 @@ public class CertHelper {
     /**
      * 验证公钥
      */
-    private PublicKey verifyPublicKey ;
+    private PublicKey verifyPublicKey;
 
     @PostConstruct
     public void init() {
         // 初始化公私钥
-        checkNotNull(keyPath, "###即信公钥路径未配置");
+        checkNotNull(p12Resource, "###即信公钥文件不存在");
         checkNotNull(keyPassword, "###即信公钥密码未配置");
-        checkNotNull(certPath, "###即信服务器证书为空");
-
-        File keyFile = new File(keyPath);
-        checkArgument(keyFile.exists(), "即信公钥路劲中的文件不存在");
+        checkNotNull(crtResource, "###即信服务器证书文件为空");
         KeyStore keyStore = null;
         char[] pwds = keyPassword.toCharArray();
-        try (InputStream is = new FileInputStream(keyFile)) {
+        try (InputStream is = p12Resource.getInputStream()) {
             keyStore = KeyStore.getInstance("PKCS12");
             keyStore.load(is, pwds);
         } catch (Throwable e) {
             log.error("加载即信公私钥异常", e);
             return;
         }
-
 
         try {
             Enumeration<String> aliases = keyStore.aliases();
@@ -98,12 +96,10 @@ public class CertHelper {
             throw new RuntimeException(e);
         }
 
-        File certFile = new File(certPath) ;
-        checkArgument(certFile.exists(), "即信验证参数公钥路劲中的文件不存在");
-        try (InputStream is = new FileInputStream(certFile)) {
+        try (InputStream is = crtResource.getInputStream()) {
             CertificateFactory factory = CertificateFactory.getInstance("X.509");
             Certificate certificate = factory.generateCertificate(is);
-            verifyPublicKey = certificate.getPublicKey() ;
+            verifyPublicKey = certificate.getPublicKey();
             log.info("即信验证参数公私钥初始成功");
         } catch (Throwable e) {
             log.error("即信验证参数公钥异常", e);
@@ -120,7 +116,7 @@ public class CertHelper {
     public String doSign(String unSign) {
         checkNotNull(unSign, "待加密字符串为空");
         log.info(String.format("待签名字符串: %s", unSign));
-        String sign = null ;
+        String sign = null;
         try {
             byte[] dataBytes = unSign.getBytes(ENCODING);
             Signature signature = Signature.getInstance(ALGORITHM);
@@ -134,19 +130,20 @@ public class CertHelper {
             return null;
         }
 
-        return sign ;
+        return sign;
     }
 
 
     /**
      * 验签
+     *
      * @param unSignData 待验签字符串
-     * @param sign 签名
+     * @param sign       签名
      * @return true 通过， false 未通过
      */
     public boolean verify(String unSignData, String sign) {
-        checkNotNull(unSignData, "待验签字符串为空") ;
-        checkNotNull(sign, "签名为空") ;
+        checkNotNull(unSignData, "待验签字符串为空");
+        checkNotNull(sign, "签名为空");
         try {
             byte[] signBytes = Base64Utils.decodeFromString(sign);
             byte[] unSignBytes = unSignData.getBytes(ENCODING);

@@ -458,7 +458,7 @@ public class ThirdBatchProvider {
                     .build();
             List<BorrowCollection> successBorrowCollectionList = borrowCollectionService.findList(bcs);
             successBorrowCollectionList.stream().forEach(borrowCollection -> {
-                borrowCollection.setThirdTransferFlag(true);
+               // borrowCollection.setThirdTransferFlag(true);
             });
             borrowCollectionService.save(successBorrowCollectionList);
         }

@@ -25,8 +25,6 @@ import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
-import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryRequest;
-import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryResponse;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResponse;
@@ -55,9 +53,8 @@ import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
-import com.gofobao.framework.migrate.MigrateBiz;
+import com.gofobao.framework.migrate.MigrateMemberBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
-import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
@@ -109,7 +106,7 @@ public class AplloApplicationTests {
     JixinTxDateHelper jixinTxDateHelper;
 
     @Autowired
-    MigrateBiz migrateBiz ;
+    MigrateMemberBiz migrateMemberBiz;
 
     @Autowired
     AssetService assetService;
@@ -127,7 +124,11 @@ public class AplloApplicationTests {
 
     @Test
     public void testMigrateBiz(){
-        migrateBiz.getMemberMigrateFile();
+        try {
+            migrateMemberBiz.postMemberMigrateFile();
+        } catch (Exception e) {
+            log.error("主程序异常了", e);
+        }
     }
 
     /**
@@ -514,7 +515,7 @@ public class AplloApplicationTests {
         mqConfig.setMsg(body);
         try {
 
-            log.info(String.format("transferBizImpl buyTransfer send mq %s", GSON.toJson(body)));
+            log.info(String.appendByTail("transferBizImpl buyTransfer send mq %s", GSON.toJson(body)));
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("transferBizImpl buyTransfer send mq exception", e);
@@ -529,7 +530,7 @@ public class AplloApplicationTests {
                 .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(169919), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
         try {
-            log.info(String.format("repaymentBizImpl repayDeal send mq %s", GSON.toJson(body)));
+            log.info(String.appendByTail("repaymentBizImpl repayDeal send mq %s", GSON.toJson(body)));
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("repaymentBizImpl repayDeal send mq exception", e);

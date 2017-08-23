@@ -309,7 +309,7 @@ public class AssetBizImpl implements AssetBiz {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR,
-                            String.format("%s每笔最大充值额度为%s元",
+                            String.appendByTail("%s每笔最大充值额度为%s元",
                                     userThirdAccount.getBankName(),
                                     StringHelper.formatDouble(oneTimes, true))));
         }
@@ -320,7 +320,7 @@ public class AssetBizImpl implements AssetBiz {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR,
-                            String.format("今天你在%s的剩余充值额度%s",
+                            String.appendByTail("今天你在%s的剩余充值额度%s",
                                     userThirdAccount.getBankName(),
                                     StringHelper.formatDouble(dayTimes < 0 ? 0 : dayTimes, true))));
         }
@@ -331,7 +331,7 @@ public class AssetBizImpl implements AssetBiz {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR,
-                            String.format("当月你在%s的剩余充值额度%s元",
+                            String.appendByTail("当月你在%s的剩余充值额度%s元",
                                     userThirdAccount.getBankName(),
                                     StringHelper.formatDouble(mouthTimes < 0 ? 0 : mouthTimes, true))));
         }*/

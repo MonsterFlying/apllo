@@ -183,12 +183,12 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前网络不稳定,请稍后重试！", VoPreCashResp.class));
         }
 
-
+/*
         if (!balanceQueryResponse.getWithdrawFlag().equals("1")) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前存管账户被银行禁止提现, 如有问题请联系广富宝金服客服!", VoPreCashResp.class));
-        }
+        }*/
 
         // 判断当前用户资金是否一直
         Asset asset = assetService.findByUserIdLock(userId);

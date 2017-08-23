@@ -31,8 +31,6 @@ spring:
     default-encoding: UTF-8
   thymeleaf:
     mode: LEGACYHTML5
-  profiles:
-    active: def
 server:
   port: 80
 jwt: #JWT 安全配置
@@ -52,9 +50,7 @@ windmill:
 
 
 jixin: #银行存管
-  keysPath: D:/cert/gofobao/guangfubao_uat.p12 #私钥路径
   keysPassword: guangfubao_uat@2016 #私钥密码
-  crtPath: D:/cert/gofobao/fdep.crt #服务端证书文件路径
   url: http://uat.gofobao.com  #即信服务器路径
   htmlUrl: https://access.credit2go.cn #即信服务器路径
   file-url: https://uat.credit2go.cn/escrow/file/download #文件请求下载链接
@@ -64,7 +60,7 @@ jixin: #银行存管
   bankCode: "30050000" #交易机构代码
   product-no: "0105" # 产品编号
   bank-no: "3005" #产品编号
-  query-time-init: "20170415" # 与存管系统查询时间
+  query-time-init: "20170418" # 与存管系统查询时间
 
 gofobao:
   dev: true # 开发环境

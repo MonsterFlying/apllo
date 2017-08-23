@@ -565,11 +565,11 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             if (CollectionUtils.isEmpty(borrowCollectionList)) {
                 break;
             }
-            Map<String, BorrowCollection> borrowCollectionMap = borrowCollectionList.stream().collect(Collectors.toMap(BorrowCollection::getTTransferOrderId, Function.identity()));
+            /*Map<String, BorrowCollection> borrowCollectionMap = borrowCollectionList.stream().collect(Collectors.toMap(BorrowCollection::getTTransferOrderId, Function.identity()));
             creditInvests.stream().forEach(creditInvest -> {
                 BorrowCollection borrowCollection = borrowCollectionMap.get(creditInvest.getOrderId());
                 borrowCollection.setTransferAuthCode(creditInvest.getAuthCode());
-            });
+            });*/
             borrowCollectionService.save(borrowCollectionList);
         } while (borrowCollectionList.size() >= maxPageSize);
     }
