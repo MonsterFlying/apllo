@@ -1353,6 +1353,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
     }
 
     /**
+     * 借款人还名义借款人垫付
+     *
      * @param repayUserThirdAccount
      * @param borrowRepayment
      * @param parentBorrow
@@ -1385,10 +1387,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
         Preconditions.checkNotNull(borrowCollectionList, "借款人向到担保人还款计划: 获取回款计划列表为空!");
-        Map<Long/** 投资记录*/, BorrowCollection/** 对应的还款计划*/> borrowCollectionMap = borrowCollectionList
-                .stream()
-                .collect(Collectors.toMap(BorrowCollection::getTenderId,
-                        Function.identity()));
 
         log.info("借款人还款垫付人开始");
         List<RepayBail> repayBails = calculateRepayBailPlan(parentBorrow, repayUserThirdAccount.getAccountId(), getLateDays(borrowRepayment), borrowRepayment.getOrder(), lateInterest);
@@ -1398,7 +1396,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         double freezeMoney = txAmount + intAmount + txFeeOut;  //冻结金额
         //生成担保人还垫付资产变更记录
         addBatchAssetChangeByGuarantor(borrowRepayment.getId(), borrowRepayment, parentBorrow, lateInterest, seqNo, groupSeqNo);
-
+        /* 冻结金额 */
         acqResMap.put("freezeMoney", freezeMoney);
         try {
             BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
@@ -2253,6 +2251,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .<Tender>and()
                     .eq("borrowId", borrowId)
                     .eq("status", 1)
+                    .in("transferFlag", 1, 3)
                     .eq("order", order) /*单期还款*/
                     .build();
         } else {
@@ -2260,6 +2259,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .<Tender>and()
                     .eq("borrowId", borrowId)
                     .eq("status", 1)
+                    .in("transferFlag", 1, 3)
                     .build();
         }
 

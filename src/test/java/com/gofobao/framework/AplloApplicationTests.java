@@ -317,9 +317,20 @@ public class AplloApplicationTests {
 
     public static void main(String[] args) {
         List<Long> sumPrincipals = new ArrayList<>(2);
-        List<Long> sumInterests = new ArrayList<>();
-        long i = (sumInterests.size() - 2) != 1 ? 0 : sumPrincipals.get(2);
+        List<Long> sumInterests = new ArrayList<>(2);
 
+        for (int i = 0;i <2;i++) {
+            for (int j = 0; j < 2; j++) {
+                if (sumPrincipals.size()!=2){
+                    sumPrincipals.add(0+100l);
+                }else {
+                    sumPrincipals.set(j,sumPrincipals.get(j) + 100);
+                }
+            }
+        }
+
+        System.out.println(sumPrincipals.get(0));
+        System.out.println(sumPrincipals.get(1));
         /*BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
                 NumberHelper.toDouble(StringHelper.toString(999.9)),
                 NumberHelper.toDouble(StringHelper.toString(2100)), 3, new Date());
