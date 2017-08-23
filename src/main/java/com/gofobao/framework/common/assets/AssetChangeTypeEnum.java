@@ -99,7 +99,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 投资人收到滞纳金
      */
-    receivedPaymentsPenalty("还款滞纳金", "receivedPayments", "7781", "add@useMoney", "add@incomeOverdue", "D"),
+    receivedPaymentsPenalty("还款滞纳金", "receivedPaymentsPenalty", "7781", "add@useMoney", "add@incomeOverdue", "D"),
 
     /**
      * 垫付账户收回垫付本息

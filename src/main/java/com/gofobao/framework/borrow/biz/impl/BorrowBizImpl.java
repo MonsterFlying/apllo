@@ -1004,7 +1004,7 @@ public class BorrowBizImpl implements BorrowBiz {
         }
         Date nowDate = new Date();
         // 生成还款记录
-        disposeBorrowRepay(borrow, nowDate);
+        List<BorrowRepayment> borrowRepaymentList = disposeBorrowRepay(borrow, nowDate);
 
         //查询当前借款的所有 状态为1的 tender记录
         Specification<Tender> ts = Specifications.<Tender>and()
@@ -1015,7 +1015,7 @@ public class BorrowBizImpl implements BorrowBiz {
         Preconditions.checkNotNull(tenderList, "生成还款记录: 投标记录为空");
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
         // 这里涉及用户投标回款计划生成和平台资金的变动
-        generateBorrowCollectionAndAssetChange(borrow, tenderList, nowDate, groupSeqNo);
+        generateBorrowCollectionAndAssetChange(borrow, borrowRepaymentList, tenderList, nowDate, groupSeqNo);
 
         // 标的自身设置奖励信息:进行存管红包发放
         awardUserByBorrowTender(borrow, tenderList);
@@ -1052,7 +1052,8 @@ public class BorrowBizImpl implements BorrowBiz {
      * @param borrow
      * @param nowDate
      */
-    private void disposeBorrowRepay(Borrow borrow, Date nowDate) {
+    private List<BorrowRepayment> disposeBorrowRepay(Borrow borrow, Date nowDate) {
+        List<BorrowRepayment> borrowRepaymentList = new ArrayList<>();
         // 调用利息计算器得出借款每期应还信息
         BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(StringHelper.toString(borrow.getMoney())),
                 NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrow.getSuccessAt());
@@ -1076,8 +1077,10 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowRepayment.setLateDays(0);
             borrowRepayment.setLateInterest(0l);
             borrowRepayment.setUserId(borrow.getUserId());
-            borrowRepaymentService.save(borrowRepayment);
+            borrowRepaymentList.add(borrowRepayment);
         }
+        borrowRepaymentService.save(borrowRepaymentList);
+        return borrowRepaymentList;
     }
 
     /**
@@ -1363,11 +1366,15 @@ public class BorrowBizImpl implements BorrowBiz {
      * @param borrowDate 计算利息开始时间
      * @param groupSeqNo
      */
-    private void generateBorrowCollectionAndAssetChange(Borrow borrow, List<Tender> tenderList, Date borrowDate, String groupSeqNo) throws Exception {
+    private void generateBorrowCollectionAndAssetChange(Borrow borrow, List<BorrowRepayment> borrowRepaymentList, List<Tender> tenderList, Date borrowDate, String groupSeqNo) throws Exception {
         Gson gson = new Gson();
         Date nowDate = new Date();
         log.info(String.format("生成用户回款计划开始: %s", gson.toJson(tenderList)));
-        for (Tender tender : tenderList) {
+        List<Long> sumPrincipals = new ArrayList<>();
+        List<Long> sumInterests = new ArrayList<>();
+        Map<Integer/* ORDER */, BorrowRepayment> borrowRepaymentMaps = borrowRepaymentList.stream().collect(Collectors.toMap(BorrowRepayment::getOrder, Function.identity()));
+        for (int i = 0; i < tenderList.size(); i++) {
+            Tender tender = tenderList.get(i);
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
                     NumberHelper.toDouble(StringHelper.toString(tender.getValidMoney())),
                     NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrowDate);
@@ -1377,21 +1384,32 @@ public class BorrowBizImpl implements BorrowBiz {
             BorrowCollection borrowCollection;
             int collectionMoney = 0;
             int collectionInterest = 0;
-            for (int i = 0; i < repayDetailList.size(); i++) {
+            for (int j = 0; j < repayDetailList.size(); j++) {
+                Map<String, Object> repayDetailMap = repayDetailList.get(j);
+                long principal = NumberHelper.toLong(repayDetailMap.get("principal"));
+                long interest = NumberHelper.toLong(repayDetailMap.get("interest"));
+                sumPrincipals.add(j, ((sumInterests.size() - j) != 1 ? 0 : sumPrincipals.get(j)) + principal);
+                sumInterests.add(j, ((sumInterests.size() - j) != 1 ? 0 : sumInterests.get(j)) + interest);
+                if (i == (tenderList.size() - 1)) { //给回款最后一期补上多出的本金与利息
+                    BorrowRepayment borrowRepayment = borrowRepaymentMaps.get(j);
+                    principal += (borrowRepayment.getPrincipal() - sumPrincipals.get(j));
+                    interest += (borrowRepayment.getInterest() - sumInterests.get(j));
+                }
+                long repayMoney = principal + interest;
+
                 borrowCollection = new BorrowCollection();
-                Map<String, Object> repayDetailMap = repayDetailList.get(i);
-                collectionMoney += NumberHelper.toLong(repayDetailMap.get("repayMoney"));
-                collectionInterest += NumberHelper.toLong(repayDetailMap.get("interest"));
+                collectionMoney += NumberHelper.toLong(repayMoney);
+                collectionInterest += NumberHelper.toLong(interest);
                 borrowCollection.setTenderId(tender.getId());
                 borrowCollection.setStatus(0);
-                borrowCollection.setOrder(i);
+                borrowCollection.setOrder(j);
                 borrowCollection.setUserId(tender.getUserId());
-                borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : borrowDate);
-                borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : nowDate);
+                borrowCollection.setStartAt(j > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(j - 1).get("repayAt"))) : borrowDate);
+                borrowCollection.setStartAtYes(j > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(j - 1).get("repayAt"))) : nowDate);
                 borrowCollection.setCollectionAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
-                borrowCollection.setCollectionMoney(NumberHelper.toLong(repayDetailMap.get("repayMoney")));
-                borrowCollection.setPrincipal(NumberHelper.toLong(repayDetailMap.get("principal")));
-                borrowCollection.setInterest(NumberHelper.toLong(repayDetailMap.get("interest")));
+                borrowCollection.setCollectionMoney(repayMoney);
+                borrowCollection.setPrincipal(principal);
+                borrowCollection.setInterest(interest);
                 borrowCollection.setCreatedAt(nowDate);
                 borrowCollection.setUpdatedAt(nowDate);
                 borrowCollection.setCollectionMoneyYes(0l);

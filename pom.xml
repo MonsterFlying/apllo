@@ -175,7 +175,19 @@
             <artifactId>jxl</artifactId>
             <version>2.6.12</version>
         </dependency>
-
+        <!--七牛云 对象储存sdk-->
+        <dependency>
+            <groupId>com.qiniu</groupId>
+            <artifactId>qiniu-java-sdk</artifactId>
+            <version>7.2.6</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.qiniu</groupId>
+            <artifactId>happy-dns-java</artifactId>
+            <version>0.1.4</version>
+            <scope>compile</scope>
+        </dependency>
         <dependency>
             <groupId>cn.jpush.api</groupId>
             <artifactId>jpush-client</artifactId>

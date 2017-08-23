@@ -233,20 +233,19 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         detailRes.setCollectionMoney(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100D));
         detailRes.setLateDays(borrowCollection.getLateDays());
         detailRes.setBorrowName(borrow.getName());
-        long interest = 0;  //利息
-        long principal = 0;//本金
+        Long principal=0L;
+        Long interest=0L;
         if (borrowCollection.getStatus() == BorrowCollectionContants.STATUS_YES) {
-            interest = borrowCollection.getInterest();
-            principal = borrowCollection.getPrincipal();
+            principal=borrowCollection.getPrincipal();
+            interest=borrowCollection.getInterest();
             detailRes.setStatusStr(BorrowCollectionContants.STATUS_YES_STR);
             detailRes.setCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAtYes()));
         } else {
             detailRes.setStatusStr(BorrowCollectionContants.STATUS_NO_STR);
             detailRes.setCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAt()));
-
         }
-        detailRes.setPrincipal(NumberHelper.to2DigitString(interest / 100D));
-        detailRes.setInterest(NumberHelper.to2DigitString(principal / 100D));
+        detailRes.setPrincipal(StringHelper.formatMon(interest / 100D));
+        detailRes.setInterest(StringHelper.formatMon( principal/ 100D));
         return detailRes;
     }
 

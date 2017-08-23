@@ -452,27 +452,36 @@ public class ThirdBatchProvider {
 
         //登记成功批次
         if (!CollectionUtils.isEmpty(successTransferOrderIds)) {
-            Specification<BorrowCollection> bcs = Specifications
-                    .<BorrowCollection>and()
-                    .in("tTransferOrderId", successTransferOrderIds.toArray())
+            Specification<TransferBuyLog> tbls = Specifications
+                    .<TransferBuyLog>and()
+                    .in("thirdTransferOrderId", successTransferOrderIds.toArray())
                     .build();
-            List<BorrowCollection> successBorrowCollectionList = borrowCollectionService.findList(bcs);
-            successBorrowCollectionList.stream().forEach(borrowCollection -> {
-               // borrowCollection.setThirdTransferFlag(true);
+            List<TransferBuyLog> successTransferBuyLogList = transferBuyLogService.findList(tbls);
+            successTransferBuyLogList.stream().forEach(transferBuyLog -> {
+                transferBuyLog.setThirdTransferFlag(true);
             });
-            borrowCollectionService.save(successBorrowCollectionList);
+            transferBuyLogService.save(successTransferBuyLogList);
         }
 
         if (!CollectionUtils.isEmpty(failureTransferOrderIds)) {  //推送垫付队列
             //取消失败批次的债权转让记录与购买债权转让记录
-            Specification<BorrowCollection> bcs = Specifications
-                    .<BorrowCollection>and()
-                    .in("tTransferOrderId", failureTransferOrderIds.toArray())
+            Specification<TransferBuyLog> tbls = Specifications
+                    .<TransferBuyLog>and()
+                    .in("thirdTransferOrderId", successTransferOrderIds.toArray())
                     .build();
-            List<BorrowCollection> failureBorrowCollectionList = borrowCollectionService.findList(bcs);
-            /* 投标记录id */
-            List<Long> tenderIds = failureBorrowCollectionList.stream().map(BorrowCollection::getTenderId).collect(Collectors.toList());
-            Preconditions.checkState(!CollectionUtils.isEmpty(failureBorrowCollectionList), "失败回款记录不存在!");
+            List<TransferBuyLog> failureTransferBuyLogList = transferBuyLogService.findList(tbls);
+            Preconditions.checkState(!CollectionUtils.isEmpty(failureTransferBuyLogList), "购买债权转让记录不能为空!");
+            List<Long> transferIds = failureTransferBuyLogList.stream().map(TransferBuyLog::getTransferId).collect(Collectors.toList());
+            //查询债权转让记录
+            Specification<Transfer> transferSpecification = Specifications
+                    .<Transfer>and()
+                    .in("id", transferIds)
+                    .build();
+            List<Transfer> transferList = transferService.findList(transferSpecification);
+            Preconditions.checkState(!CollectionUtils.isEmpty(transferList), "债权转让记录不存在!");
+            /* 投标id集合 */
+            List<Long> tenderIds = transferList.stream().map(Transfer::getTenderId).collect(Collectors.toList());
+            Map<Long/* 投标id */, Transfer> transferMaps = transferList.stream().collect(Collectors.toMap(Transfer::getTenderId, Function.identity()));
             /* 投标记录 */
             Specification<Tender> ts = Specifications
                     .<Tender>and()
@@ -480,26 +489,8 @@ public class ThirdBatchProvider {
                     .build();
             List<Tender> tenderList = tenderService.findList(ts);
             Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "投标记录不存在!");
-            Map<Long, Tender> tenderMaps = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
-            //查询债权转让记录
-            Specification<Transfer> transferSpecification = Specifications
-                    .<Transfer>and()
-                    .in("tenderId", tenderIds.toArray())
-                    .build();
-            List<Transfer> transferList = transferService.findList(transferSpecification);
-            Preconditions.checkState(!CollectionUtils.isEmpty(transferList), "债权转让记录不存在!");
-            List<Long> transferIds = transferList.stream().map(Transfer::getId).collect(Collectors.toList());
-            Map<Long/* 投标id */, Transfer> transferMaps = transferList.stream().collect(Collectors.toMap(Transfer::getTenderId, Function.identity()));
-            /* 购买债权转让记录 */
-            Specification<TransferBuyLog> tbls = Specifications
-                    .<TransferBuyLog>and()
-                    .in("transferId", transferIds.toArray())
-                    .build();
-            List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
-            Preconditions.checkState(!CollectionUtils.isEmpty(transferBuyLogList), "购买债权转让记录不能为空!");
-            failureBorrowCollectionList.stream().forEach(borrowCollection -> {
+            tenderList.stream().forEach(tender -> {
                 //更新tender状态
-                Tender tender = tenderMaps.get(borrowCollection.getTenderId());
                 tender.setTransferFlag(0);
                 tender.setUpdatedAt(new Date());
                 //取消债权转让
@@ -877,13 +868,14 @@ public class ThirdBatchProvider {
                 //更新批次状态
                 thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), transferId, 3);
 
+                Transfer transfer = transferService.findById(transferId);
                 //推送队列结束债权
                 MqConfig mqConfig = new MqConfig();
                 mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
                 mqConfig.setTag(MqTagEnum.END_CREDIT_BY_TRANSFER);
                 mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
                 ImmutableMap<String, String> body = ImmutableMap
-                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(transferId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(transfer.getBorrowId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
                 mqConfig.setMsg(body);
                 try {
                     log.info(String.format("thirdBatchProvider creditInvestDeal send mq %s", GSON.toJson(body)));

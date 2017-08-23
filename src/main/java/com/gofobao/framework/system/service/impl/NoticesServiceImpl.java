@@ -9,6 +9,7 @@ import com.gofobao.framework.system.vo.request.VoNoticesReq;
 import com.gofobao.framework.system.vo.request.VoNoticesTranReq;
 import com.gofobao.framework.system.vo.response.NoticesInfo;
 import com.gofobao.framework.system.vo.response.UserNotices;
+import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -127,13 +128,13 @@ public class NoticesServiceImpl implements NoticesService {
         Date now = new Date();
         return noticesRepository.delete(now,
                 voNoticesTranReq.getUserId(),
-                voNoticesTranReq.getNoticesIds()) <= 0 ? false : true;
+                Lists.newArrayList(voNoticesTranReq.getNoticesIds())) <= 0 ? false : true;
     }
 
     @Transactional
     @Override
     public boolean update(VoNoticesTranReq voNoticesTranReq) {
         return noticesRepository.update(voNoticesTranReq.getUserId(),
-                voNoticesTranReq.getNoticesIds()) <= 0 ? false : true;
+                Lists.newArrayList(voNoticesTranReq.getNoticesIds())) <= 0 ? false : true;
     }
 }

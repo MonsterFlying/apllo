@@ -214,20 +214,20 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         }
         Long borrowId = borrowRepayment.getBorrowId();
         Borrow borrow = borrowRepository.findOne(borrowId);
-        long principal = 0;
-        long interest = 0;
-        if (borrowRepayment.getStatus() == 0) {
-            detailRes.setRepayAt(DateHelper.dateToString(borrowRepayment.getRepayAt()));
+        Long interest=0L;
+        Long principal=0L;
+        if (borrowRepayment.getStatus() == RepaymentContants.STATUS_NO) {
+            detailRes.setRepayAt(DateHelper.dateToString(borrowRepayment.getRepayAt(),DateHelper.DATE_FORMAT_YMD));
             detailRes.setStatusStr(RepaymentContants.STATUS_NO_STR);
         } else {
-            interest = borrowRepayment.getInterest();
-            principal = borrowRepayment.getPrincipal();
+            interest=borrowRepayment.getInterest();
+            principal=borrowRepayment.getPrincipal();
             detailRes.setStatusStr(RepaymentContants.STATUS_YES_STR);
-            detailRes.setRepayAt(DateHelper.dateToString(borrowRepayment.getRepayAtYes()));
+            detailRes.setRepayAt(DateHelper.dateToString(borrowRepayment.getRepayAtYes(),DateHelper.DATE_FORMAT_YMD));
         }
         detailRes.setStatus(borrowRepayment.getStatus());
         detailRes.setInterest(StringHelper.formatMon(interest / 100d));
-        detailRes.setPrincipal(StringHelper.formatMon(principal / 100d));
+        detailRes.setPrincipal(StringHelper.formatMon(principal/ 100d));
         detailRes.setBorrowName(borrow.getName());
         detailRes.setCollectionMoney(StringHelper.formatMon(borrowRepayment.getRepayMoney()/ 100d));
         detailRes.setLateDays(borrowRepayment.getLateDays());

@@ -40,4 +40,5 @@ public interface ThirdBatchLogBiz {
      * @return
      */
     ThirdBatchLog getValidLastBatchLog(String sourceId, Integer... type);
+
 }

@@ -71,7 +71,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
         do {
             Map<String, Object> paramMap = Maps.newHashMap();
             try {
-                String paramStr = request.getParameter("param").toString();
+                String paramStr = request.getParameter("param");
                 if (!StringUtils.isEmpty(paramStr)) {
                     paramMap = StrToJsonStrUtil.commonUrlParamToMap(paramStr, desKey);
 
@@ -153,7 +153,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
 
         Map<String, Object> paramMap;
         try {
-            String paramStr = request.getParameter("param").toString();
+            String paramStr = request.getParameter("param");
             paramMap = StrToJsonStrUtil.commonUrlParamToMap(paramStr, desKey);
 
 
@@ -213,7 +213,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
         BySomeDayRes bySomeDayRes = new BySomeDayRes();
         BySomeDayReq someDayReq;
         try {
-            String paramStr = request.getParameter("param").toString();
+            String paramStr = request.getParameter("param");
             Map<String,Object>paramMap= StrToJsonStrUtil.commonUrlParamToMap(paramStr, desKey);
             someDayReq = GSON.fromJson(GSON.toJson(paramMap), new TypeToken<BySomeDayReq>() {
             }.getType());

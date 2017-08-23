@@ -1,11 +1,15 @@
 package com.gofobao.framework.security.helper;
 
+import com.gofobao.framework.helper.IpHelper;
 import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.member.entity.Users;
+import com.google.common.collect.Maps;
+import com.google.gson.Gson;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -13,6 +17,7 @@ import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
@@ -203,12 +208,30 @@ public class JwtTokenHelper implements Serializable {
         return refreshedToken;
     }
 
-    public String getToken(HttpServletRequest httpServletRequest) throws Exception {
+    public String getToken(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws Exception {
+        //从头部中获取token
         String authToken = httpServletRequest.getHeader(this.tokenHeader);
         if(!StringUtils.isEmpty(authToken) && (authToken.contains(prefix))){
             return authToken.substring(7) ;
+        }else {
+            //从参数中获取token
+            String requestToken = httpServletRequest.getParameter(this.tokenHeader);
+            if (!StringUtils.isEmpty(requestToken) && requestToken.contains(prefix)) {
+                return requestToken.substring(7);
+            }
         }
-
+        //该用户没有登录非法访问
+        httpServletResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+        httpServletResponse.setCharacterEncoding("utf-8");
+        httpServletResponse.setContentType("text/html; charset=utf-8");
+        PrintWriter pw= httpServletResponse.getWriter();
+        Map<String,Object>resultMap= Maps.newHashMap();
+        Map<String,Object>result=Maps.newHashMap();
+        resultMap.put("code",5);
+        resultMap.put("msg","用户未登录");
+        result.put("state",resultMap);
+        pw.write(new Gson().toJson(result));
+        log.info("记录非法访问ip:"+ IpHelper.getIpAddress(httpServletRequest));
         throw new Exception("非法访问");
     }
 

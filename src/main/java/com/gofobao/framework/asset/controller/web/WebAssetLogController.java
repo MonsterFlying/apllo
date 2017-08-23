@@ -1,9 +1,9 @@
 package com.gofobao.framework.asset.controller.web;
 
 import com.gofobao.framework.asset.biz.AssetBiz;
-import com.gofobao.framework.asset.repository.AssetLogRepository;
 import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.response.VoViewAssetLogWarpRes;
+import com.gofobao.framework.asset.vo.response.pc.VoViewAssetLogsWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -33,6 +33,12 @@ public class WebAssetLogController {
         return assetBiz.newAssetLogResList(voAssetLogReq);
     }
 
+    @RequestMapping(value = "assetLog/pc/v2/old/list", method = RequestMethod.POST)
+    public ResponseEntity<VoViewAssetLogsWarpRes> pcAssetLog(@ModelAttribute VoAssetLogReq voAssetLogReq,
+                                                                    @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        voAssetLogReq.setUserId(userId);
+        return assetBiz.pcAssetLogs(voAssetLogReq);
+    }
 
     @ApiOperation("资金流水导出")
     @RequestMapping(value = "assetLog/pc/v2/toExcel", method = RequestMethod.GET)
@@ -41,4 +47,7 @@ public class WebAssetLogController {
         voAssetLogReq.setUserId(userId);
         assetBiz.pcToExcel(voAssetLogReq,response);
     }
+
+
+
 }

@@ -38,6 +38,12 @@ jwt: #JWT 安全配置
   secret: WWW.gOf0b@o.c0m@0701
   expiration: 2592000
   prefix: Bearer
+#七牛
+qiniu:
+  domain: test.img.gofobao.com
+  bucket: test
+  ak: yevGNMoheNL4EGIencz8E-ohrPzMqLwchW9SvX9e
+  sk: GjGZAJBUpe8UzPoWmKeKBPSi7Kq_IshmuW-UC89o
 
 #风车理财
 windmill:

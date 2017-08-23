@@ -3,10 +3,7 @@ package com.gofobao.framework.lend.controller.web;
 import com.gofobao.framework.common.page.Page;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.lend.biz.LendBiz;
-import com.gofobao.framework.lend.vo.request.VoAddLendBlacklist;
-import com.gofobao.framework.lend.vo.request.VoDelLendBlacklist;
-import com.gofobao.framework.lend.vo.request.VoGetLendBlacklists;
-import com.gofobao.framework.lend.vo.request.VoUserLendReq;
+import com.gofobao.framework.lend.vo.request.*;
 import com.gofobao.framework.lend.vo.response.*;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
@@ -66,6 +63,20 @@ public class WebLendController {
         voUserLendReq.setPageIndex(pageIndex);
         voUserLendReq.setUserId(userId);
         return lendBiz.byUserId(voUserLendReq);
+    }
+
+    /**
+     * 发布有草出借
+     *
+     * @param voCreateLend
+     * @return
+     */
+    @PostMapping(value = "lend/pc/v2/create")
+    @ApiOperation("pc:发布有草出借")
+    public ResponseEntity<VoBaseResp> pcCreate(@ModelAttribute @Valid VoCreateLend voCreateLend,
+                                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        voCreateLend.setUserId(userId);
+        return lendBiz.create(voCreateLend);
     }
 
     /**

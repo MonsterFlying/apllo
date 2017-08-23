@@ -1,7 +1,6 @@
 package com.gofobao.framework.asset.controller.finance;
 
 import com.gofobao.framework.asset.biz.CashDetailLogBiz;
-import com.gofobao.framework.asset.vo.request.VoAdminCashReq;
 import com.gofobao.framework.asset.vo.request.VoBankApsReq;
 import com.gofobao.framework.asset.vo.request.VoCashReq;
 import com.gofobao.framework.asset.vo.response.VoBankApsWrapResp;

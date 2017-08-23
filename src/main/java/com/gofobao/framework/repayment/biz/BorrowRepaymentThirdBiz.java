@@ -1,13 +1,8 @@
 package com.gofobao.framework.repayment.biz;
 
-import com.gofobao.framework.api.model.batch_credit_invest.CreditInvest;
 import com.gofobao.framework.api.model.batch_repay.Repay;
-import com.gofobao.framework.api.model.batch_repay_bail.RepayBail;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.member.entity.UserThirdAccount;
-import com.gofobao.framework.repayment.entity.AdvanceAssetChange;
-import com.gofobao.framework.repayment.entity.RepayAssetChange;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
 import org.springframework.http.ResponseEntity;
 
@@ -95,29 +90,4 @@ public interface BorrowRepaymentThirdBiz {
      */
     void receivedRepay(List<Repay> repayList, Borrow borrow, String borrowAccountId, int order, double interestPercent, int lateDays, long lateInterest) throws Exception;
 
-    /**
-     * 新版生成还款计划
-     *
-     * @param borrow
-     * @param repayAccountId
-     * @param order
-     * @param lateDays
-     * @param lateInterest
-     * @param interestPercent
-     * @param repayAssetChanges
-     * @throws Exception
-     */
-    List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, int order, int lateDays, long lateInterest, double interestPercent, List<RepayAssetChange> repayAssetChanges) throws Exception;
-
-    /**
-     * 生成借款人偿还担保人计划
-     *
-     * @param borrow
-     * @param repayAccountId
-     * @param lateDays
-     * @param order
-     * @param lateInterest
-     * @return
-     */
-    List<RepayBail> calculateRepayBailPlan(Borrow borrow, String repayAccountId, int lateDays, Integer order, long lateInterest) throws Exception;
 }

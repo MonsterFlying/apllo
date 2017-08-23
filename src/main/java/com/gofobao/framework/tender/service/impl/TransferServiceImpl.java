@@ -168,7 +168,7 @@ public class TransferServiceImpl implements TransferService {
         }
         //标id集合
         Set<Long> tenderArray = tenderList.stream()
-                .map(p -> p.getId())
+                .map(p -> p.getBorrowId())
                 .collect(Collectors.toSet());
         List<Borrow> borrows = borrowRepository.findByIdIn(new ArrayList<>(tenderArray));
         Map<Long, Borrow> borrowMap = borrows.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
@@ -178,8 +178,8 @@ public class TransferServiceImpl implements TransferService {
             Transfered transfered = new Transfered();
             Borrow borrow = borrowMap.get(p.getBorrowId());
             transfered.setTime(DateHelper.dateToString(p.getSuccessAt()));
-            double transferFeeRate = Math.min(0.004 + 0.0008 * (borrow.getTotalOrder() - 1), 0.0128);
-            transfered.setCost(StringHelper.formatMon(Math.round(borrow.getMoney() * transferFeeRate) / 100D));
+            double transferFeeRate = Math.min(0.004 + 0.0008 * (p.getTimeLimit() - 1), 0.0128);
+            transfered.setCost(StringHelper.formatMon(Math.round(p.getTransferMoney() * transferFeeRate) / 100D));
             transfered.setName(borrow.getName());
             transfered.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
             transfereds.add(transfered);

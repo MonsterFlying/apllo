@@ -3,6 +3,12 @@ package com.gofobao.framework.member.biz.impl;
 import com.gofobao.framework.asset.biz.AssetSynBiz;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.common.qiniu.common.QiniuException;
+import com.gofobao.framework.common.qiniu.common.Zone;
+import com.gofobao.framework.common.qiniu.http.Response;
+import com.gofobao.framework.common.qiniu.storage.Configuration;
+import com.gofobao.framework.common.qiniu.storage.UploadManager;
+import com.gofobao.framework.common.qiniu.util.Auth;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -32,6 +38,7 @@ import com.gofobao.framework.member.vo.response.pc.VoViewServiceUserListWarpRes;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.gofobao.framework.security.vo.VoLoginReq;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,11 +51,9 @@ import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -103,6 +108,19 @@ public class UserBizImpl implements UserBiz {
     @Value("${gofobao.javaDomain}")
     String javaDomain;
 
+    @Value("${qiniu.sk}")
+     String SECRET_KEY;
+
+    @Value("${qiniu.ak}")
+     String ACCESS_KEY;
+
+    @Value("${qiniu.domain}")
+     String qiNiuDomain;
+
+    @Value("${qiniu.bucket}")
+     String bucketname;
+
+
     @Autowired
     JwtTokenHelper jwtTokenHelper;
 
@@ -113,8 +131,7 @@ public class UserBizImpl implements UserBiz {
     private IntegralService integralService;
 
     /**
-     *
-     * @param request 请求
+     * @param request       请求
      * @param voRegisterReq 注册实体
      * @return
      * @throws Exception
@@ -246,7 +263,8 @@ public class UserBizImpl implements UserBiz {
         } else {
             voBasicUserInfoResp.setThirdAccountState(true);
             voBasicUserInfoResp.setBankPassworState(userThirdAccount.getPasswordState() == 1);
-            voBasicUserInfoResp.setBankAccout(UserHelper.hideChar(userThirdAccount.getCardNo(), UserHelper.BANK_ACCOUNT_NUM));
+            voBasicUserInfoResp.setBankAccout(userThirdAccount.getCardNo());
+            voBasicUserInfoResp.setBankName("江西银行总行营业部");
             voBasicUserInfoResp.setBankState(!StringUtils.isEmpty(userThirdAccount.getCardNo()));
             voBasicUserInfoResp.setAutoTenderState(userThirdAccount.getAutoTenderState().equals(1));
             voBasicUserInfoResp.setAutoTranferState(userThirdAccount.getAutoTransferState().equals(1));
@@ -280,6 +298,7 @@ public class UserBizImpl implements UserBiz {
 
     /**
      * 金服用户登录
+     *
      * @param httpServletRequest
      * @param response
      * @param voLoginReq
@@ -289,7 +308,7 @@ public class UserBizImpl implements UserBiz {
     public ResponseEntity<VoBasicUserInfoResp> login(HttpServletRequest httpServletRequest, HttpServletResponse response, VoLoginReq voLoginReq, boolean financeState) {
         // 登录验证
         Users user = userService.findByAccount(voLoginReq.getAccount());
-        if(ObjectUtils.isEmpty(user)){
+        if (ObjectUtils.isEmpty(user)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "账户/密码错误", VoBasicUserInfoResp.class));
@@ -314,14 +333,14 @@ public class UserBizImpl implements UserBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "账户已被系统冻结，如有问题请联系客服！", VoBasicUserInfoResp.class));
         }
-        if(financeState){
-            if(!user.getType().equals("finance")){  // 理财用户
+        if (financeState) {
+            if (!user.getType().equals("finance")) {  // 理财用户
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "系统拒绝了你的访问请求", VoBasicUserInfoResp.class));
             }
-        }else{
-            if(user.getType().equals("finance")){  // 金服用户
+        } else {
+            if (user.getType().equals("finance")) {  // 金服用户
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "系统拒绝了你的访问请求", VoBasicUserInfoResp.class));
@@ -330,7 +349,7 @@ public class UserBizImpl implements UserBiz {
 
         // 保存登录信息
         user.setIp(IpHelper.getIpAddress(httpServletRequest)); // 设置ip
-        user.setSource(voLoginReq.getSource()) ;
+        user.setSource(voLoginReq.getSource());
         user.setLoginTime(new Date());
         if (StringUtils.isEmpty(user.getPushId())) {   // 推送
             user.setPushId(UUID.randomUUID().toString().replace("-", ""));
@@ -344,7 +363,7 @@ public class UserBizImpl implements UserBiz {
         user.setUsername(username);
         final String token = jwtTokenHelper.generateToken(user, voLoginReq.getSource());
         response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
-        try{
+        try {
             // 触发登录队列
             MqConfig mqConfig = new MqConfig();
             mqConfig.setTag(MqTagEnum.LOGIN);
@@ -353,7 +372,7 @@ public class UserBizImpl implements UserBiz {
             ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_USER_ID, user.getId().toString());
             mqConfig.setMsg(body);
             mqHelper.convertAndSend(mqConfig);
-        }catch (Exception e){
+        } catch (Exception e) {
             log.error("触发登录队列异常", e);
         }
 
@@ -587,6 +606,43 @@ public class UserBizImpl implements UserBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统异常,请稍后再试试吧"));
         else
             return ResponseEntity.ok(VoBaseResp.ok("重置密码成功"));
+
+    }
+    
+    public Map<String,Object> upload(byte[] file, String key,Users users) throws IOException {
+        //密钥配置
+        Auth auth = Auth.create(ACCESS_KEY, SECRET_KEY);
+        //创建上传对象
+
+        Zone z = Zone.autoZone();
+        Configuration c = new Configuration(z);
+        UploadManager uploadManager = new UploadManager(c);
+        String token=auth.uploadToken(bucketname);
+        Map<String, Object> resultMap = Maps.newHashMap();
+        try {
+            //调用put方法上传
+            Response res = uploadManager.put(file, key, token);
+            resultMap.put("result",Boolean.TRUE);
+            resultMap.put("code", VoBaseResp.ERROR);
+            resultMap.put("msg", res.bodyString());
+            users.setAvatarPath(qiNiuDomain+key);
+            userService.save(users);
+        } catch (QiniuException e) {
+            Response r = e.response;
+            // 请求失败时打印的异常的信息
+            System.out.println(r.toString());
+            resultMap.put("result",Boolean.FALSE);
+            resultMap.put("code", VoBaseResp.ERROR);
+            resultMap.put("msg", r.bodyString());
+
+        }
+       return resultMap;
+    }
+
+
+    @Override
+    public Map<String, Object> uploadAvatar(byte[] file, String filePath,Users users)throws Exception {
+           return upload(file, filePath,users);
 
     }
 }

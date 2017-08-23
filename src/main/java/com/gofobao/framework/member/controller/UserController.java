@@ -13,13 +13,21 @@ import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.member.vo.response.VoOpenAccountInfo;
 import com.gofobao.framework.member.vo.response.VoSignInfoResp;
 import com.gofobao.framework.security.contants.SecurityContants;
+import com.google.gson.Gson;
 import io.swagger.annotations.ApiOperation;
+import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import springfox.documentation.annotations.ApiIgnore;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.PrintWriter;
+import java.util.Map;
 
 /**
  * Created by Max on 17/5/16.
@@ -32,18 +40,32 @@ public class UserController {
     UserPhoneBiz userPhoneBiz;
 
     @Autowired
-    UserEmailBiz userEmailBiz ;
+    UserEmailBiz userEmailBiz;
 
     @Autowired
-    UserThirdBiz userThirdBiz ;
+    UserThirdBiz userThirdBiz;
 
     @Autowired
-    UserBiz userBiz ;
+    UserBiz userBiz;
+
+
+    @Value("${qiniu.sk}")
+    private String secretKey;
+
+    @Value("${qiniu.ak}")
+    private String accessKey;
+
+    @Value("${qiniu.domain}")
+    private String qiNiuDomain;
+
+    @Value("${qiniu.bucket}")
+    private String bucket;
+
 
     @ApiOperation("更改手机号")
     @PostMapping("/user/phone/switch")
     public ResponseEntity<VoBasicUserInfoResp> bindSwitchPhone(@Valid @ModelAttribute VoBindSwitchPhoneReq voBindSwitchPhoneReq,
-                                                      @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+                                                               @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voBindSwitchPhoneReq.setUserId(userId);
         return userPhoneBiz.bindSwitchPhone(voBindSwitchPhoneReq);
     }
@@ -57,45 +79,46 @@ public class UserController {
 
     @ApiOperation("绑定手机")
     @PostMapping("/user/phone/bind")
-    public ResponseEntity<VoBasicUserInfoResp> bindPhone( @ModelAttribute @Valid  VoBindPhone voBindPhone,
-                                                          @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
-       return userPhoneBiz.bindPhone(voBindPhone, userId) ;
+    public ResponseEntity<VoBasicUserInfoResp> bindPhone(@ModelAttribute @Valid VoBindPhone voBindPhone,
+                                                         @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return userPhoneBiz.bindPhone(voBindPhone, userId);
     }
 
 
     @ApiOperation("绑定邮箱")
     @PostMapping("/user/email/bind")
-    public ResponseEntity<VoBasicUserInfoResp> bindEmail( @ModelAttribute @Valid VoBindEmailReq voBindEmailReq,
-                                                          @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
-        return userEmailBiz.bindEmail(voBindEmailReq, userId) ;
+    public ResponseEntity<VoBasicUserInfoResp> bindEmail(@ModelAttribute @Valid VoBindEmailReq voBindEmailReq,
+                                                         @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return userEmailBiz.bindEmail(voBindEmailReq, userId);
     }
 
     @ApiOperation("获取签约状态")
     @PostMapping("/user/sign")
-    public ResponseEntity<VoSignInfoResp> querySigned(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
-        return userThirdBiz.querySigned(userId) ;
+    public ResponseEntity<VoSignInfoResp> querySigned(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return userThirdBiz.querySigned(userId);
     }
 
 
     @ApiOperation("更换手机下一步短信判断")
     @GetMapping("/user/phone/switchVerify/{smsCode}")
-    public ResponseEntity<VoBaseResp> verfyUnBindPhoneMessage(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable("smsCode") String smsCode){
-        return userPhoneBiz.verfyUnBindPhoneMessage(userId, smsCode) ;
+    public ResponseEntity<VoBaseResp> verfyUnBindPhoneMessage(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable("smsCode") String smsCode) {
+        return userPhoneBiz.verfyUnBindPhoneMessage(userId, smsCode);
     }
 
     @ApiOperation("获取用户配置信息")
     @PostMapping("/user/configInfo")
-    public ResponseEntity<VoBasicUserInfoResp> getUserInfo(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
-        return userBiz.userInfo(userId) ;
+    public ResponseEntity<VoBasicUserInfoResp> getUserInfo(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return userBiz.userInfo(userId);
     }
 
 
     @ApiOperation("获取存管信息")
     @PostMapping("/user/openAccountInfo")
-    public ResponseEntity<VoOpenAccountInfo> getOpenAccountInfo(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
-        return userBiz.openAccountInfo(userId) ;
+    public ResponseEntity<VoOpenAccountInfo> getOpenAccountInfo(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return userBiz.openAccountInfo(userId);
     }
 
 
 
 }
+

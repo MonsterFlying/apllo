@@ -40,9 +40,9 @@ public class IntegralController {
      * @return
      */
     @ApiOperation("获取积分列表")
-    @PostMapping("pub/integral/list")
+    @PostMapping("integral/list")
     public ResponseEntity<VoListIntegralResp> list(@Valid @ModelAttribute VoListIntegralReq voListIntegralReq,
-                                                   @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
+                                                    @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         //app 请求
         voListIntegralReq.setType(0);
         voListIntegralReq.setUserId(userId);
@@ -58,7 +58,7 @@ public class IntegralController {
      * @throws Exception
      */
     @ApiOperation(value = "积分兑换")
-    @PostMapping(value = "pub/integral/doTakeRates")
+    @PostMapping(value = "integral/doTakeRates")
     public ResponseEntity<VoBaseResp> doTakeRates(@Valid @ModelAttribute VoIntegralTakeReq voIntegralTakeReq,
                                                   @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voIntegralTakeReq.setUserId(userId);

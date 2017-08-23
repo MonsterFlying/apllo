@@ -161,7 +161,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
             balanceUnfreezeReq.setChannel(ChannelContant.HTML);
             balanceUnfreezeReq.setOrderId(newOrderId);
             balanceUnfreezeReq.setOrgOrderId(orderId);
-            BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
+            BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_UN_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
             if ((ObjectUtils.isEmpty(balanceUnfreezeResp)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
                 throw new Exception("理财计划资金变动解冻资金失败：" + balanceUnfreezeResp.getRetMsg());
             }
@@ -220,7 +220,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
             balanceUnfreezeReq.setChannel(ChannelContant.HTML);
             balanceUnfreezeReq.setOrderId(newOrderId);
             balanceUnfreezeReq.setOrgOrderId(orderId);
-            BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
+            BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_UN_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
             if ((ObjectUtils.isEmpty(balanceUnfreezeResp)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
                 throw new Exception("理财计划投标解冻资金失败：" + balanceUnfreezeResp.getRetMsg());
             }
