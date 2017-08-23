@@ -46,7 +46,7 @@ public class QRCodeHelper {
     private static void writeToFile(BitMatrix matrix, String format, File file) throws IOException {
         BufferedImage image = toBufferedImage(matrix);
         if (!ImageIO.write(image, format, file)) {
-            throw new IOException("Could not write an image of format " + format + " to " + file);
+            throw new IOException("Could not write an image of appendByTail " + format + " to " + file);
         }
     }
 
@@ -78,7 +78,7 @@ public class QRCodeHelper {
             img.flush();
         }
         if (!ImageIO.write(image, format, stream)) {
-            throw new IOException("Could not write an image of format " + format);
+            throw new IOException("Could not write an image of appendByTail " + format);
         }
     }
 

@@ -659,6 +659,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             if (CollectionUtils.isEmpty(transferBuyLogList)) {
                 break;
             }
+
             Map<String, TransferBuyLog> transferBuyLogMaps = transferBuyLogList.stream().collect(Collectors.toMap(TransferBuyLog::getThirdTransferOrderId, Function.identity()));
             creditInvests.stream().forEach(creditInvest -> {
                 TransferBuyLog transferBuyLog = transferBuyLogMaps.get(creditInvest.getOrderId());

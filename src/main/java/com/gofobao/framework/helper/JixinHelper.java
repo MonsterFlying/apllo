@@ -61,6 +61,7 @@ public class JixinHelper {
     public static final String END_CREDIT_PREFIX = "GFBEC_";
 
 
+
     public static String getOrderId(String prefix) {
         return prefix + new Date().getTime() + NumberHelper.toInt(Math.random() * 100 + 1);
     }
