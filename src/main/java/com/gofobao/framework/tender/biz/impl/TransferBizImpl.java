@@ -141,6 +141,74 @@ public class TransferBizImpl implements TransferBiz {
     public static final String LEFT_MONEY = "leftMoney";
 
     /**
+     * 查询债权转让购买记录
+     *
+     * @return
+     */
+    public ResponseEntity<VoViewTransferBuyLogList> findTransferBuyLog(VoFindTransferBuyLog voFindTransferBuyLog) {
+        /* 债权转让id */
+        Long transferId = voFindTransferBuyLog.getTransferId();
+        /* 债权转让购买人id */
+        long userId = voFindTransferBuyLog.getUserId();
+        Specification<TransferBuyLog> tbls = null;
+        if (!ObjectUtils.isEmpty(transferId)) {
+            /* 债权转让记录 */
+            Transfer transfer = transferService.findById(transferId);
+            Preconditions.checkNotNull(transfer, "债权转让记录不存在!");
+            tbls = Specifications
+                    .<TransferBuyLog>and()
+                    .eq("transferId", transferId)
+                    .eq("userId", userId)
+                    .build();
+        } else {
+            tbls = Specifications
+                    .<TransferBuyLog>and()
+                    .eq("userId", userId)
+                    .build();
+        }
+        /* 购买债权转让集合 */
+        List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
+        Map<Long/* 债权转让id */, Transfer> transferMaps = new HashMap<>();
+        if (!CollectionUtils.isEmpty(transferBuyLogList)) {
+            Set<Long> transferIds = transferBuyLogList.stream().map(TransferBuyLog::getTransferId).collect(Collectors.toSet());
+            Specification<Transfer> ts = Specifications
+                    .<Transfer>and()
+                    .in("id", transferIds.toArray())
+                    .eq("state",0)
+                    .build();
+            List<Transfer> transferList = transferService.findList(ts);
+            Preconditions.checkState(!CollectionUtils.isEmpty(transferList), "债权转让不存在!");
+            transferMaps = transferList.stream().collect(Collectors.toMap(Transfer::getId, Function.identity()));
+        }
+        /* 查询购买债权记录显示集合 */
+        List<VoViewTransferBuyLog> voViewTransferBuyLogList = new ArrayList<>();
+        for (TransferBuyLog transferBuyLog : transferBuyLogList) {
+            Transfer transfer = transferMaps.get(transferBuyLog.getTransferId());
+            Borrow borrow = borrowService.findById(transfer.getBorrowId());
+            //预期收益
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(transferBuyLog.getPrincipal()),
+                    new Double(transfer.getApr()),
+                    transfer.getTimeLimit(),
+                    new Date());
+            Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
+            Integer earnings = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("earnings")));
+
+            VoViewTransferBuyLog voViewTransferBuyLog = new VoViewTransferBuyLog();
+            voViewTransferBuyLog.setTitle(transfer.getTitle());
+            voViewTransferBuyLog.setApr(StringHelper.formatDouble(transfer.getApr(), 100, false));
+            voViewTransferBuyLog.setBuyAt(DateHelper.dateToString(transferBuyLog.getCreatedAt()));
+            voViewTransferBuyLog.setMoney(StringHelper.formatDouble(transferBuyLog.getValidMoney(), 100, true));
+            voViewTransferBuyLog.setEarning(StringHelper.formatDouble(earnings, 100, true));
+            voViewTransferBuyLog.setPrincipal(StringHelper.formatDouble(transferBuyLog.getPrincipal(), 100, true));
+            voViewTransferBuyLog.setAlreadyInterest(StringHelper.formatDouble(transferBuyLog.getAlreadyInterest(), 100, true));
+            voViewTransferBuyLogList.add(voViewTransferBuyLog);
+        }
+        VoViewTransferBuyLogList resp = VoBaseResp.ok("查询成功", VoViewTransferBuyLogList.class);
+        resp.setVoViewTransferBuyLogs(voViewTransferBuyLogList);
+        return ResponseEntity.ok(resp);
+    }
+
+    /**
      * 结束债权转让
      *
      * @param voEndTransfer
@@ -528,9 +596,8 @@ public class TransferBizImpl implements TransferBiz {
             childTender.setParentId(parentTender.getId());
             childTender.setTransferBuyId(transferBuyLog.getId());
             childTender.setAlreadyInterest(transferBuyLog.getAlreadyInterest());
-            childTender.setThirdTransferOrderId(transferBuyLog.getThirdTransferOrderId());
-            childTender.setThirdTransferFlag(transferBuyLog.getThirdTransferFlag());
-            childTender.setTransferAuthCode(transferBuyLog.getTransferAuthCode());
+            childTender.setThirdTenderOrderId(transferBuyLog.getThirdTransferOrderId());
+            childTender.setAuthCode(transferBuyLog.getTransferAuthCode());
             childTender.setCreatedAt(nowDate);
             childTender.setUpdatedAt(nowDate);
             childTenderList.add(childTender);
@@ -1366,7 +1433,7 @@ public class TransferBizImpl implements TransferBiz {
         borrowInfoRes.setTenderCount(transfer.getTenderCount() + com.gofobao.framework.borrow.contants.BorrowContants.TIME);
         borrowInfoRes.setMoney(StringHelper.formatMon(transfer.getTransferMoney() / 100d));
         borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
-        borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatDouble(transfer.getTransferMoneyYes() / transfer.getTransferMoney().doubleValue(), false))*100);
+        borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatDouble(transfer.getTransferMoneyYes() / transfer.getTransferMoney().doubleValue(), false)) * 100);
         //结束时间
         Date endAt = DateHelper.addDays(DateHelper.beginOfDate(transfer.getReleaseAt()), 3 + 1);
         borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
@@ -1431,6 +1498,7 @@ public class TransferBizImpl implements TransferBiz {
                 .build();
 
         List<TransferBuyLog> transferBuyLogs = transferBuyLogService.findList(tbs);
+
 
         Date nowDate = new Date();
         // 取消借款

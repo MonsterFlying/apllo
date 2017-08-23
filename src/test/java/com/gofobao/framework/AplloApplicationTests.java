@@ -633,9 +633,8 @@ public class AplloApplicationTests {
             childTender.setParentId(parentTender.getId());
             childTender.setTransferBuyId(transferBuyLog.getId());
             childTender.setAlreadyInterest(transferBuyLog.getAlreadyInterest());
-            childTender.setThirdTransferOrderId(transferBuyLog.getThirdTransferOrderId());
-            childTender.setThirdTransferFlag(transferBuyLog.getThirdTransferFlag());
-            childTender.setTransferAuthCode(transferBuyLog.getTransferAuthCode());
+            childTender.setThirdTenderOrderId(transferBuyLog.getThirdTransferOrderId());
+            childTender.setAuthCode(transferBuyLog.getTransferAuthCode());
             childTender.setCreatedAt(nowDate);
             childTender.setUpdatedAt(nowDate);
             childTenderList.add(childTender);
@@ -682,8 +681,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("150420");
-        batchDetailsQueryReq.setBatchTxDate("20170821");
+        batchDetailsQueryReq.setBatchNo("165416");
+        batchDetailsQueryReq.setBatchTxDate("20170822");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -716,21 +715,6 @@ public class AplloApplicationTests {
     @Autowired
     CertHelper certHelper;
 
-    public void saveThirdTransferAuthCode(List<CreditInvestRun> creditInvestRunList) {
-        List<String> orderIds = creditInvestRunList.stream().map(creditInvestRun -> creditInvestRun.getOrderId()).collect(Collectors.toList());
-        Specification<Tender> ts = Specifications
-                .<Tender>and()
-                .in("thirdTransferOrderId", orderIds.toArray())
-                .build();
-
-        List<Tender> tenderList = tenderService.findList(ts);
-        Map<String, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getThirdTransferOrderId, Function.identity()));
-        creditInvestRunList.stream().forEach(creditInvestRun -> {
-            String orderId = creditInvestRun.getOrderId();
-            Tender tender = tenderMap.get(orderId);
-            tender.setTransferAuthCode(creditInvestRun.getAuthCode());
-        });
-    }
 
     public void balanceQuery() {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
@@ -774,8 +758,8 @@ public class AplloApplicationTests {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(170010),
-                        MqConfig.BATCH_NO, StringHelper.toString(150420),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(41),
+                        MqConfig.BATCH_NO, StringHelper.toString(141503),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
                 );
 
@@ -831,7 +815,7 @@ public class AplloApplicationTests {
         }*/
 
         //批次处理
-        batchDeal();
+        //batchDeal();
         //查询存管账户资金信息
         //balanceQuery();
         //查询资金流水
@@ -859,7 +843,7 @@ public class AplloApplicationTests {
         //批次状态查询
         //batchQuery();
         //批次详情查询
-        //batchDetailsQuery();
+        batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调
@@ -887,7 +871,7 @@ public class AplloApplicationTests {
             repaymentBiz.newRepay(voRepayReq);
         } catch (Exception e) {
             e.printStackTrace();
-        } 【原始技术】澳洲小哥真人MC：篱笆泥墙（1）
+        }
 
         */
 
