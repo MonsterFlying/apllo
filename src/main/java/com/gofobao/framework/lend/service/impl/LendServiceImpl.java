@@ -267,7 +267,7 @@ public class LendServiceImpl implements LendService {
             userLendInfo.setRepayAt(DateHelper.dateToString(p.getRepayAt()));
             userLendInfo.setLendMoney(StringHelper.formatMon(p.getMoney() / 100D));
             userLendInfo.setTitle(p.getTimeLimit() + BorrowContants.DAY + "," + DateHelper.dateToString(p.getCreatedAt()));
-            userLendInfo.setSurplusMoney(StringHelper.formatMon((p.getMoney() - p.getMoneyYes()) / 100D));
+            userLendInfo.setSurplusMoney(StringHelper.formatDouble((p.getMoney() - p.getMoneyYes()) / 100D,true));
             String statusStr = p.getStatus() == LendContants.STATUS_NO ? LendContants.STATUS_NO_STR : LendContants.STATUS_YES_STR;
             userLendInfo.setStatusStr(statusStr);
             userLendInfo.setStatus(p.getStatus());
