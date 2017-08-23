@@ -33,8 +33,7 @@ spring:
     mode: LEGACYHTML5
   profiles:
     active: def
-server:
-  port: 8080
+
 jwt: #JWT 安全配置
   header: Authorization
   secret: WWW.gOf0b@o.c0m@0701
@@ -58,15 +57,13 @@ windmill:
   notify-address:  http://121.42.52.42/wrb/ws_info_call_back.json  #通知风车理财接口
 
 jixin: #银行存管
-  keysPath: D:/sign/guangfubao_uat.p12 #私钥路径
   keysPassword: guangfubao_uat@2016 #私钥密码
-  crtPath: D:/sign/fdep.crt #服务端证书文件路径
   url: http://uat.gofobao.com #即信服务器路径
   htmlUrl: https://access.credit2go.cn #即信服务器路径
   version: 10 #版本号
   instCode: "00960001" #机构代码
   bankCode: "30050000" #交易机构代码
-  query-time-init: "20161011" # 与存管系统查询时间
+  query-time-init: "20170418" # 与存管系统查询时间
 gofobao:
   dev: true # 开发环境
   javaDomain:  http://lang.hk1.mofasuidao.cn

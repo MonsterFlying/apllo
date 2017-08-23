@@ -1,6 +1,8 @@
 package com.gofobao.framework.member.service;
 
 import com.gofobao.framework.member.entity.UserThirdAccount;
+import com.gofobao.framework.member.entity.Users;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -63,4 +65,7 @@ public interface UserThirdAccountService {
     long count(Specification<UserThirdAccount> userThirderAccountSpe);
 
 
+    Page<UserThirdAccount> findAll(Pageable pageable);
+
+    void save(List<UserThirdAccount> userThirdAccountList);
 }
