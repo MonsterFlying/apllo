@@ -217,7 +217,7 @@ public class JwtTokenHelper implements Serializable {
             //从参数中获取token
             String requestToken = httpServletRequest.getParameter(this.tokenHeader);
             if (!StringUtils.isEmpty(requestToken) && requestToken.contains(prefix)) {
-                return authToken.substring(7);
+                return requestToken.substring(7);
             }
         }
         //该用户没有登录非法访问

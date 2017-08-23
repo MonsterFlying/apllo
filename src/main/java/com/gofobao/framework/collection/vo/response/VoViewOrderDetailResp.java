@@ -10,7 +10,7 @@ import lombok.Data;
  */
 @Data
 @ApiModel("回款详情")
-public class VoViewOrderDetailResp extends VoBaseResp {
+public class    VoViewOrderDetailResp extends VoBaseResp {
     @ApiModelProperty("第几期")
     private Integer order;
 
