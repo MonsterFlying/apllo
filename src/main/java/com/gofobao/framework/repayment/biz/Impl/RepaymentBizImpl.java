@@ -1192,6 +1192,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
         } else {
             // 正常还款
             resp = normalRepay(freezeOrderId, acqResMap, repayUserThirdAccount, borrowRepayment, parentBorrow, lateInterest, interestPercent, batchNo, batchAssetChange, seqNo, groupSeqNo);
+            if (advance) { //生成名义借款人垫付批次资金改变记录
+                addBatchAssetChangeByGuarantor(batchAssetChange.getId(), borrowRepayment, parentBorrow, lateInterest, seqNo, groupSeqNo);
+            }
         }
 
         //改变还款与垫付记录的值
