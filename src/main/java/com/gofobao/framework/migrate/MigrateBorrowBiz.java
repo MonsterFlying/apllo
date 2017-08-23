@@ -137,8 +137,8 @@ public class MigrateBorrowBiz {
                     StringBuffer text = new StringBuffer();
                     try {
                         String borrowName = borrow.getName();
-                        if (borrowName.length() > 60) {
-                            borrowName = borrowName.substring(0, 60);
+                        if (borrowName.length() > 30) {
+                            throw new Exception("标的信息过长");
                         }
                         String borrowMenoy = StringHelper.formatDouble(borrow.getMoney() / 100D, false);
                         String intType = null;
@@ -157,7 +157,7 @@ public class MigrateBorrowBiz {
                                     DateHelper.diffInDays(DateHelper.addMonths(successAt, borrow.getTimeLimit()), successAt, false));
                         }
                         String borrowId = StringHelper.toString(borrow.getId());
-                        String yield = StringHelper.toString(borrow.getApr() * 10 ); // 逾期年化收益
+                        String yield = StringHelper.toString(borrow.getApr() * 10); // 逾期年化收益
                         text.append(FormatHelper.appendByTail(BANK_NO, 4)); // 银行代号
                         text.append(FormatHelper.appendByTail(batchNo, 6));  // 批次号
                         text.append(FormatHelper.appendByTail(StringHelper.toString(borrow.getId()), 40));  // 标的编号
@@ -232,20 +232,25 @@ public class MigrateBorrowBiz {
 
         Stream<String> lines = reader.lines();
         lines.forEach((String item) -> {
-            String flag = item.substring(271, 273);
-            String idStr = item.substring(10, 50);
-            if (!"  ".equals(flag)) {
-                StringBuffer stringBuffer = new StringBuffer();
-                stringBuffer.append(NumberHelper.toLong(idStr)).append("|").append(ERROR_MSG_DATA.get(flag));
-                try {
-                    errorWriter.write(stringBuffer.toString());
-                    errorWriter.newLine();
-                } catch (IOException e) {
-                    log.error("写入错误数据", e);
-                    return;
+            try {
+                byte[]  gbks = item.getBytes("gbk");
+                String flag =  FormatHelper.getStr(gbks, 271, 273);
+                String idStr = FormatHelper.getStr(gbks, 10, 50);
+                if (!"  ".equals(flag)) {
+                    StringBuffer stringBuffer = new StringBuffer();
+                    stringBuffer.append(NumberHelper.toLong(idStr)).append("|").append(ERROR_MSG_DATA.get(flag));
+                    try {
+                        errorWriter.write(stringBuffer.toString());
+                        errorWriter.newLine();
+                    } catch (IOException e) {
+                        log.error("写入错误数据", e);
+                        return;
+                    }
+                } else {
+                    prodcutIdList.add(NumberHelper.toLong(idStr));
                 }
-            } else {
-                prodcutIdList.add(NumberHelper.toLong(idStr));
+            } catch (Exception e) {
+                log.error("获取失败", e);
             }
         });
 
@@ -253,9 +258,9 @@ public class MigrateBorrowBiz {
                 .<Borrow>and()
                 .in("id", prodcutIdList.toArray())
                 .build();
+
         List<Borrow> borrowList = borrowService.findList(bs);
-        borrowList
-                .stream()
+        borrowList.stream()
                 .filter(borrow -> ObjectUtils.isEmpty(borrow.getProductId()))
                 .forEach(borrow -> {
                     borrow.setProductId(borrow.getId().toString());
@@ -265,7 +270,6 @@ public class MigrateBorrowBiz {
     }
 
     private static Map<String, String> ERROR_MSG_DATA = new HashMap<>();
-
     static {
         ERROR_MSG_DATA.put("01", "银行号不允许为空");
         ERROR_MSG_DATA.put("02", "批次号不允许为空");

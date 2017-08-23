@@ -57,16 +57,17 @@ windmill:
   notify-address:  http://121.42.52.42/wrb/ws_info_call_back.json  #通知风车理财接口
 jixin: #银行存管
   keysPassword: guangfubao_uat@2016 #私钥密码
-  url: http://uat.gofobao.com #即信服务器路径
+  url: http://uat.gofobao.com  #即信服务器路径
   htmlUrl: https://access.credit2go.cn #即信服务器路径
   file-url: https://uat.credit2go.cn/escrow/file/download #文件请求下载链接
-  save-file-path: D:/statistice/   #文件本地保存的路径
+  save-file-path: D:/statistice   #文件本地保存的路径
   version: 10 #版本号
   instCode: "00960001" #机构代码
   bankCode: "30050000" #交易机构代码
   product-no: "0105" # 产品编号
   bank-no: "3005" #产品编号
-  query-time-init: "20170418" # 与存管系统查询时间
+  query-time-init: "20170419" # 与存管系统查询时间
+
 gofobao:
   dev: true # 开发环境
   javaDomain: http://t191fqp.hk1.mofasuidao.cn

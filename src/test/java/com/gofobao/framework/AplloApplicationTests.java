@@ -55,6 +55,7 @@ import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.migrate.MigrateBorrowBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.gofobao.framework.tender.entity.Tender;
@@ -143,6 +144,13 @@ public class AplloApplicationTests {
     @Autowired
     MarketingProcessBiz marketingProcessBiz;
 
+    @Autowired
+    MigrateBorrowBiz migrateBorrowBiz ;
+
+    @Test
+    public void testMigrateBiz() {
+        migrateBorrowBiz.getBorrowMigrateFile();
+    }
 
     /**
      * 发送注册红包
