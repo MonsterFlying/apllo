@@ -59,6 +59,6 @@ public class AdvanceLogServiceImpl implements AdvanceLogService{
     }
 
     public long count(Specification<AdvanceLog> specification){
-        return count(specification);
+        return advanceLogRepository.count(specification);
     }
 }

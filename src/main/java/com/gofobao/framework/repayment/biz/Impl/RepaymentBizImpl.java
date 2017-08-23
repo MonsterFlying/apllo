@@ -319,9 +319,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Preconditions.checkNotNull(borrowAsset, "借款人资产记录不存在!");
 
         /* 获取批次记录 */
-        ThirdBatchLog thirdBatchLog = thirdBatchLogBiz.getValidLastBatchLog(String.valueOf(borrowId), ThirdBatchLogContants.BATCH_REPAY);
+        ThirdBatchLog thirdBatchLog = thirdBatchLogBiz.getValidLastBatchLog(String.valueOf(borrowId), ThirdBatchLogContants.BATCH_REPAY_ALL);
         //判断提交还款批次是否多次重复提交
-        int flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(borrowId), ThirdBatchLogContants.BATCH_REPAY);
+        int flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(borrowId), ThirdBatchLogContants.BATCH_REPAY_ALL);
         if (flag == ThirdBatchLogContants.AWAIT) {
             return ResponseEntity
                     .badRequest()
@@ -689,7 +689,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 collectionOrderRes.setCollectionId(p.getId());
                 collectionOrderRes.setBorrowName(borrow.getName());
                 collectionOrderRes.setOrder(p.getOrder() + 1);
-                if(p.getStatus().intValue()==RepaymentContants.STATUS_YES){
+                if (p.getStatus().intValue() == RepaymentContants.STATUS_YES) {
                     collectionOrderRes.setCollectionMoneyYes(StringHelper.formatMon(p.getRepayMoneyYes() / 100d));
                 }
                 collectionOrderRes.setCollectionMoney(StringHelper.formatMon(p.getRepayMoney() / 100d));
@@ -2176,7 +2176,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
 
         /* 获取批次记录 */
-        ThirdBatchLog thirdBatchLog = thirdBatchLogBiz.getValidLastBatchLog(String.valueOf(borrowRepayment.getId()), ThirdBatchLogContants.BATCH_REPAY);
+        ThirdBatchLog thirdBatchLog = thirdBatchLogBiz.getValidLastBatchLog(String.valueOf(borrowRepayment.getId()), ThirdBatchLogContants.BATCH_BAIL_REPAY);
         //判断提交还款批次是否多次重复提交
         int flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(borrowRepayment.getId()), ThirdBatchLogContants.BATCH_BAIL_REPAY);
         if (flag == ThirdBatchLogContants.AWAIT) {
@@ -2254,21 +2254,17 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .eq("borrowId", borrowId)
                     .eq("status", 1)
                     .eq("order", order) /*单期还款*/
-                    .eq("transferFlag", 1)
                     .build();
         } else {
             ts = Specifications
                     .<Tender>and()
                     .eq("borrowId", borrowId)
                     .eq("status", 1)
-                    .eq("transferFlag", 1)
                     .build();
         }
 
         List<Tender> tenderList = tenderService.findList(ts);
-        if (!CollectionUtils.isEmpty(tenderList))
-
-        {
+        if (!CollectionUtils.isEmpty(tenderList)) {
             List<Long> tenderIds = tenderList.stream().map(Tender::getId).collect(Collectors.toList());
             Specification<Transfer> transferSpecification = Specifications
                     .<Transfer>and()
@@ -2951,6 +2947,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
     /**
      * 结束垫付债权
+     *
      * @param parentBorrow
      */
     private void endAdvanceCredit(Borrow parentBorrow) {
