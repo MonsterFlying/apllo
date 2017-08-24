@@ -159,7 +159,7 @@ public class TransferController {
     }
 
     @ApiOperation("购买债权记录")
-    @GetMapping("transfer/v2/transfer/user/list/{pageIndex}/{pageSize}/{transferId}")
+    @GetMapping("pub/transfer/v2/transfer/user/list/{pageIndex}/{pageSize}/{transferId}")
     public ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(@PathVariable Long transferId,
                                                                           @PathVariable Integer pageIndex,
                                                                           @PathVariable Integer pageSize) {
