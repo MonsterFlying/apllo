@@ -167,7 +167,7 @@ public class UserBizImpl implements UserBiz {
             }
         }
 
-        Integer parentId = 0;
+        long parentId = 0;
         if (!StringUtils.isEmpty(voRegisterReq.getInviteCode())) {
             // 3.推荐人处理
             Users invitedUser = userService.findByInviteCode(voRegisterReq.getInviteCode());
@@ -177,7 +177,7 @@ public class UserBizImpl implements UserBiz {
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "无效的邀请码！"));
             }
 
-            parentId = invitedUser.getId().intValue();
+            parentId = invitedUser.getId();
         }
 
         // 处理注册来源

@@ -10,6 +10,7 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.marketing.biz.MarketingProcessBiz;
 import com.gofobao.framework.marketing.entity.*;
+import com.gofobao.framework.marketing.enums.MarketingTypeEnum;
 import com.gofobao.framework.marketing.service.*;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -19,6 +20,9 @@ import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -36,6 +40,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -84,8 +89,9 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         log.info(String.format("活动监控:  %s", marketingDataStr));
         MarketingData marketingData = null;
         try {
-            marketingData = parseMarketingData(marketingDataStr);   // 转换类型
+            marketingData = parseMarketingData(marketingDataStr);   // 转换数据
         } catch (Exception e) {
+            log.error("活动触发数据转换失败", e);
             return false;
         }
         List<Marketing> marketings = null;
@@ -98,6 +104,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             // 筛选时间
             filterMarketingByTime(marketings, marketingData);
         } catch (Exception e) {
+            log.error("获取活动记录异常", e);
             return false;
         }
 
@@ -157,7 +164,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             Preconditions.checkNotNull(opUser, "MarketingProcessBizImpl.publishRedPack rule is null");
             if (opUser.getIsLock()) {
                 log.error("红包派发: 当前用户被冻结");
-                return ;
+                return;
             }
         } else {
             opUser = user;
@@ -203,7 +210,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                 Tender tender = tenderService.findById(marketingData.getSourceId());
                 Long validMoney = tender.getValidMoney();
                 Double tempMoney;
-                Double tenderMoneyMin ;
+                Double tenderMoneyMin;
                 // 红包类型: 1.投资金额随机百分比,2.投资金额规定百分比, 3.随机金额, 4.规定金额, 5.年化率
                 switch (ruleType) {
                     case 1: // 投资金额随机百分比
@@ -322,11 +329,11 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         List<MarketingRedpackRecord> marketingRedpackRecords = marketingRedpackRecordService.findByMarketingIdAndRedpackRuleIdAndUserIdAndSourceId(marketingRedpackRecord.getMarketingId(),
                 marketingRedpackRecord.getRedpackRuleId(),
                 marketingRedpackRecord.getUserId(),
-                marketingRedpackRecord.getSourceId()) ;
+                marketingRedpackRecord.getSourceId());
 
-        if(!CollectionUtils.isEmpty(marketingRedpackRecords)){
+        if (!CollectionUtils.isEmpty(marketingRedpackRecords)) {
             log.error("红包被重复派发");
-        }else{
+        } else {
             marketingRedpackRecordService.save(marketingRedpackRecord);
         }
     }
@@ -493,7 +500,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             Marketing marketing = iterator.next();
             MarketingDimentsion marketingDimentsion = dimentsionMap.get(marketing.getId());
             Preconditions.checkNotNull(marketingDimentsion, "MarketingProcessBizImpl.filterDataByDimension marketingDimentsion is null");
-            boolean channelState = verifyChannel(marketingDimentsion, marketingData, user);  // 验证用户渠道
+            boolean channelState = verifyRegisterChannel(marketingDimentsion, user);  // 验证用户注册渠道
             if (!channelState) {
                 log.info("促销活动: 渠道用户验证不通过");
                 iterator.remove();
@@ -515,7 +522,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             }
 
             switch (marketingData.getMarketingType()) {
-                case LOGIN:
+                case LOGIN:  // 登录
                     boolean loginPlatform = verifyUserPlatform(marketingDimentsion, user);
                     if (!loginPlatform) {
                         log.info("促销活动: 登录平台");
@@ -523,7 +530,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                         continue;
                     }
                     break;
-                case TENDER:
+                case TENDER:  // 投标
                     boolean tenderPlatformState = verifyTenderPlatform(marketingDimentsion, user, marketingData);
                     if (!tenderPlatformState) {
                         log.info("促销活动: 投标平台不符合");
@@ -548,13 +555,9 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                     }
                     break;
                 case REGISTER:
-                    boolean registerSourceState = verifyRegisterSource(marketingDimentsion, marketingData);
-                    if (!registerSourceState) {
-                        log.info("促销活动: 注册来源来源");
-                        iterator.remove();
-                        continue;
-                    }
+                    // 注册不验证用户platform
                     break;
+
                 case OPEN_ACCOUNT:
                     boolean openAccountState = verifyOpenAccountSource(marketingDimentsion, marketingData);
                     if (!openAccountState) {
@@ -584,13 +587,14 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             return false;
         }
 
-        Integer source = user.getSource();
+        Integer source = user.getPlatform();  // 开户登录来源
         String[] platformArr = platform.split(",");
         for (String item : platformArr) {
             if (Integer.parseInt(item) == source) {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -607,7 +611,8 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         if (StringUtils.isEmpty(platform)) {
             return true;
         }
-        Users user = userService.findById(marketingData.getSourceId());
+
+        Users user = userService.findById(marketingData.getSourceId()) ;
         Preconditions.checkNotNull(user, "MarketingProcessBizImpl.verifyRegisterSource: user not found");
         Integer source = user.getSource();
         String[] platformArr = platform.split(",");
@@ -635,6 +640,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         RechargeDetailLog rachargeDetailLog = rechargeDetailLogService.findById(marketingData.getSourceId());
         Preconditions.checkNotNull(rachargeDetailLog, "MarketingProcessBizImpl.verifyRechargeSource: tender not found");
         if (rachargeDetailLog.getState() != 1) {
+            log.info("充值检测: 充值状态失败");
             return false;
         }
 
@@ -667,6 +673,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         if (borrowType.contains("-2")) {
             return borrow.getIsVouch();
         }
+
         String[] borrowTypeArr = borrowType.split(",");
         for (String item : borrowTypeArr) {
             if (Integer.parseInt(item) == borrow.getType()) {
@@ -675,7 +682,6 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         }
 
         return false;
-
     }
 
 
@@ -696,14 +702,14 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         String[] platformArr = platform.split(",");
         Long tenderId = marketingData.getSourceId();
         Tender tender = tenderService.findById(tenderId);
-        if (tender.getIsAuto()) {
+        if (tender.getIsAuto()) { // 自动投标
             return true;
         }
 
         for (String item : platformArr) {
             Integer source = tender.getSource();
             int i = Integer.parseInt(item);
-            if ( (!ObjectUtils.isEmpty(source)) && (i == source)) {
+            if ((!ObjectUtils.isEmpty(source)) && (i == source)) {
                 return true;
             }
         }
@@ -712,7 +718,11 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
     }
 
     /**
-     * 检测登录平台
+     * 检测用户登录平台
+     * 0: PC登录
+     * 1: android登录
+     * 2: ios登录
+     * 3: html登录
      *
      * @param marketingDimentsion
      * @param user
@@ -735,7 +745,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
     }
 
     /**
-     * 验证用户新老问题
+     * 验证用户是否为新老用户
      *
      * @param marketingDimentsion
      * @param user
@@ -752,7 +762,9 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
     }
 
     /**
-     * 验证是否需要邀请人
+     * 判断用户是否为被邀请用户
+     * 注意:
+     * 程序会检测邀请用户是否被冻结
      *
      * @param marketingDimentsion
      * @param user
@@ -761,6 +773,11 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
     private boolean verifyUserParent(MarketingDimentsion marketingDimentsion, Users user) {
         if (marketingDimentsion.getParentState() == 1) {
             if (!ObjectUtils.isEmpty(user.getParentId()) && user.getParentId() > 0) {
+                Users parentUser = userService.findUserByUserId(user.getParentId());
+                if (ObjectUtils.isEmpty(parentUser) || parentUser.getIsLock()) {
+                    log.info("判断用户是否为被邀请用户: 邀请用户不存在/邀请用户被冻结");
+                    return false;
+                }
                 return true;
             } else {
                 return false;
@@ -770,14 +787,17 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
     }
 
     /**
-     * 验证用户渠道
+     * 验证用户注册渠道
+     * 0: pc 用户
+     * 1: android 用户
+     * 2: ios 用户
+     * 9: html 用户
      *
      * @param marketingDimentsion
-     * @param marketingData
      * @param user
      * @return
      */
-    private boolean verifyChannel(MarketingDimentsion marketingDimentsion, MarketingData marketingData, Users user) {
+    private boolean verifyRegisterChannel(MarketingDimentsion marketingDimentsion, Users user) {
         String channelType = marketingDimentsion.getChannelType();
         if (!StringUtils.isEmpty(channelType)) {
             String[] channelArr = channelType.split(",");
@@ -817,56 +837,64 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
     }
 
     /**
+     * 活动缓存
+     */
+    LoadingCache<MarketingTypeEnum, List<Marketing>> marketingConditonCache = CacheBuilder
+            .newBuilder()
+            .expireAfterWrite(1, TimeUnit.HOURS)
+            .build(new CacheLoader<MarketingTypeEnum, List<Marketing>>() {
+                @Override
+                public List<Marketing> load(MarketingTypeEnum key) throws Exception {
+                    // 查询投标金额大于零,且不删除
+                    PredicateBuilder<MarketingCondition> builder = Specifications.
+                            <MarketingCondition>and()
+                            .eq("del", 0); // 没有删除
+                    switch (key) {
+                        case LOGIN:
+                            builder.ne("loginMinTime", null);  // 登录时间不能为空
+                            break;
+                        case TENDER:
+                            builder.gt("tenderMoneyMin", 0);  // 投标金额大于零
+                            break;
+                        case RECHARGE:
+                            builder.gt("rechargeMoneyMin", 0); // 充值金额大于零
+                            break;
+                        case REGISTER:
+                            builder.ne("registerMinTime", null);  // 注册时间不能为空
+                            break;
+                        case OPEN_ACCOUNT:
+                            builder.ne("openAccountMinTime", null);  // 开户时间不能为空
+                            break;
+                        default:
+                            throw new Exception("MarketingProcessBizImpl.findMarketing: not found marketingType");
+                    }
+                    Specification<MarketingCondition> marketingConditonSpecification = builder.build();
+                    List<MarketingCondition> marketingConditions =
+                            marketingConditionService.findAll(marketingConditonSpecification);
+
+                    if (CollectionUtils.isEmpty(marketingConditions)) {
+                        log.info("根据活动数据查询活动条件记录为空");
+                        return Lists.newArrayList();
+                    }
+
+                    List<Long> marketingIdList = marketingConditions
+                            .stream()
+                            .map(marketingCondition -> marketingCondition.getMarketingId())
+                            .collect(Collectors.toList());
+                    return marketingService.findByDelAndOpenStateAndIdIn(0,
+                            1,
+                            marketingIdList);
+                }
+            });
+
+    /**
      * 查找活动
      *
      * @param marketingData
      * @return
      */
     private List<Marketing> findMarketing(MarketingData marketingData) throws Exception {
-        List<Marketing> marketings = Lists.newArrayList();
-        // 查询投标金额大于零,且不删除
-
-        PredicateBuilder<MarketingCondition> builder = Specifications.
-                <MarketingCondition>and()
-                .eq("del", 0);
-
-        switch (marketingData.getMarketingType()) {
-            case LOGIN:
-                builder.ne("loginMinTime", null);  // 登录时间不能为空
-                break;
-
-            case TENDER:
-                builder.gt("tenderMoneyMin", 0);  // 投标金额大于零
-                break;
-
-            case RECHARGE:
-                builder.gt("rechargeMoneyMin", 0); // 充值金额大于零
-                break;
-
-            case REGISTER:
-                builder.ne("registerMinTime", null);  // 注册时间不能为空
-                break;
-
-            case OPEN_ACCOUNT:
-                builder.ne("openAccountMinTime", null);  // 开户时间不能为空
-                break;
-
-            default:
-                throw new Exception("MarketingProcessBizImpl.findMarketing: not found marketingType");
-        }
-        Specification<MarketingCondition> marketingConditonSpecification = builder.build() ;
-        List<MarketingCondition> marketingConditions = marketingConditionService.findAll(marketingConditonSpecification);
-        if (CollectionUtils.isEmpty(marketingConditions)) {
-            return marketings;
-        }
-        List<Long> marketingIdList = marketingConditions
-                .stream()
-                .map(marketingCondition -> marketingCondition.getMarketingId())
-                .collect(Collectors.toList());
-        return marketingService.findByDelAndOpenStateAndIdIn(0,
-                1,
-                marketingIdList);
-
+        return marketingConditonCache.get(marketingData.getMarketingType());
     }
 
     /**
@@ -889,7 +917,6 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         Preconditions.checkNotNull(marketingData.getUserId(), "MarketingProcessBizImpl,parseMarketingData: userId null ");
         Preconditions.checkNotNull(marketingData.getSourceId(), "MarketingProcessBizImpl,parseMarketingData: sourceId null ");
         Preconditions.checkNotNull(marketingData.getTransTime(), "MarketingProcessBizImpl,parseMarketingData: transTime null ");
-
         return marketingData;
     }
 }

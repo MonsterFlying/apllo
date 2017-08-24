@@ -49,7 +49,7 @@ public class Users implements Serializable{
 
     private String inviteCode;
 
-    private Integer parentId;
+    private Long parentId;
 
     private Integer source;
 

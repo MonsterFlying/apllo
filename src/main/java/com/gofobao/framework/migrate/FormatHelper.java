@@ -58,7 +58,7 @@ public class FormatHelper {
             // 不相等长高度
             int leafLen = length - real_length;
             for (int i = 0; i < leafLen; i++) {
-                value.append(" ");
+                value.append("0");
             }
             value.append(valueStr);
             return value.toString();

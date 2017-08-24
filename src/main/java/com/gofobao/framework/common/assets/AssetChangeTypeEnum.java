@@ -144,7 +144,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 用户接受平台广富币兑换红包
      */
-    currencyExchangeRedpack("广富币兑换", "platformPublishIntegralExchangeRedpack", "7833", "add@useMoney", "add@incomeOther", "D"),
+    currencyExchangeRedpack("广富币兑换", "currencyExchangeRedpack", "7833", "add@useMoney", "add@incomeOther", "D"),
 
     /**
      * 红包奖励

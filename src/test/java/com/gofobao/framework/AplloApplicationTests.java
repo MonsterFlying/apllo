@@ -56,6 +56,7 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.migrate.MigrateBorrowBiz;
+import com.gofobao.framework.migrate.MigrateProtocolBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.gofobao.framework.tender.entity.Tender;
@@ -147,9 +148,17 @@ public class AplloApplicationTests {
     @Autowired
     MigrateBorrowBiz migrateBorrowBiz;
 
+    @Autowired
+    MigrateProtocolBiz migrateProtocolBiz ;
+
     @Test
     public void testMigrateBiz() {
         migrateBorrowBiz.getBorrowMigrateFile();
+    }
+
+    @Test
+    public void testMigrateProtocolBiz(){
+        migrateProtocolBiz.getProtocolMigrateFile();
     }
 
     /**

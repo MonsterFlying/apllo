@@ -15,11 +15,9 @@ spring:
       hibernate:
         dialect : org.hibernate.dialect.MySQL5Dialect
   redis:
-    host: 192.168.1.5
-    password: gofobao@123
-    port: 6379
+    host: 192.168.1.13
   rabbitmq:
-    host: 127.0.0.1
+    host: 192.168.1.13
     port: 5672
     username: gofobao
     password: gofobao

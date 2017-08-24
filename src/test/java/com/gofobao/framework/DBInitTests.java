@@ -45,7 +45,7 @@ public class DBInitTests {
     BorrowCollectionService borrowCollectionService;
 
     @Test
-    public void contextLoads() {
+    public void initDatabase() {
         int pageSize = 2000, pageIndex = 0, realSize = 0;
         // 查询标的记录
         do {
@@ -62,7 +62,6 @@ public class DBInitTests {
 
             realSize = borrowList.size();
             pageIndex++;
-
             // 查询标的记录信息
             List<Tender> allTender = new ArrayList<>() ;
             List<BorrowRepayment> allBorrowRepaymentList = new ArrayList<>() ;
@@ -85,6 +84,16 @@ public class DBInitTests {
 
             List<Tender> tenderAll = tenderService.findList(tenderSpecification) ;
             Map<Long, List<Tender>> tenderMap = tenderAll.stream().collect(Collectors.groupingBy(Tender::getBorrowId));
+            Set<Long> tenderIdSet = tenderAll.stream().map(tender -> tender.getId()).collect(Collectors.toSet());
+
+            Specification<BorrowCollection> borrowCollectionSpecification = Specifications.<BorrowCollection>and()
+                    .in("tenderId", tenderIdSet.toArray())
+                    .build();
+
+            List<BorrowCollection> borrowCollectionListAll = borrowCollectionService.findList(borrowCollectionSpecification);
+            Map<Long, List<BorrowCollection>> borrowCollectionMap = borrowCollectionListAll.stream().collect(Collectors.groupingBy(BorrowCollection::getTenderId));
+
+
             for (Borrow borrow : borrowList) {
                 log.info("=========================================");
                 log.info("进入标循环" + borrow.getId());
@@ -115,12 +124,10 @@ public class DBInitTests {
                     for (Tender tender : tenderList) {
                         long tenderUserId = tender.getUserId();
                         long tenderId = tender.getId();
-                        tender.setStatus(borrowState);
+                        tender.setState(borrowState);
+
                         // 查询回款记录
-                        Specification<BorrowCollection> borrowCollectionSpecification = Specifications.<BorrowCollection>and()
-                                .eq("tenderId", tenderId)
-                                .build();
-                        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(borrowCollectionSpecification);
+                        List<BorrowCollection> borrowCollectionList = borrowCollectionMap.get(tenderId) ;
                         if (!CollectionUtils.isEmpty(borrowCollectionList)) {
                             for (BorrowCollection borrowCollection : borrowCollectionList) {
                                 borrowCollection.setUserId(tenderUserId);
