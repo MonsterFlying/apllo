@@ -7,6 +7,8 @@ import com.gofobao.framework.api.model.account_open.AccountOpenRequest;
 import com.gofobao.framework.api.model.account_open.AccountOpenResponse;
 import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusRequest;
 import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusResponse;
+import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileRequest;
+import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileResponse;
 import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthRequest;
 import com.gofobao.framework.api.model.auto_bid_auth_plus.AutoBidAuthResponse;
 import com.gofobao.framework.api.model.auto_credit_invest_auth.AutoCreditInvestAuthRequest;
@@ -29,6 +31,8 @@ import com.gofobao.framework.api.model.password_reset.PasswordResetRequest;
 import com.gofobao.framework.api.model.password_reset.PasswordResetResponse;
 import com.gofobao.framework.api.model.password_set.PasswordSetRequest;
 import com.gofobao.framework.api.model.password_set.PasswordSetResponse;
+import com.gofobao.framework.api.model.password_set_query.PasswordSetQueryRequest;
+import com.gofobao.framework.api.model.password_set_query.PasswordSetQueryResponse;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.entity.BankAccount;
 import com.gofobao.framework.asset.service.AssetService;
@@ -139,6 +143,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     @Autowired
     ThymeleafHelper thymeleafHelper;
 
+
     //用户来源
     private List<Integer> sources = Lists.newArrayList(0, 1, 2, 9);
 
@@ -207,7 +212,12 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "你访问的账户不存在", VoOpenAccountResp.class));
         // 2. 判断用户是否已经开过存管账户
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(user.getId());
+        UserThirdAccount userThirdAccount = null;
+        try {
+            userThirdAccount = queryUserThirdInfo(user.getId());
+        } catch (Exception e) {
+        }
+
         if (!ObjectUtils.isEmpty(userThirdAccount))
             return ResponseEntity
                     .badRequest()
@@ -358,7 +368,11 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Override
     public ResponseEntity<VoHtmlResp> modifyOpenAccPwd(HttpServletRequest httpServletRequest, Long userId) {
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        UserThirdAccount userThirdAccount = null;
+        try {
+            userThirdAccount = queryUserThirdInfo(userId);
+        } catch (Exception e) {
+        }
         if (ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
                     .badRequest()
@@ -368,7 +382,6 @@ public class UserThirdBizImpl implements UserThirdBiz {
         String html = null;
         // 判断用户是密码初始化还是
         html = generateModifyPasswordHtml(httpServletRequest, userId, userThirdAccount);
-
         if (StringUtils.isEmpty(html)) {
             return ResponseEntity
                     .badRequest()
@@ -509,6 +522,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Override
     public ResponseEntity<VoHtmlResp> autoTender(HttpServletRequest httpServletRequest, Long userId) {
+        String html = null;
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         if (ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
@@ -558,7 +572,6 @@ public class UserThirdBizImpl implements UserThirdBiz {
         autoBidAuthRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/user/third/autoTender/callback"));
         autoBidAuthRequest.setAcqRes(userId.toString());
         autoBidAuthRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
-        String html = null;
 
         try {
             html = jixinManager.getHtml(JixinTxCodeEnum.AUTO_BID_AUTH, autoBidAuthRequest);
@@ -733,13 +746,20 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Override
     public String showPassword(Long id, Model model) {
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(id);
+        UserThirdAccount userThirdAccount = null;
+        try {
+            userThirdAccount = queryUserThirdInfo(id);
+        } catch (Exception e) {
+            userThirdAccount = null;
+        }
         model.addAttribute("h5Domain", h5Domain);
         if (ObjectUtils.isEmpty(userThirdAccount)) {
             return "password/faile";
         }
 
         if (userThirdAccount.getPasswordState() == 1) {
+            // 获取签约
+
             return "password/success";
         } else {
             return "password/faile";
@@ -1476,6 +1496,83 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
     }
 
+    @Override
+    public UserThirdAccount queryUserThirdInfo(Long id) throws Exception {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(id);
+        if (!ObjectUtils.isEmpty(userThirdAccount)) {
+            return userThirdAccount;
+        }
+
+        Users user = userService.findUserByUserId(id);
+        Preconditions.checkNotNull(user, "UserThirdBizImpl.queryUserThirdInfo: user is null");
+        String phone = user.getPhone();
+        if (StringUtils.isEmpty(phone)) {
+            throw new Exception("记录不存在");
+        }
+
+        AccountQueryByMobileRequest accountQueryByMobileRequest = new AccountQueryByMobileRequest();
+        accountQueryByMobileRequest.setMobile(phone);
+        AccountQueryByMobileResponse accountQueryByMobileResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_QUERY_BY_MOBILE,
+                accountQueryByMobileRequest,
+                AccountQueryByMobileResponse.class);
+        if (ObjectUtils.isEmpty(accountQueryByMobileResponse)
+                || !JixinResultContants.SUCCESS.equals(accountQueryByMobileResponse.getRetCode())) {
+            String msg = accountQueryByMobileResponse == null ? "网路异常请稍后再试" : accountQueryByMobileResponse.getRetMsg();
+            throw new Exception(msg);
+        }
+
+        String accountId = accountQueryByMobileResponse.getAccountId(); // 用户类型
+        String mobile = accountQueryByMobileResponse.getMobile();// 手机号
+        String idNo = accountQueryByMobileResponse.getIdNo(); // 证件号
+        String name = accountQueryByMobileResponse.getName(); // 用户真实姓名
+
+        UserThirdAccount entity = new UserThirdAccount();
+        Date nowDate = new Date();
+        entity.setUpdateAt(nowDate);
+        entity.setUserId(user.getId());
+        entity.setCreateAt(nowDate);
+        entity.setCreateId(user.getId());
+        entity.setUserId(user.getId());
+        entity.setDel(0);
+        entity.setMobile(mobile);
+        entity.setIdType(1);
+        entity.setIdNo(idNo);
+        try {
+            CardBindItem cardInfoByThird = findCardInfoByThird(accountId); // 查询银行卡
+            String cardNo = cardInfoByThird.getCardNo();
+            BankBinHelper.BankInfo bankInfo = bankBinHelper.find(cardNo);
+            if (ObjectUtils.isEmpty(bankInfo) || !bankInfo.getCardType().equals("借记卡")) {
+                throw new Exception("系统异常");
+            }
+            String bankName = bankInfo.getBankName();
+            if (StringUtils.isEmpty(bankName)) {
+                throw new Exception("系统异常");
+            }
+
+            DictValue dictValue = bankLimitCache.get(bankName);
+            entity.setBankLogo(dictValue.getValue03());
+            entity.setBankName(bankName);
+        } catch (Exception e) {
+            log.error("系统主动查询开户信息并且写入银行卡信息异常");
+        }
+
+        entity.setAcctUse(1);
+        entity.setAccountId(accountId);
+        entity.setPasswordState(0);
+        entity.setCardNoBindState(1);
+        entity.setName(name);
+        userThirdAccountService.save(entity);
+
+        //  9.保存用户实名信息
+        user.setRealname(name);
+        user.setCardId(idNo);
+        user.setUpdatedAt(nowDate);
+        userService.save(user);
+        // 开户成功
+        touchMarketingByOpenAccount(entity);
+        return userThirdAccountService.findByUserId(user.getId());
+    }
+
 
     /**
      * 根据开户账号查询绑定银行卡信息(通过查询存管平台)
@@ -1514,6 +1611,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         return cardBindItemsList.get(0);
     }
 
+
     /**
      * 生成修改密码html
      *
@@ -1524,7 +1622,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
      */
     private String generateModifyPasswordHtml(HttpServletRequest httpServletRequest, Long userId, UserThirdAccount userThirdAccount) {
         String html;// 判断用户是密码初始化还是
-        Integer passwordState = userThirdAccount.getPasswordState();
+        Integer passwordState = queryUserThirdPasswordState(userThirdAccount);
+        // 请求即信获取密码期详情
         if (passwordState.equals(0)) { // 初始化密码
             PasswordSetRequest passwordSetRequest = new PasswordSetRequest();
             passwordSetRequest.setMobile(userThirdAccount.getMobile());
@@ -1551,5 +1650,36 @@ public class UserThirdBizImpl implements UserThirdBiz {
             html = jixinManager.getHtml(JixinTxCodeEnum.PASSWORD_RESET, passwordResetRequest);
         }
         return html;
+    }
+
+    /**
+     * 查询用户面状态(会主动请求即信信息,同步数据库)
+     *
+     * @param userThirdAccount
+     * @return
+     */
+    private Integer queryUserThirdPasswordState(UserThirdAccount userThirdAccount) {
+        Integer passwordState = userThirdAccount.getPasswordState();
+        if (passwordState.equals(0)) {
+            // 查询密码
+            PasswordSetQueryRequest passwordSetQueryRequest = new PasswordSetQueryRequest();
+            passwordSetQueryRequest.setAccountId(userThirdAccount.getAccountId());
+            PasswordSetQueryResponse passwordSetQueryResponse = jixinManager.send(JixinTxCodeEnum.PASSWORD_SET_QUERY,
+                    passwordSetQueryRequest,
+                    PasswordSetQueryResponse.class);
+            if (ObjectUtils.isEmpty(passwordSetQueryResponse)
+                    || JixinResultContants.SUCCESS.equals(passwordSetQueryResponse.getRetCode())) {
+                return 0;
+            }
+
+            String pinFlag = passwordSetQueryResponse.getPinFlag();
+            if ("1".equals(pinFlag)) { // 已经设置过密码, 同步数据库
+                userThirdAccount.setPasswordState(1);
+                userThirdAccountService.save(userThirdAccount);
+            }
+            return 1;
+        } else {
+            return 1;
+        }
     }
 }

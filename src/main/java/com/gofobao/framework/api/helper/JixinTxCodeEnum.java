@@ -14,6 +14,13 @@ public enum JixinTxCodeEnum {
             "/escrow/p2p/online",
             "移动端开户"),
 
+    /**
+     * 查询电子账户密码
+     */
+    PASSWORD_SET_QUERY(
+            "passwordSetQuery",
+            "/escrow/p2p/online",
+            "查询电子账户密码"),
 
     /**
      * 开户

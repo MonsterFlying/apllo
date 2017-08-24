@@ -42,7 +42,6 @@ public class UserThirdController {
     }
 
 
-
     @ApiOperation("银行存管密码管理")
     @PostMapping("/user/third/modifyOpenAccPwd")
     public ResponseEntity<VoHtmlResp> modifyOpenAccPwd(HttpServletRequest httpServletRequest, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
@@ -70,20 +69,17 @@ public class UserThirdController {
         return userThirdBiz.bankBindCallback(httpServletRequest) ;
     }
 
-
     @ApiOperation("银行存管页面中的忘记密码")
     @GetMapping("/pub/third/password/{encode}/{channel}")
     public ResponseEntity<String> publicPasswordModify(HttpServletRequest httpServletRequest, @PathVariable("encode") String encode, @PathVariable("channel") String channel) {
         return userThirdBiz.publicPasswordModify(httpServletRequest, encode, channel) ;
     }
 
-
     @ApiOperation("银行存管页面中忘记密码回调")
     @PostMapping("/pub/user/third/modifyOpenAccPwd/callback/{type}")
     public ResponseEntity<String> modifyOpenAccPwdCallback(HttpServletRequest request, HttpServletResponse response, @PathVariable Integer type) {
         return userThirdBiz.modifyOpenAccPwdCallback(request, response, type) ;
     }
-
 
     @ApiOperation("开通自动投标协议")
     @PostMapping("/user/third/autoTender")
