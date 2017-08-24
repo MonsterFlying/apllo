@@ -416,7 +416,7 @@ public class AplloApplicationTests {
                 .in("id", transferTenderIds.toArray())
                 .build();
         List<Tender> transferTenderList = tenderService.findList(ts);
-        Map<Long, Tender> transferTenderMaps = transferTenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
+        Map<Long, Tender> parentTenderMaps = transferTenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
         /* 原始标id */
         Set<Long> parentBorrowIds = transferTenderList.stream().map(Tender::getBorrowId).collect(Collectors.toSet());
         /* 原始借款集合 */
@@ -436,10 +436,10 @@ public class AplloApplicationTests {
         Map<Long/* 投标id tender_id */, List<BorrowCollection>> transferBorrowCollectionMaps = transferBorrowCollectionList.stream().collect(groupingBy(BorrowCollection::getTenderId));
         List<Transfer> transferList = new ArrayList<>();
         transferBorrowList.stream().forEach(borrow -> {
-            Tender transferTender = transferTenderMaps.get(borrow.getTenderId());
-            List<BorrowCollection> transferBorrowCollection = transferBorrowCollectionMaps.get(transferTender.getId());
+            Tender parentTender = parentTenderMaps.get(borrow.getTenderId());
+            List<BorrowCollection> transferBorrowCollection = transferBorrowCollectionMaps.get(parentTender.getId());
             boolean flag = !CollectionUtils.isEmpty(transferBorrowCollection);
-            Borrow parentBorrow = parentBorrowMaps.get(transferTender.getBorrowId());
+            Borrow parentBorrow = parentBorrowMaps.get(parentTender.getBorrowId());
 
             Transfer transfer = new Transfer();
             transfer.setState(borrow.getStatus() == 5 ? 4 : (borrow.getStatus() == 2 ? 3 : 2));
@@ -467,22 +467,22 @@ public class AplloApplicationTests {
             transferList.add(transfer);
         });
         transferService.save(transferList);
-        Map<Long, Transfer> transferMaps = transferList.stream().filter(transfer -> transfer.getState() == 2).collect(Collectors.toMap(Transfer::getId, Function.identity()));
+        Map<Long, Transfer> transferMaps = transferList.stream().filter(transfer -> transfer.getState() == 2).collect(Collectors.toMap(Transfer::getTenderId, Function.identity()));
 
         /* 查询债权转让borrow的投标记录 */
         for (Long transferBorrowId : transferBorrowIds) {
             ts = Specifications
                     .<Tender>and()
                     .eq("borrowId", transferBorrowId)
-                    .notIn("status", 0)
+                    .eq("status", 1)
                     .build();
 
             List<Tender> buyTransferTenderList = tenderService.findList(ts);
             List<TransferBuyLog> transferBuyLogList = new ArrayList<>();
             buyTransferTenderList.stream().forEach(buyTransferTender -> {
                 Borrow transferBorrow = transferBorrowMaps.get(buyTransferTender.getBorrowId());
-                Tender transferTender = transferTenderMaps.get(transferBorrow.getTenderId());
-                Transfer transfer = transferMaps.get(transferTender.getId());
+                Tender parentTender = parentTenderMaps.get(transferBorrow.getTenderId());
+                Transfer transfer = transferMaps.get(parentTender.getId());
                 if (ObjectUtils.isEmpty(transfer)) {
                     return;
                 }
@@ -505,14 +505,14 @@ public class AplloApplicationTests {
             Map<Long, List<TransferBuyLog>> transferBuyMaps = transferBuyLogList.stream().collect(groupingBy(TransferBuyLog::getTransferId));
             buyTransferTenderList.stream().forEach(buyTransferTender -> {
                 Borrow transferBorrow = transferBorrowMaps.get(buyTransferTender.getBorrowId());
-                Tender transferTender = transferTenderMaps.get(transferBorrow.getTenderId());
-                Transfer transfer = transferMaps.get(transferTender.getId());
+                Tender parentTender = parentTenderMaps.get(transferBorrow.getTenderId());
+                Transfer transfer = transferMaps.get(parentTender.getId());
                 if (ObjectUtils.isEmpty(transfer) || transfer.getState() != 2) {
                     return;
                 }
-                Borrow prarentBorrow = parentBorrowMaps.get(transferTender.getBorrowId());
+                Borrow prarentBorrow = parentBorrowMaps.get(parentTender.getBorrowId());
                 List<TransferBuyLog> transferBuyLogs = transferBuyMaps.get(transfer.getId());
-                List<Tender> childTenderList = addChildTender(transfer.getCreatedAt(), transfer, transferTender, transferBuyLogs);
+                List<Tender> childTenderList = addChildTender(transfer.getCreatedAt(), transfer, parentTender, transferBuyLogs);
 
                 addChildTenderCollection(transfer.getCreatedAt(), transfer, prarentBorrow, childTenderList);
             });
@@ -550,10 +550,8 @@ public class AplloApplicationTests {
                     .build();
         }
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);/* 债权转让原投资回款记录 */
-        long transferInterest = borrowCollectionList.stream().mapToLong(BorrowCollection::getInterest).sum();/* 债权转让总利息 */
         Date repayAt = transfer.getRepayAt();/* 原借款下一期还款日期 */
         Date startAt = DateHelper.subMonths(repayAt, 1);/* 计息开始时间 */
-        long sumCollectionInterest = 0;//总回款利息
         for (int j = 0; j < childTenderList.size(); j++) {
             Tender childTender = childTenderList.get(j);/* 购买债权转让子投资记录 */
             //生成购买债权转让新的回款记录
@@ -567,19 +565,12 @@ public class AplloApplicationTests {
             Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
             BorrowCollection borrowCollection;
             long collectionMoney = 0;
-            long collectionInterest = 0;
             int startOrder = borrowCollectionList.get(0).getOrder();/* 获取开始转让期数,期数下标从0开始 */
             for (int i = 0; i < repayDetailList.size(); i++) {
                 borrowCollection = new BorrowCollection();
                 Map<String, Object> repayDetailMap = repayDetailList.get(i);
                 collectionMoney += new Double(NumberHelper.toDouble(repayDetailMap.get("repayMoney"))).longValue();
                 long interest = new Double(NumberHelper.toDouble(repayDetailMap.get("interest"))).longValue();
-                collectionInterest += interest;
-                sumCollectionInterest += interest;
-                //最后一个购买债权转让的最后一期回款，需要把还款溢出的利息补给新的回款记录
-                if ((j == childTenderList.size() - 1) && (i == repayDetailList.size() - 1)) {
-                    interest += transferInterest - sumCollectionInterest;/* 新的回款利息添加溢出的利息 */
-                }
 
                 borrowCollection.setTenderId(childTender.getId());
                 borrowCollection.setStatus(0);
@@ -793,7 +784,7 @@ public class AplloApplicationTests {
 
     @Test
     public void test() {
-        //dataMigration();
+        dataMigration();
 
        /* MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
@@ -825,7 +816,7 @@ public class AplloApplicationTests {
         }*/
 
         //批次处理
-        batchDeal();
+        //batchDeal();
         //查询存管账户资金信息
         //balanceQuery();
         //查询资金流水
