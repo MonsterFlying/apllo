@@ -82,11 +82,11 @@ public class MigrateBorrowBiz {
             log.error("创建标迁移文件失败", e);
         }
 
-        String errorFileName = fileName + "_name";
+        String errorFileName = fileName + "_error";
         BufferedWriter errorBorrowWriter = null;
         try {
             File borrowFile = FileHelper.createFile(MIGRATE_PATH, BORROW_DIR, errorFileName);
-            errorBorrowWriter = Files.newWriter(borrowFile, Charset.forName("gbk"));
+            errorBorrowWriter = Files.newWriter(borrowFile, Charset.forName("UTF-8"));
         } catch (Exception e) {
             log.error("创建标迁移文件失败", e);
         }
@@ -101,12 +101,15 @@ public class MigrateBorrowBiz {
                     .eq("status", "3")
                     .eq("closeAt", null)
                     .eq("productId", null)
+                    .in("type", Stream.of(0, 1 ,4).toArray())
+                    .eq("tenderId", null)
                     .build();
             List<Borrow> borrowList = borrowService.findList(bs, pageable);
             if (CollectionUtils.isEmpty(borrowList)) {
                 break;
             }
             realSize = borrowList.size();
+            pageIndex ++ ;
 
             Set<Long> userIdSet = borrowList.stream().map(borrow -> borrow.getUserId()).collect(Collectors.toSet());
 
@@ -136,11 +139,8 @@ public class MigrateBorrowBiz {
                     // 写入存管
                     StringBuffer text = new StringBuffer();
                     try {
-                        String borrowName = borrow.getName();
-                        if (borrowName.length() > 30) {
-                            throw new Exception("标的信息过长");
-                        }
-                        String borrowMenoy = StringHelper.formatDouble(borrow.getMoney() / 100D, false);
+                        String borrowName = String.format("GFB%s", borrow.getId() ) ;
+                        String borrowMenoy = borrow.getMoney().toString() ;
                         String intType = null;
                         Integer repayFashion = borrow.getRepayFashion();
                         String intPayDay = null;
@@ -153,11 +153,11 @@ public class MigrateBorrowBiz {
                             intType = "1";
                             Date successAt = borrow.getSuccessAt();
                             intPayDay = String.valueOf(DateHelper.getDay(successAt));
-                            loanTerm = String.valueOf(
-                                    DateHelper.diffInDays(DateHelper.addMonths(successAt, borrow.getTimeLimit()), successAt, false));
+                            loanTerm = String.valueOf(DateHelper.diffInDays(DateHelper.addMonths(successAt, borrow.getTimeLimit()), successAt, false));
                         }
                         String borrowId = StringHelper.toString(borrow.getId());
-                        String yield = StringHelper.toString(borrow.getApr() * 10); // 逾期年化收益
+                        String yield = StringHelper.toString(borrow.getApr() * 1000); // 逾期年化收益
+
                         text.append(FormatHelper.appendByTail(BANK_NO, 4)); // 银行代号
                         text.append(FormatHelper.appendByTail(batchNo, 6));  // 批次号
                         text.append(FormatHelper.appendByTail(StringHelper.toString(borrow.getId()), 40));  // 标的编号
@@ -182,7 +182,6 @@ public class MigrateBorrowBiz {
                     }
                 }
             }
-
         } while (realSize == pageSize);
         try {
             if (borrowWriter != null) {

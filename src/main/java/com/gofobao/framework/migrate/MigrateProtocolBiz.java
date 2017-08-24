@@ -228,13 +228,13 @@ public class MigrateProtocolBiz {
                         String orderId = System.currentTimeMillis() + RandomHelper.generateNumberCode(6);
                         StringBuffer text = new StringBuffer();
                         text.append(FormatHelper.appendByTail(BANK_NO, 4)); // 银行代号
-                        text.append(FormatHelper.appendByTail(timeStr, 8));  // 批次号
+                        text.append(FormatHelper.appendByTail(timeStr, 6));  // 批次号
                         text.append(FormatHelper.appendByTail(item.getAccountId(), 19));  // 签约电子账号
                         text.append(FormatHelper.appendByTail(FUISSUER, 4));
                         text.append(FormatHelper.appendByTail("2", 1));
                         text.append(FormatHelper.appendByTail(String.format("%s%s%s", COINSTCODE, "0000", orderId), 40));
                         text.append(FormatHelper.appendByTail(dateStr, 8));
-                        text.append(FormatHelper.appendByTail(dateStr, 6));
+                        text.append(FormatHelper.appendByTail(timeStr, 6));
                         text.append(FormatHelper.appendByTail(item.getId().toString(), 100));
                         text.append(FormatHelper.appendByTail("", 100));
                         gbk.write(text.toString());
@@ -247,13 +247,13 @@ public class MigrateProtocolBiz {
                         String orderId = System.currentTimeMillis() + RandomHelper.generateNumberCode(6);
                         StringBuffer text = new StringBuffer();
                         text.append(FormatHelper.appendByTail(BANK_NO, 4)); // 银行代号
-                        text.append(FormatHelper.appendByTail(timeStr, 8));  // 批次号
+                        text.append(FormatHelper.appendByTail(timeStr, 6));  // 批次号
                         text.append(FormatHelper.appendByTail(item.getAccountId(), 19));  // 签约电子账号
                         text.append(FormatHelper.appendByTail(FUISSUER, 4));
                         text.append(FormatHelper.appendByTail("1", 1));
                         text.append(FormatHelper.appendByTail(String.format("%s%s%s", COINSTCODE, "0000", orderId), 40));
                         text.append(FormatHelper.appendByTail(dateStr, 8));
-                        text.append(FormatHelper.appendByTail(dateStr, 6));
+                        text.append(FormatHelper.appendByTail(timeStr, 6));
                         text.append(FormatHelper.appendByTail(item.getId().toString(), 100));
                         text.append(FormatHelper.appendByTail("", 100));
                         gbk.write(text.toString());
