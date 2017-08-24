@@ -159,22 +159,25 @@ public class TransferBizImpl implements TransferBiz {
                     .<TransferBuyLog>and()
                     .eq("transferId", transferId)
                     .eq("userId", userId)
+                    .eq("state", 0)
                     .build();
         } else {
             tbls = Specifications
                     .<TransferBuyLog>and()
                     .eq("userId", userId)
+                    .eq("state", 0)
                     .build();
         }
         /* 购买债权转让集合 */
-        List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);
+        List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls, new PageRequest(voFindTransferBuyLog.getPageIndex(),
+                voFindTransferBuyLog.getPageSize(), new Sort(Sort.Direction.DESC, "createdAt")));
         Map<Long/* 债权转让id */, Transfer> transferMaps = new HashMap<>();
         if (!CollectionUtils.isEmpty(transferBuyLogList)) {
             Set<Long> transferIds = transferBuyLogList.stream().map(TransferBuyLog::getTransferId).collect(Collectors.toSet());
             Specification<Transfer> ts = Specifications
                     .<Transfer>and()
                     .in("id", transferIds.toArray())
-                    .eq("state",0)
+                    .eq("state", 1)
                     .build();
             List<Transfer> transferList = transferService.findList(ts);
             Preconditions.checkState(!CollectionUtils.isEmpty(transferList), "债权转让不存在!");
@@ -480,13 +483,13 @@ public class TransferBizImpl implements TransferBiz {
             bcs = Specifications
                     .<BorrowCollection>and()
                     .eq("tenderId", transfer.getTenderId())
-                    .eq("id", borrowCollectionIds.split(","))
                     .eq("status", 0)
                     .build();
         } else {
             bcs = Specifications
                     .<BorrowCollection>and()
                     .eq("tenderId", transfer.getTenderId())
+                    .eq("id", borrowCollectionIds.split(","))
                     .eq("status", 0)
                     .build();
         }
@@ -616,6 +619,7 @@ public class TransferBizImpl implements TransferBiz {
         //更新债权转让为已转让
         transfer.setState(2);
         transfer.setUpdatedAt(new Date());
+        transfer.setSuccessAt(new Date());
         transferService.save(transfer);
         return childTenderList;
     }
@@ -1000,7 +1004,7 @@ public class TransferBizImpl implements TransferBiz {
         transfer.setUserId(userId);
         transfer.setTransferMoney(leftCapital + alreadyInterest);
         transfer.setTransferMoneyYes(0l);
-        transfer.setDel(false);
+        transfer.setDel(true);
         transfer.setBorrowId(borrow.getId());
         transfer.setPrincipal(leftCapital);
         transfer.setStartOrder(firstBorrowCollection.getOrder());
@@ -1362,7 +1366,7 @@ public class TransferBizImpl implements TransferBiz {
             voViewBorrowList.setSpend(0d);
             //债权转让进行中
             if (item.getState() == 1) {
-                if (item.getTransferMoneyYes()/item.getTransferMoney()==1) {
+                if (item.getTransferMoneyYes() / item.getTransferMoney() == 1) {
                     voViewBorrowList.setStatus(6);
                 } else {
                     voViewBorrowList.setStatus(3);

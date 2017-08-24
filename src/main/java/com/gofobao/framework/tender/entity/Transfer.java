@@ -38,7 +38,7 @@ public class Transfer {
     private Long userId;
     private Long lowest;
     private Boolean del;
-    private Boolean isAll;
+    private Boolean isAll = true;
     private Integer startOrder;
     private Integer endOrder;
     private String borrowCollectionIds;
