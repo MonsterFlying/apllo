@@ -1,5 +1,6 @@
 package com.gofobao.framework.tender.vo.request;
 
+import com.gofobao.framework.common.page.Page;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -9,9 +10,10 @@ import lombok.Data;
  */
 @ApiModel
 @Data
-public class VoFindTransferBuyLog {
+public class VoFindTransferBuyLog extends Page{
     @ApiModelProperty(hidden = true)
     private Long userId;
     @ApiModelProperty(name = "债权转让id，选填")
     private Long transferId;
+
 }

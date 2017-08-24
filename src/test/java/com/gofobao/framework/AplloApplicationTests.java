@@ -145,7 +145,7 @@ public class AplloApplicationTests {
     MarketingProcessBiz marketingProcessBiz;
 
     @Autowired
-    MigrateBorrowBiz migrateBorrowBiz ;
+    MigrateBorrowBiz migrateBorrowBiz;
 
     @Test
     public void testMigrateBiz() {
@@ -467,48 +467,56 @@ public class AplloApplicationTests {
             transferList.add(transfer);
         });
         transferService.save(transferList);
-        Map<Long, Transfer> transferMaps = transferList.stream().filter(transfer -> transfer.getState() == 2).collect(Collectors.toMap(Transfer::getTenderId, Function.identity()));
+        Map<Long, Transfer> transferMaps = transferList.stream().filter(transfer -> transfer.getState() == 2).collect(Collectors.toMap(Transfer::getId, Function.identity()));
 
         /* 查询债权转让borrow的投标记录 */
-        ts = Specifications
-                .<Tender>and()
-                .in("borrowId", transferBorrowIds.toArray())
-                .eq("status", 1)
-                .build();
-        List<Tender> buyTransferTenderList = tenderService.findList(ts);
-        List<TransferBuyLog> transferBuyLogList = new ArrayList<>();
-        buyTransferTenderList.stream().forEach(buyTransferTender -> {
-            Borrow transferBorrow = transferBorrowMaps.get(buyTransferTender.getBorrowId());
-            Tender transferTender = transferTenderMaps.get(transferBorrow.getTenderId());
-            Transfer transfer = transferMaps.get(transferTender.getId());
+        for (Long transferBorrowId : transferBorrowIds) {
+            ts = Specifications
+                    .<Tender>and()
+                    .eq("borrowId", transferBorrowId)
+                    .notIn("status", 0)
+                    .build();
 
-            TransferBuyLog transferBuyLog = new TransferBuyLog();
-            transferBuyLog.setSource(0);
-            transferBuyLog.setState(1);
-            transferBuyLog.setUserId(buyTransferTender.getUserId());
-            transferBuyLog.setUpdatedAt(buyTransferTender.getUpdatedAt());
-            transferBuyLog.setType(0);
-            transferBuyLog.setValidMoney(buyTransferTender.getValidMoney());
-            transferBuyLog.setBuyMoney(buyTransferTender.getValidMoney());
-            transferBuyLog.setAlreadyInterest(0l);
-            transferBuyLog.setTransferId(transfer.getId());
-            transferBuyLog.setPrincipal(buyTransferTender.getValidMoney());
-            transferBuyLog.setCreatedAt(transfer.getCreatedAt());
-            transferBuyLogList.add(transferBuyLog);
-        });
-        transferBuyLogService.save(transferBuyLogList);
-        Map<Long, List<TransferBuyLog>> transferBuyMaps = transferBuyLogList.stream().collect(groupingBy(TransferBuyLog::getTransferId));
-        buyTransferTenderList.stream().forEach(buyTransferTender -> {
-            Borrow transferBorrow = transferBorrowMaps.get(buyTransferTender.getBorrowId());
-            Tender transferTender = transferTenderMaps.get(transferBorrow.getTenderId());
-            Transfer transfer = transferMaps.get(transferTender.getId());
-            Borrow prarentBorrow = parentBorrowMaps.get(transferTender.getBorrowId());
-            List<TransferBuyLog> transferBuyLogs = transferBuyMaps.get(transfer.getId());
-            List<Tender> childTenderList = addChildTender(transfer.getCreatedAt(), transfer, transferTender, transferBuyLogs);
+            List<Tender> buyTransferTenderList = tenderService.findList(ts);
+            List<TransferBuyLog> transferBuyLogList = new ArrayList<>();
+            buyTransferTenderList.stream().forEach(buyTransferTender -> {
+                Borrow transferBorrow = transferBorrowMaps.get(buyTransferTender.getBorrowId());
+                Tender transferTender = transferTenderMaps.get(transferBorrow.getTenderId());
+                Transfer transfer = transferMaps.get(transferTender.getId());
+                if (ObjectUtils.isEmpty(transfer)) {
+                    return;
+                }
 
-            addChildTenderCollection(transfer.getCreatedAt(), transfer, prarentBorrow, childTenderList);
-        });
+                TransferBuyLog transferBuyLog = new TransferBuyLog();
+                transferBuyLog.setSource(0);
+                transferBuyLog.setState(1);
+                transferBuyLog.setUserId(buyTransferTender.getUserId());
+                transferBuyLog.setUpdatedAt(buyTransferTender.getUpdatedAt());
+                transferBuyLog.setType(0);
+                transferBuyLog.setValidMoney(buyTransferTender.getValidMoney());
+                transferBuyLog.setBuyMoney(buyTransferTender.getValidMoney());
+                transferBuyLog.setAlreadyInterest(0l);
+                transferBuyLog.setTransferId(transfer.getId());
+                transferBuyLog.setPrincipal(buyTransferTender.getValidMoney());
+                transferBuyLog.setCreatedAt(transfer.getCreatedAt());
+                transferBuyLogList.add(transferBuyLog);
+            });
+            transferBuyLogService.save(transferBuyLogList);
+            Map<Long, List<TransferBuyLog>> transferBuyMaps = transferBuyLogList.stream().collect(groupingBy(TransferBuyLog::getTransferId));
+            buyTransferTenderList.stream().forEach(buyTransferTender -> {
+                Borrow transferBorrow = transferBorrowMaps.get(buyTransferTender.getBorrowId());
+                Tender transferTender = transferTenderMaps.get(transferBorrow.getTenderId());
+                Transfer transfer = transferMaps.get(transferTender.getId());
+                if (ObjectUtils.isEmpty(transfer) || transfer.getState() != 2) {
+                    return;
+                }
+                Borrow prarentBorrow = parentBorrowMaps.get(transferTender.getBorrowId());
+                List<TransferBuyLog> transferBuyLogs = transferBuyMaps.get(transfer.getId());
+                List<Tender> childTenderList = addChildTender(transfer.getCreatedAt(), transfer, transferTender, transferBuyLogs);
 
+                addChildTenderCollection(transfer.getCreatedAt(), transfer, prarentBorrow, childTenderList);
+            });
+        }
 
     }
 
@@ -523,20 +531,22 @@ public class AplloApplicationTests {
     public List<BorrowCollection> addChildTenderCollection(Date nowDate, Transfer transfer, Borrow parentBorrow, List<Tender> childTenderList) {
         List<BorrowCollection> childTenderCollectionList = new ArrayList<>();/* 债权子记录回款记录 */
         String borrowCollectionIds = transfer.getBorrowCollectionIds();
+
         //生成子级债权回款记录，标注老债权回款已经转出
         Specification<BorrowCollection> bcs = null;
+
         if (transfer.getIsAll()) {
             bcs = Specifications
                     .<BorrowCollection>and()
                     .eq("tenderId", transfer.getTenderId())
-                    .eq("id", borrowCollectionIds.split(","))
-                    .eq("status", 0)
+                    .eq("transferFlag", 1)
                     .build();
         } else {
             bcs = Specifications
                     .<BorrowCollection>and()
                     .eq("tenderId", transfer.getTenderId())
-                    .eq("status", 0)
+                    .eq("id", borrowCollectionIds.split(","))
+                    .eq("transferFlag", 1)
                     .build();
         }
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);/* 债权转让原投资回款记录 */
@@ -615,8 +625,8 @@ public class AplloApplicationTests {
         List<Tender> childTenderList = new ArrayList<>();
         transferBuyLogList.stream().forEach(transferBuyLog -> {
             Tender childTender = new Tender();
-            UserThirdAccount buyUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
-
+            /*UserThirdAccount buyUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
+*/
             childTender.setUserId(transferBuyLog.getUserId());
             childTender.setStatus(1);
             childTender.setType(transferBuyLog.getType());
@@ -627,8 +637,9 @@ public class AplloApplicationTests {
             childTender.setMoney(transferBuyLog.getBuyMoney());
             childTender.setValidMoney(transferBuyLog.getPrincipal());
             childTender.setTransferFlag(0);
-            childTender.setTUserId(buyUserThirdAccount.getUserId());
+            childTender.setTUserId(transferBuyLog.getUserId());
             childTender.setState(2);
+            childTender.setAutoOrder(0);
             childTender.setParentId(parentTender.getId());
             childTender.setTransferBuyId(transferBuyLog.getId());
             childTender.setAlreadyInterest(transferBuyLog.getAlreadyInterest());
@@ -680,8 +691,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("165416");
-        batchDetailsQueryReq.setBatchTxDate("20170822");
+        batchDetailsQueryReq.setBatchNo("113936");
+        batchDetailsQueryReq.setBatchTxDate("20170823");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -718,7 +729,7 @@ public class AplloApplicationTests {
     public void balanceQuery() {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId("6212462190000000021");
+        balanceQueryRequest.setAccountId("6212462190000057468");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         System.out.println(balanceQueryResponse);
     }
@@ -757,8 +768,8 @@ public class AplloApplicationTests {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(41),
-                        MqConfig.BATCH_NO, StringHelper.toString(141503),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(170026),
+                        MqConfig.BATCH_NO, StringHelper.toString(152215),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
                 );
 
@@ -782,7 +793,7 @@ public class AplloApplicationTests {
 
     @Test
     public void test() {
-        //dataMigration();
+        dataMigration();
 
        /* MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
@@ -842,7 +853,7 @@ public class AplloApplicationTests {
         //批次状态查询
         //batchQuery();
         //批次详情查询
-        batchDetailsQuery();
+        //batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调

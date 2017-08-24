@@ -1388,12 +1388,12 @@ public class BorrowBizImpl implements BorrowBiz {
                 Map<String, Object> repayDetailMap = repayDetailList.get(j);
                 long principal = NumberHelper.toLong(repayDetailMap.get("principal"));
                 long interest = NumberHelper.toLong(repayDetailMap.get("interest"));
-                if (sumPrincipals.size() != 2) {
+                if (sumPrincipals.size() != repayDetailList.size()) {
                     sumPrincipals.add(principal);
                 } else {
                     sumPrincipals.set(j, sumPrincipals.get(j) + principal);
                 }
-                if (sumInterests.size() != 2) {
+                if (sumInterests.size() != repayDetailList.size()) {
                     sumInterests.add(interest);
                 } else {
                     sumInterests.set(j, sumInterests.get(j) + interest);
