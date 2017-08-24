@@ -2880,7 +2880,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         /* 是否垫付 */
         boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
         //2.处理资金还款人、收款人资金变动
-        batchAssetChangeHelper.batchAssetChangeAndCollection(repaymentId, batchNo, BatchAssetChangeContants.BATCH_LEND_REPAY);
+        batchAssetChangeHelper.batchAssetChangeAndCollection(repaymentId, batchNo, BatchAssetChangeContants.BATCH_BAIL_REPAY);
         /* 逾期天数 */
         int lateDays = getLateDays(borrowRepayment);
         long lateInterest = new Double(calculateLateInterest(lateDays, borrowRepayment, parentBorrow) / 2D).longValue();/* 获取逾期利息的一半*/
@@ -2915,7 +2915,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         /* 查询债权转让记录 */
         Specification<Transfer> ts = Specifications
                 .<Transfer>and()
-                .eq("userId", tenderIds.toArray())
+                .in("tenderId", tenderIds.toArray())
                 .eq("state", 1)
                 .eq("type", 2)
                 .build();

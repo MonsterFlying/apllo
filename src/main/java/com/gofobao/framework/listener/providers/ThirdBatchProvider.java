@@ -361,6 +361,7 @@ public class ThirdBatchProvider {
                 log.error("批次还款处理(提前结清)异常:" + resp.getBody().getState().getMsg());
             } else {
                 //更新批次状态
+                log.error("批次还款处理正常:" + resp.getBody().getState().getMsg());
                 thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), borrowId, 3);
             }
         }
@@ -424,11 +425,12 @@ public class ThirdBatchProvider {
             }.getType());
             try {
                 ResponseEntity<VoBaseResp> resp = repaymentBiz.newRepayDeal(voRepayReq.getRepaymentId(), batchNo);
-                if (!ObjectUtils.isEmpty(resp)) {
+                if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
                     log.error("批次融资人还担保账户垫款：" + resp.getBody().getState().getMsg());
                 } else {
                     //更新批次状态
                     thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), repaymentId, 3);
+                    log.info("批次融资人还担保账户垫款：" + resp.getBody().getState().getMsg());
                 }
             } catch (Exception e) {
                 log.error("ThirdBatchProvider repayBailDeal error:", e);
@@ -530,11 +532,12 @@ public class ThirdBatchProvider {
         //==================================================================
         if (CollectionUtils.isEmpty(failureTransferOrderIds)) {
             ResponseEntity<VoBaseResp> resp = repaymentBiz.newAdvanceDeal(repaymentId, batchNo);
-            if (!ObjectUtils.isEmpty(resp)) {
+            if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
                 log.error("批次名义借款人垫付操作：" + resp.getBody().getState().getMsg());
             } else {
                 //更新批次状态
                 thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), repaymentId, 3);
+                log.info("批次名义借款人垫付操作：" + resp.getBody().getState().getMsg());
             }
         }
     }
@@ -594,6 +597,7 @@ public class ThirdBatchProvider {
             if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
                 log.error("批次还款处理:" + resp.getBody().getState().getMsg());
             } else {
+                log.info("批次还款处理:" + resp.getBody().getState().getMsg());
                 //更新批次状态
                 thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), repaymentId, 3);
             }
