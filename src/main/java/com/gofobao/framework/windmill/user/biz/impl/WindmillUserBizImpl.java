@@ -182,7 +182,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
                 users.setBranch(0);
                 users.setSource(channel);
                 users.setInviteCode(GenerateInviteCodeHelper.getRandomCode()); // 生成用户邀请码
-                users.setParentId(1);
+                users.setParentId(0L);
                 users.setParentAward(0);
                 users.setCreatedAt(now);
                 users.setUpdatedAt(now);

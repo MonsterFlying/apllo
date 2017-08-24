@@ -151,7 +151,7 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
                 .collect(Collectors.toList());
 
         Users users = new Users();
-        users.setParentId(userId.intValue());
+        users.setParentId(userId);
         Example<Users> example = Example.of(users);
         Long count = usersRepository.count(example);
 
