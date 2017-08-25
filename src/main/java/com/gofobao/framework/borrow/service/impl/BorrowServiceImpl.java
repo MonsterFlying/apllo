@@ -251,7 +251,7 @@ public class BorrowServiceImpl implements BorrowService {
             item.setIsConversion(m.getIsConversion());
             item.setIsVouch(m.getIsVouch());
             item.setTenderCount(m.getTenderCount());
-            item.setAvatar(imageDomain + "/data/images/avatar/" + userId + "_avatar_middle.jpg");
+            item.setAvatar(user.getAvatarPath());
             listResList.add(item);
         });
 
@@ -368,7 +368,7 @@ public class BorrowServiceImpl implements BorrowService {
             List<UserAttachmentRes> attachmentRes = Lists.newArrayList();
             attachmentList.stream().forEach(p -> {
                 UserAttachmentRes attachment = new UserAttachmentRes();
-                attachment.setFilepath(imageDomain + p.getFilepath());
+                attachment.setFilepath(p.getFilepath());
                 attachment.setName(p.getName());
                 attachmentRes.add(attachment);
             });
