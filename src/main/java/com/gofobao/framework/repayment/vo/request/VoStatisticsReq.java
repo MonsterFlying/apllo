@@ -13,6 +13,4 @@ public class VoStatisticsReq extends Page {
     @ApiModelProperty("一周：gt7days,30天内有逾期未还：lt30days,30天以上有逾期未还：gt30days,逾期已归还：lateRepay")
     private String type;
 
-    @ApiModelProperty(hidden = true)
-    private Long userId;
 }

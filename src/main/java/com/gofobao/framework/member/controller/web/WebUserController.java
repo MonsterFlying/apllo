@@ -3,6 +3,7 @@ package com.gofobao.framework.member.controller.web;
 import com.gofobao.framework.asset.vo.request.VoJudgmentAvailableReq;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.RandomUtil;
 import com.gofobao.framework.member.biz.UserBiz;
 import com.gofobao.framework.member.biz.UserEmailBiz;
 import com.gofobao.framework.member.biz.UserPhoneBiz;
@@ -175,9 +176,9 @@ public class WebUserController {
         Users users=userService.findById(userId);
         if(ObjectUtils.isEmpty(users)){
             response.setStatus(HttpStatus.SC_BAD_REQUEST);
-        }else if (StringUtils.isEmpty(upfile)) {
+        }else if (!StringUtils.isEmpty(upfile)) {
             //循环获取file数组中得文件
-            String fileName = upfile.getOriginalFilename();
+            String fileName = "avatar/"+RandomUtil.getRandomString(10);
             byte[] fileByte = upfile.getBytes();
             Map<String, Object> result = userBiz.uploadAvatar(fileByte, fileName,users);
             if ((Boolean) result.get("result")) {

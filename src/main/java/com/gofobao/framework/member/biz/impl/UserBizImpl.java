@@ -273,7 +273,7 @@ public class UserBizImpl implements UserBiz {
 
         // 获取vip状态
         Vip vip = vipService.findTopByUserIdAndStatus(user.getId(), 1);
-        voBasicUserInfoResp.setAvatarUrl(String.format("%S/data/images/avatar/$s_avatar_small.jpg", imageDomain, user.getId()));
+        voBasicUserInfoResp.setAvatarUrl(user.getAvatarPath());
         voBasicUserInfoResp.setVipState(ObjectUtils.isEmpty(vip) ? false : DateHelper.diffInDays(new Date(), vip.getExpireAt(), false) > 0);
         voBasicUserInfoResp.setEmail(UserHelper.hideChar(StringUtils.isEmpty(user.getEmail()) ? " " : user.getEmail(), UserHelper.EMAIL_NUM));
         voBasicUserInfoResp.setEmailState(!StringUtils.isEmpty(user.getEmail()));
@@ -623,14 +623,15 @@ public class UserBizImpl implements UserBiz {
             //调用put方法上传
             Response res = uploadManager.put(file, key, token);
             resultMap.put("result",Boolean.TRUE);
-            resultMap.put("code", VoBaseResp.ERROR);
+            resultMap.put("code", VoBaseResp.OK);
             resultMap.put("msg", res.bodyString());
-            users.setAvatarPath(qiNiuDomain+key);
+            resultMap.put("url",qiNiuDomain+"/"+key);
+            users.setAvatarPath(qiNiuDomain+"/"+key);
             userService.save(users);
         } catch (QiniuException e) {
             Response r = e.response;
             // 请求失败时打印的异常的信息
-            System.out.println(r.toString());
+            System.out.println("上传失败："+r.toString());
             resultMap.put("result",Boolean.FALSE);
             resultMap.put("code", VoBaseResp.ERROR);
             resultMap.put("msg", r.bodyString());

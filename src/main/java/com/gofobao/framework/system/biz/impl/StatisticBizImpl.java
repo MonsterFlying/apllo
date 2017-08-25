@@ -16,6 +16,7 @@ import com.gofobao.framework.system.service.IncrStatisticService;
 import com.gofobao.framework.system.service.StatisticService;
 import com.gofobao.framework.system.vo.response.IndexStatistics;
 import com.gofobao.framework.system.vo.response.NewIndexStatisics;
+import com.gofobao.framework.system.vo.response.OperateDataStatistics;
 import com.gofobao.framework.system.vo.response.VoViewIndexStatisticsWarpRes;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
@@ -196,6 +197,56 @@ public class StatisticBizImpl implements StatisticBiz {
             return artclesCache.get("mobile");
         } catch (ExecutionException e) {
             return new NewIndexStatisics();
+        }
+    }
+
+
+    LoadingCache<String, OperateDataStatistics> operateData = CacheBuilder
+            .newBuilder()
+            .expireAfterWrite(60, TimeUnit.MINUTES)
+            .maximumSize(1024)
+            .build(new CacheLoader<String, OperateDataStatistics>() {
+                @Override
+                public OperateDataStatistics load(String type) throws Exception {
+                    OperateDataStatistics dataStatistics = VoBaseResp.ok("查询成功", OperateDataStatistics.class);
+                    ResponseEntity<VoViewIndexStatisticsWarpRes> responseEntity = query();
+                    VoViewIndexStatisticsWarpRes statisticsWarpRes = responseEntity.getBody();
+                    IndexStatistics indexStatistics = statisticsWarpRes.getIndexStatistics();
+                    //年化率
+                    dataStatistics.setApr(indexStatistics.getApr());
+                    //待收总额
+                    dataStatistics.setDueTotal(indexStatistics.getDueTotal());
+                    //注册人数
+                    dataStatistics.setRegisterTotal(indexStatistics.getRegisterTotal());
+                    //为用户赚取收益
+                    dataStatistics.setEarnings(indexStatistics.getEarnings());
+                    //累计成交笔数
+                    dataStatistics.setBorrowTotal(indexStatistics.getBorrowTotal());
+                    //交易总额
+                    dataStatistics.setTransactionsTotal(indexStatistics.getTransactionsTotal());
+                /*    //已还本息
+                    dataStatistics.setSettleCapitalTotal(indexStatistics.);*/
+
+/*
+                    //平均每笔投资金额
+                    dataStatistics.setAverageTenderMoney();
+                    //人均累计投资金额
+                    dataStatistics.setAverageTenderMoneySum();
+                    //累计投资人数
+                    dataStatistics.setTenderNoOfPeople();*/
+
+                    return dataStatistics;
+                }
+            });
+
+    @Override
+    public ResponseEntity<OperateDataStatistics> queryOperateData() {
+
+        try {
+            OperateDataStatistics dataStatistics=operateData.get("");
+            return ResponseEntity.ok(dataStatistics);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询异常", OperateDataStatistics.class));
         }
     }
 }
