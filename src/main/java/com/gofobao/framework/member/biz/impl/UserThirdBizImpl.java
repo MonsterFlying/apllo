@@ -271,7 +271,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             srvTxCode = redisHelper.get(String.format("%s_%s", SrvTxCodeContants.ACCOUNT_OPEN_PLUS, voOpenAccountReq.getMobile()), null);
             redisHelper.remove(String.format("%s_%s", SrvTxCodeContants.ACCOUNT_OPEN_PLUS, voOpenAccountReq.getMobile()));
         } catch (Throwable e) {
-            log.error("UserThirdBizImpl openAccount get redis exception ", e);
+            log.error("UserThirdBizImpl continueOpenAccount get redis exception ", e);
         }
 
         if (StringUtils.isEmpty(srvTxCode)) {
@@ -337,7 +337,6 @@ public class UserThirdBizImpl implements UserThirdBiz {
         voOpenAccountResp.setName(voOpenAccountReq.getName());
         // 开户成功
         touchMarketingByOpenAccount(entity);
-
         return ResponseEntity.ok(voOpenAccountResp);
     }
 
@@ -758,13 +757,13 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
         if (userThirdAccount.getPasswordState() == 1) {
-            // 获取签约
-
             return "password/success";
         } else {
             return "password/faile";
         }
     }
+
+
 
     @Override
     public String thirdAccountProtocolJson(Long userId) {
@@ -1555,7 +1554,6 @@ public class UserThirdBizImpl implements UserThirdBiz {
         } catch (Exception e) {
             log.error("系统主动查询开户信息并且写入银行卡信息异常");
         }
-
         entity.setAcctUse(1);
         entity.setAccountId(accountId);
         entity.setPasswordState(0);
