@@ -9,7 +9,7 @@ public final class FileListing {
     /**
      * 文件对象列表
      */
-    public com.qiniu.storage.model.FileInfo[] items;
+    public FileInfo[] items;
     /**
      * 下一次列举的marker
      */

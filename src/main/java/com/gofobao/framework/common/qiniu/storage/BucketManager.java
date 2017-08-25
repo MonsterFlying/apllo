@@ -1,16 +1,15 @@
 package com.gofobao.framework.common.qiniu.storage;
 
-import com.qiniu.common.QiniuException;
-import com.qiniu.http.Client;
-import com.qiniu.http.Response;
-import com.qiniu.storage.Configuration;
-import com.qiniu.storage.model.FetchRet;
-import com.qiniu.storage.model.FileInfo;
-import com.qiniu.storage.model.FileListing;
-import com.qiniu.util.Auth;
-import com.qiniu.util.StringMap;
-import com.qiniu.util.StringUtils;
-import com.qiniu.util.UrlSafeBase64;
+import com.gofobao.framework.common.qiniu.http.Client;
+import com.gofobao.framework.common.qiniu.util.Auth;
+import com.gofobao.framework.common.qiniu.util.StringMap;
+import com.gofobao.framework.common.qiniu.common.QiniuException;
+import com.gofobao.framework.common.qiniu.http.Response;
+import com.gofobao.framework.common.qiniu.storage.model.FetchRet;
+import com.gofobao.framework.common.qiniu.storage.model.FileInfo;
+import com.gofobao.framework.common.qiniu.storage.model.FileListing;
+import com.gofobao.framework.common.qiniu.util.StringUtils;
+import com.gofobao.framework.common.qiniu.util.UrlSafeBase64;
 
 import java.util.ArrayList;
 import java.util.Iterator;

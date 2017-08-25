@@ -3,10 +3,7 @@ package com.gofobao.framework.system.controller;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.marketing.biz.MarketingBiz;
-import com.gofobao.framework.system.biz.ArticleBiz;
-import com.gofobao.framework.system.biz.DictBiz;
-import com.gofobao.framework.system.biz.FindBiz;
-import com.gofobao.framework.system.biz.SuggestBiz;
+import com.gofobao.framework.system.biz.*;
 import com.gofobao.framework.system.entity.Suggest;
 import com.gofobao.framework.system.vo.request.VoArticleReq;
 import com.gofobao.framework.system.vo.response.*;
@@ -38,6 +35,8 @@ public class FindController {
     @Autowired
     private MarketingBiz marketingBiz;
 
+    @Autowired
+    private StatisticBiz statisticBiz;
 
     @GetMapping("/pub/find/index")
     public ResponseEntity<VoFindIndexResp> index() {
@@ -80,4 +79,13 @@ public class FindController {
       return   marketingBiz.list();
 
     }
+
+
+    @ApiOperation("活动列表")
+    @GetMapping("pub/find/operateData")
+    public ResponseEntity<OperateDataStatistics> operateData(){
+        return statisticBiz.queryOperateData();
+
+    }
+
 }
