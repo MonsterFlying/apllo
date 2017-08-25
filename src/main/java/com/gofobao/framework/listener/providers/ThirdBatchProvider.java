@@ -53,6 +53,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
@@ -789,6 +790,7 @@ public class ThirdBatchProvider {
      * @param successThirdTransferOrderIds
      * @throws Exception
      */
+    @Transactional(rollbackFor = Exception.class)
     private void newCreditInvestDeal(long batchNo, long transferId, List<String> failureThirdTransferOrderIds, List<String> successThirdTransferOrderIds) throws Exception {
         Date nowDate = new Date();
         if (CollectionUtils.isEmpty(failureThirdTransferOrderIds)) {

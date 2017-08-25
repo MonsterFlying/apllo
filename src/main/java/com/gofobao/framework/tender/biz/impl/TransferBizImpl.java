@@ -46,11 +46,16 @@ import com.gofobao.framework.member.repository.UsersRepository;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.system.biz.IncrStatisticBiz;
 import com.gofobao.framework.system.biz.StatisticBiz;
+import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.IncrStatistic;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.entity.Statistic;
+import com.gofobao.framework.system.entity.ThirdBatchLog;
+import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.contants.TransferBuyLogContants;
@@ -72,6 +77,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.mapping.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -87,6 +93,9 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -127,6 +136,10 @@ public class TransferBizImpl implements TransferBiz {
     private BatchAssetChangeHelper batchAssetChangeHelper;
     @Autowired
     AssetChangeProvider assetChangeProvider;
+    @Autowired
+    private BorrowRepaymentService borrowRepaymentService;
+    @Autowired
+    private ThirdBatchLogService thirdBatchLogService;
 
     @Autowired
     private UsersRepository usersRepository;
@@ -1206,10 +1219,10 @@ public class TransferBizImpl implements TransferBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前系统出现异常, 麻烦通知平台客服人员!"));
         }
 
-        if ((borrow.getType() != 0)) {
+        if ((borrow.getType() != 0 && borrow.getType() != 4)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "投资非投资官方标的是不可债权转让!"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "投资非官方借款暂不支持债权转让!"));
         }
 
         if ((borrow.getStatus() != 3)) {
@@ -1230,6 +1243,28 @@ public class TransferBizImpl implements TransferBiz {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "您已经有一个进行中的借款标"));
+        }
+
+        //判断当期是否有提交处理中回调
+        Specification<BorrowRepayment> brs = Specifications
+                .<BorrowRepayment>and()
+                .eq("borrowId", borrow.getId())
+                .eq("status", 0)
+                .build();
+        List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
+        Preconditions.checkState(!CollectionUtils.isEmpty(borrowRepaymentList), "还款记录不存在!");
+        List<Long> borrowRepaymentIds = borrowRepaymentList.stream().map(BorrowRepayment::getId).collect(Collectors.toList());
+        Specification<ThirdBatchLog> tbls = Specifications
+                .<ThirdBatchLog>and()
+                .in("sourceId", borrowRepaymentIds.toArray())
+                .in("type", ThirdBatchLogContants.BATCH_REPAY, ThirdBatchLogContants.BATCH_REPAY_ALL)
+                .in("state", 0, 1)
+                .build();
+        long count = thirdBatchLogService.count(tbls);
+        if (count > 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "这笔投资回款处理中，暂时无法债权转让操作!"));
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());

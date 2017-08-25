@@ -375,7 +375,7 @@ public class TenderBizImpl implements TenderBiz {
 
         // 判断投标频繁
         if (tenderService.checkTenderNimiety(borrow.getId(), user.getId())) {
-            errerMessage.add("投标太过于频繁!");
+            errerMessage.add("投标间隔不能小于一分钟!");
             return false;
         }
 
