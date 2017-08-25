@@ -3,6 +3,7 @@ package com.gofobao.framework.tender.service.impl;
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
+import com.gofobao.framework.collection.contants.BorrowCollectionContants;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.repository.BorrowCollectionRepository;
 import com.gofobao.framework.helper.DateHelper;
@@ -261,7 +262,9 @@ public class TransferServiceImpl implements TransferService {
             }
             transferMay.setName(borrow.getName());
             transferMay.setTenderId(p.getId());
-            List<BorrowCollection> borrowCollectionList1 = borrowCollectionMaps.get(p.getId());
+            List<BorrowCollection> borrowCollectionList1 = borrowCollectionMaps.get(p.getId()).stream()
+                    .filter(w->w.getStatus()== BorrowCollectionContants.STATUS_NO)
+                    .collect(Collectors.toList());
             long principalSum = borrowCollectionList1.stream().mapToLong(w -> w.getPrincipal()).sum();
             long interestSum = borrowCollectionList1.stream().mapToLong(w -> w.getInterest()).sum();
             transferMay.setInterest(StringHelper.formatMon(interestSum / 100d));

@@ -93,7 +93,9 @@ public class PaymentBizImpl implements PaymentBiz {
                 item.setOrder(p.getOrder() + 1);
                 item.setTimeLime(borrow.getTimeLimit());
                 item.setCollectionMoney(StringHelper.formatMon(p.getCollectionMoney() / 100d));
-                item.setCollectionMoneyYes(StringHelper.formatMon(p.getCollectionMoneyYes() / 100d));
+                if(p.getStatus()==BorrowCollectionContants.STATUS_YES) {
+                    item.setCollectionMoneyYes(StringHelper.formatMon(p.getCollectionMoneyYes() / 100d));
+                }
                 orderResList.add(item);
             });
 

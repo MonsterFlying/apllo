@@ -84,6 +84,9 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -156,8 +159,8 @@ public class BorrowBizImpl implements BorrowBiz {
     ThirdBatchLogService thirdBatchLogService;
     @Autowired
     BatchAssetChangeHelper batchAssetChangeHelper;
-    @Autowired
-
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
@@ -460,12 +463,22 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "借款金额大于净值额度!"));
         }
 
-        long count = borrowService.countByUserIdAndStatusIn(userId, Arrays.asList(0, 1));
-        if (count > 0) {
-            log.info("新增借款：您已经有一个进行中的借款标。");
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "您已经有一个进行中的借款标!"));
+       // long count = borrowService.countByUserIdAndStatusIn(userId, Arrays.asList(0, 1));
+
+        Specification<Borrow> specification = Specifications.<Borrow>and()
+                .eq("userId", userId)
+                .eq("status", BorrowContants.BIDDING)
+                .build();
+        List<Borrow> borrows = borrowService.findList(specification);
+        if (!CollectionUtils.isEmpty(borrows)) {
+            Borrow borrow = borrows.get(0);
+            if (borrow.getMoneyYes() / borrow.getMoney() < 1) {
+                log.info("新增借款：您已经有一个进行中的借款标。");
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "您已经有一个进行中的借款标!"));
+
+            }
         }
 
         Long borrowId = insertBorrow(voAddNetWorthBorrow, userId);  // 插入标
