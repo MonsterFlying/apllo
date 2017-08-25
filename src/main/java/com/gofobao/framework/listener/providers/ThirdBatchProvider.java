@@ -645,7 +645,7 @@ public class ThirdBatchProvider {
                     .build();
             List<Tender> failureTenderList = tenderService.findList(ts);
             Preconditions.checkNotNull(failureTenderList, "正常批次放款回调: 查询失败投标记录为空");
-            Map<Long/** borrowId */, List<Tender> /** borrowid 对应的投标记录*/> borrowIdAndTenderMap = failureTenderList
+            Map<Long/** borrowId */, List<Tender> /** borrowId 对应的投标记录*/> borrowIdAndTenderMap = failureTenderList
                     .stream()
                     .collect(Collectors.groupingBy(Tender::getBorrowId));
 
