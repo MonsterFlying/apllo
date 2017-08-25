@@ -639,13 +639,14 @@ public class UserBizImpl implements UserBiz {
             BucketManager bucketManager = new BucketManager(auth, c);
             try {
                 //删除用户在七牛云上的用户头像
-                userAvatar=userAvatar.substring(userAvatar.lastIndexOf("/"));
-                bucketManager.delete(bucketname,userAvatar);
+                userAvatar=userAvatar.substring(userAvatar.lastIndexOf("/")+1);
+                bucketManager.delete(bucketname,"avatar/"+userAvatar);
             } catch (QiniuException e) {
                 //捕获异常信息
                 Response r = e.response;
                 log.info("删除用户头像失败打印七牛返回信息："+r.error);
             }
+            log.info("删除用户头像成功");
         }
         //上传
         UploadManager uploadManager = new UploadManager(c);
