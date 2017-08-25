@@ -407,19 +407,24 @@ public class TransferProvider {
         List<CreditInvest> creditInvestList = new ArrayList<>();
         CreditInvest creditInvest = null;
         UserThirdAccount tenderUserThirdAccount = null;
-        int sumCount = 0;  // 全部有效投保金额
+        // 全部有效投保金额
+        int sumCount = 0;
         for (TransferBuyLog transferBuyLog : transferBuyLogList) {
             double txFee = 0;
             if (BooleanHelper.isTrue(transferBuyLog.getThirdTransferFlag())) {  //判断标的已在存管登记转让
                 continue;
             }
-            tenderUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());/* 债权转让购买人存管账户信息 */
+            /* 债权转让购买人存管账户信息 */
+            tenderUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
             Preconditions.checkNotNull(tenderUserThirdAccount, "投资人开户记录不存在!");
-            double txAmount = transferBuyLog.getValidMoney();  //购买债权转让有效金额
+            //购买债权转让有效金额
+            double txAmount = transferBuyLog.getValidMoney();
+            // 全部有效投保金额
             sumCount += txAmount;
             //收取转让人债权转让管理费
             txFee += MathHelper.myRound((transferBuyLog.getValidMoney() / new Double(transfer.getPrincipal())) * transferFee, 0);  // 分摊转让费用到各项中
-            String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);/* 购买债权转让orderId */
+            /* 购买债权转让orderId */
+            String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
             creditInvest = new CreditInvest();
             creditInvest.setAccountId(tenderUserThirdAccount.getAccountId());
             creditInvest.setOrderId(transferOrderId);
