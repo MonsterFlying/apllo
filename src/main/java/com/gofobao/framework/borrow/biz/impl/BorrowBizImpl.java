@@ -332,7 +332,7 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setIsVouch(borrow.getIsVouch());
             borrowInfoRes.setHideLowMoney(borrow.getLowest());
             borrowInfoRes.setIsFlow(StringUtils.isEmpty(borrow.getTenderId()) ? false : true);
-            borrowInfoRes.setAvatar(imageDomain + "/data/images/avatar/" + borrow.getUserId() + "_avatar_small.jpg");
+            borrowInfoRes.setAvatar(users.getAvatarPath());
             borrowInfoRes.setReleaseAt(DateHelper.dateToString(borrow.getReleaseAt()));
             borrowInfoRes.setLockStatus(borrow.getIsLock());
 
