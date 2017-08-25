@@ -195,8 +195,8 @@ public class TransferProvider {
                 if (ThirdAccountHelper.allConditionCheck(userThirdAccount).getBody().getState().getCode() != VoBaseResp.OK) {
                     continue;
                 }
-
-                if ((transferMoneyYes >= transferMoney)) {  // 判断是否满标或者 达到自动投标最大额度
+                // 判断是否满标或者 达到自动投标最大额度
+                if ((transferMoneyYes >= transferMoney)) {
                     flag = true;
                     break;
                 }
