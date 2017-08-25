@@ -34,7 +34,7 @@ public class UnionLineUnmberBizImpl implements UnionLineNumberBiz {
     @Override
     public ResponseEntity<UnionLineNoWarpRes> list(VoUnionLineNoReq unionLineNoReq) {
         UnionLineNoWarpRes warpRes = VoBaseResp.ok("查询成功", UnionLineNoWarpRes.class);
-        Specification<UnionLineNumber> specification = Specifications.<UnionLineNumber>or()
+        Specification<UnionLineNumber> specification = Specifications.<UnionLineNumber>and()
                 .eq(!StringUtils.isEmpty(unionLineNoReq.getCityId()), "city", unionLineNoReq.getCityId())
                 .eq(!StringUtils.isEmpty(unionLineNoReq.getProvinceId()), "province", unionLineNoReq.getProvinceId())
                 .like(!StringUtils.isEmpty(unionLineNoReq.getKeyword()), "bankName", "%"+unionLineNoReq.getKeyword()+"%")
