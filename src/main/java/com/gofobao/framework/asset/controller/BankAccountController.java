@@ -58,13 +58,12 @@ public class BankAccountController {
         return bankAccountBiz.list(userId) ;
     }
 
-
-
     @ApiOperation("省市")
     @GetMapping("pub/area/list")
     public ResponseEntity<VoAreaWarpRes> areaList(@Param("id") Integer id) {
         return areaBiz.list(id);
     }
+
 
     @ApiOperation("联行号")
     @GetMapping("pub/unionLineNo/list")

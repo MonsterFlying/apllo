@@ -233,4 +233,11 @@ public interface UserThirdBiz {
      * @return
      */
     String showBindCard(Long id, Model model);
+
+    /**
+     * 请求即信查询用户是否开户
+     * @param id
+     * @return
+     */
+    UserThirdAccount queryUserThirdInfo(Long id) throws Exception;
 }
