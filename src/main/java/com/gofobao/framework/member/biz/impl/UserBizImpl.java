@@ -6,6 +6,7 @@ import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.common.qiniu.common.QiniuException;
 import com.gofobao.framework.common.qiniu.common.Zone;
 import com.gofobao.framework.common.qiniu.http.Response;
+import com.gofobao.framework.common.qiniu.storage.BucketManager;
 import com.gofobao.framework.common.qiniu.storage.Configuration;
 import com.gofobao.framework.common.qiniu.storage.UploadManager;
 import com.gofobao.framework.common.qiniu.util.Auth;
@@ -109,16 +110,16 @@ public class UserBizImpl implements UserBiz {
     String javaDomain;
 
     @Value("${qiniu.sk}")
-     String SECRET_KEY;
+    String SECRET_KEY;
 
     @Value("${qiniu.ak}")
-     String ACCESS_KEY;
+    String ACCESS_KEY;
 
     @Value("${qiniu.domain}")
-     String qiNiuDomain;
+    String qiNiuDomain;
 
     @Value("${qiniu.bucket}")
-     String bucketname;
+    String bucketname;
 
 
     @Autowired
@@ -608,42 +609,56 @@ public class UserBizImpl implements UserBiz {
             return ResponseEntity.ok(VoBaseResp.ok("重置密码成功"));
 
     }
-    
-    public Map<String,Object> upload(byte[] file, String key,Users users) throws IOException {
+
+    public Map<String, Object> upload(byte[] file, String imageName, Users users) throws IOException {
         //密钥配置
         Auth auth = Auth.create(ACCESS_KEY, SECRET_KEY);
         //创建上传对象
-
         Zone z = Zone.autoZone();
         Configuration c = new Configuration(z);
+
+        //判断当前用户是否有头像
+        if (!StringUtils.isEmpty(users.getAvatarPath())) {
+            //实例化一个BucketManager对象
+            BucketManager bucketManager = new BucketManager(auth, c);
+            try {
+                //调用delete方法移动文件
+                bucketManager.delete(bucketname,users.getAvatarPath());
+            } catch (QiniuException e) {
+                //捕获异常信息
+                Response r = e.response;
+                log.info("删除用户头像失败打印七牛返回信息："+r.error);
+            }
+        }
+        //上传
         UploadManager uploadManager = new UploadManager(c);
-        String token=auth.uploadToken(bucketname);
+        String token = auth.uploadToken(bucketname);
         Map<String, Object> resultMap = Maps.newHashMap();
         try {
             //调用put方法上传
-            Response res = uploadManager.put(file, key, token);
-            resultMap.put("result",Boolean.TRUE);
+            Response res = uploadManager.put(file, imageName, token);
+            resultMap.put("result", Boolean.TRUE);
             resultMap.put("code", VoBaseResp.OK);
             resultMap.put("msg", res.bodyString());
-            resultMap.put("url",qiNiuDomain+"/"+key);
-            users.setAvatarPath(qiNiuDomain+"/"+key);
+            String avatarPath=qiNiuDomain+imageName;
+            resultMap.put("url", avatarPath);
+            users.setAvatarPath(avatarPath);
             userService.save(users);
         } catch (QiniuException e) {
             Response r = e.response;
             // 请求失败时打印的异常的信息
-            System.out.println("上传失败："+r.toString());
-            resultMap.put("result",Boolean.FALSE);
+            System.out.println("上传失败 打印的异常的信息：" + r.toString());
+            resultMap.put("result", Boolean.FALSE);
             resultMap.put("code", VoBaseResp.ERROR);
             resultMap.put("msg", r.bodyString());
-
         }
-       return resultMap;
+        return resultMap;
     }
 
 
     @Override
-    public Map<String, Object> uploadAvatar(byte[] file, String filePath,Users users)throws Exception {
-           return upload(file, filePath,users);
+    public Map<String, Object> uploadAvatar(byte[] file, String imageName, Users users) throws Exception {
+        return upload(file, imageName, users);
 
     }
 }
