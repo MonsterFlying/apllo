@@ -800,7 +800,7 @@ public class AssetBizImpl implements AssetBiz {
         VoAliPayRechargeInfo voAliPayRechargeInfo = VoBaseResp.ok("查询成功!", VoAliPayRechargeInfo.class);
         voAliPayRechargeInfo.setBankCardNo(userThirdAccount.getAccountId());
         voAliPayRechargeInfo.setName(users.getRealname());
-        voAliPayRechargeInfo.setBankName("江西银行");
+        voAliPayRechargeInfo.setBankName("江西银行总行营业部");
         return ResponseEntity.ok(voAliPayRechargeInfo);
     }
 
@@ -924,13 +924,13 @@ public class AssetBizImpl implements AssetBiz {
         if (ObjectUtils.isEmpty(asset)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍后重试！", VoAssetIndexResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "非法请求!", VoAssetIndexResp.class));
         }
         UserCache userCache = userCacheService.findById(userId);
         if (ObjectUtils.isEmpty(userCache)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍后重试！", VoAssetIndexResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "非法请求!", VoAssetIndexResp.class));
         }
 
         VoAssetIndexResp response = VoBaseResp.ok("查询成功", VoAssetIndexResp.class);

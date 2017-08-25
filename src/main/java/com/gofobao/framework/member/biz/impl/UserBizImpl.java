@@ -264,8 +264,9 @@ public class UserBizImpl implements UserBiz {
         } else {
             voBasicUserInfoResp.setThirdAccountState(true);
             voBasicUserInfoResp.setBankPassworState(userThirdAccount.getPasswordState() == 1);
-            voBasicUserInfoResp.setBankAccout(userThirdAccount.getCardNo());
+            voBasicUserInfoResp.setBankAccout(userThirdAccount.getAccountId());
             voBasicUserInfoResp.setBankName("江西银行总行营业部");
+            voBasicUserInfoResp.setSubbranch(userThirdAccount.getBankName());
             voBasicUserInfoResp.setBankState(!StringUtils.isEmpty(userThirdAccount.getCardNo()));
             voBasicUserInfoResp.setAutoTenderState(userThirdAccount.getAutoTenderState().equals(1));
             voBasicUserInfoResp.setAutoTranferState(userThirdAccount.getAutoTransferState().equals(1));
@@ -572,9 +573,14 @@ public class UserBizImpl implements UserBiz {
     public ResponseEntity<VipInfoRes> vipInfo(Long userId) {
         Vip vip = vipService.findTopByUserIdAndStatus(userId, 1);
         VipInfoRes vipInfoRes = VoBaseResp.ok("查询成功", VipInfoRes.class);
-        vipInfoRes.setEndAt(DateHelper.dateToString(vip.getExpireAt()));
-        Users user = userService.findById(vip.getKefuId());
-        vipInfoRes.setServiceUserName(user.getUsername());
+        if(!ObjectUtils.isEmpty(vipInfoRes)){
+            vipInfoRes.setEndAt(DateHelper.dateToString(vip.getExpireAt()));
+            Users user = userService.findById(vip.getKefuId());
+            vipInfoRes.setServiceUserName(user.getUsername());
+        }else {
+            vipInfoRes.setServiceUserName("");
+            vipInfoRes.setEndAt("");
+        }
         return ResponseEntity.ok(vipInfoRes);
     }
 
@@ -627,12 +633,14 @@ public class UserBizImpl implements UserBiz {
         Configuration c = new Configuration(z);
 
         //判断当前用户是否有头像
-        if (!StringUtils.isEmpty(users.getAvatarPath())) {
+        String userAvatar= users.getAvatarPath();
+        if (!StringUtils.isEmpty(userAvatar)) {
             //实例化一个BucketManager对象
             BucketManager bucketManager = new BucketManager(auth, c);
             try {
                 //删除用户在七牛云上的用户头像
-                bucketManager.delete(bucketname,users.getAvatarPath());
+                userAvatar=userAvatar.substring(userAvatar.lastIndexOf("/"));
+                bucketManager.delete(bucketname,userAvatar);
             } catch (QiniuException e) {
                 //捕获异常信息
                 Response r = e.response;
