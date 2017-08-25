@@ -610,7 +610,16 @@ public class UserBizImpl implements UserBiz {
 
     }
 
-    public Map<String, Object> upload(byte[] file, String imageName, Users users) throws IOException {
+    /**
+     * 上传用户头像
+     * @param file
+     * @param imageName
+     * @param users
+     * @return
+     * @throws Exception
+     */
+    @Override
+    public Map<String, Object> uploadAvatar(byte[] file, String imageName, Users users) throws Exception {
         //密钥配置
         Auth auth = Auth.create(ACCESS_KEY, SECRET_KEY);
         //创建上传对象
@@ -622,7 +631,7 @@ public class UserBizImpl implements UserBiz {
             //实例化一个BucketManager对象
             BucketManager bucketManager = new BucketManager(auth, c);
             try {
-                //调用delete方法移动文件
+                //删除用户在七牛云上的用户头像
                 bucketManager.delete(bucketname,users.getAvatarPath());
             } catch (QiniuException e) {
                 //捕获异常信息
@@ -637,11 +646,13 @@ public class UserBizImpl implements UserBiz {
         try {
             //调用put方法上传
             Response res = uploadManager.put(file, imageName, token);
+            //返回上传成功信息
             resultMap.put("result", Boolean.TRUE);
             resultMap.put("code", VoBaseResp.OK);
             resultMap.put("msg", res.bodyString());
             String avatarPath=qiNiuDomain+imageName;
             resultMap.put("url", avatarPath);
+            //更新用户头像
             users.setAvatarPath(avatarPath);
             userService.save(users);
         } catch (QiniuException e) {
@@ -653,12 +664,5 @@ public class UserBizImpl implements UserBiz {
             resultMap.put("msg", r.bodyString());
         }
         return resultMap;
-    }
-
-
-    @Override
-    public Map<String, Object> uploadAvatar(byte[] file, String imageName, Users users) throws Exception {
-        return upload(file, imageName, users);
-
     }
 }
