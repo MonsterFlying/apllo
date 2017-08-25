@@ -573,7 +573,7 @@ public class UserBizImpl implements UserBiz {
     public ResponseEntity<VipInfoRes> vipInfo(Long userId) {
         Vip vip = vipService.findTopByUserIdAndStatus(userId, 1);
         VipInfoRes vipInfoRes = VoBaseResp.ok("查询成功", VipInfoRes.class);
-        if(!ObjectUtils.isEmpty(vipInfoRes)){
+        if(!ObjectUtils.isEmpty(vip)){
             vipInfoRes.setEndAt(DateHelper.dateToString(vip.getExpireAt()));
             Users user = userService.findById(vip.getKefuId());
             vipInfoRes.setServiceUserName(user.getUsername());
