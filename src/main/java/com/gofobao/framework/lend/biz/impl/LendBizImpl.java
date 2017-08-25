@@ -207,11 +207,11 @@ public class LendBizImpl implements LendBiz {
                 .eq("status", 0)
                 .build();
 
-        if (lendService.count(ls) > 0) {
+  /*      if (lendService.count(ls) > 0) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "您已经有一个借款信息"));
-        }
+        }*/
 
         //进行借款的新增
         Lend lend = new Lend();
