@@ -79,6 +79,9 @@ public class VoBasicUserInfoResp extends VoBaseResp{
     @ApiModelProperty("开户行")
     private String  bankName ;
 
+    @ApiModelProperty("支行")
+    private String  subbranch ;
+
 
     @ApiModelProperty("投资积分")
     private Long  tenderIntegral ;

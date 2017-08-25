@@ -1427,7 +1427,7 @@ public class TransferBizImpl implements TransferBiz {
             voViewBorrowList.setRepayFashion(borrow.getRepayFashion());
             voViewBorrowList.setIsVouch(borrow.getIsVouch());
             voViewBorrowList.setTenderCount(item.getTenderCount());
-            voViewBorrowList.setAvatar(imageDomain + "/data/images/avatar/" + item.getUserId() + "_avatar_middle.jpg");
+            voViewBorrowList.setAvatar(user.getAvatarPath());
             voViewBorrowLists.add(voViewBorrowList);
         }
         return voViewBorrowLists;

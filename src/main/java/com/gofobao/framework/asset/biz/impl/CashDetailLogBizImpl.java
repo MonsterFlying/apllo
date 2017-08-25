@@ -195,10 +195,9 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         // 本地资金大于存管资金
         Long currBal =  new Double(new Double(balanceQueryResponse.getCurrBal()) * 100).longValue()   ;
         if(currBal < asset.getNoUseMoney() + asset.getUseMoney()) {
-            log.error("当前客户本地金额大于存管金额");
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "提现系统开小差了, 请联系平台客服", VoPreCashResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前客户本地金额大于存管金额,请联系客服吧", VoPreCashResp.class));
         }
         Long realCashMoney = getRealCashMoney(userId);
         VoPreCashResp resp = VoBaseResp.ok("查询成功", VoPreCashResp.class);
