@@ -91,10 +91,10 @@ public class LendBizImpl implements LendBiz {
      * @return
      */
     @Override
-    public ResponseEntity<VoViewLendListWarpRes> list(Page page) {
+    public ResponseEntity<VoViewLendListWarpRes> list(Page page,Long userId) {
         try {
             VoViewLendListWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewLendListWarpRes.class);
-            Map<String, Object> resultMaps = lendService.list(page);
+            Map<String, Object> resultMaps = lendService.list(page,userId);
             Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
             List<VoViewLend> lends = (List<VoViewLend>) resultMaps.get("lends");
             warpRes.setVoViewLends(lends);

@@ -94,7 +94,7 @@ public class LendServiceImpl implements LendService {
     }
 
     @Override
-    public Map<String, Object> list(Page page) {
+    public Map<String, Object> list(Page page,Long userId) {
         Map<String, Object> resultMaps = Maps.newHashMap();
 
         org.springframework.data.domain.Page<Lend> lends = lendRepository.findAll(
@@ -123,9 +123,14 @@ public class LendServiceImpl implements LendService {
             lend.setLendId(p.getId());
             lend.setApr(StringHelper.formatMon(p.getApr() / 100D) + BorrowContants.PERCENT);
             Users user = usersMap.get(p.getUserId());
-            String userName = StringUtils.isEmpty(user.getUsername()) ?
-                    UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM) :
-                    UserHelper.hideChar(user.getUsername(), UserHelper.USERNAME_NUM);
+            String userName ="";
+            if(user.getId().intValue()==userId.intValue()){
+                userName=StringUtils.isEmpty(user.getUsername())?user.getPhone():user.getUsername();
+            }else {
+                userName= StringUtils.isEmpty(user.getUsername()) ?
+                        UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM) :
+                        UserHelper.hideChar(user.getUsername(), UserHelper.USERNAME_NUM);
+            }
             lend.setUserName(userName);
             lend.setMoney(StringHelper.formatMon(p.getMoney() / 100D));
             if (p.getStatus() == LendContants.STATUS_NO) {
