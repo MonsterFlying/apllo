@@ -75,13 +75,17 @@ public class WebBorrowController {
         return borrowBiz.pcFindAll(voBorrowListReq);
     }
 
-
-    @ApiOperation("标信息")
-    @GetMapping("pub/borrow/pc/v2/info/{transferId}")
-    public ResponseEntity<BorrowInfoRes> pcgetByBorrowId(@PathVariable Long transferId) {
+    @ApiOperation("流转标信息")
+    @GetMapping("pub/transfer/pc/v2/info/{transferId}")
+    public ResponseEntity<BorrowInfoRes> pcgetByTransferId(@PathVariable Long transferId) {
         return transferBiz.transferInfo(transferId);
     }
 
+    @ApiOperation("普通标信息")
+    @GetMapping("pub/borrow/pc/v2/info/{borrowId}")
+    public ResponseEntity<BorrowInfoRes> pcgetByBorrowId(@PathVariable Long borrowId) {
+        return borrowBiz.info(borrowId);
+    }
 
     @ApiOperation("pc：标简介")
     @GetMapping("pub/borrow/pc/v2/desc/{borrowId}")
