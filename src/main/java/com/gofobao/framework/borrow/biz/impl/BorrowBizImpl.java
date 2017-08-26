@@ -71,6 +71,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
+import org.hibernate.type.descriptor.java.DataHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Example;
@@ -799,7 +800,7 @@ public class BorrowBizImpl implements BorrowBiz {
             //  发送站内信
             // ======================================
             Notices notices;
-            String content = String.format("你所投资的借款[ %s ]在 %s 已取消", borrow.getName());
+            String content = String.format("你所投资的借款[ %s ]在 %s 已取消", borrow.getName(), DateHelper.dateToString(new Date()));
             for (Long toUserId : userIds) {
                 notices = new Notices();
                 notices.setFromUserId(1L);

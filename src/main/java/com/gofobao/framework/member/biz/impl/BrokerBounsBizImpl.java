@@ -43,8 +43,8 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
     @Value("${gofobao.h5Domain}")
     private String h5Domain;
 
-    @Value("${gofobao.webDomain}")
-    private String webDomain;
+    @Value("${gofobao.javaDomain}")
+    private String javaDomain;
 
     @Autowired
     private ThymeleafHelper thymeleafHelper;
@@ -132,7 +132,7 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
         paramMaps.put("inviteUrl", h5Domain + "/#/auth/register?inviteCode=" + inviteCode);
         paramMaps.put("inviteCode", inviteCode);
         paramMaps.put("invitePhone", user.getPhone());
-        paramMaps.put("QRCodeURL", webDomain + "/invite/qrcode/getInviteFriendQRCode?inviteCode=" + inviteCode);
+        paramMaps.put("QRCodeURL", javaDomain + "/invite/qrcode/getInviteFriendQRCode?inviteCode=" + inviteCode);
         paramMaps.put("requestSource", 3);
         return paramMaps;
     }

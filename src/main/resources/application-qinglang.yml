@@ -72,8 +72,7 @@ jixin: #银行存管
 gofobao:
   dev: true # 开发环境
   javaDomain:  http://lang.hk1.mofasuidao.cn
-  webDomain:  http://lang.hk1.mofasuidao.cn
-  h5Domain:  http://ng.hk1.mofasuidao.cn
+  h5Domain:  http://18164xy341.51mypc.cn
   imageDomain : http://www.gofobao.com
   file-url: http://uat.gofobao.com/escrow/file/download #文件请求下载链接
 

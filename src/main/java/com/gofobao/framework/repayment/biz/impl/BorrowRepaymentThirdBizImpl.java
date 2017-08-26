@@ -121,10 +121,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     @Autowired
     private TransferBiz transferBiz;
 
-
-    @Value("${gofobao.webDomain}")
-    private String webDomain;
-
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
 

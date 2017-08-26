@@ -1,23 +1,30 @@
 package com.gofobao.framework.member.controller;
 
 import com.gofobao.framework.member.biz.OpenAccountBiz;
-import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestAttribute;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 @Api(description = "开户模块")
-@RestController
+@Controller
 public class OpenAccountController {
 
     @Autowired
     OpenAccountBiz openAccountBiz ;
 
-    public String continueOpenAccount(@RequestAttribute(SecurityContants.USERID_KEY) Long userId, HttpServletRequest httpServletRequest, Model model) {
-        return openAccountBiz.openAccount(userId, httpServletRequest, model) ;
+    @GetMapping("/pub/openAccount/callback/{userId}/{process}")
+    public String opeanAccountCallBack(
+            @PathVariable Long userId,
+            @PathVariable String process,
+            HttpServletRequest httpServletRequest,
+            HttpServletResponse httpServletResponse,
+            Model model) {
+        return openAccountBiz.opeanAccountCallBack(userId, process,  httpServletRequest, httpServletResponse, model) ;
     }
 }

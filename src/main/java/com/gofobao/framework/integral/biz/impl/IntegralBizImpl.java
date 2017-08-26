@@ -86,8 +86,8 @@ public class IntegralBizImpl implements IntegralBiz {
     @Autowired
     private DictItemService dictItemService;
 
-    @Value("${gofobao.webDomain}")
-    private String webDomain;
+    @Value("${gofobao.javaDomain}")
+    private String javaDomain;
 
     @Autowired
     AssetChangeProvider assetChangeProvider;
@@ -199,7 +199,7 @@ public class IntegralBizImpl implements IntegralBiz {
             }));
             voListIntegralResp.setVoIntegralList(voIntegralList);
         }
-        voListIntegralResp.setDescImage(webDomain + "/images/integral/desc.png");
+        voListIntegralResp.setDescImage(javaDomain + "/images/integral/desc.png");
         voListIntegralResp.setCollectionMoney(StringHelper.formatMon(asset.getCollection() / 100D));
 
         return ResponseEntity.ok(voListIntegralResp);

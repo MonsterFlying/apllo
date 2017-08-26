@@ -190,9 +190,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
     @Autowired
     private WindmillTenderBiz windmillTenderBiz;
 
-    @Value("${gofobao.webDomain}")
-    private String webDomain;
-
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
 
