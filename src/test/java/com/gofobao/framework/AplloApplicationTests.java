@@ -768,8 +768,8 @@ public class AplloApplicationTests {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(82),
-                        MqConfig.BATCH_NO, StringHelper.toString(192801),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(53),
+                        MqConfig.BATCH_NO, StringHelper.toString(142324),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
                 );
 
@@ -825,7 +825,7 @@ public class AplloApplicationTests {
         }*/
 
         //批次处理
-        //batchDeal();
+        batchDeal();
         //查询存管账户资金信息
         //balanceQuery();
         //查询资金流水
@@ -853,7 +853,7 @@ public class AplloApplicationTests {
         //批次状态查询
         //batchQuery();
         //批次详情查询
-        batchDetailsQuery();
+        //batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调
