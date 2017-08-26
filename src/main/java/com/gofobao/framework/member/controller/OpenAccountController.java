@@ -20,8 +20,8 @@ public class OpenAccountController {
 
     @GetMapping("/pub/openAccount/callback/{userId}/{process}")
     public String opeanAccountCallBack(
-            @PathVariable(name = "userId", value = "0", required = true) Long userId,
-            @PathVariable(name = "process", value = "IP", required = true) String process,
+            @PathVariable Long userId,
+            @PathVariable String process,
             HttpServletRequest httpServletRequest,
             HttpServletResponse httpServletResponse,
             Model model) {

@@ -57,8 +57,8 @@ public class CouponBizImpl implements CouponBiz {
     @Value("${gofobao.flowConfig.key}")
     private String yiFengXiangKey;
 
-    @Value("${gofobao.webDomain}")
-    private String webDomain;
+    @Value("${gofobao.javaDomain}")
+    private String javaDomain;
 
     @Autowired
     private CouponRepository couponRepository;
@@ -219,7 +219,7 @@ public class CouponBizImpl implements CouponBiz {
         params.put("busiCode", "INTEGRAL");
         params.put("effectKind", "1");
         // params.put("notifyUrl",  "http://max.3w.dkys.org/coupon/takeFlowBackCall");
-        params.put("notifyUrl", String.format("%s/pub/coupon/v2/takeFlowBackCall", webDomain));
+        params.put("notifyUrl", String.format("%s/pub/coupon/v2/takeFlowBackCall", javaDomain));
         params.put("mobile", coupon.getPhone());
         params.put("packCode", bizcode);
         params.put("timestamp", DateHelper.dateToString(new Date()).replace("-", "").replace(":", "").replace(" ", ""));

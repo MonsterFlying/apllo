@@ -69,9 +69,8 @@ jixin: #银行存管
   query-time-init: "20170420" # 与存管系统查询时间
 gofobao:
   dev: true # 开发环境
-  javaDomain:  http://lang.hk1.mofasuidao.cn
-  webDomain:  http://lang.hk1.mofasuidao.cn
-  h5Domain:  http://ng.hk1.mofasuidao.cn
+  javaDomain:  http://gofobao.vicp.io
+  h5Domain:  http://18164xy341.51mypc.cn
   imageDomain : http://www.gofobao.com
   file-url: http://uat.gofobao.com/escrow/file/download #文件请求下载链接
 
