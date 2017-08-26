@@ -204,6 +204,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
+   @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoOpenAccountResp> openAccount(VoOpenAccountReq voOpenAccountReq, Long userId, HttpServletRequest httpServletRequest) {
         // 1.用户用户信息
         Users user = userService.findById(userId);
@@ -228,6 +229,17 @@ public class UserThirdBizImpl implements UserThirdBiz {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "手机已在存管平台开户, 无需开户！", VoOpenAccountResp.class));
+        }
+
+        try {
+            userThirdAccount = queryUserThirdInfo(userId) ;
+            if(!ObjectUtils.isEmpty(userThirdAccount)){
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "手机已在存管平台开户, 无需开户！", VoOpenAccountResp.class));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         String bankName = null;
@@ -1039,7 +1051,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
         if (!JixinResultContants.SUCCESS.equals(accountOpenResponse.getRetCode())) {
             log.error("UserThirdBizImpl.adminOpenAccountCallback: 回调出失败");
-            // 删除用户数据
+
+
             userThirdAccountService.deleteByUserId(userId);
             return ResponseEntity
                     .badRequest()
