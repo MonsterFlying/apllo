@@ -652,3 +652,21 @@ ALTER TABLE gfb_yesterday_asset MODIFY no_use_money BIGINT(20) NOT NULL COMMENT 
 ALTER TABLE gfb_yesterday_asset MODIFY payment BIGINT(20) NOT NULL COMMENT '待还金额（分）';
 ALTER TABLE gfb_yesterday_asset MODIFY use_money BIGINT(20) NOT NULL COMMENT '可用金额（分）';
 ALTER TABLE gfb_yesterday_asset MODIFY virtual_money BIGINT(20) NOT NULL COMMENT '体验金（分）';
+
+
+CREATE TABLE `gfb_third_error_remark` (
+  `id` int(11) NOT NULL,
+  `state` int(11) DEFAULT '0' COMMENT '0未解决 1已解决',
+  `user_id` int(11) DEFAULT NULL,
+  `type` int(11) DEFAULT NULL,
+  `source_id` int(11) DEFAULT NULL,
+  `to_user_id` int(11) DEFAULT NULL,
+  `third_req_str` text,
+  `third_resp_str` text,
+  `error_msg` text COMMENT '异常信息',
+  `remark` varchar(2048) DEFAULT NULL,
+  `is_del` int(11) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

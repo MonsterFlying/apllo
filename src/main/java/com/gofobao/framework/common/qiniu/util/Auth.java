@@ -1,10 +1,6 @@
 package com.gofobao.framework.common.qiniu.util;
 
-import com.qiniu.http.Client;
-import com.qiniu.util.Json;
-import com.qiniu.util.StringMap;
-import com.qiniu.util.StringUtils;
-import com.qiniu.util.UrlSafeBase64;
+import com.gofobao.framework.common.qiniu.http.Client;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;

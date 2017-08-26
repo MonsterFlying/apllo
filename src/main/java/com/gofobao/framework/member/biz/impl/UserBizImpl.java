@@ -6,6 +6,7 @@ import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.common.qiniu.common.QiniuException;
 import com.gofobao.framework.common.qiniu.common.Zone;
 import com.gofobao.framework.common.qiniu.http.Response;
+import com.gofobao.framework.common.qiniu.storage.BucketManager;
 import com.gofobao.framework.common.qiniu.storage.Configuration;
 import com.gofobao.framework.common.qiniu.storage.UploadManager;
 import com.gofobao.framework.common.qiniu.util.Auth;
@@ -109,16 +110,16 @@ public class UserBizImpl implements UserBiz {
     String javaDomain;
 
     @Value("${qiniu.sk}")
-     String SECRET_KEY;
+    String SECRET_KEY;
 
     @Value("${qiniu.ak}")
-     String ACCESS_KEY;
+    String ACCESS_KEY;
 
     @Value("${qiniu.domain}")
-     String qiNiuDomain;
+    String qiNiuDomain;
 
     @Value("${qiniu.bucket}")
-     String bucketname;
+    String bucketname;
 
 
     @Autowired
@@ -263,8 +264,9 @@ public class UserBizImpl implements UserBiz {
         } else {
             voBasicUserInfoResp.setThirdAccountState(true);
             voBasicUserInfoResp.setBankPassworState(userThirdAccount.getPasswordState() == 1);
-            voBasicUserInfoResp.setBankAccout(userThirdAccount.getCardNo());
+            voBasicUserInfoResp.setBankAccout(userThirdAccount.getAccountId());
             voBasicUserInfoResp.setBankName("江西银行总行营业部");
+            voBasicUserInfoResp.setSubbranch(userThirdAccount.getBankName());
             voBasicUserInfoResp.setBankState(!StringUtils.isEmpty(userThirdAccount.getCardNo()));
             voBasicUserInfoResp.setAutoTenderState(userThirdAccount.getAutoTenderState().equals(1));
             voBasicUserInfoResp.setAutoTranferState(userThirdAccount.getAutoTransferState().equals(1));
@@ -273,7 +275,7 @@ public class UserBizImpl implements UserBiz {
 
         // 获取vip状态
         Vip vip = vipService.findTopByUserIdAndStatus(user.getId(), 1);
-        voBasicUserInfoResp.setAvatarUrl(String.format("%S/data/images/avatar/$s_avatar_small.jpg", imageDomain, user.getId()));
+        voBasicUserInfoResp.setAvatarUrl(user.getAvatarPath());
         voBasicUserInfoResp.setVipState(ObjectUtils.isEmpty(vip) ? false : DateHelper.diffInDays(new Date(), vip.getExpireAt(), false) > 0);
         voBasicUserInfoResp.setEmail(UserHelper.hideChar(StringUtils.isEmpty(user.getEmail()) ? " " : user.getEmail(), UserHelper.EMAIL_NUM));
         voBasicUserInfoResp.setEmailState(!StringUtils.isEmpty(user.getEmail()));
@@ -571,9 +573,14 @@ public class UserBizImpl implements UserBiz {
     public ResponseEntity<VipInfoRes> vipInfo(Long userId) {
         Vip vip = vipService.findTopByUserIdAndStatus(userId, 1);
         VipInfoRes vipInfoRes = VoBaseResp.ok("查询成功", VipInfoRes.class);
-        vipInfoRes.setEndAt(DateHelper.dateToString(vip.getExpireAt()));
-        Users user = userService.findById(vip.getKefuId());
-        vipInfoRes.setServiceUserName(user.getUsername());
+        if(!ObjectUtils.isEmpty(vip)){
+            vipInfoRes.setEndAt(DateHelper.dateToString(vip.getExpireAt()));
+            Users user = userService.findById(vip.getKefuId());
+            vipInfoRes.setServiceUserName(user.getUsername());
+        }else {
+            vipInfoRes.setServiceUserName("");
+            vipInfoRes.setEndAt("");
+        }
         return ResponseEntity.ok(vipInfoRes);
     }
 
@@ -608,41 +615,63 @@ public class UserBizImpl implements UserBiz {
             return ResponseEntity.ok(VoBaseResp.ok("重置密码成功"));
 
     }
-    
-    public Map<String,Object> upload(byte[] file, String key,Users users) throws IOException {
+
+    /**
+     * 上传用户头像
+     * @param file
+     * @param imageName
+     * @param users
+     * @return
+     * @throws Exception
+     */
+    @Override
+    public Map<String, Object> uploadAvatar(byte[] file, String imageName, Users users) throws Exception {
         //密钥配置
         Auth auth = Auth.create(ACCESS_KEY, SECRET_KEY);
         //创建上传对象
-
         Zone z = Zone.autoZone();
         Configuration c = new Configuration(z);
+
+        //判断当前用户是否有头像
+        String userAvatar= users.getAvatarPath();
+        if (!StringUtils.isEmpty(userAvatar)) {
+            //实例化一个BucketManager对象
+            BucketManager bucketManager = new BucketManager(auth, c);
+            try {
+                //删除用户在七牛云上的用户头像
+                userAvatar=userAvatar.substring(userAvatar.lastIndexOf("/")+1);
+                bucketManager.delete(bucketname,"avatar/"+userAvatar);
+            } catch (QiniuException e) {
+                //捕获异常信息
+                Response r = e.response;
+                log.info("删除用户头像失败打印七牛返回信息："+r.error);
+            }
+            log.info("删除用户头像成功");
+        }
+        //上传
         UploadManager uploadManager = new UploadManager(c);
-        String token=auth.uploadToken(bucketname);
+        String token = auth.uploadToken(bucketname);
         Map<String, Object> resultMap = Maps.newHashMap();
         try {
             //调用put方法上传
-            Response res = uploadManager.put(file, key, token);
-            resultMap.put("result",Boolean.TRUE);
-            resultMap.put("code", VoBaseResp.ERROR);
+            Response res = uploadManager.put(file, imageName, token);
+            //返回上传成功信息
+            resultMap.put("result", Boolean.TRUE);
+            resultMap.put("code", VoBaseResp.OK);
             resultMap.put("msg", res.bodyString());
-            users.setAvatarPath(qiNiuDomain+key);
+            String avatarPath=qiNiuDomain+imageName;
+            resultMap.put("url", avatarPath);
+            //更新用户头像
+            users.setAvatarPath(avatarPath);
             userService.save(users);
         } catch (QiniuException e) {
             Response r = e.response;
             // 请求失败时打印的异常的信息
-            System.out.println(r.toString());
-            resultMap.put("result",Boolean.FALSE);
+            System.out.println("上传失败 打印的异常的信息：" + r.toString());
+            resultMap.put("result", Boolean.FALSE);
             resultMap.put("code", VoBaseResp.ERROR);
             resultMap.put("msg", r.bodyString());
-
         }
-       return resultMap;
-    }
-
-
-    @Override
-    public Map<String, Object> uploadAvatar(byte[] file, String filePath,Users users)throws Exception {
-           return upload(file, filePath,users);
-
+        return resultMap;
     }
 }

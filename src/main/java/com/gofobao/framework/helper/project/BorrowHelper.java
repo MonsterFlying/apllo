@@ -10,16 +10,6 @@ import java.util.Set;
  */
 public class BorrowHelper {
 
-    /**
-     * 获取借款url
-     *
-     * @param borrowId
-     * @param borrowName
-     * @return
-     */
-    public static String getBorrowLink(Long borrowId, String borrowName) {
-        return "<a href=\"/borrow/" + borrowId + "\" target=\"_blank\">" + borrowName + "</a>";
-    }
 
     /**
      * 计算RepayFashions

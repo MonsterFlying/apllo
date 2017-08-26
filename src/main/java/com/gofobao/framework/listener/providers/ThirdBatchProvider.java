@@ -53,6 +53,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
@@ -373,7 +374,6 @@ public class ThirdBatchProvider {
      * @param acqRes
      * @param failureTRepayBailOrderIds
      * @param successTRepayBailOrderIds
-     * @// TODO: 2017/8/16 需要修改
      */
     private void repayBailDeal(long batchNo, long repaymentId, String acqRes, List<String> failureTRepayBailOrderIds, List<String> successTRepayBailOrderIds) {
 
@@ -755,7 +755,7 @@ public class ThirdBatchProvider {
      */
     private void sendCancelTender(Date nowDate, Borrow borrow, List<Tender> tenders) {
         Set<Long> userIdSet = tenders.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet());
-        String content = String.format("你所投资的借款[ %s ] 与存管通讯失败, 在 %s 已取消", BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()), DateHelper.nextDate(nowDate));
+        String content = String.format("你所投资的借款[ %s ] 与存管通讯失败, 在 %s 已取消", borrow.getName());
         userIdSet.forEach(userid -> {
             Notices notices = new Notices();
             notices.setFromUserId(1L);
@@ -789,6 +789,7 @@ public class ThirdBatchProvider {
      * @param successThirdTransferOrderIds
      * @throws Exception
      */
+    @Transactional(rollbackFor = Exception.class)
     private void newCreditInvestDeal(long batchNo, long transferId, List<String> failureThirdTransferOrderIds, List<String> successThirdTransferOrderIds) throws Exception {
         Date nowDate = new Date();
         if (CollectionUtils.isEmpty(failureThirdTransferOrderIds)) {

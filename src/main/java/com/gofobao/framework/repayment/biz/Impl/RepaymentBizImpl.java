@@ -1009,10 +1009,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //迭代投标人记录
         borrowCollectionList.stream().forEach(borrowCollection -> {
             long actualInterest = borrowCollection.getCollectionMoneyYes() - borrowCollection.getPrincipal();/* 实收利息 */
-            String noticeContent = String.format("客户在%s已将借款[%s]第%s期还款,还款金额为%s元", DateHelper.dateToString(new Date(), "yyyy-MM-dd HH:mm:ss"), BorrowHelper.getBorrowLink(parentBorrow.getId()
-                    , parentBorrow.getName()), (borrowCollection.getOrder() + 1), StringHelper.formatDouble(actualInterest, 100, true));
+            String noticeContent = String.format("客户在%s已将借款[%s]第%s期还款,还款金额为%s元", DateHelper.dateToString(new Date(), "yyyy-MM-dd HH:mm:ss"), parentBorrow.getName(), (borrowCollection.getOrder() + 1), StringHelper.formatDouble(actualInterest, 100, true));
             if (advance) {
-                noticeContent = "广富宝在" + DateHelper.dateToString(new Date(), "yyyy-MM-dd HH:mm:ss") + " 已将借款[" + BorrowHelper.getBorrowLink(parentBorrow.getId(), parentBorrow.getName()) +
+                noticeContent = "广富宝在" + DateHelper.dateToString(new Date(), "yyyy-MM-dd HH:mm:ss") + " 已将借款[" + parentBorrow.getName() +
                         "]第" + (borrowCollection.getOrder() + 1) + "期垫付还款,垫付金额为" + StringHelper.formatDouble(actualInterest, 100, true) + "元";
             }
 
@@ -1277,7 +1276,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         batchAssetChangeItem.setUserId(borrow.getUserId());
         batchAssetChangeItem.setMoney(borrowRepayment.getPrincipal() + borrowRepayment.getInterest());
         batchAssetChangeItem.setRemark(String.format("对借款[%s]第%s期的还款",
-                BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()),
+                borrow.getName(),
                 StringHelper.toString(borrowRepayment.getOrder() + 1)));
         if (interestPercent < 1) {
             batchAssetChangeItem.setRemark("（提前结清）");
@@ -1298,7 +1297,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             batchAssetChangeItem.setType(AssetChangeTypeEnum.repayMentPenaltyFee.getLocalType());  // 扣除借款人还款滞纳金
             batchAssetChangeItem.setUserId(borrow.getUserId());
             batchAssetChangeItem.setMoney(lateInterest);
-            batchAssetChangeItem.setRemark(String.format("借款[%s]的逾期罚息", BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName())));
+            batchAssetChangeItem.setRemark(String.format("借款[%s]的逾期罚息", borrow.getName()));
             batchAssetChangeItem.setCreatedAt(nowDate);
             batchAssetChangeItem.setUpdatedAt(nowDate);
             batchAssetChangeItem.setSourceId(borrowRepayment.getId());
@@ -1342,7 +1341,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         batchAssetChangeItem.setToUserId(parentBorrow.getUserId());
         batchAssetChangeItem.setMoney(borrowRepayment.getRepayMoney() + lateInterest);/* 还款金额加上逾期利息 */
         batchAssetChangeItem.setRemark(String.format("收到客户对借款[%s]第%s期垫付的还款",
-                BorrowHelper.getBorrowLink(parentBorrow.getId(), parentBorrow.getName()),
+                parentBorrow.getName(),
                 (borrowRepayment.getOrder() + 1)));
         batchAssetChangeItem.setCreatedAt(nowDate);
         batchAssetChangeItem.setUpdatedAt(nowDate);
@@ -1750,15 +1749,15 @@ public class RepaymentBizImpl implements RepaymentBiz {
             int inFee = 0; // 出借人利息费用
             int outFee = 0; // 借款人管理费
             BorrowCollection borrowCollection = borrowCollectionMap.get(tender.getId());  // 还款计划
+            // 标的转让中时, 需要取消出让信息
             if (tender.getTransferFlag() == 1) {
-                transferBiz.cancelTransferByTenderId(tender.getId()); // 标的转让中时, 需要取消出让信息
+                transferBiz.cancelTransferByTenderId(tender.getId());
             }
-            /**
-             * @// TODO: 2017/8/18 资金变动有问题
-             */
-            if (tender.getTransferFlag() == 2 || ObjectUtils.isEmpty(borrowCollection)) {  // 已经转让的债权, 可以跳过还款
+            // 已经转让的债权, 可以跳过还款
+            if (tender.getTransferFlag() == 2 || ObjectUtils.isEmpty(borrowCollection)) {
                 continue;
             }
+
             inIn = (long) MathHelper.myRound(borrowCollection.getInterest() * interestPercent, 0); // 还款利息
             inPr = borrowCollection.getPrincipal(); // 还款本金
             repayAssetChange.setUserId(tender.getUserId());
@@ -2691,9 +2690,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if (BooleanHelper.isTrue(transferBuyLog.getThirdTransferFlag())) {
                 continue;
             }
-            if (tender.getTransferFlag() == 1) {
-                transferBiz.cancelTransferByTenderId(tender.getId()); // 标的转让中时, 需要取消出让信息
-            }
             if (tender.getTransferFlag() == 2) {  // 已经转让的债权, 可以跳过还款
                 continue;
             }
@@ -2843,7 +2839,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         advanceBailAssetChangeItem.setType(AssetChangeTypeEnum.compensatoryRepayment.getLocalType());  // 名义借款人垫付还款
         advanceBailAssetChangeItem.setUserId(bailAccountId);
         advanceBailAssetChangeItem.setMoney(borrowRepayment.getRepayMoney());
-        advanceBailAssetChangeItem.setRemark(String.format("对借款[%s]第%s期的垫付还款", BorrowHelper.getBorrowLink(parentBorrow.getId(), parentBorrow.getName()), (borrowRepayment.getOrder() + 1)));
+        advanceBailAssetChangeItem.setRemark(String.format("对借款[%s]第%s期的垫付还款", parentBorrow.getName()));
         advanceBailAssetChangeItem.setCreatedAt(nowDate);
         advanceBailAssetChangeItem.setUpdatedAt(nowDate);
         advanceBailAssetChangeItem.setSourceId(borrowRepayment.getId());
@@ -2858,7 +2854,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             overdueAssetChangeItem.setType(AssetChangeTypeEnum.compensatoryRepaymentOverdueFee.getLocalType());  // 名义借款人垫付还款
             overdueAssetChangeItem.setUserId(bailAccountId);
             overdueAssetChangeItem.setMoney(new Double(lateInterest.doubleValue() / 2D).longValue());
-            overdueAssetChangeItem.setRemark(String.format("对借款[%s]第%s期的垫付滞纳金", BorrowHelper.getBorrowLink(parentBorrow.getId(), parentBorrow.getName()), (borrowRepayment.getOrder() + 1)));
+            overdueAssetChangeItem.setRemark(String.format("对借款[%s]第%s期的垫付滞纳金", parentBorrow.getName(), (borrowRepayment.getOrder() + 1)));
             overdueAssetChangeItem.setCreatedAt(nowDate);
             overdueAssetChangeItem.setUpdatedAt(nowDate);
             overdueAssetChangeItem.setSourceId(borrowRepayment.getId());
