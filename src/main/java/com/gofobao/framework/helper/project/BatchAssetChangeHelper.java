@@ -77,11 +77,15 @@ public class BatchAssetChangeHelper {
                 .eq("sourceId", sourceId)
                 .eq("type", type)
                 .eq("batchNo", batchNo)
-                .eq("state", 0)
+                .in("state", 0, 1)
                 .build();
         List<BatchAssetChange> batchAssetChangeList = batchAssetChangeService.findList(bacs);
         Preconditions.checkNotNull(batchAssetChangeList, batchNo + "债权转让资金变动记录不存在!");
         BatchAssetChange batchAssetChange = batchAssetChangeList.get(0);/* 债权转让资金变动记录 */
+        if (batchAssetChange.getState() == 1) {
+            log.error(String.format("资金变动未已完成!请检查资金是否变动：%s", GSON.toJson(batchAssetChange)));
+            return;
+        }
 
         Specification<BatchAssetChangeItem> bacis = Specifications
                 .<BatchAssetChangeItem>and()
