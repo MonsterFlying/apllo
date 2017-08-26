@@ -262,6 +262,8 @@ public class UserBizImpl implements UserBiz {
             voBasicUserInfoResp.setBankPassworState(false);
             voBasicUserInfoResp.setBankState(false);
             voBasicUserInfoResp.setBankAccout(" ");
+            voBasicUserInfoResp.setSubbranch("");
+
             voBasicUserInfoResp.setAutoTenderState(false);
             voBasicUserInfoResp.setAutoTranferState(false);
         } else {
@@ -280,13 +282,13 @@ public class UserBizImpl implements UserBiz {
         Vip vip = vipService.findTopByUserIdAndStatus(user.getId(), 1);
         voBasicUserInfoResp.setAvatarUrl(user.getAvatarPath());
         voBasicUserInfoResp.setVipState(ObjectUtils.isEmpty(vip) ? false : DateHelper.diffInDays(new Date(), vip.getExpireAt(), false) > 0);
-        voBasicUserInfoResp.setEmail(UserHelper.hideChar(StringUtils.isEmpty(user.getEmail()) ? " " : user.getEmail(), UserHelper.EMAIL_NUM));
+        voBasicUserInfoResp.setEmail(StringUtils.isEmpty(user.getEmail()) ? " " : user.getEmail());
         voBasicUserInfoResp.setEmailState(!StringUtils.isEmpty(user.getEmail()));
-        voBasicUserInfoResp.setPhone(UserHelper.hideChar(StringUtils.isEmpty(user.getPhone()) ? " " : user.getPhone(), UserHelper.PHONE_NUM));
+        voBasicUserInfoResp.setPhone(StringUtils.isEmpty(user.getPhone()) ? " " : user.getPhone());
         voBasicUserInfoResp.setPhoneState(!StringUtils.isEmpty(user.getPhone()));
-        voBasicUserInfoResp.setRealname(UserHelper.hideChar(StringUtils.isEmpty(user.getRealname()) ? " " : user.getRealname(), UserHelper.REALNAME_NUM));
+        voBasicUserInfoResp.setRealname(StringUtils.isEmpty(user.getRealname()) ? " " : user.getRealname());
         voBasicUserInfoResp.setRealnameState(!StringUtils.isEmpty(user.getRealname()));
-        voBasicUserInfoResp.setIdNo(UserHelper.hideChar(StringUtils.isEmpty(user.getCardId()) ? " " : user.getCardId(), UserHelper.CARD_ID_NUM));
+        voBasicUserInfoResp.setIdNo(StringUtils.isEmpty(user.getCardId()) ? " " : user.getCardId());
         voBasicUserInfoResp.setRegisterAt(DateHelper.dateToString(user.getCreatedAt()));
         Integral integral = integralService.findByUserId(user.getId());
         voBasicUserInfoResp.setTenderIntegral(new Long(integral.getUseIntegral() + integral.getNoUseIntegral()));

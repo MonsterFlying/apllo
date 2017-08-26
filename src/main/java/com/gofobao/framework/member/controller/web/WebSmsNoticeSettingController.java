@@ -32,7 +32,7 @@ public class WebSmsNoticeSettingController {
                             SmsNoticeSettingsEntity smsSettingUpdateReq) {
         smsSettingUpdateReq.setUserId(userId);
     return smsNoticeSettingsBiz.update(smsSettingUpdateReq);
-    }
+}
 
 
     /**
