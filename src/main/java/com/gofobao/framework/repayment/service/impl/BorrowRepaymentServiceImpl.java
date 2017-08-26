@@ -17,6 +17,9 @@ import com.gofobao.framework.repayment.vo.response.RepayCollectionLog;
 import com.gofobao.framework.repayment.vo.response.RepaymentOrderDetail;
 import com.gofobao.framework.repayment.vo.response.pc.VoCollection;
 import com.gofobao.framework.repayment.vo.response.pc.VoOrdersList;
+import com.gofobao.framework.tender.contants.TransferContants;
+import com.gofobao.framework.tender.entity.Transfer;
+import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +54,8 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
     @PersistenceContext
     private EntityManager entityManager;
 
+    @Autowired
+    private TransferService transferService;
 
     /**
      * 还款计划列表
@@ -114,6 +119,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
 
     /**
      * pc:还款计划导出到excel
+     *
      * @param orderListReq
      * @return
      */
@@ -214,22 +220,22 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         }
         Long borrowId = borrowRepayment.getBorrowId();
         Borrow borrow = borrowRepository.findOne(borrowId);
-        Long interest=0L;
-        Long principal=0L;
+        Long interest = 0L;
+        Long principal = 0L;
         if (borrowRepayment.getStatus() == RepaymentContants.STATUS_NO) {
-            detailRes.setRepayAt(DateHelper.dateToString(borrowRepayment.getRepayAt(),DateHelper.DATE_FORMAT_YMD));
+            detailRes.setRepayAt(DateHelper.dateToString(borrowRepayment.getRepayAt(), DateHelper.DATE_FORMAT_YMD));
             detailRes.setStatusStr(RepaymentContants.STATUS_NO_STR);
         } else {
-            interest=borrowRepayment.getInterest();
-            principal=borrowRepayment.getPrincipal();
+            interest = borrowRepayment.getInterest();
+            principal = borrowRepayment.getPrincipal();
             detailRes.setStatusStr(RepaymentContants.STATUS_YES_STR);
-            detailRes.setRepayAt(DateHelper.dateToString(borrowRepayment.getRepayAtYes(),DateHelper.DATE_FORMAT_YMD));
+            detailRes.setRepayAt(DateHelper.dateToString(borrowRepayment.getRepayAtYes(), DateHelper.DATE_FORMAT_YMD));
         }
         detailRes.setStatus(borrowRepayment.getStatus());
         detailRes.setInterest(StringHelper.formatMon(interest / 100d));
-        detailRes.setPrincipal(StringHelper.formatMon(principal/ 100d));
+        detailRes.setPrincipal(StringHelper.formatMon(principal / 100d));
         detailRes.setBorrowName(borrow.getName());
-        detailRes.setCollectionMoney(StringHelper.formatMon(borrowRepayment.getRepayMoney()/ 100d));
+        detailRes.setCollectionMoney(StringHelper.formatMon(borrowRepayment.getRepayMoney() / 100d));
         detailRes.setLateDays(borrowRepayment.getLateDays());
         detailRes.setOrder(borrowRepayment.getOrder() + 1);
 
@@ -258,7 +264,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
     /**
      * 标的还款记录
      *
-     * @param borrowId
+     * @param transferId
      * @return
      */
     @Override
