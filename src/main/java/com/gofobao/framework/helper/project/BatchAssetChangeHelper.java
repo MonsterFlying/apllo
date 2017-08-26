@@ -107,11 +107,7 @@ public class BatchAssetChangeHelper {
             assetChange.setGroupSeqNo(item.getGroupSeqNo());
             assetChange.setSourceId(item.getSourceId());
             assetChange.setType(AssetChangeTypeEnum.findType(item.getType()));
-            try {
-                assetChangeProvider.commonAssetChange(assetChange);
-            } catch (Exception e) {
-                log.error(String.format("资金变动异常：%s",GSON.toJson(item)));
-            }
+            assetChangeProvider.commonAssetChange(assetChange);
 
             item.setState(1);
             item.setUpdatedAt(new Date());
