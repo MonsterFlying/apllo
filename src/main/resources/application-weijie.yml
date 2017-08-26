@@ -1,9 +1,9 @@
 spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
-    url: jdbc:mysql://192.168.1.13:3306/gfb0821?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&&useSSL=true
-    username: root
-    password: root
+    url: jdbc:mysql://192.168.1.5:3306/gfb0810?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&&useSSL=true
+    username: gfb0810
+    password: GOFOBAO@0701.
     driver-class-name: com.mysql.jdbc.Driver
   jpa:
     database: mysql
@@ -66,7 +66,7 @@ jixin: #银行存管
   bankCode: "30050000" #交易机构代码
   product-no: "0105" # 产品编号
   bank-no: "3005" #产品编号
-  query-time-init: "20170419" # 与存管系统查询时间
+  query-time-init: "20170420" # 与存管系统查询时间
 
 gofobao:
   dev: true # 开发环境
@@ -88,7 +88,7 @@ gofobao:
     AppKey: ce7616b0fc76f923a1b53b30
     MasterSecre : d4b742ae7cc3e4be1d6a95c3
 logging:
-  file: D:/apollo/apllo.log
+  file: /var/log/apllo.log
   pattern:
     console: "%d %-5level %logger : %msg%n"
   level:

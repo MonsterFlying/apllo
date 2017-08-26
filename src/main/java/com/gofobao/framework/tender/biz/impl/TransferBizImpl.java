@@ -96,9 +96,6 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -1331,9 +1328,9 @@ public class TransferBizImpl implements TransferBiz {
 
     @Override
     public List<VoViewBorrowList> findTransferList(VoBorrowListReq voBorrowListReq) {
-        Map<String,Object> resultMaps=commonQuery( voBorrowListReq);
-        List<Transfer>transferList=(List<Transfer>) resultMaps.get("transfers");
-        if(CollectionUtils.isEmpty(transferList)){
+        Map<String, Object> resultMaps = commonQuery(voBorrowListReq);
+        List<Transfer> transferList = (List<Transfer>) resultMaps.get("transfers");
+        if (CollectionUtils.isEmpty(transferList)) {
             return Lists.newArrayList();
         }
         Set<Long> borrowIds = transferList
@@ -1379,39 +1376,35 @@ public class TransferBizImpl implements TransferBiz {
             voViewBorrowList.setIsContinued(borrow.getIsContinued());
             voViewBorrowList.setLockStatus(borrow.getIsLock());
             voViewBorrowList.setIsImpawn(borrow.getIsImpawn());
-            voViewBorrowList.setApr(StringHelper.formatMon(borrow.getApr() / 100d) + MoneyConstans.PERCENT);  //转换率
+            voViewBorrowList.setApr(StringHelper.formatMon(item.getApr() / 100d) + MoneyConstans.PERCENT);  //转换率
             voViewBorrowList.setName(item.getTitle());
             voViewBorrowList.setMoneyYes(StringHelper.formatMon(item.getPrincipal() / 100d) + MoneyConstans.RMB);
             voViewBorrowList.setIsNovice(borrow.getIsNovice());
             voViewBorrowList.setIsMortgage(borrow.getIsMortgage());
             voViewBorrowList.setIsPassWord(false);
-
-            if (borrow.getType() == com.gofobao.framework.borrow.contants.BorrowContants.REPAY_FASHION_ONCE) {
-                voViewBorrowList.setTimeLimit(item.getTimeLimit() + BorrowContants.DAY);
-            } else {
-                voViewBorrowList.setTimeLimit(item.getTimeLimit() + BorrowContants.MONTH);
-            }
+            voViewBorrowList.setTimeLimit(item.getTimeLimit() + BorrowContants.MONTH);
+            //1.待发布 2.还款中 3.招标中 4.已完成 5.已过期 6.待复审
 
             //待发布时间
             voViewBorrowList.setSurplusSecond(0L);
             //进度
             voViewBorrowList.setSpend(0d);
-            //债权转让进行中
-            if (item.getState() == 1) {
+             //转让中
+             if (item.getState() == TransferContants.TRANSFERIND) {
                 if (item.getTransferMoneyYes() / item.getTransferMoney() == 1) {
+                    //待审核
                     voViewBorrowList.setStatus(6);
                 } else {
-                    voViewBorrowList.setStatus(3);
+                    //招标中
+                    if(DateHelper.addDays(item.getVerifyAt(),1).getTime()>new Date().getTime()){
+                        voViewBorrowList.setStatus(3);
+                    }else{
+                        voViewBorrowList.setStatus(5);
+                    }
                 }
-
-            } else { // 回款中
-                if (ObjectUtils.isEmpty(borrow.getCloseAt())) {
-                    voViewBorrowList.setStatus(2);
-                    voViewBorrowList.setSpend(1D);
-                } else {
-                    voViewBorrowList.setStatus(4);
-                    voViewBorrowList.setSpend(1D);
-                }
+            } else if (item.getState() == TransferContants.TRANSFERED) {
+                 //已完成
+                voViewBorrowList.setStatus(4);
             }
             double spend = Double.parseDouble(StringHelper.formatMon(item.getTransferMoneyYes().doubleValue() / item.getTransferMoney()));
             voViewBorrowList.setSpend(spend);
@@ -1434,10 +1427,10 @@ public class TransferBizImpl implements TransferBiz {
     @Override
     public ResponseEntity<VoPcBorrowList> pcFindTransferList(VoBorrowListReq voBorrowListReq) {
 
-        VoPcBorrowList voPcBorrowList=VoBaseResp.ok("查询成功",VoPcBorrowList.class);
-        Map<String,Object> resultMaps=commonQuery( voBorrowListReq);
-        List<Transfer>transferList=(List<Transfer>) resultMaps.get("transfers");
-        if(CollectionUtils.isEmpty(transferList)){
+        VoPcBorrowList voPcBorrowList = VoBaseResp.ok("查询成功", VoPcBorrowList.class);
+        Map<String, Object> resultMaps = commonQuery(voBorrowListReq);
+        List<Transfer> transferList = (List<Transfer>) resultMaps.get("transfers");
+        if (CollectionUtils.isEmpty(transferList)) {
             return ResponseEntity.ok(voPcBorrowList);
         }
         voPcBorrowList.setTotalCount(Long.valueOf(resultMaps.get("totalCount").toString()).intValue());
@@ -1471,43 +1464,79 @@ public class TransferBizImpl implements TransferBiz {
                 .stream()
                 .collect(Collectors.toMap(Users::getId, Function.identity()));
 
-        List<VoViewBorrowList> borrowLists= Lists.newArrayList();
+        List<VoViewBorrowList> transfers = Lists.newArrayList();
 
         transferList.forEach(transfer -> {
-            VoViewBorrowList item=new VoViewBorrowList();
+            VoViewBorrowList item = new VoViewBorrowList();
 
-            Borrow borrow=borrowRef.get(transfer.getBorrowId());
+            Borrow borrow = borrowRef.get(transfer.getBorrowId());
+            Users users = userRef.get(transfer.getUserId());
 
-            item.setApr(StringHelper.formatMon(transfer.getApr()/100D));
-          /*  item.setAvatar(borrow.get);*/
-
-
-
+            item.setApr(StringHelper.formatMon(transfer.getApr() / 100D));
+            item.setAvatar(users.getAvatarPath());
+            item.setId(transfer.getId());
+            item.setMoneyYes(StringHelper.formatMon(transfer.getTransferMoneyYes() / 100D));
+            item.setMoney(StringHelper.formatMon(transfer.getTransferMoney() / 100D));
+            item.setIsConversion(borrow.getIsConversion());
+            item.setName(borrow.getName());
+            item.setIsFlow(true);
+            item.setIsImpawn(borrow.getIsImpawn());
+            item.setIsMortgage(borrow.getIsMortgage());
+            item.setIsNovice(borrow.getIsNovice());
+            item.setIsContinued(borrow.getIsContinued());
+            item.setIsPassWord(StringUtils.isEmpty(borrow.getPassword()) ? false : true);
+            item.setLockStatus(false);
+            item.setIsVouch(borrow.getIsVouch());
+            item.setReleaseAt(DateHelper.dateToString(transfer.getReleaseAt()));
+            item.setTimeLimit(transfer.getTimeLimit() + BorrowContants.MONTH);
+            item.setTenderCount(transfer.getTenderCount());
+            item.setUserName(StringUtils.isEmpty(users.getUsername()) ? UserHelper.hideChar(users.getPhone(), UserHelper.PHONE_NUM) : UserHelper.hideChar(users.getUsername(), UserHelper.USERNAME_NUM));
+            item.setType(5);
+            double spend = Double.parseDouble(StringHelper.formatMon(transfer.getTransferMoneyYes().doubleValue() / transfer.getTransferMoney()))*100;
+            item.setSpend(spend);
+            //1.待发布 2.还款中 3.招标中 4.已完成 5.已过期 6.待复审
+            //进度
+            Integer status=transfer.getState();
+            //转让中
+            if (status == TransferContants.TRANSFERIND) {
+                if (transfer.getTransferMoneyYes() / transfer.getTransferMoney() == 1) {
+                    //待审核
+                    item.setStatus(6);
+                } else {
+                    //招标中
+                    if(DateHelper.addDays(transfer.getVerifyAt(),1).getTime()>new Date().getTime()){
+                        item.setStatus(3);
+                    }else{
+                        item.setStatus(5);
+                    }
+                }
+            } else if (status == TransferContants.TRANSFERED) {
+                //已完成
+                item.setStatus(4);
+            }
+            item.setRepayFashion(0);
+            item.setSurplusSecond(0L);
+            transfers.add(item);
         });
-
-
-
-
-
-
-
-        return null;
+        voPcBorrowList.setBorrowLists(transfers);
+        return ResponseEntity.ok(voPcBorrowList);
     }
 
 
-    private Map<String,Object> commonQuery(VoBorrowListReq voBorrowListReq) {
-        Map<String,Object>resultMaps= Maps.newHashMap();
+    private Map<String, Object> commonQuery(VoBorrowListReq voBorrowListReq) {
+        Map<String, Object> resultMaps = Maps.newHashMap();
         Specification<Transfer> ts = Specifications
                 .<Transfer>and()
                 .in("state", ImmutableList.of(TransferContants.TRANSFERIND, TransferContants.TRANSFERED).toArray())
                 .eq("type", 0)
                 .build();
         Pageable pageable = new PageRequest(voBorrowListReq.getPageIndex(), voBorrowListReq.getPageSize(), new Sort(Sort.Direction.ASC, "state"));
-        Page<Transfer> transferPage=transferService.findPageList(ts,pageable);
-        resultMaps.put("totalCount",transferPage.getTotalElements());
-        resultMaps.put("transfers",transferPage.getContent());
+        Page<Transfer> transferPage = transferService.findPageList(ts, pageable);
+        resultMaps.put("totalCount", transferPage.getTotalElements());
+        resultMaps.put("transfers", transferPage.getContent());
         return resultMaps;
     }
+
     @Override
     public ResponseEntity<BorrowInfoRes> transferInfo(Long transferId) {
         Transfer transfer = transferService.findById(transferId);

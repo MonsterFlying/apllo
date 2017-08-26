@@ -24,7 +24,7 @@ public interface LendService {
 
     Lend findById(Long id);
 
-    Map<String, Object> list(Page page);
+    Map<String, Object> list(Page page,Long userId);
 
 
     /**

@@ -14,6 +14,7 @@ import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.response.VoViewRepayCollectionLogWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
+import com.gofobao.framework.tender.biz.TransferBiz;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -58,6 +59,10 @@ public class WebBorrowController {
     private String prefix;
 
 
+    @Autowired
+    private TransferBiz transferBiz;
+
+
     @ApiOperation(value = "pc:首页标列表; type:-1：全部 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
     @GetMapping("pub/borrow/pc/v2/list/{type}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoPcBorrowList> pcList(@PathVariable Integer pageIndex,
@@ -70,13 +75,17 @@ public class WebBorrowController {
         return borrowBiz.pcFindAll(voBorrowListReq);
     }
 
+    @ApiOperation("流转标信息")
+    @GetMapping("pub/transfer/pc/v2/info/{transferId}")
+    public ResponseEntity<BorrowInfoRes> pcgetByTransferId(@PathVariable Long transferId) {
+        return transferBiz.transferInfo(transferId);
+    }
 
-    @ApiOperation("标信息")
+    @ApiOperation("普通标信息")
     @GetMapping("pub/borrow/pc/v2/info/{borrowId}")
     public ResponseEntity<BorrowInfoRes> pcgetByBorrowId(@PathVariable Long borrowId) {
         return borrowBiz.info(borrowId);
     }
-
 
     @ApiOperation("pc：标简介")
     @GetMapping("pub/borrow/pc/v2/desc/{borrowId}")
@@ -113,7 +122,6 @@ public class WebBorrowController {
     public ResponseEntity<VoViewRepayCollectionLogWarpRes> info(@PathVariable("borrowId") Long borrowId) {
         return repaymentBiz.logs(borrowId);
     }
-
 
     @ApiOperation(value = "pc：招标中统计")
     @GetMapping(value = "pub/borrow/pc/v2/statistics")
