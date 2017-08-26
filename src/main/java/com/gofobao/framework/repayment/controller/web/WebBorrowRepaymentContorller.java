@@ -4,10 +4,7 @@ import com.gofobao.framework.borrow.vo.request.VoRepayAllReq;
 import com.gofobao.framework.collection.vo.request.VoCollectionListReq;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
-import com.gofobao.framework.repayment.vo.request.VoInstantlyRepaymentReq;
-import com.gofobao.framework.repayment.vo.request.VoOrderListReq;
-import com.gofobao.framework.repayment.vo.request.VoPcAdvanceReq;
-import com.gofobao.framework.repayment.vo.request.VoRepayReq;
+import com.gofobao.framework.repayment.vo.request.*;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewCollectionWarpRes;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewOrderListWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
@@ -66,7 +63,7 @@ public class WebBorrowRepaymentContorller {
         return repaymentBiz.orderList(voCollectionListReq);
     }
 
-    @PostMapping("/pub/pc/repay/all")
+    @PostMapping("/pub/v2/repay/all")
     @ApiOperation("提前还款")
     public ResponseEntity<VoBaseResp> pcRepayAll(@Valid @ModelAttribute VoRepayAllReq voRepayAllReq) {
         try {
@@ -80,20 +77,19 @@ public class WebBorrowRepaymentContorller {
     /**
      * 立即还款
      *
-     * @param voInstantlyRepaymentReq
+     * @param voPcRepay
      * @return 0成功 1失败 2操作不存在 3该借款上一期还未还 4账户余额不足，请先充值
      * @throws Exception
      */
-    @PostMapping("/v2/instantly")
+    @PostMapping("/pub/v2/pcInstantly")
     @ApiOperation("立即还款")
-    public ResponseEntity<VoBaseResp> instantly(@ModelAttribute @Valid VoInstantlyRepaymentReq voInstantlyRepaymentReq,
-                                                @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
-        VoRepayReq voRepayReq = new VoRepayReq();
-        voRepayReq.setRepaymentId(voInstantlyRepaymentReq.getRepaymentId());
-        voRepayReq.setUserId(userId);
-        voRepayReq.setInterestPercent(1d);
-        voRepayReq.setIsUserOpen(true);
-        return repaymentBiz.newRepay(voRepayReq);
+    public ResponseEntity<VoBaseResp> pcInstantly(@ModelAttribute @Valid VoPcRepay voPcRepay) throws Exception {
+        try {
+            return repaymentBiz.pcInstantly(voPcRepay);
+        } catch (Throwable e) {
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "立即还款失败！"));
+        }
     }
 
 

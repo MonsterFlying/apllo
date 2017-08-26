@@ -121,4 +121,9 @@ public class UserThirdAccountServiceImpl implements UserThirdAccountService {
     public void save(List<UserThirdAccount> userThirdAccountList) {
         userThirdAccountRepository.save(userThirdAccountList);
     }
+
+    @Override
+    public UserThirdAccount findByIdNo(String idNo) {
+        return userThirdAccountRepository.findTopByIdNoAndDel(idNo, 0);
+    }
 }

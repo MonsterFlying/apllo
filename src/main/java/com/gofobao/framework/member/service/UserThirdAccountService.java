@@ -68,4 +68,6 @@ public interface UserThirdAccountService {
     Page<UserThirdAccount> findAll(Pageable pageable);
 
     void save(List<UserThirdAccount> userThirdAccountList);
+
+    UserThirdAccount findByIdNo(String idNo);
 }

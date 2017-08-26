@@ -109,6 +109,7 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
@@ -214,6 +215,41 @@ public class RepaymentBizImpl implements RepaymentBiz {
     @Autowired
     private JixinManager jixinManager;
 
+    /**
+     * pc还款
+     *
+     * @return
+     * @throws Exception
+     */
+    public ResponseEntity<VoBaseResp> pcInstantly(VoPcRepay voPcRepay) throws Exception {
+        String paramStr = voPcRepay.getParamStr();/* pc还款 */
+        if (!SecurityHelper.checkSign(voPcRepay.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc取消借款 签名验证不通过!"));
+        }
+        Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        /* 借款id */
+        long repaymentId = NumberHelper.toLong(paramMap.get("repaymentId"));
+        /* 是否是垫付 */
+        boolean isAdvance = BooleanUtils.toBoolean(paramMap.get("isAdvance"));
+        /* 还款记录 */
+        BorrowRepayment borrowRepayment = borrowRepaymentService.findById(repaymentId);
+        Preconditions.checkNotNull(borrowRepayment, "还款不存在!");
+        /* 名义借款人id */
+        UserThirdAccount titularBorrowAccount = jixinHelper.getTitularBorrowAccount(borrowRepayment.getBorrowId());
+
+        VoRepayReq voRepayReq = new VoRepayReq();
+        voRepayReq.setRepaymentId(repaymentId);
+        if (isAdvance) {
+            voRepayReq.setUserId(titularBorrowAccount.getUserId());
+        } else {
+            voRepayReq.setUserId(borrowRepayment.getUserId());
+        }
+        voRepayReq.setInterestPercent(1d);
+        voRepayReq.setIsUserOpen(true);
+        return newRepay(voRepayReq);
+    }
 
     /**
      * pc提前结清
@@ -1859,8 +1895,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      */
     private ResponseEntity<VoBaseResp> repayConditionCheck(UserThirdAccount userThirdAccount, BorrowRepayment borrowRepayment, Map<String, Object> acqResMap) {
+        /* 名义借款人id */
+        UserThirdAccount titularBorrowAccount = jixinHelper.getTitularBorrowAccount(borrowRepayment.getBorrowId());
         // 1. 还款用户是否与还款计划用户一致
-        if (!userThirdAccount.getUserId().equals(borrowRepayment.getUserId())) {
+        if (!userThirdAccount.getUserId().equals(borrowRepayment.getUserId()) &&
+                !userThirdAccount.getUserId().equals(titularBorrowAccount.getUserId())) {
             log.error("批量还款: 还款前期判断, 还款计划用户与主动请求还款用户不匹配");
             return ResponseEntity
                     .badRequest()
