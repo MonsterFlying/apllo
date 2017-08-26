@@ -3,6 +3,7 @@ package com.gofobao.framework.tender.biz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
+import com.gofobao.framework.borrow.vo.response.VoPcBorrowList;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.core.vo.VoBaseResp;
@@ -109,6 +110,13 @@ public interface TransferBiz {
      */
 
     List<VoViewBorrowList> findTransferList(VoBorrowListReq voBorrowListReq);
+
+    /**
+     * pc理财列表
+     * @param voBorrowListReq
+     * @return
+     */
+    ResponseEntity<VoPcBorrowList> pcFindTransferList(VoBorrowListReq voBorrowListReq);
 
     /**
      * 获取转让标详情
