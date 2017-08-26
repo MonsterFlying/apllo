@@ -22,6 +22,14 @@ import javax.servlet.http.HttpServletResponse;
 public interface RepaymentBiz {
 
     /**
+     * pc还款
+     *
+     * @return
+     * @throws Exception
+     */
+    ResponseEntity<VoBaseResp> pcInstantly(VoPcRepay voPcRepay) throws Exception;
+
+    /**
      * 提前结清处理
      *
      * @param borrowId

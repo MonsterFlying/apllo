@@ -112,6 +112,7 @@ public class ThirdBatchProvider {
      * @param msg
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public boolean batchDeal(Map<String, String> msg) throws Exception {
         Long sourceId = NumberHelper.toLong(msg.get(MqConfig.SOURCE_ID));//batchLog sourceId
         Long batchNo = NumberHelper.toLong(msg.get(MqConfig.BATCH_NO));//batchLog batchNo

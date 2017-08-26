@@ -691,8 +691,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("161846");
-        batchDetailsQueryReq.setBatchTxDate("20170825");
+        batchDetailsQueryReq.setBatchNo("114537");
+        batchDetailsQueryReq.setBatchTxDate("20170826");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -768,8 +768,8 @@ public class AplloApplicationTests {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(88),
-                        MqConfig.BATCH_NO, StringHelper.toString(161846),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(84),
+                        MqConfig.BATCH_NO, StringHelper.toString(114537),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
                 );
 
