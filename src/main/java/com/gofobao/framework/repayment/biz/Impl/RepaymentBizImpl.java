@@ -2267,7 +2267,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         // 生成名义借款人垫付批次资产变更记录
         addBatchAssetChangeItemByAdvance(batchAssetChange.getId(), titularBorrowAccount.getUserId(), borrowRepayment, parentBorrow, lateInterest, seqNo, groupSeqNo);
         // 存管系统登记垫付
-        resp = newAdvanceProcess(parentBorrow, borrowRepayment, batchAssetChange, lateInterest, lateDays, freezeOrderId, acqResMap, titularBorrowAccount, seqNo, groupSeqNo);
+        resp = newAdvanceProcess(parentBorrow, borrowRepayment, batchAssetChange, lateInterest, lateDays, freezeOrderId, acqResMap, titularBorrowAccount, seqNo, groupSeqNo,batchNo);
         if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
             return resp;
         }
@@ -2333,7 +2333,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             transfer.setCreatedAt(nowDate);
             transfer.setTimeLimit(1);
             transfer.setLowest(1000 * 100L);
-            transfer.setState(0);
+            transfer.setState(1);
             transfer.setTenderCount(0);
             transfer.setTenderId(tender.getId());
             transfer.setStartOrder(borrowCollection.getOrder());
@@ -2389,7 +2389,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
                                                          Map<String, Object> acqResMap,
                                                          UserThirdAccount titularBorrowAccount,
                                                          String seqNo,
-                                                         String groupSeqNo) throws Exception {
+                                                         String groupSeqNo,
+                                                         String batchNo) throws Exception {
         log.info("垫付流程: 进入新的垫付流程");
         /* 查询投资列表 */
         Specification<Tender> specification = Specifications
@@ -2445,8 +2446,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
         doGenerateAssetChangeRecodeByAdvance(borrow, borrowRepayment, advanceAssetChangeList, batchAssetChange, titularBorrowAccount, seqNo, groupSeqNo);
         // 垫付金额 = sum(垫付本金 + 垫付利息)
         double txAmount = creditInvestList.stream().mapToDouble(w -> NumberHelper.toDouble(w.getTxAmount())).sum();
-        // 批次号
-        String batchNo = jixinHelper.getBatchNo();
         try {
             BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
             balanceFreezeReq.setAccountId(titularBorrowAccount.getAccountId());
