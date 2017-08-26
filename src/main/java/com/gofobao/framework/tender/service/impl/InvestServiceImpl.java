@@ -374,7 +374,7 @@ public class InvestServiceImpl implements InvestService {
             returnedMoney.setCollectionMoney(StringHelper.formatMon(p.getCollectionMoney() / 100D));
             returnedMoney.setOrder(p.getOrder() + 1);
             returnedMoney.setLateDays(p.getLateDays());
-            returnedMoney.setCollectionAt(DateHelper.dateToString(p.getCollectionAt()));
+            returnedMoney.setCollectionAt(p.getStatus()==BorrowCollectionContants.STATUS_YES?DateHelper.dateToString(p.getCollectionAtYes(),DateHelper.DATE_FORMAT_YMD):DateHelper.dateToString(p.getCollectionAt(),DateHelper.DATE_FORMAT_YMD));
             returnedMoney.setStatus(p.getStatus());
             returnedMonies.add(returnedMoney);
         });

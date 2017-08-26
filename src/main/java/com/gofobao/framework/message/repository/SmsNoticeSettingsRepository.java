@@ -11,8 +11,8 @@ import java.util.List;
  * Created by admin on 2017/7/13.
  */
 @Repository
-public interface SmsNoticeSettingsRepository extends JpaRepository<SmsNoticeSettingsEntity,Integer>, JpaSpecificationExecutor<SmsNoticeSettingsEntity>{
+public interface SmsNoticeSettingsRepository extends JpaRepository<SmsNoticeSettingsEntity,Long>, JpaSpecificationExecutor<SmsNoticeSettingsEntity>{
 
-        List<SmsNoticeSettingsEntity>findByUserId(Integer userId);
+        List<SmsNoticeSettingsEntity>findByUserId(Long userId);
 
 }

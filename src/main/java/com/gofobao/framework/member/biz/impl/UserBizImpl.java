@@ -36,6 +36,8 @@ import com.gofobao.framework.member.vo.response.pc.ServiceUser;
 import com.gofobao.framework.member.vo.response.pc.UserInfoExt;
 import com.gofobao.framework.member.vo.response.pc.VipInfoRes;
 import com.gofobao.framework.member.vo.response.pc.VoViewServiceUserListWarpRes;
+import com.gofobao.framework.message.entity.SmsNoticeSettingsEntity;
+import com.gofobao.framework.message.service.SmsNoticeSettingsService;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.gofobao.framework.security.vo.VoLoginReq;
 import com.google.common.collect.ImmutableMap;
@@ -52,7 +54,6 @@ import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -96,6 +97,8 @@ public class UserBizImpl implements UserBiz {
     @Autowired
     AssetSynBiz assetSynBiz;
 
+    @Autowired
+    private SmsNoticeSettingsService settingsService;
 
     @Value("${jwt.header}")
     String tokenHeader;
@@ -431,6 +434,9 @@ public class UserBizImpl implements UserBiz {
             return false;
         }
 
+        SmsNoticeSettingsEntity  settingsEntity=new SmsNoticeSettingsEntity();
+        settingsEntity.setUserId(userId);
+        settingsService.save(settingsEntity);
         return true;
     }
 

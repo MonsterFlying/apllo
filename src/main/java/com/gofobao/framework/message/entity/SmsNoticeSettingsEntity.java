@@ -21,7 +21,7 @@ public class SmsNoticeSettingsEntity implements Serializable{
     @Id
     @GeneratedValue
     @Column(name = "user_id")
-    private Integer userId ;
+    private Long userId ;
     @Basic
     @Column(name = "received_repay")
     private boolean receivedRepay;

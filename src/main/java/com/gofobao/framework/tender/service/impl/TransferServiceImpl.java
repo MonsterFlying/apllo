@@ -113,6 +113,7 @@ public class TransferServiceImpl implements TransferService {
     @Override
     public Map<String, Object> transferOfList(VoTransferReq voTransferReq) {
         voTransferReq.setStatus(TransferContants.TRANSFERIND);
+        voTransferReq.setType(TransferContants.GENERAL);
         Map<String, Object> resultMaps = commonQueryTemp(voTransferReq);
         List<Transfer> transferList = (List<Transfer>) resultMaps.get("transfers");
         if (CollectionUtils.isEmpty(transferList)) {
@@ -161,6 +162,7 @@ public class TransferServiceImpl implements TransferService {
     @Override
     public Map<String, Object> transferedList(VoTransferReq voTransferReq) {
         voTransferReq.setStatus(TransferContants.TRANSFERED);
+        voTransferReq.setType(TransferContants.GENERAL);
         Map<String, Object> resultMaps = commonQueryTemp(voTransferReq);
         List<Transfer> tenderList = (List<Transfer>) resultMaps.get("transfers");
         if (CollectionUtils.isEmpty(tenderList)) {
@@ -287,6 +289,7 @@ public class TransferServiceImpl implements TransferService {
      */
     @Override
     public Map<String, Object> transferBuyList(VoTransferReq voTransferReq) {
+        voTransferReq.setType(TransferContants.GENERAL);
         Map<String, Object> resultMaps = commonQuery(voTransferReq);
 
         Specification<TransferBuyLog> specification = Specifications.<TransferBuyLog>and()
@@ -335,8 +338,9 @@ public class TransferServiceImpl implements TransferService {
      */
     public Map<String, Object> commonQuery(VoTransferReq voTransferReq) {
         Map<String, Object> resultMaps = Maps.newHashMap();
-        Page<Tender> tenderPage = tenderRepository.findByUserIdAndStatusIsAndTransferFlagIs(
+        Page<Tender> tenderPage = tenderRepository.findByUserIdAndTypeIsAndStatusIsAndTransferFlagIs(
                 voTransferReq.getUserId(),
+                voTransferReq.getType(),
                 TenderConstans.SUCCESS,
                 voTransferReq.getStatus(),
                 new PageRequest(voTransferReq.getPageIndex(),
@@ -365,6 +369,7 @@ public class TransferServiceImpl implements TransferService {
         Specification<Transfer> specification = Specifications.<Transfer>and()
                 .eq("userId", voTransferReq.getUserId())
                 .eq("state", voTransferReq.getStatus())
+                .in("type",voTransferReq.getType())
                 .build();
         Page<Transfer> transferPage = transferRepository.findAll(specification,
                 new PageRequest(voTransferReq.getPageIndex(),

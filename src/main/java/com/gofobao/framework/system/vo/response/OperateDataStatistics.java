@@ -32,10 +32,9 @@ public class OperateDataStatistics extends VoBaseResp {
     @ApiModelProperty("注册人数")
     private BigDecimal registerTotal;
 
-
-/* @ApiModelProperty("累计投资人数")
-    private BigDecimal tenderNoOfPeople ;
-  @ApiModelProperty("已还本息")
+    @ApiModelProperty("累计投资人数")
+    private Long tenderNoOfPeople ;
+ /* @ApiModelProperty("已还本息")
     private Long settleCapitalTotal;
 
     @ApiModelProperty("人均累计投资金额")
