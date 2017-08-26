@@ -691,8 +691,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("192801");
-        batchDetailsQueryReq.setBatchTxDate("20170824");
+        batchDetailsQueryReq.setBatchNo("142831");
+        batchDetailsQueryReq.setBatchTxDate("20170825");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -729,14 +729,14 @@ public class AplloApplicationTests {
     public void balanceQuery() {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId("6212462190000057468");
+        balanceQueryRequest.setAccountId("6212462190000000393");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         System.out.println(balanceQueryResponse);
     }
 
     public void accountDetailsQuery() {
         AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
-        request.setAccountId("6212462190000000310");
+        request.setAccountId("6212462190000000393");
         request.setStartDate("20161002");
         request.setEndDate("20171003");
         request.setChannel(ChannelContant.HTML);
@@ -768,8 +768,8 @@ public class AplloApplicationTests {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(82),
-                        MqConfig.BATCH_NO, StringHelper.toString(192801),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(53),
+                        MqConfig.BATCH_NO, StringHelper.toString(142324),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
                 );
 

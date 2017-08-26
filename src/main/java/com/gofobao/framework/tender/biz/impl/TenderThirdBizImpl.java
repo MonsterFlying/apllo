@@ -88,8 +88,6 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
     @Autowired
     private TransferBuyLogService transferBuyLogService;
 
-    @Value("${gofobao.webDomain}")
-    private String webDomain;
 
     @Value("${gofobao.javaDomain}")
     private String javaDomain;

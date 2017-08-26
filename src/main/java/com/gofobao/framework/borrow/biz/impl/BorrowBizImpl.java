@@ -71,6 +71,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
+import org.hibernate.type.descriptor.java.DataHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Example;
@@ -463,7 +464,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "借款金额大于净值额度!"));
         }
 
-       // long count = borrowService.countByUserIdAndStatusIn(userId, Arrays.asList(0, 1));
+        // long count = borrowService.countByUserIdAndStatusIn(userId, Arrays.asList(0, 1));
 
         Specification<Borrow> specification = Specifications.<Borrow>and()
                 .eq("userId", userId)
@@ -650,7 +651,7 @@ public class BorrowBizImpl implements BorrowBiz {
             assetChange.setType(AssetChangeTypeEnum.unfreeze);  // 招标失败解除冻结资金
             assetChange.setUserId(borrow.getUserId());
             assetChange.setMoney(tender.getValidMoney());
-            assetChange.setRemark(String.format("借款 [%s] 招标失败解除冻结资金。", BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName())));
+            assetChange.setRemark(String.format("借款 [%s] 招标失败解除冻结资金。", borrow.getName()));
             assetChange.setSourceId(borrow.getId());
             assetChange.setSeqNo(assetChangeProvider.getSeqNo());
             assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
@@ -666,7 +667,7 @@ public class BorrowBizImpl implements BorrowBiz {
         //  发送站内信
         // ======================================
         Notices notices;
-        String content = String.format("你所投资的借款[ %s ]在 %s 已取消", BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()), DateHelper.nextDate(nowDate));
+        String content = String.format("你所投资的借款[ %s ]在 %s 已取消", borrow.getName());
         for (Long toUserId : userIdSet) {
             notices = new Notices();
             notices.setFromUserId(1L);
@@ -799,7 +800,7 @@ public class BorrowBizImpl implements BorrowBiz {
             //  发送站内信
             // ======================================
             Notices notices;
-            String content = String.format("你所投资的借款[ %s ]在 %s 已取消", BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()), DateHelper.nextDate(nowDate));
+            String content = String.format("你所投资的借款[ %s ]在 %s 已取消", borrow.getName(), DateHelper.dateToString(new Date()));
             for (Long toUserId : userIds) {
                 notices = new Notices();
                 notices.setFromUserId(1L);
@@ -925,7 +926,7 @@ public class BorrowBizImpl implements BorrowBiz {
             assetChange.setType(AssetChangeTypeEnum.unfreeze);  // 招标失败解除冻结资金
             assetChange.setUserId(borrow.getUserId());
             assetChange.setMoney(tender.getValidMoney());
-            assetChange.setRemark(String.format("借款 [%s] 招标失败解除冻结资金。", BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName())));
+            assetChange.setRemark(String.format("借款 [%s] 招标失败解除冻结资金。", borrow.getName()));
             assetChange.setSourceId(borrow.getId());
             assetChange.setSeqNo(assetChangeProvider.getSeqNo());
             assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
@@ -941,7 +942,7 @@ public class BorrowBizImpl implements BorrowBiz {
         //  发送站内信
         // ======================================
         Notices notices;
-        String content = String.format("你所投资的借款[ %s ]在 %s 已取消", BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()), DateHelper.nextDate(nowDate));
+        String content = String.format("你所投资的借款[ %s ]在 %s 已取消", borrow.getName());
         for (Long toUserId : userIdSet) {
             notices = new Notices();
             notices.setFromUserId(1L);
@@ -1314,7 +1315,7 @@ public class BorrowBizImpl implements BorrowBiz {
             notices.setUserId(userId);
             notices.setRead(false);
             notices.setName("投资的借款满标审核通过");
-            notices.setContent("您所投资的借款[" + BorrowHelper.getBorrowLink(borrow.getId(), borrow.getName()) + "]在 " + DateHelper.dateToString(nowDate) + " 已满标审核通过");
+            notices.setContent("您所投资的借款[" + borrow.getName() + "]在 " + DateHelper.dateToString(nowDate) + " 已满标审核通过");
             notices.setType("system");
             notices.setCreatedAt(nowDate);
             notices.setUpdatedAt(nowDate);

@@ -33,8 +33,9 @@ public class WindmillUserController {
 
     @Autowired
     private WindmillUserBiz windmillUserBiz;
-    @Value("${gofobao.webDomain}")
-    private String address;
+
+    @Value("${gofobao.javaDomain}")
+    private String javaDomain;
 
 
     @Autowired
@@ -53,7 +54,7 @@ public class WindmillUserController {
         String paramStr = request.getParameter("param");
         Map<String, Object> paramMap = Maps.newHashMap();
         paramMap.put("param", paramStr);
-        paramMap.put("address", address);
+        paramMap.put("address", javaDomain);
         return thymeleafHelper.build("windmill/user/login", paramMap);
     }
 

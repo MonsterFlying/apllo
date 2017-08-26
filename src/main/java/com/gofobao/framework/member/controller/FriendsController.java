@@ -32,21 +32,17 @@ import java.util.Map;
 @Api(description = "我的邀请")
 @RestController
 public class FriendsController {
-
-
-
     @Autowired
     private BrokerBounsBiz brokerBounsBiz;
 
     @Autowired
     private ThymeleafHelper thymeleafHelper;
 
-
     @Value("${gofobao.h5Domain}")
     private String h5Domain;
 
-    @Value("${gofobao.webDomain}")
-    private String webDomain;
+    @Value("${gofobao.javaDomain}")
+    private String javaDomain;
 
     @ApiOperation("邀请好友列表")
     @GetMapping("/invite/v2/list/{pageIndex}/{pageSize}")
@@ -89,7 +85,7 @@ public class FriendsController {
             res.setTitle("邀请好友投资,奖励送不停");
             res.setDesc("新手福利,注册即送1000元投标体验金+加息0.5%-3%");
             res.setRequestHtmlUrl(resultMaps.get("inviteUrl").toString());
-            res.setIcon(webDomain + "/images/bankLogo/logo.png");
+            res.setIcon(javaDomain + "/images/bankLogo/logo.png");
             content = thymeleafHelper.build("user/friends", resultMaps);
             res.setHtml(content);
         } catch (Throwable e) {

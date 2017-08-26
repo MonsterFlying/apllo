@@ -11,7 +11,9 @@ import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.system.biz.impl.JixinTxLogBizImpl;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.KeyValue;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -24,9 +26,7 @@ import javax.net.ssl.*;
 import javax.servlet.http.HttpServletRequest;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -57,7 +57,75 @@ public class JixinManager {
     String bankCode;
 
     @Autowired
-    JixinTxLogBizImpl jixinTxLogBiz ;
+    JixinTxLogBizImpl jixinTxLogBiz;
+
+
+    /**
+     * 获取url
+     *
+     * @param txCodeEnum
+     * @return
+     */
+    public String getUrl(JixinTxCodeEnum txCodeEnum) {
+        return htmlPrefixUrl + txCodeEnum.getUrl();
+    }
+
+
+    @Data
+    public class KeyValuePair {
+        private String key;
+        private String value;
+    }
+
+    /**
+     * 获取加签
+     *
+     * @param txCodeEnum
+     * @param req
+     * @param <T>
+     * @return
+     */
+    public <T extends JixinBaseRequest> List<KeyValuePair> getSignData(JixinTxCodeEnum txCodeEnum, T req) {
+        checkNotNull(req, "JixinManager.getSignData: req is null");
+        req.setBankCode(bankCode);
+        req.setVersion(version);
+        req.setInstCode(instCode);
+        if (StringUtils.isEmpty(req.getSeqNo())) {
+            req.setSeqNo(RandomHelper.generateNumberCode(6));
+        }
+
+        if (StringUtils.isEmpty(req.getTxTime())) {
+            req.setTxTime(DateHelper.getTime());
+        }
+
+        if (StringUtils.isEmpty(req.getTxDate())) {
+            req.setTxDate(DateHelper.getDate());
+        }
+
+        if (StringUtils.isEmpty(req.getChannel())) {
+            req.setChannel(ChannelContant.HTML);
+        }
+        req.setTxCode(txCodeEnum.getValue());
+        String json = gson.toJson(req);
+        Map<String, String> params = gson.fromJson(json, new TypeToken<Map<String, String>>() {
+        }.getType());
+
+        String unSign = StringHelper.mergeMap(params);
+        String sign = certHelper.doSign(unSign);
+        params.put("sign", sign);
+
+        List<KeyValuePair> datas = new ArrayList<>(params.size());
+        Set<String> keys = params.keySet();
+        for (String key : keys) {
+            String value = params.get(key);
+            KeyValuePair keyValuePair = new KeyValuePair() ;
+            keyValuePair.setKey(key);
+            keyValuePair.setValue(value);
+            datas.add(keyValuePair);
+        }
+
+        return datas;
+    }
 
     public <T extends JixinBaseRequest> String getHtml(JixinTxCodeEnum txCodeEnum, T req) {
         checkNotNull(req, "请求体为null");
@@ -78,7 +146,7 @@ public class JixinManager {
             req.setTxDate(DateHelper.getDate());
         }
 
-        if(StringUtils.isEmpty(req.getChannel())){
+        if (StringUtils.isEmpty(req.getChannel())) {
             req.setChannel(ChannelContant.HTML);
         }
         req.setTxCode(txCodeEnum.getValue());
@@ -91,7 +159,7 @@ public class JixinManager {
         params.put("sign", sign);
         jixinTxLogBiz.saveRequest(txCodeEnum, params);
         log.info("=============================================");
-        log.info(String.format("[%s] 报文流水：%s%s%s", txCodeEnum.getName() , req.getTxDate(), req.getTxTime(), req.getSeqNo()));
+        log.info(String.format("[%s] 报文流水：%s%s%s", txCodeEnum.getName(), req.getTxDate(), req.getTxTime(), req.getSeqNo()));
         log.info("=============================================");
         log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));
         return genFormHtml(params, url);
@@ -140,7 +208,8 @@ public class JixinManager {
     }
 
     /**
-     *  回调
+     * 回调
+     *
      * @param request
      * @param typeToken
      * @param <T>
@@ -163,7 +232,7 @@ public class JixinManager {
             return null;
         }
 
-        t.setRetMsg(JixinResultContants.getMessage(t.getRetCode())) ;
+        t.setRetMsg(JixinResultContants.getMessage(t.getRetCode()));
         return t;
     }
 
@@ -187,7 +256,7 @@ public class JixinManager {
             req.setTxDate(DateHelper.getDate());
         }
 
-        if(StringUtils.isEmpty(req.getChannel())){
+        if (StringUtils.isEmpty(req.getChannel())) {
             req.setChannel(ChannelContant.HTML);
         }
 
@@ -203,7 +272,7 @@ public class JixinManager {
         log.info(String.format("[%s]报文流水：%s%s%s", txCodeEnum.getName(), req.getTxDate(), req.getTxTime(), req.getSeqNo()));
         log.info("=============================================");
         log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));
-        jixinTxLogBiz.saveRequest(txCodeEnum, params) ;
+        jixinTxLogBiz.saveRequest(txCodeEnum, params);
         initHttps();
         HttpEntity entity = getHttpEntity(params);
         RestTemplate restTemplate = new RestTemplate();
@@ -229,7 +298,7 @@ public class JixinManager {
         }
         log.info(String.format("即信响应报文:url=%s body=%s", url, gson.toJson(body)));
 
-        body.setRetMsg(JixinResultContants.getMessage(body.getRetCode())) ;
+        body.setRetMsg(JixinResultContants.getMessage(body.getRetCode()));
         // 请求插入数据
         return body;
     }
