@@ -188,23 +188,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
-
-
-    LoadingCache<String, DictValue> jixinCache = CacheBuilder
-            .newBuilder()
-            .expireAfterWrite(60, TimeUnit.MINUTES)
-            .maximumSize(1024)
-            .build(new CacheLoader<String, DictValue>() {
-                @Override
-                public DictValue load(String bankName) throws Exception {
-                    DictItem dictItem = dictItemService.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
-                    if (ObjectUtils.isEmpty(dictItem)) {
-                        return null;
-                    }
-
-                    return dictValueService.findTopByItemIdAndValue01(dictItem.getId(), bankName);
-                }
-            });
     @Autowired
     private UserThirdAccountService userThirdAccountService;
     @Autowired
@@ -216,6 +199,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      * @throws Exception
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> pcInstantly(VoPcRepay voPcRepay) throws Exception {
         String paramStr = voPcRepay.getParamStr();/* pc还款 */
         if (!SecurityHelper.checkSign(voPcRepay.getSign(), paramStr)) {

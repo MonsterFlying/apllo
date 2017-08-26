@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
  */
 public interface LendBiz {
 
-    ResponseEntity<VoViewLendListWarpRes> list(Page page);
+    ResponseEntity<VoViewLendListWarpRes> list(Page page,Long userId);
 
 
     ResponseEntity<VoViewLendInfoWarpRes> info(Long userId, Long lendId);

@@ -28,14 +28,15 @@ public class WebLendController {
 
     private VoUserLendReq voUserLendReq = new VoUserLendReq();
 
-    @RequestMapping(value = "pub/lend/pc/v2/list/{pageIndex}/{pageSize}", method = RequestMethod.GET)
+    @RequestMapping(value = "lend/pc/v2/list/{pageIndex}/{pageSize}", method = RequestMethod.GET)
     @ApiOperation("pc：出借列表")
     public ResponseEntity<VoViewLendListWarpRes> list(@PathVariable Integer pageIndex,
-                                                      @PathVariable Integer pageSize) {
+                                                      @PathVariable Integer pageSize,
+                                                      @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         Page page = new Page();
         page.setPageIndex(pageIndex);
         page.setPageSize(pageSize);
-        return lendBiz.list(page);
+        return lendBiz.list(page,userId);
     }
 
 
