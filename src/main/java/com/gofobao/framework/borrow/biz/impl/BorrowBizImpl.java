@@ -221,21 +221,18 @@ public class BorrowBizImpl implements BorrowBiz {
         VoPcBorrowList listWarpRes = VoBaseResp.ok("查询成功", VoPcBorrowList.class);
 
         try {
-            //流转标
-            if(voBorrowListReq.getType().intValue()==5){
+            if (voBorrowListReq.getType().intValue() != 5) {
                 VoPcBorrowList borrowLists = borrowService.pcFindAll(voBorrowListReq);
                 listWarpRes.setBorrowLists(borrowLists.getBorrowLists());
                 listWarpRes.setTotalCount(borrowLists.getTotalCount());
                 listWarpRes.setPageIndex(borrowLists.getPageIndex());
                 listWarpRes.setPageSize(borrowLists.getPageSize());
-            }else{
-
-                transferBiz.pcFindTransferList(voBorrowListReq);
-
-
+                return ResponseEntity.ok(listWarpRes);
+            } else {
+                //流转标
+                return transferBiz.pcFindTransferList(voBorrowListReq);
             }
 
-            return ResponseEntity.ok(listWarpRes);
         } catch (Throwable e) {
             log.info("BorrowBizImpl findNormalBorrow fail%s", e);
             return ResponseEntity.badRequest()
@@ -649,7 +646,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 voCancelThirdTenderReq.setTenderId(tender.getId());
                 ResponseEntity<VoBaseResp> resp = tenderThirdBiz.cancelThirdTender(voCancelThirdTenderReq);
                 if (!resp.getStatusCode().equals(HttpStatus.OK)) {
-                    return resp ;
+                    return resp;
                 }
             }
 
