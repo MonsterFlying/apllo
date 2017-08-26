@@ -19,7 +19,6 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class SmsNoticeSettingsEntity implements Serializable{
     @Id
-    @GeneratedValue
     @Column(name = "user_id")
     private Long userId ;
     @Basic
