@@ -63,7 +63,7 @@ public class WebBorrowRepaymentContorller {
         return repaymentBiz.orderList(voCollectionListReq);
     }
 
-    @PostMapping("/pub/pc/repay/all")
+    @PostMapping("/pub/v2/repay/all")
     @ApiOperation("提前还款")
     public ResponseEntity<VoBaseResp> pcRepayAll(@Valid @ModelAttribute VoRepayAllReq voRepayAllReq) {
         try {
@@ -81,14 +81,14 @@ public class WebBorrowRepaymentContorller {
      * @return 0成功 1失败 2操作不存在 3该借款上一期还未还 4账户余额不足，请先充值
      * @throws Exception
      */
-    @PostMapping("/v2/pcInstantly")
+    @PostMapping("/pub/v2/pcInstantly")
     @ApiOperation("立即还款")
     public ResponseEntity<VoBaseResp> pcInstantly(@ModelAttribute @Valid VoPcRepay voPcRepay) throws Exception {
         try {
             return repaymentBiz.pcInstantly(voPcRepay);
         } catch (Throwable e) {
             return ResponseEntity.badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "提前还款失败！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "立即还款失败！"));
         }
     }
 
