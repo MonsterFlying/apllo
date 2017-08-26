@@ -218,14 +218,23 @@ public class BorrowBizImpl implements BorrowBiz {
 
     @Override
     public ResponseEntity<VoPcBorrowList> pcFindAll(VoBorrowListReq voBorrowListReq) {
+        VoPcBorrowList listWarpRes = VoBaseResp.ok("查询成功", VoPcBorrowList.class);
 
         try {
-            VoPcBorrowList borrowLists = borrowService.pcFindAll(voBorrowListReq);
-            VoPcBorrowList listWarpRes = VoBaseResp.ok("查询成功", VoPcBorrowList.class);
-            listWarpRes.setBorrowLists(borrowLists.getBorrowLists());
-            listWarpRes.setTotalCount(borrowLists.getTotalCount());
-            listWarpRes.setPageIndex(borrowLists.getPageIndex());
-            listWarpRes.setPageSize(borrowLists.getPageSize());
+            //流转标
+            if(voBorrowListReq.getType().intValue()==5){
+                VoPcBorrowList borrowLists = borrowService.pcFindAll(voBorrowListReq);
+                listWarpRes.setBorrowLists(borrowLists.getBorrowLists());
+                listWarpRes.setTotalCount(borrowLists.getTotalCount());
+                listWarpRes.setPageIndex(borrowLists.getPageIndex());
+                listWarpRes.setPageSize(borrowLists.getPageSize());
+            }else{
+
+                transferBiz.pcFindTransferList(voBorrowListReq);
+
+
+            }
+
             return ResponseEntity.ok(listWarpRes);
         } catch (Throwable e) {
             log.info("BorrowBizImpl findNormalBorrow fail%s", e);
@@ -472,16 +481,15 @@ public class BorrowBizImpl implements BorrowBiz {
                 .build();
         List<Borrow> borrows = borrowService.findList(specification);
         if (!CollectionUtils.isEmpty(borrows)) {
-            Borrow borrow = borrows.get(0);
-            if (borrow.getMoneyYes() / borrow.getMoney() < 1) {
-                log.info("新增借款：您已经有一个进行中的借款标。");
-                return ResponseEntity
-                        .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR, "您已经有一个进行中的借款标!"));
-
+            for (Borrow borrow : borrows) {
+                if ((borrow.getMoneyYes() / borrow.getMoney()) < 1) {
+                    log.info("新增借款：您已经有一个进行中的借款标。");
+                    return ResponseEntity
+                            .badRequest()
+                            .body(VoBaseResp.error(VoBaseResp.ERROR, "您已经有一个进行中的借款标!"));
+                }
             }
         }
-
         Long borrowId = insertBorrow(voAddNetWorthBorrow, userId);  // 插入标
         if (borrowId <= 0) {
             log.info("新增借款：净值标插入失败。");
@@ -640,9 +648,8 @@ public class BorrowBizImpl implements BorrowBiz {
                 voCancelThirdTenderReq = new VoCancelThirdTenderReq();
                 voCancelThirdTenderReq.setTenderId(tender.getId());
                 ResponseEntity<VoBaseResp> resp = tenderThirdBiz.cancelThirdTender(voCancelThirdTenderReq);
-                log.info(String.format("取消借款: 发起即信存管投资取消!"));
                 if (!resp.getStatusCode().equals(HttpStatus.OK)) {
-                    log.info(String.format("取消借款:已在即信登记投标不能取消: %s", new Gson().toJson(resp)));
+                    return resp ;
                 }
             }
 
@@ -763,10 +770,8 @@ public class BorrowBizImpl implements BorrowBiz {
                     voCancelThirdTenderReq = new VoCancelThirdTenderReq();
                     voCancelThirdTenderReq.setTenderId(tender.getId());
                     ResponseEntity<VoBaseResp> resp = tenderThirdBiz.cancelThirdTender(voCancelThirdTenderReq);
-                    log.info(String.format("取消借款: 发起即信存管投资取消!"));
                     if (!resp.getStatusCode().equals(HttpStatus.OK)) {
-                        log.error(String.format("取消借款:取消即信投标记录失败: %s", new Gson().toJson(resp)));
-                        log.info("borrowBizImpl cancelBorrow:" + resp.getBody().getState().getMsg());
+                        return;
                     }
                 }
 

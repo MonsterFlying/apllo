@@ -19,6 +19,7 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
+import com.gofobao.framework.borrow.vo.response.VoPcBorrowList;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
 import com.gofobao.framework.collection.contants.BorrowCollectionContants;
 import com.gofobao.framework.collection.entity.BorrowCollection;
@@ -75,12 +76,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.mapping.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -1290,7 +1292,7 @@ public class TransferBizImpl implements TransferBiz {
                 .build();
         List<BorrowCollection> borrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "id"));
         Preconditions.checkNotNull(borrowCollections, "获取立即转让详情: 还款计划查询失败!");
-        borrowCollections=borrowCollections.stream().filter(w->w.getStatus()== BorrowCollectionContants.STATUS_NO).collect(Collectors.toList());
+        borrowCollections = borrowCollections.stream().filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_NO).collect(Collectors.toList());
         BorrowCollection borrowCollection = borrowCollections.get(0);
         Borrow borrow = borrowService.findById(tender.getBorrowId());
         Preconditions.checkNotNull(borrowCollections, "获取立即转让详情: 获取投资的标的信息失败!");
@@ -1329,17 +1331,11 @@ public class TransferBizImpl implements TransferBiz {
 
     @Override
     public List<VoViewBorrowList> findTransferList(VoBorrowListReq voBorrowListReq) {
-        Specification<Transfer> ts = Specifications
-                .<Transfer>and()
-                .in("state", ImmutableList.of(TransferContants.TRANSFERIND, TransferContants.TRANSFERED).toArray())
-                .eq("type", 0)
-                .build();
-        Pageable pageable = new PageRequest(voBorrowListReq.getPageIndex(), voBorrowListReq.getPageSize(), new Sort(Sort.Direction.ASC, "state"));
-        List<Transfer> transferList = transferService.findList(ts, pageable);
-        if (CollectionUtils.isEmpty(transferList)) {
+        Map<String,Object> resultMaps=commonQuery( voBorrowListReq);
+        List<Transfer>transferList=(List<Transfer>) resultMaps.get("transfers");
+        if(CollectionUtils.isEmpty(transferList)){
             return Lists.newArrayList();
         }
-
         Set<Long> borrowIds = transferList
                 .stream()
                 .map(transfer -> transfer.getBorrowId()).collect(Collectors.toSet());
@@ -1434,6 +1430,84 @@ public class TransferBizImpl implements TransferBiz {
         return voViewBorrowLists;
     }
 
+
+    @Override
+    public ResponseEntity<VoPcBorrowList> pcFindTransferList(VoBorrowListReq voBorrowListReq) {
+
+        VoPcBorrowList voPcBorrowList=VoBaseResp.ok("查询成功",VoPcBorrowList.class);
+        Map<String,Object> resultMaps=commonQuery( voBorrowListReq);
+        List<Transfer>transferList=(List<Transfer>) resultMaps.get("transfers");
+        if(CollectionUtils.isEmpty(transferList)){
+            return ResponseEntity.ok(voPcBorrowList);
+        }
+        voPcBorrowList.setTotalCount(Long.valueOf(resultMaps.get("totalCount").toString()).intValue());
+
+
+        Set<Long> borrowIds = transferList
+                .stream()
+                .map(transfer -> transfer.getBorrowId()).collect(Collectors.toSet());
+
+        Specification<Borrow> bs = Specifications
+                .<Borrow>and()
+                .in("id", borrowIds.toArray())
+                .build();
+
+        List<Borrow> borrowList = borrowService.findList(bs);
+
+
+        Map<Long, Borrow> borrowRef = borrowList
+                .stream()
+                .collect(Collectors.toMap(Borrow::getId, Function.identity()));
+        Set<Long> userIds = transferList
+                .stream()
+                .map(transfer -> transfer.getUserId()).collect(Collectors.toSet());
+        Specification<Users> us = Specifications
+                .<Users>and()
+                .in("id", userIds.toArray())
+                .build();
+
+        List<Users> userLists = userService.findList(us);
+        Map<Long, Users> userRef = userLists
+                .stream()
+                .collect(Collectors.toMap(Users::getId, Function.identity()));
+
+        List<VoViewBorrowList> borrowLists= Lists.newArrayList();
+
+        transferList.forEach(transfer -> {
+            VoViewBorrowList item=new VoViewBorrowList();
+
+            Borrow borrow=borrowRef.get(transfer.getBorrowId());
+
+            item.setApr(StringHelper.formatMon(transfer.getApr()/100D));
+          /*  item.setAvatar(borrow.get);*/
+
+
+
+        });
+
+
+
+
+
+
+
+        return null;
+    }
+
+
+    private Map<String,Object> commonQuery(VoBorrowListReq voBorrowListReq) {
+        Map<String,Object>resultMaps= Maps.newHashMap();
+        Specification<Transfer> ts = Specifications
+                .<Transfer>and()
+                .in("state", ImmutableList.of(TransferContants.TRANSFERIND, TransferContants.TRANSFERED).toArray())
+                .eq("type", 0)
+                .build();
+        Pageable pageable = new PageRequest(voBorrowListReq.getPageIndex(), voBorrowListReq.getPageSize(), new Sort(Sort.Direction.ASC, "state"));
+        Page<Transfer> transferPage=transferService.findPageList(ts,pageable);
+        resultMaps.put("totalCount",transferPage.getTotalElements());
+        resultMaps.put("transfers",transferPage.getContent());
+        return resultMaps;
+    }
     @Override
     public ResponseEntity<BorrowInfoRes> transferInfo(Long transferId) {
         Transfer transfer = transferService.findById(transferId);

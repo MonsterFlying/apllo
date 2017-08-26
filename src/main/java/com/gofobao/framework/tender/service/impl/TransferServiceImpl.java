@@ -104,6 +104,11 @@ public class TransferServiceImpl implements TransferService {
         return transferRepository.findById(id);
     }
 
+    @Override
+    public Page<Transfer> findPageList(Specification<Transfer> specification, Pageable pageable) {
+        return transferRepository.findAll(specification,pageable);
+    }
+
     /**
      * 转让中
      *
