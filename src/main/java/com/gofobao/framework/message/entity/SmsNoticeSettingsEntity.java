@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -13,19 +14,16 @@ import java.io.Serializable;
  */
 @Entity
 @DynamicInsert
+@DynamicUpdate
 @Table(name = "gfb_sms_notice_settings")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class SmsNoticeSettingsEntity implements Serializable{
     @Id
-    @GeneratedValue
-    @Column(name = "user_id")
     private Long userId ;
     @Basic
-    @Column(name = "received_repay")
     private boolean receivedRepay;
     @Basic
-    @Column(name = "borrow_success")
     private boolean borrowSuccess;
 }

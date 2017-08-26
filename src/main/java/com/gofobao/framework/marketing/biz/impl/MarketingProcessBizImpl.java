@@ -913,10 +913,10 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             throw new Exception(e);
         }
 
-        Preconditions.checkNotNull(marketingData.getMarketingType(), "MarketingProcessBizImpl,parseMarketingData: marketingType null ");
-        Preconditions.checkNotNull(marketingData.getUserId(), "MarketingProcessBizImpl,parseMarketingData: userId null ");
-        Preconditions.checkNotNull(marketingData.getSourceId(), "MarketingProcessBizImpl,parseMarketingData: sourceId null ");
-        Preconditions.checkNotNull(marketingData.getTransTime(), "MarketingProcessBizImpl,parseMarketingData: transTime null ");
+        Preconditions.checkNotNull(marketingData.getMarketingType(), "MarketingProcessBizImpl.parseMarketingData: marketingType null ");
+        Preconditions.checkNotNull(marketingData.getUserId(), "MarketingProcessBizImpl.parseMarketingData: userId null ");
+        Preconditions.checkNotNull(marketingData.getSourceId(), "MarketingProcessBizImpl.parseMarketingData: sourceId null ");
+        Preconditions.checkNotNull(marketingData.getTransTime(), "MarketingProcessBizImpl.parseMarketingData: transTime null ");
         return marketingData;
     }
 }

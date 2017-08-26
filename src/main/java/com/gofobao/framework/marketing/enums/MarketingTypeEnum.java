@@ -1,5 +1,7 @@
 package com.gofobao.framework.marketing.enums;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * 营销类型
  */
@@ -7,25 +9,36 @@ public enum MarketingTypeEnum {
     /**
      * 充值
      */
-    RECHARGE,
+    @SerializedName("RECHARGE")
+    RECHARGE("RECHARGE"),
 
     /**
      * 开户
      */
-    OPEN_ACCOUNT,
+    @SerializedName("OPEN_ACCOUNT")
+    OPEN_ACCOUNT("OPEN_ACCOUNT"),
 
     /**
      * 投标
      */
-    TENDER,
+    @SerializedName("TENDER")
+    TENDER("TENDER"),
 
     /**
      * 注册
      */
-    REGISTER,
+    @SerializedName("REGISTER")
+    REGISTER("REGISTER"),
 
     /**
      * 登录
      */
-    LOGIN
+    @SerializedName("LOGIN")
+    LOGIN("LOGIN");
+
+    private String value ;
+
+    MarketingTypeEnum(String value){
+        this.value = value ;
+    }
 }
