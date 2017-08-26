@@ -30,7 +30,7 @@ public class WebSmsNoticeSettingController {
     @PostMapping("smsSetting/pc/v2/update")
     public ResponseEntity<VoBaseResp> update(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                             SmsNoticeSettingsEntity smsSettingUpdateReq) {
-        smsSettingUpdateReq.setUserId(userId.intValue());
+        smsSettingUpdateReq.setUserId(userId);
     return smsNoticeSettingsBiz.update(smsSettingUpdateReq);
     }
 
@@ -43,6 +43,6 @@ public class WebSmsNoticeSettingController {
     @ApiOperation("用户短信设置列表")
     @PostMapping("smmSetting/pc/v2/list")
     public ResponseEntity<List<SmsNoticeSettingsEntity>> list(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        return smsNoticeSettingsBiz.list(userId.intValue());
+        return smsNoticeSettingsBiz.list(userId);
     }
 }

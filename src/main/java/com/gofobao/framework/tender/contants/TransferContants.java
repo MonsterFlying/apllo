@@ -31,4 +31,27 @@ public class TransferContants {
      * 已取消
      */
     public static Integer CANCEL = 4;
+
+    /**
+     *普通
+     */
+    public static Integer  GENERAL=0;
+
+    /**
+     *理财
+     */
+    public static Integer  LICAI=1;
+
+
+    /**
+     *垫付
+     */
+    public static Integer  ADVANCE=2;
+
+
+
+
+
+
+
 }

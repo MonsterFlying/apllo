@@ -21,7 +21,7 @@ public class SmsNoticeSettingBizImpl implements SmsNoticeSettingsBiz {
     private SmsNoticeSettingsService smsNoticeSettingsService;
 
     @Override
-    public ResponseEntity<List<SmsNoticeSettingsEntity>> list(Integer userId) {
+    public ResponseEntity<List<SmsNoticeSettingsEntity>> list(Long userId) {
 
         List<SmsNoticeSettingsEntity> settingsEntityList = smsNoticeSettingsService.findByUserId(userId);
 

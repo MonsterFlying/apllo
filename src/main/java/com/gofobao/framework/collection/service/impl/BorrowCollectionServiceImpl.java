@@ -239,10 +239,10 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
             principal=borrowCollection.getPrincipal();
             interest=borrowCollection.getInterest();
             detailRes.setStatusStr(BorrowCollectionContants.STATUS_YES_STR);
-            detailRes.setCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAtYes()));
+            detailRes.setCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAtYes(),DateHelper.DATE_FORMAT_YMD));
         } else {
             detailRes.setStatusStr(BorrowCollectionContants.STATUS_NO_STR);
-            detailRes.setCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAt()));
+            detailRes.setCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAt(),DateHelper.DATE_FORMAT_YMD));
         }
         detailRes.setPrincipal(StringHelper.formatMon( principal/ 100D));
         detailRes.setInterest(StringHelper.formatMon( interest/ 100D));

@@ -11,7 +11,7 @@ import java.util.List;
  */
 public interface SmsNoticeSettingsBiz {
 
-    ResponseEntity<List<SmsNoticeSettingsEntity>> list(Integer userId);
+    ResponseEntity<List<SmsNoticeSettingsEntity>> list(Long userId);
 
     ResponseEntity<VoBaseResp> update(SmsNoticeSettingsEntity smsNoticeSettingsEntity);
 

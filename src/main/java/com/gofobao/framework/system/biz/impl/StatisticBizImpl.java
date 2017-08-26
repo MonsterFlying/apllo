@@ -1,5 +1,6 @@
 package com.gofobao.framework.system.biz.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MathHelper;
@@ -18,6 +19,8 @@ import com.gofobao.framework.system.vo.response.IndexStatistics;
 import com.gofobao.framework.system.vo.response.NewIndexStatisics;
 import com.gofobao.framework.system.vo.response.OperateDataStatistics;
 import com.gofobao.framework.system.vo.response.VoViewIndexStatisticsWarpRes;
+import com.gofobao.framework.tender.contants.TenderConstans;
+import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
@@ -26,6 +29,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -224,6 +228,14 @@ public class StatisticBizImpl implements StatisticBiz {
                     dataStatistics.setBorrowTotal(indexStatistics.getBorrowTotal());
                     //交易总额
                     dataStatistics.setTransactionsTotal(indexStatistics.getTransactionsTotal());
+
+                    Specification<Tender> specification= Specifications.<Tender>and()
+                            .eq("status", TenderConstans.SUCCESS)
+                            .build();
+                    Long count=tenderService.count(specification);
+                    //累计投资人数
+                    dataStatistics.setTenderNoOfPeople(count);
+
                 /*    //已还本息
                     dataStatistics.setSettleCapitalTotal(indexStatistics.);*/
 
@@ -232,8 +244,7 @@ public class StatisticBizImpl implements StatisticBiz {
                     dataStatistics.setAverageTenderMoney();
                     //人均累计投资金额
                     dataStatistics.setAverageTenderMoneySum();
-                    //累计投资人数
-                    dataStatistics.setTenderNoOfPeople();*/
+                    */
 
                     return dataStatistics;
                 }

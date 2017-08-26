@@ -14,7 +14,7 @@ public interface SmsNoticeSettingsService {
          * @param userId
          * @return
          */
-        List<SmsNoticeSettingsEntity> findByUserId(Integer userId);
+        List<SmsNoticeSettingsEntity> findByUserId(Long userId);
 
         /**
          *
@@ -22,4 +22,11 @@ public interface SmsNoticeSettingsService {
          * @return
          */
         SmsNoticeSettingsEntity update(SmsNoticeSettingsEntity smsNoticeSettingsEntity);
+
+        /**
+         * 
+         * @param smsNoticeSettingsEntity
+         * @return
+         */
+        SmsNoticeSettingsEntity save(SmsNoticeSettingsEntity smsNoticeSettingsEntity);
 }

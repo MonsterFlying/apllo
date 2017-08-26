@@ -23,7 +23,7 @@ public class SmsNoticeSettingsServiceImpl implements SmsNoticeSettingsService{
      * @return
      */
     @Override
-    public List<SmsNoticeSettingsEntity> findByUserId(Integer userId) {
+    public List<SmsNoticeSettingsEntity> findByUserId(Long userId) {
       return   smsNoticeSettingsRepository.findByUserId(userId);
     }
 
@@ -36,5 +36,15 @@ public class SmsNoticeSettingsServiceImpl implements SmsNoticeSettingsService{
     public SmsNoticeSettingsEntity update(SmsNoticeSettingsEntity smsNoticeSettingsEntity) {
         return  smsNoticeSettingsRepository.save(smsNoticeSettingsEntity);
 
+    }
+
+    /**
+     *
+     * @param smsNoticeSettingsEntity
+     * @return
+     */
+    @Override
+    public SmsNoticeSettingsEntity save(SmsNoticeSettingsEntity smsNoticeSettingsEntity) {
+        return smsNoticeSettingsRepository.save(smsNoticeSettingsEntity);
     }
 }

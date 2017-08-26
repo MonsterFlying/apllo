@@ -20,6 +20,7 @@ import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
 import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowList;
+import com.gofobao.framework.collection.contants.BorrowCollectionContants;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.assets.AssetChange;
@@ -1289,6 +1290,7 @@ public class TransferBizImpl implements TransferBiz {
                 .build();
         List<BorrowCollection> borrowCollections = borrowCollectionService.findList(bcs, new Sort(Sort.Direction.ASC, "id"));
         Preconditions.checkNotNull(borrowCollections, "获取立即转让详情: 还款计划查询失败!");
+        borrowCollections=borrowCollections.stream().filter(w->w.getStatus()== BorrowCollectionContants.STATUS_NO).collect(Collectors.toList());
         BorrowCollection borrowCollection = borrowCollections.get(0);
         Borrow borrow = borrowService.findById(tender.getBorrowId());
         Preconditions.checkNotNull(borrowCollections, "获取立即转让详情: 获取投资的标的信息失败!");
@@ -1305,7 +1307,6 @@ public class TransferBizImpl implements TransferBiz {
                 break;
             default:
         }
-
         long money = borrowCollections.stream().mapToLong(borrowCollectionItem -> borrowCollectionItem.getPrincipal()).sum(); // 待汇款本金
         // 0.4% + 0.08% * (剩余期限-1)  （费率最高上限为1.28%）
         double rate = 0.004 + 0.0008 * (borrowCollections.size() - 1);
