@@ -756,7 +756,7 @@ public class ThirdBatchProvider {
      */
     private void sendCancelTender(Date nowDate, Borrow borrow, List<Tender> tenders) {
         Set<Long> userIdSet = tenders.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet());
-        String content = String.format("你所投资的借款[ %s ] 与存管通讯失败, 在 %s 已取消", borrow.getName());
+        String content = String.format("你所投资的借款[ %s ] 与存管通讯失败, 在 %s 已取消", borrow.getName(), DateHelper.dateToString(new Date()));
         userIdSet.forEach(userid -> {
             Notices notices = new Notices();
             notices.setFromUserId(1L);

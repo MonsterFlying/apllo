@@ -139,7 +139,7 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
      *@param isSuccess  @return
      */
     private String generateCommon(String title, String errorMessage, String buttonMessage, Model model, boolean isSuccess) {
-        String url = String.format("%s/#/home", h5Domain) ;
+        String url = String.format("%s/#/user", h5Domain) ;
         model.addAttribute("title", title);
         model.addAttribute("message", errorMessage);
         model.addAttribute("action", url);
