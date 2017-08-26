@@ -15,6 +15,14 @@ public enum JixinTxCodeEnum {
             "移动端开户"),
 
     /**
+     * 电子账户手机号修改增强
+     */
+    MOBILE_MODIFY_PLUS(
+            "mobileModifyPlus",
+            "/escrow/p2p/online",
+            "电子账户手机号修改增强"),
+
+    /**
      * 查询电子账户密码
      */
     PASSWORD_SET_QUERY(

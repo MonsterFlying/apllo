@@ -29,8 +29,6 @@ spring:
     default-encoding: UTF-8
   thymeleaf:
     mode: LEGACYHTML5
-  profiles:
-    active: def
 
 jwt: #JWT 安全配置
   header: Authorization
