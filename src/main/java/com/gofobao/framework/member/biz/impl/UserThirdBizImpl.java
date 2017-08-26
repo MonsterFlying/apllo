@@ -271,7 +271,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             srvTxCode = redisHelper.get(String.format("%s_%s", SrvTxCodeContants.ACCOUNT_OPEN_PLUS, voOpenAccountReq.getMobile()), null);
             redisHelper.remove(String.format("%s_%s", SrvTxCodeContants.ACCOUNT_OPEN_PLUS, voOpenAccountReq.getMobile()));
         } catch (Throwable e) {
-            log.error("UserThirdBizImpl continueOpenAccount get redis exception ", e);
+            log.error("UserThirdBizImpl opeanAccountCallBack get redis exception ", e);
         }
 
         if (StringUtils.isEmpty(srvTxCode)) {
@@ -844,6 +844,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         passwordResetRequest.setName(userThirdAccount.getName());
         passwordResetRequest.setAccountId(userThirdAccount.getAccountId());
         passwordResetRequest.setIdType(IdTypeContant.ID_CARD);
+        passwordResetRequest.setIdNo(userThirdAccount.getIdNo());
         passwordResetRequest.setIdNo(userThirdAccount.getIdNo());
         passwordResetRequest.setAcqRes(String.valueOf(userId));
         passwordResetRequest.setRetUrl(String.format("%s%s/%s", javaDomain, "/pub/password/show", userId));
