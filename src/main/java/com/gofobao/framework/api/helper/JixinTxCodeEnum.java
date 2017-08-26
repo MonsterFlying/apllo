@@ -246,6 +246,16 @@ public enum JixinTxCodeEnum {
             "受托支付查询"
     ),
     /**
+     * 按证件号查询电子账号
+     */
+    ACCOUNT_ID_QUERY(
+            "accountIdQuery",
+            "/escrow/p2p/online",
+            "按证件号查询电子账号"
+    ),
+
+
+    /**
      * 按手机号查询电子账号信息
      */
     ACCOUNT_QUERY_BY_MOBILE(

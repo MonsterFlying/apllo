@@ -3,6 +3,8 @@ package com.gofobao.framework.member.biz.impl;
 import com.gofobao.framework.api.contants.*;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.account_id_query.AccountIdQueryRequest;
+import com.gofobao.framework.api.model.account_id_query.AccountIdQueryResponse;
 import com.gofobao.framework.api.model.account_open.AccountOpenRequest;
 import com.gofobao.framework.api.model.account_open.AccountOpenResponse;
 import com.gofobao.framework.api.model.account_open_plus.AccountOpenPlusRequest;
@@ -224,22 +226,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "你的账户已经开户！", VoOpenAccountResp.class));
 
-        UserThirdAccount userThirdAccountbyMobile = userThirdAccountService.findByMobile(voOpenAccountReq.getMobile());
-        if (!ObjectUtils.isEmpty(userThirdAccountbyMobile)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "手机已在存管平台开户, 无需开户！", VoOpenAccountResp.class));
-        }
-
-        try {
-            userThirdAccount = queryUserThirdInfo(userId) ;
-            if(!ObjectUtils.isEmpty(userThirdAccount)){
-                return ResponseEntity
-                        .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR, "手机已在存管平台开户, 无需开户！", VoOpenAccountResp.class));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        ResponseEntity<VoOpenAccountResp> voOpenAccountRespResponseEntity = preCheckeForOpenAccount(voOpenAccountReq);
+        if(!voOpenAccountRespResponseEntity.getStatusCode().equals(HttpStatus.OK)){
+            return voOpenAccountRespResponseEntity ;
         }
 
         String bankName = null;
@@ -350,6 +339,51 @@ public class UserThirdBizImpl implements UserThirdBiz {
         // 开户成功
         touchMarketingByOpenAccount(entity);
         return ResponseEntity.ok(voOpenAccountResp);
+    }
+
+
+    /**
+     * 开户前置检测
+     * @param voOpenAccountReq
+     * @return
+     */
+    private ResponseEntity<VoOpenAccountResp> preCheckeForOpenAccount(VoOpenAccountReq voOpenAccountReq) {
+        UserThirdAccount userThirdAccountbyMobile = userThirdAccountService.findByMobile(voOpenAccountReq.getMobile());  // 验证手机是否唯一
+        if (!ObjectUtils.isEmpty(userThirdAccountbyMobile)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "手机已在存管平台开户, 无需开户！", VoOpenAccountResp.class));
+        }
+
+        // 从存管获取用户注册信息
+        AccountQueryByMobileRequest accountQueryByMobileReques = new AccountQueryByMobileRequest() ;
+        accountQueryByMobileReques.setMobile(voOpenAccountReq.getMobile()) ;
+        AccountQueryByMobileResponse accountQueryByMobileResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_QUERY_BY_MOBILE,
+                accountQueryByMobileReques, AccountQueryByMobileResponse.class);
+        if(!ObjectUtils.isEmpty(accountQueryByMobileResponse) && JixinResultContants.SUCCESS.equals(accountQueryByMobileResponse.getRetCode())){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "手机已在存管平台开户, 无需开户！", VoOpenAccountResp.class));
+        }
+
+        UserThirdAccount userThirdAccountByIdNo = userThirdAccountService.findByIdNo(voOpenAccountReq.getIdNo()) ;
+        if (!ObjectUtils.isEmpty(userThirdAccountByIdNo)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "身份证已在存管平台开户, 无需开户！", VoOpenAccountResp.class));
+        }
+
+        AccountIdQueryRequest accountIdQueryRequest = new AccountIdQueryRequest() ;
+        accountIdQueryRequest.setIdNo(voOpenAccountReq.getIdNo()) ;
+        AccountIdQueryResponse accountIdQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_ID_QUERY,
+                accountIdQueryRequest, AccountIdQueryResponse.class);
+        if(!ObjectUtils.isEmpty(accountIdQueryResponse) && JixinResultContants.SUCCESS.equals(accountIdQueryResponse.getRetCode())){
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "身份证已在存管平台开户, 无需开户！", VoOpenAccountResp.class));
+        }
+
+        return ResponseEntity.ok(VoBaseResp.error(VoBaseResp.OK, "查询成功", VoOpenAccountResp.class)) ;
     }
 
     /**
@@ -938,7 +972,12 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "你访问的账户不存在", VoHtmlResp.class));
         // 2. 判断用户是否已经开过存管账户
-        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(user.getId());
+        UserThirdAccount userThirdAccount = null;
+        try {
+            userThirdAccount = queryUserThirdInfo(user.getId());
+        } catch (Exception e) {
+        }
+
         if (!ObjectUtils.isEmpty(userThirdAccount))
             return ResponseEntity
                     .badRequest()
