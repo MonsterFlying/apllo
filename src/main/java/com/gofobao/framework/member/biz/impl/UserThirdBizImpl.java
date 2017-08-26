@@ -412,6 +412,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoHtmlResp> modifyOpenAccPwd(HttpServletRequest httpServletRequest, Long userId) {
         UserThirdAccount userThirdAccount = null;
         try {
@@ -792,6 +793,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String showPassword(Long id, Model model) {
         UserThirdAccount userThirdAccount = null;
         try {
@@ -949,6 +951,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoHtmlResp> adminOpenAccount(VoAdminOpenAccountResp voAdminOpenAccountResp, HttpServletRequest httpServletRequest) {
         if (!SecurityHelper.checkSign(voAdminOpenAccountResp.getSign(), voAdminOpenAccountResp.getParamStr())) {
             return ResponseEntity
@@ -963,7 +966,6 @@ public class UserThirdBizImpl implements UserThirdBiz {
         String realMame = openAccountBodyMap.get("name");
         String idNo = openAccountBodyMap.get("idNo");
         String cardNo = openAccountBodyMap.get("cardNo");
-
 
         // 1.用户用户信息
         Users user = userService.findById(userId);
