@@ -141,11 +141,10 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
     private String generateCommon(String title, String errorMessage, String buttonMessage, Model model, boolean isSuccess) {
         String url = String.format("%s/#/home", h5Domain) ;
         model.addAttribute("title", title);
-        model.addAttribute("datas", Lists.newArrayList());
         model.addAttribute("message", errorMessage);
         model.addAttribute("action", url);
         model.addAttribute("buttonMessage", buttonMessage);
-        return isSuccess ? "openAccount/success" : "openAccount/fail";
+        return isSuccess ? "openAccount/commonSuccess" : "openAccount/commonFail";
     }
 
 
@@ -178,13 +177,13 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
         autoCreditInvestAuthPlusRequest.setAcqRes(userThirdAccount.getUserId().toString());
         autoCreditInvestAuthPlusRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
         String url = jixinManager.getUrl(JixinTxCodeEnum.AUTO_CREDIT_INVEST_AUTH);
-        List<Map<String, String>> datas = jixinManager.getSignData(JixinTxCodeEnum.AUTO_CREDIT_INVEST_AUTH, autoCreditInvestAuthPlusRequest);
+        List<JixinManager.KeyValuePair> datas = jixinManager.getSignData(JixinTxCodeEnum.AUTO_CREDIT_INVEST_AUTH, autoCreditInvestAuthPlusRequest);
         model.addAttribute("title", title);
         model.addAttribute("datas", datas);
         model.addAttribute("message", errorMessage);
         model.addAttribute("action", url);
         model.addAttribute("buttonMessage", buttonMessage);
-        return isSuccess ? "openAccount/success" : "openAccount/fail";
+        return isSuccess ? "openAccount/formSuccess" : "openAccount/formFail";
     }
 
     /**
@@ -218,13 +217,13 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
         autoBidAuthRequest.setAcqRes(userThirdAccount.getUserId().toString());
         autoBidAuthRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
         String url = jixinManager.getUrl(JixinTxCodeEnum.AUTO_BID_AUTH);
-        List<Map<String, String>> datas = jixinManager.getSignData(JixinTxCodeEnum.AUTO_BID_AUTH, autoBidAuthRequest);
+        List<JixinManager.KeyValuePair> datas = jixinManager.getSignData(JixinTxCodeEnum.AUTO_BID_AUTH, autoBidAuthRequest);
         model.addAttribute("title", title);
         model.addAttribute("datas", datas);
         model.addAttribute("message", errorMessage);
         model.addAttribute("action", url);
         model.addAttribute("buttonMessage", buttonMessage);
-        return isSuccess ? "openAccount/success" : "openAccount/fail";
+        return isSuccess ? "openAccount/formSuccess" : "openAccount/formFail";
     }
 
 
@@ -256,13 +255,13 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
         passwordSetRequest.setAcqRes(String.valueOf(userThirdAccount.getUserId()));
         passwordSetRequest.setRetUrl(String.format("%s/pub/openAccount/callback/%s/initPassword", javaDomain, userThirdAccount.getUserId()));
         passwordSetRequest.setNotifyUrl(String.format("%s%s", javaDomain, "/pub/user/third/modifyOpenAccPwd/callback/1"));
-        List<Map<String, String>> datas = jixinManager.getSignData(JixinTxCodeEnum.PASSWORD_SET, passwordSetRequest);
+        List<JixinManager.KeyValuePair> datas = jixinManager.getSignData(JixinTxCodeEnum.PASSWORD_SET, passwordSetRequest);
         model.addAttribute("title", title);
         model.addAttribute("datas", datas);
         model.addAttribute("message", errorMessage);
         model.addAttribute("action", url);
         model.addAttribute("buttonMessage", buttonMessage);
-        return "openAccount/success";
+        return  "openAccount/formSuccess"  ;
     }
 
 

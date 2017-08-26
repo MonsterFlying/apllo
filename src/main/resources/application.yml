@@ -60,7 +60,7 @@ jixin: #银行存管
   url: http://uat.gofobao.com #即信服务器路径
   htmlUrl: https://access.credit2go.cn #即信服务器路径
   file-url: https://uat.credit2go.cn/escrow/file/download #文件请求下载链接
-  save-file-path: D:/statistice/   #文件本地保存的路径
+  save-file-path: /root/statistice/   #文件本地保存的路径
   version: 10 #版本号
   product-no: "0105" # 产品编号
   bank-no: "3005" #产品编号

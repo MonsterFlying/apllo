@@ -11,7 +11,9 @@ import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.system.biz.impl.JixinTxLogBizImpl;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.KeyValue;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -60,21 +62,30 @@ public class JixinManager {
 
     /**
      * 获取url
+     *
      * @param txCodeEnum
      * @return
      */
-    public String getUrl(JixinTxCodeEnum txCodeEnum){
+    public String getUrl(JixinTxCodeEnum txCodeEnum) {
         return htmlPrefixUrl + txCodeEnum.getUrl();
+    }
+
+
+    @Data
+    public class KeyValuePair {
+        private String key;
+        private String value;
     }
 
     /**
      * 获取加签
+     *
      * @param txCodeEnum
      * @param req
      * @param <T>
      * @return
      */
-    public <T extends JixinBaseRequest> List<Map<String, String>> getSignData(JixinTxCodeEnum txCodeEnum, T req) {
+    public <T extends JixinBaseRequest> List<KeyValuePair> getSignData(JixinTxCodeEnum txCodeEnum, T req) {
         checkNotNull(req, "JixinManager.getSignData: req is null");
         req.setBankCode(bankCode);
         req.setVersion(version);
@@ -103,17 +114,17 @@ public class JixinManager {
         String sign = certHelper.doSign(unSign);
         params.put("sign", sign);
 
-        List<Map<String, String>> datas = new ArrayList<>(params.size());
+        List<KeyValuePair> datas = new ArrayList<>(params.size());
         Set<String> keys = params.keySet();
         for (String key : keys) {
             String value = params.get(key);
-            Map<String, String> data = new HashMap<>();
-            data.put("key", key);
-            data.put("value", value);
-            datas.add(data);
+            KeyValuePair keyValuePair = new KeyValuePair() ;
+            keyValuePair.setKey(key);
+            keyValuePair.setValue(value);
+            datas.add(keyValuePair);
         }
 
-        return datas ;
+        return datas;
     }
 
     public <T extends JixinBaseRequest> String getHtml(JixinTxCodeEnum txCodeEnum, T req) {

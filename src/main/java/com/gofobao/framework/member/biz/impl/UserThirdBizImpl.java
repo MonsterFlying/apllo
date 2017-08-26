@@ -567,7 +567,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
         autoBidAuthRequest.setTxAmount("999999999");
         autoBidAuthRequest.setTotAmount("999999999");
         autoBidAuthRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, userId));
-        autoBidAuthRequest.setRetUrl(String.format("%s%s%s", javaDomain, "/pub/autoTender/show/", userId));
+        //autoBidAuthRequest.setRetUrl(String.format("%s%s%s", javaDomain, "/pub/autoTender/show/", userId));
+        autoBidAuthRequest.setRetUrl(String.format("%s/pub/openAccount/callback/%s/autoTender", javaDomain, userThirdAccount.getUserId()));
         autoBidAuthRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/user/third/autoTender/callback"));
         autoBidAuthRequest.setAcqRes(userId.toString());
         autoBidAuthRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
@@ -640,7 +641,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
         autoCreditInvestAuthPlusRequest.setAccountId(userThirdAccount.getAccountId());
         autoCreditInvestAuthPlusRequest.setOrderId(System.currentTimeMillis() + RandomHelper.generateNumberCode(6));
         autoCreditInvestAuthPlusRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, userId));
-        autoCreditInvestAuthPlusRequest.setRetUrl(String.format("%s%s%s", javaDomain, "/pub/autoTranfer/show/", userId));
+        // autoCreditInvestAuthPlusRequest.setRetUrl(String.format("%s%s%s", javaDomain, "/pub/autoTranfer/show/", userId));
+        autoCreditInvestAuthPlusRequest.setRetUrl(String.format("%s/pub/openAccount/callback/%s/autoTranfer", javaDomain, userThirdAccount.getUserId()));
         autoCreditInvestAuthPlusRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/user/third/autoTranfer/callback"));
         autoCreditInvestAuthPlusRequest.setAcqRes(userId.toString());
         autoCreditInvestAuthPlusRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
@@ -1632,7 +1634,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
             passwordSetRequest.setIdType(IdTypeContant.ID_CARD);
             passwordSetRequest.setIdNo(userThirdAccount.getIdNo());
             passwordSetRequest.setAcqRes(String.valueOf(userId));
-            passwordSetRequest.setRetUrl(String.format("%s%s/%s", javaDomain, "/pub/password/show", userId));
+            //passwordSetRequest.setRetUrl(String.format("%s%s/%s", javaDomain, "/pub/password/show", userId));
+            passwordSetRequest.setRetUrl(String.format("%s/pub/openAccount/callback/%s/initPassword", javaDomain, userThirdAccount.getUserId()));
             passwordSetRequest.setNotifyUrl(String.format("%s%s", javaDomain, "/pub/user/third/modifyOpenAccPwd/callback/1"));
             html = jixinManager.getHtml(JixinTxCodeEnum.PASSWORD_SET, passwordSetRequest);
         } else { // 重置密码
