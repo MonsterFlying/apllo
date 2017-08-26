@@ -67,10 +67,10 @@ public class UserPhoneBizImpi implements UserPhoneBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBasicUserInfoResp> bindSwitchPhone(VoBindSwitchPhoneReq voBindSwitchPhoneReq) {
+        // TODO 需要添加主动查询即信手机号功能
+
         Long userId = voBindSwitchPhoneReq.getUserId();
         String newPhone = voBindSwitchPhoneReq.getNewPhone();
-
-
         Users users = userService.findById(userId);
         if (ObjectUtils.isEmpty(users) || ObjectUtils.isEmpty(users.getPhone())) {
             ResponseEntity
@@ -96,8 +96,8 @@ public class UserPhoneBizImpi implements UserPhoneBiz {
         // 修改成验证即信手机
         String srvTxCode = null;
         try {
-            srvTxCode = redisHelper.get(String.format("%s_%s", SrvTxCodeContants.ACCOUNT_OPEN_PLUS, voBindSwitchPhoneReq.getNewPhone()), null);
-            redisHelper.remove(String.format("%s_%s", SrvTxCodeContants.ACCOUNT_OPEN_PLUS, voBindSwitchPhoneReq.getNewPhone()));
+            srvTxCode = redisHelper.get(String.format("%s_%s", SrvTxCodeContants.MOBILE_MODIFY_PLUS, voBindSwitchPhoneReq.getNewPhone()), null);
+            redisHelper.remove(String.format("%s_%s", SrvTxCodeContants.MOBILE_MODIFY_PLUS, voBindSwitchPhoneReq.getNewPhone()));
         } catch (Throwable e) {
             log.error("UserThirdBizImpl opeanAccountCallBack get redis exception ", e);
         }
