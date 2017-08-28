@@ -132,7 +132,7 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
         paramMaps.put("inviteUrl", h5Domain + "/#/auth/register?inviteCode=" + inviteCode);
         paramMaps.put("inviteCode", inviteCode);
         paramMaps.put("invitePhone", user.getPhone());
-        paramMaps.put("QRCodeURL", javaDomain + "/invite/qrcode/getInviteFriendQRCode?inviteCode=" + inviteCode);
+        paramMaps.put("QRCodeURL", javaDomain + "/pub/invite/qrcode/getInviteFriendQRCode?inviteCode=" + inviteCode);
         paramMaps.put("requestSource", 3);
         return paramMaps;
     }
