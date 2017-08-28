@@ -477,7 +477,10 @@ public class BorrowBizImpl implements BorrowBiz {
                 .eq("status", BorrowContants.BIDDING)
                 .build();
         List<Borrow> borrows = borrowService.findList(specification);
-        if (!CollectionUtils.isEmpty(borrows)) {
+        /**
+         * TODO 上线请取消注释
+         */
+        /*if (!CollectionUtils.isEmpty(borrows)) {
             for (Borrow borrow : borrows) {
                 if ((borrow.getMoneyYes() / borrow.getMoney()) < 1) {
                     log.info("新增借款：您已经有一个进行中的借款标。");
@@ -486,7 +489,7 @@ public class BorrowBizImpl implements BorrowBiz {
                             .body(VoBaseResp.error(VoBaseResp.ERROR, "您已经有一个进行中的借款标!"));
                 }
             }
-        }
+        }*/
         Long borrowId = insertBorrow(voAddNetWorthBorrow, userId);  // 插入标
         if (borrowId <= 0) {
             log.info("新增借款：净值标插入失败。");
@@ -1432,6 +1435,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 borrowCollection.setStartAt(j > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(j - 1).get("repayAt"))) : borrowDate);
                 borrowCollection.setStartAtYes(j > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(j - 1).get("repayAt"))) : nowDate);
                 borrowCollection.setCollectionAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
+                borrowCollection.setCollectionAtYes(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
                 borrowCollection.setCollectionMoney(repayMoney);
                 borrowCollection.setPrincipal(principal);
                 borrowCollection.setInterest(interest);
@@ -1473,34 +1477,6 @@ public class BorrowBizImpl implements BorrowBiz {
             tender.setUpdatedAt(new Date());
         }
         tenderService.save(tenderList);
-    }
-
-    /**
-     * 检查提前结清参数
-     *
-     * @param voRepayAll
-     * @return
-     */
-    public ResponseEntity<VoBaseResp> checkRepayAll(com.gofobao.framework.borrow.vo.request.VoRepayAll voRepayAll) {
-        Long borrowId = voRepayAll.getBorrowId();
-        Borrow borrow = borrowService.findByIdLock(borrowId);
-        if ((borrow.getStatus() != 3) || (borrow.getType() != 0 && borrow.getType() != 4)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款状态非可结清状态！"));
-        }
-
-        Specification<BorrowRepayment> brs = Specifications
-                .<BorrowRepayment>and()
-                .eq("borrowId", borrowId)
-                .eq("status", 0)
-                .build();
-        if (borrowRepaymentService.count(brs) < 1) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "该借款剩余未还期数小于1期！"));
-        }
-        return null;
     }
 
     /**
