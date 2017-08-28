@@ -1,9 +1,9 @@
 spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
-    url: jdbc:mysql://192.168.1.5:3306/gfb0810?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&&useSSL=true
-    username: gfb0810
-    password: GOFOBAO@0701.
+    url: jdbc:mysql://192.168.1.13:3306/gfb0821?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&&useSSL=true
+    username: root
+    password: root
     driver-class-name: com.mysql.jdbc.Driver
   jpa:
     database: mysql

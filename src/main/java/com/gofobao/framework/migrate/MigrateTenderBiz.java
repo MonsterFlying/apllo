@@ -69,7 +69,7 @@ public class MigrateTenderBiz {
     /**
      * 迁移结果文件
      */
-    private static final String RESULT_TENDER_FILE_PATH = "";
+    private static final String RESULT_TENDER_FILE_PATH = "D:/Apollo/migrate/tender_result/3005-BIDRESP-101945-20170420";
 
     @Autowired
     private TenderService tenderService;
@@ -92,11 +92,11 @@ public class MigrateTenderBiz {
             log.error("创建投标迁移文件失败", e);
         }
 
-        String errorFileName = fileName + "_name";
+        String errorFileName = fileName + "_error";
         BufferedWriter errorTenderWriter = null;
         try {
             File tenderErrorFile = FileHelper.createFile(MIGRATE_PATH, TENDER_DIR, errorFileName);
-            errorTenderWriter = Files.newWriter(tenderErrorFile, Charset.forName("gbk"));
+            errorTenderWriter = Files.newWriter(tenderErrorFile, Charset.forName("UTF-8"));
         } catch (Exception e) {
             log.error("创建投标迁移文件失败", e);
         }
@@ -111,21 +111,22 @@ public class MigrateTenderBiz {
             if (CollectionUtils.isEmpty(borrowList)) {
                 break;
             }
-
+            pageIndex++ ;
+            realSize = borrowList.size() ;
             Map<Long, Borrow> borrowMap = borrowList
                     .stream()
                     .collect(Collectors.toMap(Borrow::getId, Function.identity()));
 
-            Set<Long> idSet = borrowList
+            Set<Long> borrowIdSet = borrowList
                     .stream()
                     .map(borrow -> borrow.getId())
                     .collect(Collectors.toSet());
             // 投标成功, 未转让
             Specification<Tender> ts = Specifications
                     .<Tender>and()
-                    .in("borrowId", idSet)
+                    .in("borrowId", borrowIdSet.toArray())
                     .eq("status", 1)
-                    .eq("transfer_flag", 0)
+                    .eq("transferFlag", 0)
                     .build();
             List<Tender> tenderList = tenderService.findList(ts);
 
@@ -138,8 +139,6 @@ public class MigrateTenderBiz {
             Map<Long, UserThirdAccount> userThirdAccountMap = userThirdAccountList
                     .stream()
                     .collect(Collectors.toMap(UserThirdAccount::getUserId, Function.identity()));
-
-
             for (Tender tender : tenderList) {
                 StringBuffer text = new StringBuffer();
                 try {
@@ -154,11 +153,12 @@ public class MigrateTenderBiz {
                     String seriNo = String.format("%s0000%s", COINST_CODE, JixinHelper.getOrderId(JixinHelper.TENDER_PREFIX));
                     Borrow borrow = borrowMap.get(tender.getBorrowId());
                     Date successAt = borrow.getSuccessAt();
-                    String date = DateHelper.dateToString(successAt, DateHelper.DATE_FORMAT_YMD_NUM);
+                    String inDate = DateHelper.dateToString(successAt, DateHelper.DATE_FORMAT_YMD_NUM);
                     String intType = null;
                     Integer repayFashion = borrow.getRepayFashion();
                     String intPayDay = null;
                     String endDate = null;
+                    String buyDate = DateHelper.dateToString(borrow.getSuccessAt(), DateHelper.DATE_FORMAT_YMD_NUM)  ;
                     if (1 == repayFashion) {
                         intType = "0";
                         intPayDay = "";
@@ -168,6 +168,7 @@ public class MigrateTenderBiz {
                         intPayDay = String.valueOf(DateHelper.getDay(successAt));
                         endDate = DateHelper.dateToString(DateHelper.addMonths(successAt, borrow.getTimeLimit()), DateHelper.DATE_FORMAT_YMD_NUM);
                     }
+
                     String yield = StringHelper.toString(borrow.getApr() * 1000); // 逾期年化收益
                     text.append(FormatHelper.appendByTail(BANK_NO, 4)); // 银行代号
                     text.append(FormatHelper.appendByTail(batchNo, 6));  // 批次号
@@ -176,8 +177,8 @@ public class MigrateTenderBiz {
                     text.append(FormatHelper.appendByTail("", 6));  // 标的号
                     text.append(FormatHelper.appendByTail(seriNo, 40));  // 申请流水号
                     text.append(FormatHelper.appendByPre(StringHelper.toString(tender.getValidMoney()), 13));  //当前持有债权金额
-                    text.append(FormatHelper.appendByTail("", 8));  // 债权获取日期
-                    text.append(FormatHelper.appendByTail(date, 8));  // 起息日
+                    text.append(FormatHelper.appendByTail(buyDate, 8));  // 债权获取日期
+                    text.append(FormatHelper.appendByTail(inDate, 8));  // 起息日
                     text.append(FormatHelper.appendByTail(intType, 1));  // 付息方式
                     text.append(FormatHelper.appendByTail(intPayDay, 2));  // 利息每月支付日
                     text.append(FormatHelper.appendByTail(endDate, 8));  // 产品到期日
@@ -213,8 +214,7 @@ public class MigrateTenderBiz {
     /**
      * 接收处理结果
      */
-    public void pustMigrateTenderFile() {
-        final Date nowDate = new Date();
+    public void postMigrateTenderFile() {
         File file = new File(RESULT_TENDER_FILE_PATH);
         if (!file.exists()) {
             log.error("债权文件不存在");
@@ -223,7 +223,7 @@ public class MigrateTenderBiz {
 
         BufferedReader reader = null;
         try {
-            reader = Files.newReader(file, StandardCharsets.UTF_8);
+            reader = Files.newReader(file, Charset.forName("gbk"));
         } catch (FileNotFoundException e) {
             log.error("读取文件异常", e);
             return;
@@ -242,23 +242,29 @@ public class MigrateTenderBiz {
         Stream<String> lines = reader.lines();
         Map<Long, String> authCodeMap = new HashMap<>();
         lines.forEach((String item) -> {
-            String flag = item.substring(160, 162);
-            String idStr = item.substring(222, 282);
-            if (!"00".equals(flag)) {
-                StringBuffer stringBuffer = new StringBuffer();
-                stringBuffer.append(NumberHelper.toLong(idStr)).append("|").append(ERROR_MSG_DATA.get(flag));
-                try {
-                    errorWriter.write(stringBuffer.toString());
-                    errorWriter.newLine();
-                } catch (IOException e) {
-                    log.error("写入债权错误数据", e);
-                    return;
+            try {
+                byte[] gbks = item.getBytes("gbk");
+                String flag = FormatHelper.getStr(gbks, 160, 162);
+                String idStr = FormatHelper.getStr(gbks, 222, 282) ;
+                if (!"00".equals(flag)) {
+                    StringBuffer stringBuffer = new StringBuffer();
+                    stringBuffer.append(NumberHelper.toLong(idStr)).append("|").append(ERROR_MSG_DATA.get(flag));
+                    try {
+                        errorWriter.write(stringBuffer.toString());
+                        errorWriter.newLine();
+                    } catch (IOException e) {
+                        log.error("写入债权错误数据", e);
+                        return;
+                    }
+                } else {
+                    String authCode = FormatHelper.getStr(gbks, 162, 182) ;
+                    long tenderId = NumberHelper.toLong(idStr) ;
+                    tenderIdList.add(tenderId);
+                    authCodeMap.put(tenderId, authCode);
                 }
-            } else {
-                String authCode = item.substring(162, 182);
-                long tenderId = NumberHelper.toLong(idStr);
-                tenderIdList.add(tenderId);
-                authCodeMap.put(tenderId, authCode);
+            } catch (Exception e) {
+                log.error("获取字段错误", e) ;
+                return;
             }
         });
 
