@@ -86,7 +86,7 @@ public class RegexHelper {
     /**
      *银行卡
      */
-    public static final String REGEX_BANK_CARD_ID="/^\\d{16}|\\d{19}$/";
+    public static final String REGEX_BANK_CARD_ID="^\\d{15,21}$";
 
     /**
      * 匹配正则表达式与字符串
