@@ -906,8 +906,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
     private MarketingData parseMarketingData(String marketingDataStr) throws Exception {
         MarketingData marketingData = null;
         try {
-            marketingData = gson.fromJson(marketingDataStr, new TypeToken<MarketingData>() {
-            }.getType());  // 解析营销阐述
+            marketingData = gson.fromJson(marketingDataStr,  MarketingData.class);  // 解析营销阐述
         } catch (Exception e) {
             log.error("MarketingProcessBizImpl,parseMarketingData convert exception", e);
             throw new Exception(e);
@@ -920,3 +919,5 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         return marketingData;
     }
 }
+
+

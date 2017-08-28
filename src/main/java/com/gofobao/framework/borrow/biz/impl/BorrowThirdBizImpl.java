@@ -403,7 +403,6 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         });
         Map<String, Object> acqResMap = GSON.fromJson(repayRunResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
 
-        boolean bool = true;
         if (ObjectUtils.isEmpty(repayRunResp)) {
             log.error("==================================批次回调======================================");
             log.error("=============================即信批次还款处理结果回调===========================");
