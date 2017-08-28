@@ -635,11 +635,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         response.setRealCashMoney(StringHelper.formatDouble((cashDetailLog.getMoney() - cashDetailLog.getFee()) / 100D, true));
         Date cashTime = cashDetailLog.getState() == 4 ? DateHelper.addHours(cashDetailLog.getCreateTime(), 2) : cashDetailLog.getCallbackTime();
         response.setRealCashTime(DateHelper.dateToString(cashTime));
-
-
-        // 状态
         Integer state = cashDetailLog.getState();
-
         String stateMsg = null;
         if (1 == state) {
             stateMsg = "提现申请已取消";
