@@ -437,7 +437,6 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了， 请稍候重试", VoHtmlResp.class));
         }
 
-
         VoHtmlResp voHtmlResp = VoBaseResp.ok("成功", VoHtmlResp.class);
         try {
             voHtmlResp.setHtml(Base64Utils.encodeToString(html.getBytes("UTF-8")));
