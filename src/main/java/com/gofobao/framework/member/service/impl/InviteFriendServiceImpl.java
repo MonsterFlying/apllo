@@ -134,12 +134,17 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
 
     @Override
     public InviteAwardStatistics query(Long userId) {
+        InviteAwardStatistics inviteAwardStatistics = new InviteAwardStatistics();
+        Users users1=usersRepository.getOne(userId);
+        inviteAwardStatistics.setInviteCode1(users1.getInviteCode());
+        inviteAwardStatistics.setInviteCode2(StringUtils.isEmpty(users1.getPhone())?"": users1.getPhone());
+
         Specification<BrokerBouns> specification = Specifications.<BrokerBouns>and()
                 .eq("userId", userId)
                 .build();
         List<BrokerBouns> brokerBounss = brokerBounsRepository.findAll(specification,new Sort(Sort.Direction.DESC,"id"));
         if (CollectionUtils.isEmpty(brokerBounss)) {
-            return new InviteAwardStatistics();
+            return inviteAwardStatistics;
         }
         Date yesterdayDate = DateHelper.subDays(new Date(), 1);
         Long yesterdayBegin = DateHelper.beginOfDate(yesterdayDate).getTime();
@@ -154,8 +159,6 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
         users.setParentId(userId);
         Example<Users> example = Example.of(users);
         Long count = usersRepository.count(example);
-
-        InviteAwardStatistics inviteAwardStatistics = new InviteAwardStatistics();
 
         //邀请总人数
         inviteAwardStatistics.setCountNum(count.intValue());
@@ -173,11 +176,6 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
             Integer sumAward = brokerBounss.stream().mapToInt(w -> w.getBounsAward()).sum();
             inviteAwardStatistics.setSumAward(NumberHelper.to2DigitString(sumAward / 100));
         }
-
-        Users users1=usersRepository.getOne(userId);
-        inviteAwardStatistics.setInviteCode1(users1.getInviteCode());
-        inviteAwardStatistics.setInviteCode2(StringUtils.isEmpty(users1.getPhone())?"": users1.getPhone());
-
         return inviteAwardStatistics;
     }
 

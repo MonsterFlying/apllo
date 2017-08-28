@@ -32,6 +32,7 @@ public class VoOpenAccountReq extends VoBaseReq{
 
     @ApiModelProperty(value = "银行卡号", required = true, dataType = "String")
     @NotEmpty(message = "银行卡不能为空")
+    @Pattern(regexp = RegexHelper.REGEX_BANK_CARD_ID,message = "不是有效的银行卡号")
     private String cardNo ;
 
     @ApiModelProperty(value = "短信验证码", required = true, dataType = "String")

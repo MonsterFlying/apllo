@@ -279,7 +279,7 @@ public class IntegralBizImpl implements IntegralBiz {
 
 
         Long useIntegral = integral.getUseIntegral();
-        if (integer >= useIntegral) {
+        if (integer.intValue() >useIntegral.intValue()) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "折现积分大于可用积分!"));

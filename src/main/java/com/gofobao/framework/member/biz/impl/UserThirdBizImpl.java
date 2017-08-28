@@ -145,6 +145,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
     @Autowired
     ThymeleafHelper thymeleafHelper;
 
+    @Autowired
+    OpenAccountBizImpl openAccountBiz ;
+
 
     //用户来源
     private List<Integer> sources = Lists.newArrayList(0, 1, 2, 9);
@@ -1677,9 +1680,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
      */
     private String generateModifyPasswordHtml(HttpServletRequest httpServletRequest, Long userId, UserThirdAccount userThirdAccount) {
         String html;// 判断用户是密码初始化还是
-        Integer passwordState = queryUserThirdPasswordState(userThirdAccount);
+        boolean passwordState = openAccountBiz.findPasswordStateIsInitByUserId(userThirdAccount);
         // 请求即信获取密码期详情
-        if (passwordState.equals(0)) { // 初始化密码
+        if (!passwordState) { // 初始化密码
             PasswordSetRequest passwordSetRequest = new PasswordSetRequest();
             passwordSetRequest.setMobile(userThirdAccount.getMobile());
             passwordSetRequest.setChannel(ChannelContant.getchannel(httpServletRequest));

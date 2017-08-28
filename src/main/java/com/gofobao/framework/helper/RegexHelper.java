@@ -83,6 +83,10 @@ public class RegexHelper {
      */
     public static final String ONLY_IS_NUM = "^[0-9]*$";
 
+    /**
+     *银行卡
+     */
+    public static final String REGEX_BANK_CARD_ID="/^\\d{16}|\\d{19}$/";
 
     /**
      * 匹配正则表达式与字符串
