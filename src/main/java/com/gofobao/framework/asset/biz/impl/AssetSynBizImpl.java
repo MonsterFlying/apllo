@@ -15,6 +15,7 @@ import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetLogService;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.ThirdAccountHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -91,8 +92,8 @@ public class AssetSynBizImpl implements AssetSynBiz {
             return asset;
         }
 
-        double availBal = NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0;
-        double currBal = NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100.0;
+        double availBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0,2);
+        double currBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100.0,2);
         // 查询用户操作记录
         int pageSize = 20, pageIndex = 1, realSize = 0;
         String accountId = userThirdAccount.getAccountId();  // 存管账户ID

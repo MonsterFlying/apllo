@@ -316,6 +316,34 @@ public class RepaymentBizImpl implements RepaymentBiz {
     }
 
     /**
+     * 检查提前结清参数
+     *
+     * @param voRepayAll
+     * @return
+     */
+    public ResponseEntity<VoBaseResp> checkRepayAll(Borrow borrow) {
+        long borrowId = borrow.getId();
+        if ((borrow.getStatus() != 3) || (borrow.getType() != 0 && borrow.getType() != 4)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款状态非可结清状态！"));
+        }
+
+        Specification<BorrowRepayment> brs = Specifications
+                .<BorrowRepayment>and()
+                .eq("borrowId", borrowId)
+                .eq("status", 0)
+                .build();
+        if (borrowRepaymentService.count(brs) < 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "该借款剩余未还期数小于1期！"));
+        }
+        return ResponseEntity.ok(VoBaseResp.ok("校验成功!"));
+    }
+
+
+    /**
      * 提前结清操作
      *
      * @param borrowId
@@ -332,7 +360,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
         Asset borrowAsset = assetService.findByUserId(borrow.getUserId());/* 借款人资产账户 */
         Preconditions.checkNotNull(borrowAsset, "借款人资产记录不存在!");
-
+        //检查提前结清
+        resp = checkRepayAll(borrow);
+        if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
+            return resp;
+        }
         /* 获取批次记录 */
         ThirdBatchLog thirdBatchLog = thirdBatchLogBiz.getValidLastBatchLog(String.valueOf(borrowId), ThirdBatchLogContants.BATCH_REPAY_ALL);
         //判断提交还款批次是否多次重复提交
@@ -961,6 +993,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
      */
     private void updateUserCacheByReceivedRepay(List<BorrowCollection> borrowCollectionList, Borrow parentBorrow) {
         Set<Long> userIds = borrowCollectionList.stream().map(borrowCollection -> borrowCollection.getUserId()).collect(toSet());/* 回款用户id */
+        if (CollectionUtils.isEmpty(userIds)) {
+            return;
+        }
         Map<Long, List<BorrowCollection>> borrowCollrctionMaps = borrowCollectionList.stream().collect(groupingBy(BorrowCollection::getUserId)); /* 回款记录集合 */
         Specification<UserCache> ucs = Specifications
                 .<UserCache>and()
@@ -1497,9 +1532,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "当前网络不稳定,请稍后重试!"));
         }
 
-        Double currBal = NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100.0;// 可用余额  账面余额-可用余额=冻结金额
+        long currBal = new Double(new Double(balanceQueryResponse.getCurrBal()) * 100.0).longValue();// 可用余额  账面余额-可用余额=冻结金额
         long localMoney = repayAsset.getUseMoney().longValue() + repayAsset.getNoUseMoney().longValue();
-        if (currBal.longValue() < localMoney) {
+        if (currBal < localMoney) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "资金账户未同步，请先在个人中心进行资金同步操作!"));
         }
 

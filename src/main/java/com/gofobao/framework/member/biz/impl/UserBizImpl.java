@@ -112,6 +112,7 @@ public class UserBizImpl implements UserBiz {
     @Value("${gofobao.javaDomain}")
     String javaDomain;
 
+
     @Value("${qiniu.sk}")
     String SECRET_KEY;
 
@@ -280,7 +281,7 @@ public class UserBizImpl implements UserBiz {
 
         // 获取vip状态
         Vip vip = vipService.findTopByUserIdAndStatus(user.getId(), 1);
-        voBasicUserInfoResp.setAvatarUrl(user.getAvatarPath());
+        voBasicUserInfoResp.setAvatarUrl(StringUtils.isEmpty(user.getAvatarPath())?"http://localhost/images/user/default_avatar.jpg":user.getAvatarPath());
         voBasicUserInfoResp.setVipState(ObjectUtils.isEmpty(vip) ? false : DateHelper.diffInDays(new Date(), vip.getExpireAt(), false) > 0);
         voBasicUserInfoResp.setEmail(StringUtils.isEmpty(user.getEmail()) ? " " : user.getEmail());
         voBasicUserInfoResp.setEmailState(!StringUtils.isEmpty(user.getEmail()));

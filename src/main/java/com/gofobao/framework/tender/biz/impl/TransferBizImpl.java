@@ -545,6 +545,7 @@ public class TransferBizImpl implements TransferBiz {
                 borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : startAt);
                 borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : nowDate);
                 borrowCollection.setCollectionAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
+                borrowCollection.setCollectionAtYes(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
                 borrowCollection.setCollectionMoney(NumberHelper.toLong(repayDetailMap.get("repayMoney")));
                 borrowCollection.setPrincipal(NumberHelper.toLong(repayDetailMap.get("principal")));
                 borrowCollection.setInterest(interest);
@@ -882,7 +883,7 @@ public class TransferBizImpl implements TransferBiz {
             msg = "当前网络不稳定,请稍后重试!";
         }
 
-        double availBal = NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0;// 可用余额  账面余额-可用余额=冻结金额
+        double availBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0,2);// 可用余额  账面余额-可用余额=冻结金额
         if (availBal < validMoney) {
             msg = "资金账户未同步，请先在个人中心进行资金同步操作!";
         }

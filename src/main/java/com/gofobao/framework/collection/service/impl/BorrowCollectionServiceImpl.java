@@ -231,7 +231,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         VoViewOrderDetailResp detailRes = VoBaseResp.ok("查询成功", VoViewOrderDetailResp.class);
         detailRes.setOrder(borrowCollection.getOrder() + 1);
         detailRes.setCollectionMoney(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100D));
-        detailRes.setLateDays(borrowCollection.getLateDays());
+        detailRes.setLateDays(DateHelper.diffInDays(DateHelper.beginOfDate(new Date()),DateHelper.beginOfDate(borrowCollection.getCollectionAtYes()),false));
         detailRes.setBorrowName(borrow.getName());
         Long principal=0L;
         Long interest=0L;

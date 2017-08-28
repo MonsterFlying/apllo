@@ -588,6 +588,7 @@ public class AplloApplicationTests {
                 borrowCollection.setStartAt(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : startAt);
                 borrowCollection.setStartAtYes(i > 0 ? DateHelper.stringToDate(StringHelper.toString(repayDetailList.get(i - 1).get("repayAt"))) : nowDate);
                 borrowCollection.setCollectionAt(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
+                borrowCollection.setCollectionAtYes(DateHelper.stringToDate(StringHelper.toString(repayDetailMap.get("repayAt"))));
                 borrowCollection.setCollectionMoney(NumberHelper.toLong(repayDetailMap.get("repayMoney")));
                 borrowCollection.setPrincipal(NumberHelper.toLong(repayDetailMap.get("principal")));
                 borrowCollection.setInterest(interest);
@@ -825,7 +826,7 @@ public class AplloApplicationTests {
         }*/
 
         //批次处理
-        batchDeal();
+        //batchDeal();
         //查询存管账户资金信息
         //balanceQuery();
         //查询资金流水

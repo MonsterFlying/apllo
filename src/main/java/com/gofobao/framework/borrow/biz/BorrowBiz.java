@@ -120,13 +120,6 @@ public interface BorrowBiz {
      */
     ResponseEntity<VoBaseResp> doAgainVerify(VoDoAgainVerifyReq voDoAgainVerifyReq);
 
-    /**
-     * 校验提前结清参数
-     *
-     * @param voRepayAll
-     * @return
-     */
-    ResponseEntity<VoBaseResp> checkRepayAll(VoRepayAll voRepayAll);
 
     /**
      * 登记官方借款（车贷标、渠道标）
