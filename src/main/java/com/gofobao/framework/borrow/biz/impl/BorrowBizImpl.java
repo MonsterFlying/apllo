@@ -656,10 +656,10 @@ public class BorrowBizImpl implements BorrowBiz {
             //招标失败解除冻结资金
             AssetChange assetChange = new AssetChange();
             assetChange.setType(AssetChangeTypeEnum.unfreeze);  // 招标失败解除冻结资金
-            assetChange.setUserId(borrow.getUserId());
+            assetChange.setUserId(tender.getUserId());
             assetChange.setMoney(tender.getValidMoney());
-            assetChange.setRemark(String.format("借款 [%s] 招标失败解除冻结资金。", borrow.getName()));
-            assetChange.setSourceId(borrow.getId());
+            assetChange.setRemark(String.format("借款 [%s] 投标失败解除冻结资金。", borrow.getName()));
+            assetChange.setSourceId(tender.getId());
             assetChange.setSeqNo(assetChangeProvider.getSeqNo());
             assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
             assetChangeProvider.commonAssetChange(assetChange);

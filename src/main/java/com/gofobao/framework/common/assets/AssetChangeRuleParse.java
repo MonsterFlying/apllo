@@ -80,7 +80,7 @@ public class AssetChangeRuleParse {
                     default:
                         throw new Exception(String.format("资金变动: %s-%s 操作符号不存在", opFieldNume, op));
                 }
-                Preconditions.checkArgument(result >= 0, "AssetsChangeRuleParse.parse money < 0");
+                Preconditions.checkArgument(result >= 0, "AssetsChangeRuleParse.parse money < 0 字段名:"+opFieldNume);
                 PropertyUtils.setProperty(target, opFieldNume, result);
             } else if (property instanceof Integer) {
                 int value = (int) property;
@@ -95,7 +95,7 @@ public class AssetChangeRuleParse {
                     default:
                         throw new Exception(String.format("资金变动: %s-%s 操作符号不存在", opFieldNume, op));
                 }
-                Preconditions.checkArgument(money >= 0, "AssetsChangeRuleParse.parse money < 0");
+                Preconditions.checkArgument(money >= 0, "AssetsChangeRuleParse.parse money < 0 字段名:"+opFieldNume);
                 PropertyUtils.setProperty(target, opFieldNume, result);
             } else {
                 throw new Exception(String.format("资金变动解析异常: %s 的类型不是Long或者Integer", opFieldNume));
