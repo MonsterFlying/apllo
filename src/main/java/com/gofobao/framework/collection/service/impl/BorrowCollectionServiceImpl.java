@@ -79,9 +79,9 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
             resultList.forEach(p -> {
                 BorrowCollection borrowCollection = new BorrowCollection();
                 borrowCollection.setId(Long.valueOf(p[0].toString()));
-                borrowCollection.setBorrowId(Long.valueOf(p[1].toString()) );
-                borrowCollection.setOrder(Integer.valueOf(p[2].toString()) );
-                borrowCollection.setCollectionMoney(NumberHelper.toLong(p[3].toString()) );
+                borrowCollection.setBorrowId(Long.valueOf(p[1].toString()));
+                borrowCollection.setOrder(Integer.valueOf(p[2].toString()));
+                borrowCollection.setCollectionMoney(NumberHelper.toLong(p[3].toString()));
                 borrowCollection.setCollectionMoneyYes(NumberHelper.toLong(p[4].toString()));
                 borrowCollection.setStatus(Integer.valueOf(p[5].toString()));
                 borrowCollections.add(borrowCollection);
@@ -231,21 +231,22 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         VoViewOrderDetailResp detailRes = VoBaseResp.ok("查询成功", VoViewOrderDetailResp.class);
         detailRes.setOrder(borrowCollection.getOrder() + 1);
         detailRes.setCollectionMoney(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100D));
-        detailRes.setLateDays(DateHelper.diffInDays(DateHelper.beginOfDate(new Date()),DateHelper.beginOfDate(borrowCollection.getCollectionAtYes()),false));
+        int lateDays = DateHelper.diffInDays(DateHelper.beginOfDate(new Date()), DateHelper.beginOfDate(borrowCollection.getCollectionAtYes()), false);
+        detailRes.setLateDays(lateDays < 1 ? 0 : lateDays);
         detailRes.setBorrowName(borrow.getName());
-        Long principal=0L;
-        Long interest=0L;
+        Long principal = 0L;
+        Long interest = 0L;
         if (borrowCollection.getStatus() == BorrowCollectionContants.STATUS_YES) {
-            principal=borrowCollection.getPrincipal();
-            interest=borrowCollection.getInterest();
+            principal = borrowCollection.getPrincipal();
+            interest = borrowCollection.getInterest();
             detailRes.setStatusStr(BorrowCollectionContants.STATUS_YES_STR);
-            detailRes.setCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAtYes(),DateHelper.DATE_FORMAT_YMD));
+            detailRes.setCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAtYes(), DateHelper.DATE_FORMAT_YMD));
         } else {
             detailRes.setStatusStr(BorrowCollectionContants.STATUS_NO_STR);
-            detailRes.setCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAt(),DateHelper.DATE_FORMAT_YMD));
+            detailRes.setCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAt(), DateHelper.DATE_FORMAT_YMD));
         }
-        detailRes.setPrincipal(StringHelper.formatMon( principal/ 100D));
-        detailRes.setInterest(StringHelper.formatMon( interest/ 100D));
+        detailRes.setPrincipal(StringHelper.formatMon(principal / 100D));
+        detailRes.setInterest(StringHelper.formatMon(interest / 100D));
         return detailRes;
     }
 

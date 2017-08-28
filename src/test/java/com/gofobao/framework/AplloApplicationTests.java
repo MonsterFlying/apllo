@@ -692,7 +692,7 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("161521");
+        batchDetailsQueryReq.setBatchNo("142904");
         batchDetailsQueryReq.setBatchTxDate("20170828");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
@@ -769,8 +769,8 @@ public class AplloApplicationTests {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(55),
-                        MqConfig.BATCH_NO, StringHelper.toString(105333),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(89),
+                        MqConfig.BATCH_NO, StringHelper.toString(142904),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
                 );
 
@@ -826,7 +826,7 @@ public class AplloApplicationTests {
         }*/
 
         //批次处理
-        //batchDeal();
+        batchDeal();
         //查询存管账户资金信息
         //balanceQuery();
         //查询资金流水
@@ -854,7 +854,7 @@ public class AplloApplicationTests {
         //批次状态查询
         //batchQuery();
         //批次详情查询
-        batchDetailsQuery();
+        //batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调
