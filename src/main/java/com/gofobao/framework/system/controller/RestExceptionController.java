@@ -18,8 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 public class RestExceptionController {
     @ExceptionHandler(value = {Exception.class})
     public ResponseEntity<VoBaseResp> restExceptionHandler(HttpServletRequest request, Throwable e) throws Exception {
-        VoBaseResp voBaseResp = VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了, 麻烦轻声提醒一下客服!");
-        log.error("全局参数检测异常", e);
+        VoBaseResp voBaseResp = VoBaseResp.error(VoBaseResp.ERROR, e.getMessage());
         return ResponseEntity
                 .badRequest()
                 .body(voBaseResp);

@@ -357,7 +357,7 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
      * @param userThirdAccount 开户信息
      * @return true: 已经初始化, false: 未初始化
      */
-    private boolean findPasswordStateIsInitByUserId(UserThirdAccount userThirdAccount) {
+    public boolean findPasswordStateIsInitByUserId(UserThirdAccount userThirdAccount) {
         if (userThirdAccount.getPasswordState() == 1) {
             return true;
         }

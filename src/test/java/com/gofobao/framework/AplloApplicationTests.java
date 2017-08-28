@@ -768,8 +768,8 @@ public class AplloApplicationTests {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(84),
-                        MqConfig.BATCH_NO, StringHelper.toString(114537),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(55),
+                        MqConfig.BATCH_NO, StringHelper.toString(105333),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
                 );
 

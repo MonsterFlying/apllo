@@ -1,16 +1,29 @@
 package com.gofobao.framework.member.biz.impl;
 
+import com.gofobao.framework.api.contants.JixinResultContants;
+import com.gofobao.framework.api.contants.SrvTxCodeContants;
+import com.gofobao.framework.api.helper.JixinManager;
+import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.mobile_modify_plus.MobileModifyRequest;
+import com.gofobao.framework.api.model.mobile_modify_plus.MobileModifyResponse;
 import com.gofobao.framework.asset.vo.request.VoJudgmentAvailableReq;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.MacthHelper;
+import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.member.biz.UserBiz;
 import com.gofobao.framework.member.biz.UserPhoneBiz;
+import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
+import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.request.VoBindPhone;
 import com.gofobao.framework.member.vo.request.VoBindSwitchPhoneReq;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
+import com.gofobao.framework.member.vo.response.VoOpenAccountResp;
+import com.google.common.base.Preconditions;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -24,6 +37,7 @@ import java.util.Date;
  * Created by Zeke on 2017/5/19.
  */
 @Service
+@Slf4j
 public class UserPhoneBizImpi implements UserPhoneBiz {
 
     @Autowired
@@ -35,6 +49,15 @@ public class UserPhoneBizImpi implements UserPhoneBiz {
     @Autowired
     UserBiz userBiz;
 
+    @Autowired
+    UserThirdAccountService userThirdAccountService ;
+
+    @Autowired
+    RedisHelper redisHelper;
+
+    @Autowired
+    JixinManager jixinManager;
+
 
     /**
      * 更换手机绑定
@@ -42,11 +65,12 @@ public class UserPhoneBizImpi implements UserPhoneBiz {
      * @param voBindSwitchPhoneReq
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBasicUserInfoResp> bindSwitchPhone(VoBindSwitchPhoneReq voBindSwitchPhoneReq) {
+        // TODO 需要添加主动查询即信手机号功能
+
         Long userId = voBindSwitchPhoneReq.getUserId();
         String newPhone = voBindSwitchPhoneReq.getNewPhone();
-
-
         Users users = userService.findById(userId);
         if (ObjectUtils.isEmpty(users) || ObjectUtils.isEmpty(users.getPhone())) {
             ResponseEntity
@@ -69,16 +93,45 @@ public class UserPhoneBizImpi implements UserPhoneBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "原手机验证码错误/或者已过期，请重新发送短信验证码!", VoBasicUserInfoResp.class));
         }
 
-        bool =  macthHelper.match( MqTagEnum.SMS_BUNDLE.getValue(), voBindSwitchPhoneReq.getNewPhone(), voBindSwitchPhoneReq.getNewPhoneCaptcha()) ;
-        if (!bool) {
+        // 修改成验证即信手机
+        String srvTxCode = null;
+        try {
+            srvTxCode = redisHelper.get(String.format("%s_%s", SrvTxCodeContants.MOBILE_MODIFY_PLUS, voBindSwitchPhoneReq.getNewPhone()), null);
+            redisHelper.remove(String.format("%s_%s", SrvTxCodeContants.MOBILE_MODIFY_PLUS, voBindSwitchPhoneReq.getNewPhone()));
+        } catch (Throwable e) {
+            log.error("UserThirdBizImpl opeanAccountCallBack get redis exception ", e);
+        }
+
+        if (StringUtils.isEmpty(srvTxCode)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "新手机验证码错误/或者已过期，请重新发送短信验证码!", VoBasicUserInfoResp.class));
         }
 
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        Preconditions.checkNotNull(userThirdAccount, "UserPhoneBizImpl.bindSwitchPhone: userThirdAccount is null") ;
+
+        // 请求即信修改手机
+        MobileModifyRequest mobileModifyRequest = new MobileModifyRequest() ;
+        mobileModifyRequest.setAccountId(userThirdAccount.getAccountId());
+        mobileModifyRequest.setMobile(voBindSwitchPhoneReq.getNewPhone());
+        mobileModifyRequest.setSmsCode(voBindSwitchPhoneReq.getNewPhoneCaptcha());
+        mobileModifyRequest.setLastSrvAuthCode(srvTxCode);
+        MobileModifyResponse mobileModifyResponse = jixinManager.send(JixinTxCodeEnum.MOBILE_MODIFY_PLUS, mobileModifyRequest, MobileModifyResponse.class);
+        if(ObjectUtils.isEmpty(mobileModifyResponse) || !JixinResultContants.SUCCESS.equals(mobileModifyResponse.getRetCode())){
+            String msg = ObjectUtils.isEmpty(mobileModifyResponse) ? "网络异常, 请稍后重试!" : mobileModifyResponse.getRetMsg() ;
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, msg, VoBasicUserInfoResp.class));
+        }
+
         users.setPhone(voBindSwitchPhoneReq.getNewPhone()) ;
         users.setUpdatedAt(new Date()) ;
         userService.save(users) ;
+
+        userThirdAccount.setMobile(voBindSwitchPhoneReq.getNewPhone()) ;
+        userThirdAccount.setUpdateAt(new Date());
+        userThirdAccountService.save(userThirdAccount) ;
         return userBiz.getUserInfoResp(users) ;
     }
 

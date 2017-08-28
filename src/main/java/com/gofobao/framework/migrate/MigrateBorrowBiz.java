@@ -54,15 +54,11 @@ public class MigrateBorrowBiz {
      * 合作单位编号
      */
     private static final String COINST_CODE = "000187";
-    /**
-     * 产品编号
-     */
-    private static final String PROUDCT_NO = "0110";
 
     /**
      * 迁移结果文件
      */
-    private static final String RESULT_BORROW_FILE_PATH = "";
+    private static final String RESULT_BORROW_FILE_PATH = "D:/Apollo/migrate/borrow_result/3005-BIDINRES-000187-101557-20170419";
 
     /**
      * 获取标的迁移文件
@@ -157,7 +153,6 @@ public class MigrateBorrowBiz {
                         }
                         String borrowId = StringHelper.toString(borrow.getId());
                         String yield = StringHelper.toString(borrow.getApr() * 1000); // 逾期年化收益
-
                         text.append(FormatHelper.appendByTail(BANK_NO, 4)); // 银行代号
                         text.append(FormatHelper.appendByTail(batchNo, 6));  // 批次号
                         text.append(FormatHelper.appendByTail(StringHelper.toString(borrow.getId()), 40));  // 标的编号
@@ -203,8 +198,7 @@ public class MigrateBorrowBiz {
     /**
      * 接收处理结果
      */
-    public void pustMigrateBorrowFile() {
-        final Date nowDate = new Date();
+    public void postMigrateBorrowFile() {
         File file = new File(RESULT_BORROW_FILE_PATH);
         if (!file.exists()) {
             log.error("文件不存在");
@@ -213,7 +207,7 @@ public class MigrateBorrowBiz {
 
         BufferedReader reader = null;
         try {
-            reader = Files.newReader(file, StandardCharsets.UTF_8);
+            reader = Files.newReader(file, Charset.forName("gbk"));
         } catch (FileNotFoundException e) {
             log.error("读取文件异常", e);
             return;
@@ -235,7 +229,7 @@ public class MigrateBorrowBiz {
                 byte[]  gbks = item.getBytes("gbk");
                 String flag =  FormatHelper.getStr(gbks, 271, 273);
                 String idStr = FormatHelper.getStr(gbks, 10, 50);
-                if (!"  ".equals(flag)) {
+                if (!"00".equals(flag)) {
                     StringBuffer stringBuffer = new StringBuffer();
                     stringBuffer.append(NumberHelper.toLong(idStr)).append("|").append(ERROR_MSG_DATA.get(flag));
                     try {

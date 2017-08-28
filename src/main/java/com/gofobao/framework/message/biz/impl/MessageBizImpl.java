@@ -561,44 +561,52 @@ public class MessageBizImpl implements MessageBiz {
 
     @Override
     public ResponseEntity<VoBaseResp> sendBindPhone4Switch(HttpServletRequest request, VoAnonSmsReq voAnonSmsReq, Long userId) {
-        // 查询用户是否已经绑定过
-        Users user = userService.findById(userId);
-        if ((ObjectUtils.isEmpty(user) || (user.getIsLock().equals(1)))) {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if (!ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前账户已经被系统锁定。如有疑问，请联系客服！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你已经开通银行存管，无需再次开通！"));
         }
 
-        if (StringUtils.isEmpty(user.getPhone())) {
+        UserThirdAccount userThirdAccountByPhone = userThirdAccountService.findByMobile(voAnonSmsReq.getPhone());
+        if (!ObjectUtils.isEmpty(userThirdAccountByPhone)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户还没有绑定手机, 请前往绑定手机操作"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前手机已在平台注册!"));
         }
 
-        boolean notExistsState = userService.notExistsByPhone(voAnonSmsReq.getPhone());
-
-        if (!notExistsState) {
+        // 4.请求即信发送验证码
+        SmsCodeApplyRequest smsCodeApplyRequest = new SmsCodeApplyRequest();
+        smsCodeApplyRequest.setSrvTxCode(SrvTxCodeContants.MOBILE_MODIFY_PLUS);
+        smsCodeApplyRequest.setMobile(voAnonSmsReq.getPhone());
+        smsCodeApplyRequest.setChannel(ChannelContant.HTML);
+        SmsCodeApplyResponse body = jixinManager.send(JixinTxCodeEnum.SMS_CODE_APPLY, smsCodeApplyRequest,  SmsCodeApplyResponse.class);
+        if (ObjectUtils.isEmpty(body)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前手机已在平台注册！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前通讯网络不稳定，请稍候重试！"));
         }
 
-        MqConfig config = new MqConfig();
-        config.setQueue(MqQueueEnum.RABBITMQ_SMS);
-        config.setTag(MqTagEnum.SMS_BUNDLE);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.PHONE, voAnonSmsReq.getPhone(), MqConfig.IP, request.getRemoteAddr());
-        config.setMsg(body);
-
-        boolean state = apollomqHelper.convertAndSend(config);
-
-        if (!state) {
+        if (!JixinResultContants.SUCCESS.equals(body.getRetCode())) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍候重试！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, body.getRetMsg()));
         }
 
-        // 调用MQ 发送注册短信
+        // 5.将授权码放入redis中
+        try {
+            redisHelper.put(
+                    String.format("%s_%s", SrvTxCodeContants.MOBILE_MODIFY_PLUS, voAnonSmsReq.getPhone()),
+                    body.getSrvAuthCode(),
+                    15 * 60);
+
+        } catch (Throwable e) {
+            log.error("即信授权码写入redis异常", e);
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍候重试！"));
+        }
+
         return ResponseEntity.ok(VoBaseResp.ok("短信发送成功"));
     }
 
