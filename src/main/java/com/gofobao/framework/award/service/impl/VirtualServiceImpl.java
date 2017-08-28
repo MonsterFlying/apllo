@@ -220,6 +220,7 @@ public class VirtualServiceImpl implements VirtualService {
         virtualCollection.setInterest(interest);
         virtualCollection.setPrincipal(principal);
         virtualCollection.setCollectionAt(collectionAt);
+        virtualCollection.setCollectionAtYes(collectionAt);
         virtualCollection.setCollectionMoneyYes(0);
         virtualCollection.setUpdatedAt(date);
         virtualCollection.setCreatedAt(date);

@@ -993,8 +993,8 @@ public class AssetBizImpl implements AssetBiz {
                         .body(VoBaseResp.error(VoBaseResp.ERROR, msg, VoAvailableAssetInfoResp.class));
             }
 
-            double availBal = NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0;// 可用余额  账面余额-可用余额=冻结金额
-            double currBal = NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100.0;// 账面余额  账面余额-可用余额=冻结金额
+            double availBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0,2);// 可用余额  账面余额-可用余额=冻结金额
+            double currBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100.0,2);// 账面余额  账面余额-可用余额=冻结金额
 
 
             // 查询用户操作记录

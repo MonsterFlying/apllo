@@ -23,10 +23,7 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.PasswordHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.helper.ThirdAccountHelper;
+import com.gofobao.framework.helper.*;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -309,7 +306,7 @@ public class TenderBizImpl implements TenderBiz {
             return false;
         }
 
-        double availBal = NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0;// 可用余额  账面余额-可用余额=冻结金额
+        double availBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0,2);// 可用余额  账面余额-可用余额=冻结金额
         if (availBal < invaildataMoney) {
             extendMessage.add("资金账户未同步，请先在个人中心进行资金同步操作!");
             return false;

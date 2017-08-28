@@ -362,7 +362,7 @@ public class LoanServiceImpl implements LoanService {
             voLoanInfo.setOrder(p.getOrder() + 1);
             voLoanInfo.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
             voLoanInfo.setStatus(p.getStatus());
-            voLoanInfo.setLateDays(p.getLateDays());
+            voLoanInfo.setLateDays(DateHelper.diffInDays(DateHelper.beginOfDate(new Date()),DateHelper.beginOfDate(p.getRepayAt()),false));
             voLoanInfo.setInterest(StringHelper.formatMon(p.getInterest() / 100D));
             voLoanInfo.setRepayAt(DateHelper.dateToString(p.getRepayAt()));
 
