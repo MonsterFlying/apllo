@@ -958,7 +958,7 @@ public class TransferBizImpl implements TransferBiz {
                 .eq("tenderId", tenderId)
                 .predicate(new GeSpecification("collectionAt", new DataObject(DateHelper.endOfDate(DateHelper.addDays(new Date(), 3)))))
                 .build();
-        if (isAll) { //部分转让
+        if (!isAll) { //部分转让
             borrowCollectionIds = Arrays.asList(borrowCollectionIdsStr.split(","));
 
             bcs = Specifications
@@ -1210,7 +1210,7 @@ public class TransferBizImpl implements TransferBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "操作失败: 非债权投资人不能转让!"));
         }
 
-        if (tender.getTransferFlag() != 0 || tender.getTransferFlag() != 3) {
+        if (tender.getTransferFlag() != 0 && tender.getTransferFlag() != 3) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "操作失败: 你已经出让债权了!"));

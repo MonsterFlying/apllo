@@ -419,7 +419,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
         /* 批次号 */
         String batchNo = jixinHelper.getBatchNo();
-                /* 资产记录流水号 */
+        /* 资产记录流水号 */
         String seqNo = assetChangeProvider.getSeqNo();
         /* 资产记录分组流水号 */
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
