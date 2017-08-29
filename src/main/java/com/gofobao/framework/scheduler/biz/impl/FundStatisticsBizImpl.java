@@ -21,6 +21,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 
 @Component
 @Slf4j
@@ -47,11 +48,11 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
         String fileName = String.format("%s-EVE%s-%s", bankNo, productNo, jixinTxDateHelper.getSubDateStr(1));
         boolean downloadState = jixinFileManager.download(fileName);
         if (!downloadState) {
-            log.info(String.format("EVE: %s下载失败", fileName));
+            log.error(String.format("EVE: %s下载失败", fileName));
             return false;
         }
         File file = new File(String.format("%s%s%s", filePath, File.separator, fileName));
-        BufferedReader bufferedReader = Files.newReader(file, Charsets.UTF_8);
+        BufferedReader bufferedReader = Files.newReader(file, Charset.forName("gbk"));
         XSSFWorkbook xwb = new XSSFWorkbook();//创建excel表格的工作空间
         XSSFSheet sheet = xwb.createSheet("data");
         CellStyle numberCellStyle = xwb.createCellStyle();

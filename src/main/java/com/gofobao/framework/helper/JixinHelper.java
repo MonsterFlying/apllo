@@ -3,6 +3,7 @@ package com.gofobao.framework.helper;
 import com.gofobao.framework.api.contants.IdTypeContant;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.entity.DictItem;
@@ -63,7 +64,7 @@ public class JixinHelper {
 
 
     public static String getOrderId(String prefix) {
-        return prefix + new Date().getTime() + NumberHelper.toInt(Math.random() * 100 + 1);
+        return prefix + new Date().getTime() + RandomHelper.generateNumberCode(9);
     }
 
 

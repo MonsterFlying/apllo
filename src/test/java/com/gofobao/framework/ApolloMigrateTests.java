@@ -3,6 +3,7 @@ package com.gofobao.framework;
 
 import com.gofobao.framework.migrate.MigrateBorrowBiz;
 import com.gofobao.framework.migrate.MigrateMemberBiz;
+import com.gofobao.framework.migrate.MigrateProtocolBiz;
 import com.gofobao.framework.migrate.MigrateTenderBiz;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -24,6 +25,9 @@ public class ApolloMigrateTests {
 
     @Autowired
     MigrateTenderBiz migrateTenderBiz;
+
+    @Autowired
+    MigrateProtocolBiz migrateProtocolBiz;
 
     /**
      * 获取会员迁移数据
@@ -79,6 +83,17 @@ public class ApolloMigrateTests {
     @Test
     public void testPostMigarateTenderBiz() {
         migrateTenderBiz.postMigrateTenderFile();
+    }
+
+
+    @Test
+    public void testgetMigarateProtocolBiz(){
+        migrateProtocolBiz.getProtocolMigrateFile();
+    }
+
+    @Test
+    public void testPostMigrateProtocolBiz(){
+        migrateProtocolBiz.postProtocolMigrateFile();
     }
 
 }

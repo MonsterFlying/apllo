@@ -1,7 +1,9 @@
 package com.gofobao.framework.migrate;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.JixinHelper;
@@ -60,7 +62,7 @@ public class MigrateProtocolBiz {
     /**
      * 迁移结果文件
      */
-    private static final String RESULT_MEMBER_FILE_PATH = "";
+    private static final String RESULT_MEMBER_FILE_PATH = "D:/Apollo/migrate/protocol_result/3005-MP-SIGRES-100759-20170419";
 
     /**
      * 写入协议存管
@@ -93,58 +95,72 @@ public class MigrateProtocolBiz {
 
         List<Long> transferIdList = new ArrayList<>();
         Map<Long, String> transferMap = new HashMap<>();
-        List<Long> tenderIdList = new ArrayList<>();
+        List<Long> tenderids = new ArrayList<>();
         Map<Long, String> tenderMap = new HashMap<>();
         List<String> lineList = lines.collect(Collectors.toList());
         for (String line : lineList) {
-            String flag = line.substring(88, 90);
-            String idStr = line.substring(90, 190);
-            String type = line.substring(33, 34);
-            String seqNo = line.substring(34, 74);
-            long id = NumberHelper.toLong(idStr);
-            if (!"00".equals(flag)) {
-                StringBuffer error = new StringBuffer();
-                error.append(id).append("|").append(ERROR_MSSAGE.get(flag));
-                try {
-                    errorWriter.write(error.toString());
-                    errorWriter.newLine();
-                } catch (IOException e) {
-                    log.error("写入文件错误", e);
-                    return;
-                }
-            } else {
-                if ("1".equals(type)) {
-                    tenderIdList.add(id);
-                    tenderMap.put(id, seqNo);
+            try{
+                byte[] gbks = line.getBytes("gbk");
+                String flag =  FormatHelper.getStr(gbks, 88, 90) ;
+                String idStr = FormatHelper.getStr(gbks, 90, 190) ;
+                String type = FormatHelper.getStr(gbks, 33, 34) ;
+                String seqNo = FormatHelper.getStr(gbks, 34, 74) ;
+                long id = NumberHelper.toLong(idStr);
+                if (!"00".equals(flag)) {
+                    StringBuffer error = new StringBuffer();
+                    error.append(id).append("|").append(ERROR_MSSAGE.get(flag));
+                    try {
+                        errorWriter.write(error.toString());
+                        errorWriter.newLine();
+                    } catch (IOException e) {
+                        log.error("写入文件错误", e);
+                        return;
+                    }
                 } else {
-                    transferIdList.add(id);
-                    transferMap.put(id, seqNo);
+                    if ("1".equals(type)) {  // 自动投标
+                        tenderids.add(id);
+                        tenderMap.put(id, seqNo);
+                    } else { // 债权转让
+                        transferIdList.add(id);
+                        transferMap.put(id, seqNo);
+                    }
                 }
+            }catch (Exception e){
+                log.error("写入异常", e);
             }
         }
 
-        Specification<UserThirdAccount> specification = Specifications
-                .<UserThirdAccount>and()
-                .in("id", tenderIdList.toArray())
-                .build();
-        List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findList(specification);
-        userThirdAccountList.forEach(userThirdAccount -> {
-            userThirdAccount.setAutoTenderState(1);
-            userThirdAccount.setAutoTenderOrderId(tenderMap.get(userThirdAccount.getId()));
-        });
+        if(!CollectionUtils.isEmpty(tenderids)){
+            Specification<UserThirdAccount> specification = Specifications
+                    .<UserThirdAccount>and()
+                    .in("id", tenderids.toArray())
+                    .build();
+            List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findList(specification);
+            userThirdAccountList.forEach(userThirdAccount -> {
+                userThirdAccount.setAutoTenderState(1);
+                userThirdAccount.setAutoTenderTotAmount(999999999L);
+                userThirdAccount.setAutoTenderTxAmount(999999999L);
+                userThirdAccount.setAutoTenderOrderId(tenderMap.get(userThirdAccount.getId()));
+            });
 
-        userThirdAccountService.save(userThirdAccountList);
+            userThirdAccountService.save(userThirdAccountList);
+        }
 
-        specification = Specifications
-                .<UserThirdAccount>and()
-                .in("id", transferIdList.toArray())
-                .build();
-        userThirdAccountList = userThirdAccountService.findList(specification);
-        userThirdAccountList.forEach(userThirdAccount -> {
-            userThirdAccount.setAutoTransferState(1);
-            userThirdAccount.setAutoTransferBondOrderId(transferMap.get(userThirdAccount.getId()));
-        });
-        userThirdAccountService.save(userThirdAccountList);
+        if(!CollectionUtils.isEmpty(transferIdList)){
+            Specification<UserThirdAccount> specification = Specifications
+                    .<UserThirdAccount>and()
+                    .in("id", transferIdList.toArray())
+                    .build();
+            List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findList(specification);
+            userThirdAccountList.forEach(userThirdAccount -> {
+                userThirdAccount.setAutoTransferState(1);
+                userThirdAccount.setAutoTransferBondOrderId(transferMap.get(userThirdAccount.getId()));
+            });
+            userThirdAccountService.save(userThirdAccountList);
+        }
+
+
+
 
 
     }
@@ -176,13 +192,15 @@ public class MigrateProtocolBiz {
     }
 
 
+    @Autowired
+    private JixinTxDateHelper jixinTxDateHelper ;
     /**
      * 获取用户协议迁移数据
      */
     public void getProtocolMigrateFile() {
         Date nowDate = new Date();
         String timeStr = DateHelper.dateToString(nowDate, DateHelper.DATE_FORMAT_HMS_NUM);
-        String dateStr = DateHelper.dateToString(nowDate, DateHelper.DATE_FORMAT_YMD_NUM);
+        String dateStr =jixinTxDateHelper.getTxDateStr() ;
         String fileName = String.format("%s-%s-SIGTRAN-%s-%s", BANK_NO, FUISSUER,
                 timeStr,
                 dateStr);
@@ -225,7 +243,7 @@ public class MigrateProtocolBiz {
             for (UserThirdAccount item : userThirdAccountList) {
                 if (item.getAutoTransferState() != 1) {  // 自动债权转让
                     try {
-                        String orderId = System.currentTimeMillis() + RandomHelper.generateNumberCode(6);
+                        String orderId = System.currentTimeMillis() + RandomHelper.generateNumberCode(10);
                         StringBuffer text = new StringBuffer();
                         text.append(FormatHelper.appendByTail(BANK_NO, 4)); // 银行代号
                         text.append(FormatHelper.appendByTail(timeStr, 6));  // 批次号
@@ -244,7 +262,7 @@ public class MigrateProtocolBiz {
                     }
                 } else if (item.getAutoTenderState() != 1) {
                     try {
-                        String orderId = System.currentTimeMillis() + RandomHelper.generateNumberCode(6);
+                        String orderId = System.currentTimeMillis() + RandomHelper.generateNumberCode(14);
                         StringBuffer text = new StringBuffer();
                         text.append(FormatHelper.appendByTail(BANK_NO, 4)); // 银行代号
                         text.append(FormatHelper.appendByTail(timeStr, 6));  // 批次号

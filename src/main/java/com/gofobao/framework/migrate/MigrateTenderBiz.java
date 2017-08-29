@@ -5,6 +5,7 @@ package com.gofobao.framework.migrate;
  */
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
@@ -74,6 +75,9 @@ public class MigrateTenderBiz {
     @Autowired
     private TenderService tenderService;
 
+    @Autowired
+    JixinTxDateHelper jixinTxDateHelper ;
+
     /**
      * 获取标的迁移文件
      */
@@ -82,7 +86,7 @@ public class MigrateTenderBiz {
         String batchNo = DateHelper.dateToString(nowDate, DateHelper.DATE_FORMAT_HMS_NUM);
         String fileName = String.format("%s-BID-%s-%s", BANK_NO,
                 batchNo,
-                DateHelper.dateToString(nowDate, DateHelper.DATE_FORMAT_YMD_NUM));
+                jixinTxDateHelper.getTxDateStr());
         // 创建
         BufferedWriter tenderWriter = null;
         try {
@@ -127,7 +131,7 @@ public class MigrateTenderBiz {
                     .in("borrowId", borrowIdSet.toArray())
                     .eq("status", 1)
                     .eq("transferFlag", 0)
-                    .eq("'")
+                    .ne("authCode", null)
                     .build();
             List<Tender> tenderList = tenderService.findList(ts);
 
@@ -159,7 +163,7 @@ public class MigrateTenderBiz {
                     Integer repayFashion = borrow.getRepayFashion();
                     String intPayDay = null;
                     String endDate = null;
-                    String buyDate = DateHelper.dateToString(borrow.getSuccessAt(), DateHelper.DATE_FORMAT_YMD_NUM)  ;
+                    String buyDate = jixinTxDateHelper.getTxDateStr() ;
                     if (1 == repayFashion) {
                         intType = "0";
                         intPayDay = "";
