@@ -69,6 +69,7 @@ public class WebBorrowRepaymentContorller {
         try {
             return repaymentBiz.pcRepayAll(voRepayAllReq);
         } catch (Throwable e) {
+            log.error("提前结清异常:",e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "提前还款失败！"));
         }

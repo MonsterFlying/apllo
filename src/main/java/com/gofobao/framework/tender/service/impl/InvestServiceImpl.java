@@ -364,7 +364,7 @@ public class InvestServiceImpl implements InvestService {
 
         viewReturnedMoney.setOrderCount(borrowCollectionList.size());
         Long collectionMoneySum = borrowCollectionList.stream().mapToLong(p -> p.getCollectionMoney()).sum();
-        viewReturnedMoney.setCollectionMoneySum(StringHelper.formatMon(collectionMoneySum/100D));
+        viewReturnedMoney.setCollectionMoneySum(StringHelper.formatMon(collectionMoneySum / 100D));
 
         List<ReturnedMoney> returnedMonies = new ArrayList<>(0);
         borrowCollectionList.stream().forEach(p -> {
@@ -373,8 +373,9 @@ public class InvestServiceImpl implements InvestService {
             returnedMoney.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
             returnedMoney.setCollectionMoney(StringHelper.formatMon(p.getCollectionMoney() / 100D));
             returnedMoney.setOrder(p.getOrder() + 1);
-            returnedMoney.setLateDays(p.getLateDays());
-            returnedMoney.setCollectionAt(p.getStatus()==BorrowCollectionContants.STATUS_YES?DateHelper.dateToString(p.getCollectionAtYes(),DateHelper.DATE_FORMAT_YMD):DateHelper.dateToString(p.getCollectionAt(),DateHelper.DATE_FORMAT_YMD));
+            int lateDays = DateHelper.diffInDays(DateHelper.beginOfDate(new Date()), DateHelper.beginOfDate(p.getCollectionAtYes()), false);
+            returnedMoney.setLateDays(p.getStatus() == 0 ? lateDays : p.getLateDays());
+            returnedMoney.setCollectionAt(p.getStatus() == BorrowCollectionContants.STATUS_YES ? DateHelper.dateToString(p.getCollectionAtYes(), DateHelper.DATE_FORMAT_YMD) : DateHelper.dateToString(p.getCollectionAt(), DateHelper.DATE_FORMAT_YMD));
             returnedMoney.setStatus(p.getStatus());
             returnedMonies.add(returnedMoney);
         });

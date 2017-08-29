@@ -103,7 +103,7 @@ public class FriendsController {
      *
      * @param response
      */
-    @RequestMapping(value = "invite/qrcode/getInviteFriendQRCode", method = RequestMethod.GET)
+    @RequestMapping(value = "pub/invite/qrcode/getInviteFriendQRCode", method = RequestMethod.GET)
     @ApiOperation(value = "获取二维码接口", notes = "获取二维码接口")
     public void getInviteFriendQRCode(@RequestParam("inviteCode") String inviteCode, HttpServletResponse response) {
 
