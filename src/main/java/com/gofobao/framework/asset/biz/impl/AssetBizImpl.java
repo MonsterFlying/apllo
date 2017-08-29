@@ -193,12 +193,12 @@ public class AssetBizImpl implements AssetBiz {
         long netWorthQuota = new Double((useMoney + waitCollectionPrincipal) * 0.8 - payment).longValue();//计算净值额度
 
         VoUserAssetInfoResp voUserAssetInfoResp = VoBaseResp.ok("成功", VoUserAssetInfoResp.class);
-        voUserAssetInfoResp.setUseMoney(useMoney);
-        voUserAssetInfoResp.setNoUseMoney(asset.getNoUseMoney());
-        voUserAssetInfoResp.setPayment(payment);
-        voUserAssetInfoResp.setCollection(asset.getCollection());
-        voUserAssetInfoResp.setVirtualMoney(asset.getVirtualMoney());
-        voUserAssetInfoResp.setNetWorthQuota(netWorthQuota);
+        voUserAssetInfoResp.setUseMoney(StringHelper.formatDouble(useMoney / 100D,true));
+        voUserAssetInfoResp.setNoUseMoney(StringHelper.formatDouble(asset.getNoUseMoney() / 100D, true));
+        voUserAssetInfoResp.setPayment(StringHelper.formatDouble(payment / 100D, true));
+        voUserAssetInfoResp.setCollection(StringHelper.formatDouble(asset.getCollection() / 100D, true));
+        voUserAssetInfoResp.setVirtualMoney(StringHelper.formatDouble(asset.getVirtualMoney() / 100D, true));
+        voUserAssetInfoResp.setNetWorthQuota(StringHelper.formatDouble(netWorthQuota / 100D, true));
         return ResponseEntity.ok(voUserAssetInfoResp);
     }
 
