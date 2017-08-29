@@ -22,7 +22,6 @@ public class FundStatisticsScheduler {
 
     @Scheduled(cron = "0 0 3 * * ?")
     public void process() {
-
         boolean state = false;
         try {
             log.info("平台账单EVE启动");
