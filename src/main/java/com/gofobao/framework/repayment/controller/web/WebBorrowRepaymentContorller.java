@@ -88,6 +88,7 @@ public class WebBorrowRepaymentContorller {
         try {
             return repaymentBiz.pcInstantly(voPcRepay);
         } catch (Throwable e) {
+            log.error("pc还款异常:",e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "立即还款失败！"));
         }

@@ -95,9 +95,6 @@ import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.gofobao.framework.windmill.borrow.biz.WindmillTenderBiz;
 import com.google.common.base.Preconditions;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
@@ -119,7 +116,6 @@ import org.springframework.util.StringUtils;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -415,10 +411,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
 
         //判断是否有在即信处理的债权转让，有不让还款
-        if (checkTransferDealing(borrowId, null)) {
+        if (checkTenderChange(borrowId)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前还款包含已提交存管系统处理的债权转让，请等待处理完成后在进行操作！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "这笔债权转让正在操作中，请等待处理完成后在进行操作！"));
         }
 
         /* 批次号 */
@@ -537,7 +533,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @throws Exception
      */
     private ResponseEntity<VoBaseResp> repayAllProcess(long borrowId, Borrow borrow, UserThirdAccount titularBorrowAccount, List<VoBuildThirdRepayReq> voBuildThirdRepayReqs, String batchNo,
-                                 String seqNo, String groupSeqNo, long penalty, BatchAssetChange batchAssetChange, Map<Long/* repaymentId */, BorrowRepayment> borrowRepaymentMaps) throws Exception {
+                                                       String seqNo, String groupSeqNo, long penalty, BatchAssetChange batchAssetChange, Map<Long/* repaymentId */, BorrowRepayment> borrowRepaymentMaps) throws Exception {
         Date nowDate = new Date();
         List<Repay> repays = new ArrayList<>();/* 生成存管还款记录(提前结清) */
         for (VoBuildThirdRepayReq voBuildThirdRepayReq : voBuildThirdRepayReqs) {
@@ -665,7 +661,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if ((ObjectUtils.isEmpty(balanceUnfreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
                 throw new Exception("提前结清解冻异常：" + balanceUnfreezeResp.getRetMsg());
             }
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR,"提前结清失败!"));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "提前结清失败!"));
         }
         return ResponseEntity.ok(VoBaseResp.ok("提前结清成功!"));
     }
@@ -1198,26 +1194,26 @@ public class RepaymentBizImpl implements RepaymentBiz {
     @Transactional(rollbackFor = Throwable.class)
     public ResponseEntity<VoBaseResp> newRepay(VoRepayReq repayReq) throws Exception {
         /* 还款人id */
-        long userId = repayReq.getUserId();
+        long repayUserId = repayReq.getUserId();
         /* 还款记录id */
         long borrowRepaymentId = repayReq.getRepaymentId();
         /* 利息百分比 */
         double interestPercent = repayReq.getInterestPercent();
         /* 是否是本人还款 */
         boolean isUserOpen = repayReq.getIsUserOpen();
-        UserThirdAccount repayUserThirdAccount = userThirdAccountService.findByUserId(userId);
+        UserThirdAccount repayUserThirdAccount = userThirdAccountService.findByUserId(repayUserId);
         Preconditions.checkNotNull(repayUserThirdAccount, "批量还款: 还款用户存管账户不存在");
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(borrowRepaymentId);
         Preconditions.checkNotNull(borrowRepayment, "批量还款: 还款记录不存在");
         Borrow parentBorrow = borrowService.findByIdLock(borrowRepayment.getBorrowId());
         Preconditions.checkNotNull(parentBorrow, "批量还款: 还款标的信息不存在");
-        Asset repayAsset = assetService.findByUserIdLock(userId);
+        Asset repayAsset = assetService.findByUserIdLock(repayUserId);
         Preconditions.checkNotNull(repayAsset, "批量还款: 还款人账户不存在");
         /* 冻结orderId */
         String freezeOrderId = JixinHelper.getOrderId(JixinHelper.BALANCE_FREEZE_PREFIX);
         //还款参数
         Map<String, Object> acqResMap = new HashMap<>();
-        acqResMap.put("userId", userId);
+        acqResMap.put("userId", repayUserId);
         acqResMap.put("repaymentId", borrowRepayment.getId());
         acqResMap.put("interestPercent", 1d);
         acqResMap.put("isUserOpen", true);
@@ -1237,7 +1233,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         // 生成投资人还款资金变动记录
         BatchAssetChange batchAssetChange = addBatchAssetChange(batchNo, borrowRepayment.getId(), advance);
         // 生成还款人还款批次资金改变记录
-        addBatchAssetChangeByBorrower(batchAssetChange.getId(), borrowRepayment, parentBorrow, interestPercent, isUserOpen, lateInterest, seqNo, groupSeqNo);
+        addBatchAssetChangeByBorrower(batchAssetChange.getId(), borrowRepayment, parentBorrow, interestPercent, isUserOpen, lateInterest, repayUserId, seqNo, groupSeqNo);
         //改变还款与垫付记录的值
         changeRepaymentAndAdvanceRecord(borrowRepayment, lateDays, lateInterest, advance);
         // 正常还款
@@ -1314,6 +1310,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                                               double interestPercent,
                                               boolean isUserOpen,
                                               long lateInterest,
+                                              long repayUserId,
                                               String seqNo,
                                               String groupSeqNo) {
         Date nowDate = new Date();
@@ -1322,7 +1319,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
         batchAssetChangeItem.setState(0);
         batchAssetChangeItem.setType(AssetChangeTypeEnum.repayment.getLocalType());  // 还款
-        batchAssetChangeItem.setUserId(borrow.getUserId());
+        batchAssetChangeItem.setUserId(repayUserId);
         batchAssetChangeItem.setMoney(borrowRepayment.getPrincipal() + borrowRepayment.getInterest());
         batchAssetChangeItem.setRemark(String.format("对借款[%s]第%s期的还款",
                 borrow.getName(),
@@ -1344,7 +1341,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
             batchAssetChangeItem.setState(0);
             batchAssetChangeItem.setType(AssetChangeTypeEnum.repayMentPenaltyFee.getLocalType());  // 扣除借款人还款滞纳金
-            batchAssetChangeItem.setUserId(borrow.getUserId());
+            batchAssetChangeItem.setUserId(repayUserId);
             batchAssetChangeItem.setMoney(lateInterest);
             batchAssetChangeItem.setRemark(String.format("借款[%s]的逾期罚息", borrow.getName()));
             batchAssetChangeItem.setCreatedAt(nowDate);
@@ -1360,7 +1357,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
         batchAssetChangeItem.setState(0);
         batchAssetChangeItem.setType(AssetChangeTypeEnum.paymentSub.getLocalType());  // 扣除待还
-        batchAssetChangeItem.setUserId(borrow.getUserId());
+        batchAssetChangeItem.setUserId(repayUserId);
         batchAssetChangeItem.setMoney(borrowRepayment.getRepayMoney());
         batchAssetChangeItem.setInterest(borrowRepayment.getInterest());
         batchAssetChangeItem.setRemark("还款成功扣除待还");
@@ -1442,10 +1439,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
         double freezeMoney = txAmount + txFeeOut + intAmount;/* 冻结金额 */
         // 冻结还款金额
         long money = new Double((freezeMoney) * 100).longValue();
-        ResponseEntity<VoBaseResp> resp = checkAssetByRepay(repayAsset, money);
+        /*ResponseEntity<VoBaseResp> resp = checkAssetByRepay(repayAsset, money);
         if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
             throw new Exception(resp.getBody().getState().getMsg());
-        }
+        }*/
 
         BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
         balanceFreezeReq.setAccountId(repayUserThirdAccount.getAccountId());
@@ -1980,10 +1977,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
 
         //5.判断是否有在即信处理的债权转让，有不让还款
-        if (checkTransferDealing(borrowRepayment.getBorrowId(), borrowRepayment.getOrder())) {
+        if (checkTenderChange(borrowRepayment.getBorrowId())) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前还款包含已提交存管系统处理的债权转让，请等待处理完成后在进行操作！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "这笔债权转让正在操作中，请等待处理完成后在进行操作！"));
         }
         return ResponseEntity.ok(VoBaseResp.ok("验证成功"));
     }
@@ -2116,10 +2113,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
 
         //5.判断是否有在即信处理的债权转让，有不让还款
-        if (checkTransferDealing(borrow.getId(), borrowRepayment.getOrder())) {
+        if (checkTenderChange(borrow.getId())) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前还款包含已提交存管系统处理的债权转让，请等待处理完成后在进行操作！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "这笔债权转让正在操作中，请等待处理完成后在进行操作！"));
         }
         return ResponseEntity.ok(VoBaseResp.ok("垫付成功!"));
     }
@@ -2130,23 +2127,17 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param borrowId
      * @return
      */
-    private boolean checkTransferDealing(long borrowId, Integer order) {
-        Specification<Tender> ts = null;
-        if (ObjectUtils.isEmpty(order)) {
-            ts = Specifications
-                    .<Tender>and()
-                    .eq("borrowId", borrowId)
-                    .eq("status", 1)
-                    .in("transferFlag", 3)
-                    .build();
-        } else {
-            ts = Specifications
-                    .<Tender>and()
-                    .eq("borrowId", borrowId)
-                    .eq("status", 1)
-                    .in("transferFlag", 1)
-                    .build();
-        }
+    private boolean checkTenderChange(long borrowId) {
+        /* 还款记录 */
+        Borrow borrow = borrowService.findById(borrowId);
+        Preconditions.checkNotNull(borrow, "还款不存在!");
+        //1.检查债权转让
+        Specification<Tender> ts = Specifications
+                .<Tender>and()
+                .eq("borrowId", borrowId)
+                .eq("status", 1)
+                .in("transferFlag", 1)
+                .build();
 
         List<Tender> tenderList = tenderService.findList(ts);
         if (!CollectionUtils.isEmpty(tenderList)) {
@@ -2170,6 +2161,30 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 if (count > 0) {
                     return true;
                 }
+            }
+        }
+        //2.检查还款、垫付、提前还款是否还在在处理中
+        Specification<BorrowRepayment> bcs = Specifications
+                .<BorrowRepayment>and()
+                .eq("borrowId", borrowId)
+                .eq("status", 0)
+                .build();
+        List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(bcs);
+        if (!CollectionUtils.isEmpty(borrowRepaymentList)) {
+            /* 还款id 跟标的id */
+            Set<Long> sourceIds = borrowRepaymentList.stream().map(BorrowRepayment::getId).collect(toSet());
+            sourceIds.addAll(borrowRepaymentList.stream().map(BorrowRepayment::getBorrowId).collect(toSet()));
+
+            //查询即信批次记录
+            Specification<ThirdBatchLog> tbls = Specifications
+                    .<ThirdBatchLog>and()
+                    .in("state", 0, 1)
+                    .in("sourceId", sourceIds.toArray())
+                    .in("type", ThirdBatchLogContants.BATCH_REPAY, ThirdBatchLogContants.BATCH_BAIL_REPAY, ThirdBatchLogContants.BATCH_REPAY_ALL)
+                    .build();
+            long count = thirdBatchLogService.count(tbls);
+            if (count > 0) {
+                return true;
             }
         }
         return false;

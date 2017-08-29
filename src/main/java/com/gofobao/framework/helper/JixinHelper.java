@@ -117,10 +117,13 @@ public class JixinHelper {
             return null;
         }
 
-        String titularBorrowAccountId = borrow.getTitularBorrowAccountId();
+        /**
+         * @// TODO: 2017/8/29 上线请去除注释
+         */
+        /*String titularBorrowAccountId = borrow.getTitularBorrowAccountId();
         if (!ObjectUtils.isEmpty(titularBorrowAccountId)) {
             return userThirdAccountService.findByAccountId(titularBorrowAccountId);
-        } else {
+        } else {*/
             try {
                 DictValue dictValue = jixinCache.get("titularBorrowUserId");
                 UserThirdAccount bailAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
@@ -128,7 +131,7 @@ public class JixinHelper {
             } catch (Throwable e) {
                 e.printStackTrace();
             }
-        }
+        /*}*/
         return null;
     }
 

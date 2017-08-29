@@ -19,7 +19,7 @@ public class VoTransferTenderReq {
     @NotNull(message = "投标id不能为空!")
     private Long tenderId;
     @ApiModelProperty("是否是部分转让")
-    private Boolean isAll = false;
+    private Boolean isAll = true;
     @ApiModelProperty("部分转让回款id集合 用英文,分隔")
     private String borrowCollectionIds;
 }
