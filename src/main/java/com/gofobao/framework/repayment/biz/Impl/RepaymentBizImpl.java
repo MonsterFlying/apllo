@@ -426,7 +426,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //生成批次资产改变主记录
         BatchAssetChange batchAssetChange = addBatchAssetChangeByRepayAll(batchNo, borrowId);
         //扣除提前结清的违约金
-        addBatchAssetChangeByBorrowPenalty(borrowId, borrow, penalty, seqNo, groupSeqNo, batchAssetChange);
+        addBatchAssetChangeByBorrowPenalty(borrowId, titularBorrowAccount.getUpdateId(), penalty, seqNo, groupSeqNo, batchAssetChange);
         //提前结清处理
         //1.生成批次资产变动记录
         //2.发送至存管系统进行备案
@@ -437,20 +437,20 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * 扣除提前结清的违约金
      *
      * @param borrowId
-     * @param borrow
+     * @param repayId
      * @param penalty
      * @param seqNo
      * @param groupSeqNo
      * @param batchAssetChange
      */
-    private void addBatchAssetChangeByBorrowPenalty(long borrowId, Borrow borrow, long penalty, String seqNo, String groupSeqNo, BatchAssetChange batchAssetChange) {
+    private void addBatchAssetChangeByBorrowPenalty(long borrowId,long repayId, long penalty, String seqNo, String groupSeqNo, BatchAssetChange batchAssetChange) {
         //扣除提前结清的违约金
         if (penalty > 0) {
             BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
             batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
             batchAssetChangeItem.setState(0);
             batchAssetChangeItem.setType(AssetChangeTypeEnum.interestManagementFee.getLocalType());  // 扣除借款人违约金
-            batchAssetChangeItem.setUserId(borrow.getUserId());
+            batchAssetChangeItem.setUserId(repayId);
             batchAssetChangeItem.setMoney(penalty);
             batchAssetChangeItem.setRemark("扣除提前结清的违约金");
             batchAssetChangeItem.setCreatedAt(new Date());
@@ -1233,7 +1233,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         // 生成投资人还款资金变动记录
         BatchAssetChange batchAssetChange = addBatchAssetChange(batchNo, borrowRepayment.getId(), advance);
         // 生成还款人还款批次资金改变记录
-        addBatchAssetChangeByBorrower(batchAssetChange.getId(), borrowRepayment, parentBorrow, interestPercent, isUserOpen, lateInterest, repayUserId, seqNo, groupSeqNo);
+        addBatchAssetChangeByBorrower(batchAssetChange.getId(), borrowRepayment, parentBorrow, interestPercent, isUserOpen, lateInterest, repayUserId, seqNo, groupSeqNo,advance);
         //改变还款与垫付记录的值
         changeRepaymentAndAdvanceRecord(borrowRepayment, lateDays, lateInterest, advance);
         // 正常还款
@@ -1312,7 +1312,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
                                               long lateInterest,
                                               long repayUserId,
                                               String seqNo,
-                                              String groupSeqNo) {
+                                              String groupSeqNo,
+                                              boolean advance) {
         Date nowDate = new Date();
         // 借款人还款
         BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
@@ -1352,21 +1353,23 @@ public class RepaymentBizImpl implements RepaymentBiz {
             batchAssetChangeItemService.save(batchAssetChangeItem);
         }
 
-        // 扣除借款人待还
-        batchAssetChangeItem = new BatchAssetChangeItem();
-        batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
-        batchAssetChangeItem.setState(0);
-        batchAssetChangeItem.setType(AssetChangeTypeEnum.paymentSub.getLocalType());  // 扣除待还
-        batchAssetChangeItem.setUserId(repayUserId);
-        batchAssetChangeItem.setMoney(borrowRepayment.getRepayMoney());
-        batchAssetChangeItem.setInterest(borrowRepayment.getInterest());
-        batchAssetChangeItem.setRemark("还款成功扣除待还");
-        batchAssetChangeItem.setCreatedAt(nowDate);
-        batchAssetChangeItem.setUpdatedAt(nowDate);
-        batchAssetChangeItem.setSourceId(borrowRepayment.getId());
-        batchAssetChangeItem.setSeqNo(seqNo);
-        batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
-        batchAssetChangeItemService.save(batchAssetChangeItem);
+        if (advance) {
+            // 扣除借款人待还
+            batchAssetChangeItem = new BatchAssetChangeItem();
+            batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
+            batchAssetChangeItem.setState(0);
+            batchAssetChangeItem.setType(AssetChangeTypeEnum.paymentSub.getLocalType());  // 扣除待还
+            batchAssetChangeItem.setUserId(repayUserId);
+            batchAssetChangeItem.setMoney(borrowRepayment.getRepayMoney());
+            batchAssetChangeItem.setInterest(borrowRepayment.getInterest());
+            batchAssetChangeItem.setRemark("还款成功扣除待还");
+            batchAssetChangeItem.setCreatedAt(nowDate);
+            batchAssetChangeItem.setUpdatedAt(nowDate);
+            batchAssetChangeItem.setSourceId(borrowRepayment.getId());
+            batchAssetChangeItem.setSeqNo(seqNo);
+            batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+            batchAssetChangeItemService.save(batchAssetChangeItem);
+        }
     }
 
     /**

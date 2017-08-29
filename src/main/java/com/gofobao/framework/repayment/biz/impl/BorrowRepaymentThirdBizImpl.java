@@ -417,6 +417,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         ImmutableMap<String, String> body = ImmutableMap
                 .of(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("borrowId")),
                         MqConfig.BATCH_NO, StringHelper.toString(lendRepayRunResp.getBatchNo()),
+                        MqConfig.BATCH_RESP, GSON.toJson(lendRepayRunResp),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
         try {
