@@ -272,7 +272,7 @@ public class UserBizImpl implements UserBiz {
             voBasicUserInfoResp.setBankPassworState(userThirdAccount.getPasswordState() == 1);
             voBasicUserInfoResp.setBankAccout(userThirdAccount.getAccountId());
             voBasicUserInfoResp.setBankName("江西银行总行营业部");
-            voBasicUserInfoResp.setSubbranch(userThirdAccount.getBankName());
+            voBasicUserInfoResp.setSubbranch( StringUtils.isEmpty(userThirdAccount.getBankName()) ?  "" : userThirdAccount.getBankName());
             voBasicUserInfoResp.setBankState(!StringUtils.isEmpty(userThirdAccount.getCardNo()));
             voBasicUserInfoResp.setAutoTenderState(userThirdAccount.getAutoTenderState().equals(1));
             voBasicUserInfoResp.setAutoTranferState(userThirdAccount.getAutoTransferState().equals(1));
@@ -284,7 +284,7 @@ public class UserBizImpl implements UserBiz {
 
         // 获取vip状态
         Vip vip = vipService.findTopByUserIdAndStatus(user.getId(), 1);
-        voBasicUserInfoResp.setAvatarUrl(StringUtils.isEmpty(user.getAvatarPath())?"http://localhost/images/user/default_avatar.jpg":user.getAvatarPath());
+        voBasicUserInfoResp.setAvatarUrl(StringUtils.isEmpty(user.getAvatarPath())?javaDomain+"/images/user/default_avatar.jpg":user.getAvatarPath());
         voBasicUserInfoResp.setVipState(ObjectUtils.isEmpty(vip) ? false : DateHelper.diffInDays(new Date(), vip.getExpireAt(), false) > 0);
         voBasicUserInfoResp.setEmail(StringUtils.isEmpty(user.getEmail()) ? " " : user.getEmail());
         voBasicUserInfoResp.setEmailState(!StringUtils.isEmpty(user.getEmail()));
