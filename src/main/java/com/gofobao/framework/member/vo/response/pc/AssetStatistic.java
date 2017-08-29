@@ -18,10 +18,10 @@ public class AssetStatistic {
     @ApiModelProperty("冻结金额")
     private String noUseMoney;
 
-    @ApiModelProperty("待收金额")
+    @ApiModelProperty("待还金额")
     private String payment;
 
-    @ApiModelProperty("待还金额")
+    @ApiModelProperty("待收金额")
     private String collection;
 
     @ApiModelProperty("净值额度")
