@@ -1,2 +1,0 @@
-#资金类型字段长度扩容
-ALTER TABLE gfb0810.gfb_new_asset_log MODIFY local_type VARCHAR(50) DEFAULT '' COMMENT '本地交易类型';

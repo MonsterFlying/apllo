@@ -17,20 +17,19 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 委托状态查询
+ * 大额提现
  * Created by Administrator on 2017/6/30 0030.
  */
 @Component
 @Slf4j
 public class BigCashQueryScheduler {
-
     @Autowired
     TaskSchedulerBiz taskSchedulerBiz;
 
     @Autowired
     CashDetailLogBiz cashDetailLogBiz ;
 
-    @Scheduled(fixedRate = 10 * 60 * 1000)
+    @Scheduled(cron = " */15 * * * * ")
     public void process() {
         log.info("大额提现资金确认扣减调动启动");
         // 查询带调度队列

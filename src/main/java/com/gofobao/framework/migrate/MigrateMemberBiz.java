@@ -200,6 +200,7 @@ public class MigrateMemberBiz {
                 userThirdAccount.setAcctUse(0);
                 userThirdAccount.setChannel(0);
                 userThirdAccount.setIdType(1);
+                userThirdAccount.setDel(0);
                 userThirdAccount.setMobile(user.getPhone());
                 userThirdAccount.setName(user.getRealname());
                 userThirdAccountAll.add(userThirdAccount) ;
