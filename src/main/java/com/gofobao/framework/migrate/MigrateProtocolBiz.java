@@ -136,7 +136,8 @@ public class MigrateProtocolBiz {
                     .in("id", tenderids.toArray())
                     .build();
             List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findList(specification);
-            userThirdAccountList.forEach(userThirdAccount -> {
+            userThirdAccountList.stream().filter(userThirdAccount -> userThirdAccount.getAutoTenderState() != 1).
+                    forEach(userThirdAccount -> {
                 userThirdAccount.setAutoTenderState(1);
                 userThirdAccount.setAutoTenderTotAmount(999999999L);
                 userThirdAccount.setAutoTenderTxAmount(999999999L);
@@ -152,17 +153,12 @@ public class MigrateProtocolBiz {
                     .in("id", transferIdList.toArray())
                     .build();
             List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findList(specification);
-            userThirdAccountList.forEach(userThirdAccount -> {
+            userThirdAccountList.stream().filter(userThirdAccount -> userThirdAccount.getAutoTransferState() != 1).forEach(userThirdAccount -> {
                 userThirdAccount.setAutoTransferState(1);
                 userThirdAccount.setAutoTransferBondOrderId(transferMap.get(userThirdAccount.getId()));
             });
             userThirdAccountService.save(userThirdAccountList);
         }
-
-
-
-
-
     }
 
     static Map<String, String> ERROR_MSSAGE = new HashMap<>();

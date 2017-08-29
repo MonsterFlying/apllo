@@ -214,6 +214,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         ImmutableMap<String, String> body = ImmutableMap
                 .of(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("transferId")),
                         MqConfig.BATCH_NO, StringHelper.toString(batchCreditInvestRunCall.getBatchNo()),
+                        MqConfig.BATCH_RESP , GSON.toJson(batchCreditInvestRunCall),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
         try {

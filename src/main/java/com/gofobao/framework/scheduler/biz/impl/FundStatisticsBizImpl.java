@@ -2,6 +2,8 @@ package com.gofobao.framework.scheduler.biz.impl;
 
 import com.gofobao.framework.api.helper.JixinFileManager;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
+import com.gofobao.framework.financial.entity.Eve;
+import com.gofobao.framework.migrate.FormatHelper;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -22,6 +24,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @Slf4j
@@ -52,7 +57,20 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
             return false;
         }
         File file = new File(String.format("%s%s%s", filePath, File.separator, fileName));
-        BufferedReader bufferedReader = Files.newReader(file, Charset.forName("gbk"));
+        BufferedReader bufferedReader = Files.newReader(file, StandardCharsets.UTF_8);
+        // 保存进数据库
+        List<Eve> eveList = new ArrayList<>(1000) ;
+        bufferedReader.lines().forEach(line ->{
+            try{
+                byte[] bytes = line.getBytes(StandardCharsets.UTF_8);
+                String bank = FormatHelper.getStr(bytes, 0, 4) ;
+            }catch (Exception e){
+                log.error("eee", e);
+            }
+
+        });
+
+
         XSSFWorkbook xwb = new XSSFWorkbook();//创建excel表格的工作空间
         XSSFSheet sheet = xwb.createSheet("data");
         CellStyle numberCellStyle = xwb.createCellStyle();
