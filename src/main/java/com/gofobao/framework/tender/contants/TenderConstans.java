@@ -61,7 +61,10 @@ public class TenderConstans {
      */
     public static final Integer TRANSFER_YES=2;
 
-
+    /**
+     * 部分转让
+     */
+    public static final Integer TRANSFER_PART_YES=3;
 
 
 }

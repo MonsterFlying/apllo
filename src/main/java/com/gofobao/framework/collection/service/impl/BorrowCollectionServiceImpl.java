@@ -19,6 +19,8 @@ import com.gofobao.framework.helper.BeanHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -44,10 +46,10 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
 
     @Autowired
     private BorrowCollectionRepository borrowCollectionRepository;
-
     @Autowired
     private BorrowRepository borrowRepository;
-
+    @Autowired
+    private BorrowRepaymentService borrowRepaymentService;
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -228,6 +230,15 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         BorrowCollection borrowCollection = borrowCollectionRepository.findOne(voOrderDetailReq.getCollectionId());
         Preconditions.checkNotNull(borrowCollection, "BorrowCollectionSericeImpl.orderDetail: borrowCollecion is empty");
         Borrow borrow = borrowRepository.findOne(borrowCollection.getBorrowId().longValue());
+        /*回款对应期数还款记录*/
+        Specification<BorrowRepayment> brs = Specifications
+                .<BorrowRepayment>and()
+                .eq("borrowId", borrow.getId())
+                .eq("order", borrowCollection.getOrder())
+                .build();
+        List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
+        Preconditions.checkState(!CollectionUtils.isEmpty(borrowRepaymentList), "还款记录不存在!");
+        BorrowRepayment borrowRepayment = borrowRepaymentList.get(0);
         VoViewOrderDetailResp detailRes = VoBaseResp.ok("查询成功", VoViewOrderDetailResp.class);
         detailRes.setOrder(borrowCollection.getOrder() + 1);
         detailRes.setCollectionMoney(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100D));
@@ -236,7 +247,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         detailRes.setBorrowName(borrow.getName());
         Long principal = 0L;
         Long interest = 0L;
-        if (borrowCollection.getStatus() == BorrowCollectionContants.STATUS_YES) {
+        if (borrowCollection.getStatus() == BorrowCollectionContants.STATUS_YES || !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) {
             principal = borrowCollection.getPrincipal();
             interest = borrowCollection.getInterest();
             detailRes.setStatusStr(BorrowCollectionContants.STATUS_YES_STR);

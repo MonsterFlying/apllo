@@ -37,6 +37,8 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
+import com.gofobao.framework.common.data.DataObject;
+import com.gofobao.framework.common.data.GeSpecification;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -149,7 +151,7 @@ public class AplloApplicationTests {
     MigrateBorrowBiz migrateBorrowBiz;
 
     @Autowired
-    MigrateProtocolBiz migrateProtocolBiz ;
+    MigrateProtocolBiz migrateProtocolBiz;
 
     @Test
     public void testMigrateBiz() {
@@ -157,7 +159,7 @@ public class AplloApplicationTests {
     }
 
     @Test
-    public void testMigrateProtocolBiz(){
+    public void testMigrateProtocolBiz() {
         migrateProtocolBiz.getProtocolMigrateFile();
     }
 
@@ -692,7 +694,7 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("142904");
+        batchDetailsQueryReq.setBatchNo("154856");
         batchDetailsQueryReq.setBatchTxDate("20170828");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
@@ -730,14 +732,14 @@ public class AplloApplicationTests {
     public void balanceQuery() {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId("6212462190000057690");
+        balanceQueryRequest.setAccountId("6212462190000000070");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         System.out.println(balanceQueryResponse);
     }
 
     public void accountDetailsQuery() {
         AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
-        request.setAccountId("6212462190000000393");
+        request.setAccountId("6212462190000000070");
         request.setStartDate("20161002");
         request.setEndDate("20171003");
         request.setChannel(ChannelContant.HTML);
@@ -769,8 +771,8 @@ public class AplloApplicationTests {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(89),
-                        MqConfig.BATCH_NO, StringHelper.toString(142904),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(61),
+                        MqConfig.BATCH_NO, StringHelper.toString(154856),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
                 );
 
@@ -811,7 +813,7 @@ public class AplloApplicationTests {
         }  */
 
         //推送队列结束债权
-/*        MqConfig mqConfig = new MqConfig();
+/*      MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
         mqConfig.setTag(MqTagEnum.END_CREDIT_ALL);
         mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 5));
