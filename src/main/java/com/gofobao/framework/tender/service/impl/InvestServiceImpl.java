@@ -373,7 +373,7 @@ public class InvestServiceImpl implements InvestService {
             returnedMoney.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
             returnedMoney.setCollectionMoney(StringHelper.formatMon(p.getCollectionMoney() / 100D));
             returnedMoney.setOrder(p.getOrder() + 1);
-            int lateDays = DateHelper.diffInDays(DateHelper.beginOfDate(new Date()), DateHelper.beginOfDate(p.getCollectionAtYes()), false);
+            int lateDays = DateHelper.diffInDays(DateHelper.beginOfDate(p.getCollectionAt()), DateHelper.beginOfDate(new Date()),false);
             returnedMoney.setLateDays(p.getStatus() == 0 ? lateDays : p.getLateDays());
             returnedMoney.setCollectionAt(p.getStatus() == BorrowCollectionContants.STATUS_YES ? DateHelper.dateToString(p.getCollectionAtYes(), DateHelper.DATE_FORMAT_YMD) : DateHelper.dateToString(p.getCollectionAt(), DateHelper.DATE_FORMAT_YMD));
             returnedMoney.setStatus(p.getStatus());
@@ -381,5 +381,11 @@ public class InvestServiceImpl implements InvestService {
         });
         viewReturnedMoney.setReturnedMonies(returnedMonies);
         return Optional.ofNullable(viewReturnedMoney).orElse(null);
+    }
+
+    public static void main(String[] args) {
+
+
+      System.out.print(DateHelper.diffInDays(DateHelper.stringToDate("2017-09-07 00:00:00"),new Date(),false));
     }
 }

@@ -108,7 +108,7 @@ public class BorrowRepayScanduler {
     /**
      *
      */
-    @Scheduled(cron = "*/5 * * * * ? ")
+    @Scheduled(cron = "0 30 9 ? * *" )
     public void todayRepayment() {
         Date nowDate = new Date();
         String sqlStr = "SELECT r.* FROM  gfb_borrow_repayment r " +
@@ -138,7 +138,7 @@ public class BorrowRepayScanduler {
                     repaymentBiz.newRepay(voRepayReq);
                     log.info(String.format("调度还款成功：打印还款期数信息:%s", new Gson().toJson(p)));
                 } catch (Exception e) {
-                    log.error("调度还款失败原因：" + e.getMessage());
+                    log.error("调度还款失败原因：%s" , e);
                     log.error(String.format("调度还款失败： 打印应款期数信息:%s", new Gson().toJson(p)));
                 }
             });
