@@ -24,6 +24,9 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.service.BorrowRepaymentService;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import io.jsonwebtoken.lang.Collections;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +36,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletResponse;
@@ -51,12 +55,12 @@ public class PaymentBizImpl implements PaymentBiz {
 
     @Autowired
     private BorrowCollectionService borrowCollectionService;
-
     @Autowired
     private BorrowRepository borrowRepository;
-
     @Autowired
     private BorrowService borrowService;
+    @Autowired
+    private BorrowRepaymentService borrowRepaymentService;
 
     /**
      * 回款列表
@@ -85,24 +89,34 @@ public class PaymentBizImpl implements PaymentBiz {
                     .collect(Collectors.toMap(Borrow::getId, Function.identity()));
 
             List<VoViewCollectionOrderRes> orderResList = new ArrayList<>();
-            borrowCollections.stream().forEach(p -> {
+            long sumCollectionMoneyYes = 0;
+            for (BorrowCollection borrowCollection : borrowCollections){
                 VoViewCollectionOrderRes item = new VoViewCollectionOrderRes();
-                Borrow borrow = borrowMap.get(p.getBorrowId());
+                Borrow borrow = borrowMap.get(borrowCollection.getBorrowId());
+                /*回款对应期数还款记录*/
+                Specification<BorrowRepayment> brs = Specifications
+                        .<BorrowRepayment>and()
+                        .eq("borrowId", borrow.getId())
+                        .eq("order", borrowCollection.getOrder())
+                        .build();
+                List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
+                Preconditions.checkState(!CollectionUtils.isEmpty(borrowRepaymentList), "还款记录不存在!");
+                BorrowRepayment borrowRepayment = borrowRepaymentList.get(0);
+
                 item.setBorrowName(borrow.getName());
-                item.setCollectionId(p.getId());
-                item.setOrder(p.getOrder() + 1);
+                item.setCollectionId(borrowCollection.getId());
+                item.setOrder(borrowCollection.getOrder() + 1);
                 item.setTimeLime(borrow.getTimeLimit());
-                item.setCollectionMoney(StringHelper.formatMon(p.getCollectionMoney() / 100d));
-                if(p.getStatus()==BorrowCollectionContants.STATUS_YES) {
-                    item.setCollectionMoneyYes(StringHelper.formatMon(p.getCollectionMoneyYes() / 100d));
+                item.setCollectionMoney(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100d));
+                if(borrowCollection.getStatus()==BorrowCollectionContants.STATUS_YES ) {
+                    item.setCollectionMoneyYes(StringHelper.formatMon(borrowCollection.getCollectionMoneyYes() / 100d));
+                }else if (!ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())){
+                    item.setCollectionMoneyYes(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100d));
+                    sumCollectionMoneyYes += borrowCollection.getCollectionMoney();
                 }
                 orderResList.add(item);
-            });
+            }
 
-            long sumCollectionMoneyYes = borrowCollections.stream()
-                    .filter(p -> p.getStatus() == BorrowCollectionContants.STATUS_YES)
-                    .mapToLong(w -> w.getCollectionMoneyYes())
-                    .sum();
             warpResp.setSumCollectionMoneyYes(StringHelper.formatMon(sumCollectionMoneyYes / 100d));
 
             VoViewCollectionOrderListWarpResp warpRes = VoBaseResp.ok("查询成功", VoViewCollectionOrderListWarpResp.class);

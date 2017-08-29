@@ -272,11 +272,14 @@ public class UserBizImpl implements UserBiz {
             voBasicUserInfoResp.setBankPassworState(userThirdAccount.getPasswordState() == 1);
             voBasicUserInfoResp.setBankAccout(userThirdAccount.getAccountId());
             voBasicUserInfoResp.setBankName("江西银行总行营业部");
-            voBasicUserInfoResp.setSubbranch(userThirdAccount.getBankName());
+            voBasicUserInfoResp.setSubbranch( StringUtils.isEmpty(userThirdAccount.getBankName()) ?  "" : userThirdAccount.getBankName());
             voBasicUserInfoResp.setBankState(!StringUtils.isEmpty(userThirdAccount.getCardNo()));
             voBasicUserInfoResp.setAutoTenderState(userThirdAccount.getAutoTenderState().equals(1));
             voBasicUserInfoResp.setAutoTranferState(userThirdAccount.getAutoTransferState().equals(1));
-            assetSynBiz.doAssetSyn(user.getId());
+            /**
+             * @// TODO: 2017/8/29 上线取消注释
+             */
+/*            assetSynBiz.doAssetSyn(user.getId());*/
         }
 
         // 获取vip状态

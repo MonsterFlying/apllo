@@ -627,7 +627,7 @@ public class TransferBizImpl implements TransferBiz {
         transferBuyLogService.save(transferBuyLogList);
 
         //更新老债权为已转让
-        parentTender.setTransferFlag(transfer.getIsAll() ? 3 : 2);
+        parentTender.setTransferFlag(transfer.getIsAll() ? 2 : 3);
         parentTender.setUpdatedAt(nowDate);
         tenderService.save(parentTender);
         //更新债权转让为已转让
@@ -883,7 +883,7 @@ public class TransferBizImpl implements TransferBiz {
             msg = "当前网络不稳定,请稍后重试!";
         }
 
-        double availBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0,2);// 可用余额  账面余额-可用余额=冻结金额
+        double availBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0, 2);// 可用余额  账面余额-可用余额=冻结金额
         if (availBal < validMoney) {
             msg = "资金账户未同步，请先在个人中心进行资金同步操作!";
         }
@@ -1208,7 +1208,7 @@ public class TransferBizImpl implements TransferBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "操作失败: 非债权投资人不能转让!"));
         }
 
-        if (tender.getTransferFlag() != 0) {
+        if (tender.getTransferFlag() != 0 || tender.getTransferFlag() != 3) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "操作失败: 你已经出让债权了!"));
@@ -1390,21 +1390,21 @@ public class TransferBizImpl implements TransferBiz {
             voViewBorrowList.setSurplusSecond(0L);
             //进度
             voViewBorrowList.setSpend(0d);
-             //转让中
-             if (item.getState() == TransferContants.TRANSFERIND) {
+            //转让中
+            if (item.getState() == TransferContants.TRANSFERIND) {
                 if (item.getTransferMoneyYes() / item.getTransferMoney() == 1) {
                     //待审核
                     voViewBorrowList.setStatus(6);
                 } else {
                     //招标中
-                    if(DateHelper.addDays(item.getVerifyAt(),1).getTime()>new Date().getTime()){
+                    if (DateHelper.addDays(item.getVerifyAt(), 1).getTime() > new Date().getTime()) {
                         voViewBorrowList.setStatus(3);
-                    }else{
+                    } else {
                         voViewBorrowList.setStatus(5);
                     }
                 }
             } else if (item.getState() == TransferContants.TRANSFERED) {
-                 //已完成
+                //已完成
                 voViewBorrowList.setStatus(4);
             }
             double spend = Double.parseDouble(StringHelper.formatMon(item.getTransferMoneyYes().doubleValue() / item.getTransferMoney()));
@@ -1493,11 +1493,11 @@ public class TransferBizImpl implements TransferBiz {
             item.setTenderCount(transfer.getTenderCount());
             item.setUserName(StringUtils.isEmpty(users.getUsername()) ? UserHelper.hideChar(users.getPhone(), UserHelper.PHONE_NUM) : UserHelper.hideChar(users.getUsername(), UserHelper.USERNAME_NUM));
             item.setType(5);
-            double spend = Double.parseDouble(StringHelper.formatMon(transfer.getTransferMoneyYes().doubleValue() / transfer.getTransferMoney()))*100;
+            double spend = Double.parseDouble(StringHelper.formatMon(transfer.getTransferMoneyYes().doubleValue() / transfer.getTransferMoney())) * 100;
             item.setSpend(spend);
             //1.待发布 2.还款中 3.招标中 4.已完成 5.已过期 6.待复审
             //进度
-            Integer status=transfer.getState();
+            Integer status = transfer.getState();
             //转让中
             if (status == TransferContants.TRANSFERIND) {
                 if (transfer.getTransferMoneyYes() / transfer.getTransferMoney() == 1) {
@@ -1505,9 +1505,9 @@ public class TransferBizImpl implements TransferBiz {
                     item.setStatus(6);
                 } else {
                     //招标中
-                    if(DateHelper.addDays(transfer.getVerifyAt(),1).getTime()>new Date().getTime()){
+                    if (DateHelper.addDays(transfer.getVerifyAt(), 1).getTime() > new Date().getTime()) {
                         item.setStatus(3);
-                    }else{
+                    } else {
                         item.setStatus(5);
                     }
                 }

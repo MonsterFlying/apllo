@@ -43,19 +43,21 @@ public class DealThirdBatchScheduler {
         Specification<ThirdBatchLog> tbls = Specifications
                 .<ThirdBatchLog>and()
                 .eq("state", 1)
-                .notIn("type", ThirdBatchLogContants.BATCH_CREDIT_END)
                 .build();
         List<ThirdBatchLog> thirdBatchLogList = null;
         int pageSize = 50;
+        int index = 0;
         do {
             thirdBatchLogList = thirdBatchLogService.findList(tbls);
+            ThirdBatchLog thirdBatchLog = thirdBatchLogList.get(index++);
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
             mqConfig.setTag(MqTagEnum.BATCH_DEAL);
             ImmutableMap<String, String> body = ImmutableMap
-                    .of(MqConfig.SOURCE_ID, StringHelper.toString(84),
-                            MqConfig.BATCH_NO, StringHelper.toString(114537),
-                            MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
+                    .of(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()),
+                            MqConfig.BATCH_NO, StringHelper.toString(thirdBatchLog.getBatchNo()),
+                            MqConfig.MSG_TIME, DateHelper.dateToString(new Date()),
+                            MqConfig.ACQ_RES, GSON.toJson(thirdBatchLog.getAcqRes())
                     );
 
             mqConfig.setMsg(body);

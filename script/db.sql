@@ -670,3 +670,6 @@ CREATE TABLE `gfb_third_error_remark` (
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+#资金类型字段长度扩容
+ALTER TABLE gfb_new_asset_log MODIFY local_type VARCHAR(50) DEFAULT '' COMMENT '本地交易类型';

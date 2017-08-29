@@ -66,12 +66,13 @@ jixin: #银行存管
   bankCode: "30050000" #交易机构代码
   product-no: "0105" # 产品编号
   bank-no: "3005" #产品编号
-  query-time-init: "20170420" # 与存管系统查询时间
+  query-time-init: "20170421" # 与存管系统查询时间
 
 gofobao:
   dev: true # 开发环境
   javaDomain: http://7yhsngp.hk1.mofasuidao.cn/
   h5Domain:  http://18164xy341.51mypc.cn
+  pcDomain: http://192.168.1.119:8080  # pc
   imageDomain : http://www.gofobao.com
   pcDomain: http://gofobao.55555.io
   captcha: false # 全站是否开启图形验证码验证

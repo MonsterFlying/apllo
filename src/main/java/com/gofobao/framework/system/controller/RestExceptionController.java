@@ -25,7 +25,7 @@ import java.util.List;
 public class RestExceptionController {
     @ExceptionHandler(value = {Exception.class})
     public ResponseEntity<VoBaseResp> restExceptionHandler(HttpServletRequest request, Throwable e) throws Exception {
-        VoBaseResp voBaseResp = VoBaseResp.error(VoBaseResp.ERROR, "系统系统, 请稍后重试!");
+        VoBaseResp voBaseResp = VoBaseResp.error(VoBaseResp.ERROR, "系统异常, 请稍后重试!");
         return ResponseEntity
                 .badRequest()
                 .body(voBaseResp);
