@@ -2840,7 +2840,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         transferList.stream().forEach(transfer -> {
             Tender parentTender = tenderMaps.get(transfer.getTenderId());
             List<TransferBuyLog> transferBuyLogs = transferBuyLogMaps.get(transfer.getId());
-            List<Tender> childTenderList = transferBiz.addChildTender(nowDate, transfer, parentTender, transferBuyLogList);
+            List<Tender> childTenderList = transferBiz.addChildTender(nowDate, transfer, parentTender, transferBuyLogs);
             // 生成子级债权回款记录，标注老债权回款已经转出
             try {
                 transferBiz.addChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList);
