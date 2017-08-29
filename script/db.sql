@@ -673,3 +673,54 @@ CREATE TABLE `gfb_third_error_remark` (
 
 #资金类型字段长度扩容
 ALTER TABLE gfb_new_asset_log MODIFY local_type VARCHAR(50) DEFAULT '' COMMENT '本地交易类型';
+
+CREATE TABLE gfb_eve
+(
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  acqcode VARCHAR(11) DEFAULT '' COMMENT '受理方标识码',
+  seqno VARCHAR(6) DEFAULT '' COMMENT '系统跟踪号',
+  sendt VARCHAR(11) DEFAULT '' COMMENT '交易传输时间',
+  cardnbr VARCHAR(19) DEFAULT '' COMMENT '主账号',
+  amount VARCHAR(12) DEFAULT '' COMMENT '交易金额',
+  crflag VARCHAR(1) DEFAULT '' COMMENT '交易金额符号',
+  msgtype VARCHAR(4) DEFAULT '' COMMENT '消息类型',
+  proccode VARCHAR(6) DEFAULT '' COMMENT '交易类型码',
+  mertype VARCHAR(4) DEFAULT '' COMMENT '商户类型',
+  term VARCHAR(8) DEFAULT '' COMMENT '受卡机终端标识码',
+  retseqno VARCHAR(12) DEFAULT '' COMMENT '检索参考号',
+  conmode VARCHAR(2) DEFAULT '' COMMENT '服务点条件码',
+  autresp VARCHAR(6) DEFAULT '' COMMENT '授权应答码',
+  forcode VARCHAR(11) DEFAULT '' COMMENT '发送方标识码',
+  clrdate VARCHAR(4) DEFAULT '' COMMENT '清算日期',
+  oldseqno VARCHAR(6) DEFAULT '' COMMENT '原始交易的系统跟踪号',
+  openbrno VARCHAR(6) DEFAULT '' COMMENT '发卡网点号',
+  tranbrno VARCHAR(6) DEFAULT '' COMMENT '交易网点',
+  ervind VARCHAR(1) DEFAULT '' COMMENT '冲正、撤销标志',
+  transtype VARCHAR(4) DEFAULT '' COMMENT '主机交易类型',
+  create_at DATETIME COMMENT '创建时间'
+)  ENGINE=InnoDB DEFAULT CHARSET=utf8;
+ALTER TABLE gfb_eve COMMENT = '存管系统交易明细';
+
+CREATE TABLE gfb_aleve
+(
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  bank VARCHAR(4) DEFAULT '' COMMENT '银行号',
+  cardnbr VARCHAR(19) DEFAULT '' COMMENT '电子账号',
+  amount VARCHAR(17) DEFAULT '' COMMENT '交易金额',
+  cur_num VARCHAR(3) DEFAULT '' COMMENT '货币代码',
+  crflag VARCHAR(1) DEFAULT '' COMMENT '交易金额符号',
+  valdate VARCHAR(8) DEFAULT '' COMMENT '入帐日期',
+  inpdate VARCHAR(8) DEFAULT '' COMMENT '交易日期',
+  reldate VARCHAR(8) DEFAULT '' COMMENT '自然日期',
+  inptime VARCHAR(8) DEFAULT '' COMMENT '交易时间',
+  tranno VARCHAR(6) DEFAULT '' COMMENT '交易流水号',
+  ori_tranno VARCHAR(6) DEFAULT '' COMMENT '关联交易流水号',
+  transtype VARCHAR(4) DEFAULT '' COMMENT '交易类型',
+  desline VARCHAR(42) DEFAULT '' COMMENT '交易描述',
+  curr_bal VARCHAR(17) DEFAULT '' COMMENT '交易后余额',
+  forcardnbr VARCHAR(19) DEFAULT '' COMMENT '对手交易帐号',
+  revind VARCHAR(1) DEFAULT '' COMMENT '冲正、撤销标志',
+  resv VARCHAR(200) DEFAULT '' COMMENT '保留域',
+  create_at DATETIME COMMENT '创建时间'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+ALTER TABLE gfb_aleve COMMENT = '交易明细全流水' ;
