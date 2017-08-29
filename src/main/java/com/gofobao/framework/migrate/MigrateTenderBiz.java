@@ -127,6 +127,7 @@ public class MigrateTenderBiz {
                     .in("borrowId", borrowIdSet.toArray())
                     .eq("status", 1)
                     .eq("transferFlag", 0)
+                    .eq("'")
                     .build();
             List<Tender> tenderList = tenderService.findList(ts);
 

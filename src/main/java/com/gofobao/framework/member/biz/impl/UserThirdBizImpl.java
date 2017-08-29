@@ -211,6 +211,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     @Override
    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoOpenAccountResp> openAccount(VoOpenAccountReq voOpenAccountReq, Long userId, HttpServletRequest httpServletRequest) {
+        voOpenAccountReq.setCardNo(voOpenAccountReq.getCardNo().toUpperCase()) ;
         // 1.用户用户信息
         Users user = userService.findById(userId);
         if (ObjectUtils.isEmpty(user))
@@ -436,6 +437,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了， 请稍候重试", VoHtmlResp.class));
         }
+
 
         VoHtmlResp voHtmlResp = VoBaseResp.ok("成功", VoHtmlResp.class);
         try {
