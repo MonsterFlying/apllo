@@ -254,7 +254,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      *
      * @param borrowId
      */
-    public ResponseEntity<VoBaseResp> repayAllDeal(long borrowId, long batchNo) throws Exception {
+    public ResponseEntity<VoBaseResp> repayAllDeal(long borrowId, String batchNo) throws Exception {
         //1.判断借款状态，
         Borrow borrow = borrowService.findByIdLock(borrowId);/* 提前结清操作的借款记录 */
         Preconditions.checkNotNull(borrow, "借款记录不存在!");
@@ -875,7 +875,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> newRepayDeal(long repaymentId, long batchNo) throws Exception {
+    public ResponseEntity<VoBaseResp> newRepayDeal(long repaymentId, String batchNo) throws Exception {
         //1.查询并判断还款记录是否存在!
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);/* 当期还款记录 */
         Preconditions.checkNotNull(borrowRepayment, "还款记录不存在!");
@@ -2774,7 +2774,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> newAdvanceDeal(long repaymentId, long batchNo) throws Exception {
+    public ResponseEntity<VoBaseResp> newAdvanceDeal(long repaymentId, String batchNo) throws Exception {
         //1.查询判断还款记录是否存在
         BorrowRepayment borrowRepayment = borrowRepaymentService.findByIdLock(repaymentId);/* 当期还款记录 */
         Preconditions.checkNotNull(borrowRepayment, "还款记录不存在!");
