@@ -133,14 +133,14 @@ public class BorrowServiceImpl implements BorrowService {
             type = null;
         }
 
-        StringBuilder condtionSql = new StringBuilder(" SELECT b.* FROM gfb_borrow  b   WHERE 1 = 1 ");
+        StringBuilder condtionSql = new StringBuilder(" SELECT b.* FROM gfb_borrow  b   WHERE 1 = 1  ");
         if (!StringUtils.isEmpty(type)) {
             condtionSql.append(" AND b.type = " + type + " AND  b.status NOT IN(:statusArray)  ");
         } else {
             //全部
             condtionSql.append(" AND b.status=:statusArray AND b.success_at is null  ");
         }
-        condtionSql.append(" AND b.verify_at IS Not NULL AND b.close_at is null");
+        condtionSql.append(" AND b.verify_at IS Not NULL AND b.close_at is null AND b.product_id IS NOT NULL");
         // 排序
         if (StringUtils.isEmpty(type)) {   // 全部
             condtionSql.append(" ORDER BY b.status ASC , (b.money_yes / b.money) DESC, FIELD(b.type,0, 4, 1),b.id DESC");
@@ -280,8 +280,8 @@ public class BorrowServiceImpl implements BorrowService {
         if (type.intValue() == -1) {
             type = null;
         }
-        StringBuilder pageSb = new StringBuilder(" SELECT b FROM Borrow b WHERE 1=1 ");
-        StringBuilder countSb = new StringBuilder(" SELECT COUNT(id) FROM Borrow b WHERE 1=1 ");
+        StringBuilder pageSb = new StringBuilder(" SELECT b FROM Borrow b WHERE 1=1  AND b.product_id IS NOT NULL");
+        StringBuilder countSb = new StringBuilder(" SELECT COUNT(id) FROM Borrow b WHERE 1=1 AND b.product_id IS NOT NULL ");
         StringBuilder condtionSql = new StringBuilder("");
         // 条件
         if (StringUtils.isEmpty(type)) {  // 全部
