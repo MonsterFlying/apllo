@@ -30,7 +30,7 @@ public class VoViewTenderDetail {
     private String repayFashion;
 
     @ApiModelProperty("起息时间")
-    private String successAt;
+    private String successAt="";
 
     @ApiModelProperty("状态描述")
     private String statusStr;
@@ -42,10 +42,10 @@ public class VoViewTenderDetail {
     private String receivableInterest;
 
     @ApiModelProperty("已收利息")
-    private String interest;
+    private String interest="0";
 
     @ApiModelProperty("已收本金")
-    private String principal;
+    private String principal="0";
 
     @ApiModelProperty("标ID")
     private Long borrowId;
