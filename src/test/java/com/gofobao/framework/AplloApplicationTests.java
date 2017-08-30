@@ -672,8 +672,8 @@ public class AplloApplicationTests {
 
     private void findThirdBorrowList() {
         VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
-        voQueryThirdBorrowList.setProductId("169917");
-        voQueryThirdBorrowList.setUserId(39557L);
+        voQueryThirdBorrowList.setProductId("170080");
+        voQueryThirdBorrowList.setUserId(45119L);
         voQueryThirdBorrowList.setPageNum("1");
         voQueryThirdBorrowList.setPageSize("10");
         DebtDetailsQueryResponse resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
@@ -708,9 +708,9 @@ public class AplloApplicationTests {
 
     private void bidApplyQuery() {
         BidApplyQueryReq request = new BidApplyQueryReq();
-        request.setAccountId("6212462190000000476");
+        request.setAccountId("6212462190000058565");
         request.setChannel(ChannelContant.HTML);
-        request.setOrgOrderId("GFBT_150288481816451");
+        request.setOrgOrderId("GFBT_1504058244169462574939");
         BidApplyQueryResp response = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, request, BidApplyQueryResp.class);
         System.out.println(response);
 
@@ -856,9 +856,9 @@ public class AplloApplicationTests {
         //批次状态查询
         //batchQuery();
         //批次详情查询
-        batchDetailsQuery();
+        //batchDetailsQuery();
         //查询投标申请
-        //bidApplyQuery();
+        bidApplyQuery();
         //转让标复审回调
         //transferBorrowAgainVerify();
         //非转让标复审问题
