@@ -89,10 +89,6 @@ public class UserCacheServiceImpl implements UserCacheService {
         statistic.setPayment(StringHelper.formatMon(payment / 100D));
 
         NetProceedsDetails netProceedsDetails = new NetProceedsDetails();
-        Long waitRepayInterest = userCache.getWaitRepayInterest();
-        Long waitRepayPrincipal = userCache.getWaitRepayPrincipal();
-        netProceedsDetails.setWaitInterest(StringHelper.formatMon(waitRepayInterest / 100D));
-        netProceedsDetails.setWaitPrincipal(StringHelper.formatMon(waitRepayPrincipal / 100D));
 
         statistic.setJingZhiDetails(netProceedsDetails);
 
@@ -135,9 +131,18 @@ public class UserCacheServiceImpl implements UserCacheService {
         Long expenditureOverdue = userCache.getExpenditureOverdue();
         //其他支出
         Long expenditureOther = userCache.getExpenditureOther();
+        //待还利息
+        Long waitRepayInterest = userCache.getWaitRepayInterest();
+        //待还本金
+        Long waitRepayPrincipal = userCache.getWaitRepayPrincipal();
+
+        Long waitExpenditureInterestManageFee=new Long(userCache.getWaitExpenditureInterestManageFee());
+
+        netProceedsDetails.setWaitInterest(StringHelper.formatMon(waitRepayInterest / 100D));
+        netProceedsDetails.setWaitPrincipal(StringHelper.formatMon(waitRepayPrincipal / 100D));
 
         //总支出
-        Long sumExpend = expenditureFee + expenditureInterest + expenditureInterestManage + expenditureManage + expenditureOverdue + expenditureOther;
+        Long sumExpend =waitExpenditureInterestManageFee+ waitRepayInterest+expenditureFee + expenditureInterest + expenditureInterestManage + expenditureManage + expenditureOverdue + expenditureOther;
 
         /**
          * 已实现净收益总额 = 已实现收入总额 - 已支出总额
@@ -177,7 +182,7 @@ public class UserCacheServiceImpl implements UserCacheService {
         int netWorthQuota = new Double((asset.getUseMoney() + waitCollectionPrincipal) * 0.8 - collection).intValue();//计算净值额度
         statistic.setNetWorthLimit(StringHelper.formatMon(netWorthQuota / 100D));
 
-        Double assetTotal = netWorthQuota + sumJingshou + noNetProceeds + userMoney + payment + collection + noUseMoney + netIncomeTotal;
+        Double assetTotal = new Double(noUseMoney+userMoney+collection);
 
         statistic.setAssetTotal(StringHelper.formatMon(assetTotal / 100D));
 
@@ -240,7 +245,7 @@ public class UserCacheServiceImpl implements UserCacheService {
         Long expenditureManage = userCache.getExpenditureManage();
         Long expenditureOther = userCache.getExpenditureOther();
         Long expenditureOverdue = userCache.getExpenditureOverdue();
-        Long interest = userCache.getWaitCollectionInterest();
+        Long waitRepayInterest=userCache.getWaitRepayInterest();
         Double waitExpenditureInterestManage = (userCache.getTjWaitCollectionInterest() + userCache.getQdWaitCollectionInterest()) * 0.1;
         //已付利息管理费
         expenditureDetail.setInterestManageFee(StringHelper.formatMon(expenditureInterestManage / 100D));
@@ -255,11 +260,11 @@ public class UserCacheServiceImpl implements UserCacheService {
         //逾期罚息
         expenditureDetail.setOverdueFee(StringHelper.formatMon(expenditureOverdue / 100D));
         //待付利息
-        expenditureDetail.setWaitExpendInterest(StringHelper.formatMon(interest / 100D));
+        expenditureDetail.setWaitExpendInterest(StringHelper.formatMon(waitRepayInterest / 100D));
         //待付利息管理费
-        expenditureDetail.setWaitExpendInterestManageFee(StringHelper.formatMon(waitExpenditureInterestManage / 100D));
+        expenditureDetail.setWaitExpendInterestManageFee(StringHelper.formatMon(userCache.getWaitExpenditureInterestManageFee() / 100D));
         //待付支出
-        expenditureDetail.setWaitExpendTotal(StringHelper.formatMon((waitExpenditureInterestManage + interest) / 100D));
+        expenditureDetail.setWaitExpendTotal(StringHelper.formatMon((waitExpenditureInterestManage + waitRepayInterest) / 100D));
         //已支出总额
         expenditureDetail.setExpenditureTotal(StringHelper.formatMon( userCache.getIncomeTotal()/100D));
 
