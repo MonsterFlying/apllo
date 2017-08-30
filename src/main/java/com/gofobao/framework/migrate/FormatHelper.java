@@ -29,9 +29,9 @@ public class FormatHelper {
     }
 
 
-    public static String getStr(byte[] datas, int begin, int end) throws Exception {
+    public static String getStrForGBK(byte[] datas, int begin, int end) throws Exception {
         if (datas.length < end) {
-            throw new Exception("越界了");
+            throw new Exception("GBK数组获取越界了");
         }
 
         byte[] temp = new byte[end - begin];
@@ -42,6 +42,23 @@ public class FormatHelper {
             temp[i - begin] = datas[i] ;
         }
         String str = new String(temp, "gbk") ;
+        return StringUtils.trim(str) ;
+    }
+
+
+    public static String getStrForUTF8(byte[] datas, int begin, int end) throws Exception {
+        if (datas.length < end) {
+            throw new Exception("UTF-8数组获取越界了");
+        }
+        byte[] temp = new byte[end - begin];
+        for (int i = 0, len = datas.length; i < len; i++) {
+            if(i < begin || i >= end){
+                continue;
+            }
+            temp[i - begin] = datas[i] ;
+        }
+
+        String str = new String(temp, "UTF-8") ;
         return StringUtils.trim(str) ;
     }
 

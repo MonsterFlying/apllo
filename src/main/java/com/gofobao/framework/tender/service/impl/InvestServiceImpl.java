@@ -336,9 +336,6 @@ public class InvestServiceImpl implements InvestService {
                     .mapToLong(s -> s.getPrincipal())
                     .sum();
 
-
-
-
             Integer timeLimit=0;
             Integer apr=0;
             Date successAt=null;
@@ -349,11 +346,11 @@ public class InvestServiceImpl implements InvestService {
             }else{
                 Specification<Transfer>transferSpecification=Specifications.<Transfer>and()
                         .eq("tenderId",tender.getId())
-                        .ne("status", Lists.newArrayList(TransferContants.NOPASS,TransferContants.CANCEL,TransferContants.CHECKPENDING))
+                        .ne("state", Lists.newArrayList(TransferContants.NOPASS,TransferContants.CANCEL,TransferContants.CHECKPENDING).toArray())
                         .build();
                 List<Transfer>transfers=transferService.findList(transferSpecification);
 
-                if(CollectionUtils.isEmpty(transfers)){
+                if(!CollectionUtils.isEmpty(transfers)){
                     Transfer transfer=transfers.get(0);
                     timeLimit= transfer.getTimeLimit();
                     apr=transfer.getApr();
@@ -361,8 +358,6 @@ public class InvestServiceImpl implements InvestService {
                 }
 
             }
-
-
             //应收利息
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(tender.getValidMoney()), new Double(apr), timeLimit,successAt );
             Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());

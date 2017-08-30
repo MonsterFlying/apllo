@@ -227,8 +227,8 @@ public class MigrateBorrowBiz {
         lines.forEach((String item) -> {
             try {
                 byte[]  gbks = item.getBytes("gbk");
-                String flag =  FormatHelper.getStr(gbks, 271, 273);
-                String idStr = FormatHelper.getStr(gbks, 10, 50);
+                String flag =  FormatHelper.getStrForGBK(gbks, 271, 273);
+                String idStr = FormatHelper.getStrForGBK(gbks, 10, 50);
                 if (!"00".equals(flag)) {
                     StringBuffer stringBuffer = new StringBuffer();
                     stringBuffer.append(NumberHelper.toLong(idStr)).append("|").append(ERROR_MSG_DATA.get(flag));
