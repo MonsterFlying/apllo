@@ -9,6 +9,8 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 
@@ -40,6 +42,12 @@ public class WebUserThirdController {
     @PostMapping("/user/pc/v2/third/autoTranfter")
     public ResponseEntity<VoHtmlResp> pcAutoTranfter(HttpServletRequest httpServletRequest, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return userThirdBiz.autoTranfter(httpServletRequest, userId) ;
+    }
+
+    @ApiOperation("绑定银行卡")
+    @GetMapping("/user/pc/v2/third/bind/bank/{bankNo}")
+    public ResponseEntity<VoHtmlResp> bindBank(HttpServletRequest httpServletRequest, @RequestAttribute(SecurityContants.USERID_KEY) Long userId,@PathVariable("bankNo") String bankNo) {
+        return userThirdBiz.bindBank(httpServletRequest, userId, bankNo) ;
     }
 
 }

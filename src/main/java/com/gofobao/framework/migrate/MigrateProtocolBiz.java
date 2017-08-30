@@ -100,6 +100,7 @@ public class MigrateProtocolBiz {
                 String idStr = FormatHelper.getStrForGBK(gbks, 90, 190) ;
                 String type = FormatHelper.getStrForGBK(gbks, 33, 34) ;
                 String seqNo = FormatHelper.getStrForGBK(gbks, 34, 74) ;
+                seqNo = seqNo.substring(10) ; // 剔除0001780000
                 long id = NumberHelper.toLong(idStr);
                 if (!"00".equals(flag)) {
                     StringBuffer error = new StringBuffer();
@@ -287,5 +288,4 @@ public class MigrateProtocolBiz {
         }
         log.info("用户迁移文件成功");
     }
-
 }
