@@ -7,8 +7,6 @@ import java.util.List;
 /**
  * eve服务
  */
-public interface EveService {
-    List<Eve> findByRetseqnoAndSeqno(String retseqno, String seqno);
+public interface FinancialSchedulerService {
 
-    Eve save(Eve eve);
 }

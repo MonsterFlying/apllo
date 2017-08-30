@@ -1,5 +1,6 @@
 package com.gofobao.framework.scheduler;
 
+import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.asset.biz.CurrentIncomeLogBiz;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import lombok.extern.slf4j.Slf4j;
@@ -20,16 +21,28 @@ public class FundStatisticsScheduler {
     @Autowired
     CurrentIncomeLogBiz currentIncomeLogBiz;
 
+    @Autowired
+    JixinTxDateHelper jixinTxDateHelper ;
+
     @Scheduled(cron = "0 0 3 * * ?")
     public void process() {
         boolean state = false;
+        String error = null ;
         try {
-            log.info("平台账单EVE启动");
-            state = fundStatisticsBiz.doEVE();
-        } catch (Exception e) {
-            log.error("EVE对账异常", e);
+            String date = jixinTxDateHelper.getSubDateStr(1) ;
+            state = fundStatisticsBiz.doEve(date);
+        } catch (Throwable e) {
+             error =  e.getMessage() ;
         }
         log.info(String.format("平台账单EVE运行结果: %s", state? "成功" : "失败"));
+
+        try{
+            log.info("平台账单AlEVE启动");
+            state = fundStatisticsBiz.doAleve() ;
+        }catch (Exception e){
+            log.error("ALEVE对账异常",  e) ;
+        }
+        log.info(String.format("平台账单ALEVE运行结果: %s", state? "成功" : "失败"));
 
         //处理活期收益
         try{
@@ -41,7 +54,9 @@ public class FundStatisticsScheduler {
         }catch (Exception e){
             log.error("活期收益异常", e);
         }
+
         log.info(String.format("活期收益运行结果: %s", state? "成功" : "失败"));
 
+        // 处理每日
     }
 }

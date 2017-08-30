@@ -3,13 +3,10 @@ package com.gofobao.framework.migrate;
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.asset.service.AssetService;
-import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
-import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.google.common.io.Files;
@@ -22,13 +19,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -62,7 +57,7 @@ public class MigrateProtocolBiz {
     /**
      * 迁移结果文件
      */
-    private static final String RESULT_MEMBER_FILE_PATH = "D:/Apollo/migrate/protocol_result/3005-MP-SIGRES-100759-20170419";
+    private static final String RESULT_MEMBER_FILE_PATH = "D:/Apollo/migrate/protocol_result/3005-MP-SIGRES-161519-20170421";
 
     /**
      * 写入协议存管
@@ -101,10 +96,10 @@ public class MigrateProtocolBiz {
         for (String line : lineList) {
             try{
                 byte[] gbks = line.getBytes("gbk");
-                String flag =  FormatHelper.getStr(gbks, 88, 90) ;
-                String idStr = FormatHelper.getStr(gbks, 90, 190) ;
-                String type = FormatHelper.getStr(gbks, 33, 34) ;
-                String seqNo = FormatHelper.getStr(gbks, 34, 74) ;
+                String flag =  FormatHelper.getStrForGBK(gbks, 88, 90) ;
+                String idStr = FormatHelper.getStrForGBK(gbks, 90, 190) ;
+                String type = FormatHelper.getStrForGBK(gbks, 33, 34) ;
+                String seqNo = FormatHelper.getStrForGBK(gbks, 34, 74) ;
                 long id = NumberHelper.toLong(idStr);
                 if (!"00".equals(flag)) {
                     StringBuffer error = new StringBuffer();

@@ -23,8 +23,5 @@ public class EveBizImpl implements EveBiz {
 
     @Value("${jixin.save-file-path}")
     String filePath;
-
-
-
-
+    
 }

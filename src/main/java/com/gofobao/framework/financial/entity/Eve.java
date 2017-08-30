@@ -21,7 +21,7 @@ public class Eve {
     private Long id  ;
     private String acqcode  ;
     private String seqno  ;
-    private String sendt  ;
+    private String cendt  ;
     private String cardnbr  ;
     private String amount  ;
     private String crflag  ;
@@ -39,10 +39,5 @@ public class Eve {
     private String tranbrno  ;
     private String ervind  ;
     private String transtype  ;
-    private Date create_at  ;
-
-
-
-
-
+    private Date createAt  ;
 }
