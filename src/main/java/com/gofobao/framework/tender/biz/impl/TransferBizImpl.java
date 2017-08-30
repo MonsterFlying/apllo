@@ -217,6 +217,7 @@ public class TransferBizImpl implements TransferBiz {
             voViewTransferBuyLog.setEarning(StringHelper.formatDouble(earnings, 100, true));
             voViewTransferBuyLog.setPrincipal(StringHelper.formatDouble(transferBuyLog.getPrincipal(), 100, true));
             voViewTransferBuyLog.setAlreadyInterest(StringHelper.formatDouble(transferBuyLog.getAlreadyInterest(), 100, true));
+            voViewTransferBuyLog.setTimeLimit(String.format("%s月",transfer.getTimeLimit()));
             voViewTransferBuyLogList.add(voViewTransferBuyLog);
         }
         VoViewTransferBuyLogList resp = VoBaseResp.ok("查询成功", VoViewTransferBuyLogList.class);

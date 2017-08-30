@@ -8,6 +8,8 @@ import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestCheckCall;
 import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestRunCall;
 import com.gofobao.framework.api.model.batch_credit_invest.CreditInvestRun;
+import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
+import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
 import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyRequest;
 import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyResponse;
 import com.gofobao.framework.api.model.bid_cancel.BidCancelReq;
@@ -192,6 +194,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
 
     /**
      * 处理批次购买债权转让
+     *
      * @param batchCreditInvestRunCall
      * @return
      */
@@ -275,21 +278,35 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         Borrow borrow = borrowService.findById(tender.getBorrowId());
         Preconditions.checkNotNull(borrow, "tenderThirdBizImpl cancelThirdTender: tender为空!");
 
+        /* 添加取消投标前置查询 */
+        BidApplyQueryReq bidApplyQueryReq = new BidApplyQueryReq();
+        bidApplyQueryReq.setAccountId(tenderUserThirdAccount.getAccountId());
+        bidApplyQueryReq.setChannel(ChannelContant.HTML);
+        bidApplyQueryReq.setOrgOrderId(tender.getThirdTenderOrderId());
+        BidApplyQueryResp bidApplyQueryResp = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, bidApplyQueryReq, BidApplyQueryResp.class);
+        /* 取消投标orderId */
         String orderId = JixinHelper.getOrderId(JixinHelper.TENDER_CANCEL_PREFIX);
-        BidCancelReq request = new BidCancelReq();
-        request.setAccountId(tenderUserThirdAccount.getAccountId());
-        request.setTxAmount(StringHelper.formatDouble(tender.getValidMoney(), 100, false));
-        request.setChannel(ChannelContant.HTML);
-        request.setOrderId(orderId);
-        request.setOrgOrderId(tender.getThirdTenderOrderId());
-        request.setProductId(borrow.getProductId());
-        request.setAcqRes(StringHelper.toString(tenderId));
-        BidCancelResp response = jixinManager.send(JixinTxCodeEnum.BID_CANCEL, request, BidCancelResp.class);
-        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
-            String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+        if (!JixinResultContants.SUCCESS.equals(bidApplyQueryResp.getRetCode())){
+            String msg = ObjectUtils.isEmpty(bidApplyQueryResp) ? "当前网络不稳定，请稍候重试" : bidApplyQueryResp.getRetMsg();
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
-        }
+        }else if ("2".equals(bidApplyQueryResp.getState()) || "4".equals(bidApplyQueryResp.getState())){
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "投标还款中不能取消借款"));
+        }else if (!"9".equals(bidApplyQueryResp.getState())) {
 
+            BidCancelReq request = new BidCancelReq();
+            request.setAccountId(tenderUserThirdAccount.getAccountId());
+            request.setTxAmount(StringHelper.formatDouble(tender.getValidMoney(), 100, false));
+            request.setChannel(ChannelContant.HTML);
+            request.setOrderId(orderId);
+            request.setOrgOrderId(tender.getThirdTenderOrderId());
+            request.setProductId(borrow.getProductId());
+            request.setAcqRes(StringHelper.toString(tenderId));
+            BidCancelResp response = jixinManager.send(JixinTxCodeEnum.BID_CANCEL, request, BidCancelResp.class);
+            if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+                String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
+            }
+        }
         tender.setThirdTenderCancelOrderId(orderId);
         tenderService.save(tender);
         return ResponseEntity.ok(VoBaseResp.ok("取消成功!"));

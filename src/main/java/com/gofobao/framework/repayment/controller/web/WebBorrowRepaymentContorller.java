@@ -75,27 +75,24 @@ public class WebBorrowRepaymentContorller {
         }
     }
 
-
-
     /**
      * 立即还款
      *
-     * @param voInstantlyRepaymentReq
+     * @param voPcRepay
      * @return 0成功 1失败 2操作不存在 3该借款上一期还未还 4账户余额不足，请先充值
      * @throws Exception
      */
-    @PostMapping("/repayment/pc/v2/instantly")
+    @PostMapping("/pub/v2/pcInstantly")
     @ApiOperation("立即还款")
-    public ResponseEntity<VoBaseResp> instantly(@ModelAttribute @Valid VoInstantlyRepaymentReq voInstantlyRepaymentReq,
-                                                @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
-        VoRepayReq voRepayReq = new VoRepayReq();
-        voRepayReq.setRepaymentId(voInstantlyRepaymentReq.getRepaymentId());
-        voRepayReq.setUserId(userId);
-        voRepayReq.setInterestPercent(1d);
-        voRepayReq.setIsUserOpen(true);
-        return repaymentBiz.newRepay(voRepayReq);
+    public ResponseEntity<VoBaseResp> pcInstantly(@ModelAttribute @Valid VoPcRepay voPcRepay) throws Exception {
+        try {
+            return repaymentBiz.pcInstantly(voPcRepay);
+        } catch (Throwable e) {
+            log.error("pc还款异常:",e);
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "立即还款失败！"));
+        }
     }
-
 
 
     /**

@@ -22,6 +22,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -87,6 +88,7 @@ public class AssetChangeProvider {
      * @param entity
      */
     public void commonAssetChange(AssetChange entity) throws Exception {
+        log.info(String.format("资金变动规则：%s", new Gson().toJson(entity)));
         Preconditions.checkNotNull(entity, "AssetChangeProvider.commonAssetChange assetEntity is null ");
         Preconditions.checkArgument(entity.getUserId() > 0, "AssetChangeProvider.commonAssetChange userId  <= 0");
         Preconditions.checkNotNull(entity.getType(), "AssetChangeProvider.commonAssetChange type is null");

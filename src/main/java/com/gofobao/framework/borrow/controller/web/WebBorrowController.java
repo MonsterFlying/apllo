@@ -153,6 +153,7 @@ public class WebBorrowController {
         try {
             return borrowBiz.pcCancelBorrow(voPcCancelThirdBorrow);
         } catch (Exception e) {
+            log.error("后台结束借款异常：",e);
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后再试!"));
         }
     }
