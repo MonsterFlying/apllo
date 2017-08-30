@@ -70,13 +70,13 @@ public class MigrateTenderBiz {
     /**
      * 迁移结果文件
      */
-    private static final String RESULT_TENDER_FILE_PATH = "D:/Apollo/migrate/tender_result/3005-BIDRESP-151754-20170421";
+    private static final String RESULT_TENDER_FILE_PATH = "D:/Apollo/migrate/tender_result/3005-BIDRESP-102752-20170421";
 
     @Autowired
     private TenderService tenderService;
 
     @Autowired
-    JixinTxDateHelper jixinTxDateHelper ;
+    JixinTxDateHelper jixinTxDateHelper;
 
     /**
      * 获取标的迁移文件
@@ -115,8 +115,8 @@ public class MigrateTenderBiz {
             if (CollectionUtils.isEmpty(borrowList)) {
                 break;
             }
-            pageIndex++ ;
-            realSize = borrowList.size() ;
+            pageIndex++;
+            realSize = borrowList.size();
             Map<Long, Borrow> borrowMap = borrowList
                     .stream()
                     .collect(Collectors.toMap(Borrow::getId, Function.identity()));
@@ -163,7 +163,7 @@ public class MigrateTenderBiz {
                     Integer repayFashion = borrow.getRepayFashion();
                     String intPayDay = null;
                     String endDate = null;
-                    String buyDate = jixinTxDateHelper.getTxDateStr() ;
+                    String buyDate = jixinTxDateHelper.getTxDateStr();
                     if (1 == repayFashion) {
                         intType = "0";
                         intPayDay = "";
@@ -171,8 +171,8 @@ public class MigrateTenderBiz {
                     } else {
                         intType = "1";
                         intPayDay = String.valueOf(DateHelper.getDay(successAt));
-                        if(intPayDay.length() == 1){
-                            intPayDay = "0" + intPayDay ;
+                        if (intPayDay.length() == 1) {
+                            intPayDay = "0" + intPayDay;
                         }
                         endDate = DateHelper.dateToString(DateHelper.addMonths(successAt, borrow.getTimeLimit()), DateHelper.DATE_FORMAT_YMD_NUM);
                     }
@@ -253,7 +253,7 @@ public class MigrateTenderBiz {
             try {
                 byte[] gbks = item.getBytes("gbk");
                 String flag = FormatHelper.getStrForGBK(gbks, 160, 162);
-                String idStr = FormatHelper.getStrForGBK(gbks, 222, 282) ;
+                String idStr = FormatHelper.getStrForGBK(gbks, 222, 282);
                 if (!"00".equals(flag)) {
                     StringBuffer stringBuffer = new StringBuffer();
                     stringBuffer.append(NumberHelper.toLong(idStr)).append("|").append(ERROR_MSG_DATA.get(flag));
@@ -265,13 +265,15 @@ public class MigrateTenderBiz {
                         return;
                     }
                 } else {
-                    String authCode = FormatHelper.getStrForGBK(gbks, 162, 182) ;
-                    long tenderId = NumberHelper.toLong(idStr) ;
+                    String authCode = FormatHelper.getStrForGBK(gbks, 162, 182);
+                    String orderId = FormatHelper.getStrForUTF8(gbks, 39, 79);
+                    orderId = orderId.substring(10);
+                    long tenderId = NumberHelper.toLong(idStr);
                     tenderIdList.add(tenderId);
-                    authCodeMap.put(tenderId, authCode);
+                    authCodeMap.put(tenderId, authCode + "#" + orderId);
                 }
             } catch (Exception e) {
-                log.error("获取字段错误", e) ;
+                log.error("获取字段错误", e);
                 return;
             }
         });
@@ -281,8 +283,10 @@ public class MigrateTenderBiz {
                 .in("id", tenderIdList.toArray())
                 .build();
         List<Tender> tenderList = tenderService.findList(bs);
-        tenderList.forEach(tender -> {
-            tender.setAuthCode(authCodeMap.get(tender.getId()));
+        tenderList.stream().filter(tender -> !tender.getThirdTenderFlag()).forEach(tender -> {
+            String[] split = authCodeMap.get(tender.getId()).split("#");
+            tender.setAuthCode(split[0]);
+            tender.setThirdTenderOrderId(split[1]);
             tender.setThirdTenderFlag(true);
         });
         tenderService.save(tenderList);

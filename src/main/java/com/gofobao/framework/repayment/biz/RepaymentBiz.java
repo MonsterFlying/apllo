@@ -34,7 +34,7 @@ public interface RepaymentBiz {
      *
      * @param borrowId
      */
-    ResponseEntity<VoBaseResp> repayAllDeal(long borrowId,long batchNo) throws Exception;
+    ResponseEntity<VoBaseResp> repayAllDeal(long borrowId,String batchNo) throws Exception;
 
     /**
      * pc提前结清
@@ -120,7 +120,7 @@ public interface RepaymentBiz {
      * @return
      * @throws Exception
      */
-    ResponseEntity<VoBaseResp> newRepayDeal(long repaymentId, long batchNo) throws Exception;
+    ResponseEntity<VoBaseResp> newRepayDeal(long repaymentId, String batchNo) throws Exception;
 
     /**
      * 当前应还款日期
@@ -147,7 +147,7 @@ public interface RepaymentBiz {
      * @return
      * @throws Exception
      */
-    ResponseEntity<VoBaseResp> newAdvanceDeal(long repaymentId, long batchNo) throws Exception;
+    ResponseEntity<VoBaseResp> newAdvanceDeal(long repaymentId, String batchNo) throws Exception;
 
     /**
      * 新版垫付

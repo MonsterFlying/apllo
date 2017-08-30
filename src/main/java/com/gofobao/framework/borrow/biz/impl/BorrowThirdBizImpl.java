@@ -127,7 +127,12 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         Long userId = borrow.getUserId();
         int repayFashion = borrow.getRepayFashion();
 
-        Long takeUserId = borrow.getTakeUserId();   // 公司实际收款人
+        /**
+         * @// TODO: 2017/8/30 上线取消这段代码
+         */
+        /*Long takeUserId = borrow.getTakeUserId();   // 公司实际收款人*/
+        long takeUserId = 45120l;
+        borrow.setTakeUserId(takeUserId);
         UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "借款人未开户!");
@@ -179,9 +184,10 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
                 return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
             }
         }
+
         borrow.setTitularBorrowAccountId(titularBorrowAccount);
         borrow.setProductId(productId);
-        borrowService.updateById(borrow);
+        borrowService.save(borrow);
         try {
             DebtDetailsQueryRequest debtDetailsQueryRequest = new DebtDetailsQueryRequest();
             debtDetailsQueryRequest.setChannel(ChannelContant.HTML);

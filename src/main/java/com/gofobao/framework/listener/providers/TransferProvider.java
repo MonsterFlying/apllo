@@ -5,6 +5,8 @@ import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeReq;
+import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeResp;
 import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestReq;
 import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestResp;
 import com.gofobao.framework.api.model.batch_credit_invest.CreditInvest;
@@ -439,6 +441,20 @@ public class TransferProvider {
             creditInvestList.add(creditInvest);
             transferBuyLog.setThirdTransferOrderId(transferOrderId);
             transferBuyLogService.save(transferBuyLogList);
+
+            //解除存管资金冻结
+            String newOrderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);/* 购买债权转让冻结金额 orderid */
+            UserThirdAccount buyUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
+            BalanceUnfreezeReq balanceUnfreezeReq = new BalanceUnfreezeReq();
+            balanceUnfreezeReq.setAccountId(buyUserThirdAccount.getAccountId());
+            balanceUnfreezeReq.setTxAmount(StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100.0, false));
+            balanceUnfreezeReq.setChannel(ChannelContant.HTML);
+            balanceUnfreezeReq.setOrderId(newOrderId);
+            balanceUnfreezeReq.setOrgOrderId(transferBuyLog.getFreezeOrderId());
+            BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_UN_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
+            if ((ObjectUtils.isEmpty(balanceUnfreezeResp)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
+                throw new Exception("购买债权转让解冻资金失败：" + balanceUnfreezeResp.getRetMsg());
+            }
         }
 
         //批次号

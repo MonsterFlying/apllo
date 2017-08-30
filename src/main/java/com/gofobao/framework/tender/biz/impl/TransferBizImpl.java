@@ -296,7 +296,7 @@ public class TransferBizImpl implements TransferBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> againVerifyTransfer(long transferId, long batchNo) throws Exception {
+    public ResponseEntity<VoBaseResp> againVerifyTransfer(long transferId, String batchNo) throws Exception {
         Date nowDate = new Date();
         /*
         1.查询债权转让记录与购买记录

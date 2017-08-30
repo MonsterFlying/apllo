@@ -5,6 +5,9 @@ import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeReq;
+import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeResp;
+import com.gofobao.framework.api.model.batch_bail_repay.BatchBailRepayCheckResp;
 import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestCheckCall;
 import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestRunCall;
 import com.gofobao.framework.api.model.batch_credit_invest.CreditInvestRun;
@@ -16,6 +19,8 @@ import com.gofobao.framework.api.model.bid_cancel.BidCancelReq;
 import com.gofobao.framework.api.model.bid_cancel.BidCancelResp;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.common.assets.AssetChange;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
@@ -290,7 +295,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             String msg = ObjectUtils.isEmpty(bidApplyQueryResp) ? "当前网络不稳定，请稍候重试" : bidApplyQueryResp.getRetMsg();
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
         }else if ("2".equals(bidApplyQueryResp.getState()) || "4".equals(bidApplyQueryResp.getState())){
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "投标还款中不能取消借款"));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, String.format("投标还款中不能取消借款 tenderId:%s",tenderId)));
         }else if (!"9".equals(bidApplyQueryResp.getState())) {
 
             BidCancelReq request = new BidCancelReq();
