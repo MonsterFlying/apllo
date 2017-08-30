@@ -346,7 +346,7 @@ public class InvestServiceImpl implements InvestService {
             }else{
                 Specification<Transfer>transferSpecification=Specifications.<Transfer>and()
                         .eq("tenderId",tender.getId())
-                        .ne("state", Lists.newArrayList(TransferContants.NOPASS,TransferContants.CANCEL,TransferContants.CHECKPENDING))
+                        .ne("state", Lists.newArrayList(TransferContants.NOPASS,TransferContants.CANCEL,TransferContants.CHECKPENDING).toArray())
                         .build();
                 List<Transfer>transfers=transferService.findList(transferSpecification);
 
