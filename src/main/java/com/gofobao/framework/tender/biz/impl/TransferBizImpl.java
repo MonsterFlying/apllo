@@ -1241,13 +1241,27 @@ public class TransferBizImpl implements TransferBiz {
                 .in("status", 0, 1)
                 .build();
 
-        long tranferingNum = borrowService.count(borrowSpecification);
+        /**
+         * @// TODO: 2017/8/29 上线取消注释
+         */
+        /*long tranferingNum = borrowService.count(borrowSpecification);
         if (tranferingNum > 0) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "您已经有一个进行中的借款标"));
         }
 
+        Specification<Transfer> ts = Specifications
+                .<Transfer>and()
+                .eq("userId", tender.getUserId())
+                .in("status", 0, 1)
+                .build();
+        tranferingNum = transferService.count(ts);
+        if (tranferingNum > 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "您已经有一个进行中的债权转让"));
+        }*/
         //判断当期是否有提交处理中回调
         Specification<BorrowRepayment> brs = Specifications
                 .<BorrowRepayment>and()
