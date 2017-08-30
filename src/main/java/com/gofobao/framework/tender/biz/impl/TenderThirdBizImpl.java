@@ -291,7 +291,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
         }else if ("2".equals(bidApplyQueryResp.getState()) || "4".equals(bidApplyQueryResp.getState())){
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "投标还款中不能取消借款"));
-        }else if ("9".equals(bidApplyQueryResp.getState())) {
+        }else if (!"9".equals(bidApplyQueryResp.getState())) {
 
             BidCancelReq request = new BidCancelReq();
             request.setAccountId(tenderUserThirdAccount.getAccountId());
