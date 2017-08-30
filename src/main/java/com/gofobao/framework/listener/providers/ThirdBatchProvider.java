@@ -587,7 +587,8 @@ public class ThirdBatchProvider {
                     voCancelThirdTenderReq.setTenderId(tender.getId());
                     ResponseEntity<VoBaseResp> resp = tenderThirdBiz.cancelThirdTender(voCancelThirdTenderReq);
                     if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) {
-                        log.error(String.format("批量放款回调: 取消投标申请失败 %s", gson.toJson(voCancelThirdTenderReq)));
+                        log.error(String.format("批量放款回调: 取消投标申请失败 %s msg:%s", gson.toJson(voCancelThirdTenderReq)
+                                ,resp.getBody().getState().getMsg()));
                     }
 
                     tender.setId(tender.getId());

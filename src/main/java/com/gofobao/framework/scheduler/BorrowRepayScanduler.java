@@ -121,6 +121,8 @@ public class BorrowRepayScanduler {
                 "AND  " +
                     "r.repay_at<=:repayAt " +
                 "AND " +
+                    "b.product_id IS NOT NULL "+
+                "AND " +
                     "(b.type=:type1 OR b.type=:type2)";
         Query query = entityManager.createNativeQuery(sqlStr, BorrowRepayment.class);
         query.setParameter("status", RepaymentContants.STATUS_NO);
