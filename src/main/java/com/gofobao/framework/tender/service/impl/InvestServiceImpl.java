@@ -350,7 +350,7 @@ public class InvestServiceImpl implements InvestService {
                         .build();
                 List<Transfer>transfers=transferService.findList(transferSpecification);
 
-                if(CollectionUtils.isEmpty(transfers)){
+                if(!CollectionUtils.isEmpty(transfers)){
                     Transfer transfer=transfers.get(0);
                     timeLimit= transfer.getTimeLimit();
                     apr=transfer.getApr();
