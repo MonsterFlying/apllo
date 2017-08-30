@@ -314,15 +314,18 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         log.info("即信批次回调触发");
         BatchRepayRunResp repayRunResp = jixinManager.callback(request, new TypeToken<BatchRepayRunResp>() {
         });
-        if (ObjectUtils.isEmpty(repayRunResp)) {
-            log.error("即信批次回调触发: 请求体为空!");
-            return ResponseEntity.ok("error");
-        }
+        return dealBatchRepay(repayRunResp);
+    }
 
-        if (!JixinResultContants.SUCCESS.equals(repayRunResp.getRetCode())) {
-            log.error(String.format("即信批次回调触发: 验证失败 %s", repayRunResp.getRetMsg()));
-            return ResponseEntity.ok("error");
-        }
+    /**
+     * 处理即信批次还款
+     *
+     * @param repayRunResp
+     * @return
+     */
+    public ResponseEntity<String> dealBatchRepay(BatchRepayRunResp repayRunResp) {
+        Preconditions.checkNotNull(repayRunResp, "即信批次回调触发: 请求体为空!");
+        Preconditions.checkState(!JixinResultContants.SUCCESS.equals(repayRunResp.getRetCode()), String.format("即信批次回调触发: 验证失败 %s", repayRunResp.getRetMsg()));
 
         Map<String, Object> acqResMap = GSON.fromJson(repayRunResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
         //触发处理批次放款处理结果队列
@@ -383,31 +386,20 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     public ResponseEntity<String> thirdBatchLendRepayRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
         BatchLendPayRunResp lendRepayRunResp = jixinManager.callback(request, new TypeToken<BatchLendPayRunResp>() {
         });
-        if (ObjectUtils.isEmpty(lendRepayRunResp)) {
-            log.error("=========================================批次回调=========================================");
-            log.error("=================================即信批次放款处理结果回调=================================");
-            log.error("请求体为空!");
-            log.error("==========================================================================================");
-            log.error("==========================================================================================");
-            return ResponseEntity.ok("error");
-        }
+        return dealBatchLendRepay(lendRepayRunResp);
+    }
 
-        if (!JixinResultContants.SUCCESS.equals(lendRepayRunResp.getRetCode())) {
-            log.error("=========================================批次回调=========================================");
-            log.error("=================================即信批次放款处理结果回调=================================");
-            log.error("回调失败! msg:" + lendRepayRunResp.getRetMsg());
-            log.error("==========================================================================================");
-            log.error("==========================================================================================");
-            return ResponseEntity.ok("error");
-        } else {
-            log.error("=========================================批次回调=========================================");
-            log.error("===============================即信批次放款处理结果回调===================================");
-            log.error("回调成功!");
-            log.error("==========================================================================================");
-            log.error("==========================================================================================");
-        }
-
-        log.info(String.format("即信放款回调信息: %s", GSON.toJson(lendRepayRunResp)));
+    /**
+     * 处理即信批次放款
+     *
+     * @param lendRepayRunResp
+     * @return
+     */
+    public ResponseEntity<String> dealBatchLendRepay(BatchLendPayRunResp lendRepayRunResp) {
+        log.info("进入批次放款处理流程!");
+        Preconditions.checkNotNull(lendRepayRunResp, "即信请求体为空！");
+        log.info("即信请求体:", GSON.toJson(lendRepayRunResp));
+        Preconditions.checkState(!JixinResultContants.SUCCESS.equals(lendRepayRunResp.getRetCode()), "即信回调反馈：处理失败! msg:" + lendRepayRunResp.getRetMsg());
         Map<String, Object> acqResMap = GSON.fromJson(lendRepayRunResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
 
         //触发处理批次放款处理结果队列
@@ -582,28 +574,21 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     public ResponseEntity<String> thirdBatchAdvanceRunCall(HttpServletRequest request, HttpServletResponse response) {
         BatchBailRepayRunResp batchBailRepayRunResp = jixinManager.callback(request, new TypeToken<BatchBailRepayRunResp>() {
         });
-        Map<String, Object> acqResMap = GSON.fromJson(batchBailRepayRunResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
-        if (ObjectUtils.isEmpty(batchBailRepayRunResp)) {
-            log.error("======================================批次回调======================================");
-            log.error("=============================批次名义借款人垫付业务处理回调===========================");
-            log.error("请求体为空!");
-            log.error("====================================================================================");
-            log.error("====================================================================================");
-        }
+        return dealBatchAdvance(batchBailRepayRunResp);
+    }
 
-        if (!JixinResultContants.SUCCESS.equals(batchBailRepayRunResp.getRetCode())) {
-            log.error("======================================批次回调======================================");
-            log.error("=============================批次名义借款人垫付业务处理回调===========================");
-            log.error("回调失败! msg:" + batchBailRepayRunResp.getRetMsg());
-            log.error("====================================================================================");
-            log.error("====================================================================================");
-        } else {
-            log.error("======================================批次回调======================================");
-            log.error("=============================批次名义借款人垫付业务处理回调===========================");
-            log.error("回调成功!");
-            log.error("====================================================================================");
-            log.error("====================================================================================");
-        }
+    /**
+     * 处理批次名义借款人垫付处理
+     * @param batchBailRepayRunResp
+     * @return
+     */
+    public ResponseEntity<String> dealBatchAdvance(BatchBailRepayRunResp batchBailRepayRunResp){
+
+        log.info("进入批次名义借款人垫付业务处理流程");
+        log.info("请求参数："+GSON.toJson(batchBailRepayRunResp));
+        Preconditions.checkNotNull(batchBailRepayRunResp, "批次名义借款人垫付业务处理回调，请求体为空!");
+        Preconditions.checkState(!JixinResultContants.SUCCESS.equals(batchBailRepayRunResp.getRetCode()), "批次名义借款人垫付业务处理回调：回调失败！ msg:" + batchBailRepayRunResp.getRetMsg());
+        Map<String, Object> acqResMap = GSON.fromJson(batchBailRepayRunResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
 
         //=============================================
         // 保存批次名义借款人垫付授权号

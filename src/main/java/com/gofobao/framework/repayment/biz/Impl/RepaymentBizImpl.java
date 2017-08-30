@@ -419,7 +419,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
         /* 批次号 */
         String batchNo = jixinHelper.getBatchNo();
-                /* 资产记录流水号 */
+        /* 资产记录流水号 */
         String seqNo = assetChangeProvider.getSeqNo();
         /* 资产记录分组流水号 */
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
@@ -427,6 +427,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
         BatchAssetChange batchAssetChange = addBatchAssetChangeByRepayAll(batchNo, borrowId);
         //扣除提前结清的违约金
         addBatchAssetChangeByBorrowPenalty(borrowId, titularBorrowAccount.getUpdateId(), penalty, seqNo, groupSeqNo, batchAssetChange);
+        //改变还款与垫付记录的值
+        changeRepaymentRecordByRepayAll(borrowRepaymentList);
         //提前结清处理
         //1.生成批次资产变动记录
         //2.发送至存管系统进行备案
@@ -443,7 +445,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param groupSeqNo
      * @param batchAssetChange
      */
-    private void addBatchAssetChangeByBorrowPenalty(long borrowId,long repayId, long penalty, String seqNo, String groupSeqNo, BatchAssetChange batchAssetChange) {
+    private void addBatchAssetChangeByBorrowPenalty(long borrowId, long repayId, long penalty, String seqNo, String groupSeqNo, BatchAssetChange batchAssetChange) {
         //扣除提前结清的违约金
         if (penalty > 0) {
             BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
@@ -1013,6 +1015,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 userCache.setQdWaitCollectionPrincipal(userCache.getQdWaitCollectionPrincipal() - principal);
                 userCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() - interest);
             }
+            //已赚利息
+            userCache.setIncomeInterest(userCache.getIncomeInterest()+interest);
+            Long collectionMoney=borrowCollections.stream().mapToLong(p->p.getCollectionMoney()).sum();
+            Long collectionMoneyYes=borrowCollections.stream().mapToLong(p->p.getCollectionMoneyYes()).sum();
+            //逾期收入
+            userCache.setIncomeOverdue(collectionMoneyYes-collectionMoney);
             userCacheService.save(userCache);
         });
     }
@@ -1233,7 +1241,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         // 生成投资人还款资金变动记录
         BatchAssetChange batchAssetChange = addBatchAssetChange(batchNo, borrowRepayment.getId(), advance);
         // 生成还款人还款批次资金改变记录
-        addBatchAssetChangeByBorrower(batchAssetChange.getId(), borrowRepayment, parentBorrow, interestPercent, isUserOpen, lateInterest, repayUserId, seqNo, groupSeqNo,advance);
+        addBatchAssetChangeByBorrower(batchAssetChange.getId(), borrowRepayment, parentBorrow, interestPercent, isUserOpen, lateInterest, repayUserId, seqNo, groupSeqNo, advance);
         //改变还款与垫付记录的值
         changeRepaymentAndAdvanceRecord(borrowRepayment, lateDays, lateInterest, advance);
         // 正常还款
@@ -1267,6 +1275,19 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
     }
 
+    /**
+     * 改变还款与垫付记录的值
+     *
+     * @param borrowRepaymentList
+     */
+    public void changeRepaymentRecordByRepayAll(List<BorrowRepayment> borrowRepaymentList) {
+        borrowRepaymentList.stream().forEach(borrowRepayment -> {
+            Date nowDate = new Date();
+            borrowRepayment.setRepayMoneyYes(borrowRepayment.getRepayMoney());
+            borrowRepayment.setUpdatedAt(nowDate);
+        });
+        borrowRepaymentService.save(borrowRepaymentList);
+    }
 
     /**
      * 新增资产更改记录

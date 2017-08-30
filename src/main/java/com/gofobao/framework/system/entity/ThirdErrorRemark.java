@@ -23,6 +23,7 @@ public class ThirdErrorRemark {
     private Long toUserId;
     private String thirdReqStr;
     private String thirdRespStr;
+    private String thirdErrorMsg;
     private String errorMsg;
     private String oldBatchNo;
     private String remark;

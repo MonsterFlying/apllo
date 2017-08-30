@@ -11,14 +11,19 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
+import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.contants.TenderConstans;
+import com.gofobao.framework.tender.contants.TransferContants;
 import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.repository.InvestRepository;
 import com.gofobao.framework.tender.service.InvestService;
+import com.gofobao.framework.tender.service.TransferService;
 import com.gofobao.framework.tender.vo.request.ReturnedMoney;
 import com.gofobao.framework.tender.vo.request.VoDetailReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;
 import com.gofobao.framework.tender.vo.response.*;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import groovy.util.logging.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +34,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.function.Function;
@@ -52,6 +58,9 @@ public class InvestServiceImpl implements InvestService {
 
     @Autowired
     private BorrowCollectionRepository borrowCollectionRepository;
+
+    @Autowired
+    private TransferService transferService;
 
     /**
      * 回款中列表
@@ -326,8 +335,31 @@ public class InvestServiceImpl implements InvestService {
                     .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES)
                     .mapToLong(s -> s.getPrincipal())
                     .sum();
+
+            Integer timeLimit=0;
+            Integer apr=0;
+            Date successAt=null;
+            if( StringUtils.isEmpty(tender.getTransferBuyId())){
+                timeLimit=borrow.getTimeLimit();
+                apr=borrow.getApr();
+                successAt= borrow.getSuccessAt();
+            }else{
+                Specification<Transfer>transferSpecification=Specifications.<Transfer>and()
+                        .eq("tenderId",tender.getId())
+                        .ne("status", Lists.newArrayList(TransferContants.NOPASS,TransferContants.CANCEL,TransferContants.CHECKPENDING))
+                        .build();
+                List<Transfer>transfers=transferService.findList(transferSpecification);
+
+                if(!CollectionUtils.isEmpty(transfers)){
+                    Transfer transfer=transfers.get(0);
+                    timeLimit= transfer.getTimeLimit();
+                    apr=transfer.getApr();
+                    successAt=transfer.getSuccessAt();
+                }
+
+            }
             //应收利息
-            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(tender.getValidMoney()), new Double(borrow.getApr()), borrow.getTimeLimit(), borrow.getSuccessAt());
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(tender.getValidMoney()), new Double(apr), timeLimit,successAt );
             Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
             Integer earnings = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("earnings")));
 

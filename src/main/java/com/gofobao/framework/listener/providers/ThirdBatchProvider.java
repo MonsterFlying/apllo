@@ -178,65 +178,54 @@ public class ThirdBatchProvider {
             }
         }));
 
-        //判断是否有失败的记录，存在失败orderId添加失败日志
-        if (!CollectionUtils.isEmpty(failureOrderIds)) {
+        //不存在失败批次进行后续操作
+        try {
+            switch (thirdBatchLog.getType()) {
+                case ThirdBatchLogContants.BATCH_CREDIT_INVEST: // 投资人批次购买债权
+                    // 批次债权转让结果处理
+                    newCreditInvestDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
+                    break;
+                case ThirdBatchLogContants.BATCH_LEND_REPAY: // 即信批次放款
+                    // 即信批次放款结果处理
+                    lendRepayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
+                    break;
+                case ThirdBatchLogContants.BATCH_REPAY: //即信批次还款
+                    // 即信批次还款结果处理
+                    repayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
+                    break;
+                case ThirdBatchLogContants.BATCH_BAIL_REPAY: //名义借款人垫付
+                    // 即信批次名义借款人垫付处理
+                    bailRepayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
+                    break;
+                case ThirdBatchLogContants.BATCH_REPAY_BAIL: //批次融资人还担保账户垫款
+                    // 即信批次融资人还担保账户垫款处理
+                    repayBailDeal(batchNo, sourceId, acqRes, failureOrderIds, successOrderIds);
+                    break;
+                case ThirdBatchLogContants.BATCH_CREDIT_END: //批次结束债权
+                    // 批次结束债权
+                    creditEndDeal(batchNo, sourceId, acqRes, failureOrderIds, successOrderIds);
+                    break;
+                case ThirdBatchLogContants.BATCH_REPAY_ALL: //提前结清批次还款
+                    // 提前结清批次还款
+                    repayAllDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
+                    break;
+                default:
+            }
+        } catch (Exception e) {
+            //判断是否有失败的记录，存在失败orderId添加失败日志
             ThirdErrorRemark remark = new ThirdErrorRemark();
             remark.setState(0);
             remark.setType(thirdBatchLog.getType());
             remark.setSourceId(sourceId);
             remark.setOldBatchNo(String.valueOf(batchNo));
             remark.setThirdRespStr(batchResp);
-            remark.setErrorMsg(GSON.toJson(failureErrorMsgList));
+            remark.setThirdErrorMsg(GSON.toJson(failureErrorMsgList));
+            remark.setErrorMsg(e.getMessage());
             remark.setCreatedAt(new Date());
             remark.setUpdatedAt(new Date());
             thirdErrorRemarkService.save(remark);
-        }
 
-        //不存在失败批次进行后续操作
-        switch (thirdBatchLog.getType()) {
-            case ThirdBatchLogContants.BATCH_CREDIT_INVEST: // 投资人批次购买债权
-                //=====================================================
-                // 批次债权转让结果处理
-                //=====================================================
-                newCreditInvestDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
-                break;
-            case ThirdBatchLogContants.BATCH_LEND_REPAY: // 即信批次放款
-                //=====================================================
-                // 即信批次放款结果处理
-                //=====================================================
-                lendRepayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
-                break;
-            case ThirdBatchLogContants.BATCH_REPAY: //即信批次还款
-                //=====================================================
-                // 即信批次还款结果处理
-                //=====================================================
-                repayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
-                break;
-            case ThirdBatchLogContants.BATCH_BAIL_REPAY: //名义借款人垫付
-                //=====================================================
-                // 即信批次名义借款人垫付处理
-                //=====================================================
-                bailRepayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
-                break;
-            case ThirdBatchLogContants.BATCH_REPAY_BAIL: //批次融资人还担保账户垫款
-                //=====================================================
-                // 即信批次融资人还担保账户垫款处理
-                //=====================================================
-                repayBailDeal(batchNo, sourceId, acqRes, failureOrderIds, successOrderIds);
-                break;
-            case ThirdBatchLogContants.BATCH_CREDIT_END: //批次结束债权
-                //=====================================================
-                // 批次结束债权
-                //=====================================================
-                creditEndDeal(batchNo, sourceId, acqRes, failureOrderIds, successOrderIds);
-                break;
-            case ThirdBatchLogContants.BATCH_REPAY_ALL: //提前结清批次还款
-                //======================================================
-                // 提前结清批次还款
-                //======================================================
-                repayAllDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
-                break;
-            default:
+            throw new Exception(e);
         }
 
         return true;
@@ -322,9 +311,9 @@ public class ThirdBatchProvider {
             borrowCollectionService.save(successBorrowCollectionList);
         }
 
-        //==================================================================
+
         // 批次还款处理(提前结清)
-        //==================================================================
+
         if (CollectionUtils.isEmpty(failureTRepayAllOrderIds)) {
             //提前结清操作
             ResponseEntity<VoBaseResp> resp = null;
@@ -371,9 +360,9 @@ public class ThirdBatchProvider {
             borrowCollectionService.save(successBorrowCollectionList);
         }
 
-        //==================================================================
+
         // 批次还款处理
-        //==================================================================
+
         if (CollectionUtils.isEmpty(failureTRepayBailOrderIds)) {
             VoRepayReq voRepayReq = GSON.fromJson(acqRes, new TypeToken<VoRepayReq>() {
             }.getType());
@@ -482,9 +471,9 @@ public class ThirdBatchProvider {
             }
         }
 
-        //==================================================================
+
         // 批次名义借款人垫付操作
-        //==================================================================
+
         if (CollectionUtils.isEmpty(failureTransferOrderIds)) {
             ResponseEntity<VoBaseResp> resp = repaymentBiz.newAdvanceDeal(repaymentId, batchNo);
             if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
@@ -523,9 +512,9 @@ public class ThirdBatchProvider {
             borrowCollectionService.save(successBorrowCollectionList);
         }
 
-        //==================================================================
+
         // 批次还款处理
-        //==================================================================
+
         if (CollectionUtils.isEmpty(failureTRepayOrderIds)) {
             ResponseEntity<VoBaseResp> resp = repaymentBiz.newRepayDeal(repaymentId, batchNo);
             if (resp.getBody().getState().getCode() != VoBaseResp.OK) {

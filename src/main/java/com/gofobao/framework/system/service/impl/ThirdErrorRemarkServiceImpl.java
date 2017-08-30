@@ -42,4 +42,8 @@ public class ThirdErrorRemarkServiceImpl implements ThirdErrorRemarkService{
     public ThirdErrorRemark save(ThirdErrorRemark thirdErrorRemark) {
         return thirdErrorRemarkRepository.save(thirdErrorRemark);
     }
+
+    public ThirdErrorRemark findByIdLock(long id){
+        return thirdErrorRemarkRepository.findById(id);
+    }
 }

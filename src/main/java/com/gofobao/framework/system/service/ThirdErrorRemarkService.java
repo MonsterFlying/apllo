@@ -13,6 +13,8 @@ import java.util.List;
 public interface ThirdErrorRemarkService {
     ThirdErrorRemark findById(long id);
 
+    ThirdErrorRemark findByIdLock(long id);
+
     List<ThirdErrorRemark> findList(Specification<ThirdErrorRemark> thirdErrorRemarkSpecification);
 
     List<ThirdErrorRemark> findList(Specification<ThirdErrorRemark> thirdErrorRemarkSpecification, Sort sort);

@@ -75,6 +75,7 @@ public class TransferController {
             voTransferTenderReq.setUserId(userId);
             return transferBiz.newTransferTender(voTransferTenderReq);
         } catch (Exception e) {
+            log.error("债权转让异常:",e);
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后重试!"));
         }
     }
