@@ -21,6 +21,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -56,37 +58,36 @@ public class DealThirdBatchScheduler {
         int pageSize = 50;
         int index = 0;
         do {
-            thirdBatchLogList = thirdBatchLogService.findList(tbls);
-            ThirdBatchLog thirdBatchLog = thirdBatchLogList.get(index);
-            BatchQueryReq req = new BatchQueryReq();
-            req.setChannel(ChannelContant.HTML);
-            req.setBatchNo(thirdBatchLog.getBatchNo());
-            req.setBatchTxDate(DateHelper.dateToString(thirdBatchLog.getCreateAt(),DateHelper.DATE_FORMAT_YMD_NUM));
-            BatchQueryResp resp = jixinManager.send(JixinTxCodeEnum.BATCH_QUERY, req, BatchQueryResp.class);
-            if ((!ObjectUtils.isEmpty(resp))
-                    && JixinResultContants.SUCCESS.equals(resp.getRetCode())
-                    && "S".equals(resp.getBatchState())) {
+            thirdBatchLogList = thirdBatchLogService.findList(tbls, new PageRequest(index, pageSize, new Sort(Sort.Direction.ASC, "id")));
+            index++;
+            thirdBatchLogList.forEach(thirdBatchLog -> {
+                BatchQueryReq req = new BatchQueryReq();
+                req.setChannel(ChannelContant.HTML);
+                req.setBatchNo(thirdBatchLog.getBatchNo());
+                req.setBatchTxDate(DateHelper.dateToString(thirdBatchLog.getCreateAt(), DateHelper.DATE_FORMAT_YMD_NUM));
+                BatchQueryResp resp = jixinManager.send(JixinTxCodeEnum.BATCH_QUERY, req, BatchQueryResp.class);
+                if ((!ObjectUtils.isEmpty(resp))
+                        && JixinResultContants.SUCCESS.equals(resp.getRetCode())
+                        && "S".equals(resp.getBatchState())) {
+                    MqConfig mqConfig = new MqConfig();
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+                    mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+                    ImmutableMap<String, String> body = ImmutableMap
+                            .of(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()),
+                                    MqConfig.BATCH_NO, StringHelper.toString(thirdBatchLog.getBatchNo()),
+                                    MqConfig.MSG_TIME, DateHelper.dateToString(new Date()),
+                                    MqConfig.ACQ_RES, GSON.toJson(thirdBatchLog.getAcqRes())
+                            );
 
-                index++;
-                MqConfig mqConfig = new MqConfig();
-                mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
-                mqConfig.setTag(MqTagEnum.BATCH_DEAL);
-                ImmutableMap<String, String> body = ImmutableMap
-                        .of(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()),
-                                MqConfig.BATCH_NO, StringHelper.toString(thirdBatchLog.getBatchNo()),
-                                MqConfig.MSG_TIME, DateHelper.dateToString(new Date()),
-                                MqConfig.ACQ_RES, GSON.toJson(thirdBatchLog.getAcqRes())
-                        );
-
-                mqConfig.setMsg(body);
-                try {
-                    log.info(String.format("DealThirdBatchScheduler process send mq %s", GSON.toJson(body)));
-                    mqHelper.convertAndSend(mqConfig);
-                } catch (Throwable e) {
-                    log.error("DealThirdBatchScheduler process send mq exception", e);
+                    mqConfig.setMsg(body);
+                    try {
+                        log.info(String.format("DealThirdBatchScheduler process send mq %s", GSON.toJson(body)));
+                        mqHelper.convertAndSend(mqConfig);
+                    } catch (Throwable e) {
+                        log.error("DealThirdBatchScheduler process send mq exception", e);
+                    }
                 }
-
-            }
+            });
         } while (thirdBatchLogList.size() >= pageSize);
 
     }
