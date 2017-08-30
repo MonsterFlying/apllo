@@ -1,6 +1,12 @@
 package com.gofobao.framework.scheduler;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.contants.JixinResultContants;
+import com.gofobao.framework.api.helper.JixinManager;
+import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
+import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -18,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 import java.util.Date;
 import java.util.List;
@@ -33,7 +40,8 @@ public class DealThirdBatchScheduler {
 
     @Autowired
     MqHelper mqHelper;
-
+    @Autowired
+    private JixinManager jixinManager;
     @Autowired
     private ThirdBatchLogService thirdBatchLogService;
 
@@ -49,23 +57,35 @@ public class DealThirdBatchScheduler {
         int index = 0;
         do {
             thirdBatchLogList = thirdBatchLogService.findList(tbls);
-            ThirdBatchLog thirdBatchLog = thirdBatchLogList.get(index++);
-            MqConfig mqConfig = new MqConfig();
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
-            mqConfig.setTag(MqTagEnum.BATCH_DEAL);
-            ImmutableMap<String, String> body = ImmutableMap
-                    .of(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()),
-                            MqConfig.BATCH_NO, StringHelper.toString(thirdBatchLog.getBatchNo()),
-                            MqConfig.MSG_TIME, DateHelper.dateToString(new Date()),
-                            MqConfig.ACQ_RES, GSON.toJson(thirdBatchLog.getAcqRes())
-                    );
+            ThirdBatchLog thirdBatchLog = thirdBatchLogList.get(index);
+            BatchQueryReq req = new BatchQueryReq();
+            req.setChannel(ChannelContant.HTML);
+            req.setBatchNo(thirdBatchLog.getBatchNo());
+            req.setBatchTxDate(DateHelper.dateToString(thirdBatchLog.getCreateAt(),DateHelper.DATE_FORMAT_YMD_NUM));
+            BatchQueryResp resp = jixinManager.send(JixinTxCodeEnum.BATCH_QUERY, req, BatchQueryResp.class);
+            if ((!ObjectUtils.isEmpty(resp))
+                    && JixinResultContants.SUCCESS.equals(resp.getRetCode())
+                    && "S".equals(resp.getBatchState())) {
 
-            mqConfig.setMsg(body);
-            try {
-                log.info(String.format("DealThirdBatchScheduler process send mq %s", GSON.toJson(body)));
-                mqHelper.convertAndSend(mqConfig);
-            } catch (Throwable e) {
-                log.error("DealThirdBatchScheduler process send mq exception", e);
+                index++;
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+                mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+                ImmutableMap<String, String> body = ImmutableMap
+                        .of(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()),
+                                MqConfig.BATCH_NO, StringHelper.toString(thirdBatchLog.getBatchNo()),
+                                MqConfig.MSG_TIME, DateHelper.dateToString(new Date()),
+                                MqConfig.ACQ_RES, GSON.toJson(thirdBatchLog.getAcqRes())
+                        );
+
+                mqConfig.setMsg(body);
+                try {
+                    log.info(String.format("DealThirdBatchScheduler process send mq %s", GSON.toJson(body)));
+                    mqHelper.convertAndSend(mqConfig);
+                } catch (Throwable e) {
+                    log.error("DealThirdBatchScheduler process send mq exception", e);
+                }
+
             }
         } while (thirdBatchLogList.size() >= pageSize);
 
