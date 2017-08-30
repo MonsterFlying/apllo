@@ -117,7 +117,7 @@ public class ThirdBatchProvider {
     @Transactional(rollbackFor = Exception.class)
     public boolean batchDeal(Map<String, String> msg) throws Exception {
         Long sourceId = NumberHelper.toLong(msg.get(MqConfig.SOURCE_ID));//batchLog sourceId
-        Long batchNo = NumberHelper.toLong(msg.get(MqConfig.BATCH_NO));//batchLog batchNo
+        String batchNo = msg.get(MqConfig.BATCH_NO);//batchLog batchNo
         String acqRes = msg.get(MqConfig.ACQ_RES);
         String batchResp = msg.get(MqConfig.BATCH_RESP);
 
@@ -242,7 +242,7 @@ public class ThirdBatchProvider {
      * @param failureThirdCreditEndOrderIds
      * @param successThirdCreditEndOrderIds
      */
-    private void creditEndDeal(long batchNo, long borrowId, String acqRes, List<String> failureThirdCreditEndOrderIds, List<String> successThirdCreditEndOrderIds) {
+    private void creditEndDeal(String batchNo, long borrowId, String acqRes, List<String> failureThirdCreditEndOrderIds, List<String> successThirdCreditEndOrderIds) {
         if (CollectionUtils.isEmpty(failureThirdCreditEndOrderIds)) {
             log.info("================================================================================");
             log.info("即信批次还款查询：未发现失败批次！");
@@ -294,7 +294,7 @@ public class ThirdBatchProvider {
      * @param failureTRepayAllOrderIds
      * @param successTRepayAllOrderIds
      */
-    private void repayAllDeal(long batchNo, long borrowId, List<String> failureTRepayAllOrderIds, List<String> successTRepayAllOrderIds) {
+    private void repayAllDeal(String batchNo, long borrowId, List<String> failureTRepayAllOrderIds, List<String> successTRepayAllOrderIds) {
         if (CollectionUtils.isEmpty(failureTRepayAllOrderIds)) {
             log.info("================================================================================");
             log.info("即信批次还款查询：未发现失败批次！");
@@ -343,7 +343,7 @@ public class ThirdBatchProvider {
      * @param failureTRepayBailOrderIds
      * @param successTRepayBailOrderIds
      */
-    private void repayBailDeal(long batchNo, long repaymentId, String acqRes, List<String> failureTRepayBailOrderIds, List<String> successTRepayBailOrderIds) {
+    private void repayBailDeal(String batchNo, long repaymentId, String acqRes, List<String> failureTRepayBailOrderIds, List<String> successTRepayBailOrderIds) {
 
         if (CollectionUtils.isEmpty(failureTRepayBailOrderIds)) {
             log.info("================================================================================");
@@ -392,7 +392,7 @@ public class ThirdBatchProvider {
      * @param failureTransferOrderIds
      * @param successTransferOrderIds
      */
-    private void bailRepayDeal(long batchNo, long repaymentId, List<String> failureTransferOrderIds, List<String> successTransferOrderIds) throws Exception {
+    private void bailRepayDeal(String batchNo, long repaymentId, List<String> failureTransferOrderIds, List<String> successTransferOrderIds) throws Exception {
         if (CollectionUtils.isEmpty(failureTransferOrderIds)) {
             log.info("================================================================================");
             log.info("即信批次还款查询：未发现失败批次！");
@@ -496,7 +496,7 @@ public class ThirdBatchProvider {
      * @param failureTRepayOrderIds
      * @param successTRepayOrderIds
      */
-    private void repayDeal(long batchNo, long repaymentId, List<String> failureTRepayOrderIds, List<String> successTRepayOrderIds) throws Exception {
+    private void repayDeal(String batchNo, long repaymentId, List<String> failureTRepayOrderIds, List<String> successTRepayOrderIds) throws Exception {
         if (CollectionUtils.isEmpty(failureTRepayOrderIds)) {
             log.info("================================================================================");
             log.info("即信批次还款查询：未发现失败批次！");
@@ -537,7 +537,7 @@ public class ThirdBatchProvider {
      * @param failureThirdLendPayOrderIds
      * @param successThirdLendPayOrderIds
      */
-    private void lendRepayDeal(long batchNo, long borrowId, List<String> failureThirdLendPayOrderIds, List<String> successThirdLendPayOrderIds) throws Exception {
+    private void lendRepayDeal(String batchNo, long borrowId, List<String> failureThirdLendPayOrderIds, List<String> successThirdLendPayOrderIds) throws Exception {
         Date nowDate = new Date();
         if (CollectionUtils.isEmpty(failureThirdLendPayOrderIds)) {
             log.info("================================================================================");
@@ -718,7 +718,7 @@ public class ThirdBatchProvider {
      * @throws Exception
      */
     @Transactional(rollbackFor = Exception.class)
-    private void newCreditInvestDeal(long batchNo, long transferId, List<String> failureThirdTransferOrderIds,
+    private void newCreditInvestDeal(String batchNo, long transferId, List<String> failureThirdTransferOrderIds,
                                      List<String> successThirdTransferOrderIds) throws Exception {
         Date nowDate = new Date();
         if (CollectionUtils.isEmpty(failureThirdTransferOrderIds)) {
@@ -835,7 +835,7 @@ public class ThirdBatchProvider {
      * @param batchNo
      * @param sourceId
      */
-    private void updateThirdBatchLogState(long batchNo, long sourceId, int type, int state) {
+    private void updateThirdBatchLogState(String batchNo, long sourceId, int type, int state) {
         //更新third_batch_log状态
         Specification<ThirdBatchLog> thirdBatchLogSpecification = Specifications
                 .<ThirdBatchLog>and()
