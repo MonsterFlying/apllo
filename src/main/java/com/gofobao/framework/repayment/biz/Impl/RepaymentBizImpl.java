@@ -1020,7 +1020,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
             Long collectionMoney=borrowCollections.stream().mapToLong(p->p.getCollectionMoney()).sum();
             Long collectionMoneyYes=borrowCollections.stream().mapToLong(p->p.getCollectionMoneyYes()).sum();
             //逾期收入
-            userCache.setIncomeOverdue(collectionMoneyYes-collectionMoney);
+            if(collectionMoneyYes>=collectionMoney){
+                userCache.setIncomeOverdue(collectionMoneyYes-collectionMoney);
+            }else{
+                log.error("当前还款批次异常：打印回款期数信息：",GSON.toJson(borrowCollections));
+                userCache.setIncomeOverdue(0L);
+            }
             userCacheService.save(userCache);
         });
     }
