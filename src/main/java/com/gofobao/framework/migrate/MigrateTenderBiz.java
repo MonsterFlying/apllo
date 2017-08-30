@@ -70,7 +70,7 @@ public class MigrateTenderBiz {
     /**
      * 迁移结果文件
      */
-    private static final String RESULT_TENDER_FILE_PATH = "D:/Apollo/migrate/tender_result/3005-BIDRESP-101945-20170420";
+    private static final String RESULT_TENDER_FILE_PATH = "D:/Apollo/migrate/tender_result/3005-BIDRESP-151754-20170421";
 
     @Autowired
     private TenderService tenderService;
@@ -131,7 +131,7 @@ public class MigrateTenderBiz {
                     .in("borrowId", borrowIdSet.toArray())
                     .eq("status", 1)
                     .eq("transferFlag", 0)
-                    .ne("authCode", null)
+                    .eq("authCode", null)
                     .build();
             List<Tender> tenderList = tenderService.findList(ts);
 
@@ -249,8 +249,8 @@ public class MigrateTenderBiz {
         lines.forEach((String item) -> {
             try {
                 byte[] gbks = item.getBytes("gbk");
-                String flag = FormatHelper.getStr(gbks, 160, 162);
-                String idStr = FormatHelper.getStr(gbks, 222, 282) ;
+                String flag = FormatHelper.getStrForGBK(gbks, 160, 162);
+                String idStr = FormatHelper.getStrForGBK(gbks, 222, 282) ;
                 if (!"00".equals(flag)) {
                     StringBuffer stringBuffer = new StringBuffer();
                     stringBuffer.append(NumberHelper.toLong(idStr)).append("|").append(ERROR_MSG_DATA.get(flag));
@@ -262,7 +262,7 @@ public class MigrateTenderBiz {
                         return;
                     }
                 } else {
-                    String authCode = FormatHelper.getStr(gbks, 162, 182) ;
+                    String authCode = FormatHelper.getStrForGBK(gbks, 162, 182) ;
                     long tenderId = NumberHelper.toLong(idStr) ;
                     tenderIdList.add(tenderId);
                     authCodeMap.put(tenderId, authCode);

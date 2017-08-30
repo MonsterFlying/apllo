@@ -96,15 +96,15 @@ public class MigrateMemberBiz {
             byte[] gbks = null;
             try {
                 gbks = item.getBytes("gbk");
-                String flag = FormatHelper.getStr(gbks, 39, 40);
-                String idStr = FormatHelper.getStr(gbks, 104, 164);
+                String flag = FormatHelper.getStrForGBK(gbks, 39, 40);
+                String idStr = FormatHelper.getStrForGBK(gbks, 104, 164);
                 Long id = NumberHelper.toLong(idStr);
 
                 if ("F".equals(flag)) {
-                    String errorCode = FormatHelper.getStr(gbks, 40, 43);
+                    String errorCode = FormatHelper.getStrForGBK(gbks, 40, 43);
                     errorUserIdMap.put(id, ERROR_MSSAGE.get(errorCode));
                 } else {
-                    String accountId = FormatHelper.getStr(gbks, 0, 19);
+                    String accountId = FormatHelper.getStrForGBK(gbks, 0, 19);
                     successUserIdMap.put(id, accountId);
                 }
             } catch (Exception e) {
