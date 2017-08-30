@@ -336,9 +336,6 @@ public class InvestServiceImpl implements InvestService {
                     .mapToLong(s -> s.getPrincipal())
                     .sum();
 
-
-
-
             Integer timeLimit=0;
             Integer apr=0;
             Date successAt=null;
@@ -361,8 +358,6 @@ public class InvestServiceImpl implements InvestService {
                 }
 
             }
-
-
             //应收利息
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(tender.getValidMoney()), new Double(apr), timeLimit,successAt );
             Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
