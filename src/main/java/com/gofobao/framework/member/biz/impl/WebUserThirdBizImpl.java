@@ -1289,7 +1289,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
         cardBindRequest.setMobile(userThirdAccount.getMobile());
         cardBindRequest.setName(userThirdAccount.getName());
         cardBindRequest.setAcqRes(String.valueOf(userId));
-        cardBindRequest.setRetUrl(String.format("%s%s%s", javaDomain, "/pub/bindCard/show/", userId));
+        cardBindRequest.setRetUrl(String.format("%s/account/card", pcDomain));
         cardBindRequest.setNotifyUrl(String.format("%s%s", javaDomain, "/pub/third/bank/bind/callback"));
 
         String html = jixinManager.getHtml(JixinTxCodeEnum.CARD_BIND, cardBindRequest);

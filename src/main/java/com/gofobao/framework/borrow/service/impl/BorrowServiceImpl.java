@@ -280,7 +280,7 @@ public class BorrowServiceImpl implements BorrowService {
         if (type.intValue() == -1) {
             type = null;
         }
-        StringBuilder pageSb = new StringBuilder(" SELECT b FROM Borrow b WHERE 1=1  AND b.productId IS NOT NULL");
+        StringBuilder pageSb = new StringBuilder(" SELECT b FROM Borrow b WHERE 1=1  AND b.productId IS NOT NULL ");
         StringBuilder countSb = new StringBuilder(" SELECT COUNT(id) FROM Borrow b WHERE 1=1 AND b.productId IS NOT NULL ");
         StringBuilder condtionSql = new StringBuilder("");
         // 条件
