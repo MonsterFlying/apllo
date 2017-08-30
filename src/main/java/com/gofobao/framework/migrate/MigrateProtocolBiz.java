@@ -247,7 +247,7 @@ public class MigrateProtocolBiz {
                         text.append(FormatHelper.appendByTail(item.getId().toString(), 100));
                         text.append(FormatHelper.appendByTail("", 100));
                         gbk.write(text.toString());
-                        gbk.newLine();
+                        gbk.write("\n");
                     } catch (Exception e) {
                         log.error("债权转让迁移错误");
                     }
@@ -266,7 +266,7 @@ public class MigrateProtocolBiz {
                         text.append(FormatHelper.appendByTail(item.getId().toString(), 100));
                         text.append(FormatHelper.appendByTail("", 100));
                         gbk.write(text.toString());
-                        gbk.newLine();
+                        gbk.write("\n");
                     } catch (Exception e) {
                         log.error("债权转让迁移错误");
                     }

@@ -166,6 +166,7 @@ public class ThirdBatchProvider {
         List<String> failureOrderIds = new ArrayList<>(); // 失败orderId
         List<String> successOrderIds = new ArrayList<>(); // 成功orderId
         List<String> failureErrorMsgList = new ArrayList<>();
+        List<String> otherOrderIds = new ArrayList<>();//其它状态orderId
         detailsQueryRespList.forEach(list -> detailsQueryRespList.forEach(obj -> {
             if ("F".equalsIgnoreCase(obj.getTxState())) {
                 failureOrderIds.add(obj.getOrderId());
@@ -174,9 +175,12 @@ public class ThirdBatchProvider {
             } else if ("S".equalsIgnoreCase(obj.getTxState())) {
                 successOrderIds.add(obj.getOrderId());
             } else {
-                log.error("批次回调状态不明确");
+                log.error(String.format("批次回调状态不明确,批次状态:%s", obj.getFailMsg()));
+                otherOrderIds.add(obj.getOrderId());
             }
         }));
+
+        Preconditions.checkState(CollectionUtils.isEmpty(otherOrderIds),"批次处理存在F、S,程序暂停运行!");
 
         //不存在失败批次进行后续操作
         try {
@@ -588,7 +592,7 @@ public class ThirdBatchProvider {
                     ResponseEntity<VoBaseResp> resp = tenderThirdBiz.cancelThirdTender(voCancelThirdTenderReq);
                     if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) {
                         log.error(String.format("批量放款回调: 取消投标申请失败 %s msg:%s", gson.toJson(voCancelThirdTenderReq)
-                                ,resp.getBody().getState().getMsg()));
+                                , resp.getBody().getState().getMsg()));
                     }
 
                     tender.setId(tender.getId());

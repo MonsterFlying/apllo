@@ -410,7 +410,7 @@ public class MigrateMemberBiz {
                             text.append(FormatHelper.appendByTail("", 17));
                             try {
                                 gbk.write(text.toString());
-                                gbk.newLine();
+                                gbk.write("\n") ;
                             } catch (IOException e) {
                                 log.error("写入正确文件失败", e);
                                 return;

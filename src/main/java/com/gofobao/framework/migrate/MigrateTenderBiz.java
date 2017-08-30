@@ -171,6 +171,9 @@ public class MigrateTenderBiz {
                     } else {
                         intType = "1";
                         intPayDay = String.valueOf(DateHelper.getDay(successAt));
+                        if(intPayDay.length() == 1){
+                            intPayDay = "0" + intPayDay ;
+                        }
                         endDate = DateHelper.dateToString(DateHelper.addMonths(successAt, borrow.getTimeLimit()), DateHelper.DATE_FORMAT_YMD_NUM);
                     }
 
@@ -192,7 +195,7 @@ public class MigrateTenderBiz {
                     text.append(FormatHelper.appendByTail(borrow.getProductId(), 40));  // 标的编号
                     text.append(FormatHelper.appendByTail(String.valueOf(tender.getId()), 60));  //保留域
                     tenderWriter.write(text.toString());
-                    tenderWriter.newLine();
+                    tenderWriter.write("\n");
                 } catch (Exception e) {
                     log.error("投标写入失败", e);
                 }
