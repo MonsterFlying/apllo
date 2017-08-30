@@ -1444,6 +1444,10 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
         entity.setPasswordState(0);
         entity.setCardNoBindState(1);
         entity.setName(name);
+        UserThirdAccount existsAccount = userThirdAccountService.findByUserId(user.getId());
+        if(!ObjectUtils.isEmpty(existsAccount)){
+            throw new Exception("重复开户");
+        }
         userThirdAccountService.save(entity);
 
         //  9.保存用户实名信息

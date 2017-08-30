@@ -368,7 +368,7 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
                 passwordSetQueryRequest,
                 PasswordSetQueryResponse.class);
         if (ObjectUtils.isEmpty(passwordSetQueryResponse)
-                || JixinResultContants.SUCCESS.equals(passwordSetQueryResponse.getRetCode())) {
+                ||!JixinResultContants.SUCCESS.equals(passwordSetQueryResponse.getRetCode())) {
             String msg = ObjectUtils.isEmpty(passwordSetQueryResponse) ?
                     "请求即信通讯异常" : passwordSetQueryResponse.getRetMsg();
             log.error(String.format("OpenAccountBizImpl.findPasswordStateInitByUserId: %s", msg));
