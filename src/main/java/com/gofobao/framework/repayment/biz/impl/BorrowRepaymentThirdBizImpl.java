@@ -399,7 +399,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         log.info("进入批次放款处理流程!");
         Preconditions.checkNotNull(lendRepayRunResp, "即信请求体为空！");
         log.info("即信请求体:", GSON.toJson(lendRepayRunResp));
-        Preconditions.checkState(!JixinResultContants.SUCCESS.equals(lendRepayRunResp.getRetCode()), "即信回调反馈：处理失败! msg:" + lendRepayRunResp.getRetMsg());
+        Preconditions.checkState(JixinResultContants.SUCCESS.equals(lendRepayRunResp.getRetCode()), "即信回调反馈：处理失败! msg:" + lendRepayRunResp.getRetMsg());
         Map<String, Object> acqResMap = GSON.fromJson(lendRepayRunResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
 
         //触发处理批次放款处理结果队列
