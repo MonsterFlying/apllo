@@ -325,7 +325,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
      */
     public ResponseEntity<String> dealBatchRepay(BatchRepayRunResp repayRunResp) {
         Preconditions.checkNotNull(repayRunResp, "即信批次回调触发: 请求体为空!");
-        Preconditions.checkState(!JixinResultContants.SUCCESS.equals(repayRunResp.getRetCode()), String.format("即信批次回调触发: 验证失败 %s", repayRunResp.getRetMsg()));
+        Preconditions.checkState(JixinResultContants.SUCCESS.equals(repayRunResp.getRetCode()), String.format("即信批次回调触发: 验证失败 %s", repayRunResp.getRetMsg()));
 
         Map<String, Object> acqResMap = GSON.fromJson(repayRunResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
         //触发处理批次放款处理结果队列
@@ -587,7 +587,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         log.info("进入批次名义借款人垫付业务处理流程");
         log.info("请求参数："+GSON.toJson(batchBailRepayRunResp));
         Preconditions.checkNotNull(batchBailRepayRunResp, "批次名义借款人垫付业务处理回调，请求体为空!");
-        Preconditions.checkState(!JixinResultContants.SUCCESS.equals(batchBailRepayRunResp.getRetCode()), "批次名义借款人垫付业务处理回调：回调失败！ msg:" + batchBailRepayRunResp.getRetMsg());
+        Preconditions.checkState(JixinResultContants.SUCCESS.equals(batchBailRepayRunResp.getRetCode()), "批次名义借款人垫付业务处理回调：回调失败！ msg:" + batchBailRepayRunResp.getRetMsg());
         Map<String, Object> acqResMap = GSON.fromJson(batchBailRepayRunResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
 
         //=============================================
