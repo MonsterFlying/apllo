@@ -237,7 +237,7 @@ public class TransferServiceImpl implements TransferService {
         Query sqlQuery = entityManager.createNativeQuery(sql.toString(), Tender.class);
         sqlQuery.setParameter("userId",voTransferReq.getUserId());
         sqlQuery.setParameter("transferFlag",TenderConstans.TRANSFER_NO);
-        sqlQuery.setParameter("state", + TenderConstans.BACK_MONEY );
+        sqlQuery.setParameter("state",TenderConstans.BACK_MONEY );
         List<Tender> totalCountList = sqlQuery.getResultList();
         sqlQuery.setFirstResult(voTransferReq.getPageIndex());
         sqlQuery.setMaxResults(voTransferReq.getPageSize());
