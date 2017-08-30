@@ -56,8 +56,10 @@ import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.service.TenderService;
+import com.gofobao.framework.tender.service.TransferService;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.google.common.base.Preconditions;
@@ -119,7 +121,8 @@ public class BorrowBizImpl implements BorrowBiz {
     private MqHelper mqHelper;
     @Autowired
     private TenderService tenderService;
-
+    @Autowired
+    private TransferService transferService;
     @Autowired
     private BorrowCollectionService borrowCollectionService;
     @Autowired
@@ -489,7 +492,19 @@ public class BorrowBizImpl implements BorrowBiz {
                             .body(VoBaseResp.error(VoBaseResp.ERROR, "您已经有一个进行中的借款标!"));
                 }
             }
-        }*/
+        }
+        Specification<Transfer> ts = Specifications
+                .<Transfer>and()
+                .eq("userId", userId)
+                .in("status", 0, 1)
+                .build();
+        long tranferingNum = transferService.count(ts);
+        if (tranferingNum > 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "您已经有一个进行中的债权转让"));
+        }
+        */
         Long borrowId = insertBorrow(voAddNetWorthBorrow, userId);  // 插入标
         if (borrowId <= 0) {
             log.info("新增借款：净值标插入失败。");

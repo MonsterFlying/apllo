@@ -145,7 +145,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         tenderService.updateById(updTender);
         return ResponseEntity.ok(VoBaseResp.ok("创建投标成功!"));
     }
-    
+
 
     /**
      * 投资人批次购买债权参数验证回调
@@ -187,6 +187,15 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
     public ResponseEntity<String> thirdBatchCreditInvestRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
         BatchCreditInvestRunCall batchCreditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
         });
+        return dealBatchCreditInvest(batchCreditInvestRunCall);
+    }
+
+    /**
+     * 处理批次购买债权转让
+     * @param batchCreditInvestRunCall
+     * @return
+     */
+    public ResponseEntity<String> dealBatchCreditInvest(BatchCreditInvestRunCall batchCreditInvestRunCall) {
         Gson gson = new Gson();
         log.info(String.format("批量债权购买回调信息打印: %s", gson.toJson(batchCreditInvestRunCall)));
         Preconditions.checkNotNull(batchCreditInvestRunCall, "批量债权转让回调: 回调信息为空!");
@@ -206,7 +215,6 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             log.error("保存第三方债权转让授权码!", e);
         }
 
-
         // 触发处理批次购买债权处理队列
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
@@ -214,7 +222,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         ImmutableMap<String, String> body = ImmutableMap
                 .of(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("transferId")),
                         MqConfig.BATCH_NO, StringHelper.toString(batchCreditInvestRunCall.getBatchNo()),
-                        MqConfig.BATCH_RESP , GSON.toJson(batchCreditInvestRunCall),
+                        MqConfig.BATCH_RESP, GSON.toJson(batchCreditInvestRunCall),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
         mqConfig.setMsg(body);
         try {

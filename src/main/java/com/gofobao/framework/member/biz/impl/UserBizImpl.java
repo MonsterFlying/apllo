@@ -276,10 +276,8 @@ public class UserBizImpl implements UserBiz {
             voBasicUserInfoResp.setBankState(!StringUtils.isEmpty(userThirdAccount.getCardNo()));
             voBasicUserInfoResp.setAutoTenderState(userThirdAccount.getAutoTenderState().equals(1));
             voBasicUserInfoResp.setAutoTranferState(userThirdAccount.getAutoTransferState().equals(1));
-            /**
-             * @// TODO: 2017/8/29 上线取消注释
-             */
-/*            assetSynBiz.doAssetSyn(user.getId());*/
+
+              assetSynBiz.doAssetSyn(user.getId());
         }
 
         // 获取vip状态

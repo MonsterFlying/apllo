@@ -1,5 +1,6 @@
 package com.gofobao.framework.tender.biz;
 
+import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestRunCall;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
@@ -15,6 +16,13 @@ public interface TenderThirdBiz {
     ResponseEntity<VoBaseResp> createThirdTender(VoCreateThirdTenderReq voCreateThirdTenderReq);
 
     ResponseEntity<VoBaseResp> cancelThirdTender(VoCancelThirdTenderReq voCancelThirdTenderReq);
+
+    /**
+     * 处理批次购买债权转让
+     * @param batchCreditInvestRunCall
+     * @return
+     */
+    ResponseEntity<String> dealBatchCreditInvest(BatchCreditInvestRunCall batchCreditInvestRunCall);
 
     /**
      * 投资人批次购买债权参数验证回调
