@@ -97,7 +97,7 @@ public class MigrateBorrowBiz {
                     .eq("status", "3")
                     .eq("closeAt", null)
                     .eq("productId", null)
-                    .in("type", Stream.of(0, 1 ,4).toArray())
+                    .in("type", Stream.of(0, 1, 4).toArray())
                     .eq("tenderId", null)
                     .build();
             List<Borrow> borrowList = borrowService.findList(bs, pageable);
@@ -105,7 +105,7 @@ public class MigrateBorrowBiz {
                 break;
             }
             realSize = borrowList.size();
-            pageIndex ++ ;
+            pageIndex++;
 
             Set<Long> userIdSet = borrowList.stream().map(borrow -> borrow.getUserId()).collect(Collectors.toSet());
 
@@ -135,8 +135,8 @@ public class MigrateBorrowBiz {
                     // 写入存管
                     StringBuffer text = new StringBuffer();
                     try {
-                        String borrowName = String.format("GFB%s", borrow.getId() ) ;
-                        String borrowMenoy = borrow.getMoney().toString() ;
+                        String borrowName = String.format("GFB%s", borrow.getId());
+                        String borrowMenoy = borrow.getMoney().toString();
                         String intType = null;
                         Integer repayFashion = borrow.getRepayFashion();
                         String intPayDay = null;
@@ -171,7 +171,7 @@ public class MigrateBorrowBiz {
                         text.append(FormatHelper.appendByTail("", 100)); // 保留域
                         text.append(FormatHelper.appendByTail(borrowId, 100)); // 第三方平台保留使用,原样返回
                         borrowWriter.write(text.toString());
-                        borrowWriter.newLine();
+                        borrowWriter.write("\n");
                     } catch (Exception e) {
                         log.error("写入成功借款失败");
                     }
@@ -226,8 +226,8 @@ public class MigrateBorrowBiz {
         Stream<String> lines = reader.lines();
         lines.forEach((String item) -> {
             try {
-                byte[]  gbks = item.getBytes("gbk");
-                String flag =  FormatHelper.getStrForGBK(gbks, 271, 273);
+                byte[] gbks = item.getBytes("gbk");
+                String flag = FormatHelper.getStrForGBK(gbks, 271, 273);
                 String idStr = FormatHelper.getStrForGBK(gbks, 10, 50);
                 if (!"00".equals(flag)) {
                     StringBuffer stringBuffer = new StringBuffer();
@@ -263,6 +263,7 @@ public class MigrateBorrowBiz {
     }
 
     private static Map<String, String> ERROR_MSG_DATA = new HashMap<>();
+
     static {
         ERROR_MSG_DATA.put("01", "银行号不允许为空");
         ERROR_MSG_DATA.put("02", "批次号不允许为空");
