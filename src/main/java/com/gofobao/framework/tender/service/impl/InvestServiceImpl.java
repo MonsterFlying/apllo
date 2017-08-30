@@ -36,6 +36,9 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -61,6 +64,9 @@ public class InvestServiceImpl implements InvestService {
 
     @Autowired
     private TransferService transferService;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     /**
      * 回款中列表
@@ -294,34 +300,15 @@ public class InvestServiceImpl implements InvestService {
             item.setSuccessAt("");
         }
         if (tender.getState() == TenderConstans.BACK_MONEY) {
-            item.setSuccessAt(DateHelper.dateToString(borrow.getSuccessAt()));
             item.setStatusStr(TenderConstans.BACK_MONEY_STR);
         }
         if (tender.getState() == TenderConstans.SETTLE) {
-            item.setSuccessAt(DateHelper.dateToString(borrow.getSuccessAt()));
             item.setStatusStr(TenderConstans.SETTLE_STR);
         }
         item.setStatus(tender.getState());
         item.setMoney(StringHelper.formatMon(tender.getValidMoney() / 100D));
-        item.setApr(StringHelper.formatMon(borrow.getApr() / 100D));
-        //期限
-        if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE) {
-            item.setRepayFashion(BorrowContants.REPAY_FASHION_ONCE_STR);
-            item.setTimeLimit(borrow.getTimeLimit() + BorrowContants.DAY);
-        } else {
-            item.setTimeLimit(borrow.getTimeLimit() + BorrowContants.MONTH);
-        }
-
         item.setBorrowId(borrow.getId());
         item.setTenderId(tender.getId());
-        //还款方式
-        if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_MONTH) {
-            item.setRepayFashion(BorrowContants.REPAY_FASHION_MONTH_STR);
-        }
-        if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL) {
-            item.setRepayFashion(BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL_STR);
-        }
-
 
         if (tender.getState() == TenderConstans.BACK_MONEY || tender.getState() == TenderConstans.SETTLE) {
             List<BorrowCollection> borrowCollectionList = borrowCollectionRepository.findByTenderId(tender.getId());
@@ -336,30 +323,53 @@ public class InvestServiceImpl implements InvestService {
                     .mapToLong(s -> s.getPrincipal())
                     .sum();
 
-            Integer timeLimit=0;
-            Integer apr=0;
-            Date successAt=null;
-            if( StringUtils.isEmpty(tender.getTransferBuyId())){
-                timeLimit=borrow.getTimeLimit();
-                apr=borrow.getApr();
-                successAt= borrow.getSuccessAt();
-            }else{
-                Specification<Transfer>transferSpecification=Specifications.<Transfer>and()
-                        .eq("tenderId",tender.getId())
-                        .ne("state", Lists.newArrayList(TransferContants.NOPASS,TransferContants.CANCEL,TransferContants.CHECKPENDING).toArray())
-                        .build();
-                List<Transfer>transfers=transferService.findList(transferSpecification);
-
-                if(!CollectionUtils.isEmpty(transfers)){
-                    Transfer transfer=transfers.get(0);
-                    timeLimit= transfer.getTimeLimit();
-                    apr=transfer.getApr();
-                    successAt=transfer.getSuccessAt();
+            Integer timeLimit = 0;
+            Integer apr = 0;
+            Date successAt = null;
+            if (StringUtils.isEmpty(tender.getTransferBuyId())) {
+                timeLimit = borrow.getTimeLimit();
+                apr = borrow.getApr();
+                successAt = borrow.getSuccessAt();
+                //期限
+                if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE) {
+                    item.setRepayFashion(BorrowContants.REPAY_FASHION_ONCE_STR);
+                    item.setTimeLimit(timeLimit + BorrowContants.DAY);
+                } else {
+                    item.setTimeLimit(timeLimit + BorrowContants.MONTH);
                 }
-
+                //还款方式
+                if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_MONTH) {
+                    item.setRepayFashion(BorrowContants.REPAY_FASHION_MONTH_STR);
+                }
+                if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL) {
+                    item.setRepayFashion(BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL_STR);
+                }
+                item.setSuccessAt(DateHelper.dateToString(borrow.getSuccessAt()));
+            } else {
+                String sqlStr = "SELECT transfer.* FROM gfb_transfer transfer  " +
+                        "LEFT JOIN " +
+                            "gfb_transfer_buy_log  transferLog " +
+                        "ON " +
+                             "transfer.id=transferLog.transfer_id " +
+                        "WHERE " +
+                            "transferLog.id=:transferLog";
+                Query query = entityManager.createNativeQuery(sqlStr, Transfer.class);
+                query.setParameter("transferLog", tender.getTransferBuyId());
+                List<Transfer> transfers = query.getResultList();
+                if (!CollectionUtils.isEmpty(transfers)) {
+                    Transfer transfer = transfers.get(0);
+                    timeLimit = transfer.getTimeLimit();
+                    apr = transfer.getApr();
+                    successAt = transfer.getSuccessAt();
+                    item.setTimeLimit(transfer.getTimeLimit() + BorrowContants.MONTH);
+                    item.setRepayFashion(BorrowContants.REPAY_FASHION_MONTH_STR);
+                    item.setSuccessAt(transfer.getState() == TransferContants.TRANSFERED ? DateHelper.dateToString(transfer.getSuccessAt()) : "");
+                }
             }
+            //年利率
+            item.setApr(StringHelper.formatMon(apr / 100D));
             //应收利息
-            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(tender.getValidMoney()), new Double(apr), timeLimit,successAt );
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(tender.getValidMoney()), new Double(apr), timeLimit, successAt);
             Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
             Integer earnings = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("earnings")));
 
@@ -405,7 +415,7 @@ public class InvestServiceImpl implements InvestService {
             returnedMoney.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
             returnedMoney.setCollectionMoney(StringHelper.formatMon(p.getCollectionMoney() / 100D));
             returnedMoney.setOrder(p.getOrder() + 1);
-            int lateDays = DateHelper.diffInDays(DateHelper.beginOfDate(p.getCollectionAt()), DateHelper.beginOfDate(new Date()),false);
+            int lateDays = DateHelper.diffInDays(DateHelper.beginOfDate(p.getCollectionAt()), DateHelper.beginOfDate(new Date()), false);
             returnedMoney.setLateDays(p.getStatus() == 0 ? lateDays : p.getLateDays());
             returnedMoney.setCollectionAt(p.getStatus() == BorrowCollectionContants.STATUS_YES ? DateHelper.dateToString(p.getCollectionAtYes(), DateHelper.DATE_FORMAT_YMD) : DateHelper.dateToString(p.getCollectionAt(), DateHelper.DATE_FORMAT_YMD));
             returnedMoney.setStatus(p.getStatus());
@@ -418,6 +428,6 @@ public class InvestServiceImpl implements InvestService {
     public static void main(String[] args) {
 
 
-      System.out.print(DateHelper.diffInDays(DateHelper.stringToDate("2017-09-07 00:00:00"),new Date(),false));
+        System.out.print(DateHelper.diffInDays(DateHelper.stringToDate("2017-09-07 00:00:00"), new Date(), false));
     }
 }
