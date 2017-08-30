@@ -1289,7 +1289,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
         cardBindRequest.setMobile(userThirdAccount.getMobile());
         cardBindRequest.setName(userThirdAccount.getName());
         cardBindRequest.setAcqRes(String.valueOf(userId));
-        cardBindRequest.setRetUrl(String.format("%s%s%s", javaDomain, "/pub/bindCard/show/", userId));
+        cardBindRequest.setRetUrl(String.format("%s/account/card", pcDomain));
         cardBindRequest.setNotifyUrl(String.format("%s%s", javaDomain, "/pub/third/bank/bind/callback"));
 
         String html = jixinManager.getHtml(JixinTxCodeEnum.CARD_BIND, cardBindRequest);
@@ -1444,6 +1444,10 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
         entity.setPasswordState(0);
         entity.setCardNoBindState(1);
         entity.setName(name);
+        UserThirdAccount existsAccount = userThirdAccountService.findByUserId(user.getId());
+        if(!ObjectUtils.isEmpty(existsAccount)){
+            throw new Exception("重复开户");
+        }
         userThirdAccountService.save(entity);
 
         //  9.保存用户实名信息

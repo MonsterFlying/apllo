@@ -1340,7 +1340,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
-    public ResponseEntity<VoHtmlResp> bindBank(HttpServletRequest httpServletRequest, Long userId, String bankNo) {
+    public ResponseEntity<VoHtmlResp>
+    bindBank(HttpServletRequest httpServletRequest, Long userId, String bankNo) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         if (ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
