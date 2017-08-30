@@ -216,7 +216,7 @@ public class TransferServiceImpl implements TransferService {
                 "AND " +
                 "t.transfer_flag=:transferFlag " +   //未转让
                 "AND " +
-                "t.state=:state" +    //回款中
+                "t.state=:state " +    //回款中
                 "AND " +
                 "(b.type=0 OR b.type=4) " +
                 "AND " +
@@ -237,7 +237,7 @@ public class TransferServiceImpl implements TransferService {
         Query sqlQuery = entityManager.createNativeQuery(sql.toString(), Tender.class);
         sqlQuery.setParameter("userId",voTransferReq.getUserId());
         sqlQuery.setParameter("transferFlag",TenderConstans.TRANSFER_NO);
-        sqlQuery.setParameter("status",TenderConstans.BACK_MONEY );
+        sqlQuery.setParameter("state",TenderConstans.BACK_MONEY );
         List<Tender> totalCountList = sqlQuery.getResultList();
         sqlQuery.setFirstResult(voTransferReq.getPageIndex());
         sqlQuery.setMaxResults(voTransferReq.getPageSize());
