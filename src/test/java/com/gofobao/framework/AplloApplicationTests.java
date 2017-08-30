@@ -14,6 +14,8 @@ import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMob
 import com.gofobao.framework.api.model.account_query_by_mobile.AccountQueryByMobileResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
+import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeReq;
+import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeResp;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
@@ -775,6 +777,25 @@ public class AplloApplicationTests {
 
     }
 
+    /**
+     * 解冻用户余额
+     */
+    public void unfrozee() {
+        //解除存管资金冻结
+        BalanceUnfreezeReq balanceUnfreezeReq = new BalanceUnfreezeReq();
+        balanceUnfreezeReq.setAccountId("6212462190000004254");
+        balanceUnfreezeReq.setTxAmount("10000");
+        balanceUnfreezeReq.setChannel(ChannelContant.HTML);
+        balanceUnfreezeReq.setOrderId("GFBBF_1504073566815264200331");
+        balanceUnfreezeReq.setOrgOrderId("GFBBF_1504073566815264200330");
+        BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_UN_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
+        if ((ObjectUtils.isEmpty(balanceUnfreezeResp)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
+           log.error("失败");
+        }
+        log.info("成功");
+
+    }
+
     public void batchDeal() {
        /* Map<String,Object> acqMap = new HashMap<>();
         acqMap.put("borrowId", 169979);
@@ -784,8 +805,8 @@ public class AplloApplicationTests {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(170074),
-                        MqConfig.BATCH_NO, StringHelper.toString(102414),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(5708),
+                        MqConfig.BATCH_NO, StringHelper.toString(154935),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
                 );
 
@@ -841,7 +862,9 @@ public class AplloApplicationTests {
         }*/
 
         //批次处理
-        //batchDeal();
+        // batchDeal();
+
+        unfrozee();
         //查询存管账户资金信息
         //balanceQuery();
         //查询资金流水
@@ -871,7 +894,7 @@ public class AplloApplicationTests {
         //批次详情查询
         //batchDetailsQuery();
         //查询投标申请
-        bidApplyQuery();
+        //bidApplyQuery();
         //转让标复审回调
         //transferBorrowAgainVerify();
         //非转让标复审问题
