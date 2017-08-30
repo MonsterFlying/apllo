@@ -1015,6 +1015,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 userCache.setQdWaitCollectionPrincipal(userCache.getQdWaitCollectionPrincipal() - principal);
                 userCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() - interest);
             }
+            //已赚利息
+            userCache.setIncomeInterest(userCache.getIncomeInterest()+interest);
+            Long collectionMoney=borrowCollections.stream().mapToLong(p->p.getCollectionMoney()).sum();
+            Long collectionMoneyYes=borrowCollections.stream().mapToLong(p->p.getCollectionMoneyYes()).sum();
+            //逾期收入
+            userCache.setIncomeOverdue(collectionMoneyYes-collectionMoney);
             userCacheService.save(userCache);
         });
     }
