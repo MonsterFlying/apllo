@@ -94,6 +94,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.gofobao.framework.listener.providers.NoticesMessageProvider.GSON;
 import static java.util.stream.Collectors.groupingBy;
 
 @RunWith(SpringRunner.class)
@@ -848,6 +849,21 @@ public class AplloApplicationTests {
     @Test
     public void test() {
 
+        //推送队列结束债权
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
+        mqConfig.setTag(MqTagEnum.END_CREDIT_BY_TRANSFER);
+        mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(177427), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            log.info(String.format("thirdBatchProvider creditInvestDeal send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("thirdBatchProvider creditInvestDeal send mq exception", e);
+        }
+
         //dealThirdBatchScheduler.process();
         //dataMigration();
 
@@ -912,7 +928,7 @@ public class AplloApplicationTests {
         //批次状态查询
         // batchQuery();
         //批次详情查询
-        batchDetailsQuery();
+        //batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调

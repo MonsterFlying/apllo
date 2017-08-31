@@ -127,11 +127,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         Long userId = borrow.getUserId();
         int repayFashion = borrow.getRepayFashion();
 
-        /**
-         * @// TODO: 2017/8/30 上线取消这段代码
-         */
-        /*Long takeUserId = borrow.getTakeUserId();   // 公司实际收款人*/
-        long takeUserId = 45162L;
+        Long takeUserId = borrow.getTakeUserId();   // 公司实际收款人*/
         borrow.setTakeUserId(takeUserId);
         UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
