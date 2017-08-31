@@ -19,6 +19,7 @@ import com.gofobao.framework.helper.BeanHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.repayment.contants.RepaymentContants;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.google.common.base.Preconditions;
@@ -242,8 +243,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         VoViewOrderDetailResp detailRes = VoBaseResp.ok("查询成功", VoViewOrderDetailResp.class);
         detailRes.setOrder(borrowCollection.getOrder() + 1);
         detailRes.setCollectionMoney(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100D));
-        int lateDays = DateHelper.diffInDays(DateHelper.beginOfDate(new Date()), DateHelper.beginOfDate(borrowCollection.getCollectionAtYes()), false);
-        detailRes.setLateDays(lateDays < 1 ? 0 : lateDays);
+        detailRes.setLateDays(borrowRepayment.getStatus()== RepaymentContants.STATUS_YES?borrowRepayment.getLateDays():DateHelper.diffInDays(DateHelper.beginOfDate(new Date()), DateHelper.beginOfDate(borrowCollection.getCollectionAt()), false));
         detailRes.setBorrowName(borrow.getName());
         Long principal = 0L;
         Long interest = 0L;

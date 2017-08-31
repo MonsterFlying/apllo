@@ -1015,17 +1015,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 userCache.setQdWaitCollectionPrincipal(userCache.getQdWaitCollectionPrincipal() - principal);
                 userCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() - interest);
             }
-            //已赚利息
-            userCache.setIncomeInterest(userCache.getIncomeInterest()+interest);
-            Long collectionMoney=borrowCollections.stream().mapToLong(p->p.getCollectionMoney()).sum();
-            Long collectionMoneyYes=borrowCollections.stream().mapToLong(p->p.getCollectionMoneyYes()).sum();
-            //逾期收入
-            if(collectionMoneyYes>=collectionMoney){
-                userCache.setIncomeOverdue(collectionMoneyYes-collectionMoney);
-            }else{
-                log.error("当前还款批次异常：打印回款期数信息：",GSON.toJson(borrowCollections));
-                userCache.setIncomeOverdue(0L);
-            }
             userCacheService.save(userCache);
         });
     }
