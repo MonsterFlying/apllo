@@ -665,7 +665,7 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
                 autoTender.setAmount(w.getMode());
                 autoTender.setTimeLimitType(w.getTimelimitType());
                 autoTender.setIsOpen(w.getStatus());
-                autoTender.setScope(StringHelper.formatMon(w.getTimelimitFirst() / 100D) + "~" + StringHelper.formatMon(w.getTimelimitLast() / 100D));
+                autoTender.setScope(StringHelper.formatMon(w.getAprFirst() / 100D) + "~" + StringHelper.formatMon(w.getLowest() / 100D));
                 autoTender.setQueueDays(DateHelper.diffInDays(new Date(), w.getAutoAt(), true));
 
 
