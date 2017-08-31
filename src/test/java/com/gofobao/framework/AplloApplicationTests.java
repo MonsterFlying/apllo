@@ -694,7 +694,7 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("094632");
+        batchDetailsQueryReq.setBatchNo("161613");
         batchDetailsQueryReq.setBatchTxDate("20170830");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
@@ -745,8 +745,8 @@ public class AplloApplicationTests {
         request.setChannel(ChannelContant.HTML);
         request.setType("0"); // 转入
         //request.setTranType("7820"); // 线下转账的
-        request.setPageSize(String.valueOf(20));
-        request.setPageNum(String.valueOf(0));
+        request.setPageSize(String.valueOf(30));
+        request.setPageNum(String.valueOf(1));
         AccountDetailsQueryResponse response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, request, AccountDetailsQueryResponse.class);
         System.out.println(response);
     }
@@ -805,8 +805,8 @@ public class AplloApplicationTests {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(69),
-                        MqConfig.BATCH_NO, StringHelper.toString("094632"),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(128),
+                        MqConfig.BATCH_NO, StringHelper.toString("161613"),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
                 );
 
@@ -863,10 +863,8 @@ public class AplloApplicationTests {
 
         //批次处理
         //batchDeal();
-        batchDeal();
-        // batchDeal();
 
-        unfrozee();
+        //unfrozee();
         //查询存管账户资金信息
         //balanceQuery();
         //查询资金流水

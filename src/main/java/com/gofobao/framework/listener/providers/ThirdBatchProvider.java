@@ -216,6 +216,7 @@ public class ThirdBatchProvider {
                 default:
             }
         } catch (Exception e) {
+            log.error("批次处理异常:",e);
             //判断是否有失败的记录，存在失败orderId添加失败日志
             ThirdErrorRemark remark = new ThirdErrorRemark();
             remark.setState(0);
@@ -576,7 +577,7 @@ public class ThirdBatchProvider {
                     .stream()
                     .collect(Collectors.groupingBy(Tender::getBorrowId));
 
-            Set<Long> borrowIdSet = borrowIdAndTenderMap.keySet();
+            Set<Long> borrowIdSet = failureTenderList.stream().map(Tender::getBorrowId).collect(Collectors.toSet());
             Specification<Borrow> bs = Specifications
                     .<Borrow>and()
                     .in("id", borrowIdSet.toArray())

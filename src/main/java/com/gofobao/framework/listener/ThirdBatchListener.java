@@ -43,7 +43,7 @@ public class ThirdBatchListener {
             try {
                 state = thirdBatchProvider.batchDeal(msg);
             } catch (Throwable e) {
-                log.error("ThirdBatchListener error ：", e);
+                log.error("批次处理失败!");
             }
             if(state){
                 log.info(String.format("即信批处理消息队列处理成功: %s", message));
