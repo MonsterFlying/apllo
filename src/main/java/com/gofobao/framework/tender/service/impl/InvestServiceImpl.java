@@ -341,6 +341,7 @@ public class InvestServiceImpl implements InvestService {
             List<Transfer> transfers = query.getResultList();
             if (!CollectionUtils.isEmpty(transfers)) {
                 Transfer transfer = transfers.get(0);
+                timeLimit=transfer.getTimeLimit();
                 apr = transfer.getApr();
                 successAt = transfer.getSuccessAt();
                 item.setTimeLimit(transfer.getTimeLimit() + BorrowContants.MONTH);
@@ -348,7 +349,7 @@ public class InvestServiceImpl implements InvestService {
                 item.setSuccessAt(transfer.getState() == TransferContants.TRANSFERED ? DateHelper.dateToString(transfer.getSuccessAt()) : "");
             }
         }
-        if(tender.getState() != TenderConstans.BIDDING){
+        if (tender.getState() != TenderConstans.BIDDING) {
             //应收利息
             BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(tender.getValidMoney()), new Double(apr), timeLimit, successAt);
             Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
