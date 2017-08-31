@@ -10,7 +10,7 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.marketing.biz.MarketingProcessBiz;
 import com.gofobao.framework.marketing.entity.*;
-import com.gofobao.framework.marketing.enums.MarketingTypeEnum;
+import com.gofobao.framework.marketing.constans.MarketingTypeContants;
 import com.gofobao.framework.marketing.service.*;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -25,7 +25,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
@@ -183,7 +182,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         long money = 0;
         StringBuffer remark = new StringBuffer();
         switch (marketingData.getMarketingType()) {
-            case LOGIN:
+            case MarketingTypeContants.LOGIN:
                 remark.append("登录奖励: ");
                 // 红包类型: 1.投资金额随机百分比,2.投资金额规定百分比, 3.随机金额, 4.规定金额, 5.年化率
                 switch (ruleType) {
@@ -205,7 +204,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                         break;
                 }
                 break;
-            case TENDER:
+            case MarketingTypeContants.TENDER:
                 remark.append("投标奖励: ");
                 Tender tender = tenderService.findById(marketingData.getSourceId());
                 Long validMoney = tender.getValidMoney();
@@ -255,7 +254,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                         break;
                 }
                 break;
-            case RECHARGE:
+            case MarketingTypeContants.RECHARGE:
                 remark.append("充值奖励: ");
                 switch (ruleType) {
                     case 1:
@@ -276,7 +275,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                         break;
                 }
                 break;
-            case REGISTER:
+            case MarketingTypeContants.REGISTER:
                 remark.append("注册奖励: ");
                 switch (ruleType) {
                     case 1:
@@ -297,7 +296,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                         break;
                 }
                 break;
-            case OPEN_ACCOUNT:
+            case MarketingTypeContants.OPEN_ACCOUNT:
                 remark.append("开户奖励: ");
                 switch (ruleType) {
                     case 1:
@@ -378,7 +377,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             Marketing marketing = iterator.next();
             MarketingCondition condition = conditionMap.get(marketing.getId());
             switch (marketingData.getMarketingType()) {
-                case LOGIN:
+                case MarketingTypeContants.LOGIN:
                     Date loginMinTime = condition.getLoginMinTime();
                     if (ObjectUtils.isEmpty(loginMinTime)) {
                         iterator.remove();
@@ -391,7 +390,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                         continue;
                     }
                     break;
-                case TENDER:
+                case MarketingTypeContants.TENDER:
                     Long tenderMoneyMin = condition.getTenderMoneyMin();
                     if (ObjectUtils.isEmpty(tenderMoneyMin) || tenderMoneyMin <= 0) {
                         iterator.remove();
@@ -411,7 +410,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                         continue;
                     }
                     break;
-                case RECHARGE:
+                case MarketingTypeContants.RECHARGE:
                     Long rechargeMoneyMin = condition.getRechargeMoneyMin();
                     if (ObjectUtils.isEmpty(rechargeMoneyMin) || rechargeMoneyMin <= 0) {
                         iterator.remove();
@@ -431,7 +430,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                     }
 
                     break;
-                case REGISTER:
+                case MarketingTypeContants.REGISTER:
                     Date registerMinTime = condition.getRegisterMinTime();
                     if (ObjectUtils.isEmpty(registerMinTime)) {
                         iterator.remove();
@@ -444,7 +443,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                         continue;
                     }
                     break;
-                case OPEN_ACCOUNT:
+                case MarketingTypeContants.OPEN_ACCOUNT:
                     Date openAccountMinTime = condition.getOpenAccountMinTime();
                     if (ObjectUtils.isEmpty(openAccountMinTime)) {
                         iterator.remove();
@@ -522,7 +521,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             }
 
             switch (marketingData.getMarketingType()) {
-                case LOGIN:  // 登录
+                case MarketingTypeContants.LOGIN:  // 登录
                     boolean loginPlatform = verifyUserPlatform(marketingDimentsion, user);
                     if (!loginPlatform) {
                         log.info("促销活动: 登录平台");
@@ -530,7 +529,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                         continue;
                     }
                     break;
-                case TENDER:  // 投标
+                case MarketingTypeContants.TENDER:  // 投标
                     boolean tenderPlatformState = verifyTenderPlatform(marketingDimentsion, user, marketingData);
                     if (!tenderPlatformState) {
                         log.info("促销活动: 投标平台不符合");
@@ -545,7 +544,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                         continue;
                     }
                     break;
-                case RECHARGE:
+                case MarketingTypeContants.RECHARGE:
                     // 处理充值来源
                     boolean rechargeSourceState = verifyRechargeSource(marketingDimentsion, marketingData);
                     if (!rechargeSourceState) {
@@ -554,11 +553,11 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                         continue;
                     }
                     break;
-                case REGISTER:
+                case MarketingTypeContants.REGISTER:
                     // 注册不验证用户platform
                     break;
 
-                case OPEN_ACCOUNT:
+                case MarketingTypeContants.OPEN_ACCOUNT:
                     boolean openAccountState = verifyOpenAccountSource(marketingDimentsion, marketingData);
                     if (!openAccountState) {
                         log.info("促销活动: 开户来源");
@@ -839,30 +838,30 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
     /**
      * 活动缓存
      */
-    LoadingCache<MarketingTypeEnum, List<Marketing>> marketingConditonCache = CacheBuilder
+    LoadingCache<String, List<Marketing>> marketingConditonCache = CacheBuilder
             .newBuilder()
             .expireAfterWrite(1, TimeUnit.HOURS)
-            .build(new CacheLoader<MarketingTypeEnum, List<Marketing>>() {
+            .build(new CacheLoader<String, List<Marketing>>() {
                 @Override
-                public List<Marketing> load(MarketingTypeEnum key) throws Exception {
+                public List<Marketing> load(String key) throws Exception {
                     // 查询投标金额大于零,且不删除
                     PredicateBuilder<MarketingCondition> builder = Specifications.
                             <MarketingCondition>and()
                             .eq("del", 0); // 没有删除
                     switch (key) {
-                        case LOGIN:
+                        case MarketingTypeContants.LOGIN:
                             builder.ne("loginMinTime", null);  // 登录时间不能为空
                             break;
-                        case TENDER:
+                        case MarketingTypeContants.TENDER:
                             builder.gt("tenderMoneyMin", 0);  // 投标金额大于零
                             break;
-                        case RECHARGE:
+                        case MarketingTypeContants.RECHARGE:
                             builder.gt("rechargeMoneyMin", 0); // 充值金额大于零
                             break;
-                        case REGISTER:
+                        case MarketingTypeContants.REGISTER:
                             builder.ne("registerMinTime", null);  // 注册时间不能为空
                             break;
-                        case OPEN_ACCOUNT:
+                        case MarketingTypeContants.OPEN_ACCOUNT:
                             builder.ne("openAccountMinTime", null);  // 开户时间不能为空
                             break;
                         default:

@@ -311,7 +311,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         withDrawRequest.setCardNo(userThirdAccount.getCardNo());
         withDrawRequest.setAccountId(userThirdAccount.getAccountId());
         withDrawRequest.setTxAmount(StringHelper.formatDouble(new Double((cashMoney - fee) / 100D), false)); //  交易金额
-        withDrawRequest.setRouteCode(bigCashState ? "2" : "0");
+        withDrawRequest.setRouteCode(bigCashState ? "2" : " ");
         if (bigCashState) {
             withDrawRequest.setCardBankCnaps(voCashReq.getBankAps()); // 联行卡号
         }
