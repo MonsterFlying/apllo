@@ -42,6 +42,19 @@ public class LoanController {
         return commonQuery(pageIndex, pageSize, userId, RepaymentContants.REFUND);
     }
 
+    @ApiOperation("复审中列表")
+    @GetMapping("/v2/rechecking/list/{pageIndex}/{pageSize}")
+    public ResponseEntity<VoViewBuddingResListWrapRes> rechecking(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                                                   @PathVariable Integer pageIndex,
+                                                                   @PathVariable Integer pageSize) {
+        VoLoanListReq voLoanListReq = new VoLoanListReq();
+        voLoanListReq.setPageIndex(pageIndex);
+        voLoanListReq.setPageSize(pageSize);
+        voLoanListReq.setUserId(userId);
+        return loanBiz.rechecking(voLoanListReq);
+    }
+
+
     @ApiOperation("已结清列表")
     @GetMapping("/v2/settle/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewSettleWarpListRes> settleList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,

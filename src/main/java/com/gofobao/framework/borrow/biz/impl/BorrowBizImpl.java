@@ -343,7 +343,6 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setReleaseAt(DateHelper.dateToString(borrow.getReleaseAt()));
             borrowInfoRes.setLockStatus(borrow.getIsLock());
 
-
             return ResponseEntity.ok(borrowInfoRes);
         } catch (Throwable e) {
             log.info("BorrowBizImpl detail fail%s", e);

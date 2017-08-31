@@ -1,7 +1,9 @@
 package com.gofobao.framework.repayment.biz.Impl;
 
 import com.gofobao.framework.borrow.contants.BorrowContants;
+import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.repayment.biz.LoanBiz;
 import com.gofobao.framework.repayment.contants.RepaymentContants;
 import com.gofobao.framework.repayment.service.LoanService;
@@ -11,9 +13,12 @@ import com.gofobao.framework.repayment.vo.request.VoStatisticsReq;
 import com.gofobao.framework.repayment.vo.response.*;
 import com.gofobao.framework.repayment.vo.response.pc.LoanStatistics;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewLoanStatisticsWarpRes;
+import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -106,6 +111,34 @@ public class LoanBizImpl implements LoanBiz {
 
         }
 
+    }
+
+    @Override
+    public ResponseEntity<VoViewBuddingResListWrapRes> rechecking(VoLoanListReq voLoanListReq) {
+        VoViewBuddingResListWrapRes wrapRes = VoBaseResp.ok("", VoViewBuddingResListWrapRes.class);
+        Map<String, Object> resultMaps = loanService.rechecking(voLoanListReq);
+        List<Borrow> borrows = (List<Borrow>) resultMaps.get("borrows");
+        Integer totalCount = (Integer) resultMaps.get("totalCount");
+        resultMaps.put("totalCount", totalCount);
+        if (CollectionUtils.isEmpty(borrows)) {
+            wrapRes.setViewBuddingResList(Lists.newArrayList());
+            return ResponseEntity.ok(wrapRes);
+        }
+        List<VoViewBuddingRes> resArrayList = Lists.newArrayList();
+        borrows.forEach(borrow -> {
+            VoViewBuddingRes item = new VoViewBuddingRes();
+            item.setApr(StringHelper.formatMon(borrow.getApr() / 100D));
+            item.setBorrowName(borrow.getName());
+            item.setSpeed("1");
+            item.setBorrowId(borrow.getId());
+            item.setMoney(StringHelper.formatMon(borrow.getMoney() / 100D));
+            item.setTimeLimit(borrow.getRepayFashion() == 1 ? borrow.getTimeLimit() + BorrowContants.DAY : borrow.getTimeLimit() + BorrowContants.MONTH);
+            item.setBorrowId(borrow.getId());
+            item.setCancel(false);
+            resArrayList.add(item);
+        });
+        wrapRes.setViewBuddingResList(resArrayList);
+        return ResponseEntity.ok(wrapRes);
     }
 
     /**
