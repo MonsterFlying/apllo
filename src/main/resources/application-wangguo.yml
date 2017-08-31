@@ -57,8 +57,8 @@ windmill:
 
 jixin: #银行存管
   keysPassword: guangfubao_uat@2016 #私钥密码
-  url: http://uat.gofobao.com  #即信服务器路径
-  htmlUrl: https://access.credit2go.cn #即信服务器路径
+  url: http://uat.gofobao.com/escrow   #即信服务器路径
+  htmlUrl: https://access.credit2go.cn/escrow  #即信服务器路径
   file-url: https://uat.credit2go.cn/escrow/file/download #文件请求下载链接
   save-file-path: D:/statistice   #文件本地保存的路径
   version: 10 #版本号
@@ -67,6 +67,8 @@ jixin: #银行存管
   product-no: "0105" # 产品编号
   bank-no: "3005" #产品编号
   query-time-init: "20170421" # 与存管系统查询时间
+  crt-path:  # crt证书路径
+  p12-path:  # p12证书路径
 
 gofobao:
   dev: true # 开发环境

@@ -11,7 +11,7 @@ public enum JixinTxCodeEnum {
      */
     OPEN_ACCOUNT_PLUS(
             "accountOpenPlus",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "移动端开户"),
 
     /**
@@ -19,7 +19,7 @@ public enum JixinTxCodeEnum {
      */
     MOBILE_MODIFY_PLUS(
             "mobileModifyPlus",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "电子账户手机号修改增强"),
 
     /**
@@ -27,7 +27,7 @@ public enum JixinTxCodeEnum {
      */
     PASSWORD_SET_QUERY(
             "passwordSetQuery",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "查询电子账户密码"),
 
     /**
@@ -35,7 +35,7 @@ public enum JixinTxCodeEnum {
      */
     OPEN_ACCOUNT(
             "accountOpen",
-            "/escrow/p2p/page/mobile",
+            "/p2p/page/mobile",
             "后台开户"),
 
     /**
@@ -43,7 +43,7 @@ public enum JixinTxCodeEnum {
      */
     BALANCE_QUERY(
             "balanceQuery",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "查询用户资产"),
 
     /**
@@ -51,7 +51,7 @@ public enum JixinTxCodeEnum {
      */
     CREDIT_AUTH_QUERY(
             "creditAuthQuery",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "查询签约状态"),
 
     /**
@@ -59,7 +59,7 @@ public enum JixinTxCodeEnum {
      */
     WITH_DRAW(
             "withdraw",
-            "/escrow/p2p/page/withdraw",
+            "/p2p/page/withdraw",
             "提现"),
 
 
@@ -68,13 +68,13 @@ public enum JixinTxCodeEnum {
      */
     SMS_CODE_APPLY(
             "smsCodeApply",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "短信发送"),
 
 
     BID_AUTO_APPLY(
             "bidAutoApply",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "自动投标申请"
     ),
 
@@ -83,7 +83,7 @@ public enum JixinTxCodeEnum {
      */
     PASSWORD_SET(
             "passwordSet",
-            "/escrow/p2p/page/passwordset",
+            "/p2p/page/passwordset",
             "初始化密码"),
 
     /**
@@ -91,7 +91,7 @@ public enum JixinTxCodeEnum {
      */
     PASSWORD_RESET(
             "passwordReset",
-            "/escrow/p2p/page/mobile",
+            "/p2p/page/mobile",
             "密码重置"),
 
     /**
@@ -99,7 +99,7 @@ public enum JixinTxCodeEnum {
      */
     SEND_RED_PACKET(
             "voucherPay",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "红包派发"),
 
     /**
@@ -107,7 +107,7 @@ public enum JixinTxCodeEnum {
      */
     DEBT_REGISTER(
             "debtRegister",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "标的登记"),
 
 
@@ -116,7 +116,7 @@ public enum JixinTxCodeEnum {
      */
     AUTO_BID_AUTH_PLUS(
             "autoBidAuthPlus",
-            "/escrow/p2p/page/mobile/plus",
+            "/p2p/page/mobile/plus",
             "自动投标增强"),
 
     /**
@@ -124,21 +124,21 @@ public enum JixinTxCodeEnum {
      */
     AUTO_BID_AUTH(
             "autoBidAuth",
-            "/escrow/p2p/page/mobile",
+            "/p2p/page/mobile",
             "自动投标签约"),
     /**
      * 债权转让增强
      */
     AUTO_CREDIT_INVEST_AUTH_PLUS(
             "autoCreditInvestAuthPlus",
-            "/escrow/p2p/page/mobile/plus",
+            "/p2p/page/mobile/plus",
             "债权转让增强"),
     /**
      * 债权转让
      */
     AUTO_CREDIT_INVEST_AUTH(
             "autoCreditInvestAuth",
-            "/escrow/p2p/page/mobile",
+            "/p2p/page/mobile",
             "债权转让签约"),
 
 
@@ -147,7 +147,7 @@ public enum JixinTxCodeEnum {
      */
     DEBT_REGISTER_CANCEL(
             "debtRegisterCancel",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "借款人标的撤销"),
 
     /**
@@ -155,7 +155,7 @@ public enum JixinTxCodeEnum {
      */
     DIRECT_RECHARGE_PLUS(
             "directRechargePlus",
-            "/escrow/p2p/page/mobile/plus",
+            "/p2p/page/mobile/plus",
             "充值"),
 
 
@@ -164,7 +164,7 @@ public enum JixinTxCodeEnum {
      */
     DIRECT_RECHARGE_ONLINE(
             "directRechargeOnline",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "联机充值"),
 
     /**
@@ -172,14 +172,14 @@ public enum JixinTxCodeEnum {
      */
     DEBT_DETAILS_QUERY(
             "debtDetailsQuery",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "借款人标的的信息查询"),
     /**
      * 批次投资人购买债权
      */
     BATCH_CREDIT_INVEST(
             "batchCreditInvest",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "批次投资人购买债权"
     ),
     /**
@@ -187,7 +187,7 @@ public enum JixinTxCodeEnum {
      */
     BATCH_REPAY(
             "batchRepay",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "批次还款"
     ),
     /**
@@ -195,7 +195,7 @@ public enum JixinTxCodeEnum {
      */
     BATCH_LEND_REPAY(
             "batchLendPay",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "批次放款"
     ),
     /**
@@ -203,7 +203,7 @@ public enum JixinTxCodeEnum {
      */
     ACCOUNT_DETAILS_QUERY(
             "accountDetailsQuery",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "电子账户资金交易明细查询"
     ),
     /**
@@ -211,7 +211,7 @@ public enum JixinTxCodeEnum {
      */
     BATCH_REPAY_BAIL(
             "batchRepayBail",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "批次融资人还担保账户垫款"
     ),
     /**
@@ -219,7 +219,7 @@ public enum JixinTxCodeEnum {
      */
     BATCH_BAIL_REPAY(
             "batchBailRepay",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "批次名义借款人垫付"
     ),
     /**
@@ -227,14 +227,14 @@ public enum JixinTxCodeEnum {
      */
     TRUSTEE_PAY(
             "trusteePay",
-            "/escrow/p2p/page/trusteePay",
+            "/p2p/page/trusteePay",
             "借款人受托支付申请"),
     /**
      * 查询批次交易明细状态
      */
     BATCH_DETAILS_QUERY(
             "batchDetailsQuery",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "查询批次交易明细状态"
     ),
     /**
@@ -242,7 +242,7 @@ public enum JixinTxCodeEnum {
      */
     BID_APPLY_QUERY(
             "bidApplyQuery",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "投资人投标申请查询"),
 
     /**
@@ -250,7 +250,7 @@ public enum JixinTxCodeEnum {
      */
     TRUSTEE_PAY_QUERY(
             "trusteePayQuery",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "受托支付查询"
     ),
     /**
@@ -258,7 +258,7 @@ public enum JixinTxCodeEnum {
      */
     ACCOUNT_ID_QUERY(
             "accountIdQuery",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "按证件号查询电子账号"
     ),
 
@@ -268,7 +268,7 @@ public enum JixinTxCodeEnum {
      */
     ACCOUNT_QUERY_BY_MOBILE(
             "accountQueryByMobile",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "按手机号查询电子账号信息"
     ),
     /**
@@ -276,7 +276,7 @@ public enum JixinTxCodeEnum {
      */
     BATCH_CANCEL(
             "batchCancel",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "批次撤销"
     ),
     /**
@@ -284,7 +284,7 @@ public enum JixinTxCodeEnum {
      */
     BATCH_CREDIT_END(
             "batchCreditEnd",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "批次结束债权"
     ),
     /**
@@ -292,7 +292,7 @@ public enum JixinTxCodeEnum {
      */
     CREDIT_INVEST_QUERY(
             "creditInvestQuery",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "投资人购买债权查询"
     ),
     /**
@@ -300,7 +300,7 @@ public enum JixinTxCodeEnum {
      */
     BID_CANCEL(
             "bidCancel",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "撤销投标申请"
     ),
     /**
@@ -308,7 +308,7 @@ public enum JixinTxCodeEnum {
      */
     BALANCE_UN_FREEZE(
             "balanceUnfreeze",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "还款冻结解冻"
     ),
     /**
@@ -316,38 +316,38 @@ public enum JixinTxCodeEnum {
      */
     BALANCE_FREEZE(
             "balanceFreeze",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "还款冻结申请"
     ),
 
     CREDIT_END(
             "creditEnd",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "债权结束"
     ),
     BATCH_QUERY(
             "batchQuery",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "查询批次状态"
     ),
     CREDIT_DETAILS_QUERY(
             "creditDetailsQuery",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "债权明细查询"
     ),
     CARD_UNBIND(
             "cardUnbind",
-            "/escrow/p2p/online",
+            "/p2p/online",
             "解绑银行卡"
     ),
     CARD_BIND(
             "cardBind",
-            "/escrow/p2p/page/mobile",
+            "/p2p/page/mobile",
             "绑定银行卡"
     ),
     CARD_BIND_DETAILS_QUERY(
             "cardBindDetailsQuery",
-                    "/escrow/p2p/online",
+                    "/p2p/online",
                     "绑卡关系查询"
     );
 

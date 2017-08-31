@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Base64Utils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
@@ -41,6 +42,12 @@ public class CertHelper {
     @Value(value = "classpath:certs/fdep.crt")
     Resource crtResource;  // 即信公钥文件
 
+    @Value("${jixin.crt-path}")
+    private String crtPath;
+
+    @Value("${jixin.p12-path}")
+    private String p12Path;
+
 
     /**
      * 公约
@@ -59,17 +66,46 @@ public class CertHelper {
     @PostConstruct
     public void init() {
         // 初始化公私钥
-        checkNotNull(p12Resource, "###即信公钥文件不存在");
+
         checkNotNull(keyPassword, "###即信公钥密码未配置");
-        checkNotNull(crtResource, "###即信服务器证书文件为空");
+        if (StringUtils.isEmpty(crtPath)) {
+            checkNotNull(crtResource, "###即信服务器证书文件为空");
+        } else {
+            File file = new File(crtPath);
+            if (ObjectUtils.isEmpty(file)) {
+                log.error(String.format("加载公钥失败路径: %s", crtPath));
+                throw new RuntimeException("即信公钥加载失败");
+            }
+        }
+
+        if (StringUtils.isEmpty(p12Path)) {
+            checkNotNull(p12Resource, "###即信公钥文件不存在");
+        } else {
+            File file = new File(p12Path);
+            if (ObjectUtils.isEmpty(file)) {
+                log.error(String.format("加载私钥失败路径: %s", p12Path));
+                throw new RuntimeException("即信私钥加载失败");
+            }
+        }
+
         KeyStore keyStore = null;
         char[] pwds = keyPassword.toCharArray();
-        try (InputStream is = p12Resource.getInputStream()) {
-            keyStore = KeyStore.getInstance("PKCS12");
-            keyStore.load(is, pwds);
-        } catch (Throwable e) {
-            log.error("加载即信公私钥异常", e);
-            return;
+        if (StringUtils.isEmpty(p12Path)) {
+            try (InputStream is = p12Resource.getInputStream()) {
+                keyStore = KeyStore.getInstance("PKCS12");
+                keyStore.load(is, pwds);
+            } catch (Throwable e) {
+                log.error("加载即信公私钥异常", e);
+                return;
+            }
+        } else {
+            try (InputStream is = new FileInputStream(p12Path)) {
+                keyStore = KeyStore.getInstance("PKCS12");
+                keyStore.load(is, pwds);
+            } catch (Throwable e) {
+                log.error("加载即信公私钥异常", e);
+                return;
+            }
         }
 
         try {
@@ -96,15 +132,28 @@ public class CertHelper {
             throw new RuntimeException(e);
         }
 
-        try (InputStream is = crtResource.getInputStream()) {
-            CertificateFactory factory = CertificateFactory.getInstance("X.509");
-            Certificate certificate = factory.generateCertificate(is);
-            verifyPublicKey = certificate.getPublicKey();
-            log.info("即信验证参数公私钥初始成功");
-        } catch (Throwable e) {
-            log.error("即信验证参数公钥异常", e);
-            return;
+        if (StringUtils.isEmpty(crtPath)) {
+            try (InputStream is = crtResource.getInputStream()) {
+                CertificateFactory factory = CertificateFactory.getInstance("X.509");
+                Certificate certificate = factory.generateCertificate(is);
+                verifyPublicKey = certificate.getPublicKey();
+                log.info("即信验证参数公私钥初始成功");
+            } catch (Throwable e) {
+                log.error("即信验证参数公钥异常", e);
+                return;
+            }
+        } else {
+            try (InputStream is = new FileInputStream(crtPath)) {
+                CertificateFactory factory = CertificateFactory.getInstance("X.509");
+                Certificate certificate = factory.generateCertificate(is);
+                verifyPublicKey = certificate.getPublicKey();
+                log.info("即信验证参数公私钥初始成功根据外部文件");
+            } catch (Throwable e) {
+                log.error("即信验证参数公钥异常", e);
+                return;
+            }
         }
+
     }
 
     /**
