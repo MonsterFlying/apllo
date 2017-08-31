@@ -1412,12 +1412,14 @@ public class TransferBizImpl implements TransferBiz {
                 if (item.getTransferMoneyYes() / item.getTransferMoney() == 1) {
                     //待审核
                     voViewBorrowList.setStatus(6);
+                    voViewBorrowList.setSuccessAt(DateHelper.dateToString(item.getSuccessAt()));
                 } else {
                     //招标中
                     if (DateHelper.addDays(item.getVerifyAt(), 1).getTime() > new Date().getTime()) {
                         voViewBorrowList.setStatus(3);
                     } else {
                         voViewBorrowList.setStatus(5);
+                        voViewBorrowList.setSuccessAt(DateHelper.dateToString(item.getSuccessAt()));
                     }
                 }
             } else if (item.getState() == TransferContants.TRANSFERED) {
@@ -1432,7 +1434,7 @@ public class TransferBizImpl implements TransferBiz {
             voViewBorrowList.setIsFlow(true);
             voViewBorrowList.setIsConversion(borrow.getIsConversion());
             voViewBorrowList.setReleaseAt(DateHelper.dateToString(item.getReleaseAt()));
-            voViewBorrowList.setRepayFashion(borrow.getRepayFashion());
+            voViewBorrowList.setRepayFashion(BorrowContants.REPAY_FASHION_AYFQ_NUM);
             voViewBorrowList.setIsVouch(borrow.getIsVouch());
             voViewBorrowList.setTenderCount(item.getTenderCount());
             voViewBorrowList.setAvatar(user.getAvatarPath());

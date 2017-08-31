@@ -694,7 +694,7 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("094632");
+        batchDetailsQueryReq.setBatchNo("161613");
         batchDetailsQueryReq.setBatchTxDate("20170830");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
@@ -745,8 +745,8 @@ public class AplloApplicationTests {
         request.setChannel(ChannelContant.HTML);
         request.setType("0"); // 转入
         //request.setTranType("7820"); // 线下转账的
-        request.setPageSize(String.valueOf(20));
-        request.setPageNum(String.valueOf(0));
+        request.setPageSize(String.valueOf(30));
+        request.setPageNum(String.valueOf(1));
         AccountDetailsQueryResponse response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, request, AccountDetailsQueryResponse.class);
         System.out.println(response);
     }
@@ -783,11 +783,11 @@ public class AplloApplicationTests {
     public void unfrozee() {
         //解除存管资金冻结
         BalanceUnfreezeReq balanceUnfreezeReq = new BalanceUnfreezeReq();
-        balanceUnfreezeReq.setAccountId("6212462190000001441");
-        balanceUnfreezeReq.setTxAmount("3360.04");
+        balanceUnfreezeReq.setAccountId("6212462190000004254");
+        balanceUnfreezeReq.setTxAmount("10000");
         balanceUnfreezeReq.setChannel(ChannelContant.HTML);
-        balanceUnfreezeReq.setOrderId("GFBBF_1504078387737694076339");
-        balanceUnfreezeReq.setOrgOrderId("GFBBF_1504078387737694076333");
+        balanceUnfreezeReq.setOrderId("GFBBF_1504073566815264200331");
+        balanceUnfreezeReq.setOrgOrderId("GFBBF_1504073566815264200330");
         BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_UN_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
         if ((ObjectUtils.isEmpty(balanceUnfreezeResp)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
            log.error("失败");
@@ -805,8 +805,8 @@ public class AplloApplicationTests {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(69),
-                        MqConfig.BATCH_NO, StringHelper.toString("094632"),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(128),
+                        MqConfig.BATCH_NO, StringHelper.toString("161613"),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
                 );
 
@@ -863,14 +863,12 @@ public class AplloApplicationTests {
 
         //批次处理
         //batchDeal();
-        //batchDeal();
-        // batchDeal();
 
-        unfrozee();
+        //unfrozee();
         //查询存管账户资金信息
         //balanceQuery();
         //查询资金流水
-        // accountDetailsQuery();
+        accountDetailsQuery();
         //根据手机号查询存管账户
         //findAccountByMobile();
         //受托支付
