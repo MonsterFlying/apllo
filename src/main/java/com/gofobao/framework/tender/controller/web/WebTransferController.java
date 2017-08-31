@@ -14,6 +14,7 @@ import com.gofobao.framework.tender.vo.response.VoViewTransferedWarpRes;
 import com.gofobao.framework.tender.vo.response.web.VoViewTransferBuyWarpRes;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +28,7 @@ import javax.validation.Valid;
 @RestController
 @RequestMapping("/transfer/pc")
 @Api(description = "pc:债券")
+@Slf4j
 public class WebTransferController {
 
     @Autowired
@@ -45,6 +47,7 @@ public class WebTransferController {
         try {
             return transferBiz.firstVerifyTransfer(voPcFirstVerityTransfer);
         } catch (Exception e) {
+            log.error("债权转让异常：",e);
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后重试!"));
         }
     }

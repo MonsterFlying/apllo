@@ -180,7 +180,7 @@ public class ThirdBatchProvider {
             }
         }));
 
-        Preconditions.checkState(CollectionUtils.isEmpty(otherOrderIds),"批次处理存在F、S,程序暂停运行!");
+        Preconditions.checkState(CollectionUtils.isEmpty(otherOrderIds), "批次处理存在F、S,程序暂停运行!");
 
         //不存在失败批次进行后续操作
         try {
@@ -216,7 +216,7 @@ public class ThirdBatchProvider {
                 default:
             }
         } catch (Exception e) {
-            log.error("批次处理异常:",e);
+            log.error("批次处理异常:", e);
             //判断是否有失败的记录，存在失败orderId添加失败日志
             ThirdErrorRemark remark = new ThirdErrorRemark();
             remark.setState(0);
@@ -259,27 +259,15 @@ public class ThirdBatchProvider {
 
         //登记成功批次
         if (!CollectionUtils.isEmpty(successThirdCreditEndOrderIds)) {
-            if (tag.equals(MqTagEnum.END_CREDIT_BY_ADVANCE.getValue())) {
-                Specification<BorrowCollection> bcs = Specifications
-                        .<BorrowCollection>and()
-                        .eq("thirdCreditEndOrderId", successThirdCreditEndOrderIds.toArray())
-                        .build();
-                List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
-                borrowCollectionList.stream().forEach(collection -> {
-                   /* collection.setThirdCreditEndFlag(true);*/
-                });
-                borrowCollectionService.save(borrowCollectionList);
-            } else {
-                Specification<Tender> ts = Specifications
-                        .<Tender>and()
-                        .in("thirdCreditEndOrderId", successThirdCreditEndOrderIds.toArray())
-                        .build();
-                List<Tender> successTenderList = tenderService.findList(ts);
-                successTenderList.stream().forEach(tender -> {
-                    tender.setThirdCreditEndFlag(true);
-                });
-                tenderService.save(successTenderList);
-            }
+            Specification<Tender> ts = Specifications
+                    .<Tender>and()
+                    .in("thirdCreditEndOrderId", successThirdCreditEndOrderIds.toArray())
+                    .build();
+            List<Tender> successTenderList = tenderService.findList(ts);
+            successTenderList.stream().forEach(tender -> {
+                tender.setThirdCreditEndFlag(true);
+            });
+            tenderService.save(successTenderList);
         }
 
         if (CollectionUtils.isEmpty(failureThirdCreditEndOrderIds)) {
