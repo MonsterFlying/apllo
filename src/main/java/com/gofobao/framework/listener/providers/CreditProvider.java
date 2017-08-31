@@ -204,12 +204,12 @@ public class CreditProvider {
                     .<Tender>and()
                     .eq("borrowId", borrowId)
                     .eq("transferFlag", 2)
-                    .eq("type", 1)
+                    .eq("type", 0)
                     .eq("status", 1)
                     .build();
             List<Tender> tenderList = tenderService.findList(ts); /* 成功投资记录 */
             if (CollectionUtils.isEmpty(tenderList)) {
-                log.info("creditProvider buildCreditEndList: 借款" + borrowId + " 未找到投递成功债权！");
+                log.info("creditProvider buildTransferCreditEndList: 借款" + borrowId + " 未找到投递成功债权！");
             }
 
             //筛选出已转让的投资记录
@@ -247,7 +247,7 @@ public class CreditProvider {
                     .build();
             List<Tender> tenderList = tenderService.findList(ts);
             if (CollectionUtils.isEmpty(tenderList)) {
-                log.info("creditProvider buildCreditEndList: 借款" + borrowId + " 未找到投递成功债权！");
+                log.info("creditProvider buildNotTransferCreditEndList: 借款" + borrowId + " 未找到投递成功债权！");
             }
 
             //筛选出已转让的投资记录

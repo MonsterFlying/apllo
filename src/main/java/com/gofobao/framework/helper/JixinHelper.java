@@ -117,21 +117,19 @@ public class JixinHelper {
             return null;
         }
 
-        /**
-         * @// TODO: 2017/8/29 上线请去除注释
-         */
-        /*String titularBorrowAccountId = borrow.getTitularBorrowAccountId();
+
+        String titularBorrowAccountId = borrow.getTitularBorrowAccountId();
         if (!ObjectUtils.isEmpty(titularBorrowAccountId)) {
             return userThirdAccountService.findByAccountId(titularBorrowAccountId);
-        } else {*/
+        } else {
             try {
-/*                DictValue dictValue = jixinCache.get("titularBorrowUserId");*/
-                UserThirdAccount bailAccount = userThirdAccountService.findByUserId(45162L/*NumberHelper.toLong(dictValue.getValue03())*/);
+                DictValue dictValue = jixinCache.get("titularBorrowUserId");
+                UserThirdAccount bailAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
                 return bailAccount;
             } catch (Throwable e) {
                 e.printStackTrace();
             }
-        /*}*/
+        }
         return null;
     }
 

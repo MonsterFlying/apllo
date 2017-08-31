@@ -489,8 +489,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
             Date endAt = DateHelper.beginOfDate(borrowRepayment.getRepayAt());
 
             //以结清第一期的14天利息作为违约金
-            if (penalty == 0) { // 违约金
-                penalty = borrowRepayment.getInterest() / DateHelper.diffInDays(endAt, startAt, false) * 14;
+            int days = DateHelper.diffInDays(endAt, startAt, false);
+            if (penalty == 0 && days > 0) { // 违约金
+                penalty = borrowRepayment.getInterest() / days * 14;
             }
 
             Date nowStartDate = DateHelper.beginOfDate(new Date());  // 现在的凌晨时间
