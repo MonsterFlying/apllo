@@ -76,7 +76,7 @@ public class DealThirdBatchScheduler {
                             .of(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()),
                                     MqConfig.BATCH_NO, StringHelper.toString(thirdBatchLog.getBatchNo()),
                                     MqConfig.MSG_TIME, DateHelper.dateToString(new Date()),
-                                    MqConfig.ACQ_RES, GSON.toJson(thirdBatchLog.getAcqRes())
+                                    MqConfig.ACQ_RES,  thirdBatchLog.getAcqRes()
                             );
 
                     mqConfig.setMsg(body);

@@ -694,8 +694,8 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("161613");
-        batchDetailsQueryReq.setBatchTxDate("20170830");
+        batchDetailsQueryReq.setBatchNo("101519");
+        batchDetailsQueryReq.setBatchTxDate("20170831");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -732,7 +732,7 @@ public class AplloApplicationTests {
     public void balanceQuery() {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId("6212462190000058508");
+        balanceQueryRequest.setAccountId("6212462190000004254");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         System.out.println(balanceQueryResponse);
     }
@@ -805,8 +805,8 @@ public class AplloApplicationTests {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(128),
-                        MqConfig.BATCH_NO, StringHelper.toString("161613"),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(170084),
+                        MqConfig.BATCH_NO, StringHelper.toString("162230"),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
                 );
 
@@ -868,7 +868,7 @@ public class AplloApplicationTests {
         //查询存管账户资金信息
         //balanceQuery();
         //查询资金流水
-        accountDetailsQuery();
+        //accountDetailsQuery();
         //根据手机号查询存管账户
         //findAccountByMobile();
         //受托支付
@@ -892,7 +892,7 @@ public class AplloApplicationTests {
         //批次状态查询
         //batchQuery();
         //批次详情查询
-        //batchDetailsQuery();
+        batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调
