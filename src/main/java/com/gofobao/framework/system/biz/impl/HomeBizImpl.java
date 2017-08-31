@@ -41,7 +41,13 @@ public class HomeBizImpl implements HomeBiz {
             indexBorrow.setBorrowId(borrow.getId());
             indexBorrow.setLimit(String.valueOf(borrow.getTimeLimit()));
             indexBorrow.setTitle(borrow.getName());
-            indexBorrow.setStartLimit(  String.valueOf(new Double(borrow.getLowest() / 100D).longValue()));
+            indexBorrow.setStartLimit(String.valueOf(new Double(borrow.getLowest() / 100D).longValue()));
+        }else{  // 默认
+            indexBorrow.setApr("*");
+            indexBorrow.setBorrowId(0L);
+            indexBorrow.setLimit("*");
+            indexBorrow.setTitle("*****");
+            indexBorrow.setStartLimit("*");
         }
         result.setIndexBorrow(indexBorrow);
         return ResponseEntity.ok(result);

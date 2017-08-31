@@ -107,7 +107,7 @@ public class BorrowServiceImpl implements BorrowService {
                             new PageRequest(0, 1, new Sort(new Sort.Order(Sort.Direction.DESC, "id"))));
                     List<Borrow> content = page.getContent();
                     if (CollectionUtils.isEmpty(content)) {
-                        return new Borrow();
+                        return null ;
                     } else {
                         return content.get(0);
                     }

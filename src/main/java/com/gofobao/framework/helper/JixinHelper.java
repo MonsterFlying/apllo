@@ -117,7 +117,6 @@ public class JixinHelper {
             return null;
         }
 
-
         String titularBorrowAccountId = borrow.getTitularBorrowAccountId();
         if (!ObjectUtils.isEmpty(titularBorrowAccountId)) {
             return userThirdAccountService.findByAccountId(titularBorrowAccountId);
