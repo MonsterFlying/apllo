@@ -1060,11 +1060,11 @@ public class AssetBizImpl implements AssetBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoCollectionResp.class));
         }
-
+        Asset asset=assetService.findByUserId(userId);
         VoCollectionResp response = VoBaseResp.ok("查询成功", VoCollectionResp.class);
         Long waitCollectionInterest = userCache.getWaitCollectionInterest();
         Long waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
-        Long waitCollectionTotal = userCache.getWaitCollectionPrincipal() + userCache.getWaitCollectionInterest();
+        Long waitCollectionTotal = asset.getPayment();
         response.setHideInterest(waitCollectionInterest);
         response.setInterest(StringHelper.formatMon(waitCollectionInterest / 100d));
 
