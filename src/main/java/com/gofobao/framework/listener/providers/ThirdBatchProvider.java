@@ -426,7 +426,7 @@ public class ThirdBatchProvider {
             //查询债权转让记录
             Specification<Transfer> transferSpecification = Specifications
                     .<Transfer>and()
-                    .in("id", transferIds)
+                    .in("id", transferIds.toArray())
                     .build();
             List<Transfer> transferList = transferService.findList(transferSpecification);
             Preconditions.checkState(!CollectionUtils.isEmpty(transferList), "债权转让记录不存在!");
