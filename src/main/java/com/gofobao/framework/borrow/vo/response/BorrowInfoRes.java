@@ -105,4 +105,5 @@ public class BorrowInfoRes extends VoBaseResp {
 
     @ApiModelProperty
     private Long borrowId;
+
 }

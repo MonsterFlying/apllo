@@ -272,6 +272,7 @@ public class TransferProvider {
                 .<TransferBuyLog>and()
                 .eq("transferId", transfer.getId())
                 .eq("state", 0)
+                .eq("del",0)
                 .build();
         List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);/* 购买债权转让记录 */
         Preconditions.checkNotNull(transferBuyLogList, "批量债权转让：购买债权记录不存在!");

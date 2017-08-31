@@ -1617,6 +1617,7 @@ public class TransferBizImpl implements TransferBiz {
                 borrowInfoRes.setStatus(4);
             }
         }
+        borrowInfoRes.setReleaseAt(DateHelper.dateToString(transfer.getReleaseAt()));
         borrowInfoRes.setBorrowId(borrowId);
         borrowInfoRes.setTenderId(transfer.getTenderId());
         borrowInfoRes.setTransferId(transfer.getId());

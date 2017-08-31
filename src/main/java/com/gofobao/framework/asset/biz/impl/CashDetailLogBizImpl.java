@@ -145,6 +145,8 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     @Autowired
     MqHelper mqHelper;
 
+    @Value("${gofobao.pcDomain}")
+    private String pcDomain;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -311,13 +313,21 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         withDrawRequest.setCardNo(userThirdAccount.getCardNo());
         withDrawRequest.setAccountId(userThirdAccount.getAccountId());
         withDrawRequest.setTxAmount(StringHelper.formatDouble(new Double((cashMoney - fee) / 100D), false)); //  交易金额
-        withDrawRequest.setRouteCode(bigCashState ? "2" : "0");
+        withDrawRequest.setRouteCode(bigCashState ? "2" : " ");
         if (bigCashState) {
             withDrawRequest.setCardBankCnaps(voCashReq.getBankAps()); // 联行卡号
         }
+
         withDrawRequest.setTxFee(StringHelper.formatDouble(new Double(fee / 100D), false));
         withDrawRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, userId));
-        withDrawRequest.setRetUrl(String.format("%s/%s/%s", javaDomain, "/pub/cash/show/", withDrawRequest.getTxDate() + withDrawRequest.getTxTime() + withDrawRequest.getSeqNo()));
+
+        Integer requestSource=Integer.valueOf(httpServletRequest.getHeader("requestSource").toString());
+        if(requestSource==0){
+            withDrawRequest.setRetUrl(String.format("%s/%s", pcDomain, "account/cash"));
+        }else{
+            withDrawRequest.setRetUrl(String.format("%s/%s/%s", javaDomain, "/pub/cash/show/", withDrawRequest.getTxDate() + withDrawRequest.getTxTime() + withDrawRequest.getSeqNo()));
+        }
+
         withDrawRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/asset/cash/callback"));
         withDrawRequest.setAcqRes(String.valueOf(userId));
         withDrawRequest.setChannel(ChannelContant.getchannel(httpServletRequest));

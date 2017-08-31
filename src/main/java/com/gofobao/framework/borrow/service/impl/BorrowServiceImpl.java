@@ -477,6 +477,10 @@ public class BorrowServiceImpl implements BorrowService {
 
                 tempTenderMap.put("calculatorMap", calculatorMap);
             }
+        } else {
+            calculatorMap.put("earnings", StringHelper.formatMon(Double.parseDouble(calculatorMap.get("earnings").toString()) / 100D));
+            calculatorMap.put("eachRepay", StringHelper.formatMon(Double.parseDouble(calculatorMap.get("eachRepay").toString()) / 100D));
+            calculatorMap.put("repayTotal", StringHelper.formatMon(Double.parseDouble(calculatorMap.get("repayTotal").toString()) / 100D));
         }
 
         //使用thymeleaf模版引擎渲染 借款合同html
@@ -504,7 +508,7 @@ public class BorrowServiceImpl implements BorrowService {
                 "b.status=:status " +
                 "AND " +
                 "b.successAt is null ");
-        TypedQuery query1 = entityManager.createQuery(sql+"", Borrow.class);
+        TypedQuery query1 = entityManager.createQuery(sql + "", Borrow.class);
         query1.setParameter("status", BorrowContants.BIDDING);
         BorrowStatistics borrowStatistics = new BorrowStatistics();
         Integer cheDai = 0;
@@ -515,7 +519,7 @@ public class BorrowServiceImpl implements BorrowService {
         List<Borrow> borrowList = query1.getResultList();
         Date nowDate = new Date();
         if (!CollectionUtils.isEmpty(borrowList)) {
-            sum1=borrowList.size();
+            sum1 = borrowList.size();
             Map<Integer, List<Borrow>> borrowMaps = borrowList.stream().collect(groupingBy(Borrow::getType));
             borrowList = borrowMaps.get(BorrowContants.CE_DAI);
             cheDai = CollectionUtils.isEmpty(borrowList) ? 0 : borrowList.size();

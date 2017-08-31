@@ -51,7 +51,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.marketing.entity.MarketingData;
-import com.gofobao.framework.marketing.enums.MarketingTypeEnum;
+import com.gofobao.framework.marketing.constans.MarketingTypeContants;
 import com.gofobao.framework.member.biz.UserThirdBiz;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -400,7 +400,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         marketingData.setTransTime(new Date());
         marketingData.setUserId(userThirdAccount.getUserId());
         marketingData.setSourceId(userThirdAccount.getId());
-        marketingData.setMarketingType(MarketingTypeEnum.OPEN_ACCOUNT);
+        marketingData.setMarketingType(MarketingTypeContants.OPEN_ACCOUNT);
         try {
             Map<String, String> body = new HashMap<>();
             BeanUtils.populate(marketingData, body);

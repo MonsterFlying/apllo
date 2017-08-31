@@ -1,6 +1,5 @@
 package com.gofobao.framework.marketing.entity;
 
-import com.gofobao.framework.marketing.enums.MarketingTypeEnum;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -13,7 +12,7 @@ public class MarketingData implements Serializable {
     /**
      * 营销类型
      */
-    private MarketingTypeEnum marketingType;
+    private String marketingType;
 
     /**
      * 触发营销的数据

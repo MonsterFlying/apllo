@@ -1015,8 +1015,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 userCache.setQdWaitCollectionPrincipal(userCache.getQdWaitCollectionPrincipal() - principal);
                 userCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() - interest);
             }
-            //已赚利息
-            userCache.setIncomeInterest(userCache.getIncomeInterest() + interest);
+
             Long collectionMoney = borrowCollections.stream().mapToLong(p -> p.getCollectionMoney()).sum();
             Long collectionMoneyYes = borrowCollections.stream().mapToLong(p -> p.getCollectionMoneyYes()).sum();
             //逾期收入
@@ -1144,7 +1143,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
             mqConfig.setTag(MqTagEnum.END_CREDIT_BY_NOT_TRANSFER);
             mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
             ImmutableMap<String, String> body = ImmutableMap
-                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(parentBorrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(parentBorrow.getId()),
+                            MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
             mqConfig.setMsg(body);
             try {
                 log.info(String.format("repaymentBizImpl endThirdTenderAndChangeBorrowStatus send mq %s", GSON.toJson(body)));

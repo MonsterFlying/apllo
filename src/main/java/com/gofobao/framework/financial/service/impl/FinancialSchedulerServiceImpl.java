@@ -1,5 +1,6 @@
 package com.gofobao.framework.financial.service.impl;
 
+import com.gofobao.framework.financial.entity.FinancialScheduler;
 import com.gofobao.framework.financial.repository.FinancialSchedulerRepository;
 import com.gofobao.framework.financial.service.FinancialSchedulerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,4 +11,9 @@ public class FinancialSchedulerServiceImpl implements FinancialSchedulerService 
 
     @Autowired
     FinancialSchedulerRepository financialSchedulerRepository ;
+
+    @Override
+    public void save(FinancialScheduler financialScheduler) {
+        financialSchedulerRepository.save(financialScheduler) ;
+    }
 }

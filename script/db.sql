@@ -730,10 +730,15 @@ CREATE TABLE gfb_financial_scheduler
   id INT PRIMARY KEY AUTO_INCREMENT,
   name VARCHAR(255) DEFAULT '' COMMENT '调度名称',
   data VARCHAR(1024) DEFAULT '' COMMENT '调度数据',
+  type VARCHAR(36) DEFAULT '' COMMENT '类型',
   do_num INT DEFAULT 0 COMMENT '调度此处',
   res_msg VARCHAR(1024) DEFAULT '' COMMENT '结果',
   create_at DATETIME COMMENT '调度创建时间',
   update_at DATETIME COMMENT '更新时间',
   state INT DEFAULT 0 COMMENT '调度状态(0, 失败, 1.成功)'
+
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 ALTER TABLE gfb_financial_scheduler COMMENT = '对账系统调度';
+
+ALTER TABLE gfb_eve ADD query_date VARCHAR(8) DEFAULT '' NULL COMMENT '查询时间';
+ALTER TABLE gfb_aleve ADD query_date VARCHAR(8) DEFAULT '' NULL COMMENT '查询时间';

@@ -52,7 +52,7 @@ import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.listener.providers.CreditProvider;
 import com.gofobao.framework.marketing.biz.MarketingProcessBiz;
 import com.gofobao.framework.marketing.entity.MarketingData;
-import com.gofobao.framework.marketing.enums.MarketingTypeEnum;
+import com.gofobao.framework.marketing.constans.MarketingTypeContants;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
@@ -60,6 +60,7 @@ import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.migrate.MigrateBorrowBiz;
 import com.gofobao.framework.migrate.MigrateProtocolBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
+import com.gofobao.framework.scheduler.DealThirdBatchScheduler;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.entity.Transfer;
@@ -170,7 +171,7 @@ public class AplloApplicationTests {
     public void testRegisterPublicRedpack() {
         MarketingData marketingData = new MarketingData();
         marketingData.setUserId(44799L);
-        marketingData.setMarketingType(MarketingTypeEnum.REGISTER);
+        marketingData.setMarketingType(MarketingTypeContants.REGISTER);
         marketingData.setSourceId(44799L);
         marketingData.setTransTime(new Date());
         try {
@@ -184,7 +185,7 @@ public class AplloApplicationTests {
     public void testLoginPublicRedpack() {
         MarketingData marketingData = new MarketingData();
         marketingData.setUserId(44799L);
-        marketingData.setMarketingType(MarketingTypeEnum.LOGIN);
+        marketingData.setMarketingType(MarketingTypeContants.LOGIN);
         marketingData.setSourceId(44799L);
         marketingData.setTransTime(new Date());
         try {
@@ -198,7 +199,7 @@ public class AplloApplicationTests {
     public void testTenderPublicRedpack() {
         MarketingData marketingData = new MarketingData();
         marketingData.setUserId(44884L);
-        marketingData.setMarketingType(MarketingTypeEnum.TENDER);
+        marketingData.setMarketingType(MarketingTypeContants.TENDER);
         marketingData.setSourceId(261540L);
         marketingData.setTransTime(new Date());
         try {
@@ -695,6 +696,7 @@ public class AplloApplicationTests {
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
         batchDetailsQueryReq.setBatchNo("101519");
+
         batchDetailsQueryReq.setBatchTxDate("20170831");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
@@ -733,6 +735,7 @@ public class AplloApplicationTests {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
         balanceQueryRequest.setAccountId("6212462190000004254");
+        balanceQueryRequest.setAccountId("6212462190000003520");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         System.out.println(balanceQueryResponse);
     }
@@ -796,6 +799,17 @@ public class AplloApplicationTests {
 
     }
 
+    public void testCredit(){
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
+        mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(5708), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        log.info(String.format("transferBizImpl buyTransfer send mq %s", GSON.toJson(body)));
+        mqHelper.convertAndSend(mqConfig);
+    }
+
     public void batchDeal() {
        /* Map<String,Object> acqMap = new HashMap<>();
         acqMap.put("borrowId", 169979);
@@ -805,9 +819,10 @@ public class AplloApplicationTests {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(170084),
-                        MqConfig.BATCH_NO, StringHelper.toString("162230"),
-                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date())
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(5707),
+                        MqConfig.BATCH_NO, StringHelper.toString("101519"),
+                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()),
+                        MqConfig.ACQ_RES,"{\"transferId\":5707}"
                 );
 
         mqConfig.setMsg(body);
@@ -828,8 +843,13 @@ public class AplloApplicationTests {
     @Autowired
     private JixinHelper jixinHelper;
 
+    @Autowired
+    private DealThirdBatchScheduler dealThirdBatchScheduler ;
+
     @Test
     public void test() {
+
+        //dealThirdBatchScheduler.process();
         //dataMigration();
 
        /* MqConfig mqConfig = new MqConfig();
@@ -862,13 +882,14 @@ public class AplloApplicationTests {
         }*/
 
         //批次处理
-        //batchDeal();
+       // batchDeal();
 
         //unfrozee();
         //查询存管账户资金信息
         //balanceQuery();
         //查询资金流水
         //accountDetailsQuery();
+        //testCredit();
         //根据手机号查询存管账户
         //findAccountByMobile();
         //受托支付
@@ -882,17 +903,18 @@ public class AplloApplicationTests {
         //垫付回调
         //advanceCall();
         //初审
-        //doFirstVerify();
+        // doFirstVerify();
         //还款处理
-        //repayDeal();
+        // repayDeal();
         //查询标的集合
-        //findThirdBorrowList();
+        // findThirdBorrowList();
         //复审
-        //doAgainVerify();
+        // doAgainVerify();
         //批次状态查询
-        //batchQuery();
+        // batchQuery();
         //批次详情查询
         batchDetailsQuery();
+        // batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调

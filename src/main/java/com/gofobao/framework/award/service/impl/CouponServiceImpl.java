@@ -100,7 +100,7 @@ public class CouponServiceImpl implements CouponService {
             CouponRes couponRes = new CouponRes();
             couponRes.setId(p.getId());
             couponRes.setPhone(p.getPhone());
-            couponRes.setSizeStr(p.getSize() + "M");
+            couponRes.setSizeStr(p.getSize());
             couponRes.setExpiryDate(DateHelper.dateToString(p.getStartAt(), DateHelper.DATE_FORMAT_YMD) + "~" + DateHelper.dateToString(p.getEndAt(), DateHelper.DATE_FORMAT_YMD));
             resList.add(couponRes);
         });
