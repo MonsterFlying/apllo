@@ -3,6 +3,7 @@ package com.gofobao.framework.tender.controller.web;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.TransferBiz;
+import com.gofobao.framework.tender.vo.request.VoEndTransfer;
 import com.gofobao.framework.tender.vo.request.VoPcFirstVerityTransfer;
 import com.gofobao.framework.tender.vo.request.VoTransferReq;
 import com.gofobao.framework.tender.vo.request.VoTransferTenderReq;
@@ -123,4 +124,25 @@ public class WebTransferController {
                                                          @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return transferBiz.goTenderInfo(tenderId, userId);
     }
+
+
+    /**
+     * pc:新版结束债权
+     *
+     * @param voEndTransfer
+     * @return
+     * @throws Exception
+     */
+    @ApiOperation("PC:结束债权转让")
+    @PostMapping("transfer/pc/v2/new/transfer/end")
+    public ResponseEntity<VoBaseResp> endTransfer(@Valid @ModelAttribute VoEndTransfer voEndTransfer, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        try {
+            voEndTransfer.setUserId(userId);
+            return transferBiz.endTransfer(voEndTransfer);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后重试!"));
+        }
+    }
+
+
 }

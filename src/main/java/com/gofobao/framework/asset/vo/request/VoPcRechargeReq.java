@@ -19,7 +19,7 @@ public class VoPcRechargeReq extends Page{
     @ApiModelProperty("结束时间")
     private String endAt;
 
-    @ApiModelProperty("充值状态：0：充值请求。1.充值成功。2.充值失败'")
+    @ApiModelProperty("充值状态：-1:全部，0：充值请求。1.充值成功。2.充值失败'")
     private Integer state;
 
 }

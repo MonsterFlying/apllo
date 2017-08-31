@@ -19,6 +19,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.LockModeType;
 import java.util.*;
@@ -67,7 +68,7 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService {
 
             Specification specification = Specifications.<RechargeDetailLog>and()
                     .eq("userId", rechargeReq.getUserId())
-                    .eq("state", rechargeReq.getState())
+                    .eq(!StringUtils.isEmpty( rechargeReq.getState()),"state",rechargeReq.getState())
                     .between("createTime", new Range<>(beginAt, endAt))
                     .build();
             Page<RechargeDetailLog> logPage = rechargeDetailLogRepository.findAll(specification,
