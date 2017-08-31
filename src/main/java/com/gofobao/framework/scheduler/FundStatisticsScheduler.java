@@ -3,11 +3,16 @@ package com.gofobao.framework.scheduler;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.asset.biz.CurrentIncomeLogBiz;
 import com.gofobao.framework.financial.biz.FinancialSchedulerBiz;
+import com.gofobao.framework.financial.entity.FinancialScheduler;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import java.util.Date;
 
 /**
  * Created by Zeke on 2017/7/10.
@@ -28,39 +33,81 @@ public class FundStatisticsScheduler {
     @Autowired
     FinancialSchedulerBiz financialSchedulerBiz;
 
+    private final Gson gson = new Gson();
+
     @Scheduled(cron = "0 0 3 * * ?")
     public void process() {
         boolean state = false;
+        String date = jixinTxDateHelper.getSubDateStr(1);
+        String resMsg ;
         try {
-            String date = jixinTxDateHelper.getSubDateStr(1);
+            resMsg = "调度成功" ;
             state = fundStatisticsBiz.doEve(date);
         } catch (Throwable e) {
-            String error = e.getMessage();
-
+            resMsg = e.getMessage();
         }
-        log.info(String.format("平台账单EVE运行结果: %s", state ? "成功" : "失败"));
+
+        Date nowDate = new Date();
+        try {
+            FinancialScheduler financialScheduler = new FinancialScheduler();
+            ImmutableMap<String, String> data = ImmutableMap.of("date", date);
+            financialScheduler.setData(gson.toJson(data));
+            financialScheduler.setDoNum(1);
+            financialScheduler.setName(String.format("%sEVE调度失败", date));
+            financialScheduler.setResMsg(resMsg);
+            financialScheduler.setUpdateAt(nowDate);
+            financialScheduler.setState(state ? 1 : 0);
+            financialScheduler.setUpdateAt(nowDate);
+            financialScheduler.setType("EVE");
+            financialSchedulerBiz.save(financialScheduler);
+        } catch (Exception e) {
+            log.error("EVE保存调度信息失败", e);
+        }
 
         try {
-            log.info("平台账单AlEVE启动");
-            state = fundStatisticsBiz.doAleve();
+            resMsg = "调度成功" ;
+            state = fundStatisticsBiz.doAleve(date);
         } catch (Exception e) {
-            log.error("ALEVE对账异常", e);
+            resMsg = e.getMessage();
         }
-        log.info(String.format("平台账单ALEVE运行结果: %s", state ? "成功" : "失败"));
+        try {
+            FinancialScheduler financialScheduler = new FinancialScheduler();
+            ImmutableMap<String, String> data = ImmutableMap.of("date", date);
+            financialScheduler.setData(gson.toJson(data));
+            financialScheduler.setDoNum(1);
+            financialScheduler.setName(String.format("%sALEVE调度失败", date));
+            financialScheduler.setResMsg(resMsg);
+            financialScheduler.setUpdateAt(nowDate);
+            financialScheduler.setState(state ? 1 : 0);
+            financialScheduler.setUpdateAt(nowDate);
+            financialScheduler.setType("ALEVE");
+            financialSchedulerBiz.save(financialScheduler);
+        } catch (Exception e) {
+            log.error("ALEVE保存调度信息失败", e);
+        }
 
         //处理活期收益
         try {
             if (state) {
-                state = currentIncomeLogBiz.process();
-            } else {
-                log.error("每日活期收益没有调度");
+                state = currentIncomeLogBiz.process(date);
             }
         } catch (Exception e) {
-            log.error("活期收益异常", e);
+            resMsg = e.getMessage();
         }
-
-        log.info(String.format("活期收益运行结果: %s", state ? "成功" : "失败"));
-
-        // 处理每日
+        try {
+            FinancialScheduler financialScheduler = new FinancialScheduler();
+            ImmutableMap<String, String> data = ImmutableMap.of("date", date);
+            financialScheduler.setData(gson.toJson(data));
+            financialScheduler.setDoNum(1);
+            financialScheduler.setName(String.format("%s活期收益调度失败", date));
+            financialScheduler.setResMsg(resMsg);
+            financialScheduler.setUpdateAt(nowDate);
+            financialScheduler.setState(state ? 1 : 0);
+            financialScheduler.setUpdateAt(nowDate);
+            financialScheduler.setType("CURR_INCOME");
+            financialSchedulerBiz.save(financialScheduler);
+        } catch (Exception e) {
+            log.error("活期调度保存调度信息失败", e);
+        }
     }
 }

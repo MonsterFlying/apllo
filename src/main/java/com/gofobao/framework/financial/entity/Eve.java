@@ -39,5 +39,6 @@ public class Eve {
     private String tranbrno  ;
     private String ervind  ;
     private String transtype  ;
+    private String queryDate ;
     private Date createAt  ;
 }

@@ -14,6 +14,7 @@ public interface FundStatisticsBiz {
      *
      * @return
      * @throws Exception
+     * @param date
      */
-    boolean doAleve() throws Exception;
+    boolean doAleve(String date) throws Exception;
 }

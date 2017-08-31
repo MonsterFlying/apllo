@@ -36,5 +36,6 @@ public class Aleve {
     private String forcardnbr;
     private String revind;
     private String resv;
+    private String queryDate ;
     private Date createAt;
 }
