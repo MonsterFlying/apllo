@@ -31,6 +31,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -244,13 +245,15 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         detailRes.setOrder(borrowCollection.getOrder() + 1);
         detailRes.setCollectionMoney(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100D));
 
-        Date nowDate=DateHelper.endOfDate(new Date());
-        Date tempCollectionAt=borrowCollection.getCollectionAt();
-        detailRes.setLateDays(borrowRepayment.getStatus()== RepaymentContants.STATUS_YES  //当前已还款直接取逾期天数
-                 ?borrowRepayment.getLateDays()
-                 :(tempCollectionAt.getTime()>nowDate.getTime())   //应还时间大于当前时间(未逾期)
-                     ?DateHelper.diffInDays(tempCollectionAt,nowDate,false)
-                     :DateHelper.diffInDays(nowDate,tempCollectionAt,false));
+        Date nowDate = DateHelper.nextDate(new Date());
+        Date tempRepayAt = DateHelper.beginOfDate(borrowRepayment.getRepayAt());
+        //当前已还款直接取逾期天数||应还时间大于当前时间(未逾期)
+        detailRes.setLateDays(borrowRepayment.getStatus() == RepaymentContants.STATUS_YES || tempRepayAt.getTime() > nowDate.getTime()
+                ? borrowRepayment.getLateDays()
+                //当前还款已垫付
+                : !StringUtils.isEmpty(borrowRepayment.getAdvanceAtYes())
+                    ?DateHelper.diffInDays(DateHelper.nextDate(borrowRepayment.getAdvanceAtYes()), tempRepayAt, false)
+                    :DateHelper.diffInDays(nowDate,tempRepayAt,false));
         detailRes.setBorrowName(borrow.getName());
         Long principal = 0L;
         Long interest = 0L;
