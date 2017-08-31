@@ -1141,7 +1141,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             //推送队列结束债权
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
-            mqConfig.setTag(MqTagEnum.END_CREDIT_BY_NOT_TRANSFER);
+            mqConfig.setTag(MqTagEnum.END_CREDIT);
             mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
             ImmutableMap<String, String> body = ImmutableMap
                     .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(parentBorrow.getId()),
@@ -2377,7 +2377,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             //生成债权购买记录
             TransferBuyLog transferBuyLog = new TransferBuyLog();
             transferBuyLog.setUserId(titularBorrowUserId);
-            transferBuyLog.setType(0);
+            transferBuyLog.setType(2);
             transferBuyLog.setState(0);
             transferBuyLog.setAuto(false);
             transferBuyLog.setBuyMoney(principal + alreadyInterest);
@@ -2467,6 +2467,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
         // 生成债权转让记录
         addTransferTenderByAdvance(borrow, transferList, transferBuyLogList, tenderList, borrowCollectionMaps, titularBorrowAccount.getUserId());
+
         Map<Long, Transfer> transferMaps = transferList.stream().collect(Collectors.toMap(Transfer::getTenderId, Function.identity()));
         Map<Long, TransferBuyLog> transferBuyLogMaps = transferBuyLogList.stream().collect(Collectors.toMap(TransferBuyLog::getTransferId, Function.identity()));
         //获取名义借款人垫付记录
@@ -2819,8 +2820,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
         addAdvanceLogAndChangeBorrowRepayment(titularBorrowUserId, borrowRepayment, lateDays, lateInterest);
         //3.5完成垫付债权转让操作
         transferTenderByAdvance(parentBorrow, tenderMaps, tenderIds);
-        //4.结束垫付投资人债权
-        endAdvanceCredit(parentBorrow);
         //5.发送投资人收到还款站内信
         sendCollectionNotices(borrowCollectionList, advance, parentBorrow);
         //6.发放积分
@@ -2876,28 +2875,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
             }
         });
 
-    }
-
-    /**
-     * 结束垫付债权
-     *
-     * @param parentBorrow
-     */
-    private void endAdvanceCredit(Borrow parentBorrow) {
-        //推送队列结束债权
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
-        mqConfig.setTag(MqTagEnum.END_CREDIT_BY_ADVANCE);
-        mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(parentBorrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            log.info(String.format("repaymentBizImpl endThirdTenderAndChangeBorrowStatus send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("repaymentBizImpl endThirdTenderAndChangeBorrowStatus send mq exception", e);
-        }
     }
 
     /**
