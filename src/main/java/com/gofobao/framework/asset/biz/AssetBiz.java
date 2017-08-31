@@ -190,4 +190,6 @@ public interface AssetBiz {
      */
     ResponseEntity<VoViewAssetLogWarpRes> newAssetLogResList(VoAssetLogReq voAssetLogReq);
 
+    ResponseEntity<VoAssetIndexResp> synHome(Long userId) throws Exception;
+
 }

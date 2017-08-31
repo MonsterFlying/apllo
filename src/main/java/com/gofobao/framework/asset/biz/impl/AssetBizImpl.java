@@ -193,18 +193,18 @@ public class AssetBizImpl implements AssetBiz {
         long netWorthQuota = new Double((useMoney + waitCollectionPrincipal) * 0.8 - payment).longValue();//计算净值额度
 
         VoUserAssetInfoResp voUserAssetInfoResp = VoBaseResp.ok("成功", VoUserAssetInfoResp.class);
-        voUserAssetInfoResp.setHideUserMoney(StringHelper.formatDouble(useMoney / 100D,true));
+        voUserAssetInfoResp.setHideUserMoney(StringHelper.formatDouble(useMoney / 100D, true));
         voUserAssetInfoResp.setHideNoUseMoney(StringHelper.formatDouble(asset.getNoUseMoney() / 100D, true));
         voUserAssetInfoResp.setHidePayment(StringHelper.formatDouble(payment / 100D, true));
         voUserAssetInfoResp.setHideCollection(StringHelper.formatDouble(asset.getCollection() / 100D, true));
         voUserAssetInfoResp.setHideVirtualMoney(StringHelper.formatDouble(asset.getVirtualMoney() / 100D, true));
         voUserAssetInfoResp.setHideNetWorthQuota(StringHelper.formatDouble(netWorthQuota / 100D, true));
         voUserAssetInfoResp.setUseMoney(useMoney);
-        voUserAssetInfoResp.setNoUseMoney( asset.getNoUseMoney());
-        voUserAssetInfoResp.setPayment( asset.getPayment()) ;
+        voUserAssetInfoResp.setNoUseMoney(asset.getNoUseMoney());
+        voUserAssetInfoResp.setPayment(asset.getPayment());
         voUserAssetInfoResp.setCollection(asset.getCollection());
-        voUserAssetInfoResp.setVirtualMoney( asset.getVirtualMoney() );
-        voUserAssetInfoResp.setNetWorthQuota( netWorthQuota );
+        voUserAssetInfoResp.setVirtualMoney(asset.getVirtualMoney());
+        voUserAssetInfoResp.setNetWorthQuota(netWorthQuota);
         return ResponseEntity.ok(voUserAssetInfoResp);
     }
 
@@ -283,7 +283,7 @@ public class AssetBizImpl implements AssetBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！"));
         }
-        if(StringUtils.isEmpty(userThirdAccount.getCardNo())){
+        if (StringUtils.isEmpty(userThirdAccount.getCardNo())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_BIND_BANK_CARD, "对不起!你的账号还没绑定银行卡呢"));
@@ -886,7 +886,7 @@ public class AssetBizImpl implements AssetBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoPreRechargeResp.class));
         }
 
-        if(StringUtils.isEmpty(userThirdAccount.getCardNo())){
+        if (StringUtils.isEmpty(userThirdAccount.getCardNo())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_BIND_BANK_CARD, "对不起!你的账号还没绑定银行卡呢", VoPreRechargeResp.class));
@@ -999,8 +999,8 @@ public class AssetBizImpl implements AssetBiz {
                         .body(VoBaseResp.error(VoBaseResp.ERROR, msg, VoAvailableAssetInfoResp.class));
             }
 
-            double availBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0,2);// 可用余额  账面余额-可用余额=冻结金额
-            double currBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100.0,2);// 账面余额  账面余额-可用余额=冻结金额
+            double availBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0, 2);// 可用余额  账面余额-可用余额=冻结金额
+            double currBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100.0, 2);// 账面余额  账面余额-可用余额=冻结金额
 
 
             // 查询用户操作记录
@@ -1060,11 +1060,11 @@ public class AssetBizImpl implements AssetBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoCollectionResp.class));
         }
-
+        Asset asset=assetService.findByUserId(userId);
         VoCollectionResp response = VoBaseResp.ok("查询成功", VoCollectionResp.class);
         Long waitCollectionInterest = userCache.getWaitCollectionInterest();
         Long waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
-        Long waitCollectionTotal = userCache.getWaitCollectionPrincipal() + userCache.getWaitCollectionInterest();
+        Long waitCollectionTotal = asset.getPayment();
         response.setHideInterest(waitCollectionInterest);
         response.setInterest(StringHelper.formatMon(waitCollectionInterest / 100d));
 
@@ -1233,32 +1233,157 @@ public class AssetBizImpl implements AssetBiz {
 
         List<NewAssetLog> assetLogs = assetLogPage.getContent();
         if (CollectionUtils.isEmpty(assetLogs)) {
-            return ResponseEntity.ok(voViewAssetLogWarpRes) ;
+            return ResponseEntity.ok(voViewAssetLogWarpRes);
         }
 
-        VoViewAssetLogRes voViewAssetLogRes = null ;
-        for(NewAssetLog newAssetLog : assetLogs){
-            voViewAssetLogRes = new VoViewAssetLogRes() ;
-            Long opMoney=newAssetLog.getOpMoney();
-            Long userMoney=newAssetLog.getUseMoney();
+        VoViewAssetLogRes voViewAssetLogRes = null;
+        for (NewAssetLog newAssetLog : assetLogs) {
+            voViewAssetLogRes = new VoViewAssetLogRes();
+            Long opMoney = newAssetLog.getOpMoney();
+            Long userMoney = newAssetLog.getUseMoney();
             voViewAssetLogRes.setCreatedAt(DateHelper.dateToString(newAssetLog.getCreateTime()));
-            if(newAssetLog.getTxFlag().equals("C")){
+            if (newAssetLog.getTxFlag().equals("C")) {
                 voViewAssetLogRes.setMoney("-" + new Double(opMoney / 100D).toString());
                 voViewAssetLogRes.setShowMoney("-" + StringHelper.formatDouble(opMoney / 100D, true));
-            }else if(newAssetLog.getTxFlag().equals("D")){
-                voViewAssetLogRes.setMoney(new Double(opMoney/ 100D).toString());
-                voViewAssetLogRes.setShowMoney( "+" + StringHelper.formatDouble(opMoney / 100D, true));
-            }else{
+            } else if (newAssetLog.getTxFlag().equals("D")) {
                 voViewAssetLogRes.setMoney(new Double(opMoney / 100D).toString());
-                voViewAssetLogRes.setShowMoney(StringHelper.formatDouble(opMoney/ 100D, true));
+                voViewAssetLogRes.setShowMoney("+" + StringHelper.formatDouble(opMoney / 100D, true));
+            } else {
+                voViewAssetLogRes.setMoney(new Double(opMoney / 100D).toString());
+                voViewAssetLogRes.setShowMoney(StringHelper.formatDouble(opMoney / 100D, true));
             }
-            voViewAssetLogRes.setUseMoney(StringHelper.formatMon(userMoney/100D));
-            voViewAssetLogRes.setHideUseMoney(userMoney/100D);
+            voViewAssetLogRes.setUseMoney(StringHelper.formatMon(userMoney / 100D));
+            voViewAssetLogRes.setHideUseMoney(userMoney / 100D);
             voViewAssetLogRes.setRemark(newAssetLog.getRemark());
             voViewAssetLogRes.setTypeName(newAssetLog.getOpName());
-            voViewAssetLogWarpRes.getResList().add(voViewAssetLogRes) ;
+            voViewAssetLogWarpRes.getResList().add(voViewAssetLogRes);
         }
         return ResponseEntity.ok(voViewAssetLogWarpRes);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoAssetIndexResp> synHome(Long userId) throws Exception {
+        Users users = userService.findByIdLock(userId);
+        if (users.getIsLock()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户已被系统锁定, 如有疑问请联系客服!", VoAssetIndexResp.class));
+        }
+
+        // 判断开户状态
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoAssetIndexResp.class));
+        }
+
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoAssetIndexResp.class));
+        }
+
+        if (userThirdAccount.getPasswordState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_INIT_BANK_PASSWORD, "请初始化江西银行存管账户密码！", VoAssetIndexResp.class));
+        }
+
+        if (userThirdAccount.getAutoTransferState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoAssetIndexResp.class));
+        }
+
+
+        if (userThirdAccount.getAutoTenderState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoAssetIndexResp.class));
+        }
+
+
+        // 查询当天充值记录
+        int pageSize = 20, pageIndex = 1, realSize = 0;
+        String accountId = userThirdAccount.getAccountId();  // 存管账户ID
+        Date nowDate = new Date();
+        do {
+            AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
+            accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
+            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
+            accountDetailsQueryRequest.setStartDate(jixinTxDateHelper.getTxDateStr()); // 查询当天数据
+            accountDetailsQueryRequest.setEndDate(jixinTxDateHelper.getTxDateStr());
+            accountDetailsQueryRequest.setType("9");
+            accountDetailsQueryRequest.setTranType("7820"); //  线下转账
+            accountDetailsQueryRequest.setAccountId(accountId);
+
+            AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
+                    accountDetailsQueryRequest,
+                    AccountDetailsQueryResponse.class);
+
+            if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
+                String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
+                return asset(userId) ;
+            }
+
+            String subPacks = accountDetailsQueryResponse.getSubPacks();
+            if (StringUtils.isEmpty(subPacks)) {
+                break;
+            }
+
+            Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
+            }.getType()));
+            List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
+            realSize = accountDetailsQueryItems.size();
+
+            String seqNo;
+            for (AccountDetailsQueryItem accountDetailsQueryItem : accountDetailsQueryItems) {   // 同步系统充值
+                seqNo = String.format("%s%s%s", accountDetailsQueryItem.getInpDate(), accountDetailsQueryItem.getInpTime(), accountDetailsQueryItem.getTraceNo());
+                RechargeDetailLog rechargeDetailLog = rechargeDetailLogService.findTopBySeqNo(seqNo);
+                if (!ObjectUtils.isEmpty(rechargeDetailLog)) {
+                    continue;
+                }
+                Double money = new Double(accountDetailsQueryItem.getTxAmount()) * 100;
+
+                // 根据对手
+                // 插入该条记录
+                rechargeDetailLog = new RechargeDetailLog();
+                rechargeDetailLog.setUserId(users.getId());
+                rechargeDetailLog.setBankName(userThirdAccount.getBankName());
+                rechargeDetailLog.setCallbackTime(nowDate);
+                rechargeDetailLog.setCreateTime(nowDate);
+                rechargeDetailLog.setUpdateTime(nowDate);
+                rechargeDetailLog.setCardNo(userThirdAccount.getCardNo());
+                rechargeDetailLog.setDel(0);
+                rechargeDetailLog.setState(1); // 充值成功
+                rechargeDetailLog.setMoney(money.longValue());
+                rechargeDetailLog.setRechargeChannel(1);  // 其他渠道
+                rechargeDetailLog.setRechargeType(1); // 线下充值
+                rechargeDetailLog.setSeqNo(seqNo);
+                rechargeDetailLogService.save(rechargeDetailLog);
+
+                AssetChange assetChange = new AssetChange();
+                assetChange.setType(AssetChangeTypeEnum.offlineRecharge);  // 招标失败解除冻结资金
+                assetChange.setUserId(userId);
+                assetChange.setMoney(money.longValue());
+                assetChange.setRemark(String.format("成功充值%s元", StringHelper.formatDouble(money.longValue() / 100D, true)));
+                assetChange.setSourceId(rechargeDetailLog.getId());
+                assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+                assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
+                assetChangeProvider.commonAssetChange(assetChange);
+
+                // 触发用户充值
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setTag(MqTagEnum.RECHARGE);
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+                mqConfig.setSendTime(DateHelper.addSeconds(nowDate, 30));
+                ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
+                mqConfig.setMsg(body);
+                mqHelper.convertAndSend(mqConfig);
+            }
+        } while (realSize == pageSize);
+
+        return asset(userId) ;
     }
 
 
