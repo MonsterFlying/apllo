@@ -1005,6 +1005,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @throws Exception
      */
     private void processBorrowAssetChange(Borrow borrow, List<Tender> tenderList, Date startAt, String groupSeqNo) throws Exception {
+        long takeUserId = ObjectUtils.isEmpty(borrow.getTakeUserId()) ? borrow.getUserId() : borrow.getTakeUserId();
         // 放款
         AssetChange borrowAssetChangeEntity = new AssetChange();
         borrowAssetChangeEntity.setSourceId(borrow.getId());
@@ -1013,7 +1014,7 @@ public class BorrowBizImpl implements BorrowBiz {
         borrowAssetChangeEntity.setSeqNo(assetChangeProvider.getSeqNo());
         borrowAssetChangeEntity.setRemark(String.format("标的[%s]融资成功. 放款%s元", borrow.getName(), StringHelper.formatDouble(borrow.getMoney() / 100D, true)));
         borrowAssetChangeEntity.setType(AssetChangeTypeEnum.borrow);
-        borrowAssetChangeEntity.setUserId(ObjectUtils.isEmpty(borrow.getTakeUserId()) ? borrow.getUserId() : borrow.getTakeUserId());
+        borrowAssetChangeEntity.setUserId(takeUserId);
         assetChangeProvider.commonAssetChange(borrowAssetChangeEntity);  // 放款
 
         // 获取待还
@@ -1043,7 +1044,7 @@ public class BorrowBizImpl implements BorrowBiz {
         paymentAssetChangeEntity.setSeqNo(assetChangeProvider.getSeqNo());
         paymentAssetChangeEntity.setRemark(String.format("添加待还金额%s元", StringHelper.formatDouble(collectionMoney / 100D, true)));
         paymentAssetChangeEntity.setType(AssetChangeTypeEnum.paymentAdd);
-        paymentAssetChangeEntity.setUserId(borrow.getUserId());
+        paymentAssetChangeEntity.setUserId(takeUserId);
         assetChangeProvider.commonAssetChange(paymentAssetChangeEntity);  // 放款
 
         // 净值账户管理费
@@ -1061,7 +1062,7 @@ public class BorrowBizImpl implements BorrowBiz {
             outBorrowFeeAssetChangeEntity.setSeqNo(assetChangeProvider.getSeqNo());
             outBorrowFeeAssetChangeEntity.setRemark(String.format("扣除标的[%s]融资管理费%s元", borrow.getName(), StringHelper.formatDouble(fee / 100D, true)));
             outBorrowFeeAssetChangeEntity.setType(AssetChangeTypeEnum.financingManagementFee);
-            outBorrowFeeAssetChangeEntity.setUserId(borrow.getUserId());
+            outBorrowFeeAssetChangeEntity.setUserId(takeUserId);
             outBorrowFeeAssetChangeEntity.setForUserId(feeId);
             assetChangeProvider.commonAssetChange(outBorrowFeeAssetChangeEntity);  // 扣除融资管理费
 
@@ -1074,7 +1075,7 @@ public class BorrowBizImpl implements BorrowBiz {
             inBorrowFeeAssetChangeEntity.setRemark(String.format("收取标的[%s]融资管理费%s元", borrow.getName(), StringHelper.formatDouble(fee / 100D, true)));
             inBorrowFeeAssetChangeEntity.setType(AssetChangeTypeEnum.platformFinancingManagementFee);
             inBorrowFeeAssetChangeEntity.setUserId(feeId);
-            inBorrowFeeAssetChangeEntity.setForUserId(borrow.getUserId());
+            inBorrowFeeAssetChangeEntity.setForUserId(takeUserId);
             assetChangeProvider.commonAssetChange(inBorrowFeeAssetChangeEntity);  // 收取融资管理费
         }
     }
