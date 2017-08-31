@@ -25,5 +25,6 @@ public class FinancialScheduler {
     private String resMsg  ;
     private Date createAt  ;
     private Date updateAt  ;
+    private String type ;
     private Integer state  ;
 }

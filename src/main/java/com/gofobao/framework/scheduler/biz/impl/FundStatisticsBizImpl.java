@@ -103,6 +103,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
                 eve.setTranbrno(tranbrno);
                 eve.setErvind(ervind);
                 eve.setTranstype(transtype);
+                eve.setQueryDate(date);
                 eve.setCreateAt(nowDate);
                 List<Eve> eveList = eveService.findByRetseqnoAndSeqno(eve.getRetseqno(), eve.getSeqno());
                 if (!CollectionUtils.isEmpty(eveList)) {
@@ -119,8 +120,8 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean doAleve() throws Exception {
-        String fileName = String.format("%s-ALEVE%s-%s", bankNo, productNo, jixinTxDateHelper.getSubDateStr(1));
+    public boolean doAleve(String date) throws Exception {
+        String fileName = String.format("%s-ALEVE%s-%s", bankNo, productNo,  date);
         boolean downloadState = jixinFileManager.download(fileName);
         if (!downloadState) {
             log.error(String.format("ALEVE: %s下载失败", fileName));
@@ -171,6 +172,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
                 aleve.setRevind(revind);
                 aleve.setResv(resv);
                 aleve.setCreateAt(nowDate) ;
+                aleve.setQueryDate(date);
                 List<Aleve> aleves = aleveService.findByTranno(aleve.getTranno());
                 if (!CollectionUtils.isEmpty(aleves)) {
                     log.error(String.format("ALEVE 重数据: %s", line));

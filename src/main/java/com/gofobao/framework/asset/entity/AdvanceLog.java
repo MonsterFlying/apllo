@@ -16,7 +16,6 @@ import java.util.Date;
 public class AdvanceLog {
     @Id
     @GeneratedValue
-    @Column(name = "id")
     private Long id;
     private Long userId;
     private Long repaymentId;
