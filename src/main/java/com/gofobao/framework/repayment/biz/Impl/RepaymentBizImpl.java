@@ -483,7 +483,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if (borrowRepayment.getOrder() == 0) {
                 startAt = DateHelper.beginOfDate(borrow.getSuccessAt());
             } else {
-                startAt = DateHelper.beginOfDate(borrowRepaymentList.get(i - 1).getRepayAt());
+                startAt = DateHelper.beginOfDate(borrowRepaymentList.get((i - 1) < 0 ? 0 : (i - 1)).getRepayAt());
             }
             /* 结束时间 */
             Date endAt = DateHelper.beginOfDate(borrowRepayment.getRepayAt());
@@ -1014,6 +1014,16 @@ public class RepaymentBizImpl implements RepaymentBiz {
             } else if (parentBorrow.getType() == 4) {
                 userCache.setQdWaitCollectionPrincipal(userCache.getQdWaitCollectionPrincipal() - principal);
                 userCache.setQdWaitCollectionInterest(userCache.getQdWaitCollectionInterest() - interest);
+            }
+
+            Long collectionMoney = borrowCollections.stream().mapToLong(p -> p.getCollectionMoney()).sum();
+            Long collectionMoneyYes = borrowCollections.stream().mapToLong(p -> p.getCollectionMoneyYes()).sum();
+            //逾期收入
+            if (collectionMoneyYes >= collectionMoney) {
+                userCache.setIncomeOverdue(collectionMoneyYes - collectionMoney);
+            } else {
+                log.error("当前还款批次异常：打印回款期数信息：", GSON.toJson(borrowCollections));
+                userCache.setIncomeOverdue(0L);
             }
             userCacheService.save(userCache);
         });
