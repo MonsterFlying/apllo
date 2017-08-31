@@ -641,80 +641,78 @@ public class BorrowBizImpl implements BorrowBiz {
                 .build();
 
         List<Tender> tenderList = tenderService.findList(borrowSpecification);
-        Preconditions.checkState(!CollectionUtils.isEmpty(tenderList), "投资记录不存在!");
-        //判断标的是否是已经在存管注册过
-        long count = tenderList.stream().filter(tender -> BooleanHelper.isTrue(tender.getThirdTenderFlag())).count();
-        if (count > 0) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款已在存管系统登记，暂不支持撤销!"));
-        }
+        if (!CollectionUtils.isEmpty(tenderList)) {
+            log.info("当前标的没有被投资过, 打印当前标的信息:", GSON.toJson(borrow));
+           //判断标的是否是已经在存管注册过
+            long count = tenderList.stream().filter(tender -> BooleanHelper.isTrue(tender.getThirdTenderFlag())).count();
+            if (count > 0) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "借款已在存管系统登记，暂不支持撤销!"));
+            }
 
-        Set<Long> userIdSet = tenderList.stream().map(p -> p.getUserId()).collect(Collectors.toSet());   // 投标的UserID
+            Set<Long> userIdSet = tenderList.stream().map(p -> p.getUserId()).collect(Collectors.toSet());   // 投标的UserID
 
-        // ======================================
-        //  更改投资记录标识, 并且解冻投资资金
-        // ======================================
-        VoCancelThirdTenderReq voCancelThirdTenderReq = null;
-        for (Tender tender : tenderList) {
-            tender.setId(tender.getId());
-            tender.setStatus(2); // 取消状态
-            tender.setUpdatedAt(nowDate);
-            tenderService.save(tender);
+            // ======================================
+            //  更改投资记录标识, 并且解冻投资资金
+            // ======================================
+            VoCancelThirdTenderReq voCancelThirdTenderReq = null;
+            for (Tender tender : tenderList) {
+                tender.setId(tender.getId());
+                tender.setStatus(2); // 取消状态
+                tender.setUpdatedAt(nowDate);
+                tenderService.save(tender);
 
-            //==================================================================
-            //取消即信投资人投标记录
-            //==================================================================
-            if (!ObjectUtils.isEmpty(tender.getThirdTenderOrderId())) {
-                voCancelThirdTenderReq = new VoCancelThirdTenderReq();
-                voCancelThirdTenderReq.setTenderId(tender.getId());
-                ResponseEntity<VoBaseResp> resp = tenderThirdBiz.cancelThirdTender(voCancelThirdTenderReq);
-                if (!resp.getStatusCode().equals(HttpStatus.OK)) {
-                    return resp;
+                //==================================================================
+                //取消即信投资人投标记录
+                //==================================================================
+                if (!ObjectUtils.isEmpty(tender.getThirdTenderOrderId())) {
+                    voCancelThirdTenderReq = new VoCancelThirdTenderReq();
+                    voCancelThirdTenderReq.setTenderId(tender.getId());
+                    ResponseEntity<VoBaseResp> resp = tenderThirdBiz.cancelThirdTender(voCancelThirdTenderReq);
+                    if (!resp.getStatusCode().equals(HttpStatus.OK)) {
+                        return resp;
+                    }
+                }
+
+                //招标失败解除冻结资金
+                AssetChange assetChange = new AssetChange();
+                assetChange.setType(AssetChangeTypeEnum.unfreeze);  // 招标失败解除冻结资金
+                assetChange.setUserId(tender.getUserId());
+                assetChange.setMoney(tender.getValidMoney());
+                assetChange.setRemark(String.format("借款 [%s] 投标失败解除冻结资金。", borrow.getName()));
+                assetChange.setSourceId(tender.getId());
+                assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+                assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
+                assetChangeProvider.commonAssetChange(assetChange);
+            }
+
+            //  发送站内信
+            Notices notices;
+            String content = String.format("你所投资的借款[ %s ]在 %s 已取消", borrow.getName(), DateHelper.dateToString(new Date()));
+            for (Long toUserId : userIdSet) {
+                notices = new Notices();
+                notices.setFromUserId(1L);
+                notices.setUserId(toUserId);
+                notices.setRead(false);
+                notices.setName("投资的借款失败");
+                notices.setContent(content);
+                notices.setType("system");
+                notices.setCreatedAt(nowDate);
+                notices.setUpdatedAt(nowDate);
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
+                mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
+                Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
+                mqConfig.setMsg(body);
+                try {
+                    log.info(String.format("borrowBizImpl cancelBorrow send mq %s", GSON.toJson(body)));
+                    mqHelper.convertAndSend(mqConfig);
+                } catch (Throwable e) {
+                    log.error("borrowBizImpl cancelBorrow send mq exception", e);
                 }
             }
-
-            //招标失败解除冻结资金
-            AssetChange assetChange = new AssetChange();
-            assetChange.setType(AssetChangeTypeEnum.unfreeze);  // 招标失败解除冻结资金
-            assetChange.setUserId(tender.getUserId());
-            assetChange.setMoney(tender.getValidMoney());
-            assetChange.setRemark(String.format("借款 [%s] 投标失败解除冻结资金。", borrow.getName()));
-            assetChange.setSourceId(tender.getId());
-            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-            assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
-            assetChangeProvider.commonAssetChange(assetChange);
         }
-
-        //  发送站内信
-        Notices notices;
-        String content = String.format("你所投资的借款[ %s ]在 %s 已取消", borrow.getName(), DateHelper.dateToString(new Date()));
-        for (Long toUserId : userIdSet) {
-            notices = new Notices();
-            notices.setFromUserId(1L);
-            notices.setUserId(toUserId);
-            notices.setRead(false);
-            notices.setName("投资的借款失败");
-            notices.setContent(content);
-            notices.setType("system");
-            notices.setCreatedAt(nowDate);
-            notices.setUpdatedAt(nowDate);
-            MqConfig mqConfig = new MqConfig();
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
-            mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
-            Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
-            mqConfig.setMsg(body);
-            try {
-                log.info(String.format("borrowBizImpl cancelBorrow send mq %s", GSON.toJson(body)));
-                mqHelper.convertAndSend(mqConfig);
-            } catch (Throwable e) {
-                log.error("borrowBizImpl cancelBorrow send mq exception", e);
-            }
-        }
-
-        // 债权转让标识取消
-        assertAndDoTransfer(borrow);
-
         //更新借款
         borrow.setStatus(5);
         borrow.setUpdatedAt(nowDate);

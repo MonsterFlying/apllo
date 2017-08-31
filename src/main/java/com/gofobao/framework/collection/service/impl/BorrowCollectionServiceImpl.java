@@ -243,7 +243,14 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         VoViewOrderDetailResp detailRes = VoBaseResp.ok("查询成功", VoViewOrderDetailResp.class);
         detailRes.setOrder(borrowCollection.getOrder() + 1);
         detailRes.setCollectionMoney(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100D));
-        detailRes.setLateDays(borrowRepayment.getStatus()== RepaymentContants.STATUS_YES?borrowRepayment.getLateDays():DateHelper.diffInDays(DateHelper.beginOfDate(new Date()), DateHelper.beginOfDate(borrowCollection.getCollectionAt()), false));
+
+        Date nowDate=DateHelper.endOfDate(new Date());
+        Date tempCollectionAt=borrowCollection.getCollectionAt();
+        detailRes.setLateDays(borrowRepayment.getStatus()== RepaymentContants.STATUS_YES  //当前已还款直接取逾期天数
+                 ?borrowRepayment.getLateDays()
+                 :(tempCollectionAt.getTime()>nowDate.getTime())   //应还时间大于当前时间(未逾期)
+                     ?DateHelper.diffInDays(tempCollectionAt,nowDate,false)
+                     :DateHelper.diffInDays(nowDate,tempCollectionAt,false));
         detailRes.setBorrowName(borrow.getName());
         Long principal = 0L;
         Long interest = 0L;
