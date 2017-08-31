@@ -344,7 +344,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             cashDetailLog.setThirdAccountId(userThirdAccount.getAccountId());
             cashDetailLog.setBankName(userThirdAccount.getBankName());
             cashDetailLog.setCardNo(userThirdAccount.getCardNo());
-            cashDetailLog.setCashType(bigCashState ? 1 : 0);
+            cashDetailLog.setCashType(bigCashState ? 1 : 1); // 现在提现都走了超网渠道, 所有类型都2820
             if (bigCashState) {
                 cashDetailLog.setCompanyBankNo(voCashReq.getBankAps()); // 联行卡号
             }
@@ -723,6 +723,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean doCancelCash(Long cashId) throws Exception {
         CashDetailLog cashDetailLog = cashDetailLogService.findById(cashId);
         if (ObjectUtils.isEmpty(cashDetailLog)) {
@@ -730,7 +731,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             return false;
         }
 
-        if (cashDetailLog.getState() != 2) {
+        if (cashDetailLog.getState() != 3) {
             log.error(String.format("大额提现调度: 提现状态已经改变 %s", GSON.toJson(cashDetailLog)));
             return true;
         }
