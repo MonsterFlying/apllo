@@ -725,19 +725,26 @@ CREATE TABLE gfb_aleve
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 ALTER TABLE gfb_aleve COMMENT = '交易明细全流水' ;
 
-CREATE TABLE gfb_financial_scheduler
-(
-  id INT PRIMARY KEY AUTO_INCREMENT,
-  name VARCHAR(255) DEFAULT '' COMMENT '调度名称',
-  data VARCHAR(1024) DEFAULT '' COMMENT '调度数据',
-  type VARCHAR(36) DEFAULT '' COMMENT '类型',
-  do_num INT DEFAULT 0 COMMENT '调度此处',
-  res_msg VARCHAR(1024) DEFAULT '' COMMENT '结果',
-  create_at DATETIME COMMENT '调度创建时间',
-  update_at DATETIME COMMENT '更新时间',
-  state INT DEFAULT 0 COMMENT '调度状态(0, 失败, 1.成功)'
+DROP TABLE IF EXISTS `gfb_third_error_remark`;
+CREATE TABLE `gfb_third_error_remark` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `state` int(11) DEFAULT '0' COMMENT '0未解决 1已解决',
+  `user_id` int(11) DEFAULT NULL COMMENT '冗余',
+  `type` int(11) DEFAULT NULL COMMENT '批次类型 ''1.投资人批次购买债权 2.即信批次放款 3.批次即信批次还款 4.批次担保人垫付 5.批次融资人还担保账户垫款 6.批次结束投资人债权 7.提前结清批次还款''',
+  `source_id` int(11) DEFAULT NULL,
+  `old_batch_no` varchar(255) DEFAULT NULL,
+  `to_user_id` int(11) DEFAULT NULL,
+  `third_req_str` text,
+  `third_resp_str` text,
+  `third_error_msg` text COMMENT '第三方异常信息',
+  `error_msg` text COMMENT '本地异常信息',
+  `remark` varchar(2048) DEFAULT NULL,
+  `is_del` int(11) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=873 DEFAULT CHARSET=utf8;
 
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 ALTER TABLE gfb_financial_scheduler COMMENT = '对账系统调度';
 
 ALTER TABLE gfb_eve ADD query_date VARCHAR(8) DEFAULT '' NULL COMMENT '查询时间';

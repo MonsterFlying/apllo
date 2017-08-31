@@ -1242,10 +1242,10 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
         Asset asset = assetService.findByUserIdLock(userId);
         Preconditions.checkNotNull(asset);
-        if ((asset.getUseMoney() != 0)
-                || (asset.getNoUseMoney() != 0)
-                || (asset.getPayment() != 0)
-                || (asset.getCollection() != 0)) {
+        if ((asset.getUseMoney().longValue() != 0)
+                || (asset.getNoUseMoney().longValue() != 0)
+                || (asset.getPayment().longValue() != 0)
+                || (asset.getCollection().longValue() != 0)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "不满足解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零"));

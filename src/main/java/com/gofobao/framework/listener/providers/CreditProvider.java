@@ -66,6 +66,10 @@ public class CreditProvider {
     private ThirdBatchLogService thirdBatchLogService;
     @Autowired
     private TransferBuyLogService transferBuyLogService;
+    @Autowired
+    private BorrowCollectionService borrowCollectionService;
+    @Autowired
+    private TransferService transferService;
     @Value("${gofobao.javaDomain}")
     String javaDomain;
 
@@ -83,16 +87,10 @@ public class CreditProvider {
         Preconditions.checkNotNull(userThirdAccount, "creditProvider endThirdCredit: 借款人未开户!");
         //构建结束债权集合
         List<CreditEnd> creditEndList = new ArrayList<>();
-        if (tag.equals(MqTagEnum.END_CREDIT_BY_NOT_TRANSFER.getValue())) {  // 结束债权by非转让标
+        if (tag.equals(MqTagEnum.END_CREDIT.getValue())) {  // 结束债权by非转让标
             buildNotTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
         } else if (tag.equals(MqTagEnum.END_CREDIT_BY_TRANSFER.getValue())) { // 结束债权by转让标
             buildTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
-        } else if (tag.equals(MqTagEnum.END_CREDIT_ALL.getValue())) { //结束所有
-            buildTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
-            buildNotTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
-        } else if (tag.equals(MqTagEnum.END_CREDIT_BY_ADVANCE.getValue())) {
-            //结束垫付 投资方债权
-            buildAdvanceCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
         } else {
             log.error("未找到对应类型!");
             return false;
@@ -142,6 +140,7 @@ public class CreditProvider {
 
     /**
      * 构建结束垫付债权集合
+     * todo 弃用
      *
      * @param creditEndList
      * @param borrowUserThirdAccountId
@@ -167,6 +166,26 @@ public class CreditProvider {
                     .eq("type", 2)
                     .in("tenderId", tenderIds.toArray())
                     .build();
+            List<Transfer> transferList = transferService.findList(transferSpecification);
+            Preconditions.checkState(!CollectionUtils.isEmpty(transferList), "结束垫付债权：债权转让记录为空!");
+            /* 获取已转出回款记录id */
+            Set<String> borrowCollectionIdStrs = transferList.stream().map(Transfer::getBorrowCollectionIds).collect(Collectors.toSet());
+            Set<String> borrowCollectionIds = new HashSet<>();
+            borrowCollectionIdStrs.stream().forEach(borrowCollectionIdStr -> {
+                borrowCollectionIds.addAll(Arrays.asList(borrowCollectionIdStr.split(",")));
+            });
+            /* 垫付转出回款记录集合 */
+            Specification<BorrowCollection> bcs = Specifications
+                    .<BorrowCollection>and()
+                    .in("id", borrowCollectionIds.toArray())
+                    .build();
+            List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
+            Preconditions.checkState(!CollectionUtils.isEmpty(borrowCollectionList), "垫付转出回款记录不存在!");
+
+            /*borrowCollectionList.stream().forEach(borrowCollection -> {
+                CreditEnd creditEnd
+            });*/
+
             /* 债权转让购买记录 */
             Specification<TransferBuyLog> tbls = Specifications
                     .<TransferBuyLog>and()
@@ -204,7 +223,7 @@ public class CreditProvider {
                     .<Tender>and()
                     .eq("borrowId", borrowId)
                     .eq("transferFlag", 2)
-                    .eq("type", 0)
+                    .eq("type", 0, 2)
                     .eq("status", 1)
                     .build();
             List<Tender> tenderList = tenderService.findList(ts); /* 成功投资记录 */
@@ -244,23 +263,12 @@ public class CreditProvider {
                     .<Tender>and()
                     .eq("borrowId", borrowId)
                     .eq("status", 1)
+                    .eq("thirdCreditEndFlag", 0)
                     .build();
             List<Tender> tenderList = tenderService.findList(ts);
             if (CollectionUtils.isEmpty(tenderList)) {
                 log.info("creditProvider buildNotTransferCreditEndList: 借款" + borrowId + " 未找到投递成功债权！");
             }
-
-            //筛选出已转让的投资记录
-            tenderList.stream().filter(p -> p.getTransferFlag() == 2).forEach(tender -> {
-                Specification<Borrow> bs = Specifications
-                        .<Borrow>and()
-                        .eq("tenderId", tender.getId())
-                        .build();
-                List<Borrow> borrowList = borrowService.findList(bs);
-                if (!CollectionUtils.isEmpty(borrowList)) {
-                    buildNotTransferCreditEndList(creditEndList, borrowUserThirdAccountId, productId, borrowList.get(0).getId());
-                }
-            });
 
             //排除已经在存管登记结束债权的投标记录
             tenderList.stream().filter(tender -> (BooleanHelper.isFalse(tender.getThirdCreditEndFlag()))).forEach(tender -> {
