@@ -126,7 +126,7 @@ public class JixinHelper {
         } else {*/
             try {
 /*                DictValue dictValue = jixinCache.get("titularBorrowUserId");*/
-                UserThirdAccount bailAccount = userThirdAccountService.findByUserId(45120l/*NumberHelper.toLong(dictValue.getValue03())*/);
+                UserThirdAccount bailAccount = userThirdAccountService.findByUserId(45162L/*NumberHelper.toLong(dictValue.getValue03())*/);
                 return bailAccount;
             } catch (Throwable e) {
                 e.printStackTrace();
