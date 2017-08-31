@@ -39,6 +39,20 @@ public interface LoanBiz {
     ResponseEntity<VoViewBuddingResListWrapRes> buddingList(VoLoanListReq voLoanListReq);
 
 
+
+
+    /**
+     * 招标中
+     * @param voLoanListReq
+     * @return
+     */
+    ResponseEntity<VoViewBuddingResListWrapRes> rechecking(VoLoanListReq voLoanListReq);
+
+
+
+
+
+
     /**
      * 还款方式
      * @param voDetailReq

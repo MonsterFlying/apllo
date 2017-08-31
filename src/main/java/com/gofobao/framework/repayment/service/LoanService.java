@@ -38,6 +38,14 @@ public interface LoanService {
 
 
     /**
+     * 待复审
+     * @param voLoanListReq
+     * @return
+     */
+    Map<String,Object>rechecking(VoLoanListReq voLoanListReq);
+
+
+    /**
      * 还款方式
      * @param voDetailReq
      * @return

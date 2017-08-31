@@ -206,6 +206,21 @@ public class LoanServiceImpl implements LoanService {
     }
 
 
+    @Override
+    public Map<String, Object> rechecking(VoLoanListReq voLoanListReq) {
+        String sqlStr = "SELECT b.* FROM gfb_borrow b where b.user_id=:userId AND b.status=:status AND b.money_yes/b.money=1";
+        Query query = entityManager.createNativeQuery(sqlStr, Borrow.class);
+        query.setParameter("userId", voLoanListReq.getUserId());
+        query.setParameter("status", BorrowContants.BIDDING);
+        query.setFirstResult(voLoanListReq.getPageIndex());
+        query.setMaxResults(voLoanListReq.getPageSize());
+        List<Borrow> borrows = query.getResultList();
+        Map<String, Object> resultMap = Maps.newHashMap();
+        resultMap.put("totalCount", 10);
+        resultMap.put("borrows", borrows);
+        return resultMap;
+    }
+
     /**
      * 拆分查询
      *
