@@ -626,7 +626,7 @@ public class BorrowBizImpl implements BorrowBiz {
         List<Tender> tenderList = tenderService.findList(borrowSpecification);
         if (!CollectionUtils.isEmpty(tenderList)) {
             log.info("当前标的没有被投资过, 打印当前标的信息:", GSON.toJson(borrow));
-           //判断标的是否是已经在存管注册过
+            //判断标的是否是已经在存管注册过
             long count = tenderList.stream().filter(tender -> BooleanHelper.isTrue(tender.getThirdTenderFlag())).count();
             if (count > 0) {
                 return ResponseEntity
@@ -1138,15 +1138,16 @@ public class BorrowBizImpl implements BorrowBiz {
      */
     private void touchMarketingByTender(Tender tender) {
         MarketingData marketingData = new MarketingData();
-        marketingData.setTransTime(new Date());
-        marketingData.setUserId(tender.getUserId());
-        marketingData.setSourceId(tender.getId());
+        marketingData.setTransTime(DateHelper.dateToString(new Date()));
+        marketingData.setUserId(tender.getUserId().toString());
+        marketingData.setSourceId(tender.getId().toString());
         marketingData.setMarketingType(MarketingTypeContants.TENDER);
         try {
-            Map<String, String> body = new HashMap<>();
-            BeanUtils.populate(marketingData, body);
+            Gson gson = new Gson();
+            String json = gson.toJson(marketingData);
+            Map<String, String> data = gson.fromJson(json, TypeTokenContants.MAP_ALL_STRING_TOKEN);
             MqConfig mqConfig = new MqConfig();
-            mqConfig.setMsg(body);
+            mqConfig.setMsg(data);
             mqConfig.setTag(MqTagEnum.MARKETING_TENDER);
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_MARKETING);
             mqHelper.convertAndSend(mqConfig);

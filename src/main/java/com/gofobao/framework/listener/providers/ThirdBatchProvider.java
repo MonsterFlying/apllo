@@ -251,11 +251,6 @@ public class ThirdBatchProvider {
         }
 
         Map<String, Object> acqMap = GSON.fromJson(acqRes, TypeTokenContants.MAP_TOKEN);
-        /**
-         * 结束债权类型
-         */
-            /* 结束在债权标签 */
-        String tag = StringHelper.toString(acqMap.get("tag"));
 
         //登记成功批次
         if (!CollectionUtils.isEmpty(successThirdCreditEndOrderIds)) {

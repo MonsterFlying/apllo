@@ -189,7 +189,9 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
         accountQueryByMobileReques.setMobile(voOpenAccountReq.getMobile());
         AccountQueryByMobileResponse accountQueryByMobileResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_QUERY_BY_MOBILE,
                 accountQueryByMobileReques, AccountQueryByMobileResponse.class);
-        if (!ObjectUtils.isEmpty(accountQueryByMobileResponse) && JixinResultContants.SUCCESS.equals(accountQueryByMobileResponse.getRetCode())) {
+        if (!ObjectUtils.isEmpty(accountQueryByMobileResponse)
+                 && JixinResultContants.SUCCESS.equals(accountQueryByMobileResponse.getRetCode())
+                 && !StringUtils.isEmpty(accountQueryByMobileResponse.getAccountId())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "手机已在存管平台开户, 无需开户！", VoOpenAccountResp.class));
@@ -206,7 +208,9 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
         accountIdQueryRequest.setIdNo(voOpenAccountReq.getIdNo());
         AccountIdQueryResponse accountIdQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_ID_QUERY,
                 accountIdQueryRequest, AccountIdQueryResponse.class);
-        if (!ObjectUtils.isEmpty(accountIdQueryResponse) && JixinResultContants.SUCCESS.equals(accountIdQueryResponse.getRetCode())) {
+        if (!ObjectUtils.isEmpty(accountIdQueryResponse)
+                && JixinResultContants.SUCCESS.equals(accountIdQueryResponse.getRetCode())
+                && !StringUtils.isEmpty(accountIdQueryResponse.getAccountId())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "身份证已在存管平台开户, 无需开户！", VoOpenAccountResp.class));
@@ -222,15 +226,16 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
      */
     private void touchMarketingByOpenAccount(UserThirdAccount userThirdAccount) {
         MarketingData marketingData = new MarketingData();
-        marketingData.setTransTime(new Date());
-        marketingData.setUserId(userThirdAccount.getUserId());
-        marketingData.setSourceId(userThirdAccount.getId());
+        marketingData.setTransTime(DateHelper.dateToString(new Date()));
+        marketingData.setUserId(userThirdAccount.getUserId().toString());
+        marketingData.setSourceId(userThirdAccount.getId().toString());
         marketingData.setMarketingType(MarketingTypeContants.OPEN_ACCOUNT);
+        Gson gson = new Gson();
         try {
-            Map<String, String> body = new HashMap<>();
-            BeanUtils.populate(marketingData, body);
+            String json = gson.toJson(marketingData);
+            Map<String, String> data = gson.fromJson(json, TypeTokenContants.MAP_ALL_STRING_TOKEN) ;
             MqConfig mqConfig = new MqConfig();
-            mqConfig.setMsg(body);
+            mqConfig.setMsg(data);
             mqConfig.setTag(MqTagEnum.MARKETING_OPEN_ACCOUNT);
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_MARKETING);
             mqHelper.convertAndSend(mqConfig);

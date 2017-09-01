@@ -62,7 +62,6 @@ public class JixinHelper {
     public static final String END_CREDIT_PREFIX = "GFBEC_";
 
 
-
     public static String getOrderId(String prefix) {
         return prefix + new Date().getTime() + RandomHelper.generateNumberCode(9);
     }
@@ -104,6 +103,24 @@ public class JixinHelper {
         return null;
     }
 
+    /**
+     * 获取名义账户
+     *
+     * @param borrowId
+     * @return
+     */
+    public UserThirdAccount getTakeUserAccount() {
+
+        try {
+            DictValue dictValue = jixinCache.get("takeUserId");
+            UserThirdAccount bailAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
+            return bailAccount;
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 
     /**
      * 获取名义账户

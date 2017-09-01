@@ -1,7 +1,5 @@
 package com.gofobao.framework.asset.biz;
 
-import com.gofobao.framework.asset.entity.Asset;
-
 /**
  * 资金同步
  */
@@ -12,5 +10,5 @@ public interface AssetSynBiz {
      * @param userId
      * @return
      */
-    Asset doAssetSyn(Long userId) ;
+    boolean doAssetSyn(Long userId) throws Exception;
 }

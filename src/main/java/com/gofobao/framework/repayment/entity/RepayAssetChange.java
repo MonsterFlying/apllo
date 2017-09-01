@@ -1,5 +1,6 @@
 package com.gofobao.framework.repayment.entity;
 
+import com.gofobao.framework.collection.entity.BorrowCollection;
 import lombok.Data;
 
 @Data
@@ -29,4 +30,9 @@ public class RepayAssetChange {
      * 平台收到逾期费
      */
     private long platformOverdueFee ;
+
+    /**
+     * 回款记录
+     */
+    private BorrowCollection borrowCollection;
 }

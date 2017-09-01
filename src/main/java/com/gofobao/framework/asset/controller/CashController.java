@@ -27,10 +27,8 @@ import javax.validation.Valid;
 @RestController
 @Api(value = "提现")
 public class CashController {
-
     @Autowired
     private CashDetailLogBiz cashDetailLogBiz;
-
 
     @ApiOperation("提现前期请求")
     @GetMapping("/asset/cash/show")

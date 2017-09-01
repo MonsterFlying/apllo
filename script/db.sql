@@ -747,5 +747,7 @@ CREATE TABLE `gfb_third_error_remark` (
 
 ALTER TABLE gfb_financial_scheduler COMMENT = '对账系统调度';
 
+INSERT INTO `gfb0810`.`gfb_dict_value` (`ID`, `ITEM_ID`, `VALUE01`, `VALUE02`, `VALUE03`, `VALUE04`, `VALUE05`, `VALUE06`, `CREATE_TIME`, `UPDATE_TIME`, `CREATE_ID`, `UPDATE_ID`, `NAME`, `DEL`) VALUES ('90', '7', 'takeUserId', '实际收款人', '45184', '', '', '', '2017-09-01 14:37:17', '2017-09-01 14:37:20', '0', '0', '', '0');
+
 ALTER TABLE gfb_eve ADD query_date VARCHAR(8) DEFAULT '' NULL COMMENT '查询时间';
 ALTER TABLE gfb_aleve ADD query_date VARCHAR(8) DEFAULT '' NULL COMMENT '查询时间';

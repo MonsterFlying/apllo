@@ -165,51 +165,6 @@ public class AplloApplicationTests {
         migrateProtocolBiz.getProtocolMigrateFile();
     }
 
-    /**
-     * 发送注册红包
-     */
-    @Test
-    public void testRegisterPublicRedpack() {
-        MarketingData marketingData = new MarketingData();
-        marketingData.setUserId(44799L);
-        marketingData.setMarketingType(MarketingTypeContants.REGISTER);
-        marketingData.setSourceId(44799L);
-        marketingData.setTransTime(new Date());
-        try {
-            marketingProcessBiz.process(new Gson().toJson(marketingData));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Test
-    public void testLoginPublicRedpack() {
-        MarketingData marketingData = new MarketingData();
-        marketingData.setUserId(44799L);
-        marketingData.setMarketingType(MarketingTypeContants.LOGIN);
-        marketingData.setSourceId(44799L);
-        marketingData.setTransTime(new Date());
-        try {
-            marketingProcessBiz.process(new Gson().toJson(marketingData));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Test
-    public void testTenderPublicRedpack() {
-        MarketingData marketingData = new MarketingData();
-        marketingData.setUserId(44884L);
-        marketingData.setMarketingType(MarketingTypeContants.TENDER);
-        marketingData.setSourceId(261540L);
-        marketingData.setTransTime(new Date());
-        try {
-            marketingProcessBiz.process(new Gson().toJson(marketingData));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
 
     @Test
     public void testDownloadFile() throws Exception {
@@ -696,9 +651,9 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("193522");
+        batchDetailsQueryReq.setBatchNo("142108");
 
-        batchDetailsQueryReq.setBatchTxDate("20170831");
+        batchDetailsQueryReq.setBatchTxDate("20170901");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -735,7 +690,7 @@ public class AplloApplicationTests {
     public void balanceQuery() {
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
         balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId("6212462190000057492");
+        balanceQueryRequest.setAccountId("6212462190000059092");
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         System.out.println(balanceQueryResponse);
     }
@@ -773,8 +728,8 @@ public class AplloApplicationTests {
     public void batchQuery() {
         BatchQueryReq req = new BatchQueryReq();
         req.setChannel(ChannelContant.HTML);
-        req.setBatchNo("173607");
-        req.setBatchTxDate("20170718");
+        req.setBatchNo("142108");
+        req.setBatchTxDate("20170901");
         BatchQueryResp resp = jixinManager.send(JixinTxCodeEnum.BATCH_QUERY, req, BatchQueryResp.class);
         System.out.println(resp);
 
@@ -848,6 +803,22 @@ public class AplloApplicationTests {
 
     @Test
     public void test() {
+
+   /*     //推送队列结束债权
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
+        mqConfig.setTag(MqTagEnum.END_CREDIT);
+        mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 1));
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(170106), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            log.info(String.format("thirdBatchProvider creditInvestDeal send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("thirdBatchProvider creditInvestDeal send mq exception", e);
+        }*/
+
         //dealThirdBatchScheduler.process();
         //dataMigration();
 
@@ -881,7 +852,7 @@ public class AplloApplicationTests {
         }*/
 
         //批次处理
-        batchDeal();
+        //batchDeal();
         //unfrozee();
         //查询存管账户资金信息
         //balanceQuery();
@@ -909,9 +880,9 @@ public class AplloApplicationTests {
         //复审
         // doAgainVerify();
         //批次状态查询
-        // batchQuery();
+         batchQuery();
         //批次详情查询
-        //batchDetailsQuery();
+        batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调
