@@ -2473,7 +2473,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         // 垫付金额 = sum(垫付本金 + 垫付利息)
         double txAmount = creditInvestList.stream().mapToDouble(w -> NumberHelper.toDouble(w.getTxAmount())).sum();
         try {
-            BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
+/*            BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
             balanceFreezeReq.setAccountId(titularBorrowAccount.getAccountId());
             balanceFreezeReq.setTxAmount(StringHelper.formatDouble(txAmount, false));
             balanceFreezeReq.setOrderId(freezeOrderId);
@@ -2481,7 +2481,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             BalanceFreezeResp balanceFreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BalanceFreezeResp.class);
             if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceFreezeResp.getRetCode()))) {
                 throw new Exception("即信批次名义借款人垫付冻结资金失败：" + balanceFreezeResp.getRetMsg());
-            }
+            }*/
 
             // 垫付还款冻结
             long frozenMoney = new Double(txAmount * 100).longValue();

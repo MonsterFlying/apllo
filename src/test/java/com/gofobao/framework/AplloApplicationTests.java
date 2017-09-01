@@ -742,7 +742,7 @@ public class AplloApplicationTests {
 
     public void accountDetailsQuery() {
         AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
-        request.setAccountId("6212462190000058912");
+        request.setAccountId("6212462190000059092");
         request.setStartDate("20161002");
         request.setEndDate("20171003");
         request.setChannel(ChannelContant.HTML);
@@ -900,9 +900,9 @@ public class AplloApplicationTests {
         //batchDeal();
         //unfrozee();
         //查询存管账户资金信息
-        //balanceQuery();
+        balanceQuery();
         //查询资金流水
-        //accountDetailsQuery();
+        accountDetailsQuery();
         //testCredit();
         //根据手机号查询存管账户
         //findAccountByMobile();
@@ -925,9 +925,9 @@ public class AplloApplicationTests {
         //复审
         // doAgainVerify();
         //批次状态查询
-         batchQuery();
+         //batchQuery();
         //批次详情查询
-        batchDetailsQuery();
+        //batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调
