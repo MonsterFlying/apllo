@@ -1250,25 +1250,6 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "不满足解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零"));
         }
-        // 查询即信账户余额
-        BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
-        balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
-        BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
-        if ((ObjectUtils.isEmpty(balanceQueryResponse)) || !balanceQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
-            String msg = ObjectUtils.isEmpty(balanceQueryResponse) ? "当前网络异常, 请稍后尝试!" : balanceQueryResponse.getRetMsg();
-            log.error(String.format("资金同步: %s", msg));
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, msg));
-        }
-
-        double currBal = NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100.0;
-        if (currBal != 0) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "不满足解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零"));
-        }
         CardBindItem cardInfoByThird = null;
         try {
             cardInfoByThird = findCardInfoByThird(userThirdAccount.getAccountId());
@@ -1293,8 +1274,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
                 creditDetailsQueryRequest,
                 CreditDetailsQueryResponse.class);
 
-        if (ObjectUtils.isEmpty(creditDetailsQueryRequest) || !JixinResultContants.SUCCESS.equalsIgnoreCase(creditDetailsQueryResponse.getRetCode())) {
-            String msg = ObjectUtils.isEmpty(balanceQueryResponse) ? "当前网络异常, 请稍后尝试!" : balanceQueryResponse.getRetMsg();
+        if (ObjectUtils.isEmpty(creditDetailsQueryResponse) || !JixinResultContants.SUCCESS.equalsIgnoreCase(creditDetailsQueryResponse.getRetCode())) {
+            String msg = ObjectUtils.isEmpty(creditDetailsQueryResponse) ? "当前网络异常, 请稍后尝试!" : creditDetailsQueryResponse.getRetMsg();
             log.error(String.format("债权明细查询: %s", msg));
             return ResponseEntity
                     .badRequest()
@@ -1310,6 +1291,26 @@ public class UserThirdBizImpl implements UserThirdBiz {
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "不满足解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零"));
             }
+        }
+
+        // 查询即信账户余额
+        BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
+        balanceQueryRequest.setChannel(ChannelContant.HTML);
+        balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
+        BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
+        if ((ObjectUtils.isEmpty(balanceQueryResponse)) || !balanceQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
+            String msg = ObjectUtils.isEmpty(balanceQueryResponse) ? "当前网络异常, 请稍后尝试!" : balanceQueryResponse.getRetMsg();
+            log.error(String.format("资金同步: %s", msg));
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, msg));
+        }
+
+        double currBal = NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100.0;
+        if (currBal != 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "不满足解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零"));
         }
 
         CardUnbindRequest cardUnbindRequest = new CardUnbindRequest();

@@ -140,7 +140,7 @@ public class BorrowRepayScanduler {
                     repaymentBiz.newRepay(voRepayReq);
                     log.info(String.format("调度还款成功：打印还款期数信息:%s", new Gson().toJson(p)));
                 } catch (Exception e) {
-                    log.error("调度还款失败原因：%s" , e);
+                    log.error("调度还款失败原因" , e);
                     log.error(String.format("调度还款失败： 打印应款期数信息:%s", new Gson().toJson(p)));
                 }
             });

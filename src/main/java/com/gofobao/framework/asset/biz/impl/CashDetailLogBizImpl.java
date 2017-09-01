@@ -325,10 +325,10 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         if(requestSource==0){
             withDrawRequest.setRetUrl(String.format("%s/%s", pcDomain, "account/cash"));
         }else{
-            withDrawRequest.setRetUrl(String.format("%s/%s/%s", javaDomain, "/pub/cash/show/", withDrawRequest.getTxDate() + withDrawRequest.getTxTime() + withDrawRequest.getSeqNo()));
+            withDrawRequest.setRetUrl(String.format("%s/%s/%s", javaDomain, "pub/cash/show/", withDrawRequest.getTxDate() + withDrawRequest.getTxTime() + withDrawRequest.getSeqNo()));
         }
 
-        withDrawRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "/pub/asset/cash/callback"));
+        withDrawRequest.setNotifyUrl(String.format("%s/%s", javaDomain, "pub/asset/cash/callback"));
         withDrawRequest.setAcqRes(String.valueOf(userId));
         withDrawRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
         // 生成提现表单
