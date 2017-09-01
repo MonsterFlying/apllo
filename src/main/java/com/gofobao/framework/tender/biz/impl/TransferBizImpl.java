@@ -510,7 +510,13 @@ public class TransferBizImpl implements TransferBiz {
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);/* 债权转让原投资回款记录 */
         long transferInterest = borrowCollectionList.stream().mapToLong(BorrowCollection::getInterest).sum();/* 债权转让总利息 */
         Date repayAt = transfer.getRepayAt();/* 原借款下一期还款日期 */
-        Date startAt = DateHelper.subMonths(repayAt, 1);/* 计息开始时间 */
+        Date startAt = null;/* 计息开始时间 */
+        if (parentBorrow.getRepayFashion() == 1){
+            startAt = DateHelper.subDays(repayAt, parentBorrow.getTimeLimit());
+        }else if (parentBorrow.getRepayFashion() == 0 || parentBorrow.getRepayFashion() == 4){
+            startAt = DateHelper.subMonths(repayAt, 1);
+        }
+
         long sumCollectionInterest = 0;//总回款利息
         for (int j = 0; j < childTenderList.size(); j++) {
             Tender childTender = childTenderList.get(j);/* 购买债权转让子投资记录 */
