@@ -44,4 +44,8 @@ public class VoUserAssetInfoResp extends VoBaseResp{
 
     @ApiModelProperty("净值额度(展示)")
     private String hideNetWorthQuota;
+
+    @ApiModelProperty("净资产")
+    private String netAsset;
+
 }
