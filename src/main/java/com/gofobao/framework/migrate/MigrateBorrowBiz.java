@@ -165,9 +165,19 @@ public class MigrateBorrowBiz {
                         text.append(FormatHelper.appendByPre(yield, 8));  // 逾期年化收益
                         text.append(FormatHelper.appendByTail("", 19));  // 担保人电子账户
                         text.append(FormatHelper.appendByTail("6212462190000000070", 19));  // 名义借款人电子账户
-                        text.append(FormatHelper.appendByTail("1", 1)); // 多种借款人模式标识
+                        if(borrow.getType() != 1){
+                            text.append(FormatHelper.appendByTail("1", 1)); // 多种借款人模式标识
+                        }else{
+                            text.append(FormatHelper.appendByTail("0", 1)); // 多种借款人模式标识
+                        }
+
                         text.append(FormatHelper.appendByTail("6212462190000000070", 19));  // 收款人
-                        text.append(FormatHelper.appendByTail("1", 1));   //  多种借款人模式下使用
+                        if(borrow.getType() != 1){
+                            text.append(FormatHelper.appendByTail("1", 1));   //  多种借款人模式下使用
+                        }else{
+                            text.append(FormatHelper.appendByTail("0", 1));   //  多种借款人模式下使用
+                        }
+
                         text.append(FormatHelper.appendByTail("", 100)); // 保留域
                         text.append(FormatHelper.appendByTail(borrowId, 100)); // 第三方平台保留使用,原样返回
                         borrowWriter.write(text.toString());

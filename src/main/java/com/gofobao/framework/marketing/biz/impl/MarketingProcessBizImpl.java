@@ -152,7 +152,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
     private void publishRedPack(Marketing marketing, MarketingData marketingData) throws Exception {
         Integer parentState = marketing.getParentState();
         // 判断派发为那个用户对象
-        Users user = userService.findById(marketingData.getUserId());
+        Users user = userService.findById(Long.parseLong(marketingData.getUserId()));
         Users opUser = null;
         if (1 == parentState) {
             if (user.getParentId() == 0) {
@@ -178,7 +178,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         marketingRedpackRecord.setPublishTime(nowDate);
         marketingRedpackRecord.setCancelTime(DateHelper.addDays(nowDate, 60));
         marketingRedpackRecord.setRedpackRuleId(rule.getId());
-        marketingRedpackRecord.setSourceId(marketingData.getSourceId());
+        marketingRedpackRecord.setSourceId(Long.parseLong(marketingData.getSourceId()));
         long money = 0;
         StringBuffer remark = new StringBuffer();
         switch (marketingData.getMarketingType()) {
@@ -206,7 +206,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                 break;
             case MarketingTypeContants.TENDER:
                 remark.append("投标奖励: ");
-                Tender tender = tenderService.findById(marketingData.getSourceId());
+                Tender tender = tenderService.findById(Long.parseLong(marketingData.getSourceId()));
                 Long validMoney = tender.getValidMoney();
                 Double tempMoney;
                 Double tenderMoneyMin;
@@ -364,7 +364,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
 
         Users user = null;
         try {
-            user = userService.findUserByUserId(marketingData.getUserId());
+            user = userService.findUserByUserId(Long.parseLong(marketingData.getUserId()));
             if (user.getIsLock()) {
                 throw new Exception("MarketingProcessBizImpl.filterDataByCondition: user lock");
             }
@@ -397,7 +397,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                         continue;
                     }
 
-                    Tender tender = tenderService.findById(marketingData.getSourceId());
+                    Tender tender = tenderService.findById(Long.parseLong(marketingData.getSourceId()));
                     Preconditions.checkNotNull(tender, "MarketingProcessBizImpl.filterDataByCondition tender is null");
                     if (tender.getState() != 1) {
                         iterator.remove();
@@ -417,7 +417,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                         continue;
                     }
 
-                    RechargeDetailLog rechargeData = rechargeDetailLogService.findById(marketingData.getSourceId());
+                    RechargeDetailLog rechargeData = rechargeDetailLogService.findById(Long.parseLong(marketingData.getSourceId()));
                     Preconditions.checkNotNull(rechargeData, "MarketingProcessBizImpl.filterDataByCondition rechargeData is null");
                     if (rechargeData.getState() != 1) {
                         iterator.remove();
@@ -486,7 +486,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
 
         Users user = null;
         try {
-            user = userService.findUserByUserId(marketingData.getUserId());
+            user = userService.findUserByUserId(Long.parseLong(marketingData.getUserId()));
             if (user.getIsLock()) {
                 throw new Exception("MarketingProcessBizImpl.filterDataByDimension: user lock");
             }
@@ -578,7 +578,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             return true;
         }
 
-        Users user = userService.findById(marketingData.getSourceId());
+        Users user = userService.findById(Long.parseLong(marketingData.getSourceId()));
         Preconditions.checkNotNull(user, "MarketingProcessBizImpl.verifyOpenAccountSource: user not found");
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(user.getId());
         Preconditions.checkNotNull(userThirdAccount, "MarketingProcessBizImpl.verifyOpenAccountSource: userThirdAccount not found");
@@ -611,7 +611,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             return true;
         }
 
-        Users user = userService.findById(marketingData.getSourceId()) ;
+        Users user = userService.findById(Long.parseLong(marketingData.getSourceId()));
         Preconditions.checkNotNull(user, "MarketingProcessBizImpl.verifyRegisterSource: user not found");
         Integer source = user.getSource();
         String[] platformArr = platform.split(",");
@@ -636,7 +636,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             return true;
         }
 
-        RechargeDetailLog rachargeDetailLog = rechargeDetailLogService.findById(marketingData.getSourceId());
+        RechargeDetailLog rachargeDetailLog = rechargeDetailLogService.findById(Long.parseLong(marketingData.getSourceId()));
         Preconditions.checkNotNull(rachargeDetailLog, "MarketingProcessBizImpl.verifyRechargeSource: tender not found");
         if (rachargeDetailLog.getState() != 1) {
             log.info("充值检测: 充值状态失败");
@@ -665,7 +665,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         if (StringUtils.isEmpty(borrowType)) {
             return true;
         }
-        Tender tender = tenderService.findById(marketingData.getSourceId());
+        Tender tender = tenderService.findById(Long.parseLong(marketingData.getSourceId()));
         Preconditions.checkNotNull(tender, "MarketingProcessBizImpl.verifyBorrowType: tender not found");
         Borrow borrow = borrowService.findById(tender.getBorrowId());
         Preconditions.checkNotNull(borrow, "MarketingProcessBizImpl.verifyBorrowType: borrow not found");
@@ -699,7 +699,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         }
 
         String[] platformArr = platform.split(",");
-        Long tenderId = marketingData.getSourceId();
+        Long tenderId = Long.parseLong(marketingData.getSourceId());
         Tender tender = tenderService.findById(tenderId);
         if (tender.getIsAuto()) { // 自动投标
             return true;
@@ -823,12 +823,12 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         Iterator<Marketing> iterator = marketings.iterator();
         while (iterator.hasNext()) {
             Marketing marketing = iterator.next();
-            if (DateHelper.diffInDays(marketing.getEndTime(), marketingData.getTransTime(), false) <= 0) {
+            if (DateHelper.diffInDays(marketing.getEndTime(), DateHelper.stringToDate(marketingData.getTransTime()), false) <= 0) {
                 iterator.remove();
                 continue;
             }
 
-            if (DateHelper.diffInDays(marketingData.getTransTime(), marketing.getBeginTime(), false) <= 0) {
+            if (DateHelper.diffInDays(DateHelper.stringToDate(marketingData.getTransTime()), marketing.getBeginTime(), false) <= 0) {
                 iterator.remove();
                 continue;
             }
