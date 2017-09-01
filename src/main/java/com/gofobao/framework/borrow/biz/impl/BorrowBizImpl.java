@@ -165,23 +165,6 @@ public class BorrowBizImpl implements BorrowBiz {
 
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
-
-    LoadingCache<String, DictValue> jixinCache = CacheBuilder
-            .newBuilder()
-            .expireAfterWrite(60, TimeUnit.MINUTES)
-            .maximumSize(1024)
-            .build(new CacheLoader<String, DictValue>() {
-                @Override
-                public DictValue load(String bankName) throws Exception {
-                    DictItem dictItem = dictItemService.findTopByAliasCodeAndDel("JIXIN_PARAM", 0);
-                    if (ObjectUtils.isEmpty(dictItem)) {
-                        return null;
-                    }
-
-                    return dictValueService.findTopByItemIdAndValue01(dictItem.getId(), bankName);
-                }
-            });
-
     @Value("${gofobao.imageDomain}")
     private String imageDomain;
 
@@ -913,31 +896,22 @@ public class BorrowBizImpl implements BorrowBiz {
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
         // 这里涉及用户投标回款计划生成和平台资金的变动
         generateBorrowCollectionAndAssetChange(borrow, borrowRepaymentList, tenderList, nowDate, groupSeqNo);
-
         // 标的自身设置奖励信息:进行存管红包发放
         awardUserByBorrowTender(borrow, tenderList);
-
         // 发送投资成功站内信
         sendNoticsByTender(borrow, tenderList);
-
         // 用户投标信息和每日统计
         userTenderStatistic(borrow, tenderList, nowDate);
-
         //用戶投資送紅包
         userTenderRedPackage(tenderList);
-
         // 借款人资金变动
         processBorrowAssetChange(borrow, tenderList, nowDate, groupSeqNo);
-
         // 满标操作
         finishBorrow(borrow);
-
         //更新网站统计
         updateStatisticByBorrowReview(borrow);
-
         //借款成功发送通知短信
         smsNoticeByBorrowReview(borrow);
-
         //发送借款协议
         sendBorrowProtocol(borrow);
         return true;

@@ -849,6 +849,13 @@ public class AplloApplicationTests {
     @Test
     public void test() {
 
+        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
+                NumberHelper.toDouble(StringHelper.toString(10000)),
+                NumberHelper.toDouble(StringHelper.toString(1000)), 3, new Date());
+        Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(0);
+        List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
+        Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
+
         //dealThirdBatchScheduler.process();
         //dataMigration();
 
@@ -882,8 +889,7 @@ public class AplloApplicationTests {
         }*/
 
         //批次处理
-        batchDeal();
-
+        //batchDeal();
         //unfrozee();
         //查询存管账户资金信息
         //balanceQuery();
