@@ -588,6 +588,20 @@ public class RepaymentBizImpl implements RepaymentBiz {
         double sumTxAmount = repays.stream().mapToDouble(repay -> NumberHelper.toDouble(repay.getTxAmount())).sum();
         for (Repay repay : repays) {
             double partPenalty = MathHelper.myRound(NumberHelper.toDouble(repay.getTxAmount()), 2) / sumTxAmount * penalty;/*分摊违约金*/
+
+            UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(repay.getForAccountId());
+            BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
+            batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
+            batchAssetChangeItem.setState(0);
+            batchAssetChangeItem.setType(AssetChangeTypeEnum.receivedPaymentsPenalty.getLocalType());  //  收到提前结清的违约金
+            batchAssetChangeItem.setUserId(userThirdAccount.getUserId());
+            batchAssetChangeItem.setMoney(penalty);
+            batchAssetChangeItem.setRemark(String.format("收到[%s]提前结清的违约金", borrow.getName()));
+            batchAssetChangeItem.setCreatedAt(nowDate);
+            batchAssetChangeItem.setUpdatedAt(nowDate);
+            batchAssetChangeItem.setSeqNo(seqNo);
+            batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+            batchAssetChangeItemService.save(batchAssetChangeItem);
             //给每期回款分摊违约金
             repay.setTxFeeOut(StringHelper.formatDouble(NumberHelper.toDouble(repay.getTxFeeOut()) + partPenalty / 100.0, false));
         }
