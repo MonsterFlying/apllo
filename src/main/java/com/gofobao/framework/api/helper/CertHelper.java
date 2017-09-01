@@ -164,7 +164,6 @@ public class CertHelper {
      */
     public String doSign(String unSign) {
         checkNotNull(unSign, "待加密字符串为空");
-        log.info(String.format("待签名字符串: %s", unSign));
         String sign = null;
         try {
             byte[] dataBytes = unSign.getBytes(ENCODING);
@@ -173,7 +172,6 @@ public class CertHelper {
             signature.update(dataBytes);
             byte[] signData = signature.sign();
             sign = Base64Utils.encodeToString(signData);
-            log.info(String.format("以签名字符串: %s", sign));
         } catch (Throwable e) {
             log.error("即信加密异常", e);
             return null;
