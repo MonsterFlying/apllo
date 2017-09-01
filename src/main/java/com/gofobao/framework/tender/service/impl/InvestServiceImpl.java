@@ -164,7 +164,7 @@ public class InvestServiceImpl implements InvestService {
             VoViewBiddingRes voViewBiddingRes = new VoViewBiddingRes();
             Borrow borrow = borrowMap.get(p.getBorrowId());
             voViewBiddingRes.setTenderId(p.getId());
-            Double aDouble = borrow.getValidDay().doubleValue() / borrow.getMoney().doubleValue();
+            Double aDouble = borrow.getMoneyYes().doubleValue() / borrow.getMoney().doubleValue();
             voViewBiddingRes.setSpend(new Double(StringHelper.formatDouble(aDouble, false)));
             voViewBiddingRes.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
             Integer timeLimit = borrow.getTimeLimit();
@@ -244,6 +244,7 @@ public class InvestServiceImpl implements InvestService {
             voViewSettleRes.setPrincipal(StringHelper.formatMon(principal / 100D));
             voViewSettleRes.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
             voViewSettleRes.setCollectionMoneyYes(StringHelper.formatMon(collectionMoneyYes / 100D));
+            voViewSettleRes.setCloseAt(DateHelper.dateToString(p.getUpdatedAt(),DateHelper.DATE_FORMAT_YMD));
             voViewSettleRes.setTenderId(p.getId());
             voViewSettleRes.setRemark("正常结清");
             voViewSettleResList.add(voViewSettleRes);

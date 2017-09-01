@@ -440,22 +440,23 @@ public class BorrowServiceImpl implements BorrowService {
         //查询投标信息
         List<Tender> borrowTenderList = new ArrayList<>();
         if (!StringUtils.isEmpty(userId) || userId > 0) {  //当前不是访客
-            Specification specification=null;
+            Specification<Tender> specification = null;
             if (!borrowUserId.equals(userId)) {  //当前用户是否 发标用户
-                if(borrow.getUserId().intValue()==userId.intValue()){
+                if (borrow.getUserId().intValue() == userId.intValue()) {
                     //发标用户 可以查看所有的的投资信息
                     specification = Specifications.<Tender>and()
                             .eq("borrowId", borrowId)
                             .build();
-                }else {
+                    borrowTenderList = tenderRepository.findAll(specification);
+                } else {
                     //不是访客 查询当前用户是否是投资用户
                     specification = Specifications.<Tender>and()
                             .eq("userId", userId)
                             .eq("borrowId", borrowId)
                             .build();
+                    borrowTenderList = tenderRepository.findAll(specification);
                 }
             }
-            borrowTenderList = tenderRepository.findAll(specification);
         }
         List<Map<String, Object>> tenderMapList = Lists.newArrayList();
         if (!CollectionUtils.isEmpty(borrowTenderList)) {
@@ -467,7 +468,6 @@ public class BorrowServiceImpl implements BorrowService {
             List<Long> tenderUserList = borrowTenderList.stream().map(m -> m.getUserId()).collect(Collectors.toList());
             List<Users> usersList = usersRepository.findByIdIn(tenderUserList);
             Map<Long, Users> userMap = usersList.stream().collect(Collectors.toMap(Users::getId, Function.identity()));
-
             for (Map<String, Object> tempTenderMap : tenderMapList) {
                 Long tempUserId = new Double(tempTenderMap.get("userId").toString()).longValue();
                 Users usersTemp = userMap.get(tempUserId);
@@ -478,8 +478,9 @@ public class BorrowServiceImpl implements BorrowService {
                 calculatorMap.put("eachRepay", StringHelper.formatMon(Double.parseDouble(calculatorMap.get("eachRepay").toString()) / 100D));
                 calculatorMap.put("repayTotal", StringHelper.formatMon(Double.parseDouble(calculatorMap.get("repayTotal").toString()) / 100D));
                 calculatorMap.put("repayDetailList", calculatorMap.get("repayDetailList"));
-
                 tempTenderMap.put("calculatorMap", calculatorMap);
+                tempTenderMap.put("validMoney", StringHelper.formatMon(Double.valueOf(tempTenderMap.get("validMoney").toString()) / 100D));
+
             }
         } else {
             calculatorMap.put("earnings", StringHelper.formatMon(Double.parseDouble(calculatorMap.get("earnings").toString()) / 100D));
