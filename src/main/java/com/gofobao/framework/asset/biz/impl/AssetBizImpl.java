@@ -188,9 +188,8 @@ public class AssetBizImpl implements AssetBiz {
         }
 
         Long useMoney = asset.getUseMoney();
-        Long waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
         Long payment = asset.getPayment();
-        long netWorthQuota = new Double((useMoney + waitCollectionPrincipal) * 0.8 - payment).longValue();//计算净值额度
+        long netWorthQuota = new Double((asset.getCollection()+asset.getNoUseMoney()+asset.getUseMoney())-asset.getPayment()).longValue();//计算净值额度
 
         VoUserAssetInfoResp voUserAssetInfoResp = VoBaseResp.ok("成功", VoUserAssetInfoResp.class);
         voUserAssetInfoResp.setHideUserMoney(StringHelper.formatDouble(useMoney / 100D, true));
