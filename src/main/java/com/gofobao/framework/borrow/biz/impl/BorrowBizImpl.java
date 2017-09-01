@@ -395,7 +395,8 @@ public class BorrowBizImpl implements BorrowBiz {
     public Map<String, Object> contract(Long borrowId, Long userId) {
         try {
             return borrowService.contract(borrowId, userId);
-        } catch (Throwable e) {
+        } catch (Exception e) {
+            e.printStackTrace();
             log.info("BorrowBizImpl contract error", e);
             return null;
         }

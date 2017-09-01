@@ -88,7 +88,7 @@ public class BorrowController {
 
     @ApiOperation(value = "标合同")
     @GetMapping(value = "pub/borrow/pub/borrowProtocol/{borrowId}")
-    public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId, HttpServletRequest request) {
+    public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId, HttpServletRequest request)throws Exception {
         Long userId = 0L;
         String authToken = request.getHeader(this.tokenHeader);
         if (!StringUtils.isEmpty(authToken) && (authToken.contains(prefix))) {
@@ -103,9 +103,9 @@ public class BorrowController {
         Map<String, Object> paramMaps = borrowBiz.contract(borrowId, userId);
         try {
             content = thymeleafHelper.build("borrowProtocol", paramMaps);
-        } catch (Throwable e) {
-            log.error("BorrowController->takeRatesDesc fail", e);
-            content = thymeleafHelper.build("load_error", null);
+        } catch (Exception e) {
+            e.printStackTrace();
+            //content = thymeleafHelper.build("load_error", null);
         }
         return ResponseEntity.ok(content);
     }
