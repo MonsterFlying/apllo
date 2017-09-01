@@ -400,7 +400,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         /* 还款请求集合 */
         List<VoBuildThirdRepayReq> voBuildThirdRepayReqs = new ArrayList<>();
         //构建还款请求集合
-        ImmutableSet<Long> resultSet = buildRepayReqList(voBuildThirdRepayReqs, borrow, borrowRepaymentList);
+        ImmutableSet<Long> resultSet = buildRepayReqList(voBuildThirdRepayReqs, borrow);
         Iterator<Long> iterator = resultSet.iterator();
         long penalty = iterator.next();/* 违约金 */
         long repayMoney = iterator.next();/* 提前结清需还总金额 */
@@ -467,7 +467,13 @@ public class RepaymentBizImpl implements RepaymentBiz {
      *
      * @param voBuildThirdRepayReqs 还款请求
      */
-    private ImmutableSet<Long> buildRepayReqList(List<VoBuildThirdRepayReq> voBuildThirdRepayReqs, Borrow borrow, List<BorrowRepayment> borrowRepaymentList) {
+    private ImmutableSet<Long> buildRepayReqList(List<VoBuildThirdRepayReq> voBuildThirdRepayReqs, Borrow borrow) {
+                /* 有效未还的还款记录 */
+        Specification<BorrowRepayment> brs = Specifications
+                .<BorrowRepayment>and()
+                .eq("borrowId", borrow.getId())
+                .build();
+        List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
         long repaymentTotal = 0;/* 还款总金额 */
         long penalty = 0;/* 违约金 */
         long repayMoney = 0;/* 还款总金额+违约金 */
@@ -481,14 +487,14 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if (borrowRepayment.getOrder() == 0) {
                 startAt = DateHelper.beginOfDate(borrow.getSuccessAt());
             } else {
-                startAt = DateHelper.beginOfDate(borrowRepaymentList.get((i - 1) < 0 ? 0 : (i - 1)).getRepayAt());
+                startAt = DateHelper.beginOfDate(borrowRepaymentList.get((i - 1)).getRepayAt());
             }
             /* 结束时间 */
             Date endAt = DateHelper.beginOfDate(borrowRepayment.getRepayAt());
+            int days = DateHelper.diffInDays(endAt, startAt, false);
 
             //以结清第一期的14天利息作为违约金
-            int days = DateHelper.diffInDays(endAt, startAt, false);
-            if (penalty == 0 && days > 0) { // 违约金
+            if (penalty == 0) { // 违约金
                 penalty = borrowRepayment.getInterest() / days * 14;
             }
 
@@ -582,6 +588,20 @@ public class RepaymentBizImpl implements RepaymentBiz {
         double sumTxAmount = repays.stream().mapToDouble(repay -> NumberHelper.toDouble(repay.getTxAmount())).sum();
         for (Repay repay : repays) {
             double partPenalty = MathHelper.myRound(NumberHelper.toDouble(repay.getTxAmount()), 2) / sumTxAmount * penalty;/*分摊违约金*/
+
+            UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(repay.getForAccountId());
+            BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
+            batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
+            batchAssetChangeItem.setState(0);
+            batchAssetChangeItem.setType(AssetChangeTypeEnum.receivedPaymentsPenalty.getLocalType());  //  收到提前结清的违约金
+            batchAssetChangeItem.setUserId(userThirdAccount.getUserId());
+            batchAssetChangeItem.setMoney(penalty);
+            batchAssetChangeItem.setRemark(String.format("收到[%s]提前结清的违约金", borrow.getName()));
+            batchAssetChangeItem.setCreatedAt(nowDate);
+            batchAssetChangeItem.setUpdatedAt(nowDate);
+            batchAssetChangeItem.setSeqNo(seqNo);
+            batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+            batchAssetChangeItemService.save(batchAssetChangeItem);
             //给每期回款分摊违约金
             repay.setTxFeeOut(StringHelper.formatDouble(NumberHelper.toDouble(repay.getTxFeeOut()) + partPenalty / 100.0, false));
         }
@@ -2474,7 +2494,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         // 垫付金额 = sum(垫付本金 + 垫付利息)
         double txAmount = creditInvestList.stream().mapToDouble(w -> NumberHelper.toDouble(w.getTxAmount())).sum();
         try {
-            BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
+/*            BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
             balanceFreezeReq.setAccountId(titularBorrowAccount.getAccountId());
             balanceFreezeReq.setTxAmount(StringHelper.formatDouble(txAmount, false));
             balanceFreezeReq.setOrderId(freezeOrderId);
@@ -2482,7 +2502,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             BalanceFreezeResp balanceFreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BalanceFreezeResp.class);
             if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceFreezeResp.getRetCode()))) {
                 throw new Exception("即信批次名义借款人垫付冻结资金失败：" + balanceFreezeResp.getRetMsg());
-            }
+            }*/
 
             // 垫付还款冻结
             long frozenMoney = new Double(txAmount * 100).longValue();

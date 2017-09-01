@@ -537,7 +537,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         UserThirdAccount titularUserThirdAccount = userThirdAccountService.findByAccountId(accountId);//担保人存管信息
         //更新批次状态
         thirdBatchLogBiz.updateBatchLogState(batchBailRepayCheckResp.getBatchNo(), repaymentId, 2);
-        //解除存管资金冻结
+        /*//解除存管资金冻结
         BalanceUnfreezeReq balanceUnfreezeReq = new BalanceUnfreezeReq();
         balanceUnfreezeReq.setAccountId(accountId);
         balanceUnfreezeReq.setTxAmount(txAmount);
@@ -550,7 +550,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("即信批次名义借款人垫付接除冻结资金失败：" + balanceUnfreezeResp.getRetMsg());
             log.error("===========================================================================");
             return true;
-        }
+        }*/
         //解除本地冻结
         //立即还款冻结
         long frozenMoney = new Double(NumberHelper.toDouble(txAmount) * 100).longValue();
