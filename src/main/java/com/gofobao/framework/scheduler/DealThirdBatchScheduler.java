@@ -49,6 +49,7 @@ public class DealThirdBatchScheduler {
 
     @Scheduled(cron = "0 20 8,10,12,14,16,18,20,22 * * ? ")
     public void process() {
+        log.info("################批次调度开始####################");
         //1.查询未处理 参数校验成功的批次 gfb_third_batch_log
         Specification<ThirdBatchLog> tbls = Specifications
                 .<ThirdBatchLog>and()
@@ -89,6 +90,6 @@ public class DealThirdBatchScheduler {
                 }
             });
         } while (thirdBatchLogList.size() >= pageSize);
-
+        log.info("################批次调度结束####################");
     }
 }
