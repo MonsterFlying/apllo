@@ -79,7 +79,7 @@ public class TenderServiceImpl implements TenderService {
             VoBorrowTenderUserRes tenderUserRes = new VoBorrowTenderUserRes();
             tenderUserRes.setValidMoney(StringHelper.formatMon(item.getValidMoney() / 100d) + MoneyConstans.RMB);
             tenderUserRes.setDate(DateHelper.dateToString(item.getCreatedAt(), DateHelper.DATE_FORMAT_YMDHMS));
-            tenderUserRes.setType(item.getIsAuto() ? TenderConstans.AUTO : TenderConstans.MANUAL);
+            tenderUserRes.setType(item.getIsAuto() ? TenderConstans.AUTO+"("+item.getAutoOrder()+")" : TenderConstans.MANUAL+"("+item.getAutoOrder()+")");
             Users user = usersRepository.findOne(new Long(item.getUserId()));
 
             // TODO 此处没有考虑到 用户名不存在 手机号不存在 只有邮箱的情况
