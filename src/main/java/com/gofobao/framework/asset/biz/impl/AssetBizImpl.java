@@ -1108,6 +1108,10 @@ public class AssetBizImpl implements AssetBiz {
         Pageable pageable = new PageRequest(voAssetLogReq.getPageIndex()
                 , voAssetLogReq.getPageSize()
                 , sort);
+        List<String> types = Arrays.asList(AssetChangeTypeEnum.collectionAdd.getLocalType(),
+                AssetChangeTypeEnum.collectionSub.getLocalType(),
+                AssetChangeTypeEnum.paymentSub.getLocalType(),
+                AssetChangeTypeEnum.paymentAdd.getLocalType());
         Date startTime = DateHelper.beginOfDate(DateHelper.stringToDate(voAssetLogReq.getStartTime(), DateHelper.DATE_FORMAT_YMD));
         Date endTime = DateHelper.endOfDate(DateHelper.stringToDate(voAssetLogReq.getEndTime(), DateHelper.DATE_FORMAT_YMD));
         Specification<NewAssetLog> specification = Specifications.<NewAssetLog>and()
@@ -1116,6 +1120,7 @@ public class AssetBizImpl implements AssetBiz {
                                 DateHelper.beginOfDate(startTime),
                                 DateHelper.endOfDate(endTime)))
                 .eq("userId", voAssetLogReq.getUserId())
+                .notIn("localType", types.toArray())
                 .build();
         Page<NewAssetLog> assetLogPage = newAssetLogService.findAll(specification, pageable);
         voViewAssetLogWarpRes.setTotalCount(assetLogPage.getTotalElements());
