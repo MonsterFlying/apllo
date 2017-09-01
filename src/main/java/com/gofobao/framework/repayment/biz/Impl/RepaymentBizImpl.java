@@ -2301,6 +2301,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
             return resp;
         }
+
         return ResponseEntity.ok(VoBaseResp.ok("垫付成功!"));
     }
 
