@@ -218,21 +218,7 @@ public class TransferServiceImpl implements TransferService {
                 "AND " +
                 "t.state=:state " +    //回款中
                 "AND " +
-                "(b.type=0 OR b.type=4) " +
-                "AND " +
-                "  ( " +
-                " SELECT " +
-                "SUM(c.principal) " +
-                " FROM " +
-                "gfb_borrow_collection c " +
-                " WHERE " +
-                "c.tender_id = t.id " +
-                " AND " +
-                "c.transfer_flag = 0 " +
-                " AND " +
-                "c. STATUS = 0 " +
-                ") >= 100000";
-
+                "(b.type=0 OR b.type=4)" ;
         //分页
         Query sqlQuery = entityManager.createNativeQuery(sql.toString(), Tender.class);
         sqlQuery.setParameter("userId",voTransferReq.getUserId());
