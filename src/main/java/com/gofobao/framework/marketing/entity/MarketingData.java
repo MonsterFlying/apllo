@@ -17,20 +17,15 @@ public class MarketingData implements Serializable {
     /**
      * 触发营销的数据
      */
-    private Long sourceId;
+    private String sourceId;
 
     /**
      * 用户ID
      */
-    private Long userId;
+    private String userId;
 
     /**
      * 传输时间
      */
-    private Date transTime;
-
-    /**
-     * 扩展信息
-     */
-    private Map<String, String> ext = new HashMap<>();
+    private String transTime;
 }

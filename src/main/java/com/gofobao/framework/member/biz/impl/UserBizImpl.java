@@ -145,7 +145,6 @@ public class UserBizImpl implements UserBiz {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> register(HttpServletRequest request, VoRegisterReq voRegisterReq) throws Exception {
         // 0.短信验证码
-
         boolean match = macthHelper.match(MqTagEnum.SMS_REGISTER.getValue(), voRegisterReq.getPhone(), voRegisterReq.getSmsCode());
         if (!match) {
             return ResponseEntity
@@ -272,17 +271,20 @@ public class UserBizImpl implements UserBiz {
             voBasicUserInfoResp.setBankPassworState(userThirdAccount.getPasswordState() == 1);
             voBasicUserInfoResp.setBankAccout(userThirdAccount.getAccountId());
             voBasicUserInfoResp.setBankName("江西银行总行营业部");
-            voBasicUserInfoResp.setSubbranch( StringUtils.isEmpty(userThirdAccount.getBankName()) ?  "" : userThirdAccount.getBankName());
+            voBasicUserInfoResp.setSubbranch(StringUtils.isEmpty(userThirdAccount.getBankName()) ? "" : userThirdAccount.getBankName());
             voBasicUserInfoResp.setBankState(!StringUtils.isEmpty(userThirdAccount.getCardNo()));
             voBasicUserInfoResp.setAutoTenderState(userThirdAccount.getAutoTenderState().equals(1));
             voBasicUserInfoResp.setAutoTranferState(userThirdAccount.getAutoTransferState().equals(1));
-
-              assetSynBiz.doAssetSyn(user.getId());
+            try {
+                assetSynBiz.doAssetSyn(user.getId());
+            } catch (Exception e) {
+                log.error("资金同步异常", e);
+            }
         }
 
         // 获取vip状态
         Vip vip = vipService.findTopByUserIdAndStatus(user.getId(), 1);
-        voBasicUserInfoResp.setAvatarUrl(StringUtils.isEmpty(user.getAvatarPath())?javaDomain+"/images/user/default_avatar.jpg":user.getAvatarPath());
+        voBasicUserInfoResp.setAvatarUrl(StringUtils.isEmpty(user.getAvatarPath()) ? javaDomain + "/images/user/default_avatar.jpg" : user.getAvatarPath());
         voBasicUserInfoResp.setVipState(ObjectUtils.isEmpty(vip) ? false : DateHelper.diffInDays(new Date(), vip.getExpireAt(), false) > 0);
         voBasicUserInfoResp.setEmail(StringUtils.isEmpty(user.getEmail()) ? " " : user.getEmail());
         voBasicUserInfoResp.setEmailState(!StringUtils.isEmpty(user.getEmail()));
@@ -438,7 +440,7 @@ public class UserBizImpl implements UserBiz {
             return false;
         }
 
-        SmsNoticeSettingsEntity  settingsEntity=new SmsNoticeSettingsEntity();
+        SmsNoticeSettingsEntity settingsEntity = new SmsNoticeSettingsEntity();
         settingsEntity.setUserId(userId);
         settingsService.save(settingsEntity);
         return true;
@@ -583,11 +585,11 @@ public class UserBizImpl implements UserBiz {
     public ResponseEntity<VipInfoRes> vipInfo(Long userId) {
         Vip vip = vipService.findTopByUserIdAndStatus(userId, 1);
         VipInfoRes vipInfoRes = VoBaseResp.ok("查询成功", VipInfoRes.class);
-        if(!ObjectUtils.isEmpty(vip)){
+        if (!ObjectUtils.isEmpty(vip)) {
             vipInfoRes.setEndAt(DateHelper.dateToString(vip.getExpireAt()));
             Users user = userService.findById(vip.getKefuId());
             vipInfoRes.setServiceUserName(user.getUsername());
-        }else {
+        } else {
             vipInfoRes.setServiceUserName("");
             vipInfoRes.setEndAt("");
         }
@@ -628,6 +630,7 @@ public class UserBizImpl implements UserBiz {
 
     /**
      * 上传用户头像
+     *
      * @param file
      * @param imageName
      * @param users
@@ -643,18 +646,18 @@ public class UserBizImpl implements UserBiz {
         Configuration c = new Configuration(z);
 
         //判断当前用户是否有头像
-        String userAvatar= users.getAvatarPath();
+        String userAvatar = users.getAvatarPath();
         if (!StringUtils.isEmpty(userAvatar)) {
             //实例化一个BucketManager对象
             BucketManager bucketManager = new BucketManager(auth, c);
             try {
                 //删除用户在七牛云上的用户头像
-                userAvatar=userAvatar.substring(userAvatar.lastIndexOf("/")+1);
-                bucketManager.delete(bucketname,"avatar/"+userAvatar);
+                userAvatar = userAvatar.substring(userAvatar.lastIndexOf("/") + 1);
+                bucketManager.delete(bucketname, "avatar/" + userAvatar);
             } catch (QiniuException e) {
                 //捕获异常信息
                 Response r = e.response;
-                log.info("删除用户头像失败打印七牛返回信息："+r.error);
+                log.info("删除用户头像失败打印七牛返回信息：" + r.error);
             }
             log.info("删除用户头像成功");
         }
@@ -669,7 +672,7 @@ public class UserBizImpl implements UserBiz {
             resultMap.put("result", Boolean.TRUE);
             resultMap.put("code", VoBaseResp.OK);
             resultMap.put("msg", res.bodyString());
-            String avatarPath=qiNiuDomain+imageName;
+            String avatarPath = qiNiuDomain + imageName;
             resultMap.put("url", avatarPath);
             //更新用户头像
             users.setAvatarPath(avatarPath);

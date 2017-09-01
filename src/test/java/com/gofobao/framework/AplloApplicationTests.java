@@ -165,51 +165,6 @@ public class AplloApplicationTests {
         migrateProtocolBiz.getProtocolMigrateFile();
     }
 
-    /**
-     * 发送注册红包
-     */
-    @Test
-    public void testRegisterPublicRedpack() {
-        MarketingData marketingData = new MarketingData();
-        marketingData.setUserId(44799L);
-        marketingData.setMarketingType(MarketingTypeContants.REGISTER);
-        marketingData.setSourceId(44799L);
-        marketingData.setTransTime(new Date());
-        try {
-            marketingProcessBiz.process(new Gson().toJson(marketingData));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Test
-    public void testLoginPublicRedpack() {
-        MarketingData marketingData = new MarketingData();
-        marketingData.setUserId(44799L);
-        marketingData.setMarketingType(MarketingTypeContants.LOGIN);
-        marketingData.setSourceId(44799L);
-        marketingData.setTransTime(new Date());
-        try {
-            marketingProcessBiz.process(new Gson().toJson(marketingData));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Test
-    public void testTenderPublicRedpack() {
-        MarketingData marketingData = new MarketingData();
-        marketingData.setUserId(44884L);
-        marketingData.setMarketingType(MarketingTypeContants.TENDER);
-        marketingData.setSourceId(261540L);
-        marketingData.setTransTime(new Date());
-        try {
-            marketingProcessBiz.process(new Gson().toJson(marketingData));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
 
     @Test
     public void testDownloadFile() throws Exception {
