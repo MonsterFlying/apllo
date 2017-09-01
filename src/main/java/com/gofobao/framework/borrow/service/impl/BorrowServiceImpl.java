@@ -438,20 +438,22 @@ public class BorrowServiceImpl implements BorrowService {
         Map calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
 
         //查询投标信息
-
-
         List<Tender> borrowTenderList = new ArrayList<>();
         if (!StringUtils.isEmpty(userId) || userId > 0) {  //当前不是访客
-            Specification specification;
+            Specification specification=null;
             if (!borrowUserId.equals(userId)) {  //当前用户是否 发标用户
-                specification = Specifications.<Tender>and()
-                        .eq("userId", userId)
-                        .eq("borrowId", borrowId)
-                        .build();
-            } else {
-                specification = Specifications.<Tender>and()
-                        .eq("borrowId", borrowId)
-                        .build();
+                if(borrow.getUserId().intValue()==userId.intValue()){
+                    //发标用户 可以查看所有的的投资信息
+                    specification = Specifications.<Tender>and()
+                            .eq("borrowId", borrowId)
+                            .build();
+                }else {
+                    //不是访客 查询当前用户是否是投资用户
+                    specification = Specifications.<Tender>and()
+                            .eq("userId", userId)
+                            .eq("borrowId", borrowId)
+                            .build();
+                }
             }
             borrowTenderList = tenderRepository.findAll(specification);
         }

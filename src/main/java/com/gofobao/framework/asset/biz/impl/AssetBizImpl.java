@@ -76,7 +76,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -193,8 +192,8 @@ public class AssetBizImpl implements AssetBiz {
 
         Long useMoney = asset.getUseMoney();
         Long payment = asset.getPayment();
-        long netWorthQuota = new Double((asset.getCollection() + asset.getNoUseMoney() + asset.getUseMoney()) - asset.getPayment()).longValue();//计算净值额度
-
+        long netWorthQuota = new Double((useMoney + userCache.getWaitCollectionPrincipal()) * 0.8 - payment).longValue();//计算净值额度
+        Long netAsset=new Double((asset.getCollection()+asset.getNoUseMoney()+asset.getUseMoney())-asset.getPayment()).longValue();
         VoUserAssetInfoResp voUserAssetInfoResp = VoBaseResp.ok("成功", VoUserAssetInfoResp.class);
         voUserAssetInfoResp.setHideUserMoney(StringHelper.formatDouble(useMoney / 100D, true));
         voUserAssetInfoResp.setHideNoUseMoney(StringHelper.formatDouble(asset.getNoUseMoney() / 100D, true));
@@ -208,6 +207,7 @@ public class AssetBizImpl implements AssetBiz {
         voUserAssetInfoResp.setCollection(asset.getCollection());
         voUserAssetInfoResp.setVirtualMoney(asset.getVirtualMoney());
         voUserAssetInfoResp.setNetWorthQuota(netWorthQuota);
+        voUserAssetInfoResp.setNetAsset(StringHelper.formatMon(netAsset/100D));
         return ResponseEntity.ok(voUserAssetInfoResp);
     }
 
@@ -833,7 +833,7 @@ public class AssetBizImpl implements AssetBiz {
         response.setCollectionMoney(StringHelper.formatDouble((userCache.getWaitCollectionPrincipal() + userCache.getWaitCollectionInterest()) / 100D, true)); // 待收
         response.setAccountMoney(StringHelper.formatDouble((asset.getNoUseMoney() + asset.getUseMoney()) / 100D, true));
         response.setTotalAsset(StringHelper.formatDouble((asset.getUseMoney() + asset.getNoUseMoney() + asset.getCollection()) / 100D, true));
-        Double netAmount = ((asset.getUseMoney() + userCache.getWaitCollectionPrincipal()) * 0.8D - asset.getPayment()) / 100D;
+        Double netAmount = ((asset.getUseMoney() +userCache.getWaitCollectionPrincipal()) * 0.8D - asset.getPayment()) / 100D;
         response.setNetAmount(StringHelper.formatDouble(netAmount, true));
         return ResponseEntity.ok(response);
     }
