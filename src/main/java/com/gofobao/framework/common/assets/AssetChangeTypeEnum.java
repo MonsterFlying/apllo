@@ -225,7 +225,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 撤回大额提现
      */
-    cancelBigCash("返还大额提现", "cancelBigCash", "2820", "add@useMoney", "sub@cashTotal", "D"),
+    cancelBigCash("拨正提现", "cancelCash", "2820", "add@useMoney", "sub@cashTotal", "D"),
 
     /**
      * 用户购买债权

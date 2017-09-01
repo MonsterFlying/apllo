@@ -144,7 +144,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
     ThymeleafHelper thymeleafHelper;
 
     @Autowired
-    OpenAccountBizImpl openAccountBiz ;
+    OpenAccountBizImpl openAccountBiz;
 
     @Value("${gofobao.pcDomain}")
     private String pcDomain;
@@ -170,9 +170,9 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
             });
 
 
-
     /**
      * 开户前置检测
+     *
      * @param voOpenAccountReq
      * @return
      */
@@ -185,34 +185,34 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
         }
 
         // 从存管获取用户注册信息
-        AccountQueryByMobileRequest accountQueryByMobileReques = new AccountQueryByMobileRequest() ;
-        accountQueryByMobileReques.setMobile(voOpenAccountReq.getMobile()) ;
+        AccountQueryByMobileRequest accountQueryByMobileReques = new AccountQueryByMobileRequest();
+        accountQueryByMobileReques.setMobile(voOpenAccountReq.getMobile());
         AccountQueryByMobileResponse accountQueryByMobileResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_QUERY_BY_MOBILE,
                 accountQueryByMobileReques, AccountQueryByMobileResponse.class);
-        if(!ObjectUtils.isEmpty(accountQueryByMobileResponse) && JixinResultContants.SUCCESS.equals(accountQueryByMobileResponse.getRetCode())){
+        if (!ObjectUtils.isEmpty(accountQueryByMobileResponse) && JixinResultContants.SUCCESS.equals(accountQueryByMobileResponse.getRetCode())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "手机已在存管平台开户, 无需开户！", VoOpenAccountResp.class));
         }
 
-        UserThirdAccount userThirdAccountByIdNo = userThirdAccountService.findByIdNo(voOpenAccountReq.getIdNo()) ;
+        UserThirdAccount userThirdAccountByIdNo = userThirdAccountService.findByIdNo(voOpenAccountReq.getIdNo());
         if (!ObjectUtils.isEmpty(userThirdAccountByIdNo)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "身份证已在存管平台开户, 无需开户！", VoOpenAccountResp.class));
         }
 
-        AccountIdQueryRequest accountIdQueryRequest = new AccountIdQueryRequest() ;
-        accountIdQueryRequest.setIdNo(voOpenAccountReq.getIdNo()) ;
+        AccountIdQueryRequest accountIdQueryRequest = new AccountIdQueryRequest();
+        accountIdQueryRequest.setIdNo(voOpenAccountReq.getIdNo());
         AccountIdQueryResponse accountIdQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_ID_QUERY,
                 accountIdQueryRequest, AccountIdQueryResponse.class);
-        if(!ObjectUtils.isEmpty(accountIdQueryResponse) && JixinResultContants.SUCCESS.equals(accountIdQueryResponse.getRetCode())){
+        if (!ObjectUtils.isEmpty(accountIdQueryResponse) && JixinResultContants.SUCCESS.equals(accountIdQueryResponse.getRetCode())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "身份证已在存管平台开户, 无需开户！", VoOpenAccountResp.class));
         }
 
-        return ResponseEntity.ok(VoBaseResp.error(VoBaseResp.OK, "查询成功", VoOpenAccountResp.class)) ;
+        return ResponseEntity.ok(VoBaseResp.error(VoBaseResp.OK, "查询成功", VoOpenAccountResp.class));
     }
 
     /**
@@ -242,7 +242,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoHtmlResp>modifyOpenAccPwd(HttpServletRequest httpServletRequest, Long userId) {
+    public ResponseEntity<VoHtmlResp> modifyOpenAccPwd(HttpServletRequest httpServletRequest, Long userId) {
         UserThirdAccount userThirdAccount = null;
         try {
             userThirdAccount = queryUserThirdInfo(userId);
@@ -640,7 +640,6 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
             return "password/faile";
         }
     }
-
 
 
     @Override
@@ -1074,25 +1073,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "不满足解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零"));
         }
-        // 查询即信账户余额
-        BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
-        balanceQueryRequest.setChannel(ChannelContant.HTML);
-        balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
-        BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
-        if ((ObjectUtils.isEmpty(balanceQueryResponse)) || !balanceQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
-            String msg = ObjectUtils.isEmpty(balanceQueryResponse) ? "当前网络异常, 请稍后尝试!" : balanceQueryResponse.getRetMsg();
-            log.error(String.format("资金同步: %s", msg));
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, msg));
-        }
 
-        double currBal = NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100.0;
-        if (currBal != 0) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "不满足解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零"));
-        }
         CardBindItem cardInfoByThird = null;
         try {
             cardInfoByThird = findCardInfoByThird(userThirdAccount.getAccountId());
@@ -1117,8 +1098,8 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
                 creditDetailsQueryRequest,
                 CreditDetailsQueryResponse.class);
 
-        if (ObjectUtils.isEmpty(creditDetailsQueryRequest) || !JixinResultContants.SUCCESS.equalsIgnoreCase(creditDetailsQueryResponse.getRetCode())) {
-            String msg = ObjectUtils.isEmpty(balanceQueryResponse) ? "当前网络异常, 请稍后尝试!" : balanceQueryResponse.getRetMsg();
+        if (ObjectUtils.isEmpty(creditDetailsQueryResponse) || !JixinResultContants.SUCCESS.equalsIgnoreCase(creditDetailsQueryResponse.getRetCode())) {
+            String msg = ObjectUtils.isEmpty(creditDetailsQueryResponse) ? "当前网络异常, 请稍后尝试!" : creditDetailsQueryResponse.getRetMsg();
             log.error(String.format("债权明细查询: %s", msg));
             return ResponseEntity
                     .badRequest()
@@ -1135,6 +1116,28 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "不满足解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零"));
             }
         }
+
+
+        // 查询即信账户余额
+        BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
+        balanceQueryRequest.setChannel(ChannelContant.HTML);
+        balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
+        BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
+        if ((ObjectUtils.isEmpty(balanceQueryResponse)) || !balanceQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
+            String msg = ObjectUtils.isEmpty(balanceQueryResponse) ? "当前网络异常, 请稍后尝试!" : balanceQueryResponse.getRetMsg();
+            log.error(String.format("资金同步: %s", msg));
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, msg));
+        }
+
+        double currBal = NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100.0;
+        if (currBal != 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "不满足解绑条件: 1.账户余额必须等于零, 2.待还和待收都等于零"));
+        }
+
 
         CardUnbindRequest cardUnbindRequest = new CardUnbindRequest();
         cardUnbindRequest.setAccountId(userThirdAccount.getAccountId());
@@ -1445,7 +1448,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
         entity.setCardNoBindState(1);
         entity.setName(name);
         UserThirdAccount existsAccount = userThirdAccountService.findByUserId(user.getId());
-        if(!ObjectUtils.isEmpty(existsAccount)){
+        if (!ObjectUtils.isEmpty(existsAccount)) {
             throw new Exception("重复开户");
         }
         userThirdAccountService.save(entity);

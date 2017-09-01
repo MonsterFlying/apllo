@@ -2819,7 +2819,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //3.新增垫付记录与更改还款状态
         addAdvanceLogAndChangeBorrowRepayment(titularBorrowUserId, borrowRepayment, lateDays, lateInterest);
         //3.5完成垫付债权转让操作
-        transferTenderByAdvance(parentBorrow, tenderMaps, tenderIds);
+        transferTenderByAdvance(parentBorrow, tenderMaps, tenderIds,borrowRepayment);
         //5.发送投资人收到还款站内信
         sendCollectionNotices(borrowCollectionList, advance, parentBorrow);
         //6.发放积分
@@ -2840,7 +2840,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param tenderMaps
      * @param tenderIds
      */
-    public void transferTenderByAdvance(Borrow parentBorrow, Map<Long, Tender> tenderMaps, Set<Long> tenderIds) {
+    public void transferTenderByAdvance(Borrow parentBorrow, Map<Long, Tender> tenderMaps, Set<Long> tenderIds,BorrowRepayment borrowRepayment) {
         /* 查询债权转让记录 */
         Specification<Transfer> ts = Specifications
                 .<Transfer>and()
@@ -2872,6 +2872,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 transferBiz.addChildTenderCollection(nowDate, transfer, parentBorrow, childTenderList);
             } catch (Exception e) {
                 log.error("repaymentBizImpl updateTransferTenderByAdvance error", e);
+            }
+            if ((parentBorrow.getTotalOrder()-1) == borrowRepayment.getOrder().intValue()){
+                parentTender.setState(3);
             }
         });
 

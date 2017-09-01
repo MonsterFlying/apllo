@@ -696,7 +696,7 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("164628");
+        batchDetailsQueryReq.setBatchNo("193522");
 
         batchDetailsQueryReq.setBatchTxDate("20170831");
         batchDetailsQueryReq.setType("0");
@@ -819,8 +819,8 @@ public class AplloApplicationTests {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(170113),
-                        MqConfig.BATCH_NO, StringHelper.toString("164628"),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(170106),
+                        MqConfig.BATCH_NO, StringHelper.toString("193522"),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date()),
                         MqConfig.ACQ_RES,"{\"transferId\":5707}"
                 );
@@ -848,14 +848,6 @@ public class AplloApplicationTests {
 
     @Test
     public void test() {
-
-        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
-                NumberHelper.toDouble(StringHelper.toString(10000)),
-                NumberHelper.toDouble(StringHelper.toString(1000)), 3, new Date());
-        Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(0);
-        List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
-        Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
-
         //dealThirdBatchScheduler.process();
         //dataMigration();
 
@@ -889,7 +881,7 @@ public class AplloApplicationTests {
         }*/
 
         //批次处理
-        //batchDeal();
+        batchDeal();
         //unfrozee();
         //查询存管账户资金信息
         //balanceQuery();
