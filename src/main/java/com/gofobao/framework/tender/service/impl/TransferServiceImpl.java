@@ -7,7 +7,12 @@ import com.gofobao.framework.collection.contants.BorrowCollectionContants;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.repository.BorrowCollectionRepository;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
+import com.gofobao.framework.helper.project.UserHelper;
+import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.contants.TransferContants;
 import com.gofobao.framework.tender.entity.Tender;
@@ -65,6 +70,8 @@ public class TransferServiceImpl implements TransferService {
     @Autowired
     private TransferRepository transferRepository;
 
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private TransferBuyLogRepository transferBuyLogService;
@@ -106,7 +113,7 @@ public class TransferServiceImpl implements TransferService {
 
     @Override
     public Page<Transfer> findPageList(Specification<Transfer> specification, Pageable pageable) {
-        return transferRepository.findAll(specification,pageable);
+        return transferRepository.findAll(specification, pageable);
     }
 
     /**
@@ -218,12 +225,12 @@ public class TransferServiceImpl implements TransferService {
                 "AND " +
                 "t.state=:state " +    //回款中
                 "AND " +
-                "(b.type=0 OR b.type=4)" ;
+                "(b.type=0 OR b.type=4)";
         //分页
         Query sqlQuery = entityManager.createNativeQuery(sql.toString(), Tender.class);
-        sqlQuery.setParameter("userId",voTransferReq.getUserId());
-        sqlQuery.setParameter("transferFlag",TenderConstans.TRANSFER_NO);
-        sqlQuery.setParameter("state",TenderConstans.BACK_MONEY );
+        sqlQuery.setParameter("userId", voTransferReq.getUserId());
+        sqlQuery.setParameter("transferFlag", TenderConstans.TRANSFER_NO);
+        sqlQuery.setParameter("state", TenderConstans.BACK_MONEY);
         List<Tender> totalCountList = sqlQuery.getResultList();
         sqlQuery.setFirstResult(voTransferReq.getPageIndex());
         sqlQuery.setMaxResults(voTransferReq.getPageSize());
@@ -259,7 +266,7 @@ public class TransferServiceImpl implements TransferService {
             transferMay.setName(borrow.getName());
             transferMay.setTenderId(p.getId());
             List<BorrowCollection> borrowCollectionList1 = borrowCollectionMaps.get(p.getId()).stream()
-                    .filter(w->w.getStatus()== BorrowCollectionContants.STATUS_NO)
+                    .filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_NO)
                     .collect(Collectors.toList());
             long principalSum = borrowCollectionList1.stream().mapToLong(w -> w.getPrincipal()).sum();
             long interestSum = borrowCollectionList1.stream().mapToLong(w -> w.getInterest()).sum();
@@ -363,7 +370,7 @@ public class TransferServiceImpl implements TransferService {
         Specification<Transfer> specification = Specifications.<Transfer>and()
                 .eq("userId", voTransferReq.getUserId())
                 .eq("state", voTransferReq.getStatus())
-                .in("type",voTransferReq.getType())
+                .in("type", voTransferReq.getType())
                 .build();
         Page<Transfer> transferPage = transferRepository.findAll(specification,
                 new PageRequest(voTransferReq.getPageIndex(),
@@ -375,4 +382,73 @@ public class TransferServiceImpl implements TransferService {
     }
 
 
+    /**
+     * 债转合同
+     *
+     * @param tenderId
+     * @param userId
+     * @return
+     */
+    @Override
+    public Map<String, Object> transferContract(Long tenderId, Long userId) {
+        Map<String, Object> resultMap = Maps.newHashMap();
+        //投标记录
+        Specification<Tender> specification = Specifications.<Tender>and()
+                .eq("id", tenderId)
+                .eq("userId", userId)
+                .ne("transferBuyId", null)
+                .build();
+        List<Tender> tenders = tenderRepository.findAll(specification);
+        if (CollectionUtils.isEmpty(tenders)) {
+            return resultMap;
+        }
+        //购买债券记录
+        Tender tender = tenders.get(0);
+        Long transferBuyId = tender.getTransferBuyId();
+        TransferBuyLog transferBuyLog = transferBuyLogService.findOne(transferBuyId);
+        if (ObjectUtils.isEmpty(transferBuyLog)) {
+            return resultMap;
+        }
+        //债权信息
+        Transfer transfer = transferRepository.findOne(transferBuyLog.getTransferId());
+        if (ObjectUtils.isEmpty(transfer)) {
+            return resultMap;
+        }
+        //借款信息
+        Map<String, Object> borrowMap = Maps.newHashMap();
+        Users users = userService.findById(transfer.getUserId());
+        borrowMap.put("username",StringUtils.isEmpty(users.getUsername()) ? UserHelper.hideChar(users.getPhone(),UserHelper.PHONE_NUM)  :UserHelper.hideChar(users.getUsername(),UserHelper.USERNAME_NUM));
+        borrowMap.put("successAt", StringUtils.isEmpty(transfer.getSuccessAt()) ? null : DateHelper.dateToString(transfer.getSuccessAt()));
+        borrowMap.put("cardId",UserHelper.hideChar(users.getCardId(),UserHelper.CARD_ID_NUM));
+        Integer apr = transfer.getApr();
+        borrowMap.put("apr", StringHelper.formatMon(apr / 100D));
+        borrowMap.put("repayFashion", 0);
+        borrowMap.put("id",transfer.getBorrowId());
+        borrowMap.put("money", StringHelper.formatMon(transfer.getTransferMoney() / 100D));
+        borrowMap.put("monthAsReimbursement", StringUtils.isEmpty(transfer.getSuccessAt()) ? null : "每月" + DateHelper.dateToString(transfer.getSuccessAt()));
+        borrowMap.put("borrowExpireAtStr",DateHelper.endOfDate(DateHelper.addDays(transfer.getReleaseAt(),1)));
+        Integer timeLimit = transfer.getTimeLimit();
+        borrowMap.put("timeLimit", timeLimit);
+        Long buyUserId = transferBuyLog.getUserId();
+        //
+        Users buyUsers = userService.findById(buyUserId);
+        List<Map<String, Object>> tenderMapList = Lists.newArrayList();
+        Map<String, Object> tenderMap = Maps.newHashMap();
+        Long buyMoney = transferBuyLog.getBuyMoney();
+        tenderMap.put("username", StringUtils.isEmpty(buyUsers.getUsername()) ? buyUsers.getPhone() : buyUsers.getUsername());
+        tenderMap.put("validMoney", StringHelper.formatMon(buyMoney / 100D));
+        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(buyMoney), new Double(apr), timeLimit, null);
+        Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(0);
+        calculatorMap.put("earnings", StringHelper.formatMon(Double.parseDouble(calculatorMap.get("earnings").toString()) / 100D));
+        calculatorMap.put("eachRepay", StringHelper.formatMon(Double.parseDouble(calculatorMap.get("eachRepay").toString()) / 100D));
+        calculatorMap.put("repayTotal", StringHelper.formatMon(Double.parseDouble(calculatorMap.get("repayTotal").toString()) / 100D));
+        calculatorMap.put("repayDetailList", calculatorMap.get("repayDetailList"));
+        tenderMap.put("calculatorMap", calculatorMap);
+        tenderMapList.add(tenderMap);
+        //返回结果
+        resultMap.put("borrowMap", borrowMap);
+        resultMap.put("tenderMapList", tenderMapList);
+        resultMap.put("calculatorMap", calculatorMap);
+        return resultMap;
+    }
 }

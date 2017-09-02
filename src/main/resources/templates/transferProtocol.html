@@ -1,0 +1,394 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<style>
+    article, aside, blockquote, body, button, code form, dd, details, div, dl, dt, fieldset, figcaption, figure, footer, h1, h2, h3, h4, h5, h6, header, hgroup, hr, input, legend, li, menu, nav, ol, p, pre, section, td, textarea, th, ul {
+        margin: 0;
+        padding: 0;
+    }
+
+    p {
+        position: relative;
+        z-index: 20;
+    }
+</style>
+
+<!--/*@thymesVar id="tenderMapList" type="java.util.List"*/-->
+<!--/*@thymesVar id="borrowMap" type="java.util.Map"*/-->
+<!--/*@thymesVar id="calculatorMap" type="java.util.Map"*/-->
+
+<div class="container"
+     style="padding: 10px; word-wrap: break-word; font: 14px/1.5 Microsoft YaHei, droidsansfallback; color: #5e5e5e; background: #fff; position: relative">
+    <div class="wrapper-xl padder-v-xl bg-white animated fadeIn">
+        <h6 style="font-size: 100%; font-weight: 500; margin: 0">合同编号：
+            <span th:text="${borrowMap['id']}"></span>
+        </h6>
+
+        <p style="margin-top: 20px">甲方（出借人）：</p>
+
+        <table border="1" cellspacing="0" bordercolor="#9e9e9e" style="border-collapse: collapse; margin-top: 10px; width:100%;"
+               th:if="${tenderMapList == null}">
+            <tr style="height: 35px">
+                <td width="25%" style="text-align: center">出借人</td>
+                <td width="25%" style="text-align: center">出借金额</td>
+                <td width="25%" style="text-align: center">出借期限</td>
+                <td style="text-align: center">月本息</td>
+            </tr>
+
+            <tr style="height: 35px">
+                <td width="25%" style="text-align: center"></td>
+                <td width="25%" style="text-align: center"></td>
+                <td width="25%" style="text-align: center"></td>
+                <td style="text-align: center"></td>
+            </tr>
+        </table>
+
+        <table border="1" cellspacing="0" bordercolor="#9e9e9e" style="border-collapse: collapse; margin-top: 10px;width:100%;"
+               th:if="${tenderMapList != null}">
+            <tr style="height: 35px">
+                <td width="25%" style="text-align: center">出借人</td>
+                <td width="25%" style="text-align: center">出借金额</td>
+                <td width="25%" style="text-align: center">出借期限</td>
+                <td style="text-align: center">月本息</td>
+            </tr>
+
+            <tr style="height: 35px" th:each="tenderMap : ${tenderMapList}">
+                <td width="25%"  style="text-align: center" th:text="${tenderMap['username']}"></td>
+                <td width="25%"  style="text-align: center"
+                    th:text="${tenderMap['validMoney']} +'元'"></td>
+                <td width="25%"  style="text-align: center"
+                    th:text="${borrowMap['timeLimit']} + ((${borrowMap['repayFashion']} == 1)?'天':'个月') "></td>
+                <td style="text-align: center"
+                    th:text="(${borrowMap['repayFashion']} == 2)?
+                    '前 '+(${borrowMap['timeLimit']} - 1)+' 个月每月收取利息 '+${   tenderMap['calculatorMap']['eachRepay'] }+
+                    ' 元,到期收取本息 '+ ${ tenderMap['validMoney']}
+                    +${ tenderMap['calculatorMap']['eachRepay']}+' 元'
+                    :
+                    (
+                        (${borrowMap['repayFashion']} == 1)?
+                        '到期收取本息 '+(${tenderMap['calculatorMap']['repayTotal']})+' 元'
+                        :
+                        '每月收取 '+(${  tenderMap['calculatorMap']['eachRepay'] })+' 元'
+                    )
+                    "
+                ></td>
+            </tr>
+        </table>
+
+        <p style="margin-top:30px ">乙方（借款人）：</p>
+
+        <p style="margin-top: 5px">广富宝用户名：<span
+                id="borrow-username" th:text="${borrowMap['username']}"></span></p>
+
+        <p style="margin-top: 5px">身份证号：
+            <span th:text="${borrowMap['cardId']}"></span>
+        </p>
+
+        <br/>
+
+        <p style="margin-top: 30px">丙方（服务平台）：深圳广富宝金融信息服务有限公司</p>
+
+        <p style="margin-top: 5px">注册号：440301107333144</p>
+        <br/>
+
+        <p style="margin-top: 30px">鉴于：</p>
+
+        <p style="margin-top: 10px">
+            乙方有一定的借款需求，有合理的借款用途；甲方有一定的资金实力，丙方拥有一套成熟的借贷管理服务平台，并基于此平台开展借款咨询及管理服务。现甲乙双方希望丙方为其提供借款与借款咨询、信用评审、借款人推荐等系列借款管理服务，并且委托其提供帐户管理、划扣款、本息管理、进行催收，贷后管理一系列活动。以保证公平的促成此交易。于此，甲、乙、丙三方依照我国有关法律、法规，经协商一致，订立本协议。
+        </p>
+
+        <p style="margin-top: 10px">
+            乙方因资金周转需要，现通过丙方广富宝 www.gofobao.com 网站，向甲方借款。
+        </p>
+
+        <p style="margin-top: 30px; font-weight: bold; color: #000">
+            第一条 借款基本信息
+        </p>
+
+        <table border="1" cellspacing="0" bordercolor="#9e9e9e" style="border-collapse: collapse; margin-top: 10px"
+               th:if="${borrowMap['successAt'] == null}">
+            <tr style="height: 35px">
+                <td width="140" style="padding: 0 20px">借款金额</td>
+                <td width="360" style="padding: 0 20px"></td>
+            </tr>
+            <tr style="height: 35px">
+                <td style="padding: 0 20px">借款期限</td>
+                <td style="padding: 0 20px">
+                </td>
+            </tr>
+            <tr style="height: 35px">
+                <td style="padding: 0 20px">年利率</td>
+                <td style="padding: 0 20px"></td>
+            </tr>
+            <tr style="height: 35px">
+                <td style="padding: 0 20px">借款开始日</td>
+                <td style="padding: 0 20px"></td>
+            </tr>
+            <tr style="height: 35px">
+                <td style="padding: 0 20px">借款到期日</td>
+                <td style="padding: 0 20px"></td>
+            </tr>
+            <tr style="height: 35px">
+                <td style="padding: 0 20px">月截止还款日</td>
+                <td style="padding: 0 20px"></td>
+            </tr>
+            <tr style="height: 35px">
+                <td style="padding: 0 20px">月还款本息</td>
+                <td style="padding: 0 20px"></td>
+            </tr>
+        </table>
+
+        <table border="1" cellspacing="0" bordercolor="#9e9e9e" style="border-collapse: collapse; margin-top: 10px"
+               th:unless="${borrowMap['successAt'] == null}">
+            <tr style="height: 35px">
+                <td width="140" style="padding: 0 20px">借款金额</td>
+                <td width="360" style="padding: 0 20px"
+                    th:text="(${borrowMap['money']}) + '元'"></td>
+            </tr>
+            <tr style="height: 35px">
+                <td style="padding: 0 20px">借款期限</td>
+                <td style="padding: 0 20px"
+                    th:text="${borrowMap['timeLimit']} + ((${borrowMap['repayFashion']} == 1)?'天':'个月') ">
+                </td>
+            </tr>
+            <tr style="height: 35px">
+                <td style="padding: 0 20px">年利率</td>
+                <td style="padding: 0 20px"
+                    th:text="(${  borrowMap['apr'] }) +'%'"></td>
+            </tr>
+            <tr style="height: 35px">
+                <td style="padding: 0 20px">借款开始日</td>
+                <td style="padding: 0 20px"
+                    th:text="${borrowMap['successAt']}">
+                </td>
+            </tr>
+            <tr style="height: 35px">
+                <td style="padding: 0 20px">借款到期日</td>
+                <td style="padding: 0 20px"
+                    th:text="${borrowMap['borrowExpireAtStr']}"
+                ></td>
+            </tr>
+            <tr style="height: 35px">
+                <td style="padding: 0 20px">月截止还款日</td>
+                <td style="padding: 0 20px"
+                    th:text="${borrowMap['monthAsReimbursement']}"
+                ></td>
+            </tr>
+            <tr style="height: 35px">
+                <td style="padding: 0 20px">月还款本息</td>
+                <td style="padding: 0 20px"
+                    th:text="(${borrowMap['repayFashion']} == 2)?
+                    '前 '+(${borrowMap['timeLimit'] } - 1)+' 个月每月还款利息 '+${calculatorMap['eachRepay']}+
+                     ' 元,到期还款本息 '+(${borrowMap['money']+calculatorMap['eachRepay']})+' 元'
+                    :
+                    (
+                        (${borrowMap['repayFashion']} == 1)?
+                        '到期还款本息 '+${calculatorMap['repayTotal']}+' 元'
+                        :
+                        '每月还款 '+${calculatorMap['eachRepay']}+' 元'
+                    )"
+                ></td>
+            </tr>
+        </table>
+
+        <p style="margin-top: 30px; font-weight: bold; color: #000">
+            第二条 正常还款
+        </p>
+
+        <p style="margin-top: 10px">
+            1、乙方承诺按照本协议第一条约定的时间和金额按期足额向借款人还款。
+        </p>
+
+        <p style="margin-top: 10px">
+            2、乙方的最后一期还款必须包含全部剩余本金、利息及其他根据本协议产生的全部费用。
+        </p>
+
+        <p style="margin-top: 10px">
+            3、乙方的每一期还款的还款金额计算公式为：每月需还款总金额=每月需还利息+每月需还本金。
+        </p>
+
+        <p style="margin-top: 30px; font-weight: bold; color: #000">
+            第三条：提前还款
+        </p>
+
+        <p style="margin-top: 10px">
+            1、双方同意,若乙方出现如下任何一种情况,则本协议项下的全部借款自动提前到期,乙方在收到丙方发出的借款提前到期通知后，应立即清偿全部剩余本金及提前还款手续费及其他相关费用：
+        </p>
+
+        <p style="margin-top: 10px">（1）乙方因任何原因逾期支付任何一期还款超过10天的；</p>
+
+        <p style="margin-top: 10px">（2）乙方的工作单位、职务或住所变更后，未在30天内通知丙方；</p>
+
+        <p style="margin-top: 10px">（3）乙方发生影响其清偿本协议项下借款的其他不利变化，未在30天内通知丙方。</p>
+
+        <p style="margin-top: 10px">
+            2、三方同意,乙方在约定的每月利息支付日前30天及以上，或者约定的借款到期日前30天及以上，提前还款的，仅需支付剩余本金、及向丙方支付提前还款手续费等相关费用。不用再支付剩余未还利息。
+        </p>
+
+        <p style="margin-top: 10px">
+            若乙方在约定的每月利息支付日前30天内，或者约定的借款到期日前30天内，提前还款的，除支付剩余本金、及向丙方支付提前还款手续费等相关费用外，仍需支付本月当期应支付的利息，或者借款剩余未支付的利息。
+        </p>
+
+        <p style="margin-top: 10px">
+            3、本借款协议中的甲方与乙方之间的借款均是相互独立的,一旦乙方逾期未归还借款本息，甲方有权单独对该甲方未收回的借款本息向乙方追索或者提起诉讼。
+        </p>
+
+        <p style="margin-top: 30px; font-weight: bold; color: #000">
+            第四条 逾期还款
+        </p>
+
+        <p style="margin-top: 10px">
+            1、若乙方逾期仍未还款,乙方除向借款人支付正常利息以外,还应每天向丙方支付逾期罚息(金额为未偿还本息的千分之四)。借款人和乙方均同意并认可，丙方可通过短信、电话、上门催收等方式对乙方逾期未偿还的本息进行催收,且丙方有权按照前述标准向乙方收取催收服务费用，上门催收费为每次1000元。
+        </p>
+
+        <p style="margin-top: 10px">
+            2、乙方同意，其逾期还款造成甲方因此支付的费用(包括但不限于律师费、诉讼费、公证费等甲方实现债权的费用)由乙方承担；
+        </p>
+
+        <p style="margin-top: 10px">
+            3、乙方同意，如乙方逾期未偿还任何一期还款，丙方有权采取以下措施之一项或几项：
+        </p>
+
+        <p style="margin-top: 10px">
+            （1）将乙方的有关身份资料及其他个人信息通过丙方“逾期黑名单”等栏目对外公开；
+        </p>
+
+        <p style="margin-top: 10px">
+            （2）将乙方的有关身份资料及其他个人信息正式备案在“不良信用记录”,列入全国个人信用评级体系的黑名单(“不良信用记录”数据将为银行、电信、担保公司、人才中心等有关机构提供个人不良信用信息)；
+        </p>
+
+        <p style="margin-top: 10px">
+            （3）对乙方采取法律措施,由此所产生的所有法律后果将由乙方来承担。甲方同意授权并支持丙方采取以上措施。
+        </p>
+
+        <p style="margin-top: 10px">
+            4、对于平台发布的借款标，如甲方为VIP用户，乙方于还款日当天22:00仍未清偿借款本息的，则丙方应以其风险准备金为限先行垫付乙方应偿还给甲方的本息金额；如果甲方为非VIP客户，乙方逾期30天后，则丙方以其风险准备金为限先行垫付乙方应偿还给甲方本息金额的50%。
+        </p>
+
+        <p style="margin-top: 10px">
+            丙方在向甲方进行垫付的同时，即刻自动取得甲方对乙方的相应债权及其他权利，包括但不限于就前述债权向乙方追偿的权利，且甲方不再就前述已让渡给丙方的债权向乙方主张任何权利，或向丙方主张任何权利，同时甲方在此授权丙方或丙方可以视情况（必要时）将垫付等相关事项通知乙方，此后乙方应直接向丙方偿还其垫付的借款本息，并按照双方签署的协议向丙方支付垫付服务费用和逾期违约金。甲方同意并认可丙方前述垫付的行为并不代表有关逾期应归责于丙方，亦不代表丙方须为此承担其他任何责任。
+        </p>
+
+        <p style="margin-top: 10px">
+            5、丙方对逾期仍未还款的乙方收取逾期罚息作为催收费用、采取多种方式进行催收、将乙方的相关信息对外公开或列入“不良信用记录”或采取法律措施等各项行为，是丙方根据本协议为甲方提供的一种服务，该等服务的法律后果均由乙方和甲方自行承担。
+        </p>
+
+        <p style="margin-top: 30px; font-weight: bold; color: #000">
+            第五条：借款的支付和还款方式
+        </p>
+
+        <p style="margin-top: 10px">
+            1、甲方在同意向乙方借款相应款项时,已委托丙方在本借款协议生效时将该笔借款直接划付至乙方帐户。
+        </p>
+
+        <p style="margin-top: 10px">
+            2、乙方已委托丙方将还款直接划付至甲方帐户。
+        </p>
+
+        <p style="margin-top: 10px">
+            3、乙方和甲方均同意，丙方接受乙方或甲方委托所采取的划付款项行为，所产生的法律后果均由相应委托方乙方或甲方自行承担。
+        </p>
+
+        <p style="margin-top: 10px">
+            4、若乙方的任何一期还款不足以偿还应还本金、利息和违约金,则甲方全部借款人同意按照各借款人借款金额在借款总金额中的比例收取还款。
+        </p>
+
+        <p style="margin-top: 10px">
+            5、本协议的履行地为丙方的住所地(广东省深圳市)。
+        </p>
+
+        <p style="margin-top: 30px; font-weight: bold; color: #000">
+            第六条、债权转让
+        </p>
+
+        <p style="margin-top: 10px">
+            1、甲方有权在将合同项下的债权全部或者部分转让给第三方，甲方承诺，该笔债权只在丙方的平台进行转让。
+        </p>
+
+        <p style="margin-top: 10px">
+            2、该等债权转让只需通知乙方，无需乙方书面同意。该笔债权转让以站内信等方式通知乙方之时立即生效。
+        </p>
+
+        <p style="margin-top: 30px; font-weight: bold; color: #000">
+            第七条、服务费用
+        </p>
+
+        <p style="margin-top: 10px">
+            丙方（www.gofobao.com）为甲方及乙方提供居间服务，丙按照市场价格收取相应的居间服务费用。
+        </p>
+
+        <p style="margin-top: 30px; font-weight: bold; color: #000">
+            第八条、追索费用
+        </p>
+
+        <p style="margin-top: 10px">
+            如果乙方到期未归还借款本金及利息从而引致甲方或者丙方向乙方追索的，则甲方或者丙方因行使追索权而产生的包括但不限于诉讼费用、仲裁费用、律师费用等在内的一切实现债权的费用和开支，一概均由乙方负责承担。
+        </p>
+
+        <p style="margin-top: 30px; font-weight: bold; color: #000">
+            第九条：特别条款
+        </p>
+
+        <p style="margin-top: 10px">
+            1、乙方保证，乙方的借款用于合法用途，不将所借款项用于任何违法活动(包括但不限于赌博、吸毒、贩毒、卖淫嫖娼等)及一切高风险投资(如证券期货、彩票等)。如乙方违反前述保证或有违反前述保证的嫌疑，则甲方有权采取下列措施：
+        </p>
+
+        <p style="margin-top: 10px">（1）宣布提前收回全部借款；</p>
+
+        <p style="margin-top: 10px">（2）甲方向公安等有关行政机关举报，追回此款并追究乙方的刑事责任，甲方和乙方均同意并授权丙方采取前述措施。</p>
+
+        <p style="margin-top: 10px">
+            2、丙方仅作为小额资金互助平台,乙方和甲方均不得利用丙方平台进行信用卡套现和其他洗钱等不正当交易行为,否则丙方有权向公安等有关行政机关举报,追究其相关法律责任。
+        </p>
+
+        <p style="margin-top: 10px">3、甲方同意本合同项下的抵押登记等事宜由丙方指定的第三人代为办理。</p>
+
+        <p style="margin-top: 10px">4、甲方同意本合同项下的其他权利由丙方代为行使。</p>
+
+        <p style="margin-top: 30px; font-weight: bold; color: #000">
+            第十条、违约责任
+        </p>
+
+        <p style="margin-top: 10px">
+            本合同签订后，甲、乙、丙各方必须全面的履行本合同项下各自的义务及/或责任。违约方须对非违约承担相应之违约责任，赔偿非违约方因违约而遭致的一切经济损失。如果乙方违约，甲方或者丙方有权向有关个人征信系统予以披露，有权通过社会公告等形式追究其违约责任。
+        </p>
+
+        <p style="margin-top: 30px; font-weight: bold; color: #000">
+            第十一条、争议解决方式
+        </p>
+
+        <p style="margin-top: 10px">
+            合同履行过程中如发生争议，协商不成的，向丙方住所地有管辖权的人民法院提起诉讼。
+        </p>
+
+        <p style="margin-top: 10px">授权委托受托人以自己名义（或受托人转委托的第三方）代为办理汇票质押手续。</p>
+
+        <p style="margin-top: 30px; font-weight: bold; color: #000">
+            第十二条、生效及其他
+        </p>
+
+        <p style="margin-top: 10px">
+            1、本协议采用电子文本形式制成。
+        </p>
+
+        <p style="margin-top: 10px">
+            2、本协议自乙方在丙方发布的借款标的审核成功之日即签订日起生效,乙方、甲方、丙方各执一份,并具同等法律效力。
+        </p>
+
+        <p style="margin-top: 10px">
+            3、乙方、甲方在履行本协议过程中，应遵守丙方的各项规定。
+        </p>
+
+        <p style="margin-top: 10px">
+            4、甲方、乙方同意、授权或认可，丙方作为网络借款的中间平台根据本协议的规定和丙方的其他规定行使各项权利、发出各项通知或采取各项措施，一切法律后果和风险均由乙方或甲方承担。
+        </p>
+
+        <p style="margin-top: 10px">
+            5、丙方（广富宝www.gofobao.com）拥有对本协议的最终解释权。
+        </p>
+
+        <div
+                style="background:url('http://www.gofobao.com/front/images/company_mark.png') no-repeat; height:200px; width: 200px; position: absolute; top: 325px; right: 0px; z-index: 0">
+        </div>
+    </div>
+</div>
+</html>

@@ -1724,4 +1724,20 @@ public class TransferBizImpl implements TransferBiz {
         tender.setUpdatedAt(nowDate);
         tenderService.save(tender);
     }
+
+    /**
+     * 投标合同
+     * @param tenderId
+     * @param userId
+     * @return
+     */
+    @Override
+    public Map<String, Object> contract(Long tenderId, Long userId) {
+        try {
+            return transferService.transferContract(tenderId, userId);
+        } catch (Exception e) {
+            return null;
+        }
+
+    }
 }

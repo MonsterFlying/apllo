@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by admin on 2017/6/12.
@@ -25,17 +26,19 @@ public interface TransferBiz {
 
     /**
      * 查询债权转让购买记录
+     *
      * @return
      */
     ResponseEntity<VoViewTransferBuyLogList> findTransferBuyLog(VoFindTransferBuyLog voFindTransferBuyLog);
 
     /**
      * 结束债权转让
+     *
      * @param voEndTransfer
      * @return
      * @throws Exception
      */
-    ResponseEntity<VoBaseResp> endTransfer(VoEndTransfer voEndTransfer)throws Exception;
+    ResponseEntity<VoBaseResp> endTransfer(VoEndTransfer voEndTransfer) throws Exception;
 
     /**
      * 债权转让复审
@@ -43,7 +46,7 @@ public interface TransferBiz {
      * @param transferId
      * @return
      */
-    ResponseEntity<VoBaseResp> againVerifyTransfer(long transferId,String batchNo) throws Exception;
+    ResponseEntity<VoBaseResp> againVerifyTransfer(long transferId, String batchNo) throws Exception;
 
     /**
      * 债权转让初审
@@ -69,6 +72,7 @@ public interface TransferBiz {
 
     /**
      * 转让中
+     *
      * @param voTransferReq
      * @return
      */
@@ -76,6 +80,7 @@ public interface TransferBiz {
 
     /**
      * 已转让
+     *
      * @param voTransferReq
      * @return
      */
@@ -83,6 +88,7 @@ public interface TransferBiz {
 
     /**
      * 可转让
+     *
      * @param voTransferReq
      * @return
      */
@@ -90,6 +96,7 @@ public interface TransferBiz {
 
     /**
      * 已购买
+     *
      * @param voTransferReq
      * @return
      */
@@ -105,6 +112,7 @@ public interface TransferBiz {
 
     /**
      * 理财列表
+     *
      * @param voBorrowListReq
      * @return
      */
@@ -113,6 +121,7 @@ public interface TransferBiz {
 
     /**
      * pc理财列表
+     *
      * @param voBorrowListReq
      * @return
      */
@@ -120,6 +129,7 @@ public interface TransferBiz {
 
     /**
      * 获取转让标详情
+     *
      * @param transferId
      * @return
      */
@@ -127,6 +137,7 @@ public interface TransferBiz {
 
     /**
      * 通过投标记录ID取消债权转让
+     *
      * @param id
      */
     void cancelTransferByTenderId(Long id) throws Exception;
@@ -134,6 +145,7 @@ public interface TransferBiz {
 
     /**
      * 投标记录列表
+     *
      * @return
      */
     ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(VoTransferUserListReq transferUserListReq);
@@ -159,5 +171,11 @@ public interface TransferBiz {
      */
     List<BorrowCollection> addChildTenderCollection(Date nowDate, Transfer transfer, Borrow parentBorrow, List<Tender> childTenderList) throws Exception;
 
-
+    /**
+     * 投标合同
+     * @param tenderId
+     * @param userId
+     * @return
+     */
+    Map<String, Object> contract(Long tenderId, Long userId);
 }

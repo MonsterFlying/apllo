@@ -11,10 +11,13 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.Map;
 
 /**
  * Created by admin on 2017/6/12.
@@ -75,7 +78,7 @@ public class TransferController {
             voTransferTenderReq.setUserId(userId);
             return transferBiz.newTransferTender(voTransferTenderReq);
         } catch (Exception e) {
-            log.error("债权转让异常:",e);
+            log.error("债权转让异常:", e);
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后重试!"));
         }
     }
@@ -170,5 +173,21 @@ public class TransferController {
         transferUserListReq.setTransferId(transferId);
         return transferBiz.transferUserList(transferUserListReq);
     }
+
+
+    @ApiOperation(value = "债权合同")
+    @GetMapping(value = "pub/transfer/v2/transferProtocol/{tenderId}")
+    public ResponseEntity<String> takeRatesDesc(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable Long tenderId, HttpServletRequest request) throws Exception {
+        String content = "";
+        Map<String, Object> paramMaps = transferBiz.contract(tenderId, userId);
+        try {
+            content = thymeleafHelper.build("transferProtocol", paramMaps);
+        } catch (Exception e) {
+            e.printStackTrace();
+            content = thymeleafHelper.build("load_error", null);
+        }
+        return ResponseEntity.ok(content);
+    }
+
 
 }

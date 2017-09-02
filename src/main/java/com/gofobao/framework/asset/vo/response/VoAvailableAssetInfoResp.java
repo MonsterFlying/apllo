@@ -21,8 +21,8 @@ public class VoAvailableAssetInfoResp extends VoBaseResp {
     @ApiModelProperty("显示冻结金额")
     private String viewNoUseMoney;
 
-    @ApiModelProperty("总额")
+    @ApiModelProperty("净资产")
     private Long total;
-    @ApiModelProperty("显示总额")
+    @ApiModelProperty("净资产总额")
     private String viwTotal;
 }

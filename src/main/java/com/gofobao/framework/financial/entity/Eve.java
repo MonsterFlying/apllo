@@ -21,7 +21,7 @@ public class Eve {
     private Long id  ;
     private String acqcode  ;
     private String seqno  ;
-    private String cendt  ;
+    private String sendt  ;
     private String cardnbr  ;
     private String amount  ;
     private String crflag  ;
