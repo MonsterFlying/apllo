@@ -37,6 +37,7 @@ public class FundStatisticsScheduler {
 
     @Scheduled(cron = "0 0 3 * * ?")
     public void process() {
+        log.info("EVE对账系统任务调度启动！");
         boolean state = false;
         String date = jixinTxDateHelper.getSubDateStr(1);
         String resMsg ;

@@ -35,6 +35,7 @@ public class BorrowAdvanceScheduler {
 
     @Scheduled(cron = "0 55 23 * * ? ")
     public void process() {
+        log.info("借款自动垫付任务调度启动！");
         List<BorrowRepayment> borrowRepaymentList = null;
         List<Borrow> borrowList = null;
         List<Long> borrowIds = null;
