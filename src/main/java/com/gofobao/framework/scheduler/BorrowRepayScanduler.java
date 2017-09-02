@@ -105,25 +105,28 @@ public class BorrowRepayScanduler {
     }
 
     /**
-     *
+     * 每天早上9点 调度还款当日所需要还款的的官表
      */
-    @Scheduled(cron = "0 30 9 ? * *" )
+    //  @Scheduled(cron = "0 30 9 ? * *" )
+    @Scheduled(cron = "*/5 * * * * ? ")
     public void todayRepayment() {
         log.info("自动还款调度启动");
-        Date nowDate = new Date();
+        //Date nowDate = new Date();
+        Date nowDate = DateHelper.stringToDate("2017-10-1");
         String sqlStr = "SELECT r.* FROM  gfb_borrow_repayment r " +
                 "LEFT JOIN " +
-                    "gfb_borrow b " +
+                "gfb_borrow b " +
                 "ON " +
-                    "b.id=r.borrow_id  " +
+                "b.id=r.borrow_id  " +
                 "WHERE " +
-                    "r.status=:status " +
+                "r.status=:status " +
                 "AND  " +
-                    "r.repay_at<=:repayAt " +
+                "r.repay_at<=:repayAt " +
                 "AND " +
-                    "b.product_id IS NOT NULL "+
+                "b.product_id IS NOT NULL " +
                 "AND " +
-                    "(b.type=:type1 OR b.type=:type2)";
+                "(b.type=:type1 OR b.type=:type2)";
+
         Query query = entityManager.createNativeQuery(sqlStr, BorrowRepayment.class);
         query.setParameter("status", RepaymentContants.STATUS_NO);
         query.setParameter("repayAt", DateHelper.dateToString(DateHelper.endOfDate(nowDate)));
@@ -140,7 +143,7 @@ public class BorrowRepayScanduler {
                     repaymentBiz.newRepay(voRepayReq);
                     log.info(String.format("调度还款成功：打印还款期数信息:%s", new Gson().toJson(p)));
                 } catch (Exception e) {
-                    log.error("调度还款失败原因" , e);
+                    log.error("调度还款失败原因", e);
                     log.error(String.format("调度还款失败： 打印应款期数信息:%s", new Gson().toJson(p)));
                 }
             });
