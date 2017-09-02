@@ -63,14 +63,11 @@ public class BorrowController {
         return borrowBiz.findAll(voBorrowListReq);
     }
 
-
     @ApiOperation("非流转标信息")
     @GetMapping("/pub/borrow/v2/info/{borrowId}")
     public ResponseEntity<BorrowInfoRes> normalBorrowInfo(@PathVariable Long borrowId) {
         return borrowBiz.info(borrowId);
     }
-
-
 
     @ApiOperation("流转标信息")
     @GetMapping("/pub/transfer/v2/info/{transferId}")

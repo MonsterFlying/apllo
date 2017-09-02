@@ -15,4 +15,12 @@ public interface NewAssetLogService {
      * @return
      */
     Page<NewAssetLog> findAll(Specification<NewAssetLog> specification, Pageable pageable);
+
+    /**
+     * 查询资金记录
+     * @param assetLogSpecification
+     * @return
+     */
+    long count(Specification<NewAssetLog> assetLogSpecification);
+
 }
