@@ -64,7 +64,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
                 byte[] bytes = line.getBytes(StandardCharsets.UTF_8);
                 String acqcode = FormatHelper.getStrForUTF8(bytes, 0, 11);
                 String seqno = FormatHelper.getStrForUTF8(bytes, 11, 17);
-                String cendt = FormatHelper.getStrForUTF8(bytes, 17, 27);
+                String sendt = FormatHelper.getStrForUTF8(bytes, 17, 27);
                 String cardnbr = FormatHelper.getStrForUTF8(bytes, 27, 46);
                 String amount = FormatHelper.getStrForUTF8(bytes, 46, 58);
                 String crflag = FormatHelper.getStrForUTF8(bytes, 58, 59);
@@ -85,7 +85,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
                 Eve eve = new Eve();
                 eve.setAcqcode(acqcode);
                 eve.setSeqno(seqno);
-                eve.setCendt(cendt);
+                eve.setSendt(sendt);
                 eve.setCardnbr(cardnbr);
                 eve.setAmount(amount);
                 eve.setCrflag(crflag);
