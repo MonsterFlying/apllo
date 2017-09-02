@@ -4,6 +4,7 @@ import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.common.data.DataObject;
 import com.gofobao.framework.common.data.LeSpecification;
 import com.gofobao.framework.helper.DateHelper;
@@ -33,7 +34,7 @@ public class BorrowCancelScheduler {
     @Autowired
     private BorrowBiz borrowBiz;
 
-    @Scheduled(fixedRate=50000)
+    @Scheduled(fixedRate = 50000)
     public void process() {
         log.info("取消借款任务调度启动");
         Specification<Borrow> bs = Specifications
@@ -51,15 +52,22 @@ public class BorrowCancelScheduler {
             //筛选已过期的标的
             borrowList = borrowList.stream().filter(borrow ->
                     //当前时间>发布时间（时间+1）
-                    new Date().getTime()>DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1).getTime()).collect(Collectors.toList());
-            try {
-                if (CollectionUtils.isEmpty(borrowList)) {
-                    break;
-                }
-                borrowBiz.schedulerCancelBorrow(borrowList);
-            } catch (Exception e) {
-                log.info("borrowCancelSchedule 取消借款异常：", e);
+                    new Date().getTime() > DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1).getTime()).collect(Collectors.toList());
+
+            if (CollectionUtils.isEmpty(borrowList)) {
+                break;
             }
+            borrowList.stream().forEach(borrow -> {
+                VoCancelBorrow voCancelBorrow = new VoCancelBorrow();
+                voCancelBorrow.setUserId(borrow.getUserId());
+                voCancelBorrow.setBorrowId(borrow.getId());
+                try {
+                    borrowBiz.cancelBorrow(voCancelBorrow);
+                } catch (Exception e) {
+                    log.error("BorrowCancelScheduler process 取消标的失败：", e);
+                }
+            });
+
         } while (borrowList.size() >= pageSize);
     }
 }

@@ -1569,9 +1569,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "当前网络不稳定,请稍后重试!"));
         }
 
-        long currBal = new Double(new Double(balanceQueryResponse.getCurrBal()) * 100.0).longValue();// 可用余额  账面余额-可用余额=冻结金额
-        long localMoney = repayAsset.getUseMoney().longValue() + repayAsset.getNoUseMoney().longValue();
-        if (currBal < localMoney) {
+        double availBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0, 2);// 可用余额  账面余额-可用余额=冻结金额
+        if (availBal < repayAsset.getUseMoney().doubleValue()) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "资金账户未同步，请先在个人中心进行资金同步操作!"));
         }
 
@@ -2847,9 +2846,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
     /**
      * 更新垫付回款记录状态
+     *
      * @param borrowCollectionList
      */
-    private void updateCollectionByAdvance(List<BorrowCollection> borrowCollectionList){
+    private void updateCollectionByAdvance(List<BorrowCollection> borrowCollectionList) {
         borrowCollectionList.stream().forEach(borrowCollection -> {
             borrowCollection.setCollectionMoney(borrowCollection.getCollectionMoney());
             borrowCollection.setUpdatedAt(new Date());

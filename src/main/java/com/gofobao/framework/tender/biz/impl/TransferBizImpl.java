@@ -217,7 +217,7 @@ public class TransferBizImpl implements TransferBiz {
             voViewTransferBuyLog.setEarning(StringHelper.formatDouble(earnings, 100, true));
             voViewTransferBuyLog.setPrincipal(StringHelper.formatDouble(transferBuyLog.getPrincipal(), 100, true));
             voViewTransferBuyLog.setAlreadyInterest(StringHelper.formatDouble(transferBuyLog.getAlreadyInterest(), 100, true));
-            voViewTransferBuyLog.setTimeLimit(String.format("%s月",transfer.getTimeLimit()));
+            voViewTransferBuyLog.setTimeLimit(String.format("%s月", transfer.getTimeLimit()));
             voViewTransferBuyLogList.add(voViewTransferBuyLog);
         }
         VoViewTransferBuyLogList resp = VoBaseResp.ok("查询成功", VoViewTransferBuyLogList.class);
@@ -259,6 +259,7 @@ public class TransferBizImpl implements TransferBiz {
         //3.更改债权转让与购买债权转让记录状态
         transfer.setState(4);
         transfer.setUpdatedAt(new Date());
+        transfer.setSuccessAt(null);
         transferService.save(transfer);
         //4.取消购买债权并解冻金额
         transferBuyLogList.stream().forEach(transferBuyLog -> {
@@ -511,9 +512,9 @@ public class TransferBizImpl implements TransferBiz {
         long transferInterest = borrowCollectionList.stream().mapToLong(BorrowCollection::getInterest).sum();/* 债权转让总利息 */
         Date repayAt = transfer.getRepayAt();/* 原借款下一期还款日期 */
         Date startAt = null;/* 计息开始时间 */
-        if (parentBorrow.getRepayFashion() == 1){
+        if (parentBorrow.getRepayFashion() == 1) {
             startAt = DateHelper.subDays(repayAt, parentBorrow.getTimeLimit());
-        }else if (parentBorrow.getRepayFashion() == 0 || parentBorrow.getRepayFashion() == 4){
+        } else if (parentBorrow.getRepayFashion() == 0 || parentBorrow.getRepayFashion() == 4) {
             startAt = DateHelper.subMonths(repayAt, 1);
         }
 
@@ -574,7 +575,7 @@ public class TransferBizImpl implements TransferBiz {
             assetChange.setSourceId(childTender.getId());
             assetChange.setGroupSeqNo(groupSeqNo);
             assetChange.setSeqNo(seqNo);
-            assetChange.setRemark(String.format("投资[%s]成功, 添加待还%s元",transfer.getTitle() ,
+            assetChange.setRemark(String.format("投资[%s]成功, 添加待还%s元", transfer.getTitle(),
                     StringHelper.formatDouble(collectionMoney / 100D, true)));
             assetChange.setUserId(childTender.getUserId());
             assetChange.setMoney(collectionMoney);
@@ -893,7 +894,7 @@ public class TransferBizImpl implements TransferBiz {
         }
 
         double availBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0, 2);// 可用余额  账面余额-可用余额=冻结金额
-        if (availBal < validMoney) {
+        if (asset.getUseMoney() > availBal) {
             msg = "资金账户未同步，请先在个人中心进行资金同步操作!";
         }
         return ImmutableMap.of(MSG, msg);

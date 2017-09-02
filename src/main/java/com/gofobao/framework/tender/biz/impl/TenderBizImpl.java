@@ -307,7 +307,7 @@ public class TenderBizImpl implements TenderBiz {
         }
 
         double availBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0,2);// 可用余额  账面余额-可用余额=冻结金额
-        if (availBal < invaildataMoney) {
+        if (availBal < asset.getUseMoney()) {
             extendMessage.add("资金账户未同步，请先在个人中心进行资金同步操作!");
             return false;
         }
