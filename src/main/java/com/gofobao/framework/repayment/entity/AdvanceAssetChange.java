@@ -1,5 +1,6 @@
 package com.gofobao.framework.repayment.entity;
 
+import com.gofobao.framework.collection.entity.BorrowCollection;
 import lombok.Data;
 
 @Data
@@ -19,4 +20,9 @@ public class AdvanceAssetChange {
      * 逾期管理费
      */
     private long overdueFee ;
+
+    /**
+     * 回款记录
+     */
+    private BorrowCollection borrowCollection;
 }
