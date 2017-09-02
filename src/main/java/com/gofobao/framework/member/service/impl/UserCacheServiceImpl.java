@@ -138,10 +138,6 @@ public class UserCacheServiceImpl implements UserCacheService {
 
         Long waitExpenditureInterestManageFee=new Long(userCache.getWaitExpenditureInterestManageFee());
         Long netAsset=new Double((asset.getCollection()+asset.getNoUseMoney()+asset.getUseMoney())-asset.getPayment()).longValue();
-
-
-
-
         netProceedsDetails.setWaitInterest(StringHelper.formatMon(waitRepayInterest / 100D));
         netProceedsDetails.setWaitPrincipal(StringHelper.formatMon(waitRepayPrincipal / 100D));
 
@@ -154,6 +150,7 @@ public class UserCacheServiceImpl implements UserCacheService {
          */
         Long netIncomeTotal = userCache.getIncomeTotal() - sumExpend;
         statistic.setNetProceeds(StringHelper.formatMon(netIncomeTotal / 100D));
+
         /**
          * 待付支出总额
          */

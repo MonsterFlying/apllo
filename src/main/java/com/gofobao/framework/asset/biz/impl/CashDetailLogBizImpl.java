@@ -1014,12 +1014,11 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         UserCache userCache = userCacheService.findByUserIdLock(userId);
         Double money = 0D;
         if (asset.getPayment() > 0) {
-            Math.min((((asset.getUseMoney() + userCache.getWaitCollectionPrincipal()) * 0.8 - asset.getPayment())), asset.getUseMoney());
+            money = Math.min((((asset.getUseMoney() + userCache.getWaitCollectionPrincipal()) * 0.8 - asset.getPayment())), asset.getUseMoney());
         } else {
-            money = asset.getUseMoney() / 100D;
+            money = asset.getUseMoney() * 1D;
         }
 
-        money = ObjectUtils.isEmpty(money) ? 0 : money;
-        return asset.getPayment() > 0 ? money.longValue() : asset.getUseMoney();
+        return money.longValue();
     }
 }

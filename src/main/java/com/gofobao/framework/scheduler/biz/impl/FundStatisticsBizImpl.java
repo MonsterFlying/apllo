@@ -87,7 +87,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
                 eve.setSeqno(seqno);
                 eve.setSendt(sendt);
                 eve.setCardnbr(cardnbr);
-                eve.setAmount(new Double(new Long(amount) / 100).toString());  //保证元的问题
+                eve.setAmount(new Double(new Long(amount) / 100D).toString());  //保证元的问题
                 eve.setCrflag(crflag);
                 eve.setMsgtype(msgtype);
                 eve.setProccode(proccode);
@@ -155,7 +155,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
                 Aleve aleve = new Aleve();
                 aleve.setBank(bank);
                 aleve.setCardnbr(cardnbr);
-                aleve.setAmount(new Double(new Long(amount) / 100).toString());  // 保证元的问题
+                aleve.setAmount(new Double(new Long(amount) / 100D).toString());  // 保证元的问题
                 aleve.setCurNum(curNum);
                 aleve.setCrflag(crflag);
                 aleve.setValdate(valdate);
@@ -167,7 +167,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
                 aleve.setTranstype(transtype);
                 aleve.setTranstype(transtype);
                 aleve.setDesline(desline);
-                aleve.setCurrBal(new Double(new Long(currBal) / 100).toString()); // 保证元的问题
+                aleve.setCurrBal(new Double(new Long(currBal) / 100D).toString()); // 保证元的问题
                 aleve.setForcardnbr(forcardnbr);
                 aleve.setRevind(revind);
                 aleve.setResv(resv);
