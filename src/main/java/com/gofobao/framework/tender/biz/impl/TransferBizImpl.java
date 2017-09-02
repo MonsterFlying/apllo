@@ -217,7 +217,7 @@ public class TransferBizImpl implements TransferBiz {
             voViewTransferBuyLog.setEarning(StringHelper.formatDouble(earnings, 100, true));
             voViewTransferBuyLog.setPrincipal(StringHelper.formatDouble(transferBuyLog.getPrincipal(), 100, true));
             voViewTransferBuyLog.setAlreadyInterest(StringHelper.formatDouble(transferBuyLog.getAlreadyInterest(), 100, true));
-            voViewTransferBuyLog.setTimeLimit(String.format("%s月",transfer.getTimeLimit()));
+            voViewTransferBuyLog.setTimeLimit(String.format("%s月", transfer.getTimeLimit()));
             voViewTransferBuyLogList.add(voViewTransferBuyLog);
         }
         VoViewTransferBuyLogList resp = VoBaseResp.ok("查询成功", VoViewTransferBuyLogList.class);
@@ -511,9 +511,9 @@ public class TransferBizImpl implements TransferBiz {
         long transferInterest = borrowCollectionList.stream().mapToLong(BorrowCollection::getInterest).sum();/* 债权转让总利息 */
         Date repayAt = transfer.getRepayAt();/* 原借款下一期还款日期 */
         Date startAt = null;/* 计息开始时间 */
-        if (parentBorrow.getRepayFashion() == 1){
+        if (parentBorrow.getRepayFashion() == 1) {
             startAt = DateHelper.subDays(repayAt, parentBorrow.getTimeLimit());
-        }else if (parentBorrow.getRepayFashion() == 0 || parentBorrow.getRepayFashion() == 4){
+        } else if (parentBorrow.getRepayFashion() == 0 || parentBorrow.getRepayFashion() == 4) {
             startAt = DateHelper.subMonths(repayAt, 1);
         }
 
@@ -574,7 +574,7 @@ public class TransferBizImpl implements TransferBiz {
             assetChange.setSourceId(childTender.getId());
             assetChange.setGroupSeqNo(groupSeqNo);
             assetChange.setSeqNo(seqNo);
-            assetChange.setRemark(String.format("投资[%s]成功, 添加待还%s元",transfer.getTitle() ,
+            assetChange.setRemark(String.format("投资[%s]成功, 添加待还%s元", transfer.getTitle(),
                     StringHelper.formatDouble(collectionMoney / 100D, true)));
             assetChange.setUserId(childTender.getUserId());
             assetChange.setMoney(collectionMoney);
@@ -1722,5 +1722,21 @@ public class TransferBizImpl implements TransferBiz {
         tender.setTransferFlag(0);
         tender.setUpdatedAt(nowDate);
         tenderService.save(tender);
+    }
+
+    /**
+     * 投标合同
+     * @param tenderId
+     * @param userId
+     * @return
+     */
+    @Override
+    public Map<String, Object> contract(Long tenderId, Long userId) {
+        try {
+            return transferService.transferContract(tenderId, userId);
+        } catch (Exception e) {
+            return null;
+        }
+
     }
 }

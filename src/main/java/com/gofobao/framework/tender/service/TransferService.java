@@ -45,6 +45,12 @@ public interface TransferService {
 
     List<Transfer> save(List<Transfer> transferList);
 
+    /**
+     * 转让合同
+     * @param transferId
+     * @return
+     */
+    Map<String,Object> transferContract(Long transferId,Long userId);
 
 
 }
