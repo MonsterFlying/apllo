@@ -108,7 +108,7 @@ public class BorrowRepayScanduler {
      * 每天早上9点 调度还款当日所需要还款的的官表
      */
     //  @Scheduled(cron = "0 30 9 ? * *" )
-    @Scheduled(cron = "*/5 * * * * ? ")
+/*    @Scheduled(cron = "*//*5 * * * * ? ")*/
     public void todayRepayment() {
         log.info("自动还款调度启动");
         //Date nowDate = new Date();

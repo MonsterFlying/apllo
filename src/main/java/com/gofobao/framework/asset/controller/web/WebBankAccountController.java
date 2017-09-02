@@ -56,8 +56,10 @@ public class WebBankAccountController {
     }
 
     @ApiOperation("联行号")
-    @GetMapping("pub/unionLineNo/pc/list")
-    public ResponseEntity<UnionLineNoWarpRes> unionLineNOList(VoUnionLineNoReq unionLineNoReq) {
+    @GetMapping("unionLineNo/pc/list")
+    public ResponseEntity<UnionLineNoWarpRes> unionLineNOList(VoUnionLineNoReq unionLineNoReq,
+                                                              @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        unionLineNoReq.setUserId(userId);
         return lineNumberBiz.list(unionLineNoReq);
     }
 
