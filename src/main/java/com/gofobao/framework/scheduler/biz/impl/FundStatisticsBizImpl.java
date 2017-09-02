@@ -53,7 +53,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
         String fileName = String.format("%s-EVE%s-%s", bankNo, productNo, date);
         boolean downloadState = jixinFileManager.download(fileName);
         if (!downloadState) {
-            throw new Exception(String.format("EVE: %s 下载失败", fileName)) ;
+            throw new Exception(String.format("EVE: %s 下载失败", fileName));
         }
         File file = new File(String.format("%s%s%s", filePath, File.separator, fileName));
         BufferedReader bufferedReader = Files.newReader(file, StandardCharsets.UTF_8);
@@ -64,7 +64,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
                 byte[] bytes = line.getBytes(StandardCharsets.UTF_8);
                 String acqcode = FormatHelper.getStrForUTF8(bytes, 0, 11);
                 String seqno = FormatHelper.getStrForUTF8(bytes, 11, 17);
-                String cendt = FormatHelper.getStrForUTF8(bytes, 17, 27);
+                String sendt = FormatHelper.getStrForUTF8(bytes, 17, 27);
                 String cardnbr = FormatHelper.getStrForUTF8(bytes, 27, 46);
                 String amount = FormatHelper.getStrForUTF8(bytes, 46, 58);
                 String crflag = FormatHelper.getStrForUTF8(bytes, 58, 59);
@@ -85,9 +85,9 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
                 Eve eve = new Eve();
                 eve.setAcqcode(acqcode);
                 eve.setSeqno(seqno);
-                eve.setCendt(cendt);
+                eve.setSendt(sendt);
                 eve.setCardnbr(cardnbr);
-                eve.setAmount(amount);
+                eve.setAmount(new Double(new Long(amount) / 100).toString());  //保证元的问题
                 eve.setCrflag(crflag);
                 eve.setMsgtype(msgtype);
                 eve.setProccode(proccode);
@@ -121,7 +121,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean doAleve(String date) throws Exception {
-        String fileName = String.format("%s-ALEVE%s-%s", bankNo, productNo,  date);
+        String fileName = String.format("%s-ALEVE%s-%s", bankNo, productNo, date);
         boolean downloadState = jixinFileManager.download(fileName);
         if (!downloadState) {
             log.error(String.format("ALEVE: %s下载失败", fileName));
@@ -155,7 +155,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
                 Aleve aleve = new Aleve();
                 aleve.setBank(bank);
                 aleve.setCardnbr(cardnbr);
-                aleve.setAmount(amount);
+                aleve.setAmount(new Double(new Long(amount) / 100).toString());  // 保证元的问题
                 aleve.setCurNum(curNum);
                 aleve.setCrflag(crflag);
                 aleve.setValdate(valdate);
@@ -167,17 +167,17 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
                 aleve.setTranstype(transtype);
                 aleve.setTranstype(transtype);
                 aleve.setDesline(desline);
-                aleve.setCurrBal(currBal);
+                aleve.setCurrBal(new Double(new Long(currBal) / 100).toString()); // 保证元的问题
                 aleve.setForcardnbr(forcardnbr);
                 aleve.setRevind(revind);
                 aleve.setResv(resv);
-                aleve.setCreateAt(nowDate) ;
+                aleve.setCreateAt(nowDate);
                 aleve.setQueryDate(date);
                 List<Aleve> aleves = aleveService.findByTranno(aleve.getTranno());
                 if (!CollectionUtils.isEmpty(aleves)) {
                     log.error(String.format("ALEVE 重数据: %s", line));
                 }
-                aleveService.save(aleve) ;
+                aleveService.save(aleve);
             } catch (Exception e) {
                 log.error("保存eve到数据库失败", e);
             }

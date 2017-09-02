@@ -79,8 +79,6 @@ public class JixinFileManager {
         RestTemplate restTemplate = new RestTemplate(new ArrayList<HttpMessageConverter<?>>() {{
             add(new GsonHttpMessageConverter());
         }});
-
-        log.info(String.format("文件下载请求体 : URL: %s  BODY: %s", fileUrl, GSON.toJson(params)));
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(fileUrl, HttpMethod.POST, entity, Map.class);
@@ -91,7 +89,6 @@ public class JixinFileManager {
         checkNotNull(response);
         // 验证参数
         String bodyJson = GSON.toJson(response.getBody());
-        log.info(String.format("文件下载响应体: %s", bodyJson));
         Map<String, String> responseMap = GSON.fromJson(bodyJson, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         Map<String, String> mapOfRemoveFile = new HashMap<>(responseMap);
         mapOfRemoveFile.remove("FILE");

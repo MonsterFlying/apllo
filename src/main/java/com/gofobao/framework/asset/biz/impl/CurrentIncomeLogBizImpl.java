@@ -96,7 +96,7 @@ public class CurrentIncomeLogBizImpl implements CurrentIncomeLogBiz {
             for (Eve eve : eveList) {
                 double money = NumberHelper.toDouble(StringUtils.trimAllWhitespace(eve.getAmount())); // 金额
                 String accountId = StringUtils.trimAllWhitespace(eve.getCardnbr()); // 账号
-                String tranDateStr = StringUtils.trimAllWhitespace(eve.getCendt());  //原始跟踪号
+                String tranDateStr = StringUtils.trimAllWhitespace(eve.getSendt());  //原始跟踪号
                 String seqNo = StringUtils.trimAllWhitespace(eve.getSeqno());  // 序列号
                 String no = String.format("20%s%s", tranDateStr, seqNo);
                 List<CurrentIncomeLog> currentIncomeLogs = currentIncomeLogService.findBySeqNoAndState(no, 1);

@@ -40,8 +40,10 @@ import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.SecurityHelper;
+import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
@@ -113,6 +115,9 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     @Autowired
     AssetChangeProvider assetChangeProvider;
 
+    @Autowired
+    UserCacheService userCacheService;
+
     @Value("${gofobao.javaDomain}")
     String javaDomain;
 
@@ -160,13 +165,13 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        if(StringUtils.isEmpty(userThirdAccount.getCardNo())){
-            return  ResponseEntity.badRequest().body(VoBaseResp.error(ERROR_BIND_BANK_CARD,"对不起,您的账号还未绑定银行卡",VoPreCashResp.class));
+        if (StringUtils.isEmpty(userThirdAccount.getCardNo())) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(ERROR_BIND_BANK_CARD, "对不起,您的账号还未绑定银行卡", VoPreCashResp.class));
         }
         ResponseEntity<VoBaseResp> checkResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
-        if(!checkResponse.getStatusCode().equals(HttpStatus.OK)){
+        if (!checkResponse.getStatusCode().equals(HttpStatus.OK)) {
             VoPreCashResp voPreCashResp = VoBaseResp.error(checkResponse.getBody().getState().getCode(), checkResponse.getBody().getState().getMsg(), VoPreCashResp.class);
-            return ResponseEntity.badRequest().body(voPreCashResp) ;
+            return ResponseEntity.badRequest().body(voPreCashResp);
         }
 
         BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
@@ -195,8 +200,8 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         // 判断当前用户资金是否一直
         Asset asset = assetService.findByUserIdLock(userId);
         // 本地资金大于存管资金
-        Long currBal =  new Double(new Double(balanceQueryResponse.getCurrBal()) * 100).longValue()   ;
-        if(currBal < asset.getNoUseMoney() + asset.getUseMoney()) {
+        Long currBal = new Double(new Double(balanceQueryResponse.getCurrBal()) * 100).longValue();
+        if (currBal < asset.getNoUseMoney() + asset.getUseMoney()) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前客户本地金额大于存管金额,请联系客服吧", VoPreCashResp.class));
@@ -206,7 +211,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         resp.setBankName(userThirdAccount.getBankName());
         resp.setLogo(String.format("%s/%s", javaDomain, userThirdAccount.getBankLogo()));
         resp.setCardNo(userThirdAccount.getCardNo().substring(userThirdAccount.getCardNo().length() - 4));
-        resp.setUseMoneyShow(StringHelper.formatDouble( realCashMoney/ 100D, true));
+        resp.setUseMoneyShow(StringHelper.formatDouble(realCashMoney / 100D, true));
         resp.setUseMoney(realCashMoney / 100D);
         int time = queryFreeTime(userId);
         resp.setFreeTime(time);
@@ -243,7 +248,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoHtmlResp.class));
         }
-        if(StringUtils.isEmpty(userThirdAccount.getCardNo())){
+        if (StringUtils.isEmpty(userThirdAccount.getCardNo())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_BIND_BANK_CARD, "对不起!你的账号还未绑定银行卡号", VoHtmlResp.class));
@@ -321,10 +326,10 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         withDrawRequest.setTxFee(StringHelper.formatDouble(new Double(fee / 100D), false));
         withDrawRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, userId));
 
-        Integer requestSource=Integer.valueOf(httpServletRequest.getHeader("requestSource").toString());
-        if(requestSource==0){
+        Integer requestSource = Integer.valueOf(httpServletRequest.getHeader("requestSource").toString());
+        if (requestSource == 0) {
             withDrawRequest.setRetUrl(String.format("%s/%s", pcDomain, "account/cash"));
-        }else{
+        } else {
             withDrawRequest.setRetUrl(String.format("%s/%s/%s", javaDomain, "pub/cash/show/", withDrawRequest.getTxDate() + withDrawRequest.getTxTime() + withDrawRequest.getSeqNo()));
         }
 
@@ -1006,10 +1011,14 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
      */
     private Long getRealCashMoney(Long userId) {
         Asset asset = assetService.findByUserIdLock(userId);
-        ImmutableList<Integer> stateList = ImmutableList.of(0, 1);
-        List<CashDetailLog> cashDetailLogs = cashDetailLogService.findByStateInAndUserId(stateList, userId);
-        long cashingMoney = cashDetailLogs.stream().mapToLong(p -> p.getMoney()).sum();  // 正在提现金额
-        Double money = Math.min((((asset.getUseMoney() + asset.getCollection()) * 0.8 - asset.getPayment()) - cashingMoney), asset.getUseMoney());
+        UserCache userCache = userCacheService.findByUserIdLock(userId);
+        Double money = 0D;
+        if (asset.getPayment() > 0) {
+            Math.min((((asset.getUseMoney() + userCache.getWaitCollectionPrincipal()) * 0.8 - asset.getPayment())), asset.getUseMoney());
+        } else {
+            money = asset.getUseMoney() / 100D;
+        }
+
         money = ObjectUtils.isEmpty(money) ? 0 : money;
         return asset.getPayment() > 0 ? money.longValue() : asset.getUseMoney();
     }
