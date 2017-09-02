@@ -309,6 +309,7 @@ public class InvestServiceImpl implements InvestService {
         Integer timeLimit = 0;    //期限
         Integer apr = 0;   //年华率
         Date successAt = null;  //
+        Boolean  falg=false;
         if (StringUtils.isEmpty(tender.getTransferBuyId())) {
             timeLimit = borrow.getTimeLimit();
             apr = borrow.getApr();
@@ -348,6 +349,7 @@ public class InvestServiceImpl implements InvestService {
                 item.setRepayFashion(BorrowContants.REPAY_FASHION_MONTH_STR);
                 item.setSuccessAt(transfer.getState() == TransferContants.TRANSFERED ? DateHelper.dateToString(transfer.getSuccessAt()) : "");
             }
+            falg=true;
         }
         if (tender.getState() != TenderConstans.BIDDING) {
             //应收利息
@@ -374,6 +376,7 @@ public class InvestServiceImpl implements InvestService {
         item.setApr(StringHelper.formatMon(apr / 100D));
         item.setStatus(tender.getState());
         item.setMoney(StringHelper.formatMon(tender.getValidMoney() / 100D));
+        item.setIsTransfer(falg);
         item.setBorrowId(borrow.getId());
         item.setTenderId(tender.getId());
         return item;

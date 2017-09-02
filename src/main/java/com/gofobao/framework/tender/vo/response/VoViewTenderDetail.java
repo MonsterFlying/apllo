@@ -53,5 +53,7 @@ public class VoViewTenderDetail {
     @ApiModelProperty("投标ID")
     private Long tenderId;
 
+    @ApiModelProperty("是否是摘转")
+    private Boolean isTransfer;
 
 }
