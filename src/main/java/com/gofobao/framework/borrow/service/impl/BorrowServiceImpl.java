@@ -253,7 +253,7 @@ public class BorrowServiceImpl implements BorrowService {
             item.setIsConversion(m.getIsConversion());
             item.setIsVouch(m.getIsVouch());
             item.setTenderCount(m.getTenderCount());
-            item.setAvatar(user.getAvatarPath());
+            item.setAvatar(StringUtils.isEmpty(user.getAvatarPath())?imageDomain+"/images/user/default_avatar.jpg":user.getAvatarPath());
             listResList.add(item);
         });
 

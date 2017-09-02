@@ -414,7 +414,7 @@ public class TransferServiceImpl implements TransferService {
         if (ObjectUtils.isEmpty(transfer)) {
             return resultMap;
         }
-        //借款信息
+        //用户投资信息
         Map<String, Object> borrowMap = Maps.newHashMap();
         Users users = userService.findById(transfer.getUserId());
         borrowMap.put("username",StringUtils.isEmpty(users.getUsername()) ? UserHelper.hideChar(users.getPhone(),UserHelper.PHONE_NUM)  :UserHelper.hideChar(users.getUsername(),UserHelper.USERNAME_NUM));
@@ -430,7 +430,7 @@ public class TransferServiceImpl implements TransferService {
         Integer timeLimit = transfer.getTimeLimit();
         borrowMap.put("timeLimit", timeLimit);
         Long buyUserId = transferBuyLog.getUserId();
-        //
+        //借款信息
         Users buyUsers = userService.findById(buyUserId);
         List<Map<String, Object>> tenderMapList = Lists.newArrayList();
         Map<String, Object> tenderMap = Maps.newHashMap();

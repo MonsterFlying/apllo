@@ -1518,6 +1518,7 @@ public class TransferBizImpl implements TransferBiz {
             item.setTimeLimit(transfer.getTimeLimit() + BorrowContants.MONTH);
             item.setTenderCount(transfer.getTenderCount());
             item.setUserName(StringUtils.isEmpty(users.getUsername()) ? UserHelper.hideChar(users.getPhone(), UserHelper.PHONE_NUM) : UserHelper.hideChar(users.getUsername(), UserHelper.USERNAME_NUM));
+            item.setAvatar(StringUtils.isEmpty(users.getAvatarPath())?imageDomain+"/images/user/default_avatar.jpg":users.getAvatarPath());
             item.setType(5);
             double spend = Double.parseDouble(StringHelper.formatMon(transfer.getTransferMoneyYes().doubleValue() / transfer.getTransferMoney())) * 100;
             item.setSpend(spend);
