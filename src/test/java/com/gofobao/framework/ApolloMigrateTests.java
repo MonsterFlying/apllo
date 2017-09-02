@@ -76,7 +76,6 @@ public class ApolloMigrateTests {
         migrateTenderBiz.getTenderMigrateFile();
     }
 
-
     /**
      * 提交投标迁移数据
      */
