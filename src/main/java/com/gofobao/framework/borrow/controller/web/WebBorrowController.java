@@ -58,7 +58,6 @@ public class WebBorrowController {
     @Value("${jwt.prefix}")
     private String prefix;
 
-
     @Autowired
     private TransferBiz transferBiz;
 
