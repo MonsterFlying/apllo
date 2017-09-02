@@ -6,9 +6,11 @@ import com.gofobao.framework.system.entity.IncrStatistic;
 import com.gofobao.framework.system.entity.Statistic;
 import com.gofobao.framework.system.service.IncrStatisticService;
 import com.gofobao.framework.system.service.StatisticService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
@@ -19,6 +21,8 @@ import java.util.Map;
 /**
  * Created by Zeke on 2017/7/10.
  */
+@Component
+@Slf4j
 public class IncrStatisticScheduler {
 
     @Autowired
@@ -31,6 +35,7 @@ public class IncrStatisticScheduler {
 
     @Scheduled(cron = "0 30 0 * * ? ")
     public void process() {
+        log.info("每日统计任务调度启动!");
         Date startDate = DateHelper.beginOfDate(DateHelper.subDays(new Date(), 1));
         Date endDate = DateHelper.endOfDate(startDate);
 

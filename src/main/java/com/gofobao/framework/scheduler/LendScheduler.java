@@ -28,6 +28,7 @@ public class LendScheduler {
 
     @Scheduled(cron = "0 3 0 * * ? ")
     public void process() {
+        log.info("取消摘草任务调度启动");
         Specification<Lend> ls = Specifications
                 .<Lend>and()
                 .eq("status", 0)

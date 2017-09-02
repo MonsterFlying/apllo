@@ -21,6 +21,7 @@ public class DailyAssetBackupScheduler {
 
     @Scheduled(cron = "0 0 0 * * ? ")
     public void process() {
+        log.info("每天备份资产记录任务调度启动");
         try {
             String yesterdayDate = DateHelper.dateToString(DateHelper.subDays(new Date(), 1), DateHelper.DATE_FORMAT_YMD);
             StringBuffer sql = new StringBuffer("delete from gfb_daily_asset WHERE `date` =  ")

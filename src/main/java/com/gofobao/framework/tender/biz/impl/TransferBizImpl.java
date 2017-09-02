@@ -1609,7 +1609,7 @@ public class TransferBizImpl implements TransferBiz {
         borrowInfoRes.setStatus(transfer.getState());
         //进度
         borrowInfoRes.setSurplusSecond(-1L);
-        //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
+        //0.待审核 1.转让中 2.已转让 3.审核未通过 4.已取消',
         Integer status = transfer.getState();
         if (status == 1) {//招标中
             borrowInfoRes.setStatus(3);
@@ -1617,11 +1617,8 @@ public class TransferBizImpl implements TransferBiz {
                 borrowInfoRes.setStatus(6);
             }
         } else {
-            if (ObjectUtils.isEmpty(borrow.getCloseAt())) {
-                borrowInfoRes.setStatus(2);
-            } else {
-                borrowInfoRes.setStatus(4);
-            }
+            borrowInfoRes.setStatus(4);
+            borrowInfoRes.setSuccessAt(DateHelper.dateToString(transfer.getSuccessAt()));
         }
         borrowInfoRes.setReleaseAt(DateHelper.dateToString(transfer.getReleaseAt()));
         borrowInfoRes.setBorrowId(borrowId);
@@ -1643,7 +1640,6 @@ public class TransferBizImpl implements TransferBiz {
         borrowInfoRes.setHideLowMoney(borrow.getLowest());
         borrowInfoRes.setIsFlow(true);
         borrowInfoRes.setAvatar(imageDomain + "/data/images/avatar/" + borrow.getUserId() + "_avatar_small.jpg");
-        borrowInfoRes.setReleaseAt(status != 1 ? DateHelper.dateToString(borrow.getReleaseAt()) : "");
         borrowInfoRes.setLockStatus(borrow.getIsLock());
         return ResponseEntity.ok(borrowInfoRes);
     }

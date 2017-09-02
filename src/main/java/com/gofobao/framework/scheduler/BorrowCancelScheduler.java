@@ -35,6 +35,7 @@ public class BorrowCancelScheduler {
 
     @Scheduled(fixedRate=50000)
     public void process() {
+        log.info("取消借款任务调度启动");
         Specification<Borrow> bs = Specifications
                 .<Borrow>and()
                 .eq("status", 1)
