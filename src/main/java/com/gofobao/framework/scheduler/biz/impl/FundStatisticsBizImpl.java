@@ -232,6 +232,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
         Date startDate = DateHelper.beginOfDate(nowDate);
         Date endDate = DateHelper.beginOfDate(DateHelper.addDays(startDate, 1));
 
+        log.info("获取本地资金流水");
         // 获取用户
         Specification<NewAssetLog> assetLogSpecification = Specifications.
                 <NewAssetLog>and()
@@ -279,7 +280,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
             }
         }
 
-
+        log.info("即信资金流水");
         XSSFSheet jixinSheet = xwb.createSheet("即信资金流水");
         createJixinTitle(jixinSheet);
         // 获取用户
@@ -320,6 +321,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
             }
         }
 
+        log.info("资金比对");
         XSSFSheet assetSheel = xwb.createSheet("资金比对");
         createAssetTitle(assetSheel);
 
@@ -362,12 +364,12 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
             }
         }
 
-        httpServletResponse.setContentType("application/vnd.ms-excel");
-        httpServletResponse.setHeader("Content-disposition", "attachment;filename=" + date + ".xls");
-        OutputStream ouputStream = httpServletResponse.getOutputStream();
-        xwb.write(ouputStream);
-        ouputStream.flush();
-        ouputStream.close();
+        httpServletResponse.setHeader("Content-Disposition", "attachment;filename=" + new String(date.getBytes("utf-8"), "iso8859-1"));// 设置头信息
+        httpServletResponse.setContentType("application/ynd.ms-excel;charset=UTF-8");
+        OutputStream out = httpServletResponse.getOutputStream();
+        xwb.write(out);// 进行输出，下载到本地
+        out.flush();
+        out.close();
     }
 
     private void createAssetTitle(XSSFSheet assetSheel) {

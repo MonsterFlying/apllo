@@ -4,6 +4,7 @@ package com.gofobao.framework.scheduler.controller;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.scheduler.FundStatisticsScheduler;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletResponse;
 
 @RestController
+@Slf4j
 public class FinancialController {
     @Autowired
     FundStatisticsScheduler fundStatisticsScheduler;
@@ -45,10 +47,10 @@ public class FinancialController {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
             return;
         }
-
         try {
             fundStatisticsBiz.downFundFile(httpServletResponse, date);
         } catch (Exception e) {
+            log.error("资金流水", e);
             return;
         }
     }
