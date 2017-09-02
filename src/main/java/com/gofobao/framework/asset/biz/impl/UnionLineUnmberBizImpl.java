@@ -46,25 +46,29 @@ public class UnionLineUnmberBizImpl implements UnionLineNumberBiz {
         Specification<UnionLineNumber> specification = Specifications.<UnionLineNumber>and()
                 .eq(!StringUtils.isEmpty(unionLineNoReq.getCityId()), "city", unionLineNoReq.getCityId())
                 .eq(!StringUtils.isEmpty(unionLineNoReq.getProvinceId()), "province", unionLineNoReq.getProvinceId())
-                .like("bankname", "%" + userInfoResp.getSubbranch() + "%")
+                .like("bankName", "%" + userInfoResp.getSubbranch() + "%")
                 .like(!StringUtils.isEmpty(unionLineNoReq.getKeyword()), "address", "%" + unionLineNoReq.getKeyword() + "%")
                 .build();
-        Page<UnionLineNumber> unionLineNumbers = unionLineNumberService.findAll(specification, new PageRequest(unionLineNoReq.getPageIndex(), unionLineNoReq.getPageSize(), new Sort(Sort.Direction.DESC, "id")));
-        List<UnionLineNumber> lineNumbers = unionLineNumbers.getContent();
-        if (CollectionUtils.isEmpty(lineNumbers)) {
-            return ResponseEntity.ok(warpRes);
+        try {
+            Page<UnionLineNumber> unionLineNumbers = unionLineNumberService.findAll(specification, new PageRequest(unionLineNoReq.getPageIndex(), unionLineNoReq.getPageSize(), new Sort(Sort.Direction.DESC, "id")));
+            List<UnionLineNumber> lineNumbers = unionLineNumbers.getContent();
+            if (CollectionUtils.isEmpty(lineNumbers)) {
+                return ResponseEntity.ok(warpRes);
+            }
+            warpRes.setTotalCount(unionLineNumbers.getTotalElements());
+            List<UnionLineNo> unionLineNos = Lists.newArrayList();
+            lineNumbers.forEach(p -> {
+                UnionLineNo unionLineNo = new UnionLineNo();
+                unionLineNo.setAddress(p.getAddress());
+                unionLineNo.setBankName(p.getBankName());
+                unionLineNo.setNumber(p.getNumber());
+                unionLineNo.setId(p.getId());
+                unionLineNos.add(unionLineNo);
+            });
+            warpRes.setUnionLineNos(unionLineNos);
+        }catch (Exception e){
+            e.printStackTrace();
         }
-        warpRes.setTotalCount(unionLineNumbers.getTotalElements());
-        List<UnionLineNo> unionLineNos = Lists.newArrayList();
-        lineNumbers.forEach(p -> {
-            UnionLineNo unionLineNo = new UnionLineNo();
-            unionLineNo.setAddress(p.getAddress());
-            unionLineNo.setBankName(p.getBankName());
-            unionLineNo.setNumber(p.getNumber());
-            unionLineNo.setId(p.getId());
-            unionLineNos.add(unionLineNo);
-        });
-        warpRes.setUnionLineNos(unionLineNos);
         return ResponseEntity.ok(warpRes);
     }
 }

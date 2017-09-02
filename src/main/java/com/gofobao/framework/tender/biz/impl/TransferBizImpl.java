@@ -259,6 +259,7 @@ public class TransferBizImpl implements TransferBiz {
         //3.更改债权转让与购买债权转让记录状态
         transfer.setState(4);
         transfer.setUpdatedAt(new Date());
+        transfer.setSuccessAt(null);
         transferService.save(transfer);
         //4.取消购买债权并解冻金额
         transferBuyLogList.stream().forEach(transferBuyLog -> {
@@ -893,7 +894,7 @@ public class TransferBizImpl implements TransferBiz {
         }
 
         double availBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0, 2);// 可用余额  账面余额-可用余额=冻结金额
-        if (availBal < validMoney) {
+        if (asset.getUseMoney() > availBal) {
             msg = "资金账户未同步，请先在个人中心进行资金同步操作!";
         }
         return ImmutableMap.of(MSG, msg);

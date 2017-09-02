@@ -30,6 +30,7 @@ import com.gofobao.framework.repayment.repository.BorrowRepaymentRepository;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -69,6 +70,10 @@ public class LendServiceImpl implements LendService {
 
     @Autowired
     private UsersRepository usersRepository;
+
+
+    @Value("${gofobao.javaDomain}")
+    private String javaDomain;
 
     public Lend insert(Lend lend) {
         if (ObjectUtils.isEmpty(lend)) {
@@ -139,10 +144,12 @@ public class LendServiceImpl implements LendService {
                 lend.setSpend(1d);
                 lend.setStatusStr(LendContants.STATUS_YES_STR);
             }
+            lend.setAvatar(StringUtils.isEmpty(user.getAvatarPath())?javaDomain+"/images/user/default_avatar.jpg":user.getAvatarPath());
             lend.setReleaseAt(DateHelper.dateToString(p.getCreatedAt()));
             lend.setCollectionAt(DateHelper.dateToString(p.getRepayAt()));
             lend.setSpend(Double.parseDouble(StringHelper.formatMon(p.getMoneyYes() / new Double(p.getMoney()))));
             lend.setLimit(p.getTimeLimit());
+            lend.setStartMoney(StringHelper.formatMon(p.getLowest()/100D));
             lend.setStatus(p.getStatus());
             lendListRes.add(lend);
         });
