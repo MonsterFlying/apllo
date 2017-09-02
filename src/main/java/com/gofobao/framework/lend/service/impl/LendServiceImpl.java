@@ -144,7 +144,7 @@ public class LendServiceImpl implements LendService {
                 lend.setSpend(1d);
                 lend.setStatusStr(LendContants.STATUS_YES_STR);
             }
-            lend.setAvatar(StringUtils.isEmpty(user.getAvatarPath())?javaDomain+"static/images/user/default_avatar.jpg":user.getAvatarPath());
+            lend.setAvatar(StringUtils.isEmpty(user.getAvatarPath())?javaDomain+"/static/images/user/default_avatar.jpg":user.getAvatarPath());
             lend.setReleaseAt(DateHelper.dateToString(p.getCreatedAt()));
             lend.setCollectionAt(DateHelper.dateToString(p.getRepayAt()));
             lend.setSpend(Double.parseDouble(StringHelper.formatMon(p.getMoneyYes() / new Double(p.getMoney()))));
