@@ -380,8 +380,7 @@ public class LoanServiceImpl implements LoanService {
             int lateDays = DateHelper.diffInDays(DateHelper.beginOfDate(new Date()), DateHelper.beginOfDate(p.getRepayAt()), false);
             voLoanInfo.setLateDays(lateDays < 1 ? 0 : lateDays);
             voLoanInfo.setInterest(StringHelper.formatMon(p.getInterest() / 100D));
-            voLoanInfo.setRepayAt(DateHelper.dateToString(p.getRepayAt()));
-
+            voLoanInfo.setRepayAt(p.getStatus() == RepaymentContants.STATUS_YES ?DateHelper.dateToString(p.getRepayAtYes()):DateHelper.dateToString(p.getRepayAt()));
             voLoanInfo.setRepayMoney(p.getStatus() == RepaymentContants.STATUS_YES ? StringHelper.formatMon(p.getRepayMoneyYes() / 100D) : StringHelper.formatMon(p.getRepayMoney() / 100D));
             voLoanInfo.setStatusStr(p.getStatus() == RepaymentContants.STATUS_YES ? RepaymentContants.STATUS_YES_STR : RepaymentContants.STATUS_NO_STR);
             voLoanInfoList.add(voLoanInfo);
