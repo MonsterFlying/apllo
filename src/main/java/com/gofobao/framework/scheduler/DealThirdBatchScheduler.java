@@ -90,6 +90,6 @@ public class DealThirdBatchScheduler {
                 }
             });
         } while (thirdBatchLogList.size() >= pageSize);
-
+        log.info("################批次调度结束####################");
     }
 }
