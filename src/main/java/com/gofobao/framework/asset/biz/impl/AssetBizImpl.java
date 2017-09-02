@@ -930,7 +930,7 @@ public class AssetBizImpl implements AssetBiz {
         VoAvailableAssetInfoResp resp = VoBaseResp.ok("查询成功", VoAvailableAssetInfoResp.class);
         Long noUserMoney = asset.getNoUseMoney();
         Long userMoney = asset.getUseMoney();
-        Long total = (asset.getNoUseMoney() + asset.getUseMoney());
+        Long total = (asset.getNoUseMoney() + asset.getUseMoney() + asset.getCollection() - asset.getPayment());
 
         resp.setNoUseMoney(noUserMoney);
         resp.setViewNoUseMoney(StringHelper.formatMon(noUserMoney / 100d));
