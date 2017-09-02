@@ -176,7 +176,7 @@ public class TransferController {
 
 
     @ApiOperation(value = "债权合同")
-    @GetMapping(value = "pub/transfer/v2/transferProtocol/{tenderId}")
+    @GetMapping(value = "transfer/v2/transferProtocol/{tenderId}")
     public ResponseEntity<String> takeRatesDesc(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable Long tenderId, HttpServletRequest request) throws Exception {
         String content = "";
         Map<String, Object> paramMaps = transferBiz.contract(tenderId, userId);
