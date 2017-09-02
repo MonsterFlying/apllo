@@ -1569,9 +1569,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "当前网络不稳定,请稍后重试!"));
         }
 
-        long currBal = new Double(new Double(balanceQueryResponse.getCurrBal()) * 100.0).longValue();// 可用余额  账面余额-可用余额=冻结金额
-        long localMoney = repayAsset.getUseMoney().longValue() + repayAsset.getNoUseMoney().longValue();
-        if (currBal < localMoney) {
+        double availBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0, 2);// 可用余额  账面余额-可用余额=冻结金额
+        if (availBal < repayAsset.getUseMoney().doubleValue()) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "资金账户未同步，请先在个人中心进行资金同步操作!"));
         }
 
@@ -1727,6 +1726,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             batchAssetChangeItem.setCreatedAt(nowDate);
             batchAssetChangeItem.setUpdatedAt(nowDate);
             batchAssetChangeItem.setSeqNo(seqNo);
+            batchAssetChangeItem.setSourceId(borrowCollection.getId());
             batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
             batchAssetChangeItem.setRemark(String.format("收到客户对借款[%s]第%s期的还款", borrow.getName(), (borrowRepayment.getOrder() + 1)));
             batchAssetChangeItemService.save(batchAssetChangeItem);
@@ -2598,6 +2598,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             advanceAssetChange.setUserId(borrowCollection.getUserId());
             advanceAssetChange.setInterest(intAmount);
             advanceAssetChange.setPrincipal(principal);
+            advanceAssetChange.setBorrowCollection(borrowCollection);
 
             if ((lateDays > 0) && (lateInterest > 0)) {  //借款人逾期罚息
                 int overdueFee = new Double(tender.getValidMoney() / new Double(borrow.getMoney()) * lateInterest / 2D).intValue();// 出借人收取50% 逾期管理费 ;
@@ -2640,11 +2641,14 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param seqNo
      * @param groupSeqNo
      */
-    private void doGenerateAssetChangeRecodeByAdvance(Borrow borrow, BorrowRepayment borrowRepayment, List<AdvanceAssetChange> advanceAsserChange, BatchAssetChange batchAssetChange, UserThirdAccount titularBorrowAccount, String seqNo, String groupSeqNo) throws ExecutionException {
+    private void doGenerateAssetChangeRecodeByAdvance(Borrow borrow, BorrowRepayment borrowRepayment, List<AdvanceAssetChange> advanceAsserChangeList, BatchAssetChange batchAssetChange, UserThirdAccount titularBorrowAccount, String seqNo, String groupSeqNo) throws ExecutionException {
         long batchAssetChangeId = batchAssetChange.getId();
         Date nowDate = new Date();
 
-        for (AdvanceAssetChange advanceAssetChange : advanceAsserChange) {
+        for (AdvanceAssetChange advanceAssetChange : advanceAsserChangeList) {
+            /* 回款记录 */
+            BorrowCollection borrowCollection = advanceAssetChange.getBorrowCollection();
+
             BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();   // 还款本金和利息
             batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
             batchAssetChangeItem.setState(0);
@@ -2654,6 +2658,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             batchAssetChangeItem.setMoney(advanceAssetChange.getPrincipal() + advanceAssetChange.getInterest());   // 本金加利息
             batchAssetChangeItem.setInterest(advanceAssetChange.getInterest());  // 利息
             batchAssetChangeItem.setRemark(String.format("收到客户对借款[%s]第%s期的还款", borrow.getName(), (borrowRepayment.getOrder() + 1)));
+            batchAssetChangeItem.setSourceId(borrowCollection.getId());
             batchAssetChangeItem.setSeqNo(seqNo);
             batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
             batchAssetChangeItemService.save(batchAssetChangeItem);
@@ -2847,9 +2852,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
     /**
      * 更新垫付回款记录状态
+     *
      * @param borrowCollectionList
      */
-    private void updateCollectionByAdvance(List<BorrowCollection> borrowCollectionList){
+    private void updateCollectionByAdvance(List<BorrowCollection> borrowCollectionList) {
         borrowCollectionList.stream().forEach(borrowCollection -> {
             borrowCollection.setCollectionMoney(borrowCollection.getCollectionMoney());
             borrowCollection.setUpdatedAt(new Date());

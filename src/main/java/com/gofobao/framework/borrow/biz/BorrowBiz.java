@@ -34,14 +34,6 @@ public interface BorrowBiz {
     ResponseEntity<VoBaseResp> pcCancelBorrow(VoPcCancelThirdBorrow voPcCancelThirdBorrow) throws Exception;
 
     /**
-     * 调度取消过期的标
-     *
-     * @param borrowList
-     * @return
-     */
-    void schedulerCancelBorrow(List<Borrow> borrowList);
-
-    /**
      * 新增净值借款
      *
      * @param voAddNetWorthBorrow
