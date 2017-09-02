@@ -177,15 +177,14 @@ public class TransferController {
 
     @ApiOperation(value = "标合同")
     @GetMapping(value = "pub/transfer/v2/transferProtocol/{tenderId}")
-    public ResponseEntity<String> takeRatesDesc(/*@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,*/ @PathVariable Long tenderId, HttpServletRequest request) throws Exception {
-        Long userId=44958L;
+    public ResponseEntity<String> takeRatesDesc(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable Long tenderId, HttpServletRequest request) throws Exception {
         String content = "";
         Map<String, Object> paramMaps = transferBiz.contract(tenderId, userId);
         try {
             content = thymeleafHelper.build("transferProtocol", paramMaps);
         } catch (Exception e) {
             e.printStackTrace();
-            //content = thymeleafHelper.build("load_error", null);
+            content = thymeleafHelper.build("load_error", null);
         }
         return ResponseEntity.ok(content);
     }

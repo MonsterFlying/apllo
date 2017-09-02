@@ -70,6 +70,8 @@ public class TransferServiceImpl implements TransferService {
     @Autowired
     private TransferRepository transferRepository;
 
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private TransferBuyLogRepository transferBuyLogService;
@@ -379,8 +381,6 @@ public class TransferServiceImpl implements TransferService {
         return resultMap;
     }
 
-    @Autowired
-    private UserService userService;
 
     /**
      * 债转合同
