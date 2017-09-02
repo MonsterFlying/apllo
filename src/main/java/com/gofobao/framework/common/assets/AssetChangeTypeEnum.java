@@ -99,13 +99,13 @@ public enum AssetChangeTypeEnum {
     /**
      * 借款人扣除还款违约金
      */
-    repayPaymentsViolation("扣除还款违约金", "repayPaymentsViolation", "7781", "add@useMoney", "add@incomeOther", "D"),
+    repayPaymentsViolation("扣除还款违约金", "repayPaymentsViolation", "7781", "sub@useMoney", "add@expenditureOther", "D"),
 
 
     /**
      * 投资人收到还款违约金
      */
-    receivedPaymentsViolation("收到还款违约金", "receivedPaymentsViolation", "7781", "add@useMoney", "add@expenditureOther", "D"),
+    receivedPaymentsViolation("收到还款违约金", "receivedPaymentsViolation", "7781", "add@useMoney", "add@incomeOther", "D"),
 
     /**
      * 投资人收到滞纳金
