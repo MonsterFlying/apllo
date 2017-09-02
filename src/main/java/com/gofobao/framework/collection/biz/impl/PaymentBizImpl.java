@@ -36,7 +36,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletResponse;
@@ -101,24 +100,22 @@ public class PaymentBizImpl implements PaymentBiz {
                         .build();
                 List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
                 Preconditions.checkState(!CollectionUtils.isEmpty(borrowRepaymentList), "还款记录不存在!");
-                BorrowRepayment borrowRepayment = borrowRepaymentList.get(0);
-
                 item.setBorrowName(borrow.getName());
                 item.setCollectionId(borrowCollection.getId());
                 item.setOrder(borrowCollection.getOrder() + 1);
                 item.setTimeLime(borrow.getTimeLimit());
                 item.setCollectionMoney(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100d));
-                if(borrowCollection.getStatus()==BorrowCollectionContants.STATUS_YES ) {
+                if(borrowCollection.getStatus() == BorrowCollectionContants.STATUS_YES ) {  // 已还款
                     item.setCollectionMoneyYes(StringHelper.formatMon(borrowCollection.getCollectionMoneyYes() / 100d));
-                }else if (!ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes())){
-                    item.setCollectionMoneyYes(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100d));
                     sumCollectionMoneyYes += borrowCollection.getCollectionMoney();
+                }else{
+                    item.setCollectionMoneyYes(StringHelper.formatMon( 0 ));
                 }
+
                 orderResList.add(item);
             }
 
             warpResp.setSumCollectionMoneyYes(StringHelper.formatMon(sumCollectionMoneyYes / 100d));
-
             VoViewCollectionOrderListWarpResp warpRes = VoBaseResp.ok("查询成功", VoViewCollectionOrderListWarpResp.class);
             //总回款期数
             warpRes.setOrder(orderResList.size());
