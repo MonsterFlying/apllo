@@ -149,6 +149,7 @@ public class LendServiceImpl implements LendService {
             lend.setCollectionAt(DateHelper.dateToString(p.getRepayAt()));
             lend.setSpend(Double.parseDouble(StringHelper.formatMon(p.getMoneyYes() / new Double(p.getMoney()))));
             lend.setLimit(p.getTimeLimit());
+            lend.setStartMoney(StringHelper.formatMon(p.getLowest()/100D));
             lend.setStatus(p.getStatus());
             lendListRes.add(lend);
         });

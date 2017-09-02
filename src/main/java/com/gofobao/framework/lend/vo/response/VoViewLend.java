@@ -30,6 +30,8 @@ public class VoViewLend {
     private String releaseAt;
     @ApiModelProperty("头像")
     private String avatar;
+    @ApiModelProperty("起借金额")
+    private String startMoney;
 
 
 }
