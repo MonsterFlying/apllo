@@ -12,4 +12,5 @@ public interface FinancialSchedulerService {
 
     void save(FinancialScheduler financialScheduler);
 
+    FinancialScheduler findById(long id);
 }
