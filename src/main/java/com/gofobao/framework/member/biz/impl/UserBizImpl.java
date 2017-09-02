@@ -106,12 +106,8 @@ public class UserBizImpl implements UserBiz {
     @Value("${jwt.prefix}")
     String prefix;
 
-    @Value("${gofobao.imageDomain}")
-    String imageDomain;
-
     @Value("${gofobao.javaDomain}")
     String javaDomain;
-
 
     @Value("${qiniu.sk}")
     String SECRET_KEY;
@@ -125,7 +121,6 @@ public class UserBizImpl implements UserBiz {
     @Value("${qiniu.bucket}")
     String bucketname;
 
-
     @Autowired
     JwtTokenHelper jwtTokenHelper;
 
@@ -134,6 +129,9 @@ public class UserBizImpl implements UserBiz {
 
     @Autowired
     private IntegralService integralService;
+
+    @Value("${gofobao.imageDomain}")
+    private String imageDomain;
 
     /**
      * @param request       请求
@@ -201,6 +199,7 @@ public class UserBizImpl implements UserBiz {
         users.setBranch(0);
         users.setSource(channel);
         users.setInviteCode(GenerateInviteCodeHelper.getRandomCode()); // 生成用户邀请码
+        users.setAvatarPath(imageDomain+"/images/user/default_avatar.jpg");
         users.setParentId(parentId);
         users.setParentAward(0);
         users.setCreatedAt(now);

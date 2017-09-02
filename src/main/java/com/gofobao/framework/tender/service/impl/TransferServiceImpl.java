@@ -425,8 +425,8 @@ public class TransferServiceImpl implements TransferService {
         borrowMap.put("repayFashion", 0);
         borrowMap.put("id",transfer.getBorrowId());
         borrowMap.put("money", StringHelper.formatMon(transfer.getTransferMoney() / 100D));
-        borrowMap.put("monthAsReimbursement", StringUtils.isEmpty(transfer.getSuccessAt()) ? null : "每月" + DateHelper.dateToString(transfer.getSuccessAt()));
-        borrowMap.put("borrowExpireAtStr",DateHelper.endOfDate(DateHelper.addDays(transfer.getReleaseAt(),1)));
+        borrowMap.put("monthAsReimbursement", StringUtils.isEmpty(transfer.getSuccessAt()) ? null : "每月" + DateHelper.dateToString(transfer.getSuccessAt(),DateHelper.DATE_FORMAT_YMD));
+        borrowMap.put("borrowExpireAtStr",DateHelper.dateToString(DateHelper.endOfDate(DateHelper.addDays(transfer.getReleaseAt(),1))));
         Integer timeLimit = transfer.getTimeLimit();
         borrowMap.put("timeLimit", timeLimit);
         Long buyUserId = transferBuyLog.getUserId();

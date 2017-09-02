@@ -27,7 +27,6 @@ public class UnionLineNumber {
     @Column(name = "bank_id")
     private Integer bank;
 
-    @Basic
     @Column(name = "bankname")
     private String bankName;
 
