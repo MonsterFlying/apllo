@@ -67,7 +67,8 @@ public class BankAccountController {
 
     @ApiOperation("联行号")
     @GetMapping("pub/unionLineNo/list")
-    public ResponseEntity<UnionLineNoWarpRes> unionLineNOList(VoUnionLineNoReq unionLineNoReq) {
+    public ResponseEntity<UnionLineNoWarpRes> unionLineNOList(VoUnionLineNoReq unionLineNoReq,@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        unionLineNoReq.setUserId(userId);
         return lineNumberBiz.list(unionLineNoReq);
     }
 

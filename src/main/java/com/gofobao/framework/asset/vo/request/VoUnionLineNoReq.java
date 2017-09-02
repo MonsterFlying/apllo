@@ -1,6 +1,7 @@
 package com.gofobao.framework.asset.vo.request;
 
 import com.gofobao.framework.common.page.Page;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 /**
@@ -14,4 +15,7 @@ public class VoUnionLineNoReq extends Page {
     private Integer provinceId;
 
     private String keyword;
+
+    private Long userId;
+
 }
