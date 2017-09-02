@@ -16,4 +16,9 @@ public class FinancialSchedulerServiceImpl implements FinancialSchedulerService 
     public void save(FinancialScheduler financialScheduler) {
         financialSchedulerRepository.save(financialScheduler) ;
     }
+
+    @Override
+    public FinancialScheduler findById(long id) {
+        return financialSchedulerRepository.findOne(id) ;
+    }
 }

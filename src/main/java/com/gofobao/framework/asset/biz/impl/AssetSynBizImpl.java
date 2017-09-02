@@ -1,5 +1,6 @@
 package com.gofobao.framework.asset.biz.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
@@ -16,7 +17,6 @@ import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.AssetLogService;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
-import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
@@ -25,6 +25,8 @@ import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.financial.entity.Aleve;
+import com.gofobao.framework.financial.service.AleveService;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -37,13 +39,17 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -80,6 +86,9 @@ public class AssetSynBizImpl implements AssetSynBiz {
 
     @Autowired
     MqHelper mqHelper;
+
+    @Autowired
+    AleveService aleveService;
 
     public static final Gson GSON = new Gson();
 
@@ -155,7 +164,6 @@ public class AssetSynBizImpl implements AssetSynBiz {
             seqNo = String.format("%s%s%s", accountDetailsQueryItem.getInpDate(), accountDetailsQueryItem.getInpTime(), accountDetailsQueryItem.getTraceNo());
             RechargeDetailLog rechargeDetailLog = rechargeDetailLogService.findTopBySeqNo(seqNo);
             if (!ObjectUtils.isEmpty(rechargeDetailLog)) {
-                log.info(String.format("线下转账已经同步%s", seqNo));
                 continue;
             }
 
@@ -193,6 +201,82 @@ public class AssetSynBizImpl implements AssetSynBiz {
             ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
             mqConfig.setMsg(body);
             mqHelper.convertAndSend(mqConfig);
+        }
+
+        return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean doOffLineRechargeByAleve(String date) throws Exception {
+        Specification<Aleve> specification = Specifications
+                .<Aleve>and()
+                .eq("queryDate", date)
+                .eq("transtype", "7820")
+                .build();
+
+        Long account = aleveService.count(specification);
+        if (account == 0) {
+            log.info("全网线下同步: aleve查询记录为空");
+            return false;
+        }
+
+        int pageSize = 1000;
+        int pageIndexTotal = account.intValue() / pageSize;
+        pageIndexTotal = account % pageSize == 0 ? pageIndexTotal : pageIndexTotal + 1;
+        Date nowDate = new Date();
+        for (int pageIndex = 0; pageIndex < pageIndexTotal; pageIndex++) {
+            Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
+            Page<Aleve> lists = aleveService.findAll(specification, pageable);
+            if (CollectionUtils.isEmpty(lists.getContent())) {
+                break;
+            }
+
+            List<Aleve> content = lists.getContent();
+            for (Aleve aleve : content) {
+                String seqNo = String.format("%s%s%s", aleve.getInpdate(), aleve.getInptime(), aleve.getTranno());
+                RechargeDetailLog rechargeDetailLog = rechargeDetailLogService.findTopBySeqNo(seqNo);
+                if (!ObjectUtils.isEmpty(rechargeDetailLog)) {
+                    continue;
+                }
+
+                UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(aleve.getCardnbr());
+                Preconditions.checkNotNull(userThirdAccount, "AssetSynBizImpl.doOffLineRechargeByAleve: userThirdAccount is empty");
+                Double money = new Double(aleve.getAmount()) * 100;
+                rechargeDetailLog = new RechargeDetailLog();
+                rechargeDetailLog.setUserId(userThirdAccount.getUserId());
+                rechargeDetailLog.setBankName(userThirdAccount.getBankName());
+                rechargeDetailLog.setCallbackTime(nowDate);
+                rechargeDetailLog.setCreateTime(nowDate);
+                rechargeDetailLog.setUpdateTime(nowDate);
+                rechargeDetailLog.setCardNo(userThirdAccount.getCardNo());
+                rechargeDetailLog.setDel(0);
+                rechargeDetailLog.setState(1); // 充值成功
+                rechargeDetailLog.setMoney(money.longValue());
+                rechargeDetailLog.setRechargeChannel(1);  // 其他渠道
+                rechargeDetailLog.setRechargeType(1); // 线下充值
+                rechargeDetailLog.setSeqNo(seqNo);
+                rechargeDetailLogService.save(rechargeDetailLog);
+
+                AssetChange assetChange = new AssetChange();
+                assetChange.setType(AssetChangeTypeEnum.offlineRecharge);  // 招标失败解除冻结资金
+                assetChange.setUserId(userThirdAccount.getUserId());
+                assetChange.setMoney(money.longValue());
+                assetChange.setRemark(String.format("成功线下充值%s元", StringHelper.formatDouble(money.longValue() / 100D, true)));
+                assetChange.setSourceId(rechargeDetailLog.getId());
+                assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+                assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
+                assetChangeProvider.commonAssetChange(assetChange);
+
+                // 触发用户充值
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setTag(MqTagEnum.RECHARGE);
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+                mqConfig.setSendTime(DateHelper.addSeconds(nowDate, 30));
+                ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
+                mqConfig.setMsg(body);
+                mqHelper.convertAndSend(mqConfig);
+            }
         }
 
         return true;

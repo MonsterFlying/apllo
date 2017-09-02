@@ -906,7 +906,7 @@ public class BorrowBizImpl implements BorrowBiz {
         //用戶投資送紅包
         userTenderRedPackage(tenderList);
         // 借款人资金变动
-        processBorrowAssetChange(borrow, tenderList, nowDate, groupSeqNo);
+        processBorrowAssetChange(borrow, borrowRepaymentList, groupSeqNo);
         // 满标操作
         finishBorrow(borrow);
         //更新网站统计
@@ -971,12 +971,11 @@ public class BorrowBizImpl implements BorrowBiz {
      * 处理借款人资金变动问题
      *
      * @param borrow
-     * @param tenderList
-     * @param startAt
+     * @param borrowRepaymentList
      * @param groupSeqNo
      * @throws Exception
      */
-    private void processBorrowAssetChange(Borrow borrow, List<Tender> tenderList, Date startAt, String groupSeqNo) throws Exception {
+    private void processBorrowAssetChange(Borrow borrow, List<BorrowRepayment> borrowRepaymentList, String groupSeqNo) throws Exception {
         long takeUserId = ObjectUtils.isEmpty(borrow.getTakeUserId()) ? borrow.getUserId() : borrow.getTakeUserId();
         // 放款
         AssetChange borrowAssetChangeEntity = new AssetChange();
@@ -991,30 +990,20 @@ public class BorrowBizImpl implements BorrowBiz {
 
         // 获取待还
         long feeId = assetChangeProvider.getFeeAccountId();  // 收费账户
-        long collectionMoney = 0;
-        long collectionInterest = 0;
-        for (Tender tender : tenderList) {
-            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
-                    NumberHelper.toDouble(StringHelper.toString(tender.getValidMoney())),
-                    NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), startAt);
-            Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
-            List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
-            Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
-            for (int i = 0; i < repayDetailList.size(); i++) {
-                Map<String, Object> repayDetailMap = repayDetailList.get(i);
-                collectionMoney += NumberHelper.toLong(repayDetailMap.get("repayMoney"));
-                collectionInterest += NumberHelper.toLong(repayDetailMap.get("interest"));
-            }
-        }
+
+        /* 待还金额 */
+        long repaymentMoney = borrowRepaymentList.stream().mapToLong(BorrowRepayment::getRepayMoney).sum();
+        /* 待还利息 */
+        long repaymentInterest = borrowRepaymentList.stream().mapToLong(BorrowRepayment::getInterest).sum();
 
         // 添加待还
         AssetChange paymentAssetChangeEntity = new AssetChange();
         paymentAssetChangeEntity.setSourceId(borrow.getId());
         paymentAssetChangeEntity.setGroupSeqNo(groupSeqNo);
-        paymentAssetChangeEntity.setMoney(collectionMoney);
-        paymentAssetChangeEntity.setInterest(collectionInterest);
+        paymentAssetChangeEntity.setMoney(repaymentMoney);
+        paymentAssetChangeEntity.setInterest(repaymentInterest);
         paymentAssetChangeEntity.setSeqNo(assetChangeProvider.getSeqNo());
-        paymentAssetChangeEntity.setRemark(String.format("添加待还金额%s元", StringHelper.formatDouble(collectionMoney / 100D, true)));
+        paymentAssetChangeEntity.setRemark(String.format("添加待还金额%s元", StringHelper.formatDouble(repaymentMoney / 100D, true)));
         paymentAssetChangeEntity.setType(AssetChangeTypeEnum.paymentAdd);
         paymentAssetChangeEntity.setUserId(takeUserId);
         assetChangeProvider.commonAssetChange(paymentAssetChangeEntity);  // 放款

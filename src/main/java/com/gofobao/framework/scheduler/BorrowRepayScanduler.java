@@ -47,17 +47,16 @@ public class BorrowRepayScanduler {
     @Autowired
     private RepaymentBiz repaymentBiz;
 
-    @Scheduled(cron = "0 50 23 * * ? ")
     public void process() {
         borrowRepay();
     }
 
-    @Scheduled(cron = "0 00 23 * * ? ")
     public void process01() {
         borrowRepay();
     }
 
     private void borrowRepay() {
+        log.info("");
         Specification<BorrowRepayment> brs = Specifications
                 .<BorrowRepayment>and()
                 .eq("status", 0)
@@ -110,6 +109,7 @@ public class BorrowRepayScanduler {
      */
     @Scheduled(cron = "0 30 9 ? * *" )
     public void todayRepayment() {
+        log.info("自动还款调度启动");
         Date nowDate = new Date();
         String sqlStr = "SELECT r.* FROM  gfb_borrow_repayment r " +
                 "LEFT JOIN " +

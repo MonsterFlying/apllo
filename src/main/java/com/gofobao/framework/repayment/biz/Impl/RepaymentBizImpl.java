@@ -2494,15 +2494,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
         // 垫付金额 = sum(垫付本金 + 垫付利息)
         double txAmount = creditInvestList.stream().mapToDouble(w -> NumberHelper.toDouble(w.getTxAmount())).sum();
         try {
-/*            BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
-            balanceFreezeReq.setAccountId(titularBorrowAccount.getAccountId());
-            balanceFreezeReq.setTxAmount(StringHelper.formatDouble(txAmount, false));
-            balanceFreezeReq.setOrderId(freezeOrderId);
-            balanceFreezeReq.setChannel(ChannelContant.HTML);
-            BalanceFreezeResp balanceFreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BalanceFreezeResp.class);
-            if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceFreezeResp.getRetCode()))) {
-                throw new Exception("即信批次名义借款人垫付冻结资金失败：" + balanceFreezeResp.getRetMsg());
-            }*/
 
             // 垫付还款冻结
             long frozenMoney = new Double(txAmount * 100).longValue();
@@ -2571,7 +2562,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      * @throws Exception
      */
-    public List<CreditInvest> calculateAdvancePlan(Borrow borrow, UserThirdAccount titularBorrowAccount, Map<Long, Transfer> transferMaps, Map<Long, TransferBuyLog> transferBuyLogMaps, List<Tender> tenderList, Map<Long/* tenderId */, BorrowCollection> borrowCollectionMaps, List<AdvanceAssetChange> advanceAssetChanges, int lateDays, long lateInterest) throws Exception {
+    public List<CreditInvest> calculateAdvancePlan(Borrow borrow, UserThirdAccount titularBorrowAccount, Map<Long, Transfer> transferMaps, Map<Long, TransferBuyLog> transferBuyLogMaps,
+                                                   List<Tender> tenderList, Map<Long/* tenderId */, BorrowCollection> borrowCollectionMaps, List<AdvanceAssetChange> advanceAssetChanges,
+                                                   int lateDays, long lateInterest) throws Exception {
 
         /* 垫付记录集合 */
         List<CreditInvest> creditInvestList = new ArrayList<>();
@@ -2846,8 +2839,23 @@ public class RepaymentBizImpl implements RepaymentBiz {
         updateUserCacheByReceivedRepay(borrowCollectionList, parentBorrow);
         //9.项目回款短信通知
         smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
+        //10修改垫付原回款状态
+        updateCollectionByAdvance(borrowCollectionList);
 
         return ResponseEntity.ok(VoBaseResp.ok("垫付处理成功!"));
+    }
+
+    /**
+     * 更新垫付回款记录状态
+     * @param borrowCollectionList
+     */
+    private void updateCollectionByAdvance(List<BorrowCollection> borrowCollectionList){
+        borrowCollectionList.stream().forEach(borrowCollection -> {
+            borrowCollection.setCollectionMoney(borrowCollection.getCollectionMoney());
+            borrowCollection.setUpdatedAt(new Date());
+            borrowCollection.setStatus(1);
+        });
+        borrowCollectionService.save(borrowCollectionList);
     }
 
     /**
