@@ -745,9 +745,20 @@ CREATE TABLE `gfb_third_error_remark` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=873 DEFAULT CHARSET=utf8;
 
+create table gfb_financial_scheduler
+(
+  id int auto_increment primary key,
+  name varchar(255) default '' null comment '调度名称',
+  data varchar(1024) default '' null comment '调度数据',
+  do_num int default '0' null comment '调度此处',
+  res_msg varchar(1024) default '' null comment '结果',
+  create_at datetime null comment '调度创建时间',
+  update_at datetime null comment '更新时间',
+  state int default '0' null comment '调度状态(0, 失败, 1.成功)'
+)ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8;
 ALTER TABLE gfb_financial_scheduler COMMENT = '对账系统调度';
 
-INSERT INTO `gfb0810`.`gfb_dict_value` (`ID`, `ITEM_ID`, `VALUE01`, `VALUE02`, `VALUE03`, `VALUE04`, `VALUE05`, `VALUE06`, `CREATE_TIME`, `UPDATE_TIME`, `CREATE_ID`, `UPDATE_ID`, `NAME`, `DEL`) VALUES ('90', '7', 'takeUserId', '实际收款人', '45184', '', '', '', '2017-09-01 14:37:17', '2017-09-01 14:37:20', '0', '0', '', '0');
+INSERT INTO gfb_dict_value (`ID`, `ITEM_ID`, `VALUE01`, `VALUE02`, `VALUE03`, `VALUE04`, `VALUE05`, `VALUE06`, `CREATE_TIME`, `UPDATE_TIME`, `CREATE_ID`, `UPDATE_ID`, `NAME`, `DEL`) VALUES ('90', '7', 'takeUserId', '实际收款人', '45184', '', '', '', '2017-09-01 14:37:17', '2017-09-01 14:37:20', '0', '0', '', '0');
 
 ALTER TABLE gfb_eve ADD query_date VARCHAR(8) DEFAULT '' NULL COMMENT '查询时间';
 ALTER TABLE gfb_aleve ADD query_date VARCHAR(8) DEFAULT '' NULL COMMENT '查询时间';
