@@ -1271,7 +1271,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         addBatchAssetChangeByBorrower(batchAssetChange.getId(), borrowRepayment, parentBorrow, interestPercent, isUserOpen, lateInterest, repayUserId, seqNo, groupSeqNo, advance);
         // 正常还款
         ResponseEntity resp = normalRepay(freezeOrderId, acqResMap, repayUserThirdAccount, borrowRepayment, parentBorrow,
-                lateInterest, interestPercent, batchNo, batchAssetChange, seqNo, groupSeqNo, lateDays, advance);
+                lateInterest, interestPercent, batchNo, batchAssetChange, seqNo, groupSeqNo, lateDays, advance,repayAsset);
 
         return resp;
     }
@@ -1428,7 +1428,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
                                                    String seqNo,
                                                    String groupSeqNo,
                                                    int lateDays,
-                                                   boolean advance) throws Exception {
+                                                   boolean advance,
+                                                   Asset repayAsset) throws Exception {
         Date nowDate = new Date();
         log.info("批次还款: 进入正常还款流程");
 
@@ -1476,10 +1477,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
         double freezeMoney = txAmount + txFeeOut + intAmount;/* 冻结金额 */
         // 冻结还款金额
         long money = new Double((freezeMoney) * 100).longValue();
-        /*ResponseEntity<VoBaseResp> resp = checkAssetByRepay(repayAsset, money);
+        ResponseEntity<VoBaseResp> resp = checkAssetByRepay(repayAsset, money);
         if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
             throw new Exception(resp.getBody().getState().getMsg());
-        }*/
+        }
 
         BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
         balanceFreezeReq.setAccountId(repayUserThirdAccount.getAccountId());
@@ -1544,6 +1545,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if ((ObjectUtils.isEmpty(balanceUnfreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnFreezeResp.getRetCode()))) {
                 throw new Exception("正常还款解冻资金异常：" + balanceUnFreezeResp.getRetMsg());
             }
+            throw new Exception(e);
         }
         return ResponseEntity.ok(VoBaseResp.ok("还款正常"));
     }
