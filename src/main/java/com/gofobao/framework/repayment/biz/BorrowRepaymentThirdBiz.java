@@ -101,19 +101,4 @@ public interface BorrowRepaymentThirdBiz {
      * @param response
      */
     ResponseEntity<String> thirdBatchRepayAdvanceRunCall(HttpServletRequest request, HttpServletResponse response);
-
-    /**
-     * 获取存管 收到还款 数据集合
-     *
-     * @param borrow
-     * @param order
-     * @param interestPercent
-     * @param borrowAccountId 借款方即信存管账户id
-     * @param lateDays
-     * @param lateInterest
-     * @return
-     * @throws Exception
-     */
-    void receivedRepay(List<Repay> repayList, Borrow borrow, String borrowAccountId, int order, double interestPercent, int lateDays, long lateInterest) throws Exception;
-
 }
