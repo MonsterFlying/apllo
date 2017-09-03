@@ -47,10 +47,12 @@ public class BorrowRepayScanduler {
     @Autowired
     private RepaymentBiz repaymentBiz;
 
+    @Scheduled(cron = "0 50 23 * * ? ")
     public void process() {
         borrowRepay();
     }
 
+    @Scheduled(cron = "0 00 23 * * ? ")
     public void process01() {
         borrowRepay();
     }
@@ -85,6 +87,9 @@ public class BorrowRepayScanduler {
             borrowList = borrowService.findList(bs);
             for (BorrowRepayment borrowRepayment : borrowRepaymentList) {
                 for (Borrow borrow : borrowList) {
+                    if (borrow.getType().intValue() != 1) {
+                        continue;
+                    }
                     if (String.valueOf(borrowRepayment.getBorrowId()).equals(String.valueOf(borrow.getId()))) {
                         try {
                             VoRepayReq voRepayReq = new VoRepayReq();
