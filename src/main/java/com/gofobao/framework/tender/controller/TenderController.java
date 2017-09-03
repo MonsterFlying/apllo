@@ -44,10 +44,16 @@ public class TenderController {
     @ApiOperation("借款投标")
     @PostMapping("tender/v2/create")
     public ResponseEntity<VoBaseResp> tender(@ModelAttribute @Valid VoCreateTenderReq voCreateTenderReq,
-                                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
+                                             @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voCreateTenderReq.setUserId(userId);
         voCreateTenderReq.setSource(0);//pc端
-        return tenderBiz.tender(voCreateTenderReq);
+        try {
+            return tenderBiz.tender(voCreateTenderReq);
+        } catch (Exception e) {
+            log.error("借款投标异常：", e);
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款投标失败！"));
+        }
     }
 
 

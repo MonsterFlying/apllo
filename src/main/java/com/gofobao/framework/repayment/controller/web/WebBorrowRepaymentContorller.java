@@ -69,7 +69,7 @@ public class WebBorrowRepaymentContorller {
         try {
             return repaymentBiz.pcRepayAll(voRepayAllReq);
         } catch (Throwable e) {
-            log.error("提前结清异常:",e);
+            log.error("提前结清异常:", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "提前还款失败！"));
         }
@@ -84,16 +84,15 @@ public class WebBorrowRepaymentContorller {
      */
     @PostMapping("/pub/v2/pcInstantly")
     @ApiOperation("立即还款")
-    public ResponseEntity<VoBaseResp> pcInstantly(@ModelAttribute @Valid VoPcRepay voPcRepay) throws Exception {
+    public ResponseEntity<VoBaseResp> pcInstantly(@ModelAttribute @Valid VoPcRepay voPcRepay) {
         try {
             return repaymentBiz.pcInstantly(voPcRepay);
         } catch (Throwable e) {
-            log.error("pc还款异常:",e);
+            log.error("pc还款异常:", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "立即还款失败！"));
         }
     }
-
 
 
     /**
@@ -106,15 +105,20 @@ public class WebBorrowRepaymentContorller {
     @PostMapping("v2/instantly")
     @ApiOperation("立即还款")
     public ResponseEntity<VoBaseResp> instantly(@ModelAttribute @Valid VoInstantlyRepaymentReq voInstantlyRepaymentReq,
-                                                @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
+                                                @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoRepayReq voRepayReq = new VoRepayReq();
         voRepayReq.setRepaymentId(voInstantlyRepaymentReq.getRepaymentId());
         voRepayReq.setUserId(userId);
         voRepayReq.setInterestPercent(1d);
         voRepayReq.setIsUserOpen(true);
-        return repaymentBiz.newRepay(voRepayReq);
+        try {
+            return repaymentBiz.newRepay(voRepayReq);
+        } catch (Exception e) {
+            log.error("还款异常：", e);
+            return ResponseEntity.badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "立即还款失败！"));
+        }
     }
-
 
 
     /**
