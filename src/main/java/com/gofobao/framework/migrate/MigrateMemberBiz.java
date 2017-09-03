@@ -3,15 +3,18 @@ package com.gofobao.framework.migrate;
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.member.biz.UserThirdBiz;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -46,8 +49,7 @@ public class MigrateMemberBiz {
 
     @Autowired
     AssetService assetService;
-
-    private static final String MIGRATE_PATH = "D:/apollo/migrate";
+    private static final String MIGRATE_PATH = "D:/apollo/migrate0904";
     private static final String MEMBER_DIR = "member";
     /**
      * 银行编号
@@ -135,13 +137,7 @@ public class MigrateMemberBiz {
             for (Users item : errorUsers) {
                 String msg = errorUserIdMap.get(item.getId());
                 StringBuffer stringBuffer = new StringBuffer();
-                String userName = item.getUsername();
-                if (StringUtils.isEmpty(userName)) {
-                    userName = item.getPhone();
-                }
-                if (StringUtils.isEmpty(userName)) {
-                    userName = item.getEmail();
-                }
+                String userName = getUserName(item);
                 stringBuffer
                         .append(item.getId())
                         .append("|")
@@ -179,14 +175,14 @@ public class MigrateMemberBiz {
                 .in("id", successUserId.toArray())
                 .build();
         List<Users> successUsers = userService.findList(ss);
-        List<UserThirdAccount> userThirdAccountAll = new ArrayList<>() ;
+        List<UserThirdAccount> userThirdAccountAll = new ArrayList<>();
         for (Users user : successUsers) {
             String accountId = successUserIdMap.get(user.getId());
             if (StringUtils.isEmpty(accountId)) {
                 throw new Exception("当前用户账号为空");
             }
 
-            UserThirdAccount checkeState = userThirdAccountMap.get(user.getId()) ;
+            UserThirdAccount checkeState = userThirdAccountMap.get(user.getId());
             if (ObjectUtils.isEmpty(checkeState)) {
                 UserThirdAccount userThirdAccount = new UserThirdAccount();
                 userThirdAccount.setIdNo(user.getCardId());
@@ -201,13 +197,15 @@ public class MigrateMemberBiz {
                 userThirdAccount.setChannel(0);
                 userThirdAccount.setIdType(1);
                 userThirdAccount.setDel(0);
+                userThirdAccount.setCardNoBindState(0);
                 userThirdAccount.setMobile(user.getPhone());
                 userThirdAccount.setName(user.getRealname());
-                userThirdAccountAll.add(userThirdAccount) ;
+                userThirdAccountAll.add(userThirdAccount);
+            }else{
+                log.error("当前用户没有账号");
             }
         }
-
-        userThirdAccountService.save(userThirdAccountAll) ;
+        userThirdAccountService.save(userThirdAccountAll);
     }
 
     static Map<String, String> ERROR_MSSAGE = new HashMap<>();
@@ -234,23 +232,6 @@ public class MigrateMemberBiz {
         ERROR_MSSAGE.put("119", "活期产品无法开立基金账户");
     }
 
-    private static String getErrorMsg(String code) {
-        return ERROR_MSSAGE.get(code);
-    }
-
-    public static String getEncoding(String str) {
-        String encodes[] = {"GB2312", "ISO-8859-1", "UTF-8", "GBK"};
-        for (String encode : encodes) {
-            try {
-                if (str.equals(new String(str.getBytes(encode), encode))) {
-                    return encode;
-                }
-            } catch (Exception exception) {
-            }
-        }
-        return "";
-    }
-
 
     /**
      * 获取用户迁移数据
@@ -271,7 +252,6 @@ public class MigrateMemberBiz {
 
 
         BufferedWriter errorWirter = null;
-        FileWriter fileWriter = null;
         try {
             File errorFile = FileHelper.createFile(MIGRATE_PATH, MEMBER_DIR, fileName + "_error");
             errorWirter = Files.newWriter(errorFile, Charset.forName("UTF-8"));
@@ -279,82 +259,86 @@ public class MigrateMemberBiz {
             return;
         }
 
-
         int realSize = 0, pageIndex = 0, pageSize = 2000;
+        ImmutableList<Integer> excludeUserId = ImmutableList.of(30978, 20267, 6061, 3364, 5069, 2856, 3656, 1549, 1235, 1548);
         do {
             Pageable pageable = new PageRequest(pageIndex, pageSize);
-            Page<Users> usersPage = userService.findAll(pageable);
-            if (ObjectUtils.isEmpty(usersPage)) {
-                log.error("查询user失败");
-                return;
-            }
-
-            realSize = usersPage.getSize();
-            pageIndex++;
-            List<Users> userList = usersPage.getContent();
+            Specification<Users> userSpecification = Specifications
+                    .<Users>and()
+                    .notIn("id", excludeUserId.toArray()).build();
+            List<Users> userList = userService.findList(userSpecification, pageable);
             if (CollectionUtils.isEmpty(userList)) {
                 break;
             }
+            realSize = userList.size();
+            pageIndex++;
+            List<Long> userIdSet = userList.stream().map(users -> users.getId()).collect(Collectors.toList());
 
-            List<Long> userId = userList.stream().map(users -> users.getId()).collect(Collectors.toList());
+            Specification<UserThirdAccount> userThirdAccountSpecification = Specifications
+                    .<UserThirdAccount>and()
+                    .in("userId", userIdSet.toArray())
+                    .build();
+
+            List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findList(userThirdAccountSpecification);  // 获取开户用户
+
+            Map<Long, UserThirdAccount> userThirdAccountRefMap = userThirdAccountList.stream().collect(Collectors.toMap(UserThirdAccount::getUserId, Function.identity()));
+
+
             Specification<Asset> specification = Specifications
                     .<Asset>and()
-                    .in("userId", userId.toArray())
+                    .in("userId", userIdSet.toArray())
                     .build();
             List<Asset> assetList = assetService.findList(specification);
             Map<Long, Asset> assetMap = assetList.stream().collect(Collectors.toMap(Asset::getUserId, Function.identity()));
 
-
             Specification<UserCache> userCacheSpecification = Specifications
                     .<UserCache>and()
-                    .in("userId", userId.toArray())
+                    .in("userId", userIdSet.toArray())
                     .build();
             List<UserCache> userCacheList = userCacheService.findList(userCacheSpecification);
             Map<Long, UserCache> userCacheMap = userCacheList.stream().collect(Collectors.toMap(UserCache::getUserId, Function.identity()));
-            for (Users item : userList) {
+
+            for (Users user : userList) {
                 boolean legitimateState = true;
                 StringBuffer remark = new StringBuffer();
-                String userName = item.getUsername();
-                if (StringUtils.isEmpty(userName)) {
-                    userName = item.getPhone();
-                }
-                if (StringUtils.isEmpty(userName)) {
-                    userName = item.getEmail();
-                }
-
-                remark.append("|").append(item.getId()).append("|").append(userName).append("|");
-                if (StringUtils.isEmpty(item.getPhone())) {  // 判断是否有手机号
+                String userName = getUserName(user);
+                remark.append("|").append(user.getId()).append("|").append(userName).append("|");
+                if (StringUtils.isEmpty(user.getPhone())) {  // 判断是否有手机号
                     legitimateState = false;
                     remark.append("[未绑定手机号码]");
                 }
 
-                if (StringUtils.isEmpty(item.getRealname())) {  // 未实名
+                if (StringUtils.isEmpty(user.getRealname())) {  // 未实名
                     legitimateState = false;
                     remark.append("[未实名]");
                 }
 
-                if (StringUtils.isEmpty(item.getCardId())) {  // 判断是否有身份证并且身份比较特殊的
+                if (StringUtils.isEmpty(user.getCardId())) {  // 判断是否有身份证并且身份比较特殊的
                     legitimateState = false;
                     remark.append("[未绑定身份证]");
-                } else {
-                    if (item.getCardId().length() != 18) {
-                        legitimateState = false;
-                        remark.append("[身份证不合规]");
-                    }
+                } else if (!(user.getCardId().length() == 15 || user.getCardId().length() == 18)) {
+                    legitimateState = false;
+                    remark.append("[未绑定身份证长度问题]");
                 }
 
-                if (item.getIsLock()) {
+                if (user.getIsLock()) {  // 冻结用户不开户
                     legitimateState = false;
                     remark.append("[账户被冻结]");
                 }
 
-                Asset asset = assetMap.get(item.getId());
+                UserThirdAccount userThirdAccount = userThirdAccountRefMap.get(user.getId());
+                if(!ObjectUtils.isEmpty(userThirdAccount)){
+                    legitimateState = false;
+                    remark.append("[已开户]");
+                }
+
+                Asset asset = assetMap.get(user.getId());
                 boolean assetFlat = asset.getNoUseMoney() + asset.getUseMoney() > 0 || asset.getCollection() > 0 || asset.getPayment() > 0;
-                if (assetFlat || "borrower".equals(item.getType())) {
+                if (assetFlat || "borrower".equals(user.getType())) {
                     if (!legitimateState) {
                         try {
                             // 查询充值总额 / 和提现总额
-                            UserCache userCache = userCacheMap.get(item.getId());
+                            UserCache userCache = userCacheMap.get(user.getId());
                             Long rechargeTotal = userCache.getRechargeTotal();
                             if (ObjectUtils.isEmpty(rechargeTotal)) {
                                 rechargeTotal = 0L;
@@ -369,7 +353,7 @@ public class MigrateMemberBiz {
                                     .append("|")
                                     .append(DateHelper.dateToString(asset.getUpdatedAt()))
                                     .append("|")
-                                    .append(item.getIsLock() ? "冻结" : "未冻结")
+                                    .append(user.getIsLock() ? "冻结" : "未冻结")
                                     .append("|")
                                     .append(StringHelper.formatDouble(asset.getCollection() / 100D, true))
                                     .append("|")
@@ -386,16 +370,22 @@ public class MigrateMemberBiz {
                         }
                     } else { // 写入正确的文件
                         try {
-                            String idxSexStr = item.getCardId().substring(16, 17);
+                            String idxSexStr = user.getCardId().substring(16, 17);
                             int idxSex = Integer.parseInt(idxSexStr) % 2;
                             String sex = (idxSex == 1) ? "2" : "1";
-                            String idStr = item.getId() + "";
+                            String idStr = user.getId() + "";
                             StringBuffer text = new StringBuffer();
-                            text.append(FormatHelper.appendByTail(item.getCardId(), 18));
+                            //正对 15位身份证转 18位
+                            String cardId = user.getCardId();
+                            if (cardId.length() == 15) {
+                                cardId = transformIdFrom15To18(cardId) ;
+                            }
+                            cardId = cardId.toUpperCase() ;
+                            text.append(FormatHelper.appendByTail(cardId, 18));
                             text.append(FormatHelper.appendByTail("01", 2));
-                            text.append(FormatHelper.appendByTail(item.getRealname(), 60));
+                            text.append(FormatHelper.appendByTail(user.getRealname(), 60));
                             text.append(FormatHelper.appendByTail(sex, 1));
-                            text.append(FormatHelper.appendByTail(item.getPhone(), 12));
+                            text.append(FormatHelper.appendByTail(user.getPhone(), 12));
                             text.append(FormatHelper.appendByTail("0", 1));
                             text.append(FormatHelper.appendByTail("", 40));
                             text.append(FormatHelper.appendByTail(idStr, 60));
@@ -410,21 +400,19 @@ public class MigrateMemberBiz {
                             text.append(FormatHelper.appendByTail("", 17));
                             try {
                                 gbk.write(text.toString());
-                                gbk.write("\n") ;
+                                gbk.write("\n");
                             } catch (IOException e) {
                                 log.error("写入正确文件失败", e);
                                 return;
                             }
                         } catch (Exception e) {
-                            log.error(new Gson().toJson(item));
+                            log.error(new Gson().toJson(user));
                             log.error("写入正确文件失败", e);
                             return;
                         }
-
                     }
                 }
             }
-
         } while (realSize == pageSize);
 
         try {
@@ -443,15 +431,55 @@ public class MigrateMemberBiz {
     }
 
 
-    private char[] getChars(byte[] bytes) {
-        Charset cs = Charset.forName("gbk");
-        ByteBuffer bb = ByteBuffer.allocate(bytes.length);
-        bb.put(bytes);
-        bb.flip();
-        CharBuffer cb = cs.decode(bb);
+    /**
+     * 把15位身份证号转换成18位身份证号码
+     * 出生月份前加"19"(20世纪才使用的15位身份证号码),最后一位加校验码
+     *
+     * @param custNo
+     * @return
+     */
+    public static String transformIdFrom15To18(String custNo) {
+        String idCardNo = null;
+        if (custNo != null && custNo.trim().length() == 15) {
+            custNo = custNo.trim();
+            StringBuffer newIdCard = new StringBuffer(custNo);
+            newIdCard.insert(6, "19");
+            newIdCard.append(trasformLastNo(newIdCard.toString()));
+            idCardNo = newIdCard.toString();
+        }
 
-        return cb.array();
+        return idCardNo;
+    }
+
+    /**
+     * 生成身份证最后一位效验码
+     *
+     * @param id
+     * @return
+     */
+    private static String trasformLastNo(String id) {
+        char pszSrc[] = id.toCharArray();
+        int iS = 0;
+        int iW[] = {7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2};
+        char szVerCode[] = new char[]{'1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'};
+        int i;
+        for (i = 0; i < id.length(); i++) {
+            iS += (pszSrc[i] - '0') * iW[i];
+        }
+        int iY = iS % 11;
+
+        return String.valueOf(szVerCode[iY]);
     }
 
 
+    private String getUserName(Users item) {
+        String userName = item.getUsername();
+        if (StringUtils.isEmpty(userName)) {
+            userName = item.getPhone();
+        }
+        if (StringUtils.isEmpty(userName)) {
+            userName = item.getEmail();
+        }
+        return userName;
+    }
 }

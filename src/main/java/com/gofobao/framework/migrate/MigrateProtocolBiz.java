@@ -39,7 +39,7 @@ public class MigrateProtocolBiz {
     @Autowired
     AssetService assetService;
 
-    private static final String MIGRATE_PATH = "D:/apollo/migrate";
+    private static final String MIGRATE_PATH = "D:/apollo/migrate0904";
     private static final String PROTOCOL_DIR = "protocol";
     /**
      * 银行编号
