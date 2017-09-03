@@ -436,6 +436,9 @@ public class AplloApplicationTests {
             transfer.setCreatedAt(borrow.getCreatedAt());
             transfer.setUpdatedAt(borrow.getUpdatedAt());
             transferList.add(transfer);
+            //改变债权转让借款标状态为6
+            borrow.setStatus(6);
+            borrow.setUpdatedAt(new Date());
         });
         transferService.save(transferList);
         Map<Long, Transfer> transferMaps = transferList.stream().filter(transfer -> transfer.getState() == 2).collect(Collectors.toMap(Transfer::getTenderId, Function.identity()));
@@ -488,7 +491,7 @@ public class AplloApplicationTests {
                 addChildTenderCollection(transfer.getCreatedAt(), transfer, prarentBorrow, childTenderList);
             });
         }
-
+        borrowService.save(transferBorrowList);
     }
 
     /**
