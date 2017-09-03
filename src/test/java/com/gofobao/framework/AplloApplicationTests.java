@@ -369,12 +369,12 @@ public class AplloApplicationTests {
     @Transactional(rollbackOn = Exception.class)
     public void dataMigration() {
         //1查询债权借款
-        String sql = "select id from gfb_borrow where tender_id > 0";
+        String sql = "select id from gfb_borrow b where tender_id > 0 and status not in (4,5,2) AND EXISTS(SELECT * from gfb_transfer WHERE tender_id != b.tender_id )";
         List<Long> queryForList = (List<Long>) entityManager.createNativeQuery(sql.toString()).getResultList();
         /* 债权转让借款 */
         Specification<Borrow> bs = Specifications
                 .<Borrow>and()
-                .in("id", new HashSet<Long>(queryForList).toArray())
+                .in("id", new HashSet(queryForList).toArray())
                 .build();
         List<Borrow> transferBorrowList = borrowService.findList(bs);
         Map<Long, Borrow> transferBorrowMaps = transferBorrowList.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
@@ -717,7 +717,7 @@ public class AplloApplicationTests {
      * 复审债权转让的
      */
     @Test
-    public void testAgantTransfer(){
+    public void testAgantTransfer() {
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
         mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
@@ -751,13 +751,13 @@ public class AplloApplicationTests {
         balanceUnfreezeReq.setOrgOrderId("GFBBF_1504073566815264200330");
         BalanceUnfreezeResp balanceUnfreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_UN_FREEZE, balanceUnfreezeReq, BalanceUnfreezeResp.class);
         if ((ObjectUtils.isEmpty(balanceUnfreezeResp)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
-           log.error("失败");
+            log.error("失败");
         }
         log.info("成功");
 
     }
 
-    public void testCredit(){
+    public void testCredit() {
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
         mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
@@ -780,7 +780,7 @@ public class AplloApplicationTests {
                 .of(MqConfig.SOURCE_ID, StringHelper.toString(170106),
                         MqConfig.BATCH_NO, StringHelper.toString("193522"),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date()),
-                        MqConfig.ACQ_RES,"{\"transferId\":5707}"
+                        MqConfig.ACQ_RES, "{\"transferId\":5707}"
                 );
 
         mqConfig.setMsg(body);
@@ -802,7 +802,7 @@ public class AplloApplicationTests {
     private JixinHelper jixinHelper;
 
     @Autowired
-    private DealThirdBatchScheduler dealThirdBatchScheduler ;
+    private DealThirdBatchScheduler dealThirdBatchScheduler;
 
     @Test
     public void test() {
@@ -890,36 +890,8 @@ public class AplloApplicationTests {
         }*/
 
         //dealThirdBatchScheduler.process();
-        //dataMigration();
+        dataMigration();
 
-       /* MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
-        mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_TRANSFER);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(5), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-
-            log.info(String.format("transferBizImpl buyTransfer send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("transferBizImpl buyTransfer send mq exception", e);
-        }  */
-
-        //推送队列结束债权
-/*      MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
-        mqConfig.setTag(MqTagEnum.END_CREDIT_ALL);
-        mqConfig.setSendTime(DateHelper.addMinutes(new Date(), 5));
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(169919), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            log.info(String.format("repaymentBizImpl repayDeal send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("repaymentBizImpl repayDeal send mq exception", e);
-        }*/
 
         //批次处理
         //batchDeal();
@@ -950,7 +922,7 @@ public class AplloApplicationTests {
         //复审
         // doAgainVerify();
         //批次状态查询
-         //batchQuery();
+        //batchQuery();
         //批次详情查询
         //batchDetailsQuery();
         //查询投标申请

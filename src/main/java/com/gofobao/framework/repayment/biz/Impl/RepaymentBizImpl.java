@@ -1613,8 +1613,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
         /* 当期回款总利息 */
         long sumCollectionInterest = borrowCollectionList.stream().mapToLong(BorrowCollection::getInterest).sum();
         for (Tender tender : tenderList) {
-            RepayAssetChange repayAssetChange = new RepayAssetChange();
-            repayAssetChanges.add(repayAssetChange);
             long inIn = 0; // 出借人的利息
             long inPr = 0; // 出借人的本金
             int inFee = 0; // 出借人利息费用
@@ -1629,6 +1627,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 continue;
             }
 
+            RepayAssetChange repayAssetChange = new RepayAssetChange();
+            repayAssetChanges.add(repayAssetChange);
             inIn = (long) MathHelper.myRound(borrowCollection.getInterest() * interestPercent, 0); // 还款利息
             inPr = borrowCollection.getPrincipal(); // 还款本金
             repayAssetChange.setUserId(tender.getUserId());
@@ -2575,9 +2575,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
             Transfer transfer = transferMaps.get(tender.getId());
             TransferBuyLog transferBuyLog = transferBuyLogMaps.get(transfer.getId());
 
-            //垫付资金变动
-            AdvanceAssetChange advanceAssetChange = new AdvanceAssetChange();
-            advanceAssetChanges.add(advanceAssetChange);
             //投标人银行存管账户
             UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
             Preconditions.checkNotNull(tenderUserThirdAccount, "投资人存管账户未开户!");
@@ -2591,6 +2588,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if (tender.getTransferFlag() == 2) {  // 已经转让的债权, 可以跳过还款
                 continue;
             }
+
+            //垫付资金变动
+            AdvanceAssetChange advanceAssetChange = new AdvanceAssetChange();
+            advanceAssetChanges.add(advanceAssetChange);
 
             intAmount = borrowCollection.getInterest();//还款利息
             principal = borrowCollection.getPrincipal(); //还款本金
