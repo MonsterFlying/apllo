@@ -2014,11 +2014,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Date endDate = DateHelper.beginOfDate(new Date());
         endDate = DateHelper.setHours(endDate, 21);
         endDate = DateHelper.setMinutes(endDate, 30);
-        if (new Date().getTime() > endDate.getTime()) {
+        /*if (new Date().getTime() > endDate.getTime()) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("还款截止时间为每天晚上9点30!")));
-        }
+        }*/
 
         //5.判断是否有在即信处理的债权转让，有不让还款
         if (checkTenderChange(borrowRepayment.getBorrowId())) {
