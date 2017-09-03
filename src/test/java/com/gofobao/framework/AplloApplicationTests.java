@@ -26,6 +26,8 @@ import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryRequest;
 import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse;
+import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryRequest;
+import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryResponse;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResponse;
@@ -893,7 +895,7 @@ public class AplloApplicationTests {
         }*/
 
         //dealThirdBatchScheduler.process();
-        dataMigration();
+        //dataMigration();
 
 
         //批次处理
@@ -935,10 +937,10 @@ public class AplloApplicationTests {
         //非转让标复审问题
         //noTransferBorrowAgainVerify();
         // 查询债权关系
-        /*CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
-        creditDetailsQueryRequest.setAccountId("6212462190000000229");
+/*        CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
+        creditDetailsQueryRequest.setAccountId("6212462190000059118");
         creditDetailsQueryRequest.setStartDate("20170417");
-        creditDetailsQueryRequest.setProductId("169979");
+        creditDetailsQueryRequest.setProductId("170138");
         creditDetailsQueryRequest.setEndDate(DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM));
         creditDetailsQueryRequest.setState("0");
         creditDetailsQueryRequest.setPageNum("1");
