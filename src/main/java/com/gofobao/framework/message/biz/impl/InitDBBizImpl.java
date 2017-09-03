@@ -147,7 +147,7 @@ public class InitDBBizImpl implements InitDBBiz {
     @Transactional(rollbackOn = Exception.class)
     public void transfer() {
         //1查询债权借款
-        String sql = "select id from gfb_borrow b where tender_id > 0 and status not in (4,5,2) AND EXISTS(SELECT * from gfb_transfer WHERE tender_id != b.tender_id )";
+        String sql = "select id from gfb_borrow b where tender_id > 0 and status not in (4, 5, 2) ";
         List<Long> queryForList = (List<Long>) entityManager.createNativeQuery(sql.toString()).getResultList();
         /* 债权转让借款 */
         Specification<Borrow> bs = Specifications
