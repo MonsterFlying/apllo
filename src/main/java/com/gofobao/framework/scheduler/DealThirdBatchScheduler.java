@@ -47,7 +47,7 @@ public class DealThirdBatchScheduler {
     @Autowired
     private ThirdBatchLogService thirdBatchLogService;
 
-    @Scheduled(cron = "0 20 8,10,12,14,16,18,20,22 * * ? ")
+    //@Scheduled(cron = "0 20 8,10,12,14,16,18,20,22 * * ? ")
     public void process() {
         log.info("处理第三方批次任务调度启动");
         //1.查询未处理 参数校验成功的批次 gfb_third_batch_log

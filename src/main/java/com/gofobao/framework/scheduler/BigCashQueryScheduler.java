@@ -29,7 +29,7 @@ public class BigCashQueryScheduler {
     @Autowired
     CashDetailLogBiz cashDetailLogBiz ;
 
-    @Scheduled(cron = "0 0/15 *  * * ? ")
+   // @Scheduled(cron = "0 0/15 *  * * ? ")
     public void process() {
         log.info("大额提现资金确认扣减调动启动");
         // 查询带调度队列
