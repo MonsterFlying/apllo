@@ -653,7 +653,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             /* 实际收取总违约金 */
             double sumPenalty = 0;
             for (Repay repay : repays) {
-                double partPenalty = MathHelper.myRound(NumberHelper.toDouble(repay.getTxAmount()), 2) / sumTxAmount * penalty;/*分摊违约金*/
+                double partPenalty = MathHelper.myRound(NumberHelper.toDouble(repay.getTxAmount()) / sumTxAmount * penalty, 2);/*分摊违约金*/
                 sumPenalty += partPenalty;
 
                 UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(repay.getForAccountId());
@@ -670,8 +670,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
                 batchAssetChangeItemService.save(batchAssetChangeItem);
                 //给每期回款分摊违约金
-                repay.setIntAmount(StringHelper.formatDouble(NumberHelper.toDouble(repay.getIntAmount() + partPenalty) / 100.0, false));
-                repay.setTxFeeOut(StringHelper.formatDouble(NumberHelper.toDouble(repay.getTxFeeOut() + partPenalty) / 100.0, false));
+                repay.setIntAmount(StringHelper.formatDouble((NumberHelper.toDouble(repay.getIntAmount()) + partPenalty), false));
+                repay.setTxFeeOut(StringHelper.formatDouble((NumberHelper.toDouble(repay.getTxFeeOut()) + partPenalty), false));
             }
             //收取借款人违约金
             BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
@@ -1271,7 +1271,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         addBatchAssetChangeByBorrower(batchAssetChange.getId(), borrowRepayment, parentBorrow, interestPercent, isUserOpen, lateInterest, repayUserId, seqNo, groupSeqNo, advance);
         // 正常还款
         ResponseEntity resp = normalRepay(freezeOrderId, acqResMap, repayUserThirdAccount, borrowRepayment, parentBorrow,
-                lateInterest, interestPercent, batchNo, batchAssetChange, seqNo, groupSeqNo, lateDays, advance,repayAsset);
+                lateInterest, interestPercent, batchNo, batchAssetChange, seqNo, groupSeqNo, lateDays, advance, repayAsset);
 
         return resp;
     }
