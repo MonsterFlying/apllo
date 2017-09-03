@@ -43,6 +43,16 @@ public class SystemController {
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 
+    @GetMapping("pub/initTransfer/{password}")
+    public void initTransfer(@PathVariable(value = "password") String password) {
+        if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
+            return;
+        }
+        long curTime = System.currentTimeMillis();
+        initDBBiz.transfer();
+        log.info("处理时间: " + (System.currentTimeMillis() - curTime));
+    }
+
 
     @GetMapping("pub/migrateMember/{password}")
     public void migrateMember(@PathVariable(value = "password") String password) {

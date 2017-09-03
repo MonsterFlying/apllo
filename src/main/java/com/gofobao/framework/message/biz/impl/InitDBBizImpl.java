@@ -59,10 +59,10 @@ public class InitDBBizImpl implements InitDBBiz {
     private EntityManager entityManager;
 
     @Autowired
-    TransferService  transferService ;
+    TransferService transferService;
 
     @Autowired
-    TransferBuyLogService transferBuyLogService ;
+    TransferBuyLogService transferBuyLogService;
 
     @Override
     public void initDb() {
@@ -144,12 +144,8 @@ public class InitDBBizImpl implements InitDBBiz {
     }
 
     @Override
-    public void transfer() {
-
-    }
-
     @Transactional(rollbackOn = Exception.class)
-    public void dataMigration() {
+    public void transfer() {
         //1查询债权借款
         String sql = "select id from gfb_borrow b where tender_id > 0 and status not in (4,5,2) AND EXISTS(SELECT * from gfb_transfer WHERE tender_id != b.tender_id )";
         List<Long> queryForList = (List<Long>) entityManager.createNativeQuery(sql.toString()).getResultList();
@@ -275,7 +271,6 @@ public class InitDBBizImpl implements InitDBBiz {
         }
         borrowService.save(transferBorrowList);
     }
-
 
     /**
      * 新增子级标的
@@ -415,7 +410,6 @@ public class InitDBBizImpl implements InitDBBiz {
 
         return childTenderCollectionList;
     }
-
 
 
     private int caculTenderState(Borrow borrow) {
