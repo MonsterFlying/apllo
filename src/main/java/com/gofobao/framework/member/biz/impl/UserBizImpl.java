@@ -199,7 +199,7 @@ public class UserBizImpl implements UserBiz {
         users.setBranch(0);
         users.setSource(channel);
         users.setInviteCode(GenerateInviteCodeHelper.getRandomCode()); // 生成用户邀请码
-        users.setAvatarPath(imageDomain+"/images/user/default_avatar.jpg");
+        users.setAvatarPath(imageDomain + "/images/user/default_avatar.jpg");
         users.setParentId(parentId);
         users.setParentAward(0);
         users.setCreatedAt(now);
@@ -371,7 +371,12 @@ public class UserBizImpl implements UserBiz {
         if (StringUtils.isEmpty(username)) username = user.getPhone();
         if (StringUtils.isEmpty(username)) username = user.getEmail();
         user.setUsername(username);
-        final String token = jwtTokenHelper.generateToken(user, voLoginReq.getSource());
+        String requestSourceStr = httpServletRequest.getHeader("requestSource");
+        if (StringUtils.isEmpty(requestSourceStr)) {
+            requestSourceStr = "-1";
+        }
+        Integer requestSource = Integer.valueOf(requestSourceStr);
+        final String token = jwtTokenHelper.generateToken(user, requestSource);
         response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
         try {
             // 触发登录队列

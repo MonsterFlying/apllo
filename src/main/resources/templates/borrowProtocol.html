@@ -60,7 +60,7 @@
                 <td style="text-align: center"
                     th:text="(${borrowMap['repayFashion']} == 2)?
                     '前 '+(${borrowMap['timeLimit']} - 1)+' 个月每月收取利息 '+${   tenderMap['calculatorMap']['eachRepay'] }+
-                    ' 元,到期收取本息 '+ ${ tenderMap['repayTotal']}+' 元'
+                    ' 元,到期收取本息 '+ ${ tenderMap['calculatorMap']['repayTotal']}+' 元'
                     :
                     (
                         (${borrowMap['repayFashion']} == 1)?
@@ -177,7 +177,7 @@
                 <td style="padding: 0 20px"
                     th:text="(${borrowMap['repayFashion']} == 2)?
                     '前 '+(${borrowMap['timeLimit'] } - 1)+' 个月每月还款利息 '+${calculatorMap['eachRepay']}+
-                     ' 元,到期还款本息 '+(${borrowMap['money']+calculatorMap['eachRepay']})+' 元'
+                     ' 元,到期还款本息 '+(${calculatorMap['repayTotal']})+' 元'
                     :
                     (
                         (${borrowMap['repayFashion']} == 1)?

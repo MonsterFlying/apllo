@@ -13,16 +13,21 @@ import org.springframework.stereotype.Service;
 public class NewAssetLogServiceImpl implements NewAssetLogService {
 
     @Autowired
-    NewAssetLogRepository newAssetLogRepository ;
+    NewAssetLogRepository newAssetLogRepository;
 
 
     @Override
     public NewAssetLog save(NewAssetLog newAssetLog) {
-        return newAssetLogRepository.save(newAssetLog) ;
+        return newAssetLogRepository.save(newAssetLog);
     }
 
     @Override
     public Page<NewAssetLog> findAll(Specification<NewAssetLog> specification, Pageable pageable) {
         return newAssetLogRepository.findAll(specification, pageable);
+    }
+
+    @Override
+    public long count(Specification<NewAssetLog> assetLogSpecification) {
+        return newAssetLogRepository.count(assetLogSpecification);
     }
 }

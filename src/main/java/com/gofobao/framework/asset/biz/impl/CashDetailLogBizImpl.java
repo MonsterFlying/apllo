@@ -326,7 +326,11 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         withDrawRequest.setTxFee(StringHelper.formatDouble(new Double(fee / 100D), false));
         withDrawRequest.setForgotPwdUrl(thirdAccountPasswordHelper.getThirdAcccountResetPasswordUrl(httpServletRequest, userId));
 
-        Integer requestSource = Integer.valueOf(httpServletRequest.getHeader("requestSource").toString());
+        String requestSourceStr = httpServletRequest.getHeader("requestSource");
+        if (StringUtils.isEmpty(requestSourceStr)) {
+            requestSourceStr = "-1";
+        }
+        Integer requestSource = Integer.valueOf(requestSourceStr);
         if (requestSource == 0) {
             withDrawRequest.setRetUrl(String.format("%s/%s", pcDomain, "account/cash"));
         } else {
