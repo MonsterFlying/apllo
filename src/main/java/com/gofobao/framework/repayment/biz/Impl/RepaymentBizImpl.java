@@ -2372,7 +2372,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             transfer.setAlreadyInterest(alreadyInterest);
             transfer.setApr(borrow.getApr());
             transfer.setCreatedAt(nowDate);
-            transfer.setTimeLimit(1);
+            transfer.setTimeLimit(borrow.getTimeLimit());/* 垫付是全部期限 */
             transfer.setLowest(1000 * 100L);
             transfer.setState(1);
             transfer.setTenderCount(0);

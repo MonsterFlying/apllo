@@ -2,6 +2,12 @@ package com.gofobao.framework.common.assets;
 
 
 public enum AssetChangeTypeEnum {
+
+    /**
+     * 投资人到期收回本息
+     */
+    initAsset("数据迁移资产初始化", "initAsset", "0", "", "", "B"),
+
     /**
      * 联机充值
      */
