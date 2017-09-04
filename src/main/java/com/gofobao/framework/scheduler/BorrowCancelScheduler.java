@@ -34,7 +34,7 @@ public class BorrowCancelScheduler {
     @Autowired
     private BorrowBiz borrowBiz;
 
-    @Scheduled(fixedRate = 50000)
+    // @Scheduled(cron = "0 0 12 * * ? ")
     public void process() {
         log.info("取消借款任务调度启动");
         Specification<Borrow> bs = Specifications

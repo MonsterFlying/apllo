@@ -463,21 +463,7 @@ CREATE TABLE gfb_recharge_detail_log
   ip VARCHAR(32) DEFAULT '' COMMENT 'ip',
   response_message VARCHAR(2048)
 );
-DROP TABLE gfb_sms CASCADE;
-CREATE TABLE gfb_sms_log
-(
-  id INT(10) unsigned PRIMARY KEY NOT NULL AUTO_INCREMENT,
-  username VARCHAR(16) NOT NULL COMMENT '用户',
-  type VARCHAR(50) NOT NULL COMMENT '短信记录类型(register:注册;cash:提现;getpwd:找回密码;change:更改手机;bundle:绑定新手机;change_bank:更改银行账号;reset_paypwd:重置交易密码;received_repay:回款通知;borrow_success:成功借款;birthday:生日短信;)',
-  phone VARCHAR(15) NOT NULL COMMENT '手机号码',
-  content VARCHAR(255) NOT NULL COMMENT '短信内容',
-  ext VARCHAR(20) NOT NULL COMMENT '扩展字段',
-  stime VARCHAR(11) NOT NULL COMMENT '发送时间',
-  rrid VARCHAR(20) NOT NULL,
-  status TINYINT(1) DEFAULT '0' NOT NULL COMMENT '发送状态（0、失败，1、成功）',
-  ip VARCHAR(20) NOT NULL COMMENT 'IP',
-  created_at TIMESTAMP COMMENT '创建时间'
-);
+ALTER TABLE gfb_sms RENAME TO gfb_sms_log;
 ALTER TABLE gfb_statistic ADD id INT(11) NOT NULL PRIMARY KEY AUTO_INCREMENT;
 CREATE TABLE gfb_suggest
 (
@@ -745,9 +731,20 @@ CREATE TABLE `gfb_third_error_remark` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=873 DEFAULT CHARSET=utf8;
 
+create table gfb_financial_scheduler
+(
+  id int auto_increment primary key,
+  name varchar(255) default '' null comment '调度名称',
+  data varchar(1024) default '' null comment '调度数据',
+  do_num int default '0' null comment '调度此处',
+  res_msg varchar(1024) default '' null comment '结果',
+  create_at datetime null comment '调度创建时间',
+  update_at datetime null comment '更新时间',
+  state int default '0' null comment '调度状态(0, 失败, 1.成功)'
+)ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8;
 ALTER TABLE gfb_financial_scheduler COMMENT = '对账系统调度';
 
-INSERT INTO `gfb0810`.`gfb_dict_value` (`ID`, `ITEM_ID`, `VALUE01`, `VALUE02`, `VALUE03`, `VALUE04`, `VALUE05`, `VALUE06`, `CREATE_TIME`, `UPDATE_TIME`, `CREATE_ID`, `UPDATE_ID`, `NAME`, `DEL`) VALUES ('90', '7', 'takeUserId', '实际收款人', '45184', '', '', '', '2017-09-01 14:37:17', '2017-09-01 14:37:20', '0', '0', '', '0');
+INSERT INTO gfb_dict_value ( `ITEM_ID`, `VALUE01`, `VALUE02`, `VALUE03`, `VALUE04`, `VALUE05`, `VALUE06`, `CREATE_TIME`, `UPDATE_TIME`, `CREATE_ID`, `UPDATE_ID`, `NAME`, `DEL`) VALUES ('7', 'takeUserId', '实际收款人', '45184', '', '', '', '2017-09-01 14:37:17', '2017-09-01 14:37:20', '0', '0', '', '0');
 
 ALTER TABLE gfb_eve ADD query_date VARCHAR(8) DEFAULT '' NULL COMMENT '查询时间';
 ALTER TABLE gfb_aleve ADD query_date VARCHAR(8) DEFAULT '' NULL COMMENT '查询时间';

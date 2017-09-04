@@ -13,6 +13,7 @@ import lombok.Data;
 public class VoAvailableAssetInfoResp extends VoBaseResp {
     @ApiModelProperty("可用余额")
     private Long useMoney;
+
     @ApiModelProperty("显示可用余额")
     private String viewUseMoney;
 

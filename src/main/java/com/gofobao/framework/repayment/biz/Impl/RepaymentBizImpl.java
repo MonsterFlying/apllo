@@ -653,7 +653,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             /* 实际收取总违约金 */
             double sumPenalty = 0;
             for (Repay repay : repays) {
-                double partPenalty = MathHelper.myRound(NumberHelper.toDouble(repay.getTxAmount()), 2) / sumTxAmount * penalty;/*分摊违约金*/
+                double partPenalty = MathHelper.myRound(NumberHelper.toDouble(repay.getTxAmount()) / sumTxAmount * penalty, 2);/*分摊违约金*/
                 sumPenalty += partPenalty;
 
                 UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(repay.getForAccountId());
@@ -670,8 +670,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
                 batchAssetChangeItemService.save(batchAssetChangeItem);
                 //给每期回款分摊违约金
-                repay.setIntAmount(StringHelper.formatDouble(NumberHelper.toDouble(repay.getIntAmount() + partPenalty) / 100.0, false));
-                repay.setTxFeeOut(StringHelper.formatDouble(NumberHelper.toDouble(repay.getTxFeeOut() + partPenalty) / 100.0, false));
+                repay.setIntAmount(StringHelper.formatDouble((NumberHelper.toDouble(repay.getIntAmount()) + partPenalty), false));
+                repay.setTxFeeOut(StringHelper.formatDouble((NumberHelper.toDouble(repay.getTxFeeOut()) + partPenalty), false));
             }
             //收取借款人违约金
             BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
@@ -1271,7 +1271,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         addBatchAssetChangeByBorrower(batchAssetChange.getId(), borrowRepayment, parentBorrow, interestPercent, isUserOpen, lateInterest, repayUserId, seqNo, groupSeqNo, advance);
         // 正常还款
         ResponseEntity resp = normalRepay(freezeOrderId, acqResMap, repayUserThirdAccount, borrowRepayment, parentBorrow,
-                lateInterest, interestPercent, batchNo, batchAssetChange, seqNo, groupSeqNo, lateDays, advance);
+                lateInterest, interestPercent, batchNo, batchAssetChange, seqNo, groupSeqNo, lateDays, advance, repayAsset);
 
         return resp;
     }
@@ -1369,7 +1369,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
         batchAssetChangeItemService.save(batchAssetChangeItem);
 
-        if ((lateInterest > 0)) { // 扣除借款人还款滞纳金
+        if ((lateInterest > 0) && new Date().getTime() > DateHelper.endOfDate(DateHelper.stringToDate("2017-09-03 23:59:59")).getTime()) { // 扣除借款人还款滞纳金
             batchAssetChangeItem = new BatchAssetChangeItem();
             batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
             batchAssetChangeItem.setState(0);
@@ -1428,7 +1428,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
                                                    String seqNo,
                                                    String groupSeqNo,
                                                    int lateDays,
-                                                   boolean advance) throws Exception {
+                                                   boolean advance,
+                                                   Asset repayAsset) throws Exception {
         Date nowDate = new Date();
         log.info("批次还款: 进入正常还款流程");
 
@@ -1476,10 +1477,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
         double freezeMoney = txAmount + txFeeOut + intAmount;/* 冻结金额 */
         // 冻结还款金额
         long money = new Double((freezeMoney) * 100).longValue();
-        /*ResponseEntity<VoBaseResp> resp = checkAssetByRepay(repayAsset, money);
+        ResponseEntity<VoBaseResp> resp = checkAssetByRepay(repayAsset, money);
         if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
             throw new Exception(resp.getBody().getState().getMsg());
-        }*/
+        }
 
         BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
         balanceFreezeReq.setAccountId(repayUserThirdAccount.getAccountId());
@@ -1544,6 +1545,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if ((ObjectUtils.isEmpty(balanceUnfreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnFreezeResp.getRetCode()))) {
                 throw new Exception("正常还款解冻资金异常：" + balanceUnFreezeResp.getRetMsg());
             }
+            throw new Exception(e);
         }
         return ResponseEntity.ok(VoBaseResp.ok("还款正常"));
     }
@@ -1613,8 +1615,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
         /* 当期回款总利息 */
         long sumCollectionInterest = borrowCollectionList.stream().mapToLong(BorrowCollection::getInterest).sum();
         for (Tender tender : tenderList) {
-            RepayAssetChange repayAssetChange = new RepayAssetChange();
-            repayAssetChanges.add(repayAssetChange);
             long inIn = 0; // 出借人的利息
             long inPr = 0; // 出借人的本金
             int inFee = 0; // 出借人利息费用
@@ -1629,6 +1629,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 continue;
             }
 
+            RepayAssetChange repayAssetChange = new RepayAssetChange();
+            repayAssetChanges.add(repayAssetChange);
             inIn = (long) MathHelper.myRound(borrowCollection.getInterest() * interestPercent, 0); // 还款利息
             inPr = borrowCollection.getPrincipal(); // 还款本金
             repayAssetChange.setUserId(tender.getUserId());
@@ -1645,7 +1647,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                         3939L, 893L, 608L,
                         1216L);
                 boolean between = isBetween(new Date(), DateHelper.stringToDate("2015-12-25 00:00:00"),
-                        DateHelper.stringToDate("2017-12-25 23:59:59"));
+                        DateHelper.stringToDate("2017-12-31 23:59:59"));
                 if ((stockholder.contains(tender.getUserId())) && (between)) {
                     inFee += 0;
                 } else {
@@ -1655,7 +1657,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
             repayAssetChange.setInterestFee(inFee);
             long overdueFee = 0;
-            long platformOverdueFee = 0;
+            long platformOverdueFee;
             if ((lateDays > 0) && (lateInterest > 0)) {  //借款人逾期罚息
                 overdueFee = new Double(borrowCollection.getInterest() / new Double(sumCollectionInterest) * lateInterest / 2).intValue();// 出借人收取50% 逾期管理费 ;
                 repayAssetChange.setOverdueFee(overdueFee);
@@ -1764,7 +1766,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             }
 
             // 收取逾期管理费
-            if (repayAssetChange.getPlatformOverdueFee() > 0) {
+            if (repayAssetChange.getPlatformOverdueFee() > 0 && new Date().getTime() > DateHelper.endOfDate(DateHelper.stringToDate("2017-09-03 23:59:59")).getTime()) {
                 batchAssetChangeItem = new BatchAssetChangeItem();
                 batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
                 batchAssetChangeItem.setState(0);
@@ -2014,11 +2016,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Date endDate = DateHelper.beginOfDate(new Date());
         endDate = DateHelper.setHours(endDate, 21);
         endDate = DateHelper.setMinutes(endDate, 30);
-        if (new Date().getTime() > endDate.getTime()) {
+        /*if (new Date().getTime() > endDate.getTime()) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("还款截止时间为每天晚上9点30!")));
-        }
+        }*/
 
         //5.判断是否有在即信处理的债权转让，有不让还款
         if (checkTenderChange(borrowRepayment.getBorrowId())) {
@@ -2575,9 +2577,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
             Transfer transfer = transferMaps.get(tender.getId());
             TransferBuyLog transferBuyLog = transferBuyLogMaps.get(transfer.getId());
 
-            //垫付资金变动
-            AdvanceAssetChange advanceAssetChange = new AdvanceAssetChange();
-            advanceAssetChanges.add(advanceAssetChange);
             //投标人银行存管账户
             UserThirdAccount tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
             Preconditions.checkNotNull(tenderUserThirdAccount, "投资人存管账户未开户!");
@@ -2591,6 +2590,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if (tender.getTransferFlag() == 2) {  // 已经转让的债权, 可以跳过还款
                 continue;
             }
+
+            //垫付资金变动
+            AdvanceAssetChange advanceAssetChange = new AdvanceAssetChange();
+            advanceAssetChanges.add(advanceAssetChange);
 
             intAmount = borrowCollection.getInterest();//还款利息
             principal = borrowCollection.getPrincipal(); //还款本金
@@ -2662,7 +2665,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
             batchAssetChangeItemService.save(batchAssetChangeItem);
 
-            if (advanceAssetChange.getOverdueFee() > 0) {  // 用户收取逾期管理费
+            if (advanceAssetChange.getOverdueFee() > 0 && new Date().getTime() > DateHelper.endOfDate(DateHelper.stringToDate("2017-09-03 23:59:59")).getTime()) {  // 用户收取逾期管理费
                 batchAssetChangeItem = new BatchAssetChangeItem();
                 batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
                 batchAssetChangeItem.setState(0);
@@ -2750,7 +2753,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         advanceBailAssetChangeItem.setGroupSeqNo(groupSeqNo);
         batchAssetChangeItemService.save(advanceBailAssetChangeItem);
 
-        if (lateInterest > 0) {
+        if (lateInterest > 0 && new Date().getTime() > DateHelper.endOfDate(DateHelper.stringToDate("2017-09-03 23:59:59")).getTime()) {
             BatchAssetChangeItem overdueAssetChangeItem = new BatchAssetChangeItem();  // 滞纳金
             overdueAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
             overdueAssetChangeItem.setState(0);

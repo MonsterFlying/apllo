@@ -20,7 +20,7 @@ public class VoAssetIndexResp extends VoBaseResp{
     @ApiModelProperty("账户余额")
     private String accountMoney;
 
-    @ApiModelProperty("总资产")
+    @ApiModelProperty("净资产")
     private String totalAsset ;
 
     @ApiModelProperty("净值额度")

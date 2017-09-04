@@ -286,7 +286,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
         // 获取用户
         Specification<Aleve> aleveSpecification = Specifications.
                 <Aleve>and()
-                .eq("queryTime", date)
+                .eq("queryDate", date)
                 .build();
 
         Long aleveAount = aleveService.count(aleveSpecification);
