@@ -169,7 +169,7 @@ public class MigrateBorrowBiz {
                             text.append(FormatHelper.appendByTail("6212462190000000070", 19));  // 收款人
                             text.append(FormatHelper.appendByTail("1", 1));   //  多种借款人模式下使用
                         }else{
-                            text.append(FormatHelper.appendByTail("6212462190000000070", 19));  // 收款人
+                            text.append(FormatHelper.appendByTail("", 19));  // 收款人
                             text.append(FormatHelper.appendByTail("0", 1));   //  多种借款人模式下使用
                         }
 
