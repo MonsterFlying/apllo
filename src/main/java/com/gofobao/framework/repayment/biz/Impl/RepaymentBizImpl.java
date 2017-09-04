@@ -568,7 +568,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
         double txFeeOut = MathHelper.myRound(repays.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxFeeOut())).sum(), 2);
         //冻结金额
         double freezeMoney = sumTxAmount + intAmount + txFeeOut;
-
+        /* 需要冻结资金 */
+        long localFreezeMoney = new Double((freezeMoney) * 100).longValue();
         //====================================================================
         //冻结借款人账户资金
         //====================================================================
@@ -591,14 +592,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
             acqResMap.put("freezeOrderId", freezeOrderId);
             acqResMap.put("userId", titularBorrowAccount.getUserId());
 
-            /* 需要冻结资金 */
-            long frozenMoney = new Double((freezeMoney) * 100).longValue();
-
             //立即还款冻结可用资金
             AssetChange assetChange = new AssetChange();
             assetChange.setType(AssetChangeTypeEnum.freeze);  // 立即还款冻结可用资金
             assetChange.setUserId(titularBorrowAccount.getUserId());
-            assetChange.setMoney(frozenMoney);
+            assetChange.setMoney(localFreezeMoney);
             assetChange.setRemark("立即还款冻结可用资金");
             assetChange.setSourceId(borrow.getId());
             assetChange.setSeqNo(assetChangeProvider.getSeqNo());
@@ -642,7 +640,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if ((ObjectUtils.isEmpty(balanceUnfreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
                 throw new Exception("提前结清解冻异常：" + balanceUnfreezeResp.getRetMsg());
             }
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "提前结清失败!"));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, balanceUnfreezeResp.getRetMsg()));
         }
         return ResponseEntity.ok(VoBaseResp.ok("提前结清成功!"));
     }

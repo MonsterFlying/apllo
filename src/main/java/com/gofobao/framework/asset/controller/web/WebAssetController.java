@@ -14,6 +14,7 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.annotations.ApiIgnore;
@@ -77,7 +78,10 @@ public class WebAssetController {
         return assetBiz.pcExpenditureDetail(userId);
     }
 
-
-
+    @ApiOperation("资产中心资金同步问题")
+    @PostMapping("/home/pc/v2/synHome")
+    public ResponseEntity<VoAssetIndexResp> synHome(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
+        return assetBiz.synHome(userId) ;
+    }
 
 }

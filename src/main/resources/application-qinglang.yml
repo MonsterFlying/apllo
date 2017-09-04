@@ -60,7 +60,7 @@ windmill:
 jixin: #银行存管
   keysPassword: guangfubao@2016 #私钥密码
   url: http://uat.gofobao.com/escrow  #即信服务器路径
-  htmlUrl: https://access.credit2go.cn/escrow  #即信服务器路径
+  htmlUrl: https://finance.credit2go.cn/escrow  #即信服务器路径
   file-url: https://uat.credit2go.cn/escrow/file/download #文件请求下载链接
   save-file-path: D:/statistice/   #文件本地保存的路径
   version: 10 #版本号
