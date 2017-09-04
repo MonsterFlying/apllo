@@ -113,14 +113,12 @@ public class MigrateMemberBiz {
         List<String> successUserId = new ArrayList(successUserIdMap.keySet());
 
         List<String> errorUserId = new ArrayList(errorUserIdMap.keySet());
-        if (CollectionUtils.isEmpty(errorUserId)) {
+        if (!CollectionUtils.isEmpty(errorUserId)) {
             Specification<Users> es = Specifications
                     .<Users>and()
                     .in("id", errorUserId.toArray())
                     .build();
-
             List<Users> errorUsers = userService.findList(es);
-
             log.info("进入错误流程");
             if (!CollectionUtils.isEmpty(errorUsers)) {
                 BufferedWriter errorWriter = null;
@@ -160,7 +158,6 @@ public class MigrateMemberBiz {
                 }
             }
         }
-
         log.info("进入正确流程");
         Specification<UserThirdAccount> uts = Specifications
                 .<UserThirdAccount>and()
@@ -180,7 +177,6 @@ public class MigrateMemberBiz {
             if (StringUtils.isEmpty(accountId)) {
                 throw new Exception("当前用户账号为空");
             }
-
             UserThirdAccount checkeState = userThirdAccountMap.get(user.getId());
             if (ObjectUtils.isEmpty(checkeState)) {
                 UserThirdAccount userThirdAccount = new UserThirdAccount();
