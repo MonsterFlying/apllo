@@ -109,53 +109,58 @@ public class MigrateMemberBiz {
             }
         });
 
-        List<String> errorUserId = new ArrayList(errorUserIdMap.keySet());
+
         List<String> successUserId = new ArrayList(successUserIdMap.keySet());
-        Specification<Users> es = Specifications
-                .<Users>and()
-                .in("id", errorUserId.toArray())
-                .build();
 
-        List<Users> errorUsers = userService.findList(es);
+        List<String> errorUserId = new ArrayList(errorUserIdMap.keySet());
+        if (CollectionUtils.isEmpty(errorUserId)) {
+            Specification<Users> es = Specifications
+                    .<Users>and()
+                    .in("id", errorUserId.toArray())
+                    .build();
 
-        log.info("进入错误流程");
-        if (!CollectionUtils.isEmpty(errorUsers)) {
-            BufferedWriter errorWriter = null;
-            try {
-                errorWriter = Files.newWriter(errorFile, StandardCharsets.UTF_8);
-            } catch (FileNotFoundException e) {
-                log.error("获取错误读取流程异常", e);
-                return;
-            }
+            List<Users> errorUsers = userService.findList(es);
 
-            for (Users item : errorUsers) {
-                String msg = errorUserIdMap.get(item.getId());
-                StringBuffer stringBuffer = new StringBuffer();
-                String userName = getUserName(item);
-                stringBuffer
-                        .append(item.getId())
-                        .append("|")
-                        .append(userName)
-                        .append("|")
-                        .append(msg);
+            log.info("进入错误流程");
+            if (!CollectionUtils.isEmpty(errorUsers)) {
+                BufferedWriter errorWriter = null;
                 try {
-                    errorWriter.write(stringBuffer.toString());
-                    errorWriter.newLine();
-                } catch (IOException e) {
-                    log.error("写入用户开户错误消息异常", e);
+                    errorWriter = Files.newWriter(errorFile, StandardCharsets.UTF_8);
+                } catch (FileNotFoundException e) {
+                    log.error("获取错误读取流程异常", e);
                     return;
                 }
-            }
 
-            if (errorWriter != null) {
-                try {
-                    errorWriter.flush();
-                    errorWriter.close();
-                } catch (Exception e) {
-                    log.error("解除文件错误", e);
+                for (Users item : errorUsers) {
+                    String msg = errorUserIdMap.get(item.getId());
+                    StringBuffer stringBuffer = new StringBuffer();
+                    String userName = getUserName(item);
+                    stringBuffer
+                            .append(item.getId())
+                            .append("|")
+                            .append(userName)
+                            .append("|")
+                            .append(msg);
+                    try {
+                        errorWriter.write(stringBuffer.toString());
+                        errorWriter.newLine();
+                    } catch (IOException e) {
+                        log.error("写入用户开户错误消息异常", e);
+                        return;
+                    }
+                }
+
+                if (errorWriter != null) {
+                    try {
+                        errorWriter.flush();
+                        errorWriter.close();
+                    } catch (Exception e) {
+                        log.error("解除文件错误", e);
+                    }
                 }
             }
         }
+
         log.info("进入正确流程");
         Specification<UserThirdAccount> uts = Specifications
                 .<UserThirdAccount>and()
