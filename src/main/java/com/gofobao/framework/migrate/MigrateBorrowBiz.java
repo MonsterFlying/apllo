@@ -43,7 +43,7 @@ public class MigrateBorrowBiz {
     @Autowired
     AssetService assetService;
 
-    private static final String MIGRATE_PATH = "D:/apollo/migrate0904";
+    private static final String MIGRATE_PATH = "/root/apollo/migrate";
     private static final String BORROW_DIR = "borrow";
     /**
      * 银行编号
@@ -54,11 +54,6 @@ public class MigrateBorrowBiz {
      * 合作单位编号
      */
     private static final String COINST_CODE = "000187";
-
-    /**
-     * 迁移结果文件
-     */
-    private static final String RESULT_BORROW_FILE_PATH = "D:/Apollo/migrate/borrow_result/3005-BIDINRES-000187-101557-20170419";
 
     /**
      * 获取标的迁移文件
@@ -208,8 +203,8 @@ public class MigrateBorrowBiz {
     /**
      * 接收处理结果
      */
-    public void postMigrateBorrowFile() {
-        File file = new File(RESULT_BORROW_FILE_PATH);
+    public void postMigrateBorrowFile(String fileName) {
+        File file = new File(String.format("%s/%s/%s", MIGRATE_PATH, BORROW_DIR, fileName));
         if (!file.exists()) {
             log.error("文件不存在");
             return;
@@ -224,7 +219,7 @@ public class MigrateBorrowBiz {
         }
 
         List<Long> prodcutIdList = new ArrayList<>();
-        File errorFile = new File(RESULT_BORROW_FILE_PATH + "_error");
+        File errorFile = new File(String.format("%s/%s/%s_error", MIGRATE_PATH, BORROW_DIR, fileName));
         final BufferedWriter errorWriter;
         try {
             errorWriter = Files.newWriter(errorFile, StandardCharsets.UTF_8);
