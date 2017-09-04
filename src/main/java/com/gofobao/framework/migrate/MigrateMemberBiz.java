@@ -24,6 +24,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -66,6 +67,7 @@ public class MigrateMemberBiz {
     /**
      * 写入存管用户存管
      */
+    @Transactional(rollbackFor = Exception.class)
     public void postMemberMigrateFile(String fileName) throws Exception {
         final Date nowDate = new Date();
         File file = new File(String.format("%s/%s/%s", MIGRATE_PATH, MEMBER_DIR, fileName));
@@ -116,6 +118,7 @@ public class MigrateMemberBiz {
 
         List<Users> errorUsers = userService.findList(es);
 
+        log.info("进入错误流程");
         if (!CollectionUtils.isEmpty(errorUsers)) {
             BufferedWriter errorWriter = null;
             try {
@@ -153,7 +156,7 @@ public class MigrateMemberBiz {
                 }
             }
         }
-
+        log.info("进入正确流程");
         Specification<UserThirdAccount> uts = Specifications
                 .<UserThirdAccount>and()
                 .in("userId", successUserId.toArray())

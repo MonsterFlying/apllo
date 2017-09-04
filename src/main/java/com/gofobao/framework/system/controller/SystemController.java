@@ -89,7 +89,7 @@ public class SystemController {
             log.info("提交用户开户数据");
             migrateMemberBiz.postMemberMigrateFile(filename);
         } catch (Exception e) {
-            log.error("导入系统异常");
+            log.error("导入系统异常", e);
         }
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
