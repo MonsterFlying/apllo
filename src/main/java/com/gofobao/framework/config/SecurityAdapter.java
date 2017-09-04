@@ -13,6 +13,7 @@ public class SecurityAdapter extends WebMvcConfigurerAdapter {
         registry.addInterceptor(new Jwtintercepter())
                 .addPathPatterns("/**")
                 .excludePathPatterns("/**/pub/**")
+                .excludePathPatterns("/test/**")
                 .excludePathPatterns("/swagger-resources/**", "/v2/**")
                 .excludePathPatterns("/*.html", "/favicon.ico", "/**/*.html", "/**/*.css", "/**/*.js", "/**/*.png", "/**/*.jpg")
                 .excludePathPatterns("/index/**") ;
