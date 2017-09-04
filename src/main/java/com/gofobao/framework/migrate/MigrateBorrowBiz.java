@@ -59,6 +59,7 @@ public class MigrateBorrowBiz {
      * 获取标的迁移文件
      */
     public void getBorrowMigrateFile() {
+        log.info("获取标的开始");
         Date nowDate = new Date();
         String batchNo = DateHelper.dateToString(nowDate, DateHelper.DATE_FORMAT_HMS_NUM);
         String fileName = String.format("%s-BIDIN-%s-%s-%s", BANK_NO, COINST_CODE,
@@ -82,9 +83,7 @@ public class MigrateBorrowBiz {
             log.error("创建标迁移文件失败", e);
         }
 
-
         int realSize = 0, pageIndex = 0, pageSize = 2000;
-
         do {
             Pageable pageable = new PageRequest(pageIndex, pageSize);
             Specification<Borrow> bs = Specifications

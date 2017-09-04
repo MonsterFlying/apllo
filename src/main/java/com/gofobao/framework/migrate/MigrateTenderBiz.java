@@ -221,9 +221,10 @@ public class MigrateTenderBiz {
 
     /**
      * 接收处理结果
+     * @param filename
      */
-    public void postMigrateTenderFile() {
-        File file = new File(RESULT_TENDER_FILE_PATH);
+    public void postMigrateTenderFile(String filename) {
+        File file = new File(String.format("%s/%s/%s", MIGRATE_PATH, TENDER_DIR, filename));
         if (!file.exists()) {
             log.error("债权文件不存在");
             return;
@@ -238,7 +239,7 @@ public class MigrateTenderBiz {
         }
 
         List<Long> tenderIdList = new ArrayList<>();
-        File errorFile = new File(RESULT_TENDER_FILE_PATH + "_error");
+        File errorFile =  new File(String.format("%s/%s/%s_error", MIGRATE_PATH, TENDER_DIR, filename));
         final BufferedWriter errorWriter;
         try {
             errorWriter = Files.newWriter(errorFile, StandardCharsets.UTF_8);

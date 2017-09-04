@@ -95,6 +95,10 @@ public class SystemController {
     }
 
 
+    /**
+     * 获取标的迁移文件
+     * @param password
+     */
     @GetMapping("pub/migrateBorrow/{password}")
     public void migrateBorrow(@PathVariable(value = "password") String password) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
@@ -128,6 +132,19 @@ public class SystemController {
 
         long curTime = System.currentTimeMillis();
         migrateTenderBiz.getTenderMigrateFile();
+        log.info("处理时间: " + (System.currentTimeMillis() - curTime));
+    }
+
+
+    @GetMapping("pub/postMigrateTender/{password}/{filename}")
+    public void postMigrateTender(@PathVariable(value = "password") String password,
+                                  @PathVariable(value = "filename") String filename) {
+        if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
+            return;
+        }
+
+        long curTime = System.currentTimeMillis();
+        migrateTenderBiz.postMigrateTenderFile(filename);
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 
