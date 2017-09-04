@@ -68,7 +68,7 @@ public class InitDBBizImpl implements InitDBBiz {
     @Override
     public void initDb() {
         int borrowCount = 1;
-        int pageSize = 1000, pageIndex = 0, realSize = 0;
+        int pageSize = 100, pageIndex = 0, realSize = 0;
         Date nowDate = new Date();
         int loop = 1;
         do {
