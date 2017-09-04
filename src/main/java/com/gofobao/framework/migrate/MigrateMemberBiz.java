@@ -60,20 +60,15 @@ public class MigrateMemberBiz {
      */
     private static final String PROUDCT_NO = "0110";
 
-    /**
-     * 迁移结果文件
-     */
-    private static final String RESULT_MEMBER_FILE_PATH = "D:/Apollo/migrate/member_result/3005-APPZX0110RES-130027-20170418";
-
     @Autowired
     UserCacheService userCacheService;
 
     /**
      * 写入存管用户存管
      */
-    public void postMemberMigrateFile() throws Exception {
+    public void postMemberMigrateFile(String fileName) throws Exception {
         final Date nowDate = new Date();
-        File file = new File(RESULT_MEMBER_FILE_PATH);
+        File file = new File(String.format("%s/%s", MIGRATE_PATH, fileName));
         if (!file.exists()) {
             log.error("文件不存在");
             return;
@@ -87,11 +82,8 @@ public class MigrateMemberBiz {
             return;
         }
 
-        File errorFile = new File(RESULT_MEMBER_FILE_PATH + "_error");
-
-
+        File errorFile = new File(String.format("%s/%s_error", MIGRATE_PATH, fileName));
         Stream<String> lines = reader.lines();
-
         Map<Long, String> errorUserIdMap = new HashMap<>();
         Map<Long, String> successUserIdMap = new HashMap<>();
         lines.forEach((String item) -> {

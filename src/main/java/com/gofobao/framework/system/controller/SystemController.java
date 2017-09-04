@@ -54,6 +54,11 @@ public class SystemController {
     }
 
 
+
+    /**
+     * 获取开户
+     * @param password
+     */
     @GetMapping("pub/migrateMember/{password}")
     public void migrateMember(@PathVariable(value = "password") String password) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
@@ -65,6 +70,30 @@ public class SystemController {
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 
+
+    /**
+     * 提交开户数据
+     * @param password
+     * @param filename
+     */
+    @GetMapping("pub/postMigrateMember/{password}/{filename}")
+    public void postMigrateMember(@PathVariable(value = "password") String password,
+                              @PathVariable(value = "filename") String filename) {
+        if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
+            return;
+        }
+
+        long curTime = System.currentTimeMillis();
+        try {
+            migrateMemberBiz.postMemberMigrateFile(filename);
+        } catch (Exception e) {
+            log.error("导入系统异常");
+        }
+        log.info("处理时间: " + (System.currentTimeMillis() - curTime));
+    }
+
+
+
     @GetMapping("pub/migrateBorrow/{password}")
     public void migrateBorrow(@PathVariable(value = "password") String password) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
@@ -75,6 +104,7 @@ public class SystemController {
         migrateBorrowBiz.getBorrowMigrateFile();
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
+
 
 
     @GetMapping("pub/migrateTender/{password}")
