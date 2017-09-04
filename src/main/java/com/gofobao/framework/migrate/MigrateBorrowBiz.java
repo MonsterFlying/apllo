@@ -43,7 +43,7 @@ public class MigrateBorrowBiz {
     @Autowired
     AssetService assetService;
 
-    private static final String MIGRATE_PATH = "D:/apollo/migrate0904";
+    private static final String MIGRATE_PATH = "/root/apollo/migrate";
     private static final String BORROW_DIR = "borrow";
     /**
      * 银行编号

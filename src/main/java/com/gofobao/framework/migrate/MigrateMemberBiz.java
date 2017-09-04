@@ -49,7 +49,7 @@ public class MigrateMemberBiz {
 
     @Autowired
     AssetService assetService;
-    private static final String MIGRATE_PATH = "D:/apollo/migrate0904";
+    private static final String MIGRATE_PATH = "/root/apollo/migrate";
     private static final String MEMBER_DIR = "member";
     /**
      * 银行编号

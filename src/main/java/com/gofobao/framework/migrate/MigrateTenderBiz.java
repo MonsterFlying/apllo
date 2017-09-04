@@ -51,7 +51,7 @@ public class MigrateTenderBiz {
     @Autowired
     AssetService assetService;
 
-    private static final String MIGRATE_PATH = "D:/apollo/migrate0904";
+    private static final String MIGRATE_PATH = "/root/apollo/migrate";
     private static final String TENDER_DIR = "tender";
     /**
      * 银行编号
