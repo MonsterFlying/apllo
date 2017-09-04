@@ -5,6 +5,7 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
+import com.gofobao.framework.helper.BeanHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -235,6 +236,7 @@ public class InitDBBizImpl implements InitDBBiz {
 
             List<Tender> buyTransferTenderList = tenderService.findList(ts);
             List<TransferBuyLog> transferBuyLogList = new ArrayList<>();
+            List<TransferBuyLog> transferBuyLogList1 = new ArrayList<>();
             buyTransferTenderList.stream().forEach(buyTransferTender -> {
                 Borrow transferBorrow = transferBorrowMaps.get(buyTransferTender.getBorrowId());
                 Tender parentTender = parentTenderMaps.get(transferBorrow.getTenderId());
@@ -245,7 +247,7 @@ public class InitDBBizImpl implements InitDBBiz {
 
                 TransferBuyLog transferBuyLog = new TransferBuyLog();
                 transferBuyLog.setSource(0);
-                transferBuyLog.setState(1);
+                transferBuyLog.setState(buyTransferTender.getState());
                 transferBuyLog.setUserId(buyTransferTender.getUserId());
                 transferBuyLog.setUpdatedAt(buyTransferTender.getUpdatedAt());
                 transferBuyLog.setType(0);
@@ -256,9 +258,14 @@ public class InitDBBizImpl implements InitDBBiz {
                 transferBuyLog.setPrincipal(buyTransferTender.getValidMoney());
                 transferBuyLog.setCreatedAt(transfer.getCreatedAt());
                 transferBuyLogList.add(transferBuyLog);
+                TransferBuyLog transferBuyLog1 = new TransferBuyLog();
+                BeanHelper.copyParamter(transferBuyLog,transferBuyLog1,true);
+                transferBuyLog1.setState(buyTransferTender.getState());
+                transferBuyLogList1.add(transferBuyLog1);
             });
             transferBuyLogService.save(transferBuyLogList);
             Map<Long, List<TransferBuyLog>> transferBuyMaps = transferBuyLogList.stream().collect(groupingBy(TransferBuyLog::getTransferId));
+            Map<Long, List<TransferBuyLog>> transferBuyMaps1 = transferBuyLogList1.stream().collect(groupingBy(TransferBuyLog::getTransferId));
             buyTransferTenderList.stream().forEach(buyTransferTender -> {
                 Borrow transferBorrow = transferBorrowMaps.get(buyTransferTender.getBorrowId());
                 Tender parentTender = parentTenderMaps.get(transferBorrow.getTenderId());
@@ -268,7 +275,8 @@ public class InitDBBizImpl implements InitDBBiz {
                 }
                 Borrow prarentBorrow = parentBorrowMaps.get(parentTender.getBorrowId());
                 List<TransferBuyLog> transferBuyLogs = transferBuyMaps.get(transfer.getId());
-                List<Tender> childTenderList = addChildTender(transfer.getCreatedAt(), transfer, parentTender, transferBuyLogs);
+                List<TransferBuyLog> transferBuyLogs1 = transferBuyMaps1.get(transfer.getId());
+                List<Tender> childTenderList = addChildTender(transfer.getCreatedAt(), transfer, parentTender, transferBuyLogs,transferBuyLogs1);
 
                 addChildTenderCollection(transfer.getCreatedAt(), transfer, prarentBorrow, childTenderList);
             });
@@ -286,13 +294,14 @@ public class InitDBBizImpl implements InitDBBiz {
      * @param transferBuyLogList
      * @return
      */
-    public List<Tender> addChildTender(Date nowDate, Transfer transfer, Tender parentTender, List<TransferBuyLog> transferBuyLogList) {
+    public List<Tender> addChildTender(Date nowDate, Transfer transfer, Tender parentTender, List<TransferBuyLog> transferBuyLogList,List<TransferBuyLog> transferBuyLogList1) {
         //生成债权记录与回款记录
         List<Tender> childTenderList = new ArrayList<>();
+        Map<Long,TransferBuyLog> transferBuyLogMaps = transferBuyLogList1.stream().collect(Collectors.toMap(TransferBuyLog::getId,Function.identity()));
         transferBuyLogList.stream().forEach(transferBuyLog -> {
             Tender childTender = new Tender();
             /*UserThirdAccount buyUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
-*/
+*/          TransferBuyLog transferBuyLog1 =transferBuyLogMaps.get(transferBuyLog.getId());
             childTender.setUserId(transferBuyLog.getUserId());
             childTender.setStatus(1);  // 投标成不成功
             childTender.setType(transferBuyLog.getType());
@@ -304,7 +313,7 @@ public class InitDBBizImpl implements InitDBBiz {
             childTender.setValidMoney(transferBuyLog.getPrincipal());
             childTender.setTransferFlag(0);
             childTender.setTUserId(transferBuyLog.getUserId());
-            childTender.setState(0);
+            childTender.setState(transferBuyLog1.getState());
             childTender.setAutoOrder(0);
             childTender.setParentId(parentTender.getId());
             childTender.setTransferBuyId(transferBuyLog.getId());

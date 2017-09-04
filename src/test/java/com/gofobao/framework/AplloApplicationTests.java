@@ -392,9 +392,9 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("190013");
+        batchDetailsQueryReq.setBatchNo("215335");
 
-        batchDetailsQueryReq.setBatchTxDate("20170901");
+        batchDetailsQueryReq.setBatchTxDate("20170903");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -545,72 +545,6 @@ public class AplloApplicationTests {
     @Test
     public void test() {
 
-        List<BorrowRepayment> borrowRepaymentList = new ArrayList<>();
-
-        BorrowRepayment borrowRepayment = new BorrowRepayment();
-        borrowRepayment.setPrincipal(0l);
-        borrowRepayment.setInterest(1500l);
-        borrowRepayment.setOrder(0);
-        borrowRepaymentList.add(borrowRepayment);
-
-        borrowRepayment = new BorrowRepayment();
-        borrowRepayment.setPrincipal(0l);
-        borrowRepayment.setInterest(1500l);
-        borrowRepayment.setOrder(1);
-        borrowRepaymentList.add(borrowRepayment);
-
-        borrowRepayment = new BorrowRepayment();
-        borrowRepayment.setPrincipal(100000l);
-        borrowRepayment.setInterest(1500l);
-        borrowRepayment.setOrder(2);
-        borrowRepaymentList.add(borrowRepayment);
-        Map<Integer/* ORDER */, BorrowRepayment> borrowRepaymentMaps = borrowRepaymentList.stream().collect(Collectors.toMap(BorrowRepayment::getOrder, Function.identity()));
-        List<Long> sumPrincipals = new ArrayList<>();
-        List<Long> sumInterests = new ArrayList<>();
-        List<Tender> tenderList = new ArrayList<>();
-        Tender tender = new Tender();
-        tender.setValidMoney(62100l);
-        tenderList.add(tender);
-        tender = new Tender();
-        tender.setValidMoney(37900l);
-        tenderList.add(tender);
-        for (int i = 0; i < tenderList.size(); i++) {
-            tender = tenderList.get(i);
-            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
-                    NumberHelper.toDouble(StringHelper.toString(tender.getValidMoney())),
-                    NumberHelper.toDouble(StringHelper.toString(1800)), 3, DateHelper.stringToDate("2017-09-01 18:20:06"));
-            Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(2);
-            List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
-            Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
-            BorrowCollection borrowCollection;
-            int collectionMoney = 0;
-            int collectionInterest = 0;
-            for (int j = 0; j < repayDetailList.size(); j++) {
-                Map<String, Object> repayDetailMap = repayDetailList.get(j);
-                long principal = NumberHelper.toLong(repayDetailMap.get("principal"));
-                long interest = NumberHelper.toLong(repayDetailMap.get("interest"));
-                if (sumPrincipals.size() != repayDetailList.size()) {
-                    sumPrincipals.add(principal);
-                } else {
-                    sumPrincipals.set(j, sumPrincipals.get(j) + principal);
-                }
-                if (sumInterests.size() != repayDetailList.size()) {
-                    sumInterests.add(interest);
-                } else {
-                    sumInterests.set(j, sumInterests.get(j) + interest);
-                }
-
-                if (i == (tenderList.size() - 1)) { //给回款最后一期补上多出的本金与利息
-                    borrowRepayment = borrowRepaymentMaps.get(j);
-                    principal += (borrowRepayment.getPrincipal() - sumPrincipals.get(j));
-                    interest += (borrowRepayment.getInterest() - sumInterests.get(j));
-                }
-                long repayMoney = principal + interest;
-
-
-            }
-        }
-
 
    /*     //推送队列结束债权
         MqConfig mqConfig = new MqConfig();
@@ -632,7 +566,7 @@ public class AplloApplicationTests {
 
 
         //批次处理
-        //batchDeal();
+        batchDeal();
         //unfrozee();
         //查询存管账户资金信息
         //balanceQuery();
