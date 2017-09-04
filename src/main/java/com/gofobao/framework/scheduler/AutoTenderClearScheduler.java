@@ -28,7 +28,7 @@ public class AutoTenderClearScheduler {
     @Autowired
     private AutoTenderService autoTenderService;
 
-    @Scheduled(cron = "0 4 0 * * ? ")
+    //@Scheduled(cron = "0 4 0 * * ? ")
     public void process() {
         log.info("自动清除过期自动投标规则启动");
         do {

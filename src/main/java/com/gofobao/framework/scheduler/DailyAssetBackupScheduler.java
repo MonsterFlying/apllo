@@ -19,7 +19,7 @@ public class DailyAssetBackupScheduler {
     @Autowired
     JdbcTemplate jdbcTemplate;
 
-    @Scheduled(cron = "0 0 0 * * ? ")
+    //@Scheduled(cron = "0 0 0 * * ? ")
     public void process() {
         log.info("每天备份资产记录任务调度启动");
         try {

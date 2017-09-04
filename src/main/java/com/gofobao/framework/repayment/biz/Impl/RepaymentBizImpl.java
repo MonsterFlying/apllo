@@ -640,7 +640,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if ((ObjectUtils.isEmpty(balanceUnfreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceUnfreezeResp.getRetCode()))) {
                 throw new Exception("提前结清解冻异常：" + balanceUnfreezeResp.getRetMsg());
             }
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "提前结清失败!"));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, balanceUnfreezeResp.getRetMsg()));
         }
         return ResponseEntity.ok(VoBaseResp.ok("提前结清成功!"));
     }

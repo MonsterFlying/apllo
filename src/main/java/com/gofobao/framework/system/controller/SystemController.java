@@ -43,7 +43,22 @@ public class SystemController {
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 
+    @GetMapping("pub/initTransfer/{password}")
+    public void initTransfer(@PathVariable(value = "password") String password) {
+        if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
+            return;
+        }
+        long curTime = System.currentTimeMillis();
+        initDBBiz.transfer();
+        log.info("处理时间: " + (System.currentTimeMillis() - curTime));
+    }
 
+
+    /**
+     * 获取开户
+     *
+     * @param password
+     */
     @GetMapping("pub/migrateMember/{password}")
     public void migrateMember(@PathVariable(value = "password") String password) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
@@ -55,6 +70,31 @@ public class SystemController {
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 
+
+    /**
+     * 提交开户数据
+     *
+     * @param password
+     * @param filename
+     */
+    @GetMapping("pub/postMigrateMember/{password}/{filename}")
+    public void postMigrateMember(@PathVariable(value = "password") String password,
+                                  @PathVariable(value = "filename") String filename) {
+        if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
+            return;
+        }
+
+        long curTime = System.currentTimeMillis();
+        try {
+            log.info("提交用户开户数据");
+            migrateMemberBiz.postMemberMigrateFile(filename);
+        } catch (Exception e) {
+            log.error("导入系统异常");
+        }
+        log.info("处理时间: " + (System.currentTimeMillis() - curTime));
+    }
+
+
     @GetMapping("pub/migrateBorrow/{password}")
     public void migrateBorrow(@PathVariable(value = "password") String password) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
@@ -63,6 +103,19 @@ public class SystemController {
 
         long curTime = System.currentTimeMillis();
         migrateBorrowBiz.getBorrowMigrateFile();
+        log.info("处理时间: " + (System.currentTimeMillis() - curTime));
+    }
+
+
+    @GetMapping("pub/postMigrateBorrow/{password}/{filename}")
+    public void postMigrateBorrow(@PathVariable(value = "password") String password,
+                                  @PathVariable(value = "filename") String filename) {
+        if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
+            return;
+        }
+
+        long curTime = System.currentTimeMillis();
+        migrateBorrowBiz.postMigrateBorrowFile(filename);
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 

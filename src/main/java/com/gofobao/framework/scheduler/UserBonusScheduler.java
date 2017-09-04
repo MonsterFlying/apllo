@@ -54,7 +54,7 @@ public class UserBonusScheduler {
      * 理财师提成
      */
     @Transactional(rollbackFor = Exception.class)
-    @Scheduled(cron = "0 1 0 * * ? ")
+    //@Scheduled(cron = "0 1 0 * * ? ")
     public void brokerProcess() {
         log.info("理财师调度启动");
         try {
@@ -156,7 +156,7 @@ public class UserBonusScheduler {
     /**
      * 天提成
      */
-    @Scheduled(cron = "0 30 23 * * ? ")
+   // @Scheduled(cron = "0 30 23 * * ? ")
     public void dayProcess() {
         log.info("每日天提成调度启动");
         try {
@@ -231,7 +231,7 @@ public class UserBonusScheduler {
     /**
      * 月提成
      */
-    @Scheduled(cron = "0 35 23 1 * ? ")
+    //@Scheduled(cron = "0 35 23 1 * ? ")
     public void monthProcess() {
         log.info("每月提成任务调度启动");
         try {

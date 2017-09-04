@@ -671,12 +671,13 @@ public class UserBizImpl implements UserBiz {
         Map<String, Object> resultMap = Maps.newHashMap();
         try {
             //调用put方法上传
-            Response res = uploadManager.put(file, imageName, token);
+            String imageUrl=imageName+"!avatar";
+            Response res = uploadManager.put(file,imageUrl , token);
             //返回上传成功信息
             resultMap.put("result", Boolean.TRUE);
             resultMap.put("code", VoBaseResp.OK);
             resultMap.put("msg", res.bodyString());
-            String avatarPath = qiNiuDomain + imageName;
+            String avatarPath = qiNiuDomain + imageUrl;
             resultMap.put("url", avatarPath);
             //更新用户头像
             users.setAvatarPath(avatarPath);
