@@ -68,7 +68,7 @@ public class MigrateMemberBiz {
      */
     public void postMemberMigrateFile(String fileName) throws Exception {
         final Date nowDate = new Date();
-        File file = new File(String.format("%s/%s", MIGRATE_PATH, fileName));
+        File file = new File(String.format("%s/%s/%s", MIGRATE_PATH, MEMBER_DIR, fileName));
         if (!file.exists()) {
             log.error("文件不存在");
             return;
@@ -82,7 +82,7 @@ public class MigrateMemberBiz {
             return;
         }
 
-        File errorFile = new File(String.format("%s/%s_error", MIGRATE_PATH, fileName));
+        File errorFile = new File(String.format("%s/%s/%s_error", MIGRATE_PATH, MEMBER_DIR, fileName));
         Stream<String> lines = reader.lines();
         Map<Long, String> errorUserIdMap = new HashMap<>();
         Map<Long, String> successUserIdMap = new HashMap<>();
@@ -106,7 +106,6 @@ public class MigrateMemberBiz {
                 return;
             }
         });
-
 
         List<String> errorUserId = new ArrayList(errorUserIdMap.keySet());
         List<String> successUserId = new ArrayList(successUserIdMap.keySet());
@@ -193,7 +192,7 @@ public class MigrateMemberBiz {
                 userThirdAccount.setMobile(user.getPhone());
                 userThirdAccount.setName(user.getRealname());
                 userThirdAccountAll.add(userThirdAccount);
-            }else{
+            } else {
                 log.error("当前用户没有账号");
             }
         }
@@ -319,7 +318,7 @@ public class MigrateMemberBiz {
                 }
 
                 UserThirdAccount userThirdAccount = userThirdAccountRefMap.get(user.getId());
-                if(!ObjectUtils.isEmpty(userThirdAccount)){
+                if (!ObjectUtils.isEmpty(userThirdAccount)) {
                     legitimateState = false;
                     remark.append("[已开户]");
                 }
@@ -370,9 +369,9 @@ public class MigrateMemberBiz {
                             //正对 15位身份证转 18位
                             String cardId = user.getCardId();
                             if (cardId.length() == 15) {
-                                cardId = transformIdFrom15To18(cardId) ;
+                                cardId = transformIdFrom15To18(cardId);
                             }
-                            cardId = cardId.toUpperCase() ;
+                            cardId = cardId.toUpperCase();
                             text.append(FormatHelper.appendByTail(cardId, 18));
                             text.append(FormatHelper.appendByTail("01", 2));
                             text.append(FormatHelper.appendByTail(user.getRealname(), 60));
