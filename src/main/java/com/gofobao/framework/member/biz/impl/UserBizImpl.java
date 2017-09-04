@@ -671,7 +671,7 @@ public class UserBizImpl implements UserBiz {
         Map<String, Object> resultMap = Maps.newHashMap();
         try {
             //调用put方法上传
-            Response res = uploadManager.put(file, imageName, token);
+            Response res = uploadManager.put(file, imageName+"!avatar", token);
             //返回上传成功信息
             resultMap.put("result", Boolean.TRUE);
             resultMap.put("code", VoBaseResp.OK);
