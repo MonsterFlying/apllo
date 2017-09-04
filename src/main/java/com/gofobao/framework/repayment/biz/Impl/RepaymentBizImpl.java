@@ -1310,11 +1310,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         BatchAssetChange batchAssetChange = new BatchAssetChange();
         batchAssetChange.setSourceId(id);
         batchAssetChange.setState(0);
-        if (advance) { // 还款人还垫付
-            batchAssetChange.setType(BatchAssetChangeContants.BATCH_REPAY_BAIL);
-        } else { //正常还款
-            batchAssetChange.setType(BatchAssetChangeContants.BATCH_REPAY);
-        }
+        batchAssetChange.setType(BatchAssetChangeContants.BATCH_REPAY);
         batchAssetChange.setCreatedAt(new Date());
         batchAssetChange.setUpdatedAt(new Date());
         batchAssetChange.setBatchNo(batchNo);
