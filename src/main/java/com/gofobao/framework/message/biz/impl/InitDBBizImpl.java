@@ -11,6 +11,7 @@ import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.message.biz.InitDBBiz;
+import com.gofobao.framework.migrate.FileHelper;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.tender.entity.Tender;
@@ -21,6 +22,7 @@ import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.Files;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -34,6 +36,11 @@ import org.springframework.util.ObjectUtils;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -65,29 +72,37 @@ public class InitDBBizImpl implements InitDBBiz {
     @Autowired
     TransferBuyLogService transferBuyLogService;
 
+    private static final String DB_PATH = "/root/apollo/";
+    private static final String DBFILE = "db";
+
     @Override
     public void initDb() {
         int borrowCount = 1;
-        int pageSize = 1000, pageIndex = 0, realSize = 0;
+        int pageSize = 300, pageIndex = 0;
         Date nowDate = new Date();
-        int loop = 1;
-        do {
-            ImmutableList<Integer> avableStatus = ImmutableList.of(1, 3); // 保函招标中, 满标复审通过
-            Specification<Borrow> borrowSpecification = Specifications.<Borrow>and()
-                    .in("status", avableStatus.toArray())
-                    .build();
+        ImmutableList<Integer> avableStatus = ImmutableList.of(1, 3); // 保函招标中, 满标复审通过
+        Specification<Borrow> borrowSpecification = Specifications.<Borrow>and()
+                .in("status", avableStatus.toArray())
+                .build();
+
+        Long count = borrowService.count(borrowSpecification);
+        log.info("初始化标量: " + count);
+        int pageIndexTotal = count.intValue() / pageSize;
+        pageIndexTotal = count.intValue() % pageSize == 0 ? pageIndexTotal : pageIndexTotal + 1;
+        log.info("总循环:" + pageIndex);
+        BufferedWriter bufferedWriter = null;
+        try {
+            File tenderFile = FileHelper.createFile(DB_PATH, DBFILE, "db");
+            bufferedWriter = Files.newWriter(tenderFile, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            log.error("创建文件失败", e);
+            return ;
+        }
+        for (; pageIndex < pageIndexTotal; pageIndex++) {
             Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "id")));
             List<Borrow> borrowList = borrowService.findList(borrowSpecification, pageable);
-
-            if (CollectionUtils.isEmpty(borrowList)) {
-                break;
-            }
-
-            realSize = borrowList.size();
-            pageIndex++;
             List<Tender> tenderDateCache = new ArrayList<>();
             List<BorrowRepayment> borrowRepaymentDataCache = new ArrayList<>();
-            List<BorrowCollection> borrowCollectionDateCache = new ArrayList<>();
             Set<Long> borrowIdSet = borrowList.stream().map(borrow -> borrow.getId()).collect(Collectors.toSet());  // 标的Id集合
 
             List<BorrowRepayment> borrowRepaymentListByBorrowId = findRepaymentListByBorrowId(borrowIdSet);   // 当前标的所有的还款
@@ -111,8 +126,15 @@ public class InitDBBizImpl implements InitDBBiz {
                     for (BorrowRepayment borrowRepayment : borrowRepaymentList) {
                         borrowRepayment.setUserId(borrowUserId);
                         borrowRepayment.setUpdatedAt(nowDate);
+                        String insert = "UPDATE `gfb_borrow_repayment`  SET `user_id` = " + borrowUserId + "  WHERE  `id` = " +  borrowRepayment.getId() +  " ;" ;
+                        try {
+                            bufferedWriter.write(insert);
+                            bufferedWriter.newLine();
+                            bufferedWriter.flush();
+                        } catch (IOException e) {
+                            log.error("添加待还事变", e);
+                        }
                     }
-                    borrowRepaymentDataCache.addAll(borrowRepaymentList);
                 }
 
                 List<Tender> tenderList = tenderAndBorrowIdRefMap.get(borrowId);
@@ -129,20 +151,31 @@ public class InitDBBizImpl implements InitDBBiz {
                                 borrowCollection.setUserId(tenderUserId);
                                 borrowCollection.setBorrowId(borrowId);
                                 borrowCollection.setUpdatedAt(nowDate);
+                                String insert = "UPDATE `gfb_borrow_collection`  SET `user_id` = " + tenderUserId+ " ,  `borrow_id` = " + borrowId + "  WHERE `id`  = " +  borrowCollection.getId()+" ;" ;
+                                try {
+                                    bufferedWriter.write(insert);
+                                    bufferedWriter.newLine();
+                                    bufferedWriter.flush();
+                                } catch (IOException e) {
+                                    log.error("插入待收失败", e);
+                                }
                             }
-
-                            borrowCollectionDateCache.addAll(borrowCollectionList);
+                        }
+                        String insert = "UPDATE `gfb_borrow_tender`  SET `state` = " +  tenderState  + "  WHERE `id` = " + tenderId + " ; "  ;
+                        try {
+                            bufferedWriter.write(insert);
+                            bufferedWriter.newLine();
+                            bufferedWriter.flush();
+                        } catch (IOException e) {
+                            log.error("插入投标记录失败", e);
                         }
                     }
-                    tenderDateCache.addAll(tenderList);
                 }
             }
-            tenderService.save(tenderDateCache);
             borrowRepaymentService.save(borrowRepaymentDataCache);
-            borrowCollectionService.save(borrowCollectionDateCache);
-            log.info("总调度次数" + (++loop));
-        } while (realSize == pageSize);
+        }
     }
+
 
     @Override
     @Transactional(rollbackOn = Exception.class)
@@ -426,9 +459,9 @@ public class InitDBBizImpl implements InitDBBiz {
 
     private int caculTenderState(Borrow borrow) {
         int tenderState = -1;
-        if (borrow.getStatus() == 1) {  // 招标中
+        if (borrow.getStatus().intValue() == 1) {  // 招标中
             tenderState = 1;  // 投标中
-        } else if (borrow.getStatus() == 3) {
+        } else if (borrow.getStatus().intValue() == 3) {
             if (!ObjectUtils.isEmpty(borrow.getCloseAt())) {
                 tenderState = 3;  // 已结清
             } else if (!ObjectUtils.isEmpty(borrow.getSuccessAt())) {

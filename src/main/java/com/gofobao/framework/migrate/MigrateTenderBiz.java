@@ -105,6 +105,9 @@ public class MigrateTenderBiz {
             log.error("创建投标迁移文件失败", e);
         }
         int realSize = 0, pageIndex = 0, pageSize = 2000;
+
+        double money = 0d;
+        long tenderCount = 0;
         do {
             Pageable pageable = new PageRequest(pageIndex, pageSize);
             Specification<Borrow> bs = Specifications
@@ -129,12 +132,11 @@ public class MigrateTenderBiz {
             Specification<Tender> ts = Specifications
                     .<Tender>and()
                     .in("borrowId", borrowIdSet.toArray())
-                    .eq("status", 1)
-                    .eq("transferFlag", 0)
-                    .eq("authCode", null)
+                    .eq("status", 1)// 投标成功
+                    .eq("transferFlag", 0)  // 未转让
+                    .eq("authCode", null) // 不用重复提交的
                     .build();
             List<Tender> tenderList = tenderService.findList(ts);
-
             Set<Long> userIdSet = tenderList.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet());
             Specification<UserThirdAccount> uts = Specifications
                     .<UserThirdAccount>and()
@@ -176,7 +178,8 @@ public class MigrateTenderBiz {
                         }
                         endDate = DateHelper.dateToString(DateHelper.addMonths(successAt, borrow.getTimeLimit()), DateHelper.DATE_FORMAT_YMD_NUM);
                     }
-
+                    money = money + tender.getValidMoney();   // 累计投标总额
+                    tenderCount = tenderCount + 1;
                     String yield = StringHelper.toString(borrow.getApr() * 1000); // 逾期年化收益
                     text.append(FormatHelper.appendByTail(BANK_NO, 4)); // 银行代号
                     text.append(FormatHelper.appendByTail(batchNo, 6));  // 批次号
@@ -202,6 +205,10 @@ public class MigrateTenderBiz {
             }
 
         } while (realSize == pageSize);
+
+        log.info("投标总额: =================" + money);
+        log.info("投标总数: =================" + tenderCount);
+
         try {
             if (tenderWriter != null) {
                 tenderWriter.flush();
@@ -221,6 +228,7 @@ public class MigrateTenderBiz {
 
     /**
      * 接收处理结果
+     *
      * @param filename
      */
     public void postMigrateTenderFile(String filename) {
@@ -239,7 +247,7 @@ public class MigrateTenderBiz {
         }
 
         List<Long> tenderIdList = new ArrayList<>();
-        File errorFile =  new File(String.format("%s/%s/%s_error", MIGRATE_PATH, TENDER_DIR, filename));
+        File errorFile = new File(String.format("%s/%s/%s_error", MIGRATE_PATH, TENDER_DIR, filename));
         final BufferedWriter errorWriter;
         try {
             errorWriter = Files.newWriter(errorFile, StandardCharsets.UTF_8);
@@ -248,6 +256,7 @@ public class MigrateTenderBiz {
             return;
         }
 
+        Date nowDate = new Date() ;
         Stream<String> lines = reader.lines();
         Map<Long, String> authCodeMap = new HashMap<>();
         lines.forEach((String item) -> {
@@ -289,6 +298,7 @@ public class MigrateTenderBiz {
             tender.setAuthCode(split[0]);
             tender.setThirdTenderOrderId(split[1]);
             tender.setThirdTenderFlag(true);
+            tender.setUpdatedAt(nowDate);
         });
         tenderService.save(tenderList);
     }

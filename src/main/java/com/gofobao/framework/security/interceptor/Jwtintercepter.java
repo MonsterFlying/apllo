@@ -13,6 +13,7 @@ import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 @Slf4j
 public class Jwtintercepter extends HandlerInterceptorAdapter {
 
@@ -40,7 +41,7 @@ public class Jwtintercepter extends HandlerInterceptorAdapter {
 
         // 判断当前用户路劲
         String url = httpServletRequest.getRequestURI();
-        log.info(String.format("访问路径：%s",url));
+        log.info("访问地址:" + url);
         String type = jwtTokenHelper.getType(token);
         if (url.contains("finance")) {  // 理财用户
             if (!"finance".equals(type)) {
