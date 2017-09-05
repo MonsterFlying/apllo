@@ -1620,7 +1620,6 @@ public class TransferBizImpl implements TransferBiz {
             }
         } else {
             borrowInfoRes.setStatus(4);
-            borrowInfoRes.setSuccessAt(DateHelper.dateToString(transfer.getSuccessAt()));
         }
         borrowInfoRes.setReleaseAt(DateHelper.dateToString(transfer.getReleaseAt()));
         borrowInfoRes.setBorrowId(borrowId);
@@ -1641,7 +1640,7 @@ public class TransferBizImpl implements TransferBiz {
         borrowInfoRes.setIsVouch(borrow.getIsVouch());
         borrowInfoRes.setHideLowMoney(borrow.getLowest());
         borrowInfoRes.setIsFlow(true);
-        borrowInfoRes.setAvatar(imageDomain + "/data/images/avatar/" + borrow.getUserId() + "_avatar_small.jpg");
+        borrowInfoRes.setAvatar(StringUtils.isEmpty(users.getAvatarPath())?imageDomain + "/images/user/default_avatar.jpg":users.getAvatarPath());
         borrowInfoRes.setLockStatus(borrow.getIsLock());
         return ResponseEntity.ok(borrowInfoRes);
     }
