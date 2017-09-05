@@ -151,6 +151,21 @@ public class TestController {
         } catch (Exception e) {
             log.error(String.format("资金变动失败：%s", assetChange));
         }
+
+        assetChange = new AssetChange();
+        assetChange.setMoney(691685);
+        assetChange.setUserId(100001l);
+        assetChange.setRemark(String.format("验证服数据待还金额修正，金额：%s元，userId：%s", 6,916.85, 100001));
+        assetChange.setSeqNo(seqNo);
+        assetChange.setGroupSeqNo(groupSeqNo);
+        assetChange.setSourceId(100001l);
+        assetChange.setType(AssetChangeTypeEnum.amendPayment);
+        try {
+            assetChangeProvider.commonAssetChange(assetChange);
+        } catch (Exception e) {
+            log.error(String.format("资金变动失败：%s", assetChange));
+        }
+
     }
 
     @RequestMapping("/test/pub/amendAsset/{accountId}")
