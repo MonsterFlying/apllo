@@ -3,7 +3,10 @@ package com.gofobao.framework.asset.service;
 import com.gofobao.framework.asset.entity.NewAssetLog;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+
+import java.util.List;
 
 public interface NewAssetLogService {
     NewAssetLog save(NewAssetLog newAssetLog);
@@ -15,6 +18,22 @@ public interface NewAssetLogService {
      * @return
      */
     Page<NewAssetLog> findAll(Specification<NewAssetLog> specification, Pageable pageable);
+
+
+    /**
+     * 查找资金流水
+     * @param specification
+     * @param sort
+     * @return
+     */
+    List<NewAssetLog> findAll(Specification<NewAssetLog> specification, Sort sort);
+
+    /**
+     * 查找资金流水
+     * @param specification
+     * @return
+     */
+    List<NewAssetLog> findAll(Specification<NewAssetLog> specification);
 
     /**
      * 查询资金记录

@@ -6,8 +6,11 @@ import com.gofobao.framework.asset.service.NewAssetLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class NewAssetLogServiceImpl implements NewAssetLogService {
@@ -26,6 +29,13 @@ public class NewAssetLogServiceImpl implements NewAssetLogService {
         return newAssetLogRepository.findAll(specification, pageable);
     }
 
+    public List<NewAssetLog> findAll(Specification<NewAssetLog> specification, Sort sort) {
+        return newAssetLogRepository.findAll(specification, sort);
+    }
+
+    public List<NewAssetLog> findAll(Specification<NewAssetLog> specification) {
+        return newAssetLogRepository.findAll(specification);
+    }
     @Override
     public long count(Specification<NewAssetLog> assetLogSpecification) {
         return newAssetLogRepository.count(assetLogSpecification);
