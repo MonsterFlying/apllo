@@ -38,7 +38,6 @@ public class SystemController {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
             return;
         }
-
         long curTime = System.currentTimeMillis();
         initDBBiz.initDb(startIndex);
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));

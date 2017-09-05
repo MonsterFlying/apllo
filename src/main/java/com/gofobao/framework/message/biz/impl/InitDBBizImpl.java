@@ -102,7 +102,7 @@ public class InitDBBizImpl implements InitDBBiz {
     private static final String DB_PATH = "/root/apollo/";
     private static final String DBFILE = "db";
 
-    @Autowired
+
     public void initUseAsset() throws Exception {
         String seqNo = assetChangeProvider.getSeqNo(); // 资产记录流水号
         String groupSeqNo = assetChangeProvider.getGroupSeqNo(); // 资产记录分组流水号
