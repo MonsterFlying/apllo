@@ -3,6 +3,23 @@ package com.gofobao.framework.common.assets;
 
 public enum AssetChangeTypeEnum {
 
+
+    /**
+     * 投资人到期收回本息
+     */
+    amendUseMoney("验证服可用金额数据修正", "amendUseMoney", "0", "add@useMoney", "", "B"),
+
+    /**
+     * 投资人到期收回本息
+     */
+    amendNotUseMoney("验证服冻结金额数据修正", "amendNotUseMoney", "0", "sub@noUseMoney", "", "B"),
+
+    /**
+     * 投资人到期收回本息
+     */
+    amendPayment("验证服冻结金额数据修正", "amendPayment", "0", "sub@payment", "", "B"),
+
+
     /**
      * 投资人到期收回本息
      */

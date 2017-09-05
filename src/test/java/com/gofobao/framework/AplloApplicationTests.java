@@ -632,7 +632,7 @@ public class AplloApplicationTests {
             e.printStackTrace();
         }
 
-   /*     //推送队列结束债权
+   /*   //推送队列结束债权
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
         mqConfig.setTag(MqTagEnum.END_CREDIT);
@@ -655,9 +655,9 @@ public class AplloApplicationTests {
         //batchDeal();
         //unfrozee();
         //查询存管账户资金信息
-        //balanceQuery();
+        balanceQuery();
         //查询资金流水
-        //accountDetailsQuery();
+        accountDetailsQuery();
         //testCredit();
         //根据手机号查询存管账户
         //findAccountByMobile();
