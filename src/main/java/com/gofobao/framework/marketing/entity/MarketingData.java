@@ -3,9 +3,6 @@ package com.gofobao.framework.marketing.entity;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 @Data
 public class MarketingData implements Serializable {

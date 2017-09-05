@@ -11,7 +11,6 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
-import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.contants.TransferContants;
 import com.gofobao.framework.tender.entity.Tender;
@@ -23,7 +22,6 @@ import com.gofobao.framework.tender.vo.request.ReturnedMoney;
 import com.gofobao.framework.tender.vo.request.VoDetailReq;
 import com.gofobao.framework.tender.vo.request.VoInvestListReq;
 import com.gofobao.framework.tender.vo.response.*;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import groovy.util.logging.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -292,6 +290,15 @@ public class InvestServiceImpl implements InvestService {
             return null;
         }
         Borrow borrow = borrowRepository.findOne(tender.getBorrowId());
+        //还款方式
+        if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_MONTH) {
+            item.setRepayFashion(BorrowContants.REPAY_FASHION_MONTH_STR);
+        }else if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL) {
+            item.setRepayFashion(BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL_STR);
+        }else if(borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE){
+            item.setRepayFashion(BorrowContants.REPAY_FASHION_ONCE_STR);
+        }
+
         item.setCreatedAt(DateHelper.dateToString(tender.getCreatedAt()));
         item.setBorrowName(borrow.getName());
         //状态
@@ -321,13 +328,7 @@ public class InvestServiceImpl implements InvestService {
             } else {
                 item.setTimeLimit(timeLimit + BorrowContants.MONTH);
             }
-            //还款方式
-            if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_MONTH) {
-                item.setRepayFashion(BorrowContants.REPAY_FASHION_MONTH_STR);
-            }
-            if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL) {
-                item.setRepayFashion(BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL_STR);
-            }
+
             item.setSuccessAt(DateHelper.dateToString(borrow.getSuccessAt()));
         } else {
             String sqlStr = "SELECT transfer.* FROM gfb_transfer transfer  " +
@@ -346,7 +347,7 @@ public class InvestServiceImpl implements InvestService {
                 apr = transfer.getApr();
                 successAt = transfer.getSuccessAt();
                 item.setTimeLimit(transfer.getTimeLimit() + BorrowContants.MONTH);
-                item.setRepayFashion(BorrowContants.REPAY_FASHION_MONTH_STR);
+
                 item.setSuccessAt(transfer.getState() == TransferContants.TRANSFERED ? DateHelper.dateToString(transfer.getSuccessAt()) : "");
             }
             falg=true;
@@ -372,6 +373,7 @@ public class InvestServiceImpl implements InvestService {
             item.setInterest(StringHelper.formatMon(interest / 100D));
             item.setPrincipal(StringHelper.formatMon(principal / 100D));
         }
+
         //年利率
         item.setApr(StringHelper.formatMon(apr / 100D));
         item.setStatus(tender.getState());

@@ -7,7 +7,6 @@ import com.gofobao.framework.api.model.batch_repay.BatchRepayRunResp;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
 import com.gofobao.framework.system.biz.ThirdErrorRemarkBiz;

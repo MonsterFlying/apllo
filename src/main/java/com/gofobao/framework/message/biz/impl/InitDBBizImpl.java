@@ -38,7 +38,6 @@ import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -76,33 +75,31 @@ public class InitDBBizImpl implements InitDBBiz {
     private static final String DBFILE = "db";
 
     @Override
-    public void initDb() {
-        int borrowCount = 1;
-        int pageSize = 300, pageIndex = 0;
+    public void initDb(long startIndex) {
+        int pageSize = 100, pageIndex = 0;
         Date nowDate = new Date();
         ImmutableList<Integer> avableStatus = ImmutableList.of(1, 3); // 保函招标中, 满标复审通过
         Specification<Borrow> borrowSpecification = Specifications.<Borrow>and()
                 .in("status", avableStatus.toArray())
+                .gt("id", startIndex)
                 .build();
 
         Long count = borrowService.count(borrowSpecification);
         log.info("初始化标量: " + count);
         int pageIndexTotal = count.intValue() / pageSize;
         pageIndexTotal = count.intValue() % pageSize == 0 ? pageIndexTotal : pageIndexTotal + 1;
-        log.info("总循环:" + pageIndex);
+        log.info("总循环:" + pageIndexTotal);
         BufferedWriter bufferedWriter = null;
         try {
-            File tenderFile = FileHelper.createFile(DB_PATH, DBFILE, "db");
+            File tenderFile = FileHelper.createFile(DB_PATH, DBFILE, DateHelper.dateToString(new Date()));
             bufferedWriter = Files.newWriter(tenderFile, StandardCharsets.UTF_8);
         } catch (Exception e) {
             log.error("创建文件失败", e);
-            return ;
+            return;
         }
         for (; pageIndex < pageIndexTotal; pageIndex++) {
             Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "id")));
             List<Borrow> borrowList = borrowService.findList(borrowSpecification, pageable);
-            List<Tender> tenderDateCache = new ArrayList<>();
-            List<BorrowRepayment> borrowRepaymentDataCache = new ArrayList<>();
             Set<Long> borrowIdSet = borrowList.stream().map(borrow -> borrow.getId()).collect(Collectors.toSet());  // 标的Id集合
 
             List<BorrowRepayment> borrowRepaymentListByBorrowId = findRepaymentListByBorrowId(borrowIdSet);   // 当前标的所有的还款
@@ -117,16 +114,17 @@ public class InitDBBizImpl implements InitDBBiz {
             Map<Long, List<BorrowCollection>> borrowCollectionAndTenderIdRefMap = borrowCollectionListAll.stream().collect(Collectors.groupingBy(BorrowCollection::getTenderId));
 
             for (Borrow borrow : borrowList) {
-                log.info("以迁移标的数量:" + (++borrowCount));
+                log.info("以迁移标的数量:" + (borrow.getId()));
                 long borrowId = borrow.getId();
                 int tenderState = caculTenderState(borrow);  // 计算当前标的状态
                 Long borrowUserId = borrow.getUserId();
                 List<BorrowRepayment> borrowRepaymentList = borrowRepaymentAndBorrowIdRefMap.get(borrowId);
                 if (!CollectionUtils.isEmpty(borrowRepaymentList)) {
+                    log.info("保顿待还" + (borrow.getId()));
                     for (BorrowRepayment borrowRepayment : borrowRepaymentList) {
                         borrowRepayment.setUserId(borrowUserId);
                         borrowRepayment.setUpdatedAt(nowDate);
-                        String insert = "UPDATE `gfb_borrow_repayment`  SET `user_id` = " + borrowUserId + "  WHERE  `id` = " +  borrowRepayment.getId() +  " ;" ;
+                        String insert = "UPDATE `gfb_borrow_repayment`  SET `user_id` = " + borrowUserId + "  WHERE  `id` = " + borrowRepayment.getId() + " ;";
                         try {
                             bufferedWriter.write(insert);
                             bufferedWriter.newLine();
@@ -139,6 +137,7 @@ public class InitDBBizImpl implements InitDBBiz {
 
                 List<Tender> tenderList = tenderAndBorrowIdRefMap.get(borrowId);
                 if (!CollectionUtils.isEmpty(tenderList)) {
+                    log.info("保存投标记录" + (borrow.getId()));
                     for (Tender tender : tenderList) {
                         long tenderUserId = tender.getUserId();
                         long tenderId = tender.getId();
@@ -147,11 +146,12 @@ public class InitDBBizImpl implements InitDBBiz {
 
                         List<BorrowCollection> borrowCollectionList = borrowCollectionAndTenderIdRefMap.get(tenderId); // 查询回款记录
                         if (!CollectionUtils.isEmpty(borrowCollectionList)) {
+                            log.info("保存待收" + (borrow.getId()));
                             for (BorrowCollection borrowCollection : borrowCollectionList) {
                                 borrowCollection.setUserId(tenderUserId);
                                 borrowCollection.setBorrowId(borrowId);
                                 borrowCollection.setUpdatedAt(nowDate);
-                                String insert = "UPDATE `gfb_borrow_collection`  SET `user_id` = " + tenderUserId+ " ,  `borrow_id` = " + borrowId + "  WHERE `id`  = " +  borrowCollection.getId()+" ;" ;
+                                String insert = "UPDATE `gfb_borrow_collection`  SET `user_id` = " + tenderUserId + " ,  `borrow_id` = " + borrowId + "  WHERE `id`  = " + borrowCollection.getId() + " ;";
                                 try {
                                     bufferedWriter.write(insert);
                                     bufferedWriter.newLine();
@@ -161,7 +161,7 @@ public class InitDBBizImpl implements InitDBBiz {
                                 }
                             }
                         }
-                        String insert = "UPDATE `gfb_borrow_tender`  SET `state` = " +  tenderState  + "  WHERE `id` = " + tenderId + " ; "  ;
+                        String insert = "UPDATE `gfb_borrow_tender`  SET `state` = " + tenderState + "  WHERE `id` = " + tenderId + " ; ";
                         try {
                             bufferedWriter.write(insert);
                             bufferedWriter.newLine();
@@ -172,7 +172,6 @@ public class InitDBBizImpl implements InitDBBiz {
                     }
                 }
             }
-            borrowRepaymentService.save(borrowRepaymentDataCache);
         }
     }
 

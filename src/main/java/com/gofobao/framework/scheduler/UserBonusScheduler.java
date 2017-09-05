@@ -195,7 +195,6 @@ public class UserBonusScheduler {
 
                     }
 
-
                     // 发放理财师奖励
                     AssetChange redpackPublish = new AssetChange();
                     redpackPublish.setMoney(money);
@@ -231,7 +230,7 @@ public class UserBonusScheduler {
     /**
      * 月提成
      */
-    //@Scheduled(cron = "0 35 23 1 * ? ")
+    @Scheduled(cron = "0 35 23 1 * ? ")
     public void monthProcess() {
         log.info("每月提成任务调度启动");
         try {

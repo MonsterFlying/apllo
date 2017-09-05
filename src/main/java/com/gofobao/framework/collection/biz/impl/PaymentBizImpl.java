@@ -105,7 +105,7 @@ public class PaymentBizImpl implements PaymentBiz {
                 item.setOrder(borrowCollection.getOrder() + 1);
                 item.setTimeLime(borrow.getTimeLimit());
                 item.setCollectionMoney(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100d));
-                if(borrowCollection.getStatus() == BorrowCollectionContants.STATUS_YES ) {  // 已还款
+                if(borrowCollection.getStatus().intValue() == BorrowCollectionContants.STATUS_YES.intValue() ) {  // 已还款
                     item.setCollectionMoneyYes(StringHelper.formatMon(borrowCollection.getCollectionMoneyYes() / 100d));
                     sumCollectionMoneyYes += borrowCollection.getCollectionMoney();
                 }else{

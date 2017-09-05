@@ -19,7 +19,6 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.currency.entity.Currency;
 import com.gofobao.framework.currency.service.CurrencyService;
 import com.gofobao.framework.helper.*;
-import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.integral.entity.Integral;
 import com.gofobao.framework.integral.service.IntegralService;
 import com.gofobao.framework.member.biz.UserBiz;
@@ -359,7 +358,7 @@ public class UserBizImpl implements UserBiz {
 
         // 保存登录信息
         user.setIp(IpHelper.getIpAddress(httpServletRequest)); // 设置ip
-        user.setSource(voLoginReq.getSource());
+        user.setPlatform(httpServletRequest.getIntHeader("requestSource"));
         user.setLoginTime(new Date());
         if (StringUtils.isEmpty(user.getPushId())) {   // 推送
             user.setPushId(UUID.randomUUID().toString().replace("-", ""));

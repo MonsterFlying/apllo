@@ -13,7 +13,6 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.google.common.collect.ImmutableMap;
@@ -47,7 +46,7 @@ public class DealThirdBatchScheduler {
     @Autowired
     private ThirdBatchLogService thirdBatchLogService;
 
-    //@Scheduled(cron = "0 20 8,10,12,14,16,18,20,22 * * ? ")
+    @Scheduled(cron = "0 20 8,10,12,14,16,18,20,22 * * ? ")
     public void process() {
         log.info("处理第三方批次任务调度启动");
         //1.查询未处理 参数校验成功的批次 gfb_third_batch_log

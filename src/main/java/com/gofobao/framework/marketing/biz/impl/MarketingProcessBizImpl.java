@@ -9,8 +9,8 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.marketing.biz.MarketingProcessBiz;
-import com.gofobao.framework.marketing.entity.*;
 import com.gofobao.framework.marketing.constans.MarketingTypeContants;
+import com.gofobao.framework.marketing.entity.*;
 import com.gofobao.framework.marketing.service.*;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -20,9 +20,6 @@ import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +36,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -111,6 +107,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         try {
             filterDataByDimension(marketings, marketingData);
         } catch (Exception e) {
+            e.printStackTrace();
             log.error("筛选范围", e);
             return false;
         }
@@ -578,7 +575,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             return true;
         }
 
-        Users user = userService.findById(Long.parseLong(marketingData.getSourceId()));
+        Users user = userService.findById(Long.parseLong(marketingData.getUserId()));
         Preconditions.checkNotNull(user, "MarketingProcessBizImpl.verifyOpenAccountSource: user not found");
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(user.getId());
         Preconditions.checkNotNull(userThirdAccount, "MarketingProcessBizImpl.verifyOpenAccountSource: userThirdAccount not found");
@@ -586,15 +583,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             return false;
         }
 
-        Integer source = user.getPlatform();  // 开户登录来源
-        String[] platformArr = platform.split(",");
-        for (String item : platformArr) {
-            if (Integer.parseInt(item) == source) {
-                return true;
-            }
-        }
-
-        return false;
+        return true;
     }
 
 
@@ -770,7 +759,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
      * @return
      */
     private boolean verifyUserParent(MarketingDimentsion marketingDimentsion, Users user) {
-        if (marketingDimentsion.getParentState() == 1) {
+        if (marketingDimentsion.getParentState().intValue() == 1) {
             if (!ObjectUtils.isEmpty(user.getParentId()) && user.getParentId() > 0) {
                 Users parentUser = userService.findUserByUserId(user.getParentId());
                 if (ObjectUtils.isEmpty(parentUser) || parentUser.getIsLock()) {
@@ -838,9 +827,9 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
     /**
      * 活动缓存
      */
-    LoadingCache<String, List<Marketing>> marketingConditonCache = CacheBuilder
+   /* LoadingCache<String, List<Marketing>> marketingConditonCache = CacheBuilder
             .newBuilder()
-            .expireAfterWrite(1, TimeUnit.HOURS)
+            .expireAfterWrite(10, TimeUnit.SECONDS)
             .build(new CacheLoader<String, List<Marketing>>() {
                 @Override
                 public List<Marketing> load(String key) throws Exception {
@@ -884,7 +873,56 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                             1,
                             marketingIdList);
                 }
-            });
+            });*/
+
+
+    public List<Marketing> getMarketing(String key)throws Exception{
+
+        PredicateBuilder<MarketingCondition> builder = Specifications.
+                <MarketingCondition>and()
+                .eq("del", 0); // 没有删除
+        switch (key) {
+            case MarketingTypeContants.LOGIN:
+                builder.ne("loginMinTime", null);  // 登录时间不能为空
+                break;
+            case MarketingTypeContants.TENDER:
+                builder.gt("tenderMoneyMin", 0);  // 投标金额大于零
+                break;
+            case MarketingTypeContants.RECHARGE:
+                builder.gt("rechargeMoneyMin", 0); // 充值金额大于零
+                break;
+            case MarketingTypeContants.REGISTER:
+                builder.ne("registerMinTime", null);  // 注册时间不能为空
+                break;
+            case MarketingTypeContants.OPEN_ACCOUNT:
+                builder.ne("openAccountMinTime", null);  // 开户时间不能为空
+                break;
+            default:
+                throw new Exception("MarketingProcessBizImpl.findMarketing: not found marketingType");
+        }
+        Specification<MarketingCondition> marketingConditonSpecification = builder.build();
+        List<MarketingCondition> marketingConditions =
+                marketingConditionService.findAll(marketingConditonSpecification);
+
+        if (CollectionUtils.isEmpty(marketingConditions)) {
+            log.info("根据活动数据查询活动条件记录为空");
+            return Lists.newArrayList();
+        }
+
+        List<Long> marketingIdList = marketingConditions
+                .stream()
+                .map(marketingCondition -> marketingCondition.getMarketingId())
+                .collect(Collectors.toList());
+        return marketingService.findByDelAndOpenStateAndIdIn(0,
+                1,
+                marketingIdList);
+    }
+
+
+
+
+    //  Map<String,Integer> marketingMap= ImmutableMap.of("OPEN_ACCOUNT",1,"TENDER",2);
+
 
     /**
      * 查找活动
@@ -893,7 +931,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
      * @return
      */
     private List<Marketing> findMarketing(MarketingData marketingData) throws Exception {
-        return marketingConditonCache.get(marketingData.getMarketingType());
+        return getMarketing(marketingData.getMarketingType());
     }
 
     /**

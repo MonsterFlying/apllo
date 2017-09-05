@@ -47,12 +47,12 @@ public class BorrowRepayScanduler {
     @Autowired
     private RepaymentBiz repaymentBiz;
 
-    //@Scheduled(cron = "0 50 23 * * ? ")
+    @Scheduled(cron = "0 50 23 * * ? ")
     public void process() {
         borrowRepay();
     }
 
-    //@Scheduled(cron = "0 00 23 * * ? ")
+    @Scheduled(cron = "0 00 23 * * ? ")
     public void process01() {
         borrowRepay();
     }
@@ -112,8 +112,7 @@ public class BorrowRepayScanduler {
     /**
      * 每天早上9点 调度还款当日所需要还款的的官表
      */
-    @Scheduled(cron = "0 30 9 ? * *" )
-/*    @Scheduled(cron = "*//*5 * * * * ? ")*/
+    // @Scheduled(cron = "0 30 9 ? * *" )
     public void todayRepayment() {
         log.info("自动还款调度启动");
         Date nowDate = new Date();
