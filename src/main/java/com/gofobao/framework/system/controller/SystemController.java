@@ -54,7 +54,7 @@ public class SystemController {
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 
-    @GetMapping("pub/initUseAsset/{password}")
+    @GetMapping("pub/initUseAsset222/{password}")
     public void initUseAsset(@PathVariable(value = "password") String password) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
             return;
