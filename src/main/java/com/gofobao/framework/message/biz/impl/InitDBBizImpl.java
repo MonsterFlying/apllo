@@ -138,7 +138,6 @@ public class InitDBBizImpl implements InitDBBiz {
                     log.error(String.format("资金同步: %s,userId:%s", msg, userThirdAccount.getUserId()));
                 }
                 //存管账户总金额
-                long money = NumberHelper.toLong(NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100);
                 Specification<NewAssetLog> nals = Specifications
                         .<NewAssetLog>and()
                         .eq("userId", userThirdAccount.getUserId())
@@ -147,22 +146,30 @@ public class InitDBBizImpl implements InitDBBiz {
                 long count = newAssetLogService.count(nals);
                 if (count == 0) {
                     Asset asset = assetMaps.get(userThirdAccount.getUserId());
-
-                    AssetChange assetChange = new AssetChange();
-                    assetChange.setMoney(0);
-                    assetChange.setForUserId(redpackThirdAccount.getUserId());
-                    assetChange.setUserId(userThirdAccount.getUserId());
-                    assetChange.setRemark(String.format("数据迁移初始化资产账户，金额：%s分，userId：%s", asset.getUseMoney(), asset.getUserId()));
-                    assetChange.setSeqNo(seqNo);
-                    assetChange.setGroupSeqNo(groupSeqNo);
-                    assetChange.setSourceId(asset.getUserId());
-                    assetChange.setType(AssetChangeTypeEnum.initAsset);
+                    NewAssetLog newAssetLog = new NewAssetLog();
+                    newAssetLog.setCreateTime(new Date());
+                    newAssetLog.setUseMoney(asset.getUseMoney());
+                    newAssetLog.setCurrMoney(asset.getUseMoney() + asset.getNoUseMoney());
+                    newAssetLog.setDel(0);
+                    newAssetLog.setForUserId(redpackThirdAccount.getUserId());
+                    newAssetLog.setLocalSeqNo(seqNo);
+                    newAssetLog.setNoUseMoney(asset.getNoUseMoney());
+                    newAssetLog.setOpMoney(0);
+                    newAssetLog.setLocalType(AssetChangeTypeEnum.initAsset.getLocalType());
+                    newAssetLog.setPlatformType(AssetChangeTypeEnum.initAsset.getPlatformType());
+                    newAssetLog.setRemark(String.format("数据迁移初始化资产账户，金额：%s分，userId：%s", asset.getUseMoney(), asset.getUserId()));
+                    newAssetLog.setUserId(userThirdAccount.getUserId());
+                    newAssetLog.setTxFlag(AssetChangeTypeEnum.initAsset.getTxFlag());
+                    newAssetLog.setGroupOpSeqNo(groupSeqNo);
+                    newAssetLog.setOpName(AssetChangeTypeEnum.initAsset.getOpName());
+                    newAssetLog.setSourceId(asset.getUserId());
                     try {
-                        assetChangeProvider.commonAssetChange(assetChange);
+                        newAssetLogService.save(newAssetLog);
                     } catch (Exception e) {
-                        log.error(String.format("资金变动失败：%s", assetChange));
+                        log.error("异常", e);
                         continue;
                     }
+
                     //3.发送红包
                     VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
                     voucherPayRequest.setAccountId(redpackThirdAccount.getAccountId());
