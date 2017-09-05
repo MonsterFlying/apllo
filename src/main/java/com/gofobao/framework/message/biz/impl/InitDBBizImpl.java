@@ -113,6 +113,7 @@ public class InitDBBizImpl implements InitDBBiz {
         Specification<UserThirdAccount> usas = Specifications
                 .<UserThirdAccount>and()
                 .eq("del", 0)
+                .notIn("accountId", String.valueOf("6212462190000000013"))
                 .eq("userId", 45219)
                 .build();
         int index = 0;
