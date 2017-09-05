@@ -255,26 +255,28 @@ public class InitDBBizImpl implements InitDBBiz {
                 transferBuyLog.setCreatedAt(transfer.getCreatedAt());
                 transferBuyLogList.add(transferBuyLog);
                 TransferBuyLog transferBuyLog1 = new TransferBuyLog();
-                BeanHelper.copyParamter(transferBuyLog,transferBuyLog1,true);
+                BeanHelper.copyParamter(transferBuyLog, transferBuyLog1, true);
                 transferBuyLog1.setState(buyTransferTender.getState());
                 transferBuyLogList1.add(transferBuyLog1);
             });
             transferBuyLogService.save(transferBuyLogList);
             Map<Long, List<TransferBuyLog>> transferBuyMaps = transferBuyLogList.stream().collect(groupingBy(TransferBuyLog::getTransferId));
             Map<Long, List<TransferBuyLog>> transferBuyMaps1 = transferBuyLogList1.stream().collect(groupingBy(TransferBuyLog::getTransferId));
+            Set<Long> transferIds = new HashSet<>();
             buyTransferTenderList.stream().forEach(buyTransferTender -> {
                 Borrow transferBorrow = transferBorrowMaps.get(buyTransferTender.getBorrowId());
                 Tender parentTender = parentTenderMaps.get(transferBorrow.getTenderId());
                 Transfer transfer = transferMaps.get(parentTender.getId());
-                if (ObjectUtils.isEmpty(transfer) || transfer.getState() != 2) {
+                if (ObjectUtils.isEmpty(transfer) || transfer.getState() != 2 || transferIds.contains(transfer.getId())) {
                     return;
                 }
                 Borrow prarentBorrow = parentBorrowMaps.get(parentTender.getBorrowId());
                 List<TransferBuyLog> transferBuyLogs = transferBuyMaps.get(transfer.getId());
                 List<TransferBuyLog> transferBuyLogs1 = transferBuyMaps1.get(transfer.getId());
-                List<Tender> childTenderList = addChildTender(transfer.getCreatedAt(), transfer, parentTender, transferBuyLogs,transferBuyLogs1);
+                List<Tender> childTenderList = addChildTender(transfer.getCreatedAt(), transfer, parentTender, transferBuyLogs, transferBuyLogs1);
 
                 addChildTenderCollection(transfer.getCreatedAt(), transfer, prarentBorrow, childTenderList);
+                transferIds.add(transfer.getId());
             });
         }
         borrowService.save(transferBorrowList);
@@ -289,14 +291,15 @@ public class InitDBBizImpl implements InitDBBiz {
      * @param transferBuyLogList
      * @return
      */
-    public List<Tender> addChildTender(Date nowDate, Transfer transfer, Tender parentTender, List<TransferBuyLog> transferBuyLogList,List<TransferBuyLog> transferBuyLogList1) {
+    public List<Tender> addChildTender(Date nowDate, Transfer transfer, Tender parentTender, List<TransferBuyLog> transferBuyLogList, List<TransferBuyLog> transferBuyLogList1) {
         //生成债权记录与回款记录
         List<Tender> childTenderList = new ArrayList<>();
-        Map<Long,TransferBuyLog> transferBuyLogMaps = transferBuyLogList1.stream().collect(Collectors.toMap(TransferBuyLog::getId,Function.identity()));
+        Map<Long, TransferBuyLog> transferBuyLogMaps = transferBuyLogList1.stream().collect(Collectors.toMap(TransferBuyLog::getId, Function.identity()));
         transferBuyLogList.stream().forEach(transferBuyLog -> {
             Tender childTender = new Tender();
             /*UserThirdAccount buyUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
-*/          TransferBuyLog transferBuyLog1 =transferBuyLogMaps.get(transferBuyLog.getId());
+*/
+            TransferBuyLog transferBuyLog1 = transferBuyLogMaps.get(transferBuyLog.getId());
             childTender.setUserId(transferBuyLog.getUserId());
             childTender.setStatus(1);  // 投标成不成功
             childTender.setType(transferBuyLog.getType());
