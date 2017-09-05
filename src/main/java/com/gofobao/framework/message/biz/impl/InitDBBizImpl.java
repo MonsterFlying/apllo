@@ -1,15 +1,31 @@
 package com.gofobao.framework.message.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.contants.DesLineFlagContant;
+import com.gofobao.framework.api.contants.JixinResultContants;
+import com.gofobao.framework.api.helper.JixinManager;
+import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
+import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
+import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
+import com.gofobao.framework.common.assets.AssetChange;
+import com.gofobao.framework.common.assets.AssetChangeProvider;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.helper.BeanHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
+import com.gofobao.framework.member.entity.UserThirdAccount;
+import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.message.biz.InitDBBiz;
 import com.gofobao.framework.migrate.FileHelper;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
@@ -70,9 +86,92 @@ public class InitDBBizImpl implements InitDBBiz {
 
     @Autowired
     TransferBuyLogService transferBuyLogService;
+    @Autowired
+    AssetChangeProvider assetChangeProvider;
+    @Autowired
+    UserThirdAccountService userThirdAccountService;
+    @Autowired
+    AssetService assetService;
+    @Autowired
+    private JixinManager jixinManager;
 
     private static final String DB_PATH = "/root/apollo/";
     private static final String DBFILE = "db";
+
+    @Autowired
+    public void initUseAsset() throws Exception{
+        String seqNo = assetChangeProvider.getSeqNo(); // 资产记录流水号
+        String groupSeqNo = assetChangeProvider.getGroupSeqNo(); // 资产记录分组流水号
+        //红包账户
+        long redId = assetChangeProvider.getRedpackAccountId();
+        UserThirdAccount redpackThirdAccount = userThirdAccountService.findByUserId(redId); //查询红包账户
+        //1.查询已开户用户
+        Specification<UserThirdAccount> usas = Specifications
+                .<UserThirdAccount>and()
+                .eq("del", 0)
+                .eq("userId", 45219)
+                .build();
+        int index = 0;
+        int pageSize = 50;
+        do {
+            List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findList(usas, new PageRequest(index, pageSize));
+            Set<Long> userIds = userThirdAccountList.stream().map(UserThirdAccount::getUserId).collect(Collectors.toSet());
+            //2.查询资产记录
+            Specification<Asset> as = Specifications
+                    .<Asset>and()
+                    .in("userId", userIds.toArray())
+                    .build();
+            List<Asset> assetList = assetService.findList(as);
+            Map<Long, Asset> assetMaps = assetList.stream().collect(Collectors.toMap(Asset::getUserId, Function.identity()));
+            for (UserThirdAccount userThirdAccount : userThirdAccountList) {
+                //3.查询存管账户是否为空
+                BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
+                balanceQueryRequest.setChannel(ChannelContant.HTML);
+                balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
+                BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
+                if ((ObjectUtils.isEmpty(balanceQueryResponse)) || !balanceQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
+                    String msg = ObjectUtils.isEmpty(balanceQueryResponse) ? "当前网络异常, 请稍后尝试!" : balanceQueryResponse.getRetMsg();
+                    log.error(String.format("资金同步: %s,userId:%s", msg, userThirdAccount.getUserId()));
+                }
+                //存管账户总金额
+                long money = NumberHelper.toLong(NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100);
+                if (money != 0) {
+                    Asset asset = assetMaps.get(userThirdAccount.getUserId());
+
+                    AssetChange assetChange = new AssetChange();
+                    assetChange.setMoney(0);
+                    assetChange.setForUserId(redpackThirdAccount.getUserId());
+                    assetChange.setUserId(userThirdAccount.getUserId());
+                    assetChange.setRemark(String.format("数据迁移初始化资产账户，金额：%s分，userId：%s", asset.getUseMoney(), asset.getUserId()));
+                    assetChange.setSeqNo(seqNo);
+                    assetChange.setGroupSeqNo(groupSeqNo);
+                    assetChange.setSourceId(asset.getUserId());
+                    assetChange.setType(AssetChangeTypeEnum.initAsset);
+                    try {
+                        assetChangeProvider.commonAssetChange(assetChange);
+                    } catch (Exception e) {
+                        log.error(String.format("资金变动失败：%s", assetChange));
+                        continue;
+                    }
+                    //3.发送红包
+                    VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
+                    voucherPayRequest.setAccountId(redpackThirdAccount.getAccountId());
+                    voucherPayRequest.setTxAmount(StringHelper.formatDouble(asset.getUseMoney(), 100, false));
+                    voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
+                    voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
+                    voucherPayRequest.setDesLine("数据迁移账户初始化！");
+                    voucherPayRequest.setChannel(ChannelContant.HTML);
+                    VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
+                    if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+                        String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+                        throw new Exception(msg);
+                    }
+                }
+            }
+        } while (false);
+
+    }
+
 
     @Override
     public void initDb(long startIndex) {
