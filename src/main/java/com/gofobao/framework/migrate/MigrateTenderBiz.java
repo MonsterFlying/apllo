@@ -206,7 +206,7 @@ public class MigrateTenderBiz {
 
         } while (realSize == pageSize);
 
-        log.info("投标总额: =================" + money);
+        log.info("投标总额: =================" + StringHelper.formatDouble(money / 100D, false));
         log.info("投标总数: =================" + tenderCount);
 
         try {

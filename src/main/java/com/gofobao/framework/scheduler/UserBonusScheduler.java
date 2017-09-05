@@ -195,7 +195,6 @@ public class UserBonusScheduler {
 
                     }
 
-
                     // 发放理财师奖励
                     AssetChange redpackPublish = new AssetChange();
                     redpackPublish.setMoney(money);
