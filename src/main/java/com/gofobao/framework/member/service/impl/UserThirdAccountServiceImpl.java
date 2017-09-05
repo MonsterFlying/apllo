@@ -1,7 +1,6 @@
 package com.gofobao.framework.member.service.impl;
 
 import com.gofobao.framework.member.entity.UserThirdAccount;
-import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UserThirdAccountRepository;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import org.springframework.beans.factory.annotation.Autowired;

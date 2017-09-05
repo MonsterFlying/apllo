@@ -89,15 +89,15 @@ public class UserCache {
     private Long cashTotal;
 
 
-
-    public long getIncomeTotal(){
+    public long getIncomeTotal() {
         return this.incomeInterest
                 + this.incomeAward
                 + this.incomeOverdue
                 + this.incomeIntegralCash
                 + this.getIncomeBonus()
-                + this.incomeOther ;
+                + this.incomeOther;
     }
+
     /**
      * 待付利息管理费
      *
@@ -106,4 +106,14 @@ public class UserCache {
     public int getWaitExpenditureInterestManageFee() {
         return (int) ((this.tjWaitCollectionInterest + this.qdWaitCollectionInterest) * 0.1);
     }
+
+    /**
+     * 当前用户是否是新手用户
+     *
+     * @return
+     */
+    public boolean isNovice() {
+        return !(this.getTenderQudao() && this.getTenderTuijian());
+    }
+
 }

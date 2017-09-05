@@ -219,13 +219,9 @@ public class RedPackageBizImpl implements RedPackageBiz {
             }
             VoViewOpenRedPackageWarpRes voViewOpenRedPackageWarpRes = VoBaseResp.ok("打开红包成功", VoViewOpenRedPackageWarpRes.class);
             voViewOpenRedPackageWarpRes.setMoney(marketingRedpackRecord.getMoney() / 100D);
-            ResponseEntity.ok().body(voViewOpenRedPackageWarpRes);
+             return  ResponseEntity.ok().body(voViewOpenRedPackageWarpRes);
         } catch (Exception e) {
             throw new Exception(e);
         }
-
-        return ResponseEntity
-                .badRequest()
-                .body(VoViewOpenRedPackageWarpRes.error(VoViewOpenRedPackageWarpRes.ERROR, "系统开小差了, 请联系平台客服!", VoViewOpenRedPackageWarpRes.class));
     }
 }

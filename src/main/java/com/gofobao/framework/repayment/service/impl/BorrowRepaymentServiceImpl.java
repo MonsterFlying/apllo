@@ -17,8 +17,6 @@ import com.gofobao.framework.repayment.vo.response.RepayCollectionLog;
 import com.gofobao.framework.repayment.vo.response.RepaymentOrderDetail;
 import com.gofobao.framework.repayment.vo.response.pc.VoCollection;
 import com.gofobao.framework.repayment.vo.response.pc.VoOrdersList;
-import com.gofobao.framework.tender.contants.TransferContants;
-import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;

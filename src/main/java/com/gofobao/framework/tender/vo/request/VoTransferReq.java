@@ -4,8 +4,6 @@ import com.gofobao.framework.common.page.Page;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
-import java.util.List;
-
 /**
  * Created by admin on 2017/6/12.
  */
