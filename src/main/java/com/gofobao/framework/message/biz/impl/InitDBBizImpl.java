@@ -11,7 +11,9 @@ import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.entity.NewAssetLog;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.asset.service.NewAssetLogService;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.collection.entity.BorrowCollection;
@@ -80,6 +82,8 @@ public class InitDBBizImpl implements InitDBBiz {
 
     @PersistenceContext
     private EntityManager entityManager;
+    @Autowired
+    private NewAssetLogService newAssetLogService;
 
     @Autowired
     TransferService transferService;
@@ -99,7 +103,7 @@ public class InitDBBizImpl implements InitDBBiz {
     private static final String DBFILE = "db";
 
     @Autowired
-    public void initUseAsset() throws Exception{
+    public void initUseAsset() throws Exception {
         String seqNo = assetChangeProvider.getSeqNo(); // 资产记录流水号
         String groupSeqNo = assetChangeProvider.getGroupSeqNo(); // 资产记录分组流水号
         //红包账户
@@ -135,7 +139,13 @@ public class InitDBBizImpl implements InitDBBiz {
                 }
                 //存管账户总金额
                 long money = NumberHelper.toLong(NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100);
-                if (money != 0) {
+                Specification<NewAssetLog> nals = Specifications
+                        .<NewAssetLog>and()
+                        .eq("userId", userThirdAccount.getUserId())
+                        .eq("localType", AssetChangeTypeEnum.initAsset.getLocalType())
+                        .build();
+                long count = newAssetLogService.count(nals);
+                if (count == 0) {
                     Asset asset = assetMaps.get(userThirdAccount.getUserId());
 
                     AssetChange assetChange = new AssetChange();
