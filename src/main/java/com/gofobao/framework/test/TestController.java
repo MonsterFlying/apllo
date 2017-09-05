@@ -151,6 +151,7 @@ public class TestController {
         } catch (Exception e) {
             log.error(String.format("资金变动失败：%s", assetChange));
         }
+
     }
 
     @RequestMapping("/test/pub/amendAsset/{accountId}")

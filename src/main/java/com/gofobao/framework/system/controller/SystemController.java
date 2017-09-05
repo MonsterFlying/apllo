@@ -54,6 +54,19 @@ public class SystemController {
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 
+    @GetMapping("pub/initUseAsset/{password}")
+    public void initUseAsset(@PathVariable(value = "password") String password) {
+        if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
+            return;
+        }
+        long curTime = System.currentTimeMillis();
+        try {
+            initDBBiz.initUseAsset();
+        } catch (Exception e) {
+            log.error("初始化资产失败!:",e);
+        }
+        log.info("处理时间: " + (System.currentTimeMillis() - curTime));
+    }
 
     /**
      * 获取开户
