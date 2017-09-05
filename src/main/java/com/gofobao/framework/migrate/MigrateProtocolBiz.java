@@ -253,7 +253,8 @@ public class MigrateProtocolBiz {
                     } catch (Exception e) {
                         log.error("债权转让迁移错误");
                     }
-                } else if (item.getAutoTenderState() != 1) {
+                }
+                if (item.getAutoTenderState() != 1) {
                     try {
                         String orderId = System.currentTimeMillis() + RandomHelper.generateNumberCode(14);
                         StringBuffer text = new StringBuffer();
