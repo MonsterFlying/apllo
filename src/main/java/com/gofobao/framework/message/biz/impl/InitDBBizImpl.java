@@ -128,6 +128,7 @@ public class InitDBBizImpl implements InitDBBiz {
             List<Asset> assetList = assetService.findList(as);
             Map<Long, Asset> assetMaps = assetList.stream().collect(Collectors.toMap(Asset::getUserId, Function.identity()));
             for (UserThirdAccount userThirdAccount : userThirdAccountList) {
+
                 //3.查询存管账户是否为空
                 BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
                 balanceQueryRequest.setChannel(ChannelContant.HTML);
@@ -144,8 +145,9 @@ public class InitDBBizImpl implements InitDBBiz {
                         .eq("localType", AssetChangeTypeEnum.initAsset.getLocalType())
                         .build();
                 long count = newAssetLogService.count(nals);
-                if (count == 0) {
-                    Asset asset = assetMaps.get(userThirdAccount.getUserId());
+                Asset asset = assetMaps.get(userThirdAccount.getUserId());
+                if (count == 0 && asset.getUseMoney() > 0) {
+
                     NewAssetLog newAssetLog = new NewAssetLog();
                     newAssetLog.setCreateTime(new Date());
                     newAssetLog.setUseMoney(asset.getUseMoney());
@@ -154,10 +156,10 @@ public class InitDBBizImpl implements InitDBBiz {
                     newAssetLog.setForUserId(redpackThirdAccount.getUserId());
                     newAssetLog.setLocalSeqNo(seqNo);
                     newAssetLog.setNoUseMoney(asset.getNoUseMoney());
-                    newAssetLog.setOpMoney(0);
+                    newAssetLog.setOpMoney(asset.getUseMoney());
                     newAssetLog.setLocalType(AssetChangeTypeEnum.initAsset.getLocalType());
                     newAssetLog.setPlatformType(AssetChangeTypeEnum.initAsset.getPlatformType());
-                    newAssetLog.setRemark(String.format("数据迁移初始化资产账户，金额：%s分，userId：%s", asset.getUseMoney(), asset.getUserId()));
+                    newAssetLog.setRemark(String.format("数据迁移初始化资产账户，金额：%s分，userId：%s", StringHelper.formatDouble(asset.getUseMoney(), 100, true), asset.getUserId()));
                     newAssetLog.setUserId(userThirdAccount.getUserId());
                     newAssetLog.setTxFlag(AssetChangeTypeEnum.initAsset.getTxFlag());
                     newAssetLog.setGroupOpSeqNo(groupSeqNo);
