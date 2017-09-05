@@ -3,15 +3,12 @@ package com.gofobao.framework.repayment.biz;
 import com.gofobao.framework.api.model.batch_bail_repay.BatchBailRepayRunResp;
 import com.gofobao.framework.api.model.batch_lend_pay.BatchLendPayRunResp;
 import com.gofobao.framework.api.model.batch_repay.BatchRepayRunResp;
-import com.gofobao.framework.api.model.batch_repay.Repay;
-import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 
 /**
  * Created by Zeke on 2017/6/8.

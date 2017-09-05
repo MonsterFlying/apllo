@@ -1,7 +1,6 @@
 package com.gofobao.framework.tender.vo.response;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.tender.entity.TransferBuyLog;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;

@@ -3,7 +3,10 @@ package com.gofobao.framework.asset.entity;
 import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.util.Date;
 
 /**

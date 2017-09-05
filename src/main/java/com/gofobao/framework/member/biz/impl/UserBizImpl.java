@@ -19,7 +19,6 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.currency.entity.Currency;
 import com.gofobao.framework.currency.service.CurrencyService;
 import com.gofobao.framework.helper.*;
-import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.integral.entity.Integral;
 import com.gofobao.framework.integral.service.IntegralService;
 import com.gofobao.framework.member.biz.UserBiz;

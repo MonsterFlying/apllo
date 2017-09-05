@@ -1,6 +1,5 @@
 package com.gofobao.framework.member.controller.web;
 
-import com.gofobao.framework.member.biz.UserThirdBiz;
 import com.gofobao.framework.member.biz.WebUserThirdBiz;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.security.contants.SecurityContants;

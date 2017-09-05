@@ -1,6 +1,9 @@
 package com.gofobao.framework.member.biz.impl;
 
-import com.gofobao.framework.api.contants.*;
+import com.gofobao.framework.api.contants.AcctUseContant;
+import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.contants.IdTypeContant;
+import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.account_id_query.AccountIdQueryRequest;
@@ -47,16 +50,17 @@ import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.SecurityHelper;
-import com.gofobao.framework.marketing.entity.MarketingData;
 import com.gofobao.framework.marketing.constans.MarketingTypeContants;
-import com.gofobao.framework.member.biz.UserThirdBiz;
+import com.gofobao.framework.marketing.entity.MarketingData;
 import com.gofobao.framework.member.biz.WebUserThirdBiz;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
-import com.gofobao.framework.member.vo.response.*;
+import com.gofobao.framework.member.vo.response.VoHtmlResp;
+import com.gofobao.framework.member.vo.response.VoOpenAccountResp;
+import com.gofobao.framework.member.vo.response.VoSignInfoResp;
 import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.service.DictItemService;
@@ -69,7 +73,6 @@ import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.beanutils.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -84,7 +87,10 @@ import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**

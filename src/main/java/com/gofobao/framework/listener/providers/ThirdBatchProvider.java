@@ -25,7 +25,6 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;

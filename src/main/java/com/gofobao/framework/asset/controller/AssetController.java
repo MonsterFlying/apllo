@@ -3,7 +3,6 @@ package com.gofobao.framework.asset.controller;
 import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.vo.request.VoSynAssetsRep;
 import com.gofobao.framework.asset.vo.response.*;
-import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
