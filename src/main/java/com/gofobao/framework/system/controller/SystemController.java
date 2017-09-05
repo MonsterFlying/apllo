@@ -32,14 +32,15 @@ public class SystemController {
     @Autowired
     MigrateProtocolBiz migrateProtocolBiz;
 
-    @GetMapping("pub/initDB/{password}")
-    public void initDB(@PathVariable(value = "password") String password) {
+    @GetMapping("pub/initDB/{password}/{startIndex}")
+    public void initDB(@PathVariable() String password,
+                       @PathVariable() long startIndex) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
             return;
         }
 
         long curTime = System.currentTimeMillis();
-        initDBBiz.initDb();
+        initDBBiz.initDb(startIndex);
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 
