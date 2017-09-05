@@ -162,7 +162,7 @@ public class SystemController {
     }
 
 
-    @GetMapping("pub/postMigrateProtocol/{password}")
+    @GetMapping("pub/postMigrateProtocol/{password}/{filename}")
     public void postMigrateProtocol(@PathVariable(value = "password") String password,
                                     @PathVariable(value = "filename") String filename) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
