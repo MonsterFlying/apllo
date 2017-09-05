@@ -295,11 +295,12 @@ public class InitDBBizImpl implements InitDBBiz {
             transferBuyLogService.save(transferBuyLogList);
             Map<Long, List<TransferBuyLog>> transferBuyMaps = transferBuyLogList.stream().collect(groupingBy(TransferBuyLog::getTransferId));
             Map<Long, List<TransferBuyLog>> transferBuyMaps1 = transferBuyLogList1.stream().collect(groupingBy(TransferBuyLog::getTransferId));
+            Set<Long> transferIds = new HashSet<>();
             buyTransferTenderList.stream().forEach(buyTransferTender -> {
                 Borrow transferBorrow = transferBorrowMaps.get(buyTransferTender.getBorrowId());
                 Tender parentTender = parentTenderMaps.get(transferBorrow.getTenderId());
                 Transfer transfer = transferMaps.get(parentTender.getId());
-                if (ObjectUtils.isEmpty(transfer) || transfer.getState() != 2) {
+                if (ObjectUtils.isEmpty(transfer) || transfer.getState() != 2 || transferIds.contains(transfer.getId())) {
                     return;
                 }
                 Borrow prarentBorrow = parentBorrowMaps.get(parentTender.getBorrowId());
@@ -308,6 +309,7 @@ public class InitDBBizImpl implements InitDBBiz {
                 List<Tender> childTenderList = addChildTender(transfer.getCreatedAt(), transfer, parentTender, transferBuyLogs, transferBuyLogs1);
 
                 addChildTenderCollection(transfer.getCreatedAt(), transfer, prarentBorrow, childTenderList);
+                transferIds.add(transfer.getId());
             });
         }
         borrowService.save(transferBorrowList);
