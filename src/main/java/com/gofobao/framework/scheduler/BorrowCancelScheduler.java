@@ -35,7 +35,7 @@ public class BorrowCancelScheduler {
     private BorrowBiz borrowBiz;
 
     /**
-     * 每天凌晨12点整取消标的
+     * 每天凌晨1点整取消标的
      */
     @Scheduled(cron = "0 0 1 * * ?")
     public void process() {
