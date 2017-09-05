@@ -126,8 +126,15 @@ public class InitDBBizImpl implements InitDBBiz {
                     for (BorrowRepayment borrowRepayment : borrowRepaymentList) {
                         borrowRepayment.setUserId(borrowUserId);
                         borrowRepayment.setUpdatedAt(nowDate);
+                        String insert = "UPDATE `gfb_borrow_repayment`  SET `user_id` = " + borrowUserId + "  WHERE  `id` = " +  borrowRepayment.getId() +  " ;" ;
+                        try {
+                            bufferedWriter.write(insert);
+                            bufferedWriter.newLine();
+                            bufferedWriter.flush();
+                        } catch (IOException e) {
+                            log.error("添加待还事变", e);
+                        }
                     }
-                    borrowRepaymentDataCache.addAll(borrowRepaymentList);
                 }
 
                 List<Tender> tenderList = tenderAndBorrowIdRefMap.get(borrowId);
@@ -150,16 +157,21 @@ public class InitDBBizImpl implements InitDBBiz {
                                     bufferedWriter.newLine();
                                     bufferedWriter.flush();
                                 } catch (IOException e) {
-                                    log.error("插入异常", e);
+                                    log.error("插入待收失败", e);
                                 }
                             }
-                            borrowCollectionService.save(borrowCollectionList);
+                        }
+                        String insert = "UPDATE `gfb_borrow_tender`  SET `state` = " +  tenderState  + "  WHERE `id` = " + tenderId + " ; "  ;
+                        try {
+                            bufferedWriter.write(insert);
+                            bufferedWriter.newLine();
+                            bufferedWriter.flush();
+                        } catch (IOException e) {
+                            log.error("插入投标记录失败", e);
                         }
                     }
-                    tenderDateCache.addAll(tenderList);
                 }
             }
-            tenderService.save(tenderDateCache);
             borrowRepaymentService.save(borrowRepaymentDataCache);
         }
     }
