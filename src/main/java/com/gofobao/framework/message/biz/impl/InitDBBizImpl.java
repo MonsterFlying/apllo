@@ -39,6 +39,7 @@ import javax.transaction.Transactional;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
@@ -143,7 +144,14 @@ public class InitDBBizImpl implements InitDBBiz {
                                 borrowCollection.setUserId(tenderUserId);
                                 borrowCollection.setBorrowId(borrowId);
                                 borrowCollection.setUpdatedAt(nowDate);
-                                String insert = null ;
+                                String insert = "UPDATE `gfb_borrow_collection`  SET `user_id` = " + tenderUserId+ " ,  `borrow_id` = " + borrowId + "  WHERE `id`  = " +  borrowCollection.getId()+" ;" ;
+                                try {
+                                    bufferedWriter.write(insert);
+                                    bufferedWriter.newLine();
+                                    bufferedWriter.flush();
+                                } catch (IOException e) {
+                                    log.error("插入异常", e);
+                                }
                             }
                             borrowCollectionService.save(borrowCollectionList);
                         }
