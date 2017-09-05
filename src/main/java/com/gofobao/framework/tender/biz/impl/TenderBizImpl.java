@@ -27,6 +27,7 @@ import com.gofobao.framework.helper.*;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.enums.RegisterSourceEnum;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
@@ -166,7 +167,7 @@ public class TenderBizImpl implements TenderBiz {
         }
 
         //如果当前用户是风车理财用户
-        if(!StringUtils.isEmpty(user.getWindmillId())){
+        if (!StringUtils.isEmpty(user.getWindmillId())) {
             windmillTenderBiz.tenderNotify(borrowTender);
         }
 
@@ -231,7 +232,7 @@ public class TenderBizImpl implements TenderBiz {
         borrowTender.setStatus(1);
         borrowTender.setMoney(voCreateTenderReq.getTenderMoney().longValue());
         borrowTender.setValidMoney(validateMoney);
-        borrowTender.setSource(voCreateTenderReq.getTenderSource());
+        borrowTender.setSource(Integer.valueOf(voCreateTenderReq.getRequestSource()));
         Integer autoOrder = voCreateTenderReq.getAutoOrder();
         borrowTender.setAutoOrder(ObjectUtils.isEmpty(autoOrder) ? 0 : autoOrder);
         borrowTender.setIsAuto(voCreateTenderReq.getIsAutoTender());
@@ -306,7 +307,7 @@ public class TenderBizImpl implements TenderBiz {
             return false;
         }
 
-        double availBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0,2);// 可用余额  账面余额-可用余额=冻结金额
+        double availBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0, 2);// 可用余额  账面余额-可用余额=冻结金额
         if (availBal < asset.getUseMoney()) {
             extendMessage.add("资金账户未同步，请先在个人中心进行资金同步操作!");
             return false;
@@ -340,14 +341,14 @@ public class TenderBizImpl implements TenderBiz {
         }
 
         Date nowDate = new Date();
-        Date releaseAt;
+        Date releaseAt = borrow.getReleaseAt();
+
         if (borrow.getIsNovice()) {  // 新手
-            releaseAt = DateHelper.max(DateHelper.setHours(nowDate, 20), borrow.getReleaseAt());
-        } else { // 普通标的
-            releaseAt = borrow.getReleaseAt();
+            releaseAt = DateHelper.max(DateHelper.setHours(releaseAt, 20), borrow.getReleaseAt());
         }
 
-        if (ObjectUtils.isEmpty(borrow.getLendId()) && (releaseAt.getTime() > nowDate.getTime())) {
+        UserCache userCache = userCacheService.findById(user.getId());
+        if (ObjectUtils.isEmpty(borrow.getLendId()) && releaseAt.getTime() > nowDate.getTime() && !userCache.isNovice()) {
             errerMessage.add("当前标的未到发布时间!");
             return false;
         }
@@ -404,7 +405,10 @@ public class TenderBizImpl implements TenderBiz {
                 return false;
             }
         }
-
+        if (!userCache.isNovice() && borrow.getIsLock()) {
+            errerMessage.add("当前标的状态已锁定,请稍后再是吧");
+            return false;
+        }
         return true;
     }
 

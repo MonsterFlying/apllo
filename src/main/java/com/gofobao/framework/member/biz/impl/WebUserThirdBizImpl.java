@@ -49,6 +49,7 @@ import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.marketing.entity.MarketingData;
 import com.gofobao.framework.marketing.constans.MarketingTypeContants;
+import com.gofobao.framework.member.biz.UserThirdBiz;
 import com.gofobao.framework.member.biz.WebUserThirdBiz;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -224,7 +225,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
      *
      * @param userThirdAccount
      */
-    private void touchMarketingByOpenAccount(UserThirdAccount userThirdAccount) {
+    public void touchMarketingByOpenAccount(UserThirdAccount userThirdAccount) {
         MarketingData marketingData = new MarketingData();
         marketingData.setTransTime(DateHelper.dateToString(new Date()));
         marketingData.setUserId(userThirdAccount.getUserId().toString());
@@ -244,6 +245,8 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
             log.error(String.format("开户营销节点触发异常：%s", new Gson().toJson(marketingData)), e);
         }
     }
+
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)

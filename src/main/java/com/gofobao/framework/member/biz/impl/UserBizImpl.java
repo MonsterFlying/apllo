@@ -359,7 +359,7 @@ public class UserBizImpl implements UserBiz {
 
         // 保存登录信息
         user.setIp(IpHelper.getIpAddress(httpServletRequest)); // 设置ip
-        user.setSource(voLoginReq.getSource());
+        user.setPlatform(httpServletRequest.getIntHeader("requestSource"));
         user.setLoginTime(new Date());
         if (StringUtils.isEmpty(user.getPushId())) {   // 推送
             user.setPushId(UUID.randomUUID().toString().replace("-", ""));

@@ -346,7 +346,7 @@ public class InvestServiceImpl implements InvestService {
                 apr = transfer.getApr();
                 successAt = transfer.getSuccessAt();
                 item.setTimeLimit(transfer.getTimeLimit() + BorrowContants.MONTH);
-                item.setRepayFashion(BorrowContants.REPAY_FASHION_MONTH_STR);
+
                 item.setSuccessAt(transfer.getState() == TransferContants.TRANSFERED ? DateHelper.dateToString(transfer.getSuccessAt()) : "");
             }
             falg=true;
@@ -372,6 +372,7 @@ public class InvestServiceImpl implements InvestService {
             item.setInterest(StringHelper.formatMon(interest / 100D));
             item.setPrincipal(StringHelper.formatMon(principal / 100D));
         }
+
         //年利率
         item.setApr(StringHelper.formatMon(apr / 100D));
         item.setStatus(tender.getState());

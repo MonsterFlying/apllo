@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
 /**
@@ -44,9 +45,11 @@ public class WebTenderController {
 
     @ApiOperation("借款投标")
     @PostMapping("tender/pc/v2/create")
-    public ResponseEntity<VoBaseResp> pcTender(@ModelAttribute @Valid VoCreateTenderReq voCreateTenderReq, @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
+    public ResponseEntity<VoBaseResp> pcTender(@ModelAttribute @Valid VoCreateTenderReq voCreateTenderReq,
+                                               HttpServletRequest request,
+                                               @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
+        voCreateTenderReq.setRequestSource( request.getHeader("requestSource"));
         voCreateTenderReq.setUserId(userId);
-        voCreateTenderReq.setSource(1);//pc端
         return tenderBiz.tender(voCreateTenderReq);
     }
 }

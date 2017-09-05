@@ -34,7 +34,10 @@ public class BorrowCancelScheduler {
     @Autowired
     private BorrowBiz borrowBiz;
 
-    // @Scheduled(cron = "0 0 12 * * ? ")
+    /**
+     * 每天凌晨12点整取消标的
+     */
+/*    @Scheduled(cron = "0 * * * * ? *")*/
     public void process() {
         log.info("取消借款任务调度启动");
         Specification<Borrow> bs = Specifications

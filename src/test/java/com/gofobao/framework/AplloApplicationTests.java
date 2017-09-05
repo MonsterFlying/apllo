@@ -57,6 +57,7 @@ import com.gofobao.framework.listener.providers.CreditProvider;
 import com.gofobao.framework.marketing.biz.MarketingProcessBiz;
 import com.gofobao.framework.marketing.entity.MarketingData;
 import com.gofobao.framework.marketing.constans.MarketingTypeContants;
+import com.gofobao.framework.member.biz.impl.WebUserThirdBizImpl;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
@@ -174,6 +175,22 @@ public class AplloApplicationTests {
     @Test
     public void testDownloadFile() throws Exception {
         fundStatisticsBiz.doEve("");
+    }
+
+
+
+    @Autowired
+     UserThirdAccountService userThirdAccountServices;
+
+    @Autowired
+    WebUserThirdBizImpl webUserThirdBiz;
+
+    @Test
+    public void touchMarketing() {
+        UserThirdAccount userThirdAccount = userThirdAccountServices.findByUserId(45215L);
+        webUserThirdBiz.touchMarketingByOpenAccount(userThirdAccount);
+
+
     }
 
 

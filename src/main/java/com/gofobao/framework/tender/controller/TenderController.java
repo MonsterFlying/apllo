@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
 /**
@@ -44,9 +45,10 @@ public class TenderController {
     @ApiOperation("借款投标")
     @PostMapping("tender/v2/create")
     public ResponseEntity<VoBaseResp> tender(@ModelAttribute @Valid VoCreateTenderReq voCreateTenderReq,
+                                             HttpServletRequest request,
                                              @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voCreateTenderReq.setUserId(userId);
-        voCreateTenderReq.setSource(0);//pc端
+        voCreateTenderReq.setRequestSource( request.getHeader("requestSource"));
         try {
             return tenderBiz.tender(voCreateTenderReq);
         } catch (Exception e) {
