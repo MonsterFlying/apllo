@@ -188,6 +188,8 @@ public class InitDBBizImpl implements InitDBBiz {
                     }
                 }
             }
+
+            index++;
         } while (userThirdAccountList.size() >= pageSize);
 
     }
