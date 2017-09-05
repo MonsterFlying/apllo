@@ -20,3 +20,4 @@ public class SecurityAdapter extends WebMvcConfigurerAdapter {
         super.addInterceptors(registry);
     }
 }
+
