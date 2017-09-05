@@ -290,6 +290,15 @@ public class InvestServiceImpl implements InvestService {
             return null;
         }
         Borrow borrow = borrowRepository.findOne(tender.getBorrowId());
+        //还款方式
+        if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_MONTH) {
+            item.setRepayFashion(BorrowContants.REPAY_FASHION_MONTH_STR);
+        }else if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL) {
+            item.setRepayFashion(BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL_STR);
+        }else if(borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE){
+            item.setRepayFashion(BorrowContants.REPAY_FASHION_ONCE_STR);
+        }
+
         item.setCreatedAt(DateHelper.dateToString(tender.getCreatedAt()));
         item.setBorrowName(borrow.getName());
         //状态
@@ -319,13 +328,7 @@ public class InvestServiceImpl implements InvestService {
             } else {
                 item.setTimeLimit(timeLimit + BorrowContants.MONTH);
             }
-            //还款方式
-            if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_MONTH) {
-                item.setRepayFashion(BorrowContants.REPAY_FASHION_MONTH_STR);
-            }
-            if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL) {
-                item.setRepayFashion(BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL_STR);
-            }
+
             item.setSuccessAt(DateHelper.dateToString(borrow.getSuccessAt()));
         } else {
             String sqlStr = "SELECT transfer.* FROM gfb_transfer transfer  " +
