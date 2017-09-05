@@ -58,7 +58,7 @@ windmill:
   notify-address:  http://121.42.52.42/wrb/ws_info_call_back.json  #通知风车理财接口
 
 jixin: #银行存管
-  keysPassword: guangfubao@2016 #私钥密码
+  keysPassword: guangfubao_uat@2016 #私钥密码
   url: http://uat.gofobao.com/escrow  #即信服务器路径
   htmlUrl: https://access.credit2go.cn/escrow  #即信服务器路径
   file-url: https://uat.credit2go.cn/escrow/file/download #文件请求下载链接
@@ -69,8 +69,8 @@ jixin: #银行存管
   instCode: "00960001" #机构代码
   bankCode: "30050000" #交易机构代码
   query-time-init: "20170421" # 与存管系统查询时间
-  crt-path: C:/Users/Max/Desktop/gfbzs/guangfubao.crt  # crt证书路径
-  p12-path: C:/Users/Max/Desktop/gfbzs/guangfubao.p12  # p12证书路径
+  crt-path:  # crt证书路径
+  p12-path:  # p12证书路径
 gofobao:
   dev: true # 开发环境
   javaDomain:  http://lang.hk1.mofasuidao.cn

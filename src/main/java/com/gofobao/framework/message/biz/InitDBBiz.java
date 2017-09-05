@@ -1,7 +1,7 @@
 package com.gofobao.framework.message.biz;
 
 public interface InitDBBiz {
-    void  initDb() ;
+    void  initDb(long startIndex) ;
 
     void transfer() ;
 }

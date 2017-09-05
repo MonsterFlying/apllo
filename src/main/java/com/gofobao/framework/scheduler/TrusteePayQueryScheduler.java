@@ -30,7 +30,7 @@ public class TrusteePayQueryScheduler {
     @Autowired
     BorrowBiz borrowBiz;
 
-    // @Scheduled(fixedRate = 10 * 60 * 1000)
+    @Scheduled(fixedRate = 10 * 60 * 1000)
     public void process() {
         log.info("委托支付标调动启动");
         // 查询带调度队列

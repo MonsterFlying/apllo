@@ -17,8 +17,7 @@ public class RedpackCancelScheduler {
 
     @Autowired
     MarketingBiz marketingBiz ;
-
-    // @Scheduled(cron = "0 0 4 * * ?")
+    @Scheduled(cron = "0 0 4 * * ?")
     public void process() {
         log.info("红包自动过期调度开始");
         marketingBiz.autoCancelRedpack() ;

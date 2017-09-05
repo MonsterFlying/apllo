@@ -62,9 +62,9 @@ public class MigrateProtocolBiz {
     /**
      * 写入协议存管
      */
-    public void postProtocolMigrateFile() {
+    public void postProtocolMigrateFile(String filename) {
         final Date nowDate = new Date();
-        File file = new File(RESULT_MEMBER_FILE_PATH);
+        File file = new File(String.format("%s/%s/%s", MIGRATE_PATH, PROTOCOL_DIR, filename));
         if (!file.exists()) {
             log.error("协议文件不存在");
             return;
@@ -78,7 +78,7 @@ public class MigrateProtocolBiz {
             return;
         }
 
-        File errorFile = new File(RESULT_MEMBER_FILE_PATH + "_error");
+        File errorFile = new File(String.format("%s/%s/%s_error", MIGRATE_PATH, PROTOCOL_DIR, filename));
         final BufferedWriter errorWriter;
         try {
             errorWriter = Files.newWriter(errorFile, StandardCharsets.UTF_8);
@@ -138,6 +138,7 @@ public class MigrateProtocolBiz {
                 userThirdAccount.setAutoTenderTotAmount(999999999L);
                 userThirdAccount.setAutoTenderTxAmount(999999999L);
                 userThirdAccount.setAutoTenderOrderId(tenderMap.get(userThirdAccount.getId()));
+                userThirdAccount.setUpdateAt(nowDate);
             });
 
             userThirdAccountService.save(userThirdAccountList);
@@ -252,7 +253,8 @@ public class MigrateProtocolBiz {
                     } catch (Exception e) {
                         log.error("债权转让迁移错误");
                     }
-                } else if (item.getAutoTenderState() != 1) {
+                }
+                if (item.getAutoTenderState() != 1) {
                     try {
                         String orderId = System.currentTimeMillis() + RandomHelper.generateNumberCode(14);
                         StringBuffer text = new StringBuffer();

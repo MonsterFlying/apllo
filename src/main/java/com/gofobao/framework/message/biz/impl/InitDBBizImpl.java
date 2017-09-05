@@ -5,11 +5,13 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
+import com.gofobao.framework.helper.BeanHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.message.biz.InitDBBiz;
+import com.gofobao.framework.migrate.FileHelper;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.tender.entity.Tender;
@@ -20,6 +22,7 @@ import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.Files;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -33,6 +36,10 @@ import org.springframework.util.ObjectUtils;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -64,29 +71,35 @@ public class InitDBBizImpl implements InitDBBiz {
     @Autowired
     TransferBuyLogService transferBuyLogService;
 
+    private static final String DB_PATH = "/root/apollo/";
+    private static final String DBFILE = "db";
+
     @Override
-    public void initDb() {
-        int borrowCount = 1;
-        int pageSize = 1000, pageIndex = 0, realSize = 0;
+    public void initDb(long startIndex) {
+        int pageSize = 100, pageIndex = 0;
         Date nowDate = new Date();
-        int loop = 1;
-        do {
-            ImmutableList<Integer> avableStatus = ImmutableList.of(1, 3); // 保函招标中, 满标复审通过
-            Specification<Borrow> borrowSpecification = Specifications.<Borrow>and()
-                    .in("status", avableStatus.toArray())
-                    .build();
+        ImmutableList<Integer> avableStatus = ImmutableList.of(1, 3); // 保函招标中, 满标复审通过
+        Specification<Borrow> borrowSpecification = Specifications.<Borrow>and()
+                .in("status", avableStatus.toArray())
+                .gt("id", startIndex)
+                .build();
+
+        Long count = borrowService.count(borrowSpecification);
+        log.info("初始化标量: " + count);
+        int pageIndexTotal = count.intValue() / pageSize;
+        pageIndexTotal = count.intValue() % pageSize == 0 ? pageIndexTotal : pageIndexTotal + 1;
+        log.info("总循环:" + pageIndexTotal);
+        BufferedWriter bufferedWriter = null;
+        try {
+            File tenderFile = FileHelper.createFile(DB_PATH, DBFILE, DateHelper.dateToString(new Date()));
+            bufferedWriter = Files.newWriter(tenderFile, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            log.error("创建文件失败", e);
+            return;
+        }
+        for (; pageIndex < pageIndexTotal; pageIndex++) {
             Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "id")));
             List<Borrow> borrowList = borrowService.findList(borrowSpecification, pageable);
-
-            if (CollectionUtils.isEmpty(borrowList)) {
-                break;
-            }
-
-            realSize = borrowList.size();
-            pageIndex++;
-            List<Tender> tenderDateCache = new ArrayList<>();
-            List<BorrowRepayment> borrowRepaymentDataCache = new ArrayList<>();
-            List<BorrowCollection> borrowCollectionDateCache = new ArrayList<>();
             Set<Long> borrowIdSet = borrowList.stream().map(borrow -> borrow.getId()).collect(Collectors.toSet());  // 标的Id集合
 
             List<BorrowRepayment> borrowRepaymentListByBorrowId = findRepaymentListByBorrowId(borrowIdSet);   // 当前标的所有的还款
@@ -101,21 +114,30 @@ public class InitDBBizImpl implements InitDBBiz {
             Map<Long, List<BorrowCollection>> borrowCollectionAndTenderIdRefMap = borrowCollectionListAll.stream().collect(Collectors.groupingBy(BorrowCollection::getTenderId));
 
             for (Borrow borrow : borrowList) {
-                log.info("以迁移标的数量:" + (++borrowCount));
+                log.info("以迁移标的数量:" + (borrow.getId()));
                 long borrowId = borrow.getId();
                 int tenderState = caculTenderState(borrow);  // 计算当前标的状态
                 Long borrowUserId = borrow.getUserId();
                 List<BorrowRepayment> borrowRepaymentList = borrowRepaymentAndBorrowIdRefMap.get(borrowId);
                 if (!CollectionUtils.isEmpty(borrowRepaymentList)) {
+                    log.info("保顿待还" + (borrow.getId()));
                     for (BorrowRepayment borrowRepayment : borrowRepaymentList) {
                         borrowRepayment.setUserId(borrowUserId);
                         borrowRepayment.setUpdatedAt(nowDate);
+                        String insert = "UPDATE `gfb_borrow_repayment`  SET `user_id` = " + borrowUserId + "  WHERE  `id` = " + borrowRepayment.getId() + " ;";
+                        try {
+                            bufferedWriter.write(insert);
+                            bufferedWriter.newLine();
+                            bufferedWriter.flush();
+                        } catch (IOException e) {
+                            log.error("添加待还事变", e);
+                        }
                     }
-                    borrowRepaymentDataCache.addAll(borrowRepaymentList);
                 }
 
                 List<Tender> tenderList = tenderAndBorrowIdRefMap.get(borrowId);
                 if (!CollectionUtils.isEmpty(tenderList)) {
+                    log.info("保存投标记录" + (borrow.getId()));
                     for (Tender tender : tenderList) {
                         long tenderUserId = tender.getUserId();
                         long tenderId = tender.getId();
@@ -124,24 +146,35 @@ public class InitDBBizImpl implements InitDBBiz {
 
                         List<BorrowCollection> borrowCollectionList = borrowCollectionAndTenderIdRefMap.get(tenderId); // 查询回款记录
                         if (!CollectionUtils.isEmpty(borrowCollectionList)) {
+                            log.info("保存待收" + (borrow.getId()));
                             for (BorrowCollection borrowCollection : borrowCollectionList) {
                                 borrowCollection.setUserId(tenderUserId);
                                 borrowCollection.setBorrowId(borrowId);
                                 borrowCollection.setUpdatedAt(nowDate);
+                                String insert = "UPDATE `gfb_borrow_collection`  SET `user_id` = " + tenderUserId + " ,  `borrow_id` = " + borrowId + "  WHERE `id`  = " + borrowCollection.getId() + " ;";
+                                try {
+                                    bufferedWriter.write(insert);
+                                    bufferedWriter.newLine();
+                                    bufferedWriter.flush();
+                                } catch (IOException e) {
+                                    log.error("插入待收失败", e);
+                                }
                             }
-
-                            borrowCollectionDateCache.addAll(borrowCollectionList);
+                        }
+                        String insert = "UPDATE `gfb_borrow_tender`  SET `state` = " + tenderState + "  WHERE `id` = " + tenderId + " ; ";
+                        try {
+                            bufferedWriter.write(insert);
+                            bufferedWriter.newLine();
+                            bufferedWriter.flush();
+                        } catch (IOException e) {
+                            log.error("插入投标记录失败", e);
                         }
                     }
-                    tenderDateCache.addAll(tenderList);
                 }
             }
-            tenderService.save(tenderDateCache);
-            borrowRepaymentService.save(borrowRepaymentDataCache);
-            borrowCollectionService.save(borrowCollectionDateCache);
-            log.info("总调度次数" + (++loop));
-        } while (realSize == pageSize);
+        }
     }
+
 
     @Override
     @Transactional(rollbackOn = Exception.class)
@@ -231,6 +264,7 @@ public class InitDBBizImpl implements InitDBBiz {
 
             List<Tender> buyTransferTenderList = tenderService.findList(ts);
             List<TransferBuyLog> transferBuyLogList = new ArrayList<>();
+            List<TransferBuyLog> transferBuyLogList1 = new ArrayList<>();
             buyTransferTenderList.stream().forEach(buyTransferTender -> {
                 Borrow transferBorrow = transferBorrowMaps.get(buyTransferTender.getBorrowId());
                 Tender parentTender = parentTenderMaps.get(transferBorrow.getTenderId());
@@ -241,7 +275,7 @@ public class InitDBBizImpl implements InitDBBiz {
 
                 TransferBuyLog transferBuyLog = new TransferBuyLog();
                 transferBuyLog.setSource(0);
-                transferBuyLog.setState(1);
+                transferBuyLog.setState(buyTransferTender.getState());
                 transferBuyLog.setUserId(buyTransferTender.getUserId());
                 transferBuyLog.setUpdatedAt(buyTransferTender.getUpdatedAt());
                 transferBuyLog.setType(0);
@@ -252,21 +286,29 @@ public class InitDBBizImpl implements InitDBBiz {
                 transferBuyLog.setPrincipal(buyTransferTender.getValidMoney());
                 transferBuyLog.setCreatedAt(transfer.getCreatedAt());
                 transferBuyLogList.add(transferBuyLog);
+                TransferBuyLog transferBuyLog1 = new TransferBuyLog();
+                BeanHelper.copyParamter(transferBuyLog, transferBuyLog1, true);
+                transferBuyLog1.setState(buyTransferTender.getState());
+                transferBuyLogList1.add(transferBuyLog1);
             });
             transferBuyLogService.save(transferBuyLogList);
             Map<Long, List<TransferBuyLog>> transferBuyMaps = transferBuyLogList.stream().collect(groupingBy(TransferBuyLog::getTransferId));
+            Map<Long, List<TransferBuyLog>> transferBuyMaps1 = transferBuyLogList1.stream().collect(groupingBy(TransferBuyLog::getTransferId));
+            Set<Long> transferIds = new HashSet<>();
             buyTransferTenderList.stream().forEach(buyTransferTender -> {
                 Borrow transferBorrow = transferBorrowMaps.get(buyTransferTender.getBorrowId());
                 Tender parentTender = parentTenderMaps.get(transferBorrow.getTenderId());
                 Transfer transfer = transferMaps.get(parentTender.getId());
-                if (ObjectUtils.isEmpty(transfer) || transfer.getState() != 2) {
+                if (ObjectUtils.isEmpty(transfer) || transfer.getState() != 2 || transferIds.contains(transfer.getId())) {
                     return;
                 }
                 Borrow prarentBorrow = parentBorrowMaps.get(parentTender.getBorrowId());
                 List<TransferBuyLog> transferBuyLogs = transferBuyMaps.get(transfer.getId());
-                List<Tender> childTenderList = addChildTender(transfer.getCreatedAt(), transfer, parentTender, transferBuyLogs);
+                List<TransferBuyLog> transferBuyLogs1 = transferBuyMaps1.get(transfer.getId());
+                List<Tender> childTenderList = addChildTender(transfer.getCreatedAt(), transfer, parentTender, transferBuyLogs, transferBuyLogs1);
 
                 addChildTenderCollection(transfer.getCreatedAt(), transfer, prarentBorrow, childTenderList);
+                transferIds.add(transfer.getId());
             });
         }
         borrowService.save(transferBorrowList);
@@ -281,13 +323,15 @@ public class InitDBBizImpl implements InitDBBiz {
      * @param transferBuyLogList
      * @return
      */
-    public List<Tender> addChildTender(Date nowDate, Transfer transfer, Tender parentTender, List<TransferBuyLog> transferBuyLogList) {
+    public List<Tender> addChildTender(Date nowDate, Transfer transfer, Tender parentTender, List<TransferBuyLog> transferBuyLogList, List<TransferBuyLog> transferBuyLogList1) {
         //生成债权记录与回款记录
         List<Tender> childTenderList = new ArrayList<>();
+        Map<Long, TransferBuyLog> transferBuyLogMaps = transferBuyLogList1.stream().collect(Collectors.toMap(TransferBuyLog::getId, Function.identity()));
         transferBuyLogList.stream().forEach(transferBuyLog -> {
             Tender childTender = new Tender();
             /*UserThirdAccount buyUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
 */
+            TransferBuyLog transferBuyLog1 = transferBuyLogMaps.get(transferBuyLog.getId());
             childTender.setUserId(transferBuyLog.getUserId());
             childTender.setStatus(1);  // 投标成不成功
             childTender.setType(transferBuyLog.getType());
@@ -299,7 +343,7 @@ public class InitDBBizImpl implements InitDBBiz {
             childTender.setValidMoney(transferBuyLog.getPrincipal());
             childTender.setTransferFlag(0);
             childTender.setTUserId(transferBuyLog.getUserId());
-            childTender.setState(0);
+            childTender.setState(transferBuyLog1.getState());
             childTender.setAutoOrder(0);
             childTender.setParentId(parentTender.getId());
             childTender.setTransferBuyId(transferBuyLog.getId());
@@ -414,9 +458,9 @@ public class InitDBBizImpl implements InitDBBiz {
 
     private int caculTenderState(Borrow borrow) {
         int tenderState = -1;
-        if (borrow.getStatus() == 1) {  // 招标中
+        if (borrow.getStatus().intValue() == 1) {  // 招标中
             tenderState = 1;  // 投标中
-        } else if (borrow.getStatus() == 3) {
+        } else if (borrow.getStatus().intValue() == 3) {
             if (!ObjectUtils.isEmpty(borrow.getCloseAt())) {
                 tenderState = 3;  // 已结清
             } else if (!ObjectUtils.isEmpty(borrow.getSuccessAt())) {

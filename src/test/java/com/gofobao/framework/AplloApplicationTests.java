@@ -2,6 +2,7 @@ package com.gofobao.framework;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.contants.DesLineFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.CertHelper;
 import com.gofobao.framework.api.helper.JixinManager;
@@ -33,6 +34,10 @@ import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResponse;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
+import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.entity.BatchAssetChangeItem;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
@@ -42,6 +47,7 @@ import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.assets.AssetChange;
+import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
@@ -85,6 +91,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -97,6 +104,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -409,9 +417,9 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("190013");
+        batchDetailsQueryReq.setBatchNo("215335");
 
-        batchDetailsQueryReq.setBatchTxDate("20170901");
+        batchDetailsQueryReq.setBatchTxDate("20170903");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -549,7 +557,8 @@ public class AplloApplicationTests {
 
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
-
+    @Autowired
+    AssetChangeProvider assetChangeProvider;
     @Autowired
     private CreditProvider creditProvider;
 
@@ -559,75 +568,87 @@ public class AplloApplicationTests {
     @Autowired
     private DealThirdBatchScheduler dealThirdBatchScheduler;
 
-    @Test
-    public void test() {
-
-        List<BorrowRepayment> borrowRepaymentList = new ArrayList<>();
-
-        BorrowRepayment borrowRepayment = new BorrowRepayment();
-        borrowRepayment.setPrincipal(0l);
-        borrowRepayment.setInterest(1500l);
-        borrowRepayment.setOrder(0);
-        borrowRepaymentList.add(borrowRepayment);
-
-        borrowRepayment = new BorrowRepayment();
-        borrowRepayment.setPrincipal(0l);
-        borrowRepayment.setInterest(1500l);
-        borrowRepayment.setOrder(1);
-        borrowRepaymentList.add(borrowRepayment);
-
-        borrowRepayment = new BorrowRepayment();
-        borrowRepayment.setPrincipal(100000l);
-        borrowRepayment.setInterest(1500l);
-        borrowRepayment.setOrder(2);
-        borrowRepaymentList.add(borrowRepayment);
-        Map<Integer/* ORDER */, BorrowRepayment> borrowRepaymentMaps = borrowRepaymentList.stream().collect(Collectors.toMap(BorrowRepayment::getOrder, Function.identity()));
-        List<Long> sumPrincipals = new ArrayList<>();
-        List<Long> sumInterests = new ArrayList<>();
-        List<Tender> tenderList = new ArrayList<>();
-        Tender tender = new Tender();
-        tender.setValidMoney(62100l);
-        tenderList.add(tender);
-        tender = new Tender();
-        tender.setValidMoney(37900l);
-        tenderList.add(tender);
-        for (int i = 0; i < tenderList.size(); i++) {
-            tender = tenderList.get(i);
-            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
-                    NumberHelper.toDouble(StringHelper.toString(tender.getValidMoney())),
-                    NumberHelper.toDouble(StringHelper.toString(1800)), 3, DateHelper.stringToDate("2017-09-01 18:20:06"));
-            Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(2);
-            List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
-            Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
-            BorrowCollection borrowCollection;
-            int collectionMoney = 0;
-            int collectionInterest = 0;
-            for (int j = 0; j < repayDetailList.size(); j++) {
-                Map<String, Object> repayDetailMap = repayDetailList.get(j);
-                long principal = NumberHelper.toLong(repayDetailMap.get("principal"));
-                long interest = NumberHelper.toLong(repayDetailMap.get("interest"));
-                if (sumPrincipals.size() != repayDetailList.size()) {
-                    sumPrincipals.add(principal);
-                } else {
-                    sumPrincipals.set(j, sumPrincipals.get(j) + principal);
+    private void initUseAsset() throws Exception{
+        String seqNo = assetChangeProvider.getSeqNo(); // 资产记录流水号
+        String groupSeqNo = assetChangeProvider.getGroupSeqNo(); // 资产记录分组流水号
+        //红包账户
+        long redId = assetChangeProvider.getRedpackAccountId();
+        UserThirdAccount redpackThirdAccount = userThirdAccountService.findByUserId(redId); //查询红包账户
+        //1.查询已开户用户
+        Specification<UserThirdAccount> usas = Specifications
+                .<UserThirdAccount>and()
+                .eq("del", 0)
+                .eq("userId", 45219)
+                .build();
+        int index = 0;
+        int pageSize = 50;
+        do {
+            List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findList(usas, new PageRequest(index, pageSize));
+            Set<Long> userIds = userThirdAccountList.stream().map(UserThirdAccount::getUserId).collect(Collectors.toSet());
+            //2.查询资产记录
+            Specification<Asset> as = Specifications
+                    .<Asset>and()
+                    .in("userId", userIds.toArray())
+                    .build();
+            List<Asset> assetList = assetService.findList(as);
+            Map<Long, Asset> assetMaps = assetList.stream().collect(Collectors.toMap(Asset::getUserId, Function.identity()));
+            for (UserThirdAccount userThirdAccount : userThirdAccountList) {
+                //3.查询存管账户是否为空
+                BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
+                balanceQueryRequest.setChannel(ChannelContant.HTML);
+                balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
+                BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
+                if ((ObjectUtils.isEmpty(balanceQueryResponse)) || !balanceQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
+                    String msg = ObjectUtils.isEmpty(balanceQueryResponse) ? "当前网络异常, 请稍后尝试!" : balanceQueryResponse.getRetMsg();
+                    log.error(String.format("资金同步: %s,userId:%s", msg, userThirdAccount.getUserId()));
                 }
-                if (sumInterests.size() != repayDetailList.size()) {
-                    sumInterests.add(interest);
-                } else {
-                    sumInterests.set(j, sumInterests.get(j) + interest);
+                //存管账户总金额
+                long money = NumberHelper.toLong(NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100);
+                if (money != 0) {
+                    Asset asset = assetMaps.get(userThirdAccount.getUserId());
+
+                    AssetChange assetChange = new AssetChange();
+                    assetChange.setMoney(0);
+                    assetChange.setForUserId(redpackThirdAccount.getUserId());
+                    assetChange.setUserId(userThirdAccount.getUserId());
+                    assetChange.setRemark(String.format("数据迁移初始化资产账户，金额：%s分，userId：%s", asset.getUseMoney(), asset.getUserId()));
+                    assetChange.setSeqNo(seqNo);
+                    assetChange.setGroupSeqNo(groupSeqNo);
+                    assetChange.setSourceId(asset.getUserId());
+                    assetChange.setType(AssetChangeTypeEnum.initAsset);
+                    try {
+                        assetChangeProvider.commonAssetChange(assetChange);
+                    } catch (Exception e) {
+                        log.error(String.format("资金变动失败：%s", assetChange));
+                        continue;
+                    }
+                    //3.发送红包
+                    VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
+                    voucherPayRequest.setAccountId(redpackThirdAccount.getAccountId());
+                    voucherPayRequest.setTxAmount(StringHelper.formatDouble(asset.getUseMoney(), 100, false));
+                    voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
+                    voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
+                    voucherPayRequest.setDesLine("数据迁移账户初始化！");
+                    voucherPayRequest.setChannel(ChannelContant.HTML);
+                    VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
+                    if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+                        String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+                        throw new Exception(msg);
+                    }
                 }
-
-                if (i == (tenderList.size() - 1)) { //给回款最后一期补上多出的本金与利息
-                    borrowRepayment = borrowRepaymentMaps.get(j);
-                    principal += (borrowRepayment.getPrincipal() - sumPrincipals.get(j));
-                    interest += (borrowRepayment.getInterest() - sumInterests.get(j));
-                }
-                long repayMoney = principal + interest;
-
-
             }
-        }
+        } while (false);
 
+    }
+
+    @Test
+    @Transactional(rollbackOn = Exception.class)
+    public void test() {
+        try {
+            initUseAsset();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
    /*     //推送队列结束债权
         MqConfig mqConfig = new MqConfig();
@@ -645,7 +666,7 @@ public class AplloApplicationTests {
         }*/
 
         //dealThirdBatchScheduler.process();
-        // dataMigration();
+        //                  dataMigration();
 
 
         //批次处理

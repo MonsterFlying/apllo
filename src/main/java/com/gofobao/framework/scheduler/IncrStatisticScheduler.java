@@ -33,7 +33,7 @@ public class IncrStatisticScheduler {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    // @Scheduled(cron = "0 30 0 * * ? ")
+    @Scheduled(cron = "0 30 0 * * ? ")
     public void process() {
         log.info("每日统计任务调度启动!");
         Date startDate = DateHelper.beginOfDate(DateHelper.subDays(new Date(), 1));

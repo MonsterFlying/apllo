@@ -32,14 +32,15 @@ public class SystemController {
     @Autowired
     MigrateProtocolBiz migrateProtocolBiz;
 
-    @GetMapping("pub/initDB/{password}")
-    public void initDB(@PathVariable(value = "password") String password) {
+    @GetMapping("pub/initDB/{password}/{startIndex}")
+    public void initDB(@PathVariable() String password,
+                       @PathVariable() long startIndex) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
             return;
         }
 
         long curTime = System.currentTimeMillis();
-        initDBBiz.initDb();
+        initDBBiz.initDb(startIndex);
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 
@@ -89,12 +90,17 @@ public class SystemController {
             log.info("提交用户开户数据");
             migrateMemberBiz.postMemberMigrateFile(filename);
         } catch (Exception e) {
-            log.error("导入系统异常");
+            log.error("导入系统异常", e);
         }
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 
 
+    /**
+     * 获取标的迁移文件
+     *
+     * @param password
+     */
     @GetMapping("pub/migrateBorrow/{password}")
     public void migrateBorrow(@PathVariable(value = "password") String password) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
@@ -132,6 +138,19 @@ public class SystemController {
     }
 
 
+    @GetMapping("pub/postMigrateTender/{password}/{filename}")
+    public void postMigrateTender(@PathVariable(value = "password") String password,
+                                  @PathVariable(value = "filename") String filename) {
+        if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
+            return;
+        }
+
+        long curTime = System.currentTimeMillis();
+        migrateTenderBiz.postMigrateTenderFile(filename);
+        log.info("处理时间: " + (System.currentTimeMillis() - curTime));
+    }
+
+
     @GetMapping("pub/migrateProtocol/{password}")
     public void migrateProtocol(@PathVariable(value = "password") String password) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
@@ -140,6 +159,19 @@ public class SystemController {
 
         long curTime = System.currentTimeMillis();
         migrateProtocolBiz.getProtocolMigrateFile();
+        log.info("处理时间: " + (System.currentTimeMillis() - curTime));
+    }
+
+
+    @GetMapping("pub/postMigrateProtocol/{password}/{filename}")
+    public void postMigrateProtocol(@PathVariable(value = "password") String password,
+                                    @PathVariable(value = "filename") String filename) {
+        if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
+            return;
+        }
+
+        long curTime = System.currentTimeMillis();
+        migrateProtocolBiz.postProtocolMigrateFile(filename);
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 }
