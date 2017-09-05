@@ -144,7 +144,12 @@ public class SystemController {
         }
 
         long curTime = System.currentTimeMillis();
-        migrateTenderBiz.getTenderMigrateFile();
+        try {
+            migrateTenderBiz.getTenderMigrateFile();
+        }catch (Exception e){
+            log.error("投资文件", e);
+        }
+
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 
@@ -157,7 +162,12 @@ public class SystemController {
         }
 
         long curTime = System.currentTimeMillis();
-        migrateTenderBiz.postMigrateTenderFile(filename);
+        try{
+            migrateTenderBiz.postMigrateTenderFile(filename);
+        }catch (Exception e){
+            log.error("操作异常", e);
+        }
+
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 
