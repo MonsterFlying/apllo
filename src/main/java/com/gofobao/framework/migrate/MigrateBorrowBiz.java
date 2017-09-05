@@ -149,7 +149,7 @@ public class MigrateBorrowBiz {
                         String yield = StringHelper.toString(borrow.getApr() * 1000); // 逾期年化收益
                         text.append(FormatHelper.appendByTail(BANK_NO, 4)); // 银行代号
                         text.append(FormatHelper.appendByTail(batchNo, 6));  // 批次号
-                        text.append(FormatHelper.appendByTail(StringHelper.toString(borrow.getId()), 40));  // 标的编号
+                        text.append(FormatHelper.appendByTail("701911" + borrow.getId(), 40));  // 标的编号
                         text.append(FormatHelper.appendByTail(borrowName, 60));//  标的描述
                         text.append(FormatHelper.appendByTail(userThirdAccount.getAccountId(), 19)); // 借款人电子账户
                         text.append(FormatHelper.appendByPre(borrowMenoy, 13)); // 借款金额
@@ -158,17 +158,17 @@ public class MigrateBorrowBiz {
                         text.append(FormatHelper.appendByTail(loanTerm, 4));  // 借款期限
                         text.append(FormatHelper.appendByPre(yield, 8));  // 逾期年化收益
                         text.append(FormatHelper.appendByTail("", 19));  // 担保人电子账户
-                        if(borrow.getType() != 1){
+                        if (borrow.getType() != 1) {
                             text.append(FormatHelper.appendByTail("6212462190000131545", 19));  // 名义借款人电子账户
                             text.append(FormatHelper.appendByTail("1", 1)); // 多种借款人模式标识
-                        }else{
+                        } else {
                             text.append(FormatHelper.appendByTail("", 19));  // 名义借款人电子账户
                             text.append(FormatHelper.appendByTail("0", 1)); // 多种借款人模式标识
                         }
-                        if(borrow.getType() != 1){
+                        if (borrow.getType() != 1) {
                             text.append(FormatHelper.appendByTail("6212462190000131545", 19));  // 收款人
                             text.append(FormatHelper.appendByTail("1", 1));   //  多种借款人模式下使用
-                        }else{
+                        } else {
                             text.append(FormatHelper.appendByTail("", 19));  // 收款人
                             text.append(FormatHelper.appendByTail("0", 1));   //  多种借款人模式下使用
                         }
@@ -257,7 +257,7 @@ public class MigrateBorrowBiz {
                 .in("id", prodcutIdList.toArray())
                 .build();
 
-        Date nowDate =new Date() ;
+        Date nowDate = new Date();
         List<Borrow> borrowList = borrowService.findList(bs);
         borrowList.stream()
                 .filter(borrow -> ObjectUtils.isEmpty(borrow.getProductId()))

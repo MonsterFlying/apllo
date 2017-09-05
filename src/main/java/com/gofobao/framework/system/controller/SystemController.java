@@ -71,7 +71,6 @@ public class SystemController {
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 
-
     /**
      * 提交开户数据
      *
