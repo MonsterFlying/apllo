@@ -172,7 +172,6 @@ public class InitDBBizImpl implements InitDBBiz {
                     }
                 }
             }
-            borrowRepaymentService.save(borrowRepaymentDataCache);
         }
     }
 
