@@ -9,6 +9,7 @@ import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.NumberHelper;
@@ -137,7 +138,15 @@ public class MigrateTenderBiz {
                     .eq("authCode", null) // 不用重复提交的
                     .build();
             List<Tender> tenderList = tenderService.findList(ts);
+            if(CollectionUtils.isEmpty(tenderList)){
+                continue;
+            }
+
             Set<Long> userIdSet = tenderList.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet());
+
+            if(CollectionUtils.isEmpty(userIdSet)){
+                continue;
+            }
             Specification<UserThirdAccount> uts = Specifications
                     .<UserThirdAccount>and()
                     .in("userId", userIdSet.toArray())
