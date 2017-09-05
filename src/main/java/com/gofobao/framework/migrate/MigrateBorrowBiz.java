@@ -257,12 +257,14 @@ public class MigrateBorrowBiz {
                 .in("id", prodcutIdList.toArray())
                 .build();
 
+        Date nowDate =new Date() ;
         List<Borrow> borrowList = borrowService.findList(bs);
         borrowList.stream()
                 .filter(borrow -> ObjectUtils.isEmpty(borrow.getProductId()))
                 .forEach(borrow -> {
                     borrow.setProductId(borrow.getId().toString());
-                    borrow.setTitularBorrowAccountId("6212462190000000070");
+                    borrow.setTitularBorrowAccountId("6212462190000131545");
+                    borrow.setUpdatedAt(nowDate);
                 });
         borrowService.save(borrowList);
     }
