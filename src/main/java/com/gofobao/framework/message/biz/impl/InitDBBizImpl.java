@@ -117,8 +117,9 @@ public class InitDBBizImpl implements InitDBBiz {
                 .build();
         int index = 0;
         int pageSize = 50;
+        List<UserThirdAccount> userThirdAccountList = new ArrayList<>();
         do {
-            List<UserThirdAccount> userThirdAccountList = userThirdAccountService.findList(usas, new PageRequest(index, pageSize));
+            userThirdAccountList = userThirdAccountService.findList(usas, new PageRequest(index, pageSize));
             Set<Long> userIds = userThirdAccountList.stream().map(UserThirdAccount::getUserId).collect(Collectors.toSet());
             //2.查询资产记录
             Specification<Asset> as = Specifications
@@ -187,7 +188,7 @@ public class InitDBBizImpl implements InitDBBiz {
                     }
                 }
             }
-        } while (false);
+        } while (userThirdAccountList.size() >= pageSize);
 
     }
 
