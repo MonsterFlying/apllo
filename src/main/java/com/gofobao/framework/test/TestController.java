@@ -1,6 +1,13 @@
 package com.gofobao.framework.test;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.helper.JixinManager;
+import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
+import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
+import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
@@ -40,6 +47,8 @@ public class TestController {
     private ThirdBatchLogService thirdBatchLogService;
     @Autowired
     AssetChangeProvider assetChangeProvider;
+    @Autowired
+    private JixinManager jixinManager;
 
     @RequestMapping("/test/pub/batch/deal/{sourceId}/{batchNo}")
     public void batchDeal(@PathVariable("sourceId") String sourceId, @PathVariable("batchNo") String batchNo) {
@@ -142,5 +151,26 @@ public class TestController {
         } catch (Exception e) {
             log.error(String.format("资金变动失败：%s", assetChange));
         }
+    }
+
+    @RequestMapping("/test/pub/amendAsset/{accountId}")
+    public void assetDetail(@PathVariable("accountId") String accountId) {
+        BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
+        balanceQueryRequest.setChannel(ChannelContant.HTML);
+        balanceQueryRequest.setAccountId(accountId);
+        BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
+        System.out.println(balanceQueryResponse);
+
+        AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
+        request.setAccountId(accountId);
+        request.setStartDate("20170828");
+        request.setEndDate("20171006");
+        request.setChannel(ChannelContant.HTML);
+        request.setType("0"); // 转入
+        //request.setTranType("7820"); // 线下转账的
+        request.setPageSize(String.valueOf(30));
+        request.setPageNum(String.valueOf(1));
+        AccountDetailsQueryResponse response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, request, AccountDetailsQueryResponse.class);
+        System.out.println(response);
     }
 }
