@@ -33,7 +33,7 @@ public class BorrowAdvanceScheduler {
     @Autowired
     private RepaymentBiz repaymentBiz;
 
-    @Scheduled(cron = "0 55 23 * * ? ")
+/*    @Scheduled(cron = "0 55 23 * * ? ")*/
     public void process() {
         log.info("借款自动垫付任务调度启动！");
         List<BorrowRepayment> borrowRepaymentList = null;
