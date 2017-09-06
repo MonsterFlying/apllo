@@ -1765,7 +1765,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             }
 
             // 收取逾期管理费
-            if (repayAssetChange.getPlatformOverdueFee() > 0 && new Date().getTime() > DateHelper.endOfDate(DateHelper.stringToDate("2017-09-03 23:59:59")).getTime()) {
+            if (repayAssetChange.getPlatformOverdueFee() > 0) {
                 batchAssetChangeItem = new BatchAssetChangeItem();
                 batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
                 batchAssetChangeItem.setState(0);
@@ -1812,7 +1812,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
      */
 
     private int calculateLateInterest(int lateDays, BorrowRepayment borrowRepayment, Borrow repaymentBorrow) {
-        if (0 == lateDays) {
+
+        if (borrowRepayment.getRepayAt().getTime() < DateHelper.stringToDate("2017-09-07 00:00:00").getTime()) {
+            lateDays = lateDays - 4;
+        }
+
+        if (0 <= lateDays) {
             return 0;
         }
 
