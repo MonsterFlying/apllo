@@ -138,6 +138,13 @@ public class TenderProvider {
         } while (num < maxSize && !bool);
         if (autoTenderCount >= 1) {
             autoTenderService.updateAutoTenderOrder();
+            log.info("===========================AutoTenderListener===========================");
+            log.info("自动投标成功! borrowId：" + borrowId);
+            log.info("========================================================================");
+        }else {
+            log.info("===========================AutoTenderListener===========================");
+            log.info("自动投标无匹配规则! borrowId：" + borrowId);
+            log.info("========================================================================");
         }
 
         // 解除锁定
