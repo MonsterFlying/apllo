@@ -46,6 +46,6 @@ public interface UsersRepository extends JpaRepository<Users,Long>,JpaSpecificat
      * @param parentId
      * @return
      */
-    Page<Users> findByParentId(Integer parentId, Pageable pageable);
+    Page<Users> findByParentId(Long parentId, Pageable pageable);
 
 }
