@@ -32,17 +32,19 @@ public class SysVserionBizImpl implements SysVersionBiz {
         response.setContentType("text/html; charset=utf-8");
         List<SysVersion> sysVersions = sysVersionService.list(terminal);
         PrintWriter printWriter=null;
-        Map<String,Object> result= Maps.newHashMap();
-        Map<String,Object>resultMaps=Maps.newHashMap();
+        Map<String,Object>resultMap=Maps.newHashMap();
+        Map<String,Object> statusMap= Maps.newHashMap();
+        Map<String,Object>statusMaps=Maps.newHashMap();
+
+        Map<String,Object>bodyMaps=Maps.newHashMap();
         try {
             printWriter= response.getWriter();
             if (CollectionUtils.isEmpty(sysVersions)) {
-                resultMaps.put("code",1);
-                resultMaps.put("msg","非法访问");
-                resultMaps.put("time", DateHelper.dateToString(new Date()));
-                result.put("status",resultMaps);
-
-                printWriter.print(new Gson().toJson(result));
+                statusMaps.put("code",1);
+                statusMaps.put("msg","非法访问");
+                statusMaps.put("time", DateHelper.dateToString(new Date()));
+                resultMap.put("status",statusMaps);
+                printWriter.print(new Gson().toJson(statusMap));
             }
             SysVersion sysVersion = sysVersions.get(0);
             boolean flag = sysVersion.getVersionId() > clientId;
@@ -50,30 +52,29 @@ public class SysVserionBizImpl implements SysVersionBiz {
             if (flag) {  // 需要
                 voSysVersion.setIsEquls(VersionContants.EQULSNO);
                 voSysVersion.setIsNew(true);
-                voSysVersion.setViewVersion(sysVersion.getViewVersion());
+                voSysVersion.setVeiwVersion(sysVersion.getViewVersion());
                 voSysVersion.setDetails(sysVersion.getDetails());
                 voSysVersion.setForce(sysVersion.getForce());
                 voSysVersion.setUrl(sysVersion.getRul());
             } else {   // 不需要
                 voSysVersion.setIsEquls(VersionContants.EQULSOK);
-                voSysVersion.setViewVersion(sysVersion.getViewVersion());
+                voSysVersion.setVeiwVersion(sysVersion.getViewVersion());
                 voSysVersion.setDetails(sysVersion.getDetails());
                 voSysVersion.setForce(sysVersion.getForce());
                 voSysVersion.setIsNew(false);
             }
-            resultMaps.put("code",0);
-            resultMaps.put("msg","查询成功");
-            resultMaps.put("time", DateHelper.dateToString(new Date()));
-            resultMaps.put("body",voSysVersion);
-            result.put("status",resultMaps);
-            printWriter.print(new Gson().toJson(result));
+            statusMaps.put("code",0);
+            statusMaps.put("msg","查询成功");
+            statusMaps.put("time", DateHelper.dateToString(new Date()));
+            resultMap.put("body",voSysVersion);
+            resultMap.put("status",statusMaps);
+            printWriter.print(new Gson().toJson(resultMap));
         }catch (Exception e){
-            resultMaps.put("code",1);
-            resultMaps.put("msg","系统异常, 请稍后重试");
-            resultMaps.put("time", DateHelper.dateToString(new Date()));
-            result.put("status",resultMaps);
-            printWriter.print(new Gson().toJson(result));
-
+            statusMaps.put("code",1);
+            statusMaps.put("msg","系统异常, 请稍后重试");
+            statusMaps.put("time", DateHelper.dateToString(new Date()));
+            resultMap.put("status",statusMaps);
+            printWriter.print(new Gson().toJson(statusMap));
         }
 
 
