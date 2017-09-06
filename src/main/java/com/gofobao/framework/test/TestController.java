@@ -82,7 +82,7 @@ public class TestController {
     @Autowired
     private BorrowThirdBiz borrowThirdBiz;
 
-    @RequestMapping("/test/pub/batch/deal/{sourceId}/{batchNo}")
+   /* @RequestMapping("/test/pub/batch/deal/{sourceId}/{batchNo}")
     public void batchDeal(@PathVariable("sourceId") String sourceId, @PathVariable("batchNo") String batchNo, @PathVariable("langlang") String langlang) {
         if (langlang.equals("langlang")) {
             Specification<ThirdBatchLog> tbls = Specifications
@@ -110,7 +110,7 @@ public class TestController {
                 log.error("tenderThirdBizImpl thirdBatchRepayAllRunCall send mq exception", e);
             }
         }
-    }
+    }*/
 
  /*   @RequestMapping("/test/pub/amendAsset/{langlang}")
     @Transactional(rollbackOn = Exception.class)
@@ -190,7 +190,7 @@ public class TestController {
         }
     }*/
 
-    @RequestMapping("/test/pub/amendAsset/{accountId}/{langlang}")
+    /*@RequestMapping("/test/pub/amendAsset/{accountId}/{langlang}")
     public void assetDetail(@PathVariable("accountId") String accountId, @PathVariable("langlang") String langlang) {
         if (langlang.equals("langlang")) {
             BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
@@ -212,8 +212,8 @@ public class TestController {
             System.out.println(response);
         }
     }
-
-    @RequestMapping("/test/pub/findBorrow/{borrowId}/{userId}/{langlang}")
+*/
+  /*  @RequestMapping("/test/pub/findBorrow/{borrowId}/{userId}/{langlang}")
     public void findThirdBorrowList(@PathVariable("borrowId") String borrowId,@PathVariable("userId") String userId, @PathVariable("langlang") String langlang) {
         if (langlang.equals("langlang")) {
             VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
@@ -224,7 +224,7 @@ public class TestController {
             DebtDetailsQueryResponse resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
             System.out.println(resp);
         }
-    }
+    }*/
 
   @RequestMapping(value = "/test/csvDownLoad", method = RequestMethod.GET)
     public void csvDownLoad(HttpServletResponse httpServletResponse) throws Exception {

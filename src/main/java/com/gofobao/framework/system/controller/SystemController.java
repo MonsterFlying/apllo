@@ -53,7 +53,7 @@ public class SystemController {
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 */
-    @GetMapping("pub/initUseAsset222/{password}")
+    /*@GetMapping("pub/initUseAsset222/{password}")
     public void initUseAsset(@PathVariable(value = "password") String password) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
             return;
@@ -66,7 +66,7 @@ public class SystemController {
         }
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
-
+*/
     /**
      * 获取开户
      *
@@ -154,7 +154,7 @@ public class SystemController {
     }*/
 
 
-    @GetMapping("pub/postMigrateTender/{password}/{filename}")
+/*    @GetMapping("pub/postMigrateTender/{password}/{filename}")
     public void postMigrateTender(@PathVariable(value = "password") String password,
                                   @PathVariable(value = "filename") String filename) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
@@ -169,7 +169,7 @@ public class SystemController {
         }
 
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
-    }
+    }*/
 
   /*
     @GetMapping("pub/migrateProtocol/{password}")
