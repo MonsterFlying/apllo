@@ -2,12 +2,14 @@ package com.gofobao.framework.test;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
+import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
@@ -17,6 +19,8 @@ import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
@@ -25,15 +29,30 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.output.FileWriterWithEncoding;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
+import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created by Zeke on 2017/6/21.
@@ -87,7 +106,7 @@ public class TestController {
         }
     }
 
-    @RequestMapping("/test/pub/amendAsset/{langlang}")
+ /*   @RequestMapping("/test/pub/amendAsset/{langlang}")
     @Transactional(rollbackOn = Exception.class)
     public void amendAsset(@PathVariable("langlang") String langlang) {
         if (langlang.equals("langlang")) {
@@ -163,7 +182,7 @@ public class TestController {
                 log.error(String.format("资金变动失败：%s", assetChange));
             }
         }
-    }
+    }*/
 
     @RequestMapping("/test/pub/amendAsset/{accountId}/{langlang}")
     public void assetDetail(@PathVariable("accountId") String accountId, @PathVariable("langlang") String langlang) {
@@ -188,7 +207,7 @@ public class TestController {
         }
     }
 
-  /*  @RequestMapping(value = "/test/csvDownLoad", method = RequestMethod.GET)
+  @RequestMapping(value = "/test/csvDownLoad", method = RequestMethod.GET)
     public void csvDownLoad(HttpServletResponse httpServletResponse) throws Exception {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
         String fileName = "test-";
@@ -290,9 +309,9 @@ public class TestController {
             }
         }
 
-    }*/
+    }
 
-   /* @RequestMapping("/test/pub/exp/asset")
+   @RequestMapping("/test/pub/exp/asset")
     public ResponseEntity expCsv() {
         HttpHeaders h = new HttpHeaders();
         h.add("Content-Type", "text/csv; charset=GBK");
@@ -357,5 +376,5 @@ public class TestController {
         } while (userThirdAccountList.size() >= pageNum);
 
         return text;
-    }*/
+    }
 }
