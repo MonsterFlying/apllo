@@ -157,6 +157,7 @@ public class TransferServiceImpl implements TransferService {
             transfering.setCancel(count < 1);
             transfering.setCreateTime(DateHelper.dateToString(p.getCreatedAt()));
             transfering.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
+            transfering.setBorrowId(borrow.getId());
             TransferOfs.add(transfering);
         });
         resultMaps.put("transferOfList", TransferOfs);
@@ -322,6 +323,7 @@ public class TransferServiceImpl implements TransferService {
             transferBuy.setTransferId(p.getId());
             transferBuy.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
             transferBuy.setCreateAt(DateHelper.dateToString(p.getCreatedAt()));
+            transferBuy.setBorrowId(borrow.getId());
             transferBuys.add(transferBuy);
         });
         resultMaps.put("transferBuys", transferBuys);

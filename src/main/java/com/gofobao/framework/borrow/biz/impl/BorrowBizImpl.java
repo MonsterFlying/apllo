@@ -474,7 +474,7 @@ public class BorrowBizImpl implements BorrowBiz {
         Specification<Transfer> ts = Specifications
                 .<Transfer>and()
                 .eq("userId", userId)
-                .in("state", Lists.newArrayList(TransferContants.CHECKPENDING,TransferContants.TRANSFERIND).toArray())
+                .in("state", Lists.newArrayList(TransferContants.CHECKPENDING, TransferContants.TRANSFERIND).toArray())
                 .build();
         long tranferingNum = transferService.count(ts);
         if (tranferingNum > 0) {
@@ -980,7 +980,7 @@ public class BorrowBizImpl implements BorrowBiz {
      *
      * @param tender
      */
-    private void touchMarketingByTender(Tender tender) {
+    public void touchMarketingByTender(Tender tender) {
         MarketingData marketingData = new MarketingData();
         marketingData.setTransTime(DateHelper.dateToString(new Date()));
         marketingData.setUserId(tender.getUserId().toString());
@@ -1245,6 +1245,12 @@ public class BorrowBizImpl implements BorrowBiz {
                         .body(VoHtmlResp.error(VoHtmlResp.ERROR, resp.getBody().getState().getMsg(), VoHtmlResp.class));
             }
             log.info(String.format("车贷标/ 渠道标初审: 存管登记成功( %s )", GSON.toJson(voRegisterOfficialBorrow)));
+        }
+
+        if (borrow.getType() != 0 && borrow.getType() != 4) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款标不是车贷标或净值标!", VoHtmlResp.class));
         }
 
         //受托支付

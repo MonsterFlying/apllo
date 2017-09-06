@@ -147,7 +147,7 @@ public class BorrowServiceImpl implements BorrowService {
         if (StringUtils.isEmpty(type)) {   // 全部
             condtionSql.append(" ORDER BY b.status ASC , (b.money_yes / b.money) DESC, FIELD(b.type,0, 4, 1),b.id DESC");
         } else {
-            if (type.equals(BorrowContants.INDEX_TYPE_CE_DAI)) {
+            if (type.equals(BorrowContants.CE_DAI)) {
                 condtionSql.append(" ORDER BY b.status ASC,(b.money_yes / b.money) DESC, b.success_at DESC,b.id DESC");
             } else {
                 condtionSql.append(" ORDER BY b.status, b.success_at DESC, b.id DESC");
@@ -297,7 +297,7 @@ public class BorrowServiceImpl implements BorrowService {
         if (StringUtils.isEmpty(type)) {   // 全部
             condtionSql.append(" ORDER BY (b.moneyYes / b.money) ASC ,b.status ASC , FIELD(b.type,0, 4, 1, 2),b.id DESC");
         } else {
-            if (type.equals(BorrowContants.INDEX_TYPE_CE_DAI)) {
+            if (type.equals(BorrowContants.CE_DAI)) {
                 condtionSql.append(" ORDER BY b.status ASC,(b.moneyYes / b.money) ASC, b.successAt DESC,b.id DESC");
             } else {
                 condtionSql.append(" ORDER BY b.status, b.successAt DESC, b.id DESC");

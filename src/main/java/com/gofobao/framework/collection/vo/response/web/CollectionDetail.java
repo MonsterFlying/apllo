@@ -9,6 +9,7 @@ import lombok.Data;
 @ApiModel("回款详情")
 @Data
 public class CollectionDetail {
+    private Long borrowId;
     private String name;
     private String orderStr;
     private String principal;

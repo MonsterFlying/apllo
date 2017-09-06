@@ -4,6 +4,7 @@ import com.github.wenhao.jpa.PredicateBuilder;
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
+import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.helper.DateHelper;
@@ -17,6 +18,7 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
@@ -31,6 +33,9 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import java.security.SecureRandom;
 import java.util.Date;
 import java.util.Iterator;
@@ -732,6 +737,10 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         return false;
     }
 
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
     /**
      * 验证用户是否为新老用户
      *
@@ -742,10 +751,18 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
     private boolean verifyMemberType(MarketingDimentsion marketingDimentsion, Users user) {
         if (marketingDimentsion.getMemberType() == 0) {
             return true;
-        } else if (marketingDimentsion.getMemberType() == 1) {  // 新用户
-            return userCacheService.isNew(user);
-        } else { // 老用户
-            return !userCacheService.isNew(user);
+        }
+        String sqlStr = "SELECT t.* FROM gfb_borrow_tender  t  INNER JOIN gfb_borrow b ON b.id=t.borrow_id WHERE t.status=:status AND  t.user_id=:userId AND (b.type=:type1 or b.type=:type2)";
+        Query query = entityManager.createNativeQuery(sqlStr,Tender.class);
+        query.setParameter("status", TenderConstans.SUCCESS);
+        query.setParameter("userId",user.getId());
+        query.setParameter("type1", BorrowContants.CE_DAI);
+        query.setParameter("type2", BorrowContants.INDEX_TYPE_QU_DAO);
+        List<Tender> tenders = query.getResultList();
+        if (tenders.size() < 2) {  //新用户
+            return true;
+        } else {         //老用户
+            return false;
         }
     }
 
@@ -874,9 +891,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                             marketingIdList);
                 }
             });*/
-
-
-    public List<Marketing> getMarketing(String key)throws Exception{
+    public List<Marketing> getMarketing(String key) throws Exception {
 
         PredicateBuilder<MarketingCondition> builder = Specifications.
                 <MarketingCondition>and()
@@ -919,8 +934,6 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
     }
 
 
-
-
     //  Map<String,Integer> marketingMap= ImmutableMap.of("OPEN_ACCOUNT",1,"TENDER",2);
 
 
@@ -943,7 +956,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
     private MarketingData parseMarketingData(String marketingDataStr) throws Exception {
         MarketingData marketingData = null;
         try {
-            marketingData = gson.fromJson(marketingDataStr,  MarketingData.class);  // 解析营销阐述
+            marketingData = gson.fromJson(marketingDataStr, MarketingData.class);  // 解析营销阐述
         } catch (Exception e) {
             log.error("MarketingProcessBizImpl,parseMarketingData convert exception", e);
             throw new Exception(e);

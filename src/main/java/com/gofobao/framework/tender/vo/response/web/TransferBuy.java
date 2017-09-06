@@ -21,4 +21,5 @@ public class TransferBuy {
     @ApiModelProperty("购买时间")
     private String createAt;
 
+    private Long borrowId;
 }
