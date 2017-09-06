@@ -21,6 +21,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.Collections;
 import java.util.Date;
@@ -83,7 +84,7 @@ public class CashDetailLogServiceImpl implements CashDetailLogService {
     public List<VoCashLog> pcLogs(VoPcCashLogs voPcCashLogs) {
         Specification specification = Specifications.<CashDetailLog>and()
                 .eq("userId", voPcCashLogs.getUserId())
-                .eq("state", voPcCashLogs.getStatus())
+                .eq(!StringUtils.isEmpty(voPcCashLogs.getStatus()),"state", voPcCashLogs.getStatus())
                 .build();
         Page<CashDetailLog> cashDetailLogPage = cashDetailLogRepository.findAll(specification,
                 new PageRequest(voPcCashLogs.getPageIndex(),
