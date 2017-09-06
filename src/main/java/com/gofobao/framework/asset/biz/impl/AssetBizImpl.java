@@ -730,16 +730,20 @@ public class AssetBizImpl implements AssetBiz {
      */
     @Override
     public void pcToExcel(VoAssetLogReq voAssetLogReq, HttpServletResponse response) {
-        List<AssetLog> assetLogs = assetLogService.pcToExcel(voAssetLogReq);
+
+        Users user=userService.findById(voAssetLogReq.getUserId());
+        voAssetLogReq.setStartTime(DateHelper.dateToString(user.getCreatedAt()));
+        voAssetLogReq.setEndTime(DateHelper.dateToString(new Date()));
+        List<NewAssetLog> assetLogs = assetLogService.pcToExcel(voAssetLogReq);
 
         List<AssetLogs> assetLogsList = new ArrayList<>(assetLogs.size());
         if (!CollectionUtils.isEmpty(assetLogs)) {
             assetLogs.stream().forEach(p -> {
                 AssetLogs assetLog = new AssetLogs();
-                assetLog.setOperationMoney(StringHelper.formatMon(p.getMoney() / 100D));
+                assetLog.setOperationMoney(StringHelper.formatMon(p.getOpMoney() / 100D));
                 assetLog.setRemark(p.getRemark());
-                assetLog.setTime(DateHelper.dateToString(p.getCreatedAt()));
-                assetLog.setTypeName(getAssetTypeStr(p.getType()));
+                assetLog.setTime(DateHelper.dateToString(p.getCreateTime()));
+                assetLog.setTypeName(p.getOpName());
                 assetLog.setUsableMoney(StringHelper.formatMon(p.getUseMoney() / 100D));
                 assetLogsList.add(assetLog);
             });
