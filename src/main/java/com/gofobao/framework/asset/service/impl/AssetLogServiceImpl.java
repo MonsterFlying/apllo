@@ -2,8 +2,10 @@ package com.gofobao.framework.asset.service.impl;
 
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.asset.entity.AssetLog;
+import com.gofobao.framework.asset.entity.NewAssetLog;
 import com.gofobao.framework.asset.repository.AssetLogRepository;
 import com.gofobao.framework.asset.service.AssetLogService;
+import com.gofobao.framework.asset.service.NewAssetLogService;
 import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.response.VoViewAssetLogRes;
 import com.gofobao.framework.asset.vo.response.pc.AssetLogs;
@@ -118,30 +120,31 @@ public class AssetLogServiceImpl implements AssetLogService {
         return resultMaps;
     }
 
+    @Autowired
+    private NewAssetLogService newAssetLogService;
+
+
     /**
      * pc：资金流水导出到excel
      * @param voAssetLogReq
      * @return
      */
     @Override
-    public List<AssetLog> pcToExcel(VoAssetLogReq voAssetLogReq) {
+    public List<NewAssetLog> pcToExcel(VoAssetLogReq voAssetLogReq) {
 
         Sort sort = new Sort(
-                new Sort.Order(Sort.Direction.DESC, "createdAt"));
+                new Sort.Order(Sort.Direction.DESC, "createTime"));
 
         Date startTime = DateHelper.beginOfDate(DateHelper.stringToDate(voAssetLogReq.getStartTime(), DateHelper.DATE_FORMAT_YMD));
         Date endTime = DateHelper.endOfDate(DateHelper.stringToDate(voAssetLogReq.getEndTime(), DateHelper.DATE_FORMAT_YMD));
-
-        Specification<AssetLog> specification = Specifications.<AssetLog>and()
-                .eq(!StringUtils.isEmpty(voAssetLogReq.getType()), "type", voAssetLogReq.getType())
-                .between("createdAt",
+        Specification<NewAssetLog> specification = Specifications.<NewAssetLog>and()
+                .between("createTime",
                         new Range<>(
                                 DateHelper.beginOfDate(startTime),
                                 DateHelper.endOfDate(endTime)))
                 .eq("userId", voAssetLogReq.getUserId())
                 .build();
-
-        return assetLogRepository.findAll(specification, sort);
+        return newAssetLogService.findAll(specification,sort);
     }
 
     @Override

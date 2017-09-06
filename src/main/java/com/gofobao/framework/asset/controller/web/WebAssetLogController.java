@@ -44,6 +44,8 @@ public class WebAssetLogController {
     @RequestMapping(value = "assetLog/pc/v2/toExcel", method = RequestMethod.GET)
     public void pcAssetLogToExcel(HttpServletResponse response, @ModelAttribute VoAssetLogReq voAssetLogReq,
                                             @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+
+
         voAssetLogReq.setUserId(userId);
         assetBiz.pcToExcel(voAssetLogReq,response);
     }

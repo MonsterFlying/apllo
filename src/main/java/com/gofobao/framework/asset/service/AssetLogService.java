@@ -1,6 +1,7 @@
 package com.gofobao.framework.asset.service;
 
 import com.gofobao.framework.asset.entity.AssetLog;
+import com.gofobao.framework.asset.entity.NewAssetLog;
 import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.response.VoViewAssetLogRes;
 import com.gofobao.framework.asset.vo.response.pc.AssetLogs;
@@ -37,5 +38,5 @@ public interface AssetLogService {
      * @param voAssetLogReq
      * @return
      */
-    List<AssetLog> pcToExcel(VoAssetLogReq voAssetLogReq);
+    List<NewAssetLog> pcToExcel(VoAssetLogReq voAssetLogReq);
 }
