@@ -112,11 +112,8 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
 
     @Override
     public List<InviteFriends> toExcel(VoFriendsTenderReq friendsTenderReq) {
-        Date beginAt = DateHelper.beginOfDate(DateHelper.stringToDate(friendsTenderReq.getBeginAt(),DateHelper.DATE_FORMAT_YMD));
-        Date endAt = DateHelper.endOfDate(DateHelper.stringToDate(friendsTenderReq.getEndAt(),DateHelper.DATE_FORMAT_YMD));
         Specification specification = Specifications.<BrokerBouns>and()
                 .eq("userId", friendsTenderReq.getUserId())
-                .between("createdAt", new Range<>(beginAt, endAt))
                 .build();
         List<BrokerBouns> bounsList=brokerBounsRepository.findAll(specification);
         List<InviteFriends> brokerBouns= new ArrayList<>(bounsList.size());
@@ -186,7 +183,7 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
      */
     @Override
     public List<FriendsTenderInfo> inviteUserFirstTender(VoFriendsReq voFriendsReq) {
-        Page<Users> usersPage = usersRepository.findByParentId(voFriendsReq.getUserId().intValue(),
+        Page<Users> usersPage = usersRepository.findByParentId(voFriendsReq.getUserId(),
                 new PageRequest(
                         voFriendsReq.getPageIndex(),
                         voFriendsReq.getPageSize(), new Sort(Sort.Direction.DESC, "createdAt")));

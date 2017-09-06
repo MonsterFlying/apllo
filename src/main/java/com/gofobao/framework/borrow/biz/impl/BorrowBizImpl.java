@@ -59,6 +59,7 @@ import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.biz.TransferBiz;
+import com.gofobao.framework.tender.contants.TransferContants;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.entity.Transfer;
@@ -71,6 +72,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
@@ -472,7 +474,7 @@ public class BorrowBizImpl implements BorrowBiz {
         Specification<Transfer> ts = Specifications
                 .<Transfer>and()
                 .eq("userId", userId)
-                .in("status", 0, 1)
+                .in("state", Lists.newArrayList(TransferContants.CHECKPENDING,TransferContants.TRANSFERIND).toArray())
                 .build();
         long tranferingNum = transferService.count(ts);
         if (tranferingNum > 0) {
