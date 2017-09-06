@@ -111,6 +111,14 @@ public class InitDBBizImpl implements InitDBBiz {
         //红包账户
         long redId = assetChangeProvider.getRedpackAccountId();
         UserThirdAccount redpackThirdAccount = userThirdAccountService.findByUserId(redId); //查询红包账户
+
+        Specification<NewAssetLog> nals = Specifications
+                .<NewAssetLog>and()
+                .eq("localType", AssetChangeTypeEnum.initAsset.getLocalType())
+                .eq("del", 0)
+                .build();
+        List<NewAssetLog> newAssetLogList = newAssetLogService.findAll(nals);
+        Set<Long> yesSendUserIds = newAssetLogList.stream().map(NewAssetLog::getUserId).collect(Collectors.toSet());
         //1.查询有金额账户
         Specification<Asset> assetSpecification = Specifications
                 .<Asset>and()
@@ -122,6 +130,7 @@ public class InitDBBizImpl implements InitDBBiz {
         Specification<UserThirdAccount> usas = Specifications
                 .<UserThirdAccount>and()
                 .eq("del", 0)
+                .notIn("userId",yesSendUserIds.toArray())
                 .in("userId", tempUserIds.toArray())
                 .notIn("accountId", String.valueOf("6212462190000000013"))
                 .build();
@@ -150,10 +159,11 @@ public class InitDBBizImpl implements InitDBBiz {
                     log.error(String.format("资金同步: %s,userId:%s", msg, userThirdAccount.getUserId()));
                 }
                 //存管账户总金额
-                Specification<NewAssetLog> nals = Specifications
+                nals = Specifications
                         .<NewAssetLog>and()
                         .eq("userId", userThirdAccount.getUserId())
                         .eq("localType", AssetChangeTypeEnum.initAsset.getLocalType())
+                        .eq("del", 0)
                         .build();
                 long count = newAssetLogService.count(nals);
                 Asset asset = assetMaps.get(userThirdAccount.getUserId());
