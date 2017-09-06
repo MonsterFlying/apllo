@@ -227,6 +227,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void downFundFile(HttpServletResponse httpServletResponse, String date) throws Exception {
         Date nowDate = DateHelper.stringToDate(date, DateHelper.DATE_FORMAT_YMD_NUM);
         Date startDate = DateHelper.beginOfDate(nowDate);
