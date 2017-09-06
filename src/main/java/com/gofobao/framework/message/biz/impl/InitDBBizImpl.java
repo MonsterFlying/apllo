@@ -111,6 +111,15 @@ public class InitDBBizImpl implements InitDBBiz {
         //红包账户
         long redId = assetChangeProvider.getRedpackAccountId();
         UserThirdAccount redpackThirdAccount = userThirdAccountService.findByUserId(redId); //查询红包账户
+
+        Specification<NewAssetLog> nals = Specifications
+                .<NewAssetLog>and()
+                .eq("localType", AssetChangeTypeEnum.initAsset.getLocalType())
+                .eq("del", 0)
+                .build();
+        List<NewAssetLog> newAssetLogList = newAssetLogService.findAll(nals);
+        log.info("已存在初始化记录:"+newAssetLogList.size());
+        Set<Long> yesSendUserIds = newAssetLogList.stream().map(NewAssetLog::getUserId).collect(Collectors.toSet());
         //1.查询有金额账户
         Specification<Asset> assetSpecification = Specifications
                 .<Asset>and()
@@ -118,10 +127,12 @@ public class InitDBBizImpl implements InitDBBiz {
                 .build();
         List<Asset> tempAssetList = assetService.findList(assetSpecification);
         Set<Long> tempUserIds = tempAssetList.stream().map(Asset::getUserId).collect(Collectors.toSet());
+        log.info("已存在资产记录:"+tempAssetList.size());
         //1.查询已开户用户
         Specification<UserThirdAccount> usas = Specifications
                 .<UserThirdAccount>and()
                 .eq("del", 0)
+                .notIn("userId",yesSendUserIds.toArray())
                 .in("userId", tempUserIds.toArray())
                 .notIn("accountId", String.valueOf("6212462190000000013"))
                 .build();
@@ -130,6 +141,7 @@ public class InitDBBizImpl implements InitDBBiz {
         List<UserThirdAccount> userThirdAccountList = new ArrayList<>();
         do {
             userThirdAccountList = userThirdAccountService.findList(usas, new PageRequest(index, pageSize));
+            log.info("第三方账户记录："+userThirdAccountList.size());
             Set<Long> userIds = userThirdAccountList.stream().map(UserThirdAccount::getUserId).collect(Collectors.toSet());
             //2.查询资产记录
             Specification<Asset> as = Specifications
@@ -150,10 +162,11 @@ public class InitDBBizImpl implements InitDBBiz {
                     log.error(String.format("资金同步: %s,userId:%s", msg, userThirdAccount.getUserId()));
                 }
                 //存管账户总金额
-                Specification<NewAssetLog> nals = Specifications
+                nals = Specifications
                         .<NewAssetLog>and()
                         .eq("userId", userThirdAccount.getUserId())
                         .eq("localType", AssetChangeTypeEnum.initAsset.getLocalType())
+                        .eq("del", 0)
                         .build();
                 long count = newAssetLogService.count(nals);
                 Asset asset = assetMaps.get(userThirdAccount.getUserId());
