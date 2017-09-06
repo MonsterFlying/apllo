@@ -264,6 +264,7 @@ public class InvestServiceImpl implements InvestService {
                 .eq("userId", voInvestListReq.getUserId())
                 .eq("state", voInvestListReq.getType())
                 .eq("status", TenderConstans.SUCCESS)
+                .eq("transferFlag",TenderConstans.TRANSFER_NO)
                 .build();
         Page<Tender> tenders = investRepository.findAll(specification,
                 new PageRequest(voInvestListReq.getPageIndex(),
