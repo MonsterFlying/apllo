@@ -1,8 +1,19 @@
 package com.gofobao.framework.migrate;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.api.contants.ChannelContant;
+import com.gofobao.framework.api.contants.DesLineFlagContant;
+import com.gofobao.framework.api.contants.JixinResultContants;
+import com.gofobao.framework.api.helper.JixinManager;
+import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
+import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.entity.NewAssetLog;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -58,6 +69,8 @@ public class MigrateMemberBiz {
 
     @Autowired
     UserCacheService userCacheService;
+    @Autowired
+    private JixinManager jixinManager;
 
     /**
      * 写入存管用户存管
@@ -419,7 +432,6 @@ public class MigrateMemberBiz {
         }
         log.info("用户迁移文件成功");
     }
-
 
     /**
      * 把15位身份证号转换成18位身份证号码
