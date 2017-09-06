@@ -21,6 +21,8 @@ import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
+import com.gofobao.framework.common.data.DataObject;
+import com.gofobao.framework.common.data.GtSpecification;
 import com.gofobao.framework.helper.BeanHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
@@ -109,10 +111,18 @@ public class InitDBBizImpl implements InitDBBiz {
         //红包账户
         long redId = assetChangeProvider.getRedpackAccountId();
         UserThirdAccount redpackThirdAccount = userThirdAccountService.findByUserId(redId); //查询红包账户
+        //1.查询有金额账户
+        Specification<Asset> assetSpecification = Specifications
+                .<Asset>and()
+                .predicate(new GtSpecification("useMoney", new DataObject(0)))
+                .build();
+        List<Asset> tempAssetList = assetService.findList(assetSpecification);
+        Set<Long> tempUserIds = tempAssetList.stream().map(Asset::getUserId).collect(Collectors.toSet());
         //1.查询已开户用户
         Specification<UserThirdAccount> usas = Specifications
                 .<UserThirdAccount>and()
                 .eq("del", 0)
+                .in("userId", tempUserIds)
                 .notIn("accountId", String.valueOf("6212462190000000013"))
                 .build();
         int index = 0;
