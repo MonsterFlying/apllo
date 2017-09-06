@@ -52,13 +52,13 @@ public class SysVserionBizImpl implements SysVersionBiz {
             if (flag) {  // 需要
                 voSysVersion.setIsEquls(VersionContants.EQULSNO);
                 voSysVersion.setIsNew(true);
-                voSysVersion.setViewVersion(sysVersion.getViewVersion());
+                voSysVersion.setVeiwVersion(sysVersion.getViewVersion());
                 voSysVersion.setDetails(sysVersion.getDetails());
                 voSysVersion.setForce(sysVersion.getForce());
                 voSysVersion.setUrl(sysVersion.getRul());
             } else {   // 不需要
                 voSysVersion.setIsEquls(VersionContants.EQULSOK);
-                voSysVersion.setViewVersion(sysVersion.getViewVersion());
+                voSysVersion.setVeiwVersion(sysVersion.getViewVersion());
                 voSysVersion.setDetails(sysVersion.getDetails());
                 voSysVersion.setForce(sysVersion.getForce());
                 voSysVersion.setIsNew(false);
