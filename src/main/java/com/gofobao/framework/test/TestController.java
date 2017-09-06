@@ -9,8 +9,12 @@ import com.gofobao.framework.api.model.account_details_query.AccountDetailsQuery
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
+import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResponse;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.borrow.biz.BorrowBiz;
+import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
+import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
@@ -75,6 +79,8 @@ public class TestController {
     private AssetService assetService;
     @Autowired
     private JixinManager jixinManager;
+    @Autowired
+    private BorrowThirdBiz borrowThirdBiz;
 
     @RequestMapping("/test/pub/batch/deal/{sourceId}/{batchNo}")
     public void batchDeal(@PathVariable("sourceId") String sourceId, @PathVariable("batchNo") String batchNo, @PathVariable("langlang") String langlang) {
@@ -204,6 +210,19 @@ public class TestController {
             request.setPageNum(String.valueOf(1));
             AccountDetailsQueryResponse response = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY, request, AccountDetailsQueryResponse.class);
             System.out.println(response);
+        }
+    }
+
+    @RequestMapping("/test/pub/findBorrow/{borrowId}/{userId}/{langlang}")
+    public void findThirdBorrowList(@PathVariable("borrowId") String borrowId,@PathVariable("userId") String userId, @PathVariable("langlang") String langlang) {
+        if (langlang.equals("langlang")) {
+            VoQueryThirdBorrowList voQueryThirdBorrowList = new VoQueryThirdBorrowList();
+            voQueryThirdBorrowList.setProductId(borrowId);
+            voQueryThirdBorrowList.setUserId(NumberHelper.toLong(userId));
+            voQueryThirdBorrowList.setPageNum("1");
+            voQueryThirdBorrowList.setPageSize("10");
+            DebtDetailsQueryResponse resp = borrowThirdBiz.queryThirdBorrowList(voQueryThirdBorrowList);
+            System.out.println(resp);
         }
     }
 
