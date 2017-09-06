@@ -107,7 +107,7 @@ public class StatisticBizImpl implements StatisticBiz {
                     } else if (titel.contains("万")) {
                         titel = titel.substring(0, titel.indexOf("万") + 1);
                     }
-                    newIndexStatisics.setRegsiterCount(formatNumber(register));
+                    newIndexStatisics.setRegsiterCount(formatNumber(register)+"人");
                     newIndexStatisics.setTotalTransaction(String.format("%s元", titel)); // 交易总额
                     return newIndexStatisics;
                 }
