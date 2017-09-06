@@ -16,8 +16,8 @@ public class SecurityAdapter extends WebMvcConfigurerAdapter {
                 .excludePathPatterns("/swagger-resources/**", "/v2/**")
                 .excludePathPatterns("/*.html", "/favicon.ico", "/**/*.html", "/**/*.css", "/**/*.js", "/**/*.png", "/**/*.jpg")
                 .excludePathPatterns("/index/**")
-                .excludePathPatterns("/version/**")
-                .excludePathPatterns("/test/**");
+                .excludePathPatterns("/version/**") ;
+
         super.addInterceptors(registry);
     }
 }

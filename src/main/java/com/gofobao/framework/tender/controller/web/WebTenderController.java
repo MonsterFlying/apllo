@@ -32,7 +32,7 @@ public class WebTenderController {
 
 
     @ApiOperation("pc:投标用户列表")
-    @GetMapping("pub/tender/pc/v2/user/list/{pageIndex}/{pageSize}/{borrowId}")
+    @GetMapping("/pub/tender/pc/v2/user/list/{pageIndex}/{pageSize}/{borrowId}")
     public ResponseEntity<VoBorrowTenderUserWarpListRes> pcFindBorrowTenderUser(@PathVariable Integer pageIndex,
                                                                                 @PathVariable Integer pageSize,
                                                                                 @PathVariable Long borrowId){

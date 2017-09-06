@@ -22,7 +22,7 @@ public class FinancialController {
     @Autowired
     FundStatisticsBiz fundStatisticsBiz;
 
-    @GetMapping("pub/scheduler/{password}/{id}")
+    @GetMapping("/pub/scheduler/{password}/{id}")
     public ResponseEntity<VoBaseResp> scheduler(
             @PathVariable(value = "password") String password,
             @PathVariable(value = "id") long id) {
@@ -39,7 +39,7 @@ public class FinancialController {
     }
 
 
-    @GetMapping("pub/financial/{password}/{date}")
+    @GetMapping("/pub/financial/{password}/{date}")
     public void financial(
             HttpServletResponse httpServletResponse,
             @PathVariable String password,

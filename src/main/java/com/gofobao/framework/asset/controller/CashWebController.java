@@ -21,7 +21,7 @@ public class CashWebController {
 
 
 
-    @GetMapping("pub/cash/show/{seqNo}")
+    @GetMapping("/pub/cash/show/{seqNo}")
     public String showCash(@PathVariable("seqNo") String  seqNo, Model model){
         return cashDetailLogBiz.showCash(seqNo, model) ;
     }

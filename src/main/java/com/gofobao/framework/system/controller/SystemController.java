@@ -32,7 +32,7 @@ public class SystemController {
     @Autowired
     MigrateProtocolBiz migrateProtocolBiz;
 /*
-    @GetMapping("pub/initDB/{password}/{startIndex}")
+    @GetMapping("/pub/initDB/{password}/{startIndex}")
     public void initDB(@PathVariable() String password,
                        @PathVariable() long startIndex) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
@@ -43,7 +43,7 @@ public class SystemController {
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 
-    @GetMapping("pub/initTransfer/{password}")
+    @GetMapping("/pub/initTransfer/{password}")
     public void initTransfer(@PathVariable(value = "password") String password) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
             return;
@@ -53,7 +53,7 @@ public class SystemController {
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 */
-    @GetMapping("pub/initUseAsset222/{password}")
+    @GetMapping("/pub/initUseAsset222/{password}")
     public void initUseAsset(@PathVariable(value = "password") String password) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
             return;
@@ -72,7 +72,7 @@ public class SystemController {
      *
      * @param password
      *//*
-    @GetMapping("pub/migrateMember/{password}")
+    @GetMapping("/pub/migrateMember/{password}")
     public void migrateMember(@PathVariable(value = "password") String password) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
             return;
@@ -89,7 +89,7 @@ public class SystemController {
      * @param password
      * @param filename
      *//*
-    @GetMapping("pub/postMigrateMember/{password}/{filename}")
+    @GetMapping("/pub/postMigrateMember/{password}/{filename}")
     public void postMigrateMember(@PathVariable(value = "password") String password,
                                   @PathVariable(value = "filename") String filename) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
@@ -112,7 +112,7 @@ public class SystemController {
      *
      * @param password
      *//*
-    @GetMapping("pub/migrateBorrow/{password}")
+    @GetMapping("/pub/migrateBorrow/{password}")
     public void migrateBorrow(@PathVariable(value = "password") String password) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
             return;
@@ -124,7 +124,7 @@ public class SystemController {
     }
 
 
-    @GetMapping("pub/postMigrateBorrow/{password}/{filename}")
+    @GetMapping("/pub/postMigrateBorrow/{password}/{filename}")
     public void postMigrateBorrow(@PathVariable(value = "password") String password,
                                   @PathVariable(value = "filename") String filename) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
@@ -137,7 +137,7 @@ public class SystemController {
     }*/
 
 
-/*    @GetMapping("pub/migrateTender/{password}")
+/*    @GetMapping("/pub/migrateTender/{password}")
     public void migrateTender(@PathVariable(value = "password") String password) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
             return;
@@ -154,7 +154,7 @@ public class SystemController {
     }*/
 
 
-    @GetMapping("pub/postMigrateTender/{password}/{filename}")
+    @GetMapping("/pub/postMigrateTender/{password}/{filename}")
     public void postMigrateTender(@PathVariable(value = "password") String password,
                                   @PathVariable(value = "filename") String filename) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
@@ -172,7 +172,7 @@ public class SystemController {
     }
 
   /*
-    @GetMapping("pub/migrateProtocol/{password}")
+    @GetMapping("/pub/migrateProtocol/{password}")
     public void migrateProtocol(@PathVariable(value = "password") String password) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
             return;
@@ -184,7 +184,7 @@ public class SystemController {
     }
 
 
-    @GetMapping("pub/postMigrateProtocol/{password}/{filename}")
+    @GetMapping("/pub/postMigrateProtocol/{password}/{filename}")
     public void postMigrateProtocol(@PathVariable(value = "password") String password,
                                     @PathVariable(value = "filename") String filename) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {

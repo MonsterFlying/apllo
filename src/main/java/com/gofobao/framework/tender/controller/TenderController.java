@@ -31,7 +31,7 @@ public class TenderController {
 
 
     @ApiOperation("标的详情-投标记录")
-    @GetMapping("pub/tender/v2/user/list/{pageIndex}/{pageSize}/{borrowId}")
+    @GetMapping("/pub/tender/v2/user/list/{pageIndex}/{pageSize}/{borrowId}")
     public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(@PathVariable Integer pageIndex,
                                                                               @PathVariable Integer pageSize,
                                                                               @PathVariable Long borrowId) {

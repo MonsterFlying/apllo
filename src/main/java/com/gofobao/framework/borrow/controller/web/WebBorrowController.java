@@ -63,7 +63,7 @@ public class WebBorrowController {
 
 
     @ApiOperation(value = "pc:首页标列表; type:-1：全部 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
-    @GetMapping("pub/borrow/pc/v2/list/{type}/{pageIndex}/{pageSize}")
+    @GetMapping("/pub/borrow/pc/v2/list/{type}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoPcBorrowList> pcList(@PathVariable Integer pageIndex,
                                                  @PathVariable Integer pageSize,
                                                  @PathVariable Integer type) {
@@ -75,26 +75,26 @@ public class WebBorrowController {
     }
 
     @ApiOperation("流转标信息")
-    @GetMapping("pub/transfer/pc/v2/info/{transferId}")
+    @GetMapping("/pub/transfer/pc/v2/info/{transferId}")
     public ResponseEntity<BorrowInfoRes> pcgetByTransferId(@PathVariable Long transferId) {
         return transferBiz.transferInfo(transferId);
     }
 
     @ApiOperation("普通标信息")
-    @GetMapping("pub/borrow/pc/v2/info/{borrowId}")
+    @GetMapping("/pub/borrow/pc/v2/info/{borrowId}")
     public ResponseEntity<BorrowInfoRes> pcgetByBorrowId(@PathVariable Long borrowId) {
         return borrowBiz.info(borrowId);
     }
 
     @ApiOperation("pc：标简介")
-    @GetMapping("pub/borrow/pc/v2/desc/{borrowId}")
+    @GetMapping("/pub/borrow/pc/v2/desc/{borrowId}")
     public ResponseEntity<VoViewVoBorrowDescWarpRes> pcDesc(@PathVariable Long borrowId) {
         return borrowBiz.desc(borrowId);
     }
 
 
     @ApiOperation(value = "pc:标合同")
-    @GetMapping(value = "pub/borrow/pc/v2/borrowProtocol/{borrowId}")
+    @GetMapping(value = "/pub/borrow/pc/v2/borrowProtocol/{borrowId}")
     public ResponseEntity<String> pcTakeRatesDesc(HttpServletRequest request, @PathVariable Long borrowId) {
         Long userId = 0L;
         String authToken = request.getHeader(this.tokenHeader);
@@ -116,14 +116,14 @@ public class WebBorrowController {
         return ResponseEntity.ok(content);
     }
 
-    @RequestMapping(value = "pub/borrow/pc/v2/repayment/logs/{borrowId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/pub/borrow/pc/v2/repayment/logs/{borrowId}", method = RequestMethod.GET)
     @ApiOperation("还款记录")
     public ResponseEntity<VoViewRepayCollectionLogWarpRes> info(@PathVariable("borrowId") Long borrowId) {
         return repaymentBiz.logs(borrowId);
     }
 
     @ApiOperation(value = "pc：招标中统计")
-    @GetMapping(value = "pub/borrow/pc/v2/statistics")
+    @GetMapping(value = "/pub/borrow/pc/v2/statistics")
     public ResponseEntity<VoViewBorrowStatisticsWarpRes> pcStatistics() {
         return borrowBiz.statistics();
     }

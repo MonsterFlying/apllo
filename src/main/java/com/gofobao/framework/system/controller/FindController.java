@@ -74,7 +74,7 @@ public class FindController {
     }
 
     @ApiOperation("活动列表")
-    @GetMapping("pub/find/event/list")
+    @GetMapping("/pub/find/event/list")
     public ResponseEntity<VoEventWarpRes> eventList(){
       return   marketingBiz.list();
 
@@ -82,7 +82,7 @@ public class FindController {
 
 
     @ApiOperation("活动列表")
-    @GetMapping("pub/find/operateData")
+    @GetMapping("/pub/find/operateData")
     public ResponseEntity<OperateDataStatistics> operateData(){
         return statisticBiz.queryOperateData();
 

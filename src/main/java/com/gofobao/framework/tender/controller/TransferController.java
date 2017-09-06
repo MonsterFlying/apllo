@@ -137,7 +137,7 @@ public class TransferController {
 
 
     @ApiOperation("债券转让说明")
-    @GetMapping("pub/transfer/v2/transfer/desc")
+    @GetMapping("/pub/transfer/v2/transfer/desc")
     public ResponseEntity<String> desc() {
         String content;
         try {
@@ -162,7 +162,7 @@ public class TransferController {
     }
 
     @ApiOperation("购买债权记录")
-    @GetMapping("pub/transfer/v2/transfer/user/list/{pageIndex}/{pageSize}/{transferId}")
+    @GetMapping("/pub/transfer/v2/transfer/user/list/{pageIndex}/{pageSize}/{transferId}")
     public ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(@PathVariable Long transferId,
                                                                           @PathVariable Integer pageIndex,
                                                                           @PathVariable Integer pageSize) {

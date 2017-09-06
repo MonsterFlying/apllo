@@ -50,7 +50,7 @@ public class WebBankAccountController {
     }
 
     @ApiOperation("省市")
-    @GetMapping("pub/area/pc/list")
+    @GetMapping("/pub/area/pc/list")
     public ResponseEntity<VoAreaWarpRes> areaList(@Param("id") Integer id) {
         return areaBiz.list(id);
     }

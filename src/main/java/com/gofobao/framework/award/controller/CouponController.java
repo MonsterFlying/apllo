@@ -56,7 +56,7 @@ public class CouponController {
         return couponBiz.exchange(takeFlowReq);
     }
 
-    @PostMapping("pub/coupon/v2/takeFlowBackCall")
+    @PostMapping("/pub/coupon/v2/takeFlowBackCall")
     public void takeFlowBackCall(HttpServletRequest request, HttpServletResponse response) {
         Map<String, String[]> parameterMap = request.getParameterMap();
         Set<Map.Entry<String, String[]>> entries = parameterMap.entrySet();

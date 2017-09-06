@@ -84,7 +84,7 @@ public class BorrowController {
 
 
     @ApiOperation(value = "标合同")
-    @GetMapping(value = "pub/borrow/pub/borrowProtocol/{borrowId}")
+    @GetMapping(value = "/pub/borrow/pub/borrowProtocol/{borrowId}")
     public ResponseEntity<String> takeRatesDesc(@PathVariable Long borrowId, HttpServletRequest request)throws Exception {
         Long userId = 0L;
         String authToken = request.getHeader(this.tokenHeader);
@@ -141,7 +141,7 @@ public class BorrowController {
      * @param voDoAgainVerifyReq
      * @return
      */
-    @PostMapping("pub/borrow/doAgainVerify")
+    @PostMapping("/pub/borrow/doAgainVerify")
     @ApiOperation("复审")
     public ResponseEntity<VoBaseResp> doAgainVerify(VoDoAgainVerifyReq voDoAgainVerifyReq) {
         return borrowBiz.doAgainVerify(voDoAgainVerifyReq);

@@ -40,7 +40,7 @@ public class FinanceIndexController {
 
 
     @ApiOperation("首页")
-    @GetMapping("pub/finance/index/v2/home")
+    @GetMapping("/pub/finance/index/v2/home")
     public ResponseEntity<VoIndexResp> home() {
         return homeBiz.home() ;
     }

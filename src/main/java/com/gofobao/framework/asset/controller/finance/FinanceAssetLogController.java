@@ -23,7 +23,7 @@ public class FinanceAssetLogController {
     private AssetBiz assetBiz;
 
     @ApiOperation("新版资金流水")
-    @RequestMapping(value = "pub/finance/assetLog/v2/list",method = RequestMethod.POST)
+    @RequestMapping(value = "/pub/finance/assetLog/v2/list",method = RequestMethod.POST)
     public ResponseEntity<VoViewAssetLogWarpRes> newAssetLogResList(@ModelAttribute VoAssetLogReq voAssetLogReq,
                                                                  @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voAssetLogReq.setUserId(userId);

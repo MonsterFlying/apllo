@@ -93,7 +93,7 @@ public class WebIntegralController {
      * @throws Exception
      */
     @ApiOperation(value = "积分折现系数说明")
-    @PostMapping(value = "pub/pc/integral/takeRatesDesc")
+    @PostMapping(value = "/pub/pc/integral/takeRatesDesc")
     public ResponseEntity<String> takeRatesDesc() throws Exception {
         Map<String, Object> paranMap = new HashMap<>() ;
         String content = thymeleafHelper.build("integral/takeRateDesc", paranMap) ;

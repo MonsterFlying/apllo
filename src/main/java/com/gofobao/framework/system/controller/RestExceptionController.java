@@ -24,6 +24,7 @@ import java.util.List;
 public class RestExceptionController {
     @ExceptionHandler(value = {Exception.class})
     public ResponseEntity<VoBaseResp> restExceptionHandler(HttpServletRequest request, Throwable e) throws Exception {
+        log.error("系统内部错误", e);
         VoBaseResp voBaseResp = VoBaseResp.error(VoBaseResp.ERROR, "系统异常, 请稍后重试!");
         return ResponseEntity
                 .badRequest()
@@ -32,6 +33,7 @@ public class RestExceptionController {
 
     @ExceptionHandler(value = {LoginException.class})
     public ResponseEntity<VoBaseResp> restLoginExceptionHandler(HttpServletRequest request, Throwable e) throws Exception {
+        log.error("登陆错误", e);
         VoBaseResp voBaseResp = VoBaseResp.error(VoBaseResp.RELOGIN, e.getMessage());
         return ResponseEntity
                 .badRequest()

@@ -29,7 +29,7 @@ public class CurrencyController {
     private CurrencyBiz currencyBiz;
 
     @ApiOperation("获取用户广富币列表")
-    @GetMapping("pub/currency/list/{pageIndex}/{pageSize}")
+    @GetMapping("/pub/currency/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoListCurrencyResp> list(@PathVariable Integer pageIndex,
                                            @PathVariable Integer pageSize,
                                            @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
