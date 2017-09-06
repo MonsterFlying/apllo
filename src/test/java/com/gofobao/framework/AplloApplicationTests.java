@@ -550,10 +550,11 @@ public class AplloApplicationTests {
     @Autowired
     private DealThirdBatchScheduler dealThirdBatchScheduler;
 
+
+
     @Test
     @Transactional(rollbackOn = Exception.class)
     public void test() {
-
    /*   //推送队列结束债权
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);

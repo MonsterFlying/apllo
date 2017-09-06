@@ -38,7 +38,6 @@ public class SystemController {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
             return;
         }
-
         long curTime = System.currentTimeMillis();
         initDBBiz.initDb(startIndex);
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
@@ -54,7 +53,7 @@ public class SystemController {
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 
-    @GetMapping("pub/initUseAsset/{password}")
+    @GetMapping("pub/initUseAsset222/{password}")
     public void initUseAsset(@PathVariable(value = "password") String password) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
             return;
@@ -145,7 +144,12 @@ public class SystemController {
         }
 
         long curTime = System.currentTimeMillis();
-        migrateTenderBiz.getTenderMigrateFile();
+        try {
+            migrateTenderBiz.getTenderMigrateFile();
+        }catch (Exception e){
+            log.error("投资文件", e);
+        }
+
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 
@@ -158,7 +162,12 @@ public class SystemController {
         }
 
         long curTime = System.currentTimeMillis();
-        migrateTenderBiz.postMigrateTenderFile(filename);
+        try{
+            migrateTenderBiz.postMigrateTenderFile(filename);
+        }catch (Exception e){
+            log.error("操作异常", e);
+        }
+
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 

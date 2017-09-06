@@ -13,6 +13,7 @@ import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
+import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.contants.TransferContants;
 import com.gofobao.framework.tender.entity.Tender;
@@ -43,10 +44,7 @@ import org.springframework.util.StringUtils;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -422,7 +420,9 @@ public class TransferServiceImpl implements TransferService {
         borrowMap.put("cardId",UserHelper.hideChar(users.getCardId(),UserHelper.CARD_ID_NUM));
         Integer apr = transfer.getApr();
         borrowMap.put("apr", StringHelper.formatMon(apr / 100D));
-        borrowMap.put("repayFashion", 0);
+        Borrow borrow=borrowRepository.findOne(tender.getBorrowId());
+        Integer repayFashion=borrow.getRepayFashion();
+        borrowMap.put("repayFashion",repayFashion );
         borrowMap.put("id",transfer.getBorrowId());
         borrowMap.put("money", StringHelper.formatMon(transfer.getTransferMoney() / 100D));
         borrowMap.put("monthAsReimbursement", StringUtils.isEmpty(transfer.getSuccessAt()) ? null : "每月" + DateHelper.dateToString(transfer.getSuccessAt(),DateHelper.DATE_FORMAT_YMD));
@@ -432,13 +432,15 @@ public class TransferServiceImpl implements TransferService {
         Long buyUserId = transferBuyLog.getUserId();
         //借款信息
         Users buyUsers = userService.findById(buyUserId);
+
+
         List<Map<String, Object>> tenderMapList = Lists.newArrayList();
         Map<String, Object> tenderMap = Maps.newHashMap();
         Long buyMoney = transferBuyLog.getBuyMoney();
         tenderMap.put("username", StringUtils.isEmpty(buyUsers.getUsername()) ? buyUsers.getPhone() : buyUsers.getUsername());
         tenderMap.put("validMoney", StringHelper.formatMon(buyMoney / 100D));
         BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(buyMoney), new Double(apr), timeLimit, null);
-        Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(0);
+        Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(repayFashion);
         calculatorMap.put("earnings", StringHelper.formatMon(Double.parseDouble(calculatorMap.get("earnings").toString()) / 100D));
         calculatorMap.put("eachRepay", StringHelper.formatMon(Double.parseDouble(calculatorMap.get("eachRepay").toString()) / 100D));
         calculatorMap.put("repayTotal", StringHelper.formatMon(Double.parseDouble(calculatorMap.get("repayTotal").toString()) / 100D));
@@ -446,9 +448,16 @@ public class TransferServiceImpl implements TransferService {
         tenderMap.put("calculatorMap", calculatorMap);
         tenderMapList.add(tenderMap);
         //返回结果
+        if(repayFashion.intValue()== BorrowContants.REPAY_FASHION_XXHB_NUM){
+            List repayDetailList=(List)calculatorMap.get("repayDetailList");
+            Map<String,String>tempMap=(Map<String, String>) repayDetailList.get(repayDetailList.size()-1);
+            Double tempMoney=Double.valueOf(tempMap.get("repayMoney").toString());
+            borrowMap.put("tempMoney",tempMoney/100);
+        }
         resultMap.put("borrowMap", borrowMap);
         resultMap.put("tenderMapList", tenderMapList);
         resultMap.put("calculatorMap", calculatorMap);
+
         return resultMap;
     }
 }
