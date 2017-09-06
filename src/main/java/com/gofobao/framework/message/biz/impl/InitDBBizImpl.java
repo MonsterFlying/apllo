@@ -118,6 +118,7 @@ public class InitDBBizImpl implements InitDBBiz {
                 .eq("del", 0)
                 .build();
         List<NewAssetLog> newAssetLogList = newAssetLogService.findAll(nals);
+        log.info("已存在初始化记录:"+newAssetLogList.size());
         Set<Long> yesSendUserIds = newAssetLogList.stream().map(NewAssetLog::getUserId).collect(Collectors.toSet());
         //1.查询有金额账户
         Specification<Asset> assetSpecification = Specifications
@@ -126,6 +127,7 @@ public class InitDBBizImpl implements InitDBBiz {
                 .build();
         List<Asset> tempAssetList = assetService.findList(assetSpecification);
         Set<Long> tempUserIds = tempAssetList.stream().map(Asset::getUserId).collect(Collectors.toSet());
+        log.info("已存在资产记录:"+tempAssetList.size());
         //1.查询已开户用户
         Specification<UserThirdAccount> usas = Specifications
                 .<UserThirdAccount>and()
