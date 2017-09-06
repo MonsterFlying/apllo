@@ -54,7 +54,7 @@ public class UserBonusScheduler {
      * 理财师提成
      */
     @Transactional(rollbackFor = Exception.class)
-    //@Scheduled(cron = "0 1 0 * * ? ")
+    @Scheduled(cron = "0 1 0 * * ? ")
     public void brokerProcess() {
         log.info("理财师调度启动");
         try {
@@ -156,7 +156,8 @@ public class UserBonusScheduler {
     /**
      * 天提成
      */
-   // @Scheduled(cron = "0 30 23 * * ? ")
+    @Scheduled(cron = "0 30 23 * * ? ")
+    @Transactional(rollbackFor = Exception.class)
     public void dayProcess() {
         log.info("每日天提成调度启动");
         try {
@@ -192,7 +193,7 @@ public class UserBonusScheduler {
                     if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
                         String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
                         log.error("每日调度:" + msg);
-
+                        continue;
                     }
 
                     // 发放理财师奖励
@@ -231,6 +232,7 @@ public class UserBonusScheduler {
      * 月提成
      */
     @Scheduled(cron = "0 35 23 1 * ? ")
+    @Transactional(rollbackFor = Exception.class)
     public void monthProcess() {
         log.info("每月提成任务调度启动");
         try {
