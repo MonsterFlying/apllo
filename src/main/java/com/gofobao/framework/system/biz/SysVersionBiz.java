@@ -1,7 +1,6 @@
 package com.gofobao.framework.system.biz;
 
-import com.gofobao.framework.core.vo.VoBaseResp;
-import org.springframework.http.ResponseEntity;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Created by admin on 2017/6/21.
@@ -10,5 +9,5 @@ import org.springframework.http.ResponseEntity;
 public interface SysVersionBiz {
 
 
-     ResponseEntity<VoBaseResp> list(Integer terminal,Integer clientId);
+     void list(Integer terminal, Integer clientId, HttpServletResponse response);
 }
