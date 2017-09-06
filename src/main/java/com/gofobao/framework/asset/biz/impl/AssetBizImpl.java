@@ -909,7 +909,7 @@ public class AssetBizImpl implements AssetBiz {
         VoCollectionResp response = VoBaseResp.ok("查询成功", VoCollectionResp.class);
         Long waitCollectionInterest = userCache.getWaitCollectionInterest();
         Long waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
-        Long waitCollectionTotal = asset.getPayment();
+        Long waitCollectionTotal = waitCollectionInterest+waitCollectionPrincipal;
         response.setHideInterest(waitCollectionInterest);
         response.setInterest(StringHelper.formatMon(waitCollectionInterest / 100d));
 
