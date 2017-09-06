@@ -13,6 +13,7 @@ import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.api.model.with_daw.WithDrawRequest;
 import com.gofobao.framework.api.model.with_daw.WithDrawResponse;
+import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.biz.CashDetailLogBiz;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.entity.CashDetailLog;
@@ -114,6 +115,8 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
 
     @Autowired
     AssetChangeProvider assetChangeProvider;
+    @Autowired
+    private AssetBiz assetBiz;
 
     @Autowired
     UserCacheService userCacheService;
@@ -156,6 +159,13 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoPreCashResp> preCash(Long userId, HttpServletRequest httpServletRequest) {
+        //同步资金
+        try {
+            assetBiz.synOffLineRecharge(userId);
+        } catch (Exception e) {
+            log.error("获取可提现额失败",e);
+        }
+
         Users users = userService.findByIdLock(userId);
         Preconditions.checkNotNull(users, "当前用户不存在");
         if (users.getIsLock()) {
@@ -234,6 +244,9 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoHtmlResp> cash(HttpServletRequest httpServletRequest, Long userId, VoCashReq voCashReq) throws Exception {
+        //同步资金
+        assetBiz.synOffLineRecharge(userId);
+        //当前用户
         Users users = userService.findByIdLock(userId);
         Preconditions.checkNotNull(users, "当前用户不存在");
         if (users.getIsLock()) {

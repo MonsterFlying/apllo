@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import javax.transaction.Transactional;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ public class IncrStatisticScheduler {
     private JdbcTemplate jdbcTemplate;
 
     @Scheduled(cron = "0 30 0 * * ? ")
+    @Transactional(rollbackOn = Exception.class)
     public void process() {
         log.info("每日统计任务调度启动!");
         Date startDate = DateHelper.beginOfDate(DateHelper.subDays(new Date(), 1));

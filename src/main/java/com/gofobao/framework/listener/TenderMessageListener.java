@@ -39,13 +39,9 @@ public class TenderMessageListener {
         String tag = body.get(MqConfig.MSG_TAG).toString();
         Map<String, String> msg = (Map<String, String>) body.get(MqConfig.MSG_BODY);
 
-        Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
         if (tag.equals(MqTagEnum.AUTO_TENDER.getValue())) {  // 自动投标
             try {
                 tenderProvider.autoTender(msg);
-                log.info("===========================AutoTenderListener===========================");
-                log.info("自动投标成功! borrowId：" + borrowId);
-                log.info("========================================================================");
             } catch (Throwable throwable) {
                 log.error("自动投标异常:", throwable);
             }

@@ -12,6 +12,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import javax.transaction.Transactional;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +28,7 @@ public class LendScheduler {
     private LendService lendService;
 
     @Scheduled(cron = "0 3 0 * * ? ")
+    @Transactional(rollbackOn = Exception.class)
     public void process() {
         log.info("取消摘草任务调度启动");
         Specification<Lend> ls = Specifications

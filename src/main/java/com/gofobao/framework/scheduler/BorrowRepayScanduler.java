@@ -25,6 +25,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -57,6 +58,7 @@ public class BorrowRepayScanduler {
         borrowRepay();
     }
 
+    @Transactional(rollbackOn = Exception.class)
     private void borrowRepay() {
         log.info("");
         Specification<BorrowRepayment> brs = Specifications
@@ -113,6 +115,7 @@ public class BorrowRepayScanduler {
      * 每天早上9点 调度还款当日所需要还款的的官表
      */
     // @Scheduled(cron = "0 30 9 ? * *" )
+    @Transactional(rollbackOn = Exception.class)
     public void todayRepayment() {
         log.info("自动还款调度启动");
         Date nowDate = new Date();
