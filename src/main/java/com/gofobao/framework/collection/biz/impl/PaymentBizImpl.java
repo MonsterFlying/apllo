@@ -285,6 +285,7 @@ public class PaymentBizImpl implements PaymentBiz {
                     collectionDetail.setEarnings(StringHelper.formatDouble(money, 100, false));
                     collectionDetail.setInterest(StringHelper.formatDouble(borrowCollection.getInterest(), 100, false));
                     collectionDetail.setOrderStr(borrowCollection.getOrder() + 1 + "/" + borrow.getTotalOrder());
+                    collectionDetail.setBorrowId(borrow.getId());
                     collectionDetailList.add(collectionDetail);
                 }
             }

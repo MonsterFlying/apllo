@@ -46,7 +46,7 @@ public class SysVserionBizImpl implements SysVersionBiz {
             voSysVersion.setIsNew(false);
         }
         VoViewSysVersionWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewSysVersionWarpRes.class);
-        warpRes.setVoSysVersion(voSysVersion);
+        warpRes.setBody(voSysVersion);
         return ResponseEntity.ok(warpRes);
     }
 }

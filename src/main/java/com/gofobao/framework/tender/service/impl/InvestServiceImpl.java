@@ -126,6 +126,7 @@ public class InvestServiceImpl implements InvestService {
             voViewBackMoney.setPrincipal(StringHelper.formatMon(principal / 100D));
             voViewBackMoney.setTenderId(p.getId());
             voViewBackMoney.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
+            voViewBackMoney.setBorrowId(borrow.getId());
             backMoneyList.add(voViewBackMoney);
         });
         resultMaps.put("backMoneyList", backMoneyList);
@@ -184,7 +185,7 @@ public class InvestServiceImpl implements InvestService {
             voViewBiddingRes.setMoney(StringHelper.formatMon(validMoney / 100D));
             voViewBiddingRes.setBorrowName(borrow.getName());
             voViewBiddingRes.setTenderId(p.getId());
-
+            voViewBiddingRes.setBorrowId(borrow.getId());
             viewBiddingResList.add(voViewBiddingRes);
         });
         resultMaps.put("biddingResList", viewBiddingResList);
@@ -244,6 +245,7 @@ public class InvestServiceImpl implements InvestService {
             voViewSettleRes.setCollectionMoneyYes(StringHelper.formatMon(collectionMoneyYes / 100D));
             voViewSettleRes.setCloseAt(DateHelper.dateToString(p.getUpdatedAt(),DateHelper.DATE_FORMAT_YMD));
             voViewSettleRes.setTenderId(p.getId());
+            voViewSettleRes.setBorrowId(borrow.getId());
             voViewSettleRes.setRemark("正常结清");
             voViewSettleResList.add(voViewSettleRes);
         });

@@ -8,5 +8,5 @@ import lombok.Data;
  */
 @Data
 public class VoViewSysVersionWarpRes extends VoBaseResp {
-    private VoSysVersion voSysVersion;
+    private VoSysVersion body;
 }

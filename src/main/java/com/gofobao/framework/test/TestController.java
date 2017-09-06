@@ -9,6 +9,8 @@ import com.gofobao.framework.api.model.account_details_query.AccountDetailsQuery
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.borrow.biz.BorrowBiz;
+import com.gofobao.framework.borrow.biz.impl.BorrowBizImpl;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
@@ -20,6 +22,9 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
+import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.repository.TenderRepository;
+import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -27,6 +32,7 @@ import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -185,6 +191,21 @@ public class TestController {
             System.out.println(response);
         }
     }
+
+    @Autowired
+    private BorrowBiz borrowBiz;
+
+    @Autowired
+    private TenderService tenderService;
+
+
+    @GetMapping("test/marketing/tender")
+    public void tests() {
+        Tender tender=tenderService.findById(262148L);
+        borrowBiz.touchMarketingByTender(tender);
+    }
+
+
 
   /*  @RequestMapping(value = "/test/csvDownLoad", method = RequestMethod.GET)
     public void csvDownLoad(HttpServletResponse httpServletResponse) throws Exception {
