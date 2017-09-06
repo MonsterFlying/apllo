@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import javax.transaction.Transactional;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,7 @@ public class TrusteePayQueryScheduler {
     BorrowBiz borrowBiz;
 
     @Scheduled(fixedRate = 10 * 60 * 1000)
+    @Transactional(rollbackOn = Exception.class)
     public void process() {
         log.info("委托支付标调动启动");
         // 查询带调度队列

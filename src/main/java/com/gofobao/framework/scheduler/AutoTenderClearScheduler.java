@@ -13,6 +13,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import javax.transaction.Transactional;
 import java.util.Date;
 import java.util.List;
 
@@ -29,6 +30,7 @@ public class AutoTenderClearScheduler {
     private AutoTenderService autoTenderService;
 
     @Scheduled(cron = "0 4 0 * * ? ")
+    @Transactional(rollbackOn = Exception.class)
     public void process() {
         log.info("自动清除过期自动投标规则启动");
         do {

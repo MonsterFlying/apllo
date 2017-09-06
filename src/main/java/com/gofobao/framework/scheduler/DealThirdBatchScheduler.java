@@ -27,6 +27,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
+import javax.transaction.Transactional;
 import java.util.Date;
 import java.util.List;
 
@@ -47,6 +48,7 @@ public class DealThirdBatchScheduler {
     private ThirdBatchLogService thirdBatchLogService;
 
     @Scheduled(cron = "0 20 8,10,12,14,16,18,20,22 * * ? ")
+    @Transactional(rollbackOn = Exception.class)
     public void process() {
         log.info("处理第三方批次任务调度启动");
         //1.查询未处理 参数校验成功的批次 gfb_third_batch_log

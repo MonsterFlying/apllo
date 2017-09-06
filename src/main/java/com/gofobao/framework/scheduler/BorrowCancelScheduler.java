@@ -18,6 +18,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import javax.transaction.Transactional;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,6 +39,7 @@ public class BorrowCancelScheduler {
      * 每天凌晨1点整取消标的
      */
     @Scheduled(cron = "0 0 1 * * ?")
+    @Transactional(rollbackOn = Exception.class)
     public void process() {
         log.info("取消借款任务调度启动");
         Specification<Borrow> bs = Specifications

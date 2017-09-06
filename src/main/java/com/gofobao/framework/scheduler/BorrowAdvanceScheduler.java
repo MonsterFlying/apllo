@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -34,6 +35,8 @@ public class BorrowAdvanceScheduler {
     private RepaymentBiz repaymentBiz;
 
 /*    @Scheduled(cron = "0 55 23 * * ? ")*/
+
+    @Transactional(rollbackOn = Exception.class)
     public void process() {
         log.info("借款自动垫付任务调度启动！");
         List<BorrowRepayment> borrowRepaymentList = null;
