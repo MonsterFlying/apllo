@@ -669,8 +669,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
                 batchAssetChangeItemService.save(batchAssetChangeItem);
                 //给每期回款分摊违约金
-                repay.setIntAmount(StringHelper.formatDouble((NumberHelper.toDouble(repay.getIntAmount()) + partPenalty), false));
-                repay.setTxFeeOut(StringHelper.formatDouble((NumberHelper.toDouble(repay.getTxFeeOut()) + partPenalty), false));
+                repay.setIntAmount(StringHelper.formatDouble((NumberHelper.toDouble(repay.getIntAmount()) + NumberHelper.toDouble(partPenalty / 100)), false));
+                repay.setTxFeeOut(StringHelper.formatDouble((NumberHelper.toDouble(repay.getTxFeeOut()) + NumberHelper.toDouble(partPenalty / 100)), false));
             }
             //收取借款人违约金
             BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
@@ -1593,6 +1593,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
                                           long lateInterest, double interestPercent, List<RepayAssetChange> repayAssetChanges) throws Exception {
         List<Repay> repayList = new ArrayList<>();
         Map<Long/* 投资记录*/, BorrowCollection/* 对应的还款计划*/> borrowCollectionMap = borrowCollectionList.stream().collect(Collectors.toMap(BorrowCollection::getTenderId, Function.identity()));
+        /* 投标记录集合 */
+        Map<Long, Tender> tenderMaps = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
         /* 投资会员id集合 */
         Set<Long> userIds = tenderList.stream().map(p -> p.getUserId()).collect(Collectors.toSet());
         /* 逾期日期 */
@@ -1608,7 +1610,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .stream()
                 .collect(Collectors.toMap(UserThirdAccount::getUserId, Function.identity()));
         /* 当期回款总利息 */
-        long sumCollectionInterest = borrowCollectionList.stream().mapToLong(BorrowCollection::getInterest).sum();
+        long sumCollectionInterest = borrowCollectionList.stream()
+                .filter(borrowCollection -> tenderMaps.get(borrowCollection.getTenderId()).getTransferFlag() != 2)
+                .mapToLong(BorrowCollection::getInterest).sum();
         for (Tender tender : tenderList) {
             long inIn = 0; // 出借人的利息
             long inPr = 0; // 出借人的本金
@@ -2857,7 +2861,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             borrowCollection.setUpdatedAt(new Date());
             borrowCollection.setStatus(1);
             borrowCollection.setCollectionAtYes(new Date());
-            borrowCollection.setCollectionMoneyYes(borrowCollection.getLateInterest()+borrowCollection.getCollectionMoney());
+            borrowCollection.setCollectionMoneyYes(borrowCollection.getLateInterest() + borrowCollection.getCollectionMoney());
         });
         borrowCollectionService.save(borrowCollectionList);
     }
