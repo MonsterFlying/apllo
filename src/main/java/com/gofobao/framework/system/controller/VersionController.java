@@ -21,9 +21,9 @@ public class VersionController {
     private SysVersionBiz sysVersionBiz;
 
     @ApiOperation("版本检查 params: 版本号 versionId:1 ,请求来源  requestSource: 1:Android,2:ios,3:H5")
-    @PostMapping("pub/v2/version/check")
+    @PostMapping("version/checkVersion")
     public ResponseEntity<VoBaseResp> checkVersion(@RequestHeader("requestSource") Integer terminal,
-                                                   @RequestHeader("versionId") Integer versionId) {
+                                                   @RequestHeader("version") Integer versionId) {
         return sysVersionBiz.list(terminal, versionId);
     }
 
