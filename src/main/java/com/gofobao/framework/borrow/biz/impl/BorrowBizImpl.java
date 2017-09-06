@@ -61,6 +61,7 @@ import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferService;
@@ -458,10 +459,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 .eq("status", BorrowContants.BIDDING)
                 .build();
         List<Borrow> borrows = borrowService.findList(specification);
-        /**
-         * TODO 上线请取消注释
-         */
-        /*if (!CollectionUtils.isEmpty(borrows)) {
+        if (!CollectionUtils.isEmpty(borrows)) {
             for (Borrow borrow : borrows) {
                 if ((borrow.getMoneyYes() / borrow.getMoney()) < 1) {
                     log.info("新增借款：您已经有一个进行中的借款标。");
@@ -482,7 +480,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "您已经有一个进行中的债权转让"));
         }
-        */
+
         Long borrowId = insertBorrow(voAddNetWorthBorrow, userId);  // 插入标
         if (borrowId <= 0) {
             log.info("新增借款：净值标插入失败。");

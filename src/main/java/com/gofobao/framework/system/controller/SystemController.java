@@ -7,8 +7,6 @@ import com.gofobao.framework.migrate.MigrateProtocolBiz;
 import com.gofobao.framework.migrate.MigrateTenderBiz;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,9 +31,7 @@ public class SystemController {
 
     @Autowired
     MigrateProtocolBiz migrateProtocolBiz;
-
-
-
+/*
     @GetMapping("pub/initDB/{password}/{startIndex}")
     public void initDB(@PathVariable() String password,
                        @PathVariable() long startIndex) {
@@ -71,11 +67,11 @@ public class SystemController {
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 
-    /**
+    *//**
      * 获取开户
      *
      * @param password
-     */
+     *//*
     @GetMapping("pub/migrateMember/{password}")
     public void migrateMember(@PathVariable(value = "password") String password) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
@@ -87,12 +83,12 @@ public class SystemController {
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 
-    /**
+    *//**
      * 提交开户数据
      *
      * @param password
      * @param filename
-     */
+     *//*
     @GetMapping("pub/postMigrateMember/{password}/{filename}")
     public void postMigrateMember(@PathVariable(value = "password") String password,
                                   @PathVariable(value = "filename") String filename) {
@@ -111,11 +107,11 @@ public class SystemController {
     }
 
 
-    /**
+    *//**
      * 获取标的迁移文件
      *
      * @param password
-     */
+     *//*
     @GetMapping("pub/migrateBorrow/{password}")
     public void migrateBorrow(@PathVariable(value = "password") String password) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
@@ -138,10 +134,10 @@ public class SystemController {
         long curTime = System.currentTimeMillis();
         migrateBorrowBiz.postMigrateBorrowFile(filename);
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
-    }
+    }*/
 
 
-    @GetMapping("pub/migrateTender/{password}")
+/*    @GetMapping("pub/migrateTender/{password}")
     public void migrateTender(@PathVariable(value = "password") String password) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
             return;
@@ -155,7 +151,7 @@ public class SystemController {
         }
 
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
-    }
+    }*/
 
 
     @GetMapping("pub/postMigrateTender/{password}/{filename}")
@@ -175,7 +171,7 @@ public class SystemController {
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 
-
+  /*
     @GetMapping("pub/migrateProtocol/{password}")
     public void migrateProtocol(@PathVariable(value = "password") String password) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
@@ -198,5 +194,5 @@ public class SystemController {
         long curTime = System.currentTimeMillis();
         migrateProtocolBiz.postProtocolMigrateFile(filename);
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
-    }
+    }*/
 }
