@@ -253,6 +253,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
         XSSFSheet localSheet = xwb.createSheet("本地资金流水");
         createLocalTitle(localSheet);  // 创建本地title标题
         int localIndex = 0;
+        log.info(String.format("资金记录总条数: %s, 总遍历条数: %s", assetAccount, pageIndexTotal));
         for (; pageIndex < pageIndexTotal; pageIndex++) {
             Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "id")));
             Page<NewAssetLog> page = newAssetLogService.findAll(assetLogSpecification, pageable);
@@ -295,6 +296,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
         pageIndexTotal = aleveAount.intValue() / pageSize;
         pageIndexTotal = aleveAount.intValue() % pageSize == 0 ? pageIndexTotal : pageIndexTotal + 1;
         localIndex = 0;
+        log.info(String.format("即信资金流水总条数: %s, 总遍历条数: %s", aleveAount, pageIndexTotal));
         for (; pageIndex < pageIndexTotal; pageIndex++) {
             Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
             Page<Aleve> page = aleveService.findAll(aleveSpecification, pageable);
