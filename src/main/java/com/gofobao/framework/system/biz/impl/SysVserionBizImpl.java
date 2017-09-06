@@ -61,7 +61,7 @@ public class SysVserionBizImpl implements SysVersionBiz {
                 voSysVersion.setForce(sysVersion.getForce());
                 voSysVersion.setIsNew(false);
             }
-            resultMaps.put("code",1);
+            resultMaps.put("code",0);
             resultMaps.put("msg","查询成功");
             resultMaps.put("time", DateHelper.dateToString(new Date()));
             resultMaps.put("body",voSysVersion);
