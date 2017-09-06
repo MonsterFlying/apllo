@@ -141,6 +141,7 @@ public class InitDBBizImpl implements InitDBBiz {
         List<UserThirdAccount> userThirdAccountList = new ArrayList<>();
         do {
             userThirdAccountList = userThirdAccountService.findList(usas, new PageRequest(index, pageSize));
+            log.info("第三方账户记录："+userThirdAccountList.size());
             Set<Long> userIds = userThirdAccountList.stream().map(UserThirdAccount::getUserId).collect(Collectors.toSet());
             //2.查询资产记录
             Specification<Asset> as = Specifications
