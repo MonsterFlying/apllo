@@ -38,6 +38,7 @@ public class VoViewSettleRes {
     @ApiModelProperty("备注")
     private String remark;
 
+    private Long borrowId;
 
 
 }

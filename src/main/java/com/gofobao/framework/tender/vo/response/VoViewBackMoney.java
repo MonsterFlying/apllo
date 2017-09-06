@@ -35,4 +35,7 @@ public class VoViewBackMoney {
     @ApiModelProperty("tenderId")
     private Long tenderId;
 
+    private Long borrowId;
+
+
 }

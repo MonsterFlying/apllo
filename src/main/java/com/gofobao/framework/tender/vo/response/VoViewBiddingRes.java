@@ -35,5 +35,6 @@ public class VoViewBiddingRes {
     @ApiModelProperty("进度")
     private Double spend;
 
+    private Long borrowId;
 
 }

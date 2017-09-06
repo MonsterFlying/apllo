@@ -59,7 +59,7 @@ public class WindmillBorrowServiceImpl implements WindmillBorrowService {
                 new Integer(BorrowContants.PASS),
                 new Integer(BorrowContants.PENDING));
         //過濾掉秒标,净值标
-        List typeArray = Lists.newArrayList(new Integer(BorrowContants.INDEX_TYPE_JING_ZHI),
+        List typeArray = Lists.newArrayList(new Integer(BorrowContants.JING_ZHI),
                 new Integer(BorrowContants.MIAO_BIAO));
         StringBuilder sql = new StringBuilder("SELECT b FROM Borrow  AS b WHERE 1=1 ");
         //条件

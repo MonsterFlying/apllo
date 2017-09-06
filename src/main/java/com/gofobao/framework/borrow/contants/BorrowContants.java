@@ -93,14 +93,6 @@ public class BorrowContants {
 
     public static final String  PERCENT="%";
 
-    /**
-     * 车贷标
-     */
-    public static final int INDEX_TYPE_CE_DAI = 1;
-    /**
-     * 净值标
-     */
-    public static final int INDEX_TYPE_JING_ZHI = 2;
 
     /**
      * 渠道标

@@ -980,7 +980,7 @@ public class BorrowBizImpl implements BorrowBiz {
      *
      * @param tender
      */
-    private void touchMarketingByTender(Tender tender) {
+    public void touchMarketingByTender(Tender tender) {
         MarketingData marketingData = new MarketingData();
         marketingData.setTransTime(DateHelper.dateToString(new Date()));
         marketingData.setUserId(tender.getUserId().toString());

@@ -5,6 +5,7 @@ import com.gofobao.framework.borrow.vo.request.*;
 import com.gofobao.framework.borrow.vo.response.*;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
+import com.gofobao.framework.tender.entity.Tender;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
@@ -14,6 +15,9 @@ import java.util.Map;
  * Created by Zeke on 2017/5/26.
  */
 public interface BorrowBiz {
+
+     void touchMarketingByTender(Tender tender);
+
 
     /**
      * 取消借款
