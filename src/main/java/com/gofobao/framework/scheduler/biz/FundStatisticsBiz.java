@@ -31,6 +31,6 @@ public interface FundStatisticsBiz {
      * @param date
      * @throws Exception
      */
-    void downFundFile(HttpServletResponse httpServletResponse, String date) throws Exception ;
+    void downloadFundFile(HttpServletResponse httpServletResponse, String date) throws Exception ;
 
 }

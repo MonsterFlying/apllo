@@ -42,6 +42,7 @@ import org.springframework.util.ObjectUtils;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -228,7 +229,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void downFundFile(HttpServletResponse httpServletResponse, String date) throws Exception {
+    public void downloadFundFile(HttpServletResponse httpServletResponse, String date) throws Exception {
         Date nowDate = DateHelper.stringToDate(date, DateHelper.DATE_FORMAT_YMD_NUM);
         Date startDate = DateHelper.beginOfDate(nowDate);
         Date endDate = DateHelper.beginOfDate(DateHelper.addDays(startDate, 1));
@@ -267,7 +268,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
                 localIndex++;
                 long userId = newAssetLog.getUserId();
                 UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-                Preconditions.checkNotNull(userThirdAccount, "FundStaticsBizImpl.downFundFile: userThirdAccount is null");
+                Preconditions.checkNotNull(userThirdAccount, "FundStaticsBizImpl.downloadFundFile: userThirdAccount is null");
                 XSSFRow tempRow = localSheet.createRow(localIndex);
                 tempRow.createCell(0).setCellValue(userThirdAccount.getName());
                 tempRow.createCell(1).setCellValue(userThirdAccount.getAccountId());
@@ -309,7 +310,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
                 localIndex++;
                 String accountId = aleve.getCardnbr();
                 UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(accountId);
-                Preconditions.checkNotNull(userThirdAccount, "FundStaticsBizImpl.downFundFile: userThirdAccount is null");
+                Preconditions.checkNotNull(userThirdAccount, "FundStaticsBizImpl.downloadFundFile: userThirdAccount is null");
                 XSSFRow tempRow = jixinSheet.createRow(localIndex);
                 tempRow.createCell(0).setCellValue(userThirdAccount.getName());
                 tempRow.createCell(1).setCellValue(userThirdAccount.getAccountId());
@@ -366,13 +367,16 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
                 }
             }
         }
+        FileOutputStream writer = new FileOutputStream(String.format("%s/%s.xls", filePath ,date));
+        xwb.write(writer) ;
 
-        httpServletResponse.setHeader("Content-Disposition", "attachment;filename=" + new String(date.getBytes("utf-8"), "iso8859-1"));// 设置头信息
+
+     /*   httpServletResponse.setHeader("Content-Disposition", "attachment;filename=" + new String(date.getBytes("utf-8"), "iso8859-1"));// 设置头信息
         httpServletResponse.setContentType("application/ynd.ms-excel;charset=UTF-8");
         OutputStream out = httpServletResponse.getOutputStream();
         xwb.write(out);// 进行输出，下载到本地
         out.flush();
-        out.close();
+        out.close();*/
     }
 
     private void createAssetTitle(XSSFSheet assetSheel) {
