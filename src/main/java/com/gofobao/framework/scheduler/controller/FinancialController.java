@@ -48,7 +48,7 @@ public class FinancialController {
             return;
         }
         try {
-            fundStatisticsBiz.downFundFile(httpServletResponse, date);
+            fundStatisticsBiz.downloadFundFile(httpServletResponse, date);
         } catch (Exception e) {
             log.error("资金流水", e);
             return;
