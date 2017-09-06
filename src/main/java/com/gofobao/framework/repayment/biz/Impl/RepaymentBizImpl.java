@@ -540,13 +540,16 @@ public class RepaymentBizImpl implements RepaymentBiz {
             List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
             Preconditions.checkNotNull(borrowCollectionList, "生成即信还款计划: 获取回款计划列表为空!");
             List<RepayAssetChange> repayAssetChangeList = new ArrayList<>();
+            int lateDays = getLateDays(borrowRepayment);
+            long lateInterest = calculateLateInterest(lateDays,borrowRepayment,borrow);
             // 生成存管投资人还款记录(提前结清)
             List<Repay> tempRepays = calculateRepayPlan(borrow,
                     titularBorrowAccount.getAccountId(),
                     borrowRepayment,
                     tenderList,
                     borrowCollectionList,
-                    voBuildThirdRepayReq.getLateInterest(),
+                    lateDays,
+                    lateInterest,
                     voBuildThirdRepayReq.getInterestPercent(),
                     repayAssetChangeList
             );
@@ -1455,6 +1458,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 borrowRepayment,
                 tenderList,
                 borrowCollectionList,
+                lateDays,
                 lateInterest,
                 interestPercent,
                 repayAssetChanges);
@@ -1590,15 +1594,13 @@ public class RepaymentBizImpl implements RepaymentBiz {
     @Transactional(rollbackFor = Exception.class)
     public List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, BorrowRepayment borrowRepayment, List<Tender> tenderList,
                                           List<BorrowCollection> borrowCollectionList,
-                                          long lateInterest, double interestPercent, List<RepayAssetChange> repayAssetChanges) throws Exception {
+                                          long lateDays, long lateInterest, double interestPercent, List<RepayAssetChange> repayAssetChanges) throws Exception {
         List<Repay> repayList = new ArrayList<>();
         Map<Long/* 投资记录*/, BorrowCollection/* 对应的还款计划*/> borrowCollectionMap = borrowCollectionList.stream().collect(Collectors.toMap(BorrowCollection::getTenderId, Function.identity()));
         /* 投标记录集合 */
         Map<Long, Tender> tenderMaps = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
         /* 投资会员id集合 */
         Set<Long> userIds = tenderList.stream().map(p -> p.getUserId()).collect(Collectors.toSet());
-        /* 逾期日期 */
-        int lateDays = getLateDays(borrowRepayment);
         /* 投资人存管记录列表 */
         Specification<UserThirdAccount> uts = Specifications
                 .<UserThirdAccount>and()
@@ -1812,11 +1814,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
      */
 
     private int calculateLateInterest(int lateDays, BorrowRepayment borrowRepayment, Borrow repaymentBorrow) {
-
-        if (borrowRepayment.getRepayAt().getTime() < DateHelper.stringToDate("2017-09-07 00:00:00").getTime()) {
-            lateDays = lateDays - 4;
-        }
-
         if (0 <= lateDays) {
             return 0;
         }
@@ -1847,6 +1844,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Date nowDateOfBegin = DateHelper.beginOfDate(new Date());
         Date repayDateOfBegin = DateHelper.beginOfDate(borrowRepayment.getRepayAt());
         int lateDays = DateHelper.diffInDays(nowDateOfBegin, repayDateOfBegin, false);
+        if (borrowRepayment.getRepayAt().getTime() < DateHelper.stringToDate("2017-09-07 00:00:00").getTime()) {
+            lateDays = lateDays - 4;
+        }
         lateDays = lateDays < 0 ? 0 : lateDays;
         return lateDays;
     }
