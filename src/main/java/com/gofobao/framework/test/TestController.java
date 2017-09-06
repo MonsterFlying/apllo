@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.transaction.Transactional;
 import java.util.Date;
 import java.util.List;
 
@@ -87,6 +88,7 @@ public class TestController {
     }
 
     @RequestMapping("/test/pub/amendAsset/{langlang}")
+    @Transactional(rollbackOn = Exception.class)
     public void amendAsset(@PathVariable("langlang") String langlang) {
         if (langlang.equals("langlang")) {
             String seqNo = assetChangeProvider.getSeqNo(); // 资产记录流水号
