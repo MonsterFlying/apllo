@@ -22,7 +22,7 @@ public class VersionController {
 
     @ApiOperation("版本检查 params: 版本号 versionId:1 ,请求来源  requestSource: 1:Android,2:ios,3:H5")
     @PostMapping("/version/checkVersion")
-    public void checkVersion(@RequestHeader("requestSource") Integer terminal,
+    public void checkVersion(@RequestHeader("requestResource") Integer terminal,
                              @RequestHeader("version") Integer versionId,
                              HttpServletResponse response) {
          sysVersionBiz.list(terminal, versionId,response);
