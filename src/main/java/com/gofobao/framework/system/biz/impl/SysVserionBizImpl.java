@@ -7,6 +7,7 @@ import com.gofobao.framework.system.entity.SysVersion;
 import com.gofobao.framework.system.service.SysVersionService;
 import com.gofobao.framework.system.vo.response.VoSysVersion;
 import com.google.common.collect.Maps;
+import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -40,7 +41,8 @@ public class SysVserionBizImpl implements SysVersionBiz {
                 resultMaps.put("msg","非法访问");
                 resultMaps.put("time", DateHelper.dateToString(new Date()));
                 result.put("status",resultMaps);
-                printWriter.print(result);
+
+                printWriter.print(new Gson().toJson(result));
             }
             SysVersion sysVersion = sysVersions.get(0);
             boolean flag = sysVersion.getVersionId() > clientId;
@@ -64,13 +66,13 @@ public class SysVserionBizImpl implements SysVersionBiz {
             resultMaps.put("time", DateHelper.dateToString(new Date()));
             resultMaps.put("body",voSysVersion);
             result.put("status",resultMaps);
-            printWriter.print(result);
+            printWriter.print(new Gson().toJson(result));
         }catch (Exception e){
             resultMaps.put("code",1);
             resultMaps.put("msg","系统异常, 请稍后重试");
             resultMaps.put("time", DateHelper.dateToString(new Date()));
             result.put("status",resultMaps);
-            printWriter.print(result);
+            printWriter.print(new Gson().toJson(result));
 
         }
 
