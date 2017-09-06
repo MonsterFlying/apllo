@@ -52,7 +52,7 @@ public class SystemController {
         initDBBiz.transfer();
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
-
+*/
     @GetMapping("pub/initUseAsset222/{password}")
     public void initUseAsset(@PathVariable(value = "password") String password) {
         if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
@@ -67,7 +67,7 @@ public class SystemController {
         log.info("处理时间: " + (System.currentTimeMillis() - curTime));
     }
 
-    *//**
+    /**
      * 获取开户
      *
      * @param password

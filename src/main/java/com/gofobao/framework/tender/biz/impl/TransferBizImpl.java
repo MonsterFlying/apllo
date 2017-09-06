@@ -1258,7 +1258,7 @@ public class TransferBizImpl implements TransferBiz {
         Specification<Transfer> ts = Specifications
                 .<Transfer>and()
                 .eq("userId", tender.getUserId())
-                .in("status", 0, 1)
+                .in("state", 0, 1)
                 .build();
         tranferingNum = transferService.count(ts);
         if (tranferingNum > 0) {

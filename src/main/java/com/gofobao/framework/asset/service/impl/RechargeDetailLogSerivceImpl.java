@@ -113,13 +113,8 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService {
      */
     @Override
     public List<RechargeLogs> toExcel(VoPcRechargeReq rechargeReq) {
-        Date beginAt = DateHelper.beginOfDate(DateHelper.stringToDate(rechargeReq.getBeginAt(), DateHelper.DATE_FORMAT_YMD));
-        Date endAt = DateHelper.endOfDate(DateHelper.stringToDate(rechargeReq.getEndAt(), DateHelper.DATE_FORMAT_YMD));
-
         Specification specification = Specifications.<RechargeDetailLog>and()
                 .eq("userId", rechargeReq.getUserId())
-                .eq("state", rechargeReq.getState())
-                .between("createTime", new Range<>(beginAt, endAt))
                 .build();
         List<RechargeDetailLog> rechargeDetailLogs=rechargeDetailLogRepository.findAll(specification);
         List<RechargeLogs> rechargeLogsList= Lists.newArrayList();

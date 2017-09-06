@@ -2854,9 +2854,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
      */
     private void updateCollectionByAdvance(List<BorrowCollection> borrowCollectionList) {
         borrowCollectionList.stream().forEach(borrowCollection -> {
-            borrowCollection.setCollectionMoney(borrowCollection.getCollectionMoney());
             borrowCollection.setUpdatedAt(new Date());
             borrowCollection.setStatus(1);
+            borrowCollection.setCollectionAtYes(new Date());
+            borrowCollection.setCollectionMoneyYes(borrowCollection.getLateInterest()+borrowCollection.getCollectionMoney());
         });
         borrowCollectionService.save(borrowCollectionList);
     }

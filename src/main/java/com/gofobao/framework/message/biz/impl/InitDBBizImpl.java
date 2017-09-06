@@ -133,7 +133,7 @@ public class InitDBBizImpl implements InitDBBiz {
                 .<UserThirdAccount>and()
                 .eq("del", 0)
                 .notIn("userId",yesSendUserIds.toArray())
-                .in("userId", tempUserIds.toArray())
+                .eq("userId",26622)
                 .notIn("accountId", String.valueOf("6212462190000000013"))
                 .build();
         int index = 0;
