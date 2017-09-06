@@ -157,7 +157,7 @@ public class TestController {
         }
     }
 
-    @RequestMapping("/test/pub/amendAsset/{accountId}")
+    @RequestMapping("/test/pub/amendAsset/{accountId}/{langlang}")
     public void assetDetail(@PathVariable("accountId") String accountId,@PathVariable("langlang") String langlang) {
         if (langlang.equals("langlang")) {
             BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
