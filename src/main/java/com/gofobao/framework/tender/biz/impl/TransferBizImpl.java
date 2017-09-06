@@ -945,7 +945,7 @@ public class TransferBizImpl implements TransferBiz {
         if (true) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "垫付内测中，敬请期待！"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "债权转让内测中，敬请期待！"));
         }
         long tenderId = voTransferTenderReq.getTenderId();/* 转让债权id */
         long userId = voTransferTenderReq.getUserId();/* 转让人id */
