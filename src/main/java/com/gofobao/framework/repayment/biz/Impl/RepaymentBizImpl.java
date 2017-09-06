@@ -669,8 +669,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
                 batchAssetChangeItemService.save(batchAssetChangeItem);
                 //给每期回款分摊违约金
-                repay.setIntAmount(StringHelper.formatDouble((NumberHelper.toDouble(repay.getIntAmount()) + NumberHelper.toDouble(partPenalty / 100)), false));
-                repay.setTxFeeOut(StringHelper.formatDouble((NumberHelper.toDouble(repay.getTxFeeOut()) + NumberHelper.toDouble(partPenalty / 100)), false));
+                repay.setIntAmount(StringHelper.formatDouble((NumberHelper.toDouble(repay.getIntAmount()) + NumberHelper.toDouble(partPenalty / 100.0)), false));
+                repay.setTxFeeOut(StringHelper.formatDouble((NumberHelper.toDouble(repay.getTxFeeOut()) + NumberHelper.toDouble(partPenalty / 100.0)), false));
             }
             //收取借款人违约金
             BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
