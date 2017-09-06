@@ -186,7 +186,7 @@ public class AplloApplicationTests {
 
     @Test
     public void testQueryFeeAccount() {
-        Users users = userService.findById(20L);
+        Users users = userService.findById(45217L);
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(users.getId());
         int pageSize = 20, pageIndex = 1, realSize = 0;
         String accountId = userThirdAccount.getAccountId();  // 存管账户ID
@@ -443,9 +443,10 @@ public class AplloApplicationTests {
         System.out.println(balanceQueryResponse);
     }
 
+    @Test
     public void accountDetailsQuery() {
         AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
-        request.setAccountId("6212462190000059092");
+        request.setAccountId("6212462190000059340");
         request.setStartDate("20161002");
         request.setEndDate("20171003");
         request.setChannel(ChannelContant.HTML);
