@@ -31,6 +31,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.output.FileWriterWithEncoding;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -40,12 +41,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
 import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -202,7 +205,111 @@ public class TestController {
         }
     }
 
-    @RequestMapping("/test/pub/exp/asset")
+  /*  @RequestMapping(value = "/test/csvDownLoad", method = RequestMethod.GET)
+    public void csvDownLoad(HttpServletResponse httpServletResponse) throws Exception {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        String fileName = "test-";
+        fileName += dateFormat.format(new Date());
+        fileName += ".csv";
+
+        httpServletResponse.setContentType("application/octet-stream");
+        httpServletResponse.addHeader("Content-Disposition", "attachment; filename=" + fileName);
+        BufferedInputStream bis = null;
+        BufferedOutputStream out = null;
+        String path = "d:/tmp.csv";
+        File file = new File(path);
+        FileWriterWithEncoding fwwe =new FileWriterWithEncoding(file,"UTF-8");
+        BufferedWriter bw = new BufferedWriter(fwwe);
+
+        int index = 0;
+        int pageNum = 50;
+
+        //1.查询已开户用户
+        Specification<UserThirdAccount> usas = Specifications
+                .<UserThirdAccount>and()
+                .eq("del", 0)
+                .build();
+        List<UserThirdAccount> userThirdAccountList = new ArrayList<>();
+        StringBuffer text = new StringBuffer();
+        bw.write("会员id,用户名,正式数据库可用资金,正式数据库冻结资金,存管系统可用资金,存管系统冻结资金,可用差异,冻结差异");
+        do {
+            userThirdAccountList = userThirdAccountService.findList(usas, new PageRequest(index, pageNum));
+            Set<Long> userIds = userThirdAccountList.stream().map(UserThirdAccount::getUserId).collect(Collectors.toSet());
+            //2.查询资产记录
+            Specification<Asset> as = Specifications
+                    .<Asset>and()
+                    .in("userId", userIds.toArray())
+                    .build();
+            List<Asset> assetList = assetService.findList(as);
+            Map<Long, Asset> assetMaps = assetList.stream().collect(Collectors.toMap(Asset::getUserId, Function.identity()));
+
+            for (UserThirdAccount userThirdAccount : userThirdAccountList) {
+
+                Asset asset = assetMaps.get(userThirdAccount.getUserId());
+
+                //3.查询存管账户是否为空
+                BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
+                balanceQueryRequest.setChannel(ChannelContant.HTML);
+                balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
+                BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
+                if ((ObjectUtils.isEmpty(balanceQueryResponse)) || !balanceQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
+                    String msg = ObjectUtils.isEmpty(balanceQueryResponse) ? "当前网络异常, 请稍后尝试!" : balanceQueryResponse.getRetMsg();
+                    log.error(String.format("资金同步: %s,userId:%s", msg, userThirdAccount.getUserId()));
+                }
+
+                double currBal = NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100;
+                double availBal = NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100;
+                double freezeBal = currBal - availBal;
+                text.append(asset.getUserId() + ",");
+                text.append(userThirdAccount.getName() + ",");
+                text.append(asset.getUseMoney() + ",");
+                text.append(asset.getNoUseMoney() + ",");
+                text.append(availBal + ",");
+                text.append(freezeBal + ",");
+                text.append(asset.getUseMoney() - availBal + ",");
+                text.append(asset.getNoUseMoney() - freezeBal + ",");
+                bw.write(text.toString());
+            }
+
+            index++;
+        } while (userThirdAccountList.size() >= pageNum);
+
+        bw.close();
+        fwwe.close();
+        try {
+            bis = new BufferedInputStream(new FileInputStream(file));
+            out = new BufferedOutputStream(httpServletResponse.getOutputStream());
+            byte[] buff = new byte[2048];
+            while (true) {
+                int bytesRead;
+                if (-1 == (bytesRead = bis.read(buff, 0, buff.length))){
+                    break;
+                }
+                out.write(buff, 0, bytesRead);
+            }
+            file.deleteOnExit();
+        }
+        catch (IOException e) {
+            throw e;
+        }
+        finally{
+            try {
+                if(bis != null){
+                    bis.close();
+                }
+                if(out != null){
+                    out.flush();
+                    out.close();
+                }
+            }
+            catch (IOException e) {
+                throw e;
+            }
+        }
+
+    }*/
+
+   /* @RequestMapping("/test/pub/exp/asset")
     public ResponseEntity expCsv() {
         HttpHeaders h = new HttpHeaders();
         h.add("Content-Type", "text/csv; charset=GBK");
@@ -267,5 +374,5 @@ public class TestController {
         } while (userThirdAccountList.size() >= pageNum);
 
         return text;
-    }
+    }*/
 }
