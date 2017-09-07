@@ -24,9 +24,8 @@ public class VersionController {
     @PostMapping("/version/checkVersion")
     @ApiOperation("版本检查 params: 版本号 versionId:1 ,请求来源  requestSource: 1:Android,2:ios,3:H5")
     public void checkVersion(@RequestHeader("version") Integer versionId,
-                             @RequestHeader("requestSource") Integer requestSource,
                              HttpServletResponse response) {
-         sysVersionBiz.list(requestSource, versionId,response);
+         sysVersionBiz.list(1, versionId,response);
     }
 
 
