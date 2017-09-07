@@ -15,6 +15,8 @@ import com.gofobao.framework.api.model.batch_repay.BatchRepayCheckResp;
 import com.gofobao.framework.api.model.batch_repay.BatchRepayRunResp;
 import com.gofobao.framework.api.model.batch_repay_bail.BatchRepayBailCheckResp;
 import com.gofobao.framework.api.model.batch_repay_bail.BatchRepayBailRunResp;
+import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
+import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
@@ -144,7 +146,18 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());// 收款人存管账户记录
         Preconditions.checkNotNull(takeUserThirdAccount, "借款人未开户!");
         Long takeUserId = borrow.getTakeUserId();
-        if (!ObjectUtils.isEmpty(takeUserId)) {
+
+        /*查询受托支付是否成功*/
+        TrusteePayQueryReq request = new TrusteePayQueryReq();
+        request.setAccountId(takeUserThirdAccount.getAccountId());
+        request.setProductId(borrow.getProductId());
+        request.setChannel(ChannelContant.HTML);
+        TrusteePayQueryResp trusteePayQueryResp = jixinManager.send(JixinTxCodeEnum.TRUSTEE_PAY_QUERY, request, TrusteePayQueryResp.class);
+        if ((ObjectUtils.isEmpty(trusteePayQueryResp)) || (!ObjectUtils.isEmpty(trusteePayQueryResp.getRetCode()) && !JixinResultContants.SUCCESS.equals(trusteePayQueryResp.getRetCode()))) {
+            throw new Exception("批次放款调用：受托支付查询失败,msg->" + trusteePayQueryResp.getRetMsg());
+        }
+
+        if (!ObjectUtils.isEmpty(takeUserId) && "1".equals(trusteePayQueryResp.getState())) {
             takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
         }
 
@@ -200,16 +213,16 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         Map<String, Object> acqResMap = new HashMap<>();
         acqResMap.put("borrowId", borrowId);
 
-        BatchLendPayReq request = new BatchLendPayReq();
-        request.setBatchNo(batchNo);
-        request.setAcqRes(GSON.toJson(acqResMap));
-        request.setNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/lendrepay/check");
-        request.setRetNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/lendrepay/run");
-        request.setTxAmount(StringHelper.formatDouble(sumCount, 100, false));
-        request.setTxCounts(StringHelper.toString(lendPayList.size()));
-        request.setSubPacks(GSON.toJson(lendPayList));
-        request.setChannel(ChannelContant.HTML);
-        BatchLendPayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_LEND_REPAY, request, BatchLendPayResp.class);
+        BatchLendPayReq batchLendPayReq = new BatchLendPayReq();
+        batchLendPayReq.setBatchNo(batchNo);
+        batchLendPayReq.setAcqRes(GSON.toJson(acqResMap));
+        batchLendPayReq.setNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/lendrepay/check");
+        batchLendPayReq.setRetNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/lendrepay/run");
+        batchLendPayReq.setTxAmount(StringHelper.formatDouble(sumCount, 100, false));
+        batchLendPayReq.setTxCounts(StringHelper.toString(lendPayList.size()));
+        batchLendPayReq.setSubPacks(GSON.toJson(lendPayList));
+        batchLendPayReq.setChannel(ChannelContant.HTML);
+        BatchLendPayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_LEND_REPAY, batchLendPayReq, BatchLendPayResp.class);
         String retCode = response.getRetCode();
         if ((ObjectUtils.isEmpty(response)) || (!ObjectUtils.isEmpty(retCode) && !JixinResultContants.SUCCESS.equals(retCode))) {
             throw new Exception("即信批次放款失败:" + response.getRetMsg());
@@ -576,13 +589,14 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
     /**
      * 处理批次名义借款人垫付处理
+     *
      * @param batchBailRepayRunResp
      * @return
      */
-    public ResponseEntity<String> dealBatchAdvance(BatchBailRepayRunResp batchBailRepayRunResp){
+    public ResponseEntity<String> dealBatchAdvance(BatchBailRepayRunResp batchBailRepayRunResp) {
 
         log.info("进入批次名义借款人垫付业务处理流程");
-        log.info("请求参数："+GSON.toJson(batchBailRepayRunResp));
+        log.info("请求参数：" + GSON.toJson(batchBailRepayRunResp));
         Preconditions.checkNotNull(batchBailRepayRunResp, "批次名义借款人垫付业务处理回调，请求体为空!");
         Preconditions.checkState(JixinResultContants.SUCCESS.equals(batchBailRepayRunResp.getRetCode()), "批次名义借款人垫付业务处理回调：回调失败！ msg:" + batchBailRepayRunResp.getRetMsg());
         Map<String, Object> acqResMap = GSON.fromJson(batchBailRepayRunResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
