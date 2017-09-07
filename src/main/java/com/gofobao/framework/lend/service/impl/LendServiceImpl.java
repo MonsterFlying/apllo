@@ -185,7 +185,7 @@ public class LendServiceImpl implements LendService {
         lendInfo.setCollectionAt(DateHelper.dateToString(lend.getRepayAt()));
 
         Users users = usersRepository.findOne(userId);
-        lendInfo.setUserName(StringUtils.isEmpty(users.getUsername()) ? UserHelper.hideChar(users.getPhone(), UserHelper.PHONE_NUM) : UserHelper.hideChar(users.getUsername(), UserHelper.USERNAME_NUM));
+        lendInfo.setUserName(lend.getUserId().equals(userId)?users.getPhone(): StringUtils.isEmpty(users.getPhone())?UserHelper.hideChar(users.getPhone(), UserHelper.PHONE_NUM) : UserHelper.hideChar(users.getUsername(), UserHelper.USERNAME_NUM));
         Asset asset = assetService.findByUserId(userId); //查询会员资产信息
         if (ObjectUtils.isEmpty(asset)) {
             return null;
