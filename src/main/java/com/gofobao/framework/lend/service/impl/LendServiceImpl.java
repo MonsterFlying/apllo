@@ -180,11 +180,8 @@ public class LendServiceImpl implements LendService {
             lendInfo.setSurplusMoney(StringHelper.formatMon(lend.getMoney() / 100D));
             lendInfo.setSurplusMoneyHide(lend.getMoney());
         }
-        if (lend.getTimeLimit() == BorrowContants.REPAY_FASHION_ONCE) {
-            lendInfo.setTimeLimit(lend.getTimeLimit() + BorrowContants.DAY);
-        } else {
-            lendInfo.setTimeLimit(lend.getTimeLimit() + BorrowContants.MONTH);
-        }
+
+        lendInfo.setTimeLimit(lend.getTimeLimit() + BorrowContants.DAY);
         lendInfo.setCollectionAt(DateHelper.dateToString(lend.getRepayAt()));
 
         Users users = usersRepository.findOne(userId);
