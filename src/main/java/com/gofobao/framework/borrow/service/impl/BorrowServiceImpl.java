@@ -292,15 +292,15 @@ public class BorrowServiceImpl implements BorrowService {
             //未结清
             condtionSql.append(" AND b.closeAt is null AND b.status NOT IN(:statusArray ) AND  b.type=" + type);  //
         }
-        condtionSql.append(" AND b.verifyAt IS Not NULL  )");
+        condtionSql.append(" AND b.verifyAt IS Not NULL ");
         // 排序
         if (StringUtils.isEmpty(type)) {   // 全部
-            condtionSql.append(" ORDER BY (b.moneyYes / b.money) ASC ,b.status ASC , FIELD(b.type,0, 4, 1, 2),b.id DESC");
+            condtionSql.append(" ORDER BY FIELD(b.type, 0, 4, 1, 2), (b.money_yes / b.money) desc, b.id desc ");
         } else {
             if (type.equals(BorrowContants.CE_DAI)) {
-                condtionSql.append(" ORDER BY b.status ASC,(b.moneyYes / b.money) ASC, b.successAt DESC,b.id DESC");
+                condtionSql.append(" ORDER BY b.status asc, (b.moneyYes / b.money) desc, b.successAt desc, b.id desc ");
             } else {
-                condtionSql.append(" ORDER BY b.status, b.successAt DESC, b.id DESC");
+                condtionSql.append(" ORDER BY b.status, b.successAt desc, b.id desc");
             }
         }
         //分页
