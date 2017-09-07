@@ -604,7 +604,7 @@ public class AplloApplicationTests {
 
 
         //批次处理
-        //batchDeal();
+        batchDeal();
         //unfrozee();
         //查询存管账户资金信息
         /*balanceQuery();

@@ -148,9 +148,9 @@ public class BorrowServiceImpl implements BorrowService {
             condtionSql.append(" AND (b.money_yes / b.money)!=1  ORDER BY (b.money_yes / b.money) ASC , b.status ASC , FIELD(b.type,0, 4, 1),b.id DESC ");
         } else {
             if (type.equals(BorrowContants.CE_DAI)) {
-                condtionSql.append(" ORDER BY b.status ASC,(b.money_yes / b.money) ASC, b.success_at DESC,b.id DESC");
+                condtionSql.append(" ORDER BY b.status ASC,( b.money_yes / b.money ) ASC, b.success_at DESC,b.id DESC");
             } else {
-                condtionSql.append(" ORDER BY (b.moneyYes / b.money) ASC, b.status, b.success_at DESC, b.id DESC");
+                condtionSql.append(" ORDER BY ( b.money_yes / b.money ) ASC, b.status, b.success_at DESC, b.id DESC");
             }
         }
         Query pageQuery = entityManager.createNativeQuery(condtionSql.toString(), Borrow.class);

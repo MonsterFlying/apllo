@@ -211,11 +211,11 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         Asset asset = assetService.findByUserIdLock(userId);
         // 本地资金大于存管资金
         Long currBal = new Double(new Double(balanceQueryResponse.getCurrBal()) * 100).longValue();
-        if (currBal < asset.getNoUseMoney() + asset.getUseMoney()) {
+      /*  if (currBal < asset.getNoUseMoney() + asset.getUseMoney()) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前客户本地金额大于存管金额,请联系客服吧", VoPreCashResp.class));
-        }
+        }*/
         Long realCashMoney = getRealCashMoney(userId);
         VoPreCashResp resp = VoBaseResp.ok("查询成功", VoPreCashResp.class);
         resp.setBankName(userThirdAccount.getBankName());
