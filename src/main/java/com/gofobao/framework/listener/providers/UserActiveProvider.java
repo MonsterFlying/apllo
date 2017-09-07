@@ -85,7 +85,7 @@ public class UserActiveProvider {
         assetChange.setRemark("赠送体验金");
         assetChange.setSourceId(userId);
         assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-        assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
+        assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
         assetChangeProvider.commonAssetChange(assetChange) ;
         log.info("award virtualMoney success");
     }

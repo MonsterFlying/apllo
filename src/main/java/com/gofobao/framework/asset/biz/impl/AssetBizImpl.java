@@ -640,7 +640,7 @@ public class AssetBizImpl implements AssetBiz {
             assetChange.setRemark(String.format("成功充值%s元", StringHelper.formatDouble(money.longValue() / 100D, true)));
             assetChange.setSourceId(rechargeDetailLog.getId());
             assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-            assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
+            assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
             assetChangeProvider.commonAssetChange(assetChange);
 
 

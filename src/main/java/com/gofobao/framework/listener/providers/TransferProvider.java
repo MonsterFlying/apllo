@@ -310,7 +310,6 @@ public class TransferProvider {
      * @param batchNo
      */
     private void addBatchAssetChange(long transferId, Transfer transfer, List<TransferBuyLog> transferBuyLogList, double transferFeeRate, String batchNo) throws ExecutionException {
-        String seqNo = assetChangeProvider.getSeqNo();
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
         Date nowDate = new Date();
         // 扣除债权购买人冻结资金
@@ -336,7 +335,7 @@ public class TransferProvider {
         batchAssetChangeItem.setCreatedAt(nowDate);
         batchAssetChangeItem.setUpdatedAt(nowDate);
         batchAssetChangeItem.setSourceId(transferId);
-        batchAssetChangeItem.setSeqNo(seqNo);
+        batchAssetChangeItem.setSeqNo(assetChangeProvider.getSeqNo());
         batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
         batchAssetChangeItemService.save(batchAssetChangeItem);
         Long feeAccountId = assetChangeProvider.getFeeAccountId();  // 平台ID
@@ -353,7 +352,7 @@ public class TransferProvider {
         batchAssetChangeItem.setCreatedAt(nowDate);
         batchAssetChangeItem.setUpdatedAt(nowDate);
         batchAssetChangeItem.setSourceId(transferId);
-        batchAssetChangeItem.setSeqNo(seqNo);
+        batchAssetChangeItem.setSeqNo(assetChangeProvider.getSeqNo());
         batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
         batchAssetChangeItemService.save(batchAssetChangeItem);
 
@@ -370,7 +369,7 @@ public class TransferProvider {
         batchAssetChangeItem.setCreatedAt(nowDate);
         batchAssetChangeItem.setUpdatedAt(nowDate);
         batchAssetChangeItem.setSourceId(transferId);
-        batchAssetChangeItem.setSeqNo(seqNo);
+        batchAssetChangeItem.setSeqNo(assetChangeProvider.getSeqNo());
         batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
         batchAssetChangeItemService.save(batchAssetChangeItem);
 
@@ -387,7 +386,7 @@ public class TransferProvider {
                     StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100D, true)));
             batchAssetChangeItem.setCreatedAt(nowDate);
             batchAssetChangeItem.setUpdatedAt(nowDate);
-            batchAssetChangeItem.setSeqNo(seqNo);
+            batchAssetChangeItem.setSeqNo(assetChangeProvider.getSeqNo());
             batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
             batchAssetChangeItem.setSourceId(transferBuyLog.getId());
             batchAssetChangeItemService.save(batchAssetChangeItem);

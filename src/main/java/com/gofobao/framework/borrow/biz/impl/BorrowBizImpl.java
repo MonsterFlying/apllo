@@ -664,7 +664,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 assetChange.setRemark(String.format("借款 [%s] 投标失败解除冻结资金。", borrow.getName()));
                 assetChange.setSourceId(tender.getId());
                 assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-                assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
+                assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
                 assetChangeProvider.commonAssetChange(assetChange);
             }
 

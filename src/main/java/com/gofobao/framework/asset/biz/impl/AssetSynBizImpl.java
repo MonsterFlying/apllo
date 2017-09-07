@@ -190,7 +190,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
             assetChange.setRemark(String.format("成功线下充值%s元", StringHelper.formatDouble(money.longValue() / 100D, true)));
             assetChange.setSourceId(rechargeDetailLog.getId());
             assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-            assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
+            assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
             assetChangeProvider.commonAssetChange(assetChange);
 
             // 触发用户充值
@@ -265,7 +265,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
                 assetChange.setRemark(String.format("成功线下充值%s元", StringHelper.formatDouble(money.longValue() / 100D, true)));
                 assetChange.setSourceId(rechargeDetailLog.getId());
                 assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-                assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
+                assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
                 assetChangeProvider.commonAssetChange(assetChange);
 
                 // 触发用户充值

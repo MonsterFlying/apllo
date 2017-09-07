@@ -294,7 +294,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             assetChange.setRemark("即信批次还款解除冻结可用资金");
             assetChange.setSourceId(repaymentId);
             assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-            assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
+            assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
             try {
                 assetChangeProvider.commonAssetChange(assetChange);
             } catch (Exception e) {
@@ -569,7 +569,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         assetChange.setRemark("名义借款人垫付解除冻结可用资金");
         assetChange.setSourceId(repaymentId);
         assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-        assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
+        assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
         try {
             assetChangeProvider.commonAssetChange(assetChange);
         } catch (Exception e) {
@@ -716,7 +716,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             assetChange.setRemark("批次融资人还名义借款人账户垫款解除冻结可用资金");
             assetChange.setSourceId(repaymentId);
             assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-            assetChange.setGroupSeqNo(assetChangeProvider.getSeqNo());
+            assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
             try {
                 assetChangeProvider.commonAssetChange(assetChange);
             } catch (Exception e) {

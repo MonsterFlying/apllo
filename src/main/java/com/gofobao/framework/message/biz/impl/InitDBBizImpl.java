@@ -106,7 +106,6 @@ public class InitDBBizImpl implements InitDBBiz {
 
 
     public void initUseAsset() throws Exception {
-        String seqNo = assetChangeProvider.getSeqNo(); // 资产记录流水号
         String groupSeqNo = assetChangeProvider.getGroupSeqNo(); // 资产记录分组流水号
         //红包账户
         long redId = assetChangeProvider.getRedpackAccountId();
@@ -178,7 +177,7 @@ public class InitDBBizImpl implements InitDBBiz {
                     newAssetLog.setCurrMoney(asset.getUseMoney() + asset.getNoUseMoney());
                     newAssetLog.setDel(0);
                     newAssetLog.setForUserId(redpackThirdAccount.getUserId());
-                    newAssetLog.setLocalSeqNo(seqNo);
+                    newAssetLog.setLocalSeqNo(assetChangeProvider.getSeqNo());
                     newAssetLog.setNoUseMoney(asset.getNoUseMoney());
                     newAssetLog.setOpMoney(asset.getUseMoney());
                     newAssetLog.setLocalType(AssetChangeTypeEnum.initAsset.getLocalType());
