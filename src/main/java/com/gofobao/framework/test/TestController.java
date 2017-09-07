@@ -169,7 +169,7 @@ public class TestController {
                     .<NewAssetLog>and()
                     .eq("userId", userId)
                     .eq("localType", AssetChangeTypeEnum.freeze.lendPaymentRepair.getLocalType())
-                    .eq("sourceId", borrowId)
+                    .eq("sourceId" , borrowId)
                     .build();
             long count = newAssetLogService.count(nals);
             if (count > 0) {
@@ -251,7 +251,7 @@ public class TestController {
                     .<NewAssetLog>and()
                     .eq("userId", userId)
                     .eq("localType", AssetChangeTypeEnum.freeze.lendPaymentRepair.getLocalType())
-                    .eq("sourceId", borrowId)
+                    .eq("sourceId" , borrowId)
                     .build();
             long count = newAssetLogService.count(nals);
             if (count > 0) {
