@@ -1820,8 +1820,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
         List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
         //装配请求即信请求参数
         AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
+        accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex)); //启始页
         accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));   //页面大小
-        accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex*pageSize));  //启始页
         // 查询交易时间范围
         accountDetailsQueryRequest.setStartDate(txDateStr);
         accountDetailsQueryRequest.setEndDate(txDateStr);
