@@ -498,7 +498,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
             if(!StringUtils.isEmpty(StringUtils.trimAllWhitespace(forAccountIdStr))){
                 UserThirdAccount byAccountId = userThirdAccountService.findByAccountId(forAccountIdStr);
                 if(!ObjectUtils.isEmpty(byAccountId)){
-                    account.setCellValue(byAccountId.getName());
+                    forAccount.setCellValue(byAccountId.getName());
                 }
             }
         }
