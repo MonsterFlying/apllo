@@ -175,6 +175,7 @@ public class BorrowBizImpl implements BorrowBiz {
      *
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> sendAgainVerify(VoSendAgainVerify voSendAgainVerify) {
         long borrowId = voSendAgainVerify.getBorrowId();
         Borrow borrow = borrowService.findByIdLock(borrowId);
@@ -191,7 +192,7 @@ public class BorrowBizImpl implements BorrowBiz {
             try {
                 mqHelper.convertAndSend(mqConfig);
             } catch (Exception e) {
-                log.error("发送复审异常:",e);
+                log.error("发送复审异常:", e);
             }
             return ResponseEntity.ok(VoBaseResp.ok("发送成功!"));
         }
