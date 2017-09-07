@@ -10,10 +10,14 @@ import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
+import com.gofobao.framework.api.model.batch_repay.BatchRepayResp;
 import com.gofobao.framework.api.model.direct_recharge_online.DirectRechargeOnlineRequest;
 import com.gofobao.framework.api.model.direct_recharge_online.DirectRechargeOnlineResponse;
 import com.gofobao.framework.api.model.direct_recharge_plus.DirectRechargePlusRequest;
 import com.gofobao.framework.api.model.direct_recharge_plus.DirectRechargePlusResponse;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
+import com.gofobao.framework.api.model.voucher_pay_cancel.VoucherPayCancelRequest;
+import com.gofobao.framework.api.model.voucher_pay_cancel.VoucherPayCancelResponse;
 import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.biz.AssetSynBiz;
 import com.gofobao.framework.asset.entity.Asset;
@@ -27,6 +31,7 @@ import com.gofobao.framework.asset.service.RechargeDetailLogService;
 import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.request.VoRechargeReq;
 import com.gofobao.framework.asset.vo.request.VoSynAssetsRep;
+import com.gofobao.framework.asset.vo.request.VoUnsendRedPacket;
 import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.asset.vo.response.pc.AssetLogs;
 import com.gofobao.framework.asset.vo.response.pc.VoViewAssetLogsWarpRes;
@@ -42,10 +47,7 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.IpHelper;
-import com.gofobao.framework.helper.RedisHelper;
-import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -103,7 +105,8 @@ public class AssetBizImpl implements AssetBiz {
 
     @Autowired
     AssetService assetService;
-
+    @Autowired
+    private JixinHelper jixinHelper;
     @Autowired
     AssetLogService assetLogService;
 
@@ -174,6 +177,50 @@ public class AssetBizImpl implements AssetBiz {
     /**
      * 获取用户资产详情
      *
+     * @param voUnsendRedPacket
+     * @return
+     */
+    public ResponseEntity<VoBaseResp> unsendRedPacket(VoUnsendRedPacket voUnsendRedPacket) {
+        String paramStr = voUnsendRedPacket.getParamStr();/* pc请求提前结清参数 */
+        if (!SecurityHelper.checkSign(voUnsendRedPacket.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc取消借款 签名验证不通过!"));
+        }
+        Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        UserThirdAccount takeAccount = jixinHelper.getTakeUserAccount();
+        /* 红包发送编号 */
+        String sendSeqNo = paramMap.get("sendSeqNo");
+        long money = NumberHelper.toLong(paramMap.get("money"));
+        long userId = NumberHelper.toLong(paramMap.get("userId"));
+        String dateStr = paramMap.get("dateStr");
+        String timeStr = paramMap.get("timeStr");
+
+        /* 存管账户记录 */
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        Preconditions.checkNotNull(userThirdAccount,"存管账户记录为空!");
+
+        VoucherPayCancelRequest voucherPayCancelRequest = new VoucherPayCancelRequest();
+        voucherPayCancelRequest.setAccountId(takeAccount.getAccountId());
+        voucherPayCancelRequest.setTxAmount(StringHelper.formatDouble(money, 100, false));
+        voucherPayCancelRequest.setOrgTxDate(dateStr);
+        voucherPayCancelRequest.setOrgTxTime(timeStr);
+        voucherPayCancelRequest.setForAccountId(userThirdAccount.getAccountId());
+        voucherPayCancelRequest.setOrgSeqNo(sendSeqNo);
+        voucherPayCancelRequest.setAcqRes(String.valueOf(userId));
+        voucherPayCancelRequest.setChannel(ChannelContant.HTML);
+        VoucherPayCancelResponse response = jixinManager.send(JixinTxCodeEnum.UNSEND_RED_PACKET, voucherPayCancelRequest, VoucherPayCancelResponse.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+            String msg = ObjectUtils.isEmpty(response) ? "当前网络出现异常, 请稍后尝试！" : response.getRetMsg();
+            log.error(msg);
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, String.format("撤销红包失败：%s", response.getRetMsg())));
+        }
+        return ResponseEntity.ok(VoBaseResp.ok(String.format("撤销红包成功：msg->%s", response.getRetMsg())));
+    }
+
+    /**
+     * 获取用户资产详情
+     *
      * @param userId
      * @return
      */
@@ -192,7 +239,7 @@ public class AssetBizImpl implements AssetBiz {
         Long useMoney = asset.getUseMoney();
         Long payment = asset.getPayment();
         long netWorthQuota = new Double((useMoney + userCache.getWaitCollectionPrincipal()) * 0.8 - payment).longValue();//计算净值额度
-        Long netAsset=new Double((asset.getCollection()+asset.getNoUseMoney()+asset.getUseMoney())-asset.getPayment()).longValue();
+        Long netAsset = new Double((asset.getCollection() + asset.getNoUseMoney() + asset.getUseMoney()) - asset.getPayment()).longValue();
         VoUserAssetInfoResp voUserAssetInfoResp = VoBaseResp.ok("成功", VoUserAssetInfoResp.class);
         voUserAssetInfoResp.setHideUserMoney(StringHelper.formatDouble(useMoney / 100D, true));
         voUserAssetInfoResp.setHideNoUseMoney(StringHelper.formatDouble(asset.getNoUseMoney() / 100D, true));
@@ -206,7 +253,7 @@ public class AssetBizImpl implements AssetBiz {
         voUserAssetInfoResp.setCollection(asset.getCollection());
         voUserAssetInfoResp.setVirtualMoney(asset.getVirtualMoney());
         voUserAssetInfoResp.setNetWorthQuota(netWorthQuota);
-        voUserAssetInfoResp.setNetAsset(StringHelper.formatMon(netAsset/100D));
+        voUserAssetInfoResp.setNetAsset(StringHelper.formatMon(netAsset / 100D));
         return ResponseEntity.ok(voUserAssetInfoResp);
     }
 
@@ -731,7 +778,7 @@ public class AssetBizImpl implements AssetBiz {
     @Override
     public void pcToExcel(VoAssetLogReq voAssetLogReq, HttpServletResponse response) {
 
-        Users user=userService.findById(voAssetLogReq.getUserId());
+        Users user = userService.findById(voAssetLogReq.getUserId());
         voAssetLogReq.setStartTime(DateHelper.dateToString(user.getCreatedAt()));
         voAssetLogReq.setEndTime(DateHelper.dateToString(new Date()));
         List<NewAssetLog> assetLogs = assetLogService.pcToExcel(voAssetLogReq);
@@ -836,7 +883,7 @@ public class AssetBizImpl implements AssetBiz {
         response.setCollectionMoney(StringHelper.formatDouble((userCache.getWaitCollectionPrincipal() + userCache.getWaitCollectionInterest()) / 100D, true)); // 待收
         response.setAccountMoney(StringHelper.formatDouble((asset.getNoUseMoney() + asset.getUseMoney()) / 100D, true));
         response.setTotalAsset(StringHelper.formatDouble((asset.getUseMoney() + asset.getNoUseMoney() + asset.getCollection() - asset.getPayment()) / 100D, true));
-        Double netAmount = ((asset.getUseMoney() +userCache.getWaitCollectionPrincipal()) * 0.8D - asset.getPayment()) / 100D;
+        Double netAmount = ((asset.getUseMoney() + userCache.getWaitCollectionPrincipal()) * 0.8D - asset.getPayment()) / 100D;
         response.setNetAmount(StringHelper.formatDouble(netAmount, true));
         return ResponseEntity.ok(response);
     }
@@ -878,7 +925,7 @@ public class AssetBizImpl implements AssetBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户处于被冻结状态，如有问题请联系客服！", VoAvailableAssetInfoResp.class));
         }
         try {
-            assetSynBiz.doAssetSyn(userId) ;
+            assetSynBiz.doAssetSyn(userId);
         } catch (Exception e) {
             log.error("用户余额同步错误", e);
         }
@@ -909,7 +956,7 @@ public class AssetBizImpl implements AssetBiz {
         VoCollectionResp response = VoBaseResp.ok("查询成功", VoCollectionResp.class);
         Long waitCollectionInterest = userCache.getWaitCollectionInterest();
         Long waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
-        Long waitCollectionTotal = waitCollectionInterest+waitCollectionPrincipal;
+        Long waitCollectionTotal = waitCollectionInterest + waitCollectionPrincipal;
         response.setHideInterest(waitCollectionInterest);
         response.setInterest(StringHelper.formatMon(waitCollectionInterest / 100d));
 
