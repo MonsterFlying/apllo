@@ -158,7 +158,12 @@ public class IncrStatisticScheduler {
             qdSumRepay = NumberHelper.toLong(resultMap.get("qdSumRepay"));
             qdSumRepayPrincipal = NumberHelper.toLong(resultMap.get("qdSumRepayPrincipal"));
         }
-
+        Long cashSum=0L;
+        sql=new StringBuffer("SELECT SUM(op_money) AS cashSum FROM gfb_new_asset_log WHERE (local_type='smallCash' or local_type='bigCash') AND del =1");
+        resultMap = jdbcTemplate.queryForMap(sql.toString());
+        if(!CollectionUtils.isEmpty(resultMap)){
+             cashSum= NumberHelper.toLong(resultMap.get("cashSum"));
+        }
         Long tjSumRepayment = 0l;
         Long tjSumRepaymentPrincipal = 0l;
         Long qdSumRepayment = 0l;
@@ -200,6 +205,7 @@ public class IncrStatisticScheduler {
         incrStatistic.setJzSumRepaymentPrincipal(jzSumRepaymentPrincipal);
         incrStatistic.setQdSumRepayment(qdSumRepayment);
         incrStatistic.setQdSumRepaymentPrincipal(qdSumRepaymentPrincipal);
+        incrStatistic.setCashSum(cashSum);
         incrStatisticService.save(incrStatistic);
     }
 }
