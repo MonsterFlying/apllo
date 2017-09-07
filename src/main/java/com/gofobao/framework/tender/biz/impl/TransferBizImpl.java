@@ -117,8 +117,7 @@ public class TransferBizImpl implements TransferBiz {
     private BorrowCollectionService borrowCollectionService;
     @Autowired
     private UserThirdAccountService userThirdAccountService;
-    @Autowired
-    private TransferBuyLogService transferBuyLogService;
+
     @Autowired
     private AssetService assetService;
     @Autowired
@@ -142,6 +141,8 @@ public class TransferBizImpl implements TransferBiz {
     @Autowired
     private ThirdBatchLogService thirdBatchLogService;
 
+    @Autowired
+    private TransferBuyLogService transferBuyLogService ;
     @Autowired
     private UsersRepository usersRepository;
 
@@ -1604,7 +1605,17 @@ public class TransferBizImpl implements TransferBiz {
         Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
         Integer earnings = NumberHelper.toInt(calculatorMap.get("earnings"));
         borrowInfoRes.setEarnings(StringHelper.formatMon(earnings / 100d) + MoneyConstans.RMB);
-        borrowInfoRes.setTenderCount(transfer.getTenderCount() + com.gofobao.framework.borrow.contants.BorrowContants.TIME);
+        if(transfer.getTenderCount() == 0){
+            Specification<TransferBuyLog> transferBuyLogSpecification = Specifications
+                    .<TransferBuyLog>and()
+                    .eq("transferId", transfer.getId())
+                    .eq("state", 1).build() ;
+            long count = transferBuyLogService.count(transferBuyLogSpecification);
+            borrowInfoRes.setTenderCount(count + com.gofobao.framework.borrow.contants.BorrowContants.TIME);
+        }else{
+            borrowInfoRes.setTenderCount(transfer.getTenderCount() + com.gofobao.framework.borrow.contants.BorrowContants.TIME);
+        }
+
         borrowInfoRes.setMoney(StringHelper.formatMon(transfer.getTransferMoney() / 100d));
         borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
         borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatDouble(transfer.getTransferMoneyYes() / transfer.getTransferMoney().doubleValue(), false)) * 100);
