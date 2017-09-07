@@ -136,13 +136,13 @@ public class UserCacheServiceImpl implements UserCacheService {
         //待还本金
         Long waitRepayPrincipal = userCache.getWaitRepayPrincipal();
 
-        Long waitExpenditureInterestManageFee=new Long(userCache.getWaitExpenditureInterestManageFee());
-        Long netAsset=new Double((asset.getCollection()+asset.getNoUseMoney()+asset.getUseMoney())-asset.getPayment()).longValue();
+        Long waitExpenditureInterestManageFee = new Long(userCache.getWaitExpenditureInterestManageFee());
+        Long netAsset = new Double((asset.getCollection() + asset.getNoUseMoney() + asset.getUseMoney()) - asset.getPayment()).longValue();
         netProceedsDetails.setWaitInterest(StringHelper.formatMon(waitRepayInterest / 100D));
         netProceedsDetails.setWaitPrincipal(StringHelper.formatMon(waitRepayPrincipal / 100D));
 
         //总支出
-        Long sumExpend =waitExpenditureInterestManageFee+ waitRepayInterest+expenditureFee + expenditureInterest + expenditureInterestManage + expenditureManage + expenditureOverdue + expenditureOther;
+        Long sumExpend = waitExpenditureInterestManageFee + waitRepayInterest + expenditureFee + expenditureInterest + expenditureInterestManage + expenditureManage + expenditureOverdue + expenditureOther;
 
         /**
          * 已实现净收益总额 = 已实现收入总额 - 已支出总额
@@ -177,14 +177,12 @@ public class UserCacheServiceImpl implements UserCacheService {
         Double sumJingshou = netIncomeTotal + noNetProceeds;
         statistic.setSumNetProceeds(StringHelper.formatMon(sumJingshou / 100D));
 
-
         //净值额度
         Double netWorthQuota = new Double((asset.getUseMoney() + waitCollectionPrincipal) * 0.8 - collection);//计算净值额度
         statistic.setNetWorthLimit(StringHelper.formatMon(netWorthQuota / 100D));
 
-        Double assetTotal = new Double(noUseMoney+userMoney+collection);
-
-        statistic.setAssetTotal(StringHelper.formatMon(assetTotal / 100D));
+        //净资产
+        statistic.setAssetTotal(StringHelper.formatDouble((asset.getUseMoney() + asset.getNoUseMoney() + asset.getCollection() - asset.getPayment()) / 100D, true));
 
         //总支出
         statistic.setSumExpend(StringHelper.formatMon(sumExpend / 100D));
@@ -245,7 +243,7 @@ public class UserCacheServiceImpl implements UserCacheService {
         Long expenditureManage = userCache.getExpenditureManage();
         Long expenditureOther = userCache.getExpenditureOther();
         Long expenditureOverdue = userCache.getExpenditureOverdue();
-        Long waitRepayInterest=userCache.getWaitRepayInterest();
+        Long waitRepayInterest = userCache.getWaitRepayInterest();
         Double waitExpenditureInterestManage = (userCache.getTjWaitCollectionInterest() + userCache.getQdWaitCollectionInterest()) * 0.1;
         //已付利息管理费
         expenditureDetail.setInterestManageFee(StringHelper.formatMon(expenditureInterestManage / 100D));
@@ -266,7 +264,7 @@ public class UserCacheServiceImpl implements UserCacheService {
         //待付支出
         expenditureDetail.setWaitExpendTotal(StringHelper.formatMon((waitExpenditureInterestManage + waitRepayInterest) / 100D));
         //已支出总额
-        expenditureDetail.setExpenditureTotal(StringHelper.formatMon( userCache.getIncomeTotal()/100D));
+        expenditureDetail.setExpenditureTotal(StringHelper.formatMon(userCache.getIncomeTotal() / 100D));
 
         return ResponseEntity.ok(expenditureDetail);
 
@@ -275,6 +273,6 @@ public class UserCacheServiceImpl implements UserCacheService {
     @Override
     public boolean isNew(Users user) {
         UserCache userCache = userCacheRepository.findByUserId(user.getId());
-        return !userCache.getTenderQudao() && !userCache.getTenderTuijian() ;
+        return !userCache.getTenderQudao() && !userCache.getTenderTuijian();
     }
 }
