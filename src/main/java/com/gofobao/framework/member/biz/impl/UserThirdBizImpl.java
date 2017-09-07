@@ -46,6 +46,7 @@ import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.BankAccountService;
 import com.gofobao.framework.borrow.vo.request.VoAdminModifyPasswordResp;
 import com.gofobao.framework.borrow.vo.request.VoAdminOpenAccountResp;
+import com.gofobao.framework.borrow.vo.request.VoPcDoFirstVerity;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
@@ -103,7 +104,7 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings("all")
 public class UserThirdBizImpl implements UserThirdBiz {
     @Autowired
-    JixinTxDateHelper jixinTxDateHelper ;
+    JixinTxDateHelper jixinTxDateHelper;
 
     @Autowired
     UserService userService;
@@ -1764,17 +1765,37 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     /**
      * 查询用户当天交易记录
+     *
      * @param userAccountThirdTxReq
      * @return
      */
     @Override
-    public ResponseEntity<UserAccountThirdTxRes> queryAccountTx(UserAccountThirdTxReq userAccountThirdTxReq) {
+    public ResponseEntity<UserAccountThirdTxRes> queryAccountTx(VoPcDoFirstVerity voPcDoFirstVerity) {
+        String paramStr = voPcDoFirstVerity.getParamStr();
+        if (!SecurityHelper.checkSign(voPcDoFirstVerity.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc查询存管用户,签名验证不通过!", UserAccountThirdTxRes.class));
+        }
+
+        UserAccountThirdTxReq userAccountThirdTxReq = null;
+        if (StringUtils.isEmpty(voPcDoFirstVerity.getParamStr())) {
+            try {
+                userAccountThirdTxReq = new Gson().fromJson(voPcDoFirstVerity.getParamStr(), new TypeToken<UserAccountThirdTxReq>() {
+                }.getType());
+            } catch (Exception e) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "pc查询存管用户,请求参数字符串转对象失败", UserAccountThirdTxRes.class));
+            }
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc查询存管用户,请求参数字符串为空", UserAccountThirdTxRes.class));
+        }
+
         UserAccountThirdTxRes thridTxRes = VoBaseResp.ok("查询成功", UserAccountThirdTxRes.class);
         //查询交易时间
-        Date nowDate = new Date();
-        SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd");
-        String startAt= sf.format(nowDate);
-        String endAt=sf.format(DateHelper.addDays(nowDate,1));
+        String txDateStr=jixinTxDateHelper.getTxDateStr();
 
         //用户是否为空
         Users users = userService.findById(userAccountThirdTxReq.getUserId());
@@ -1789,7 +1810,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         // 存管账户ID
         String accountId = userThirdAccount.getAccountId();
 
-        int pageSize = userAccountThirdTxReq.getPageSize(), pageIndex = userAccountThirdTxReq.getPageIndex()==0?userAccountThirdTxReq.getPageIndex()+1:userAccountThirdTxReq.getPageIndex();
+        int pageSize = userAccountThirdTxReq.getPageSize(), pageIndex = userAccountThirdTxReq.getPageIndex() == 0 ? userAccountThirdTxReq.getPageIndex() + 1 : userAccountThirdTxReq.getPageIndex();
 
         List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
         //装配请求即信请求参数
@@ -1797,8 +1818,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
         accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));   //页面大小
         accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));  //启始页
         // 查询交易时间范围
-        accountDetailsQueryRequest.setStartDate(jixinTxDateHelper.getTxDateStr());
-        accountDetailsQueryRequest.setEndDate(jixinTxDateHelper.getTxDateStr());
+        accountDetailsQueryRequest.setStartDate(txDateStr);
+        accountDetailsQueryRequest.setEndDate(txDateStr);
         //交易量；类型
         accountDetailsQueryRequest.setType(userAccountThirdTxReq.getType());
         //存管账户
@@ -1812,15 +1833,17 @@ public class UserThirdBizImpl implements UserThirdBiz {
             String ressultMsg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, ressultMsg, UserAccountThirdTxRes.class));
         }
+
         String subPacks = accountDetailsQueryResponse.getSubPacks();
         //判断交易流水
-        if (StringUtils.isEmpty(subPacks)||subPacks.equals("[]")) {
+        if (StringUtils.isEmpty(subPacks) || subPacks.equals("[]")) {
             thridTxRes.setDetailsQueryItems(new ArrayList<>(0));
             return ResponseEntity.ok(thridTxRes);
         }
         //json转对象
         List<AccountDetailsQueryItem> detailsQueryItems = new Gson().fromJson(subPacks, new TypeToken<AccountDetailsQueryItem>() {
         }.getType());
+        thridTxRes.setTotalCount(Integer.valueOf(accountDetailsQueryResponse.getTotalItems()));
         thridTxRes.setDetailsQueryItems(detailsQueryItems);
         return ResponseEntity.ok(thridTxRes);
     }

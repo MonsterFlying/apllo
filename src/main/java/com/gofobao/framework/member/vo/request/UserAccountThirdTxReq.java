@@ -13,7 +13,6 @@ public class UserAccountThirdTxReq extends Page{
     @ApiModelProperty(hidden =true)
     private Long userId;
 
-
     @ApiModelProperty("0-所有交易\n" +
             "1-转入交易\n" +
             "2-转出交易\n" +

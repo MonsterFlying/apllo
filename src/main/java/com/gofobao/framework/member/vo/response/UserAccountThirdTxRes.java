@@ -15,4 +15,7 @@ public class UserAccountThirdTxRes extends VoBaseResp {
 
         private List<AccountDetailsQueryItem> detailsQueryItems= new ArrayList<>(0);
 
+        private Integer totalCount=0;
+
+
 }
