@@ -35,8 +35,6 @@ public class SysVserionBizImpl implements SysVersionBiz {
         Map<String,Object>resultMap=Maps.newHashMap();
         Map<String,Object> statusMap= Maps.newHashMap();
         Map<String,Object>statusMaps=Maps.newHashMap();
-
-        Map<String,Object>bodyMaps=Maps.newHashMap();
         try {
             printWriter= response.getWriter();
             if (CollectionUtils.isEmpty(sysVersions)) {
@@ -52,13 +50,13 @@ public class SysVserionBizImpl implements SysVersionBiz {
             if (flag) {  // 需要
                 voSysVersion.setIsEquls(VersionContants.EQULSNO);
                 voSysVersion.setIsNew(true);
-                voSysVersion.setViewVersion(sysVersion.getViewVersion());
+                voSysVersion.setVeiwVersion(sysVersion.getViewVersion());
                 voSysVersion.setDetails(sysVersion.getDetails());
                 voSysVersion.setForce(sysVersion.getForce());
                 voSysVersion.setUrl(sysVersion.getRul());
             } else {   // 不需要
                 voSysVersion.setIsEquls(VersionContants.EQULSOK);
-                voSysVersion.setViewVersion(sysVersion.getViewVersion());
+                voSysVersion.setVeiwVersion(sysVersion.getViewVersion());
                 voSysVersion.setDetails(sysVersion.getDetails());
                 voSysVersion.setForce(sysVersion.getForce());
                 voSysVersion.setIsNew(false);
