@@ -150,7 +150,7 @@ public class BorrowServiceImpl implements BorrowService {
             if (type.equals(BorrowContants.CE_DAI)) {
                 condtionSql.append(" ORDER BY b.status ASC,(b.money_yes / b.money) ASC, b.success_at DESC,b.id DESC");
             } else {
-                condtionSql.append(" ORDER BY b.status, b.success_at DESC, b.id DESC");
+                condtionSql.append(" ORDER BY (b.moneyYes / b.money) ASC, b.status, b.success_at DESC, b.id DESC");
             }
         }
         Query pageQuery = entityManager.createNativeQuery(condtionSql.toString(), Borrow.class);
@@ -300,7 +300,7 @@ public class BorrowServiceImpl implements BorrowService {
             if (type.equals(BorrowContants.CE_DAI)) {
                 condtionSql.append(" ORDER BY  (b.moneyYes / b.money) ASC, b.status asc, b.successAt desc, b.id desc ");
             } else {
-                condtionSql.append(" ORDER BY b.status, b.successAt desc, b.id desc");
+                condtionSql.append(" ORDER BY  (b.moneyYes / b.money) ASC,  b.status, b.successAt desc, b.id desc");
             }
         }
         //分页
