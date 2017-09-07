@@ -42,10 +42,6 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
     @Value("${gofobao.h5Domain}")
     private String h5Address;
 
-
-    @Value("${windmill.local-des-key}")
-    private String localDesKey;
-
     @Autowired
     private UsersRepository usersRepository;
 

@@ -48,14 +48,14 @@ qiniu:
 
 server:
   port: 8080
-#风车理财
-windmill:
+
+windmill: #风车理财
   des-key: 2l0IYbNnRcShWOM9Q5Ej0A3gCEP07LBS #des加密key值
-  request-address: http://121.42.52.42  #风车理财请求地址
+  request-address: https://p.fengchelicai.com  #风车理财请求地址
   short-name: gfb #风车理财分配给平台的简称
   from: wrb #风车理财简称
   local-des-key : 2l0IYbNnRcShWOM9Q5Ej0A3gCGOFOBAO #和风车理财交互时 平台的关键字段加密key值
-  notify-address:  http://121.42.52.42/wrb/ws_info_call_back.json  #通知风车理财接口
+  notify-address:  https://p.fengchelicai.com/wrb/ws_info_call_back.json  #通知风车理财接口
 
 jixin: #银行存管
   keysPassword: guangfubao_uat@2016 #私钥密码

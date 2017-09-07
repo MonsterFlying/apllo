@@ -62,8 +62,6 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
     @Value("${windmill.des-key}")
     private String desKey;
 
-    @Value("${windmill.local-des-key}")
-    private String localDesKey;
 
     @Value("${gofobao.h5Domain}")
     private String h5Domain;
