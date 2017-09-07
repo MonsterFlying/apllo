@@ -1,6 +1,7 @@
 package com.gofobao.framework.member.controller.web;
 
 import com.gofobao.framework.asset.vo.request.VoJudgmentAvailableReq;
+import com.gofobao.framework.borrow.vo.request.VoPcDoFirstVerity;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.RandomUtil;
@@ -12,6 +13,7 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.entity.Vip;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.vo.request.*;
+import com.gofobao.framework.member.vo.response.UserAccountThirdTxRes;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.member.vo.response.VoSignInfoResp;
 import com.gofobao.framework.member.vo.response.pc.UserInfoExt;
@@ -133,11 +135,10 @@ public class WebUserController {
     @ApiOperation("重置交易密码")
     @PostMapping("/user/pc/rest/payPassWord")
     public ResponseEntity<VoBaseResp> restPayPassWord(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
-                                                     @ModelAttribute VoRestPayPassWord tranPassWord) {
+                                                      @ModelAttribute VoRestPayPassWord tranPassWord) {
         tranPassWord.setUserId(userId);
         return userBiz.restPayPassWord(tranPassWord);
     }
-
 
 
     @ApiOperation("申请vip")
@@ -173,14 +174,14 @@ public class WebUserController {
     public void uploadAvatar(@RequestParam("file") MultipartFile upfile,
                              HttpServletResponse response,
                              @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
-        Users users=userService.findById(userId);
-        if(ObjectUtils.isEmpty(users)){
+        Users users = userService.findById(userId);
+        if (ObjectUtils.isEmpty(users)) {
             response.setStatus(HttpStatus.SC_BAD_REQUEST);
-        }else if (!StringUtils.isEmpty(upfile)) {
+        } else if (!StringUtils.isEmpty(upfile)) {
             //循环获取file数组中得文件
-            String imageName = "avatar/"+RandomUtil.getRandomString(20);
+            String imageName = "avatar/" + RandomUtil.getRandomString(20);
             byte[] fileByte = upfile.getBytes();
-            Map<String, Object> result = userBiz.uploadAvatar(fileByte, imageName,users);
+            Map<String, Object> result = userBiz.uploadAvatar(fileByte, imageName, users);
             if ((Boolean) result.get("result")) {
                 response.setStatus(HttpStatus.SC_OK);
             } else {
@@ -191,4 +192,12 @@ public class WebUserController {
 
         }
     }
+
+    @ApiOperation("查询用户即信当日交易流水")
+    @PostMapping("/user/third/account/tx/log")
+    public ResponseEntity<UserAccountThirdTxRes> queryUserAccountThirdTx(VoPcDoFirstVerity voPcDoFirstVerity) {
+        return userThirdBiz.queryAccountTx(voPcDoFirstVerity);
+    }
+
+
 }
