@@ -145,7 +145,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         Preconditions.checkNotNull(borrow, "批次放款调用: 标的信息为空 ");
         UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());// 收款人存管账户记录
         Preconditions.checkNotNull(takeUserThirdAccount, "借款人未开户!");
-        Long takeUserId = borrow.getTakeUserId();
 
         /*查询受托支付是否成功*/
         TrusteePayQueryReq request = new TrusteePayQueryReq();
@@ -156,7 +155,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         if ((ObjectUtils.isEmpty(trusteePayQueryResp)) || (!ObjectUtils.isEmpty(trusteePayQueryResp.getRetCode()) && !JixinResultContants.SUCCESS.equals(trusteePayQueryResp.getRetCode()))) {
             throw new Exception("批次放款调用：受托支付查询失败,msg->" + trusteePayQueryResp.getRetMsg());
         }
-
+        /*收款人id*/
+        long takeUserId = borrow.getTakeUserId();
         if (!ObjectUtils.isEmpty(takeUserId) && "1".equals(trusteePayQueryResp.getState())) {
             takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
         }

@@ -135,6 +135,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         debtRegisterRequest.setRaiseDate(DateHelper.dateToString(borrow.getReleaseAt(), DateHelper.DATE_FORMAT_YMD_NUM));
         debtRegisterRequest.setRaiseEndDate(DateHelper.dateToString(DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1), DateHelper.DATE_FORMAT_YMD_NUM));
         debtRegisterRequest.setIntType(StringHelper.toString(repayFashion == 1 ? 0 : 1));
+
         int duration;
         if (repayFashion != 1) {
             Date releaseAt = borrow.getReleaseAt();
@@ -147,9 +148,12 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         debtRegisterRequest.setTxAmount(StringHelper.formatDouble(borrow.getMoney(), 100, false));
         debtRegisterRequest.setRate(StringHelper.formatDouble(borrow.getApr(), 100, false));
         debtRegisterRequest.setTxFee("0");
-        /* 名义借款人id */
-        String titularBorrowAccount = jixinHelper.getTitularBorrowAccount(borrowId).getAccountId();
-        debtRegisterRequest.setNominalAccountId(titularBorrowAccount);
+        /* 公司实际名义借款人账户 */
+        UserThirdAccount titularBorrowAccount = jixinHelper.getTitularBorrowAccount();
+        if (!ObjectUtils.isEmpty(titularBorrowAccount)) {
+            borrow.setTitularBorrowAccountId(titularBorrowAccount.getAccountId());
+            debtRegisterRequest.setNominalAccountId(titularBorrowAccount.getAccountId());
+        }
         debtRegisterRequest.setAcqRes(StringHelper.toString(borrowId));
         debtRegisterRequest.setChannel(ChannelContant.HTML);
         //判断是否是受托支付标的  目前只支持官标渠道标
@@ -158,7 +162,6 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             UserThirdAccount takeAccount = jixinHelper.getTakeUserAccount();
             Long takeUserId = takeAccount.getUserId();   // 公司实际收款人*/
             borrow.setTakeUserId(takeUserId);
-            borrow.setTitularBorrowAccountId(titularBorrowAccount);
             /* 公司实际收款人 */
             UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
 
