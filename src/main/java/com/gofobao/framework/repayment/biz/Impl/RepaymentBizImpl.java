@@ -1065,15 +1065,19 @@ public class RepaymentBizImpl implements RepaymentBiz {
             //投资积分
             long integral = actualInterest / 100 * 10;
             if ((parentBorrow.getType() == 0 || parentBorrow.getType() == 4) && 0 < integral) {
-                IntegralChangeEntity integralChangeEntity = new IntegralChangeEntity();
-                integralChangeEntity.setType(IntegralChangeEnum.TENDER);
-                integralChangeEntity.setValue(integral);
-                integralChangeEntity.setUserId(borrowCollection.getUserId());
-                try {
-                    integralChangeHelper.integralChange(integralChangeEntity);
-                } catch (Exception e) {
-                    log.error("投资人回款积分发放失败：", e);
+                Users users = userService.findById(borrowCollection.getUserId());
+                if(StringUtils.isEmpty(users.getWindmillId())){  // 非风车理财派发积分
+                    IntegralChangeEntity integralChangeEntity = new IntegralChangeEntity();
+                    integralChangeEntity.setType(IntegralChangeEnum.TENDER);
+                    integralChangeEntity.setValue(integral);
+                    integralChangeEntity.setUserId(borrowCollection.getUserId());
+                    try {
+                        integralChangeHelper.integralChange(integralChangeEntity);
+                    } catch (Exception e) {
+                        log.error("投资人回款积分发放失败：", e);
+                    }
                 }
+
             }
         });
     }
@@ -1652,7 +1656,14 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 if ((stockholder.contains(tender.getUserId())) && (between)) {
                     inFee += 0;
                 } else {
-                    inFee += new Double(MathHelper.myRound(inIn * 0.1, 2)).intValue();
+                    Long userId = tender.getUserId();
+                    Users user = userService.findById(userId);
+                    if(!StringUtils.isEmpty(user.getWindmillId())){ // 风车理财用户不收管理费
+                        log.info(String.format("风车理财：%s", user));
+                        inFee += 0;
+                    }else{
+                        inFee += new Double(MathHelper.myRound(inIn * 0.1, 2)).intValue();
+                    }
                 }
             }
 
