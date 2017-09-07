@@ -1771,20 +1771,24 @@ public class UserThirdBizImpl implements UserThirdBiz {
      */
     @Override
     public ResponseEntity<UserAccountThirdTxRes> queryAccountTx(VoPcDoFirstVerity voPcDoFirstVerity) {
+
         String paramStr = voPcDoFirstVerity.getParamStr();
+        //判断请求参数是否为空
+        UserAccountThirdTxReq userAccountThirdTxReq = null;
+        if (StringUtils.isEmpty(paramStr) || StringUtils.isEmpty(voPcDoFirstVerity.getSign())) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc查询存管用户,请求参数字符串为空", UserAccountThirdTxRes.class));
+        }
+        //验证签名
         if (!SecurityHelper.checkSign(voPcDoFirstVerity.getSign(), paramStr)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "pc查询存管用户,签名验证不通过!", UserAccountThirdTxRes.class));
         }
 
-        UserAccountThirdTxReq userAccountThirdTxReq = null;
-        if (StringUtils.isEmpty(paramStr)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc查询存管用户,请求参数字符串为空", UserAccountThirdTxRes.class));
-        }
         try {
+            //json参数转对象
             userAccountThirdTxReq = new Gson().fromJson(voPcDoFirstVerity.getParamStr(),
                     new TypeToken<UserAccountThirdTxReq>() {
                     }.getType());
@@ -1836,7 +1840,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
         String subPacks = accountDetailsQueryResponse.getSubPacks();
-        //判断交易流水
+        //判断交易流水是否为空
         if (StringUtils.isEmpty(subPacks) || subPacks.equals("[]")) {
             thridTxRes.setDetailsQueryItems(new ArrayList<>(0));
             return ResponseEntity.ok(thridTxRes);
