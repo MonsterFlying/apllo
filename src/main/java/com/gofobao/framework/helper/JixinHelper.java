@@ -106,7 +106,6 @@ public class JixinHelper {
     /**
      * 获取名义账户
      *
-     * @param borrowId
      * @return
      */
     public UserThirdAccount getTakeUserAccount() {
@@ -119,6 +118,22 @@ public class JixinHelper {
             e.printStackTrace();
         }
 
+        return null;
+    }
+
+    /**
+     * 获取名义账户
+     *
+     * @return
+     */
+    public UserThirdAccount getTitularBorrowAccount() {
+        try {
+            DictValue dictValue = jixinCache.get("titularBorrowUserId");
+            UserThirdAccount bailAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
+            return bailAccount;
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
