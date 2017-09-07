@@ -23,6 +23,6 @@ public class VoSysVersion {
     @ApiModelProperty("是否强制更新 0:不需要 ;1：需要")
     private Integer force;
     @ApiModelProperty("版本号")
-    private String veiwVersion;
+    private String viewVersion;
 }
 

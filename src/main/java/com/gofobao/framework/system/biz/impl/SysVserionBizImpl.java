@@ -41,7 +41,7 @@ public class SysVserionBizImpl implements SysVersionBiz {
                 statusMaps.put("code",1);
                 statusMaps.put("msg","非法访问");
                 statusMaps.put("time", DateHelper.dateToString(new Date()));
-                resultMap.put("status",statusMaps);
+                resultMap.put("state",statusMaps);
                 printWriter.print(new Gson().toJson(statusMap));
             }
             SysVersion sysVersion = sysVersions.get(0);
@@ -50,13 +50,13 @@ public class SysVserionBizImpl implements SysVersionBiz {
             if (flag) {  // 需要
                 voSysVersion.setIsEquls(VersionContants.EQULSNO);
                 voSysVersion.setIsNew(true);
-                voSysVersion.setVeiwVersion(sysVersion.getViewVersion());
+                voSysVersion.setViewVersion(sysVersion.getViewVersion());
                 voSysVersion.setDetails(sysVersion.getDetails());
                 voSysVersion.setForce(sysVersion.getForce());
                 voSysVersion.setUrl(sysVersion.getRul());
             } else {   // 不需要
                 voSysVersion.setIsEquls(VersionContants.EQULSOK);
-                voSysVersion.setVeiwVersion(sysVersion.getViewVersion());
+                voSysVersion.setViewVersion(sysVersion.getViewVersion());
                 voSysVersion.setDetails(sysVersion.getDetails());
                 voSysVersion.setForce(sysVersion.getForce());
                 voSysVersion.setIsNew(false);
@@ -64,14 +64,14 @@ public class SysVserionBizImpl implements SysVersionBiz {
             statusMaps.put("code",0);
             statusMaps.put("msg","查询成功");
             statusMaps.put("time", DateHelper.dateToString(new Date()));
-            resultMap.put("body",voSysVersion);
-            resultMap.put("status",statusMaps);
+            resultMap.put("voSysVersion",voSysVersion);
+            resultMap.put("state",statusMaps);
             printWriter.print(new Gson().toJson(resultMap));
         }catch (Exception e){
             statusMaps.put("code",1);
             statusMaps.put("msg","系统异常, 请稍后重试");
             statusMaps.put("time", DateHelper.dateToString(new Date()));
-            resultMap.put("status",statusMaps);
+            resultMap.put("state",statusMaps);
             printWriter.print(new Gson().toJson(statusMap));
         }
 
