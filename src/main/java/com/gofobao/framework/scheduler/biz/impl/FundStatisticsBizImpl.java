@@ -490,6 +490,17 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
 
             XSSFCell forAccountId = titleRow.createCell(13);
             forAccountId.setCellValue("账号" + item.getForAccountId());
+            XSSFCell account = titleRow.createCell(14);
+            account.setCellValue(userThirdAccount.getName());
+
+            XSSFCell forAccount = titleRow.createCell(15);
+            String forAccountIdStr = item.getForAccountId();
+            if(!StringUtils.isEmpty(StringUtils.trimAllWhitespace(forAccountIdStr))){
+                UserThirdAccount byAccountId = userThirdAccountService.findByAccountId(forAccountIdStr);
+                if(!ObjectUtils.isEmpty(byAccountId)){
+                    account.setCellValue(byAccountId.getName());
+                }
+            }
         }
 
         String filename = String.format("%s.xls", userId);//设置下载时客户端Excel的名称
@@ -573,6 +584,13 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
 
         XSSFCell forAccountId = titleRow.createCell(13);
         forAccountId.setCellValue("对手电子账号");
+
+        XSSFCell account = titleRow.createCell(14);
+        account.setCellValue("账户姓名");
+
+        XSSFCell forAccount = titleRow.createCell(15);
+        forAccount.setCellValue("对手账户姓名");
+
     }
 
     private void createAssetTitle(XSSFSheet assetSheel) {
