@@ -194,7 +194,7 @@ public class WebUserController {
     }
 
     @ApiOperation("查询用户即信当日交易流水")
-    @PostMapping("/user/third/account/tx/log")
+    @PostMapping("pub/user/third/account/tx/log")
     public ResponseEntity<UserAccountThirdTxRes> queryUserAccountThirdTx(VoPcDoFirstVerity voPcDoFirstVerity) {
         return userThirdBiz.queryAccountTx(voPcDoFirstVerity);
     }
