@@ -565,7 +565,7 @@ public class AplloApplicationTests {
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(redpackAccountId);
-        UserThirdAccount userThirdAccount1 = userThirdAccountService.findByUserId(30l);
+        UserThirdAccount userThirdAccount1 = userThirdAccountService.findByUserId(45255l);
         //3.发送红包
         VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
         voucherPayRequest.setAccountId(userThirdAccount.getAccountId());
