@@ -32,12 +32,12 @@ public class WebAssetController {
 
 
     /**
-     * 获取用户资产详情
+     * 撤回即信红包
      *
      * @param voUnsendRedPacket
      * @return
      */
-    @ApiOperation("获取用户资产信息")
+    @ApiOperation("撤回即信红包")
     @GetMapping("/pub/asset/pc/v2/redpacket/unsend")
     public ResponseEntity<VoBaseResp> unsendRedPacket(@Valid @ModelAttribute VoUnsendRedPacket voUnsendRedPacket) {
         return assetBiz.unsendRedPacket(voUnsendRedPacket);

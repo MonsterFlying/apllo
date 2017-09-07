@@ -175,7 +175,7 @@ public class AssetBizImpl implements AssetBiz {
     NewAssetLogService newAssetLogService;
 
     /**
-     * 获取用户资产详情
+     * 撤回即信红包
      *
      * @param voUnsendRedPacket
      * @return

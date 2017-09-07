@@ -171,6 +171,34 @@ public class BorrowBizImpl implements BorrowBiz {
 
 
     /**
+     * 发送复审
+     *
+     * @return
+     */
+    public ResponseEntity<VoBaseResp> sendAgainVerify(VoSendAgainVerify voSendAgainVerify) {
+        long borrowId = voSendAgainVerify.getBorrowId();
+        Borrow borrow = borrowService.findByIdLock(borrowId);
+        Preconditions.checkNotNull(borrow, "借款记录不存在!");
+        if (borrow.getStatus() == 1 && borrow.getMoneyYes() >= borrow.getMoney()) {
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()),
+                            MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            log.info(String.format("BorrowBizImpl sendAgainVerify send mq %s", GSON.toJson(body)));
+            try {
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Exception e) {
+                log.error("发送复审异常:",e);
+            }
+            return ResponseEntity.ok(VoBaseResp.ok("发送成功!"));
+        }
+        return ResponseEntity.ok(VoBaseResp.ok("发送失败!"));
+    }
+
+    /**
      * 理财首页标列表
      *
      * @param voBorrowListReq
@@ -1268,7 +1296,7 @@ public class BorrowBizImpl implements BorrowBiz {
     public boolean doTrusteePay(Long borrowId) {
         Borrow borrow = borrowService.findByIdLock(borrowId);
         String productId = borrow.getProductId();
-        Preconditions.checkNotNull(productId, String.format("受托支付记录查询, 当前标的为登记:borrowId%s",borrowId));
+        Preconditions.checkNotNull(productId, String.format("受托支付记录查询, 当前标的为登记:borrowId%s", borrowId));
         Long userId = borrow.getUserId();
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
 
