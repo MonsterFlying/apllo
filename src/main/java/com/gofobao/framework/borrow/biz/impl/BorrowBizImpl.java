@@ -53,6 +53,7 @@ import com.gofobao.framework.system.biz.StatisticBiz;
 import com.gofobao.framework.system.entity.IncrStatistic;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.entity.Statistic;
+import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
@@ -187,6 +188,8 @@ public class BorrowBizImpl implements BorrowBiz {
         long borrowId = NumberHelper.toLong(paramMap.get("borrowId"));
         Borrow borrow = borrowService.findByIdLock(borrowId);
         Preconditions.checkNotNull(borrow, "借款记录不存在!");
+        //判断是否已经提交即信处理
+
         if (borrow.getStatus() == 1 && borrow.getMoneyYes() >= borrow.getMoney()) {
             MqConfig mqConfig = new MqConfig();
             mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
