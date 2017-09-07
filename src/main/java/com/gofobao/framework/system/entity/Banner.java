@@ -27,9 +27,6 @@ public class Banner {
 
     private String clickurl;
 
-    @Column(name = "m_clickurl")
-    private String mClickUrl;
-
     private Integer order;
 
     private Timestamp createdAt;

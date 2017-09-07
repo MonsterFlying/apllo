@@ -15,7 +15,4 @@ public class IndexBanner {
     @ApiModelProperty("图片点击")
     private String clickUrl;
 
-
-    private String mClickUrl;
-
 }

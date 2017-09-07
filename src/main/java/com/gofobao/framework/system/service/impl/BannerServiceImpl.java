@@ -47,7 +47,6 @@ public class BannerServiceImpl implements BannerService {
                         indexBanner.setTitle(p.getTitle());
                         indexBanner.setImageUrl(p.getImgurl());
                         indexBanner.setClickUrl(p.getClickurl());
-                        indexBanner.setMClickUrl(p.getMClickUrl());
                         bannerList.add(indexBanner);
                     });
                     return bannerList;
