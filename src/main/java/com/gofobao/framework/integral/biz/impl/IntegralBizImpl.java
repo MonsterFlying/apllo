@@ -349,14 +349,14 @@ public class IntegralBizImpl implements IntegralBiz {
         AssetChange redpackPublish = new AssetChange();
         redpackPublish.setMoney(money);
         redpackPublish.setType(AssetChangeTypeEnum.platformPublishIntegralExchangeRedpack);  // 积分兑换
-        redpackPublish.setUserId(userId);
+        redpackPublish.setUserId(redId);
         redpackPublish.setRemark(String.format("派发用户在%s, 使用积分(%s)兑换%s元",
                 DateHelper.dateToString(nowDate),
                 voIntegralTakeReq.getInteger(),
                 StringHelper.formatDouble(money / 100D, true)));
         redpackPublish.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
         redpackPublish.setGroupSeqNo(groupSeqNo);
-        redpackPublish.setForUserId(redId);
+        redpackPublish.setForUserId(userId);
         redpackPublish.setSourceId(integralLog.getId());
         assetChangeProvider.commonAssetChange(redpackPublish);
 

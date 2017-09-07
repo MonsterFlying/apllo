@@ -21,7 +21,7 @@ public class Jwtintercepter extends HandlerInterceptorAdapter {
 
     @Override
     public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o) throws Exception {
-
+        
         // 判断当前用户路劲
         String url = httpServletRequest.getRequestURI();
 
