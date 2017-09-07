@@ -89,6 +89,7 @@ import org.springframework.util.StringUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static com.gofobao.framework.helper.project.UserHelper.getAssetTypeStr;
@@ -188,7 +189,13 @@ public class AssetBizImpl implements AssetBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "pc取消借款 签名验证不通过!"));
         }
         Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
-        UserThirdAccount takeAccount = jixinHelper.getTakeUserAccount();
+        long redpackAccountId = 0;
+        try {
+            redpackAccountId = assetChangeProvider.getRedpackAccountId();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        UserThirdAccount redpackAccount = userThirdAccountService.findByUserId(redpackAccountId);
         /* 红包发送编号 */
         String sendSeqNo = paramMap.get("sendSeqNo");
         Double money = NumberHelper.toDouble(paramMap.get("money"));
@@ -201,7 +208,7 @@ public class AssetBizImpl implements AssetBiz {
         Preconditions.checkNotNull(userThirdAccount, "存管账户记录为空!");
 
         VoucherPayCancelRequest voucherPayCancelRequest = new VoucherPayCancelRequest();
-        voucherPayCancelRequest.setAccountId(takeAccount.getAccountId());
+        voucherPayCancelRequest.setAccountId(redpackAccount.getAccountId());
         voucherPayCancelRequest.setTxAmount(StringHelper.formatDouble(money, false));
         voucherPayCancelRequest.setOrgTxDate(dateStr);
         voucherPayCancelRequest.setOrgTxTime(timeStr);

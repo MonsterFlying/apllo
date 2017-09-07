@@ -90,6 +90,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -168,9 +169,8 @@ public class AplloApplicationTests {
     }
 
 
-
     @Autowired
-     UserThirdAccountService userThirdAccountServices;
+    UserThirdAccountService userThirdAccountServices;
 
     @Autowired
     WebUserThirdBizImpl webUserThirdBiz;
@@ -182,8 +182,6 @@ public class AplloApplicationTests {
 
 
     }
-
-
 
 
     @Test
@@ -542,8 +540,7 @@ public class AplloApplicationTests {
 
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
-    @Autowired
-    AssetChangeProvider assetChangeProvider;
+
     @Autowired
     private CreditProvider creditProvider;
 
@@ -554,10 +551,34 @@ public class AplloApplicationTests {
     private DealThirdBatchScheduler dealThirdBatchScheduler;
 
 
+    @Autowired
+    private AssetChangeProvider assetChangeProvider;
 
     @Test
     @Transactional(rollbackOn = Exception.class)
     public void test() {
+        long redpackAccountId = 0;
+        try {
+            redpackAccountId = assetChangeProvider.getRedpackAccountId();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(redpackAccountId);
+        UserThirdAccount userThirdAccount1 = userThirdAccountService.findByUserId(30l);
+        //3.发送红包
+        VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
+        voucherPayRequest.setAccountId(userThirdAccount.getAccountId());
+        voucherPayRequest.setTxAmount("10.22");
+        voucherPayRequest.setForAccountId(userThirdAccount1.getAccountId());
+        voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
+        voucherPayRequest.setDesLine("数据迁移账户初始化！");
+        voucherPayRequest.setChannel(ChannelContant.HTML);
+        VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+            String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+        }
+
    /*   //推送队列结束债权
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_CREDIT);
@@ -581,9 +602,9 @@ public class AplloApplicationTests {
         //batchDeal();
         //unfrozee();
         //查询存管账户资金信息
-        balanceQuery();
+        /*balanceQuery();
         //查询资金流水
-        accountDetailsQuery();
+        accountDetailsQuery();*/
         //testCredit();
         //根据手机号查询存管账户
         //findAccountByMobile();
