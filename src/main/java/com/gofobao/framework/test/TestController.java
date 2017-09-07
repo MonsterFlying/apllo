@@ -66,7 +66,7 @@ public class TestController {
     private NewAssetLogService newAssetLogService;
 
     @ApiOperation("获取自动投标列表")
-    @PostMapping("/pub/lend/payment/repair")
+    @PostMapping("/pub/lend/payment/repair1")
     public void lendPaymentRepair1() throws Exception{
         String sql = "\n" +
                 "SELECT t.*,t8.username,t8.realname, concat('\\'',t9.account_id) from (\n" +
