@@ -1,5 +1,6 @@
 package com.gofobao.framework.member.biz;
 
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
 import com.gofobao.framework.borrow.vo.request.VoAdminModifyPasswordResp;
 import com.gofobao.framework.borrow.vo.request.VoAdminOpenAccountResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
@@ -240,4 +241,11 @@ public interface UserThirdBiz {
      * @return
      */
     UserThirdAccount queryUserThirdInfo(Long id) throws Exception;
+
+    /**
+     *
+     * @return
+     */
+    ResponseEntity<AccountDetailsQueryItem> queryAccountTx(Long userId);
+
 }
