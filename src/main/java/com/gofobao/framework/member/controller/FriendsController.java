@@ -44,6 +44,9 @@ public class FriendsController {
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
 
+
+
+
     @ApiOperation("邀请好友列表")
     @GetMapping("/invite/v2/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewInviteFriendersWarpRes> list(@RequestAttribute(SecurityContants.USERID_KEY) Long userId,
@@ -83,7 +86,7 @@ public class FriendsController {
             Map<String, Object> resultMaps = brokerBounsBiz.shareRegister(userId);
             res.setCodeUrl(resultMaps.get("QRCodeURL").toString());
             res.setTitle("邀请好友投资,奖励送不停");
-            res.setDesc("新手福利,注册即送1000元投标体验金+加息0.5%-3%");
+            res.setDesc("新手福利,投资即可发放红包+加息0.5%-3%");
             res.setRequestHtmlUrl(resultMaps.get("inviteUrl").toString());
             res.setIcon(javaDomain + "/images/bankLogo/logo.png");
             content = thymeleafHelper.build("user/friends", resultMaps);

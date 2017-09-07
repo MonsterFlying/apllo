@@ -163,6 +163,16 @@ public class RedPackageBizImpl implements RedPackageBiz {
                         .body(VoViewOpenRedPackageWarpRes.error(VoViewOpenRedPackageWarpRes.ERROR, "存管系统发放红包异常!", VoViewOpenRedPackageWarpRes.class));
             }
 
+            // 更新红包
+            marketingRedpackRecord.setState(1);
+            marketingRedpackRecordService.save(marketingRedpackRecord);
+
+            try{
+
+            }catch (Exception e){
+                log.error("拆开红包失败", e);
+            }
+
             // 红包账户发送红包
             AssetChange redpackPublish = new AssetChange();
             redpackPublish.setMoney(marketingRedpackRecord.getMoney());
@@ -172,7 +182,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
             redpackPublish.setRemark(String.format("派发奖励红包 %s元", StringHelper.formatDouble(marketingRedpackRecord.getMoney() / 100D, true)));
             redpackPublish.setGroupSeqNo(groupSeqNo);
             redpackPublish.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
-            redpackPublish.setForUserId(redId);
+            redpackPublish.setForUserId(marketingRedpackRecord.getUserId());
             redpackPublish.setSourceId(marketingRedpackRecord.getId());
             assetChangeProvider.commonAssetChange(redpackPublish);
 
@@ -181,17 +191,13 @@ public class RedPackageBizImpl implements RedPackageBiz {
             redpackR.setMoney(marketingRedpackRecord.getMoney());
             redpackR.setType(AssetChangeTypeEnum.receiveRedpack);
             redpackR.setUserId(packageReq.getUserId());
-            redpackR.setForUserId(redId);
+            redpackR.setForUserId(marketingRedpackRecord.getUserId());
             redpackR.setRemark(String.format("领取奖励红包 %s元", StringHelper.formatDouble(marketingRedpackRecord.getMoney() / 100D, true)));
             redpackR.setGroupSeqNo(groupSeqNo);
             redpackR.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
             redpackR.setForUserId(redId);
             redpackR.setSourceId(marketingRedpackRecord.getId());
             assetChangeProvider.commonAssetChange(redpackR);
-
-            // 更新红包
-            marketingRedpackRecord.setState(1);
-            marketingRedpackRecordService.save(marketingRedpackRecord);
 
             //站内信数据装配
             Notices notices = new Notices();
