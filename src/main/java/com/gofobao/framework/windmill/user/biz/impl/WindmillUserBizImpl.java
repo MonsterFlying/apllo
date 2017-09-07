@@ -163,7 +163,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             }
             try {
                 // 处理注册来源
-                Integer channel = RegisterSourceEnum.getIndex("7");
+                Integer channel = RegisterSourceEnum.getIndex("windmill");
                 Date now = new Date();
                 // 插入数据
                 Users users = new Users();

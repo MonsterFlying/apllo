@@ -1,15 +1,12 @@
 package com.gofobao.framework.member.biz;
 
-import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
 import com.gofobao.framework.borrow.vo.request.VoAdminModifyPasswordResp;
 import com.gofobao.framework.borrow.vo.request.VoAdminOpenAccountResp;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.entity.UserThirdAccount;
+import com.gofobao.framework.member.vo.request.UserAccountThirdTxReq;
 import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
-import com.gofobao.framework.member.vo.response.VoHtmlResp;
-import com.gofobao.framework.member.vo.response.VoOpenAccountResp;
-import com.gofobao.framework.member.vo.response.VoPreOpenAccountResp;
-import com.gofobao.framework.member.vo.response.VoSignInfoResp;
+import com.gofobao.framework.member.vo.response.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 
@@ -246,6 +243,6 @@ public interface UserThirdBiz {
      *
      * @return
      */
-    ResponseEntity<AccountDetailsQueryItem> queryAccountTx(Long userId);
+    ResponseEntity<UserAccountThirdTxRes> queryAccountTx(UserAccountThirdTxReq userAccountThirdTxReq);
 
 }
