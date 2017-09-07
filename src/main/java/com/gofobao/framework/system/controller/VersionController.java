@@ -1,5 +1,6 @@
 package com.gofobao.framework.system.controller;
 
+import com.gofobao.framework.common.qiniu.util.StringUtils;
 import com.gofobao.framework.system.biz.SysVersionBiz;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -23,10 +24,9 @@ public class VersionController {
 
     @PostMapping("/version/checkVersion")
     @ApiOperation("版本检查 params: 版本号 versionId:1 ,请求来源  requestSource: 1:Android,2:ios,3:H5")
-    public void checkVersion(@RequestHeader("requestResource") Integer terminal,
-                             @RequestHeader("version") Integer versionId,
+    public void checkVersion(@RequestHeader("version") Integer versionId,
                              HttpServletResponse response) {
-         sysVersionBiz.list(terminal, versionId,response);
+         sysVersionBiz.list(1, versionId,response);
     }
 
 
