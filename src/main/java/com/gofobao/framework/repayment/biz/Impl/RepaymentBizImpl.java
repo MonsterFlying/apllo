@@ -1424,7 +1424,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                                                    boolean advance,
                                                    Asset repayAsset) throws Exception {
         Date nowDate = new Date();
-        log.info("批次还款: 进入正常还款流程");
+        log.info(String.format("批次还款: 进入正常还款流程 repaymentId->",borrowRepayment.getId()));
 
         /* 投资记录：不包含理财计划 */
         Specification<Tender> specification = Specifications
