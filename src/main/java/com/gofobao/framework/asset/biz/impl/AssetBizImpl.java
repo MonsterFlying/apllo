@@ -10,18 +10,15 @@ import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
-import com.gofobao.framework.api.model.batch_repay.BatchRepayResp;
 import com.gofobao.framework.api.model.direct_recharge_online.DirectRechargeOnlineRequest;
 import com.gofobao.framework.api.model.direct_recharge_online.DirectRechargeOnlineResponse;
 import com.gofobao.framework.api.model.direct_recharge_plus.DirectRechargePlusRequest;
 import com.gofobao.framework.api.model.direct_recharge_plus.DirectRechargePlusResponse;
-import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.api.model.voucher_pay_cancel.VoucherPayCancelRequest;
 import com.gofobao.framework.api.model.voucher_pay_cancel.VoucherPayCancelResponse;
 import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.biz.AssetSynBiz;
 import com.gofobao.framework.asset.entity.Asset;
-import com.gofobao.framework.asset.entity.AssetLog;
 import com.gofobao.framework.asset.entity.NewAssetLog;
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.AssetLogService;
@@ -91,8 +88,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-
-import static com.gofobao.framework.helper.project.UserHelper.getAssetTypeStr;
 
 /**
  * Created by Zeke on 2017/5/19.
