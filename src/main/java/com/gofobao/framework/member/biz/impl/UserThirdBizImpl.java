@@ -103,7 +103,7 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings("all")
 public class UserThirdBizImpl implements UserThirdBiz {
     @Autowired
-    JixinTxDateHelper jixinTxDateHelper ;
+    JixinTxDateHelper jixinTxDateHelper;
 
     @Autowired
     UserService userService;
@@ -1355,8 +1355,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
-    public ResponseEntity<VoHtmlResp>
-    bindBank(HttpServletRequest httpServletRequest, Long userId, String bankNo) {
+    public ResponseEntity<VoHtmlResp> bindBank(HttpServletRequest httpServletRequest, Long userId, String bankNo) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         if (ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
@@ -1764,6 +1763,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     /**
      * 查询用户当天交易记录
+     *
      * @param userAccountThirdTxReq
      * @return
      */
@@ -1773,8 +1773,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
         //查询交易时间
         Date nowDate = new Date();
         SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd");
-        String startAt= sf.format(nowDate);
-        String endAt=sf.format(DateHelper.addDays(nowDate,1));
+        String startAt = sf.format(nowDate);
+        String endAt = sf.format(DateHelper.addDays(nowDate, 1));
 
         //用户是否为空
         Users users = userService.findById(userAccountThirdTxReq.getUserId());
@@ -1789,7 +1789,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         // 存管账户ID
         String accountId = userThirdAccount.getAccountId();
 
-        int pageSize = userAccountThirdTxReq.getPageSize(), pageIndex = userAccountThirdTxReq.getPageIndex()==0?userAccountThirdTxReq.getPageIndex()+1:userAccountThirdTxReq.getPageIndex();
+        int pageSize = userAccountThirdTxReq.getPageSize(), pageIndex = userAccountThirdTxReq.getPageIndex() == 0 ? userAccountThirdTxReq.getPageIndex() + 1 : userAccountThirdTxReq.getPageIndex();
 
         List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
         //装配请求即信请求参数
@@ -1814,7 +1814,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
         String subPacks = accountDetailsQueryResponse.getSubPacks();
         //判断交易流水
-        if (StringUtils.isEmpty(subPacks)||subPacks.equals("[]")) {
+        if (StringUtils.isEmpty(subPacks) || subPacks.equals("[]")) {
             thridTxRes.setDetailsQueryItems(new ArrayList<>(0));
             return ResponseEntity.ok(thridTxRes);
         }
