@@ -116,6 +116,7 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
         try {
             List<Tender> tenders = windmillTenderService.userTenderLog(userTenderLogReq);
             if (CollectionUtils.isEmpty(tenders)) {
+                investRecordsRes.setPf_user_id(userTenderLogReq.getPf_user_id());
                 investRecordsRes.setRetcode(VoBaseResp.OK);
                 investRecordsRes.setRetmsg("用戶投資記錄為空");
                 return investRecordsRes;

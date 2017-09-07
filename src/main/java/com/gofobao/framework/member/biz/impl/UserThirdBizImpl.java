@@ -3,6 +3,7 @@ package com.gofobao.framework.member.biz.impl;
 import com.gofobao.framework.api.contants.*;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
 import com.gofobao.framework.api.model.account_id_query.AccountIdQueryRequest;
 import com.gofobao.framework.api.model.account_id_query.AccountIdQueryResponse;
 import com.gofobao.framework.api.model.account_open.AccountOpenRequest;
@@ -85,6 +86,7 @@ import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -93,6 +95,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Service
 @Slf4j
+@SuppressWarnings("all")
 public class UserThirdBizImpl implements UserThirdBiz {
 
     @Autowired
@@ -1744,8 +1747,27 @@ public class UserThirdBizImpl implements UserThirdBiz {
                 userThirdAccountService.save(userThirdAccount);
             }
             return 1;
+
+
+
         } else {
             return 1;
         }
+    }
+
+    /**
+     *
+     * @param userId
+     * @return
+     */
+    @Override
+    public ResponseEntity<AccountDetailsQueryItem> queryAccountTx(Long userId) {
+        Date nowDate=new Date();
+        SimpleDateFormat sf=new SimpleDateFormat("YYYYMMDD");
+        String time=sf.format(nowDate);
+
+
+
+        return null;
     }
 }

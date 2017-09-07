@@ -33,7 +33,6 @@ public class RestExceptionController {
 
     @ExceptionHandler(value = {LoginException.class})
     public ResponseEntity<VoBaseResp> restLoginExceptionHandler(HttpServletRequest request, Throwable e) throws Exception {
-        log.error("登陆错误", e);
         VoBaseResp voBaseResp = VoBaseResp.error(VoBaseResp.RELOGIN, e.getMessage());
         return ResponseEntity
                 .badRequest()
