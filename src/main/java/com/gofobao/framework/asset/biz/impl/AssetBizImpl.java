@@ -191,18 +191,18 @@ public class AssetBizImpl implements AssetBiz {
         UserThirdAccount takeAccount = jixinHelper.getTakeUserAccount();
         /* 红包发送编号 */
         String sendSeqNo = paramMap.get("sendSeqNo");
-        long money = NumberHelper.toLong(paramMap.get("money"));
+        Double money = NumberHelper.toDouble(paramMap.get("money"));
         long userId = NumberHelper.toLong(paramMap.get("userId"));
         String dateStr = paramMap.get("dateStr");
         String timeStr = paramMap.get("timeStr");
 
         /* 存管账户记录 */
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        Preconditions.checkNotNull(userThirdAccount,"存管账户记录为空!");
+        Preconditions.checkNotNull(userThirdAccount, "存管账户记录为空!");
 
         VoucherPayCancelRequest voucherPayCancelRequest = new VoucherPayCancelRequest();
         voucherPayCancelRequest.setAccountId(takeAccount.getAccountId());
-        voucherPayCancelRequest.setTxAmount(StringHelper.formatDouble(money, 100, false));
+        voucherPayCancelRequest.setTxAmount(StringHelper.formatDouble(money, false));
         voucherPayCancelRequest.setOrgTxDate(dateStr);
         voucherPayCancelRequest.setOrgTxTime(timeStr);
         voucherPayCancelRequest.setForAccountId(userThirdAccount.getAccountId());
