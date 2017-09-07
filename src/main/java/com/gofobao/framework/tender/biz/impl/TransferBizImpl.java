@@ -942,11 +942,11 @@ public class TransferBizImpl implements TransferBiz {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> newTransferTender(VoTransferTenderReq voTransferTenderReq) throws Exception {
 
-        if (true) {
+        /*if (true) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "债权转让内测中，敬请期待！"));
-        }
+        }*/
         long tenderId = voTransferTenderReq.getTenderId();/* 转让债权id */
         long userId = voTransferTenderReq.getUserId();/* 转让人id */
         boolean isAll = voTransferTenderReq.getIsAll();/* 是否是部分转让 */

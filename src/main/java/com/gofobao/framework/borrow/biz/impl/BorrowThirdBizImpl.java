@@ -123,12 +123,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         borrow.setReleaseAt(ObjectUtils.isEmpty(borrow.getReleaseAt()) ? new Date() : borrow.getReleaseAt());
         Long userId = borrow.getUserId();
         int repayFashion = borrow.getRepayFashion();
-
-        /* 公司实际收款人账户 */
-        UserThirdAccount takeAccount = jixinHelper.getTakeUserAccount();
-        Long takeUserId = takeAccount.getUserId();   // 公司实际收款人*/
-        borrow.setTakeUserId(takeUserId);
-        UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
+        /* 借款人账户 */
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "借款人未开户!");
         String productId = StringHelper.toString(borrowId);  // 生成标的的唯一识别码
@@ -157,7 +152,16 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         debtRegisterRequest.setNominalAccountId(titularBorrowAccount);
         debtRegisterRequest.setAcqRes(StringHelper.toString(borrowId));
         debtRegisterRequest.setChannel(ChannelContant.HTML);
-        if (entrustFlag && !ObjectUtils.isEmpty(takeUserThirdAccount)) { //判断是否是受托支付标的
+        //判断是否是受托支付标的  目前只支持官标渠道标
+        if (entrustFlag && borrow.getType().intValue() == 0 && borrow.getType().intValue() == 4) {
+            /* 公司实际收款人账户 */
+            UserThirdAccount takeAccount = jixinHelper.getTakeUserAccount();
+            Long takeUserId = takeAccount.getUserId();   // 公司实际收款人*/
+            borrow.setTakeUserId(takeUserId);
+            borrow.setTitularBorrowAccountId(titularBorrowAccount);
+            /* 公司实际收款人 */
+            UserThirdAccount takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
+
             debtRegisterRequest.setEntrustFlag("1");
             debtRegisterRequest.setReceiptAccountId(takeUserThirdAccount.getAccountId());
         }
@@ -180,7 +184,6 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             }
         }
 
-        borrow.setTitularBorrowAccountId(titularBorrowAccount);
         borrow.setProductId(productId);
         borrowService.save(borrow);
         try {
