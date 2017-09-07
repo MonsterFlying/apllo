@@ -65,6 +65,93 @@ public class TestController {
     @Autowired
     private NewAssetLogService newAssetLogService;
 
+    @ApiOperation("获取自动投标列表")
+    @PostMapping("/pub/lend/payment/repair1")
+    public void lendPaymentRepair1() throws Exception{
+        String sql = "\n" +
+                "SELECT t.*,t8.username,t8.realname, concat('\\'',t9.account_id) from (\n" +
+                "\n" +
+                "SELECT t3.`id` as borrowId ,(t3.`op_money` - t4.`op_money`) as money,t3.`user_id` as userId FROM \n" +
+                "\n" +
+                "(\n" +
+                "SELECT \n" +
+                "t.`source_id` as id,\n" +
+                "t.`user_id`,\n" +
+                "       t.`op_money`\n" +
+                "        from ( SELECT * from `gfb_new_asset_log` where `source_id` in\n" +
+                "                                           ( SELECT `source_id`  FROM `gfb_third_batch_log` where `BATCH_NO`  in ('112424','103523','103244','100841')) and `local_type` in \n" +
+                "                                                                                                                ('borrow')\n" +
+                "               )t LEFT JOIN `gfb_users` t1 on t.user_id = t1.`id` \n" +
+                "LEFT JOIN `gfb_user_third_account` t2 on t.user_id = t2.`user_id` \n" +
+                ")\n" +
+                "t3,(\n" +
+                "    SELECT \n" +
+                "t.`source_id` as id,\n" +
+                "t.`user_id`,\n" +
+                "       t.`op_money`\n" +
+                "        from ( SELECT * from `gfb_new_asset_log` where `source_id` in\n" +
+                "                                           ( SELECT `source_id`  FROM `gfb_third_batch_log` where `BATCH_NO`  in ('112424','103523','103244','100841')) and `local_type` in \n" +
+                "                                                                                                                ('financingManagementFee')\n" +
+                "               )t LEFT JOIN `gfb_users` t1 on t.user_id = t1.`id` \n" +
+                "LEFT JOIN `gfb_user_third_account` t2 on t.user_id = t2.`user_id` \n" +
+                "    \n" +
+                "    \n" +
+                " ) t4 where t3.`id` = t4.id\n" +
+                ")\n" +
+                "\n" +
+                "t LEFT JOIN `gfb_users` t8 on t.userId = t8.`id` \n" +
+                "LEFT JOIN `gfb_user_third_account` t9 on t.userId = t9.`user_id` ";
+
+        List<Map<String, Object>> resultList = jdbcTemplate.queryForList(sql.toString());
+        long redId = assetChangeProvider.getRedpackAccountId();
+        UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(redId);
+        String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+        for (Map<String, Object> resultMap : resultList) {
+            long userId = NumberHelper.toLong(resultMap.get("userId"));
+            UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+            long borrowId = NumberHelper.toLong(resultMap.get("borrowId"));
+            long money = NumberHelper.toLong(resultMap.get("money"));
+
+            Specification<NewAssetLog> nals = Specifications
+                    .<NewAssetLog>and()
+                    .eq("userId", userId)
+                    .eq("localType", AssetChangeTypeEnum.freeze.lendPaymentRepair.getLocalType())
+                    .eq("borrowId",borrowId)
+                    .build();
+            long count = newAssetLogService.count(nals);
+            if (count > 0) {
+                continue;
+            }
+
+            // 净值标借款入账
+            AssetChange redpackPublish = new AssetChange();
+            redpackPublish.setMoney(money);
+            redpackPublish.setType(AssetChangeTypeEnum.lendPaymentRepair);  //  净值标借款入账
+            redpackPublish.setUserId(userId);
+            redpackPublish.setForUserId(redId);
+            redpackPublish.setRemark(String.format("净值标借款入账 %s元", StringHelper.formatDouble(money / 100D, true)));
+            redpackPublish.setGroupSeqNo(groupSeqNo);
+            redpackPublish.setSeqNo(assetChangeProvider.getSeqNo());
+            redpackPublish.setForUserId(userId);
+            redpackPublish.setSourceId(borrowId);
+            assetChangeProvider.commonAssetChange(redpackPublish);
+
+            //请求即信红包
+            VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
+            voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
+            voucherPayRequest.setTxAmount(StringHelper.formatDouble(money, 100, false));
+            voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
+            voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
+            voucherPayRequest.setDesLine(String.format("净值标借款入账 %s元", StringHelper.formatDouble(money / 100D, true)));
+            voucherPayRequest.setChannel(ChannelContant.HTML);
+            VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
+            if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+                String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+                throw new Exception(String.format("净值标借款入账失败:%s,borrowId->%s", msg, borrowId));
+            }
+        }
+    }
+
     /**
      * 获取自动投标列表
      *
@@ -110,7 +197,8 @@ public class TestController {
             Specification<NewAssetLog> nals = Specifications
                     .<NewAssetLog>and()
                     .eq("userId", userId)
-                    .eq("localType", AssetChangeTypeEnum.lendPaymentRepair.getLocalType())
+                    .eq("localType", AssetChangeTypeEnum.freeze.lendPaymentRepair.getLocalType())
+                    .eq("borrowId",borrowId)
                     .build();
             long count = newAssetLogService.count(nals);
             if (count > 0) {
