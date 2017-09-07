@@ -21,6 +21,14 @@ public class Jwtintercepter extends HandlerInterceptorAdapter {
 
     @Override
     public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o) throws Exception {
+
+        // 判断当前用户路劲
+        String url = httpServletRequest.getRequestURI();
+
+        if(url.contains("version")){
+            return true;
+        }
+
         if (ObjectUtils.isEmpty(jwtTokenHelper)) {  // 初始化 jwtTokenHelper
             ApplicationContext ac = WebApplicationContextUtils.getRequiredWebApplicationContext(httpServletRequest.getServletContext());
             jwtTokenHelper = (JwtTokenHelper) ac.getBean("jwtTokenHelper");
@@ -39,8 +47,6 @@ public class Jwtintercepter extends HandlerInterceptorAdapter {
         Long userId = jwtTokenHelper.getUserIdFromToken(token);  // 用户ID
         httpServletRequest.setAttribute(SecurityContants.USERID_KEY, userId);
 
-        // 判断当前用户路劲
-        String url = httpServletRequest.getRequestURI();
         log.info("访问地址:" + url);
         String type = jwtTokenHelper.getType(token);
         if (url.contains("finance")) {  // 理财用户

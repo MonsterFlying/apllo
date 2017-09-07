@@ -179,8 +179,8 @@ public class UserCacheServiceImpl implements UserCacheService {
 
 
         //净值额度
-     //   int netWorthQuota = new Double((asset.getUseMoney() + waitCollectionPrincipal) * 0.8 - collection).intValue();//计算净值额度
-        statistic.setNetWorthLimit(StringHelper.formatMon(netAsset / 100D));
+        Double netWorthQuota = new Double((asset.getUseMoney() + waitCollectionPrincipal) * 0.8 - collection);//计算净值额度
+        statistic.setNetWorthLimit(StringHelper.formatMon(netWorthQuota / 100D));
 
         Double assetTotal = new Double(noUseMoney+userMoney+collection);
 

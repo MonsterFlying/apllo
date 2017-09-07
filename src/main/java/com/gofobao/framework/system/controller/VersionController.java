@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 @RestController
 @Api(description = "版本检查")
+
 public class VersionController {
 
     @Autowired
