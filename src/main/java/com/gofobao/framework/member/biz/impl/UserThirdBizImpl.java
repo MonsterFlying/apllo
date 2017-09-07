@@ -1814,9 +1814,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
         // 存管账户ID
         String accountId = userThirdAccount.getAccountId();
-
-        Integer pageIndex = userAccountThirdTxReq.getPageIndex();
-        Integer pageSize = userAccountThirdTxReq.getPageSize();
+        //分页
+        Integer pageIndex = userAccountThirdTxReq.getPageIndex()+1;
+        Integer pageSize  = userAccountThirdTxReq.getPageSize();
         List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
         //装配请求即信请求参数
         AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
