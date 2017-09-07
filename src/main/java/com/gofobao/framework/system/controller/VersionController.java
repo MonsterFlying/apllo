@@ -1,6 +1,5 @@
 package com.gofobao.framework.system.controller;
 
-import com.gofobao.framework.common.qiniu.util.StringUtils;
 import com.gofobao.framework.system.biz.SysVersionBiz;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
