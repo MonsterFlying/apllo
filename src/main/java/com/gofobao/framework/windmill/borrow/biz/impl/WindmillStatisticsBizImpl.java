@@ -46,9 +46,6 @@ public class WindmillStatisticsBizImpl implements WindmillStatisticsBiz {
     @Value("${windmill.des-key}")
     private String desKey;
 
-    @Value("${windmill.local-des-key}")
-    private String localDesKey;
-
 
     private static final Gson GSON = new Gson();
 

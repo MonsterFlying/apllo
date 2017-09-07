@@ -36,9 +36,6 @@ public class WindmillTenderServiceImpl implements WindmillTenderService {
     @Autowired
     private TenderRepository tenderRepository;
 
-    @Value("${windmill.local-des-key}")
-    private String localDesKey;
-
     @Autowired
     private BorrowCollectionRepository borrowCollectionRepository;
 
@@ -110,7 +107,7 @@ public class WindmillTenderServiceImpl implements WindmillTenderService {
             query.setParameter("status", TenderConstans.SUCCESS);
             query.setParameter("userId", tenderLogReq.getPf_user_id());
             try {
-                query.setParameter("id", Long.valueOf(WrbCoopDESUtil.desDecrypt(localDesKey, tenderLogReq.getInvest_record_id())));
+                query.setParameter("id",  tenderLogReq.getInvest_record_id());
             } catch (Exception e) {
             }
             resultTenders = query.getResultList();

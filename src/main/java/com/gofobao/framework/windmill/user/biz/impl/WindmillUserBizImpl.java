@@ -90,8 +90,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
     @Autowired
     private JwtTokenHelper jwtTokenHelper;
 
-    @Value("${windmill.local-des-key}")
-    private String localDesKey;
+
 
 
     @Transactional
@@ -133,7 +132,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
                         registerRes.setRetmsg("注册成功");
                         registerRes.setPf_user_name(StringUtils.isEmpty(users.getUsername()) ? users.getPhone().toString() : users.getUsername());
                         try {
-                            registerRes.setPf_user_id(WrbCoopDESUtil.desEncrypt(localDesKey, users.getId().toString()));
+                            registerRes.setPf_user_id(users.getId().toString());
                         } catch (Exception e) {
 
                         }
@@ -227,7 +226,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
                 smsConfig.setMsg(smsBoby);
                 mqHelper.convertAndSend(smsConfig);
 
-                registerRes.setPf_user_id(WrbCoopDESUtil.desEncrypt(localDesKey, users.getId().toString()));
+                registerRes.setPf_user_id(users.getId().toString());
                 registerRes.setRetmsg("风车理财用户注册:注册成功");
                 registerRes.setRetcode(UserRegisterConstant.SUCCESS);
                 registerRes.setPf_user_name(StringUtils.isEmpty(users.getUsername()) ? users.getPhone() : users.getUsername());
