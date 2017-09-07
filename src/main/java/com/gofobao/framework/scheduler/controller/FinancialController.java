@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 @RestController
@@ -49,6 +50,28 @@ public class FinancialController {
         }
         try {
             fundStatisticsBiz.downloadFundFile(httpServletResponse, date);
+        } catch (Exception e) {
+            log.error("资金流水", e);
+            return;
+        }
+    }
+
+
+
+    @GetMapping("/pub/financial/download/{password}/{userId}")
+    public void downloadFinancial(
+            HttpServletResponse httpServletResponse,
+            HttpServletRequest httpServletRequest,
+            @PathVariable String password,
+            @PathVariable Long userId) {
+        if (!"@GOFOBAO0701WEIBO----=====".equals(password)) {
+            return;
+        }
+        try {
+            fundStatisticsBiz.downloadOnline(httpServletResponse,httpServletRequest, userId);
+
+
+
         } catch (Exception e) {
             log.error("资金流水", e);
             return;
