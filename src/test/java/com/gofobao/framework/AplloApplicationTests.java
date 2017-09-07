@@ -557,7 +557,12 @@ public class AplloApplicationTests {
     @Test
     @Transactional(rollbackOn = Exception.class)
     public void test() {
-        long redpackAccountId = 0;
+        Borrow borrow = new Borrow();
+        long takeUserId = borrow.getTakeUserId();
+        if (ObjectUtils.isEmpty(takeUserId)){
+
+        }
+        /*long redpackAccountId = 0;
         try {
             redpackAccountId = assetChangeProvider.getRedpackAccountId();
         } catch (ExecutionException e) {
@@ -577,7 +582,7 @@ public class AplloApplicationTests {
         VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
             String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-        }
+        }*/
 
    /*   //推送队列结束债权
         MqConfig mqConfig = new MqConfig();

@@ -152,13 +152,15 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         request.setProductId(borrow.getProductId());
         request.setChannel(ChannelContant.HTML);
         TrusteePayQueryResp trusteePayQueryResp = jixinManager.send(JixinTxCodeEnum.TRUSTEE_PAY_QUERY, request, TrusteePayQueryResp.class);
-        if ((ObjectUtils.isEmpty(trusteePayQueryResp)) || (!ObjectUtils.isEmpty(trusteePayQueryResp.getRetCode()) && !JixinResultContants.SUCCESS.equals(trusteePayQueryResp.getRetCode()))) {
+        if (ObjectUtils.isEmpty(trusteePayQueryResp)) {
             throw new Exception("批次放款调用：受托支付查询失败,msg->" + trusteePayQueryResp.getRetMsg());
         }
-        /*收款人id*/
-        long takeUserId = borrow.getTakeUserId();
-        if (!ObjectUtils.isEmpty(takeUserId) && "1".equals(trusteePayQueryResp.getState())) {
-            takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
+        if ("1".equals(trusteePayQueryResp.getState())) {
+                 /*收款人id*/
+            Long takeUserId = borrow.getTakeUserId();
+            if (!ObjectUtils.isEmpty(takeUserId)) {
+                takeUserThirdAccount = userThirdAccountService.findByUserId(takeUserId);
+            }
         }
 
         double totalManageFee = 0; // 净值标, 收取账户管理费
