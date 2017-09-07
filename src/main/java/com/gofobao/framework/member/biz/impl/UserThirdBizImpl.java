@@ -3,7 +3,10 @@ package com.gofobao.framework.member.biz.impl;
 import com.gofobao.framework.api.contants.*;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
 import com.gofobao.framework.api.model.account_id_query.AccountIdQueryRequest;
 import com.gofobao.framework.api.model.account_id_query.AccountIdQueryResponse;
 import com.gofobao.framework.api.model.account_open.AccountOpenRequest;
@@ -18,6 +21,7 @@ import com.gofobao.framework.api.model.auto_credit_invest_auth.AutoCreditInvestA
 import com.gofobao.framework.api.model.auto_credit_invest_auth.AutoCreditInvestAuthResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
+import com.gofobao.framework.api.model.batch_bail_repay.BatchBailRepayRunResp;
 import com.gofobao.framework.api.model.card_bind.CardBindRequest;
 import com.gofobao.framework.api.model.card_bind.CardBindResponse;
 import com.gofobao.framework.api.model.card_bind_details_query.CardBindDetailsQueryRequest;
@@ -58,6 +62,7 @@ import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.member.vo.request.UserAccountThirdTxReq;
 import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
 import com.gofobao.framework.member.vo.response.*;
 import com.gofobao.framework.system.entity.DictItem;
@@ -97,6 +102,8 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @SuppressWarnings("all")
 public class UserThirdBizImpl implements UserThirdBiz {
+    @Autowired
+    JixinTxDateHelper jixinTxDateHelper ;
 
     @Autowired
     UserService userService;
@@ -148,7 +155,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
     ThymeleafHelper thymeleafHelper;
 
     @Autowired
-    OpenAccountBizImpl openAccountBiz ;
+    OpenAccountBizImpl openAccountBiz;
 
 
     //用户来源
@@ -211,9 +218,9 @@ public class UserThirdBizImpl implements UserThirdBiz {
     }
 
     @Override
-   @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoOpenAccountResp> openAccount(VoOpenAccountReq voOpenAccountReq, Long userId, HttpServletRequest httpServletRequest) {
-        voOpenAccountReq.setCardNo(voOpenAccountReq.getCardNo().toUpperCase()) ;
+        voOpenAccountReq.setCardNo(voOpenAccountReq.getCardNo().toUpperCase());
         // 1.用户用户信息
         Users user = userService.findById(userId);
         if (ObjectUtils.isEmpty(user))
@@ -233,8 +240,8 @@ public class UserThirdBizImpl implements UserThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "你的账户已经开户！", VoOpenAccountResp.class));
 
         ResponseEntity<VoOpenAccountResp> voOpenAccountRespResponseEntity = preCheckeForOpenAccount(voOpenAccountReq);
-        if(!voOpenAccountRespResponseEntity.getStatusCode().equals(HttpStatus.OK)){
-            return voOpenAccountRespResponseEntity ;
+        if (!voOpenAccountRespResponseEntity.getStatusCode().equals(HttpStatus.OK)) {
+            return voOpenAccountRespResponseEntity;
         }
 
         String bankName = null;
@@ -350,6 +357,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     /**
      * 开户前置检测
+     *
      * @param voOpenAccountReq
      * @return
      */
@@ -362,38 +370,38 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
         // 从存管获取用户注册信息
-        AccountQueryByMobileRequest accountQueryByMobileReques = new AccountQueryByMobileRequest() ;
-        accountQueryByMobileReques.setMobile(voOpenAccountReq.getMobile()) ;
+        AccountQueryByMobileRequest accountQueryByMobileReques = new AccountQueryByMobileRequest();
+        accountQueryByMobileReques.setMobile(voOpenAccountReq.getMobile());
         AccountQueryByMobileResponse accountQueryByMobileResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_QUERY_BY_MOBILE,
                 accountQueryByMobileReques, AccountQueryByMobileResponse.class);
-        if(!ObjectUtils.isEmpty(accountQueryByMobileResponse)
+        if (!ObjectUtils.isEmpty(accountQueryByMobileResponse)
                 && JixinResultContants.SUCCESS.equals(accountQueryByMobileResponse.getRetCode())
-                && !StringUtils.isEmpty(accountQueryByMobileResponse.getAccountId())  ){
+                && !StringUtils.isEmpty(accountQueryByMobileResponse.getAccountId())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "手机已在存管平台开户, 无需开户！", VoOpenAccountResp.class));
         }
 
-        UserThirdAccount userThirdAccountByIdNo = userThirdAccountService.findByIdNo(voOpenAccountReq.getIdNo()) ;
+        UserThirdAccount userThirdAccountByIdNo = userThirdAccountService.findByIdNo(voOpenAccountReq.getIdNo());
         if (!ObjectUtils.isEmpty(userThirdAccountByIdNo)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "身份证已在存管平台开户, 无需开户！", VoOpenAccountResp.class));
         }
 
-        AccountIdQueryRequest accountIdQueryRequest = new AccountIdQueryRequest() ;
-        accountIdQueryRequest.setIdNo(voOpenAccountReq.getIdNo()) ;
+        AccountIdQueryRequest accountIdQueryRequest = new AccountIdQueryRequest();
+        accountIdQueryRequest.setIdNo(voOpenAccountReq.getIdNo());
         AccountIdQueryResponse accountIdQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_ID_QUERY,
                 accountIdQueryRequest, AccountIdQueryResponse.class);
-        if(!ObjectUtils.isEmpty(accountIdQueryResponse)
+        if (!ObjectUtils.isEmpty(accountIdQueryResponse)
                 && JixinResultContants.SUCCESS.equals(accountIdQueryResponse.getRetCode())
-                && !StringUtils.isEmpty(accountIdQueryResponse.getAccountId())){
+                && !StringUtils.isEmpty(accountIdQueryResponse.getAccountId())) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "身份证已在存管平台开户, 无需开户！", VoOpenAccountResp.class));
         }
 
-        return ResponseEntity.ok(VoBaseResp.error(VoBaseResp.OK, "查询成功", VoOpenAccountResp.class)) ;
+        return ResponseEntity.ok(VoBaseResp.error(VoBaseResp.OK, "查询成功", VoOpenAccountResp.class));
     }
 
     /**
@@ -410,7 +418,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         Gson gson = new Gson();
         try {
             String json = gson.toJson(marketingData);
-            Map<String, String> data = gson.fromJson(json, TypeTokenContants.MAP_ALL_STRING_TOKEN) ;
+            Map<String, String> data = gson.fromJson(json, TypeTokenContants.MAP_ALL_STRING_TOKEN);
             MqConfig mqConfig = new MqConfig();
             mqConfig.setMsg(data);
             mqConfig.setTag(MqTagEnum.MARKETING_OPEN_ACCOUNT);
@@ -823,7 +831,6 @@ public class UserThirdBizImpl implements UserThirdBiz {
             return "password/faile";
         }
     }
-
 
 
     @Override
@@ -1749,25 +1756,72 @@ public class UserThirdBizImpl implements UserThirdBiz {
             return 1;
 
 
-
         } else {
             return 1;
         }
     }
 
+
     /**
-     *
-     * @param userId
+     * 查询用户当天交易记录
+     * @param userAccountThirdTxReq
      * @return
      */
     @Override
-    public ResponseEntity<AccountDetailsQueryItem> queryAccountTx(Long userId) {
-        Date nowDate=new Date();
-        SimpleDateFormat sf=new SimpleDateFormat("YYYYMMDD");
-        String time=sf.format(nowDate);
+    public ResponseEntity<UserAccountThirdTxRes> queryAccountTx(UserAccountThirdTxReq userAccountThirdTxReq) {
+        UserAccountThirdTxRes thridTxRes = VoBaseResp.ok("查询成功", UserAccountThirdTxRes.class);
+        //查询交易时间
+        Date nowDate = new Date();
+        SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd");
+        String startAt= sf.format(nowDate);
+        String endAt=sf.format(DateHelper.addDays(nowDate,1));
 
+        //用户是否为空
+        Users users = userService.findById(userAccountThirdTxReq.getUserId());
+        if (ObjectUtils.isEmpty(users)) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非法请求", UserAccountThirdTxRes.class));
+        }
+        //用户是否开通存管
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(users.getId());
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户没有开通存管", UserAccountThirdTxRes.class));
+        }
+        // 存管账户ID
+        String accountId = userThirdAccount.getAccountId();
 
+        int pageSize = userAccountThirdTxReq.getPageSize(), pageIndex = userAccountThirdTxReq.getPageIndex()==0?userAccountThirdTxReq.getPageIndex()+1:userAccountThirdTxReq.getPageIndex();
 
-        return null;
+        List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
+        //装配请求即信请求参数
+        AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
+        accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));   //页面大小
+        accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));  //启始页
+        // 查询交易时间范围
+        accountDetailsQueryRequest.setStartDate(jixinTxDateHelper.getTxDateStr());
+        accountDetailsQueryRequest.setEndDate(jixinTxDateHelper.getTxDateStr());
+        //交易量；类型
+        accountDetailsQueryRequest.setType(userAccountThirdTxReq.getType());
+        //存管账户
+        accountDetailsQueryRequest.setAccountId(accountId);
+        //发送即信请求
+        AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
+                accountDetailsQueryRequest,
+                AccountDetailsQueryResponse.class);
+        //判断返回结果
+        if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
+            String ressultMsg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, ressultMsg, UserAccountThirdTxRes.class));
+        }
+        String subPacks = accountDetailsQueryResponse.getSubPacks();
+        //判断交易流水
+        if (StringUtils.isEmpty(subPacks)||subPacks.equals("[]")) {
+            thridTxRes.setDetailsQueryItems(new ArrayList<>(0));
+            return ResponseEntity.ok(thridTxRes);
+        }
+        //json转对象
+        List<AccountDetailsQueryItem> detailsQueryItems = new Gson().fromJson(subPacks, new TypeToken<AccountDetailsQueryItem>() {
+        }.getType());
+        thridTxRes.setDetailsQueryItems(detailsQueryItems);
+        return ResponseEntity.ok(thridTxRes);
     }
 }
