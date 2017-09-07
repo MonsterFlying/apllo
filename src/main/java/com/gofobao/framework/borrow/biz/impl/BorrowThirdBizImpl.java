@@ -157,7 +157,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         debtRegisterRequest.setAcqRes(StringHelper.toString(borrowId));
         debtRegisterRequest.setChannel(ChannelContant.HTML);
         //判断是否是受托支付标的  目前只支持官标渠道标
-        if (entrustFlag && borrow.getType().intValue() == 0 && borrow.getType().intValue() == 4) {
+        if (entrustFlag && (borrow.getType().intValue() == 0 || borrow.getType().intValue() == 4)) {
             /* 公司实际收款人账户 */
             UserThirdAccount takeAccount = jixinHelper.getTakeUserAccount();
             Long takeUserId = takeAccount.getUserId();   // 公司实际收款人*/

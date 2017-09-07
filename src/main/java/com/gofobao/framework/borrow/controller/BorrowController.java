@@ -1,10 +1,7 @@
 package com.gofobao.framework.borrow.controller;
 
 import com.gofobao.framework.borrow.biz.BorrowBiz;
-import com.gofobao.framework.borrow.vo.request.VoAddNetWorthBorrow;
-import com.gofobao.framework.borrow.vo.request.VoBorrowListReq;
-import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
-import com.gofobao.framework.borrow.vo.request.VoDoAgainVerifyReq;
+import com.gofobao.framework.borrow.vo.request.*;
 import com.gofobao.framework.borrow.vo.response.BorrowInfoRes;
 import com.gofobao.framework.borrow.vo.response.VoViewBorrowListWarpRes;
 import com.gofobao.framework.borrow.vo.response.VoViewVoBorrowDescWarpRes;
@@ -61,6 +58,18 @@ public class BorrowController {
         voBorrowListReq.setPageSize(pageSize);
         voBorrowListReq.setType(type);
         return borrowBiz.findAll(voBorrowListReq);
+    }
+
+
+    /**
+     * 发送复审
+     *
+     * @return
+     */
+    @ApiOperation("发送复审")
+    @PostMapping("/pub/borrow/send/again/verify")
+    public ResponseEntity<VoBaseResp> sendAgainVerify(@ModelAttribute VoSendAgainVerify voSendAgainVerify){
+        return borrowBiz.sendAgainVerify(voSendAgainVerify);
     }
 
     @ApiOperation("非流转标信息")
