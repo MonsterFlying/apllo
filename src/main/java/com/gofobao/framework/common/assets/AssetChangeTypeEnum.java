@@ -3,6 +3,10 @@ package com.gofobao.framework.common.assets;
 
 public enum AssetChangeTypeEnum {
 
+    /**
+     * 净值标借款入账
+     */
+    lendPaymentRepair("净值标借款入账", "lendPaymentRepair", "0", "add@useMoney", "", "B"),
 
     /**
      * 投资人到期收回本息

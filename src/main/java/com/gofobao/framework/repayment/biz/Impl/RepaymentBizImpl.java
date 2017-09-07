@@ -501,7 +501,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param borrow
      * @param titularBorrowAccount
      * @param voBuildThirdRepayReqs
-     * @param seqNo
      * @param groupSeqNo
      * @param batchAssetChange
      * @param borrowRepaymentMaps

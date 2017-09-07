@@ -171,21 +171,23 @@ public class UserBonusScheduler {
             int pageSize = 50;
             long money = 0;
             List<Map<String, Object>> resultList = null;
+            long redId = assetChangeProvider.getRedpackAccountId();
+            UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(redId);
+            String groupSeqNo = assetChangeProvider.getGroupSeqNo();
             do {
                 sql.append(" limit " + (pageIndex++ - 1) * pageSize + "," + pageIndex * pageSize);
                 resultList = jdbcTemplate.queryForList(sql.toString());
-                long redId = assetChangeProvider.getRedpackAccountId();
-                UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(redId);
+
                 for (Map<String, Object> map : resultList) {
                     money = (int) MathHelper.myRound(NumberHelper.toInt(map.get("sum")) / 100 * 0.005 / 365, 0);
                     Long userId = NumberHelper.toLong(map.get("userId"));
-                    String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+                    UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(redId);
 
                     //请求即信红包
                     VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
                     voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
                     voucherPayRequest.setTxAmount(StringHelper.formatDouble(money, 100, false));
-                    voucherPayRequest.setForAccountId(String.valueOf(redId));
+                    voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
                     voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
                     voucherPayRequest.setDesLine("每日提成");
                     voucherPayRequest.setChannel(ChannelContant.HTML);
