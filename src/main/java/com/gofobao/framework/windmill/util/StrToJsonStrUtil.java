@@ -48,7 +48,11 @@ public class StrToJsonStrUtil {
         for (int i = 0; i < params.length; i++) {
             String[] p = params[i].split("=");
             for (int j = 0; j < p.length ; j++) {
-                map.put(p[0], StringUtils.isEmpty(p[1])?"":p[1]);
+                if(p.length==1){
+                    map.put(p[0],null);
+                }else{
+                    map.put(p[0],p[1]);
+                }
             }
         }
         log.info("风车理财请求平台 解密后的param参数:"+GSON.toJson(map));

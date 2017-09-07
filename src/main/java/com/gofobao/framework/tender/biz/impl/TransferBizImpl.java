@@ -492,7 +492,6 @@ public class TransferBizImpl implements TransferBiz {
     public List<BorrowCollection> addChildTenderCollection(Date nowDate, Transfer transfer, Borrow parentBorrow, List<Tender> childTenderList) throws Exception {
         List<BorrowCollection> childTenderCollectionList = new ArrayList<>();/* 债权子记录回款记录 */
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
-        String seqNo = assetChangeProvider.getSeqNo();
         String borrowCollectionIds = transfer.getBorrowCollectionIds();
         //生成子级债权回款记录，标注老债权回款已经转出
         Specification<BorrowCollection> bcs = null;
@@ -576,7 +575,7 @@ public class TransferBizImpl implements TransferBiz {
             assetChange.setType(AssetChangeTypeEnum.collectionAdd);
             assetChange.setSourceId(childTender.getId());
             assetChange.setGroupSeqNo(groupSeqNo);
-            assetChange.setSeqNo(seqNo);
+            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
             assetChange.setRemark(String.format("投资[%s]成功, 添加待还%s元", transfer.getTitle(),
                     StringHelper.formatDouble(collectionMoney / 100D, true)));
             assetChange.setUserId(childTender.getUserId());
