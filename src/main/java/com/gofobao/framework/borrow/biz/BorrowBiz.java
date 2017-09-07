@@ -16,7 +16,13 @@ import java.util.Map;
  */
 public interface BorrowBiz {
 
-     void touchMarketingByTender(Tender tender);
+    /**
+     * 发送复审
+     * @return
+     */
+    ResponseEntity<VoBaseResp> sendAgainVerify(VoSendAgainVerify voSendAgainVerify);
+
+    void touchMarketingByTender(Tender tender);
 
 
     /**

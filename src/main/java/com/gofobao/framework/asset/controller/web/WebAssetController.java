@@ -1,10 +1,12 @@
 package com.gofobao.framework.asset.controller.web;
 
 import com.gofobao.framework.asset.biz.AssetBiz;
+import com.gofobao.framework.asset.vo.request.VoUnsendRedPacket;
 import com.gofobao.framework.asset.vo.response.VoAccruedMoneyResp;
 import com.gofobao.framework.asset.vo.response.VoAssetIndexResp;
 import com.gofobao.framework.asset.vo.response.VoCollectionResp;
 import com.gofobao.framework.asset.vo.response.VoUserAssetInfoResp;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.vo.response.pc.ExpenditureDetail;
 import com.gofobao.framework.member.vo.response.pc.IncomeEarnedDetail;
 import com.gofobao.framework.member.vo.response.pc.VoViewAssetStatisticWarpRes;
@@ -13,11 +15,10 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestAttribute;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
+
+import javax.validation.Valid;
 
 /**
  * Created by Zeke on 2017/5/19.
@@ -29,6 +30,19 @@ public class WebAssetController {
     @Autowired
     private AssetBiz assetBiz;
 
+
+    /**
+     * 撤回即信红包
+     *
+     * @param voUnsendRedPacket
+     * @return
+     */
+    @ApiOperation("撤回即信红包")
+    @GetMapping("/pub/asset/pc/v2/redpacket/unsend")
+    public ResponseEntity<VoBaseResp> unsendRedPacket(@Valid @ModelAttribute VoUnsendRedPacket voUnsendRedPacket) {
+        return assetBiz.unsendRedPacket(voUnsendRedPacket);
+    }
+
     @ApiOperation("获取用户资产信息")
     @GetMapping("/asset/pc/v2/info")
     public ResponseEntity<VoUserAssetInfoResp> userAAssessetInfo(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
@@ -38,27 +52,27 @@ public class WebAssetController {
 
     @ApiOperation("资产中心数据")
     @GetMapping("/asset/pc/v2/index")
-    public ResponseEntity<VoAssetIndexResp> asset(@ApiIgnore  @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        return assetBiz.asset(userId) ;
+    public ResponseEntity<VoAssetIndexResp> asset(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return assetBiz.asset(userId);
     }
 
     @ApiOperation("累计收益详情")
     @GetMapping("/asset/pc/v2/accruedMoney")
     public ResponseEntity<VoAccruedMoneyResp> accruedMoney(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        return assetBiz.accruedMoney(userId) ;
+        return assetBiz.accruedMoney(userId);
     }
 
 
     @ApiOperation("账户余额")
     @GetMapping("/asset/pc/v2/accountMoney")
     public ResponseEntity<VoViewAssetStatisticWarpRes> accountMoney(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        return assetBiz.pcAccountStatstic(userId) ;
+        return assetBiz.pcAccountStatstic(userId);
     }
 
     @ApiOperation("待收总额")
     @GetMapping("/asset/pc/v2/collectionMoney")
     public ResponseEntity<VoCollectionResp> collectionMoney(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
-        return assetBiz.collectionMoney(userId) ;
+        return assetBiz.collectionMoney(userId);
     }
 
     @ApiOperation("账户总额统计")
@@ -66,6 +80,7 @@ public class WebAssetController {
     public ResponseEntity<VoViewAssetStatisticWarpRes> accountTotal(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return assetBiz.pcAccountStatstic(userId);
     }
+
     @ApiOperation("总收益统计詳情")
     @GetMapping("/asset/pc/v2/incomeEarnedTotal")
     public ResponseEntity<IncomeEarnedDetail> incomeEarnedTotal(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
@@ -81,7 +96,7 @@ public class WebAssetController {
     @ApiOperation("资产中心资金同步问题")
     @PostMapping("/home/pc/v2/synHome")
     public ResponseEntity<VoAssetIndexResp> synHome(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
-        return assetBiz.synHome(userId) ;
+        return assetBiz.synHome(userId);
     }
 
 }

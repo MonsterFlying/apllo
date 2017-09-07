@@ -103,6 +103,15 @@ public enum JixinTxCodeEnum {
             "红包派发"),
 
     /**
+     * 红包撤销
+     */
+    UNSEND_RED_PACKET(
+            "voucherPayCancel",
+            "/p2p/online",
+            "红包撤销"
+    ),
+
+    /**
      * 标的登记
      */
     DEBT_REGISTER(
