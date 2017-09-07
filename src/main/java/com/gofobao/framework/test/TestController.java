@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
@@ -73,6 +74,7 @@ public class TestController {
      */
     @ApiOperation("获取自动投标列表")
     @PostMapping("/pub/lend/payment/repair")
+    @Transactional
     public void lendPaymentRepair() throws Exception {
         String sql = "\n" +
                 "\n" +
