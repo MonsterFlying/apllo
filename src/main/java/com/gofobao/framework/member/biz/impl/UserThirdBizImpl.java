@@ -1779,23 +1779,24 @@ public class UserThirdBizImpl implements UserThirdBiz {
         }
 
         UserAccountThirdTxReq userAccountThirdTxReq = null;
-        if (StringUtils.isEmpty(voPcDoFirstVerity.getParamStr())) {
-            try {
-                userAccountThirdTxReq = new Gson().fromJson(voPcDoFirstVerity.getParamStr(), new TypeToken<UserAccountThirdTxReq>() {
-                }.getType());
-            } catch (Exception e) {
-                return ResponseEntity
-                        .badRequest()
-                        .body(VoBaseResp.error(VoBaseResp.ERROR, "pc查询存管用户,请求参数字符串转对象失败", UserAccountThirdTxRes.class));
-            }
+        if (StringUtils.isEmpty(paramStr)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "pc查询存管用户,请求参数字符串为空", UserAccountThirdTxRes.class));
         }
+        try {
+            userAccountThirdTxReq = new Gson().fromJson(voPcDoFirstVerity.getParamStr(),
+                    new TypeToken<UserAccountThirdTxReq>() {
+                    }.getType());
+        } catch (Exception e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc查询存管用户,请求参数字符串转对象失败", UserAccountThirdTxRes.class));
+        }
 
         UserAccountThirdTxRes thridTxRes = VoBaseResp.ok("查询成功", UserAccountThirdTxRes.class);
         //查询交易时间
-        String txDateStr=jixinTxDateHelper.getTxDateStr();
+        String txDateStr = jixinTxDateHelper.getTxDateStr();
 
         //用户是否为空
         Users users = userService.findById(userAccountThirdTxReq.getUserId());
