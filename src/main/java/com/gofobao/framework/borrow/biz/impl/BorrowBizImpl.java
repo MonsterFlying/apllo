@@ -1268,7 +1268,7 @@ public class BorrowBizImpl implements BorrowBiz {
     public boolean doTrusteePay(Long borrowId) {
         Borrow borrow = borrowService.findByIdLock(borrowId);
         String productId = borrow.getProductId();
-        Preconditions.checkNotNull(productId, "受托支付记录查询, 当前标的为登记");
+        Preconditions.checkNotNull(productId, String.format("受托支付记录查询, 当前标的为登记:borrowId%s",borrowId));
         Long userId = borrow.getUserId();
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
 
