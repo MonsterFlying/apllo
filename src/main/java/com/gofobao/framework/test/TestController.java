@@ -113,6 +113,7 @@ public class TestController {
                     .<NewAssetLog>and()
                     .eq("userId", userId)
                     .eq("localType", AssetChangeTypeEnum.lendPaymentRepair.getLocalType())
+                    .eq("sourceId", borrowId)
                     .build();
             long count = newAssetLogService.count(nals);
             if (count > 0) {
