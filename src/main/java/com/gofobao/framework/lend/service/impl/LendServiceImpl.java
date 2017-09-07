@@ -99,7 +99,7 @@ public class LendServiceImpl implements LendService {
     }
 
     @Override
-    public Map<String, Object> list(Page page,Long userId) {
+    public Map<String, Object> list(Page page, Long userId) {
         Map<String, Object> resultMaps = Maps.newHashMap();
 
         org.springframework.data.domain.Page<Lend> lends = lendRepository.findAll(
@@ -128,11 +128,11 @@ public class LendServiceImpl implements LendService {
             lend.setLendId(p.getId());
             lend.setApr(StringHelper.formatMon(p.getApr() / 100D) + BorrowContants.PERCENT);
             Users user = usersMap.get(p.getUserId());
-            String userName ="";
-            if(user.getId().intValue()==userId.intValue()){
-                userName=StringUtils.isEmpty(user.getUsername())?user.getPhone():user.getUsername();
-            }else {
-                userName= StringUtils.isEmpty(user.getUsername()) ?
+            String userName = "";
+            if (user.getId().intValue() == userId.intValue()) {
+                userName = StringUtils.isEmpty(user.getUsername()) ? user.getPhone() : user.getUsername();
+            } else {
+                userName = StringUtils.isEmpty(user.getUsername()) ?
                         UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM) :
                         UserHelper.hideChar(user.getUsername(), UserHelper.USERNAME_NUM);
             }
@@ -144,12 +144,12 @@ public class LendServiceImpl implements LendService {
                 lend.setSpend(1d);
                 lend.setStatusStr(LendContants.STATUS_YES_STR);
             }
-            lend.setAvatar(StringUtils.isEmpty(user.getAvatarPath())?javaDomain+"/images/user/default_avatar.jpg":user.getAvatarPath());
+            lend.setAvatar(StringUtils.isEmpty(user.getAvatarPath()) ? javaDomain + "/images/user/default_avatar.jpg" : user.getAvatarPath());
             lend.setReleaseAt(DateHelper.dateToString(p.getCreatedAt()));
             lend.setCollectionAt(DateHelper.dateToString(p.getRepayAt()));
             lend.setSpend(Double.parseDouble(StringHelper.formatMon(p.getMoneyYes() / new Double(p.getMoney()))));
             lend.setLimit(p.getTimeLimit());
-            lend.setStartMoney(StringHelper.formatMon(p.getLowest()/100D));
+            lend.setStartMoney(StringHelper.formatMon(p.getLowest() / 100D));
             lend.setStatus(p.getStatus());
             lendListRes.add(lend);
         });
@@ -184,8 +184,9 @@ public class LendServiceImpl implements LendService {
         lendInfo.setTimeLimit(lend.getTimeLimit() + BorrowContants.DAY);
         lendInfo.setCollectionAt(DateHelper.dateToString(lend.getRepayAt()));
 
-        Users users = usersRepository.findOne(userId);
-        lendInfo.setUserName(lend.getUserId().equals(userId)?users.getPhone(): StringUtils.isEmpty(users.getPhone())?UserHelper.hideChar(users.getPhone(), UserHelper.PHONE_NUM) : UserHelper.hideChar(users.getUsername(), UserHelper.USERNAME_NUM));
+        Users users = usersRepository.findOne(lend.getUserId());
+
+        lendInfo.setUserName(users.getId().equals(userId) ? users.getPhone() : StringUtils.isEmpty(users.getUsername()) ? UserHelper.hideChar(users.getPhone(), UserHelper.PHONE_NUM) : UserHelper.hideChar(users.getUsername(), UserHelper.USERNAME_NUM));
         Asset asset = assetService.findByUserId(userId); //查询会员资产信息
         if (ObjectUtils.isEmpty(asset)) {
             return null;
@@ -209,12 +210,12 @@ public class LendServiceImpl implements LendService {
 
     @Override
     public List<LendInfoList> infoList(Long userId, Long lendId) {
-        Specification lendSpecification=Specifications.<Lend>and()
-                .eq("id",lendId)
-                .eq("userId",userId)
+        Specification lendSpecification = Specifications.<Lend>and()
+                .eq("id", lendId)
+                .eq("userId", userId)
                 .build();
-        Lend lend=lendRepository.findOne(lendSpecification);
-        if(ObjectUtils.isEmpty(lend)){
+        Lend lend = lendRepository.findOne(lendSpecification);
+        if (ObjectUtils.isEmpty(lend)) {
             return Collections.EMPTY_LIST;
         }
         Specification borrowSpecification = Specifications.<Borrow>and()
@@ -225,9 +226,9 @@ public class LendServiceImpl implements LendService {
         if (ObjectUtils.isEmpty(borrows)) {
             return Collections.EMPTY_LIST;
         }
-        Borrow borrow=borrows.get(0);
-        List<LendBlacklist>blacklists=blacklistRepository.findByUserId(userId);
-        Map<Long,LendBlacklist> blacklistMap=blacklists.stream().collect(Collectors.toMap(LendBlacklist::getBlackUserId,Function.identity()));
+        Borrow borrow = borrows.get(0);
+        List<LendBlacklist> blacklists = blacklistRepository.findByUserId(userId);
+        Map<Long, LendBlacklist> blacklistMap = blacklists.stream().collect(Collectors.toMap(LendBlacklist::getBlackUserId, Function.identity()));
         List<BorrowRepayment> borrowRepayments = borrowRepaymentRepository.findByBorrowId(borrow.getId());
         List<Long> userIds = borrowRepayments.stream().map(p -> p.getUserId()).collect(Collectors.toList());
         List<Users> users = usersRepository.findByIdIn(new ArrayList(userIds));
@@ -236,13 +237,13 @@ public class LendServiceImpl implements LendService {
         borrowRepayments.stream().forEach(p -> {
             LendInfoList lendInfo = new LendInfoList();
             Users tempUser = usersMap.get(p.getUserId());
-            lendInfo.setToUserBackList(ObjectUtils.isEmpty(blacklistMap.get(p.getUserId()))?false:true);
+            lendInfo.setToUserBackList(ObjectUtils.isEmpty(blacklistMap.get(p.getUserId())) ? false : true);
             lendInfo.setUserName(StringUtils.isEmpty(tempUser.getUsername()) ? tempUser.getPhone() : tempUser.getUsername());
             lendInfo.setUserId(tempUser.getId());
-            lendInfo.setApr(StringHelper.formatMon(borrow.getApr()/100D));
-            lendInfo.setMoney(StringHelper.formatMon(p.getRepayMoney()/100D));
+            lendInfo.setApr(StringHelper.formatMon(borrow.getApr() / 100D));
+            lendInfo.setMoney(StringHelper.formatMon(p.getRepayMoney() / 100D));
             lendInfo.setRepaymentId(p.getId());
-            lendInfo.setRepayAtYes(ObjectUtils.isEmpty(p.getRepayAtYes())?"":DateHelper.dateToString(p.getRepayAtYes()));
+            lendInfo.setRepayAtYes(ObjectUtils.isEmpty(p.getRepayAtYes()) ? "" : DateHelper.dateToString(p.getRepayAtYes()));
             lendInfo.setRepayAt(DateHelper.dateToString(p.getRepayAt()));
             lendInfo.setTimeLimit(lend.getTimeLimit());
             lendInfos.add(lendInfo);
@@ -252,7 +253,7 @@ public class LendServiceImpl implements LendService {
 
     @Override
     public Map<String, Object> queryUser(VoUserLendReq voUserLendReq) {
-        Map<String, Object> resultMaps=Maps.newHashMap();
+        Map<String, Object> resultMaps = Maps.newHashMap();
         Specification specification = Specifications.<Lend>and()
                 .eq("userId", voUserLendReq.getUserId())
                 .build();
@@ -262,10 +263,10 @@ public class LendServiceImpl implements LendService {
                         voUserLendReq.getPageSize(),
                         new Sort(Sort.Direction.DESC, "id")));
         List<Lend> lendList = lendPage.getContent();
-        Long totalCount=lendPage.getTotalElements();
-        resultMaps.put("totalCount",totalCount);
+        Long totalCount = lendPage.getTotalElements();
+        resultMaps.put("totalCount", totalCount);
         if (CollectionUtils.isEmpty(lendList)) {
-            resultMaps.put("lendList",new ArrayList<>(0));
+            resultMaps.put("lendList", new ArrayList<>(0));
             return resultMaps;
         }
         List<UserLendInfo> userLendInfos = Lists.newArrayList();
@@ -276,7 +277,7 @@ public class LendServiceImpl implements LendService {
             userLendInfo.setRepayAt(DateHelper.dateToString(p.getRepayAt()));
             userLendInfo.setLendMoney(StringHelper.formatMon(p.getMoney() / 100D));
             userLendInfo.setTitle(p.getTimeLimit() + BorrowContants.DAY + "," + DateHelper.dateToString(p.getCreatedAt()));
-            userLendInfo.setSurplusMoney(StringHelper.formatDouble((p.getMoney() - p.getMoneyYes()) / 100D,true));
+            userLendInfo.setSurplusMoney(StringHelper.formatDouble((p.getMoney() - p.getMoneyYes()) / 100D, true));
             String statusStr = p.getStatus() == LendContants.STATUS_NO ? LendContants.STATUS_NO_STR : LendContants.STATUS_YES_STR;
             userLendInfo.setStatusStr(statusStr);
             userLendInfo.setStatus(p.getStatus());
@@ -285,7 +286,7 @@ public class LendServiceImpl implements LendService {
             userLendInfos.add(userLendInfo);
         });
 
-        resultMaps.put("lendList",userLendInfos);
+        resultMaps.put("lendList", userLendInfos);
         return resultMaps;
     }
 
