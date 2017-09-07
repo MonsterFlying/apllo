@@ -1,5 +1,6 @@
 package com.gofobao.framework.scheduler.biz;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public interface FundStatisticsBiz {
@@ -33,4 +34,12 @@ public interface FundStatisticsBiz {
      */
     void downloadFundFile(HttpServletResponse httpServletResponse, String date) throws Exception ;
 
+
+    /**
+     * 实时下载日志流水
+     * @param httpServletResponse
+     * @param httpServletRequest
+     * @param userId
+     */
+    void downloadOnline(HttpServletResponse httpServletResponse, HttpServletRequest httpServletRequest, Long userId) throws Exception;
 }

@@ -1,11 +1,15 @@
 package com.gofobao.framework.scheduler.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinFileManager;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryItem;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
+import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.asset.entity.Asset;
@@ -24,7 +28,10 @@ import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.migrate.FormatHelper;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.io.Files;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -38,15 +45,21 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
+import javax.mail.internet.MimeUtility;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @Slf4j
@@ -367,8 +380,8 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
                 }
             }
         }
-        FileOutputStream writer = new FileOutputStream(String.format("%s/%s.xls", filePath ,date));
-        xwb.write(writer) ;
+        FileOutputStream writer = new FileOutputStream(String.format("%s/%s.xls", filePath, date));
+        xwb.write(writer);
 
 
      /*   httpServletResponse.setHeader("Content-Disposition", "attachment;filename=" + new String(date.getBytes("utf-8"), "iso8859-1"));// 设置头信息
@@ -377,6 +390,207 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
         xwb.write(out);// 进行输出，下载到本地
         out.flush();
         out.close();*/
+    }
+
+    Gson GSON = new Gson();
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void downloadOnline(HttpServletResponse httpServletResponse, HttpServletRequest httpServletRequest, Long userId) throws Exception {
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        Preconditions.checkNotNull(userThirdAccount, "当前用户未开户");
+        BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
+        balanceQueryRequest.setChannel(ChannelContant.HTML);
+        balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
+        BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
+        if ((ObjectUtils.isEmpty(balanceQueryResponse)) || !balanceQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
+            String msg = ObjectUtils.isEmpty(balanceQueryResponse) ? "当前网络异常, 请稍后尝试!" : balanceQueryResponse.getRetMsg();
+            throw new Exception("查询用户余额失败");
+        }
+        int pageSize = 10, pageIndex = 1, realSize = 0;
+        List<AccountDetailsQueryItem> all = new ArrayList<>();
+        do {
+            AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
+            accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
+            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
+            accountDetailsQueryRequest.setStartDate(jixinTxDateHelper.getTxDateStr()); // 查询当天数据
+            accountDetailsQueryRequest.setEndDate(jixinTxDateHelper.getTxDateStr());
+            accountDetailsQueryRequest.setType("0");
+            accountDetailsQueryRequest.setAccountId(userThirdAccount.getAccountId());
+
+            AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
+                    accountDetailsQueryRequest,
+                    AccountDetailsQueryResponse.class);
+
+            if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
+                String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
+                log.error(String.format("资金同步失败: %s", msg));
+                throw new Exception("查询用户资金失败");
+            }
+            pageIndex++;
+            Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
+            }.getType()));
+            List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
+            if (CollectionUtils.isEmpty(accountDetailsQueryItems)) {
+                break;
+            }
+
+            realSize = accountDetailsQueryItems.size();
+            all.addAll(accountDetailsQueryItems);
+        } while (pageSize == realSize);
+
+
+        XSSFWorkbook xwb = new XSSFWorkbook();//创建excel表格的工作空间
+        XSSFSheet localSheet = xwb.createSheet("本地资金流水");
+        createStream(localSheet);
+
+
+        int index = 0;
+        for (AccountDetailsQueryItem item : all) {
+            index++;
+            XSSFRow titleRow = localSheet.createRow(index);
+            XSSFCell realName = titleRow.createCell(0);
+            realName.setCellValue(item.getAccDate());
+
+            XSSFCell accountId = titleRow.createCell(1);
+            accountId.setCellValue(item.getInpDate());
+
+            XSSFCell seqNo = titleRow.createCell(2);
+            seqNo.setCellValue(item.getRelDate());
+
+            XSSFCell amount = titleRow.createCell(3);
+            amount.setCellValue(item.getInpTime());
+
+            XSSFCell totalAmount = titleRow.createCell(4);
+            totalAmount.setCellValue(item.getTraceNo());
+
+            XSSFCell jixinType = titleRow.createCell(5);
+            jixinType.setCellValue("账号" + item.getAccountId());
+
+            XSSFCell localTypeName = titleRow.createCell(6);
+            localTypeName.setCellValue(item.getTranType());
+
+            XSSFCell flag = titleRow.createCell(7);
+            flag.setCellValue(item.getOrFlag());
+
+            XSSFCell returnCell = titleRow.createCell(8);
+            returnCell.setCellValue(item.getTxAmount());
+
+            XSSFCell createTime = titleRow.createCell(9);
+            createTime.setCellValue(item.getTxFlag());
+
+            XSSFCell describe = titleRow.createCell(10);
+            describe.setCellValue(item.getDescribe());
+
+            XSSFCell currency = titleRow.createCell(11);
+            currency.setCellValue(item.getCurrency());
+
+            XSSFCell currBal = titleRow.createCell(12);
+            currBal.setCellValue(item.getCurrBal());
+
+            XSSFCell forAccountId = titleRow.createCell(13);
+            forAccountId.setCellValue("账号" + item.getForAccountId());
+            XSSFCell account = titleRow.createCell(14);
+            account.setCellValue(userThirdAccount.getName());
+
+            XSSFCell forAccount = titleRow.createCell(15);
+            String forAccountIdStr = item.getForAccountId();
+            if(!StringUtils.isEmpty(StringUtils.trimAllWhitespace(forAccountIdStr))){
+                UserThirdAccount byAccountId = userThirdAccountService.findByAccountId(forAccountIdStr);
+                if(!ObjectUtils.isEmpty(byAccountId)){
+                    account.setCellValue(byAccountId.getName());
+                }
+            }
+        }
+
+        String filename = String.format("%s.xls", userId);//设置下载时客户端Excel的名称
+        filename = encodeFilename(filename, httpServletRequest);
+        httpServletResponse.setContentType("application/vnd.ms-excel");
+        httpServletResponse.setHeader("Content-disposition", "attachment;filename=" + filename);
+        OutputStream ouputStream = httpServletResponse.getOutputStream();
+        xwb.write(ouputStream);
+        ouputStream.flush();
+        ouputStream.close();
+    }
+
+    public static String encodeFilename(String filename, HttpServletRequest request) {
+        /**
+         * 获取客户端浏览器和操作系统信息
+         * 在IE浏览器中得到的是：User-Agent=Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; Maxthon; Alexa Toolbar)
+         * 在Firefox中得到的是：User-Agent=Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.7.10) Gecko/20050717 Firefox/1.0.6
+         */
+        String agent = request.getHeader("USER-AGENT");
+        try {
+            if ((agent != null) && (-1 != agent.indexOf("MSIE"))) {
+                String newFileName = URLEncoder.encode(filename, "UTF-8");
+                newFileName = StringUtils.replace(newFileName, "+", "%20");
+                if (newFileName.length() > 150) {
+                    newFileName = new String(filename.getBytes("GB2312"), "ISO8859-1");
+                    newFileName = StringUtils.replace(newFileName, " ", "%20");
+                }
+                return newFileName;
+            }
+            if ((agent != null) && (-1 != agent.indexOf("Mozilla")))
+                return MimeUtility.encodeText(filename, "UTF-8", "B");
+
+            return filename;
+        } catch (Exception ex) {
+            return filename;
+        }
+    }
+
+    private void createStream(XSSFSheet localSheet) {
+        XSSFRow titleRow = localSheet.createRow(0);
+        XSSFCell realName = titleRow.createCell(0);
+        realName.setCellValue("入账时间");
+
+        XSSFCell accountId = titleRow.createCell(1);
+        accountId.setCellValue("交易时间");
+
+        XSSFCell seqNo = titleRow.createCell(2);
+        seqNo.setCellValue("自然日期");
+
+        XSSFCell amount = titleRow.createCell(3);
+        amount.setCellValue("交易时间");
+
+        XSSFCell totalAmount = titleRow.createCell(4);
+        totalAmount.setCellValue("流水号");
+
+        XSSFCell jixinType = titleRow.createCell(5);
+        jixinType.setCellValue("电子账户");
+
+        XSSFCell localTypeName = titleRow.createCell(6);
+        localTypeName.setCellValue("交易类型");
+
+        XSSFCell flag = titleRow.createCell(7);
+        flag.setCellValue("冲正撤销标志");
+
+        XSSFCell returnCell = titleRow.createCell(8);
+        returnCell.setCellValue("交易金额");
+
+        XSSFCell createTime = titleRow.createCell(9);
+        createTime.setCellValue("交易金额符号");
+
+
+        XSSFCell describe = titleRow.createCell(10);
+        describe.setCellValue("描述信息");
+
+
+        XSSFCell currency = titleRow.createCell(11);
+        currency.setCellValue("货币代码");
+
+        XSSFCell currBal = titleRow.createCell(12);
+        currBal.setCellValue("交易后余额");
+
+        XSSFCell forAccountId = titleRow.createCell(13);
+        forAccountId.setCellValue("对手电子账号");
+
+        XSSFCell account = titleRow.createCell(14);
+        account.setCellValue("账户姓名");
+
+        XSSFCell forAccount = titleRow.createCell(15);
+        forAccount.setCellValue("对手账户姓名");
+
     }
 
     private void createAssetTitle(XSSFSheet assetSheel) {
