@@ -44,6 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.*;
@@ -86,6 +87,7 @@ public class TestController {
 
     @ApiOperation("获取自动投标列表")
     @GetMapping("/pub/batch/deal")
+    @Transactional
     public void batchDeal(@PathVariable("sourceId") String sourceId, @PathVariable("batchNo") String batchNo) {
        /* Map<String,Object> acqMap = new HashMap<>();
         acqMap.put("borrowId", 169979);
@@ -120,6 +122,7 @@ public class TestController {
 
     @ApiOperation("获取自动投标列表")
     @PostMapping("/pub/lend/payment/repair1")
+    @Transactional
     public void lendPaymentRepair1() throws Exception {
         String sql = "\n" +
                 "SELECT t.*,t8.username,t8.realname, concat('\\'',t9.account_id) from (\n" +
@@ -213,6 +216,7 @@ public class TestController {
      */
     @ApiOperation("获取自动投标列表")
     @PostMapping("/pub/lend/payment/repair")
+    @Transactional
     public void lendPaymentRepair() throws Exception {
         String sql = "\n" +
                 "\n" +
