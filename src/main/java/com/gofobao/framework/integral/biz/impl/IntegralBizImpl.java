@@ -307,21 +307,6 @@ public class IntegralBizImpl implements IntegralBiz {
         DictValue dictValue = jixinCache.get(JixinContants.RED_PACKET_USER_ID);
         UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(dictValue.getValue03()));
 
-        // 调用即信发送红包接口
-        VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-        voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
-        voucherPayRequest.setTxAmount(StringHelper.formatDouble(money, 100, false));
-        voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
-        voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
-        voucherPayRequest.setDesLine(String.format("使用积分(%s)兑换%s元", voIntegralTakeReq.getInteger(), StringHelper.formatDouble(money / 100D, true)));
-        voucherPayRequest.setChannel(ChannelContant.HTML);
-        VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
-        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
-            log.error(String.format("积分兑换 红包发放失败: %s", new Gson().toJson(voucherPayRequest)));
-            String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-            throw new Exception("积分折现异常:" + msg);
-        }
-
         // 更新记录
         Long noUseIntegral = integral.getNoUseIntegral() + integer;
         Long userInteger1 = integral.getUseIntegral() - integer;
@@ -341,6 +326,21 @@ public class IntegralBizImpl implements IntegralBiz {
         integralLog.setType("convert");
         integralLog = integralLogService.insert(integralLog);
 
+
+        // 调用即信发送红包接口
+        VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
+        voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
+        voucherPayRequest.setTxAmount(StringHelper.formatDouble(money, 100, false));
+        voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
+        voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
+        voucherPayRequest.setDesLine(String.format("使用积分(%s)兑换%s元", voIntegralTakeReq.getInteger(), StringHelper.formatDouble(money / 100D, true)));
+        voucherPayRequest.setChannel(ChannelContant.HTML);
+        VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+            log.error(String.format("积分兑换 红包发放失败: %s", new Gson().toJson(voucherPayRequest)));
+            String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+            throw new Exception("积分折现异常:" + msg);
+        }
 
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
         long redId = assetChangeProvider.getRedpackAccountId();
