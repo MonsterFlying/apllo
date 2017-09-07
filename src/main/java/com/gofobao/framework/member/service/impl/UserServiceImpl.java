@@ -84,7 +84,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Users findByInviteCode(String inviteCode) {
-        List<Users> users = userRepository.findByInviteCode(inviteCode);
+        List<Users> users = userRepository.findByInviteCodeOrPhone(inviteCode, inviteCode);
         if (CollectionUtils.isEmpty(users)) {
             return null;
         } else {

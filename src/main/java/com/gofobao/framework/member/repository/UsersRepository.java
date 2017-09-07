@@ -33,7 +33,7 @@ public interface UsersRepository extends JpaRepository<Users,Long>,JpaSpecificat
     List<Users> findByUsername(String userName);
 
     /** 根据邀请码获取用户信息*/
-    List<Users> findByInviteCode(String inviteCode);
+    List<Users> findByInviteCodeOrPhone(String inviteCode,String phone);
 
     /**
      *
