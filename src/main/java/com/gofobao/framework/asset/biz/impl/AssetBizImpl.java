@@ -103,6 +103,7 @@ public class AssetBizImpl implements AssetBiz {
     AssetService assetService;
     @Autowired
     private JixinHelper jixinHelper;
+
     @Autowired
     AssetLogService assetLogService;
 
