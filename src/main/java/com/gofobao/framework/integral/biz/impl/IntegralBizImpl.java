@@ -342,38 +342,44 @@ public class IntegralBizImpl implements IntegralBiz {
             throw new Exception("积分折现异常:" + msg);
         }
 
-        String groupSeqNo = assetChangeProvider.getGroupSeqNo();
-        long redId = assetChangeProvider.getRedpackAccountId();
-        Date nowDate = new Date();
-        // 平台发放积分
-        AssetChange redpackPublish = new AssetChange();
-        redpackPublish.setMoney(money);
-        redpackPublish.setType(AssetChangeTypeEnum.platformPublishIntegralExchangeRedpack);  // 积分兑换
-        redpackPublish.setUserId(redId);
-        redpackPublish.setRemark(String.format("派发用户在%s, 使用积分(%s)兑换%s元",
-                DateHelper.dateToString(nowDate),
-                voIntegralTakeReq.getInteger(),
-                StringHelper.formatDouble(money / 100D, true)));
-        redpackPublish.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
-        redpackPublish.setGroupSeqNo(groupSeqNo);
-        redpackPublish.setForUserId(userId);
-        redpackPublish.setSourceId(integralLog.getId());
-        assetChangeProvider.commonAssetChange(redpackPublish);
 
-        // 接收红包
-        AssetChange redpackR = new AssetChange();
-        redpackR.setMoney(money);
-        redpackR.setType(AssetChangeTypeEnum.integralExchangeRedpack);  // 积分兑换
-        redpackR.setUserId(userId);
-        redpackR.setRemark(String.format("你在%s, 成功使用积分(%s)兑换%s元",
-                DateHelper.dateToString(nowDate),
-                voIntegralTakeReq.getInteger(),
-                StringHelper.formatDouble(money / 100D, true)));
-        redpackR.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
-        redpackR.setGroupSeqNo(groupSeqNo);
-        redpackR.setForUserId(redId);
-        redpackR.setSourceId(integralLog.getId());
-        assetChangeProvider.commonAssetChange(redpackR);
+        try{
+            String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+            long redId = assetChangeProvider.getRedpackAccountId();
+            Date nowDate = new Date();
+            // 平台发放积分
+            AssetChange redpackPublish = new AssetChange();
+            redpackPublish.setMoney(money);
+            redpackPublish.setType(AssetChangeTypeEnum.platformPublishIntegralExchangeRedpack);  // 积分兑换
+            redpackPublish.setUserId(redId);
+            redpackPublish.setRemark(String.format("派发用户在%s, 使用积分(%s)兑换%s元",
+                    DateHelper.dateToString(nowDate),
+                    voIntegralTakeReq.getInteger(),
+                    StringHelper.formatDouble(money / 100D, true)));
+            redpackPublish.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
+            redpackPublish.setGroupSeqNo(groupSeqNo);
+            redpackPublish.setForUserId(userId);
+            redpackPublish.setSourceId(integralLog.getId());
+            assetChangeProvider.commonAssetChange(redpackPublish);
+
+            // 接收红包
+            AssetChange redpackR = new AssetChange();
+            redpackR.setMoney(money);
+            redpackR.setType(AssetChangeTypeEnum.integralExchangeRedpack);  // 积分兑换
+            redpackR.setUserId(userId);
+            redpackR.setRemark(String.format("你在%s, 成功使用积分(%s)兑换%s元",
+                    DateHelper.dateToString(nowDate),
+                    voIntegralTakeReq.getInteger(),
+                    StringHelper.formatDouble(money / 100D, true)));
+            redpackR.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
+            redpackR.setGroupSeqNo(groupSeqNo);
+            redpackR.setForUserId(redId);
+            redpackR.setSourceId(integralLog.getId());
+            assetChangeProvider.commonAssetChange(redpackR);
+        }catch (Exception e){
+            log.error("积分变动兑换失败", e);
+        }
+
         return ResponseEntity.ok(VoBaseResp.ok("积分折现成功!"));
     }
 
