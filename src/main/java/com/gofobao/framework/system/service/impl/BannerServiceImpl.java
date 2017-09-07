@@ -37,9 +37,9 @@ public class BannerServiceImpl implements BannerService {
                 public List<IndexBanner> load(String s) throws Exception {
                     List<Banner> banners;
                     if ("pc".equals(s)) {  // pc
-                        banners = bannerRepository.findByStatusAndTerminal(new Byte("1"), 0);
+                        banners = bannerRepository.findByStatusAndTerminalOrderByIdDesc(new Byte("1"), 0);
                     } else {  // 移动端
-                        banners = bannerRepository.findByStatusAndTerminal(new Byte("1"), 1);
+                        banners = bannerRepository.findByStatusAndTerminalOrderByIdDesc(new Byte("1"), 1);
                     }
 
                     List<IndexBanner> bannerList = Lists.newArrayList();

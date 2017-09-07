@@ -13,5 +13,5 @@ import java.util.List;
 @Repository
 public interface BannerRepository extends JpaRepository<Banner,Long> ,JpaSpecificationExecutor<Banner> {
 
-    List<Banner>findByStatusAndTerminal(byte status,Integer terminal);
+    List<Banner>findByStatusAndTerminalOrderByIdDesc(byte status,Integer terminal);
 }
