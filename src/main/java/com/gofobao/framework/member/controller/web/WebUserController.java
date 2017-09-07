@@ -1,10 +1,14 @@
 package com.gofobao.framework.member.controller.web;
 
+import com.gofobao.framework.asset.biz.AssetBiz;
+import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
 import com.gofobao.framework.asset.vo.request.VoJudgmentAvailableReq;
+import com.gofobao.framework.asset.vo.response.VoViewAssetLogWarpRes;
 import com.gofobao.framework.borrow.vo.request.VoPcDoFirstVerity;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.RandomUtil;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.biz.UserBiz;
 import com.gofobao.framework.member.biz.UserEmailBiz;
 import com.gofobao.framework.member.biz.UserPhoneBiz;
@@ -20,6 +24,7 @@ import com.gofobao.framework.member.vo.response.pc.UserInfoExt;
 import com.gofobao.framework.member.vo.response.pc.VipInfoRes;
 import com.gofobao.framework.member.vo.response.pc.VoViewServiceUserListWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import io.swagger.annotations.ApiOperation;
 import org.apache.http.HttpStatus;
@@ -198,6 +203,39 @@ public class WebUserController {
     public ResponseEntity<UserAccountThirdTxRes> queryUserAccountThirdTx(VoPcDoFirstVerity voPcDoFirstVerity) {
         return userThirdBiz.queryAccountTx(voPcDoFirstVerity);
     }
+
+
+    @Autowired
+    private AssetBiz assetBiz;
+
+
+    @ApiOperation("查询用户本地当日交易流水")
+    @PostMapping("pub/user/local/account/tx/log")
+    public ResponseEntity<VoViewAssetLogWarpRes> queryLocalAssetLogsTx(VoPcDoFirstVerity voPcDoFirstVerity) {
+        String paramStr = voPcDoFirstVerity.getParamStr();
+        if (!SecurityHelper.checkSign(voPcDoFirstVerity.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc查询用户本地当日交易流水,签名验证不通过!", VoViewAssetLogWarpRes.class));
+        }
+        VoAssetLogReq assetLogReq = null;
+        if (StringUtils.isEmpty(paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc查询用户本地当日交易流水,请求参数字符串为空", VoViewAssetLogWarpRes.class));
+        }
+        try {
+            assetLogReq = new Gson().fromJson(voPcDoFirstVerity.getParamStr(),
+                    new TypeToken<UserAccountThirdTxReq>() {
+                    }.getType());
+        } catch (Exception e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc查询用户本地当日交易流水,请求参数字符串转对象失败", VoViewAssetLogWarpRes.class));
+        }
+        return assetBiz.newAssetLogResList(assetLogReq);
+    }
+
 
 
 }

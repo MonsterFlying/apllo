@@ -1842,7 +1842,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
             return ResponseEntity.ok(thridTxRes);
         }
         //json转对象
-        List<AccountDetailsQueryItem> detailsQueryItems = new Gson().fromJson(subPacks, new TypeToken<AccountDetailsQueryItem>() {
+        List<AccountDetailsQueryItem> detailsQueryItems = new Gson().fromJson(subPacks, new TypeToken<List<AccountDetailsQueryItem>>() {
         }.getType());
         thridTxRes.setTotalCount(Integer.valueOf(accountDetailsQueryResponse.getTotalItems()));
         thridTxRes.setDetailsQueryItems(detailsQueryItems);
