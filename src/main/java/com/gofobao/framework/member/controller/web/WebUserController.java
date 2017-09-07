@@ -226,7 +226,7 @@ public class WebUserController {
         }
         try {
             assetLogReq = new Gson().fromJson(voPcDoFirstVerity.getParamStr(),
-                    new TypeToken<UserAccountThirdTxReq>() {
+                    new TypeToken<VoAssetLogReq>() {
                     }.getType());
         } catch (Exception e) {
             return ResponseEntity
