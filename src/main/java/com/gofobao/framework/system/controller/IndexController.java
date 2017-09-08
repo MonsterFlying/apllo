@@ -1,5 +1,7 @@
 package com.gofobao.framework.system.controller;
 
+import com.gofobao.framework.helper.ThymeleafHelper;
+import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.system.biz.BannerBiz;
 import com.gofobao.framework.system.biz.HomeBiz;
 import com.gofobao.framework.system.biz.StatisticBiz;
@@ -44,6 +46,14 @@ public class IndexController {
     public ResponseEntity<VoIndexResp> home() {
         return homeBiz.home() ;
     }
-
-
+   @Autowired
+   private ThymeleafHelper thymeleafHelper;
+    @ApiOperation("新手福利")
+    @GetMapping("/pub/index/v2/newUser/welfare")
+    public ResponseEntity<VoHtmlResp> welfare() {
+        String content = thymeleafHelper.build("/new_user_welfare", null);
+        VoHtmlResp resp = VoHtmlResp.ok("获取成功!", VoHtmlResp.class);
+        resp.setHtml(content);
+        return ResponseEntity.ok(resp);
+    }
 }
