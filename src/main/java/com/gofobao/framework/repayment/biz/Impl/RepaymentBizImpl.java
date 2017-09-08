@@ -1467,7 +1467,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         addBatchAssetChangeByBorrower(batchAssetChange.getId(), borrowRepayment, borrow,
                 interestPercent, voRepayReq.getIsUserOpen(),
                 lateInterest, voRepayReq.getUserId(), groupSeqNo,
-                advance, repayMoney);
+                advance, money);
         //改变还款与垫付记录的值
         /**
          * @// TODO: 2017/9/8 判断 

@@ -49,12 +49,6 @@ public class ThirdAccountHelper {
                     .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoBaseResp.class));
         }
 
-        if(userThirdAccount.getCardNoBindState() != 1){
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_BIND_BANK_CARD, "请先绑定银行卡！", VoBaseResp.class));
-        }
-
         return ResponseEntity.ok(VoBaseResp.ok("搜索成功")) ;
     }
 
