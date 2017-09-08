@@ -34,7 +34,7 @@ public class RepaymentOrderDetail {
     @ApiModelProperty("状态描述")
     private String statusStr;
 
-    @ApiModelProperty("还款状态： 0：未还 1已还")
+    @ApiModelProperty("还款状态： 0：未还 1:已还 2:还款复审中")
     private Integer status;
 
 

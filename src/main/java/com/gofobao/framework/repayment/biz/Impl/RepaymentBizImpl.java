@@ -760,14 +760,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     collectionOrderRes.setCollectionMoneyYes(StringHelper.formatMon(p.getRepayMoneyYes() / 100d));
                 }
                 collectionOrderRes.setStatus(p.getStatus());
-                Specification<ThirdBatchLog> specification = Specifications.<ThirdBatchLog>and()
-                        .eq("type", ThirdBatchLogContants.BATCH_REPAY)
-                        .eq("sourceId", p.getId())
-                        .build();
-                List<ThirdBatchLog> thirdBatchLogs = thirdBatchLogService.findList(specification);
-                if (!CollectionUtils.isEmpty(thirdBatchLogs)) {
-                    collectionOrderRes.setStatus(2);  //还款复审中
-                }
                 collectionOrderRes.setCollectionMoney(StringHelper.formatMon(p.getRepayMoney() / 100d));
                 collectionOrderRes.setTimeLime(borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_YCBX_NUM ? 1 : borrow.getTimeLimit());
                 orderResList.add(collectionOrderRes);
