@@ -95,17 +95,11 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
         }
         Map<String, String> paramMap = gson.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         /* sourceId */
-        String sourceId = paramMap.get("sourceId");
-        //批次号
-        String batchNo = paramMap.get("batchNo");
-        //type
-        String type = paramMap.get("type");
+        String thirdBatchLogId = paramMap.get("thirdBatchLogId");
 
         Specification<ThirdBatchLog> tbls = Specifications
                 .<ThirdBatchLog>and()
-                .eq("sourceId", StringHelper.toString(sourceId))
-                .eq("batchNo", StringHelper.toString(batchNo))
-                .eq("type", type)
+                .eq("id",thirdBatchLogId)
                 .build();
         List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls);
         if (CollectionUtils.isEmpty(thirdBatchLogList)) {
