@@ -66,6 +66,7 @@ import com.gofobao.framework.migrate.MigrateProtocolBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.scheduler.DealThirdBatchScheduler;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
+import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
@@ -177,8 +178,8 @@ public class AplloApplicationTests {
 
     @Test
     public void touchMarketing() {
-
-      //  borrowBiz.touchMarketingByTender();
+        Tender tender=tenderService.findById(262285L);
+        borrowBiz.touchMarketingByTender(tender);
 
     }
 

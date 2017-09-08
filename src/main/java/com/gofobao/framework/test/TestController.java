@@ -12,6 +12,7 @@ import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.asset.entity.NewAssetLog;
 import com.gofobao.framework.asset.service.NewAssetLogService;
+import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
@@ -23,6 +24,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.member.biz.impl.WebUserThirdBizImpl;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
@@ -30,6 +32,8 @@ import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.AutoTenderBiz;
+import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoDelAutoTenderReq;
 import com.gofobao.framework.tender.vo.request.VoGetAutoTenderList;
 import com.gofobao.framework.tender.vo.request.VoOpenAutoTenderReq;
@@ -136,6 +140,20 @@ public class TestController {
         log.info("即信批次状态查询:");
         log.info("=========================================================================================");
         log.info(GSON.toJson(resp));
+
+    }
+
+
+    @Autowired
+    BorrowBiz borrowBiz;
+
+    @Autowired
+    TenderService tenderService;
+
+    @GetMapping("pub/test/marketing")
+    public void touchMarketing() {
+        Tender tender=tenderService.findById(262285L);
+        borrowBiz.touchMarketingByTender(tender);
 
     }
 
