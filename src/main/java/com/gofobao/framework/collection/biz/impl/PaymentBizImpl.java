@@ -26,6 +26,7 @@ import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
+import com.gofobao.framework.tender.contants.BorrowContants;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import io.jsonwebtoken.lang.Collections;
@@ -101,8 +102,10 @@ public class PaymentBizImpl implements PaymentBiz {
                 List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
                 Preconditions.checkState(!CollectionUtils.isEmpty(borrowRepaymentList), "还款记录不存在!");
                 item.setBorrowName(borrow.getName());
+                item.setStatus(borrowCollection.getStatus());
                 item.setCollectionId(borrowCollection.getId());
                 item.setOrder(borrowCollection.getOrder() + 1);
+                item.setTimeLime(borrow.getRepayFashion()== BorrowContants.REPAY_FASHION_YCBX_NUM?1:borrow.getTimeLimit());
                 item.setTimeLime(borrow.getTimeLimit());
                 item.setCollectionMoney(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100d));
                 if(borrowCollection.getStatus().intValue() == BorrowCollectionContants.STATUS_YES.intValue() ) {  // 已还款
