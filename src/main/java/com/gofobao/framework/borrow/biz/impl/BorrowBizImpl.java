@@ -494,7 +494,7 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         // long count = borrowService.countByUserIdAndStatusIn(userId, Arrays.asList(0, 1));
-
+/*
         Specification<Borrow> specification = Specifications.<Borrow>and()
                 .eq("userId", userId)
                 .eq("status", BorrowContants.BIDDING)
@@ -509,7 +509,7 @@ public class BorrowBizImpl implements BorrowBiz {
                             .body(VoBaseResp.error(VoBaseResp.ERROR, "您已经有一个进行中的借款标!"));
                 }
             }
-        }
+        }*/
         /*Specification<Transfer> ts = Specifications
                 .<Transfer>and()
                 .eq("userId", userId)
