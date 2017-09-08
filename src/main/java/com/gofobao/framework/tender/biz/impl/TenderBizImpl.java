@@ -167,7 +167,11 @@ public class TenderBizImpl implements TenderBiz {
 
         //如果当前用户是风车理财用户
         if (!StringUtils.isEmpty(user.getWindmillId())) {
-            windmillTenderBiz.tenderNotify(borrowTender);
+            try {
+                windmillTenderBiz.tenderNotify(borrowTender);
+            } catch (Exception e) {
+                log.error("推送风车理财", e);
+            }
         }
 
         return ResponseEntity.ok(VoBaseResp.ok("投资成功"));
@@ -413,7 +417,7 @@ public class TenderBizImpl implements TenderBiz {
         }
 
         if (!userCache.isNovice() && borrow.getIsLock()) {
-            log.info("borrowId -> %s,isLock -> %s,isNovice -> %s",borrow.getId(),borrow.getIsLock(),!userCache.isNovice());
+            log.info("borrowId -> %s,isLock -> %s,isNovice -> %s", borrow.getId(), borrow.getIsLock(), !userCache.isNovice());
             errerMessage.add("当前标的状态已锁定,请稍后再是吧");
             return false;
         }

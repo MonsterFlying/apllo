@@ -445,6 +445,8 @@ public class AplloApplicationTests {
 
     @Test
     public void accountDetailsQuery() {
+
+
         AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
         request.setAccountId("6212462190000059514");
         request.setStartDate("20161002");
@@ -557,10 +559,21 @@ public class AplloApplicationTests {
     @Test
     @Transactional(rollbackOn = Exception.class)
     public void test() {
-        Borrow borrow = new Borrow();
+        /*Borrow borrow = new Borrow();
         long takeUserId = borrow.getTakeUserId();
         if (ObjectUtils.isEmpty(takeUserId)){
 
+        }*/
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TENDER);
+        mqConfig.setTag(MqTagEnum.AUTO_TENDER);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString("170183"), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("borrowProvider autoTender send mq exception", e);
         }
         /*long redpackAccountId = 0;
         try {
@@ -604,10 +617,10 @@ public class AplloApplicationTests {
 
 
         //批次处理
-        batchDeal();
+       /* batchDeal();
         //unfrozee();
         //查询存管账户资金信息
-        /*balanceQuery();
+        balanceQuery();
         //查询资金流水
         accountDetailsQuery();*/
         //testCredit();
