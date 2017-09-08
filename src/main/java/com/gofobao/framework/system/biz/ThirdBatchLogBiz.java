@@ -1,11 +1,21 @@
 package com.gofobao.framework.system.biz;
 
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
+import com.gofobao.framework.system.vo.request.VoSendThirdBatch;
+import org.springframework.http.ResponseEntity;
 
 /**
  * Created by Zeke on 2017/7/14.
  */
 public interface ThirdBatchLogBiz {
+
+    /**
+     * 发送即信批次处理
+     * @param voSendThirdBatch
+     * @return
+     */
+    ResponseEntity<VoBaseResp> sendThirdBatchDeal(VoSendThirdBatch voSendThirdBatch);
 
     /**
      * 更新批次日志状态
