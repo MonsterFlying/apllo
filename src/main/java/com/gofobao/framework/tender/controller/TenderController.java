@@ -1,6 +1,7 @@
 package com.gofobao.framework.tender.controller;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.vo.request.TenderUserReq;
@@ -48,7 +49,16 @@ public class TenderController {
                                              HttpServletRequest request,
                                              @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voCreateTenderReq.setUserId(userId);
-        voCreateTenderReq.setRequestSource( request.getHeader("requestSource"));
+        voCreateTenderReq.setRequestSource(request.getHeader("requestSource"));
+
+        String requestSource = request.getHeader("requestSource");
+        int requestSourceInt =  0;
+        try {
+            requestSourceInt = NumberHelper.toInt(requestSource);
+        } catch (Exception e) {
+            requestSourceInt = 0 ;
+        }
+        voCreateTenderReq.setRequestSource(requestSourceInt + "") ;
         try {
             return tenderBiz.tender(voCreateTenderReq);
         } catch (Exception e) {

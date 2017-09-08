@@ -50,6 +50,8 @@ import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.system.biz.IncrStatisticBiz;
 import com.gofobao.framework.system.biz.StatisticBiz;
+import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
+import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.IncrStatistic;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.entity.Statistic;
@@ -108,40 +110,58 @@ public class BorrowBizImpl implements BorrowBiz {
 
     @Autowired
     private UserCacheService userCacheService;
+
     @Autowired
     private AssetService assetService;
+
     @Autowired
     private BorrowService borrowService;
+
     @Autowired
     private AutoTenderService autoTenderService;
+
     @Autowired
     private UserThirdAccountService userThirdAccountService;
+
     @Autowired
     private MqHelper mqHelper;
+
     @Autowired
     private TenderService tenderService;
+
     @Autowired
     private TransferService transferService;
+
     @Autowired
     private BorrowCollectionService borrowCollectionService;
+
     @Autowired
     private BorrowRepaymentService borrowRepaymentService;
+
     @Autowired
     private BorrowProvider borrowProvider;
+
     @Autowired
     private BorrowThirdBiz borrowThirdBiz;
+
     @Autowired
     private IncrStatisticBiz incrStatisticBiz;
+
     @Autowired
     private UserService userService;
+
     @Autowired
     private StatisticBiz statisticBiz;
+
     @Autowired
     private ThymeleafHelper thymeleafHelper;
+
     @Autowired
     private TenderThirdBiz tenderThirdBiz;
+
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
     @Autowired
     private LendService lendService;
     @Autowired
@@ -162,8 +182,8 @@ public class BorrowBizImpl implements BorrowBiz {
     ThirdBatchLogService thirdBatchLogService;
     @Autowired
     BatchAssetChangeHelper batchAssetChangeHelper;
-    @PersistenceContext
-    private EntityManager entityManager;
+    @Autowired
+    private ThirdBatchLogBiz thirdBatchLogBiz;
 
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
@@ -189,6 +209,34 @@ public class BorrowBizImpl implements BorrowBiz {
         Borrow borrow = borrowService.findByIdLock(borrowId);
         Preconditions.checkNotNull(borrow, "借款记录不存在!");
         //判断是否已经提交即信处理
+        ThirdBatchLog thirdBatchLog = thirdBatchLogBiz.getValidLastBatchLog(String.valueOf(borrowId),
+                ThirdBatchLogContants.BATCH_LEND_REPAY);
+
+        int flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(borrowId),
+                ThirdBatchLogContants.BATCH_LEND_REPAY);
+        if (flag == ThirdBatchLogContants.AWAIT) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("复审处理中，请勿重复点击!")));
+        } else if (flag == ThirdBatchLogContants.SUCCESS) {
+            //触发处理批次放款处理结果队列
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()),
+                            MqConfig.BATCH_NO, StringHelper.toString(thirdBatchLog.getBatchNo()),
+                            MqConfig.ACQ_RES, thirdBatchLog.getAcqRes(),
+                            MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("borrowBizImpl sendAgainVerify send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("borrowBizImpl sendAgainVerify send mq exception", e);
+            }
+            log.info("即信批次回调处理结束");
+        }
 
         if (borrow.getStatus() == 1 && borrow.getMoneyYes() >= borrow.getMoney()) {
             MqConfig mqConfig = new MqConfig();

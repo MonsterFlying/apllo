@@ -28,7 +28,7 @@ public class VoSaveAutoTenderReq {
     @NotNull(message = "自动投标不能为空!")
     private Boolean status;
 
-    @ApiModelProperty(value = "最低投标金额 分 不填写默认50")
+    @ApiModelProperty(value = "最低投标金额 元 不填写默认50")
     private Integer lowest = 50 * 100;
 
     @ApiModelProperty(value = "投标种类（0：车贷标；4、渠道标；1、净值标；3、转让标） 选中则带上相应数字 用,隔开 0,1,3", dataType = "String", required = true)
