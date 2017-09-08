@@ -1408,14 +1408,17 @@ public class BorrowBizImpl implements BorrowBiz {
 
             //查询借款信息
 
-            borrowMap = GSON.fromJson(GSON.toJson(borrow), new com.google.common.reflect.TypeToken<Map<String, Object>>() {
+            borrowMap = GSON.fromJson(GSON.toJson(borrow), new TypeToken<Map<String, Object>>() {
             }.getType());
             borrowUser = userService.findById(borrow.getUserId());
             username = borrowUser.getUsername();
-
-            borrowMap.put("username", org.apache.commons.lang3.StringUtils.isEmpty(username) ? borrowUser.getPhone() : username);
+            borrowMap.put("username", StringUtils.isEmpty(username) ? borrowUser.getPhone() : username);
             borrowMap.put("cardId", UserHelper.hideChar(borrowUser.getCardId(), UserHelper.CARD_ID_NUM));
-
+            borrowMap.put("id",borrow.getId().intValue());
+            borrowMap.put("timeLimit",borrow.getTimeLimit().intValue());
+            borrowMap.put("apr",StringHelper.formatMon(borrow.getApr()/100d));
+            borrowMap.put("successAt",DateHelper.dateToString(new Date(),DateHelper.DATE_FORMAT_YMD));
+            borrowMap.put("money",StringHelper.formatMon(borrow.getMoneyYes()/100D));
             if (!ObjectUtils.isEmpty(borrow.getSuccessAt())) { //判断是否存在满标时间
                 boolean successAtBool = DateHelper.getMonth(DateHelper.addMonths(borrow.getSuccessAt(), borrow.getTimeLimit())) % 12
                         !=
@@ -1486,8 +1489,10 @@ public class BorrowBizImpl implements BorrowBiz {
 
                     borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(tempTenderMap.get("validMoney")), new Double(borrow.getApr()), borrow.getTimeLimit(), null);
                     calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
+                    calculatorMap.put("repayTotal",StringHelper.formatMon(Double.valueOf(calculatorMap.get("repayTotal").toString())/100D));
+                    calculatorMap.put("eachRepay",StringHelper.formatMon(Double.valueOf(calculatorMap.get("eachRepay").toString())/100D));
                     tempTenderMap.put("calculatorMap", calculatorMap);
-
+                    tempTenderMap.put("validMoney",Double.valueOf(tempTenderMap.get("validMoney").toString())/100D);
                     username = tenderUser.getUsername();
                     tempTenderMap.put("username", org.apache.commons.lang3.StringUtils.isEmpty(username) ? tenderUser.getPhone() : username);
 
