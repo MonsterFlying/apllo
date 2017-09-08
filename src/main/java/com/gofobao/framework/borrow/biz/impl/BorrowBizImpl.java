@@ -416,7 +416,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
             return ResponseEntity.ok(borrowInfoRes);
         } catch (Throwable e) {
-            log.info("BorrowBizImpl detail fail%s", e);
+            log.info("BorrowBizImpl detail fail", e);
             return ResponseEntity.badRequest()
                     .body(VoBaseResp.error(
                             VoBaseResp.ERROR,
@@ -1754,7 +1754,6 @@ public class BorrowBizImpl implements BorrowBiz {
 
         Map<String, String> paramMap = new Gson().fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         Long borrowId = NumberHelper.toLong(paramMap.get("borrowId"));
-
         boolean verifyState = doFirstVerify(borrowId); // 初审标的
         if (verifyState) {
             return ResponseEntity.ok(VoBaseResp.ok("初审成功!"));

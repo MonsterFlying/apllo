@@ -14,7 +14,7 @@ import java.util.List;
  * Created by Max on 17/6/7.
  */
 @Repository
-public interface RechargeDetailLogRepository extends JpaRepository<RechargeDetailLog, Long>,JpaSpecificationExecutor<RechargeDetailLog> {
+public interface RechargeDetailLogRepository extends JpaRepository<RechargeDetailLog, Long>, JpaSpecificationExecutor<RechargeDetailLog> {
     RechargeDetailLog findTopBySeqNoAndDel(String seqNo, int del);
 
     RechargeDetailLog findTopByIdAndDel(Long rechargeId, int del);
