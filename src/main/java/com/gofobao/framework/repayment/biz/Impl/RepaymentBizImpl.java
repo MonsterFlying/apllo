@@ -537,7 +537,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             Preconditions.checkNotNull(borrowCollectionList, "生成即信还款计划: 获取回款计划列表为空!");
             List<RepayAssetChange> repayAssetChangeList = new ArrayList<>();
             int lateDays = getLateDays(borrowRepayment);
-            long lateInterest = calculateLateInterest(lateDays,borrowRepayment,borrow);
+            long lateInterest = calculateLateInterest(lateDays, borrowRepayment, borrow);
             // 生成存管投资人还款记录(提前结清)
             List<Repay> tempRepays = calculateRepayPlan(borrow,
                     titularBorrowAccount.getAccountId(),
@@ -759,8 +759,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 if (p.getStatus().intValue() == RepaymentContants.STATUS_YES) {
                     collectionOrderRes.setCollectionMoneyYes(StringHelper.formatMon(p.getRepayMoneyYes() / 100d));
                 }
+                collectionOrderRes.setStatus(p.getStatus());
                 collectionOrderRes.setCollectionMoney(StringHelper.formatMon(p.getRepayMoney() / 100d));
-                collectionOrderRes.setTimeLime(borrow.getTimeLimit());
+                collectionOrderRes.setTimeLime(borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_YCBX_NUM ? 1 : borrow.getTimeLimit());
                 orderResList.add(collectionOrderRes);
             });
 
@@ -1062,7 +1063,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             long integral = actualInterest / 100 * 10;
             if ((parentBorrow.getType() == 0 || parentBorrow.getType() == 4) && 0 < integral) {
                 Users users = userService.findById(borrowCollection.getUserId());
-                if(StringUtils.isEmpty(users.getWindmillId())){  // 非风车理财派发积分
+                if (StringUtils.isEmpty(users.getWindmillId())) {  // 非风车理财派发积分
                     IntegralChangeEntity integralChangeEntity = new IntegralChangeEntity();
                     integralChangeEntity.setType(IntegralChangeEnum.TENDER);
                     integralChangeEntity.setValue(integral);
@@ -1424,7 +1425,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                                                    boolean advance,
                                                    Asset repayAsset) throws Exception {
         Date nowDate = new Date();
-        log.info(String.format("批次还款: 进入正常还款流程 repaymentId->",borrowRepayment.getId()));
+        log.info(String.format("批次还款: 进入正常还款流程 repaymentId->", borrowRepayment.getId()));
 
         /* 投资记录：不包含理财计划 */
         Specification<Tender> specification = Specifications
@@ -1649,10 +1650,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 } else {
                     Long userId = tender.getUserId();
                     Users user = userService.findById(userId);
-                    if(!StringUtils.isEmpty(user.getWindmillId())){ // 风车理财用户不收管理费
+                    if (!StringUtils.isEmpty(user.getWindmillId())) { // 风车理财用户不收管理费
                         log.info(String.format("风车理财：%s", user));
                         inFee += 0;
-                    }else{
+                    } else {
                         inFee += new Double(MathHelper.myRound(inIn * 0.1, 2)).intValue();
                     }
                 }
