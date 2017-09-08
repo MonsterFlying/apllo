@@ -1155,6 +1155,7 @@ public class AssetBizImpl implements AssetBiz {
             voViewAssetLogRes.setUseMoney(StringHelper.formatMon(userMoney / 100D));
             voViewAssetLogRes.setHideUseMoney(userMoney / 100D);
             voViewAssetLogRes.setRemark(newAssetLog.getRemark());
+            voViewAssetLogRes.setNoUseMoney(StringHelper.formatMon(newAssetLog.getNoUseMoney() / 100D));
             voViewAssetLogRes.setTypeName(newAssetLog.getOpName());
             voViewAssetLogWarpRes.getResList().add(voViewAssetLogRes);
         }

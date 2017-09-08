@@ -24,6 +24,7 @@ public class VoViewAssetLogRes {
         private String useMoney;
         @ApiModelProperty("隐藏可用金额")
         private Double hideUseMoney;
-
+        @ApiModelProperty("冻结金额")
+        private String noUseMoney;
 
 }
