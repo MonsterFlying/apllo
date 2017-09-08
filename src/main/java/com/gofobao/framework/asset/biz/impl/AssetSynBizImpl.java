@@ -17,6 +17,7 @@ import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.AssetLogService;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
+import com.gofobao.framework.asset.vo.response.pc.RechargeLogs;
 import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
@@ -50,10 +51,9 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 
 @Component
@@ -118,6 +118,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         ResponseEntity<VoBaseResp> conditionResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
         if (!conditionResponse.getStatusCode().equals(HttpStatus.OK)) {
+            log.error("当前用户未开户");
             return false;
         }
 
@@ -133,6 +134,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
 
         double currBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100.0, 2);  // 账户总额
         if (new Double(currBal * 100).longValue() <= (asset.getNoUseMoney() + asset.getUseMoney())) {
+            log.info("当前用户金额无需同步");
             return false;
         }
 
@@ -169,20 +171,44 @@ public class AssetSynBizImpl implements AssetSynBiz {
             realSize = accountDetailsQueryItems.size();
             accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
         } while (realSize == pageSize);
+
         // 同步开始
         if (CollectionUtils.isEmpty(accountDetailsQueryItemList)) {
+            log.info("当前线下用户资金流水为0");
             return true;
         }
 
+        Specification<RechargeDetailLog> rechargeDetailLogSpecification = Specifications
+                .<RechargeDetailLog>and()
+                .between("createTime", new Range<>(DateHelper.beginOfDate(nowDate), DateHelper.endOfDate(nowDate)))
+                .eq("userId", userId)  // 用户ID
+                .eq("rechargeChannel", 1) // 线下充值
+                .eq("state", 1)  // 充值成功
+                .build();
+        List<RechargeDetailLog> rechargeDetailLogList = rechargeDetailLogService.findAll(rechargeDetailLogSpecification);
+
+        if (CollectionUtils.isEmpty(rechargeDetailLogList)) {
+            log.info("线下充值记录为空为空");
+            return true;
+        }
+        Map<Long, RechargeDetailLog> rechargeMap = rechargeDetailLogList
+                .stream()
+                .collect(Collectors.toMap(RechargeDetailLog::getMoney, Function.identity()));
+
+        Gson gson = new Gson();
         String seqNo;
-        for (AccountDetailsQueryItem accountDetailsQueryItem : accountDetailsQueryItemList) {   // 同步系统充值
+        for (AccountDetailsQueryItem accountDetailsQueryItem : accountDetailsQueryItemList) {
             seqNo = String.format("%s%s%s", accountDetailsQueryItem.getInpDate(), accountDetailsQueryItem.getInpTime(), accountDetailsQueryItem.getTraceNo());
-            RechargeDetailLog rechargeDetailLog = rechargeDetailLogService.findTopBySeqNo(seqNo);
-            if (!ObjectUtils.isEmpty(rechargeDetailLog)) {
+            Long money = new Double(Double.parseDouble(accountDetailsQueryItem.getTxAmount()) * 100).longValue();
+            RechargeDetailLog rechargeDetailLog = rechargeMap.get(money);
+            if(!ObjectUtils.isEmpty(rechargeDetailLog)){
+                log.info(String.format("当前用户线下充值已同步: %s", gson.toJson(rechargeDetailLog)));
                 continue;
+            }else{
+                rechargeDetailLog = new RechargeDetailLog() ;
             }
 
-            Double money = new Double(accountDetailsQueryItem.getTxAmount()) * 100;
+            log.info("进入同步环节");
             rechargeDetailLog = new RechargeDetailLog();
             rechargeDetailLog.setUserId(userId);
             rechargeDetailLog.setBankName(userThirdAccount.getBankName());
@@ -252,16 +278,6 @@ public class AssetSynBizImpl implements AssetSynBiz {
             List<Aleve> content = lists.getContent();
             for (Aleve aleve : content) {
                 String seqNo = String.format("%s%s%s", aleve.getInpdate(), aleve.getInptime(), aleve.getTranno());
-              /* Date startDate = DateHelper.beginOfDate() ;
-                Specification<RechargeDetailLog> rechargeDetailLogSpecification = Specifications
-                        .<RechargeDetailLog>and()
-                        .between("createTime", new Range<>())
-                        .eq("transtype", "7820")
-                        .build();
-                List<RechargeDetailLog> rechargeDetailLogs = rechargeDetailLogService.findAll(rechargeDetailLogSpecification) ;
-                if(CollectionUtils.isEmpty(rechargeDetailLogs)){
-                    continue;
-                }*/
                 RechargeDetailLog rechargeDetailLog = rechargeDetailLogService.findTopBySeqNo(seqNo);
                 if (!ObjectUtils.isEmpty(rechargeDetailLog)) {
                     continue;
