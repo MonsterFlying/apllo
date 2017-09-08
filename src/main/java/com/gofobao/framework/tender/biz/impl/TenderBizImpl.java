@@ -346,7 +346,7 @@ public class TenderBizImpl implements TenderBiz {
      */
     private boolean verifyBorrowInfo4Borrow(Borrow borrow, Users user, VoCreateTenderReq voCreateTenderReq, Multiset<String> errerMessage) throws Exception {
         if (!(borrow.getStatus() == 1 && borrow.getMoneyYes() < borrow.getMoney())) {
-            errerMessage.add("标的未在招标状态, 如有疑问请联系客服!");
+            errerMessage.add("标的未在招标状态， 如有疑问请联系客服!");
             return false;
         }
 
