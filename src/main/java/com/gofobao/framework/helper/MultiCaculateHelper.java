@@ -40,7 +40,7 @@ public class MultiCaculateHelper {
                     writeMethod.invoke(org, lDbValue + lChangeValue) ;
                 }else if(typeName.equals(Integer.class.getTypeName())){
                     iChangeValue = (Integer) ClassHelper.getValueByRefler(clazz, change, fieldName);
-                    if(ObjectUtils.isEmpty(lChangeValue)){
+                    if(ObjectUtils.isEmpty(iChangeValue)){
                         continue;
                     }
                     iDbValue = (Integer) readMethod.invoke(org);

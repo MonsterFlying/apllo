@@ -1645,7 +1645,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         user.setUpdatedAt(nowDate);
         userService.save(user);
         // 开户成功
-        touchMarketingByOpenAccount(entity);
+       touchMarketingByOpenAccount(entity);
         return userThirdAccountService.findByUserId(user.getId());
     }
 
