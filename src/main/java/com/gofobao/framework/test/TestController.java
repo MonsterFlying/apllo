@@ -135,7 +135,7 @@ public class TestController {
         }
     }
 
-    @Transactional(rollbackFor = Exception.class)
+   /* @Transactional(rollbackFor = Exception.class)
     @ApiOperation("获取自动投标列表")
     @RequestMapping("/pub/packet/send")
     public void redPacket() {
@@ -180,7 +180,7 @@ public class TestController {
             String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
             log.error("redPacket" + msg);
         }
-    }
+    }*/
 
     @ApiOperation("资产查询")
     @RequestMapping("/pub/asset/find")
