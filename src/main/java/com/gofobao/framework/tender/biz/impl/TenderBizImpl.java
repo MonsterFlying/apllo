@@ -355,11 +355,14 @@ public class TenderBizImpl implements TenderBiz {
         boolean isAutoTender = voCreateTenderReq.getIsAutoTender();
 
         if (borrow.getIsNovice()) {  // 新手
-            releaseAt = DateHelper.max(DateHelper.setHours(releaseAt, 20), borrow.getReleaseAt());
+            releaseAt = DateHelper.max(DateHelper.addHours(DateHelper.beginOfDate(releaseAt), 20), borrow.getReleaseAt());
         }
 
         UserCache userCache = userCacheService.findById(user.getId());
-        if (ObjectUtils.isEmpty(borrow.getLendId()) && releaseAt.getTime() > nowDate.getTime() && !userCache.isNovice()) {
+        if (ObjectUtils.isEmpty(borrow.getLendId())  && releaseAt.getTime() > nowDate.getTime() && !userCache.isNovice()) {
+            log.info(String.valueOf(ObjectUtils.isEmpty(borrow.getLendId())));
+            log.info(String.valueOf(releaseAt.getTime() > nowDate.getTime()));
+            log.info(String.valueOf(!userCache.isNovice()));
             errerMessage.add("当前标的未到发布时间!");
             return false;
         }

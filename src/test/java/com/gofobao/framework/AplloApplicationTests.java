@@ -57,8 +57,10 @@ import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.listener.providers.CreditProvider;
 import com.gofobao.framework.marketing.biz.MarketingProcessBiz;
 import com.gofobao.framework.member.biz.impl.WebUserThirdBizImpl;
+import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.migrate.MigrateBorrowBiz;
@@ -555,16 +557,32 @@ public class AplloApplicationTests {
 
     @Autowired
     private AssetChangeProvider assetChangeProvider;
+    @Autowired
+    private UserCacheService userCacheService;
 
     @Test
     @Transactional(rollbackOn = Exception.class)
     public void test() {
+        Borrow borrow = borrowService.findById(170185l);
+        UserCache userCache = userCacheService.findById(22002l);
+        Date nowDate = new Date();
+        Date releaseAt = borrow.getReleaseAt();
+
+        if (borrow.getIsNovice()) {  // 新手
+            releaseAt = DateHelper.max(DateHelper.addHours(DateHelper.beginOfDate(releaseAt), 20), borrow.getReleaseAt());
+        }
+        if (ObjectUtils.isEmpty(borrow.getLendId())  && releaseAt.getTime() > nowDate.getTime() && !userCache.isNovice()) {
+            log.info(String.valueOf(ObjectUtils.isEmpty(borrow.getLendId())));
+            log.info(String.valueOf(releaseAt.getTime() > nowDate.getTime()));
+            log.info(String.valueOf(!userCache.isNovice()));
+        }
+
         /*Borrow borrow = new Borrow();
         long takeUserId = borrow.getTakeUserId();
         if (ObjectUtils.isEmpty(takeUserId)){
 
         }*/
-        MqConfig mqConfig = new MqConfig();
+        /*MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_TENDER);
         mqConfig.setTag(MqTagEnum.AUTO_TENDER);
         ImmutableMap<String, String> body = ImmutableMap
@@ -574,7 +592,7 @@ public class AplloApplicationTests {
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("borrowProvider autoTender send mq exception", e);
-        }
+        }*/
         /*long redpackAccountId = 0;
         try {
             redpackAccountId = assetChangeProvider.getRedpackAccountId();
