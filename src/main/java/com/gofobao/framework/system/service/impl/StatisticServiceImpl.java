@@ -13,8 +13,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import javax.persistence.LockModeType;
+import java.util.List;
 
 /**
  * Created by Max on 17/6/2.
@@ -23,34 +25,32 @@ import javax.persistence.LockModeType;
 public class StatisticServiceImpl implements StatisticService {
 
     @Autowired
-    StatisticRepository statisticRepository ;
+    StatisticRepository statisticRepository;
 
     @Autowired
-    IncrStatisticService incrStatisticService ;
+    IncrStatisticService incrStatisticService;
 
     @Autowired
-    DictItemService dictItemService ;
+    DictItemService dictItemService;
 
-    DictValueService dictValueService ;
+    DictValueService dictValueService;
 
     @Override
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     public Statistic findLast() {
-        Pageable pageable = new PageRequest(0, 1, new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
-        Page<Statistic> all = statisticRepository.findAll(pageable);
-        Statistic statistic = null ;
-        if(all.getTotalElements() == 0){
-            statistic = statisticRepository.save( new Statistic() ) ;
-        }else{
-            statistic = all.getContent().get(0) ;
+        List<Statistic> all = statisticRepository.findAll();
+        Statistic statistic = null;
+        if (CollectionUtils.isEmpty(all)) {
+            statistic = statisticRepository.save(new Statistic());
+        } else {
+            statistic = all.get(0);
         }
-
-        return  statistic ;
+        return statistic;
     }
 
     @Override
     public void save(Statistic statistic) {
-        statisticRepository.save(statistic) ;
+        statisticRepository.save(statistic);
     }
 
 }
