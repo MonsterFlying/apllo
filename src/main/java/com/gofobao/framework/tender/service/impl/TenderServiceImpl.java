@@ -161,7 +161,7 @@ public class TenderServiceImpl implements TenderService {
     @Override
     public Map<String, Long> statistic() {
         Date todayAt = new Date();
-        Date yesterdayAt = DateHelper.addDays(todayAt, 1);
+        Date yesterdayAt = DateHelper.subDays(todayAt, 1);
         Specification todaySpecificati = Specifications.<Tender>and()
                 .between("createdAt", new Range<>(DateHelper.beginOfDate(todayAt), DateHelper.endOfDate(todayAt)))
                 .eq("status", TenderConstans.SUCCESS)

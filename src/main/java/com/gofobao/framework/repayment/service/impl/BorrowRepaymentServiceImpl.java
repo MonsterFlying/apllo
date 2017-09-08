@@ -241,6 +241,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         Specification<ThirdBatchLog> thirdBatchLogSpecification = Specifications.<ThirdBatchLog>and()
                 .eq("type", ThirdBatchLogContants.BATCH_REPAY)
                 .eq("sourceId", borrowRepayment.getId())
+                .in("state",Lists.newArrayList(0,1).toArray())
                 .build();
         List<ThirdBatchLog> thirdBatchLogs = thirdBatchLogService.findList(thirdBatchLogSpecification);
         if (!CollectionUtils.isEmpty(thirdBatchLogs)) {
