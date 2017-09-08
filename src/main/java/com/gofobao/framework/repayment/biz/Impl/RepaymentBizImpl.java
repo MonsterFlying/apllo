@@ -1569,10 +1569,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
         if (availBal < repayAsset.getUseMoney().doubleValue()) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "资金账户未同步，请先在个人中心进行资金同步操作!"));
         }
-
-        if (repayAsset.getUseMoney() < repayMoney) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "可用余额不足，操作失败!"));
-        }
         return ResponseEntity.ok(VoBaseResp.ok("检查成功!"));
     }
 
