@@ -2,10 +2,7 @@ package com.gofobao.framework.tender.biz;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
-import com.gofobao.framework.tender.vo.request.VoDelAutoTenderReq;
-import com.gofobao.framework.tender.vo.request.VoGetAutoTenderList;
-import com.gofobao.framework.tender.vo.request.VoOpenAutoTenderReq;
-import com.gofobao.framework.tender.vo.request.VoSaveAutoTenderReq;
+import com.gofobao.framework.tender.vo.request.*;
 import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
 import com.gofobao.framework.tender.vo.response.VoViewAutoTenderList;
 import com.gofobao.framework.tender.vo.response.VoViewUserAutoTenderWarpRes;
@@ -17,6 +14,14 @@ import org.springframework.http.ResponseEntity;
  */
 public interface AutoTenderBiz {
     ResponseEntity<VoViewUserAutoTenderWarpRes> list(Long userId);
+
+    /**
+     * 发送自动投标
+     *
+     * @param voSendAutoTender
+     * @return
+     */
+    ResponseEntity<VoBaseResp> sendAutoTender(VoSendAutoTender voSendAutoTender);
 
     /**
      * 创建自动投标规则
@@ -74,19 +79,17 @@ public interface AutoTenderBiz {
      * @return
      * @throws Exception
      */
-     ResponseEntity<VoViewAutoTenderList> getAutoTenderList(VoGetAutoTenderList voGetAutoTenderList) throws Exception;
+    ResponseEntity<VoViewAutoTenderList> getAutoTenderList(VoGetAutoTenderList voGetAutoTenderList) throws Exception;
 
 
     /**
      * pc：获取自动投标列表
+     *
      * @param voGetAutoTenderList
      * @return
      * @throws Exception
      */
     ResponseEntity<VoViewPcAutoTenderWarpRes> pcAutoTenderList(VoGetAutoTenderList voGetAutoTenderList) throws Exception;
-
-
-
 
 
 }

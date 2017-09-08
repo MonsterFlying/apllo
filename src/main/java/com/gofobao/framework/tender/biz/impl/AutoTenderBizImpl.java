@@ -1,8 +1,17 @@
 package com.gofobao.framework.tender.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.borrow.biz.BorrowBiz;
+import com.gofobao.framework.borrow.entity.Borrow;
+import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.common.constans.TypeTokenContants;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
@@ -11,16 +20,17 @@ import com.gofobao.framework.tender.contants.AutoTenderContants;
 import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.entity.AutoTender;
 import com.gofobao.framework.tender.service.AutoTenderService;
-import com.gofobao.framework.tender.vo.request.VoDelAutoTenderReq;
-import com.gofobao.framework.tender.vo.request.VoGetAutoTenderList;
-import com.gofobao.framework.tender.vo.request.VoOpenAutoTenderReq;
-import com.gofobao.framework.tender.vo.request.VoSaveAutoTenderReq;
+import com.gofobao.framework.tender.vo.request.*;
 import com.gofobao.framework.tender.vo.response.*;
 import com.gofobao.framework.tender.vo.response.web.PcAutoTender;
 import com.gofobao.framework.tender.vo.response.web.VoViewPcAutoTenderWarpRes;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +40,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
@@ -39,16 +50,19 @@ import java.util.*;
  * Created by Zeke on 2017/5/27.
  */
 @Service
+@Slf4j
 public class AutoTenderBizImpl implements AutoTenderBiz {
+    final Gson gson = new GsonBuilder().create();
     @Autowired
     private AutoTenderService autoTenderService;
     @Autowired
     private ThymeleafHelper thymeleafHelper;
-
-    final Gson gson = new GsonBuilder().create();
-
+    @Autowired
+    private BorrowService borrowService;
     @Autowired
     UserThirdAccountService userThirdAccountService;
+    @Autowired
+    MqHelper mqHelper;
 
     @Override
     public ResponseEntity<VoViewUserAutoTenderWarpRes> list(Long userId) {
@@ -61,6 +75,57 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "", VoViewUserAutoTenderWarpRes.class));
         }
 
+    }
+
+    /**
+     * 发送自动投标
+     *
+     * @param voSendAutoTender
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoBaseResp> sendAutoTender(VoSendAutoTender voSendAutoTender) {
+        String paramStr = voSendAutoTender.getParamStr();/* pc请求提前结清参数 */
+        if (!SecurityHelper.checkSign(voSendAutoTender.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc取消借款 签名验证不通过!"));
+        }
+        Map<String, String> paramMap = gson.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        /* 借款id */
+        long borrowId = NumberHelper.toLong(paramMap.get("borrowId"));
+        Borrow borrow = borrowService.findById(borrowId);
+        Preconditions.checkNotNull(borrow, "借款记录不存在!");
+        // 自动投标前提:
+        // 1.没有设置标密码
+        // 2.车贷标, 渠道标, 流转表
+        // 3.标的年化率为 800 以上
+        Integer borrowType = borrow.getType();
+        ImmutableList<Integer> autoTenderBorrowType = ImmutableList.of(0, 1, 4);
+        if ((ObjectUtils.isEmpty(borrow.getPassword()))
+                && (autoTenderBorrowType.contains(borrowType)) && borrow.getApr() > 800) {
+            Date checkDate = DateHelper.stringToDate(String.format("%s 20:00:00", DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD)));
+            if (borrow.getIsNovice() && new Date().getTime() < checkDate.getTime()) {   // 对于新手标直接延迟8点后推送
+                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "新手标请在晚上8点后触发"));
+            }
+
+            //触发自动投标队列
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_TENDER);
+            mqConfig.setTag(MqTagEnum.AUTO_TENDER);
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("borrowProvider autoTender send mq %s", gson.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+                return ResponseEntity.ok(VoBaseResp.ok("触发成功!"));
+            } catch (Throwable e) {
+                log.error("borrowProvider autoTender send mq exception", e);
+                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "触发失败!"));
+            }
+        }
+        return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "触发失败!"));
     }
 
     /**
