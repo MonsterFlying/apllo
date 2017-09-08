@@ -6,6 +6,8 @@ import com.gofobao.framework.api.contants.DesLineFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
+import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
@@ -137,6 +139,18 @@ public class TestController {
         log.info("=========================================================================================");
         log.info(GSON.toJson(resp));
 
+        BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
+        batchDetailsQueryReq.setBatchNo(StringHelper.toString(batchNo));
+        batchDetailsQueryReq.setBatchTxDate(String.valueOf(txDate));
+        batchDetailsQueryReq.setType("0");
+        batchDetailsQueryReq.setPageNum("1");
+        batchDetailsQueryReq.setPageSize("20");
+        batchDetailsQueryReq.setChannel(ChannelContant.HTML);
+        BatchDetailsQueryResp batchDetailsQueryResp = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, batchDetailsQueryReq, BatchDetailsQueryResp.class);
+        log.info("=========================================================================================");
+        log.info("即信批次状态详情查询:");
+        log.info("=========================================================================================");
+        log.info(GSON.toJson(batchDetailsQueryResp));
     }
 
 }
