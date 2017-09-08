@@ -155,6 +155,11 @@ public class StatisticBizImpl implements StatisticBiz {
      */
     @Override
     public ResponseEntity<VoViewIndexStatisticsWarpRes> query() {
+        try {
+            redisHelper.remove("indexStatistic");
+        }catch (Exception e){
+            log.error("删除首页缓存数据失败",e);
+        }
         IndexStatistics indexStatistics = new IndexStatistics();
         Gson gson = new Gson();
         try {
