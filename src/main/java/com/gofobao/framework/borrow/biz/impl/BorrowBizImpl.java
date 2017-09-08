@@ -1334,6 +1334,7 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         if (borrow.getType() != 0 && borrow.getType() != 4) {
+
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "借款标不是车贷标或净值标!", VoHtmlResp.class));
