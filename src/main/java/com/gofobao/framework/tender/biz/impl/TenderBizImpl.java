@@ -346,19 +346,23 @@ public class TenderBizImpl implements TenderBiz {
      */
     private boolean verifyBorrowInfo4Borrow(Borrow borrow, Users user, VoCreateTenderReq voCreateTenderReq, Multiset<String> errerMessage) throws Exception {
         if (!(borrow.getStatus() == 1 && borrow.getMoneyYes() < borrow.getMoney())) {
-            errerMessage.add("标的未在招标状态, 如有疑问请联系客服!");
+            errerMessage.add("标的未在招标状态， 如有疑问请联系客服!");
             return false;
         }
 
         Date nowDate = new Date();
         Date releaseAt = borrow.getReleaseAt();
+        boolean isAutoTender = voCreateTenderReq.getIsAutoTender();
 
         if (borrow.getIsNovice()) {  // 新手
-            releaseAt = DateHelper.max(DateHelper.setHours(releaseAt, 20), borrow.getReleaseAt());
+            releaseAt = DateHelper.max(DateHelper.addHours(DateHelper.beginOfDate(releaseAt), 20), borrow.getReleaseAt());
         }
 
         UserCache userCache = userCacheService.findById(user.getId());
-        if (ObjectUtils.isEmpty(borrow.getLendId()) && releaseAt.getTime() > nowDate.getTime() && !userCache.isNovice()) {
+        if (ObjectUtils.isEmpty(borrow.getLendId())  && releaseAt.getTime() > nowDate.getTime() && !userCache.isNovice()) {
+            log.info(String.valueOf(ObjectUtils.isEmpty(borrow.getLendId())));
+            log.info(String.valueOf(releaseAt.getTime() > nowDate.getTime()));
+            log.info(String.valueOf(!userCache.isNovice()));
             errerMessage.add("当前标的未到发布时间!");
             return false;
         }
@@ -416,10 +420,12 @@ public class TenderBizImpl implements TenderBiz {
             }
         }
 
-        if (!userCache.isNovice() && borrow.getIsLock()) {
-            log.info("borrowId -> %s,isLock -> %s,isNovice -> %s", borrow.getId(), borrow.getIsLock(), !userCache.isNovice());
-            errerMessage.add("当前标的状态已锁定,请稍后再是吧");
-            return false;
+        if (!isAutoTender) {
+            if (!userCache.isNovice() && borrow.getIsLock()) {
+                log.info("borrowId -> %s,isLock -> %s,isNovice -> %s", borrow.getId(), borrow.getIsLock(), !userCache.isNovice());
+                errerMessage.add("当前标的状态已锁定,请稍后再试吧");
+                return false;
+            }
         }
         return true;
     }
