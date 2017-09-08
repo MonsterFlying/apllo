@@ -184,7 +184,7 @@ public class StatisticBizImpl implements StatisticBiz {
                 indexStatistics.setYesterdayDueTotal(tenderStatistic.get("yesterdayTender"));
                 //今日成功
                 indexStatistics.setTodayDueTotal(tenderStatistic.get("todayTender"));
-                redisHelper.put("indexStatistic", gson.toJson(indexStatistics));
+                redisHelper.put("indexStatistic", gson.toJson(indexStatistics),3600);
             }
         } catch (Throwable e) {
             e.printStackTrace();
