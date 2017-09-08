@@ -144,7 +144,7 @@ public class TestController {
         UserThirdAccount redpackAccount = userThirdAccountService.findByUserId(redpackAccountId);
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(22002l);
 
-        long money = 0l;
+        long money = 160000*100l;
         // 发放理财师奖励
         AssetChange assetChange = new AssetChange();
         assetChange.setMoney(money);
