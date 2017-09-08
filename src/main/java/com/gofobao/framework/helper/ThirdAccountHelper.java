@@ -25,11 +25,6 @@ public class ThirdAccountHelper {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你还没有开通江西银行存管，请前往开通！", VoBaseResp.class));
         }
-        if(StringUtils.isEmpty(userThirdAccount.getCardNo())){
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR_BIND_BANK_CARD, "对不起! 你的账号还没有绑定银行卡呢", VoBaseResp.class));
-        }
         if (userThirdAccount.getPasswordState() != 1) {
             return ResponseEntity
                     .badRequest()
