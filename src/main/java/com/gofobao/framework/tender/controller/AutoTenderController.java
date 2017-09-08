@@ -35,6 +35,7 @@ public class AutoTenderController {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
+    @PostMapping("/pub/autoTender/v2/send")
     public ResponseEntity<VoBaseResp> sendAutoTender(@Valid @ModelAttribute VoSendAutoTender voSendAutoTender) {
         return autoTenderBiz.sendAutoTender(voSendAutoTender);
     }
