@@ -162,7 +162,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 平台发放红包
      */
-    publishRedpack("平台派发红包", "publishRedpack", "2833", "add@useMoney", "", "C"),
+    publishRedpack("平台派发红包", "publishRedpack", "2833", "sub@useMoney", "", "C"),
 
     /**
      * 平台发放提成

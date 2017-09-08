@@ -152,7 +152,7 @@ public class TestController {
         // 发放理财师奖励
         AssetChange assetChange = new AssetChange();
         assetChange.setMoney(money);
-        assetChange.setType(AssetChangeTypeEnum.publishRedpack);  //  扣除红包
+        assetChange.setType(AssetChangeTypeEnum.receiveRedpack);  //  扣除红包
         assetChange.setUserId(userThirdAccount.getUserId());
         assetChange.setForUserId(userThirdAccount.getUserId());
         assetChange.setRemark(String.format("发放红包至zfh %s元", StringHelper.formatDouble(money / 100D, true)));
