@@ -48,7 +48,7 @@ public class TenderProvider {
      */
     @Transactional(rollbackFor = Exception.class)
     public void autoTender(Map<String, String> msg) throws Exception {
-        Gson gson = new Gson() ;
+        Gson gson = new Gson();
         log.info(String.format("自动投标启动: %s", gson.toJson(msg)));
         Date nowDate = new Date();
         Long borrowId = NumberHelper.toLong(msg.get(MqConfig.MSG_BORROW_ID));
@@ -77,8 +77,8 @@ public class TenderProvider {
             if (CollectionUtils.isEmpty(autoTenderList)) {
                 log.info("自动投标MQ：第" + (pageIndex) + "页,没有匹配到自动投标规则！");
                 break;
-            }else{
-                log.info(String.format("获取到自动投标: %s", new Gson().toJson(autoTenderList))) ;
+            } else {
+                log.info(String.format("获取到自动投标: %s", new Gson().toJson(autoTenderList)));
             }
 
             pageIndex++;
@@ -134,7 +134,7 @@ public class TenderProvider {
                 if ((!tenderUserIds.contains(NumberHelper.toLong(voFindAutoTender.get("userId"))))
                         && (!autoTenderIds.contains(NumberHelper.toLong(voFindAutoTender.get("id"))))) {  // 保证自动不能重复
                     ResponseEntity<VoBaseResp> response = tenderBiz.createTender(voCreateBorrowTender);
-                    if (response.getStatusCode().equals(HttpStatus.OK)) {
+                    if (response.getBody().getState().getCode() == VoBaseResp.OK) {
                         moneyYes += lowest;
                         autoTenderIds.add(NumberHelper.toLong(voFindAutoTender.get("id")));
                         tenderUserIds.add(NumberHelper.toLong(voFindAutoTender.get("userId")));
@@ -142,7 +142,7 @@ public class TenderProvider {
                         autoTenderService.updateById(autoTender);
                         autoTenderCount++;
                     } else {
-                        log.info(String.format("自动投标启动: 创建投标失败 %s", gson.toJson(voFindAutoTender)));
+                        log.info(String.format("自动投标启动: 创建投标失败 %s,msg->%s", gson.toJson(voFindAutoTender), response.getBody().getState().getMsg()));
                         continue;
                     }
                 }

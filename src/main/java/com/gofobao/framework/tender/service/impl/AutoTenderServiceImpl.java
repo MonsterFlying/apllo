@@ -81,7 +81,7 @@ public class AutoTenderServiceImpl implements AutoTenderService {
     }
 
 
-    public List<Map<String,Object>> findQualifiedAutoTenders(VoFindAutoTenderList voFindAutoTenderList) {
+    public List<Map<String, Object>> findQualifiedAutoTenders(VoFindAutoTenderList voFindAutoTenderList) {
         Long borrowId = voFindAutoTenderList.getBorrowId();
         if (ObjectUtils.isEmpty(borrowId)) {
             return Collections.EMPTY_LIST;
@@ -92,10 +92,15 @@ public class AutoTenderServiceImpl implements AutoTenderService {
         StringBuffer sql = new StringBuffer("select t.id AS id,t. STATUS AS status,t.user_id AS userId,t.lowest AS lowest,t.borrow_types AS borrowTypes," +
                 "t.repay_fashions AS repayFashions,t.tender_0 AS tender0,t.tender_1 AS tender1,t.tender_3 AS tender3,t.tender_4 AS tender4,t.`mode` AS mode,t.tender_money AS tenderMoney,t.timelimit_first AS timelimitFirst,t.timelimit_last AS timelimitLast,t.timelimit_type AS timelimitType,t.apr_first AS aprFirst,t.apr_last AS aprLast,t.save_money AS saveMoney,t.`order` AS `order`,t.auto_at AS autoAt,t.created_at AS createdAt," +
                 "t.updated_at AS updatedAt,a.use_money AS useMoney,a.no_use_money AS noUseMoney,a.virtual_money AS virtualMoney,a.collection AS collection,a.payment AS payment " +
-                "from gfb_auto_tender t " +
-                "left join gfb_asset a on t.user_id = a.user_id " +
-                "left join gfb_user_third_account uta on  t.user_id =  uta.user_id " +
-                "where 1=1 and uta.del = 0 ");
+                "FROM\n" +
+                "  gfb_auto_tender t\n" +
+                "  LEFT JOIN gfb_asset a ON t.user_id = a.user_id\n" +
+                "\tLEFT JOIN gfb_users u on t.user_id = u.id\n" +
+                "  LEFT JOIN gfb_user_third_account uta ON t.user_id = uta.user_id\n" +
+                "WHERE\n" +
+                "  1 = 1\n" +
+                "  AND uta.del = 0\n" +
+                "\tAND u.is_lock = '0'\n");
 
         Integer type = !ObjectUtils.isEmpty(borrow.getTenderId()) ? 3 : borrow.getType();
         sql.append(" and t.tender_" + type + " = 1");
@@ -135,11 +140,11 @@ public class AutoTenderServiceImpl implements AutoTenderService {
         Integer pageSize = voFindAutoTenderList.getPageSize();
         sql.append(" limit ").append(pageIndex * pageSize).append(",").append(pageSize);
         log.info(sql.toString());
-        List<Map<String,Object>> resultList = jdbcTemplate.queryForList(sql.toString());
-        if(CollectionUtils.isEmpty(resultList)) {
+        List<Map<String, Object>> resultList = jdbcTemplate.queryForList(sql.toString());
+        if (CollectionUtils.isEmpty(resultList)) {
             return new ArrayList<>(0);
-        }else{
-            return resultList ;
+        } else {
+            return resultList;
         }
     }
 
@@ -205,11 +210,11 @@ public class AutoTenderServiceImpl implements AutoTenderService {
         autoTenderRepository.delete(id);
     }
 
-    public void delete(AutoTender autoTender){
+    public void delete(AutoTender autoTender) {
         autoTenderRepository.delete(autoTender);
     }
 
-    public void delete(List<AutoTender> autoTenderList){
+    public void delete(List<AutoTender> autoTenderList) {
         autoTenderRepository.delete(autoTenderList);
     }
 }
