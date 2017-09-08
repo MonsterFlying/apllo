@@ -11,30 +11,46 @@ import com.gofobao.framework.asset.entity.AdvanceLog;
 import com.gofobao.framework.asset.service.AdvanceLogService;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.common.constans.TypeTokenContants;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.BooleanHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
+import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
+import com.gofobao.framework.system.vo.request.VoSendThirdBatch;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferService;
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Zeke on 2017/7/14.
@@ -43,6 +59,7 @@ import java.util.List;
 @Slf4j
 public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
 
+    final Gson gson = new GsonBuilder().create();
     @Autowired
     private ThirdBatchLogService thirdBatchLogService;
     @Autowired
@@ -57,6 +74,67 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
     private TenderService tenderService;
     @Autowired
     private TransferService transferService;
+    @Autowired
+    private MqHelper mqHelper;
+
+
+    /**
+     * 发送即信批次处理
+     *
+     * @param voSendThirdBatch
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoBaseResp> sendThirdBatchDeal(VoSendThirdBatch voSendThirdBatch) {
+        log.info("pc：触发发送即信批次处理");
+        String paramStr = voSendThirdBatch.getParamStr();/* pc请求提前结清参数 */
+        if (!SecurityHelper.checkSign(voSendThirdBatch.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc发送即信批次处理 签名验证不通过!"));
+        }
+        Map<String, String> paramMap = gson.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        /* sourceId */
+        String sourceId = paramMap.get("sourceId");
+        //批次号
+        String batchNo = paramMap.get("batchNo");
+        //type
+        String type = paramMap.get("type");
+
+        Specification<ThirdBatchLog> tbls = Specifications
+                .<ThirdBatchLog>and()
+                .eq("sourceId", StringHelper.toString(sourceId))
+                .eq("batchNo", StringHelper.toString(batchNo))
+                .eq("type", type)
+                .build();
+        List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls);
+        if (CollectionUtils.isEmpty(thirdBatchLogList)) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "批次记录不存在!"));
+        }
+        //批次日志记录
+        ThirdBatchLog thirdBatchLog = thirdBatchLogList.get(0);
+        log.info(String.format("thirdBatchLog 记录->%s", gson.toJson(thirdBatchLog)));
+
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(170106),
+                        MqConfig.BATCH_NO, StringHelper.toString("193522"),
+                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()),
+                        MqConfig.ACQ_RES, thirdBatchLogList.get(0).getAcqRes()
+                );
+
+        mqConfig.setMsg(body);
+        try {
+            log.info(String.format("tenderThirdBizImpl thirdBatchRepayAllRunCall send mq %s", gson.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+            return ResponseEntity.ok(VoBaseResp.ok("处理成功!"));
+        } catch (Throwable e) {
+            log.error("tenderThirdBizImpl thirdBatchRepayAllRunCall send mq exception", e);
+            return ResponseEntity.ok(VoBaseResp.ok("处理失败!"));
+        }
+    }
 
     /**
      * 更新批次日志状态

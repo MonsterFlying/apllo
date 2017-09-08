@@ -4,16 +4,14 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.AutoTenderBiz;
-import com.gofobao.framework.tender.vo.request.VoDelAutoTenderReq;
-import com.gofobao.framework.tender.vo.request.VoGetAutoTenderList;
-import com.gofobao.framework.tender.vo.request.VoOpenAutoTenderReq;
-import com.gofobao.framework.tender.vo.request.VoSaveAutoTenderReq;
+import com.gofobao.framework.tender.vo.request.*;
 import com.gofobao.framework.tender.vo.response.VoAutoTenderInfo;
 import com.gofobao.framework.tender.vo.response.VoViewAutoTenderList;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
@@ -29,6 +27,17 @@ public class AutoTenderController {
 
     @Autowired
     private AutoTenderBiz autoTenderBiz;
+
+    /**
+     * 发送自动投标
+     *
+     * @param voSendAutoTender
+     * @return
+     */
+    @PostMapping("/pub/autoTender/v2/send")
+    public ResponseEntity<VoBaseResp> sendAutoTender(@Valid @ModelAttribute VoSendAutoTender voSendAutoTender) {
+        return autoTenderBiz.sendAutoTender(voSendAutoTender);
+    }
 
     /**
      * 开启自动投标
@@ -91,7 +100,7 @@ public class AutoTenderController {
      */
     @ApiOperation("查询自动投标详情")
     @PostMapping("/autoTender/v2/info")
-    public ResponseEntity<VoAutoTenderInfo> queryAutoTenderInfo(@RequestParam("autoTenderId") Long autoTenderId,  @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY)Long userId) {
+    public ResponseEntity<VoAutoTenderInfo> queryAutoTenderInfo(@RequestParam("autoTenderId") Long autoTenderId, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return autoTenderBiz.queryAutoTenderInfo(autoTenderId, userId);
     }
 
