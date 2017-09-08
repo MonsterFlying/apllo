@@ -113,7 +113,7 @@ public class UserCache {
      * @return
      */
     public boolean isNovice() {
-        return !(this.getTenderQudao() && this.getTenderTuijian());
+        return !(this.getTenderQudao() || this.getTenderTuijian());
     }
 
 }

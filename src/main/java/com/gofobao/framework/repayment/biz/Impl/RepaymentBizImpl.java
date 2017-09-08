@@ -1469,11 +1469,14 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 lateInterest, voRepayReq.getUserId(), groupSeqNo,
                 advance, repayMoney);
         //改变还款与垫付记录的值
+        /**
+         * @// TODO: 2017/9/8 判断 
+         */
         changeRepaymentAndAdvanceRecord(borrowRepayment, lateDays, repayMoney, lateInterest, advance);
-        ResponseEntity<VoBaseResp> resp = checkAssetByRepay(repayAsset, money);
+        /*ResponseEntity<VoBaseResp> resp = checkAssetByRepay(repayAsset, money);
         if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
             throw new Exception(resp.getBody().getState().getMsg());
-        }
+        }*/
 
         BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
         balanceFreezeReq.setAccountId(repayUserThirdAccount.getAccountId());
