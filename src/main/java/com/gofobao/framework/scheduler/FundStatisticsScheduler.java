@@ -136,7 +136,7 @@ public class FundStatisticsScheduler {
             log.error("ALEVE保存调度信息失败", e);
         }
 
-        // 处理未同步的线下转账
+        /*// 处理未同步的线下转账
         try {
             resMsg = "调度成功";
             if (aleveState) {
@@ -149,7 +149,7 @@ public class FundStatisticsScheduler {
             }
         } catch (Exception e) {
             resMsg = e.getMessage();
-        }
+        }*/
         try {
             FinancialScheduler financialScheduler = new FinancialScheduler();
             ImmutableMap<String, String> data = ImmutableMap.of("date", date);
