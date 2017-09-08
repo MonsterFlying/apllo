@@ -542,7 +542,6 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         // long count = borrowService.countByUserIdAndStatusIn(userId, Arrays.asList(0, 1));
-/*
         Specification<Borrow> specification = Specifications.<Borrow>and()
                 .eq("userId", userId)
                 .eq("status", BorrowContants.BIDDING)
@@ -557,8 +556,8 @@ public class BorrowBizImpl implements BorrowBiz {
                             .body(VoBaseResp.error(VoBaseResp.ERROR, "您已经有一个进行中的借款标!"));
                 }
             }
-        }*/
-        /*Specification<Transfer> ts = Specifications
+        }
+        Specification<Transfer> ts = Specifications
                 .<Transfer>and()
                 .eq("userId", userId)
                 .in("state", Lists.newArrayList(TransferContants.CHECKPENDING, TransferContants.TRANSFERIND).toArray())
@@ -568,7 +567,7 @@ public class BorrowBizImpl implements BorrowBiz {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "您已经有一个进行中的债权转让"));
-        }*/
+        }
 
         Long borrowId = insertBorrow(voAddNetWorthBorrow, userId);  // 插入标
         if (borrowId <= 0) {
