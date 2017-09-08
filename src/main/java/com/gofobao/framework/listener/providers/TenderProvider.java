@@ -47,6 +47,7 @@ public class TenderProvider {
      */
     @Transactional(rollbackFor = Exception.class)
     public void autoTender(Map<String, String> msg) throws Exception {
+        log.info("自动投标");
         Date nowDate = new Date();
         Long borrowId = NumberHelper.toLong(msg.get(MqConfig.MSG_BORROW_ID));
         Borrow borrow = borrowService.findByIdLock(borrowId);
@@ -119,6 +120,7 @@ public class TenderProvider {
                 voCreateBorrowTender.setTenderMoney(MathHelper.myRound(money / 100.0, 2));  // 投标金额
                 voCreateBorrowTender.setAutoOrder(NumberHelper.toInt(voFindAutoTender.get("order")));
                 voCreateBorrowTender.setIsAutoTender(true);//自动标识
+                voCreateBorrowTender.setRequestSource("0"); //自动投标
 
                 if ((!tenderUserIds.contains(NumberHelper.toLong(voFindAutoTender.get("userId"))))
                         && (!autoTenderIds.contains(NumberHelper.toLong(voFindAutoTender.get("id"))))) {  // 保证自动不能重复
@@ -136,12 +138,13 @@ public class TenderProvider {
                 }
             }
         } while (num < maxSize && !bool);
+
         if (autoTenderCount >= 1) {
             autoTenderService.updateAutoTenderOrder();
             log.info("===========================AutoTenderListener===========================");
             log.info("自动投标成功! borrowId：" + borrowId);
             log.info("========================================================================");
-        }else {
+        } else {
             log.info("===========================AutoTenderListener===========================");
             log.info("自动投标无匹配规则! borrowId：" + borrowId);
             log.info("========================================================================");

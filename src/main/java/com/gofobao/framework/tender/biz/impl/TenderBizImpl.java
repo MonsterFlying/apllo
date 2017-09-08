@@ -231,7 +231,14 @@ public class TenderBizImpl implements TenderBiz {
         borrowTender.setStatus(1);
         borrowTender.setMoney(voCreateTenderReq.getTenderMoney().longValue());
         borrowTender.setValidMoney(validateMoney);
-        borrowTender.setSource(Integer.valueOf(voCreateTenderReq.getRequestSource()));
+        Integer requestSource = 0;
+        try {
+            requestSource = Integer.valueOf(voCreateTenderReq.getRequestSource());
+        } catch (Exception e) {
+            requestSource = 0;
+        }
+
+        borrowTender.setSource(requestSource);
         Integer autoOrder = voCreateTenderReq.getAutoOrder();
         borrowTender.setAutoOrder(ObjectUtils.isEmpty(autoOrder) ? 0 : autoOrder);
         borrowTender.setIsAuto(voCreateTenderReq.getIsAutoTender());
