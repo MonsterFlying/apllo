@@ -13,6 +13,7 @@ import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.vo.VoFindAutoTenderList;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.google.common.base.Preconditions;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -47,7 +48,8 @@ public class TenderProvider {
      */
     @Transactional(rollbackFor = Exception.class)
     public void autoTender(Map<String, String> msg) throws Exception {
-        log.info("自动投标");
+        Gson gson = new Gson() ;
+        log.info(String.format("自动投标启动: %s", gson.toJson(msg)));
         Date nowDate = new Date();
         Long borrowId = NumberHelper.toLong(msg.get(MqConfig.MSG_BORROW_ID));
         Borrow borrow = borrowService.findByIdLock(borrowId);
@@ -60,9 +62,8 @@ public class TenderProvider {
         int pageIndex = 0;
         int maxSize = 50;
         int autoTenderCount = 0; // 中标item
-        boolean bool = false;//是否满标
+        boolean isFull = false;//是否满标
         do {
-            pageIndex++;
             voFindAutoTenderList.setStatus("1");
             voFindAutoTenderList.setNotUserId(borrow.getUserId());
             voFindAutoTenderList.setInRepayFashions(BorrowHelper.countRepayFashions(new Integer[]{borrow.getRepayFashion()}));
@@ -74,10 +75,13 @@ public class TenderProvider {
             voFindAutoTenderList.setGtAprLast(apr);
             autoTenderList = autoTenderService.findQualifiedAutoTenders(voFindAutoTenderList);  // 查询自动投标队列
             if (CollectionUtils.isEmpty(autoTenderList)) {
-                log.info("自动投标MQ：第" + (pageIndex + 1) + "页,没有匹配到自动投标规则！");
+                log.info("自动投标MQ：第" + (pageIndex) + "页,没有匹配到自动投标规则！");
                 break;
+            }else{
+                log.info(String.format("获取到自动投标: %s", new Gson().toJson(autoTenderList))) ;
             }
 
+            pageIndex++;
             Iterator<Map<String, Object>> itAutoTender = autoTenderList.iterator();
             Map<String, Object> voFindAutoTender = null;
             long money = 0;
@@ -88,29 +92,34 @@ public class TenderProvider {
             Set<Long> tenderUserIds = new HashSet<>();
             Set<Long> autoTenderIds = new HashSet<>();
             AutoTender autoTender = null;
+
             while (itAutoTender.hasNext()) { // 将合格的自动投标  放入消息队列
                 autoTender = new AutoTender();
                 voFindAutoTender = itAutoTender.next();
                 if ((moneyYes >= borrowMoney) || (mostAuto > 0 && moneyYes >= mostAuto)) {  // 判断是否满标或者 达到自动投标最大额度
-                    bool = true;
+                    isFull = true;  // 满标了
+                    log.info(String.format("自动投标:已满标: %s", gson.toJson(voFindAutoTender)));
                     break;
                 }
 
                 if (tenderUserIds.contains(NumberHelper.toLong(voFindAutoTender.get("userId")))   // 保证每个用户 和 每个自动投标规则只能使用一次
                         || autoTenderIds.contains(NumberHelper.toLong(voFindAutoTender.get("id")))) {
+                    log.info(String.format("自动投标:已经投标: %s", gson.toJson(voFindAutoTender)));
                     continue;
                 }
 
                 useMoney = NumberHelper.toLong(voFindAutoTender.get("useMoney"));  // 用户可用金额
-                money = String.valueOf(voFindAutoTender.get("mode")).equals("1") ? NumberHelper.toInt(voFindAutoTender.get("tenderMoney")) : useMoney;
+                money = String.valueOf(voFindAutoTender.get("mode")).equals("1") ? NumberHelper.toInt(voFindAutoTender.get("tenderMoney")) : useMoney;  // 0 余额  1.固定金额
                 money = Math.min(useMoney - NumberHelper.toInt(voFindAutoTender.get("saveMoney")), money);
                 lowest = NumberHelper.toLong(voFindAutoTender.get("lowest")); // 最小投标金额
                 if ((money < lowest)) {
+                    log.info(String.format("自动投标:小于自最小投标金额: %s", gson.toJson(voFindAutoTender)));
                     continue;
                 }
 
                 // 标的金额小于 最小投标金额
                 if (borrowMoney - moneyYes < lowest) {
+                    log.info(String.format("自动投标启动: 标投标金额小于可投金额 %s", gson.toJson(voFindAutoTender)));
                     continue;
                 }
 
@@ -133,11 +142,12 @@ public class TenderProvider {
                         autoTenderService.updateById(autoTender);
                         autoTenderCount++;
                     } else {
+                        log.info(String.format("自动投标启动: 创建投标失败 %s", gson.toJson(voFindAutoTender)));
                         continue;
                     }
                 }
             }
-        } while (num < maxSize && !bool);
+        } while (num < maxSize && !isFull);
 
         if (autoTenderCount >= 1) {
             autoTenderService.updateAutoTenderOrder();
