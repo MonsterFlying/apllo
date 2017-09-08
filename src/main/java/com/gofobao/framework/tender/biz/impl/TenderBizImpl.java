@@ -404,7 +404,9 @@ public class TenderBizImpl implements TenderBiz {
                 return false;
             }
         }
+
         if (!userCache.isNovice() && borrow.getIsLock()) {
+            log.info("borrowId -> %s,isLock -> %s,isNovice -> %s",borrow.getId(),borrow.getIsLock(),!userCache.isNovice());
             errerMessage.add("当前标的状态已锁定,请稍后再是吧");
             return false;
         }
