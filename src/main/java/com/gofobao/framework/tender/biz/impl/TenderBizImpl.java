@@ -352,6 +352,7 @@ public class TenderBizImpl implements TenderBiz {
 
         Date nowDate = new Date();
         Date releaseAt = borrow.getReleaseAt();
+        boolean isAutoTender = voCreateTenderReq.getIsAutoTender();
 
         if (borrow.getIsNovice()) {  // 新手
             releaseAt = DateHelper.max(DateHelper.setHours(releaseAt, 20), borrow.getReleaseAt());
@@ -416,10 +417,12 @@ public class TenderBizImpl implements TenderBiz {
             }
         }
 
-        if (!userCache.isNovice() && borrow.getIsLock()) {
-            log.info("borrowId -> %s,isLock -> %s,isNovice -> %s", borrow.getId(), borrow.getIsLock(), !userCache.isNovice());
-            errerMessage.add("当前标的状态已锁定,请稍后再是吧");
-            return false;
+        if (!isAutoTender) {
+            if (!userCache.isNovice() && borrow.getIsLock()) {
+                log.info("borrowId -> %s,isLock -> %s,isNovice -> %s", borrow.getId(), borrow.getIsLock(), !userCache.isNovice());
+                errerMessage.add("当前标的状态已锁定,请稍后再试吧");
+                return false;
+            }
         }
         return true;
     }
