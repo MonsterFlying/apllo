@@ -113,10 +113,10 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(170106),
-                        MqConfig.BATCH_NO, StringHelper.toString("193522"),
+                .of(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()),
+                        MqConfig.BATCH_NO, StringHelper.toString(thirdBatchLog.getBatchNo()),
                         MqConfig.MSG_TIME, DateHelper.dateToString(new Date()),
-                        MqConfig.ACQ_RES, thirdBatchLogList.get(0).getAcqRes()
+                        MqConfig.ACQ_RES, thirdBatchLog.getAcqRes()
                 );
 
         mqConfig.setMsg(body);
