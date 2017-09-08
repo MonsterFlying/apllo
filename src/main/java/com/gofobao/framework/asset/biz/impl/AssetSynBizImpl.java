@@ -282,8 +282,6 @@ public class AssetSynBizImpl implements AssetSynBiz {
                 if (!ObjectUtils.isEmpty(rechargeDetailLog)) {
                     continue;
                 }
-
-
                 UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(aleve.getCardnbr());
                 Preconditions.checkNotNull(userThirdAccount, "AssetSynBizImpl.doOffLineRechargeByAleve: userThirdAccount is empty");
                 Double money = new Double(aleve.getAmount()) * 100;

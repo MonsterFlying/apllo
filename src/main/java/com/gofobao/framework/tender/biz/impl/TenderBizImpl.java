@@ -359,7 +359,9 @@ public class TenderBizImpl implements TenderBiz {
         }
 
         UserCache userCache = userCacheService.findById(user.getId());
-        if (ObjectUtils.isEmpty(borrow.getLendId()) && releaseAt.getTime() > nowDate.getTime() && !userCache.isNovice()) {
+        if (ObjectUtils.isEmpty(borrow.getLendId())
+                &&  releaseAt.getTime() > nowDate.getTime()
+                && !userCache.isNovice()) {
             errerMessage.add("当前标的未到发布时间!");
             return false;
         }
