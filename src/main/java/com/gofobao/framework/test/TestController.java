@@ -250,7 +250,7 @@ public class TestController {
 
     @GetMapping("pub/test/marketing")
     public void touchMarketing() {
-        Tender tender=tenderService.findById(262285L);
+        Tender tender=tenderService.findById(262158L);
         borrowBiz.touchMarketingByTender(tender);
 
     }

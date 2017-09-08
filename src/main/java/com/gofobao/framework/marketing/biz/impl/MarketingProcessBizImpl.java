@@ -401,7 +401,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
 
                     Tender tender = tenderService.findById(Long.parseLong(marketingData.getSourceId()));
                     Preconditions.checkNotNull(tender, "MarketingProcessBizImpl.filterDataByCondition tender is null");
-                    if (tender.getState() != 1) {
+                    if (tender.getState() .intValue()!= 1) {
                         iterator.remove();
                         continue;
                     }
@@ -759,11 +759,14 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         query.setParameter("type1", BorrowContants.CE_DAI);
         query.setParameter("type2", BorrowContants.INDEX_TYPE_QU_DAO);
         List<Tender> tenders = query.getResultList();
-        if (tenders.size() < 2) {  //新用户
-            return true;
-        } else {         //老用户
-            return false;
+
+        if(marketingDimentsion.getMemberType().intValue()==2){  //老用户
+            return  tenders.size()>1?true:false;
+
+        }else{  //新用户
+            return  tenders.size()<2?true:false;
         }
+
     }
 
     /**
