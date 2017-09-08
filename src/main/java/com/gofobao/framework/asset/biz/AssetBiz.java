@@ -1,9 +1,6 @@
 package com.gofobao.framework.asset.biz;
 
-import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
-import com.gofobao.framework.asset.vo.request.VoRechargeReq;
-import com.gofobao.framework.asset.vo.request.VoSynAssetsRep;
-import com.gofobao.framework.asset.vo.request.VoUnsendRedPacket;
+import com.gofobao.framework.asset.vo.request.*;
 import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.asset.vo.response.pc.VoViewAssetLogsWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
@@ -23,12 +20,20 @@ import javax.servlet.http.HttpServletResponse;
 public interface AssetBiz {
 
     /**
-     * 获取用户资产详情
+     * 撤回即信红包
      *
      * @param voUnsendRedPacket
      * @return
      */
     ResponseEntity<VoBaseResp> unsendRedPacket(VoUnsendRedPacket voUnsendRedPacket);
+
+    /**
+     * 发送即信红包
+     *
+     * @param voSendRedPacket
+     * @return
+     */
+    ResponseEntity<VoBaseResp> sendRedPacket(VoSendRedPacket voSendRedPacket);
 
     /**
      * 获取用户资产详情

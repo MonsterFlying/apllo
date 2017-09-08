@@ -6,6 +6,8 @@ import com.gofobao.framework.api.contants.DesLineFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
+import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.asset.entity.NewAssetLog;
@@ -86,15 +88,15 @@ public class TestController {
     final Gson GSON = new GsonBuilder().create();
 
     @ApiOperation("获取自动投标列表")
-    @GetMapping("/pub/batch/deal")
+    @RequestMapping("/pub/batch/deal")
     @Transactional
-    public void batchDeal(@PathVariable("sourceId") Object sourceId, @PathVariable("batchNo") Object batchNo) {
+    public void batchDeal(@RequestParam("sourceId") Object sourceId, @RequestParam("batchNo") Object batchNo) {
        /* Map<String,Object> acqMap = new HashMap<>();
         acqMap.put("borrowId", 169979);
         acqMap.put("tag", MqTagEnum.END_CREDIT_BY_TRANSFER);*/
         Specification<ThirdBatchLog> tbls = Specifications
                 .<ThirdBatchLog>and()
-                .eq("sourceId",StringHelper.toString(sourceId))
+                .eq("sourceId", StringHelper.toString(sourceId))
                 .eq("batchNo", StringHelper.toString(batchNo))
                 .build();
         List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls);
@@ -118,6 +120,22 @@ public class TestController {
         } catch (Throwable e) {
             log.error("tenderThirdBizImpl thirdBatchRepayAllRunCall send mq exception", e);
         }
+    }
+
+    @ApiOperation("批次查询")
+    @RequestMapping("/pub/batch/find")
+    @Transactional
+    public void findBatch(@RequestParam("txDate") Object txDate, @RequestParam("batchNo") Object batchNo) {
+        BatchQueryReq req = new BatchQueryReq();
+        req.setChannel(ChannelContant.HTML);
+        req.setBatchNo(StringHelper.toString(batchNo));
+        req.setBatchTxDate(String.valueOf(txDate));
+        BatchQueryResp resp = jixinManager.send(JixinTxCodeEnum.BATCH_QUERY, req, BatchQueryResp.class);
+        log.info("=========================================================================================");
+        log.info("即信批次状态查询:");
+        log.info("=========================================================================================");
+        log.info(GSON.toJson(resp));
+
     }
 
 }

@@ -1,10 +1,7 @@
 package com.gofobao.framework.asset.biz.impl;
 
 import com.github.wenhao.jpa.Specifications;
-import com.gofobao.framework.api.contants.ChannelContant;
-import com.gofobao.framework.api.contants.IdTypeContant;
-import com.gofobao.framework.api.contants.JixinResultContants;
-import com.gofobao.framework.api.contants.SrvTxCodeContants;
+import com.gofobao.framework.api.contants.*;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
@@ -14,6 +11,8 @@ import com.gofobao.framework.api.model.direct_recharge_online.DirectRechargeOnli
 import com.gofobao.framework.api.model.direct_recharge_online.DirectRechargeOnlineResponse;
 import com.gofobao.framework.api.model.direct_recharge_plus.DirectRechargePlusRequest;
 import com.gofobao.framework.api.model.direct_recharge_plus.DirectRechargePlusResponse;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
+import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.api.model.voucher_pay_cancel.VoucherPayCancelRequest;
 import com.gofobao.framework.api.model.voucher_pay_cancel.VoucherPayCancelResponse;
 import com.gofobao.framework.asset.biz.AssetBiz;
@@ -25,10 +24,7 @@ import com.gofobao.framework.asset.service.AssetLogService;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.NewAssetLogService;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
-import com.gofobao.framework.asset.vo.request.VoAssetLogReq;
-import com.gofobao.framework.asset.vo.request.VoRechargeReq;
-import com.gofobao.framework.asset.vo.request.VoSynAssetsRep;
-import com.gofobao.framework.asset.vo.request.VoUnsendRedPacket;
+import com.gofobao.framework.asset.vo.request.*;
 import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.asset.vo.response.pc.AssetLogs;
 import com.gofobao.framework.asset.vo.response.pc.VoViewAssetLogsWarpRes;
@@ -219,6 +215,71 @@ public class AssetBizImpl implements AssetBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, String.format("撤销红包失败：%s", response.getRetMsg())));
         }
         return ResponseEntity.ok(VoBaseResp.ok(String.format("撤销红包成功：msg->%s", response.getRetMsg())));
+    }
+
+
+    /**
+     * 发送即信红包
+     *
+     * @param voSendRedPacket
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoBaseResp> sendRedPacket(VoSendRedPacket voSendRedPacket) {
+        String paramStr = voSendRedPacket.getParamStr();/* pc请求提前结清参数 */
+        if (!SecurityHelper.checkSign(voSendRedPacket.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc发送红包 签名验证不通过!"));
+        }
+        Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        long redpackAccountId = 0;
+        try {
+            redpackAccountId = assetChangeProvider.getRedpackAccountId();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        UserThirdAccount redpackAccount = userThirdAccountService.findByUserId(redpackAccountId);
+        //发送红包参数
+        long userId = NumberHelper.toLong(paramMap.get("userId"));
+        /* 用户记录*/
+        Users users = userService.findByIdLock(userId);
+        Preconditions.checkNotNull(users, "用户记录不存在!");
+        Asset asset = assetService.findByUserIdLock(userId);
+        Preconditions.checkNotNull(asset, "用户资产记录不存在!");
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        Preconditions.checkNotNull(userThirdAccount, "存管账户记录不存在!");
+        /* 红包发放金额 */
+        double money = NumberHelper.toDouble(paramMap.get("money")) * 100.0;
+        if (money <= 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc发送红包 发放金额为空!"));
+        }
+
+        if (users.getIsLock()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc发送红包 用户已锁定!"));
+        }
+
+        //3.发送红包
+        VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
+        voucherPayRequest.setAccountId(redpackAccount.getAccountId());
+        voucherPayRequest.setTxAmount(StringHelper.formatDouble(asset.getUseMoney(), 100, false));
+        voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
+        voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
+        voucherPayRequest.setDesLine("红包发送!");
+        voucherPayRequest.setChannel(ChannelContant.HTML);
+        VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+            String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, String.format("pc发送红包 请求即信异常:%s", msg)));
+        }
+
+        return ResponseEntity.ok(VoBaseResp.ok("发送成功!"));
     }
 
     /**

@@ -177,7 +177,7 @@ public class AplloApplicationTests {
 
     @Test
     public void touchMarketing() {
-            borrowBiz.sendBorrowProtocol( borrowService.findByBorrowId(170172L));
+
 
     }
 
