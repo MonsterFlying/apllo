@@ -195,7 +195,7 @@ public class BorrowBizImpl implements BorrowBiz {
         if (flag == ThirdBatchLogContants.AWAIT) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("还款处理中，请勿重复点击!")));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("复审处理中，请勿重复点击!")));
         } else if (flag == ThirdBatchLogContants.SUCCESS) {
             //触发处理批次放款处理结果队列
             MqConfig mqConfig = new MqConfig();
