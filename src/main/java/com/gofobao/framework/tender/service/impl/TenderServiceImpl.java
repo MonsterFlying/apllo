@@ -79,7 +79,7 @@ public class TenderServiceImpl implements TenderService {
             VoBorrowTenderUserRes tenderUserRes = new VoBorrowTenderUserRes();
             tenderUserRes.setValidMoney(StringHelper.formatMon(item.getValidMoney() / 100d) + MoneyConstans.RMB);
             tenderUserRes.setDate(DateHelper.dateToString(item.getCreatedAt(), DateHelper.DATE_FORMAT_YMDHMS));
-            tenderUserRes.setType(item.getIsAuto() ? TenderConstans.AUTO+"("+item.getAutoOrder()+")" : TenderConstans.MANUAL+"("+item.getAutoOrder()+")");
+            tenderUserRes.setType(item.getIsAuto() ? TenderConstans.AUTO+"("+item.getAutoOrder()+")" : TenderConstans.MANUAL);
             Users user = usersRepository.findOne(new Long(item.getUserId()));
 
             String userName = StringUtils.isEmpty(user.getUsername()) ?

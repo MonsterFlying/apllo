@@ -412,16 +412,11 @@ public class TenderBizImpl implements TenderBiz {
             }
         }
 
-        if(borrow.getIsLock()){
-            errerMessage.add("当前标的状态已锁定,请稍后尝试!");
+        if (!userCache.isNovice() && borrow.getIsLock()) {
+            log.info("borrowId -> %s,isLock -> %s,isNovice -> %s",borrow.getId(),borrow.getIsLock(),!userCache.isNovice());
+            errerMessage.add("当前标的状态已锁定,请稍后再是吧");
             return false;
         }
-
-        /*
-        if (!userCache.isNovice() && borrow.getIsLock()) {
-            errerMessage.add("当前标的状态已锁定,请稍后尝试!");
-            return false;
-        }*/
         return true;
     }
 

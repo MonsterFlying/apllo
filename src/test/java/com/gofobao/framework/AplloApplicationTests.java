@@ -177,8 +177,6 @@ public class AplloApplicationTests {
 
     @Test
     public void touchMarketing() {
-        UserThirdAccount userThirdAccount = userThirdAccountServices.findByUserId(45215L);
-        webUserThirdBiz.touchMarketingByOpenAccount(userThirdAccount);
 
 
     }

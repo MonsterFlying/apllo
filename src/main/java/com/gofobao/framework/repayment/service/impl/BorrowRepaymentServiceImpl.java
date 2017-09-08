@@ -17,6 +17,9 @@ import com.gofobao.framework.repayment.vo.response.RepayCollectionLog;
 import com.gofobao.framework.repayment.vo.response.RepaymentOrderDetail;
 import com.gofobao.framework.repayment.vo.response.pc.VoCollection;
 import com.gofobao.framework.repayment.vo.response.pc.VoOrdersList;
+import com.gofobao.framework.system.contants.ThirdBatchLogContants;
+import com.gofobao.framework.system.entity.ThirdBatchLog;
+import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -54,6 +57,10 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
 
     @Autowired
     private TransferService transferService;
+
+    @Autowired
+    private ThirdBatchLogService thirdBatchLogService;
+
 
     /**
      * 还款计划列表
@@ -229,7 +236,17 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
             detailRes.setStatusStr(RepaymentContants.STATUS_YES_STR);
             detailRes.setRepayAt(DateHelper.dateToString(borrowRepayment.getRepayAtYes(), DateHelper.DATE_FORMAT_YMD));
         }
+
         detailRes.setStatus(borrowRepayment.getStatus());
+        Specification<ThirdBatchLog> thirdBatchLogSpecification = Specifications.<ThirdBatchLog>and()
+                .eq("type", ThirdBatchLogContants.BATCH_REPAY)
+                .eq("sourceId", borrowRepayment.getId())
+                .build();
+        List<ThirdBatchLog> thirdBatchLogs = thirdBatchLogService.findList(thirdBatchLogSpecification);
+        if (!CollectionUtils.isEmpty(thirdBatchLogs)) {
+            detailRes.setStatus(2);  //还款复审中
+            detailRes.setStatusStr("还款复审中");
+        }
         detailRes.setInterest(StringHelper.formatMon(interest / 100d));
         detailRes.setPrincipal(StringHelper.formatMon(principal / 100d));
         detailRes.setBorrowName(borrow.getName());
