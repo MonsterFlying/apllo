@@ -51,7 +51,7 @@ public class IndexController {
     @ApiOperation("新手福利")
     @GetMapping("/pub/index/v2/newUser/welfare")
     public ResponseEntity<VoHtmlResp> welfare() {
-        String content = thymeleafHelper.build("/new_user_welfare", null);
+        String content = thymeleafHelper.build("new_user_welfare", null);
         VoHtmlResp resp = VoHtmlResp.ok("获取成功!", VoHtmlResp.class);
         resp.setHtml(content);
         return ResponseEntity.ok(resp);
