@@ -89,6 +89,7 @@ public class TestController {
     MqHelper mqHelper;
     final Gson GSON = new GsonBuilder().create();
 
+
     @ApiOperation("获取自动投标列表")
     @RequestMapping("/pub/batch/deal")
     @Transactional

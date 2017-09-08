@@ -11,6 +11,7 @@ import com.gofobao.framework.tender.service.AutoTenderService;
 import com.gofobao.framework.tender.vo.VoFindAutoTenderList;
 import com.gofobao.framework.tender.vo.response.UserAutoTender;
 import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +32,7 @@ import java.util.*;
  * Created by Zeke on 2017/5/27.
  */
 @Service
+@Slf4j
 public class AutoTenderServiceImpl implements AutoTenderService {
 
     @Autowired
@@ -132,6 +134,7 @@ public class AutoTenderServiceImpl implements AutoTenderService {
         Integer pageIndex = voFindAutoTenderList.getPageIndex();
         Integer pageSize = voFindAutoTenderList.getPageSize();
         sql.append(" limit ").append(pageIndex * pageSize).append(",").append(pageSize);
+        log.info(sql.toString());
         List<Map<String,Object>> resultList = jdbcTemplate.queryForList(sql.toString());
         if(CollectionUtils.isEmpty(resultList)) {
             return new ArrayList<>(0);

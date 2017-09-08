@@ -1,6 +1,7 @@
 package com.gofobao.framework.asset.controller.web;
 
 import com.gofobao.framework.asset.biz.AssetBiz;
+import com.gofobao.framework.asset.vo.request.VoSendRedPacket;
 import com.gofobao.framework.asset.vo.request.VoUnsendRedPacket;
 import com.gofobao.framework.asset.vo.response.VoAccruedMoneyResp;
 import com.gofobao.framework.asset.vo.response.VoAssetIndexResp;
@@ -15,6 +16,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
@@ -30,6 +32,18 @@ public class WebAssetController {
     @Autowired
     private AssetBiz assetBiz;
 
+
+    /**
+     * 发送即信红包
+     *
+     * @param voSendRedPacket
+     * @return
+     */
+    @ApiOperation("发送即信红包")
+    @PostMapping("/pub/asset/pc/v2/redpacket/send")
+    public ResponseEntity<VoBaseResp> sendRedPacket(VoSendRedPacket voSendRedPacket){
+        return assetBiz.sendRedPacket(voSendRedPacket);
+    }
 
     /**
      * 撤回即信红包
