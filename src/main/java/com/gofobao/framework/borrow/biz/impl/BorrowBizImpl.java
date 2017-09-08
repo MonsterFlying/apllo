@@ -50,6 +50,8 @@ import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.system.biz.IncrStatisticBiz;
 import com.gofobao.framework.system.biz.StatisticBiz;
+import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
+import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.IncrStatistic;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.entity.Statistic;
@@ -121,8 +123,6 @@ public class BorrowBizImpl implements BorrowBiz {
     @Autowired
     private TenderService tenderService;
     @Autowired
-    private TransferService transferService;
-    @Autowired
     private BorrowCollectionService borrowCollectionService;
     @Autowired
     private BorrowRepaymentService borrowRepaymentService;
@@ -140,8 +140,6 @@ public class BorrowBizImpl implements BorrowBiz {
     private ThymeleafHelper thymeleafHelper;
     @Autowired
     private TenderThirdBiz tenderThirdBiz;
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
     @Autowired
     private LendService lendService;
     @Autowired
@@ -162,8 +160,8 @@ public class BorrowBizImpl implements BorrowBiz {
     ThirdBatchLogService thirdBatchLogService;
     @Autowired
     BatchAssetChangeHelper batchAssetChangeHelper;
-    @PersistenceContext
-    private EntityManager entityManager;
+    @Autowired
+    private ThirdBatchLogBiz thirdBatchLogBiz;
 
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
@@ -189,6 +187,34 @@ public class BorrowBizImpl implements BorrowBiz {
         Borrow borrow = borrowService.findByIdLock(borrowId);
         Preconditions.checkNotNull(borrow, "借款记录不存在!");
         //判断是否已经提交即信处理
+        ThirdBatchLog thirdBatchLog = thirdBatchLogBiz.getValidLastBatchLog(String.valueOf(borrowId),
+                ThirdBatchLogContants.BATCH_LEND_REPAY);
+
+        int flag = thirdBatchLogBiz.checkBatchOftenSubmit(String.valueOf(borrowId),
+                ThirdBatchLogContants.BATCH_LEND_REPAY);
+        if (flag == ThirdBatchLogContants.AWAIT) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("还款处理中，请勿重复点击!")));
+        } else if (flag == ThirdBatchLogContants.SUCCESS) {
+            //触发处理批次放款处理结果队列
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setTag(MqTagEnum.BATCH_DEAL);
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()),
+                            MqConfig.BATCH_NO, StringHelper.toString(thirdBatchLog.getBatchNo()),
+                            MqConfig.ACQ_RES, thirdBatchLog.getAcqRes(),
+                            MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            try {
+                log.info(String.format("borrowBizImpl sendAgainVerify send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
+            } catch (Throwable e) {
+                log.error("borrowBizImpl sendAgainVerify send mq exception", e);
+            }
+            log.info("即信批次回调处理结束");
+        }
 
         if (borrow.getStatus() == 1 && borrow.getMoneyYes() >= borrow.getMoney()) {
             MqConfig mqConfig = new MqConfig();
@@ -494,7 +520,7 @@ public class BorrowBizImpl implements BorrowBiz {
         }
 
         // long count = borrowService.countByUserIdAndStatusIn(userId, Arrays.asList(0, 1));
-
+/*
         Specification<Borrow> specification = Specifications.<Borrow>and()
                 .eq("userId", userId)
                 .eq("status", BorrowContants.BIDDING)
@@ -509,8 +535,8 @@ public class BorrowBizImpl implements BorrowBiz {
                             .body(VoBaseResp.error(VoBaseResp.ERROR, "您已经有一个进行中的借款标!"));
                 }
             }
-        }
-        Specification<Transfer> ts = Specifications
+        }*/
+        /*Specification<Transfer> ts = Specifications
                 .<Transfer>and()
                 .eq("userId", userId)
                 .in("state", Lists.newArrayList(TransferContants.CHECKPENDING, TransferContants.TRANSFERIND).toArray())
@@ -520,7 +546,7 @@ public class BorrowBizImpl implements BorrowBiz {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "您已经有一个进行中的债权转让"));
-        }
+        }*/
 
         Long borrowId = insertBorrow(voAddNetWorthBorrow, userId);  // 插入标
         if (borrowId <= 0) {

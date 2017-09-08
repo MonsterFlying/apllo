@@ -759,8 +759,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 if (p.getStatus().intValue() == RepaymentContants.STATUS_YES) {
                     collectionOrderRes.setCollectionMoneyYes(StringHelper.formatMon(p.getRepayMoneyYes() / 100d));
                 }
+                collectionOrderRes.setStatus(p.getStatus());
                 collectionOrderRes.setCollectionMoney(StringHelper.formatMon(p.getRepayMoney() / 100d));
-                collectionOrderRes.setTimeLime(borrow.getTimeLimit());
+                collectionOrderRes.setTimeLime(borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_YCBX_NUM ? 1 : borrow.getTimeLimit());
                 orderResList.add(collectionOrderRes);
             });
 
@@ -1565,10 +1566,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
         double availBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0, 2);// 可用余额  账面余额-可用余额=冻结金额
         if (availBal < repayAsset.getUseMoney().doubleValue()) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "资金账户未同步，请先在个人中心进行资金同步操作!"));
-        }
-
-        if (repayAsset.getUseMoney() < repayMoney) {
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "可用余额不足，操作失败!"));
         }
         return ResponseEntity.ok(VoBaseResp.ok("检查成功!"));
     }

@@ -29,4 +29,6 @@ public class VoViewCollectionOrderRes {
     @ApiModelProperty("期数id")
     private Long collectionId;
 
+    @ApiModelProperty("回款：0：未回款,1：已回款;   还款：0：未还, 1：已还 ")
+    private Integer status;
 }

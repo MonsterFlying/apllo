@@ -14,4 +14,5 @@ public class IndexBanner {
     private String imageUrl;
     @ApiModelProperty("图片点击")
     private String clickUrl;
+
 }

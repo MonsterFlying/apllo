@@ -41,7 +41,6 @@ public class BannerServiceImpl implements BannerService {
                     } else {  // 移动端
                         banners = bannerRepository.findByStatusAndTerminalOrderByIdDesc(new Byte("1"), 1);
                     }
-
                     List<IndexBanner> bannerList = Lists.newArrayList();
                     banners.stream().forEach(p -> {
                         IndexBanner indexBanner = new IndexBanner();
