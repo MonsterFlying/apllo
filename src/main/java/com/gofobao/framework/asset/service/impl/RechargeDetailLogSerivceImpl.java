@@ -130,4 +130,9 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService {
         return rechargeLogsList;
     }
 
+    @Override
+    public List<RechargeDetailLog> findAll(Specification<RechargeDetailLog> rechargeDetailLogSpecification) {
+        return null;
+    }
+
 }

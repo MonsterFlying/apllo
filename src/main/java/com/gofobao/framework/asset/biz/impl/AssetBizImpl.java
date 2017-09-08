@@ -7,6 +7,8 @@ import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryRequest;
 import com.gofobao.framework.api.model.account_details_query.AccountDetailsQueryResponse;
+import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
+import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.api.model.direct_recharge_online.DirectRechargeOnlineRequest;
 import com.gofobao.framework.api.model.direct_recharge_online.DirectRechargeOnlineResponse;
 import com.gofobao.framework.api.model.direct_recharge_plus.DirectRechargePlusRequest;
@@ -28,6 +30,7 @@ import com.gofobao.framework.asset.vo.request.*;
 import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.asset.vo.response.pc.AssetLogs;
 import com.gofobao.framework.asset.vo.response.pc.VoViewAssetLogsWarpRes;
+import com.gofobao.framework.borrow.vo.request.VoDoAgainVerifyReq;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
@@ -1234,5 +1237,38 @@ public class AssetBizImpl implements AssetBiz {
         return asset(userId);
     }
 
+    @Override
+    public ResponseEntity<VoQueryInfoResp> queryUserMoneyForJixin(VoDoAgainVerifyReq voDoAgainVerifyReq) {
+        String paramStr = voDoAgainVerifyReq.getParamStr();
+        if (!SecurityHelper.checkSign(voDoAgainVerifyReq.getSign(), paramStr)) {
+            log.error("BorrowBizImpl doAgainVerify error：签名校验不通过");
+        }
 
+        Map<String, String> paramMap = GSON.fromJson(paramStr, new com.google.gson.reflect.TypeToken<Map<String, String>>() {
+        }.getType());
+        String userId = paramMap.get("userId");
+        if (StringUtils.isEmpty(userId)) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "没有当前用户", VoQueryInfoResp.class));
+        }
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(NumberHelper.toLong(userId));
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户", VoQueryInfoResp.class));
+        }
+
+        BalanceQueryRequest balanceQueryRequest = new BalanceQueryRequest();
+        balanceQueryRequest.setChannel(ChannelContant.HTML);
+        balanceQueryRequest.setAccountId(userThirdAccount.getAccountId());
+        BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
+        if ((ObjectUtils.isEmpty(balanceQueryResponse)) || !balanceQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
+            String msg = ObjectUtils.isEmpty(balanceQueryResponse) ? "当前网络异常, 请稍后尝试!" : balanceQueryResponse.getRetMsg();
+            log.error(String.format("资金同步: %s", msg));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg, VoQueryInfoResp.class));
+        }
+
+        VoQueryInfoResp voQueryInfoResp = VoBaseResp.ok("查询成功", VoQueryInfoResp.class);
+        voQueryInfoResp.setTotalMoey(balanceQueryResponse.getCurrBal());
+        voQueryInfoResp.setValidateMoney(balanceQueryResponse.getAvailBal());
+        return ResponseEntity.ok(voQueryInfoResp);
+    }
 }

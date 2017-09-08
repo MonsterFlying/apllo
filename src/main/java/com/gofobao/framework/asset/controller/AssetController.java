@@ -3,6 +3,8 @@ package com.gofobao.framework.asset.controller;
 import com.gofobao.framework.asset.biz.AssetBiz;
 import com.gofobao.framework.asset.vo.request.VoSynAssetsRep;
 import com.gofobao.framework.asset.vo.response.*;
+import com.gofobao.framework.borrow.vo.request.VoDoAgainVerifyReq;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -71,4 +73,18 @@ public class AssetController {
     public ResponseEntity<VoCollectionResp> collectionMoney(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return assetBiz.collectionMoney(userId) ;
     }
+
+
+    /**
+     * 查询用户金额
+     *
+     * @param voDoAgainVerifyReq
+     * @return
+     */
+    @PostMapping("/pub/asset/money")
+    @ApiOperation("实时查询用户金额")
+    public ResponseEntity<VoQueryInfoResp> queryUserMoneyForJixin(VoDoAgainVerifyReq voDoAgainVerifyReq) {
+        return assetBiz.queryUserMoneyForJixin(voDoAgainVerifyReq);
+    }
+
 }
