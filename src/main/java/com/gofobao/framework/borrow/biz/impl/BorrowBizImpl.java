@@ -108,40 +108,58 @@ public class BorrowBizImpl implements BorrowBiz {
 
     @Autowired
     private UserCacheService userCacheService;
+
     @Autowired
     private AssetService assetService;
+
     @Autowired
     private BorrowService borrowService;
+
     @Autowired
     private AutoTenderService autoTenderService;
+
     @Autowired
     private UserThirdAccountService userThirdAccountService;
+
     @Autowired
     private MqHelper mqHelper;
+
     @Autowired
     private TenderService tenderService;
+
     @Autowired
     private TransferService transferService;
+
     @Autowired
     private BorrowCollectionService borrowCollectionService;
+
     @Autowired
     private BorrowRepaymentService borrowRepaymentService;
+
     @Autowired
     private BorrowProvider borrowProvider;
+
     @Autowired
     private BorrowThirdBiz borrowThirdBiz;
+
     @Autowired
     private IncrStatisticBiz incrStatisticBiz;
+
     @Autowired
     private UserService userService;
+
     @Autowired
     private StatisticBiz statisticBiz;
+
     @Autowired
     private ThymeleafHelper thymeleafHelper;
+
     @Autowired
     private TenderThirdBiz tenderThirdBiz;
+
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
     @Autowired
     private LendService lendService;
     @Autowired
@@ -1685,6 +1703,7 @@ public class BorrowBizImpl implements BorrowBiz {
         voCreateTenderReq.setUserId(lend.getUserId());
         voCreateTenderReq.setBorrowId(borrow.getId());
         voCreateTenderReq.setTenderMoney(MathHelper.myRound(borrow.getMoney() / 100.0, 2));
+        voCreateTenderReq.setRequestSource("0") ; // 有草出借
         ResponseEntity<VoBaseResp> response = tenderBiz.createTender(voCreateTenderReq);
         return response.getStatusCode().equals(HttpStatus.OK);
     }
