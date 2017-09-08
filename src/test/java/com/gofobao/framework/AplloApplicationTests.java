@@ -178,6 +178,7 @@ public class AplloApplicationTests {
     @Test
     public void touchMarketing() {
 
+      //  borrowBiz.touchMarketingByTender();
 
     }
 
