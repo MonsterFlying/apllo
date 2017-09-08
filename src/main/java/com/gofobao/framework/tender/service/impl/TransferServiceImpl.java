@@ -224,7 +224,7 @@ public class TransferServiceImpl implements TransferService {
                 "AND " +
                 "t.state=:state " +    //回款中
                 "AND " +
-                "(b.type=0 OR b.type=4)";
+                "(b.type=0 OR b.type=4) ORDER BY t.id DESC";
         //分页
         Query sqlQuery = entityManager.createNativeQuery(sql.toString(), Tender.class);
         sqlQuery.setParameter("userId", voTransferReq.getUserId());
