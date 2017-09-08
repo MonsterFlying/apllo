@@ -294,7 +294,7 @@ public class BorrowServiceImpl implements BorrowService {
         condtionSql.append(" AND b.verifyAt IS Not NULL  ");
         // 排序
         if (StringUtils.isEmpty(type)) {   // 全部
-            condtionSql.append(" AND (b.moneyYes / b.money)!=1  ORDER BY  b.status ASC , (b.moneyYes / b.money) ASC,  FIELD(b.type, 0, 4, 1, 2) , b.id desc ");
+            condtionSql.append(" AND (b.moneyYes / b.money)!=1  ORDER BY  FIELD(b.type, 0, 4, 1, 2) , b.status ASC , (b.moneyYes / b.money) ASC,  b.id desc ");
         } else {
             if (type.equals(BorrowContants.CE_DAI)) {
                 condtionSql.append(" ORDER BY  (b.moneyYes / b.money) ASC, b.status asc, b.successAt desc, b.id desc ");
