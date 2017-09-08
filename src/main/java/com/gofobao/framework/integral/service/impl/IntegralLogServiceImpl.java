@@ -52,7 +52,7 @@ public class IntegralLogServiceImpl implements IntegralLogService {
         Specification specification= Specifications.<IntegralLog>and()
                 .eq("userId",integralReq.getUserId())
                 .build();
-        Pageable pageable=new PageRequest(integralReq.getPageIndex(),integralReq.getPageSize(),new Sort("id"));
+        Pageable pageable=new PageRequest(integralReq.getPageIndex(),integralReq.getPageSize(),new Sort(Sort.Direction.DESC,"id"));
         Page<IntegralLog>integralLogs=integralLogRepository.findAll(specification,pageable);
         Long totalCount=integralLogs.getTotalElements();
         resultMaps.put("totalCount",totalCount);

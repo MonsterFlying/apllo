@@ -3,6 +3,7 @@ package com.gofobao.framework.asset.biz;
 import com.gofobao.framework.asset.vo.request.*;
 import com.gofobao.framework.asset.vo.response.*;
 import com.gofobao.framework.asset.vo.response.pc.VoViewAssetLogsWarpRes;
+import com.gofobao.framework.borrow.vo.request.VoDoAgainVerifyReq;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.member.vo.response.pc.ExpenditureDetail;
@@ -205,5 +206,13 @@ public interface AssetBiz {
     ResponseEntity<VoViewAssetLogWarpRes> newAssetLogResList(VoAssetLogReq voAssetLogReq);
 
     ResponseEntity<VoAssetIndexResp> synHome(Long userId) throws Exception;
+
+
+    /**
+     * 实时查询即信
+     * @param voDoAgainVerifyReq
+     * @return
+     */
+    ResponseEntity<VoQueryInfoResp> queryUserMoneyForJixin(VoDoAgainVerifyReq voDoAgainVerifyReq);
 
 }

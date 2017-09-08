@@ -17,6 +17,7 @@ import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.AssetLogService;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
+import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
@@ -39,10 +40,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -50,6 +48,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -90,11 +89,28 @@ public class AssetSynBizImpl implements AssetSynBiz {
     @Autowired
     AleveService aleveService;
 
+    @Autowired
+    RedisHelper redisHelper;
+
     public static final Gson GSON = new Gson();
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean doAssetSyn(Long userId) throws Exception {
+        String key = String.format("SYN_%s", userId);
+        String date = redisHelper.get(key, "");
+        Date nowDate = new Date();
+        if (StringUtils.isEmpty(date)) {
+            String startDate = DateHelper.dateToString(nowDate);
+            redisHelper.put(key, startDate);
+        } else {
+            Date startDate = DateHelper.addMinutes(DateHelper.stringToDate(date), 10);
+            if (DateHelper.diffInDays(nowDate, startDate, false) < 0) {
+                log.info("请求同步过于频繁");
+                return true;
+            }
+        }
+
         Users user = userService.findByIdLock(userId);
         Preconditions.checkNotNull(user, "资金同步: 查询用户为空");
         Asset asset = assetService.findByUserIdLock(userId);  // 用户资产
@@ -158,7 +174,6 @@ public class AssetSynBizImpl implements AssetSynBiz {
             return true;
         }
 
-        Date nowDate = new Date();
         String seqNo;
         for (AccountDetailsQueryItem accountDetailsQueryItem : accountDetailsQueryItemList) {   // 同步系统充值
             seqNo = String.format("%s%s%s", accountDetailsQueryItem.getInpDate(), accountDetailsQueryItem.getInpTime(), accountDetailsQueryItem.getTraceNo());
@@ -225,6 +240,8 @@ public class AssetSynBizImpl implements AssetSynBiz {
         int pageIndexTotal = account.intValue() / pageSize;
         pageIndexTotal = account % pageSize == 0 ? pageIndexTotal : pageIndexTotal + 1;
         Date nowDate = new Date();
+
+        // 时间
         for (int pageIndex = 0; pageIndex < pageIndexTotal; pageIndex++) {
             Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
             Page<Aleve> lists = aleveService.findAll(specification, pageable);
@@ -235,10 +252,21 @@ public class AssetSynBizImpl implements AssetSynBiz {
             List<Aleve> content = lists.getContent();
             for (Aleve aleve : content) {
                 String seqNo = String.format("%s%s%s", aleve.getInpdate(), aleve.getInptime(), aleve.getTranno());
+              /* Date startDate = DateHelper.beginOfDate() ;
+                Specification<RechargeDetailLog> rechargeDetailLogSpecification = Specifications
+                        .<RechargeDetailLog>and()
+                        .between("createTime", new Range<>())
+                        .eq("transtype", "7820")
+                        .build();
+                List<RechargeDetailLog> rechargeDetailLogs = rechargeDetailLogService.findAll(rechargeDetailLogSpecification) ;
+                if(CollectionUtils.isEmpty(rechargeDetailLogs)){
+                    continue;
+                }*/
                 RechargeDetailLog rechargeDetailLog = rechargeDetailLogService.findTopBySeqNo(seqNo);
                 if (!ObjectUtils.isEmpty(rechargeDetailLog)) {
                     continue;
                 }
+
 
                 UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(aleve.getCardnbr());
                 Preconditions.checkNotNull(userThirdAccount, "AssetSynBizImpl.doOffLineRechargeByAleve: userThirdAccount is empty");
@@ -259,7 +287,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
                 rechargeDetailLogService.save(rechargeDetailLog);
 
                 AssetChange assetChange = new AssetChange();
-                assetChange.setType(AssetChangeTypeEnum.offlineRecharge);  // 招标失败解除冻结资金
+                assetChange.setType(AssetChangeTypeEnum.offlineRecharge);  // 线下充值
                 assetChange.setUserId(userThirdAccount.getUserId());
                 assetChange.setMoney(money.longValue());
                 assetChange.setRemark(String.format("成功线下充值%s元", StringHelper.formatDouble(money.longValue() / 100D, true)));

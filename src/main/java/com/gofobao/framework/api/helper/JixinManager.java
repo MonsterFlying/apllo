@@ -157,10 +157,10 @@ public class JixinManager {
         String sign = certHelper.doSign(unSign);
         params.put("sign", sign);
         jixinTxLogBiz.saveRequest(txCodeEnum, params);
-        log.info("=============================================");
+      /*  log.info("=============================================");
         log.info(String.format("[%s] 报文流水：%s%s%s", txCodeEnum.getName(), req.getTxDate(), req.getTxTime(), req.getSeqNo()));
         log.info("=============================================");
-        log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));
+        log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));*/
         return genFormHtml(params, url);
     }
 
@@ -267,10 +267,10 @@ public class JixinManager {
         String unSign = StringHelper.mergeMap(params);
         String sign = certHelper.doSign(unSign);
         params.put("sign", sign);
-        log.info("=============================================");
+       /* log.info("=============================================");
         log.info(String.format("[%s]报文流水：%s%s%s", txCodeEnum.getName(), req.getTxDate(), req.getTxTime(), req.getSeqNo()));
         log.info("=============================================");
-        log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));
+        log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));*/
         jixinTxLogBiz.saveRequest(txCodeEnum, params);
         initHttps();
         HttpEntity entity = getHttpEntity(params);
@@ -295,7 +295,7 @@ public class JixinManager {
             log.error("即信请求返回值验证不通过");
             return null;
         }
-        log.info(String.format("即信响应报文:url=%s body=%s", url, gson.toJson(body)));
+        /*log.info(String.format("即信响应报文:url=%s body=%s", url, gson.toJson(body)));*/
 
         body.setRetMsg(JixinResultContants.getMessage(body.getRetCode()));
         // 请求插入数据

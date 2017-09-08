@@ -5,6 +5,7 @@ import com.gofobao.framework.asset.vo.request.VoPcRechargeReq;
 import com.gofobao.framework.asset.vo.response.pc.RechargeLogs;
 import com.gofobao.framework.asset.vo.response.pc.VoViewRechargeWarpRes;
 import com.google.common.collect.ImmutableList;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Date;
@@ -33,4 +34,13 @@ public interface RechargeDetailLogService {
      * @return
      */
     List<RechargeLogs>toExcel(VoPcRechargeReq rechargeReq);
+
+
+    /**
+     * 查询投资记录
+     * @param rechargeDetailLogSpecification
+     * @return
+     */
+    List<RechargeDetailLog> findAll(Specification<RechargeDetailLog> rechargeDetailLogSpecification);
+
 }
