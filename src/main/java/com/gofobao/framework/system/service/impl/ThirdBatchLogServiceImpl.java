@@ -20,6 +20,10 @@ public class ThirdBatchLogServiceImpl implements ThirdBatchLogService {
     @Autowired
     private ThirdBatchLogRepository thirdBatchLogRepository;
 
+    public ThirdBatchLog findById(long id){
+        return thirdBatchLogRepository.findOne(id);
+    }
+
     public List<ThirdBatchLog> findList(Specification<ThirdBatchLog> specification) {
         return thirdBatchLogRepository.findAll(specification);
     }

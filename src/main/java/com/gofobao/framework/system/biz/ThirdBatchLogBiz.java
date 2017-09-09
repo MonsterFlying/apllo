@@ -2,6 +2,8 @@ package com.gofobao.framework.system.biz;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
+import com.gofobao.framework.system.vo.request.VoDealThirdErrorReq;
+import com.gofobao.framework.system.vo.request.VoFindThirdBatch;
 import com.gofobao.framework.system.vo.request.VoSendThirdBatch;
 import org.springframework.http.ResponseEntity;
 
@@ -9,6 +11,15 @@ import org.springframework.http.ResponseEntity;
  * Created by Zeke on 2017/7/14.
  */
 public interface ThirdBatchLogBiz {
+
+
+
+    /**
+     * 查询批次状态
+     *
+     * @return
+     */
+    ResponseEntity<VoBaseResp> findThirdThirdBatch(VoFindThirdBatch voFindThirdBatch);
 
     /**
      * 发送即信批次处理

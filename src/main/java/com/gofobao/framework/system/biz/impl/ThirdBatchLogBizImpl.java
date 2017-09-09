@@ -5,6 +5,8 @@ import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
+import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
+import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
 import com.gofobao.framework.asset.entity.AdvanceLog;
@@ -28,11 +30,13 @@ import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
+import com.gofobao.framework.system.vo.request.VoFindThirdBatch;
 import com.gofobao.framework.system.vo.request.VoSendThirdBatch;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferService;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -77,6 +81,54 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
     @Autowired
     private MqHelper mqHelper;
 
+
+    /**
+     * 查询批次状态
+     *
+     * @return
+     */
+    public ResponseEntity<VoBaseResp> findThirdThirdBatch(VoFindThirdBatch voFindThirdBatch){
+        log.info("pc：触发查询即信批次处理");
+        String paramStr = voFindThirdBatch.getParamStr();/* pc请求提前结清参数 */
+        if (!SecurityHelper.checkSign(voFindThirdBatch.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc发送即信批次处理 签名验证不通过!"));
+        }
+        Map<String, String> paramMap = gson.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        /* sourceId */
+        String thirdBatchLogId = paramMap.get("thirdBatchLogId");
+        ThirdBatchLog thirdBatchLog = thirdBatchLogService.findById(NumberHelper.toLong(thirdBatchLogId));
+        Preconditions.checkNotNull(thirdBatchLog,"即信批次记录不存在!");
+
+        String batchNo =  StringHelper.toString(thirdBatchLog.getBatchNo());
+        String txDate = DateHelper.dateToString(thirdBatchLog.getCreateAt(),DateHelper.DATE_FORMAT_YMD_NUM);
+
+        BatchQueryReq req = new BatchQueryReq();
+        req.setChannel(ChannelContant.HTML);
+        req.setBatchNo(batchNo);
+        req.setBatchTxDate(txDate);
+        BatchQueryResp resp = jixinManager.send(JixinTxCodeEnum.BATCH_QUERY, req, BatchQueryResp.class);
+        log.info("=========================================================================================");
+        log.info("即信批次状态查询:");
+        log.info("=========================================================================================");
+        log.info(gson.toJson(resp));
+
+        BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
+        batchDetailsQueryReq.setBatchNo(StringHelper.toString(batchNo));
+        batchDetailsQueryReq.setBatchTxDate(String.valueOf(txDate));
+        batchDetailsQueryReq.setType("0");
+        batchDetailsQueryReq.setPageNum("1");
+        batchDetailsQueryReq.setPageSize("20");
+        batchDetailsQueryReq.setChannel(ChannelContant.HTML);
+        BatchDetailsQueryResp batchDetailsQueryResp = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, batchDetailsQueryReq, BatchDetailsQueryResp.class);
+        log.info("=========================================================================================");
+        log.info("即信批次状态详情查询:");
+        log.info("=========================================================================================");
+        log.info(gson.toJson(batchDetailsQueryResp));
+
+        return ResponseEntity.ok(VoBaseResp.ok("查询成功!"));
+    }
 
     /**
      * 发送即信批次处理
