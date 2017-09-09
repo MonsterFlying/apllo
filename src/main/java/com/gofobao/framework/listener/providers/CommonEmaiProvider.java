@@ -168,7 +168,7 @@ public class CommonEmaiProvider {
             mailSender.send(message);
             return true;
         } catch (Throwable e) {
-            log.error("邮件发送失败:", e);
+            log.error("邮件发送失败");
             return false;
         }
     }
