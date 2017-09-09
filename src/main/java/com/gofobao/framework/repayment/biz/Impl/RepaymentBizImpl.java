@@ -1457,8 +1457,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         double txFeeOut = repays.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxFeeOut())).sum();
         double freezeMoney = txAmount + txFeeOut + intAmount;/* 冻结金额 */
         // 冻结还款金额
-        long money = new Double((freezeMoney) * 100).longValue();
-
+        long money =  MoneyHelper.yuanToFen(freezeMoney);
         // 生成投资人还款资金变动记录
         BatchAssetChange batchAssetChange = addBatchAssetChange(batchNo, borrowRepayment.getId(), advance);
         // 生成还款人还款批次资金改变记录
@@ -1494,7 +1493,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             freezeAssetChange.setForUserId(repayUserThirdAccount.getUserId());
             freezeAssetChange.setUserId(repayUserThirdAccount.getUserId());
             freezeAssetChange.setType(AssetChangeTypeEnum.freeze);
-            freezeAssetChange.setRemark(String.format("成功还款标的[%s]冻结资金%s 元", borrow.getName(), StringHelper.formatDouble(money / 100D, true)));
+            freezeAssetChange.setRemark(String.format("成功还款标的[%s]冻结", borrow.getName(), StringHelper.formatDouble(money / 100D, true)));
             freezeAssetChange.setSeqNo(assetChangeProvider.getSeqNo());
             freezeAssetChange.setMoney(money);
             freezeAssetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
