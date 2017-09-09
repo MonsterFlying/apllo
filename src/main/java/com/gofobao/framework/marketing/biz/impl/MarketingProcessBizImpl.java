@@ -664,7 +664,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         Borrow borrow = borrowService.findById(tender.getBorrowId());
         Preconditions.checkNotNull(borrow, "MarketingProcessBizImpl.verifyBorrowType: borrow not found");
         if (borrowType.contains("-2")) {
-            return borrow.getIsVouch();
+            return borrow.getIsNovice();
         }
 
         String[] borrowTypeArr = borrowType.split(",");
