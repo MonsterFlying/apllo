@@ -1493,7 +1493,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             freezeAssetChange.setForUserId(repayUserThirdAccount.getUserId());
             freezeAssetChange.setUserId(repayUserThirdAccount.getUserId());
             freezeAssetChange.setType(AssetChangeTypeEnum.freeze);
-            freezeAssetChange.setRemark(String.format("成功还款标的[%s]冻结资金%s元", borrow.getName(), StringHelper.formatDouble(money / 100D, true)));
+            freezeAssetChange.setRemark(String.format("成功还款标的[%s]冻结资金%s 元", borrow.getName(), StringHelper.formatDouble(money / 100D, true)));
             freezeAssetChange.setSeqNo(assetChangeProvider.getSeqNo());
             freezeAssetChange.setMoney(money);
             freezeAssetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
@@ -1525,7 +1525,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             thirdBatchLog.setUpdateAt(nowDate);
             thirdBatchLog.setSourceId(borrowRepayment.getId());
             thirdBatchLog.setType(ThirdBatchLogContants.BATCH_REPAY);
-            thirdBatchLog.setRemark("即信批次还款");
+            thirdBatchLog.setRemark("即信批次还款.");
             thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
             thirdBatchLogService.save(thirdBatchLog);
         } catch (Exception e) {
