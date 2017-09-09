@@ -1,5 +1,7 @@
 package com.gofobao.framework.security.interceptor;
 
+import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.IpHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.security.exception.LoginException;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
@@ -13,6 +15,7 @@ import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Date;
 
 @Slf4j
 public class Jwtintercepter extends HandlerInterceptorAdapter {
@@ -21,7 +24,16 @@ public class Jwtintercepter extends HandlerInterceptorAdapter {
 
     @Override
     public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o) throws Exception {
-        
+
+        String requestSource=httpServletRequest.getHeader("requestSource");
+        try{
+            if(StringUtils.isEmpty(requestSource)){
+                log.error("当前用户非法请求 记录当前ip:"+ IpHelper.getIpAddress(httpServletRequest) + ",当前时间:"+ DateHelper.dateToString(new Date()));
+            }
+        }catch (Exception e){
+
+        }
+
         // 判断当前用户路劲
         String url = httpServletRequest.getRequestURI();
 
@@ -46,8 +58,8 @@ public class Jwtintercepter extends HandlerInterceptorAdapter {
 
         Long userId = jwtTokenHelper.getUserIdFromToken(token);  // 用户ID
         httpServletRequest.setAttribute(SecurityContants.USERID_KEY, userId);
-
-        log.info("访问地址:" + url);
+        String requestSourceStr = StringUtils.isEmpty(requestSource) ? "未知来源" : requestSource;
+        log.info(String.format("当前请求地址：%s，来源: %s , 终端ip: %s", url, requestSourceStr,IpHelper.getIpAddress(httpServletRequest)));
         String type = jwtTokenHelper.getType(token);
         if (url.contains("finance")) {  // 理财用户
             if (!"finance".equals(type)) {
