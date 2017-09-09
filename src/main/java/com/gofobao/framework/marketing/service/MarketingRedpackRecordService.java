@@ -44,4 +44,6 @@ public interface MarketingRedpackRecordService {
      * @return
      */
     MarketingRedpackRecord findTopByIdAndUserIdAndDel(Long redPackageId, Long userId, int del);
+
+    MarketingRedpackRecord findById(long id);
 }
