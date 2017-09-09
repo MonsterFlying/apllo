@@ -7,6 +7,7 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
+import com.gofobao.framework.api.model.batch_details_query.DetailsQueryResp;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
 import com.gofobao.framework.asset.entity.AdvanceLog;
@@ -38,6 +39,7 @@ import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +54,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -87,7 +90,7 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
      *
      * @return
      */
-    public ResponseEntity<VoBaseResp> findThirdThirdBatch(VoFindThirdBatch voFindThirdBatch){
+    public ResponseEntity<VoBaseResp> findThirdThirdBatch(VoFindThirdBatch voFindThirdBatch) {
         log.info("pc：触发查询即信批次处理");
         String paramStr = voFindThirdBatch.getParamStr();/* pc请求提前结清参数 */
         if (!SecurityHelper.checkSign(voFindThirdBatch.getSign(), paramStr)) {
@@ -99,10 +102,10 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
         /* sourceId */
         String thirdBatchLogId = paramMap.get("thirdBatchLogId");
         ThirdBatchLog thirdBatchLog = thirdBatchLogService.findById(NumberHelper.toLong(thirdBatchLogId));
-        Preconditions.checkNotNull(thirdBatchLog,"即信批次记录不存在!");
+        Preconditions.checkNotNull(thirdBatchLog, "即信批次记录不存在!");
 
-        String batchNo =  StringHelper.toString(thirdBatchLog.getBatchNo());
-        String txDate = DateHelper.dateToString(thirdBatchLog.getCreateAt(),DateHelper.DATE_FORMAT_YMD_NUM);
+        String batchNo = StringHelper.toString(thirdBatchLog.getBatchNo());
+        String txDate = DateHelper.dateToString(thirdBatchLog.getCreateAt(), DateHelper.DATE_FORMAT_YMD_NUM);
 
         BatchQueryReq req = new BatchQueryReq();
         req.setChannel(ChannelContant.HTML);
@@ -113,21 +116,72 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
         log.info("即信批次状态查询:");
         log.info("=========================================================================================");
         log.info(gson.toJson(resp));
+        /**
+         * 待处理    --A
+         处理中    --D
+         处理结束  --S
+         处理失败  --F
+         已撤销    --C
+         */
+        String batchState = resp.getBatchState();
+        if ("A".equals(batchState)) {
+            return ResponseEntity.ok(VoBaseResp.ok("等待即信处理!"));
+        } else if ("D".equals(batchState)) {
+            return ResponseEntity.ok(VoBaseResp.ok("即信处理中!"));
+        } else if ("C".equals(batchState)) {
+            return ResponseEntity.ok(VoBaseResp.ok("即信处理失败!"));
+        } else if ("F".equals(batchState)) {
+            return ResponseEntity.ok(VoBaseResp.ok("处理失败!"));
+        }
 
-        BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo(StringHelper.toString(batchNo));
-        batchDetailsQueryReq.setBatchTxDate(String.valueOf(txDate));
-        batchDetailsQueryReq.setType("0");
-        batchDetailsQueryReq.setPageNum("1");
-        batchDetailsQueryReq.setPageSize("20");
-        batchDetailsQueryReq.setChannel(ChannelContant.HTML);
-        BatchDetailsQueryResp batchDetailsQueryResp = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, batchDetailsQueryReq, BatchDetailsQueryResp.class);
-        log.info("=========================================================================================");
-        log.info("即信批次状态详情查询:");
-        log.info("=========================================================================================");
-        log.info(gson.toJson(batchDetailsQueryResp));
+        // 批次存在失败批次，处理失败批次
+        int pageIndex = 0, pageSize = 20, realSize = 0;
+        List<DetailsQueryResp> detailsQueryRespList = new ArrayList<>();
+        do {
+            pageIndex++;
+            // 1.查询批次交易明细
+            BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
+            batchDetailsQueryReq.setBatchNo(batchNo);
+            batchDetailsQueryReq.setBatchTxDate(txDate);
+            batchDetailsQueryReq.setType("0"); // 查询全部交易
+            batchDetailsQueryReq.setPageNum(String.valueOf(pageIndex));
+            batchDetailsQueryReq.setPageSize(String.valueOf(pageSize));
+            batchDetailsQueryReq.setChannel(ChannelContant.HTML);
+            BatchDetailsQueryResp batchDetailsQueryResp = jixinManager.send(JixinTxCodeEnum.BATCH_DETAILS_QUERY, batchDetailsQueryReq, BatchDetailsQueryResp.class);
+            if ((ObjectUtils.isEmpty(batchDetailsQueryResp)) || (!JixinResultContants.SUCCESS.equals(batchDetailsQueryResp.getRetCode()))) {
+                log.error(ObjectUtils.isEmpty(batchDetailsQueryResp) ? "当前网络不稳定，请稍候重试" : batchDetailsQueryResp.getRetMsg());
+            }
+            List<DetailsQueryResp> detailsQueryRespsItemList = gson.fromJson(batchDetailsQueryResp.getSubPacks(), new TypeToken<List<DetailsQueryResp>>() {
+            }.getType());
+            if (CollectionUtils.isEmpty(detailsQueryRespsItemList)) {
+                break;
+            }
+            realSize = detailsQueryRespsItemList.size();
+            detailsQueryRespList.addAll(detailsQueryRespsItemList);
+        } while (pageSize == realSize);
 
-        return ResponseEntity.ok(VoBaseResp.ok("查询成功!"));
+        //筛选失败批次
+        Preconditions.checkNotNull(detailsQueryRespList, "批处理回调: 查询批次详细异常!");
+        boolean flag = true;
+        for (DetailsQueryResp detailsQueryResp : detailsQueryRespList) {
+            if ("F".equalsIgnoreCase(detailsQueryResp.getTxState())) {
+                log.error(String.format("批次处理,出现失败批次: %s", detailsQueryResp.getFailMsg()));
+                flag = false;
+                break;
+            } else if ("S".equalsIgnoreCase(detailsQueryResp.getTxState())) {
+            } else {
+                log.error(String.format("批次回调状态不明确,批次状态:%s", detailsQueryResp.getFailMsg()));
+                flag = false;
+                break;
+            }
+        }
+
+        if (!flag) {
+            return ResponseEntity.ok(VoBaseResp.ok("即信处理成功，请在本地触发批次处理操作!"));
+        } else {
+            return ResponseEntity.ok(VoBaseResp.ok("即信处理失败,出现错误批次!借款信息将回滚!"));
+        }
+
     }
 
     /**
@@ -151,7 +205,7 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
 
         Specification<ThirdBatchLog> tbls = Specifications
                 .<ThirdBatchLog>and()
-                .eq("id",thirdBatchLogId)
+                .eq("id", thirdBatchLogId)
                 .build();
         List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls);
         if (CollectionUtils.isEmpty(thirdBatchLogList)) {

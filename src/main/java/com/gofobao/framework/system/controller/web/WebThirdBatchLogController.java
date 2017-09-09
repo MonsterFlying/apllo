@@ -2,6 +2,7 @@ package com.gofobao.framework.system.controller.web;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
+import com.gofobao.framework.system.vo.request.VoFindThirdBatch;
 import com.gofobao.framework.system.vo.request.VoSendThirdBatch;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -19,6 +20,17 @@ import javax.validation.Valid;
 public class WebThirdBatchLogController {
     @Autowired
     private ThirdBatchLogBiz thirdBatchLogBiz;
+
+    /**
+     * 查询批次状态
+     *
+     * @return
+     */
+    @PostMapping(value = "/pub/third/batch/deal/send")
+    @ApiOperation("发送即信批次处理")
+    public ResponseEntity<VoBaseResp> findThirdThirdBatch(VoFindThirdBatch voFindThirdBatch) {
+        return thirdBatchLogBiz.findThirdThirdBatch(voFindThirdBatch);
+    }
 
     /**
      * 发送即信批次处理
