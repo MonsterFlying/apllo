@@ -94,6 +94,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     @Autowired
     private BorrowService borrowService;
     @Autowired
+    private BorrowBiz borrowBiz;
+    @Autowired
     private JixinHelper jixinHelper;
     @Autowired
     private BorrowCollectionService borrowCollectionService;
@@ -188,7 +190,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
             //净值账户管理费
             if (borrow.getType() == 1) {
-                debtFee += MathHelper.myRound(validMoney / borrow.getMoney().doubleValue() * totalManageFee, 2);
+                debtFee += Math.floor(validMoney / borrow.getMoney().doubleValue() * totalManageFee);
             }
 
             String lendPayOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);

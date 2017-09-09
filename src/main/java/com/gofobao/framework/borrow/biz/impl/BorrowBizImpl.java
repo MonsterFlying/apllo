@@ -951,11 +951,12 @@ public class BorrowBizImpl implements BorrowBiz {
 
         // 净值账户管理费
         if (borrow.getType() == 1) {
+
             Double fee;
             if (borrow.getRepayFashion() == 1) {
-                fee = MathHelper.myRound(borrow.getMoney() * 0.0012 / 30 * borrow.getTimeLimit(), 2);
+                fee = Math.floor(borrow.getMoney() * 0.0012 / 30 * borrow.getTimeLimit());
             } else {
-                fee = MathHelper.myRound(borrow.getMoney() * 0.0012 * borrow.getTimeLimit(), 2);
+                fee = Math.floor(borrow.getMoney() * 0.0012 * borrow.getTimeLimit());
             }
             AssetChange outBorrowFeeAssetChangeEntity = new AssetChange();
             outBorrowFeeAssetChangeEntity.setSourceId(borrow.getId());
