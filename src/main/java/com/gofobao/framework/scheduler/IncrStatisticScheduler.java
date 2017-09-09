@@ -159,7 +159,7 @@ public class IncrStatisticScheduler {
             qdSumRepayPrincipal = NumberHelper.toLong(resultMap.get("qdSumRepayPrincipal"));
         }
         Long cashSum=0L;
-        sql=new StringBuffer("SELECT SUM(op_money) AS cashSum FROM gfb_new_asset_log WHERE (local_type='smallCash' or local_type='bigCash') AND del =1");
+        sql=new StringBuffer("SELECT SUM(money) AS cashSum FROM gfb_cash_log WHERE  (status=1 or status=4 or status=0) AND created_at>='"+DateHelper.dateToString(startDate)+"' AND created_at<='"+DateHelper.dateToString(endDate)+"' " );
         resultMap = jdbcTemplate.queryForMap(sql.toString());
         if(!CollectionUtils.isEmpty(resultMap)){
              cashSum= NumberHelper.toLong(resultMap.get("cashSum"));
