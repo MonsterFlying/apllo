@@ -1123,14 +1123,15 @@ public class AssetBizImpl implements AssetBiz {
         log.info(String.format("资金同步: %s", paramStr));
         Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         Long userId = Long.parseLong(paramMap.get("userId"));
-        String date =  paramMap.get("date");
-        Date synDate = null ;
-        if(!StringUtils.isEmpty(date)){
-            synDate = DateHelper.stringToDate(date, DateHelper.DATE_FORMAT_YMD_NUM) ;
-        }else{
-            synDate = new Date() ;
+        String date = paramMap.get("date");
+        Date synDate = null;
+        if (!StringUtils.isEmpty(date)) {
+            synDate = DateHelper.stringToDate(date, DateHelper.DATE_FORMAT_YMD_NUM);
+        } else {
+            synDate = new Date();
         }
-        return assetSynBiz.doAdminSynAsset(userId, synDate) ;
+        assetSynBiz.doAdminSynAsset(userId, synDate);
+        return userAssetInfo(userId);
     }
 
 
