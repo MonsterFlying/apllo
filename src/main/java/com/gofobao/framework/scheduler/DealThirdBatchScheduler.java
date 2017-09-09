@@ -54,7 +54,7 @@ public class DealThirdBatchScheduler {
         //1.查询未处理 参数校验成功的批次 gfb_third_batch_log
         Specification<ThirdBatchLog> tbls = Specifications
                 .<ThirdBatchLog>and()
-                .eq("state", 1)
+                .eq("state", 0, 1)
                 .build();
         List<ThirdBatchLog> thirdBatchLogList = null;
         int pageSize = 50;

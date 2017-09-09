@@ -1461,18 +1461,19 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
         // 生成投资人还款资金变动记录
         BatchAssetChange batchAssetChange = addBatchAssetChange(batchNo, borrowRepayment.getId(), advance);
-        // 生成资金变动记录
-        long repayMoney = doGenerateAssetChangeRecodeByRepay(borrow, borrowRepayment, borrowRepayment.getUserId(), repayAssetChanges, groupSeqNo, batchAssetChange, advance);
         // 生成还款人还款批次资金改变记录
         addBatchAssetChangeByBorrower(batchAssetChange.getId(), borrowRepayment, borrow,
                 interestPercent, voRepayReq.getIsUserOpen(),
                 lateInterest, voRepayReq.getUserId(), groupSeqNo,
                 advance, money);
+        // 生成回款人资金变动记录
+        doGenerateAssetChangeRecodeByRepay(borrow, borrowRepayment, borrowRepayment.getUserId(), repayAssetChanges, groupSeqNo, batchAssetChange, advance);
+
         //改变还款与垫付记录的值
         /**
          * @// TODO: 2017/9/8 判断 
          */
-        changeRepaymentAndAdvanceRecord(borrowRepayment, lateDays, repayMoney, lateInterest, advance);
+        changeRepaymentAndAdvanceRecord(borrowRepayment, lateDays, money, lateInterest, advance);
         /*ResponseEntity<VoBaseResp> resp = checkAssetByRepay(repayAsset, money);
         if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
             throw new Exception(resp.getBody().getState().getMsg());
