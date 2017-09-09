@@ -248,7 +248,7 @@ public class OpenAccountBizImpl implements OpenAccountBiz {
         passwordSetRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
         passwordSetRequest.setName(userThirdAccount.getName());
         passwordSetRequest.setAccountId(userThirdAccount.getAccountId());
-        passwordSetRequest.setIdType(IdTypeContant.ID_CARD);
+        passwordSetRequest.setIdType(IdTypeContant.getIdTypeContant(userThirdAccount));
         passwordSetRequest.setIdNo(userThirdAccount.getIdNo());
         passwordSetRequest.setAcqRes(String.valueOf(userThirdAccount.getUserId()));
         passwordSetRequest.setRetUrl(String.format("%s/pub/openAccount/callback/%s/initPassword", javaDomain, userThirdAccount.getUserId()));

@@ -467,7 +467,7 @@ public class AssetBizImpl implements AssetBiz {
         directRechargeOnlineRequest.setTxTime(DateHelper.getTime());
         directRechargeOnlineRequest.setTxDate(DateHelper.getDate());
         directRechargeOnlineRequest.setAccountId(userThirdAccount.getAccountId());
-        directRechargeOnlineRequest.setIdType(IdTypeContant.ID_CARD);
+        directRechargeOnlineRequest.setIdType(IdTypeContant.getIdTypeContant(userThirdAccount));
         directRechargeOnlineRequest.setIdNo(userThirdAccount.getIdNo());
         directRechargeOnlineRequest.setName(userThirdAccount.getName());
         directRechargeOnlineRequest.setMobile(voRechargeReq.getPhone());
@@ -636,7 +636,7 @@ public class AssetBizImpl implements AssetBiz {
         directRechargePlusRequest.setTxTime(DateHelper.getTime());
         directRechargePlusRequest.setTxDate(DateHelper.getDate());
         directRechargePlusRequest.setAccountId(userThirdAccount.getAccountId());
-        directRechargePlusRequest.setIdType(IdTypeContant.ID_CARD);
+        directRechargePlusRequest.setIdType(IdTypeContant.getIdTypeContant(userThirdAccount));
         directRechargePlusRequest.setIdNo(userThirdAccount.getIdNo());
         directRechargePlusRequest.setName(users.getRealname());
         directRechargePlusRequest.setMobile(userThirdAccount.getMobile());
