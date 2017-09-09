@@ -215,4 +215,13 @@ public interface AssetBiz {
      */
     ResponseEntity<VoQueryInfoResp> queryUserMoneyForJixin(VoDoAgainVerifyReq voDoAgainVerifyReq);
 
+
+    /**
+     * 撤销红包接口
+     * @param voUnsendRedPacket
+     * @return
+     */
+    ResponseEntity<VoBaseResp> cancelRedPacket(VoUnsendRedPacket voUnsendRedPacket) throws Exception;
+
+
 }

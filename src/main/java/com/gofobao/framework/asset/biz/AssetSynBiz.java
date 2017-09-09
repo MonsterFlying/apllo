@@ -1,5 +1,10 @@
 package com.gofobao.framework.asset.biz;
 
+import com.gofobao.framework.asset.vo.response.VoUserAssetInfoResp;
+import org.springframework.http.ResponseEntity;
+
+import java.util.Date;
+
 /**
  * 资金同步
  */
@@ -25,4 +30,13 @@ public interface AssetSynBiz {
      */
     boolean doOffLineRechargeByAleve(String date) throws Exception;
 
+
+    /**
+     * 后台资金同步
+     *
+     * @param userId
+     * @param synDate
+     * @return
+     */
+    boolean doAdminSynAsset(Long userId, Date synDate) throws Exception;
 }

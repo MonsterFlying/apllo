@@ -42,4 +42,5 @@ public interface NewAssetLogService {
      */
     long count(Specification<NewAssetLog> assetLogSpecification);
 
+    NewAssetLog findById(long id);
 }

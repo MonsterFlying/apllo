@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface NewAssetLogRepository extends JpaRepository<NewAssetLog, Long>, JpaSpecificationExecutor<NewAssetLog> {
+    NewAssetLog findById(long id);
 }

@@ -88,98 +88,105 @@ public class AssetChangeProvider {
      * @param entity
      */
     public void commonAssetChange(AssetChange entity) throws Exception {
-        log.info(String.format("资金变动规则：%s", new Gson().toJson(entity)));
-        Preconditions.checkNotNull(entity, "AssetChangeProvider.commonAssetChange assetEntity is null ");
-        Preconditions.checkArgument(entity.getUserId() > 0, "AssetChangeProvider.commonAssetChange userId  <= 0");
-        Preconditions.checkNotNull(entity.getType(), "AssetChangeProvider.commonAssetChange type is null");
+        try {
+            log.info(String.format("资金变动规则处理前：%s", new Gson().toJson(entity)));
+            Preconditions.checkNotNull(entity, "AssetChangeProvider.commonAssetChange assetEntity is null ");
+            Preconditions.checkArgument(entity.getUserId() > 0, "AssetChangeProvider.commonAssetChange userId  <= 0");
+            Preconditions.checkNotNull(entity.getType(), "AssetChangeProvider.commonAssetChange type is null");
 
-        if (entity.getMoney() <= 0) {
-            entity.setMoney(entity.getPrincipal() + entity.getInterest());
-        }
-
-        Preconditions.checkArgument(entity.getUserId() > 0, "AssetChangeProvider.commonAssetChange moeny  <= 0");
-        if (entity.getPrincipal() <= 0) {
-            entity.setPrincipal(entity.getMoney() - entity.getInterest());
-        }
-
-        long userId = entity.getUserId();
-        Users user = userService.findByIdLock(userId);
-        Preconditions.checkNotNull(user, "AssetsChangeHelper.execute user is null");
-
-        Asset asset = assetService.findByUserIdLock(userId);
-        Preconditions.checkNotNull(asset, "AssetsChangeHelper.execute asset is null");
-
-        UserCache userCache = userCacheService.findByUserIdLock(userId);
-        Preconditions.checkNotNull(userCache, "AssetsChangeHelper.execute userCache is null");
-
-        Date nowDate = new Date();
-        Date zeroDate = DateHelper.beginOfDate(nowDate);
-        long yesterdayMoney = 0L; // 昨日资产
-        if (asset.getUpdatedAt().getTime() < zeroDate.getTime()) {  // 写入昨日资产
-            log.info("资金变动: 更新用户昨日缓存");
-            YesterdayAsset yesterdayAsset = yesterdayAssetService.findByUserId(userId);
-            boolean initState = false;
-            if (ObjectUtils.isEmpty(yesterdayAsset)) {
-                yesterdayAsset = new YesterdayAsset();
-                initState = true;
+            if (entity.getMoney() <= 0) {
+                entity.setMoney(entity.getPrincipal() + entity.getInterest());
             }
 
-            yesterdayMoney = asset.getUseMoney();
-            yesterdayAsset.setUseMoney(asset.getUseMoney());
-            yesterdayAsset.setNoUseMoney(asset.getNoUseMoney());
-            yesterdayAsset.setUseMoney(asset.getUseMoney());
-            yesterdayAsset.setNoUseMoney(asset.getNoUseMoney());
-            yesterdayAsset.setVirtualMoney(asset.getVirtualMoney());
-            yesterdayAsset.setCollection(asset.getCollection());
-            yesterdayAsset.setPayment(asset.getPayment());
-            yesterdayAsset.setUpdatedAt(nowDate);
-            yesterdayAsset.setUserId(entity.getUserId());
-            if (initState) {
-                yesterdayAssetService.insert(yesterdayAsset);
-            } else {
-                yesterdayAssetService.update(yesterdayAsset);
+            Preconditions.checkArgument(entity.getUserId() > 0, "AssetChangeProvider.commonAssetChange moeny  <= 0");
+            if (entity.getPrincipal() <= 0) {
+                entity.setPrincipal(entity.getMoney() - entity.getInterest());
             }
-        }
 
-        String assetChangeRule = entity.getType().getAssetChangeRule();
-        if (!StringUtils.isEmpty(assetChangeRule)) {  // 解析资金变动
-            log.info(String.format("资金变动: 解析资金变动规则: %s", assetChangeRule));
-            AssetChangeRuleParse.parse(asset, assetChangeRule, entity.getPrincipal(), entity.getInterest());
-            asset.setUpdatedAt(nowDate);
-            assetService.save(asset);
-            // 查询资金变动记录
-            NewAssetLog newAssetLog = new NewAssetLog();
-            newAssetLog.setCreateTime(nowDate);
-            newAssetLog.setUseMoney(asset.getUseMoney());
-            newAssetLog.setCurrMoney(asset.getUseMoney() + asset.getNoUseMoney());
-            newAssetLog.setDel(0);
-            if (!ObjectUtils.isEmpty(entity.getForUserId())) {
-                newAssetLog.setForUserId(entity.getForUserId());
+            long userId = entity.getUserId();
+            Users user = userService.findByIdLock(userId);
+            Preconditions.checkNotNull(user, "AssetsChangeHelper.execute user is null");
+
+            Asset asset = assetService.findByUserIdLock(userId);
+            Preconditions.checkNotNull(asset, "AssetsChangeHelper.execute asset is null");
+
+            UserCache userCache = userCacheService.findByUserIdLock(userId);
+            Preconditions.checkNotNull(userCache, "AssetsChangeHelper.execute userCache is null");
+
+            Date nowDate = new Date();
+            Date zeroDate = DateHelper.beginOfDate(nowDate);
+            long yesterdayMoney = 0L; // 昨日资产
+            if (asset.getUpdatedAt().getTime() < zeroDate.getTime()) {  // 写入昨日资产
+                log.info("资金变动: 更新用户昨日缓存");
+                YesterdayAsset yesterdayAsset = yesterdayAssetService.findByUserId(userId);
+                boolean initState = false;
+                if (ObjectUtils.isEmpty(yesterdayAsset)) {
+                    yesterdayAsset = new YesterdayAsset();
+                    initState = true;
+                }
+
+                yesterdayMoney = asset.getUseMoney();
+                yesterdayAsset.setUseMoney(asset.getUseMoney());
+                yesterdayAsset.setNoUseMoney(asset.getNoUseMoney());
+                yesterdayAsset.setUseMoney(asset.getUseMoney());
+                yesterdayAsset.setNoUseMoney(asset.getNoUseMoney());
+                yesterdayAsset.setVirtualMoney(asset.getVirtualMoney());
+                yesterdayAsset.setCollection(asset.getCollection());
+                yesterdayAsset.setPayment(asset.getPayment());
+                yesterdayAsset.setUpdatedAt(nowDate);
+                yesterdayAsset.setUserId(entity.getUserId());
+                if (initState) {
+                    yesterdayAssetService.insert(yesterdayAsset);
+                } else {
+                    yesterdayAssetService.update(yesterdayAsset);
+                }
             }
-            newAssetLog.setLocalSeqNo(entity.getSeqNo());
-            newAssetLog.setNoUseMoney(asset.getNoUseMoney());
-            newAssetLog.setOpMoney(entity.getMoney());
-            newAssetLog.setLocalType(entity.getType().getLocalType());
-            newAssetLog.setPlatformType(entity.getType().getPlatformType());
-            newAssetLog.setRemark(entity.getRemark());
-            newAssetLog.setUserId(entity.getUserId());
-            newAssetLog.setTxFlag(entity.getType().getTxFlag());
-            newAssetLog.setGroupOpSeqNo(entity.getGroupSeqNo());
-            newAssetLog.setOpName(entity.getType().getOpName());
-            if (!ObjectUtils.isEmpty(entity.getSourceId())) {
-                newAssetLog.setSourceId(entity.getSourceId());
+
+            String assetChangeRule = entity.getType().getAssetChangeRule();
+            if (!StringUtils.isEmpty(assetChangeRule)) {  // 解析资金变动
+                log.info(String.format("资金变动: 解析资金变动规则: %s", assetChangeRule));
+                AssetChangeRuleParse.parse(asset, assetChangeRule, entity.getPrincipal(), entity.getInterest());
+                asset.setUpdatedAt(nowDate);
+                assetService.save(asset);
+                // 查询资金变动记录
+                NewAssetLog newAssetLog = new NewAssetLog();
+                newAssetLog.setCreateTime(nowDate);
+                newAssetLog.setUseMoney(asset.getUseMoney());
+                newAssetLog.setCurrMoney(asset.getUseMoney() + asset.getNoUseMoney());
+                newAssetLog.setDel(0);
+                if (!ObjectUtils.isEmpty(entity.getForUserId())) {
+                    newAssetLog.setForUserId(entity.getForUserId());
+                }
+                newAssetLog.setLocalSeqNo(entity.getSeqNo());
+                newAssetLog.setNoUseMoney(asset.getNoUseMoney());
+                newAssetLog.setOpMoney(entity.getMoney());
+                newAssetLog.setLocalType(entity.getType().getLocalType());
+                newAssetLog.setPlatformType(entity.getType().getPlatformType());
+                newAssetLog.setRemark(entity.getRemark());
+                newAssetLog.setUserId(entity.getUserId());
+                newAssetLog.setTxFlag(entity.getType().getTxFlag());
+                newAssetLog.setGroupOpSeqNo(entity.getGroupSeqNo());
+                newAssetLog.setOpName(entity.getType().getOpName());
+                if (!ObjectUtils.isEmpty(entity.getSourceId())) {
+                    newAssetLog.setSourceId(entity.getSourceId());
+                }
+                newAssetLogService.save(newAssetLog);
             }
-            newAssetLogService.save(newAssetLog);
-        }
 
 
-        String userCacheChangeRule = entity.getType().getUserCacheChangeRule();
-        if (!StringUtils.isEmpty(userCacheChangeRule)) {
-            log.info(String.format("资金变动: 解析资金缓存变动规则: %s", assetChangeRule));
-            AssetChangeRuleParse.parse(userCache, userCacheChangeRule, entity.getPrincipal(), entity.getInterest());
-            userCache.setUpdatedAt(nowDate);
-            userCache.setYesterdayUseMoney(yesterdayMoney > 0 ? yesterdayMoney : 0);
-            userCacheService.save(userCache);
+            log.info(String.format("资金变动规则处理后：%s", new Gson().toJson(entity)));
+            String userCacheChangeRule = entity.getType().getUserCacheChangeRule();
+            if (!StringUtils.isEmpty(userCacheChangeRule)) {
+                log.info(String.format("资金变动: 解析资金缓存变动规则: %s", assetChangeRule));
+                AssetChangeRuleParse.parse(userCache, userCacheChangeRule, entity.getPrincipal(), entity.getInterest());
+                userCache.setUpdatedAt(nowDate);
+                userCache.setYesterdayUseMoney(yesterdayMoney > 0 ? yesterdayMoney : 0);
+                userCacheService.save(userCache);
+            }
+        } catch (Exception e) {
+            log.error(String.format("资金变动规则处理失败：%s", new Gson().toJson(entity)));
+            log.error("error:", e);
+            throw new Exception(e);
         }
     }
 

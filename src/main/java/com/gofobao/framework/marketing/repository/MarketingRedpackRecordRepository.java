@@ -25,4 +25,6 @@ public interface MarketingRedpackRecordRepository extends JpaRepository<Marketin
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     MarketingRedpackRecord findTopByIdAndUserIdAndDel(Long redPackageId, Long userId, int del);
+
+    MarketingRedpackRecord findById(long id);
 }

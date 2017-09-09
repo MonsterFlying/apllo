@@ -40,4 +40,10 @@ public class NewAssetLogServiceImpl implements NewAssetLogService {
     public long count(Specification<NewAssetLog> assetLogSpecification) {
         return newAssetLogRepository.count(assetLogSpecification);
     }
+
+    @Override
+    public NewAssetLog findById(long id) {
+
+        return newAssetLogRepository.findById(id) ;
+    }
 }

@@ -7,6 +7,10 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
+import com.gofobao.framework.api.model.voucher_pay_cancel.VoucherPayCancelRequest;
+import com.gofobao.framework.api.model.voucher_pay_cancel.VoucherPayCancelResponse;
+import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.award.biz.RedPackageBiz;
 import com.gofobao.framework.award.repository.RedPackageLogRepository;
 import com.gofobao.framework.award.repository.RedPackageRepository;
@@ -26,10 +30,13 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.marketing.entity.MarketingRedpackRecord;
 import com.gofobao.framework.marketing.service.MarketingRedpackRecordService;
 import com.gofobao.framework.member.entity.UserThirdAccount;
+import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.service.DictItemService;
@@ -87,6 +94,12 @@ public class RedPackageBizImpl implements RedPackageBiz {
     @Autowired
     private JixinManager jixinManager;
 
+    @Autowired
+    UserService userService;
+
+    @Autowired
+    AssetService assetService ;
+
     @Override
     public ResponseEntity<VoViewRedPackageWarpRes> list(VoRedPackageReq voRedPackageReq) {
         Pageable pageable = new PageRequest(voRedPackageReq.getPageIndex(), voRedPackageReq.getPageSize(), new Sort(Sort.Direction.DESC, "id"));
@@ -142,9 +155,30 @@ public class RedPackageBizImpl implements RedPackageBiz {
                     .body(VoViewOpenRedPackageWarpRes.error(VoViewOpenRedPackageWarpRes.ERROR, "对不起, 当前红包已过期!", VoViewOpenRedPackageWarpRes.class));
         }
 
+        Users users = userService.findById(packageReq.getUserId());
+        if (ObjectUtils.isEmpty(users)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoViewOpenRedPackageWarpRes.error(VoViewOpenRedPackageWarpRes.ERROR, "当前用户不存在!", VoViewOpenRedPackageWarpRes.class));
+        }
+
+        if (users.getIsLock()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoViewOpenRedPackageWarpRes.error(VoViewOpenRedPackageWarpRes.ERROR, "当前用户锁定, 取消你领取额红包的资格!", VoViewOpenRedPackageWarpRes.class));
+        }
+
         try {
             String groupSeqNo = assetChangeProvider.getGroupSeqNo();
             long redId = assetChangeProvider.getRedpackAccountId();
+            Asset redPackage = assetService.findByUserIdLock(redId);
+            Long sendRedpackMoney = marketingRedpackRecord.getMoney();
+            if(redPackage.getUseMoney() - sendRedpackMoney < 0){
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoViewOpenRedPackageWarpRes.error(VoViewOpenRedPackageWarpRes.ERROR, "平台派发红包余额不足, 麻烦联系我们客服充钱, 请稍后重试!", VoViewOpenRedPackageWarpRes.class));
+            }
+
             UserThirdAccount redpackThirdAccount = userThirdAccountService.findByUserId(redId); //查询红包账户
             UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(marketingRedpackRecord.getUserId());
             VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
@@ -152,7 +186,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
             voucherPayRequest.setTxAmount(StringHelper.formatDouble(marketingRedpackRecord.getMoney(), 100, false));
             voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
             voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
-            voucherPayRequest.setDesLine("拆开红包");
+            voucherPayRequest.setDesLine("领取红包");
             voucherPayRequest.setChannel(ChannelContant.HTML);
             VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
             if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
@@ -167,18 +201,11 @@ public class RedPackageBizImpl implements RedPackageBiz {
             marketingRedpackRecord.setState(1);
             marketingRedpackRecordService.save(marketingRedpackRecord);
 
-            try{
-
-            }catch (Exception e){
-                log.error("拆开红包失败", e);
-            }
-
             // 红包账户发送红包
             AssetChange redpackPublish = new AssetChange();
             redpackPublish.setMoney(marketingRedpackRecord.getMoney());
             redpackPublish.setType(AssetChangeTypeEnum.publishRedpack);  //  扣除红包
             redpackPublish.setUserId(redId);
-            redpackPublish.setForUserId(marketingRedpackRecord.getUserId());
             redpackPublish.setRemark(String.format("派发奖励红包 %s元", StringHelper.formatDouble(marketingRedpackRecord.getMoney() / 100D, true)));
             redpackPublish.setGroupSeqNo(groupSeqNo);
             redpackPublish.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
@@ -190,8 +217,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
             AssetChange redpackR = new AssetChange();
             redpackR.setMoney(marketingRedpackRecord.getMoney());
             redpackR.setType(AssetChangeTypeEnum.receiveRedpack);
-            redpackR.setUserId(packageReq.getUserId());
-            redpackR.setForUserId(marketingRedpackRecord.getUserId());
+            redpackR.setUserId(marketingRedpackRecord.getUserId());
             redpackR.setRemark(String.format("领取奖励红包 %s元", StringHelper.formatDouble(marketingRedpackRecord.getMoney() / 100D, true)));
             redpackR.setGroupSeqNo(groupSeqNo);
             redpackR.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
@@ -225,7 +251,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
             }
             VoViewOpenRedPackageWarpRes voViewOpenRedPackageWarpRes = VoBaseResp.ok("打开红包成功", VoViewOpenRedPackageWarpRes.class);
             voViewOpenRedPackageWarpRes.setMoney(marketingRedpackRecord.getMoney() / 100D);
-             return  ResponseEntity.ok().body(voViewOpenRedPackageWarpRes);
+            return ResponseEntity.ok().body(voViewOpenRedPackageWarpRes);
         } catch (Exception e) {
             throw new Exception(e);
         }

@@ -14,6 +14,7 @@ import com.gofobao.framework.member.vo.response.pc.VoViewAssetStatisticWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ import javax.validation.Valid;
  */
 @Api(description = "资金模块")
 @RestController
+@Slf4j
 public class WebAssetController {
 
     @Autowired
@@ -41,7 +43,7 @@ public class WebAssetController {
      */
     @ApiOperation("发送即信红包")
     @PostMapping("/pub/asset/pc/v2/redpacket/send")
-    public ResponseEntity<VoBaseResp> sendRedPacket(VoSendRedPacket voSendRedPacket){
+    public ResponseEntity<VoBaseResp> sendRedPacket(VoSendRedPacket voSendRedPacket) {
         return assetBiz.sendRedPacket(voSendRedPacket);
     }
 
@@ -56,6 +58,25 @@ public class WebAssetController {
     public ResponseEntity<VoBaseResp> unsendRedPacket(@Valid @ModelAttribute VoUnsendRedPacket voUnsendRedPacket) {
         return assetBiz.unsendRedPacket(voUnsendRedPacket);
     }
+
+
+    /**
+     * 撤回即信红包
+     *
+     * @param voUnsendRedPacket
+     * @return
+     */
+    @ApiOperation("撤回即信红包")
+    @PostMapping("/pub/asset/pc/v2/redpacket/cancel")
+    public ResponseEntity<VoBaseResp> cancelRedPacket(@Valid @ModelAttribute VoUnsendRedPacket voUnsendRedPacket) {
+        try {
+            return assetBiz.cancelRedPacket(voUnsendRedPacket);
+        } catch (Exception e) {
+            log.error("红包撤销处理失败");
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, e.getMessage()));
+        }
+    }
+
 
     @ApiOperation("获取用户资产信息")
     @GetMapping("/asset/pc/v2/info")
