@@ -26,7 +26,7 @@ public class WebThirdBatchLogController {
      *
      * @return
      */
-    @PostMapping(value = "/pub/third/batch/deal/send")
+    @PostMapping(value = "/pub/third/batch/deal/find")
     @ApiOperation("发送即信批次处理")
     public ResponseEntity<VoBaseResp> findThirdThirdBatch(VoFindThirdBatch voFindThirdBatch) {
         return thirdBatchLogBiz.findThirdThirdBatch(voFindThirdBatch);
