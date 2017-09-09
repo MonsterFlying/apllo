@@ -11,6 +11,9 @@ import java.util.List;
  * Created by Zeke on 2017/6/15.
  */
 public interface ThirdBatchLogService {
+
+    ThirdBatchLog findById(long id);
+
     List<ThirdBatchLog> findList(Specification<ThirdBatchLog> specification);
 
     List<ThirdBatchLog> findList(Specification<ThirdBatchLog> specification, Sort sort);

@@ -75,7 +75,7 @@ public interface BorrowCollectionService {
 
     boolean updateBySpecification(BorrowCollection borrowCollection, Specification<BorrowCollection> specification);
 
-    BorrowCollection save(BorrowCollection borrowCollection);
+    BorrowCollection save(BorrowCollection borrowCollection) throws Exception;
 
     BorrowCollection insert(BorrowCollection borrowCollection);
 

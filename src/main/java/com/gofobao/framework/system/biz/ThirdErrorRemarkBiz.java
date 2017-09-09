@@ -15,4 +15,5 @@ public interface ThirdErrorRemarkBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> dealThirdError(VoDealThirdErrorReq voDealThirdErrorReq);
+
 }

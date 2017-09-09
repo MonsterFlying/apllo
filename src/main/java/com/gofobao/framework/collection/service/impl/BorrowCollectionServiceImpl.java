@@ -25,6 +25,9 @@ import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -44,8 +47,10 @@ import java.util.stream.Collectors;
  * Created by admin on 2017/5/31.
  */
 @Component
+@Slf4j
 public class BorrowCollectionServiceImpl implements BorrowCollectionService {
 
+    final Gson gson = new GsonBuilder().create();
     @Autowired
     private BorrowCollectionRepository borrowCollectionRepository;
     @Autowired
@@ -305,8 +310,13 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         return !CollectionUtils.isEmpty(borrowCollectionRepository.save(borrowCollectionList));
     }
 
-    public BorrowCollection save(BorrowCollection borrowCollection) {
-        return borrowCollectionRepository.save(borrowCollection);
+    public BorrowCollection save(BorrowCollection borrowCollection) throws Exception{
+        try {
+            return borrowCollectionRepository.save(borrowCollection);
+        } catch (Exception e) {
+            log.error("生成还款记录失败:collection->"+gson.toJson(borrowCollection));
+            throw new Exception(e);
+        }
     }
 
     public BorrowCollection insert(BorrowCollection borrowCollection) {

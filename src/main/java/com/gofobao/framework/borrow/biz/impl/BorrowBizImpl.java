@@ -1230,7 +1230,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 borrowCollection.setLateDays(0);
                 borrowCollection.setLateInterest(0l);
                 borrowCollection.setBorrowId(borrow.getId());
-                borrowCollectionService.insert(borrowCollection);
+                borrowCollectionService.save(borrowCollection);
             }
 
             // 新版投标成功
