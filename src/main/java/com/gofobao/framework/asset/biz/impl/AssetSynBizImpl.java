@@ -97,20 +97,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean doAssetSyn(Long userId) throws Exception {
-        String key = String.format("SYN_%s", userId);
-        String date = redisHelper.get(key, "");
         Date nowDate = new Date();
-        if (StringUtils.isEmpty(date)) {
-            String startDate = DateHelper.dateToString(nowDate);
-            redisHelper.put(key, startDate);
-        } else {
-            Date startDate = DateHelper.addMinutes(DateHelper.stringToDate(date), 10);
-            if (DateHelper.diffInDays(nowDate, startDate, false) < 0) {
-                log.info("请求同步过于频繁");
-                return true;
-            }
-        }
-
         Users user = userService.findByIdLock(userId);
         Preconditions.checkNotNull(user, "资金同步: 查询用户为空");
         Asset asset = assetService.findByUserIdLock(userId);  // 用户资产
@@ -185,29 +172,33 @@ public class AssetSynBizImpl implements AssetSynBiz {
                 .eq("rechargeChannel", 1) // 线下充值
                 .eq("state", 1)  // 充值成功
                 .build();
+
         List<RechargeDetailLog> rechargeDetailLogList = rechargeDetailLogService.findAll(rechargeDetailLogSpecification);
 
-        if (CollectionUtils.isEmpty(rechargeDetailLogList)) {
-            log.info("线下充值记录为空为空");
+        if (!CollectionUtils.isEmpty(rechargeDetailLogList)) {
+            Iterator<RechargeDetailLog> iterator = rechargeDetailLogList.iterator();
+            while (iterator.hasNext()) {
+                RechargeDetailLog recharge = iterator.next();
+                Iterator<AccountDetailsQueryItem> iterator1 = accountDetailsQueryItemList.iterator();
+                while (iterator1.hasNext()) {
+                    AccountDetailsQueryItem offRecharge = iterator1.next();
+                    if (recharge.getMoney() == (new Double(offRecharge.getTxAmount()) * 100)) {
+                        iterator.remove();
+                        iterator1.remove();
+                    }
+                }
+            }
+        }
+
+        if (CollectionUtils.isEmpty(accountDetailsQueryItemList)) {
             return true;
         }
-        Map<Long, RechargeDetailLog> rechargeMap = rechargeDetailLogList
-                .stream()
-                .collect(Collectors.toMap(RechargeDetailLog::getMoney, Function.identity()));
 
-        Gson gson = new Gson();
         String seqNo;
         for (AccountDetailsQueryItem accountDetailsQueryItem : accountDetailsQueryItemList) {
             seqNo = String.format("%s%s%s", accountDetailsQueryItem.getInpDate(), accountDetailsQueryItem.getInpTime(), accountDetailsQueryItem.getTraceNo());
             Long money = new Double(Double.parseDouble(accountDetailsQueryItem.getTxAmount()) * 100).longValue();
-            RechargeDetailLog rechargeDetailLog = rechargeMap.get(money);
-            if(!ObjectUtils.isEmpty(rechargeDetailLog)){
-                log.info(String.format("当前用户线下充值已同步: %s", gson.toJson(rechargeDetailLog)));
-                continue;
-            }else{
-                rechargeDetailLog = new RechargeDetailLog() ;
-            }
-
+            RechargeDetailLog rechargeDetailLog = new RechargeDetailLog() ;
             log.info("进入同步环节");
             rechargeDetailLog = new RechargeDetailLog();
             rechargeDetailLog.setUserId(userId);

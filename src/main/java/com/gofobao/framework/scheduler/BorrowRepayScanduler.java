@@ -48,17 +48,17 @@ public class BorrowRepayScanduler {
     @Autowired
     private RepaymentBiz repaymentBiz;
 
-    @Scheduled(cron = "0 50 23 * * ? ")
+    //@Scheduled(cron = "0 50 23 * * ? ")
     public void process() {
         borrowRepay();
     }
 
-    @Scheduled(cron = "0 00 23 * * ? ")
+    //@Scheduled(cron = "0 00 23 * * ? ")
     public void process01() {
         borrowRepay();
     }
 
-    @Transactional(rollbackOn = Exception.class)
+    //@Transactional(rollbackOn = Exception.class)
     private void borrowRepay() {
         log.info("");
         Specification<BorrowRepayment> brs = Specifications
