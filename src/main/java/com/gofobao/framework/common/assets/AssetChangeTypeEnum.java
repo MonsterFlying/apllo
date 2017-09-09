@@ -160,9 +160,9 @@ public enum AssetChangeTypeEnum {
     revokedRedpack("平台撤销红包发放", "revokedRedpack", "2833", "sub@useMoney", "", "C"),
 
     /**
-     * 用户红包撤销
+     * 平台收到到平台撤销类型
      */
-    cancelPaltFormRedpack("平台收到撤销红包", "revokedRedpack", "7833", "add@useMoney", "", "D"),
+    cancelPaltFormRedpack("平台收到撤销红包", "cancelPaltFormRedpack", "7833", "add@useMoney", "", "D"),
 
     /**
      * 平台发放红包
