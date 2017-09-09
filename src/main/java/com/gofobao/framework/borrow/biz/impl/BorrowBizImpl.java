@@ -1185,6 +1185,7 @@ public class BorrowBizImpl implements BorrowBiz {
             Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
             List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
             Preconditions.checkNotNull(repayDetailList, "生成用户回款计划开始: 计划生成为空");
+            log.info(String.format("回款计划参数: %s", gson.toJson(repayDetailList)));
             BorrowCollection borrowCollection;
             int collectionMoney = 0;
             int collectionInterest = 0;
