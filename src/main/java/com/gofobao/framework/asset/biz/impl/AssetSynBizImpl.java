@@ -97,20 +97,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean doAssetSyn(Long userId) throws Exception {
-        String key = String.format("SYN_%s", userId);
-        String date = redisHelper.get(key, "");
         Date nowDate = new Date();
-        if (StringUtils.isEmpty(date)) {
-            String startDate = DateHelper.dateToString(nowDate);
-            redisHelper.put(key, startDate);
-        } else {
-            Date startDate = DateHelper.addMinutes(DateHelper.stringToDate(date), 10);
-            if (DateHelper.diffInDays(nowDate, startDate, false) < 0) {
-                log.info("请求同步过于频繁");
-                return true;
-            }
-        }
-
         Users user = userService.findByIdLock(userId);
         Preconditions.checkNotNull(user, "资金同步: 查询用户为空");
         Asset asset = assetService.findByUserIdLock(userId);  // 用户资产
@@ -187,13 +174,12 @@ public class AssetSynBizImpl implements AssetSynBiz {
                 .build();
         List<RechargeDetailLog> rechargeDetailLogList = rechargeDetailLogService.findAll(rechargeDetailLogSpecification);
 
-        if (CollectionUtils.isEmpty(rechargeDetailLogList)) {
-            log.info("线下充值记录为空为空");
-            return true;
+        Map<Long, RechargeDetailLog> rechargeMap = new HashMap<>() ;
+        if(!CollectionUtils.isEmpty(rechargeDetailLogList)){
+            rechargeMap = rechargeDetailLogList
+                    .stream()
+                    .collect(Collectors.toMap(RechargeDetailLog::getMoney, Function.identity()));
         }
-        Map<Long, RechargeDetailLog> rechargeMap = rechargeDetailLogList
-                .stream()
-                .collect(Collectors.toMap(RechargeDetailLog::getMoney, Function.identity()));
 
         Gson gson = new Gson();
         String seqNo;
