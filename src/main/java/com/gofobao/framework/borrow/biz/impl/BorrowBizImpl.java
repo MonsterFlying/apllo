@@ -850,8 +850,7 @@ public class BorrowBizImpl implements BorrowBiz {
         processBorrowAssetChange(borrow, borrowRepaymentList, groupSeqNo);
         // 满标操作
         finishBorrow(borrow);
-        //更新网站统计
-        updateStatisticByBorrowReview(borrow);
+
         //借款成功发送通知短信
         smsNoticeByBorrowReview(borrow);
         //发送借款协议
@@ -1015,6 +1014,9 @@ public class BorrowBizImpl implements BorrowBiz {
             }
 
             IncrStatistic incrStatistic = new IncrStatistic();
+            incrStatistic.setCashSum(0l);
+            incrStatistic.setJzSumPublish(0);
+            incrStatistic.setJzSumRepay(0);
             if ((!userCache.getTenderTransfer()) && (!userCache.getTenderTuijian()) && (!userCache.getTenderJingzhi()) && (!userCache.getTenderMiao()) && (!userCache.getTenderQudao())) {
                 incrStatistic.setTenderCount(1);
                 incrStatistic.setTenderTotal(1);
