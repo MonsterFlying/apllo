@@ -557,6 +557,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 }
             }
         }
+
         Specification<Transfer> ts = Specifications
                 .<Transfer>and()
                 .eq("userId", userId)

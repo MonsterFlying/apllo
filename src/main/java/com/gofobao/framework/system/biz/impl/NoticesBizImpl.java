@@ -269,6 +269,7 @@ public class NoticesBizImpl implements NoticesBiz {
             warpRes.setNum(noticesService.unread(userId));
             return ResponseEntity.ok(warpRes);
         } catch (Exception e) {
+            log.error("读取站内信有问题", e);
             return ResponseEntity.badRequest()
                     .body(
                             VoBaseResp.error(
