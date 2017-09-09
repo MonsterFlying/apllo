@@ -53,6 +53,7 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.listener.providers.CreditProvider;
 import com.gofobao.framework.marketing.biz.MarketingProcessBiz;
@@ -563,7 +564,14 @@ public class AplloApplicationTests {
     @Test
     @Transactional(rollbackOn = Exception.class)
     public void test() {
-        Borrow borrow = borrowService.findById(170185l);
+
+        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
+                NumberHelper.toDouble(StringHelper.toString(9)),
+                NumberHelper.toDouble(StringHelper.toString(1500)), 12, new Date());
+        Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(0);
+        List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
+        System.out.println(repayDetailList);
+/*        Borrow borrow = borrowService.findById(170185l);
         UserCache userCache = userCacheService.findById(22002l);
         Date nowDate = new Date();
         Date releaseAt = borrow.getReleaseAt();
@@ -575,7 +583,7 @@ public class AplloApplicationTests {
             log.info(String.valueOf(ObjectUtils.isEmpty(borrow.getLendId())));
             log.info(String.valueOf(releaseAt.getTime() > nowDate.getTime()));
             log.info(String.valueOf(!userCache.isNovice()));
-        }
+        }*/
 
         /*Borrow borrow = new Borrow();
         long takeUserId = borrow.getTakeUserId();

@@ -105,7 +105,9 @@ public class BorrowCalculatorHelper {
 
                 principal = MathHelper.myRound(principal, 0);
                 this.msPrincipal = MathHelper.myRound(this.msPrincipal - principal, 0);
-
+                if (this.msPrincipal<0){
+                    this.msPrincipal = 0d;
+                }
                 repayAt = DateHelper.addMonths((Date) this.successAt.clone(), i + 1);
 
                 repayDetailMap.put("repayMoney", NumberHelper.toString(MathHelper.myRound(principal + interest, 0)));
