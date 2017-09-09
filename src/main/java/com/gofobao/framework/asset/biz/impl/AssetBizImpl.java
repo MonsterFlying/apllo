@@ -45,6 +45,8 @@ import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.SecurityHelper;
+import com.gofobao.framework.marketing.entity.MarketingRedpackRecord;
+import com.gofobao.framework.marketing.service.MarketingRedpackRecordService;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -148,7 +150,8 @@ public class AssetBizImpl implements AssetBiz {
     @Autowired
     AssetChangeProvider assetChangeProvider;
 
-
+    @Autowired
+    MarketingRedpackRecordService marketingRedpackRecordService;
     LoadingCache<String, DictValue> bankLimitCache = CacheBuilder
             .newBuilder()
             .expireAfterWrite(60, TimeUnit.MINUTES)
@@ -1120,8 +1123,17 @@ public class AssetBizImpl implements AssetBiz {
         log.info(String.format("资金同步: %s", paramStr));
         Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         Long userId = Long.parseLong(paramMap.get("userId"));
-        return synOffLineRecharge(userId);
+        String date = paramMap.get("date");
+        Date synDate = null;
+        if (!StringUtils.isEmpty(date)) {
+            synDate = DateHelper.stringToDate(date, DateHelper.DATE_FORMAT_YMD_NUM);
+        } else {
+            synDate = new Date();
+        }
+        assetSynBiz.doAdminSynAsset(userId, synDate);
+        return userAssetInfo(userId);
     }
+
 
     @Override
     public ResponseEntity<VoUnionRechargeInfo> unionBankInfo(Long userId) {
@@ -1270,5 +1282,117 @@ public class AssetBizImpl implements AssetBiz {
         voQueryInfoResp.setTotalMoey(balanceQueryResponse.getCurrBal());
         voQueryInfoResp.setValidateMoney(balanceQueryResponse.getAvailBal());
         return ResponseEntity.ok(voQueryInfoResp);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoBaseResp> cancelRedPacket(VoUnsendRedPacket voUnsendRedPacket) throws Exception {
+        String paramStr = voUnsendRedPacket.getParamStr();/* pc请求提前结清参数 */
+        if (!SecurityHelper.checkSign(voUnsendRedPacket.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc取消借款 签名验证不通过!"));
+        }
+
+
+        Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        String newAssetLogId = paramMap.get("id");
+        NewAssetLog newAssetLog = newAssetLogService.findById(Long.parseLong(newAssetLogId));
+        if (!newAssetLog.getLocalType().equals("receiveRedpack")) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户资金记录不属于红包派发记录"));
+        }
+
+        if (ObjectUtils.isEmpty(newAssetLog)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "没有资金变动用户记录!"));
+        }
+
+        Long userId = newAssetLog.getUserId();
+        Asset asset = assetService.findByUserIdLock(userId);
+        if (ObjectUtils.isEmpty(asset)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "该用户资金记录!"));
+        }
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户开户信息为空!"));
+        }
+
+        String localSeqNo = newAssetLog.getLocalSeqNo();
+        long redId = 0;
+        try {
+            redId = assetChangeProvider.getRedpackAccountId();
+        } catch (ExecutionException e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询红包账户为空!"));
+        }
+
+        UserThirdAccount redpackAccount = userThirdAccountService.findByUserId(redId);
+        if (ObjectUtils.isEmpty(redpackAccount)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询红包账户为空!"));
+        }
+
+        if (asset.getUseMoney() - newAssetLog.getOpMoney() < 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前用户资金额小于撤销金额!"));
+        }
+
+        // 20170909101039117204
+        String txDate = localSeqNo.substring(0, 8);
+        String txTime = localSeqNo.substring(8, 14);
+        String seqNo = localSeqNo.substring(14);
+        VoucherPayCancelRequest voucherPayCancelRequest = new VoucherPayCancelRequest();
+        voucherPayCancelRequest.setAccountId(redpackAccount.getAccountId());
+        voucherPayCancelRequest.setTxAmount(StringHelper.formatDouble(newAssetLog.getOpMoney() / 100D, false));
+        voucherPayCancelRequest.setOrgTxDate(txDate);
+        voucherPayCancelRequest.setOrgTxTime(txTime);
+        voucherPayCancelRequest.setForAccountId(userThirdAccount.getAccountId());
+        voucherPayCancelRequest.setOrgSeqNo(seqNo);
+        voucherPayCancelRequest.setAcqRes(String.valueOf(userId));
+        voucherPayCancelRequest.setChannel(ChannelContant.HTML);
+        VoucherPayCancelResponse response = jixinManager.send(JixinTxCodeEnum.UNSEND_RED_PACKET, voucherPayCancelRequest, VoucherPayCancelResponse.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+            String msg = ObjectUtils.isEmpty(response) ? "当前网络出现异常, 请稍后尝试！" : response.getRetMsg();
+            log.error(msg);
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, String.format("撤销红包失败：%s", response.getRetMsg())));
+        }
+
+        String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+        // 红包取消派发
+        AssetChange redpackPublish = new AssetChange();
+        redpackPublish.setMoney(newAssetLog.getOpMoney());
+        redpackPublish.setType(AssetChangeTypeEnum.cancelPaltFormRedpack);  //  取消发放红包
+        redpackPublish.setUserId(redId);
+        redpackPublish.setForUserId(userId);
+        redpackPublish.setRemark(String.format("取消派发奖励红包 %s元", StringHelper.formatDouble(newAssetLog.getOpMoney() / 100D, true)));
+        redpackPublish.setGroupSeqNo(groupSeqNo);
+        redpackPublish.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
+        redpackPublish.setSourceId(newAssetLog.getId());
+        assetChangeProvider.commonAssetChange(redpackPublish);
+
+        // 红包取消领取
+        AssetChange redpackR = new AssetChange();
+        redpackR.setMoney(newAssetLog.getOpMoney());
+        redpackR.setType(AssetChangeTypeEnum.revokedRedpack);
+        redpackR.setUserId(userId);
+        redpackR.setForUserId(redId);
+        redpackR.setRemark(String.format("取消奖励红包 %s元", StringHelper.formatDouble(newAssetLog.getOpMoney() / 100D, true)));
+        redpackR.setGroupSeqNo(groupSeqNo);
+        redpackR.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
+        redpackR.setSourceId(newAssetLog.getId());
+        assetChangeProvider.commonAssetChange(redpackR);
+
+        return ResponseEntity.ok(VoBaseResp.ok(String.format("撤销红包成功：msg->%s", response.getRetMsg())));
     }
 }

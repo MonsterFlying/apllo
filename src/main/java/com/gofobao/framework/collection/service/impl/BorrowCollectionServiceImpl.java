@@ -249,18 +249,13 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         VoViewOrderDetailResp detailRes = VoBaseResp.ok("查询成功", VoViewOrderDetailResp.class);
         detailRes.setOrder(borrowCollection.getOrder() + 1);
         detailRes.setCollectionMoney(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100D));
-        Date nowDate = new Date();   //当前时间
-        Date tempRepayAt = DateHelper.nextDate(borrowRepayment.getRepayAt());  //还款日（第二天0点之前都算 还款日）
         Integer lateDays = 0;
-        //当前已还款直接取逾期天数||应还时间大于当前时间(还未到还款日)
-        if (borrowRepayment.getStatus() == RepaymentContants.STATUS_YES || tempRepayAt.getTime() > nowDate.getTime()) {
-            lateDays = borrowRepayment.getLateDays();
-            //当前是否是垫付
-        } else if (!StringUtils.isEmpty(borrowRepayment.getAdvanceAtYes())) {
-            lateDays = DateHelper.diffInDays(DateHelper.nextDate(borrowRepayment.getAdvanceAtYes()), tempRepayAt, false);
-            //当前时间大于还款日（逾期)&&未还款
-        } else if(nowDate.getTime()>tempRepayAt.getTime()&&borrowRepayment.getStatus()==RepaymentContants.STATUS_NO){
-            lateDays = DateHelper.diffInDays(nowDate, tempRepayAt, false);
+        Date collectionAt=DateHelper.nextDate(borrowCollection.getCollectionAt());  //回款日
+        Date nowDate=new Date();
+        if(borrowCollection.getStatus()==BorrowCollectionContants.STATUS_YES||nowDate.getTime()<collectionAt.getTime() ){
+            lateDays=borrowCollection.getLateDays();
+        }else if(nowDate.getTime()>collectionAt.getTime()&&borrowCollection.getStatus()==BorrowCollectionContants.STATUS_NO){
+            lateDays=DateHelper.diffInDays(nowDate,collectionAt,false);
         }
         detailRes.setLateDays(lateDays);
         detailRes.setBorrowName(borrow.getName());

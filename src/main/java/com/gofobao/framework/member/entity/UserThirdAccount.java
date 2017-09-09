@@ -1,5 +1,6 @@
 package com.gofobao.framework.member.entity;
 
+import com.gofobao.framework.common.qiniu.util.StringUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -61,13 +62,27 @@ public class UserThirdAccount {
 
     private String autoTransferBondOrderId;
 
-    private Integer autoTransferState ;
+    private Integer autoTransferState;
 
-    private Integer autoTenderState ;
+    private Integer autoTenderState;
 
     private Integer del;
 
-    private String bankName ;
+    private String bankName;
 
-    private String bankLogo ;
+    private String bankLogo;
+
+    public String getIdNo() {
+        if (!StringUtils.isNullOrEmpty(idNo)) {
+            return idNo.toUpperCase();
+        }
+        return idNo;
+    }
+
+    public void setIdNo(String idNo) {
+        if (!StringUtils.isNullOrEmpty(idNo)) {
+            this.idNo = idNo.toUpperCase();
+        }
+
+    }
 }

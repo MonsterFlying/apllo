@@ -19,7 +19,7 @@ public class MarketingRedpackRecordServiceImpl implements MarketingRedpackRecord
 
     @Override
     public MarketingRedpackRecord save(MarketingRedpackRecord marketingRedpackRecord) {
-        return marketingRedpackRecordRepository.save(marketingRedpackRecord) ;
+        return marketingRedpackRecordRepository.save(marketingRedpackRecord);
     }
 
     @Override
@@ -29,21 +29,26 @@ public class MarketingRedpackRecordServiceImpl implements MarketingRedpackRecord
 
     @Override
     public List<MarketingRedpackRecord> findByCancelTimeBetween(Date startDate, Date nowDate, Pageable pageable) {
-        return Optional.fromNullable(marketingRedpackRecordRepository.findByCancelTimeBetween(startDate, nowDate, pageable)).or(Lists.newArrayList()) ;
+        return Optional.fromNullable(marketingRedpackRecordRepository.findByCancelTimeBetween(startDate, nowDate, pageable)).or(Lists.newArrayList());
     }
 
     @Override
     public void save(List<MarketingRedpackRecord> marketingRedpackRecordList) {
-        marketingRedpackRecordRepository.save(marketingRedpackRecordList) ;
+        marketingRedpackRecordRepository.save(marketingRedpackRecordList);
     }
 
     @Override
     public List<MarketingRedpackRecord> findByUserIdAndState(Long userId, Integer status, Pageable pageable) {
-        return Optional.fromNullable(marketingRedpackRecordRepository.findByUserIdAndState(userId, status, pageable)).or(Lists.newArrayList()) ;
+        return Optional.fromNullable(marketingRedpackRecordRepository.findByUserIdAndState(userId, status, pageable)).or(Lists.newArrayList());
     }
 
     @Override
     public MarketingRedpackRecord findTopByIdAndUserIdAndDel(Long redPackageId, Long userId, int del) {
         return marketingRedpackRecordRepository.findTopByIdAndUserIdAndDel(redPackageId, userId, del);
+    }
+
+    @Override
+    public MarketingRedpackRecord findById(long id) {
+        return marketingRedpackRecordRepository.findById(id);
     }
 }

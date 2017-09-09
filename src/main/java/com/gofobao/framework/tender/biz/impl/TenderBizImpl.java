@@ -363,7 +363,12 @@ public class TenderBizImpl implements TenderBiz {
             log.info(String.valueOf(ObjectUtils.isEmpty(borrow.getLendId())));
             log.info(String.valueOf(releaseAt.getTime() > nowDate.getTime()));
             log.info(String.valueOf(!userCache.isNovice()));
-            errerMessage.add("当前标的未到发布时间!");
+            if(borrow.getIsNovice()){
+                errerMessage.add("老用户可在20:00点后投新手标!");
+            }else{
+                errerMessage.add("当前标的未到发布时间");
+            }
+
             return false;
         }
 
