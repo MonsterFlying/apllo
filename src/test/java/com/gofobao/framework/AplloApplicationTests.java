@@ -562,15 +562,21 @@ public class AplloApplicationTests {
     private UserCacheService userCacheService;
 
     @Test
-    @Transactional(rollbackOn = Exception.class)
     public void test() {
 
-        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
+        Borrow borrow = borrowService.findById(170187l);
+        try {
+            borrowBiz.borrowAgainVerify(borrow);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        /*BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
                 NumberHelper.toDouble(StringHelper.toString(9)),
                 NumberHelper.toDouble(StringHelper.toString(1500)), 12, new Date());
         Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(0);
         List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
-        System.out.println(repayDetailList);
+        System.out.println(repayDetailList);*/
 /*        Borrow borrow = borrowService.findById(170185l);
         UserCache userCache = userCacheService.findById(22002l);
         Date nowDate = new Date();

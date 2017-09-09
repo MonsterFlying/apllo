@@ -363,7 +363,7 @@ public class BorrowBizImpl implements BorrowBiz {
             Integer status = borrow.getStatus();
             Date nowDate = new Date(System.currentTimeMillis());
             Date releaseAt = borrow.getReleaseAt();  //发布时间
-            double spend = NumberHelper.floorDouble(borrow.getMoneyYes().doubleValue() / borrow.getMoney().doubleValue() * 100.0,2);
+            double spend = NumberHelper.floorDouble(borrow.getMoneyYes().doubleValue() / borrow.getMoney().doubleValue() * 100.0, 2);
 
             if (status == BorrowContants.BIDDING) {//招标中
                 //待发布
@@ -850,8 +850,7 @@ public class BorrowBizImpl implements BorrowBiz {
         processBorrowAssetChange(borrow, borrowRepaymentList, groupSeqNo);
         // 满标操作
         finishBorrow(borrow);
-        //更新网站统计
-        updateStatisticByBorrowReview(borrow);
+
         //借款成功发送通知短信
         smsNoticeByBorrowReview(borrow);
         //发送借款协议
@@ -1015,6 +1014,9 @@ public class BorrowBizImpl implements BorrowBiz {
             }
 
             IncrStatistic incrStatistic = new IncrStatistic();
+            incrStatistic.setCashSum(0l);
+            incrStatistic.setJzSumPublish(0);
+            incrStatistic.setJzSumRepay(0);
             if ((!userCache.getTenderTransfer()) && (!userCache.getTenderTuijian()) && (!userCache.getTenderJingzhi()) && (!userCache.getTenderMiao()) && (!userCache.getTenderQudao())) {
                 incrStatistic.setTenderCount(1);
                 incrStatistic.setTenderTotal(1);
@@ -1204,10 +1206,11 @@ public class BorrowBizImpl implements BorrowBiz {
                     sumInterests.set(j, sumInterests.get(j) + interest);
                 }
 
-                if (i == (tenderList.size() - 1)) { //给回款最后一期补上多出的本金与利息
+                if (i == (tenderList.size() - 1)) { //通过回款金额计算还款金额
                     BorrowRepayment borrowRepayment = borrowRepaymentMaps.get(j);
-                    principal += (borrowRepayment.getPrincipal() - sumPrincipals.get(j));
-                    interest += (borrowRepayment.getInterest() - sumInterests.get(j));
+                    borrowRepayment.setPrincipal(sumPrincipals.get(j));
+                    borrowRepayment.setInterest(sumInterests.get(j));
+                    borrowRepayment.setRepayMoney(sumPrincipals.get(j) + sumInterests.get(j));
                 }
                 long repayMoney = principal + interest;
 
@@ -1262,6 +1265,7 @@ public class BorrowBizImpl implements BorrowBiz {
             tender.setState(2);
             tender.setUpdatedAt(new Date());
         }
+        borrowRepaymentService.save(borrowRepaymentList);
         tenderService.save(tenderList);
     }
 
@@ -1415,11 +1419,11 @@ public class BorrowBizImpl implements BorrowBiz {
             username = borrowUser.getUsername();
             borrowMap.put("username", StringUtils.isEmpty(username) ? borrowUser.getPhone() : username);
             borrowMap.put("cardId", UserHelper.hideChar(borrowUser.getCardId(), UserHelper.CARD_ID_NUM));
-            borrowMap.put("id",borrow.getId().intValue());
-            borrowMap.put("timeLimit",borrow.getTimeLimit().intValue());
-            borrowMap.put("apr",StringHelper.formatMon(borrow.getApr()/100d));
-            borrowMap.put("successAt",DateHelper.dateToString(new Date(),DateHelper.DATE_FORMAT_YMD));
-            borrowMap.put("money",StringHelper.formatMon(borrow.getMoneyYes()/100D));
+            borrowMap.put("id", borrow.getId().intValue());
+            borrowMap.put("timeLimit", borrow.getTimeLimit().intValue());
+            borrowMap.put("apr", StringHelper.formatMon(borrow.getApr() / 100d));
+            borrowMap.put("successAt", DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD));
+            borrowMap.put("money", StringHelper.formatMon(borrow.getMoneyYes() / 100D));
             if (!ObjectUtils.isEmpty(borrow.getSuccessAt())) { //判断是否存在满标时间
                 boolean successAtBool = DateHelper.getMonth(DateHelper.addMonths(borrow.getSuccessAt(), borrow.getTimeLimit())) % 12
                         !=
@@ -1490,10 +1494,10 @@ public class BorrowBizImpl implements BorrowBiz {
 
                     borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(tempTenderMap.get("validMoney")), new Double(borrow.getApr()), borrow.getTimeLimit(), null);
                     calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
-                    calculatorMap.put("repayTotal",StringHelper.formatMon(Double.valueOf(calculatorMap.get("repayTotal").toString())/100D));
-                    calculatorMap.put("eachRepay",StringHelper.formatMon(Double.valueOf(calculatorMap.get("eachRepay").toString())/100D));
+                    calculatorMap.put("repayTotal", StringHelper.formatMon(Double.valueOf(calculatorMap.get("repayTotal").toString()) / 100D));
+                    calculatorMap.put("eachRepay", StringHelper.formatMon(Double.valueOf(calculatorMap.get("eachRepay").toString()) / 100D));
                     tempTenderMap.put("calculatorMap", calculatorMap);
-                    tempTenderMap.put("validMoney",Double.valueOf(tempTenderMap.get("validMoney").toString())/100D);
+                    tempTenderMap.put("validMoney", Double.valueOf(tempTenderMap.get("validMoney").toString()) / 100D);
                     username = tenderUser.getUsername();
                     tempTenderMap.put("username", org.apache.commons.lang3.StringUtils.isEmpty(username) ? tenderUser.getPhone() : username);
 

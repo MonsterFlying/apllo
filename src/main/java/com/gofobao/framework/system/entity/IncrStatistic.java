@@ -27,171 +27,171 @@ public class IncrStatistic {
 
     @Basic
     @Column(name = "register_count")
-    private Integer registerCount;
+    private Integer registerCount = 0;
 
     @Basic
     @Column(name = "register_total_count")
-    private Integer registerTotalCount;
+    private Integer registerTotalCount = 0;
 
     @Basic
     @Column(name = "real_register_count")
-    private Integer realRegisterCount;
+    private Integer realRegisterCount = 0;
 
     @Basic
     @Column(name = "real_register_total_count")
-    private Integer realRegisterTotalCount;
+    private Integer realRegisterTotalCount = 0;
 
     @Basic
     @Column(name = "tender_count")
-    private Integer tenderCount;
+    private Integer tenderCount = 0;
 
     @Basic
     @Column(name = "tender_total")
-    private Integer tenderTotal;
+    private Integer tenderTotal = 0;
 
     @Basic
     @Column(name = "tender_tj_count")
-    private Integer tenderTjCount;
+    private Integer tenderTjCount = 0;
 
     @Basic
     @Column(name = "tender_tj_total_count")
-    private Integer tenderTjTotalCount;
+    private Integer tenderTjTotalCount = 0;
 
     @Basic
     @Column(name = "tender_jz_count")
-    private Integer tenderJzCount;
+    private Integer tenderJzCount = 0;
 
     @Basic
     @Column(name = "tender_jz_total_count")
-    private Integer tenderJzTotalCount;
+    private Integer tenderJzTotalCount = 0;
 
     @Basic
     @Column(name = "tender_miao_count")
-    private Integer tenderMiaoCount;
+    private Integer tenderMiaoCount = 0;
 
     @Basic
     @Column(name = "tender_miao_total_count")
-    private Integer tenderMiaoTotalCount;
+    private Integer tenderMiaoTotalCount = 0;
 
     @Basic
     @Column(name = "tender_lz_count")
-    private Integer tenderLzCount;
+    private Integer tenderLzCount = 0;
 
     @Basic
     @Column(name = "tender_lz_total_count")
-    private Integer tenderLzTotalCount;
+    private Integer tenderLzTotalCount = 0;
 
     @Basic
     @Column(name = "tender_qd_count")
-    private Integer tenderQdCount;
+    private Integer tenderQdCount = 0;
 
     @Basic
     @Column(name = "tender_qd_total_count")
-    private Integer tenderQdTotalCount;
+    private Integer tenderQdTotalCount = 0;
 
     @Basic
     @Column(name = "recharge_sum")
-    private Long rechargeSum;
+    private Long rechargeSum = 0l;
 
     @Basic
     @Column(name = "cash_sum")
-    private Long cashSum;
+    private Long cashSum = 0l;
 
     @Basic
     @Column(name = "use_money_sum")
-    private Long useMoneySum;
+    private Long useMoneySum = 0l;
 
     @Basic
     @Column(name = "no_use_money_sum")
-    private Integer noUseMoneySum;
+    private Integer noUseMoneySum = 0;
 
     @Basic
     @Column(name = "tj_sum_publish")
-    private Integer tjSumPublish;
+    private Integer tjSumPublish = 0;
 
     @Basic
     @Column(name = "jz_sum_publish")
-    private Integer jzSumPublish;
+    private Integer jzSumPublish = 0;
 
     @Basic
     @Column(name = "lz_sum_publish")
-    private Integer lzSumPublish;
+    private Integer lzSumPublish = 0;
 
     @Basic
     @Column(name = "qd_sum_publish")
-    private Integer qdSumPublish;
+    private Integer qdSumPublish = 0;
 
     @Basic
     @Column(name = "miao_sum_publish")
-    private Integer miaoSumPublish;
+    private Integer miaoSumPublish = 0;
 
     @Basic
     @Column(name = "tj_sum_success")
-    private Integer tjSumSuccess;
+    private Integer tjSumSuccess = 0;
 
     @Basic
     @Column(name = "jz_sum_success")
-    private Integer jzSumSuccess;
+    private Integer jzSumSuccess = 0;
 
     @Basic
     @Column(name = "lz_sum_success")
-    private Integer lzSumSuccess;
+    private Integer lzSumSuccess = 0;
 
     @Basic
     @Column(name = "qd_sum_success")
-    private Integer qdSumSuccess;
+    private Integer qdSumSuccess = 0;
 
     @Basic
     @Column(name = "miao_sum_success")
-    private Integer miaoSumSuccess;
+    private Integer miaoSumSuccess = 0;
 
     @Basic
     @Column(name = "tj_sum_repay")
-    private Integer tjSumRepay;
+    private Integer tjSumRepay = 0;
 
     @Basic
     @Column(name = "tj_sum_repay_principal")
-    private Integer tjSumRepayPrincipal;
+    private Integer tjSumRepayPrincipal = 0;
 
     @Basic
     @Column(name = "jz_sum_repay")
-    private Integer jzSumRepay;
+    private Integer jzSumRepay = 0;
 
     @Basic
     @Column(name = "qd_sum_repay")
-    private Integer qdSumRepay;
+    private Integer qdSumRepay = 0;
 
     @Basic
     @Column(name = "qd_sum_repay_principal")
-    private Integer qdSumRepayPrincipal;
+    private Integer qdSumRepayPrincipal = 0;
 
     @Basic
     @Column(name = "jz_sum_repay_principal")
-    private Integer jzSumRepayPrincipal;
+    private Integer jzSumRepayPrincipal = 0;
 
     @Basic
     @Column(name = "tj_sum_repayment")
-    private Long tjSumRepayment;
+    private Long tjSumRepayment = 0l;
 
     @Basic
     @Column(name = "tj_sum_repayment_principal")
-    private Long tjSumRepaymentPrincipal;
+    private Long tjSumRepaymentPrincipal = 0l;
 
     @Basic
     @Column(name = "jz_sum_repayment")
-    private Long jzSumRepayment;
+    private Long jzSumRepayment = 0l;
 
     @Basic
     @Column(name = "qd_sum_repayment")
-    private Long qdSumRepayment;
+    private Long qdSumRepayment = 0l;
 
     @Basic
     @Column(name = "qd_sum_repayment_principal")
-    private Long qdSumRepaymentPrincipal;
+    private Long qdSumRepaymentPrincipal = 0l;
 
     @Basic
     @Column(name = "jz_sum_repayment_principal")
-    private Long jzSumRepaymentPrincipal;
+    private Long jzSumRepaymentPrincipal = 0l;
 
     @Basic
     @Column(name = "date")
