@@ -205,7 +205,7 @@ public class BorrowServiceImpl implements BorrowService {
             Integer status = m.getStatus();
             Date nowDate = new Date(System.currentTimeMillis());
             Date releaseAt = m.getReleaseAt();  //发布时间
-            double spend = MathHelper.myRound(m.getMoneyYes().doubleValue() / m.getMoney() * 100, 2);
+            double spend = NumberHelper.floorDouble((m.getMoneyYes().doubleValue() / m.getMoney() * 100),2);
 
             if (status == BorrowContants.BIDDING) {//招标中
                 Integer validDay = m.getValidDay();
