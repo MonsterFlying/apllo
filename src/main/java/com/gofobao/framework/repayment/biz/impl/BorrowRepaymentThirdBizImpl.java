@@ -94,8 +94,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     @Autowired
     private BorrowService borrowService;
     @Autowired
-    private BorrowBiz borrowBiz;
-    @Autowired
     private JixinHelper jixinHelper;
     @Autowired
     private BorrowCollectionService borrowCollectionService;

@@ -363,7 +363,7 @@ public class BorrowBizImpl implements BorrowBiz {
             Integer status = borrow.getStatus();
             Date nowDate = new Date(System.currentTimeMillis());
             Date releaseAt = borrow.getReleaseAt();  //发布时间
-            double spend = MathHelper.myRound(borrow.getMoneyYes().doubleValue() / borrow.getMoney() * 100, 2);
+            double spend = NumberHelper.floorDouble(borrow.getMoneyYes().doubleValue() / borrow.getMoney().doubleValue() * 100.0,2);
 
             if (status == BorrowContants.BIDDING) {//招标中
                 //待发布
