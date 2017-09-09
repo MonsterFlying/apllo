@@ -17,8 +17,6 @@ import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.AssetLogService;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
-import com.gofobao.framework.asset.vo.response.pc.RechargeLogs;
-import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
@@ -49,11 +47,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 
 @Component
@@ -185,6 +180,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
                     if (recharge.getMoney() == (new Double(offRecharge.getTxAmount()) * 100)) {
                         iterator.remove();
                         iterator1.remove();
+                        break;
                     }
                 }
             }
