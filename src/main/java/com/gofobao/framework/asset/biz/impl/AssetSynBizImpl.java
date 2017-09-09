@@ -172,28 +172,33 @@ public class AssetSynBizImpl implements AssetSynBiz {
                 .eq("rechargeChannel", 1) // 线下充值
                 .eq("state", 1)  // 充值成功
                 .build();
+
         List<RechargeDetailLog> rechargeDetailLogList = rechargeDetailLogService.findAll(rechargeDetailLogSpecification);
 
-        Map<Long, RechargeDetailLog> rechargeMap = new HashMap<>() ;
-        if(!CollectionUtils.isEmpty(rechargeDetailLogList)){
-            rechargeMap = rechargeDetailLogList
-                    .stream()
-                    .collect(Collectors.toMap(RechargeDetailLog::getMoney, Function.identity()));
+        if (!CollectionUtils.isEmpty(rechargeDetailLogList)) {
+            Iterator<RechargeDetailLog> iterator = rechargeDetailLogList.iterator();
+            while (iterator.hasNext()) {
+                RechargeDetailLog recharge = iterator.next();
+                Iterator<AccountDetailsQueryItem> iterator1 = accountDetailsQueryItemList.iterator();
+                while (iterator1.hasNext()) {
+                    AccountDetailsQueryItem offRecharge = iterator1.next();
+                    if (recharge.getMoney() == (new Double(offRecharge.getTxAmount()) * 100)) {
+                        iterator.remove();
+                        iterator1.remove();
+                    }
+                }
+            }
         }
 
-        Gson gson = new Gson();
+        if (CollectionUtils.isEmpty(accountDetailsQueryItemList)) {
+            return true;
+        }
+
         String seqNo;
         for (AccountDetailsQueryItem accountDetailsQueryItem : accountDetailsQueryItemList) {
             seqNo = String.format("%s%s%s", accountDetailsQueryItem.getInpDate(), accountDetailsQueryItem.getInpTime(), accountDetailsQueryItem.getTraceNo());
             Long money = new Double(Double.parseDouble(accountDetailsQueryItem.getTxAmount()) * 100).longValue();
-            RechargeDetailLog rechargeDetailLog = rechargeMap.get(money);
-            if(!ObjectUtils.isEmpty(rechargeDetailLog)){
-                log.info(String.format("当前用户线下充值已同步: %s", gson.toJson(rechargeDetailLog)));
-                continue;
-            }else{
-                rechargeDetailLog = new RechargeDetailLog() ;
-            }
-
+            RechargeDetailLog rechargeDetailLog = new RechargeDetailLog() ;
             log.info("进入同步环节");
             rechargeDetailLog = new RechargeDetailLog();
             rechargeDetailLog.setUserId(userId);
