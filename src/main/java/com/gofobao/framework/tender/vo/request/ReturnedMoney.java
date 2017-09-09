@@ -10,7 +10,6 @@ import lombok.Data;
 @Data
 @ApiModel("回款列表")
 public class ReturnedMoney {
-
     @ApiModelProperty("逾期天数")
     private Integer lateDays;
 

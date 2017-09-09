@@ -424,10 +424,12 @@ public class InvestServiceImpl implements InvestService {
             Date nowDate=DateHelper.endOfDate(new Date());
             Date collectionAt=DateHelper.endOfDate(p.getCollectionAt());
             //已还款或者 未到回款日
-            returnedMoney.setLateDays(p.getStatus() == BorrowCollectionContants.STATUS_YES||collectionAt.getTime()>nowDate.getTime()
+            returnedMoney.setLateDays(p.getStatus() == BorrowCollectionContants.STATUS_YES|| collectionAt.getTime() > nowDate.getTime()
                     ? p.getLateDays()
-                    : DateHelper.diffInDays(nowDate,collectionAt,false));
-            returnedMoney.setCollectionAt(p.getStatus() == BorrowCollectionContants.STATUS_YES ? DateHelper.dateToString(p.getCollectionAtYes(), DateHelper.DATE_FORMAT_YMD) : DateHelper.dateToString(p.getCollectionAt(), DateHelper.DATE_FORMAT_YMD));
+                    : DateHelper.diffInDays(DateHelper.beginOfDate(nowDate), DateHelper.beginOfDate(collectionAt),false));
+            returnedMoney.setCollectionAt(p.getStatus() == BorrowCollectionContants.STATUS_YES ?
+                    DateHelper.dateToString(p.getCollectionAtYes(), DateHelper.DATE_FORMAT_YMD) :
+                    DateHelper.dateToString(p.getCollectionAt(), DateHelper.DATE_FORMAT_YMD));
             returnedMoney.setStatus(p.getStatus());
             returnedMonies.add(returnedMoney);
         });
