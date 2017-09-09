@@ -734,7 +734,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
         passwordResetRequest.setChannel(channel);
         passwordResetRequest.setName(userThirdAccount.getName());
         passwordResetRequest.setAccountId(userThirdAccount.getAccountId());
-        passwordResetRequest.setIdType(IdTypeContant.ID_CARD);
+        passwordResetRequest.setIdType(IdTypeContant.getIdTypeContant(userThirdAccount));
         passwordResetRequest.setIdNo(userThirdAccount.getIdNo());
         passwordResetRequest.setIdNo(userThirdAccount.getIdNo());
         passwordResetRequest.setAcqRes(String.valueOf(userId));
@@ -1015,7 +1015,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
         passwordSetRequest.setChannel(channel);
         passwordSetRequest.setName(userThirdAccount.getName());
         passwordSetRequest.setAccountId(userThirdAccount.getAccountId());
-        passwordSetRequest.setIdType(IdTypeContant.ID_CARD);
+        passwordSetRequest.setIdType(IdTypeContant.getIdTypeContant(userThirdAccount));
         passwordSetRequest.setIdNo(userThirdAccount.getIdNo());
         passwordSetRequest.setAcqRes(String.valueOf(userId));
         passwordSetRequest.setRetUrl(String.format("%s%s/%s", javaDomain, "/pub/password/show", userId));
@@ -1156,7 +1156,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
         CardUnbindRequest cardUnbindRequest = new CardUnbindRequest();
         cardUnbindRequest.setAccountId(userThirdAccount.getAccountId());
         cardUnbindRequest.setCardNo(userThirdAccount.getCardNo());
-        cardUnbindRequest.setIdType(IdTypeContant.ID_CARD);
+        cardUnbindRequest.setIdType(IdTypeContant.getIdTypeContant(userThirdAccount));
         cardUnbindRequest.setIdNo(userThirdAccount.getIdNo());
         cardUnbindRequest.setMobile(userThirdAccount.getMobile());
         cardUnbindRequest.setName(userThirdAccount.getName());
@@ -1301,7 +1301,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
         CardBindRequest cardBindRequest = new CardBindRequest();
         cardBindRequest.setAccountId(userThirdAccount.getAccountId());
         cardBindRequest.setCardNo(bankNo);
-        cardBindRequest.setIdType(IdTypeContant.ID_CARD);
+        cardBindRequest.setIdType(IdTypeContant.getIdTypeContant(userThirdAccount));
         cardBindRequest.setIdNo(userThirdAccount.getIdNo());
         cardBindRequest.setMobile(userThirdAccount.getMobile());
         cardBindRequest.setName(userThirdAccount.getName());
@@ -1534,7 +1534,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
             passwordSetRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
             passwordSetRequest.setName(userThirdAccount.getName());
             passwordSetRequest.setAccountId(userThirdAccount.getAccountId());
-            passwordSetRequest.setIdType(IdTypeContant.ID_CARD);
+            passwordSetRequest.setIdType(IdTypeContant.getIdTypeContant(userThirdAccount));
             passwordSetRequest.setIdNo(userThirdAccount.getIdNo());
             passwordSetRequest.setAcqRes(String.valueOf(userId));
             //passwordSetRequest.setRetUrl(String.format("%s%s/%s", javaDomain, "/pub/password/show", userId));
@@ -1547,7 +1547,7 @@ public class WebUserThirdBizImpl implements WebUserThirdBiz {
             passwordResetRequest.setChannel(ChannelContant.getchannel(httpServletRequest));
             passwordResetRequest.setName(userThirdAccount.getName());
             passwordResetRequest.setAccountId(userThirdAccount.getAccountId());
-            passwordResetRequest.setIdType(IdTypeContant.ID_CARD);
+            passwordResetRequest.setIdType(IdTypeContant.getIdTypeContant(userThirdAccount));
             passwordResetRequest.setIdNo(userThirdAccount.getIdNo());
             passwordResetRequest.setAcqRes(String.valueOf(userId));
             passwordResetRequest.setRetUrl(String.format("%s%s/%s", javaDomain, "/pub/password/show", userId));

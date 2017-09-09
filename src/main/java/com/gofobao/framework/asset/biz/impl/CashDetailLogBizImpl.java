@@ -324,7 +324,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         withDrawRequest.setSeqNo(RandomHelper.generateNumberCode(6));
         withDrawRequest.setTxTime(DateHelper.getTime());
         withDrawRequest.setTxDate(DateHelper.getDate());
-        withDrawRequest.setIdType(IdTypeContant.ID_CARD);
+        withDrawRequest.setIdType(IdTypeContant.getIdTypeContant(userThirdAccount));
         withDrawRequest.setIdNo(userThirdAccount.getIdNo());
         withDrawRequest.setName(userThirdAccount.getName());
         withDrawRequest.setMobile(userThirdAccount.getMobile());
