@@ -229,8 +229,6 @@ public class RedPackageBizImpl implements RedPackageBiz {
             Notices notices = new Notices();
             notices.setFromUserId(1L);
             notices.setUserId(marketingRedpackRecord.getUserId());
-            notices.setRead(true);
-            notices.setRead(false);
             notices.setRead(false);
             notices.setName("打开红包");
             notices.setContent("你在" + DateHelper.dateToString(new Date()) + "开启红包(" + marketingRedpackRecord.getMarkeingTitel() + ")获得奖励" + StringHelper.formatDouble(marketingRedpackRecord.getMoney() / 100d, true) + "元");

@@ -40,7 +40,8 @@ public class NoticesMessageListener {
             String tag = body.get(MqConfig.MSG_TAG).toString();
             Map<String, String> msg = (Map<String, String>)body.get(MqConfig.MSG_BODY) ;
             boolean result = false ;
-            if(msg.equals(NOTICE_PUBLISH.getValue())){
+            if(tag.equals(NOTICE_PUBLISH.getValue())){
+                log.info("进入站内信");
                 result = noticeMessageProvider.addNoticeMessage(tag, msg);
             }
 
@@ -50,8 +51,6 @@ public class NoticesMessageListener {
         }catch (Throwable e){
             log.error("NoticesMessageListener process do exception", e);
         }
-
-
     }
 
 }

@@ -22,8 +22,7 @@ public class NoticesMessageProvider {
     public static final Gson GSON = new Gson();
 
     /**
-     * 添加站内信
-     *
+     *  添加站内信
      * @param tag
      * @param body
      * @return
