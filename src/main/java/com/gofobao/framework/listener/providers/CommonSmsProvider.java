@@ -285,7 +285,7 @@ public class CommonSmsProvider {
         smsEntity.setContent(message);
         smsEntity.setPhone(phone);
         smsEntity.setCreatedAt(nowDate);
-        smsEntity.setStatus(rs ? 0 : 1);
+        smsEntity.setStatus(rs ? 1 : 0);
         smsEntity.setUsername(phone);
         smsEntity.setExt(" ");
         smsEntity.setId(null);
