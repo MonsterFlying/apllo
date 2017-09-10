@@ -1,5 +1,6 @@
 package com.gofobao.framework.tender.vo.request;
 
+import com.gofobao.framework.common.qiniu.util.StringUtils;
 import com.gofobao.framework.core.vo.VoBaseReq;
 import com.gofobao.framework.helper.MathHelper;
 import io.swagger.annotations.ApiModel;
@@ -41,7 +42,7 @@ public class VoCreateTenderReq extends VoBaseReq {
     private Boolean isAutoTender = false;
 
     @ApiModelProperty(hidden = true)
-    private String requestSource;
+    private String requestSource = "0";
 
 
     public Double getTenderMoney() {
@@ -52,5 +53,26 @@ public class VoCreateTenderReq extends VoBaseReq {
         this.tenderMoney = MathHelper.myRound(tenderMoney * 100.0, 0);
     }
 
+    public String getRequestSource() {
+        if(StringUtils.isNullOrEmpty(requestSource)){
+            return "0" ;
+        }else {
+            return  requestSource ;
+        }
+    }
 
+    public void setRequestSource(String requestSource) {
+        if(StringUtils.isNullOrEmpty(requestSource)){
+            this.requestSource = "0";
+        }else {
+            if(StringUtils.isNullOrEmpty(requestSource)){
+                try {
+                    Long.parseLong(requestSource);
+                }catch (Exception e){
+                    requestSource = "0" ;
+                }
+                this.requestSource = requestSource;
+            }
+        }
+    }
 }

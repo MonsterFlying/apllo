@@ -643,12 +643,12 @@ public class BorrowServiceImpl implements BorrowService {
         return borrowRepository.countByUserIdAndStatusIn(userId, statusList);
     }
 
-    public boolean insert(Borrow borrow) {
+    public Borrow insert(Borrow borrow) {
         if (ObjectUtils.isEmpty(borrow)) {
-            return false;
+            return null ;
         }
         borrow.setId(null);
-        return !ObjectUtils.isEmpty(borrowRepository.save(borrow));
+        return borrowRepository.save(borrow);
     }
 
     public boolean updateById(Borrow borrow) {

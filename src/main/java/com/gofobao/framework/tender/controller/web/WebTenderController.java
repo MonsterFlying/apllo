@@ -1,5 +1,6 @@
 package com.gofobao.framework.tender.controller.web;
 
+import com.gofobao.framework.common.qiniu.util.StringUtils;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.TenderBiz;
@@ -48,7 +49,9 @@ public class WebTenderController {
     public ResponseEntity<VoBaseResp> pcTender(@ModelAttribute @Valid VoCreateTenderReq voCreateTenderReq,
                                                HttpServletRequest request,
                                                @RequestAttribute(SecurityContants.USERID_KEY) Long userId) throws Exception {
-        voCreateTenderReq.setRequestSource( request.getHeader("requestSource"));
+
+        String requestSource = request.getHeader("requestSource");
+        voCreateTenderReq.setRequestSource(requestSource);
         voCreateTenderReq.setUserId(userId);
         return tenderBiz.tender(voCreateTenderReq);
     }
