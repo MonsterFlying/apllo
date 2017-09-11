@@ -27,4 +27,6 @@ public interface MarketingRedpackRecordRepository extends JpaRepository<Marketin
     MarketingRedpackRecord findTopByIdAndUserIdAndDel(Long redPackageId, Long userId, int del);
 
     MarketingRedpackRecord findById(long id);
+
+    List<MarketingRedpackRecord> findByUserIdAndStateAndDel(Long userId, Integer status, int i, Pageable pageable);
 }

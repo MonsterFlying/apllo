@@ -118,6 +118,15 @@ public class RedPackageBizImpl implements RedPackageBiz {
         RedPackageRes redPackageRes = null;
         // 遍历
         for (MarketingRedpackRecord item : marketingRedpackRecords) {
+            if(item.getMarketingId() == 1){
+                item.setMarketingId(2L);
+            }else if(item.getMarketingId() == 2){
+                item.setMarketingId(3L);
+            }else if(item.getMarketingId() == 3){
+                item.setMarketingId(1L);
+            }else{
+                item.setMarketingId(4L);
+            }
             redPackageRes = new RedPackageRes();
             redPackageRes.setExpiryDate(DateHelper.dateToString(item.getPublishTime(), DateHelper.DATE_FORMAT_YMDHM)
                     + "~" + DateHelper.dateToString(item.getCancelTime(), DateHelper.DATE_FORMAT_YMDHM));  // 有效时间
