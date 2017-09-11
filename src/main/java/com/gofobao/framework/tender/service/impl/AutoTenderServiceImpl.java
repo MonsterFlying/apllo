@@ -56,6 +56,10 @@ public class AutoTenderServiceImpl implements AutoTenderService {
         return !ObjectUtils.isEmpty(autoTenderRepository.save(autoTender));
     }
 
+    public AutoTender save(AutoTender autoTender) {
+        return autoTenderRepository.save(autoTender);
+    }
+
     public boolean updateById(AutoTender autoTender) {
         if (ObjectUtils.isEmpty(autoTender) || ObjectUtils.isEmpty(autoTender.getId())) {
             return false;
