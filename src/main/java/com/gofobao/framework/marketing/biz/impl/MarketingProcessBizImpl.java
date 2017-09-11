@@ -400,6 +400,22 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                     }
                     break;
                 case MarketingTypeContants.TENDER:
+                    if (!ObjectUtils.isEmpty(condition.getRegisterMinTime())) {
+                        String userId = marketingData.getUserId();
+                        Users users = userService.findById(Long.parseLong(userId));
+                        if (ObjectUtils.isEmpty(users)) {
+                            continue;
+                        }
+
+                        Date createdAt = users.getCreatedAt();
+                        if (condition.getRegisterMinTime().getTime() > createdAt.getTime()) {
+                            log.info("不属于活动时间新用户");
+                            iterator.remove();
+                            continue;
+                        }
+                    }
+
+
                     log.info("验证投标条件开始");
                     Long tenderMoneyMin = condition.getTenderMoneyMin();
                     if (ObjectUtils.isEmpty(tenderMoneyMin) || tenderMoneyMin <= 0) {
@@ -517,7 +533,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         Iterator<Marketing> iterator = marketings.iterator();
         while (iterator.hasNext()) {
             Marketing marketing = iterator.next();
-            log.info("活动信息" + marketing.getTitel()) ;
+            log.info("活动信息" + marketing.getTitel());
             MarketingDimentsion marketingDimentsion = dimentsionMap.get(marketing.getId());
             Preconditions.checkNotNull(marketingDimentsion, "MarketingProcessBizImpl.filterDataByDimension marketingDimentsion is null");
             //============================
@@ -538,7 +554,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             log.info("验证用户是否为新用户");
             boolean verifyUserNewState = verifyMemberType(marketingDimentsion, user, marketingData);  // 验证是否为新用户
             if (!verifyUserNewState) {
-                log.info("促销活动: 新用户判断用户问题" +  marketingDataStr );
+                log.info("促销活动: 新用户判断用户问题" + marketingDataStr);
                 iterator.remove();
                 continue;
             }
@@ -694,7 +710,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         String[] borrowTypeArr = borrowType.split(",");
         for (String item : borrowTypeArr) {
             int setType = Integer.parseInt(item);
-            if ( setType  == borrow.getType().intValue()) {
+            if (setType == borrow.getType().intValue()) {
                 return true;
             }
         }
@@ -775,10 +791,9 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
      * @return
      */
     private boolean verifyMemberType(MarketingDimentsion marketingDimentsion, Users user, MarketingData marketingData) {
-        if (marketingDimentsion.getMemberType() == 0) {
+        if (marketingDimentsion.getMemberType().intValue() == 0) {
             return true;
         }
-
         String marketingType = marketingData.getMarketingType();
         boolean isNovice = true;
         if (MarketingTypeContants.TENDER.equals(marketingType)) {  // 投标验证新用户
@@ -795,7 +810,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                         "   AND bt.`user_id`= :userId" +
                         "   AND bt.`borrow_id`  <>  :borrowId" +
                         "   AND bt.`created_at` < :createDate " +
-                        "LIMIT 0, 1";
+                        "LIMIT 1 ";
 
                 Query query = entityManager.createNativeQuery(sqlStr, Tender.class);
                 query.setParameter("userId", tender.getUserId());
@@ -803,16 +818,17 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                 query.setParameter("createDate", DateHelper.dateToString(tender.getCreatedAt()));
                 List<Tender> tenders = query.getResultList();
                 if (!CollectionUtils.isEmpty(tenders)) {
-                    isNovice = false;
+                    isNovice = false;  // 不是新手
                 }
             } catch (NumberFormatException e) {
                 log.error("查询新手用户异常", e);
+                isNovice = false ;
             }
         } else {
             UserCache userCache = userCacheService.findById(user.getId());
             isNovice = userCache.isNovice();
         }
-
+        
         if (marketingDimentsion.getMemberType().intValue() == 2) {  //老用户
             return !isNovice;
         } else {  //新用户
