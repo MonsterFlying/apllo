@@ -9,6 +9,7 @@ import com.gofobao.framework.member.vo.request.VoSettingTranPassWord;
 import com.gofobao.framework.member.vo.request.VoUserInfoUpdateReq;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.member.vo.response.VoOpenAccountInfo;
+import com.gofobao.framework.member.vo.response.pc.BalanceOfPaymentRes;
 import com.gofobao.framework.member.vo.response.pc.UserInfoExt;
 import com.gofobao.framework.member.vo.response.pc.VipInfoRes;
 import com.gofobao.framework.member.vo.response.pc.VoViewServiceUserListWarpRes;
@@ -123,6 +124,13 @@ public interface UserBiz {
 
 
      Map<String, Object> uploadAvatar(byte[] fileBty, String filePath,Users users) throws Exception;
+
+    /**
+     * 用户今日收支
+     * @param userId
+     * @return
+     */
+     ResponseEntity<BalanceOfPaymentRes> userBalanceOfPayment(Long userId);
 
 }
 

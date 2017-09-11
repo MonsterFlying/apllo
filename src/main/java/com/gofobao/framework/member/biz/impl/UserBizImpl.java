@@ -1,8 +1,12 @@
 package com.gofobao.framework.member.biz.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.asset.biz.AssetSynBiz;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.collection.biz.PaymentBiz;
+import com.gofobao.framework.collection.entity.BorrowCollection;
+import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.qiniu.common.QiniuException;
 import com.gofobao.framework.common.qiniu.common.Zone;
 import com.gofobao.framework.common.qiniu.http.Response;
@@ -31,12 +35,12 @@ import com.gofobao.framework.member.vo.request.VoSettingTranPassWord;
 import com.gofobao.framework.member.vo.request.VoUserInfoUpdateReq;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.member.vo.response.VoOpenAccountInfo;
-import com.gofobao.framework.member.vo.response.pc.ServiceUser;
-import com.gofobao.framework.member.vo.response.pc.UserInfoExt;
-import com.gofobao.framework.member.vo.response.pc.VipInfoRes;
-import com.gofobao.framework.member.vo.response.pc.VoViewServiceUserListWarpRes;
+import com.gofobao.framework.member.vo.response.pc.*;
 import com.gofobao.framework.message.entity.SmsNoticeSettingsEntity;
 import com.gofobao.framework.message.service.SmsNoticeSettingsService;
+import com.gofobao.framework.repayment.contants.RepaymentContants;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.gofobao.framework.security.vo.VoLoginReq;
 import com.google.common.collect.ImmutableMap;
@@ -45,9 +49,12 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Range;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -183,11 +190,11 @@ public class UserBizImpl implements UserBiz {
 
         // 处理注册来源
         String source = voRegisterReq.getSource();
-        Integer channel=0;
-        if(!source.equals("3")){
-            channel= RegisterSourceEnum.getIndex(source.toLowerCase());
-        }else{
-            channel=3;
+        Integer channel = 0;
+        if (!source.equals("3")) {
+            channel = RegisterSourceEnum.getIndex(source.toLowerCase());
+        } else {
+            channel = 3;
         }
         Date now = new Date();
         // 插入数据
@@ -675,8 +682,8 @@ public class UserBizImpl implements UserBiz {
         Map<String, Object> resultMap = Maps.newHashMap();
         try {
             //调用put方法上传
-            String imageUrl=imageName+"!avatar";
-            Response res = uploadManager.put(file,imageUrl , token);
+            String imageUrl = imageName + "!avatar";
+            Response res = uploadManager.put(file, imageUrl, token);
             //返回上传成功信息
             resultMap.put("result", Boolean.TRUE);
             resultMap.put("code", VoBaseResp.OK);
@@ -695,5 +702,55 @@ public class UserBizImpl implements UserBiz {
             resultMap.put("msg", r.bodyString());
         }
         return resultMap;
+    }
+
+
+    @Autowired
+    private BorrowRepaymentService borrowRepaymentService;
+
+    @Autowired
+    private BorrowCollectionService borrowCollectionService;
+
+    /**
+     * 用户今日收支
+     *
+     * @param userId
+     * @return
+     */
+    @Override
+    public ResponseEntity<BalanceOfPaymentRes> userBalanceOfPayment(Long userId) {
+        BalanceOfPaymentRes balanceOfPaymentRes = VoBaseResp.ok("查询成功", BalanceOfPaymentRes.class);
+        Date nowDate = new Date();
+        Specification repaymentSpecification = Specifications.<BorrowRepayment>and()
+                .eq("userId", userId)
+                .between("repayAt", new Range<>(DateHelper.beginOfDate(nowDate), DateHelper.endOfDate(nowDate)))
+                .build();
+        List<BorrowRepayment> borrowRepayments = borrowRepaymentService.findList(repaymentSpecification);
+        if (CollectionUtils.isEmpty(borrowRepayments)) {
+
+            //以还
+            Long repayment = borrowRepayments.stream().mapToLong(p -> p.getRepayMoneyYes()).sum();
+            balanceOfPaymentRes.setPayment(StringHelper.formatMon(repayment / 100D));
+            //应还
+            Long waitRepayment = borrowRepayments.stream().mapToLong(p -> p.getRepayMoney()).sum();
+            balanceOfPaymentRes.setWaitPayment(StringHelper.formatMon(waitRepayment / 100D));
+        }
+
+        //已收 待收
+        Specification collectionSpecification = Specifications.<BorrowRepayment>and()
+                .eq("userId", userId)
+                .between("collectionAt", new Range<>(DateHelper.beginOfDate(nowDate), DateHelper.endOfDate(nowDate)))
+                .build();
+
+        List<BorrowCollection> borrowCollections = borrowCollectionService.findList(collectionSpecification);
+        if (!CollectionUtils.isEmpty(borrowCollections)) {
+            //已收
+            Long collection = borrowCollections.stream().mapToLong(p -> p.getCollectionMoneyYes()).sum();
+            //待收
+            Long waitCollection = borrowCollections.stream().mapToLong(p -> p.getCollectionMoney()).sum();
+            balanceOfPaymentRes.setCollection(StringHelper.formatMon(collection / 100D));
+            balanceOfPaymentRes.setWaitCollection(StringHelper.formatMon(waitCollection / 100D));
+        }
+        return ResponseEntity.ok(balanceOfPaymentRes);
     }
 }
