@@ -20,6 +20,7 @@ import com.gofobao.framework.member.vo.request.*;
 import com.gofobao.framework.member.vo.response.UserAccountThirdTxRes;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.member.vo.response.VoSignInfoResp;
+import com.gofobao.framework.member.vo.response.pc.BalanceOfPaymentRes;
 import com.gofobao.framework.member.vo.response.pc.UserInfoExt;
 import com.gofobao.framework.member.vo.response.pc.VipInfoRes;
 import com.gofobao.framework.member.vo.response.pc.VoViewServiceUserListWarpRes;
@@ -236,6 +237,9 @@ public class WebUserController {
         return assetBiz.newAssetLogResList(assetLogReq);
     }
 
-
-
+    @GetMapping("/user/balanceOfPayment")
+    @ApiOperation("用户进入支出")
+    public ResponseEntity<BalanceOfPaymentRes> userBalanceOfPayment(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        return userBiz.userBalanceOfPayment(userId);
+    }
 }

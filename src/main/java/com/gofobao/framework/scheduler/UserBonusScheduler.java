@@ -162,12 +162,7 @@ public class UserBonusScheduler {
     public void dayProcess() {
         log.info("每日天提成调度启动");
         try {
-            StringBuffer sql = new StringBuffer("select sum(gfb_asset.collection) - sum(gfb_asset.payment) as sum, `gfb_ticheng_user`.`user_id` as userId" +
-                    " from `gfb_ticheng_user` inner join `gfb_users` on `gfb_ticheng_user`.`user_id` = `gfb_users`.`parent_id` inner join `gfb_asset`" +
-                    " on `gfb_users`.`id` = `gfb_asset`.`user_id` where `gfb_ticheng_user`.`type` = 0 and (`gfb_ticheng_user`.`start_at` is null or " +
-                    " `gfb_ticheng_user`.`start_at` < '" + DateHelper.dateToString(new Date()) + "') and (`gfb_ticheng_user`.`end_at` is null or " +
-                    " `gfb_ticheng_user`.`end_at` > '" + DateHelper.dateToString(new Date()) + "') " +
-                    " group by `gfb_ticheng_user`.`user_id` having `sum` >= " + Math.ceil(365 / 0.005));
+
             int pageIndex = 1;
             int pageSize = 50;
             long money = 0;
@@ -176,11 +171,17 @@ public class UserBonusScheduler {
             UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(redId);
             String groupSeqNo = assetChangeProvider.getGroupSeqNo();
             do {
-                sql.append(" limit " + (pageIndex++ - 1) * pageSize + "," + pageIndex * pageSize);
-                resultList = jdbcTemplate.queryForList(sql.toString());
+                StringBuffer sql = new StringBuffer("select sum(gfb_asset.collection) - sum(gfb_asset.payment) as sum, `gfb_ticheng_user`.`user_id` as userId" +
+                        " from `gfb_ticheng_user` inner join `gfb_users` on `gfb_ticheng_user`.`user_id` = `gfb_users`.`parent_id` inner join `gfb_asset`" +
+                        " on `gfb_users`.`id` = `gfb_asset`.`user_id` where `gfb_ticheng_user`.`type` = 0 and (`gfb_ticheng_user`.`start_at` is null or " +
+                        " `gfb_ticheng_user`.`start_at` < '" + DateHelper.dateToString(new Date()) + "') and (`gfb_ticheng_user`.`end_at` is null or " +
+                        " `gfb_ticheng_user`.`end_at` > '" + DateHelper.dateToString(new Date()) + "') " +
+                        " group by `gfb_ticheng_user`.`user_id` having `sum` >= " + Math.ceil(365 / 0.005));
+                String limitSql = " limit " + pageSize + " offset " + (pageIndex - 1) * pageSize;
+                resultList = jdbcTemplate.queryForList(sql.append(limitSql).toString());
 
                 for (Map<String, Object> map : resultList) {
-                    money = (int) MoneyHelper.round(NumberHelper.toInt(map.get("sum")) / 100 * 0.005 / 365, 0);
+                    money = (int) MoneyHelper.round(NumberHelper.toInt(map.get("sum")) * 0.005 / 365, 0);
                     Long userId = NumberHelper.toLong(map.get("userId"));
                     UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(redId);
 
@@ -225,6 +226,8 @@ public class UserBonusScheduler {
                     redpackR.setSourceId(0L);
                     assetChangeProvider.commonAssetChange(redpackR);
                 }
+
+                pageIndex++;
             } while (resultList.size() >= 50);
         } catch (Throwable e) {
             log.error("UserBonusScheduler dayProcess error:", e);
@@ -237,43 +240,34 @@ public class UserBonusScheduler {
     @Scheduled(cron = "0 35 23 1 * ? ")
     @Transactional(rollbackFor = Exception.class)
     public void monthProcess() {
-        doTicheng();
-    }
-
-
-
-    /**
-     * do 提成
-     */
-    private void doTicheng() {
         log.info("每月提成任务调度启动");
         try {
-            StringBuffer sql = new StringBuffer("select sum(gfb_asset.collection) - sum(gfb_asset.payment) as sum, " +
-                    "`gfb_ticheng_user`.`user_id` as userId from `gfb_ticheng_user` inner join `gfb_users` on `gfb_ticheng_user`.`user_id`" +
-                    " = `gfb_users`.`parent_id` inner join `gfb_asset` on `gfb_users`.`id` = `gfb_asset`.`user_id` where `gfb_ticheng_user`.`type` = 1 " +
-                    "and (`gfb_ticheng_user`.`start_at` is null or `gfb_ticheng_user`.`start_at` < '" + DateHelper.dateToString(new Date()) + "') and " +
-                    "(`gfb_ticheng_user`.`end_at` is null or `gfb_ticheng_user`.`end_at` > '" + DateHelper.dateToString(new Date()) + "') and " +
-                    "`gfb_users`.`created_at` < '2016-08-14 00:00:00' group by `gfb_ticheng_user`.`user_id` having `sum` >= " + Math.ceil(1 / .0002));
             int pageIndex = 1;
             int pageSize = 50;
             long money = 0;
             int sum = 0;
             List<Map<String, Object>> resultList = null;
             do {
-                sql.append(" limit " + (pageIndex++ - 1) * pageSize + "," + pageIndex * pageSize);
-                resultList = jdbcTemplate.queryForList(sql.toString());
+                StringBuffer sql = new StringBuffer("select sum(gfb_asset.collection) - sum(gfb_asset.payment) as sum, " +
+                        "`gfb_ticheng_user`.`user_id` as userId from `gfb_ticheng_user` inner join `gfb_users` on `gfb_ticheng_user`.`user_id`" +
+                        " = `gfb_users`.`parent_id` inner join `gfb_asset` on `gfb_users`.`id` = `gfb_asset`.`user_id` where `gfb_ticheng_user`.`type` = 1 " +
+                        "and (`gfb_ticheng_user`.`start_at` is null or `gfb_ticheng_user`.`start_at` < '" + DateHelper.dateToString(new Date()) + "') and " +
+                        "(`gfb_ticheng_user`.`end_at` is null or `gfb_ticheng_user`.`end_at` > '" + DateHelper.dateToString(new Date()) + "') and " +
+                        "`gfb_users`.`created_at` < '2016-08-14 00:00:00' group by `gfb_ticheng_user`.`user_id` having `sum` >= " + Math.ceil(1 / .0002));
+                String limitSql = " limit " + pageSize + " offset " + (pageIndex - 1) * pageSize;
+                resultList = jdbcTemplate.queryForList(sql.append(limitSql).toString());
                 long redId = assetChangeProvider.getRedpackAccountId();
                 UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(redId);
                 for (Map<String, Object> map : resultList) {
                     sum = NumberHelper.toInt(map.get("sum"));
                     if (sum < Math.pow(10, 9)) {
-                        money = (int) MoneyHelper.round(sum / 100 * 0.0002, 0);
+                        money = (int) MoneyHelper.round(sum * 0.0002, 0);
                     } else if (sum > Math.pow(10, 9) && sum <= 5 * Math.pow(10, 9)) {
-                        money = 200 + (int) MoneyHelper.round((sum - Math.pow(10, 9)) / 100 * .0003, 0);
+                        money = 200 + (int) MoneyHelper.round((sum - Math.pow(10, 9)) * .0003, 0);
                     } else if (sum > 5 * Math.pow(10, 9) && sum <= Math.pow(10, 10)) {
-                        money = 1400 + (int) MoneyHelper.round((sum - 5 * Math.pow(10, 9)) / 100 * .0004, 0);
+                        money = 1400 + (int) MoneyHelper.round((sum - 5 * Math.pow(10, 9)) * .0004, 0);
                     } else {
-                        money = 3400 + (int) MoneyHelper.round((sum - Math.pow(10, 10)) / 100 * .0005, 0);
+                        money = 3400 + (int) MoneyHelper.round((sum - Math.pow(10, 10)) * .0005, 0);
                     }
 
 
@@ -320,6 +314,7 @@ public class UserBonusScheduler {
                     redpackR.setSourceId(0L);
                     assetChangeProvider.commonAssetChange(redpackR);
                 }
+                pageIndex++;
             } while (resultList.size() >= 50);
         } catch (Throwable e) {
             log.error("UserBonusScheduler monthProcess error:", e);
