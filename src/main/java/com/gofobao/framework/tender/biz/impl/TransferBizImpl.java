@@ -1512,7 +1512,7 @@ public class TransferBizImpl implements TransferBiz {
             item.setUserName(StringUtils.isEmpty(users.getUsername()) ? UserHelper.hideChar(users.getPhone(), UserHelper.PHONE_NUM) : UserHelper.hideChar(users.getUsername(), UserHelper.USERNAME_NUM));
             item.setAvatar(StringUtils.isEmpty(users.getAvatarPath())?imageDomain+"/images/user/default_avatar.jpg":users.getAvatarPath());
             item.setType(5);
-            double spend = NumberHelper.floorDouble((transfer.getTransferMoneyYes().doubleValue() / transfer.getTransferMoney()),2);
+            double spend = NumberHelper.floorDouble((transfer.getTransferMoneyYes().doubleValue() / transfer.getTransferMoney() * 100),2);
             item.setSpend(spend);
             //1.待发布 2.还款中 3.招标中 4.已完成 5.已过期 6.待复审
             //进度
