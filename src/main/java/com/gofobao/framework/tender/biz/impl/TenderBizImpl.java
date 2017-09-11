@@ -174,6 +174,15 @@ public class TenderBizImpl implements TenderBiz {
             }
         }
 
+        try {
+            // 触发新手标活动派发
+            if (borrow.getIsNovice()) {
+                borrowBiz.touchMarketingByTender(borrowTender);
+            }
+        } catch (Exception e) {
+            log.error("触发派发失败新手红包失败", e);
+        }
+
         return ResponseEntity.ok(VoBaseResp.ok("投资成功"));
     }
 
@@ -317,7 +326,7 @@ public class TenderBizImpl implements TenderBiz {
             return false;
         }
 
-        double availBal = MoneyHelper.round(MoneyHelper.multiply(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()), 100d), 2);// 可用余额  账面余额-可用余额=冻结金额
+        double availBal = MoneyHelper.round(MoneyHelper.multiply(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()), 100d), 0);// 可用余额  账面余额-可用余额=冻结金额
         if (availBal < asset.getUseMoney()) {
             extendMessage.add("资金账户未同步，请先在个人中心进行资金同步操作!");
             return false;

@@ -9,7 +9,9 @@ import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
 import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
 import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.entity.BatchAssetChange;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.asset.service.BatchAssetChangeService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
 import com.gofobao.framework.borrow.contants.BorrowContants;
@@ -107,6 +109,9 @@ import java.util.stream.Collectors;
 public class BorrowBizImpl implements BorrowBiz {
 
     static final Gson GSON = new Gson();
+
+    @Autowired
+    private BatchAssetChangeService batchAssetChangeService;
 
     @Autowired
     private UserCacheService userCacheService;
@@ -847,20 +852,116 @@ public class BorrowBizImpl implements BorrowBiz {
         sendNoticsByTender(borrow, tenderList);
         // 用户投标信息和每日统计
         userTenderStatistic(borrow, tenderList, nowDate);
-        //用戶投資送紅包
-        userTenderRedPackage(tenderList);
+        try{
+            // 老用户投标
+            if(!borrow.getIsNovice()){
+                userTenderRedPackage(tenderList);
+            }
+        }catch (Exception e){
+            log.error("触发老用户投标红包失败", e) ;
+        }
+
         // 借款人资金变动
-        //1.处理借款人资产变动
-        batchAssetChangeHelper.batchAssetChangeAndCollection(borrow.getId(), batchNo, BatchAssetChangeContants.BATCH_LEND_REPAY);
-        //2.新增待还记录
-        addLendRepayPayment(borrow, borrowRepaymentList, groupSeqNo);
+        Specification<BatchAssetChange> bacs = Specifications
+                .<BatchAssetChange>and()
+                .eq("sourceId", borrow.getId())
+                .eq("type", BatchAssetChangeContants.BATCH_LEND_REPAY)
+                .eq("batchNo", batchNo)
+                .in("state", 0, 1)
+                .build();
+        long count = batchAssetChangeService.count(bacs);
+        if (count > 0) {
+            //1.处理借款人资产变动
+            batchAssetChangeHelper.batchAssetChangeAndCollection(borrow.getId(), batchNo, BatchAssetChangeContants.BATCH_LEND_REPAY);
+            //2.新增待还记录
+            addLendRepayPayment(borrow, borrowRepaymentList, groupSeqNo);
+        } else {
+            processBorrowAssetChange(borrow, borrowRepaymentList, groupSeqNo);
+        }
         // 满标操作
         finishBorrow(borrow);
         //借款成功发送通知短信
         smsNoticeByBorrowReview(borrow);
         //发送借款协议
         sendBorrowProtocol(borrow);
+        //更新总统计
+        updateStatisticByBorrowReview(borrow);
         return true;
+    }
+
+    /**
+     * 处理借款人资金变动问题
+     *
+     * @param borrow
+     * @param borrowRepaymentList
+     * @param groupSeqNo
+     * @throws Exception
+     */
+    private void processBorrowAssetChange(Borrow borrow, List<BorrowRepayment> borrowRepaymentList, String groupSeqNo) throws Exception {
+        long takeUserId = ObjectUtils.isEmpty(borrow.getTakeUserId()) ? borrow.getUserId() : borrow.getTakeUserId();
+        // 放款
+        AssetChange borrowAssetChangeEntity = new AssetChange();
+        borrowAssetChangeEntity.setSourceId(borrow.getId());
+        borrowAssetChangeEntity.setGroupSeqNo(groupSeqNo);
+        borrowAssetChangeEntity.setMoney(borrow.getMoney());
+        borrowAssetChangeEntity.setSeqNo(assetChangeProvider.getSeqNo());
+        borrowAssetChangeEntity.setRemark(String.format("标的[%s]融资成功. 放款%s元", borrow.getName(), StringHelper.formatDouble(borrow.getMoney() / 100D, true)));
+        borrowAssetChangeEntity.setType(AssetChangeTypeEnum.borrow);
+        borrowAssetChangeEntity.setUserId(takeUserId);
+        assetChangeProvider.commonAssetChange(borrowAssetChangeEntity);  // 放款
+
+        // 获取待还
+        long feeId = assetChangeProvider.getFeeAccountId();  // 收费账户
+
+        /* 待还金额 */
+        long repaymentMoney = borrowRepaymentList.stream().mapToLong(BorrowRepayment::getRepayMoney).sum();
+        /* 待还利息 */
+        long repaymentInterest = borrowRepaymentList.stream().mapToLong(BorrowRepayment::getInterest).sum();
+
+        // 添加待还
+        AssetChange paymentAssetChangeEntity = new AssetChange();
+        paymentAssetChangeEntity.setSourceId(borrow.getId());
+        paymentAssetChangeEntity.setGroupSeqNo(groupSeqNo);
+        paymentAssetChangeEntity.setMoney(repaymentMoney);
+        paymentAssetChangeEntity.setInterest(repaymentInterest);
+        paymentAssetChangeEntity.setSeqNo(assetChangeProvider.getSeqNo());
+        paymentAssetChangeEntity.setRemark(String.format("添加待还金额%s元", StringHelper.formatDouble(repaymentMoney / 100D, true)));
+        paymentAssetChangeEntity.setType(AssetChangeTypeEnum.paymentAdd);
+        paymentAssetChangeEntity.setUserId(takeUserId);
+        assetChangeProvider.commonAssetChange(paymentAssetChangeEntity);  // 放款
+
+        // 净值账户管理费
+        if (borrow.getType() == 1) {
+
+            Double fee;
+            if (borrow.getRepayFashion() == 1) {
+                fee = MathHelper.myRound(borrow.getMoney() * 0.0012 / 30 * borrow.getTimeLimit(), 0);
+            } else {
+                fee = MathHelper.myRound(borrow.getMoney() * 0.0012 * borrow.getTimeLimit(), 0);
+            }
+            AssetChange outBorrowFeeAssetChangeEntity = new AssetChange();
+            outBorrowFeeAssetChangeEntity.setSourceId(borrow.getId());
+            outBorrowFeeAssetChangeEntity.setGroupSeqNo(groupSeqNo);
+            outBorrowFeeAssetChangeEntity.setMoney(fee.longValue());
+            outBorrowFeeAssetChangeEntity.setSeqNo(assetChangeProvider.getSeqNo());
+            outBorrowFeeAssetChangeEntity.setRemark(String.format("扣除标的[%s]融资管理费%s元", borrow.getName(), StringHelper.formatDouble(fee / 100D, true)));
+            outBorrowFeeAssetChangeEntity.setType(AssetChangeTypeEnum.financingManagementFee);
+            outBorrowFeeAssetChangeEntity.setUserId(takeUserId);
+            outBorrowFeeAssetChangeEntity.setForUserId(feeId);
+            assetChangeProvider.commonAssetChange(outBorrowFeeAssetChangeEntity);  // 扣除融资管理费
+
+            // 费用平台添加收取的转让费
+            AssetChange inBorrowFeeAssetChangeEntity = new AssetChange();
+            inBorrowFeeAssetChangeEntity.setSourceId(borrow.getId());
+            inBorrowFeeAssetChangeEntity.setGroupSeqNo(groupSeqNo);
+            inBorrowFeeAssetChangeEntity.setMoney(fee.longValue());
+            inBorrowFeeAssetChangeEntity.setSeqNo(assetChangeProvider.getSeqNo());
+            inBorrowFeeAssetChangeEntity.setRemark(String.format("收取标的[%s]融资管理费%s元", borrow.getName(), StringHelper.formatDouble(fee / 100D, true)));
+            inBorrowFeeAssetChangeEntity.setType(AssetChangeTypeEnum.platformFinancingManagementFee);
+            inBorrowFeeAssetChangeEntity.setUserId(feeId);
+            inBorrowFeeAssetChangeEntity.setForUserId(takeUserId);
+            assetChangeProvider.commonAssetChange(inBorrowFeeAssetChangeEntity);  // 收取融资管理费
+        }
     }
 
     /**
@@ -1550,25 +1651,25 @@ public class BorrowBizImpl implements BorrowBiz {
         long borrowMoney = borrow.getMoney();
 
         statistic.setBorrowItems(1L);
-        statistic.setBorrowTotal((long) borrowMoney);
-        statistic.setWaitRepayTotal((long) repayMoney);
+        statistic.setBorrowTotal(borrowMoney);
+        statistic.setWaitRepayTotal(repayMoney);
 
         if (borrow.isTransfer()) {
-            statistic.setLzBorrowTotal((long) borrowMoney);
+            statistic.setLzBorrowTotal(borrowMoney);
         } else if (borrow.getType() == 0) {//0：车贷标；1：净值标；2：秒标；4：渠道标；
-            statistic.setTjBorrowTotal((long) borrowMoney);
-            statistic.setTjWaitRepayPrincipalTotal((long) principal);
-            statistic.setTjWaitRepayTotal((long) repayMoney);
+            statistic.setTjBorrowTotal(borrowMoney);
+            statistic.setTjWaitRepayPrincipalTotal(principal);
+            statistic.setTjWaitRepayTotal(repayMoney);
         } else if (borrow.getType() == 1) {
-            statistic.setJzBorrowTotal((long) borrowMoney);
-            statistic.setJzWaitRepayPrincipalTotal((long) principal);
-            statistic.setJzWaitRepayTotal((long) repayMoney);
+            statistic.setJzBorrowTotal(borrowMoney);
+            statistic.setJzWaitRepayPrincipalTotal(principal);
+            statistic.setJzWaitRepayTotal(repayMoney);
         } else if (borrow.getType() == 2) {
-            statistic.setMbBorrowTotal((long) borrowMoney);
+            statistic.setMbBorrowTotal(borrowMoney);
         } else if (borrow.getType() == 4) {
-            statistic.setQdBorrowTotal((long) borrowMoney);
-            statistic.setQdWaitRepayPrincipalTotal((long) principal);
-            statistic.setQdWaitRepayTotal((long) repayMoney);
+            statistic.setQdBorrowTotal(borrowMoney);
+            statistic.setQdWaitRepayPrincipalTotal(principal);
+            statistic.setQdWaitRepayTotal(repayMoney);
         }
         if (!ObjectUtils.isEmpty(statistic)) {
             try {
@@ -1703,7 +1804,7 @@ public class BorrowBizImpl implements BorrowBiz {
         VoCreateTenderReq voCreateTenderReq = new VoCreateTenderReq();
         voCreateTenderReq.setUserId(lend.getUserId());
         voCreateTenderReq.setBorrowId(borrow.getId());
-        voCreateTenderReq.setTenderMoney(MathHelper.myRound(MoneyHelper.divide(borrow.getMoney() , 100d), 2));
+        voCreateTenderReq.setTenderMoney(MathHelper.myRound(MoneyHelper.divide(borrow.getMoney(), 100d), 2));
         voCreateTenderReq.setRequestSource("0");
         ResponseEntity<VoBaseResp> response = tenderBiz.createTender(voCreateTenderReq);
         return response.getStatusCode().equals(HttpStatus.OK);

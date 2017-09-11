@@ -115,8 +115,8 @@ public class AssetSynBizImpl implements AssetSynBiz {
             return false;
         }
 
-        double currBal = MoneyHelper.round(MoneyHelper.multiply(NumberHelper.toDouble(balanceQueryResponse.getCurrBal()), 100d), 2);  // 账户总额
-        if (new Double(currBal * 100).longValue() <= (asset.getNoUseMoney() + asset.getUseMoney())) {
+        double currBal = MoneyHelper.round(MoneyHelper.multiply(NumberHelper.toDouble(balanceQueryResponse.getCurrBal()), 100d), 0);  // 账户总额
+        if (new Double(currBal).longValue() <= (asset.getNoUseMoney() + asset.getUseMoney())) {
             log.info("当前用户金额无需同步");
             return false;
         }

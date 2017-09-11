@@ -358,7 +358,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             long userId = NumberHelper.toLong(acqResMap.get("userId"));
             UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(userId);
             String freezeOrderId = StringHelper.toString(acqResMap.get("freezeOrderId"));
-            String freezeMoney = StringHelper.toString(acqResMap.get("freezeMoney"));//分
+            String freezeMoney = StringHelper.toString(acqResMap.get("freezeMoney"));//元
 
             //解除存管资金冻结
             String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);

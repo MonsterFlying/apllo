@@ -320,7 +320,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
                     Map<String, String> data = gson.fromJson(json, TypeTokenContants.MAP_ALL_STRING_TOKEN);
                     MqConfig mqConfig = new MqConfig();
                     mqConfig.setMsg(data);
-                    mqConfig.setTag(MqTagEnum.MARKETING_OPEN_ACCOUNT);
+                    mqConfig.setTag(MqTagEnum.MARKETING_TENDER);
                     mqConfig.setQueue(MqQueueEnum.RABBITMQ_MARKETING);
                     mqHelper.convertAndSend(mqConfig);
                     log.info(String.format("投资营销节点触发: %s", new Gson().toJson(marketingData)));
@@ -330,46 +330,6 @@ public class RedPackageBizImpl implements RedPackageBiz {
             }
         }
 
-        // ===============================
-        // 用户派发红包
-        // ===============================
-        Specification<Users> usersSpecification = Specifications
-                .<Users>and()
-                .gt("parentId", 0)
-                .between("createdAt", new Range<>(DateHelper.beginOfDate(beginDate), DateHelper.endOfDate(nowDate)))
-                .build();
-
-
-        Long userCount = userService.count(usersSpecification);
-        pageindex = 0;
-        totalPageIndex = 0;
-        totalPageIndex = userCount.intValue() / pageSize;
-        totalPageIndex = userCount.intValue() % pageSize == 0 ? totalPageIndex : totalPageIndex + 1;
-
-        for (; pageindex < totalPageIndex; pageindex++) {
-            Pageable pageable = new PageRequest(pageindex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
-            List<Users> userList = userService.findList(usersSpecification, pageable);
-            for (Users users : userList) {
-                log.info(String.format("触发活动: %s", gson.toJson(users)));
-                MarketingData marketingData = new MarketingData();
-                marketingData.setTransTime(DateHelper.dateToString(users.getCreatedAt()));
-                marketingData.setUserId(users.getId().toString());
-                marketingData.setSourceId(users.getId().toString());
-                marketingData.setMarketingType(MarketingTypeContants.OPEN_ACCOUNT);
-                try {
-                    String json = gson.toJson(marketingData);
-                    Map<String, String> data = gson.fromJson(json, TypeTokenContants.MAP_ALL_STRING_TOKEN);
-                    MqConfig mqConfig = new MqConfig();
-                    mqConfig.setMsg(data);
-                    mqConfig.setTag(MqTagEnum.MARKETING_OPEN_ACCOUNT);
-                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_MARKETING);
-                    mqHelper.convertAndSend(mqConfig);
-                    log.info(String.format("开户营销节点触发: %s", new Gson().toJson(marketingData)));
-                } catch (Throwable e) {
-                    log.error(String.format("开户营销节点触发异常：%s", new Gson().toJson(marketingData)), e);
-                }
-            }
-        }
         return null;
     }
 
