@@ -22,7 +22,7 @@ public interface AutoTenderService {
 
     boolean updateByExample(AutoTender autoTender, Example<AutoTender> example);
 
-    List<Map<String,Object>> findQualifiedAutoTenders(VoFindAutoTenderList voFindAutoTenderList);
+    List<Map<String, Object>> findQualifiedAutoTenders(VoFindAutoTenderList voFindAutoTenderList);
 
     boolean updateAutoTenderOrder();
 
@@ -38,8 +38,11 @@ public interface AutoTenderService {
 
     void delete(long id);
 
+    AutoTender save(AutoTender autoTender);
+
     /**
      * 获取自动投标序号
+     *
      * @return
      */
     int getOrderNum();

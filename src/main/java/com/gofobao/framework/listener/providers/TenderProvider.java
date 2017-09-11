@@ -91,10 +91,8 @@ public class TenderProvider {
             long money = 0;
             long lowest = 0;
             long useMoney = 0;
-            AutoTender autoTender = null;
 
             while (itAutoTender.hasNext()) { // 将合格的自动投标  放入消息队列
-                autoTender = new AutoTender();
                 voFindAutoTender = itAutoTender.next();
                 if ((moneyYes >= borrowMoney) || (mostAuto > 0 && moneyYes >= mostAuto)) {  // 判断是否满标或者 达到自动投标最大额度
                     isFull = true;  // 满标了
@@ -136,10 +134,14 @@ public class TenderProvider {
                     ResponseEntity<VoBaseResp> response = tenderBiz.createTender(voCreateBorrowTender);
                     if (response.getBody().getState().getCode() == VoBaseResp.OK) {
                         moneyYes += lowest;
-                        autoTenderIds.add(NumberHelper.toLong(voFindAutoTender.get("id")));
+                        long autoTenderId = NumberHelper.toLong(voFindAutoTender.get("id"));
+                        autoTenderIds.add(autoTenderId);
                         tenderUserIds.add(NumberHelper.toLong(voFindAutoTender.get("userId")));
-                        autoTender.setAutoAt(nowDate);
-                        autoTenderService.updateById(autoTender);
+                        AutoTender autoTender = new AutoTender();
+                        autoTender.setId(autoTenderId);
+                        autoTender.setAutoAt(new Date());
+                        autoTender.setUpdatedAt(new Date());
+                        autoTenderService.save(autoTender);
                         autoTenderCount++;
                     } else {
                         log.info(String.format("自动投标启动: 创建投标失败 %s,msg->%s", gson.toJson(voFindAutoTender), response.getBody().getState().getMsg()));
