@@ -287,12 +287,11 @@ public class UserBonusScheduler {
                     voucherPayRequest.setDesLine("每月提成");
                     voucherPayRequest.setChannel(ChannelContant.HTML);
                     VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
-            /*        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+                    if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
                         String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
                         log.error("每月提成调度:" + msg);
                         continue;
                     }
-*/
 
                     // 发放理财师奖励
                     AssetChange redpackPublish = new AssetChange();
