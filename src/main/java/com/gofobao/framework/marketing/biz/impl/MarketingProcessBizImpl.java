@@ -496,8 +496,10 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         //===============================
         Users user = null;
         try {
+            log.info("用户冻结开始");
             user = userService.findUserByUserId(Long.parseLong(marketingData.getUserId()));
             if (user.getIsLock()) {
+                log.info("用户冻结开始失败");
                 throw new Exception("MarketingProcessBizImpl.filterDataByDimension: user lock");
             }
         } catch (Exception e) {
@@ -512,23 +514,24 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             //============================
             //校验用户渠道问题
             //============================
+            log.info("验证用户渠道");
             boolean channelState = verifyRegisterChannel(marketingDimentsion, user);
             if (!channelState) {
                 log.info(String.format("促销活动: 渠道用户验证不通过: %s", marketingDataStr));
                 iterator.remove();
                 continue;
             }
-
+            log.info("验证用户是否为邀请用户");
             boolean verifyParentState = verifyUserParent(marketingDimentsion, user);  // 验证是否被邀请
             if (!verifyParentState) {
                 log.info(String.format("促销活动: 当前用户不属于邀请用户, %s", marketingDataStr));
                 iterator.remove();
                 continue;
             }
-
+            log.info("验证用户是否为新用户");
             boolean verifyUserNewState = verifyMemberType(marketingDimentsion, user, marketingData);  // 验证是否为新用户
             if (!verifyUserNewState) {
-                log.info("促销活动: 用户类型不符合");
+                log.info("促销活动: 新用户判断用户问题");
                 iterator.remove();
                 continue;
             }
@@ -675,6 +678,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         Preconditions.checkNotNull(tender, "MarketingProcessBizImpl.verifyBorrowType: tender not found");
         Borrow borrow = borrowService.findById(tender.getBorrowId());
         Preconditions.checkNotNull(borrow, "MarketingProcessBizImpl.verifyBorrowType: borrow not found");
+        log.info("当前标的类型" + borrow.getType());
         if (borrowType.contains("-2")) {
             return borrow.getIsNovice();
         }
@@ -707,6 +711,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         String[] platformArr = platform.split(",");
         long tenderId = Long.parseLong(marketingData.getSourceId());
         Tender tender = tenderService.findById(tenderId);
+        log.info("投标平台检测" + tender.getSource());
         if (tender.getIsAuto()) { // 自动投标
             return true;
         }
