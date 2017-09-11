@@ -65,14 +65,14 @@ public class UserBonusScheduler {
             Integer bounsAward = 0;
             List<Map<String, Object>> resultList = null;
             do {
-                StringBuffer sql = new StringBuffer(" SELECT sum(t4.tj_wait_collection_principal+t4.qd_wait_collection_principal)AS wait_principal_total, " +
+                StringBuffer sqlStr = new StringBuffer(" SELECT sum(t4.tj_wait_collection_principal+t4.qd_wait_collection_principal)AS wait_principal_total, " +
                         " t1.id AS user_id,t2.tj_wait_collection_principal,t2.qd_wait_collection_principal FROM gfb_users t1 " +
                         " INNER JOIN gfb_user_cache t2 ON t1.id=t2.user_id INNER JOIN gfb_users t3 ON t1.id=t3.parent_id INNER JOIN gfb_user_cache t4 ON t3.id=t4.user_id " +
                         " WHERE t2.tj_wait_collection_principal+t2.qd_wait_collection_principal>=1000000 AND t3.created_at>='" + DateHelper.dateToString(validDate) + "' AND t3.source IN(0,1,2,9) " +
                         " AND NOT EXISTS(SELECT 1 FROM gfb_ticheng_user t5 WHERE t5.user_id=t1.id AND t5.type=0)GROUP BY t1.id HAVING wait_principal_total>=73000");
 
                 String limitSql = " limit " + pageSize + " offset " + (pageIndex - 1) * pageSize;
-                resultList = jdbcTemplate.queryForList(sql.append(limitSql).toString());
+                resultList = jdbcTemplate.queryForList(sqlStr.append(limitSql).toString());
                 if (CollectionUtils.isEmpty(resultList)) {
                     return;
                 }
@@ -108,6 +108,7 @@ public class UserBonusScheduler {
                     if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
                         String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
                         log.error("理财师调度:" + msg);
+                        continue;
                     }
 
                     // 发放理财师奖励
@@ -162,7 +163,6 @@ public class UserBonusScheduler {
     public void dayProcess() {
         log.info("每日天提成调度启动");
         try {
-
             int pageIndex = 1;
             int pageSize = 50;
             long money = 0;
@@ -171,15 +171,17 @@ public class UserBonusScheduler {
             UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(redId);
             String groupSeqNo = assetChangeProvider.getGroupSeqNo();
             do {
-                StringBuffer sql = new StringBuffer("select sum(gfb_asset.collection) - sum(gfb_asset.payment) as sum, `gfb_ticheng_user`.`user_id` as userId" +
+                StringBuffer daySqlStr = new StringBuffer("select sum(gfb_asset.collection) - sum(gfb_asset.payment) as sum, `gfb_ticheng_user`.`user_id` as userId" +
                         " from `gfb_ticheng_user` inner join `gfb_users` on `gfb_ticheng_user`.`user_id` = `gfb_users`.`parent_id` inner join `gfb_asset`" +
                         " on `gfb_users`.`id` = `gfb_asset`.`user_id` where `gfb_ticheng_user`.`type` = 0 and (`gfb_ticheng_user`.`start_at` is null or " +
                         " `gfb_ticheng_user`.`start_at` < '" + DateHelper.dateToString(new Date()) + "') and (`gfb_ticheng_user`.`end_at` is null or " +
                         " `gfb_ticheng_user`.`end_at` > '" + DateHelper.dateToString(new Date()) + "') " +
                         " group by `gfb_ticheng_user`.`user_id` having `sum` >= " + Math.ceil(365 / 0.005));
                 String limitSql = " limit " + pageSize + " offset " + (pageIndex - 1) * pageSize;
-                resultList = jdbcTemplate.queryForList(sql.append(limitSql).toString());
-
+                resultList = jdbcTemplate.queryForList(daySqlStr.append(limitSql).toString());
+                if (CollectionUtils.isEmpty(resultList)) {
+                    return;
+                }
                 for (Map<String, Object> map : resultList) {
                     money = (int) MoneyHelper.round(NumberHelper.toInt(map.get("sum")) * 0.005 / 365, 0);
                     Long userId = NumberHelper.toLong(map.get("userId"));
@@ -226,8 +228,8 @@ public class UserBonusScheduler {
                     redpackR.setSourceId(0L);
                     assetChangeProvider.commonAssetChange(redpackR);
                 }
-
                 pageIndex++;
+
             } while (resultList.size() >= 50);
         } catch (Throwable e) {
             log.error("UserBonusScheduler dayProcess error:", e);
@@ -248,14 +250,17 @@ public class UserBonusScheduler {
             int sum = 0;
             List<Map<String, Object>> resultList = null;
             do {
-                StringBuffer sql = new StringBuffer("select sum(gfb_asset.collection) - sum(gfb_asset.payment) as sum, " +
+                StringBuilder monthSql = new StringBuilder("select sum(gfb_asset.collection) - sum(gfb_asset.payment) as sum, " +
                         "`gfb_ticheng_user`.`user_id` as userId from `gfb_ticheng_user` inner join `gfb_users` on `gfb_ticheng_user`.`user_id`" +
                         " = `gfb_users`.`parent_id` inner join `gfb_asset` on `gfb_users`.`id` = `gfb_asset`.`user_id` where `gfb_ticheng_user`.`type` = 1 " +
                         "and (`gfb_ticheng_user`.`start_at` is null or `gfb_ticheng_user`.`start_at` < '" + DateHelper.dateToString(new Date()) + "') and " +
                         "(`gfb_ticheng_user`.`end_at` is null or `gfb_ticheng_user`.`end_at` > '" + DateHelper.dateToString(new Date()) + "') and " +
                         "`gfb_users`.`created_at` < '2016-08-14 00:00:00' group by `gfb_ticheng_user`.`user_id` having `sum` >= " + Math.ceil(1 / .0002));
                 String limitSql = " limit " + pageSize + " offset " + (pageIndex - 1) * pageSize;
-                resultList = jdbcTemplate.queryForList(sql.append(limitSql).toString());
+                resultList = jdbcTemplate.queryForList(monthSql.append(limitSql).toString());
+                if (CollectionUtils.isEmpty(resultList)) {
+                    return;
+                }
                 long redId = assetChangeProvider.getRedpackAccountId();
                 UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(redId);
                 for (Map<String, Object> map : resultList) {
@@ -285,8 +290,8 @@ public class UserBonusScheduler {
                     if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
                         String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
                         log.error("每月提成调度:" + msg);
+                        continue;
                     }
-
 
                     // 发放理财师奖励
                     AssetChange redpackPublish = new AssetChange();
