@@ -112,7 +112,9 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
 
         // 刷选范围
         try {
+            log.info("赛选范围开始");
             filterDataByDimension(marketings, marketingData);
+            log.info("赛选范围结束");
         } catch (Exception e) {
             e.printStackTrace();
             log.error("筛选范围", e);
@@ -121,7 +123,9 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
 
         // 筛选条件
         try {
+            log.info("用户条件检测");
             filterDataByCondition(marketings, marketingData);
+            log.info("用户条件检测结束:", marketings.size());
         } catch (Exception e) {
             return false;
         }
@@ -396,21 +400,25 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                     }
                     break;
                 case MarketingTypeContants.TENDER:
+                    log.info("验证投标条件开始");
                     Long tenderMoneyMin = condition.getTenderMoneyMin();
                     if (ObjectUtils.isEmpty(tenderMoneyMin) || tenderMoneyMin <= 0) {
+                        log.info("验证投标条件金额失败");
                         iterator.remove();
                         continue;
                     }
 
                     Tender tender = tenderService.findById(Long.parseLong(marketingData.getSourceId()));
                     Preconditions.checkNotNull(tender, "MarketingProcessBizImpl.filterDataByCondition tender is null");
-                    if (tender.getState().intValue() != 1) {
+                    if (tender.getStatus().intValue() != 1) {
+                        log.info("验证投标条件标的状态不对");
                         iterator.remove();
                         continue;
                     }
 
                     Long validMoney = tender.getValidMoney();
                     if (validMoney < tenderMoneyMin) {
+                        log.info("验证投标条件标的投标金额不对");
                         iterator.remove();
                         continue;
                     }
@@ -499,7 +507,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             log.info("用户冻结开始");
             user = userService.findUserByUserId(Long.parseLong(marketingData.getUserId()));
             if (user.getIsLock()) {
-                log.info("用户冻结开始失败");
+                log.info("该用户为冻结用户");
                 throw new Exception("MarketingProcessBizImpl.filterDataByDimension: user lock");
             }
         } catch (Exception e) {
@@ -509,19 +517,18 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         Iterator<Marketing> iterator = marketings.iterator();
         while (iterator.hasNext()) {
             Marketing marketing = iterator.next();
+            log.info("活动信息" + marketing.getTitel()) ;
             MarketingDimentsion marketingDimentsion = dimentsionMap.get(marketing.getId());
             Preconditions.checkNotNull(marketingDimentsion, "MarketingProcessBizImpl.filterDataByDimension marketingDimentsion is null");
             //============================
             //校验用户渠道问题
             //============================
-            log.info("验证用户渠道");
             boolean channelState = verifyRegisterChannel(marketingDimentsion, user);
             if (!channelState) {
                 log.info(String.format("促销活动: 渠道用户验证不通过: %s", marketingDataStr));
                 iterator.remove();
                 continue;
             }
-            log.info("验证用户是否为邀请用户");
             boolean verifyParentState = verifyUserParent(marketingDimentsion, user);  // 验证是否被邀请
             if (!verifyParentState) {
                 log.info(String.format("促销活动: 当前用户不属于邀请用户, %s", marketingDataStr));
@@ -531,7 +538,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             log.info("验证用户是否为新用户");
             boolean verifyUserNewState = verifyMemberType(marketingDimentsion, user, marketingData);  // 验证是否为新用户
             if (!verifyUserNewState) {
-                log.info("促销活动: 新用户判断用户问题");
+                log.info("促销活动: 新用户判断用户问题" +  marketingDataStr );
                 iterator.remove();
                 continue;
             }
@@ -546,13 +553,14 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                     }
                     break;
                 case MarketingTypeContants.TENDER:  // 投标
+                    log.info("投标平台标的检测");
                     boolean tenderPlatformState = verifyTenderPlatform(marketingDimentsion, user, marketingData);
                     if (!tenderPlatformState) {
-                        log.info("促销活动: 投标平台不符合");
+                        log.info("促销活动: 投标平台不符合" + marketingDataStr);
                         iterator.remove();
                         continue;
                     }
-
+                    log.info("标的类型检测");
                     boolean borrowTypeState = verifyBorrowType(marketingDimentsion, marketingData);
                     if (!borrowTypeState) {
                         log.info("促销活动: 标的类型不符合");
