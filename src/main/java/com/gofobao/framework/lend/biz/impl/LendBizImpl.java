@@ -202,7 +202,7 @@ public class LendBizImpl implements LendBiz {
         if (money > asset.getUseMoney()) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款金额不能大于可用金额"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "出借金额不能大于可用金额"));
         }
 
         //查询当前会员的借款记录
