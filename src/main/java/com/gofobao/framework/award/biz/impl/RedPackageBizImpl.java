@@ -320,7 +320,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
                     Map<String, String> data = gson.fromJson(json, TypeTokenContants.MAP_ALL_STRING_TOKEN);
                     MqConfig mqConfig = new MqConfig();
                     mqConfig.setMsg(data);
-                    mqConfig.setTag(MqTagEnum.MARKETING_OPEN_ACCOUNT);
+                    mqConfig.setTag(MqTagEnum.MARKETING_TENDER);
                     mqConfig.setQueue(MqQueueEnum.RABBITMQ_MARKETING);
                     mqHelper.convertAndSend(mqConfig);
                     log.info(String.format("投资营销节点触发: %s", new Gson().toJson(marketingData)));

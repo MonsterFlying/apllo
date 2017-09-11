@@ -852,8 +852,15 @@ public class BorrowBizImpl implements BorrowBiz {
         sendNoticsByTender(borrow, tenderList);
         // 用户投标信息和每日统计
         userTenderStatistic(borrow, tenderList, nowDate);
-        //用戶投資送紅包
-        userTenderRedPackage(tenderList);
+        try{
+            // 老用户投标
+            if(!borrow.getIsNovice()){
+                userTenderRedPackage(tenderList);
+            }
+        }catch (Exception e){
+            log.error("触发老用户投标红包失败", e) ;
+        }
+
         // 借款人资金变动
         Specification<BatchAssetChange> bacs = Specifications
                 .<BatchAssetChange>and()

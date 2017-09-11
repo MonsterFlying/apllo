@@ -174,6 +174,15 @@ public class TenderBizImpl implements TenderBiz {
             }
         }
 
+        try {
+            // 触发新手标活动派发
+            if (borrow.getIsNovice()) {
+                borrowBiz.touchMarketingByTender(borrowTender);
+            }
+        } catch (Exception e) {
+            log.error("触发派发失败新手红包失败", e);
+        }
+
         return ResponseEntity.ok(VoBaseResp.ok("投资成功"));
     }
 
