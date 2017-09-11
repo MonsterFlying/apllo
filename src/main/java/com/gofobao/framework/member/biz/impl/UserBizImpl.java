@@ -183,7 +183,12 @@ public class UserBizImpl implements UserBiz {
 
         // 处理注册来源
         String source = voRegisterReq.getSource();
-        Integer channel = RegisterSourceEnum.getIndex(source.toLowerCase());
+        Integer channel=0;
+        if(!source.equals("3")){
+            channel= RegisterSourceEnum.getIndex(source.toLowerCase());
+        }else{
+            channel=3;
+        }
         Date now = new Date();
         // 插入数据
         Users users = new Users();
