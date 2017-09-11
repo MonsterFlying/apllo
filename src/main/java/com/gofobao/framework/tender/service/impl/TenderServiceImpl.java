@@ -81,11 +81,7 @@ public class TenderServiceImpl implements TenderService {
             tenderUserRes.setDate(DateHelper.dateToString(item.getCreatedAt(), DateHelper.DATE_FORMAT_YMDHMS));
             tenderUserRes.setType(item.getIsAuto() ? TenderConstans.AUTO+"("+item.getAutoOrder()+")" : TenderConstans.MANUAL);
             Users user = usersRepository.findOne(new Long(item.getUserId()));
-
-            String userName = StringUtils.isEmpty(user.getUsername()) ?
-                    UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM) :
-                    UserHelper.hideChar(user.getUsername(), UserHelper.USERNAME_NUM);
-            tenderUserRes.setUserName(userName);
+            tenderUserRes.setUserName(UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM));
             tenderUserResList.add(tenderUserRes);
         });
         return Optional.empty().ofNullable(tenderUserResList).orElse(Collections.emptyList());
