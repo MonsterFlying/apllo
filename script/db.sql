@@ -748,3 +748,5 @@ INSERT INTO gfb_dict_value ( `ITEM_ID`, `VALUE01`, `VALUE02`, `VALUE03`, `VALUE0
 
 ALTER TABLE gfb_eve ADD query_date VARCHAR(8) DEFAULT '' NULL COMMENT '查询时间';
 ALTER TABLE gfb_aleve ADD query_date VARCHAR(8) DEFAULT '' NULL COMMENT '查询时间';
+
+alter table gfb_batch_asset_change_item change  column to_user_id for_user_id int(11) DEFAULT NULL COMMENT '交易对方ID';
