@@ -81,6 +81,7 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -427,14 +428,16 @@ public class TransferBizImpl implements TransferBiz {
             log.info(String.format("投标统计: %s", gson.toJson(tender)));
             UserCache userCache = userCacheService.findById(tender.getUserId());
             IncrStatistic incrStatistic = new IncrStatistic();
-            if ((!userCache.getTenderTransfer()) && (!userCache.getTenderTuijian()) && (!userCache.getTenderJingzhi()) && (!userCache.getTenderMiao()) && (!userCache.getTenderQudao())) {
+            if ((!BooleanUtils.toBoolean(userCache.getTenderTransfer())) && (!BooleanUtils.toBoolean(userCache.getTenderTuijian())) &&
+                    (!BooleanUtils.toBoolean(userCache.getTenderJingzhi())) && (!BooleanUtils.toBoolean(userCache.getTenderMiao()))
+                    && (!BooleanUtils.toBoolean(userCache.getTenderQudao()))) {
                 incrStatistic.setTenderCount(1);
                 incrStatistic.setTenderTotal(1);
             }
 
             incrStatistic.setTenderLzCount(1);
             incrStatistic.setTenderLzTotalCount(1);
-            userCache.setTenderTransfer(true);
+            userCache.setTenderTransfer(tender.getBorrowId().intValue());
 
             userCacheService.save(userCache);
             if (!ObjectUtils.isEmpty(incrStatistic)) {

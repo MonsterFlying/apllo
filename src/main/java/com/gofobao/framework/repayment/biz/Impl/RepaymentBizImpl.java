@@ -96,6 +96,7 @@ import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.gofobao.framework.windmill.borrow.biz.WindmillTenderBiz;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
@@ -397,11 +398,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 .eq("status", 0)
                 .build();
         List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
-        Map<Long/* repaymentId */, BorrowRepayment> borrowRepaymentMaps = borrowRepaymentList.stream().collect(Collectors.toMap(BorrowRepayment::getId, Function.identity()));
         /* 还款请求集合 */
         List<VoBuildThirdRepayReq> voBuildThirdRepayReqs = new ArrayList<>();
         //构建还款请求集合
-        ImmutableSet<Long> resultSet = buildRepayReqList(voBuildThirdRepayReqs, borrow);
+        ImmutableList<Long> resultSet = buildRepayReqList(voBuildThirdRepayReqs, borrow);
         Iterator<Long> iterator = resultSet.iterator();
         long penalty = iterator.next();/* 违约金 */
         long repayMoney = iterator.next();/* 提前结清需还总金额 */
@@ -427,7 +427,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //提前结清处理
         //1.生成批次资产变动记录
         //2.发送至存管系统进行备案
-        return repayAllProcess(borrowId, borrow, titularBorrowAccount, voBuildThirdRepayReqs, batchNo, groupSeqNo, penalty, batchAssetChange, borrowRepaymentMaps);
+        return repayAllProcess(borrowId, borrow, titularBorrowAccount, voBuildThirdRepayReqs, batchNo, groupSeqNo, penalty, batchAssetChange, borrowRepaymentList);
     }
 
 
@@ -436,7 +436,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      *
      * @param voBuildThirdRepayReqs 还款请求
      */
-    private ImmutableSet<Long> buildRepayReqList(List<VoBuildThirdRepayReq> voBuildThirdRepayReqs, Borrow borrow) {
+    private ImmutableList<Long> buildRepayReqList(List<VoBuildThirdRepayReq> voBuildThirdRepayReqs, Borrow borrow) {
                 /* 有效未还的还款记录 */
         Specification<BorrowRepayment> brs = Specifications
                 .<BorrowRepayment>and()
@@ -487,11 +487,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
             voBuildThirdRepayReq.setUserId(borrowRepayment.getUserId());
             voBuildThirdRepayReq.setIsUserOpen(false);
             voBuildThirdRepayReq.setLateDays(lateDays);
-            voBuildThirdRepayReq.setLateInterest(lateInterest);
             voBuildThirdRepayReqs.add(voBuildThirdRepayReq);
         }
         repayMoney = repaymentTotal + penalty;/* 提前结清需还总金额 */
-        return ImmutableSet.of(penalty, repayMoney);
+        return ImmutableList.of(penalty, repayMoney);
     }
 
     /**
@@ -503,14 +502,15 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param voBuildThirdRepayReqs
      * @param groupSeqNo
      * @param batchAssetChange
-     * @param borrowRepaymentMaps
+     * @param borrowRepaymentList
      * @throws Exception
      */
     private ResponseEntity<VoBaseResp> repayAllProcess(long borrowId, Borrow borrow, UserThirdAccount titularBorrowAccount, List<VoBuildThirdRepayReq> voBuildThirdRepayReqs, String batchNo,
                                                        String groupSeqNo, long penalty, BatchAssetChange batchAssetChange,
-                                                       Map<Long/* repaymentId */, BorrowRepayment> borrowRepaymentMaps) throws Exception {
+                                                       List<BorrowRepayment> borrowRepaymentList) throws Exception {
         Date nowDate = new Date();
         /* 投资记录：不包含理财计划 */
+        Map<Long/* repaymentId */, BorrowRepayment> borrowRepaymentMaps = borrowRepaymentList.stream().collect(Collectors.toMap(BorrowRepayment::getId, Function.identity()));
         Specification<Tender> specification = Specifications
                 .<Tender>and()
                 .eq("status", 1)
@@ -537,25 +537,38 @@ public class RepaymentBizImpl implements RepaymentBiz {
             Preconditions.checkNotNull(borrowCollectionList, "生成即信还款计划: 获取回款计划列表为空!");
             List<RepayAssetChange> repayAssetChangeList = new ArrayList<>();
             int lateDays = getLateDays(borrowRepayment);
-            long lateInterest = calculateLateInterest(lateDays, borrowRepayment, borrow);
             // 生成存管投资人还款记录(提前结清)
             List<Repay> tempRepays = calculateRepayPlan(borrow,
                     titularBorrowAccount.getAccountId(),
                     tenderList,
                     borrowCollectionList,
                     lateDays,
-                    lateInterest,
+                    borrowRepayment,
                     voBuildThirdRepayReq.getInterestPercent(),
                     repayAssetChangeList
             );
             repays.addAll(tempRepays);
-            // 生成还款记录
+            // 生成回款记录 返回值  实际本金和利息
             long repayMoney = doGenerateAssetChangeRecodeByRepay(borrow, borrowRepayment, borrowRepayment.getUserId(), repayAssetChangeList, groupSeqNo, batchAssetChange, false);
+            //真实的逾期费用
+            /*平台实际收取的逾期费用*/
+            long realPlatformOverdueFee = repayAssetChangeList.stream().mapToLong(RepayAssetChange::getPlatformOverdueFee).sum();
+            /*投资人实际收取的逾期费用*/
+            long realOverdueFee = repayAssetChangeList.stream().mapToLong(RepayAssetChange::getOverdueFee).sum();
+            long realLateInterest = realOverdueFee + realPlatformOverdueFee;
+            // 是否是垫付
+            boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
+            // 生成还款人还款批次资金改变记录
+            addBatchAssetChangeByBorrower(batchAssetChange.getId(), borrowRepayment, borrow,
+                    voBuildThirdRepayReq.getInterestPercent(), voBuildThirdRepayReq.getIsUserOpen(),
+                    realLateInterest, titularBorrowAccount.getUserId(), groupSeqNo,
+                    advance, repayMoney);
             //更新还款记录
             borrowRepayment.setUpdatedAt(nowDate);
             borrowRepayment.setRepayMoneyYes(repayMoney);
-            borrowRepaymentService.save(borrowRepayment);
+            borrowRepayment.setLateInterest(realLateInterest);
         }
+        borrowRepaymentService.save(borrowRepaymentList);
         /* 总还款本金 */
         double sumTxAmount = repays.stream().mapToDouble(repay -> NumberHelper.toDouble(repay.getTxAmount())).sum();
         //========================处理提前结清违约金开始============================
@@ -644,6 +657,19 @@ public class RepaymentBizImpl implements RepaymentBiz {
         return ResponseEntity.ok(VoBaseResp.ok("提前结清成功!"));
     }
 
+    /**
+     * 处理提前结清违约金开始
+     *
+     * @param borrowId
+     * @param borrow
+     * @param titularBorrowAccount
+     * @param groupSeqNo
+     * @param penalty
+     * @param batchAssetChange
+     * @param nowDate
+     * @param repays
+     * @param sumTxAmount
+     */
     private void dealRepayAllPenalty(long borrowId, Borrow borrow, UserThirdAccount titularBorrowAccount, String groupSeqNo, long penalty, BatchAssetChange batchAssetChange, Date nowDate, List<Repay> repays, double sumTxAmount) {
         //扣除提前结清的违约金
         if (penalty > 0) {
@@ -1411,7 +1437,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Date nowDate = new Date();
         log.info(String.format("批次还款: 进入正常还款流程 repaymentId->", borrowRepayment.getId()));
         int lateDays = getLateDays(borrowRepayment);   //计算逾期天数
-        long lateInterest = calculateLateInterest(lateDays, borrowRepayment, borrow);   // 计算逾期产生的总费用
         String batchNo = jixinHelper.getBatchNo();    // 批次号
         String groupSeqNo = assetChangeProvider.getGroupSeqNo(); // 资产记录分组流水号
         boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());   // 是否是垫付
@@ -1443,7 +1468,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 tenderList,
                 borrowCollectionList,
                 lateDays,
-                lateInterest,
+                borrowRepayment,
                 interestPercent,
                 repayAssetChanges);
 
@@ -1458,19 +1483,24 @@ public class RepaymentBizImpl implements RepaymentBiz {
         long money = new Double(MoneyHelper.round(freezeMoney, 0)).longValue();
         // 生成投资人还款资金变动记录
         BatchAssetChange batchAssetChange = addBatchAssetChange(batchNo, borrowRepayment.getId(), advance);
+        // 生成回款人资金变动记录  返回值实际还款本金和利息  不包括手续费
+        long repayMoney = doGenerateAssetChangeRecodeByRepay(borrow, borrowRepayment, borrowRepayment.getUserId(), repayAssetChanges, groupSeqNo, batchAssetChange, advance);
+        //真实的逾期费用
+        /*平台实际收取的逾期费用*/
+        long realPlatformOverdueFee = repayAssetChanges.stream().mapToLong(RepayAssetChange::getPlatformOverdueFee).sum();
+        /*投资人实际收取的逾期费用*/
+        long realOverdueFee = repayAssetChanges.stream().mapToLong(RepayAssetChange::getOverdueFee).sum();
+        long realLateInterest = realOverdueFee + realPlatformOverdueFee;
         // 生成还款人还款批次资金改变记录
         addBatchAssetChangeByBorrower(batchAssetChange.getId(), borrowRepayment, borrow,
                 interestPercent, voRepayReq.getIsUserOpen(),
-                lateInterest, voRepayReq.getUserId(), groupSeqNo,
-                advance, money);
-        // 生成回款人资金变动记录
-        doGenerateAssetChangeRecodeByRepay(borrow, borrowRepayment, borrowRepayment.getUserId(), repayAssetChanges, groupSeqNo, batchAssetChange, advance);
-
+                realLateInterest, voRepayReq.getUserId(), groupSeqNo,
+                advance, repayMoney);
         //改变还款与垫付记录的值
         /**
          * @// TODO: 2017/9/8 判断 
          */
-        changeRepaymentAndAdvanceRecord(borrowRepayment, lateDays, money, lateInterest, advance);
+        changeRepaymentAndAdvanceRecord(borrowRepayment, lateDays, repayMoney, realLateInterest, advance);
         /*ResponseEntity<VoBaseResp> resp = checkAssetByRepay(repayAsset, money);
         if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
             throw new Exception(resp.getBody().getState().getMsg());
@@ -1576,7 +1606,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
      *
      * @param borrow
      * @param repayAccountId
-     * @param lateInterest
      * @param repayAssetChanges
      * @return
      * @throws Exception
@@ -1584,7 +1613,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
     @Transactional(rollbackFor = Exception.class)
     public List<Repay> calculateRepayPlan(Borrow borrow, String repayAccountId, List<Tender> tenderList,
                                           List<BorrowCollection> borrowCollectionList,
-                                          long lateDays, long lateInterest, double interestPercent, List<RepayAssetChange> repayAssetChanges) throws Exception {
+                                          int lateDays, BorrowRepayment borrowRepayment, double interestPercent, List<RepayAssetChange> repayAssetChanges) throws Exception {
         List<Repay> repayList = new ArrayList<>();
         Map<Long/* 投资记录*/, BorrowCollection/* 对应的还款计划*/> borrowCollectionMap = borrowCollectionList.stream().collect(Collectors.toMap(BorrowCollection::getTenderId, Function.identity()));
         /* 投标记录集合 */
@@ -1605,6 +1634,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
         long sumCollectionInterest = borrowCollectionList.stream()
                 .filter(borrowCollection -> tenderMaps.get(borrowCollection.getTenderId()).getTransferFlag() != 2)
                 .mapToLong(BorrowCollection::getInterest).sum();
+        // 计算逾期产生的总费用
+        long lateInterest = calculateLateInterest(lateDays, borrowRepayment, borrow);
         for (Tender tender : tenderList) {
             long inIn = 0; // 出借人的利息
             long inPr = 0; // 出借人的本金
@@ -1691,7 +1722,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
     }
 
     /**
-     * 生成还款记录
+     * 生成回款记录
      *
      * @param borrow
      * @param borrowRepayment
@@ -1764,7 +1795,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             }
 
             // 收取逾期管理费
-            if (repayAssetChange.getPlatformOverdueFee() > 0) {
+            if (repayAssetChange.getOverdueFee() > 0) {
                 batchAssetChangeItem = new BatchAssetChangeItem();
                 batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
                 batchAssetChangeItem.setState(0);
@@ -2502,7 +2533,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             freezeAssetChange.setSeqNo(assetChangeProvider.getSeqNo());
             freezeAssetChange.setMoney(frozenMoney);
             freezeAssetChange.setUserId(titularBorrowAccount.getUserId());
-            freezeAssetChange.setRemark(String.format("垫付还款,冻结资金%s元", StringHelper.formatDouble(MoneyHelper.divide(frozenMoney , 100D), true)));
+            freezeAssetChange.setRemark(String.format("垫付还款,冻结资金%s元", StringHelper.formatDouble(MoneyHelper.divide(frozenMoney, 100D), true)));
             freezeAssetChange.setSourceId(borrowRepayment.getId());
             freezeAssetChange.setType(AssetChangeTypeEnum.freeze);
             assetChangeProvider.commonAssetChange(freezeAssetChange);

@@ -9,6 +9,7 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UserCacheRepository;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.vo.response.pc.*;
+import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -273,6 +274,6 @@ public class UserCacheServiceImpl implements UserCacheService {
     @Override
     public boolean isNew(Users user) {
         UserCache userCache = userCacheRepository.findByUserId(user.getId());
-        return !userCache.getTenderQudao() && !userCache.getTenderTuijian();
+        return !BooleanUtils.toBoolean(userCache.getTenderQudao()) && !BooleanUtils.toBoolean(userCache.getTenderTuijian());
     }
 }

@@ -3,6 +3,7 @@ package com.gofobao.framework.member.entity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.BooleanUtils;
 import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.Column;
@@ -66,15 +67,15 @@ public class UserCache {
 
     private Long waitRepayInterest;
 
-    private Boolean tenderTuijian;
+    private Integer tenderTuijian;
 
-    private Boolean tenderJingzhi;
+    private Integer tenderJingzhi;
 
-    private Boolean tenderMiao;
+    private Integer tenderMiao;
 
-    private Boolean tenderTransfer;
+    private Integer tenderTransfer;
 
-    private Boolean tenderQudao;
+    private Integer tenderQudao;
 
     private Long firstTenderAward;
 
@@ -113,7 +114,7 @@ public class UserCache {
      * @return
      */
     public boolean isNovice() {
-        return !(this.getTenderQudao() || this.getTenderTuijian());
+        return !(BooleanUtils.toBoolean(this.getTenderQudao()) || BooleanUtils.toBoolean(this.getTenderTuijian()));
     }
 
 }

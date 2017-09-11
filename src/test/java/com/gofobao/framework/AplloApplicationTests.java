@@ -401,14 +401,6 @@ public class AplloApplicationTests {
 
     }
 
-    private void noTransferBorrowAgainVerify() {
-        Borrow borrow = borrowService.findById(169881L);
-        try {
-            borrowBiz.borrowAgainVerify(borrow);
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-    }
 
     @Autowired
     CertHelper certHelper;
@@ -539,12 +531,16 @@ public class AplloApplicationTests {
 
     @Test
     public void test() {
-
-        Borrow borrow = borrowService.findById(170187l);
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TENDER);
+        mqConfig.setTag(MqTagEnum.AUTO_TENDER);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString("170190"), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
         try {
-            borrowBiz.borrowAgainVerify(borrow);
-        } catch (Exception e) {
-            e.printStackTrace();
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("borrowProvider autoTender send mq exception", e);
         }
 
         /*BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(

@@ -80,6 +80,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Example;
@@ -975,31 +976,33 @@ public class BorrowBizImpl implements BorrowBiz {
             incrStatistic.setCashSum(0l);
             incrStatistic.setJzSumPublish(0);
             incrStatistic.setJzSumRepay(0);
-            if ((!userCache.getTenderTransfer()) && (!userCache.getTenderTuijian()) && (!userCache.getTenderJingzhi()) && (!userCache.getTenderMiao()) && (!userCache.getTenderQudao())) {
+            if ((!BooleanUtils.toBoolean(userCache.getTenderTransfer())) && (!BooleanUtils.toBoolean(userCache.getTenderTuijian()))
+                    && (!BooleanUtils.toBoolean(userCache.getTenderJingzhi())) && (!BooleanUtils.toBoolean(userCache.getTenderMiao()))
+                    && (!BooleanUtils.toBoolean(userCache.getTenderQudao()))) {
                 incrStatistic.setTenderCount(1);
                 incrStatistic.setTenderTotal(1);
             }
 
-            if (borrow.isTransfer() && (!userCache.getTenderTransfer())) {
+            if (borrow.isTransfer() && (!BooleanUtils.toBoolean(userCache.getTenderTransfer()))) {
                 incrStatistic.setTenderLzCount(1);
                 incrStatistic.setTenderLzTotalCount(1);
-                userCache.setTenderTransfer(true);
-            } else if ((borrow.getType() == 0) && (!userCache.getTenderTuijian())) {
+                userCache.setTenderTransfer(borrow.getId().intValue());
+            } else if ((borrow.getType() == 0) && (!BooleanUtils.toBoolean(userCache.getTenderTuijian()))) {
                 incrStatistic.setTenderTjCount(1);
                 incrStatistic.setTenderTjTotalCount(1);
-                userCache.setTenderTuijian(true);
-            } else if ((borrow.getType() == 1) && (!userCache.getTenderJingzhi())) {
+                userCache.setTenderTuijian(borrow.getId().intValue());
+            } else if ((borrow.getType() == 1) && (!BooleanUtils.toBoolean(userCache.getTenderJingzhi()))) {
                 incrStatistic.setTenderJzCount(1);
                 incrStatistic.setTenderJzTotalCount(1);
-                userCache.setTenderJingzhi(true);
-            } else if ((borrow.getType() == 2) && (!userCache.getTenderMiao())) {
+                userCache.setTenderJingzhi(borrow.getId().intValue());
+            } else if ((borrow.getType() == 2) && (!BooleanUtils.toBoolean(userCache.getTenderMiao()))) {
                 incrStatistic.setTenderMiaoCount(1);
                 incrStatistic.setTenderMiaoTotalCount(1);
-                userCache.setTenderMiao(true);
-            } else if ((borrow.getType() == 4) && (!userCache.getTenderQudao())) {
+                userCache.setTenderMiao(borrow.getId().intValue());
+            } else if ((borrow.getType() == 4) && (!BooleanUtils.toBoolean(userCache.getTenderQudao()))) {
                 incrStatistic.setTenderQdCount(1);
                 incrStatistic.setTenderQdTotalCount(1);
-                userCache.setTenderQudao(true);
+                userCache.setTenderQudao(borrow.getId().intValue());
             }
 
             userCacheService.save(userCache);
@@ -1097,7 +1100,7 @@ public class BorrowBizImpl implements BorrowBiz {
         for (Tender tender : tenderList) {
             UserCache userCache = userCacheService.findById(tender.getUserId());
             Users user = userService.findById(tender.getUserId());
-            if ((!borrow.isTransfer()) && (!userCache.getTenderTuijian()) && (!userCache.getTenderQudao())) {
+            if ((!borrow.isTransfer()) && (!BooleanUtils.toBoolean(userCache.getTenderTuijian())) && (!BooleanUtils.toBoolean(userCache.getTenderQudao()))) {
                 //首次投资推荐标满2000元赠送流
                 ImmutableSet channelSet = ImmutableSet.of(3, 5, 7);
                 if ((!channelSet.contains(tender.getSource())) && tender.getValidMoney() >= 2000 * 100) {
