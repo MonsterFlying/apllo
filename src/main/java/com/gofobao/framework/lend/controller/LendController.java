@@ -8,6 +8,7 @@ import com.gofobao.framework.lend.vo.response.*;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,7 @@ import javax.validation.Valid;
  */
 @Api(description = "出借")
 @RestController
+@Slf4j
 public class LendController {
 
     @Autowired
@@ -100,7 +102,14 @@ public class LendController {
     public ResponseEntity<VoBaseResp> lend(@ModelAttribute @Valid VoLend voLend,
                                            @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voLend.setUserId(userId);
-        return lendBiz.lend(voLend);
+        try {
+            return lendBiz.lend(voLend);
+        } catch (Exception e) {
+            log.error("有草出借摘草异常", e);
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "很抱歉的通知你:摘草失败了！")) ;
+        }
     }
 
     /**

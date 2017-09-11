@@ -26,7 +26,7 @@ public interface BorrowService {
 
     long countByUserIdAndStatusIn(Long userId, List<Integer> statusList);
 
-    boolean insert(Borrow borrow);
+    Borrow insert(Borrow borrow);
 
     boolean updateById(Borrow borrow);
 

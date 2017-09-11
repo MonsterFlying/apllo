@@ -20,13 +20,13 @@ import springfox.documentation.annotations.ApiIgnore;
 
 @Api(description="pc：我的借款")
 @RestController
-@RequestMapping("/loan/pc")
+@RequestMapping("")
 public class WebLoanController {
     @Autowired
     private LoanBiz loanBiz;
 
     @ApiOperation("还款中列表")
-    @RequestMapping(value = "/v2/refund/list/{pageIndex}/{pageSize}", method = RequestMethod.GET)
+    @RequestMapping(value = "/loan/pc/v2/refund/list/{pageIndex}/{pageSize}", method = RequestMethod.GET)
     public ResponseEntity<VoViewRefundWrapRes> refundResList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                     @PathVariable Integer pageIndex,
                                                     @PathVariable Integer pageSize) {
@@ -38,7 +38,7 @@ public class WebLoanController {
     }
 
     @ApiOperation("投标中列表")
-    @GetMapping("/v2/budding/list/{pageIndex}/{pageSize}")
+    @GetMapping("/loan/pc/v2/budding/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewBuddingResListWrapRes> buddingList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
                                                                    @PathVariable Integer pageIndex,
                                                                    @PathVariable Integer pageSize) {
@@ -50,7 +50,7 @@ public class WebLoanController {
     }
 
     @ApiOperation("已结清列表----")
-    @GetMapping("/v2/settle/list/{pageIndex}/{pageSize}")
+    @GetMapping("/loan/pc/v2/settle/list/{pageIndex}/{pageSize}")
     public ResponseEntity<VoViewSettleWarpListRes>  settleList(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId ,
                                                                @PathVariable Integer pageIndex,
                                                                @PathVariable Integer pageSize) {
@@ -63,7 +63,7 @@ public class WebLoanController {
 
 
     @ApiOperation("借款详情")
-    @GetMapping("/v2/detail/{borrowId}")
+    @GetMapping("/loan/pc/v2/detail/{borrowId}")
     public ResponseEntity<VoViewRepaymentDetailWrapRes> detail(@PathVariable("borrowId") Long borrowId,
                                                                @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
 
@@ -75,7 +75,7 @@ public class WebLoanController {
 
 
     @ApiOperation("借款详情列表")
-    @GetMapping("/v2/repayment/list/{borrowId}")
+    @GetMapping("/loan/pc/v2/repayment/list/{borrowId}")
     public ResponseEntity<VoViewLoanInfoListWrapRes> repaymentList(@PathVariable("borrowId") Long borrowId,
                                                                    @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         VoDetailReq voDetailReq = new VoDetailReq();
@@ -85,7 +85,7 @@ public class WebLoanController {
     }
 
     @ApiOperation("平台借款统计")
-    @GetMapping("v2/pc/statistics")
+    @GetMapping("pub/loan/pc/v2/pc/statistics")
     public ResponseEntity<VoViewLoanStatisticsWarpRes> statistics(
                                                                   VoStatisticsReq statisticsReq){
 

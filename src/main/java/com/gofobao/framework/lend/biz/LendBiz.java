@@ -40,7 +40,7 @@ public interface LendBiz {
      * @param voLend
      * @return
      */
-    ResponseEntity<VoBaseResp> lend(VoLend voLend);
+    ResponseEntity<VoBaseResp> lend(VoLend voLend) throws Exception;
 
 
     /**

@@ -3,6 +3,8 @@ package com.gofobao.framework.lend.biz.impl;
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.borrow.biz.BorrowBiz;
+import com.gofobao.framework.borrow.biz.impl.BorrowBizImpl;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.page.Page;
@@ -63,6 +65,9 @@ public class LendBizImpl implements LendBiz {
     final Gson GSON = new Gson();
 
     @Autowired
+    private BorrowBiz borrowBiz;
+
+    @Autowired
     private LendService lendService;
     @Autowired
     private AssetService assetService;
@@ -91,10 +96,10 @@ public class LendBizImpl implements LendBiz {
      * @return
      */
     @Override
-    public ResponseEntity<VoViewLendListWarpRes> list(Page page,Long userId) {
+    public ResponseEntity<VoViewLendListWarpRes> list(Page page, Long userId) {
         try {
             VoViewLendListWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewLendListWarpRes.class);
-            Map<String, Object> resultMaps = lendService.list(page,userId);
+            Map<String, Object> resultMaps = lendService.list(page, userId);
             Integer totalCount = Integer.valueOf(resultMaps.get("totalCount").toString());
             List<VoViewLend> lends = (List<VoViewLend>) resultMaps.get("lends");
             warpRes.setVoViewLends(lends);
@@ -197,7 +202,7 @@ public class LendBizImpl implements LendBiz {
         if (money > asset.getUseMoney()) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "借款金额不能大于可用金额"));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "出借金额不能大于可用金额"));
         }
 
         //查询当前会员的借款记录
@@ -269,7 +274,7 @@ public class LendBizImpl implements LendBiz {
      * @return
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<VoBaseResp> lend(VoLend voLend) {
+    public ResponseEntity<VoBaseResp> lend(VoLend voLend) throws Exception {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voLend.getUserId());
         ResponseEntity<VoBaseResp> conditionCheckResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
         if (!conditionCheckResponse.getStatusCode().equals(HttpStatus.OK)) {
@@ -327,11 +332,10 @@ public class LendBizImpl implements LendBiz {
         }
 
         //  反向修改借款记录. 并且减少有草出借数量
-        createBorrow4Lend(userId, money, lend, user);
-        return ResponseEntity.ok(VoBaseResp.ok("摘草成功!"));
+        return createBorrow4Lend(userId, money, lend, user);
     }
 
-    private void createBorrow4Lend(long userId, Double money, Lend lend, Users user) {
+    private ResponseEntity<VoBaseResp> createBorrow4Lend(long userId, Double money, Lend lend, Users user) throws Exception {
         Borrow tempBorrow = new Borrow();
         tempBorrow.setType(1);
         tempBorrow.setRepayFashion(1);
@@ -352,27 +356,30 @@ public class LendBizImpl implements LendBiz {
         tempBorrow.setPassword("");
         tempBorrow.setMoneyYes(0l);
         tempBorrow.setTenderCount(0);
+        tempBorrow.setStatus(0);
+        tempBorrow = borrowService.insert(tempBorrow);
+        if (ObjectUtils.isEmpty(tempBorrow)
+                || ObjectUtils.isEmpty(tempBorrow.getId())
+                || (tempBorrow.getId() <= 0)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "很抱歉的通知你:摘草失败了！"));
+        }
 
-        borrowService.insert(tempBorrow);
         lend.setMoneyYes(lend.getMoneyYes() + money.intValue());
         if ((lend.getMoney() - lend.getMoneyYes()) < lend.getLowest()) {
             lend.setStatus(1);
         }
 
         lendService.updateById(lend);
+        boolean result = borrowBiz.doFirstVerify(tempBorrow.getId());// 初审并且生成投标记录
 
-        //初审
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
-        mqConfig.setTag(MqTagEnum.FIRST_VERIFY);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(tempBorrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            log.info(String.format("borrowBizImpl firstVerify send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("borrowBizImpl firstVerify send mq exception", e);
+        if (result) {
+            return ResponseEntity.ok(VoBaseResp.ok("摘草成功"));
+        } else {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "很抱歉的通知你:摘草失败了！"));
         }
     }
 

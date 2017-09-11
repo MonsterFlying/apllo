@@ -556,6 +556,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 }
             }
         }
+
         Specification<Transfer> ts = Specifications
                 .<Transfer>and()
                 .eq("userId", userId)
@@ -653,8 +654,10 @@ public class BorrowBizImpl implements BorrowBiz {
         borrow.setTenderCount(0);
         borrow.setCreatedAt(new Date());
         borrow.setUpdatedAt(new Date());
-        boolean rs = borrowService.insert(borrow);
-        if (rs) {
+        borrow = borrowService.insert(borrow);
+        if (!ObjectUtils.isEmpty(borrow)
+                && !ObjectUtils.isEmpty(borrow.getId())
+                && borrow.getId() > 0) {
             return borrow.getId();
         } else {
             return 0;
@@ -1697,7 +1700,8 @@ public class BorrowBizImpl implements BorrowBiz {
         VoCreateTenderReq voCreateTenderReq = new VoCreateTenderReq();
         voCreateTenderReq.setUserId(lend.getUserId());
         voCreateTenderReq.setBorrowId(borrow.getId());
-        voCreateTenderReq.setTenderMoney(MoneyHelper.round(borrow.getMoney() / 100.0, 2));
+        voCreateTenderReq.setTenderMoney(MathHelper.myRound(MoneyHelper.divide(borrow.getMoney() , 100d), 2));
+        voCreateTenderReq.setRequestSource("0");
         ResponseEntity<VoBaseResp> response = tenderBiz.createTender(voCreateTenderReq);
         return response.getStatusCode().equals(HttpStatus.OK);
     }

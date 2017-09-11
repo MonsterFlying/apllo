@@ -7,8 +7,12 @@ import com.gofobao.framework.asset.vo.response.VoPreRechargeResp;
 import com.gofobao.framework.asset.vo.response.VoRechargeEntityWrapResp;
 import com.gofobao.framework.asset.vo.response.VoUnionRechargeInfo;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
+import com.gofobao.framework.tender.vo.request.VoAdminRechargeReq;
+import com.gofobao.framework.tender.vo.request.VoPublishRedReq;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +26,7 @@ import javax.validation.Valid;
  * Created by Max on 17/6/7.
  */
 @RestController
+@Slf4j
 public class RechargeController {
 
     @Autowired
@@ -64,6 +69,27 @@ public class RechargeController {
     @PostMapping("/asset/preRecharge")
     public ResponseEntity<VoPreRechargeResp> preRecharge(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         return assetBiz.preRecharge(userId) ;
+    }
+
+
+    @ApiOperation("后台确认充值成功")
+    @PostMapping("pub/recharge")
+    public ResponseEntity<VoBaseResp> adminRechargeForm(@ModelAttribute VoAdminRechargeReq voAdminRechargeReq) {
+        String paramStr = voAdminRechargeReq.getParamStr();
+        if (!SecurityHelper.checkSign(voAdminRechargeReq.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "确认充值成功, 签名验证不通过!"));
+        }
+
+        try {
+            return assetBiz.adminRechargeForm(voAdminRechargeReq) ;
+        } catch (Exception e) {
+            log.error("后台审核通过失败", e);
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "后台审核通过失败!"));
+        }
     }
 
 }

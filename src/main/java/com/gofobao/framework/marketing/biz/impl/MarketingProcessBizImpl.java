@@ -7,12 +7,14 @@ import com.gofobao.framework.asset.service.RechargeDetailLogService;
 import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
+import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.marketing.biz.MarketingProcessBiz;
 import com.gofobao.framework.marketing.constans.MarketingTypeContants;
 import com.gofobao.framework.marketing.entity.*;
 import com.gofobao.framework.marketing.service.*;
+import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
@@ -159,7 +161,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         if (1 == parentState) {
             if (user.getParentId() == 0) {
                 log.error("红包派发: 当前用户父类为空");
-                throw new Exception("红包派发: 当前用户父类为空");
+                return;
             }
             opUser = userService.findById(new Long(user.getParentId()));
             Preconditions.checkNotNull(opUser, "MarketingProcessBizImpl.publishRedPack rule is null");
@@ -336,6 +338,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             log.error("红包被重复派发");
         } else {
             marketingRedpackRecordService.save(marketingRedpackRecord);
+            log.info("红包派发成功");
         }
     }
 
@@ -401,7 +404,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
 
                     Tender tender = tenderService.findById(Long.parseLong(marketingData.getSourceId()));
                     Preconditions.checkNotNull(tender, "MarketingProcessBizImpl.filterDataByCondition tender is null");
-                    if (tender.getState() .intValue()!= 1) {
+                    if (tender.getState().intValue() != 1) {
                         iterator.remove();
                         continue;
                     }
@@ -479,6 +482,8 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
      * @param marketingData
      */
     private void filterDataByDimension(List<Marketing> marketings, MarketingData marketingData) throws Exception {
+        Gson gson = new Gson();
+        String marketingDataStr = gson.toJson(marketingData);
         List<Long> marketingidList = marketings.stream().map(marketing -> marketing.getId()).collect(Collectors.toList());
         List<MarketingDimentsion> marketingDimentsionList = marketingDimentsionService.findBymarketingIdInAndDel(marketingidList, 0);
         Preconditions.checkNotNull(marketingDimentsionList, "MarketingProcessBizImpl.filterDataByDimension marketingDimentsionList is null ");
@@ -486,6 +491,9 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                 .stream()
                 .collect(Collectors.toMap(MarketingDimentsion::getMarketingId, Function.identity()));
 
+        //===============================
+        // 屏蔽冻结用户
+        //===============================
         Users user = null;
         try {
             user = userService.findUserByUserId(Long.parseLong(marketingData.getUserId()));
@@ -501,21 +509,24 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
             Marketing marketing = iterator.next();
             MarketingDimentsion marketingDimentsion = dimentsionMap.get(marketing.getId());
             Preconditions.checkNotNull(marketingDimentsion, "MarketingProcessBizImpl.filterDataByDimension marketingDimentsion is null");
-            boolean channelState = verifyRegisterChannel(marketingDimentsion, user);  // 验证用户注册渠道
+            //============================
+            //校验用户渠道问题
+            //============================
+            boolean channelState = verifyRegisterChannel(marketingDimentsion, user);
             if (!channelState) {
-                log.info("促销活动: 渠道用户验证不通过");
+                log.info(String.format("促销活动: 渠道用户验证不通过: %s", marketingDataStr));
                 iterator.remove();
                 continue;
             }
 
             boolean verifyParentState = verifyUserParent(marketingDimentsion, user);  // 验证是否被邀请
             if (!verifyParentState) {
-                log.info("促销活动: 当前用户不属于邀请用户");
+                log.info(String.format("促销活动: 当前用户不属于邀请用户, %s", marketingDataStr));
                 iterator.remove();
                 continue;
             }
 
-            boolean verifyUserNewState = verifyMemberType(marketingDimentsion, user);  // 验证是否为新用户
+            boolean verifyUserNewState = verifyMemberType(marketingDimentsion, user, marketingData);  // 验证是否为新用户
             if (!verifyUserNewState) {
                 log.info("促销活动: 用户类型不符合");
                 iterator.remove();
@@ -659,7 +670,8 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         if (StringUtils.isEmpty(borrowType)) {
             return true;
         }
-        Tender tender = tenderService.findById(Long.parseLong(marketingData.getSourceId()));
+        long tenderId = Long.parseLong(marketingData.getSourceId());
+        Tender tender = tenderService.findById(tenderId);
         Preconditions.checkNotNull(tender, "MarketingProcessBizImpl.verifyBorrowType: tender not found");
         Borrow borrow = borrowService.findById(tender.getBorrowId());
         Preconditions.checkNotNull(borrow, "MarketingProcessBizImpl.verifyBorrowType: borrow not found");
@@ -669,7 +681,8 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
 
         String[] borrowTypeArr = borrowType.split(",");
         for (String item : borrowTypeArr) {
-            if (Integer.parseInt(item) == borrow.getType()) {
+            int setType = Integer.parseInt(item);
+            if ( setType  == borrow.getType().intValue()) {
                 return true;
             }
         }
@@ -691,16 +704,15 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         if (StringUtils.isEmpty(platform)) {
             return true;
         }
-
         String[] platformArr = platform.split(",");
-        Long tenderId = Long.parseLong(marketingData.getSourceId());
+        long tenderId = Long.parseLong(marketingData.getSourceId());
         Tender tender = tenderService.findById(tenderId);
         if (tender.getIsAuto()) { // 自动投标
             return true;
         }
 
         for (String item : platformArr) {
-            Integer source = tender.getSource();
+            int source = tender.getSource();
             int i = Integer.parseInt(item);
             if ((!ObjectUtils.isEmpty(source)) && (i == source)) {
                 return true;
@@ -746,27 +758,53 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
      *
      * @param marketingDimentsion
      * @param user
+     * @param marketingData
      * @return
      */
-    private boolean verifyMemberType(MarketingDimentsion marketingDimentsion, Users user) {
+    private boolean verifyMemberType(MarketingDimentsion marketingDimentsion, Users user, MarketingData marketingData) {
         if (marketingDimentsion.getMemberType() == 0) {
             return true;
         }
-        String sqlStr = "SELECT t.* FROM gfb_borrow_tender  t  INNER JOIN gfb_borrow b ON b.id=t.borrow_id WHERE t.status=:status AND  t.user_id=:userId AND (b.type=:type1 or b.type=:type2)";
-        Query query = entityManager.createNativeQuery(sqlStr,Tender.class);
-        query.setParameter("status", TenderConstans.SUCCESS);
-        query.setParameter("userId",user.getId());
-        query.setParameter("type1", BorrowContants.CE_DAI);
-        query.setParameter("type2", BorrowContants.INDEX_TYPE_QU_DAO);
-        List<Tender> tenders = query.getResultList();
 
-        if(marketingDimentsion.getMemberType().intValue()==2){  //老用户
-            return  tenders.size()>1?true:false;
+        String marketingType = marketingData.getMarketingType();
+        boolean isNovice = true;
+        if (MarketingTypeContants.TENDER.equals(marketingType)) {  // 投标验证新用户
+            try {
+                String sourceId = marketingData.getSourceId();
+                long tenderId = Long.parseLong(sourceId);
+                Tender tender = tenderService.findById(tenderId);
+                String sqlStr = "SELECT  bt.*" +
+                        "  FROM `gfb_borrow_tender` bt" +
+                        "  INNER JOIN `gfb_borrow` b ON bt.`borrow_id`= b.`id`" +
+                        " WHERE bt.`status`= 1" +
+                        "   AND(b.`type`= 0" +
+                        "    OR b.`type`= 4)" +
+                        "   AND bt.`user_id`= :userId" +
+                        "   AND bt.`borrow_id`  <>  :borrowId" +
+                        "   AND bt.`created_at` < :createDate " +
+                        "LIMIT 0, 1";
 
-        }else{  //新用户
-            return  tenders.size()<2?true:false;
+                Query query = entityManager.createNativeQuery(sqlStr, Tender.class);
+                query.setParameter("userId", tender.getUserId());
+                query.setParameter("borrowId", tender.getBorrowId());
+                query.setParameter("createDate", DateHelper.dateToString(tender.getCreatedAt()));
+                List<Tender> tenders = query.getResultList();
+                if (!CollectionUtils.isEmpty(tenders)) {
+                    isNovice = false;
+                }
+            } catch (NumberFormatException e) {
+                log.error("查询新手用户异常", e);
+            }
+        } else {
+            UserCache userCache = userCacheService.findById(user.getId());
+            isNovice = userCache.isNovice();
         }
 
+        if (marketingDimentsion.getMemberType().intValue() == 2) {  //老用户
+            return !isNovice;
+        } else {  //新用户
+            return isNovice;
+        }
     }
 
     /**
@@ -809,15 +847,21 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
         String channelType = marketingDimentsion.getChannelType();
         if (!StringUtils.isEmpty(channelType)) {
             String[] channelArr = channelType.split(",");
-            Integer source = user.getSource();
+            int source = user.getSource();
             for (String channel : channelArr) {
-                if (Integer.parseInt(channel) == source) {
+                int setChannel = 0;
+                try {
+                    setChannel = Integer.parseInt(channel);
+                } catch (Exception e) {
+                    log.error("验证用户渠道错误", e);
+                    continue;
+                }
+                if (setChannel == source) {
                     return true;
                 }
             }
             return false;
         }
-
         return true;
     }
 

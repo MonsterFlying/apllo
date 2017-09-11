@@ -1,5 +1,6 @@
 package com.gofobao.framework.tender.vo.request;
 
+import com.gofobao.framework.common.qiniu.util.StringUtils;
 import com.gofobao.framework.core.vo.VoBaseReq;
 import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.MoneyHelper;
@@ -18,7 +19,7 @@ public class VoCreateTenderReq extends VoBaseReq {
     @ApiModelProperty(name = "userId", hidden = true)
     private Long userId;
 
-    @ApiModelProperty(name = "tenderMoney", value = "投标金额", dataType = "double",required = true)
+    @ApiModelProperty(name = "tenderMoney", value = "投标金额", dataType = "double", required = true)
     @NotNull(message = "投标金额不能为空!")
     private Double tenderMoney;
 
@@ -42,7 +43,7 @@ public class VoCreateTenderReq extends VoBaseReq {
     private Boolean isAutoTender = false;
 
     @ApiModelProperty(hidden = true)
-    private String requestSource;
+    private String requestSource = "0";
 
 
     public Double getTenderMoney() {
@@ -53,5 +54,25 @@ public class VoCreateTenderReq extends VoBaseReq {
         this.tenderMoney = MoneyHelper.round(tenderMoney * 100.0, 0);
     }
 
+    public String getRequestSource() {
+        if (StringUtils.isNullOrEmpty(this.requestSource)) {
+            return "0";
+        } else {
+            return this.requestSource;
+        }
+    }
 
+    public void setRequestSource(String requestSource) {
+        if (StringUtils.isNullOrEmpty(requestSource)) {
+            this.requestSource = "0";
+        } else {
+            try {
+                Long.parseLong(requestSource);
+            } catch (Exception e) {
+                requestSource = "0";
+            }
+            this.requestSource = requestSource;
+
+        }
+    }
 }

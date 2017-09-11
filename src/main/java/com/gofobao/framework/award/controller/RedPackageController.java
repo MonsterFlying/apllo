@@ -1,12 +1,15 @@
 package com.gofobao.framework.award.controller;
 
+import com.gofobao.framework.asset.vo.response.VoPreRechargeResp;
 import com.gofobao.framework.award.biz.RedPackageBiz;
 import com.gofobao.framework.award.vo.request.VoOpenRedPackageReq;
 import com.gofobao.framework.award.vo.request.VoRedPackageReq;
 import com.gofobao.framework.award.vo.response.VoViewOpenRedPackageWarpRes;
 import com.gofobao.framework.award.vo.response.VoViewRedPackageWarpRes;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
+import com.gofobao.framework.tender.vo.request.VoPublishRedReq;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,5 +65,18 @@ public class RedPackageController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统异常, 请稍后重试!", VoViewOpenRedPackageWarpRes.class));
         }
+    }
+
+    @ApiOperation("重新触发派发红包")
+    @PostMapping("pub/publishActivity/red")
+    public ResponseEntity<VoBaseResp> publishActivity(@ModelAttribute VoPublishRedReq voPublishRedReq) {
+        String paramStr = voPublishRedReq.getParamStr();
+        if (!SecurityHelper.checkSign(voPublishRedReq.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "派发红包, 签名验证不通过!"));
+        }
+
+        return redPackageBiz.publishActivity(voPublishRedReq) ;
     }
 }

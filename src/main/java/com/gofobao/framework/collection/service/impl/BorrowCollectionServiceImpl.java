@@ -68,33 +68,33 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
      */
     @Override
     public List<BorrowCollection> orderList(VoCollectionOrderReq voCollectionOrderReq) {
-        Date date = DateHelper.stringToDate(voCollectionOrderReq.getTime(), DateHelper.DATE_FORMAT_YMD);
-     /*   Specification<BorrowCollection> specification = Specifications.<BorrowCollection>and()
-                .between("collectionAt", new Range<>(DateHelper.beginOfDate(date), DateHelper.endOfDate(date)))
-                .eq("userId", voCollectionOrderReq.getUserId())
-                .eq("transferFlag", BorrowCollectionContants.TRANSFER_FLAG_NO)
-                .ne("borrowId", null)
-                .build();*/
-        String sql = "SELECT b.id ,b.borrow_id ,b.`order`,b.collection_money  ,b.collection_money_yes ,b.status FROM gfb_borrow_collection b " +
-                "WHERE " +
-                "b.user_id= " + voCollectionOrderReq.getUserId() +
-                " AND " +
-                "(b.collection_at >= '" + DateHelper.dateToString(DateHelper.beginOfDate(date)) + "' AND  b.collection_at <='" + DateHelper.dateToString(DateHelper.endOfDate(date)) + "' ) " +
-                "AND b.borrow_id IS NOT NULL";
-        Query query = entityManager.createNativeQuery(sql);
-        List<Object[]> resultList = query.getResultList();
-        List<BorrowCollection> borrowCollections = new ArrayList<>(resultList.size());
-        if (CollectionUtils.isEmpty(borrowCollections)) {
-            resultList.forEach(p -> {
-                BorrowCollection borrowCollection = new BorrowCollection();
-                borrowCollection.setId(Long.valueOf(p[0].toString()));
-                borrowCollection.setBorrowId(Long.valueOf(p[1].toString()));
-                borrowCollection.setOrder(Integer.valueOf(p[2].toString()));
-                borrowCollection.setCollectionMoney(NumberHelper.toLong(p[3].toString()));
-                borrowCollection.setCollectionMoneyYes(NumberHelper.toLong(p[4].toString()));
-                borrowCollection.setStatus(Integer.valueOf(p[5].toString()));
-                borrowCollections.add(borrowCollection);
-            });
+        List<BorrowCollection> borrowCollections = new ArrayList<>(0);
+        try {
+            Date date = DateHelper.stringToDate(voCollectionOrderReq.getTime(), DateHelper.DATE_FORMAT_YMD);
+            String sql = "SELECT b.id ,b.borrow_id ,b.`order`,b.collection_money  ,b.collection_money_yes ,b.status FROM gfb_borrow_collection b " +
+                    "WHERE " +
+                    "b.user_id= " + voCollectionOrderReq.getUserId() +
+                    " AND " +
+                    "(b.collection_at >= '" + DateHelper.dateToString(DateHelper.beginOfDate(date)) + "' AND  b.collection_at <='" + DateHelper.dateToString(DateHelper.endOfDate(date)) + "' ) " +
+                    "AND b.borrow_id IS NOT NULL";
+            Query query = entityManager.createNativeQuery(sql);
+            List<Object[]> resultList = query.getResultList();
+            borrowCollections = new ArrayList<>(resultList.size());
+            if (CollectionUtils.isEmpty(borrowCollections)) {
+                List<BorrowCollection> finalBorrowCollections = borrowCollections;
+                resultList.forEach(p -> {
+                    BorrowCollection borrowCollection = new BorrowCollection();
+                    borrowCollection.setId(Long.valueOf(p[0].toString()));
+                    borrowCollection.setBorrowId(Long.valueOf(p[1].toString()));
+                    borrowCollection.setOrder(Integer.valueOf(p[2].toString()));
+                    borrowCollection.setCollectionMoney(NumberHelper.toLong(p[3].toString()));
+                    borrowCollection.setCollectionMoneyYes(NumberHelper.toLong(p[4].toString()));
+                    borrowCollection.setStatus(Integer.valueOf(p[5].toString()));
+                    finalBorrowCollections.add(borrowCollection);
+                });
+            }
+        } catch (Exception e) {
+
         }
         return Optional.ofNullable(borrowCollections).orElse(Collections.EMPTY_LIST);
     }
@@ -250,12 +250,12 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         detailRes.setOrder(borrowCollection.getOrder() + 1);
         detailRes.setCollectionMoney(StringHelper.formatMon(borrowCollection.getCollectionMoney() / 100D));
         Integer lateDays = 0;
-        Date collectionAt=DateHelper.nextDate(borrowCollection.getCollectionAt());  //回款日
-        Date nowDate=new Date();
-        if(borrowCollection.getStatus()==BorrowCollectionContants.STATUS_YES||nowDate.getTime()<collectionAt.getTime() ){
-            lateDays=borrowCollection.getLateDays();
-        }else if(nowDate.getTime()>collectionAt.getTime()&&borrowCollection.getStatus()==BorrowCollectionContants.STATUS_NO){
-            lateDays=DateHelper.diffInDays(nowDate,collectionAt,false);
+        Date collectionAt = DateHelper.nextDate(borrowCollection.getCollectionAt());  //回款日
+        Date nowDate = new Date();
+        if (borrowCollection.getStatus() == BorrowCollectionContants.STATUS_YES || nowDate.getTime() < collectionAt.getTime()) {
+            lateDays = borrowCollection.getLateDays();
+        } else if (nowDate.getTime() > collectionAt.getTime() && borrowCollection.getStatus() == BorrowCollectionContants.STATUS_NO) {
+            lateDays = DateHelper.diffInDays(nowDate, collectionAt, false);
         }
         detailRes.setLateDays(lateDays);
         detailRes.setBorrowName(borrow.getName());
@@ -305,11 +305,11 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         return !CollectionUtils.isEmpty(borrowCollectionRepository.save(borrowCollectionList));
     }
 
-    public BorrowCollection save(BorrowCollection borrowCollection) throws Exception{
+    public BorrowCollection save(BorrowCollection borrowCollection) throws Exception {
         try {
             return borrowCollectionRepository.save(borrowCollection);
         } catch (Exception e) {
-            log.error("生成还款记录失败:collection->"+gson.toJson(borrowCollection));
+            log.error("生成还款记录失败:collection->" + gson.toJson(borrowCollection));
             throw new Exception(e);
         }
     }
