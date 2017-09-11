@@ -88,7 +88,6 @@ public class UserBonusScheduler {
                     }
 
                     bounsAward = NumberHelper.toInt(NumberHelper.toInt(map.get("wait_principal_total")) * awardApr / 365);
-
                     if (bounsAward <= 1) {
                         continue;
                     }
@@ -143,8 +142,9 @@ public class UserBonusScheduler {
                     brokerBouns.setLevel(level);
                     brokerBouns.setCreatedAt(new Date());
                     brokerBouns.setAwardApr((int) MathHelper.myRound(awardApr * 10000, 0));
+                    brokerBouns.setAwardApr(new Double(MoneyHelper.round(awardApr * 100, 0)).intValue());
                     brokerBouns.setWaitPrincipalTotal(NumberHelper.toLong(map.get("wait_principal_total")));
-                    brokerBouns.setBounsAward((int) MathHelper.myRound(bounsAward, 0));
+                    brokerBouns.setBounsAward(new Double(MoneyHelper.round(bounsAward, 0)).intValue());
                     brokerBounsService.save(brokerBouns);
                 }
                 pageIndex++;
@@ -180,7 +180,7 @@ public class UserBonusScheduler {
                 resultList = jdbcTemplate.queryForList(sql.toString());
 
                 for (Map<String, Object> map : resultList) {
-                    money = (int) MathHelper.myRound(NumberHelper.toInt(map.get("sum")) / 100 * 0.005 / 365, 0);
+                    money = (int) MoneyHelper.round(NumberHelper.toInt(map.get("sum")) / 100 * 0.005 / 365, 0);
                     Long userId = NumberHelper.toLong(map.get("userId"));
                     UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(redId);
 
@@ -267,13 +267,13 @@ public class UserBonusScheduler {
                 for (Map<String, Object> map : resultList) {
                     sum = NumberHelper.toInt(map.get("sum"));
                     if (sum < Math.pow(10, 9)) {
-                        money = (int) MathHelper.myRound(sum / 100 * 0.0002, 0);
+                        money = (int) MoneyHelper.round(sum / 100 * 0.0002, 0);
                     } else if (sum > Math.pow(10, 9) && sum <= 5 * Math.pow(10, 9)) {
-                        money = 200 + (int) MathHelper.myRound((sum - Math.pow(10, 9)) / 100 * .0003, 0);
+                        money = 200 + (int) MoneyHelper.round((sum - Math.pow(10, 9)) / 100 * .0003, 0);
                     } else if (sum > 5 * Math.pow(10, 9) && sum <= Math.pow(10, 10)) {
-                        money = 1400 + (int) MathHelper.myRound((sum - 5 * Math.pow(10, 9)) / 100 * .0004, 0);
+                        money = 1400 + (int) MoneyHelper.round((sum - 5 * Math.pow(10, 9)) / 100 * .0004, 0);
                     } else {
-                        money = 3400 + (int) MathHelper.myRound((sum - Math.pow(10, 10)) / 100 * .0005, 0);
+                        money = 3400 + (int) MoneyHelper.round((sum - Math.pow(10, 10)) / 100 * .0005, 0);
                     }
 
 

@@ -5,6 +5,7 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.MathHelper;
+import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.tender.biz.TenderBiz;
@@ -58,11 +59,14 @@ public class TenderProvider {
         List<Map<String, Object>> autoTenderList = null;
         long moneyYes = borrow.getMoneyYes();
 
-        int num = 0;
         int pageIndex = 0;
         int maxSize = 50;
         int autoTenderCount = 0; // 中标item
+        Set<Long> tenderUserIds = new HashSet<>();
+        Set<Long> autoTenderIds = new HashSet<>();
         boolean isFull = false;//是否满标
+        long borrowMoney = borrow.getMoney(); // 借款金额（分）
+        Integer mostAuto = borrow.getMostAuto();
         do {
             voFindAutoTenderList.setStatus("1");
             voFindAutoTenderList.setNotUserId(borrow.getUserId());
@@ -87,10 +91,6 @@ public class TenderProvider {
             long money = 0;
             long lowest = 0;
             long useMoney = 0;
-            long borrowMoney = borrow.getMoney(); // 借款金额（分）
-            Integer mostAuto = borrow.getMostAuto();
-            Set<Long> tenderUserIds = new HashSet<>();
-            Set<Long> autoTenderIds = new HashSet<>();
             AutoTender autoTender = null;
 
             while (itAutoTender.hasNext()) { // 将合格的自动投标  放入消息队列
@@ -126,7 +126,7 @@ public class TenderProvider {
                 VoCreateTenderReq voCreateBorrowTender = new VoCreateTenderReq();
                 voCreateBorrowTender.setBorrowId(borrowId); // 标的
                 voCreateBorrowTender.setUserId(NumberHelper.toLong(voFindAutoTender.get("userId"))); // 投标用户
-                voCreateBorrowTender.setTenderMoney(MathHelper.myRound(money / 100.0, 2));  // 投标金额
+                voCreateBorrowTender.setTenderMoney(MoneyHelper.round(MoneyHelper.divide(money, 100d), 2));  // 投标金额
                 voCreateBorrowTender.setAutoOrder(NumberHelper.toInt(voFindAutoTender.get("order")));
                 voCreateBorrowTender.setIsAutoTender(true);//自动标识
                 voCreateBorrowTender.setRequestSource("0"); //自动投标
@@ -147,7 +147,7 @@ public class TenderProvider {
                     }
                 }
             }
-        } while (num < maxSize && !isFull);
+        } while (autoTenderList.size() >= maxSize && !isFull);
 
         if (autoTenderCount >= 1) {
             autoTenderService.updateAutoTenderOrder();

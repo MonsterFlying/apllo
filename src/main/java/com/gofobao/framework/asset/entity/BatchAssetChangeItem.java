@@ -25,7 +25,7 @@ public class BatchAssetChangeItem {
     private Long batchAssetChangeId;
     private Integer state;
     private Long userId;
-    private Long toUserId;
+    private Long forUserId;
     private Long money;
     private Long principal;
     private Long interest ;

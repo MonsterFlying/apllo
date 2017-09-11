@@ -205,7 +205,7 @@ public class BorrowServiceImpl implements BorrowService {
             Integer status = m.getStatus();
             Date nowDate = new Date(System.currentTimeMillis());
             Date releaseAt = m.getReleaseAt();  //发布时间
-            double spend = NumberHelper.floorDouble((m.getMoneyYes().doubleValue() / m.getMoney() * 100),2);
+            double spend = NumberHelper.floorDouble((m.getMoneyYes().doubleValue() / m.getMoney() * 100), 2);
 
             if (status == BorrowContants.BIDDING) {//招标中
                 Integer validDay = m.getValidDay();
@@ -252,7 +252,7 @@ public class BorrowServiceImpl implements BorrowService {
             item.setIsConversion(m.getIsConversion());
             item.setIsVouch(m.getIsVouch());
             item.setTenderCount(m.getTenderCount());
-            item.setAvatar(StringUtils.isEmpty(user.getAvatarPath())?imageDomain+"/images/user/default_avatar.jpg":user.getAvatarPath());
+            item.setAvatar(StringUtils.isEmpty(user.getAvatarPath()) ? imageDomain + "/images/user/default_avatar.jpg" : user.getAvatarPath());
             listResList.add(item);
         });
 
@@ -473,18 +473,18 @@ public class BorrowServiceImpl implements BorrowService {
                 tempTenderMap.put("username", UserHelper.hideChar(StringUtils.isEmpty(usersTemp.getUsername()) ? usersTemp.getPhone() : usersTemp.getUsername(), USERNAME_NUM));
                 borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(tempTenderMap.get("validMoney")), new Double(borrow.getApr()), borrow.getTimeLimit(), null);
                 calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
-                calculatorMap.put("earnings", StringHelper.formatMon(Double.parseDouble(calculatorMap.get("earnings").toString()) / 100D));
-                calculatorMap.put("eachRepay", StringHelper.formatMon(Double.parseDouble(calculatorMap.get("eachRepay").toString()) / 100D));
-                calculatorMap.put("repayTotal", StringHelper.formatMon(Double.parseDouble(calculatorMap.get("repayTotal").toString()) / 100D));
+                calculatorMap.put("earnings", StringHelper.formatMon(MoneyHelper.divide(Double.parseDouble(calculatorMap.get("earnings").toString()), 100D)));
+                calculatorMap.put("eachRepay", StringHelper.formatMon(MoneyHelper.divide(Double.parseDouble(calculatorMap.get("eachRepay").toString()), 100D)));
+                calculatorMap.put("repayTotal", StringHelper.formatMon(MoneyHelper.divide(Double.parseDouble(calculatorMap.get("repayTotal").toString()), 100D)));
                 calculatorMap.put("repayDetailList", calculatorMap.get("repayDetailList"));
                 tempTenderMap.put("calculatorMap", calculatorMap);
-                tempTenderMap.put("validMoney", StringHelper.formatMon(Double.valueOf(tempTenderMap.get("validMoney").toString()) / 100D));
+                tempTenderMap.put("validMoney", StringHelper.formatMon(MoneyHelper.divide(Double.valueOf(tempTenderMap.get("validMoney").toString()), 100D)));
 
             }
         } else {
-            calculatorMap.put("earnings", StringHelper.formatMon(Double.parseDouble(calculatorMap.get("earnings").toString()) / 100D));
-            calculatorMap.put("eachRepay", StringHelper.formatMon(Double.parseDouble(calculatorMap.get("eachRepay").toString()) / 100D));
-            calculatorMap.put("repayTotal", StringHelper.formatMon(Double.parseDouble(calculatorMap.get("repayTotal").toString()) / 100D));
+            calculatorMap.put("earnings", StringHelper.formatMon(MoneyHelper.divide(Double.parseDouble(calculatorMap.get("earnings").toString()), 100D)));
+            calculatorMap.put("eachRepay", StringHelper.formatMon(MoneyHelper.divide(Double.parseDouble(calculatorMap.get("eachRepay").toString()), 100D)));
+            calculatorMap.put("repayTotal", StringHelper.formatMon(MoneyHelper.divide(Double.parseDouble(calculatorMap.get("repayTotal").toString()), 100D)));
         }
 
         //使用thymeleaf模版引擎渲染 借款合同html

@@ -23,6 +23,7 @@ import com.gofobao.framework.common.jxl.ExcelUtil;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MathHelper;
+import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
@@ -283,7 +284,7 @@ public class PaymentBizImpl implements PaymentBiz {
                     collectionDetail.setPrincipal(StringHelper.formatDouble(borrowCollection.getPrincipal(), 100, false));
                     long money = borrowCollection.getInterest();
                     if (borrow.getType() == 0 || borrow.getType() == 4) {
-                        money -= (int) MathHelper.myRound(borrowCollection.getInterest() * 0.9, 0);
+                        money -= new Double(MoneyHelper.round(borrowCollection.getInterest() * 0.9, 0)).longValue();
                     }
                     collectionDetail.setEarnings(StringHelper.formatDouble(money, 100, false));
                     collectionDetail.setInterest(StringHelper.formatDouble(borrowCollection.getInterest(), 100, false));

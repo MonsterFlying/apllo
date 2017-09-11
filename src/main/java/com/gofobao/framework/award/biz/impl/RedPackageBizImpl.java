@@ -1,5 +1,6 @@
 package com.gofobao.framework.award.biz.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.DesLineFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
@@ -11,6 +12,7 @@ import com.gofobao.framework.api.model.voucher_pay_cancel.VoucherPayCancelReques
 import com.gofobao.framework.api.model.voucher_pay_cancel.VoucherPayCancelResponse;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.asset.vo.response.VoPreRechargeResp;
 import com.gofobao.framework.award.biz.RedPackageBiz;
 import com.gofobao.framework.award.repository.RedPackageLogRepository;
 import com.gofobao.framework.award.repository.RedPackageRepository;
@@ -20,6 +22,8 @@ import com.gofobao.framework.award.vo.request.VoRedPackageReq;
 import com.gofobao.framework.award.vo.response.RedPackageRes;
 import com.gofobao.framework.award.vo.response.VoViewOpenRedPackageWarpRes;
 import com.gofobao.framework.award.vo.response.VoViewRedPackageWarpRes;
+import com.gofobao.framework.borrow.entity.Borrow;
+import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
@@ -32,6 +36,9 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.project.SecurityHelper;
+import com.gofobao.framework.marketing.constans.MarketingTypeContants;
+import com.gofobao.framework.marketing.entity.MarketingData;
 import com.gofobao.framework.marketing.entity.MarketingRedpackRecord;
 import com.gofobao.framework.marketing.service.MarketingRedpackRecordService;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -41,16 +48,26 @@ import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
+import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.service.TenderService;
+import com.gofobao.framework.tender.vo.request.VoPublishRedReq;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Range;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -63,27 +80,13 @@ import static com.gofobao.framework.listener.providers.NoticesMessageProvider.GS
 @Slf4j
 @Service
 public class RedPackageBizImpl implements RedPackageBiz {
+    @Autowired
+    MqHelper mqHelper;
 
     @Autowired
-    private RedPackageService redPackageService;
+    UserThirdAccountService userThirdAccountService;
 
-    @Autowired
-    private RedPackageLogRepository redPackageLogRepository;
 
-    @Autowired
-    private RedPackageRepository redPackageRepository;
-
-    @Autowired
-    private MqHelper mqHelper;
-
-    @Autowired
-    private UserThirdAccountService userThirdAccountService;
-
-    @Autowired
-    private DictItemService dictItemService;
-
-    @Autowired
-    private DictValueService dictValueService;
 
     @Autowired
     AssetChangeProvider assetChangeProvider;
@@ -92,13 +95,19 @@ public class RedPackageBizImpl implements RedPackageBiz {
     MarketingRedpackRecordService marketingRedpackRecordService;
 
     @Autowired
-    private JixinManager jixinManager;
+    JixinManager jixinManager;
 
     @Autowired
     UserService userService;
 
     @Autowired
-    AssetService assetService ;
+    AssetService assetService;
+
+    @Autowired
+    BorrowService borrowService;
+
+    @Autowired
+    TenderService tenderService;
 
     @Override
     public ResponseEntity<VoViewRedPackageWarpRes> list(VoRedPackageReq voRedPackageReq) {
@@ -173,7 +182,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
             long redId = assetChangeProvider.getRedpackAccountId();
             Asset redPackage = assetService.findByUserIdLock(redId);
             Long sendRedpackMoney = marketingRedpackRecord.getMoney();
-            if(redPackage.getUseMoney() - sendRedpackMoney < 0){
+            if (redPackage.getUseMoney() - sendRedpackMoney < 0) {
                 return ResponseEntity
                         .badRequest()
                         .body(VoViewOpenRedPackageWarpRes.error(VoViewOpenRedPackageWarpRes.ERROR, "平台派发红包余额不足, 麻烦联系我们客服充钱, 请稍后重试!", VoViewOpenRedPackageWarpRes.class));
@@ -201,29 +210,33 @@ public class RedPackageBizImpl implements RedPackageBiz {
             marketingRedpackRecord.setState(1);
             marketingRedpackRecordService.save(marketingRedpackRecord);
 
-            // 红包账户发送红包
-            AssetChange redpackPublish = new AssetChange();
-            redpackPublish.setMoney(marketingRedpackRecord.getMoney());
-            redpackPublish.setType(AssetChangeTypeEnum.publishRedpack);  //  扣除红包
-            redpackPublish.setUserId(redId);
-            redpackPublish.setRemark(String.format("派发奖励红包 %s元", StringHelper.formatDouble(marketingRedpackRecord.getMoney() / 100D, true)));
-            redpackPublish.setGroupSeqNo(groupSeqNo);
-            redpackPublish.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
-            redpackPublish.setForUserId(marketingRedpackRecord.getUserId());
-            redpackPublish.setSourceId(marketingRedpackRecord.getId());
-            assetChangeProvider.commonAssetChange(redpackPublish);
+            try {
+                // 红包账户发送红包
+                AssetChange redpackPublish = new AssetChange();
+                redpackPublish.setMoney(marketingRedpackRecord.getMoney());
+                redpackPublish.setType(AssetChangeTypeEnum.publishRedpack);  //  扣除红包
+                redpackPublish.setUserId(redId);
+                redpackPublish.setRemark(String.format("派发奖励红包 %s元", StringHelper.formatDouble(marketingRedpackRecord.getMoney() / 100D, true)));
+                redpackPublish.setGroupSeqNo(groupSeqNo);
+                redpackPublish.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
+                redpackPublish.setForUserId(marketingRedpackRecord.getUserId());
+                redpackPublish.setSourceId(marketingRedpackRecord.getId());
+                assetChangeProvider.commonAssetChange(redpackPublish);
 
-            // 用户接收红包
-            AssetChange redpackR = new AssetChange();
-            redpackR.setMoney(marketingRedpackRecord.getMoney());
-            redpackR.setType(AssetChangeTypeEnum.receiveRedpack);
-            redpackR.setUserId(marketingRedpackRecord.getUserId());
-            redpackR.setRemark(String.format("领取奖励红包 %s元", StringHelper.formatDouble(marketingRedpackRecord.getMoney() / 100D, true)));
-            redpackR.setGroupSeqNo(groupSeqNo);
-            redpackR.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
-            redpackR.setForUserId(redId);
-            redpackR.setSourceId(marketingRedpackRecord.getId());
-            assetChangeProvider.commonAssetChange(redpackR);
+                // 用户接收红包
+                AssetChange redpackR = new AssetChange();
+                redpackR.setMoney(marketingRedpackRecord.getMoney());
+                redpackR.setType(AssetChangeTypeEnum.receiveRedpack);
+                redpackR.setUserId(marketingRedpackRecord.getUserId());
+                redpackR.setRemark(String.format("领取奖励红包 %s元", StringHelper.formatDouble(marketingRedpackRecord.getMoney() / 100D, true)));
+                redpackR.setGroupSeqNo(groupSeqNo);
+                redpackR.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
+                redpackR.setForUserId(redId);
+                redpackR.setSourceId(marketingRedpackRecord.getId());
+                assetChangeProvider.commonAssetChange(redpackR);
+            } catch (Exception e) {
+                log.error("红包开启本地资金变动异常", e);
+            }
 
             //站内信数据装配
             Notices notices = new Notices();
@@ -254,4 +267,111 @@ public class RedPackageBizImpl implements RedPackageBiz {
             throw new Exception(e);
         }
     }
+
+    @Override
+    public ResponseEntity<VoBaseResp> publishActivity(VoPublishRedReq voPublishRedReq) {
+        Date nowDate = new Date();
+        String paramStr = voPublishRedReq.getParamStr();
+        Gson gson = new Gson();
+        Map<String, String> paramMap = new Gson().fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        String beginTime = paramMap.get("beginTime");
+        if (StringUtils.isEmpty(beginTime)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "派发红包, 签名验证不通过!"));
+        }
+
+        Date beginDate = DateHelper.stringToDate(beginTime);
+        Specification<Tender> specification = Specifications
+                .<Tender>and()
+                .eq("status", 1)
+                .between("createdAt", new Range<>(DateHelper.beginOfDate(beginDate), DateHelper.endOfDate(nowDate))).build();
+
+        Long count = tenderService.count(specification);
+        if (count == 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "派发红包, 派发对象为空!"));
+        }
+
+        int pageSize = 100, pageindex = 0, totalPageIndex = 0;
+        totalPageIndex = count.intValue() / pageSize;
+        totalPageIndex = count.intValue() % pageSize == 0 ? totalPageIndex : totalPageIndex + 1;
+
+        // ==================================
+        // 投资派发红包
+        // ==================================
+        for (; pageindex < totalPageIndex; pageindex++) {
+            Pageable pageable = new PageRequest(pageindex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
+            List<Tender> tenderList = tenderService.findList(specification, pageable);
+            if (CollectionUtils.isEmpty(tenderList)) {
+                break;
+            }
+
+            for (Tender tender : tenderList) {
+                log.info(String.format("触发活动: %s", gson.toJson(tender)));
+                MarketingData marketingData = new MarketingData();
+                marketingData.setTransTime(DateHelper.dateToString(tender.getCreatedAt()));
+                marketingData.setUserId(tender.getUserId().toString());
+                marketingData.setSourceId(tender.getId().toString());
+                marketingData.setMarketingType(MarketingTypeContants.TENDER);
+                try {
+                    String json = gson.toJson(marketingData);
+                    Map<String, String> data = gson.fromJson(json, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+                    MqConfig mqConfig = new MqConfig();
+                    mqConfig.setMsg(data);
+                    mqConfig.setTag(MqTagEnum.MARKETING_OPEN_ACCOUNT);
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_MARKETING);
+                    mqHelper.convertAndSend(mqConfig);
+                    log.info(String.format("投资营销节点触发: %s", new Gson().toJson(marketingData)));
+                } catch (Throwable e) {
+                    log.error(String.format("投资营销节点触发异常：%s", new Gson().toJson(marketingData)), e);
+                }
+            }
+        }
+
+        // ===============================
+        // 用户派发红包
+        // ===============================
+        Specification<Users> usersSpecification = Specifications
+                .<Users>and()
+                .gt("parentId", 0)
+                .between("createdAt", new Range<>(DateHelper.beginOfDate(beginDate), DateHelper.endOfDate(nowDate)))
+                .build();
+
+
+        Long userCount = userService.count(usersSpecification);
+        pageindex = 0;
+        totalPageIndex = 0;
+        totalPageIndex = userCount.intValue() / pageSize;
+        totalPageIndex = userCount.intValue() % pageSize == 0 ? totalPageIndex : totalPageIndex + 1;
+
+        for (; pageindex < totalPageIndex; pageindex++) {
+            Pageable pageable = new PageRequest(pageindex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
+            List<Users> userList = userService.findList(usersSpecification, pageable);
+            for (Users users : userList) {
+                log.info(String.format("触发活动: %s", gson.toJson(users)));
+                MarketingData marketingData = new MarketingData();
+                marketingData.setTransTime(DateHelper.dateToString(users.getCreatedAt()));
+                marketingData.setUserId(users.getId().toString());
+                marketingData.setSourceId(users.getId().toString());
+                marketingData.setMarketingType(MarketingTypeContants.OPEN_ACCOUNT);
+                try {
+                    String json = gson.toJson(marketingData);
+                    Map<String, String> data = gson.fromJson(json, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+                    MqConfig mqConfig = new MqConfig();
+                    mqConfig.setMsg(data);
+                    mqConfig.setTag(MqTagEnum.MARKETING_OPEN_ACCOUNT);
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_MARKETING);
+                    mqHelper.convertAndSend(mqConfig);
+                    log.info(String.format("开户营销节点触发: %s", new Gson().toJson(marketingData)));
+                } catch (Throwable e) {
+                    log.error(String.format("开户营销节点触发异常：%s", new Gson().toJson(marketingData)), e);
+                }
+            }
+        }
+        return null;
+    }
+
+
 }

@@ -81,6 +81,7 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -142,7 +143,7 @@ public class TransferBizImpl implements TransferBiz {
     private ThirdBatchLogService thirdBatchLogService;
 
     @Autowired
-    private TransferBuyLogService transferBuyLogService ;
+    private TransferBuyLogService transferBuyLogService;
     @Autowired
     private UsersRepository usersRepository;
 
@@ -427,14 +428,16 @@ public class TransferBizImpl implements TransferBiz {
             log.info(String.format("投标统计: %s", gson.toJson(tender)));
             UserCache userCache = userCacheService.findById(tender.getUserId());
             IncrStatistic incrStatistic = new IncrStatistic();
-            if ((!userCache.getTenderTransfer()) && (!userCache.getTenderTuijian()) && (!userCache.getTenderJingzhi()) && (!userCache.getTenderMiao()) && (!userCache.getTenderQudao())) {
+            if ((!BooleanUtils.toBoolean(userCache.getTenderTransfer())) && (!BooleanUtils.toBoolean(userCache.getTenderTuijian())) &&
+                    (!BooleanUtils.toBoolean(userCache.getTenderJingzhi())) && (!BooleanUtils.toBoolean(userCache.getTenderMiao()))
+                    && (!BooleanUtils.toBoolean(userCache.getTenderQudao()))) {
                 incrStatistic.setTenderCount(1);
                 incrStatistic.setTenderTotal(1);
             }
 
             incrStatistic.setTenderLzCount(1);
             incrStatistic.setTenderLzTotalCount(1);
-            userCache.setTenderTransfer(true);
+            userCache.setTenderTransfer(tender.getBorrowId().intValue());
 
             userCacheService.save(userCache);
             if (!ObjectUtils.isEmpty(incrStatistic)) {
@@ -752,8 +755,8 @@ public class TransferBizImpl implements TransferBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
         }
         long leftMoney = NumberHelper.toLong(verifyTransferMap.get(LEFT_MONEY));
-        long validMoney = (long) MathHelper.min(leftMoney, buyMoney);/* 可购债权金额  */
-        long alreadyInterest = validMoney / transfer.getTransferMoney() * transfer.getAlreadyInterest();/* 应付给债权转让人的当期应计利息 */
+        long validMoney = new Double(MathHelper.min(leftMoney, buyMoney)).longValue();/* 可购债权金额  */
+        long alreadyInterest = new Double(MoneyHelper.multiply(MoneyHelper.divide(validMoney, transfer.getTransferMoney()), transfer.getAlreadyInterest())).longValue();/* 应付给债权转让人的当期应计利息 */
 
         // 验证购买人账户
         ImmutableMap<String, Object> verifyBuyTransferUserMap = verifyBuyTransferUser(buyUserThirdAccount, asset, validMoney);
@@ -894,7 +897,7 @@ public class TransferBizImpl implements TransferBiz {
             msg = "当前网络不稳定,请稍后重试!";
         }
 
-        double availBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0, 2);// 可用余额  账面余额-可用余额=冻结金额
+        double availBal = MoneyHelper.round(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0, 2);// 可用余额  账面余额-可用余额=冻结金额
         if (asset.getUseMoney() > availBal) {
             msg = "资金账户未同步，请先在个人中心进行资金同步操作!";
         }
@@ -1425,7 +1428,7 @@ public class TransferBizImpl implements TransferBiz {
                 //已完成
                 voViewBorrowList.setStatus(4);
             }
-            double spend = NumberHelper.floorDouble((item.getTransferMoneyYes().doubleValue() / item.getTransferMoney()),2);
+            double spend = NumberHelper.floorDouble((item.getTransferMoneyYes().doubleValue() / item.getTransferMoney()), 2);
             voViewBorrowList.setSpend(spend);
             Users user = userRef.get(item.getUserId());
             voViewBorrowList.setUserName(!StringUtils.isEmpty(user.getUsername()) ? user.getUsername() : user.getPhone());
@@ -1510,9 +1513,9 @@ public class TransferBizImpl implements TransferBiz {
             item.setTimeLimit(transfer.getTimeLimit() + BorrowContants.MONTH);
             item.setTenderCount(transfer.getTenderCount());
             item.setUserName(StringUtils.isEmpty(users.getUsername()) ? UserHelper.hideChar(users.getPhone(), UserHelper.PHONE_NUM) : UserHelper.hideChar(users.getUsername(), UserHelper.USERNAME_NUM));
-            item.setAvatar(StringUtils.isEmpty(users.getAvatarPath())?imageDomain+"/images/user/default_avatar.jpg":users.getAvatarPath());
+            item.setAvatar(StringUtils.isEmpty(users.getAvatarPath()) ? imageDomain + "/images/user/default_avatar.jpg" : users.getAvatarPath());
             item.setType(5);
-            double spend = NumberHelper.floorDouble((transfer.getTransferMoneyYes().doubleValue() / transfer.getTransferMoney() * 100),2);
+            double spend = NumberHelper.floorDouble((transfer.getTransferMoneyYes().doubleValue() / transfer.getTransferMoney()), 2);
             item.setSpend(spend);
             //1.待发布 2.还款中 3.招标中 4.已完成 5.已过期 6.待复审
             //进度
@@ -1593,20 +1596,21 @@ public class TransferBizImpl implements TransferBiz {
         Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
         Integer earnings = NumberHelper.toInt(calculatorMap.get("earnings"));
         borrowInfoRes.setEarnings(StringHelper.formatMon(earnings / 100d) + MoneyConstans.RMB);
-        if(transfer.getTenderCount() == 0){
+        if (transfer.getTenderCount() == 0) {
             Specification<TransferBuyLog> transferBuyLogSpecification = Specifications
                     .<TransferBuyLog>and()
                     .eq("transferId", transfer.getId())
-                    .eq("state", 1).build() ;
+                    .eq("state", 1).build();
             long count = transferBuyLogService.count(transferBuyLogSpecification);
             borrowInfoRes.setTenderCount(count + com.gofobao.framework.borrow.contants.BorrowContants.TIME);
-        }else{
+        } else {
             borrowInfoRes.setTenderCount(transfer.getTenderCount() + com.gofobao.framework.borrow.contants.BorrowContants.TIME);
         }
 
         borrowInfoRes.setMoney(StringHelper.formatMon(transfer.getTransferMoney() / 100d));
         borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
-        borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatDouble(transfer.getTransferMoneyYes() / transfer.getTransferMoney().doubleValue(), false)) * 100);
+        double spend = NumberHelper.floorDouble(MoneyHelper.divide(transfer.getTransferMoneyYes(), transfer.getTransferMoney().doubleValue()) * 100, 2);
+        borrowInfoRes.setSpend(spend);
         //结束时间
         Date endAt = DateHelper.addDays(DateHelper.beginOfDate(transfer.getReleaseAt()), 3 + 1);
         borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
@@ -1642,7 +1646,7 @@ public class TransferBizImpl implements TransferBiz {
         borrowInfoRes.setIsVouch(borrow.getIsVouch());
         borrowInfoRes.setHideLowMoney(borrow.getLowest());
         borrowInfoRes.setIsFlow(true);
-        borrowInfoRes.setAvatar(StringUtils.isEmpty(users.getAvatarPath())?imageDomain + "/images/user/default_avatar.jpg":users.getAvatarPath());
+        borrowInfoRes.setAvatar(StringUtils.isEmpty(users.getAvatarPath()) ? imageDomain + "/images/user/default_avatar.jpg" : users.getAvatarPath());
         borrowInfoRes.setLockStatus(borrow.getIsLock());
         return ResponseEntity.ok(borrowInfoRes);
     }
@@ -1729,6 +1733,7 @@ public class TransferBizImpl implements TransferBiz {
 
     /**
      * 投标合同
+     *
      * @param tenderId
      * @param userId
      * @return

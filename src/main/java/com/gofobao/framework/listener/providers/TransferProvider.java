@@ -44,6 +44,7 @@ import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.gofobao.framework.tender.vo.request.VoBuyTransfer;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -222,7 +223,7 @@ public class TransferProvider {
                     VoBuyTransfer voBuyTransfer = new VoBuyTransfer();
                     voBuyTransfer.setUserId(autoTender.getUserId());
                     voBuyTransfer.setAuto(true);
-                    voBuyTransfer.setBuyMoney(MathHelper.myRound(buyMoney / 100.0, 2));
+                    voBuyTransfer.setBuyMoney(MoneyHelper.round(buyMoney / 100.0, 2));
                     voBuyTransfer.setAutoOrder(autoTender.getOrder());
                     ResponseEntity<VoBaseResp> response = transferBiz.buyTransfer(voBuyTransfer);
                     if (response.getStatusCode().equals(HttpStatus.OK)) { //购买债权转让成功后更新自动投标规则
@@ -272,7 +273,7 @@ public class TransferProvider {
                 .<TransferBuyLog>and()
                 .eq("transferId", transfer.getId())
                 .eq("state", 0)
-                .eq("del",0)
+                .eq("del", 0)
                 .build();
         List<TransferBuyLog> transferBuyLogList = transferBuyLogService.findList(tbls);/* 购买债权转让记录 */
         Preconditions.checkNotNull(transferBuyLogList, "批量债权转让：购买债权记录不存在!");
@@ -285,15 +286,14 @@ public class TransferProvider {
 
         log.info(String.format("复审: 批量债权转让申请开始: %s", GSON.toJson(msg)));
 
-        /* 债权转让管理费费率 */
-        double transferFeeRate = BorrowHelper.getTransferFeeRate(transfer.getTimeLimit());
-        double transferFee = transfer.getPrincipal() * transferFeeRate;  /* 转让管理费 */
-
         //登记存管债权转让
-        String batchNo = registerThirdTransferTender(transfer, transferBuyLogList, parentTender, transferUserThirdAccount, parentBorrow, transferFee);
-
+        ImmutableList<Object> result = registerThirdTransferTender(transfer, transferBuyLogList, parentTender, transferUserThirdAccount, parentBorrow);
+        Iterator<Object> iterator = result.iterator();
+        String batchNo = StringHelper.toString(iterator.next());
+        /* 转让管理费 */
+        long transferFee = NumberHelper.toLong(iterator.next());
         //增加批次资金变动记录
-        addBatchAssetChange(transferId, transfer, transferBuyLogList, transferFeeRate, batchNo);
+        addBatchAssetChange(transferId, transfer, transferBuyLogList, transferFee, batchNo);
 
         log.info(String.format("复审: 批量债权转让申请成功: %s", GSON.toJson(msg)));
         return true;
@@ -306,10 +306,10 @@ public class TransferProvider {
      * @param transferId
      * @param transfer
      * @param transferBuyLogList
-     * @param transferFeeRate
+     * @param transferFee
      * @param batchNo
      */
-    private void addBatchAssetChange(long transferId, Transfer transfer, List<TransferBuyLog> transferBuyLogList, double transferFeeRate, String batchNo) throws ExecutionException {
+    private void addBatchAssetChange(long transferId, Transfer transfer, List<TransferBuyLog> transferBuyLogList, long transferFee, String batchNo) throws ExecutionException {
         String groupSeqNo = assetChangeProvider.getGroupSeqNo();
         Date nowDate = new Date();
         // 扣除债权购买人冻结资金
@@ -331,7 +331,7 @@ public class TransferProvider {
         batchAssetChangeItem.setUserId(transfer.getUserId());
         batchAssetChangeItem.setMoney(transfer.getPrincipal() + transfer.getAlreadyInterest());
         batchAssetChangeItem.setRemark(String.format("出售债权[%s]获得待收本金和应计利息%s元", transfer.getTitle(),
-                StringHelper.formatDouble((transfer.getPrincipal() + transfer.getAlreadyInterest()) / 100D, true)));
+                StringHelper.formatDouble((transfer.getPrincipal() + transfer.getAlreadyInterest()), 100D, true)));
         batchAssetChangeItem.setCreatedAt(nowDate);
         batchAssetChangeItem.setUpdatedAt(nowDate);
         batchAssetChangeItem.setSourceId(transferId);
@@ -345,10 +345,10 @@ public class TransferProvider {
         batchAssetChangeItem.setState(0);
         batchAssetChangeItem.setType(AssetChangeTypeEnum.batchSellBondsFee.getLocalType());  // 扣除债权转让人手续费
         batchAssetChangeItem.setUserId(transfer.getUserId());
-        batchAssetChangeItem.setToUserId(feeAccountId);
-        batchAssetChangeItem.setMoney(NumberHelper.toLong(transfer.getPrincipal() * transferFeeRate));
+        batchAssetChangeItem.setForUserId(feeAccountId);
+        batchAssetChangeItem.setMoney(transferFee);
         batchAssetChangeItem.setRemark(String.format("扣除出售债权[%s]手续费%s元", transfer.getTitle(),
-                StringHelper.formatDouble(NumberHelper.toLong(transfer.getPrincipal() * transferFeeRate) / 100D, true)));
+                StringHelper.formatDouble(transferFee, 100D, true)));
         batchAssetChangeItem.setCreatedAt(nowDate);
         batchAssetChangeItem.setUpdatedAt(nowDate);
         batchAssetChangeItem.setSourceId(transferId);
@@ -362,10 +362,10 @@ public class TransferProvider {
         batchAssetChangeItem.setState(0);
         batchAssetChangeItem.setType(AssetChangeTypeEnum.platformBatchSellBondsFee.getLocalType());  // 收取债权转让人手续费
         batchAssetChangeItem.setUserId(feeAccountId);  // 平台收费人
-        batchAssetChangeItem.setToUserId(transfer.getUserId());
-        batchAssetChangeItem.setMoney(NumberHelper.toLong(transfer.getPrincipal() * transferFeeRate));
+        batchAssetChangeItem.setForUserId(transfer.getUserId());
+        batchAssetChangeItem.setMoney(transferFee);
         batchAssetChangeItem.setRemark(String.format("收取出售债权[%s]手续费%s元", transfer.getTitle(),
-                StringHelper.formatDouble(NumberHelper.toLong(transfer.getPrincipal() * transferFeeRate) / 100D, true)));
+                StringHelper.formatDouble(transferFee, 100D, true)));
         batchAssetChangeItem.setCreatedAt(nowDate);
         batchAssetChangeItem.setUpdatedAt(nowDate);
         batchAssetChangeItem.setSourceId(transferId);
@@ -379,11 +379,11 @@ public class TransferProvider {
             batchAssetChangeItem.setState(0);
             batchAssetChangeItem.setType(AssetChangeTypeEnum.batchBuyClaims.getLocalType());
             batchAssetChangeItem.setUserId(transferBuyLog.getUserId());
-            batchAssetChangeItem.setToUserId(transfer.getUserId());
+            batchAssetChangeItem.setForUserId(transfer.getUserId());
             batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
             batchAssetChangeItem.setMoney(transferBuyLog.getValidMoney());
             batchAssetChangeItem.setRemark(String.format("购买债权[%s], 成功扣除资金%s元", transfer.getTitle(),
-                    StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100D, true)));
+                    StringHelper.formatDouble(transferBuyLog.getValidMoney(), 100D, true)));
             batchAssetChangeItem.setCreatedAt(nowDate);
             batchAssetChangeItem.setUpdatedAt(nowDate);
             batchAssetChangeItem.setSeqNo(assetChangeProvider.getSeqNo());
@@ -404,13 +404,18 @@ public class TransferProvider {
      * @param transferFee
      * @throws Exception
      */
-    private String registerThirdTransferTender(Transfer transfer, List<TransferBuyLog> transferBuyLogList, Tender parentTender, UserThirdAccount transferUserThirdAccount, Borrow parentBorrow, double transferFee) throws Exception {
+    private ImmutableList<Object> registerThirdTransferTender(Transfer transfer, List<TransferBuyLog> transferBuyLogList, Tender parentTender, UserThirdAccount transferUserThirdAccount, Borrow parentBorrow) throws Exception {
         Date nowDate = new Date();
         List<CreditInvest> creditInvestList = new ArrayList<>();
         CreditInvest creditInvest = null;
         UserThirdAccount tenderUserThirdAccount = null;
         // 全部有效投保金额
         int sumCount = 0;
+        // 转让管理费
+        int sumTransferFee = 0;
+        /* 债权转让管理费费率 */
+        double transferFeeRate = BorrowHelper.getTransferFeeRate(transfer.getTimeLimit());
+        double transferFee = MoneyHelper.multiply(transfer.getPrincipal(), transferFeeRate);  /* 转让管理费 */
         for (TransferBuyLog transferBuyLog : transferBuyLogList) {
             double txFee = 0;
             if (BooleanHelper.isTrue(transferBuyLog.getThirdTransferFlag())) {  //判断标的已在存管登记转让
@@ -424,7 +429,9 @@ public class TransferProvider {
             // 全部有效投保金额
             sumCount += txAmount;
             //收取转让人债权转让管理费
-            txFee += MathHelper.myRound((transferBuyLog.getValidMoney() / new Double(transfer.getPrincipal())) * transferFee, 0);  // 分摊转让费用到各项中
+            double tempTransferFee = MoneyHelper.round(MoneyHelper.multiply(transferBuyLog.getValidMoney() / new Double(transfer.getPrincipal()), transferFee), 0);
+            txFee += tempTransferFee;  // 分摊转让费用到各项中
+            sumTransferFee += tempTransferFee;
             /* 购买债权转让orderId */
             String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
             creditInvest = new CreditInvest();
@@ -447,7 +454,7 @@ public class TransferProvider {
             UserThirdAccount buyUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
             BalanceUnfreezeReq balanceUnfreezeReq = new BalanceUnfreezeReq();
             balanceUnfreezeReq.setAccountId(buyUserThirdAccount.getAccountId());
-            balanceUnfreezeReq.setTxAmount(StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100.0, false));
+            balanceUnfreezeReq.setTxAmount(StringHelper.formatDouble(transferBuyLog.getValidMoney(), 100d, false));
             balanceUnfreezeReq.setChannel(ChannelContant.HTML);
             balanceUnfreezeReq.setOrderId(newOrderId);
             balanceUnfreezeReq.setOrgOrderId(transferBuyLog.getFreezeOrderId());
@@ -489,7 +496,8 @@ public class TransferProvider {
         thirdBatchLog.setRemark("投资人批次购买债权");
         thirdBatchLogService.save(thirdBatchLog);
 
-        return batchNo;
+        ImmutableList<Object> immutableList = ImmutableList.of(batchNo, sumTransferFee);
+        return immutableList;
     }
 
 

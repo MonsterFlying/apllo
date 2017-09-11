@@ -104,7 +104,7 @@ public class BatchAssetChangeHelper {
             assetChange.setPrincipal(ObjectUtils.isEmpty(principal) ? 0 : principal);
             Long moeny = item.getMoney();
             assetChange.setMoney(ObjectUtils.isEmpty(moeny) ? 0 : moeny);
-            assetChange.setForUserId(item.getToUserId());
+            assetChange.setForUserId(item.getForUserId());
             assetChange.setUserId(item.getUserId());
             assetChange.setRemark(item.getRemark());
             assetChange.setSeqNo(item.getSeqNo());

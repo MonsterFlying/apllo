@@ -297,31 +297,7 @@ public class AplloApplicationTests {
         Thread.sleep(100000 * 1000);
     }
 
-    public static void main(String[] args) {
-        List<Long> sumPrincipals = new ArrayList<>(2);
-        List<Long> sumInterests = new ArrayList<>();
-        long i = (sumInterests.size() - 2) != 1 ? 0 : sumPrincipals.get(2);
 
-        /*BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
-                NumberHelper.toDouble(StringHelper.toString(999.9)),
-                NumberHelper.toDouble(StringHelper.toString(2100)), 3, new Date());
-        Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(0);
-        System.out.println(rsMap);*/
-
-        /*System.out.println("select t.id AS id,t. STATUS AS status,t.user_id AS userId,t.lowest AS lowest,t.borrow_types AS borrowTypes," +
-                "t.repay_fashions AS repayFashions,t.tender_0 AS tender0,t.tender_1 AS tender1,t.tender_3 AS tender3,t.tender_4 AS tender4,t.`mode` AS mode,t.tender_money AS tenderMoney,t.timelimit_first AS timelimitFirst,t.timelimit_last AS timelimitLast,t.timelimit_type AS timelimitType,t.apr_first AS aprFirst,t.apr_last AS aprLast,t.save_money AS saveMoney,t.`order` AS `order`,t.auto_at AS autoAt,t.created_at AS createdAt," +
-                "t.updated_at AS updatedAt,a.use_money AS useMoney,a.no_use_money AS noUseMoney,a.virtual_money AS virtualMoney,a.collection AS collection,a.payment AS payment " +
-                "from gfb_auto_tender t " +
-                "left join gfb_asset a on t.user_id = a.user_id " +
-                "left join gfb_user_third_account uta on  t.user_id =  uta.user_id " +
-                "where 1=1 and uta.del = 0 ");
-
-        Gson gson = new Gson();
-        Map<String, String> map = new HashMap<>();
-        map.put("repaymentId", "173810");
-        System.out.println(gson.toJson(map));
-        System.out.println(SecurityHelper.getSign(gson.toJson(map)));*/
-    }
 
     public AccountQueryByMobileResponse findAccountByMobile() {
         AccountQueryByMobileRequest request = new AccountQueryByMobileRequest();
@@ -425,14 +401,6 @@ public class AplloApplicationTests {
 
     }
 
-    private void noTransferBorrowAgainVerify() {
-        Borrow borrow = borrowService.findById(169881L);
-        try {
-            borrowBiz.borrowAgainVerify(borrow);
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-    }
 
     @Autowired
     CertHelper certHelper;
@@ -563,12 +531,16 @@ public class AplloApplicationTests {
 
     @Test
     public void test() {
-
-        Borrow borrow = borrowService.findById(170187l);
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TENDER);
+        mqConfig.setTag(MqTagEnum.AUTO_TENDER);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString("170190"), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
         try {
-            borrowBiz.borrowAgainVerify(borrow);
-        } catch (Exception e) {
-            e.printStackTrace();
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("borrowProvider autoTender send mq exception", e);
         }
 
         /*BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(

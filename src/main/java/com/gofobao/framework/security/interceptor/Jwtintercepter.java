@@ -25,19 +25,19 @@ public class Jwtintercepter extends HandlerInterceptorAdapter {
     @Override
     public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o) throws Exception {
 
-        String requestSource=httpServletRequest.getHeader("requestSource");
-        try{
-            if(StringUtils.isEmpty(requestSource)){
-                log.error("当前用户非法请求 记录当前ip:"+ IpHelper.getIpAddress(httpServletRequest) + ",当前时间:"+ DateHelper.dateToString(new Date()));
+        String requestSource = httpServletRequest.getHeader("requestSource");
+        try {
+            if (StringUtils.isEmpty(requestSource)) {
+                log.error("当前用户非法请求 记录当前ip:" + IpHelper.getIpAddress(httpServletRequest) + ",当前时间:" + DateHelper.dateToString(new Date()));
             }
-        }catch (Exception e){
+        } catch (Exception e) {
 
         }
 
         // 判断当前用户路劲
         String url = httpServletRequest.getRequestURI();
 
-        if(url.contains("version")){
+        if (url.contains("version")) {
             return true;
         }
 
@@ -46,8 +46,8 @@ public class Jwtintercepter extends HandlerInterceptorAdapter {
             jwtTokenHelper = (JwtTokenHelper) ac.getBean("jwtTokenHelper");
         }
 
-        String token = jwtTokenHelper.getToken(httpServletRequest,httpServletResponse);
-        if(StringUtils.isEmpty(token)){
+        String token = jwtTokenHelper.getToken(httpServletRequest, httpServletResponse);
+        if (StringUtils.isEmpty(token)) {
             return false;
         }
         try {
@@ -58,8 +58,11 @@ public class Jwtintercepter extends HandlerInterceptorAdapter {
 
         Long userId = jwtTokenHelper.getUserIdFromToken(token);  // 用户ID
         httpServletRequest.setAttribute(SecurityContants.USERID_KEY, userId);
-        String requestSourceStr = StringUtils.isEmpty(requestSource) ? "未知来源" : requestSource;
-        log.info(String.format("当前请求地址：%s，来源: %s , 终端ip: %s", url, requestSourceStr,IpHelper.getIpAddress(httpServletRequest)));
+        try {
+            String requestSourceStr = StringUtils.isEmpty(requestSource) ? "未知来源" : requestSource;
+            log.info(String.format("当前请求地址：%s，来源: %s , 终端ip: %s", url, requestSourceStr, httpServletRequest.getRemoteAddr()));
+        } catch (Exception e) {
+        }
         String type = jwtTokenHelper.getType(token);
         if (url.contains("finance")) {  // 理财用户
             if (!"finance".equals(type)) {

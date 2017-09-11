@@ -23,7 +23,7 @@ public class NumberHelper {
         if (digit > 0) {
             multiple = Math.pow(10, digit);
         }
-        return Math.floor(num * multiple) / 100.0;
+        return Math.floor(num * multiple) / multiple;
     }
 
 

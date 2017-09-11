@@ -3,6 +3,7 @@ package com.gofobao.framework.tender.vo.request;
 import com.gofobao.framework.common.qiniu.util.StringUtils;
 import com.gofobao.framework.core.vo.VoBaseReq;
 import com.gofobao.framework.helper.MathHelper;
+import com.gofobao.framework.helper.MoneyHelper;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -46,11 +47,11 @@ public class VoCreateTenderReq extends VoBaseReq {
 
 
     public Double getTenderMoney() {
-        return MathHelper.myRound(tenderMoney, 0);
+        return MoneyHelper.round(tenderMoney, 0);
     }
 
     public void setTenderMoney(Double tenderMoney) {
-        this.tenderMoney = MathHelper.myRound(tenderMoney * 100.0, 0);
+        this.tenderMoney = MoneyHelper.round(tenderMoney * 100.0, 0);
     }
 
     public String getRequestSource() {

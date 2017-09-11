@@ -62,6 +62,7 @@ import com.gofobao.framework.system.entity.DictItem;
 import com.gofobao.framework.system.entity.DictValue;
 import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
+import com.gofobao.framework.tender.vo.request.VoAdminRechargeReq;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -256,7 +257,7 @@ public class AssetBizImpl implements AssetBiz {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "存管账户记录不存在!");
         /* 红包发放金额 */
-        double money = NumberHelper.toDouble(paramMap.get("money")) * 100.0;
+        double money = MoneyHelper.multiply(NumberHelper.toDouble(paramMap.get("money")), 100d);
         if (money <= 0) {
             return ResponseEntity
                     .badRequest()
@@ -1394,5 +1395,54 @@ public class AssetBizImpl implements AssetBiz {
         assetChangeProvider.commonAssetChange(redpackR);
 
         return ResponseEntity.ok(VoBaseResp.ok(String.format("撤销红包成功：msg->%s", response.getRetMsg())));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoBaseResp> adminRechargeForm(VoAdminRechargeReq voAdminRechargeReq) throws Exception {
+        String paramStr = voAdminRechargeReq.getParamStr();
+        Map<String, String> paramMap = new Gson().fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        String id = paramMap.get("id");
+        long rechargeId = Long.parseLong(id);
+        RechargeDetailLog rechargeDetailLog = rechargeDetailLogService.findById(rechargeId);
+        if (ObjectUtils.isEmpty(rechargeDetailLog)) {
+            log.error("AssetBizImpl.rechargeCallback: 没有该条充值记录");
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "没有该条充值记录"));
+        }
+
+        if (rechargeDetailLog.getState().intValue() == 1) {
+            log.error("AssetBizImpl.rechargeCallback: 当前标的已经充值成功");
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "当前标的已经充值成功"));
+        }
+
+        Date now = new Date();
+        rechargeDetailLog.setUpdateTime(now);
+        rechargeDetailLog.setState(1);
+        rechargeDetailLog.setRemark("平台审核通过");
+        rechargeDetailLogService.save(rechargeDetailLog);
+
+        AssetChange assetChange = new AssetChange();
+        assetChange.setType(AssetChangeTypeEnum.offlineRecharge);  // 招标失败解除冻结资金
+        assetChange.setUserId(rechargeDetailLog.getUserId());
+        assetChange.setMoney(rechargeDetailLog.getMoney());
+        assetChange.setRemark(String.format("成功充值%s元", StringHelper.formatDouble(rechargeDetailLog.getMoney() / 100D, true)));
+        assetChange.setSourceId(rechargeDetailLog.getId());
+        assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+        assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+        assetChangeProvider.commonAssetChange(assetChange);
+
+        // 触发用户充值
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setTag(MqTagEnum.RECHARGE);
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+        mqConfig.setSendTime(DateHelper.addSeconds(now, 30));
+        ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
+        mqConfig.setMsg(body);
+        mqHelper.convertAndSend(mqConfig);
+        return ResponseEntity.ok(VoBaseResp.ok("审核成功"));
     }
 }

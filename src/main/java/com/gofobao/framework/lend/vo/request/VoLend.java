@@ -1,6 +1,7 @@
 package com.gofobao.framework.lend.vo.request;
 
 import com.gofobao.framework.helper.MathHelper;
+import com.gofobao.framework.helper.MoneyHelper;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -27,6 +28,6 @@ public class VoLend {
     }
 
     public void setMoney(Double money) {
-        this.money = MathHelper.myRound(money * 100.0, 0);
+        this.money = MoneyHelper.round(money * 100.0, 0);
     }
 }

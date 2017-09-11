@@ -1,6 +1,7 @@
 package com.gofobao.framework.tender.vo.request;
 
 import com.gofobao.framework.helper.MathHelper;
+import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.tender.contants.AutoTenderContants;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -71,33 +72,33 @@ public class VoSaveAutoTenderReq {
     private Integer saveMoney = 0;
 
     public Integer getLowest() {
-        return (int) MathHelper.myRound(lowest, 0);
+        return (int) MoneyHelper.round(lowest, 0);
     }
 
     public void setLowest(Double lowest) {
-        this.lowest = (int) MathHelper.myRound(lowest * 100.0, 0);
+        this.lowest = (int) MoneyHelper.round(lowest * 100.0, 0);
     }
 
     public Integer getTenderMoney() {
         if (!ObjectUtils.isEmpty(tenderMoney)) {
-            return (int) MathHelper.myRound(tenderMoney, 0);
+            return (int) MoneyHelper.round(tenderMoney, 0);
         }
         return tenderMoney;
     }
 
     public void setTenderMoney(Double tenderMoney) {
-        this.tenderMoney = (int) MathHelper.myRound(tenderMoney * 100.0, 0);
+        this.tenderMoney = (int) MoneyHelper.round(tenderMoney * 100.0, 0);
     }
 
     public Integer getSaveMoney() {
         if (!ObjectUtils.isEmpty(saveMoney)) {
-            return (int) MathHelper.myRound(saveMoney, 0);
+            return (int) MoneyHelper.round(saveMoney, 0);
         }
         return saveMoney;
     }
 
     public void setSaveMoney(Double saveMoney) {
-        this.saveMoney = (int) MathHelper.myRound(saveMoney * 100.0, 0);
+        this.saveMoney = new Double(MoneyHelper.round(saveMoney * 100.0, 0)).intValue();
     }
 
 

@@ -1,6 +1,7 @@
 package com.gofobao.framework.helper.project;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MathHelper;
+import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import org.springframework.util.ObjectUtils;
 
@@ -79,11 +80,11 @@ public class BorrowCalculatorHelper {
         do {
             rsMap = new HashMap<>();
             double li = MathHelper.pow((1 + this.monthApr), this.timeLimit);
-            this.eachRepay = MathHelper.myRound(this.principal * this.monthApr * li / (li - 1), 0);//月均还款
+            this.eachRepay = MoneyHelper.round(this.principal * this.monthApr * li / (li - 1), 0);//月均还款
             rsMap.put("eachRepay", this.eachRepay);     // 每期还款
             this.repayTotal = this.eachRepay * this.timeLimit;
             rsMap.put("repayTotal", this.repayTotal);   // 总额偿还
-            rsMap.put("earnings", MathHelper.myRound(this.repayTotal - this.principal, 0));   // 总利息
+            rsMap.put("earnings", MoneyHelper.round(this.repayTotal - this.principal, 0));   // 总利息
             List<Map<String, String>> repayDetailList = new ArrayList<>();
             rsMap.put("repayDetailList", repayDetailList);
             Map<String, String> repayDetailMap = null;
@@ -93,24 +94,24 @@ public class BorrowCalculatorHelper {
             int month = 0;
             for (int i = 0; i < this.timeLimit; i++) {
                 repayDetailMap = new HashMap<>();
-                interest = MathHelper.myRound(this.msPrincipal * this.monthApr, 0);
+                interest = MoneyHelper.round(this.msPrincipal * this.monthApr, 0);
                 principal = this.eachRepay - interest;
                 if (i + 1 == this.timeLimit) {
                     principal = this.msPrincipal;
-                    interest = MathHelper.max(MathHelper.myRound(this.eachRepay - principal, 0), 0);
+                    interest = MathHelper.max(MoneyHelper.round(this.eachRepay - principal, 0), 0);
                     if (interest == 0) {
                         interest = this.eachRepay;
                     }
                 }
 
-                principal = MathHelper.myRound(principal, 0);
-                this.msPrincipal = MathHelper.myRound(this.msPrincipal - principal, 0);
+                principal = MoneyHelper.round(principal, 0);
+                this.msPrincipal = MoneyHelper.round(this.msPrincipal - principal, 0);
                 if (this.msPrincipal<0){
                     this.msPrincipal = 0d;
                 }
                 repayAt = DateHelper.addMonths((Date) this.successAt.clone(), i + 1);
 
-                repayDetailMap.put("repayMoney", NumberHelper.toString(MathHelper.myRound(principal + interest, 0)));
+                repayDetailMap.put("repayMoney", NumberHelper.toString(MoneyHelper.round(principal + interest, 0)));
                 repayDetailMap.put("principal", NumberHelper.toString(principal));
                 repayDetailMap.put("interest", NumberHelper.toString(interest));
                 repayDetailMap.put("msPrincipal", NumberHelper.toString(this.msPrincipal));
@@ -128,21 +129,21 @@ public class BorrowCalculatorHelper {
      */
     public Map<String, Object> ycxhbfx() {
         Map<String, Object> rsMap = new HashMap<>();
-        double interest = MathHelper.myRound(this.msPrincipal * this.dayApr * this.timeLimit, 0);
+        double interest = MoneyHelper.round(this.msPrincipal * this.dayApr * this.timeLimit, 0);
         double principal = this.msPrincipal;
 
-        this.msPrincipal = MathHelper.myRound(this.msPrincipal - principal, 0);
-        this.eachRepay = this.repayTotal = MathHelper.myRound(principal + interest, 0);
+        this.msPrincipal = MoneyHelper.round(this.msPrincipal - principal, 0);
+        this.eachRepay = this.repayTotal = MoneyHelper.round(principal + interest, 0);
         rsMap.put("eachRepay", this.eachRepay);
         rsMap.put("repayTotal", this.repayTotal);
-        rsMap.put("earnings", MathHelper.myRound(this.repayTotal - this.principal, 0));
+        rsMap.put("earnings", MoneyHelper.round(this.repayTotal - this.principal, 0));
 
         Date repayAt = DateHelper.addDays((Date) this.successAt.clone(), timeLimit);
 
         List<Map<String, String>> repayDetailList = new ArrayList<>();
         rsMap.put("repayDetailList", repayDetailList);
         Map<String, String> repayDetailMap = new HashMap<>();
-        repayDetailMap.put("repayMoney", NumberHelper.toString(MathHelper.myRound(principal + interest, 0)));
+        repayDetailMap.put("repayMoney", NumberHelper.toString(MoneyHelper.round(principal + interest, 0)));
         repayDetailMap.put("principal", NumberHelper.toString(principal));
         repayDetailMap.put("interest", NumberHelper.toString(interest));
         repayDetailMap.put("msPrincipal", NumberHelper.toString(this.msPrincipal));
@@ -159,12 +160,12 @@ public class BorrowCalculatorHelper {
      */
     public Map<String, Object> dqhbayfx() {
         Map<String, Object> rsMap = new HashMap<>();
-        double interest = MathHelper.myRound(this.msPrincipal * this.monthApr, 0);
+        double interest = MoneyHelper.round(this.msPrincipal * this.monthApr, 0);
         this.eachRepay = interest;
-        this.repayTotal = MathHelper.myRound(this.principal + interest * this.timeLimit, 0);
+        this.repayTotal = MoneyHelper.round(this.principal + interest * this.timeLimit, 0);
         rsMap.put("eachRepay", this.eachRepay);
         rsMap.put("repayTotal", this.repayTotal);
-        rsMap.put("earnings", MathHelper.myRound(this.repayTotal - this.principal, 0));
+        rsMap.put("earnings", MoneyHelper.round(this.repayTotal - this.principal, 0));
 
         double principal = 0;
         Date repayAt = null;
@@ -180,12 +181,12 @@ public class BorrowCalculatorHelper {
                 principal = this.msPrincipal;
             }
 
-            this.msPrincipal = MathHelper.myRound(this.msPrincipal - principal, 0);
+            this.msPrincipal = MoneyHelper.round(this.msPrincipal - principal, 0);
 
             //操作时间
             repayAt = DateHelper.addMonths((Date) this.successAt.clone(), i + 1);
 
-            repayDetailMap.put("repayMoney", NumberHelper.toString(MathHelper.myRound(principal + interest, 0)));
+            repayDetailMap.put("repayMoney", NumberHelper.toString(MoneyHelper.round(principal + interest, 0)));
             repayDetailMap.put("principal", NumberHelper.toString(principal));
             repayDetailMap.put("interest", NumberHelper.toString(interest));
             repayDetailMap.put("msPrincipal", NumberHelper.toString(this.msPrincipal));

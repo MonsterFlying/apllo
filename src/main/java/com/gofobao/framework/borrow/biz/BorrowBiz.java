@@ -74,7 +74,7 @@ public interface BorrowBiz {
      * @return
      * @throws Exception
      */
-    boolean borrowAgainVerify(Borrow borrow) throws Exception;
+    boolean borrowAgainVerify(Borrow borrow,String batchNo) throws Exception;
 
     /**
      * 标信息

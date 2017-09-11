@@ -1,9 +1,9 @@
 spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
-    url: jdbc:mysql://192.168.1.13:3306/gfb0903?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&&useSSL=true
+    url: jdbc:mysql://192.168.1.5:3306/gfb0908?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&&useSSL=true
     username: root
-    password: root
+    password:
     driver-class-name: com.mysql.jdbc.Driver
   jpa:
     database: mysql
@@ -67,7 +67,7 @@ jixin: #银行存管
   bankCode: "30050000" #交易机构代码
   product-no: "0105" # 产品编号
   bank-no: "3005" #产品编号
-  query-time-init: "20170421" # 与存管系统查询时间
+  query-time-init: "20170424" # 与存管系统查询时间
   crt-path:  # crt证书路径
   p12-path:  # p12证书路径
 

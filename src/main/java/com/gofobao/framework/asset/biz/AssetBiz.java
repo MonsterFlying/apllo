@@ -9,6 +9,7 @@ import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.member.vo.response.pc.ExpenditureDetail;
 import com.gofobao.framework.member.vo.response.pc.IncomeEarnedDetail;
 import com.gofobao.framework.member.vo.response.pc.VoViewAssetStatisticWarpRes;
+import com.gofobao.framework.tender.vo.request.VoAdminRechargeReq;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 
@@ -223,5 +224,12 @@ public interface AssetBiz {
      */
     ResponseEntity<VoBaseResp> cancelRedPacket(VoUnsendRedPacket voUnsendRedPacket) throws Exception;
 
+
+    /**
+     * 后台充值确认
+     * @param voAdminRechargeReq
+     * @return
+     */
+    ResponseEntity<VoBaseResp> adminRechargeForm(VoAdminRechargeReq voAdminRechargeReq) throws Exception;
 
 }
