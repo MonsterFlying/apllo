@@ -139,7 +139,8 @@ public class TenderProvider {
                         tenderUserIds.add(NumberHelper.toLong(voFindAutoTender.get("userId")));
                         AutoTender autoTender = new AutoTender();
                         autoTender.setId(autoTenderId);
-                        autoTender.setAutoAt(nowDate);
+                        autoTender.setAutoAt(new Date());
+                        autoTender.setUpdatedAt(new Date());
                         autoTenderService.save(autoTender);
                         autoTenderCount++;
                     } else {
