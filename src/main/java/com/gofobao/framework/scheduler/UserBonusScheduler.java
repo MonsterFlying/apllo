@@ -52,7 +52,7 @@ public class UserBonusScheduler {
      * 理财师提成
      */
     @Transactional(rollbackFor = Exception.class)
-    @Scheduled(cron = "1 * * * * ? ")
+    @Scheduled(cron = "0 35 23 1 * ? ")
     public void brokerProcess() {
         log.info("理财师调度启动");
         try {
@@ -71,7 +71,7 @@ public class UserBonusScheduler {
                         " WHERE t2.tj_wait_collection_principal+t2.qd_wait_collection_principal>=1000000 AND t3.created_at>='" + DateHelper.dateToString(validDate) + "' AND t3.source IN(0,1,2,9) " +
                         " AND NOT EXISTS(SELECT 1 FROM gfb_ticheng_user t5 WHERE t5.user_id=t1.id AND t5.type=0)GROUP BY t1.id HAVING wait_principal_total>=73000");
 
-                String limitSql = " limit " + (pageIndex++ - 1) * pageSize + " offset " + pageSize;
+                String limitSql = " limit " + pageSize + " offset " + (pageIndex - 1) * pageSize;
                 resultList = jdbcTemplate.queryForList(sql.append(limitSql).toString());
                 if (CollectionUtils.isEmpty(resultList)) {
                     return;
@@ -109,9 +109,7 @@ public class UserBonusScheduler {
                     if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
                         String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
                         log.error("理财师调度:" + msg);
-
                     }
-
 
                     // 发放理财师奖励
                     AssetChange redpackPublish = new AssetChange();
@@ -125,6 +123,7 @@ public class UserBonusScheduler {
                     redpackPublish.setForUserId(redId);
                     redpackPublish.setSourceId(0L);
                     assetChangeProvider.commonAssetChange(redpackPublish);
+
 
                     // 接收理财师
                     AssetChange redpackR = new AssetChange();
@@ -148,6 +147,7 @@ public class UserBonusScheduler {
                     brokerBouns.setBounsAward((int) MathHelper.myRound(bounsAward, 0));
                     brokerBounsService.save(brokerBouns);
                 }
+                pageIndex++;
             } while (resultList.size() >= 50);
         } catch (Throwable e) {
             log.error("UserBonusScheduler brokerProcess error:", e);
@@ -157,7 +157,7 @@ public class UserBonusScheduler {
     /**
      * 天提成
      */
-    @Scheduled(cron = "5 * * * * ? ")
+    @Scheduled(cron = "0 30 23 * * ? ")
     @Transactional(rollbackFor = Exception.class)
     public void dayProcess() {
         log.info("每日天提成调度启动");
@@ -234,9 +234,18 @@ public class UserBonusScheduler {
     /**
      * 月提成
      */
-    @Scheduled(cron = "1 * * * * ? ")
+    @Scheduled(cron = "0 35 23 1 * ? ")
     @Transactional(rollbackFor = Exception.class)
     public void monthProcess() {
+        doTicheng();
+    }
+
+
+
+    /**
+     * do 提成
+     */
+    private void doTicheng() {
         log.info("每月提成任务调度启动");
         try {
             StringBuffer sql = new StringBuffer("select sum(gfb_asset.collection) - sum(gfb_asset.payment) as sum, " +
