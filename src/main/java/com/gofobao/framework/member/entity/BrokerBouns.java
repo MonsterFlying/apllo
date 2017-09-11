@@ -20,6 +20,7 @@ import java.util.Date;
 public class BrokerBouns {
     @Id
     @Column(name = "id", nullable = false)
+    @GeneratedValue
     private Integer id;
 
     @Basic
