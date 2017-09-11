@@ -115,7 +115,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
             return false;
         }
 
-        double currBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getCurrBal()) * 100.0, 2);  // 账户总额
+        double currBal = MoneyHelper.round(MoneyHelper.multiply(NumberHelper.toDouble(balanceQueryResponse.getCurrBal()), 100d), 2);  // 账户总额
         if (new Double(currBal * 100).longValue() <= (asset.getNoUseMoney() + asset.getUseMoney())) {
             log.info("当前用户金额无需同步");
             return false;
@@ -194,7 +194,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
         String seqNo;
         for (AccountDetailsQueryItem accountDetailsQueryItem : accountDetailsQueryItemList) {
             seqNo = String.format("%s%s%s", accountDetailsQueryItem.getInpDate(), accountDetailsQueryItem.getInpTime(), accountDetailsQueryItem.getTraceNo());
-            Long money = new Double(Double.parseDouble(accountDetailsQueryItem.getTxAmount()) * 100).longValue();
+            Long money = new Double(MoneyHelper.multiply(Double.parseDouble(accountDetailsQueryItem.getTxAmount()), 100d)).longValue();
             RechargeDetailLog rechargeDetailLog = new RechargeDetailLog();
             log.info("进入同步环节");
             rechargeDetailLog = new RechargeDetailLog();

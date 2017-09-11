@@ -1,6 +1,7 @@
 package com.gofobao.framework.lend.vo.request;
 
 import com.gofobao.framework.helper.MathHelper;
+import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.lend.contants.LendContants;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -49,7 +50,7 @@ public class VoCreateLend {
     }
 
     public void setMoney(Double money) {
-        this.money = MathHelper.myRound(money * 100.0, 0);
+        this.money = MoneyHelper.round(money * 100.0, 0);
     }
 
     public Double getLowest() {
@@ -57,6 +58,6 @@ public class VoCreateLend {
     }
 
     public void setLowest(Double lowest) {
-        this.lowest = MathHelper.myRound(lowest * 100.0, 0);
+        this.lowest = MoneyHelper.round(lowest * 100.0, 0);
     }
 }

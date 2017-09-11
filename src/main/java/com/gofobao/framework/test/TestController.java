@@ -27,6 +27,7 @@ import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.BooleanHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -52,6 +53,7 @@ import com.google.gson.GsonBuilder;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
@@ -63,6 +65,7 @@ import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.validation.Valid;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -211,6 +214,18 @@ public class TestController {
         log.info("即信用户资产流水查询:");
         log.info("=========================================================================================");
         log.info(GSON.toJson(response));
+    }
+
+    public static void main(String[] args) {
+        System.out.println(NumberHelper.floorDouble(0.15d,2) - NumberHelper.floorDouble(0.05d,2)); // 0.09999999999999999
+        System.out.println(2.08f - 3.7f); // -1.6200001
+        System.out.println(13.2d * 7);//92.39999999999999
+
+        BigDecimal b1 = new BigDecimal(String.valueOf(0.15d));
+        BigDecimal b2 = new BigDecimal(String.valueOf(0.05d));
+        double val = b1.subtract(b2).doubleValue();
+        System.out.println(val);
+        System.out.println(BooleanUtils.toBoolean(12));
     }
 
     @ApiOperation("批次查询")

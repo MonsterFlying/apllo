@@ -256,7 +256,7 @@ public class AssetBizImpl implements AssetBiz {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "存管账户记录不存在!");
         /* 红包发放金额 */
-        double money = NumberHelper.toDouble(paramMap.get("money")) * 100.0;
+        double money = MoneyHelper.multiply(NumberHelper.toDouble(paramMap.get("money")), 100d);
         if (money <= 0) {
             return ResponseEntity
                     .badRequest()

@@ -2,6 +2,7 @@ package com.gofobao.framework.borrow.vo.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gofobao.framework.helper.MathHelper;
+import com.gofobao.framework.helper.MoneyHelper;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -80,7 +81,7 @@ public class VoAddNetWorthBorrow {
     private boolean closeAuto;
 
     public double getMoney() {
-        return (int) MathHelper.myRound(money, 0);
+        return  new Double(MoneyHelper.round(money, 0)).longValue();
     }
 
     public void setMoney(double money) {

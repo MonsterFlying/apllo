@@ -7,6 +7,7 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
+import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
@@ -92,8 +93,6 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.function.Function;
@@ -819,7 +818,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @throws Exception
      */
     @Transactional(rollbackFor = Throwable.class)
-    public boolean borrowAgainVerify(Borrow borrow) throws Exception {
+    public boolean borrowAgainVerify(Borrow borrow, String batchNo) throws Exception {
         if ((ObjectUtils.isEmpty(borrow)) || (borrow.getStatus() != 1)
                 || (!StringHelper.toString(borrow.getMoney()).equals(StringHelper.toString(borrow.getMoneyYes())))) {
             return false;
@@ -847,10 +846,12 @@ public class BorrowBizImpl implements BorrowBiz {
         //用戶投資送紅包
         userTenderRedPackage(tenderList);
         // 借款人资金变动
-        processBorrowAssetChange(borrow, borrowRepaymentList, groupSeqNo);
+        //1.处理借款人资产变动
+        batchAssetChangeHelper.batchAssetChangeAndCollection(borrow.getId(), batchNo, BatchAssetChangeContants.BATCH_LEND_REPAY);
+        //2.新增待还记录
+        addLendRepayPayment(borrow, borrowRepaymentList, groupSeqNo);
         // 满标操作
         finishBorrow(borrow);
-
         //借款成功发送通知短信
         smsNoticeByBorrowReview(borrow);
         //发送借款协议
@@ -915,22 +916,8 @@ public class BorrowBizImpl implements BorrowBiz {
      * @param groupSeqNo
      * @throws Exception
      */
-    private void processBorrowAssetChange(Borrow borrow, List<BorrowRepayment> borrowRepaymentList, String groupSeqNo) throws Exception {
+    private void addLendRepayPayment(Borrow borrow, List<BorrowRepayment> borrowRepaymentList, String groupSeqNo) throws Exception {
         long takeUserId = ObjectUtils.isEmpty(borrow.getTakeUserId()) ? borrow.getUserId() : borrow.getTakeUserId();
-        // 放款
-        AssetChange borrowAssetChangeEntity = new AssetChange();
-        borrowAssetChangeEntity.setSourceId(borrow.getId());
-        borrowAssetChangeEntity.setGroupSeqNo(groupSeqNo);
-        borrowAssetChangeEntity.setMoney(borrow.getMoney());
-        borrowAssetChangeEntity.setSeqNo(assetChangeProvider.getSeqNo());
-        borrowAssetChangeEntity.setRemark(String.format("标的[%s]融资成功. 放款%s元", borrow.getName(), StringHelper.formatDouble(borrow.getMoney() / 100D, true)));
-        borrowAssetChangeEntity.setType(AssetChangeTypeEnum.borrow);
-        borrowAssetChangeEntity.setUserId(takeUserId);
-        assetChangeProvider.commonAssetChange(borrowAssetChangeEntity);  // 放款
-
-        // 获取待还
-        long feeId = assetChangeProvider.getFeeAccountId();  // 收费账户
-
         /* 待还金额 */
         long repaymentMoney = borrowRepaymentList.stream().mapToLong(BorrowRepayment::getRepayMoney).sum();
         /* 待还利息 */
@@ -947,39 +934,6 @@ public class BorrowBizImpl implements BorrowBiz {
         paymentAssetChangeEntity.setType(AssetChangeTypeEnum.paymentAdd);
         paymentAssetChangeEntity.setUserId(takeUserId);
         assetChangeProvider.commonAssetChange(paymentAssetChangeEntity);  // 放款
-
-        // 净值账户管理费
-        if (borrow.getType() == 1) {
-
-            Double fee;
-            if (borrow.getRepayFashion() == 1) {
-                fee = Math.floor(borrow.getMoney() * 0.0012 / 30 * borrow.getTimeLimit());
-            } else {
-                fee = Math.floor(borrow.getMoney() * 0.0012 * borrow.getTimeLimit());
-            }
-            AssetChange outBorrowFeeAssetChangeEntity = new AssetChange();
-            outBorrowFeeAssetChangeEntity.setSourceId(borrow.getId());
-            outBorrowFeeAssetChangeEntity.setGroupSeqNo(groupSeqNo);
-            outBorrowFeeAssetChangeEntity.setMoney(fee.longValue());
-            outBorrowFeeAssetChangeEntity.setSeqNo(assetChangeProvider.getSeqNo());
-            outBorrowFeeAssetChangeEntity.setRemark(String.format("扣除标的[%s]融资管理费%s元", borrow.getName(), StringHelper.formatDouble(fee / 100D, true)));
-            outBorrowFeeAssetChangeEntity.setType(AssetChangeTypeEnum.financingManagementFee);
-            outBorrowFeeAssetChangeEntity.setUserId(takeUserId);
-            outBorrowFeeAssetChangeEntity.setForUserId(feeId);
-            assetChangeProvider.commonAssetChange(outBorrowFeeAssetChangeEntity);  // 扣除融资管理费
-
-            // 费用平台添加收取的转让费
-            AssetChange inBorrowFeeAssetChangeEntity = new AssetChange();
-            inBorrowFeeAssetChangeEntity.setSourceId(borrow.getId());
-            inBorrowFeeAssetChangeEntity.setGroupSeqNo(groupSeqNo);
-            inBorrowFeeAssetChangeEntity.setMoney(fee.longValue());
-            inBorrowFeeAssetChangeEntity.setSeqNo(assetChangeProvider.getSeqNo());
-            inBorrowFeeAssetChangeEntity.setRemark(String.format("收取标的[%s]融资管理费%s元", borrow.getName(), StringHelper.formatDouble(fee / 100D, true)));
-            inBorrowFeeAssetChangeEntity.setType(AssetChangeTypeEnum.platformFinancingManagementFee);
-            inBorrowFeeAssetChangeEntity.setUserId(feeId);
-            inBorrowFeeAssetChangeEntity.setForUserId(takeUserId);
-            assetChangeProvider.commonAssetChange(inBorrowFeeAssetChangeEntity);  // 收取融资管理费
-        }
     }
 
     /**
@@ -1743,7 +1697,7 @@ public class BorrowBizImpl implements BorrowBiz {
         VoCreateTenderReq voCreateTenderReq = new VoCreateTenderReq();
         voCreateTenderReq.setUserId(lend.getUserId());
         voCreateTenderReq.setBorrowId(borrow.getId());
-        voCreateTenderReq.setTenderMoney(MathHelper.myRound(borrow.getMoney() / 100.0, 2));
+        voCreateTenderReq.setTenderMoney(MoneyHelper.round(borrow.getMoney() / 100.0, 2));
         ResponseEntity<VoBaseResp> response = tenderBiz.createTender(voCreateTenderReq);
         return response.getStatusCode().equals(HttpStatus.OK);
     }

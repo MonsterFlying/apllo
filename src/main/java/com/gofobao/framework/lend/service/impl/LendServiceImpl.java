@@ -8,6 +8,8 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.common.page.Page;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.MoneyHelper;
+import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.lend.contants.LendContants;
@@ -147,7 +149,8 @@ public class LendServiceImpl implements LendService {
             lend.setAvatar(StringUtils.isEmpty(user.getAvatarPath()) ? javaDomain + "/images/user/default_avatar.jpg" : user.getAvatarPath());
             lend.setReleaseAt(DateHelper.dateToString(p.getCreatedAt()));
             lend.setCollectionAt(DateHelper.dateToString(p.getRepayAt()));
-            lend.setSpend(Double.parseDouble(StringHelper.formatMon(p.getMoneyYes() / new Double(p.getMoney()))));
+            double spend = NumberHelper.floorDouble(MoneyHelper.divide(p.getMoneyYes(), p.getMoney()) * 100, 2);
+            lend.setSpend(spend);
             lend.setLimit(p.getTimeLimit());
             lend.setStartMoney(StringHelper.formatMon(p.getLowest() / 100D));
             lend.setStatus(p.getStatus());

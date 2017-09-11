@@ -380,7 +380,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             AssetChange assetChange = new AssetChange();
             assetChange.setSourceId(borrowId);
             assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-            assetChange.setMoney(new Double(NumberHelper.toDouble(freezeMoney) * 100).longValue());
+            assetChange.setMoney(new Double(MoneyHelper.multiply(NumberHelper.toDouble(freezeMoney),100d)).longValue());
             assetChange.setSeqNo(assetChangeProvider.getSeqNo());
             assetChange.setRemark("(提前结清)即信批次还款解除冻结可用资金");
             assetChange.setType(AssetChangeTypeEnum.unfreeze);

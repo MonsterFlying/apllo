@@ -317,7 +317,7 @@ public class TenderBizImpl implements TenderBiz {
             return false;
         }
 
-        double availBal = MathHelper.myRound(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0, 2);// 可用余额  账面余额-可用余额=冻结金额
+        double availBal = MoneyHelper.round(MoneyHelper.multiply(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()), 100d), 2);// 可用余额  账面余额-可用余额=冻结金额
         if (availBal < asset.getUseMoney()) {
             extendMessage.add("资金账户未同步，请先在个人中心进行资金同步操作!");
             return false;
@@ -359,13 +359,13 @@ public class TenderBizImpl implements TenderBiz {
         }
 
         UserCache userCache = userCacheService.findById(user.getId());
-        if (ObjectUtils.isEmpty(borrow.getLendId())  && releaseAt.getTime() > nowDate.getTime() && !userCache.isNovice()) {
+        if (ObjectUtils.isEmpty(borrow.getLendId()) && releaseAt.getTime() > nowDate.getTime() && !userCache.isNovice()) {
             log.info(String.valueOf(ObjectUtils.isEmpty(borrow.getLendId())));
             log.info(String.valueOf(releaseAt.getTime() > nowDate.getTime()));
             log.info(String.valueOf(!userCache.isNovice()));
-            if(borrow.getIsNovice()){
+            if (borrow.getIsNovice()) {
                 errerMessage.add("老用户可在20:00点后投新手标!");
-            }else{
+            } else {
                 errerMessage.add("当前标的未到发布时间");
             }
 

@@ -17,6 +17,11 @@ import com.gofobao.framework.api.model.batch_repay_bail.BatchRepayBailCheckResp;
 import com.gofobao.framework.api.model.batch_repay_bail.BatchRepayBailRunResp;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
+import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
+import com.gofobao.framework.asset.entity.BatchAssetChange;
+import com.gofobao.framework.asset.entity.BatchAssetChangeItem;
+import com.gofobao.framework.asset.service.BatchAssetChangeItemService;
+import com.gofobao.framework.asset.service.BatchAssetChangeService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
@@ -73,6 +78,7 @@ import org.springframework.util.ObjectUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -117,6 +123,10 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     private TransferBuyLogService transferBuyLogService;
     @Autowired
     private TransferBiz transferBiz;
+    @Autowired
+    private BatchAssetChangeService batchAssetChangeService;
+    @Autowired
+    private BatchAssetChangeItemService batchAssetChangeItemService;
 
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
@@ -167,9 +177,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         if (borrow.getType() == 1) {
             double manageFeeRate = 0.0012;
             if (borrow.getRepayFashion() == 1) {
-                totalManageFee = MathHelper.myRound(borrow.getMoney() * manageFeeRate / 30 * borrow.getTimeLimit(), 2);
+                totalManageFee = MoneyHelper.round(borrow.getMoney() * manageFeeRate / 30 * borrow.getTimeLimit(), 0);
             } else {
-                totalManageFee = MathHelper.myRound(borrow.getMoney() * manageFeeRate * borrow.getTimeLimit(), 2);
+                totalManageFee = MoneyHelper.round(borrow.getMoney() * manageFeeRate * borrow.getTimeLimit(), 0);
             }
         }
 
@@ -177,6 +187,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         LendPay lendPay;
         UserThirdAccount tenderUserThirdAccount;
         double sumCount = 0, validMoney, debtFee;
+        double sumNetWorthFee = 0;
         for (Tender tender : tenderList) {
             debtFee = 0;
             if (BooleanHelper.isTrue(tender.getThirdTenderFlag())) {
@@ -190,7 +201,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
             //净值账户管理费
             if (borrow.getType() == 1) {
-                debtFee += Math.floor(validMoney / borrow.getMoney().doubleValue() * totalManageFee);
+                double newWorthFee = MoneyHelper.multiply(MoneyHelper.divide(validMoney, borrow.getMoney()), totalManageFee);
+                sumNetWorthFee += newWorthFee;
+                debtFee += newWorthFee;
             }
 
             String lendPayOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
@@ -233,6 +246,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             throw new Exception("即信批次放款失败!");
         }
 
+        //新增放款资产变动记录
+        addBorrowLendRepayAssetChange(nowDate, borrowId, borrow, sumNetWorthFee, batchNo);
+
         //记录日志
         ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
         thirdBatchLog.setBatchNo(batchNo);
@@ -244,6 +260,82 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         thirdBatchLog.setRemark("即信批次放款");
         thirdBatchLogService.save(thirdBatchLog);
         return null;
+    }
+
+    /**
+     * 新增借款放款资产变动
+     *
+     * @param nowDate
+     * @param borrowId
+     * @param borrow
+     * @param sumNetWorthFee
+     * @param batchNo
+     * @throws ExecutionException
+     */
+    private void addBorrowLendRepayAssetChange(Date nowDate, Long borrowId, Borrow borrow, double sumNetWorthFee, String batchNo) throws ExecutionException {
+        String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+        long takeUserId = ObjectUtils.isEmpty(borrow.getTakeUserId()) ? borrow.getUserId() : borrow.getTakeUserId();
+        // 获取待还
+        long feeId = assetChangeProvider.getFeeAccountId();  // 收费账户
+        //生成借款人资产变动记录
+        BatchAssetChange batchAssetChange = new BatchAssetChange();
+        batchAssetChange.setSourceId(borrowId);
+        batchAssetChange.setState(0);
+        batchAssetChange.setType(BatchAssetChangeContants.BATCH_LEND_REPAY);
+        batchAssetChange.setCreatedAt(new Date());
+        batchAssetChange.setUpdatedAt(new Date());
+        batchAssetChange.setBatchNo(batchNo);
+        batchAssetChangeService.save(batchAssetChange);
+        long batchAssetChangeId = batchAssetChange.getId();
+        // 借款人还款
+        // 放款
+        BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
+        batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
+        batchAssetChangeItem.setState(0);
+        batchAssetChangeItem.setSourceId(borrow.getId());
+        batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+        batchAssetChangeItem.setMoney(borrow.getMoney());
+        batchAssetChangeItem.setSeqNo(assetChangeProvider.getSeqNo());
+        batchAssetChangeItem.setRemark(String.format("标的[%s]融资成功. 放款%s元", borrow.getName(), StringHelper.formatDouble(borrow.getMoney() / 100D, true)));
+        batchAssetChangeItem.setType(AssetChangeTypeEnum.borrow.getLocalType());
+        batchAssetChangeItem.setUserId(takeUserId);
+        batchAssetChangeItem.setCreatedAt(nowDate);
+        batchAssetChangeItem.setUpdatedAt(nowDate);
+        batchAssetChangeItemService.save(batchAssetChangeItem);
+
+        // 净值账户管理费
+        if (borrow.getType() == 1) {
+            batchAssetChangeItem = new BatchAssetChangeItem();
+            batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
+            batchAssetChangeItem.setState(0);
+            batchAssetChangeItem.setSourceId(borrow.getId());
+            batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+            batchAssetChangeItem.setMoney(new Double(sumNetWorthFee).longValue());
+            batchAssetChangeItem.setSeqNo(assetChangeProvider.getSeqNo());
+            batchAssetChangeItem.setRemark(String.format("扣除标的[%s]融资管理费%s元", borrow.getName(), StringHelper.formatDouble(MoneyHelper.divide(new Double(sumNetWorthFee).longValue(), 100D), true)));
+            batchAssetChangeItem.setType(AssetChangeTypeEnum.financingManagementFee.getLocalType());
+            batchAssetChangeItem.setUserId(takeUserId);
+            batchAssetChangeItem.setForUserId(feeId);
+            batchAssetChangeItem.setCreatedAt(nowDate);
+            batchAssetChangeItem.setUpdatedAt(nowDate);
+            batchAssetChangeItemService.save(batchAssetChangeItem);  // 扣除融资管理费
+
+            // 费用平台添加收取的转让费
+            batchAssetChangeItem = new BatchAssetChangeItem();
+            batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
+            batchAssetChangeItem.setState(0);
+            batchAssetChangeItem.setSourceId(borrow.getId());
+            batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+            batchAssetChangeItem.setMoney(new Double(sumNetWorthFee).longValue());
+            batchAssetChangeItem.setSeqNo(assetChangeProvider.getSeqNo());
+            batchAssetChangeItem.setRemark(String.format("收取标的[%s]融资管理费%s元", borrow.getName(), StringHelper.formatDouble(MoneyHelper.divide(new Double(sumNetWorthFee).longValue(), 100D), true)));
+            batchAssetChangeItem.setType(AssetChangeTypeEnum.platformFinancingManagementFee.getLocalType());
+            batchAssetChangeItem.setUserId(feeId);
+            batchAssetChangeItem.setForUserId(takeUserId);
+            batchAssetChangeItem.setCreatedAt(nowDate);
+            batchAssetChangeItem.setUpdatedAt(nowDate);
+            batchAssetChangeItemService.save(batchAssetChangeItem);  // 收取融资管理费
+        }
     }
 
     /**
@@ -563,7 +655,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         }*/
         //解除本地冻结
         //立即还款冻结
-        long frozenMoney = new Double(NumberHelper.toDouble(txAmount) * 100).longValue();
+        long frozenMoney = new Double(MoneyHelper.multiply(NumberHelper.toDouble(txAmount), 100)).longValue();
         AssetChange assetChange = new AssetChange();
         assetChange.setType(AssetChangeTypeEnum.unfreeze);  // 招标失败解除冻结资金
         assetChange.setUserId(titularUserThirdAccount.getUserId());

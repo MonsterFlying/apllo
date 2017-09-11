@@ -5,6 +5,7 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.MathHelper;
+import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.tender.biz.TenderBiz;
@@ -126,7 +127,7 @@ public class TenderProvider {
                 VoCreateTenderReq voCreateBorrowTender = new VoCreateTenderReq();
                 voCreateBorrowTender.setBorrowId(borrowId); // 标的
                 voCreateBorrowTender.setUserId(NumberHelper.toLong(voFindAutoTender.get("userId"))); // 投标用户
-                voCreateBorrowTender.setTenderMoney(MathHelper.myRound(money / 100.0, 2));  // 投标金额
+                voCreateBorrowTender.setTenderMoney(MoneyHelper.round(MoneyHelper.multiply(money, 100d), 2));  // 投标金额
                 voCreateBorrowTender.setAutoOrder(NumberHelper.toInt(voFindAutoTender.get("order")));
                 voCreateBorrowTender.setIsAutoTender(true);//自动标识
                 voCreateBorrowTender.setRequestSource("0"); //自动投标

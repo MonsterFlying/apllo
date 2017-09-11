@@ -2,6 +2,7 @@ package com.gofobao.framework.tender.vo.request;
 
 import com.gofobao.framework.core.vo.VoBaseReq;
 import com.gofobao.framework.helper.MathHelper;
+import com.gofobao.framework.helper.MoneyHelper;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -28,10 +29,10 @@ public class VoBuyTransfer extends VoBaseReq {
 
     @NotNull(message = "购买债权金额不能为空!")
     public Double getBuyMoney() {
-        return MathHelper.myRound(buyMoney, 0);
+        return MoneyHelper.round(buyMoney, 0);
     }
 
     public void setBuyMoney(Double buyMoney) {
-        this.buyMoney = MathHelper.myRound(buyMoney * 100.0, 0);
+        this.buyMoney = MoneyHelper.round(buyMoney * 100.0, 0);
     }
 }

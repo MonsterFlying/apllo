@@ -11,10 +11,7 @@ import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
-import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.MathHelper;
-import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.*;
 import com.gofobao.framework.member.entity.BrokerBouns;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.BrokerBounsService;
@@ -87,7 +84,7 @@ public class UserBonusScheduler {
                         awardApr = .003;
                     }
 
-                    bounsAward = MathHelper.myRound(NumberHelper.toInt(map.get("wait_principal_total")) * .01 * awardApr / 365, 2);
+                    bounsAward = MoneyHelper.round(NumberHelper.toInt(map.get("wait_principal_total")) * .01 * awardApr / 365, 2);
 
                     if (bounsAward <= .01) {
                         continue;
@@ -142,9 +139,9 @@ public class UserBonusScheduler {
                     BrokerBouns brokerBouns = new BrokerBouns();
                     brokerBouns.setUserId((long) NumberHelper.toInt(map.get("user_id")));
                     brokerBouns.setLevel(level);
-                    brokerBouns.setAwardApr((int) MathHelper.myRound(awardApr * 100, 0));
+                    brokerBouns.setAwardApr(new Double(MoneyHelper.round(awardApr * 100, 0)).intValue());
                     brokerBouns.setWaitPrincipalTotal(NumberHelper.toLong(map.get("wait_principal_total")));
-                    brokerBouns.setBounsAward((int) MathHelper.myRound(bounsAward, 0));
+                    brokerBouns.setBounsAward(new Double(MoneyHelper.round(bounsAward, 0)).intValue());
                     brokerBounsService.save(brokerBouns);
                 }
             } while (resultList.size() >= 50);
@@ -179,7 +176,7 @@ public class UserBonusScheduler {
                 resultList = jdbcTemplate.queryForList(sql.toString());
 
                 for (Map<String, Object> map : resultList) {
-                    money = (int) MathHelper.myRound(NumberHelper.toInt(map.get("sum")) / 100 * 0.005 / 365, 0);
+                    money = (int) MoneyHelper.round(NumberHelper.toInt(map.get("sum")) / 100 * 0.005 / 365, 0);
                     Long userId = NumberHelper.toLong(map.get("userId"));
                     UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(redId);
 
@@ -257,13 +254,13 @@ public class UserBonusScheduler {
                 for (Map<String, Object> map : resultList) {
                     sum = NumberHelper.toInt(map.get("sum"));
                     if (sum < Math.pow(10, 9)) {
-                        money = (int) MathHelper.myRound(sum / 100 * 0.0002, 0);
+                        money = (int) MoneyHelper.round(sum / 100 * 0.0002, 0);
                     } else if (sum > Math.pow(10, 9) && sum <= 5 * Math.pow(10, 9)) {
-                        money = 200 + (int) MathHelper.myRound((sum - Math.pow(10, 9)) / 100 * .0003, 0);
+                        money = 200 + (int) MoneyHelper.round((sum - Math.pow(10, 9)) / 100 * .0003, 0);
                     } else if (sum > 5 * Math.pow(10, 9) && sum <= Math.pow(10, 10)) {
-                        money = 1400 + (int) MathHelper.myRound((sum - 5 * Math.pow(10, 9)) / 100 * .0004, 0);
+                        money = 1400 + (int) MoneyHelper.round((sum - 5 * Math.pow(10, 9)) / 100 * .0004, 0);
                     } else {
-                        money = 3400 + (int) MathHelper.myRound((sum - Math.pow(10, 10)) / 100 * .0005, 0);
+                        money = 3400 + (int) MoneyHelper.round((sum - Math.pow(10, 10)) / 100 * .0005, 0);
                     }
 
 
