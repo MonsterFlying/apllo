@@ -85,7 +85,7 @@ public class FriendsController {
         try {
             Map<String, Object> resultMaps = brokerBounsBiz.shareRegister(userId);
             res.setCodeUrl(resultMaps.get("QRCodeURL").toString());
-            res.setTitle("邀请好友投资,奖励送不停");
+            res.setTitle("江西银行存管，您值得信赖");
             res.setDesc("新手福利,投资即可发放红包+加息0.5%-3%");
             res.setRequestHtmlUrl(resultMaps.get("inviteUrl").toString());
             res.setIcon(javaDomain + "/images/bankLogo/logo.png");

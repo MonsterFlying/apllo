@@ -1,9 +1,12 @@
 package com.gofobao.framework.award.biz;
 
+import com.gofobao.framework.asset.vo.response.VoPreRechargeResp;
 import com.gofobao.framework.award.vo.request.VoOpenRedPackageReq;
 import com.gofobao.framework.award.vo.request.VoRedPackageReq;
 import com.gofobao.framework.award.vo.response.VoViewOpenRedPackageWarpRes;
 import com.gofobao.framework.award.vo.response.VoViewRedPackageWarpRes;
+import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.tender.vo.request.VoPublishRedReq;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -24,4 +27,12 @@ public interface RedPackageBiz {
      * @return
      */
     ResponseEntity<VoViewOpenRedPackageWarpRes> openRedPackage(VoOpenRedPackageReq voOpenRedPackageReq) throws Exception;
+
+
+    /**
+     * 后台补发红包
+     * @param voPublishRedReq
+     * @return
+     */
+    ResponseEntity<VoBaseResp> publishActivity(VoPublishRedReq voPublishRedReq);
 }
