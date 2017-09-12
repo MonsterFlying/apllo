@@ -35,7 +35,7 @@ public class BorrowInfoRes extends VoBaseResp {
     private Long hideSurplusMoney;
 
     @ApiModelProperty("进度")
-    private double spend;
+    private String spend;
 
     @ApiModelProperty("年华率")
     private String apr;

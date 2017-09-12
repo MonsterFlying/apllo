@@ -97,6 +97,7 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -358,7 +359,6 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setTenderCount(borrow.getTenderCount() + BorrowContants.TIME);
             borrowInfoRes.setMoney(StringHelper.formatMon(borrow.getMoney() / 100d));
             borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
-            borrowInfoRes.setSpend(Double.parseDouble(StringHelper.formatDouble(borrow.getMoneyYes() / borrow.getMoney().doubleValue(), false)));
             //结束时间
             Date endAt = DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1);
             borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
@@ -368,8 +368,7 @@ public class BorrowBizImpl implements BorrowBiz {
             Integer status = borrow.getStatus();
             Date nowDate = new Date(System.currentTimeMillis());
             Date releaseAt = borrow.getReleaseAt();  //发布时间
-            double spend = NumberHelper.floorDouble(borrow.getMoneyYes().doubleValue() / borrow.getMoney().doubleValue() * 100.0, 2);
-
+            borrowInfoRes.setSpend(StringHelper.formatMon(NumberHelper.floorDouble(borrow.getMoneyYes()/borrow.getMoney().doubleValue(),2)*100));
             if (status == BorrowContants.BIDDING) {//招标中
                 //待发布
                 if (releaseAt.getTime() >= nowDate.getTime()) {
@@ -385,10 +384,9 @@ public class BorrowBizImpl implements BorrowBiz {
                 } else {
                     status = 3; //招标中
                     //  进度
-                    if (spend == 100) {
+                    if (borrow.getMoneyYes()/borrow.getMoney()==1) {
                         status = 6;
                     }
-                    borrowInfoRes.setSpend(spend);
                 }
             } else if (!ObjectUtils.isEmpty(borrow.getSuccessAt()) && !ObjectUtils.isEmpty(borrow.getCloseAt())) {   //满标时间 结清
                 status = 4; //已完成
@@ -399,7 +397,6 @@ public class BorrowBizImpl implements BorrowBiz {
             if (!StringUtils.isEmpty(borrow.getTenderId())) {
                 borrowInfoRes.setType(5);
             }
-            borrowInfoRes.setSpend(spend);
             borrowInfoRes.setPassWord(StringUtils.isEmpty(borrow.getPassword()) ? false : true);
             Users users = userService.findById(borrow.getUserId());
             borrowInfoRes.setUserName(!StringUtils.isEmpty(users.getUsername()) ? users.getUsername() : users.getPhone());
@@ -418,7 +415,6 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowInfoRes.setAvatar(users.getAvatarPath());
             borrowInfoRes.setReleaseAt(DateHelper.dateToString(borrow.getReleaseAt()));
             borrowInfoRes.setLockStatus(borrow.getIsLock());
-
             return ResponseEntity.ok(borrowInfoRes);
         } catch (Throwable e) {
             log.info("BorrowBizImpl detail fail", e);
