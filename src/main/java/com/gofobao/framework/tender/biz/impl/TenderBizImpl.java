@@ -97,8 +97,6 @@ public class TenderBizImpl implements TenderBiz {
     @Autowired
     private WindmillTenderBiz windmillTenderBiz;
 
-    @Autowired
-    LendService lendService ;
     /**
      * 新版投标
      *
@@ -368,9 +366,9 @@ public class TenderBizImpl implements TenderBiz {
 
         String availBal1 = balanceQueryResponse.getAvailBal();
         long availBal = MoneyHelper.yuanToFen(NumberHelper.toDouble(availBal1));
-       // double availBal = MoneyHelper.round(MoneyHelper.multiply(NumberHelper.toDouble(availBal1), 100d), 0);// 可用余额  账面余额-可用余额=冻结金额
-        if (availBal < asset.getUseMoney()) {
-            log.error("资金账户未同步，请先在个人中心进行资金同步操作!");
+        long useMoney = asset.getUseMoney().longValue();
+        if (availBal < useMoney) {
+            log.error(String.format("资金账户未同步:本地:%s 即信:%s", useMoney, availBal));
             extendMessage.add("资金账户未同步，请先在个人中心进行资金同步操作!");
             return false;
         }

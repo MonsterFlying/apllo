@@ -528,8 +528,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     /**
      * 批次名义借款人垫付参数检查回调
      */
-    public ResponseEntity<String>
-    thirdBatchAdvanceCheckCall(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> thirdBatchAdvanceCheckCall(HttpServletRequest request, HttpServletResponse response) {
         BatchBailRepayCheckResp batchBailRepayCheckResp = jixinManager.callback(request, new TypeToken<BatchBailRepayCheckResp>() {
         });
         if (ObjectUtils.isEmpty(batchBailRepayCheckResp)) {
