@@ -26,6 +26,9 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
+import com.gofobao.framework.repayment.contants.ThirdDealStatusContrants;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
@@ -99,7 +102,8 @@ public class ThirdBatchProvider {
     private ThirdErrorRemarkService thirdErrorRemarkService;
     @Autowired
     MqHelper mqHelper;
-
+    @Autowired
+    private BorrowRepaymentService borrowRepaymentService;
     @Autowired
     BorrowCollectionService borrowCollectionService;
 
@@ -501,8 +505,21 @@ public class ThirdBatchProvider {
 
 
         // 批次还款处理
+        if(!CollectionUtils.isEmpty(failureTRepayOrderIds)){
+            //更新即信放款状态 为处理失败!
+            BorrowRepayment borrowRepayment = borrowRepaymentService.findById(repaymentId);
+            borrowRepayment.setRepayStatus(ThirdDealStatusContrants.INDISPOSE);
+            borrowRepayment.setUpdatedAt(new Date());
+            borrowRepaymentService.save(borrowRepayment);
+        }
 
         if (CollectionUtils.isEmpty(failureTRepayOrderIds)) {
+            //更新即信放款状态 为处理失败!
+            BorrowRepayment borrowRepayment = borrowRepaymentService.findById(repaymentId);
+            borrowRepayment.setRepayStatus(ThirdDealStatusContrants.DISPOSED);
+            borrowRepayment.setUpdatedAt(new Date());
+            borrowRepaymentService.save(borrowRepayment);
+
             ResponseEntity<VoBaseResp> resp = repaymentBiz.newRepayDeal(repaymentId, batchNo);
             if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
                 log.error("批次还款处理:" + resp.getBody().getState().getMsg());
@@ -606,9 +623,15 @@ public class ThirdBatchProvider {
             //更新批次日志状态
             updateThirdBatchLogState(batchNo, borrowId, ThirdBatchLogContants.BATCH_LEND_REPAY, 4);
             borrowService.save(failureBorrowList);
+
+            //改变批次放款状态 处理失败
+            Borrow borrow = borrowService.findById(borrowId);
+            borrow.setLendRepayStatus(ThirdDealStatusContrants.UNDISPOSED);
+            borrowService.save(borrow);
         }
 
         if (CollectionUtils.isEmpty(failureThirdLendPayOrderIds)) {
+
             Borrow borrow = borrowService.findById(borrowId);
             log.info(String.format("正常标的放款回调: %s", gson.toJson(borrow)));
             boolean flag = borrowBiz.borrowAgainVerify(borrow, batchNo);
@@ -618,6 +641,10 @@ public class ThirdBatchProvider {
                 //更新批次状态
                 thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), borrowId, 3);
             }
+
+            //改变批次放款状态 处理成功
+            borrow.setLendRepayStatus(ThirdDealStatusContrants.DISPOSED);
+            borrowService.save(borrow);
         } else {
             log.info("非流转标复审失败!");
         }
