@@ -295,7 +295,7 @@ public class UserBizImpl implements UserBiz {
         // 获取vip状态
         Vip vip = vipService.findTopByUserIdAndStatus(user.getId(), 1);
         voBasicUserInfoResp.setAvatarUrl(StringUtils.isEmpty(user.getAvatarPath()) ? javaDomain + "/images/user/default_avatar.jpg" : user.getAvatarPath());
-        voBasicUserInfoResp.setVipState(ObjectUtils.isEmpty(vip) ? false : DateHelper.diffInDays(new Date(), vip.getExpireAt(), false) > 0);
+        voBasicUserInfoResp.setVipState(ObjectUtils.isEmpty(vip) ? false : DateHelper.diffInDays(vip.getExpireAt(), new Date() ,false) > 0);
         voBasicUserInfoResp.setEmail(StringUtils.isEmpty(user.getEmail()) ? " " : user.getEmail());
         voBasicUserInfoResp.setEmailState(!StringUtils.isEmpty(user.getEmail()));
         voBasicUserInfoResp.setPhone(StringUtils.isEmpty(user.getPhone()) ? " " : user.getPhone());

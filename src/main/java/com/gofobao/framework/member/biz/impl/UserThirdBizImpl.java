@@ -1,5 +1,6 @@
 package com.gofobao.framework.member.biz.impl;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.*;
 import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
@@ -57,7 +58,10 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.marketing.constans.MarketingTypeContants;
+import com.gofobao.framework.marketing.entity.Marketing;
 import com.gofobao.framework.marketing.entity.MarketingData;
+import com.gofobao.framework.marketing.entity.MarketingRedpackRecord;
+import com.gofobao.framework.marketing.service.MarketingRedpackRecordService;
 import com.gofobao.framework.member.biz.UserThirdBiz;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -80,6 +84,8 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Range;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -405,12 +411,37 @@ public class UserThirdBizImpl implements UserThirdBiz {
         return ResponseEntity.ok(VoBaseResp.error(VoBaseResp.OK, "查询成功", VoOpenAccountResp.class));
     }
 
+
+    @Autowired
+    MarketingRedpackRecordService marketingRedpackRecordService;
     /**
      * 触发开户活动
      *
      * @param userThirdAccount
      */
     private void touchMarketingByOpenAccount(UserThirdAccount userThirdAccount) {
+        Long userId = userThirdAccount.getUserId();
+        Users user = userService.findById(userId);
+        Preconditions.checkNotNull(user, "touchMarketingByOpenAccount user is null");
+        Long parentId = user.getParentId();
+        if (!ObjectUtils.isEmpty(parentId)
+                && parentId > 0) {
+
+            Date nowDate = new Date();
+            // 每天每个用户只能邀请100
+            Specification<MarketingRedpackRecord> specifications = Specifications
+                    .<MarketingRedpackRecord>and()
+                    .eq("userId", parentId)
+                    .between("publishTime", new Range<>(DateHelper.beginOfDate(nowDate), DateHelper.endOfDate(nowDate)))
+                    .build();
+            long count = marketingRedpackRecordService.count(specifications) ;
+            if(count >= 100){
+                log.error("此用户每天邀请好友过100, 系统拒绝执行");
+                return ;
+            }
+        }
+
+
         MarketingData marketingData = new MarketingData();
         marketingData.setTransTime(DateHelper.dateToString(new Date()));
         marketingData.setUserId(userThirdAccount.getUserId().toString());

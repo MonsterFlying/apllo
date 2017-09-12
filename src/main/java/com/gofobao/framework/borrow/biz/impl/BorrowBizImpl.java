@@ -1782,7 +1782,7 @@ public class BorrowBizImpl implements BorrowBiz {
      * @return
      * @throws Exception
      */
-    private boolean verifyLendBorrow(Borrow borrow) throws Exception {
+    public boolean verifyLendBorrow(Borrow borrow) throws Exception {
         Date nowDate = DateHelper.subSeconds(new Date(), 10);
         borrow.setStatus(1);  //更新借款状态
         borrow.setVerifyAt(nowDate);

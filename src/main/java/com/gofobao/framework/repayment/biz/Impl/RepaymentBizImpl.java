@@ -1595,7 +1595,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "当前网络不稳定,请稍后重试!"));
         }
 
-        long availBal = new Double(MoneyHelper.round(MoneyHelper.multiply(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()), 100d), 0)).longValue();// 可用余额  账面余额-可用余额=冻结金额
+        long availBal = MoneyHelper.yuanToFen(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()));
         long useMoney = repayAsset.getUseMoney().longValue();
         if (availBal < useMoney) {
             log.error(String.format("资金账户未同步:本地:%s 即信:%s", useMoney, availBal));

@@ -897,9 +897,9 @@ public class TransferBizImpl implements TransferBiz {
             msg = "当前网络不稳定,请稍后重试!";
         }
 
-        long availBal = new Double(MoneyHelper.round(MoneyHelper.multiply(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()), 100d), 0)).longValue();// 可用余额  账面余额-可用余额=冻结金额
+        long availBal = MoneyHelper.yuanToFen(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()));
         long useMoney = asset.getUseMoney().longValue();
-        if (availBal < useMoney) {
+        if (useMoney > availBal) {
             log.error(String.format("资金账户未同步:本地:%s 即信:%s", useMoney, availBal));
             msg = "资金账户未同步，请先在个人中心进行资金同步操作!";
         }

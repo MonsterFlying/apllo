@@ -135,6 +135,12 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
         Users users1=usersRepository.getOne(userId);
         inviteAwardStatistics.setInviteCode1(users1.getInviteCode());
         inviteAwardStatistics.setInviteCode2(StringUtils.isEmpty(users1.getPhone())?"": users1.getPhone());
+        Users users = new Users();
+        users.setParentId(userId);
+        Example<Users> example = Example.of(users);
+        Long count = usersRepository.count(example);
+        //邀请总人数
+        inviteAwardStatistics.setCountNum(count.intValue());
 
         Specification<BrokerBouns> specification = Specifications.<BrokerBouns>and()
                 .eq("userId", userId)
@@ -152,26 +158,20 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
                         p.getCreatedAt().getTime() <= yesterdayEnd && p.getCreatedAt().getTime() >= yesterdayBegin)
                 .collect(Collectors.toList());
 
-        Users users = new Users();
-        users.setParentId(userId);
-        Example<Users> example = Example.of(users);
-        Long count = usersRepository.count(example);
 
-        //邀请总人数
-        inviteAwardStatistics.setCountNum(count.intValue());
         //昨日奖励
         if (CollectionUtils.isEmpty(yesterdayBroker)) {
             inviteAwardStatistics.setYesterdayAward("0.00");
         } else {
             Integer yesterdayBounsAward = yesterdayBroker.stream().mapToInt(w -> w.getBounsAward()).sum();
-            inviteAwardStatistics.setYesterdayAward(NumberHelper.to2DigitString(yesterdayBounsAward / 100));
+            inviteAwardStatistics.setYesterdayAward(StringHelper.formatMon(yesterdayBounsAward / 100));
             inviteAwardStatistics.setApr( StringHelper.formatMon(brokerBounss.get(0).getAwardApr()/100D));
             inviteAwardStatistics.setWaitPrincipalTotal(StringHelper.formatMon(brokerBounss.get(0).getWaitPrincipalTotal()/100D)+ MoneyConstans.PERCENT);
         }
         //总奖励
         if(!CollectionUtils.isEmpty(brokerBounss)){
             Integer sumAward = brokerBounss.stream().mapToInt(w -> w.getBounsAward()).sum();
-            inviteAwardStatistics.setSumAward(NumberHelper.to2DigitString(sumAward / 100));
+            inviteAwardStatistics.setSumAward(StringHelper.formatMon(sumAward / 100D));
         }
         return inviteAwardStatistics;
     }

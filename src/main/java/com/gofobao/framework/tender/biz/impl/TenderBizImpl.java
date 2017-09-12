@@ -117,6 +117,15 @@ public class TenderBizImpl implements TenderBiz {
         Borrow borrow = borrowService.findByIdLock(voCreateTenderReq.getBorrowId());
         Preconditions.checkNotNull(borrow, "投标: 标的信息为空!");
 
+        if(!ObjectUtils.isEmpty(borrow.getLendId()) && borrow.getLendId() > 0){
+            // 对待有草出借,只能是出草人投
+            if(voCreateTenderReq.getUserId().intValue() != borrow.getLendId().intValue()){
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "非常抱歉, 当前标的为有草出借标的, 只有出草人才能投!"));
+            }
+        }
+
         Preconditions.checkNotNull(borrow, "投标: 标的信息为空!");
         Asset asset = assetService.findByUserIdLock(voCreateTenderReq.getUserId());
         Preconditions.checkNotNull(asset, "投标: 资金记录为空!");
@@ -197,6 +206,8 @@ public class TenderBizImpl implements TenderBiz {
                     log.error(String.format("投资营销节点触发异常：%s", new Gson().toJson(marketingData)), e);
                 }
             }
+
+
         } catch (Exception e) {
             log.error("触发派发失败新手红包失败", e);
         }
@@ -344,9 +355,11 @@ public class TenderBizImpl implements TenderBiz {
             return false;
         }
 
-        long availBal = new Double(MoneyHelper.round(MoneyHelper.multiply(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()), 100d), 0)).longValue();// 可用余额  账面余额-可用余额=冻结金额
+
+        String availBal1 = balanceQueryResponse.getAvailBal();
+        long availBal = MoneyHelper.yuanToFen(NumberHelper.toDouble(availBal1));
         long useMoney = asset.getUseMoney().longValue();
-        if (availBal < asset.getUseMoney().longValue()) {
+        if (availBal < useMoney) {
             log.error(String.format("资金账户未同步:本地:%s 即信:%s", useMoney, availBal));
             extendMessage.add("资金账户未同步，请先在个人中心进行资金同步操作!");
             return false;
@@ -356,6 +369,15 @@ public class TenderBizImpl implements TenderBiz {
         return true;
     }
 
+
+    public static void main(String[] args) {
+        double availBal = MoneyHelper.round(MoneyHelper.multiply(NumberHelper.toDouble("1251.14"), 100d), 0);// 可用余额  账面余额-可用余额=冻结金额
+
+        System.err.println(availBal);
+        System.err.println("125114");
+        System.err.println( availBal < 125114);
+
+    }
 
     /**
      * 验证标的信息是否符合投标要求
