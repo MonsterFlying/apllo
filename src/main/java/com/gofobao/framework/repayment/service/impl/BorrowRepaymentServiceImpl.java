@@ -197,6 +197,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
             collection.setLend(!StringUtils.isEmpty(borrow.getLendId()) ? true : false);
             collection.setRepayAt(!StringUtils.isEmpty(borrow.getLendId()) ? DateHelper.dateToString(p.getRepayAt(), DateHelper.DATE_FORMAT_YMD) : DateHelper.dateToString(p.getRepayAt()));
             collection.setRepaymentId(p.getId());
+            collection.setStatus(p.getStatus()==0?!StringUtils.isEmpty(p.getAdvanceMoneyYes())?2:p.getStatus():p.getStatus());
             collection.setBorrowName(borrow.getName());
             collection.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
             collection.setInterest(StringHelper.formatMon(p.getInterest() / 100D));

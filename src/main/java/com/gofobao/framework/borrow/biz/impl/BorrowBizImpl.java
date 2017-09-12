@@ -368,30 +368,28 @@ public class BorrowBizImpl implements BorrowBiz {
             Integer status = borrow.getStatus();
             Date nowDate = new Date(System.currentTimeMillis());
             Date releaseAt = borrow.getReleaseAt();  //发布时间
-            borrowInfoRes.setSpend(StringHelper.formatMon(NumberHelper.floorDouble(borrow.getMoneyYes()/borrow.getMoney().doubleValue(),2)*100));
+            borrowInfoRes.setSpend(StringHelper.formatMon(NumberHelper.floorDouble(borrow.getMoneyYes() / borrow.getMoney().doubleValue(), 2) * 100));
             if (status == BorrowContants.BIDDING) {//招标中
                 //待发布
                 if (releaseAt.getTime() >= nowDate.getTime()) {
                     status = 1;
                     borrowInfoRes.setSurplusSecond(((releaseAt.getTime() - nowDate.getTime()) / 1000) + 5);
                 } else if (nowDate.getTime() > endAt.getTime()) {  //当前时间大于招标有效时间
-                    //流转标没有过期时间
-                    if (!StringUtils.isEmpty(borrow.getTenderId())) {
-                        status = 3; //招标中
-                    } else {
-                        status = 5; //已过期
-                    }
+                    borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
+                    status = 5; //已过期
                 } else {
                     status = 3; //招标中
-                    //  进度
-                    if (borrow.getMoneyYes()/borrow.getMoney()==1) {
+                    //复审中
+                    if (borrow.getLendRepayStatus() == 1) {
                         status = 6;
+                        borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
                     }
                 }
             } else if (!ObjectUtils.isEmpty(borrow.getSuccessAt()) && !ObjectUtils.isEmpty(borrow.getCloseAt())) {   //满标时间 结清
                 status = 4; //已完成
             } else if (status == BorrowContants.PASS && ObjectUtils.isEmpty(borrow.getCloseAt())) {
                 status = 2; //还款中
+                borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
             }
             borrowInfoRes.setType(borrow.getType());
             if (!StringUtils.isEmpty(borrow.getTenderId())) {
@@ -797,7 +795,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 config.setQueue(MqQueueEnum.RABBITMQ_SMS);
                 config.setTag(MqTagEnum.SMS_BORROW_CANCEL_TENDER);
                 body.put(MqConfig.PHONE, users.getPhone());
-                body.put(MqConfig.MSG_ID,String.valueOf(borrowId));
+                body.put(MqConfig.MSG_ID, String.valueOf(borrowId));
                 body.put(MqConfig.IP, "127.0.0.1");
                 body.put(MqConfig.MSG_NAME, borrow.getName());
                 body.put(MqConfig.TIMESTAMP, DateHelper.dateToString(new Date()));
@@ -839,7 +837,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 config.setQueue(MqQueueEnum.RABBITMQ_SMS);
                 config.setTag(MqTagEnum.SMS_BORROW_CANCEL_TENDER);
                 body.put(MqConfig.PHONE, borrowUser.getPhone());
-                body.put(MqConfig.MSG_ID,String.valueOf(borrowId));
+                body.put(MqConfig.MSG_ID, String.valueOf(borrowId));
                 body.put(MqConfig.IP, "127.0.0.1");
                 body.put(MqConfig.MSG_NAME, borrow.getName());
                 body.put(MqConfig.TIMESTAMP, DateHelper.dateToString(new Date()));
