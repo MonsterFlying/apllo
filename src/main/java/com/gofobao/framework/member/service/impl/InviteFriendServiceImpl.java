@@ -135,6 +135,12 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
         Users users1=usersRepository.getOne(userId);
         inviteAwardStatistics.setInviteCode1(users1.getInviteCode());
         inviteAwardStatistics.setInviteCode2(StringUtils.isEmpty(users1.getPhone())?"": users1.getPhone());
+        Users users = new Users();
+        users.setParentId(userId);
+        Example<Users> example = Example.of(users);
+        Long count = usersRepository.count(example);
+        //邀请总人数
+        inviteAwardStatistics.setCountNum(count.intValue());
 
         Specification<BrokerBouns> specification = Specifications.<BrokerBouns>and()
                 .eq("userId", userId)
@@ -152,13 +158,7 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
                         p.getCreatedAt().getTime() <= yesterdayEnd && p.getCreatedAt().getTime() >= yesterdayBegin)
                 .collect(Collectors.toList());
 
-        Users users = new Users();
-        users.setParentId(userId);
-        Example<Users> example = Example.of(users);
-        Long count = usersRepository.count(example);
 
-        //邀请总人数
-        inviteAwardStatistics.setCountNum(count.intValue());
         //昨日奖励
         if (CollectionUtils.isEmpty(yesterdayBroker)) {
             inviteAwardStatistics.setYesterdayAward("0.00");
