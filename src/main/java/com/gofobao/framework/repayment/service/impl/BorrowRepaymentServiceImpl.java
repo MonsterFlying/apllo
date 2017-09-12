@@ -190,6 +190,13 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
         //装配结果集
         List<VoCollection> collections = Lists.newArrayList();
         repaymentList.stream().forEach(p -> {
+            Specification<ThirdBatchLog> thirdBatchLogSpecification = Specifications.<ThirdBatchLog>and()
+                    .eq("type", ThirdBatchLogContants.BATCH_REPAY)
+                    .eq("sourceId", p.getId())
+                    .in("state",Lists.newArrayList(0,1).toArray())
+                    .build();
+            List<ThirdBatchLog> thirdBatchLogs = thirdBatchLogService.findList(thirdBatchLogSpecification);
+
             VoCollection collection = new VoCollection();
             collection.setOrder(p.getOrder() + 1);
             Borrow borrow = borrowMap.get(p.getBorrowId());
@@ -197,6 +204,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
             collection.setLend(!StringUtils.isEmpty(borrow.getLendId()) ? true : false);
             collection.setRepayAt(!StringUtils.isEmpty(borrow.getLendId()) ? DateHelper.dateToString(p.getRepayAt(), DateHelper.DATE_FORMAT_YMD) : DateHelper.dateToString(p.getRepayAt()));
             collection.setRepaymentId(p.getId());
+            collection.setStatus(p.getStatus()==0?!CollectionUtils.isEmpty(thirdBatchLogs)?2:p.getStatus():p.getStatus());
             collection.setBorrowName(borrow.getName());
             collection.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
             collection.setInterest(StringHelper.formatMon(p.getInterest() / 100D));
