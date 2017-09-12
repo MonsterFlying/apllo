@@ -380,11 +380,9 @@ public class BorrowBizImpl implements BorrowBiz {
                 } else {
                     status = 3; //招标中
                     //复审中
-                    if (borrow.getLendRepayStatus().intValue() ==3 ) {
-                        if(ObjectUtils.isEmpty(borrow.getRecheckAt())){
-                            borrow.setRecheckAt( DateHelper.addHours(borrow.getSuccessAt(), 4) ) ;
-                        }
+                    if (borrow.getLendRepayStatus() == 1) {
                         status = 6;
+                        borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
                     }
                 }
             } else if (!ObjectUtils.isEmpty(borrow.getSuccessAt()) && !ObjectUtils.isEmpty(borrow.getCloseAt())) {   //满标时间 结清
@@ -394,6 +392,9 @@ public class BorrowBizImpl implements BorrowBiz {
                 borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
             }
             borrowInfoRes.setType(borrow.getType());
+            if (!StringUtils.isEmpty(borrow.getTenderId())) {
+                borrowInfoRes.setType(5);
+            }
             borrowInfoRes.setPassWord(StringUtils.isEmpty(borrow.getPassword()) ? false : true);
             Users users = userService.findById(borrow.getUserId());
             borrowInfoRes.setUserName(!StringUtils.isEmpty(users.getUsername()) ? users.getUsername() : users.getPhone());
@@ -1034,7 +1035,7 @@ public class BorrowBizImpl implements BorrowBiz {
         List<BorrowRepayment> borrowRepaymentList = new ArrayList<>();
         // 调用利息计算器得出借款每期应还信息
         BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(StringHelper.toString(borrow.getMoney())),
-                NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), nowDate);
+                NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrow.getSuccessAt());
         Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
         List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
         BorrowRepayment borrowRepayment = null;
