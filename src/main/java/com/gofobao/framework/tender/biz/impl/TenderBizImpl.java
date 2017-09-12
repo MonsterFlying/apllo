@@ -378,7 +378,7 @@ public class TenderBizImpl implements TenderBiz {
         long availBal = MoneyHelper.yuanToFen(NumberHelper.toDouble(availBal1));
         long useMoney = asset.getUseMoney().longValue();
         if (availBal < useMoney) {
-            log.error(String.format("资金账户未同步:本地:%s 即信:%s", useMoney, availBal));
+            log.error(String.format("资金账户未同步userId:%s:本地:%s 即信:%s", user.getId(), useMoney, availBal));
             extendMessage.add("资金账户未同步，请先在个人中心进行资金同步操作!");
             return false;
         }
