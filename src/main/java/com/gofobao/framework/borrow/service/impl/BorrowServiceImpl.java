@@ -644,10 +644,6 @@ public class BorrowServiceImpl implements BorrowService {
     }
 
     public Borrow insert(Borrow borrow) {
-        if (ObjectUtils.isEmpty(borrow)) {
-            return null ;
-        }
-        borrow.setId(null);
         return borrowRepository.save(borrow);
     }
 
