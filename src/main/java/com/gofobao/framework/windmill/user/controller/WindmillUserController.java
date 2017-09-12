@@ -43,7 +43,7 @@ public class WindmillUserController {
     private ThymeleafHelper thymeleafHelper;
 
     @ApiOperation("用户注册")
-    @GetMapping(value = "user/register")
+    @PostMapping(value = "user/register")
     public UserRegisterRes register(HttpServletRequest request) throws Exception {
         return windmillUserBiz.register(request);
 

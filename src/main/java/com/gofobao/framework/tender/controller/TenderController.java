@@ -1,7 +1,5 @@
 package com.gofobao.framework.tender.controller;
 
-import com.gofobao.framework.asset.vo.response.VoQueryInfoResp;
-import com.gofobao.framework.borrow.vo.request.VoDoAgainVerifyReq;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
