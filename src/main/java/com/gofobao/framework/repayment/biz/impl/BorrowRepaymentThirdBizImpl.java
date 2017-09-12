@@ -41,6 +41,7 @@ import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
+import com.gofobao.framework.repayment.contants.ThirdDealStatusContrants;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
@@ -259,6 +260,10 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
         thirdBatchLog.setRemark("即信批次放款");
         thirdBatchLogService.save(thirdBatchLog);
+
+        //改变批次放款状态 处理中
+        borrow.setLendRepayStatus(ThirdDealStatusContrants.DISPOSING);
+        borrowService.save(borrow);
         return null;
     }
 
@@ -394,6 +399,12 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             } catch (Exception e) {
                 log.error("即信批次还款解除冻结可用资金异常:", e);
             }
+
+            //更新即信放款状态 为处理失败!
+            BorrowRepayment borrowRepayment = borrowRepaymentService.findById(repaymentId);
+            borrowRepayment.setRepayStatus(ThirdDealStatusContrants.UNDISPOSED);
+            borrowRepayment.setUpdatedAt(new Date());
+            borrowRepaymentService.save(borrowRepayment);
         } else {
             log.info("=============================即信批次还款检验参数回调===========================");
             log.info("回调成功!");
@@ -471,6 +482,10 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("=============================即信批次放款检验参数回调===========================");
             log.error("回调失败! msg:" + lendRepayCheckResp.getRetMsg());
             thirdBatchLogBiz.updateBatchLogState(lendRepayCheckResp.getBatchNo(), borrowId, 2);
+            //改变批次放款状态 处理失败
+            Borrow borrow = borrowService.findById(borrowId);
+            borrow.setLendRepayStatus(ThirdDealStatusContrants.INDISPOSE);
+            borrowService.save(borrow);
         } else {
             log.info("=============================即信批次放款检验参数回调===========================");
             log.info("回调成功!");

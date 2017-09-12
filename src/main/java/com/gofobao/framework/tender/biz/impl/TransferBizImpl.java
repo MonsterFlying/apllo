@@ -97,6 +97,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -1609,10 +1610,10 @@ public class TransferBizImpl implements TransferBiz {
             borrowInfoRes.setTenderCount(transfer.getTenderCount() + com.gofobao.framework.borrow.contants.BorrowContants.TIME);
         }
 
+        borrowInfoRes.setSpend(StringHelper.formatMon(NumberHelper.floorDouble(transfer.getTransferMoneyYes()/transfer.getTransferMoney().doubleValue(),2)*100));
         borrowInfoRes.setMoney(StringHelper.formatMon(transfer.getTransferMoney() / 100d));
         borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
-        double spend = NumberHelper.floorDouble(MoneyHelper.divide(transfer.getTransferMoneyYes(), transfer.getTransferMoney().doubleValue()) * 100, 2);
-        borrowInfoRes.setSpend(spend);
+
         //结束时间
         Date endAt = DateHelper.addDays(DateHelper.beginOfDate(transfer.getReleaseAt()), 3 + 1);
         borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));

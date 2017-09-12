@@ -2,6 +2,7 @@ package com.gofobao.framework.repayment.entity;
 
 import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -13,6 +14,7 @@ import java.util.Date;
 @Data
 @Table(name = "gfb_borrow_repayment")
 @DynamicInsert
+@DynamicUpdate
 public class BorrowRepayment {
     @Id
     @GeneratedValue
@@ -87,4 +89,6 @@ public class BorrowRepayment {
     @Basic
     @Column(name = "t_user_id")
     private Long tUserId;
+    //放款即信通信状态 0.未处理 1.处理中 2.处理失败 3.处理成功
+    private Integer repayStatus;
 }

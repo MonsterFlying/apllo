@@ -5,6 +5,7 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.member.entity.Users;
@@ -92,13 +93,13 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
                         invest.setInvest_title(p.getName());
                         invest.setInvest_url(h5Address + "#/borrow/" + p.getId());
                         invest.setTime_limit(p.getTimeLimit());
-                        invest.setTime_limit_desc(p.getTimeLimit() + BorrowContants.DAY);
+                        invest.setTime_limit_desc(p.getTimeLimit() + (p.getRepayFashion() == 1 ? BorrowContants.DAY : BorrowContants.MONTH));
                         invest.setBuy_limit(p.getMost() == 0 ? "" : StringHelper.formatDouble(p.getMost() / 100D, false));
                         invest.setBuy_unit(p.getLowest() == 0 ? "" : StringHelper.formatDouble(p.getLowest() / 100D, false));
                         invest.setInvested_amount(StringHelper.formatMon(p.getMoneyYes() / 100D));
                         invest.setTotal_amount(StringHelper.formatMon(p.getMoney() / 100D));
                         invest.setRate(StringHelper.formatDouble(p.getApr() / 100D, false));
-                        invest.setProgress(StringHelper.formatDouble(p.getMoneyYes() / p.getMoney(), false));
+                        invest.setProgress(NumberHelper.floorDouble((p.getMoneyYes().doubleValue() / p.getMoney().doubleValue()) * 100, 2) + "");
                         invest.setStart_time(DateHelper.dateToString(p.getVerifyAt()));
                         if (p.getRepayFashion() == 0) {
                             invest.setPayback_way(BorrowContants.REPAY_FASHION_MONTH_STR);
@@ -174,7 +175,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
         tenders.forEach(p -> {
             VoTender tender = new VoTender();
             try {
-                tender.setIndex( p.getId());
+                tender.setIndex(p.getId());
                 tender.setInvest_money(StringHelper.formatDouble(p.getValidMoney(), false));
                 tender.setInvest_time(DateHelper.dateToString(p.getCreatedAt()));
                 Users tempUser = usersMap.get(p.getUserId());
@@ -210,7 +211,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
         BySomeDayReq someDayReq;
         try {
             String paramStr = request.getParameter("param");
-            Map<String,Object>paramMap= StrToJsonStrUtil.commonUrlParamToMap(paramStr, desKey);
+            Map<String, Object> paramMap = StrToJsonStrUtil.commonUrlParamToMap(paramStr, desKey);
             someDayReq = GSON.fromJson(GSON.toJson(paramMap), new TypeToken<BySomeDayReq>() {
             }.getType());
 

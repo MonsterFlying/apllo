@@ -71,7 +71,6 @@ public class WebAutoTenderController {
         return autoTenderBiz.delAutoTender(voDelAutoTenderReq);
     }
 
-
     /**
      * pc:更新自动投标规则
      * @param voSaveAutoTenderReq
@@ -79,8 +78,7 @@ public class WebAutoTenderController {
      */
     @ApiOperation("pc：更新自动投标规则")
     @PostMapping("/autoTender/pc/v2/update")
-    public ResponseEntity<VoBaseResp> updateAutoTender(@ModelAttribute @Valid VoSaveAutoTenderReq voSaveAutoTenderReq,
-                                                       @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoBaseResp> updateAutoTender(@ModelAttribute @Valid VoSaveAutoTenderReq voSaveAutoTenderReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voSaveAutoTenderReq.setUserId(userId);
         return autoTenderBiz.updateAutoTender(voSaveAutoTenderReq);
     }
@@ -93,12 +91,10 @@ public class WebAutoTenderController {
      */
     @ApiOperation("pc:创建自动投标")
     @PostMapping("/autoTender/pc/v2/create")
-    public ResponseEntity<VoBaseResp> createAutoTender(@ModelAttribute @Valid VoSaveAutoTenderReq voSaveAutoTenderReq,
-                                                       @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<VoBaseResp> createAutoTender(@ModelAttribute @Valid VoSaveAutoTenderReq voSaveAutoTenderReq, @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         voSaveAutoTenderReq.setUserId(userId);
         return autoTenderBiz.createAutoTender(voSaveAutoTenderReq);
     }
-
 
     /**
      * 查询自动投标详情

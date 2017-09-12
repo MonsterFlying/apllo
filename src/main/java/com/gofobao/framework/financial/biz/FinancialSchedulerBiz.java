@@ -10,4 +10,12 @@ public interface FinancialSchedulerBiz {
      */
     void save(FinancialScheduler financialScheduler);
 
+
+    /**
+     * 当前任务是否执行
+     * @param type
+     * @return
+     */
+    boolean isExecute(String type);
+
 }

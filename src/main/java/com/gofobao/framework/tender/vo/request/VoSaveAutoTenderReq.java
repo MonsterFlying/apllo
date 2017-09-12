@@ -1,6 +1,5 @@
 package com.gofobao.framework.tender.vo.request;
 
-import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.tender.contants.AutoTenderContants;
 import io.swagger.annotations.ApiModel;
@@ -18,7 +17,8 @@ import javax.validation.constraints.Pattern;
  */
 @ApiModel
 @Data
-public class VoSaveAutoTenderReq {
+public class
+VoSaveAutoTenderReq {
     @ApiModelProperty(hidden = true)
     private Long userId;
 
@@ -50,7 +50,7 @@ public class VoSaveAutoTenderReq {
     @ApiModelProperty( value = "期限范围结束值 timelimitType不为0时必填", dataType = "int", required = false)
     private Integer timelimitLast = 0;
 
-    @ApiModelProperty( value = "最大投标金额(分) ")
+    @ApiModelProperty( name = "最大投标金额(分) ")
     private Integer tenderMoney = null;
 
     @ApiModelProperty( value = "返款方式（0、按月分期 1、一次性还本付息2、先息后本） 选中则带上相应数字 用,隔开 例如 0,1", dataType = "String", required = true)

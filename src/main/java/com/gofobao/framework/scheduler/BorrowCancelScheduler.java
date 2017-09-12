@@ -8,6 +8,8 @@ import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.common.data.DataObject;
 import com.gofobao.framework.common.data.LeSpecification;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.service.TenderService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -21,6 +23,7 @@ import org.springframework.util.CollectionUtils;
 import javax.transaction.Transactional;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -34,6 +37,8 @@ public class BorrowCancelScheduler {
     private BorrowService borrowService;
     @Autowired
     private BorrowBiz borrowBiz;
+    @Autowired
+    private TenderService tenderService;
 
     /**
      * 每天凌晨1点整取消标的
@@ -57,19 +62,34 @@ public class BorrowCancelScheduler {
             //筛选已过期的标的
             borrowList = borrowList.stream().filter(borrow ->
                     //当前时间>发布时间（时间+1）
-                    new Date().getTime() > DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1).getTime()).collect(Collectors.toList());
+                    new Date().getTime() > DateHelper.addDays(DateHelper.beginOfDate(borrow.getReleaseAt()), borrow.getValidDay() + 1).getTime()
+                            &&
+                            borrow.getMoneyYes() < borrow.getMoney()
+            ).collect(Collectors.toList());
+            Set<Long> borrowIds = borrowList.stream().map(Borrow::getId).collect(Collectors.toSet());
+            /* 获取已在即信等级标的 */
+            Specification<Tender> ts = Specifications
+                    .<Tender>and()
+                    .in("borrowId", borrowIds.toArray())
+                    .eq("status", 1)
+                    .eq("thirdTenderFlag", true)
+                    .build();
+            List<Tender> tenderList = tenderService.findList(ts);
 
             if (CollectionUtils.isEmpty(borrowList)) {
                 break;
             }
             borrowList.stream().forEach(borrow -> {
-                VoCancelBorrow voCancelBorrow = new VoCancelBorrow();
-                voCancelBorrow.setUserId(borrow.getUserId());
-                voCancelBorrow.setBorrowId(borrow.getId());
-                try {
-                    borrowBiz.cancelBorrow(voCancelBorrow);
-                } catch (Exception e) {
-                    log.error("BorrowCancelScheduler process 取消标的失败：", e);
+                long count = tenderList.stream().filter(tender -> tender.getBorrowId() == borrow.getId() && tender.getThirdTenderFlag()).count();
+                if (count <= 0) {
+                    VoCancelBorrow voCancelBorrow = new VoCancelBorrow();
+                    voCancelBorrow.setUserId(borrow.getUserId());
+                    voCancelBorrow.setBorrowId(borrow.getId());
+                    try {
+                        borrowBiz.cancelBorrow(voCancelBorrow);
+                    } catch (Exception e) {
+                        log.error("BorrowCancelScheduler process 取消标的失败：", e);
+                    }
                 }
             });
 
