@@ -25,6 +25,8 @@ import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.PasswordHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
+import com.gofobao.framework.lend.entity.Lend;
+import com.gofobao.framework.lend.service.LendService;
 import com.gofobao.framework.marketing.constans.MarketingTypeContants;
 import com.gofobao.framework.marketing.entity.MarketingData;
 import com.gofobao.framework.member.entity.UserCache;
@@ -95,6 +97,8 @@ public class TenderBizImpl implements TenderBiz {
     @Autowired
     private WindmillTenderBiz windmillTenderBiz;
 
+    @Autowired
+    LendService lendService ;
     /**
      * 新版投标
      *
@@ -118,8 +122,9 @@ public class TenderBizImpl implements TenderBiz {
         Preconditions.checkNotNull(borrow, "投标: 标的信息为空!");
 
         if(!ObjectUtils.isEmpty(borrow.getLendId()) && borrow.getLendId() > 0){
+            Lend lend = lendService.findByIdLock(borrow.getLendId());
             // 对待有草出借,只能是出草人投
-            if(voCreateTenderReq.getUserId().intValue() != borrow.getLendId().intValue()){
+            if(voCreateTenderReq.getUserId().intValue() != lend.getUserId().intValue()){
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "非常抱歉, 当前标的为有草出借标的, 只有出草人才能投!"));
@@ -313,6 +318,7 @@ public class TenderBizImpl implements TenderBiz {
         // 判断用户是否已经锁定
         if (user.getIsLock()) {
             extendMessage.add("当前用户属于锁定状态, 如有问题请联系客服!");
+            log.error("当前用户属于锁定状态, 如有问题请联系客服!");
             return false;
         }
 
@@ -322,6 +328,7 @@ public class TenderBizImpl implements TenderBiz {
         long realMiniTenderMoney = Math.min(realTenderMoney, minLimitTenderMoney);  // 获取最小投标金额
         if (realMiniTenderMoney > voCreateTenderReq.getTenderMoney()) {
             extendMessage.add("小于标的最小投标金额!");
+            log.error("小于标的最小投标金额!");
             return false;
         }
 
@@ -335,12 +342,14 @@ public class TenderBizImpl implements TenderBiz {
 
             if ((invaildataMoney <= 0) || (invaildataMoney < minLimitTenderMoney)) {
                 extendMessage.add("该借款已达到自投限额!");
+                log.error("该借款已达到自投限额!");
                 return false;
             }
         }
 
         if (invaildataMoney > asset.getUseMoney()) {
             extendMessage.add("您的账户可用余额不足,请先充值!");
+            log.error("您的账户可用余额不足,请先充值!");
             return false;
         }
 
@@ -352,6 +361,7 @@ public class TenderBizImpl implements TenderBiz {
         BalanceQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.BALANCE_QUERY, balanceQueryRequest, BalanceQueryResponse.class);
         if ((ObjectUtils.isEmpty(balanceQueryResponse)) || !balanceQueryResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
             extendMessage.add("当前网络不稳定,请稍后重试!");
+            log.error("当前网络不稳定,请稍后重试!");
             return false;
         }
 
@@ -360,6 +370,7 @@ public class TenderBizImpl implements TenderBiz {
         long availBal = MoneyHelper.yuanToFen(NumberHelper.toDouble(availBal1));
        // double availBal = MoneyHelper.round(MoneyHelper.multiply(NumberHelper.toDouble(availBal1), 100d), 0);// 可用余额  账面余额-可用余额=冻结金额
         if (availBal < asset.getUseMoney()) {
+            log.error("资金账户未同步，请先在个人中心进行资金同步操作!");
             extendMessage.add("资金账户未同步，请先在个人中心进行资金同步操作!");
             return false;
         }

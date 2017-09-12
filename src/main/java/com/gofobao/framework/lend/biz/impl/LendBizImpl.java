@@ -373,15 +373,24 @@ public class LendBizImpl implements LendBiz {
         }
 
         lendService.updateById(lend);
-        boolean result = borrowBiz.doFirstVerify(tempBorrow.getId());// 初审并且生成投标记录
 
-        if (result) {
-            return ResponseEntity.ok(VoBaseResp.ok("摘草成功"));
-        } else {
+        //初审
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
+        mqConfig.setTag(MqTagEnum.FIRST_VERIFY);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(tempBorrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            log.info(String.format("borrowBizImpl firstVerify send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("LendBizImpl 初审 send mq exception", e);
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "很抱歉的通知你:摘草失败了！"));
         }
+        return ResponseEntity.ok(VoBaseResp.ok("摘草请求以向存管系统报备, 请留意摘草进度!"));
     }
 
     private ResponseEntity<VoBaseResp> lendCondiitionCheck(long userId, Double money, Lend lend) {
