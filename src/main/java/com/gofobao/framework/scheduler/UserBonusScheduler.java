@@ -194,7 +194,7 @@ public class UserBonusScheduler {
     /**
      * 天提成
      */
-    @Scheduled(cron = "1 * * * * ? ")
+    @Scheduled(cron = "0 30 23 * * ? ")
     @Transactional(rollbackFor = Exception.class)
     public void dayProcess() {
         log.info("每日天提成调度启动");
