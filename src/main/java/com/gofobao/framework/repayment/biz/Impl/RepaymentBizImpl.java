@@ -787,7 +787,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 }
                 collectionOrderRes.setStatus(p.getStatus());
                 collectionOrderRes.setCollectionMoney(StringHelper.formatMon(p.getRepayMoney() / 100d));
-                collectionOrderRes.setTimeLime(borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_YCBX_NUM ? 1 : borrow.getTimeLimit());
+                collectionOrderRes.setTimeLime(borrow.getRepayFashion().intValue() == BorrowContants.REPAY_FASHION_YCBX_NUM ? 1 : borrow.getTimeLimit());
                 orderResList.add(collectionOrderRes);
             });
 
