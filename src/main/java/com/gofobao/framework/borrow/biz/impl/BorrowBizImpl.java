@@ -382,7 +382,6 @@ public class BorrowBizImpl implements BorrowBiz {
                     //复审中
                     if (borrow.getLendRepayStatus() == 1) {
                         status = 6;
-                        borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
                     }
                 }
             } else if (!ObjectUtils.isEmpty(borrow.getSuccessAt()) && !ObjectUtils.isEmpty(borrow.getCloseAt())) {   //满标时间 结清
@@ -392,9 +391,6 @@ public class BorrowBizImpl implements BorrowBiz {
                 borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
             }
             borrowInfoRes.setType(borrow.getType());
-            if (!StringUtils.isEmpty(borrow.getTenderId())) {
-                borrowInfoRes.setType(5);
-            }
             borrowInfoRes.setPassWord(StringUtils.isEmpty(borrow.getPassword()) ? false : true);
             Users users = userService.findById(borrow.getUserId());
             borrowInfoRes.setUserName(!StringUtils.isEmpty(users.getUsername()) ? users.getUsername() : users.getPhone());

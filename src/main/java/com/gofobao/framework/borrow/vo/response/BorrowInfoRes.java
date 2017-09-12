@@ -106,7 +106,7 @@ public class BorrowInfoRes extends VoBaseResp {
     @ApiModelProperty
     private Long borrowId;
 
-    @ApiModelProperty("当状态是复审中为 复审时间；当状态还款中 为满标计息时间")
+    @ApiModelProperty("当状态还款中 为满标计息时间")
     private String recheckAt;
 
 }
