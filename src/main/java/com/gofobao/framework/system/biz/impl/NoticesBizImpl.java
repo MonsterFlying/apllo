@@ -136,7 +136,7 @@ public class NoticesBizImpl implements NoticesBiz {
                 log.info(String.format("极光发送结果: %s", new Gson().toJson(pushResult)));
             }
         } catch (Exception e) {
-            log.error("极光推送发送失败", e);
+             log.error("极光推送失败");
         }
 
         return true;

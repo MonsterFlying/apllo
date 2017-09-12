@@ -401,7 +401,6 @@ public class TransferProvider {
      * @param parentTender
      * @param transferUserThirdAccount
      * @param parentBorrow
-     * @param transferFee
      * @throws Exception
      */
     private ImmutableList<Object> registerThirdTransferTender(Transfer transfer, List<TransferBuyLog> transferBuyLogList, Tender parentTender, UserThirdAccount transferUserThirdAccount, Borrow parentBorrow) throws Exception {
@@ -410,7 +409,7 @@ public class TransferProvider {
         CreditInvest creditInvest = null;
         UserThirdAccount tenderUserThirdAccount = null;
         // 全部有效投保金额
-        int sumCount = 0;
+        int sumAmount = 0;
         // 转让管理费
         int sumTransferFee = 0;
         /* 债权转让管理费费率 */
@@ -425,9 +424,9 @@ public class TransferProvider {
             tenderUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
             Preconditions.checkNotNull(tenderUserThirdAccount, "投资人开户记录不存在!");
             //购买债权转让有效金额
-            double txAmount = transferBuyLog.getValidMoney();
+            double txAmount = MoneyHelper.round(transferBuyLog.getValidMoney(), 0);
             // 全部有效投保金额
-            sumCount += txAmount;
+            sumAmount += txAmount;
             //收取转让人债权转让管理费
             double tempTransferFee = MoneyHelper.round(MoneyHelper.multiply(transferBuyLog.getValidMoney() / new Double(transfer.getPrincipal()), transferFee), 0);
             txFee += tempTransferFee;  // 分摊转让费用到各项中
@@ -454,7 +453,7 @@ public class TransferProvider {
             UserThirdAccount buyUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
             BalanceUnfreezeReq balanceUnfreezeReq = new BalanceUnfreezeReq();
             balanceUnfreezeReq.setAccountId(buyUserThirdAccount.getAccountId());
-            balanceUnfreezeReq.setTxAmount(StringHelper.formatDouble(transferBuyLog.getValidMoney(), 100d, false));
+            balanceUnfreezeReq.setTxAmount(StringHelper.formatDouble(MoneyHelper.divide(transferBuyLog.getValidMoney(), 100d), false));
             balanceUnfreezeReq.setChannel(ChannelContant.HTML);
             balanceUnfreezeReq.setOrderId(newOrderId);
             balanceUnfreezeReq.setOrgOrderId(transferBuyLog.getFreezeOrderId());
@@ -472,7 +471,7 @@ public class TransferProvider {
         //调用存管批次债权转让接口
         BatchCreditInvestReq request = new BatchCreditInvestReq();
         request.setBatchNo(batchNo);
-        request.setTxAmount(StringHelper.formatDouble(sumCount, 100, false));
+        request.setTxAmount(StringHelper.formatDouble(sumAmount, 100, false));
         request.setTxCounts(StringHelper.toString(creditInvestList.size()));
         request.setSubPacks(GSON.toJson(creditInvestList));
         request.setAcqRes(GSON.toJson(acqResMap));

@@ -357,6 +357,7 @@ public class LendBizImpl implements LendBiz {
         tempBorrow.setMoneyYes(0l);
         tempBorrow.setTenderCount(0);
         tempBorrow.setStatus(0);
+        tempBorrow.setIsContinued(false) ;
         tempBorrow = borrowService.insert(tempBorrow);
         if (ObjectUtils.isEmpty(tempBorrow)
                 || ObjectUtils.isEmpty(tempBorrow.getId())
