@@ -1511,8 +1511,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
         balanceFreezeReq.setChannel(ChannelContant.HTML);
         BalanceFreezeResp balanceFreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BalanceFreezeResp.class);
         if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceFreezeResp.getRetCode()))) {
-            throw new Exception("正常还款流程：" + balanceFreezeResp.getRetMsg());
+            throw new Exception(String.format("正常还款流程：%s,userId:%s,repaymentId:%s,borrowId:%s", balanceFreezeResp.getRetMsg(), repayUserThirdAccount.getUserId(), borrowRepayment.getId(), borrow.getId()));
         }
+
 
         try {
             // 冻结还款金额
@@ -1704,10 +1705,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
             Repay repay = new Repay();
             repay.setAccountId(repayAccountId);
             repay.setOrderId(orderId);
-            repay.setTxAmount( StringHelper.formatDouble(MoneyHelper.round(new Double(inPr), 100),false));
-            repay.setIntAmount(StringHelper.formatDouble(MoneyHelper.round(new Double(inIn), 100), false));
-            repay.setTxFeeIn(StringHelper.formatDouble(MoneyHelper.round(new Double(inFee), 100), false));
-            repay.setTxFeeOut(StringHelper.formatDouble(MoneyHelper.round(new Double(outFee), 100), false));
+            repay.setTxAmount( StringHelper.formatDouble(MoneyHelper.round( new Double(inPr) / 100, 2),false));
+            repay.setIntAmount(StringHelper.formatDouble(MoneyHelper.round( new Double(inIn) / 100  , 2), false));
+            repay.setTxFeeIn(StringHelper.formatDouble(MoneyHelper.round( new Double(inFee) / 100, 2), false));
+            repay.setTxFeeOut(StringHelper.formatDouble(MoneyHelper.round( new Double(outFee) / 100 , 2), false));
             repay.setProductId(borrow.getProductId());
             repay.setAuthCode(tender.getAuthCode());
             UserThirdAccount userThirdAccount = userThirdAccountMap.get(tender.getUserId());
@@ -1722,6 +1723,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
             borrowCollectionService.updateById(borrowCollection);
         }
         return repayList;
+    }
+
+    public static void main(String[] args) {
+        long inPr = 110001 ;
+        String s = StringHelper.formatDouble(MoneyHelper.round(new Double(inPr), 100), false);
+        System.err.println(s);
     }
 
     /**

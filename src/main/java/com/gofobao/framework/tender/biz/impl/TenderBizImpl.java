@@ -7,8 +7,11 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
+import com.gofobao.framework.api.model.bid_cancel.BidCancelReq;
+import com.gofobao.framework.api.model.bid_cancel.BidCancelResp;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.asset.vo.response.VoQueryInfoResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
@@ -25,6 +28,7 @@ import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.PasswordHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.lend.entity.Lend;
 import com.gofobao.framework.lend.service.LendService;
 import com.gofobao.framework.marketing.constans.MarketingTypeContants;
@@ -40,6 +44,7 @@ import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.TenderUserReq;
+import com.gofobao.framework.tender.vo.request.VoAdminCancelTender;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
@@ -59,6 +64,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+
+import static com.gofobao.framework.common.assets.AssetChangeTypeEnum.tender;
 
 /**
  * Created by Zeke on 2017/5/31.
@@ -98,7 +105,7 @@ public class TenderBizImpl implements TenderBiz {
     private WindmillTenderBiz windmillTenderBiz;
 
     @Autowired
-    private LendService lendService ;
+    private LendService lendService;
 
     /**
      * 新版投标
@@ -122,10 +129,10 @@ public class TenderBizImpl implements TenderBiz {
         Borrow borrow = borrowService.findByIdLock(voCreateTenderReq.getBorrowId());
         Preconditions.checkNotNull(borrow, "投标: 标的信息为空!");
 
-        if(!ObjectUtils.isEmpty(borrow.getLendId()) && borrow.getLendId() > 0){
+        if (!ObjectUtils.isEmpty(borrow.getLendId()) && borrow.getLendId() > 0) {
             Lend lend = lendService.findByIdLock(borrow.getLendId());
             // 对待有草出借,只能是出草人投
-            if(voCreateTenderReq.getUserId().intValue() != lend.getUserId().intValue()){
+            if (voCreateTenderReq.getUserId().intValue() != lend.getUserId().intValue()) {
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "非常抱歉, 当前标的为有草出借标的, 只有出草人才能投!"));
@@ -386,7 +393,7 @@ public class TenderBizImpl implements TenderBiz {
 
         System.err.println(availBal);
         System.err.println("125114");
-        System.err.println( availBal < 125114);
+        System.err.println(availBal < 125114);
 
     }
 
@@ -532,6 +539,42 @@ public class TenderBizImpl implements TenderBiz {
                     badRequest().
                     body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败", VoBorrowTenderUserWarpListRes.class));
         }
+    }
+
+    @Override
+    public ResponseEntity<VoBaseResp> adminCancelTender(VoAdminCancelTender voAdminCancelTender) {
+        log.error("请求用户标的信息");
+        String paramStr = voAdminCancelTender.getParamStr();
+        if (!SecurityHelper.checkSign(voAdminCancelTender.getSign(), paramStr)) {
+            log.error("BorrowBizImpl doAgainVerify error：自动车标不成功");
+        }
+
+        Map<String, String> paramMap = GSON.fromJson(paramStr, new com.google.gson.reflect.TypeToken<Map<String, String>>() {
+        }.getType());
+
+
+        String orderId = JixinHelper.getOrderId(JixinHelper.TENDER_CANCEL_PREFIX);
+        String accountId = paramMap.get("accountId");
+        String txAmount = paramMap.get("txAmount");
+        String orgOrderId = paramMap.get("orgOrderId");
+        String productId = paramMap.get("productId");
+        log.info("标的撤销:" + orgOrderId);
+        BidCancelReq request = new BidCancelReq();
+        request.setAccountId(accountId);
+        request.setTxAmount(txAmount);
+        request.setChannel(ChannelContant.HTML);
+        request.setOrderId(orderId);
+        request.setOrgOrderId(orgOrderId);
+        request.setProductId(productId);
+        request.setAcqRes(accountId);
+        BidCancelResp response = jixinManager.send(JixinTxCodeEnum.BID_CANCEL, request, BidCancelResp.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+            String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+            log.error("标的初审" + new Gson().toJson(response));
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
+        }
+
+        return ResponseEntity.badRequest().body(VoBaseResp.ok("撤销成功"));
     }
 
 
