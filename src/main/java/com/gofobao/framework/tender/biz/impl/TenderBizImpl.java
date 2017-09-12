@@ -190,7 +190,7 @@ public class TenderBizImpl implements TenderBiz {
                     mqConfig.setMsg(data);
                     mqConfig.setTag(MqTagEnum.MARKETING_TENDER);
                     mqConfig.setQueue(MqQueueEnum.RABBITMQ_MARKETING);
-                    mqConfig.setSendTime(DateHelper.addSeconds(nowDate, 10));
+                    mqConfig.setSendTime(DateHelper.addSeconds(nowDate, 30));
                     mqHelper.convertAndSend(mqConfig);
                     log.info(String.format("投资营销节点触发: %s", new Gson().toJson(marketingData)));
                 } catch (Throwable e) {
