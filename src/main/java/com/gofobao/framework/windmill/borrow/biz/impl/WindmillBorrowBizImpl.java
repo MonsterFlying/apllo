@@ -167,7 +167,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
             borrowTenderList.setRetmsg("没有查询到当前标的投标记录");
             return borrowTenderList;
         }
-        Set<Long> userIds = tenders.stream().map(p -> p.getId()).collect(Collectors.toSet());
+        Set<Long> userIds = tenders.stream().map(p -> p.getUserId()).collect(Collectors.toSet());
         List<Users> users = usersRepository.findByIdIn(new ArrayList<>(userIds));
         Map<Long, Users> usersMap = users.stream().collect(Collectors.toMap(Users::getId, Function.identity()));
         List<VoTender> invest_list = Lists.newArrayList();
