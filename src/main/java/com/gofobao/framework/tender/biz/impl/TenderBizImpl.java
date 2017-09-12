@@ -17,6 +17,7 @@ import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
+import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
@@ -24,6 +25,8 @@ import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.PasswordHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
+import com.gofobao.framework.marketing.constans.MarketingTypeContants;
+import com.gofobao.framework.marketing.entity.MarketingData;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -53,10 +56,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by Zeke on 2017/5/31.
@@ -176,8 +176,26 @@ public class TenderBizImpl implements TenderBiz {
 
         try {
             // 触发新手标活动派发
-            if (borrow.getIsNovice()) {
-                borrowBiz.touchMarketingByTender(borrowTender);
+            if (borrow.getIsNovice() && userCache.isNovice()) {
+                MarketingData marketingData = new MarketingData();
+                marketingData.setTransTime(DateHelper.dateToString(new Date()));
+                marketingData.setUserId(borrowTender.getUserId().toString());
+                marketingData.setSourceId(borrowTender.getId().toString());
+                marketingData.setMarketingType(MarketingTypeContants.TENDER);
+                try {
+                    Gson gson = new Gson();
+                    String json = gson.toJson(marketingData);
+                    Map<String, String> data = gson.fromJson(json, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+                    MqConfig mqConfig = new MqConfig();
+                    mqConfig.setMsg(data);
+                    mqConfig.setTag(MqTagEnum.MARKETING_TENDER);
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_MARKETING);
+                    mqConfig.setSendTime(DateHelper.addSeconds(nowDate, 10));
+                    mqHelper.convertAndSend(mqConfig);
+                    log.info(String.format("投资营销节点触发: %s", new Gson().toJson(marketingData)));
+                } catch (Throwable e) {
+                    log.error(String.format("投资营销节点触发异常：%s", new Gson().toJson(marketingData)), e);
+                }
             }
         } catch (Exception e) {
             log.error("触发派发失败新手红包失败", e);
