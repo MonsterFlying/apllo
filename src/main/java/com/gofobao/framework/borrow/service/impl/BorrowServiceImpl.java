@@ -142,7 +142,6 @@ public class BorrowServiceImpl implements BorrowService {
             condtionSql.append(" AND b.status=:statusArray AND b.success_at is null  ");
         }
         condtionSql.append(" AND b.verify_at IS Not NULL AND b.close_at is null AND b.product_id IS NOT NULL");
-        // 排序
         if (StringUtils.isEmpty(type)) {   // 全部
             condtionSql.append(" AND (b.money_yes / b.money)!=1  ORDER BY  FIELD(b.type,0, 4, 1), b.status ASC , (b.money_yes / b.money) ASC ,  b.id DESC,b.lend_repay_status ASC ");
         } else {
@@ -200,6 +199,7 @@ public class BorrowServiceImpl implements BorrowService {
             item.setSurplusSecond(-1L);
             //进度
             item.setSpend(0d);
+
             //1.待发布 2.还款中 3.招标中 4.已完成 5.其它
             Integer status = m.getStatus();
             Date nowDate = new Date(System.currentTimeMillis());
@@ -289,9 +289,9 @@ public class BorrowServiceImpl implements BorrowService {
             condtionSql.append(" AND (b.moneyYes / b.money)!=1  ORDER BY  FIELD(b.type, 0, 4, 1, 2) , b.status ASC , (b.moneyYes / b.money) ASC,  b.id desc,b.lendRepayStatus ASC ");
         } else {
             if (type.equals(BorrowContants.CE_DAI)) {
-                condtionSql.append(" ORDER BY  (b.moneyYes / b.money) ASC, b.status asc, b.successAt desc, b.id desc ,b.lendRepayStatus ASC");
+                condtionSql.append(" ORDER BY  (b.moneyYes / b.money) ASC, b.status asc, b.successAt desc, b.id desc, b.lendRepayStatus ASC");
             } else {
-                condtionSql.append(" ORDER BY  (b.moneyYes / b.money) ASC,  b.status, b.successAt desc, b.id desc,b.lendRepayStatus ASC ");
+                condtionSql.append(" ORDER BY  (b.moneyYes / b.money) ASC,  b.status, b.successAt desc, b.id desc, b.lendRepayStatus ASC ");
             }
         }
         //分页

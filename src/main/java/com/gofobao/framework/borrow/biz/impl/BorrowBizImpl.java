@@ -380,7 +380,10 @@ public class BorrowBizImpl implements BorrowBiz {
                 } else {
                     status = 3; //招标中
                     //复审中
-                    if (borrow.getLendRepayStatus() == 1) {
+                    if (borrow.getLendRepayStatus().intValue() ==3 ) {
+                        if(ObjectUtils.isEmpty(borrow.getRecheckAt())){
+                            borrow.setRecheckAt( DateHelper.addHours(borrow.getSuccessAt(), 4) ) ;
+                        }
                         status = 6;
                     }
                 }

@@ -64,7 +64,6 @@ import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.contants.RepaymentContants;
-import com.gofobao.framework.repayment.contants.ThirdDealStatusContrants;
 import com.gofobao.framework.repayment.entity.AdvanceAssetChange;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.entity.RepayAssetChange;
@@ -155,11 +154,15 @@ public class RepaymentBizImpl implements RepaymentBiz {
     @Autowired
     private BorrowRepository borrowRepository;
     @Autowired
+    private DictItemService dictItemService;
+    @Autowired
     private ThirdBatchLogService thirdBatchLogService;
     @Autowired
     private ThirdBatchLogBiz thirdBatchLogBiz;
     @Autowired
     private JixinHelper jixinHelper;
+    @Autowired
+    private DictValueService dictValueService;
     @Autowired
     private BatchAssetChangeHelper batchAssetChangeHelper;
     @Autowired
@@ -180,6 +183,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private TransferBiz transferBiz;
     @Autowired
     private WindmillTenderBiz windmillTenderBiz;
+
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
     @Autowired
@@ -947,7 +951,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         /* 是否垫付 */
         boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
         //2.处理资金还款人、收款人资金变动
-/*        batchAssetChangeHelper.batchAssetChangeAndCollection(repaymentId, batchNo, BatchAssetChangeContants.BATCH_REPAY);*/
+        batchAssetChangeHelper.batchAssetChangeAndCollection(repaymentId, batchNo, BatchAssetChangeContants.BATCH_REPAY);
         //4.还款成功后变更改还款状态
         changeRepaymentAndRepayStatus(parentBorrow, tenderList, borrowRepayment, borrowCollectionList, advance);
         //5.结束第三方债权并更新借款状态（还款最后一期的时候）
@@ -996,6 +1000,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if (ObjectUtils.isEmpty(phone)) {
                 MqConfig config = new MqConfig();
                 config.setQueue(MqQueueEnum.RABBITMQ_SMS);
+                config.setTag(MqTagEnum.SMS_REGISTER);
                 switch (parentBorrow.getType()) {
                     case BorrowContants.CE_DAI:
                         name = "车贷标";
@@ -1506,8 +1511,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
         balanceFreezeReq.setChannel(ChannelContant.HTML);
         BalanceFreezeResp balanceFreezeResp = jixinManager.send(JixinTxCodeEnum.BALANCE_FREEZE, balanceFreezeReq, BalanceFreezeResp.class);
         if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceFreezeResp.getRetCode()))) {
-            throw new Exception(String.format("正常还款流程：%s,userId:%s", balanceFreezeResp.getRetMsg(), repayUserThirdAccount.getUserId()));
+            throw new Exception(String.format("正常还款流程：%s,userId:%s,repaymentId:%s,borrowId:%s", balanceFreezeResp.getRetMsg(), repayUserThirdAccount.getUserId(), borrowRepayment.getId(), borrow.getId()));
         }
+
 
         try {
             // 冻结还款金额
@@ -1551,11 +1557,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
             thirdBatchLog.setRemark("即信批次还款.");
             thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
             thirdBatchLogService.save(thirdBatchLog);
-
-            //更新即信放款状态 为处理中
-            borrowRepayment.setRepayStatus(ThirdDealStatusContrants.DISPOSING);
-            borrowRepayment.setUpdatedAt(nowDate);
-            borrowRepaymentService.save(borrowRepayment);
         } catch (Exception e) {
 
             // 申请即信还款解冻
@@ -1704,10 +1705,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
             Repay repay = new Repay();
             repay.setAccountId(repayAccountId);
             repay.setOrderId(orderId);
-            repay.setTxAmount(StringHelper.formatDouble(MoneyHelper.round(new Double(inPr), 100), false));
-            repay.setIntAmount(StringHelper.formatDouble(MoneyHelper.round(new Double(inIn), 100), false));
-            repay.setTxFeeIn(StringHelper.formatDouble(MoneyHelper.round(new Double(inFee), 100), false));
-            repay.setTxFeeOut(StringHelper.formatDouble(MoneyHelper.round(new Double(outFee), 100), false));
+            repay.setTxAmount( StringHelper.formatDouble(MoneyHelper.round( new Double(inPr) / 100, 2),false));
+            repay.setIntAmount(StringHelper.formatDouble(MoneyHelper.round( new Double(inIn) / 100  , 2), false));
+            repay.setTxFeeIn(StringHelper.formatDouble(MoneyHelper.round( new Double(inFee) / 100, 2), false));
+            repay.setTxFeeOut(StringHelper.formatDouble(MoneyHelper.round( new Double(outFee) / 100 , 2), false));
             repay.setProductId(borrow.getProductId());
             repay.setAuthCode(tender.getAuthCode());
             UserThirdAccount userThirdAccount = userThirdAccountMap.get(tender.getUserId());
@@ -1722,6 +1723,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
             borrowCollectionService.updateById(borrowCollection);
         }
         return repayList;
+    }
+
+    public static void main(String[] args) {
+        long inPr = 110001 ;
+        String s = StringHelper.formatDouble(MoneyHelper.round(new Double(inPr), 100), false);
+        System.err.println(s);
     }
 
     /**
@@ -2168,7 +2175,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
 
         int lateDays = getLateDays(borrowRepayment);//逾期天数
-        long lateInterest = calculateLateInterest(lateDays, borrowRepayment, borrow);//逾期利息
+        long lateInterest = calculateLateInterest(lateDays,borrowRepayment,borrow);//逾期利息
         long repayInterest = borrowRepayment.getInterest();//还款利息
         long repayMoney = borrowRepayment.getPrincipal() + repayInterest;//还款金额
         if (advanceUserAsses.getUseMoney() < (repayMoney + lateInterest)) {
