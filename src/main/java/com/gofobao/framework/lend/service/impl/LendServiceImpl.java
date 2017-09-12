@@ -149,7 +149,7 @@ public class LendServiceImpl implements LendService {
             lend.setAvatar(StringUtils.isEmpty(user.getAvatarPath()) ? javaDomain + "/images/user/default_avatar.jpg" : user.getAvatarPath());
             lend.setReleaseAt(DateHelper.dateToString(p.getCreatedAt()));
             lend.setCollectionAt(DateHelper.dateToString(p.getRepayAt()));
-            double spend = NumberHelper.floorDouble(MoneyHelper.divide(p.getMoneyYes(), p.getMoney()) * 100, 2);
+            double spend = NumberHelper.floorDouble((p.getMoneyYes()/ p.getMoney()) * 100, 2);
             lend.setSpend(spend);
             lend.setLimit(p.getTimeLimit());
             lend.setStartMoney(StringHelper.formatMon(p.getLowest() / 100D));

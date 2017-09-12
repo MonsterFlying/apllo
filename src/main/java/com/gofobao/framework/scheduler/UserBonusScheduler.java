@@ -1,6 +1,7 @@
 package com.gofobao.framework.scheduler;
 
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.DesLineFlagContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
@@ -11,6 +12,9 @@ import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
+import com.gofobao.framework.financial.biz.FinancialSchedulerBiz;
+import com.gofobao.framework.financial.entity.FinancialScheduler;
+import com.gofobao.framework.financial.service.FinancialSchedulerService;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.member.entity.BrokerBouns;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -19,6 +23,8 @@ import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Range;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -49,6 +55,10 @@ public class UserBonusScheduler {
     @Autowired
     private JixinManager jixinManager;
 
+    @Autowired
+    private FinancialSchedulerBiz financialSchedulerBiz;
+
+
     /**
      * 理财师提成
      */
@@ -56,7 +66,17 @@ public class UserBonusScheduler {
     @Scheduled(cron = "0 35 23 * * ? ")
     public void brokerProcess() {
         log.info("理财师调度启动");
+
+        //记录调度日志
+        FinancialScheduler financialScheduler = new FinancialScheduler();
         try {
+            boolean isExecute = financialSchedulerBiz.isExecute("PUSHMONEY");
+            if (isExecute) {
+                log.info("理财师提成已调度");
+                return;
+            }
+            financialScheduler.setCreateAt(new Date());
+            //执行调度
             Date validDate = DateHelper.createDate(2016, 8, 14, 0, 0, 0);
             validDate = DateHelper.max(DateHelper.subYears(DateHelper.beginOfDate(new Date()), 1), validDate);
             int pageIndex = 1;
@@ -155,18 +175,38 @@ public class UserBonusScheduler {
                 }
                 pageIndex++;
             } while (resultList.size() >= 50);
+            financialScheduler.setData(new Gson().toJson(resultList));
+            financialScheduler.setState(1);
+            financialScheduler.setResMsg("调度成功");
+            financialScheduler.setUpdateAt(new Date());
         } catch (Throwable e) {
+            financialScheduler.setState(0);
+            financialScheduler.setResMsg("调度失败");
+            financialScheduler.setUpdateAt(new Date());
             log.error("UserBonusScheduler brokerProcess error:", e);
         }
+        financialScheduler.setName("理财师提成调度");
+        financialScheduler.setType("PUSHMONEY");
+        financialScheduler.setDoNum(1);
+        financialSchedulerBiz.save(financialScheduler);
     }
 
     /**
      * 天提成
      */
-    @Scheduled(cron = "0 30 23 * * ? ")
+    @Scheduled(cron = "1 * * * * ? ")
     @Transactional(rollbackFor = Exception.class)
     public void dayProcess() {
         log.info("每日天提成调度启动");
+        //查询当前调度是否执行成功过
+
+        boolean isExecute = financialSchedulerBiz.isExecute("DAY_PUSHMONEY");
+        if (isExecute) {
+            log.info("理财师-天-提成已调度");
+            return;
+        }
+        FinancialScheduler financialScheduler = new FinancialScheduler();
+        financialScheduler.setCreateAt(new Date());
         try {
             int pageIndex = 1;
             int pageSize = 50;
@@ -184,6 +224,8 @@ public class UserBonusScheduler {
                         " group by `gfb_ticheng_user`.`user_id` having `sum` >= " + Math.ceil(365 / 0.005));
                 String limitSql = " limit " + pageSize + " offset " + (pageIndex - 1) * pageSize;
                 resultList = jdbcTemplate.queryForList(daySqlStr.append(limitSql).toString());
+                financialScheduler.setData(new Gson().toJson(resultList));
+
                 if (CollectionUtils.isEmpty(resultList)) {
                     return;
                 }
@@ -241,9 +283,19 @@ public class UserBonusScheduler {
                 pageIndex++;
 
             } while (resultList.size() >= 50);
+
+            financialScheduler.setState(1);
+            financialScheduler.setResMsg("调度成功");
+            financialScheduler.setCreateAt(new Date());
         } catch (Throwable e) {
+            financialScheduler.setState(0);
+            financialScheduler.setResMsg("调度失败");
             log.error("UserBonusScheduler dayProcess error:", e);
         }
+        financialScheduler.setName(DateHelper.dateToString(new Date()) + "理财师每天提成");
+        financialScheduler.setType("DAY_PUSHMONEY");
+        financialScheduler.setDoNum(financialScheduler.getDoNum());
+        financialSchedulerBiz.save(financialScheduler);
     }
 
     /**
@@ -253,6 +305,13 @@ public class UserBonusScheduler {
     @Transactional(rollbackFor = Exception.class)
     public void monthProcess() {
         log.info("每月提成任务调度启动");
+        boolean isExecute = financialSchedulerBiz.isExecute("MONTH_PUSHMONEY");
+        if (isExecute) {
+            log.info("理财师-月-提成已调度");
+            return;
+        }
+        FinancialScheduler financialScheduler = new FinancialScheduler();
+        financialScheduler.setCreateAt(new Date());
         try {
             int pageIndex = 1;
             int pageSize = 50;
@@ -335,8 +394,19 @@ public class UserBonusScheduler {
                 }
                 pageIndex++;
             } while (resultList.size() >= 50);
+            financialScheduler.setState(1);
+            financialScheduler.setResMsg("调度成功");
+            financialScheduler.setCreateAt(new Date());
+            financialScheduler.setData(new Gson().toJson(resultList));
         } catch (Throwable e) {
+            financialScheduler.setState(0);
+            financialScheduler.setResMsg("调度失败");
             log.error("UserBonusScheduler monthProcess error:", e);
         }
+        financialScheduler.setName(DateHelper.dateToString(new Date()) + "理财师每月提成");
+        financialScheduler.setType("MONTH_PUSHMONEY");
+        financialScheduler.setDoNum(financialScheduler.getDoNum());
+        financialSchedulerBiz.save(financialScheduler);
+
     }
 }

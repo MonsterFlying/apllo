@@ -144,12 +144,12 @@ public class BorrowServiceImpl implements BorrowService {
         condtionSql.append(" AND b.verify_at IS Not NULL AND b.close_at is null AND b.product_id IS NOT NULL");
         // 排序
         if (StringUtils.isEmpty(type)) {   // 全部
-            condtionSql.append(" AND (b.money_yes / b.money)!=1  ORDER BY  FIELD(b.type,0, 4, 1), b.status ASC , (b.money_yes / b.money) ASC ,  b.id DESC ");
+            condtionSql.append(" AND (b.money_yes / b.money)!=1  ORDER BY  FIELD(b.type,0, 4, 1), b.status ASC , (b.money_yes / b.money) ASC ,  b.id DESC,b.lend_repay_stauts ASC ");
         } else {
             if (type.equals(BorrowContants.CE_DAI)) {
-                condtionSql.append(" ORDER BY b.status ASC,( b.money_yes / b.money ) ASC, b.success_at DESC,b.id DESC");
+                condtionSql.append(" ORDER BY b.status ASC,( b.money_yes / b.money ) ASC, b.success_at DESC,b.id DESC ,b.lend_repay_stauts ASC");
             } else {
-                condtionSql.append(" ORDER BY ( b.money_yes / b.money ) ASC, b.status, b.success_at DESC, b.id DESC");
+                condtionSql.append(" ORDER BY ( b.money_yes / b.money ) ASC, b.status, b.success_at DESC, b.id DESC ,b.lend_repay_stauts ASC");
             }
         }
         Query pageQuery = entityManager.createNativeQuery(condtionSql.toString(), Borrow.class);
@@ -206,7 +206,6 @@ public class BorrowServiceImpl implements BorrowService {
             Date nowDate = new Date(System.currentTimeMillis());
             Date releaseAt = m.getReleaseAt();  //发布时间
             double spend = NumberHelper.floorDouble((m.getMoneyYes().doubleValue() / m.getMoney() * 100), 2);
-
             if (status == BorrowContants.BIDDING) {//招标中
                 Integer validDay = m.getValidDay();
                 Date endAt = DateHelper.addDays(DateHelper.beginOfDate(m.getReleaseAt()), validDay + 1);
@@ -214,25 +213,20 @@ public class BorrowServiceImpl implements BorrowService {
                 if (releaseAt.getTime() >= nowDate.getTime()) {
                     status = 1;
                     item.setSurplusSecond(((releaseAt.getTime() - nowDate.getTime()) / 1000) + 5);
-                } else if (nowDate.getTime() >= endAt.getTime()) {  //当前时间大于招标有效时间
-                    //流转标没有过期时间
-                    if (!StringUtils.isEmpty(m.getTenderId())) {
-                        status = 3; //招标中
-                    } else {
-                        status = 5; //已过期
-                    }
+                    //当前时间大于招标有效时间
+                } else if (nowDate.getTime() >= endAt.getTime()) {
+                    status = 5; //已过期
                 } else {
                     status = 3; //招标中
-                    //  进度
-                    if (spend == 100) {
-                        status = 6;
-                    }
-
+                    if (m.getLendRepayStatus() == 1) {
+                        item.setStatus(6);
+                    };
                 }
             } else if (!ObjectUtils.isEmpty(m.getSuccessAt()) && !ObjectUtils.isEmpty(m.getCloseAt())) {   //满标时间 结清
                 status = 4; //已完成
             } else if (status == BorrowContants.PASS && ObjectUtils.isEmpty(m.getCloseAt())) {
                 status = 2; //还款中
+
             }
             item.setSpend(spend);
             Long userId = m.getUserId();
@@ -245,6 +239,7 @@ public class BorrowServiceImpl implements BorrowService {
             } else {
                 item.setIsFlow(false);
             }
+
             item.setReleaseAt(DateHelper.dateToString(m.getReleaseAt()));
             item.setStatus(status);
             item.setRepayFashion(m.getRepayFashion());
@@ -294,12 +289,12 @@ public class BorrowServiceImpl implements BorrowService {
         condtionSql.append(" AND b.verifyAt IS Not NULL  ");
         // 排序
         if (StringUtils.isEmpty(type)) {   // 全部
-            condtionSql.append(" AND (b.moneyYes / b.money)!=1  ORDER BY  FIELD(b.type, 0, 4, 1, 2) , b.status ASC , (b.moneyYes / b.money) ASC,  b.id desc ");
+            condtionSql.append(" AND (b.moneyYes / b.money)!=1  ORDER BY  FIELD(b.type, 0, 4, 1, 2) , b.status ASC , (b.moneyYes / b.money) ASC,  b.id desc,b.lendRepayStatus ASC ");
         } else {
             if (type.equals(BorrowContants.CE_DAI)) {
-                condtionSql.append(" ORDER BY  (b.moneyYes / b.money) ASC, b.status asc, b.successAt desc, b.id desc ");
+                condtionSql.append(" ORDER BY  (b.moneyYes / b.money) ASC, b.status asc, b.successAt desc, b.id desc ,b.lendRepayStatus ASC");
             } else {
-                condtionSql.append(" ORDER BY  (b.moneyYes / b.money) ASC,  b.status, b.successAt desc, b.id desc");
+                condtionSql.append(" ORDER BY  (b.moneyYes / b.money) ASC,  b.status, b.successAt desc, b.id desc,b.lendRepayStatus ASC ");
             }
         }
         //分页

@@ -32,4 +32,7 @@ public class VoCollection {
     @ApiModelProperty("标是否是摘草")
     private boolean isLend;
 
+    @ApiModelProperty("状态 0:未还款;1 以还 ；2：待复审")
+    private Integer status;
+
 }

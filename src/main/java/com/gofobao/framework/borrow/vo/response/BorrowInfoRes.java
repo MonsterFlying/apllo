@@ -35,7 +35,7 @@ public class BorrowInfoRes extends VoBaseResp {
     private Long hideSurplusMoney;
 
     @ApiModelProperty("进度")
-    private double spend;
+    private String spend;
 
     @ApiModelProperty("年华率")
     private String apr;
@@ -105,5 +105,8 @@ public class BorrowInfoRes extends VoBaseResp {
 
     @ApiModelProperty
     private Long borrowId;
+
+    @ApiModelProperty("当状态是复审中为 复审时间；当状态还款中 为满标计息时间")
+    private String recheckAt;
 
 }
