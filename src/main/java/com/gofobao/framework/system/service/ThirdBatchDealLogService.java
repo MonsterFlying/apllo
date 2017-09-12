@@ -1,10 +1,10 @@
 package com.gofobao.framework.system.service;
 
 import com.gofobao.framework.system.entity.ThirdBatchDealLog;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.awt.print.Pageable;
 import java.util.List;
 
 /**

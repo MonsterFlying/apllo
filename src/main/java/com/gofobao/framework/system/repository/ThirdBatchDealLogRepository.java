@@ -10,6 +10,5 @@ import org.springframework.stereotype.Repository;
  * Created by Zeke on 2017/6/15.
  */
 @Repository
-public interface ThirdBatchDealLogRepository extends JpaRepository<ThirdBatchDealLog,Long>,JpaSpecificationExecutor<ThirdBatchLog> {
-    ThirdBatchLog findByBatchNoAndSourceId(String batchNo, Long sourceId);
+public interface ThirdBatchDealLogRepository extends JpaRepository<ThirdBatchDealLog,Long>,JpaSpecificationExecutor<ThirdBatchDealLog> {
 }

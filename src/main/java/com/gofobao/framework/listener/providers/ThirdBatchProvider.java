@@ -505,7 +505,7 @@ public class ThirdBatchProvider {
 
 
         // 批次还款处理
-        if(!CollectionUtils.isEmpty(failureTRepayOrderIds)){
+        if (!CollectionUtils.isEmpty(failureTRepayOrderIds)) {
             //更新即信放款状态 为处理失败!
             BorrowRepayment borrowRepayment = borrowRepaymentService.findById(repaymentId);
             borrowRepayment.setRepayStatus(ThirdDealStatusContrants.INDISPOSE);
@@ -644,6 +644,7 @@ public class ThirdBatchProvider {
 
             //改变批次放款状态 处理成功
             borrow.setLendRepayStatus(ThirdDealStatusContrants.DISPOSED);
+            borrow.setSuccessAt(new Date());
             borrowService.save(borrow);
         } else {
             log.info("非流转标复审失败!");

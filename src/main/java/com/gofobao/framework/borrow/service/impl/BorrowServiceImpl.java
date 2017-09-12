@@ -292,9 +292,9 @@ public class BorrowServiceImpl implements BorrowService {
             condtionSql.append(" AND (b.moneyYes / b.money)!=1  ORDER BY  FIELD(b.type, 0, 4, 1, 2) , b.status ASC , (b.moneyYes / b.money) ASC,  b.id desc,b.lendRepayStatus ASC ");
         } else {
             if (type.equals(BorrowContants.CE_DAI)) {
-                condtionSql.append(" ORDER BY  (b.moneyYes / b.money) ASC, b.status asc, b.successAt desc, b.id desc ,b.lendRepayStatus ASC");
+                condtionSql.append(" ORDER BY  (b.moneyYes / b.money) ASC, b.status asc, b.successAt desc, b.id desc, b.lendRepayStatus ASC");
             } else {
-                condtionSql.append(" ORDER BY  (b.moneyYes / b.money) ASC,  b.status, b.successAt desc, b.id desc,b.lendRepayStatus ASC ");
+                condtionSql.append(" ORDER BY  (b.moneyYes / b.money) ASC,  b.status, b.successAt desc, b.id desc, b.lendRepayStatus ASC ");
             }
         }
         //分页
