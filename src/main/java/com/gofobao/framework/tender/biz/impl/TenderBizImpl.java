@@ -344,8 +344,10 @@ public class TenderBizImpl implements TenderBiz {
             return false;
         }
 
-        double availBal = MoneyHelper.round(MoneyHelper.multiply(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()), 100d), 0);// 可用余额  账面余额-可用余额=冻结金额
-        if (availBal < asset.getUseMoney()) {
+        long availBal = new Double(MoneyHelper.round(MoneyHelper.multiply(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()), 100d), 0)).longValue();// 可用余额  账面余额-可用余额=冻结金额
+        long useMoney = asset.getUseMoney().longValue();
+        if (availBal < asset.getUseMoney().longValue()) {
+            log.error(String.format("资金账户未同步:本地:%s 即信:%s", useMoney, availBal));
             extendMessage.add("资金账户未同步，请先在个人中心进行资金同步操作!");
             return false;
         }

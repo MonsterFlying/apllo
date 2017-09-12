@@ -1478,7 +1478,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         double intAmount = repays.stream().mapToDouble(r -> NumberHelper.toDouble(r.getIntAmount())).sum();
         //所有还款手续费
         double txFeeOut = repays.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxFeeOut())).sum();
-        double freezeMoney = txAmount + txFeeOut + intAmount;/* 冻结金额 */
+        double freezeMoney = MoneyHelper.round(txAmount + txFeeOut + intAmount, 2);/* 冻结金额 */
         // 生成投资人还款资金变动记录
         BatchAssetChange batchAssetChange = addBatchAssetChange(batchNo, borrowRepayment.getId(), advance);
         // 生成回款人资金变动记录  返回值实际还款本金和利息  不包括手续费
@@ -1595,8 +1595,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "当前网络不稳定,请稍后重试!"));
         }
 
-        double availBal = MoneyHelper.round(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0, 2);// 可用余额  账面余额-可用余额=冻结金额
-        if (availBal < repayAsset.getUseMoney().doubleValue()) {
+        long availBal = new Double(MoneyHelper.round(MoneyHelper.multiply(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()), 100d), 0)).longValue();// 可用余额  账面余额-可用余额=冻结金额
+        long useMoney = repayAsset.getUseMoney().longValue();
+        if (availBal < useMoney) {
+            log.error(String.format("资金账户未同步:本地:%s 即信:%s", useMoney, availBal));
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "资金账户未同步，请先在个人中心进行资金同步操作!"));
         }
         return ResponseEntity.ok(VoBaseResp.ok("检查成功!"));
@@ -1702,10 +1704,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
             Repay repay = new Repay();
             repay.setAccountId(repayAccountId);
             repay.setOrderId(orderId);
-            repay.setTxAmount(StringHelper.formatDouble(inPr, 100, false));
-            repay.setIntAmount(StringHelper.formatDouble(inIn, 100, false));
-            repay.setTxFeeIn(StringHelper.formatDouble(inFee, 100, false));
-            repay.setTxFeeOut(StringHelper.formatDouble(outFee, 100, false));
+            repay.setTxAmount( StringHelper.formatDouble(MoneyHelper.round(new Double(inPr), 100),false));
+            repay.setIntAmount(StringHelper.formatDouble(MoneyHelper.round(new Double(inIn), 100), false));
+            repay.setTxFeeIn(StringHelper.formatDouble(MoneyHelper.round(new Double(inFee), 100), false));
+            repay.setTxFeeOut(StringHelper.formatDouble(MoneyHelper.round(new Double(outFee), 100), false));
             repay.setProductId(borrow.getProductId());
             repay.setAuthCode(tender.getAuthCode());
             UserThirdAccount userThirdAccount = userThirdAccountMap.get(tender.getUserId());
@@ -2164,25 +2166,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
             }
         }
 
-        long lateInterest = 0;//逾期利息
-        int lateDays = 0;//逾期天数
-        int diffDay = DateHelper.diffInDays(DateHelper.beginOfDate(new Date()), DateHelper.beginOfDate(borrowRepayment.getRepayAt()), false);
-        if (diffDay > 0) {
-            lateDays = diffDay;
-            long overPrincipal = borrowRepayment.getPrincipal();//剩余未还本金
-            if (order < (borrow.getTotalOrder() - 1)) {
-                brs = Specifications
-                        .<BorrowRepayment>and()
-                        .eq("borrowId", borrow.getId())
-                        .eq("status", 0)
-                        .build();
-                List<BorrowRepayment> borrowRepaymentList = borrowRepaymentService.findList(brs);
-                //剩余未还本金
-                overPrincipal = borrowRepaymentList.stream().mapToLong(w -> w.getPrincipal()).sum();
-            }
-            lateInterest = Math.round(overPrincipal * 0.004 * lateDays);
-        }
 
+        int lateDays = getLateDays(borrowRepayment);//逾期天数
+        long lateInterest = calculateLateInterest(lateDays,borrowRepayment,borrow);//逾期利息
         long repayInterest = borrowRepayment.getInterest();//还款利息
         long repayMoney = borrowRepayment.getPrincipal() + repayInterest;//还款金额
         if (advanceUserAsses.getUseMoney() < (repayMoney + lateInterest)) {

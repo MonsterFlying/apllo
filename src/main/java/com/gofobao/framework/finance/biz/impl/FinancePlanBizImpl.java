@@ -49,6 +49,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multiset;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -66,6 +67,7 @@ import java.util.*;
  * Created by Zeke on 2017/8/10.
  */
 @Service
+@Slf4j
 public class FinancePlanBizImpl implements FinancePlanBiz {
 
     final Gson GSON = new GsonBuilder().create();
@@ -372,8 +374,10 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
             return false;
         }
 
-        double availBal = MoneyHelper.round(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()) * 100.0,2);// 可用余额  账面余额-可用余额=冻结金额
-        if (availBal < asset.getUseMoney()) {
+        long availBal = new Double(MoneyHelper.round(MoneyHelper.multiply(NumberHelper.toDouble(balanceQueryResponse.getAvailBal()), 100d), 0)).longValue();// 可用余额  账面余额-可用余额=冻结金额
+        long useMoney = asset.getUseMoney().longValue();
+        if (availBal < useMoney) {
+            log.error(String.format("资金账户未同步:本地:%s 即信:%s", useMoney, availBal));
             errerMessage.add("资金账户未同步，请先在个人中心进行资金同步操作!");
             return false;
         }
