@@ -531,6 +531,8 @@ public class AplloApplicationTests {
 
     @Test
     public void test() {
+
+
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_TENDER);
         mqConfig.setTag(MqTagEnum.AUTO_TENDER);
@@ -731,5 +733,6 @@ public class AplloApplicationTests {
         BatchRepayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_REPAY, request, BatchRepayResp.class);
         System.out.println(response);*/
     }
+
 
 }
