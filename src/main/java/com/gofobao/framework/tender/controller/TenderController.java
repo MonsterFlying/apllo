@@ -77,7 +77,7 @@ public class TenderController {
      */
     @PostMapping("/pub/admin/cancel/tender")
     @ApiOperation("实时查询用户金额")
-    public ResponseEntity<VoBaseResp> adminCancelTender(VoAdminCancelTender voAdminCancelTender) {
+    public ResponseEntity<VoBaseResp> adminCancelTender(@ModelAttribute VoAdminCancelTender voAdminCancelTender) {
         return tenderBiz.adminCancelTender(voAdminCancelTender);
     }
 
