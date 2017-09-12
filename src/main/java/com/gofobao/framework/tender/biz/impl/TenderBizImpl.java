@@ -97,6 +97,9 @@ public class TenderBizImpl implements TenderBiz {
     @Autowired
     private WindmillTenderBiz windmillTenderBiz;
 
+    @Autowired
+    private LendService lendService ;
+
     /**
      * 新版投标
      *
