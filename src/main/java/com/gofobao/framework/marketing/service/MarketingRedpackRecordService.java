@@ -2,6 +2,7 @@ package com.gofobao.framework.marketing.service;
 
 import com.gofobao.framework.marketing.entity.MarketingRedpackRecord;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.Date;
 import java.util.List;
@@ -46,4 +47,6 @@ public interface MarketingRedpackRecordService {
     MarketingRedpackRecord findTopByIdAndUserIdAndDel(Long redPackageId, Long userId, int del);
 
     MarketingRedpackRecord findById(long id);
+
+    long count(Specification<MarketingRedpackRecord> specifications);
 }

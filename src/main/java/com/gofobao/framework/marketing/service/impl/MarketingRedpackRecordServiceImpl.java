@@ -7,6 +7,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -50,5 +51,10 @@ public class MarketingRedpackRecordServiceImpl implements MarketingRedpackRecord
     @Override
     public MarketingRedpackRecord findById(long id) {
         return marketingRedpackRecordRepository.findById(id);
+    }
+
+    @Override
+    public long count(Specification<MarketingRedpackRecord> specifications) {
+        return marketingRedpackRecordRepository.count(specifications) ;
     }
 }
