@@ -164,14 +164,14 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
             inviteAwardStatistics.setYesterdayAward("0.00");
         } else {
             Integer yesterdayBounsAward = yesterdayBroker.stream().mapToInt(w -> w.getBounsAward()).sum();
-            inviteAwardStatistics.setYesterdayAward(NumberHelper.to2DigitString(yesterdayBounsAward / 100));
+            inviteAwardStatistics.setYesterdayAward(StringHelper.formatMon(yesterdayBounsAward / 100));
             inviteAwardStatistics.setApr( StringHelper.formatMon(brokerBounss.get(0).getAwardApr()/100D));
             inviteAwardStatistics.setWaitPrincipalTotal(StringHelper.formatMon(brokerBounss.get(0).getWaitPrincipalTotal()/100D)+ MoneyConstans.PERCENT);
         }
         //总奖励
         if(!CollectionUtils.isEmpty(brokerBounss)){
             Integer sumAward = brokerBounss.stream().mapToInt(w -> w.getBounsAward()).sum();
-            inviteAwardStatistics.setSumAward(NumberHelper.to2DigitString(sumAward / 100));
+            inviteAwardStatistics.setSumAward(StringHelper.formatMon(sumAward / 100D));
         }
         return inviteAwardStatistics;
     }
