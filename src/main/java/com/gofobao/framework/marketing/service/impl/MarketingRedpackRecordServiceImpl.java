@@ -39,7 +39,7 @@ public class MarketingRedpackRecordServiceImpl implements MarketingRedpackRecord
 
     @Override
     public List<MarketingRedpackRecord> findByUserIdAndState(Long userId, Integer status, Pageable pageable) {
-        return Optional.fromNullable(marketingRedpackRecordRepository.findByUserIdAndState(userId, status, pageable)).or(Lists.newArrayList());
+        return Optional.fromNullable(marketingRedpackRecordRepository.findByUserIdAndStateAndDel(userId, status, 0,  pageable)).or(Lists.newArrayList());
     }
 
     @Override

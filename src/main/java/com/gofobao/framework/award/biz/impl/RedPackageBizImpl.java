@@ -118,6 +118,15 @@ public class RedPackageBizImpl implements RedPackageBiz {
         RedPackageRes redPackageRes = null;
         // 遍历
         for (MarketingRedpackRecord item : marketingRedpackRecords) {
+            if(item.getMarketingId() == 1){
+                item.setMarketingId(2L);
+            }else if(item.getMarketingId() == 2){
+                item.setMarketingId(3L);
+            }else if(item.getMarketingId() == 3){
+                item.setMarketingId(1L);
+            }else{
+                item.setMarketingId(4L);
+            }
             redPackageRes = new RedPackageRes();
             redPackageRes.setExpiryDate(DateHelper.dateToString(item.getPublishTime(), DateHelper.DATE_FORMAT_YMDHM)
                     + "~" + DateHelper.dateToString(item.getCancelTime(), DateHelper.DATE_FORMAT_YMDHM));  // 有效时间
@@ -282,7 +291,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
         }
 
         Date beginDate = DateHelper.stringToDate(beginTime);
-        Specification<Tender> specification = Specifications
+     Specification<Tender> specification = Specifications
                 .<Tender>and()
                 .eq("status", 1)
                 .between("createdAt", new Range<>(DateHelper.beginOfDate(beginDate), DateHelper.endOfDate(nowDate))).build();
@@ -297,7 +306,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
         int pageSize = 100, pageindex = 0, totalPageIndex = 0;
         totalPageIndex = count.intValue() / pageSize;
         totalPageIndex = count.intValue() % pageSize == 0 ? totalPageIndex : totalPageIndex + 1;
-
+   /*
         // ==================================
         // 投资派发红包
         // ==================================
@@ -328,8 +337,48 @@ public class RedPackageBizImpl implements RedPackageBiz {
                     log.error(String.format("投资营销节点触发异常：%s", new Gson().toJson(marketingData)), e);
                 }
             }
-        }
+        }*/
 
+        // ===============================
+        // 用户派发红包
+        // ===============================
+        Specification<Users> usersSpecification = Specifications
+                .<Users>and()
+                .gt("parentId", 0)
+                .between("createdAt", new Range<>(DateHelper.beginOfDate(beginDate), DateHelper.endOfDate(nowDate)))
+                .build();
+
+
+        Long userCount = userService.count(usersSpecification);
+        pageindex = 0;
+        totalPageIndex = 0;
+        totalPageIndex = userCount.intValue() / pageSize;
+        totalPageIndex = userCount.intValue() % pageSize == 0 ? totalPageIndex : totalPageIndex + 1;
+
+        for (; pageindex < totalPageIndex; pageindex++) {
+            Pageable pageable = new PageRequest(pageindex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
+            List<Users> userList = userService.findList(usersSpecification, pageable);
+            for (Users users : userList) {
+                log.info(String.format("触发活动: %s", gson.toJson(users)));
+                MarketingData marketingData = new MarketingData();
+                marketingData.setTransTime(DateHelper.dateToString(users.getCreatedAt()));
+                marketingData.setUserId(users.getId().toString());
+                marketingData.setSourceId(users.getId().toString());
+                marketingData.setMarketingType(MarketingTypeContants.OPEN_ACCOUNT);
+                try {
+                    String json = gson.toJson(marketingData);
+                    Map<String, String> data = gson.fromJson(json, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+                    MqConfig mqConfig = new MqConfig();
+                    mqConfig.setMsg(data);
+                    mqConfig.setTag(MqTagEnum.MARKETING_OPEN_ACCOUNT);
+                    mqConfig.setQueue(MqQueueEnum.RABBITMQ_MARKETING);
+                    mqHelper.convertAndSend(mqConfig);
+                    log.info(String.format("开户营销节点触发: %s", new Gson().toJson(marketingData)));
+                } catch (Throwable e) {
+                    log.error(String.format("开户营销节点触发异常：%s", new Gson().toJson(marketingData)), e);
+                }
+            }
+        }
         return null;
     }
 

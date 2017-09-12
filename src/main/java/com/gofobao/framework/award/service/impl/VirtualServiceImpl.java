@@ -245,6 +245,7 @@ public class VirtualServiceImpl implements VirtualService {
         Specification<MarketingRedpackRecord> redPackageSpec = Specifications.<MarketingRedpackRecord>and()
                 .eq("userId", userId)
                 .eq("state", RedPacketContants.unUsed)
+                .eq("del", 0)
                 .build();
         Long redpackSize = marketingRedpackRecordRepository.count(redPackageSpec);
         awardStatistics.setRedPackageCount(redpackSize.intValue());

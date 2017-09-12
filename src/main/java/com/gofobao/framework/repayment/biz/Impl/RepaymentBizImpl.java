@@ -1479,8 +1479,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //所有还款手续费
         double txFeeOut = repays.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxFeeOut())).sum();
         double freezeMoney = txAmount + txFeeOut + intAmount;/* 冻结金额 */
-        // 冻结还款金额
-        long money = new Double(MoneyHelper.round(freezeMoney, 0)).longValue();
         // 生成投资人还款资金变动记录
         BatchAssetChange batchAssetChange = addBatchAssetChange(batchNo, borrowRepayment.getId(), advance);
         // 生成回款人资金变动记录  返回值实际还款本金和利息  不包括手续费
@@ -1517,6 +1515,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
 
         try {
+            // 冻结还款金额
+            long money = new Double(MoneyHelper.round(MoneyHelper.multiply(freezeMoney, 100d), 0)).longValue();
             AssetChange freezeAssetChange = new AssetChange();
             freezeAssetChange.setForUserId(repayUserThirdAccount.getUserId());
             freezeAssetChange.setUserId(repayUserThirdAccount.getUserId());
@@ -1557,6 +1557,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
             thirdBatchLogService.save(thirdBatchLog);
         } catch (Exception e) {
+
             // 申请即信还款解冻
             String unfreezeOrderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);
             BalanceUnfreezeReq balanceUnfreezeReq = new BalanceUnfreezeReq();
@@ -2796,7 +2797,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
             overdueAssetChangeItem.setGroupSeqNo(groupSeqNo);
             batchAssetChangeItemService.save(overdueAssetChangeItem);
         }
-
     }
 
     /**

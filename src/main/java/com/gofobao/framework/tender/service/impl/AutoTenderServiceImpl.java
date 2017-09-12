@@ -85,6 +85,10 @@ public class AutoTenderServiceImpl implements AutoTenderService {
     }
 
 
+    public AutoTender findById(long id){
+        return autoTenderRepository.findOne(id);
+    }
+
     public List<Map<String, Object>> findQualifiedAutoTenders(VoFindAutoTenderList voFindAutoTenderList) {
         Long borrowId = voFindAutoTenderList.getBorrowId();
         if (ObjectUtils.isEmpty(borrowId)) {

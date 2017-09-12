@@ -34,6 +34,8 @@ public interface AutoTenderService {
 
     List<AutoTender> findList(Specification<AutoTender> specification, Pageable pageable);
 
+    AutoTender findById(long id);
+
     long count(Specification<AutoTender> specification);
 
     void delete(long id);

@@ -27,7 +27,7 @@ public class ApolloRedpackTests {
         VoPublishRedReq voPublishRedReq = new VoPublishRedReq();
 
         Map<String, String> data = new HashMap<>();
-        data.put("beginTime", "2017-09-06 00:00:00");
+        data.put("beginTime", "2017-09-08 00:00:00");
         voPublishRedReq.setParamStr(new Gson().toJson(data));
         redPackageBiz.publishActivity(voPublishRedReq);
 
