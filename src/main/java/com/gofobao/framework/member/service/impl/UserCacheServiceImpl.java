@@ -265,8 +265,7 @@ public class UserCacheServiceImpl implements UserCacheService {
         //待付支出
         expenditureDetail.setWaitExpendTotal(StringHelper.formatMon((waitExpenditureInterestManage + waitRepayInterest) / 100D));
         //已支出总额
-        expenditureDetail.setExpenditureTotal(StringHelper.formatMon(userCache.getIncomeTotal() / 100D));
-
+        expenditureDetail.setExpenditureTotal(StringHelper.formatMon((expenditureInterestManage+expenditureOther+expenditureManage+expenditureInterest+expenditureFee+expenditureOverdue) / 100D));
         return ResponseEntity.ok(expenditureDetail);
 
     }
