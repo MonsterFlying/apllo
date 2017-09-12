@@ -1,8 +1,6 @@
 package com.gofobao.framework.borrow.entity;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.util.ObjectUtils;
@@ -16,15 +14,12 @@ import java.util.Date;
  */
 @Entity
 @Table(name = "gfb_borrow")
-@NoArgsConstructor
-@AllArgsConstructor
 @DynamicInsert
 @DynamicUpdate
 @Data
 public class Borrow implements Serializable {
     @Id
     @GeneratedValue
-    @Column(name = "id")
     private Long id;
 
     private Long userId;
