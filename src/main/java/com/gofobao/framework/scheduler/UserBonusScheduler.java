@@ -16,6 +16,7 @@ import com.gofobao.framework.member.entity.BrokerBouns;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.BrokerBounsService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -52,7 +53,7 @@ public class UserBonusScheduler {
      * 理财师提成
      */
     @Transactional(rollbackFor = Exception.class)
-    @Scheduled(cron = "0 35 23 1 * ? ")
+    @Scheduled(cron = "0 35 23 * * ? ")
     public void brokerProcess() {
         log.info("理财师调度启动");
         try {
@@ -93,6 +94,11 @@ public class UserBonusScheduler {
                     }
 
                     long userId = NumberHelper.toLong(map.get("user_id"));
+                    UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+                    if (ObjectUtils.isEmpty(userThirdAccount)) {
+                        log.error("当前用户没有开户: " + userId);
+                        continue;
+                    }
                     String groupSeqNo = assetChangeProvider.getGroupSeqNo();
                     long redId = assetChangeProvider.getRedpackAccountId();
                     UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(redId);
@@ -100,13 +106,14 @@ public class UserBonusScheduler {
                     VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
                     voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
                     voucherPayRequest.setTxAmount(StringHelper.formatDouble(bounsAward, 100, false));
-                    voucherPayRequest.setForAccountId(String.valueOf(redId));
+                    voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
                     voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
                     voucherPayRequest.setDesLine("理财师提成");
                     voucherPayRequest.setChannel(ChannelContant.HTML);
                     VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
                     if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
                         String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+                        log.error(new Gson().toJson(response));
                         log.error("理财师调度:" + msg);
                         continue;
                     }
@@ -116,11 +123,10 @@ public class UserBonusScheduler {
                     redpackPublish.setMoney(bounsAward.longValue());
                     redpackPublish.setType(AssetChangeTypeEnum.publishCommissions);  //  扣除红包
                     redpackPublish.setUserId(redId);
-                    redpackPublish.setForUserId(userId);
                     redpackPublish.setRemark(String.format("派发理财师提成奖励 %s元", StringHelper.formatDouble(bounsAward.longValue() / 100D, true)));
                     redpackPublish.setGroupSeqNo(groupSeqNo);
                     redpackPublish.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
-                    redpackPublish.setForUserId(redId);
+                    redpackPublish.setForUserId(userId);
                     redpackPublish.setSourceId(0L);
                     assetChangeProvider.commonAssetChange(redpackPublish);
 
@@ -130,7 +136,6 @@ public class UserBonusScheduler {
                     redpackR.setMoney(bounsAward.longValue());
                     redpackR.setType(AssetChangeTypeEnum.receiveCommissions);
                     redpackR.setUserId(userId);
-                    redpackR.setForUserId(redId);
                     redpackR.setRemark(String.format("接收理财师提成奖励 %s元", StringHelper.formatDouble(bounsAward.longValue() / 100D, true)));
                     redpackR.setGroupSeqNo(groupSeqNo);
                     redpackR.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
@@ -182,12 +187,18 @@ public class UserBonusScheduler {
                 if (CollectionUtils.isEmpty(resultList)) {
                     return;
                 }
+
+
                 for (Map<String, Object> map : resultList) {
                     money = (int) MoneyHelper.round(NumberHelper.toInt(map.get("sum")) * 0.005 / 365, 0);
                     Long userId = NumberHelper.toLong(map.get("userId"));
-                    UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(redId);
+                    UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+                    if (ObjectUtils.isEmpty(userThirdAccount)) {
+                        log.error("每日调度用户未开户:" + userId);
+                        continue;
+                    }
 
-                    //请求即信红包
+                    log.info("每日提成:" + new Gson().toJson(userThirdAccount));
                     VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
                     voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
                     voucherPayRequest.setTxAmount(StringHelper.formatDouble(money, 100, false));
@@ -198,6 +209,7 @@ public class UserBonusScheduler {
                     VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
                     if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
                         String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+                        log.error(new Gson().toJson(response));
                         log.error("每日调度:" + msg);
                         continue;
                     }
@@ -207,11 +219,10 @@ public class UserBonusScheduler {
                     redpackPublish.setMoney(money);
                     redpackPublish.setType(AssetChangeTypeEnum.publishCommissions);  //  扣除红包
                     redpackPublish.setUserId(redId);
-                    redpackPublish.setForUserId(userId);
                     redpackPublish.setRemark(String.format("派发每日提成奖励 %s元", StringHelper.formatDouble(money / 100D, true)));
                     redpackPublish.setGroupSeqNo(groupSeqNo);
                     redpackPublish.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
-                    redpackPublish.setForUserId(redId);
+                    redpackPublish.setForUserId(userId);
                     redpackPublish.setSourceId(0L);
                     assetChangeProvider.commonAssetChange(redpackPublish);
 
@@ -220,7 +231,6 @@ public class UserBonusScheduler {
                     redpackR.setMoney(money);
                     redpackR.setType(AssetChangeTypeEnum.receiveCommissions);
                     redpackR.setUserId(userId);
-                    redpackR.setForUserId(redId);
                     redpackR.setRemark(String.format("接收每日提成奖励 %s元", StringHelper.formatDouble(money / 100D, true)));
                     redpackR.setGroupSeqNo(groupSeqNo);
                     redpackR.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
@@ -278,17 +288,23 @@ public class UserBonusScheduler {
 
                     String groupSeqNo = assetChangeProvider.getGroupSeqNo();
                     Long userId = NumberHelper.toLong(map.get("userId"));
+                    UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+                    if (ObjectUtils.isEmpty(userThirdAccount)) {
+                        log.error("每日调度用户未开户:" + userId);
+                        continue;
+                    }
                     //请求即信红包
                     VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
                     voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
                     voucherPayRequest.setTxAmount(StringHelper.formatDouble(money, 100, false));
-                    voucherPayRequest.setForAccountId(String.valueOf(redId));
+                    voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
                     voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
                     voucherPayRequest.setDesLine("每月提成");
                     voucherPayRequest.setChannel(ChannelContant.HTML);
                     VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
                     if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
                         String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+                        log.error(new Gson().toJson(response));
                         log.error("每月提成调度:" + msg);
                         continue;
                     }
@@ -298,11 +314,10 @@ public class UserBonusScheduler {
                     redpackPublish.setMoney(money);
                     redpackPublish.setType(AssetChangeTypeEnum.publishCommissions);  //  扣除红包
                     redpackPublish.setUserId(redId);
-                    redpackPublish.setForUserId(userId);
                     redpackPublish.setRemark(String.format("派发每月提成奖励 %s元", StringHelper.formatDouble(money / 100D, true)));
                     redpackPublish.setGroupSeqNo(groupSeqNo);
                     redpackPublish.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
-                    redpackPublish.setForUserId(redId);
+                    redpackPublish.setForUserId(userId);
                     redpackPublish.setSourceId(0L);
                     assetChangeProvider.commonAssetChange(redpackPublish);
 
@@ -311,7 +326,6 @@ public class UserBonusScheduler {
                     redpackR.setMoney(money);
                     redpackR.setType(AssetChangeTypeEnum.receiveCommissions);
                     redpackR.setUserId(userId);
-                    redpackR.setForUserId(redId);
                     redpackR.setRemark(String.format("接收每月提成奖励 %s元", StringHelper.formatDouble(money / 100D, true)));
                     redpackR.setGroupSeqNo(groupSeqNo);
                     redpackR.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));

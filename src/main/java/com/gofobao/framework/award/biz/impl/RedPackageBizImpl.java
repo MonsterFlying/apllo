@@ -291,7 +291,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
         }
 
         Date beginDate = DateHelper.stringToDate(beginTime);
-        Specification<Tender> specification = Specifications
+     Specification<Tender> specification = Specifications
                 .<Tender>and()
                 .eq("status", 1)
                 .between("createdAt", new Range<>(DateHelper.beginOfDate(beginDate), DateHelper.endOfDate(nowDate))).build();
@@ -306,7 +306,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
         int pageSize = 100, pageindex = 0, totalPageIndex = 0;
         totalPageIndex = count.intValue() / pageSize;
         totalPageIndex = count.intValue() % pageSize == 0 ? totalPageIndex : totalPageIndex + 1;
-
+   /*
         // ==================================
         // 投资派发红包
         // ==================================
@@ -337,7 +337,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
                     log.error(String.format("投资营销节点触发异常：%s", new Gson().toJson(marketingData)), e);
                 }
             }
-        }
+        }*/
 
         // ===============================
         // 用户派发红包
@@ -379,8 +379,6 @@ public class RedPackageBizImpl implements RedPackageBiz {
                 }
             }
         }
-
-
         return null;
     }
 
