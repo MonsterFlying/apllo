@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -49,7 +50,7 @@ public class WindmillUserController {
     }
 
     @ApiOperation("用户绑定请求登录页面")
-    @PostMapping("user/bind/html")
+    @GetMapping("user/bind/html")
     public String loginHtml(HttpServletRequest request) {
         String paramStr = request.getParameter("param");
         Map<String, Object> paramMap = Maps.newHashMap();
@@ -59,7 +60,7 @@ public class WindmillUserController {
     }
 
     @ApiOperation("綁定登陸")
-    @PostMapping("user/bind/login")
+    @GetMapping("user/bind/login")
     public ResponseEntity<VoBasicUserInfoResp> bindLogin(HttpServletRequest request,
                                                          HttpServletResponse response,
                                                          BindLoginReq bindLoginReq) {
@@ -67,11 +68,8 @@ public class WindmillUserController {
     }
 
     @ApiOperation("用户登录")
-    @PostMapping("/user/login")
+    @GetMapping("/user/login")
     public void loginUser(HttpServletRequest request, HttpServletResponse response)throws Exception {
         response.sendRedirect(windmillUserBiz.login(request, response));
     }
-
-
-
 }

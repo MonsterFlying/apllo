@@ -644,7 +644,7 @@ public class ThirdBatchProvider {
 
             //改变批次放款状态 处理成功
             borrow.setLendRepayStatus(ThirdDealStatusContrants.DISPOSED);
-            borrow.setSuccessAt(new Date());
+            borrow.setRecheckAt(new Date());
             borrowService.save(borrow);
         } else {
             log.info("非流转标复审失败!");

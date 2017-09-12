@@ -5,6 +5,7 @@ import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.vo.request.TenderUserReq;
+import com.gofobao.framework.tender.vo.request.VoAdminCancelTender;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.gofobao.framework.tender.vo.response.VoBorrowTenderUserWarpListRes;
 import io.swagger.annotations.Api;
@@ -68,5 +69,16 @@ public class TenderController {
         }
     }
 
+    /**
+     * 取消用户投标申请
+     *
+     * @param voAdminCancelTender
+     * @return
+     */
+    @PostMapping("/pub/admin/cancel/tender")
+    @ApiOperation("实时查询用户金额")
+    public ResponseEntity<VoBaseResp> adminCancelTender(@ModelAttribute VoAdminCancelTender voAdminCancelTender) {
+        return tenderBiz.adminCancelTender(voAdminCancelTender);
+    }
 
 }
