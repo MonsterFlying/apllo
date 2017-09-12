@@ -33,8 +33,7 @@ public class WindmillTenderColltroller {
     @ApiOperation("用户投资记录查询接口")
     @RequestMapping("user/invest/list")
     public InvestRecordsRes userInvestList(HttpServletRequest request) {
-        return windmillTenderBiz.investRecordList(request);
-    }
+        return windmillTenderBiz.investRecordList(request);   }
 
 
 }

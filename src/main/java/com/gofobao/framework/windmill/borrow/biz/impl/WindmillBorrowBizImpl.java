@@ -91,7 +91,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
                         Invest invest = new Invest();
                         invest.setInvest_id(p.getId().toString());
                         invest.setInvest_title(p.getName());
-                        invest.setInvest_url(h5Address + "#/borrow/" + p.getId());
+                        invest.setInvest_url(h5Address + "/#/borrow/" + p.getId());
                         invest.setTime_limit(p.getTimeLimit());
                         invest.setTime_limit_desc(p.getTimeLimit() + (p.getRepayFashion() == 1 ? BorrowContants.DAY : BorrowContants.MONTH));
                         invest.setBuy_limit(p.getMost() == 0 ? "" : StringHelper.formatDouble(p.getMost() / 100D, false));
@@ -167,7 +167,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
             borrowTenderList.setRetmsg("没有查询到当前标的投标记录");
             return borrowTenderList;
         }
-        Set<Long> userIds = tenders.stream().map(p -> p.getId()).collect(Collectors.toSet());
+        Set<Long> userIds = tenders.stream().map(p -> p.getUserId()).collect(Collectors.toSet());
         List<Users> users = usersRepository.findByIdIn(new ArrayList<>(userIds));
         Map<Long, Users> usersMap = users.stream().collect(Collectors.toMap(Users::getId, Function.identity()));
         List<VoTender> invest_list = Lists.newArrayList();

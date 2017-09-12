@@ -124,8 +124,8 @@ public class WrbCoopDESUtil {
     }
 
     public static void main(String[] args) throws Exception {
-
-        System.out.println(desDecrypt("2l0IYbNnRcShWOM9Q5Ej0A3gCEP07LBS", "cnrsZzSe86JyDxvb9Am4mt7O4673N8NP"));
+        String param="id=179483&start_time=2017-09-10 00:00:00";
+        System.out.println(desEncrypt("2l0IYbNnRcShWOM9Q5Ej0A3gCEP07LBS", param));
            }
 
 }
