@@ -61,6 +61,79 @@ public class CommonSmsProvider {
      * @param body
      * @return
      */
+    public boolean doSmsNoticeByBorrowCancel(String tag, Map<String, String> body) {
+        checkNotNull(body, "CommonSmsProvider doSmsNoticeByBorrowCancel body is null");
+        String phone = body.get(MqConfig.PHONE);
+        String ip = body.get(MqConfig.IP);
+        String id = body.get(MqConfig.MSG_ID);
+        String name = body.get(TEMPLATE_NAME);
+        String timestamp = body.get(TEMPLATE_KEY_TIMESTAMP);
+
+        checkNotNull(phone, "CommonSmsProvider doSmsNoticeByBorrowCancel phone is null");
+        checkNotNull(ip, "CommonSmsProvider doSmsNoticeByBorrowCancel ip is null");
+        checkNotNull(id, "CommonSmsProvider doSmsNoticeByBorrowCancel id is null");
+        checkNotNull(name, "CommonSmsProvider doSmsNoticeByBorrowCancel name is null");
+
+        SmsServerConfig smsServerConfig = smsConfigService.installSMSServer();  // 获取短信配置
+        if (ObjectUtils.isEmpty(smsServerConfig)) {
+            return false;
+        }
+        // 获取模板
+        String template = smsTemplateService.findSmsTemplate(tag);
+        checkNotNull(template, "CommonSmsProvider doSmsWindmillRegister template is null");
+
+
+        Map<String, String> params = new HashMap<>();
+        params.put(MqConfig.MSG_ID, id);
+        params.put(TEMPLATE_NAME, name);
+        params.put(TEMPLATE_KEY_TIMESTAMP, timestamp);
+        params.putAll(body);
+
+        String message = replateTemplace(template, params);  // 替换短信模板
+        List<String> phones = new ArrayList<>(1);
+        phones.add(phone);
+
+        boolean rs = false;
+        try {
+            if (!closePhoneSend) {
+                smsServerConfig.getService().
+                        sendMessage(smsServerConfig.getConfig(), phones, message);
+            }
+            rs = true;
+        } catch (Throwable e) {
+            log.error("CommonSmsProvider smsNoticeByReceivedRepay send message error", e);
+            return false;
+        }
+
+        // 写入数据库
+        Date nowDate = new Date();
+        SmsEntity smsEntity = new SmsEntity();
+        smsEntity.setIp(ip);
+        smsEntity.setType(tag);
+        smsEntity.setContent(message);
+        smsEntity.setPhone(phone);
+        smsEntity.setCreatedAt(nowDate);
+        smsEntity.setStatus(rs ? 0 : 1);
+        smsEntity.setUsername(phone);
+        smsEntity.setExt(" ");
+        smsEntity.setId(null);
+        smsEntity.setRrid(" ");
+        smsEntity.setStime(" ");
+        try {
+            smsRepository.save(smsEntity);
+        } catch (Throwable e) {
+            log.error("保存数据失败", e);
+        }
+        return true;
+    }
+
+    /**
+     * 发送收到回款短信
+     *
+     * @param tag
+     * @param body
+     * @return
+     */
     public boolean doSmsNoticeByReceivedRepay(String tag, Map<String, String> body) {
         checkNotNull(body, "CommonSmsProvider doSendMessageCode body is null");
         String phone = body.get(MqConfig.PHONE);
@@ -86,7 +159,7 @@ public class CommonSmsProvider {
         }
         // 获取模板
         String template = smsTemplateService.findSmsTemplate(tag);
-        checkNotNull(template, "CommonSmsProvider doSmsWindmillRegister template is null");
+        checkNotNull(template, "CommonSmsProvider doSmsNoticeByReceivedRepay template is null");
 
 
         Map<String, String> params = new HashMap<>();
@@ -109,7 +182,7 @@ public class CommonSmsProvider {
             }
             rs = true;
         } catch (Throwable e) {
-            log.error("CommonSmsProvider smsNoticeByReceivedRepay send message error", e);
+            log.error("CommonSmsProvider doSmsNoticeByReceivedRepay send message error", e);
             return false;
         }
 

@@ -42,6 +42,10 @@ public class SmsMessageListener{
             boolean result;
             if (tag.equals(MqTagEnum.SMS_RECEIVED_REPAY.getValue())){
                 result = commonSmsProvider.doSmsNoticeByReceivedRepay(tag,msg);
+            }else if(tag.equals(MqTagEnum.SMS_BORROW_CANCEL_TENDER.getValue())){
+                result = commonSmsProvider.doSmsNoticeByBorrowCancel(tag,msg);
+            }else if(tag.equals(MqTagEnum.SMS_BORROW_CANCEL_BORROW.getValue())){
+                result = commonSmsProvider.doSmsNoticeByBorrowCancel(tag,msg);
             }else if(tag.equals(MqTagEnum.SMS_WINDMILL_USER_REGISTER.getValue())){
                 result = commonSmsProvider.doSmsWindmillRegister(tag, msg);
             }else {

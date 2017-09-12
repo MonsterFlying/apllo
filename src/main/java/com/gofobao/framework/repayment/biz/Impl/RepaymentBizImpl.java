@@ -951,7 +951,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         /* 是否垫付 */
         boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
         //2.处理资金还款人、收款人资金变动
-        batchAssetChangeHelper.batchAssetChangeAndCollection(repaymentId, batchNo, BatchAssetChangeContants.BATCH_REPAY);
+/*        batchAssetChangeHelper.batchAssetChangeAndCollection(repaymentId, batchNo, BatchAssetChangeContants.BATCH_REPAY);*/
         //4.还款成功后变更改还款状态
         changeRepaymentAndRepayStatus(parentBorrow, tenderList, borrowRepayment, borrowCollectionList, advance);
         //5.结束第三方债权并更新借款状态（还款最后一期的时候）
@@ -1000,7 +1000,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if (ObjectUtils.isEmpty(phone)) {
                 MqConfig config = new MqConfig();
                 config.setQueue(MqQueueEnum.RABBITMQ_SMS);
-                config.setTag(MqTagEnum.SMS_REGISTER);
                 switch (parentBorrow.getType()) {
                     case BorrowContants.CE_DAI:
                         name = "车贷标";

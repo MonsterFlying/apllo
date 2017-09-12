@@ -750,3 +750,6 @@ ALTER TABLE gfb_eve ADD query_date VARCHAR(8) DEFAULT '' NULL COMMENT '查询时
 ALTER TABLE gfb_aleve ADD query_date VARCHAR(8) DEFAULT '' NULL COMMENT '查询时间';
 
 alter table gfb_batch_asset_change_item change  column to_user_id for_user_id int(11) DEFAULT NULL COMMENT '交易对方ID';
+
+INSERT INTO `gfb_sms_template` ( `ALIAS_CODE`, `TEMPLATE`, `IS_DEL`, `IS_ACTIVE`, `TYPE`, `CREATE_TIME`, `CREATE_ID`, `UPDATE_TIME`, `UPDATE_ID`) VALUES ('SMS_BORROW_CANCEL_TENDER', '【广富宝】你所投资的借款{name}在{timestamp}已取消', '0', '1', '0', '2017-09-12 16:07:32', '0', '2017-09-12 16:07:40', '0');
+INSERT INTO `gfb_sms_template` ( `ALIAS_CODE`, `TEMPLATE`, `IS_DEL`, `IS_ACTIVE`, `TYPE`, `CREATE_TIME`, `CREATE_ID`, `UPDATE_TIME`, `UPDATE_ID`) VALUES ('SMS_BORROW_CANCEL_BORROW', '【广富宝】你发布的借款{name}停止募集，在{timestamp}取消', '0', '1', '0', '2017-09-12 16:07:36', '0', '2017-09-12 16:07:44', '0');
