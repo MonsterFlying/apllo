@@ -1041,7 +1041,7 @@ public class BorrowBizImpl implements BorrowBiz {
         List<BorrowRepayment> borrowRepaymentList = new ArrayList<>();
         // 调用利息计算器得出借款每期应还信息
         BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(StringHelper.toString(borrow.getMoney())),
-                NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrow.getSuccessAt());
+                NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), nowDate);
         Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
         List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
         BorrowRepayment borrowRepayment = null;

@@ -98,7 +98,7 @@ public class TenderBizImpl implements TenderBiz {
     private WindmillTenderBiz windmillTenderBiz;
 
     @Autowired
-    private LendService lendService ;
+    private LendService lendService;
 
     /**
      * 新版投标
@@ -122,10 +122,10 @@ public class TenderBizImpl implements TenderBiz {
         Borrow borrow = borrowService.findByIdLock(voCreateTenderReq.getBorrowId());
         Preconditions.checkNotNull(borrow, "投标: 标的信息为空!");
 
-        if(!ObjectUtils.isEmpty(borrow.getLendId()) && borrow.getLendId() > 0){
+        if (!ObjectUtils.isEmpty(borrow.getLendId()) && borrow.getLendId() > 0) {
             Lend lend = lendService.findByIdLock(borrow.getLendId());
             // 对待有草出借,只能是出草人投
-            if(voCreateTenderReq.getUserId().intValue() != lend.getUserId().intValue()){
+            if (voCreateTenderReq.getUserId().intValue() != lend.getUserId().intValue()) {
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "非常抱歉, 当前标的为有草出借标的, 只有出草人才能投!"));
@@ -371,7 +371,7 @@ public class TenderBizImpl implements TenderBiz {
         long availBal = MoneyHelper.yuanToFen(NumberHelper.toDouble(availBal1));
         long useMoney = asset.getUseMoney().longValue();
         if (availBal < useMoney) {
-            log.error(String.format("资金账户未同步:本地:%s 即信:%s", useMoney, availBal));
+            log.error(String.format("资金账户未同步userId:%s:本地:%s 即信:%s", user.getId(), useMoney, availBal));
             extendMessage.add("资金账户未同步，请先在个人中心进行资金同步操作!");
             return false;
         }
@@ -386,7 +386,7 @@ public class TenderBizImpl implements TenderBiz {
 
         System.err.println(availBal);
         System.err.println("125114");
-        System.err.println( availBal < 125114);
+        System.err.println(availBal < 125114);
 
     }
 
