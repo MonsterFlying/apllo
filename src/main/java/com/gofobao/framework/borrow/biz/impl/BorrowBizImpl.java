@@ -723,12 +723,19 @@ public class BorrowBizImpl implements BorrowBiz {
             }
 
             Set<Long> userIdSet = tenderList.stream().map(p -> p.getUserId()).collect(Collectors.toSet());   // 投标的UserID
-
+            /* 查询用户存管账户 */
+            Specification<Users> utas = Specifications
+                    .<Users>and()
+                    .in("id", userIdSet.toArray())
+                    .build();
+            List<Users> usersList = userService.findList(utas);
+            Map<Long/*userId*/, Users> usersMap = usersList.stream().collect(Collectors.toMap(Users::getId, Function.identity()));
             // ======================================
             //  更改投资记录标识, 并且解冻投资资金
             // ======================================
             VoCancelThirdTenderReq voCancelThirdTenderReq = null;
             for (Tender tender : tenderList) {
+
                 tender.setId(tender.getId());
                 tender.setStatus(2); // 取消状态
                 tender.setUpdatedAt(nowDate);
@@ -762,6 +769,8 @@ public class BorrowBizImpl implements BorrowBiz {
             Notices notices;
             String content = String.format("你所投资的借款[ %s ]在 %s 已取消", borrow.getName(), DateHelper.dateToString(new Date()));
             for (Long toUserId : userIdSet) {
+                Users users = usersMap.get(toUserId);
+
                 notices = new Notices();
                 notices.setFromUserId(1L);
                 notices.setUserId(toUserId);
@@ -781,6 +790,64 @@ public class BorrowBizImpl implements BorrowBiz {
                     mqHelper.convertAndSend(mqConfig);
                 } catch (Throwable e) {
                     log.error("borrowBizImpl cancelBorrow send mq exception", e);
+                }
+
+                //给投标人发短信
+                MqConfig config = new MqConfig();
+                config.setQueue(MqQueueEnum.RABBITMQ_SMS);
+                config.setTag(MqTagEnum.SMS_BORROW_CANCEL_TENDER);
+                body.put(MqConfig.PHONE, users.getPhone());
+                body.put(MqConfig.MSG_ID,String.valueOf(borrowId));
+                body.put(MqConfig.IP, "127.0.0.1");
+                body.put(MqConfig.MSG_NAME, borrow.getName());
+                body.put(MqConfig.TIMESTAMP, DateHelper.dateToString(new Date()));
+                config.setMsg(body);
+
+                boolean state = mqHelper.convertAndSend(config);
+                if (!state) {
+                    log.error(String.format("发送投资人收到还款短信失败:%s", config));
+                }
+            }
+
+            content = String.format("你发布的借款[ %s ]停止募集，在 %s 取消", borrow.getName(), DateHelper.dateToString(new Date()));
+            //净值标取消发送短信
+            if (borrow.getType() == 1) {
+                Users borrowUser = userService.findById(borrow.getUserId());
+                notices = new Notices();
+                notices.setFromUserId(1L);
+                notices.setUserId(borrow.getUserId());
+                notices.setRead(false);
+                notices.setName("融资失败");
+                notices.setContent(content);
+                notices.setType("system");
+                notices.setCreatedAt(nowDate);
+                notices.setUpdatedAt(nowDate);
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_NOTICE);
+                mqConfig.setTag(MqTagEnum.NOTICE_PUBLISH);
+                Map<String, String> body = GSON.fromJson(GSON.toJson(notices), TypeTokenContants.MAP_TOKEN);
+                mqConfig.setMsg(body);
+                try {
+                    log.info(String.format("borrowBizImpl cancelBorrow send mq %s", GSON.toJson(body)));
+                    mqHelper.convertAndSend(mqConfig);
+                } catch (Throwable e) {
+                    log.error("borrowBizImpl cancelBorrow send mq exception", e);
+                }
+
+                //给借款人发短信
+                MqConfig config = new MqConfig();
+                config.setQueue(MqQueueEnum.RABBITMQ_SMS);
+                config.setTag(MqTagEnum.SMS_BORROW_CANCEL_TENDER);
+                body.put(MqConfig.PHONE, borrowUser.getPhone());
+                body.put(MqConfig.MSG_ID,String.valueOf(borrowId));
+                body.put(MqConfig.IP, "127.0.0.1");
+                body.put(MqConfig.MSG_NAME, borrow.getName());
+                body.put(MqConfig.TIMESTAMP, DateHelper.dateToString(new Date()));
+                config.setMsg(body);
+
+                boolean state = mqHelper.convertAndSend(config);
+                if (!state) {
+                    log.error(String.format("发送投资人收到还款短信失败:%s", config));
                 }
             }
         }
@@ -848,13 +915,13 @@ public class BorrowBizImpl implements BorrowBiz {
         sendNoticsByTender(borrow, tenderList);
         // 用户投标信息和每日统计
         userTenderStatistic(borrow, tenderList, nowDate);
-        try{
+        try {
             // 老用户投标
-            if(!borrow.getIsNovice()){
+            if (!borrow.getIsNovice()) {
                 userTenderRedPackage(tenderList);
             }
-        }catch (Exception e){
-            log.error("触发老用户投标红包失败", e) ;
+        } catch (Exception e) {
+            log.error("触发老用户投标红包失败", e);
         }
 
         // 借款人资金变动
