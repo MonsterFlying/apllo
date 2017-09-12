@@ -414,33 +414,37 @@ public class UserThirdBizImpl implements UserThirdBiz {
 
     @Autowired
     MarketingRedpackRecordService marketingRedpackRecordService;
+
     /**
      * 触发开户活动
      *
      * @param userThirdAccount
      */
     private void touchMarketingByOpenAccount(UserThirdAccount userThirdAccount) {
-        Long userId = userThirdAccount.getUserId();
-        Users user = userService.findById(userId);
-        Preconditions.checkNotNull(user, "touchMarketingByOpenAccount user is null");
-        Long parentId = user.getParentId();
-        if (!ObjectUtils.isEmpty(parentId)
-                && parentId > 0) {
+        try {
+            Long userId = userThirdAccount.getUserId();
+            Users user = userService.findById(userId);
+            Preconditions.checkNotNull(user, "touchMarketingByOpenAccount user is null");
+            Long parentId = user.getParentId();
+            if (!ObjectUtils.isEmpty(parentId)
+                    && parentId > 0) {
 
-            Date nowDate = new Date();
-            // 每天每个用户只能邀请100
-            Specification<MarketingRedpackRecord> specifications = Specifications
-                    .<MarketingRedpackRecord>and()
-                    .eq("userId", parentId)
-                    .between("publishTime", new Range<>(DateHelper.beginOfDate(nowDate), DateHelper.endOfDate(nowDate)))
-                    .build();
-            long count = marketingRedpackRecordService.count(specifications) ;
-            if(count >= 100){
-                log.error("此用户每天邀请好友过100, 系统拒绝执行");
-                return ;
+                Date nowDate = new Date();
+                // 每天每个用户只能邀请100
+                Specification<MarketingRedpackRecord> specifications = Specifications
+                        .<MarketingRedpackRecord>and()
+                        .eq("userId", parentId)
+                        .between("publishTime", new Range<>(DateHelper.beginOfDate(nowDate), DateHelper.endOfDate(nowDate)))
+                        .build();
+                long count = marketingRedpackRecordService.count(specifications);
+                if (count >= 100) {
+                    log.error("此用户每天邀请好友过100, 系统拒绝执行");
+                    return;
+                }
             }
+        } catch (Exception e) {
+            log.error("邀请好友拦截异常", e);
         }
-
 
         MarketingData marketingData = new MarketingData();
         marketingData.setTransTime(DateHelper.dateToString(new Date()));
