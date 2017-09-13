@@ -159,7 +159,6 @@
 <script>
     window.onload = function () {
         $.toast = function (msg, duration, extraclass) {
-            console.log('test..')
             var $toast = $('<div class="toast ' + (extraclass || '') + '">' + msg + '</div>').appendTo(document.body);
             setTimeout(function () {
                 $toast.remove();

@@ -163,7 +163,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
             }
             try {
                 // 处理注册来源
-                Integer channel = RegisterSourceEnum.getIndex("windmill");
+             //   Integer channel = RegisterSourceEnum.getIndex("windmill");
                 Date now = new Date();
                 // 插入数据
                 Users users = new Users();
@@ -179,7 +179,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
                 users.setRealname(registerReq.getTrue_name());
                 users.setType("");
                 users.setBranch(0);
-                users.setSource(channel);
+                users.setSource(12);
                 users.setInviteCode(GenerateInviteCodeHelper.getRandomCode()); // 生成用户邀请码
                 users.setParentId(0L);
                 users.setParentAward(0);

@@ -100,7 +100,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
                         invest.setTotal_amount(StringHelper.formatMon(p.getMoney() / 100D));
                         invest.setRate(StringHelper.formatDouble(p.getApr() / 100D, false));
                         invest.setProgress(NumberHelper.floorDouble((p.getMoneyYes().doubleValue() / p.getMoney().doubleValue()) * 100, 2) + "");
-                        invest.setStart_time(DateHelper.dateToString(p.getVerifyAt()));
+                        invest.setStart_time(DateHelper.dateToString(p.getReleaseAt()));
                         if (p.getRepayFashion() == 0) {
                             invest.setPayback_way(BorrowContants.REPAY_FASHION_MONTH_STR);
                         }
@@ -176,7 +176,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
             VoTender tender = new VoTender();
             try {
                 tender.setIndex(p.getId());
-                tender.setInvest_money(StringHelper.formatDouble(p.getValidMoney(), false));
+                tender.setInvest_money(StringHelper.formatDouble(p.getValidMoney()/100D, false));
                 tender.setInvest_time(DateHelper.dateToString(p.getCreatedAt()));
                 Users tempUser = usersMap.get(p.getUserId());
                 tender.setInvest_user(StringUtils.isEmpty(tempUser.getUsername()) ? UserHelper.hideChar(tempUser.getPhone(), UserHelper.PHONE_NUM) : tempUser.getUsername());
