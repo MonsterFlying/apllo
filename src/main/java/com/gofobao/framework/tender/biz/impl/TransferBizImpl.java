@@ -1431,7 +1431,7 @@ public class TransferBizImpl implements TransferBiz {
                 //已完成
                 voViewBorrowList.setStatus(4);
             }
-            double spend = NumberHelper.floorDouble((item.getTransferMoneyYes().doubleValue() / item.getTransferMoney()), 2);
+            double spend = NumberHelper.floorDouble((item.getTransferMoneyYes().doubleValue() / item.getTransferMoney()) * 100, 2);
             voViewBorrowList.setSpend(spend);
             Users user = userRef.get(item.getUserId());
             voViewBorrowList.setUserName(!StringUtils.isEmpty(user.getUsername()) ? user.getUsername() : user.getPhone());
@@ -1518,7 +1518,7 @@ public class TransferBizImpl implements TransferBiz {
             item.setUserName(StringUtils.isEmpty(users.getUsername()) ? UserHelper.hideChar(users.getPhone(), UserHelper.PHONE_NUM) : UserHelper.hideChar(users.getUsername(), UserHelper.USERNAME_NUM));
             item.setAvatar(StringUtils.isEmpty(users.getAvatarPath()) ? imageDomain + "/images/user/default_avatar.jpg" : users.getAvatarPath());
             item.setType(5);
-            double spend = NumberHelper.floorDouble((transfer.getTransferMoneyYes().doubleValue() / transfer.getTransferMoney()), 2);
+            double spend = NumberHelper.floorDouble((transfer.getTransferMoneyYes().doubleValue() / transfer.getTransferMoney()) * 100, 2);
             item.setSpend(spend);
             //1.待发布 2.还款中 3.招标中 4.已完成 5.已过期 6.待复审
             //进度
@@ -1556,7 +1556,7 @@ public class TransferBizImpl implements TransferBiz {
                 .in("state", ImmutableList.of(TransferContants.TRANSFERIND, TransferContants.TRANSFERED).toArray())
                 .eq("type", 0)
                 .build();
-        Pageable pageable = new PageRequest(voBorrowListReq.getPageIndex(), voBorrowListReq.getPageSize(), new Sort(Sort.Direction.ASC, "state"));
+        Pageable pageable = new PageRequest(voBorrowListReq.getPageIndex(), voBorrowListReq.getPageSize(), new Sort(Sort.Direction.DESC, "id"));
         Page<Transfer> transferPage = transferService.findPageList(ts, pageable);
         resultMaps.put("totalCount", transferPage.getTotalElements());
         resultMaps.put("transfers", transferPage.getContent());

@@ -116,6 +116,7 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
@@ -536,7 +537,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
             Preconditions.checkNotNull(borrowCollectionList, "生成即信还款计划: 获取回款计划列表为空!");
             List<RepayAssetChange> repayAssetChangeList = new ArrayList<>();
-            int lateDays = getLateDays(borrowRepayment);
+            int lateDays = getLateDays(borrowRepayment);  // 逾期天数
             // 生成存管投资人还款记录(提前结清)
             List<Repay> tempRepays = calculateRepayPlan(borrow,
                     titularBorrowAccount.getAccountId(),
@@ -1000,7 +1001,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             if (ObjectUtils.isEmpty(phone)) {
                 MqConfig config = new MqConfig();
                 config.setQueue(MqQueueEnum.RABBITMQ_SMS);
-                config.setTag(MqTagEnum.SMS_REGISTER);
+                config.setTag(MqTagEnum.SMS_RECEIVED_REPAY);
                 switch (parentBorrow.getType()) {
                     case BorrowContants.CE_DAI:
                         name = "车贷标";
@@ -1634,12 +1635,13 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Map<Long/* 用户ID*/, UserThirdAccount /* 用户存管*/> userThirdAccountMap = userThirdAccountList
                 .stream()
                 .collect(Collectors.toMap(UserThirdAccount::getUserId, Function.identity()));
-        /* 当期回款总利息 */
+
         long sumCollectionInterest = borrowCollectionList.stream()
                 .filter(borrowCollection -> tenderMaps.get(borrowCollection.getTenderId()).getTransferFlag() != 2)
-                .mapToLong(BorrowCollection::getInterest).sum();
-        // 计算逾期产生的总费用
-        long lateInterest = calculateLateInterest(lateDays, borrowRepayment, borrow);
+                .mapToLong(BorrowCollection::getInterest).sum();  // 通过回款计划的利息获取回款总利息
+
+
+        long lateInterest = calculateLateInterest(lateDays, borrowRepayment, borrow);     // 计算逾期产生的总费用
         for (Tender tender : tenderList) {
             long inIn = 0; // 出借人的利息
             long inPr = 0; // 出借人的本金
@@ -1657,7 +1659,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
             RepayAssetChange repayAssetChange = new RepayAssetChange();
             repayAssetChanges.add(repayAssetChange);
-            inIn = new Double(MoneyHelper.round(borrowCollection.getInterest() * interestPercent, 0)).longValue(); // 还款利息
+            //  = new Double(MoneyHelper.round(borrowCollection.getInterest() * interestPercent, 0)).longValue(); // 还款利息
+            inIn = MoneyHelper.doubleToint(MoneyHelper.multiply(borrowCollection.getInterest(), interestPercent));  //  还款利息, 不会四舍五入
+
+
             inPr = borrowCollection.getPrincipal(); // 还款本金
             repayAssetChange.setUserId(tender.getUserId());
             repayAssetChange.setInterest(inIn);
@@ -1684,6 +1689,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                         inFee += 0;
                     } else {
                         inFee += new Double(MoneyHelper.round(inIn * 0.1, 0)).longValue();
+                        // 利息管理费
                     }
                 }
             }
@@ -1725,6 +1731,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
         return repayList;
     }
+
 
     /**
      * 生成回款记录
@@ -1843,16 +1850,16 @@ public class RepaymentBizImpl implements RepaymentBiz {
      *
      * @param borrowRepayment
      * @param repaymentBorrow
-     * @return
+     * @return@
      */
 
-    private int calculateLateInterest(int lateDays, BorrowRepayment borrowRepayment, Borrow repaymentBorrow) {
+    private long calculateLateInterest(int lateDays, BorrowRepayment borrowRepayment, Borrow repaymentBorrow) {
         if (0 <= lateDays) {
             return 0;
         }
 
         long overPrincipal = borrowRepayment.getPrincipal();
-        if (borrowRepayment.getOrder() < (repaymentBorrow.getTotalOrder() - 1)) { //
+        if (borrowRepayment.getOrder() < (repaymentBorrow.getTotalOrder() - 1)) {
             Specification<BorrowRepayment> brs = Specifications
                     .<BorrowRepayment>and()
                     .eq("borrowId", repaymentBorrow.getId())
@@ -1864,8 +1871,13 @@ public class RepaymentBizImpl implements RepaymentBiz {
             overPrincipal = borrowRepaymentList.stream().mapToLong(w -> w.getPrincipal()).sum();
         }
 
-        return new Double(MoneyHelper.round(overPrincipal * 0.004 * lateDays, 2)).intValue();
+        // 现用户
+        double oneDayOverPricipal = MoneyHelper.multiply(overPrincipal, 0.004);  // 每天逾期费
+        double allDayOverPricipal = MoneyHelper.multiply(oneDayOverPricipal, lateDays);  // 总共乐器费
+        // return new Double(MoneyHelper.round(overPrincipal * 0.004 * lateDays, 2)).intValue();
+        return MoneyHelper.doubleToLong(allDayOverPricipal);  //不会四舍五入
     }
+
 
     /**
      * 获取逾期天数
@@ -1877,9 +1889,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Date nowDateOfBegin = DateHelper.beginOfDate(new Date());
         Date repayDateOfBegin = DateHelper.beginOfDate(borrowRepayment.getRepayAt());
         int lateDays = DateHelper.diffInDays(nowDateOfBegin, repayDateOfBegin, false);
-        if (borrowRepayment.getRepayAt().getTime() < DateHelper.stringToDate("2017-09-07 00:00:00").getTime()) {
-            lateDays = lateDays - 4;
-        }
         lateDays = lateDays < 0 ? 0 : lateDays;
         return lateDays;
     }
@@ -2170,7 +2179,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
 
         int lateDays = getLateDays(borrowRepayment);//逾期天数
-        long lateInterest = calculateLateInterest(lateDays,borrowRepayment,borrow);//逾期利息
+        long lateInterest = calculateLateInterest(lateDays, borrowRepayment, borrow);//逾期利息
         long repayInterest = borrowRepayment.getInterest();//还款利息
         long repayMoney = borrowRepayment.getPrincipal() + repayInterest;//还款金额
         if (advanceUserAsses.getUseMoney() < (repayMoney + lateInterest)) {

@@ -175,7 +175,7 @@ public class UserBonusScheduler {
                 }
                 pageIndex++;
             } while (resultList.size() >= 50);
-            financialScheduler.setData(new Gson().toJson(resultList));
+            financialScheduler.setData(DateHelper.dateToString(new Date()));
             financialScheduler.setState(1);
             financialScheduler.setResMsg("调度成功");
             financialScheduler.setUpdateAt(new Date());
