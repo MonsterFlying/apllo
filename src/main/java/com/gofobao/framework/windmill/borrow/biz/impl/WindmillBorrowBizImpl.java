@@ -100,7 +100,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
                         invest.setTotal_amount(StringHelper.formatMon(p.getMoney() / 100D));
                         invest.setRate(StringHelper.formatDouble(p.getApr() / 100D, false));
                         invest.setProgress(NumberHelper.floorDouble((p.getMoneyYes().doubleValue() / p.getMoney().doubleValue()) * 100, 2) + "");
-                        invest.setStart_time(DateHelper.dateToString(p.getVerifyAt()));
+                        invest.setStart_time(DateHelper.dateToString(p.getReleaseAt()));
                         if (p.getRepayFashion() == 0) {
                             invest.setPayback_way(BorrowContants.REPAY_FASHION_MONTH_STR);
                         }
