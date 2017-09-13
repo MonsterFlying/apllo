@@ -552,10 +552,14 @@ public class RepaymentBizImpl implements RepaymentBiz {
             long repayMoney = doGenerateAssetChangeRecodeByRepay(borrow, borrowRepayment, borrowRepayment.getUserId(), repayAssetChangeList, groupSeqNo, batchAssetChange, false);
             //真实的逾期费用
             /*平台实际收取的逾期费用*/
-            long realPlatformOverdueFee = repayAssetChangeList.stream().mapToLong(RepayAssetChange::getPlatformOverdueFee).sum();
+            double realPlatformOverdueFee = 0;
             /*投资人实际收取的逾期费用*/
-            long realOverdueFee = repayAssetChangeList.stream().mapToLong(RepayAssetChange::getOverdueFee).sum();
-            long realLateInterest = realOverdueFee + realPlatformOverdueFee;
+            double realOverdueFee = 0;
+            for (RepayAssetChange repayAssetChange : repayAssetChangeList) {
+                realPlatformOverdueFee = MoneyHelper.add(realPlatformOverdueFee, repayAssetChange.getPlatformOverdueFee());
+                realOverdueFee = MoneyHelper.add(realOverdueFee, repayAssetChange.getOverdueFee());
+            }
+            long realLateInterest = NumberHelper.toLong(MoneyHelper.round(MoneyHelper.add(realOverdueFee, realPlatformOverdueFee), 0));
             // 是否是垫付
             boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
             // 生成还款人还款批次资金改变记录
@@ -1514,7 +1518,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
             throw new Exception(String.format("正常还款流程：%s,userId:%s,repaymentId:%s,borrowId:%s", balanceFreezeResp.getRetMsg(), repayUserThirdAccount.getUserId(), borrowRepayment.getId(), borrow.getId()));
         }
 
-
         try {
             // 冻结还款金额
             long money = new Double(MoneyHelper.round(MoneyHelper.multiply(freezeMoney, 100d), 0)).longValue();
@@ -1528,6 +1531,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
             freezeAssetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
             freezeAssetChange.setSourceId(borrowRepayment.getId());
             assetChangeProvider.commonAssetChange(freezeAssetChange);
+
+            //查询即信投标
+
 
             //批量放款
             acqResMap.put("freezeMoney", freezeMoney);
@@ -1709,7 +1715,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
             repay.setIntAmount(StringHelper.formatDouble(MoneyHelper.divide(new Double(inIn), 100), false));
             repay.setTxFeeIn(StringHelper.formatDouble(MoneyHelper.divide(new Double(inFee), 100), false));
             repay.setTxFeeOut(StringHelper.formatDouble(MoneyHelper.divide(new Double(outFee), 100), false));
-
             repay.setProductId(borrow.getProductId());
             repay.setAuthCode(tender.getAuthCode());
             UserThirdAccount userThirdAccount = userThirdAccountMap.get(tender.getUserId());
@@ -2170,7 +2175,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
 
         int lateDays = getLateDays(borrowRepayment);//逾期天数
-        long lateInterest = calculateLateInterest(lateDays,borrowRepayment,borrow);//逾期利息
+        long lateInterest = calculateLateInterest(lateDays, borrowRepayment, borrow);//逾期利息
         long repayInterest = borrowRepayment.getInterest();//还款利息
         long repayMoney = borrowRepayment.getPrincipal() + repayInterest;//还款金额
         if (advanceUserAsses.getUseMoney() < (repayMoney + lateInterest)) {

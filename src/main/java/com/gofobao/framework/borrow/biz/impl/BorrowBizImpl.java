@@ -380,9 +380,9 @@ public class BorrowBizImpl implements BorrowBiz {
                 } else {
                     status = 3; //招标中
                     //复审中
-                    if (borrow.getLendRepayStatus().intValue() ==3 ) {
-                        if(ObjectUtils.isEmpty(borrow.getRecheckAt())){
-                            borrow.setRecheckAt( DateHelper.addHours(borrow.getSuccessAt(), 4) ) ;
+                    if (borrow.getLendRepayStatus().intValue() == 3) {
+                        if (ObjectUtils.isEmpty(borrow.getRecheckAt())) {
+                            borrow.setRecheckAt(DateHelper.addHours(borrow.getSuccessAt(), 4));
                         }
                         status = 6;
                     }
@@ -1661,11 +1661,12 @@ public class BorrowBizImpl implements BorrowBiz {
                 && ((borrow.getRepayFashion() != 1) || (borrow.getTimeLimit() > 1))) {
             String phone = user.getPhone();
             if (!ObjectUtils.isEmpty(phone)) {
-                long fee = 0;
+                double manageFeeRate = 0.0012;
+                double fee = 0;
                 if (borrow.getRepayFashion() == 1) {
-                    fee = Math.round(borrow.getMoney() * 0.12 / 30 * borrow.getTimeLimit());
+                    fee = MoneyHelper.round(borrow.getMoney() * manageFeeRate / 30 * borrow.getTimeLimit(), 0);
                 } else {
-                    fee = Math.round(borrow.getMoney() * 0.12 * borrow.getTimeLimit());
+                    fee = MoneyHelper.round(borrow.getMoney() * manageFeeRate * borrow.getTimeLimit(), 0);
                 }
                 // 使用消息队列发送短信
                 MqConfig config = new MqConfig();

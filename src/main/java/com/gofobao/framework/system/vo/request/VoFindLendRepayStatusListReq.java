@@ -1,5 +1,6 @@
 package com.gofobao.framework.system.vo.request;
 
+import com.gofobao.framework.common.page.Page;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -9,7 +10,7 @@ import lombok.Data;
  */
 @ApiModel
 @Data
-public class VoFindLendRepayStatusList {
+public class VoFindLendRepayStatusListReq extends Page {
     @ApiModelProperty("借款id")
     private Long borrowId;
 }

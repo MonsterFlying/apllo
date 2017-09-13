@@ -213,7 +213,7 @@ public class BorrowServiceImpl implements BorrowService {
                     status = 1;
                     item.setSurplusSecond(((releaseAt.getTime() - nowDate.getTime()) / 1000) + 5);
                     //当前时间大于招标有效时间
-                } else if (m.getLendRepayStatus() == 1) {
+                } else if (!ObjectUtils.isEmpty(m.getLendRepayStatus()) && m.getLendRepayStatus() == 1) {
                     item.setStatus(6);
                 } else if (nowDate.getTime() >= endAt.getTime()) {
                     status = 5; //已过期

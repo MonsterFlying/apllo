@@ -118,9 +118,6 @@ public class Borrow implements Serializable {
     private Integer lendRepayStatus;
 
 
-    @Column(name = "repay_status")
-    private Integer repayStatus;
-
 
     /**
      * 判断是否是转让标
