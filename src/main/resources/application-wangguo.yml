@@ -48,11 +48,11 @@ qiniu:
 
 windmill: #风车理财
   des-key: 2l0IYbNnRcShWOM9Q5Ej0A3gCEP07LBS #des加密key值
-  request-address: https://p.fengchelicai.com  #风车理财请求地址
+  request-address: http://121.42.52.42 #风车理财请求地址
   short-name: gfb #风车理财分配给平台的简称
   from: wrb #风车理财简称
   local-des-key : 2l0IYbNnRcShWOM9Q5Ej0A3gCGOFOBAO #和风车理财交互时 平台的关键字段加密key值
-  notify-address:  https://p.fengchelicai.com/wrb/ws_info_call_back.json  #通知风车理财接口
+  notify-address:  http://121.42.52.42/wrb/ws_info_call_back.json  #通知风车理财接口
 
 
 jixin: #银行存管
@@ -73,8 +73,8 @@ jixin: #银行存管
 gofobao:
   dev: true # 开发环境
   javaDomain: http://7yhsngp.hk1.mofasuidao.cn/
-  h5Domain:  http://18164xy341.51mypc.cn
-  imageDomain : http://api.gofobao.com
+  h5Domain:  https://18164xy341.51mypc.cn
+  imageDomain : https://api.gofobao.com
   pcDomain: http://gofobao.55555.io
   captcha: false # 全站是否开启图形验证码验证
   close-email-send: true # 关闭邮箱发送
