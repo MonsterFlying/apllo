@@ -179,7 +179,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
                 tender.setInvest_money(StringHelper.formatDouble(p.getValidMoney()/100D, false));
                 tender.setInvest_time(DateHelper.dateToString(p.getCreatedAt()));
                 Users tempUser = usersMap.get(p.getUserId());
-                tender.setInvest_user(StringUtils.isEmpty(tempUser.getUsername()) ? UserHelper.hideChar(tempUser.getPhone(), UserHelper.PHONE_NUM) : tempUser.getUsername());
+                tender.setInvest_user(UserHelper.hideChar(tempUser.getPhone(), UserHelper.PHONE_NUM));
                 invest_list.add(tender);
             } catch (Exception e) {
                 borrowTenderList.setRetcode(VoBaseResp.ERROR);
