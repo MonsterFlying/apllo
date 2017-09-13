@@ -116,7 +116,6 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletResponse;
-import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
@@ -251,7 +250,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
         //提前结清操作
         return repayAll(borrowId);
     }
-
 
 
     /**
@@ -1476,12 +1474,18 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 repayAssetChanges);
 
         //所有交易金额 交易金额指的是txAmount字段
-        double txAmount = repays.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxAmount())).sum();
+        double txAmount = 0;
         //所有交易利息
-        double intAmount = repays.stream().mapToDouble(r -> NumberHelper.toDouble(r.getIntAmount())).sum();
+        double intAmount = 0 ;
         //所有还款手续费
-        double txFeeOut = repays.stream().mapToDouble(r -> NumberHelper.toDouble(r.getTxFeeOut())).sum();
-        double freezeMoney = MoneyHelper.round(txAmount + txFeeOut + intAmount, 2);/* 冻结金额 */
+        double txFeeOut = 0 ;
+        for(Repay repay: repays){
+            txAmount = MoneyHelper.add(txAmount, NumberHelper.toDouble(repay.getTxAmount()));
+            intAmount = MoneyHelper.add(intAmount, NumberHelper.toDouble(repay.getIntAmount()));
+            txFeeOut = MoneyHelper.add(txFeeOut, NumberHelper.toDouble(repay.getTxFeeOut()));
+        }
+        double freezeMoney = MoneyHelper.round(MoneyHelper.add(MoneyHelper.add(txAmount, intAmount), txFeeOut), 2);
+         // MoneyHelper.add(MoneyHelper.add(txAmount, intAmount),  txFeeOut, 2);
         // 生成投资人还款资金变动记录
         BatchAssetChange batchAssetChange = addBatchAssetChange(batchNo, borrowRepayment.getId(), advance);
         // 生成回款人资金变动记录  返回值实际还款本金和利息  不包括手续费
@@ -1660,9 +1664,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
             RepayAssetChange repayAssetChange = new RepayAssetChange();
             repayAssetChanges.add(repayAssetChange);
-            //  = new Double(MoneyHelper.round(borrowCollection.getInterest() * interestPercent, 0)).longValue(); // 还款利息
-            inIn = MoneyHelper.doubleToint(MoneyHelper.multiply(borrowCollection.getInterest(), interestPercent));  //  还款利息, 不会四舍五入
-
+            // inIn = new Double(MoneyHelper.round(borrowCollection.getInterest() * interestPercent, 0)).longValue();
+            double inInDouble = MoneyHelper.multiply(borrowCollection.getInterest(), interestPercent, 0);
+            inIn = MoneyHelper.doubleToLong(inInDouble);  // 还款利息
 
             inPr = borrowCollection.getPrincipal(); // 还款本金
             repayAssetChange.setUserId(tender.getUserId());
@@ -1691,22 +1695,24 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     } else {
                         // inFee += new Double(MoneyHelper.round(inIn * 0.1, 0)).longValue();
                         // 利息管理费
-                        inFee += MoneyHelper.doubleToint(MoneyHelper.multiply(inIn,0.1D)) ;  // 利息问题
+                        inFee += MoneyHelper.doubleToint(MoneyHelper.multiply(inIn, 0.1D, 0));  // 利息问题
                     }
                 }
             }
 
             repayAssetChange.setInterestFee(inFee);  // 利息管理费
             long overdueFee = 0;
-            long platformOverdueFee;
+            long platformOverdueFee = 0;
             if ((lateDays > 0) && (lateInterest > 0)) {  //借款人逾期罚息
-                // overdueFee = new Double(MoneyHelper.round(borrowCollection.getInterest() / new Double(sumCollectionInterest) * lateInterest / 2, 0)).longValue();// 出借人收取50% 逾期管理费 ;
-                double preve = MoneyHelper.divide(borrowCollection.getInterest(), sumCollectionInterest);  // 利息占比
-                double doubleOverdueFee = MoneyHelper.multiply(MoneyHelper.multiply(preve, lateInterest), 0.5);// 出借人逾期手续费
-                overdueFee = MoneyHelper.doubleToLong(doubleOverdueFee) ; // 出借人收取50% 逾期管理费 ;
+                //  overdueFee = new Double(MoneyHelper.round(borrowCollection.getInterest() / new Double(sumCollectionInterest) * lateInterest / 2, 0)).longValue();// 出借人收取50% 逾期管理费 ;
+                // platformOverdueFee = new Double(MoneyHelper.round(borrowCollection.getInterest() / new Double(sumCollectionInterest) * lateInterest / 2, 0)).longValue(); // 平台收取50% 逾期管理费
+                double preve = MoneyHelper.divide(borrowCollection.getInterest(), sumCollectionInterest);  // 逾期收益百分比
+                double overdueFeeDouble = MoneyHelper.multiply(MoneyHelper.multiply(preve, lateInterest), 0.5, 0);// 出借人逾期手续费
+                overdueFee = MoneyHelper.doubleToLong(overdueFeeDouble);
                 repayAssetChange.setOverdueFee(overdueFee);
                 inIn += overdueFee;
-                platformOverdueFee =  overdueFee;
+
+                platformOverdueFee = overdueFee;
                 repayAssetChange.setPlatformOverdueFee(platformOverdueFee);
                 outFee += platformOverdueFee;
             }
@@ -1716,10 +1722,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
             Repay repay = new Repay();
             repay.setAccountId(repayAccountId);
             repay.setOrderId(orderId);
-            repay.setTxAmount(StringHelper.formatDouble(MoneyHelper.divide(new Double(inPr), 100), false));
-            repay.setIntAmount(StringHelper.formatDouble(MoneyHelper.divide(new Double(inIn), 100), false));
-            repay.setTxFeeIn(StringHelper.formatDouble(MoneyHelper.divide(new Double(inFee), 100), false));
-            repay.setTxFeeOut(StringHelper.formatDouble(MoneyHelper.divide(new Double(outFee), 100), false));
+            repay.setTxAmount(StringHelper.formatDouble(MoneyHelper.divide(inPr, 100, 2), false));
+            repay.setIntAmount(StringHelper.formatDouble(MoneyHelper.divide(inIn, 100, 2), false));
+            repay.setTxFeeIn(StringHelper.formatDouble(MoneyHelper.divide(inFee, 100, 2), false));
+            repay.setTxFeeOut(StringHelper.formatDouble(MoneyHelper.divide(outFee, 100, 2), false));
 
             repay.setProductId(borrow.getProductId());
             repay.setAuthCode(tender.getAuthCode());
@@ -1878,11 +1884,10 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
         // 现用户
         double oneDayOverPricipal = MoneyHelper.multiply(overPrincipal, 0.004);  // 每天逾期费
-        double allDayOverPricipal = MoneyHelper.multiply(oneDayOverPricipal, lateDays);  // 总共乐器费
+        double allDayOverPricipal = MoneyHelper.multiply(oneDayOverPricipal, lateDays);  // 总共逾期费
         // return new Double(MoneyHelper.round(overPrincipal * 0.004 * lateDays, 2)).intValue();
-        return MoneyHelper.doubleToLong(allDayOverPricipal);  //不会四舍五入
+        return MoneyHelper.doubleToLong(MoneyHelper.round(allDayOverPricipal, 0));  //不会四舍五入
     }
-
 
     /**
      * 获取逾期天数
