@@ -201,29 +201,33 @@ public class UserCacheServiceImpl implements UserCacheService {
      */
     @Override
     public ResponseEntity<IncomeEarnedDetail> incomeEarned(Long userId) {
-
         IncomeEarnedDetail incomeEarnedDetail = VoBaseResp.ok("查詢成功", IncomeEarnedDetail.class);
-
         UserCache userCache = userCacheRepository.findOne(userId);
-        Long incomeTotal = userCache.getIncomeTotal();  //总
-        Long incomeOverdue = userCache.getIncomeOverdue();
-        Long incomeOther = userCache.getIncomeOther();
-        Long incomeInterest = userCache.getIncomeInterest();
+        Long waitCollectionInterest = userCache.getIncomeInterest();
+        //已转奖励
         Long incomeAward = userCache.getIncomeAward();
-        Long incomeBonus = userCache.getIncomeBonus();
-        Long incomeIntegralCash = userCache.getIncomeIntegralCash();
-        Long waitCollectionInterest = userCache.getWaitCollectionInterest();
-
         incomeEarnedDetail.setIncomeAward(StringHelper.formatMon(incomeAward / 100D));
+        //提成收入
+        Long incomeBonus = userCache.getIncomeBonus();
         incomeEarnedDetail.setIncomeBonus(StringHelper.formatMon(incomeBonus / 100D));
+        //积分折现
+        Long incomeIntegralCash = userCache.getIncomeIntegralCash();
         incomeEarnedDetail.setIncomeIntegralCash(StringHelper.formatMon(incomeIntegralCash / 100D));
+        //已转利息
+        Long incomeInterest = userCache.getIncomeInterest();
         incomeEarnedDetail.setIncomeInterest(StringHelper.formatMon(incomeInterest / 100D));
+        //其他收入
+        Long incomeOther = userCache.getIncomeOther();
         incomeEarnedDetail.setIncomeOther(StringHelper.formatMon(incomeOther / 100D));
+        //逾期收入
+        Long incomeOverdue = userCache.getIncomeOverdue();
         incomeEarnedDetail.setIncomeOverdue(StringHelper.formatMon(incomeOverdue / 100D));
-        incomeEarnedDetail.setIncomeEarned(StringHelper.formatMon((waitCollectionInterest + incomeTotal) / 100D));
+        //已赚收益
+        incomeEarnedDetail.setIncomeEarned(StringHelper.formatMon((incomeAward+incomeBonus+incomeIntegralCash+incomeInterest+incomeOther+incomeOverdue) / 100D));
+        //待收利息
         incomeEarnedDetail.setWaitCollectionInterest(StringHelper.formatMon(waitCollectionInterest / 100D));
+        //待收收益
         incomeEarnedDetail.setWaitIncomeInterest(StringHelper.formatMon(waitCollectionInterest / 100D));
-
         return ResponseEntity.ok(incomeEarnedDetail);
     }
 
