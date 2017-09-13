@@ -113,11 +113,8 @@ public class Borrow implements Serializable {
     private Boolean isWindmill;
     //放款即信通信状态 0.未处理 1.处理中 2.处理失败 3.处理成功
 
-
     @Column(name = "lend_repay_status")
     private Integer lendRepayStatus;
-
-
 
     /**
      * 判断是否是转让标

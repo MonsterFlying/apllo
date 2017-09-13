@@ -203,8 +203,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             //净值账户管理费
             if (borrow.getType() == 1) {
                 double newWorthFee = MoneyHelper.multiply(MoneyHelper.divide(validMoney, borrow.getMoney()), totalManageFee);
-                sumNetWorthFee += newWorthFee;
-                debtFee += newWorthFee;
+                sumNetWorthFee = MoneyHelper.add(sumNetWorthFee, newWorthFee);
+                debtFee = MoneyHelper.add(debtFee, newWorthFee);
             }
 
             String lendPayOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);

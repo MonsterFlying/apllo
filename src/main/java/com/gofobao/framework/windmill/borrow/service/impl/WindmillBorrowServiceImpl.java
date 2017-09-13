@@ -56,7 +56,8 @@ public class WindmillBorrowServiceImpl implements WindmillBorrowService {
                 new Integer(BorrowContants.CANCEL),
                 new Integer(BorrowContants.NO_PASS),
                 new Integer(BorrowContants.RECHECK_NO_PASS),
-                new Integer(BorrowContants.PENDING));
+                new Integer(BorrowContants.PENDING),
+                new Integer(BorrowContants.PASS));
         //過濾掉秒标,净值标
         List typeArray = Lists.newArrayList(new Integer(BorrowContants.JING_ZHI),
                 new Integer(BorrowContants.MIAO_BIAO));
