@@ -157,16 +157,24 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
                 .filter(p ->
                         p.getCreatedAt().getTime() <= yesterdayEnd && p.getCreatedAt().getTime() >= yesterdayBegin)
                 .collect(Collectors.toList());
-
-
         //昨日奖励
         if (CollectionUtils.isEmpty(yesterdayBroker)) {
             inviteAwardStatistics.setYesterdayAward("0.00");
         } else {
+            //昨日奖励
             Integer yesterdayBounsAward = yesterdayBroker.stream().mapToInt(w -> w.getBounsAward()).sum();
             inviteAwardStatistics.setYesterdayAward(StringHelper.formatMon(yesterdayBounsAward / 100));
-            inviteAwardStatistics.setApr( StringHelper.formatMon(brokerBounss.get(0).getAwardApr()/100D));
-            inviteAwardStatistics.setWaitPrincipalTotal(StringHelper.formatMon(brokerBounss.get(0).getWaitPrincipalTotal()/100D)+ MoneyConstans.PERCENT);
+            //待收本金
+            Long waitPrincipalTotal=brokerBounss.stream().mapToLong(p->p.getWaitPrincipalTotal()).sum();
+            //年化率
+            String awardApr = "0.02";
+            if ( waitPrincipalTotal>= 80000000) {
+                awardApr = "0.05";
+            } else if ( waitPrincipalTotal>= 20000000) {
+                awardApr = "0.03";
+            }
+            inviteAwardStatistics.setApr( awardApr);
+            inviteAwardStatistics.setWaitPrincipalTotal(StringHelper.formatMon(waitPrincipalTotal/100D));
         }
         //总奖励
         if(!CollectionUtils.isEmpty(brokerBounss)){
