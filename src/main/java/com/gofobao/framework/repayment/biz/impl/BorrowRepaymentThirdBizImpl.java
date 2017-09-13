@@ -368,7 +368,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             long userId = NumberHelper.toLong(acqResMap.get("userId"));
             UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(userId);
             String freezeOrderId = StringHelper.toString(acqResMap.get("freezeOrderId"));
-            String freezeMoney = StringHelper.toString(acqResMap.get("freezeMoney"));//分
+            String freezeMoney = StringHelper.formatDouble(MoneyHelper.round(NumberHelper.toDouble(acqResMap.get("freezeMoney")),2),false);//元
 
             //解除存管资金冻结
             String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);
@@ -799,7 +799,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             long userId = NumberHelper.toLong(acqResMap.get("userId"));
             UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(userId);
             String freezeOrderId = StringHelper.toString(acqResMap.get("freezeOrderId"));
-            String freezeMoney = StringHelper.toString(acqResMap.get("freezeMoney"));//分
+            String freezeMoney = StringHelper.formatDouble(MoneyHelper.round(NumberHelper.toDouble(acqResMap.get("freezeMoney")),2),false);//元
 
             //解除存管资金冻结
             String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);

@@ -55,7 +55,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
                 .eq("sourceId", borrow.getId())
                 .eq("type", ThirdBatchLogContants.BATCH_LEND_REPAY)
                 .build();
-        List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls, new Sort(Sort.Direction.DESC, "createdAt"));
+        List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls, new Sort(Sort.Direction.DESC, "createAt"));
         /* 批次处理记录 */
         ThirdBatchLog thirdBatchLog = null;
         if (!CollectionUtils.isEmpty(thirdBatchLogList)) {
@@ -126,7 +126,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
         //第三步
         voFindLendRepayStatus = new VoFindLendRepayStatus();
         voFindLendRepayStatus.setName(ThirdBatchLogContants.BORROW_THIRD_STEP);
-        if (flag && ObjectUtils.isEmpty(thirdBatchLog)) { // 0待处理
+        if (flag || ObjectUtils.isEmpty(thirdBatchLog)) { // 0待处理
             voFindLendRepayStatus.setDateStr("- -");
             voFindLendRepayStatus.setState(0);
         } else if (thirdBatchLog.getState() == 2 || thirdBatchLog.getState() == 4) { //1.未通过
@@ -141,7 +141,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
         //第四步
         voFindLendRepayStatus = new VoFindLendRepayStatus();
         voFindLendRepayStatus.setName(ThirdBatchLogContants.BORROW_FOUR_STEP);
-        if (flag && thirdBatchLog.getState() != 3) { // 0待处理
+        if (flag || thirdBatchLog.getState() != 3) { // 0待处理
             voFindLendRepayStatus.setDateStr("- -");
             voFindLendRepayStatus.setState(0);
         } else if (thirdBatchLog.getState() == 4 || thirdBatchLog.getState() == 2) { //1.未通过
@@ -156,7 +156,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
         //第五步
         voFindLendRepayStatus = new VoFindLendRepayStatus();
         voFindLendRepayStatus.setName(ThirdBatchLogContants.BORROW_FIVE_STEP);
-        if (flag && thirdBatchLog.getState() != 3) { // 0待处理
+        if (flag || thirdBatchLog.getState() != 3) { // 0待处理
             voFindLendRepayStatus.setDateStr("- -");
             voFindLendRepayStatus.setState(0);
         } else if (thirdBatchLog.getState() == 2 || thirdBatchLog.getState() == 4) { //1.未通过
