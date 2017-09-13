@@ -1664,11 +1664,12 @@ public class BorrowBizImpl implements BorrowBiz {
                 && ((borrow.getRepayFashion() != 1) || (borrow.getTimeLimit() > 1))) {
             String phone = user.getPhone();
             if (!ObjectUtils.isEmpty(phone)) {
-                long fee = 0;
+                double manageFeeRate = 0.0012;
+                double fee = 0;
                 if (borrow.getRepayFashion() == 1) {
-                    fee = Math.round(borrow.getMoney() * 0.12 / 30 * borrow.getTimeLimit());
+                    fee = MoneyHelper.round(borrow.getMoney() * manageFeeRate / 30 * borrow.getTimeLimit(), 0);
                 } else {
-                    fee = Math.round(borrow.getMoney() * 0.12 * borrow.getTimeLimit());
+                    fee = MoneyHelper.round(borrow.getMoney() * manageFeeRate * borrow.getTimeLimit(), 0);
                 }
                 // 使用消息队列发送短信
                 MqConfig config = new MqConfig();
