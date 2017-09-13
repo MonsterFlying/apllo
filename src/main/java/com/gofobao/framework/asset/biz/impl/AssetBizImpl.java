@@ -1458,7 +1458,12 @@ public class AssetBizImpl implements AssetBiz {
         Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
         String localSeqNo = paramMap.get("seqNo");
         String money = paramMap.get("money");
-        String forAccountId = paramMap.get("forAccountId");
+        String userId = paramMap.get("userId");
+
+        UserThirdAccount userThird = userThirdAccountService.findByUserId(Long.parseLong(userId));
+        if(ObjectUtils.isEmpty(userThird)){
+            log.error("当前用户没有开户");
+        }
         long redId = 0;
         try {
             redId = assetChangeProvider.getRedpackAccountId();
@@ -1483,9 +1488,9 @@ public class AssetBizImpl implements AssetBiz {
         voucherPayCancelRequest.setTxAmount(money);
         voucherPayCancelRequest.setOrgTxDate(txDate);
         voucherPayCancelRequest.setOrgTxTime(txTime);
-        voucherPayCancelRequest.setForAccountId(forAccountId);
+        voucherPayCancelRequest.setForAccountId(userThird.getAccountId());
         voucherPayCancelRequest.setOrgSeqNo(seqNo);
-        voucherPayCancelRequest.setAcqRes(forAccountId);
+        voucherPayCancelRequest.setAcqRes(userThird.getAccountId());
         voucherPayCancelRequest.setChannel(ChannelContant.HTML);
 
         VoucherPayCancelResponse response = jixinManager.send(JixinTxCodeEnum.UNSEND_RED_PACKET, voucherPayCancelRequest, VoucherPayCancelResponse.class);
