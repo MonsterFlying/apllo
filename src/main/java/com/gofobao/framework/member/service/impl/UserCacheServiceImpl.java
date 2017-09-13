@@ -88,9 +88,7 @@ public class UserCacheServiceImpl implements UserCacheService {
         //待还
         Long payment = asset.getPayment();
         statistic.setPayment(StringHelper.formatMon(payment / 100D));
-
         NetProceedsDetails netProceedsDetails = new NetProceedsDetails();
-
         statistic.setJingZhiDetails(netProceedsDetails);
 
         PaymentDetails paymentDetails = new PaymentDetails();
@@ -112,8 +110,14 @@ public class UserCacheServiceImpl implements UserCacheService {
         paymentDetails.setChedaiWaitCollectionPrincipal(StringHelper.formatMon(tjWaitCollectionPrincipal / 100D));
         paymentDetails.setQudaoWaitCollectionInterest(StringHelper.formatMon(qdWaitCollectionInterest / 100D));
         paymentDetails.setQudaoWaitCollectionPrincipal(StringHelper.formatMon(qdWaitCollectionPrincipal / 100D));
-        paymentDetails.setJingzhiWaitCollectionInterest(StringHelper.formatMon((waitCollectionInterest - tjWaitCollectionInterest - qdWaitCollectionInterest) / 100D));
-        paymentDetails.setJingzhiWaitCollectionPrincipal(StringHelper.formatMon((waitCollectionPrincipal - tjWaitCollectionPrincipal - qdWaitCollectionPrincipal) / 100D));
+        paymentDetails.setJingzhiWaitCollectionInterest(StringHelper.formatMon((waitCollectionInterest
+                - tjWaitCollectionInterest
+                - qdWaitCollectionInterest)
+                / 100D));
+        paymentDetails.setJingzhiWaitCollectionPrincipal(StringHelper.formatMon((waitCollectionPrincipal
+                - tjWaitCollectionPrincipal
+                - qdWaitCollectionPrincipal) / 100D));
+
         statistic.setPaymentDetails(paymentDetails);
 
         //费用支出
@@ -132,40 +136,55 @@ public class UserCacheServiceImpl implements UserCacheService {
         Long waitRepayInterest = userCache.getWaitRepayInterest();
         //待还本金
         Long waitRepayPrincipal = userCache.getWaitRepayPrincipal();
-
+        //待付利息管理费
         Long waitExpenditureInterestManageFee = new Long(userCache.getWaitExpenditureInterestManageFee());
-        Long netAsset = new Double((asset.getCollection() + asset.getNoUseMoney() + asset.getUseMoney()) - asset.getPayment()).longValue();
+
+        //待还利息
         netProceedsDetails.setWaitInterest(StringHelper.formatMon(waitRepayInterest / 100D));
+        //待还本金
         netProceedsDetails.setWaitPrincipal(StringHelper.formatMon(waitRepayPrincipal / 100D));
 
-        //总支出
-        Long sumExpend = waitExpenditureInterestManageFee + waitRepayInterest + expenditureFee + expenditureInterest + expenditureInterestManage + expenditureManage + expenditureOverdue + expenditureOther;
+        //总支出总额
+        Long sumExpend = waitExpenditureInterestManageFee
+                + waitRepayInterest
+                + expenditureFee
+                + expenditureInterest
+                + expenditureInterestManage
+                + expenditureManage
+                + expenditureOverdue
+                + expenditureOther;
+
+        //已支出总额
+        Long sumExpened = expenditureFee
+                + expenditureInterest
+                + expenditureInterestManage
+                + expenditureManage
+                + expenditureOverdue
+                + expenditureOther;
 
         /**
          * 已实现净收益总额 = 已实现收入总额 - 已支出总额
          * @return array
          */
-        Long netIncomeTotal = userCache.getIncomeTotal() - sumExpend;
+        Long netIncomeTotal = userCache.getIncomeTotal() - sumExpened;
         statistic.setNetProceeds(StringHelper.formatMon(netIncomeTotal / 100D));
+
+        /**
+         * 未实现收入总额
+         */
+        Long waitIncomeTotal = userCache.getWaitCollectionInterest();
 
         /**
          * 待付支出总额
          */
-        Double sumWaitExpend = (tjWaitCollectionInterest + qdWaitCollectionInterest) * 0.1;
-
-        /**
-         * 未实现收入总额
-         * @return float
-         */
-        Long collectionInterest = userCache.getWaitCollectionInterest();
+        Double sumWaitExpend = waitRepayInterest + (tjWaitCollectionInterest + qdWaitCollectionInterest) * 0.1;
 
         /**
          * 未实现净收益总额 = 未实现收入总额 - 待付支出总额
          * @return array
          */
-        Double noNetProceeds = new Double(collectionInterest) - sumWaitExpend;
+        Double noNetProceeds = new Double(waitIncomeTotal) - sumWaitExpend;
         statistic.setNoNetProceeds(StringHelper.formatMon(noNetProceeds / 100D));
-
 
         /**
          * 总净收益 = 已实现净收益总额 + 未实现净收益总额
@@ -179,12 +198,17 @@ public class UserCacheServiceImpl implements UserCacheService {
         statistic.setNetWorthLimit(StringHelper.formatMon(netWorthQuota / 100D));
 
         //净资产
-        statistic.setAssetTotal(StringHelper.formatDouble((asset.getUseMoney() + asset.getNoUseMoney() + asset.getCollection() - asset.getPayment()) / 100D, true));
+        statistic.setAssetTotal(StringHelper.formatDouble((asset.getUseMoney()
+                + asset.getNoUseMoney()
+                + asset.getCollection()
+                - asset.getPayment()) / 100D, true));
 
         //总支出
         statistic.setSumExpend(StringHelper.formatMon(sumExpend / 100D));
+
         //总收益
-        statistic.setSumEarnings(StringHelper.formatMon((userCache.getIncomeTotal() + waitCollectionInterest) / 100D));
+        statistic.setSumEarnings(StringHelper.formatMon((userCache.getIncomeTotal()
+                + waitIncomeTotal) / 100D));
 
         return statistic;
     }
