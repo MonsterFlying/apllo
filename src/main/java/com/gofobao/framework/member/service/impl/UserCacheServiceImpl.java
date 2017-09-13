@@ -107,10 +107,6 @@ public class UserCacheServiceImpl implements UserCacheService {
         //总待收本金
         Long waitCollectionPrincipal = userCache.getWaitCollectionPrincipal();
 
-        //总待收
-        //  Long sumWaitCollectionMoney = waitCollectionInterest + waitCollectionPrincipal;
-        //statistic.setPayment(StringHelper.formatMon(sumWaitCollectionMoney/100D));
-
         //待收明细
         paymentDetails.setChedaiWaitCollectionInterest(StringHelper.formatMon(tjWaitCollectionInterest / 100D));
         paymentDetails.setChedaiWaitCollectionPrincipal(StringHelper.formatMon(tjWaitCollectionPrincipal / 100D));
@@ -179,7 +175,7 @@ public class UserCacheServiceImpl implements UserCacheService {
         statistic.setSumNetProceeds(StringHelper.formatMon(sumJingshou / 100D));
 
         //净值额度
-        Double netWorthQuota = new Double((asset.getUseMoney() + waitCollectionPrincipal) * 0.8 -payment);//计算净值额度
+        Double netWorthQuota = new Double((asset.getUseMoney() + waitCollectionPrincipal) * 0.8 - payment);//计算净值额度
         statistic.setNetWorthLimit(StringHelper.formatMon(netWorthQuota / 100D));
 
         //净资产
@@ -203,28 +199,35 @@ public class UserCacheServiceImpl implements UserCacheService {
     public ResponseEntity<IncomeEarnedDetail> incomeEarned(Long userId) {
         IncomeEarnedDetail incomeEarnedDetail = VoBaseResp.ok("查詢成功", IncomeEarnedDetail.class);
         UserCache userCache = userCacheRepository.findOne(userId);
-        Long waitCollectionInterest = userCache.getIncomeInterest();
-        //已转奖励
-        Long incomeAward = userCache.getIncomeAward();
-        incomeEarnedDetail.setIncomeAward(StringHelper.formatMon(incomeAward / 100D));
-        //提成收入
-        Long incomeBonus = userCache.getIncomeBonus();
-        incomeEarnedDetail.setIncomeBonus(StringHelper.formatMon(incomeBonus / 100D));
-        //积分折现
-        Long incomeIntegralCash = userCache.getIncomeIntegralCash();
-        incomeEarnedDetail.setIncomeIntegralCash(StringHelper.formatMon(incomeIntegralCash / 100D));
-        //已转利息
+        //已赚利息
         Long incomeInterest = userCache.getIncomeInterest();
         incomeEarnedDetail.setIncomeInterest(StringHelper.formatMon(incomeInterest / 100D));
-        //其他收入
-        Long incomeOther = userCache.getIncomeOther();
-        incomeEarnedDetail.setIncomeOther(StringHelper.formatMon(incomeOther / 100D));
+
+        //已赚奖励
+        Long incomeAward = userCache.getIncomeAward();
+        incomeEarnedDetail.setIncomeAward(StringHelper.formatMon(incomeAward / 100D));
+
         //逾期收入
         Long incomeOverdue = userCache.getIncomeOverdue();
         incomeEarnedDetail.setIncomeOverdue(StringHelper.formatMon(incomeOverdue / 100D));
+
+        //积分折现
+        Long incomeIntegralCash = userCache.getIncomeIntegralCash();
+        incomeEarnedDetail.setIncomeIntegralCash(StringHelper.formatMon(incomeIntegralCash / 100D));
+
+        //提成收入
+        Long incomeBonus = userCache.getIncomeBonus();
+        incomeEarnedDetail.setIncomeBonus(StringHelper.formatMon(incomeBonus / 100D));
+
+        //其他收入
+        Long incomeOther = userCache.getIncomeOther();
+        incomeEarnedDetail.setIncomeOther(StringHelper.formatMon(incomeOther / 100D));
+
         //已赚收益
-        incomeEarnedDetail.setIncomeEarned(StringHelper.formatMon((incomeAward+incomeBonus+incomeIntegralCash+incomeInterest+incomeOther+incomeOverdue) / 100D));
+        incomeEarnedDetail.setIncomeEarned(StringHelper.formatMon((incomeInterest + incomeAward + incomeOverdue + incomeIntegralCash + incomeBonus + incomeOther) / 100D));
+
         //待收利息
+        Long waitCollectionInterest = userCache.getWaitCollectionInterest();
         incomeEarnedDetail.setWaitCollectionInterest(StringHelper.formatMon(waitCollectionInterest / 100D));
         //待收收益
         incomeEarnedDetail.setWaitIncomeInterest(StringHelper.formatMon(waitCollectionInterest / 100D));
@@ -269,7 +272,7 @@ public class UserCacheServiceImpl implements UserCacheService {
         //待付支出
         expenditureDetail.setWaitExpendTotal(StringHelper.formatMon((waitExpenditureInterestManage + waitRepayInterest) / 100D));
         //已支出总额
-        expenditureDetail.setExpenditureTotal(StringHelper.formatMon((expenditureInterestManage+expenditureOther+expenditureManage+expenditureInterest+expenditureFee+expenditureOverdue) / 100D));
+        expenditureDetail.setExpenditureTotal(StringHelper.formatMon((expenditureInterestManage + expenditureOther + expenditureManage + expenditureInterest + expenditureFee + expenditureOverdue) / 100D));
         return ResponseEntity.ok(expenditureDetail);
 
     }
