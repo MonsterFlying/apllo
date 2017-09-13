@@ -87,7 +87,6 @@ public class RedPackageBizImpl implements RedPackageBiz {
     UserThirdAccountService userThirdAccountService;
 
 
-
     @Autowired
     AssetChangeProvider assetChangeProvider;
 
@@ -118,13 +117,13 @@ public class RedPackageBizImpl implements RedPackageBiz {
         RedPackageRes redPackageRes = null;
         // 遍历
         for (MarketingRedpackRecord item : marketingRedpackRecords) {
-            if(item.getMarketingId() == 1){
+            if (item.getMarketingId() == 1) {
                 item.setMarketingId(2L);
-            }else if(item.getMarketingId() == 2){
+            } else if (item.getMarketingId() == 2) {
                 item.setMarketingId(3L);
-            }else if(item.getMarketingId() == 3){
+            } else if (item.getMarketingId() == 3) {
                 item.setMarketingId(1L);
-            }else{
+            } else {
                 item.setMarketingId(4L);
             }
             redPackageRes = new RedPackageRes();
@@ -291,7 +290,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
         }
 
         Date beginDate = DateHelper.stringToDate(beginTime);
-     Specification<Tender> specification = Specifications
+        Specification<Tender> specification = Specifications
                 .<Tender>and()
                 .eq("status", 1)
                 .between("createdAt", new Range<>(DateHelper.beginOfDate(beginDate), DateHelper.endOfDate(nowDate))).build();

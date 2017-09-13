@@ -224,8 +224,8 @@ public class BorrowServiceImpl implements BorrowService {
                     status = 3; //招标中
                     //  进度
                     if (spend == 100) {
-                        status = 6;
-                    }
+                    status = 6;
+                }
 
                 }
             } else if (!ObjectUtils.isEmpty(m.getSuccessAt()) && !ObjectUtils.isEmpty(m.getCloseAt())) {   //满标时间 结清

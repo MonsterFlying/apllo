@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
@@ -32,7 +33,7 @@ public class ThirdBatchDealController {
      * @return
      */
     @ApiOperation("查询放款状态集合")
-    @GetMapping("/thirdbatchdeal/pub/lendrepay/find/list")
+    @PostMapping("/thirdbatchdeal/pub/lendrepay/find/list")
     public ResponseEntity<VoViewFindLendRepayStatusListRes> findLendRepayStatusList(@ModelAttribute @Valid VoFindLendRepayStatusListReq voFindLendRepayStatusListReq) {
         return thirdBatchDealLogBiz.findLendRepayStatusList(voFindLendRepayStatusListReq);
     }

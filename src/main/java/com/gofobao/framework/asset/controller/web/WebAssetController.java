@@ -78,6 +78,23 @@ public class WebAssetController {
     }
 
 
+    /**
+     * 撤回即信红包
+     *
+     * @param voUnsendRedPacket
+     * @return
+     */
+    @ApiOperation("撤回即信红包")
+    @PostMapping("/pub/asset/pc/v2/redpacket/cancelAndNoLog")
+    public ResponseEntity<VoBaseResp> cancelRedPacketNoChangeLog(@Valid @ModelAttribute VoUnsendRedPacket voUnsendRedPacket) {
+        try {
+            return assetBiz.cancelRedPacketNoChangeLog(voUnsendRedPacket);
+        } catch (Exception e) {
+            log.error("红包撤销处理失败");
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, e.getMessage()));
+        }
+    }
+
     @ApiOperation("获取用户资产信息")
     @GetMapping("/asset/pc/v2/info")
     public ResponseEntity<VoUserAssetInfoResp> userAAssessetInfo(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {

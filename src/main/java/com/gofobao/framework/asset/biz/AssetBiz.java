@@ -232,4 +232,11 @@ public interface AssetBiz {
      */
     ResponseEntity<VoBaseResp> adminRechargeForm(VoAdminRechargeReq voAdminRechargeReq) throws Exception;
 
+
+    /**
+     * 撤销红包
+     * @param voUnsendRedPacket
+     * @return
+     */
+    ResponseEntity<VoBaseResp> cancelRedPacketNoChangeLog(VoUnsendRedPacket voUnsendRedPacket);
 }
