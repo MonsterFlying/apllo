@@ -177,7 +177,7 @@
                 return
             }
             $.ajax({
-                type: 'POST',
+                type: 'get',
                 url: _address.value + '/pub/windmill/user/bind/login',
                 data: {userName: _username.value, password: _password.value, params: _param.value},
                 success: function (response) {
@@ -185,8 +185,6 @@
                     window.location.href = target_url;
                 },
                 error: function (response) {
-                    var targetUrl = "http://www.gofobao.com";
-                    window.location.href = targetUrl;
                     const res = JSON.parse(response.response)
                     const msg = res.state.msg
                     $.toast(msg)
