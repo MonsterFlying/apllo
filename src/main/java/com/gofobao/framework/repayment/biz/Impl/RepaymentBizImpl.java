@@ -1696,14 +1696,17 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 }
             }
 
-            repayAssetChange.setInterestFee(inFee);
+            repayAssetChange.setInterestFee(inFee);  // 利息管理费
             long overdueFee = 0;
             long platformOverdueFee;
             if ((lateDays > 0) && (lateInterest > 0)) {  //借款人逾期罚息
-                overdueFee = new Double(MoneyHelper.round(borrowCollection.getInterest() / new Double(sumCollectionInterest) * lateInterest / 2, 0)).longValue();// 出借人收取50% 逾期管理费 ;
+                // overdueFee = new Double(MoneyHelper.round(borrowCollection.getInterest() / new Double(sumCollectionInterest) * lateInterest / 2, 0)).longValue();// 出借人收取50% 逾期管理费 ;
+                double preve = MoneyHelper.divide(borrowCollection.getInterest(), sumCollectionInterest);  // 利息占比
+                double doubleOverdueFee = MoneyHelper.multiply(MoneyHelper.multiply(preve, lateInterest), 0.5);// 出借人逾期手续费
+                overdueFee = MoneyHelper.doubleToLong(doubleOverdueFee) ; // 出借人收取50% 逾期管理费 ;
                 repayAssetChange.setOverdueFee(overdueFee);
                 inIn += overdueFee;
-                platformOverdueFee = new Double(MoneyHelper.round(borrowCollection.getInterest() / new Double(sumCollectionInterest) * lateInterest / 2, 0)).longValue(); // 平台收取50% 逾期管理费
+                platformOverdueFee =  overdueFee;
                 repayAssetChange.setPlatformOverdueFee(platformOverdueFee);
                 outFee += platformOverdueFee;
             }
