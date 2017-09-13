@@ -1,6 +1,7 @@
 package com.gofobao.framework.collection.service.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.collection.contants.BorrowCollectionContants;
@@ -214,7 +215,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
             collection.setPrincipal(StringHelper.formatMon(p.getPrincipal() / 100D));
             collection.setCollectionAt(DateHelper.dateToString(p.getCollectionAt()));
             collection.setOrder(p.getOrder() + 1);
-            collection.setTimeLimit(borrow.getTimeLimit());
+            collection.setTimeLimit(BorrowContants.REPAY_FASHION_ONCE==borrow.getRepayFashion()?BorrowContants.REPAY_FASHION_ONCE:borrow.getTimeLimit());
             if (borrow.getStatus() == 0 || borrow.getStatus() == 4) { //官标
                 collection.setEarnings(StringHelper.formatMon((p.getCollectionMoney() * 0.9) / 100D));
             } else {
