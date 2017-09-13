@@ -179,7 +179,7 @@ public class UserCacheServiceImpl implements UserCacheService {
         statistic.setSumNetProceeds(StringHelper.formatMon(sumJingshou / 100D));
 
         //净值额度
-        Double netWorthQuota = new Double((asset.getUseMoney() + waitCollectionPrincipal) * 0.8 - collection);//计算净值额度
+        Double netWorthQuota = new Double((asset.getUseMoney() + waitCollectionPrincipal) * 0.8 -payment);//计算净值额度
         statistic.setNetWorthLimit(StringHelper.formatMon(netWorthQuota / 100D));
 
         //净资产
