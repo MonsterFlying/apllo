@@ -66,17 +66,4 @@ public class RedPackageController {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统异常, 请稍后重试!", VoViewOpenRedPackageWarpRes.class));
         }
     }
-
-    @ApiOperation("重新触发派发红包")
-    @PostMapping("pub/publishActivity/red")
-    public ResponseEntity<VoBaseResp> publishActivity(@ModelAttribute VoPublishRedReq voPublishRedReq) {
-        String paramStr = voPublishRedReq.getParamStr();
-        if (!SecurityHelper.checkSign(voPublishRedReq.getSign(), paramStr)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "派发红包, 签名验证不通过!"));
-        }
-
-        return redPackageBiz.publishActivity(voPublishRedReq) ;
-    }
 }

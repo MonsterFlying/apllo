@@ -1445,4 +1445,56 @@ public class AssetBizImpl implements AssetBiz {
         mqHelper.convertAndSend(mqConfig);
         return ResponseEntity.ok(VoBaseResp.ok("审核成功"));
     }
+
+    @Override
+    public ResponseEntity<VoBaseResp> cancelRedPacketNoChangeLog(VoUnsendRedPacket voUnsendRedPacket) {
+        String paramStr = voUnsendRedPacket.getParamStr();/* pc请求提前结清参数 */
+        if (!SecurityHelper.checkSign(voUnsendRedPacket.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc取消借款 签名验证不通过!"));
+        }
+
+        Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        String localSeqNo = paramMap.get("seqNo");
+        String money = paramMap.get("money");
+        String forAccountId = paramMap.get("forAccountId");
+        long redId = 0;
+        try {
+            redId = assetChangeProvider.getRedpackAccountId();
+        } catch (ExecutionException e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询红包账户为空!"));
+        }
+
+        UserThirdAccount redpackAccount = userThirdAccountService.findByUserId(redId);
+        if (ObjectUtils.isEmpty(redpackAccount)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "查询红包账户为空!"));
+        }
+
+        String txDate = localSeqNo.substring(0, 8);
+        String txTime = localSeqNo.substring(8, 14);
+        String seqNo = localSeqNo.substring(14);
+        VoucherPayCancelRequest voucherPayCancelRequest = new VoucherPayCancelRequest();
+        voucherPayCancelRequest.setAccountId(redpackAccount.getAccountId());
+        voucherPayCancelRequest.setTxAmount(money);
+        voucherPayCancelRequest.setOrgTxDate(txDate);
+        voucherPayCancelRequest.setOrgTxTime(txTime);
+        voucherPayCancelRequest.setForAccountId(forAccountId);
+        voucherPayCancelRequest.setOrgSeqNo(seqNo);
+        voucherPayCancelRequest.setAcqRes(forAccountId);
+        voucherPayCancelRequest.setChannel(ChannelContant.HTML);
+
+        VoucherPayCancelResponse response = jixinManager.send(JixinTxCodeEnum.UNSEND_RED_PACKET, voucherPayCancelRequest, VoucherPayCancelResponse.class);
+        if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
+            String msg = ObjectUtils.isEmpty(response) ? "当前网络出现异常, 请稍后尝试！" : response.getRetMsg();
+            log.error(msg);
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, String.format("撤销红包失败：%s", response.getRetMsg())));
+        }
+        log.error("请求撤销用户红包" + new Gson().toJson(voucherPayCancelRequest)) ;
+        return ResponseEntity.ok(VoBaseResp.ok(String.format("撤销红包成功：msg->%s", response.getRetMsg())));
+    }
 }
