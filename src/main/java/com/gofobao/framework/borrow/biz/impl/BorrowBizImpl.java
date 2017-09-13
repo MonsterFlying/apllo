@@ -794,6 +794,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 MqConfig config = new MqConfig();
                 config.setQueue(MqQueueEnum.RABBITMQ_SMS);
                 config.setTag(MqTagEnum.SMS_BORROW_CANCEL_TENDER);
+                body.clear();
                 body.put(MqConfig.PHONE, users.getPhone());
                 body.put(MqConfig.MSG_ID, String.valueOf(borrowId));
                 body.put(MqConfig.IP, "127.0.0.1");
@@ -836,6 +837,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 MqConfig config = new MqConfig();
                 config.setQueue(MqQueueEnum.RABBITMQ_SMS);
                 config.setTag(MqTagEnum.SMS_BORROW_CANCEL_TENDER);
+                body.clear();
                 body.put(MqConfig.PHONE, borrowUser.getPhone());
                 body.put(MqConfig.MSG_ID, String.valueOf(borrowId));
                 body.put(MqConfig.IP, "127.0.0.1");

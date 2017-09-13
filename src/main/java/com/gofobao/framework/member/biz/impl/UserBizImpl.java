@@ -308,6 +308,14 @@ public class UserBizImpl implements UserBiz {
         voBasicUserInfoResp.setTenderIntegral(new Long(integral.getUseIntegral() + integral.getNoUseIntegral()));
         voBasicUserInfoResp.setIdNoState(!StringUtils.isEmpty(user.getCardId()));
         voBasicUserInfoResp.setAlias(user.getPushId());
+        String userName = user.getUsername() ;
+        if(StringUtils.isEmpty(userName)){
+            userName = user.getPhone() ;
+        }
+        if(StringUtils.isEmpty(userName)){
+            userName = user.getEmail() ;
+        }
+        voBasicUserInfoResp.setUsername(userName);
         return ResponseEntity.ok(voBasicUserInfoResp);
     }
 

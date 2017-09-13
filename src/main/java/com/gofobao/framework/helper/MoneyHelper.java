@@ -16,6 +16,25 @@ import java.math.BigDecimal;
 public class MoneyHelper {
     private static final int DEF_DIV_SCALE = 10;
 
+
+    /**
+     * double 转long (直接截断小数点后面的数字, 不会四舍五入)
+     * @param v1
+     * @return
+     */
+    public static long doubleToLong(double v1) {
+        return new BigDecimal(v1).longValue();
+    }
+
+    /**
+     * double 转 int (直接截断小数点后面的数字, 不会四舍五入)
+     * @param v1
+     * @return
+     */
+    public static int doubleToint(double v1){
+        return new BigDecimal(v1).intValue();
+    }
+
     /**
      * 提供精确的加法运算
      *
@@ -617,10 +636,11 @@ public class MoneyHelper {
 
     /**
      * 保留两位小数
+     *
      * @param money
      * @return
      */
-    public static long yuanToFen(double money){
+    public static long yuanToFen(double money) {
         long moneyLong = new Double(multiply(money, 1000D)).longValue();
         return moneyLong / 10;
     }
