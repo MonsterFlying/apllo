@@ -124,7 +124,7 @@ public class WrbCoopDESUtil {
     }
 
     public static void main(String[] args) throws Exception {
-        String param="id=179483&start_time=2017-09-10 00:00:00";
+        String param="pf_user_id=22002";
         System.out.println(desEncrypt("2l0IYbNnRcShWOM9Q5Ej0A3gCEP07LBS", param));
            }
 
