@@ -252,6 +252,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
         return repayAll(borrowId);
     }
 
+
+
     /**
      * 提前结清处理
      *
@@ -1514,8 +1516,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
         if ((ObjectUtils.isEmpty(balanceFreezeReq)) || (!JixinResultContants.SUCCESS.equalsIgnoreCase(balanceFreezeResp.getRetCode()))) {
             throw new Exception(String.format("正常还款流程：%s,userId:%s,repaymentId:%s,borrowId:%s", balanceFreezeResp.getRetMsg(), repayUserThirdAccount.getUserId(), borrowRepayment.getId(), borrow.getId()));
         }
-
-
         try {
             // 冻结还款金额
             long money = new Double(MoneyHelper.round(MoneyHelper.multiply(freezeMoney, 100d), 0)).longValue();
@@ -1576,6 +1576,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
         return ResponseEntity.ok(VoBaseResp.ok("还款正常"));
     }
+
 
     /**
      * 检查还款用户资产账户
@@ -1688,8 +1689,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
                         log.info(String.format("风车理财：%s", user));
                         inFee += 0;
                     } else {
-                        inFee += new Double(MoneyHelper.round(inIn * 0.1, 0)).longValue();
+                        // inFee += new Double(MoneyHelper.round(inIn * 0.1, 0)).longValue();
                         // 利息管理费
+                        inFee += MoneyHelper.doubleToint(MoneyHelper.multiply(inIn,0.1D)) ;  // 利息问题
                     }
                 }
             }
