@@ -1,6 +1,7 @@
 package com.gofobao.framework.repayment.service.impl;
 
 import com.github.wenhao.jpa.Specifications;
+import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.repository.BorrowRepository;
 import com.gofobao.framework.collection.vo.request.VoCollectionListReq;
@@ -200,7 +201,7 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
             VoCollection collection = new VoCollection();
             collection.setOrder(p.getOrder() + 1);
             Borrow borrow = borrowMap.get(p.getBorrowId());
-            collection.setTimeLimit(borrow.getTimeLimit());
+            collection.setTimeLimit(borrow.getRepayFashion()== BorrowContants.REPAY_FASHION_ONCE?BorrowContants.REPAY_FASHION_ONCE:borrow.getTimeLimit());
             collection.setLend(!StringUtils.isEmpty(borrow.getLendId()) ? true : false);
             collection.setRepayAt(!StringUtils.isEmpty(borrow.getLendId()) ? DateHelper.dateToString(p.getRepayAt(), DateHelper.DATE_FORMAT_YMD) : DateHelper.dateToString(p.getRepayAt()));
             collection.setRepaymentId(p.getId());
