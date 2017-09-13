@@ -140,7 +140,7 @@ public class WindmillStatisticsBizImpl implements WindmillStatisticsBiz {
             accountStatistics.setEarned_interest(voAssetIndexResp.getAccruedMoney());
             //活期金额
             accountStatistics.setPf_user_id(userId.toString());
-            accountStatistics.setCurrent_money("0");
+            accountStatistics.setCurrent_money(userCache.getCashTotal()+"");
             //奖励余额
             String reward = "";
             if (!CollectionUtils.isEmpty(assetLogs)) {
