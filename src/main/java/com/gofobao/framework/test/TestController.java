@@ -199,10 +199,10 @@ public class TestController {
         log.info(GSON.toJson(response));
     }
 
-    @ApiOperation("批次查询")
-    @RequestMapping("/pub/batch/find")
+    @ApiOperation("解除冻结")
+    @RequestMapping("/pub/unfreeze")
     @Transactional
-    public void findBatch(@RequestParam("freezeMoney") Object freezeMoney
+    public void unfreeze(@RequestParam("freezeMoney") Object freezeMoney
             , @RequestParam("accountId") Object accountId
             , @RequestParam("freezeOrderId") Object freezeOrderId
             , @RequestParam("userId") Object userId) {
@@ -237,7 +237,7 @@ public class TestController {
     }
 
     public static void main(String[] args) {
-        System.out.println(NumberHelper.floorDouble(0.15d,2) - NumberHelper.floorDouble(0.05d,2)); // 0.09999999999999999
+        System.out.println(NumberHelper.floorDouble(0.15d, 2) - NumberHelper.floorDouble(0.05d, 2)); // 0.09999999999999999
         System.out.println(2.08f - 3.7f); // -1.6200001
         System.out.println(13.2d * 7);//92.39999999999999
 
@@ -285,7 +285,7 @@ public class TestController {
 
     @GetMapping("pub/test/marketing")
     public void touchMarketing() {
-        Tender tender=tenderService.findById(262363L);
+        Tender tender = tenderService.findById(262363L);
         borrowBiz.touchMarketingByTender(tender);
 
     }
