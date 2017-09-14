@@ -11,7 +11,9 @@ import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.api.model.voucher_pay_cancel.VoucherPayCancelRequest;
 import com.gofobao.framework.api.model.voucher_pay_cancel.VoucherPayCancelResponse;
 import com.gofobao.framework.asset.entity.Asset;
+import com.gofobao.framework.asset.entity.NewAssetLog;
 import com.gofobao.framework.asset.service.AssetService;
+import com.gofobao.framework.asset.service.NewAssetLogService;
 import com.gofobao.framework.asset.vo.response.VoPreRechargeResp;
 import com.gofobao.framework.award.biz.RedPackageBiz;
 import com.gofobao.framework.award.repository.RedPackageLogRepository;
@@ -35,6 +37,7 @@ import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.JixinHelper;
+import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.marketing.constans.MarketingTypeContants;
@@ -51,6 +54,7 @@ import com.gofobao.framework.system.service.DictValueService;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.vo.request.VoPublishRedReq;
+import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.User;
@@ -107,6 +111,140 @@ public class RedPackageBizImpl implements RedPackageBiz {
 
     @Autowired
     TenderService tenderService;
+
+    @Autowired
+    NewAssetLogService newAssetLogService;
+
+    /**
+     * 派发
+     *
+     * @param userId              派发用户ID
+     * @param money               用户金额(必须是分)
+     * @param assetChangeTypeEnum 红包派发类型
+     * @param onlyNo              唯一标识红包是否派发(可以判断是否重复派发)
+     * @param remark              领取红包记录备注
+     * @param sourceId            来源id, 不能为空
+     * @return
+     * @throws Exception
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public boolean commonPublishRedpack(Long userId, long money, AssetChangeTypeEnum assetChangeTypeEnum, String onlyNo, String remark, long sourceId) throws Exception {
+        Preconditions.checkArgument(sourceId > 0, "sourceId 不能为空");
+        Preconditions.checkArgument(!StringUtils.isEmpty(onlyNo), "onleyNo 不能为空");
+        Users user = userService.findByIdLock(userId);
+        if (user.getIsLock()) {
+            log.error("通用打开红包, 当前用户处于冻结状态!");
+            throw new Exception("通用打开红包, 当前用户处于冻结状态!");
+        }
+
+        Preconditions.checkNotNull(user, "publishRedpack user record is null");
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        Preconditions.checkNotNull(userThirdAccount, "userThirdAccount is null");
+        Long redpackAccountId = assetChangeProvider.getRedpackAccountId();
+        Asset redpackAsset = assetService.findByUserId(redpackAccountId);
+        Preconditions.checkNotNull(redpackAsset, "publishRedpack redpackAsset is null");
+
+        if (redpackAsset.getUseMoney() - money < 0) {
+            throw new Exception("非常抱歉, 红包账户余额不足, 请致电平台客服! (红包还可以继续使用)");
+        }
+
+        UserThirdAccount redpackAccount = userThirdAccountService.findByUserId(redpackAccountId);
+        // 判断用户是否派发过
+        Specification<NewAssetLog> specification = Specifications
+                .<NewAssetLog>and()
+                .eq("userId", userId)
+                .eq("localType", assetChangeTypeEnum.getLocalType())
+                .eq("groupOpSeqNo", onlyNo)
+                .build();
+        long count = newAssetLogService.count(specification);
+        if (count > 0) {
+            throw new Exception("红包已经派发");
+        }
+
+        // 派发红包
+        Gson gson = new Gson();
+        double doubleMoney = MoneyHelper.divide(money, 100, 2);
+        VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
+        voucherPayRequest.setAccountId(redpackAccount.getAccountId()); // 红包账户
+        voucherPayRequest.setTxAmount(doubleMoney + "");
+        voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
+        voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
+        voucherPayRequest.setDesLine(sourceId + "");
+        voucherPayRequest.setChannel(ChannelContant.HTML);
+        VoucherPayResponse voucherPayResponse = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
+        log.info(String.format("开始派发红包:%s", gson.toJson(voucherPayRequest)));
+        log.info(String.format("结束派发红包:%s", gson.toJson(voucherPayResponse)));
+        if ((ObjectUtils.isEmpty(voucherPayResponse)) || (!JixinResultContants.SUCCESS.equals(voucherPayResponse.getRetCode()))) {
+            String msg = ObjectUtils.isEmpty(voucherPayResponse) ? "当前网络不稳定，请稍候重试" : voucherPayResponse.getRetMsg();
+            log.error(String.format("派发红包异常, 主动撤回: %s", msg));
+            VoucherPayCancelRequest voucherPayCancelRequest = new VoucherPayCancelRequest();
+            voucherPayCancelRequest.setAccountId(redpackAccount.getAccountId());
+            voucherPayCancelRequest.setTxAmount(doubleMoney + "");
+            voucherPayCancelRequest.setOrgTxDate(voucherPayRequest.getTxDate());
+            voucherPayCancelRequest.setOrgTxTime(voucherPayCancelRequest.getTxTime());
+            voucherPayCancelRequest.setForAccountId(userThirdAccount.getAccountId());
+            voucherPayCancelRequest.setOrgSeqNo(voucherPayCancelRequest.getSeqNo());
+            voucherPayCancelRequest.setAcqRes(onlyNo);
+            voucherPayCancelRequest.setChannel(ChannelContant.HTML);
+            VoucherPayCancelResponse voucherPayCancelResponse = jixinManager.send(JixinTxCodeEnum.UNSEND_RED_PACKET, voucherPayCancelRequest, VoucherPayCancelResponse.class);
+            if ((ObjectUtils.isEmpty(voucherPayCancelResponse)) || (!JixinResultContants.SUCCESS.equals(voucherPayCancelResponse.getRetCode()))) {
+                msg = ObjectUtils.isEmpty(voucherPayCancelResponse) ? "当前网络出现异常, 请稍后尝试！" : voucherPayCancelResponse.getRetMsg();
+                log.error(String.format("撤销红包异常 %s", msg));
+            }
+            return false;
+        }
+
+        // 执行资金变动
+        try {
+            // 红包账户发送红包
+            AssetChange redpackPublish = new AssetChange();
+            redpackPublish.setMoney(money);
+            redpackPublish.setType(AssetChangeTypeEnum.publishRedpack);  //  扣除红包
+            redpackPublish.setUserId(redpackAccountId);
+            redpackPublish.setRemark(String.format("平台派发奖励红包 %s元", StringHelper.formatDouble(money / 100D, true)));
+            redpackPublish.setGroupSeqNo(onlyNo);
+            redpackPublish.setSeqNo(String.format("%s%s%s", voucherPayRequest.getTxDate(), voucherPayRequest.getTxTime(), voucherPayRequest.getSeqNo()));
+            redpackPublish.setForUserId(userId);
+            redpackPublish.setSourceId(sourceId);
+            assetChangeProvider.commonAssetChange(redpackPublish);
+
+            if (StringUtils.isEmpty(remark)) {
+                remark = String.format("领取奖励红包 %s元", StringHelper.formatDouble(money / 100D, true));
+            }
+            // 用户接收红包
+            AssetChange redpackR = new AssetChange();
+            redpackR.setMoney(money);
+            redpackR.setType(assetChangeTypeEnum);
+            redpackR.setUserId(userId);
+            redpackR.setRemark(remark);
+            redpackR.setGroupSeqNo(onlyNo);
+            redpackR.setSeqNo(String.format("%s%s%s", voucherPayRequest.getTxDate(), voucherPayRequest.getTxTime(), voucherPayRequest.getSeqNo()));
+            redpackR.setForUserId(redpackAccountId);
+            redpackR.setSourceId(sourceId);
+            assetChangeProvider.commonAssetChange(redpackR);
+            return true;
+        } catch (Exception e) {
+            log.error("红包开启本地资金变动异常", e);
+            String msg = ObjectUtils.isEmpty(voucherPayResponse) ? "当前网络不稳定，请稍候重试" : voucherPayResponse.getRetMsg();
+            log.error(String.format("派发红包异常, 主动撤回: %s", msg));
+            VoucherPayCancelRequest voucherPayCancelRequest = new VoucherPayCancelRequest();
+            voucherPayCancelRequest.setAccountId(redpackAccount.getAccountId());
+            voucherPayCancelRequest.setTxAmount(doubleMoney + "");
+            voucherPayCancelRequest.setOrgTxDate(voucherPayRequest.getTxDate());
+            voucherPayCancelRequest.setOrgTxTime(voucherPayCancelRequest.getTxTime());
+            voucherPayCancelRequest.setForAccountId(userThirdAccount.getAccountId());
+            voucherPayCancelRequest.setOrgSeqNo(voucherPayCancelRequest.getSeqNo());
+            voucherPayCancelRequest.setAcqRes(onlyNo);
+            voucherPayCancelRequest.setChannel(ChannelContant.HTML);
+            VoucherPayCancelResponse voucherPayCancelResponse = jixinManager.send(JixinTxCodeEnum.UNSEND_RED_PACKET, voucherPayCancelRequest, VoucherPayCancelResponse.class);
+            log.info("由资金变动异常,进行红包撤回: %s", gson.toJson(voucherPayCancelRequest));
+            if ((ObjectUtils.isEmpty(voucherPayCancelResponse)) || (!JixinResultContants.SUCCESS.equals(voucherPayCancelResponse.getRetCode()))) {
+                msg = ObjectUtils.isEmpty(voucherPayCancelResponse) ? "当前网络出现异常, 请稍后尝试！" : voucherPayCancelResponse.getRetMsg();
+                log.error(String.format("由资金变动异常, 撤销红包异常 %s", msg));
+            }
+            throw new Exception("派发红包失败");
+        }
+    }
 
     @Override
     public ResponseEntity<VoViewRedPackageWarpRes> list(VoRedPackageReq voRedPackageReq) {
@@ -185,67 +323,17 @@ public class RedPackageBizImpl implements RedPackageBiz {
                     .body(VoViewOpenRedPackageWarpRes.error(VoViewOpenRedPackageWarpRes.ERROR, "当前用户锁定, 取消你领取额红包的资格!", VoViewOpenRedPackageWarpRes.class));
         }
 
-        try {
-            String groupSeqNo = assetChangeProvider.getGroupSeqNo();
-            long redId = assetChangeProvider.getRedpackAccountId();
-            Asset redPackage = assetService.findByUserIdLock(redId);
-            Long sendRedpackMoney = marketingRedpackRecord.getMoney();
-            if (redPackage.getUseMoney() - sendRedpackMoney < 0) {
-                return ResponseEntity
-                        .badRequest()
-                        .body(VoViewOpenRedPackageWarpRes.error(VoViewOpenRedPackageWarpRes.ERROR, "平台派发红包余额不足, 麻烦联系我们客服充钱, 请稍后重试!", VoViewOpenRedPackageWarpRes.class));
-            }
-
-            UserThirdAccount redpackThirdAccount = userThirdAccountService.findByUserId(redId); //查询红包账户
-            UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(marketingRedpackRecord.getUserId());
-            VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
-            voucherPayRequest.setAccountId(redpackThirdAccount.getAccountId());
-            voucherPayRequest.setTxAmount(StringHelper.formatDouble(marketingRedpackRecord.getMoney(), 100, false));
-            voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
-            voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
-            voucherPayRequest.setDesLine("领取红包");
-            voucherPayRequest.setChannel(ChannelContant.HTML);
-            VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
-            if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
-                String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
-                log.error("用户拆红包异常:" + msg);
-                return ResponseEntity
-                        .badRequest()
-                        .body(VoViewOpenRedPackageWarpRes.error(VoViewOpenRedPackageWarpRes.ERROR, "存管系统发放红包异常!", VoViewOpenRedPackageWarpRes.class));
-            }
-
+        String onlySeql = String.format("%s%s%s", users.getId(), AssetChangeTypeEnum.receiveRedpack.getLocalType(), marketingRedpackRecord.getId());
+        boolean result = commonPublishRedpack(users.getId(),
+                marketingRedpackRecord.getMoney(),
+                AssetChangeTypeEnum.receiveRedpack,
+                onlySeql,
+                null,
+                marketingRedpackRecord.getId());
+        if (result) {
             // 更新红包
             marketingRedpackRecord.setState(1);
             marketingRedpackRecordService.save(marketingRedpackRecord);
-
-            try {
-                // 红包账户发送红包
-                AssetChange redpackPublish = new AssetChange();
-                redpackPublish.setMoney(marketingRedpackRecord.getMoney());
-                redpackPublish.setType(AssetChangeTypeEnum.publishRedpack);  //  扣除红包
-                redpackPublish.setUserId(redId);
-                redpackPublish.setRemark(String.format("派发奖励红包 %s元", StringHelper.formatDouble(marketingRedpackRecord.getMoney() / 100D, true)));
-                redpackPublish.setGroupSeqNo(groupSeqNo);
-                redpackPublish.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
-                redpackPublish.setForUserId(marketingRedpackRecord.getUserId());
-                redpackPublish.setSourceId(marketingRedpackRecord.getId());
-                assetChangeProvider.commonAssetChange(redpackPublish);
-
-                // 用户接收红包
-                AssetChange redpackR = new AssetChange();
-                redpackR.setMoney(marketingRedpackRecord.getMoney());
-                redpackR.setType(AssetChangeTypeEnum.receiveRedpack);
-                redpackR.setUserId(marketingRedpackRecord.getUserId());
-                redpackR.setRemark(String.format("领取奖励红包 %s元", StringHelper.formatDouble(marketingRedpackRecord.getMoney() / 100D, true)));
-                redpackR.setGroupSeqNo(groupSeqNo);
-                redpackR.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
-                redpackR.setForUserId(redId);
-                redpackR.setSourceId(marketingRedpackRecord.getId());
-                assetChangeProvider.commonAssetChange(redpackR);
-            } catch (Exception e) {
-                log.error("红包开启本地资金变动异常", e);
-            }
-
             //站内信数据装配
             Notices notices = new Notices();
             notices.setFromUserId(1L);
@@ -268,12 +356,16 @@ public class RedPackageBizImpl implements RedPackageBiz {
             } catch (Throwable e) {
                 log.error("RedPackageServiceImpl openRedPackage send mq exception", e);
             }
+
             VoViewOpenRedPackageWarpRes voViewOpenRedPackageWarpRes = VoBaseResp.ok("打开红包成功", VoViewOpenRedPackageWarpRes.class);
             voViewOpenRedPackageWarpRes.setMoney(marketingRedpackRecord.getMoney() / 100D);
             return ResponseEntity.ok().body(voViewOpenRedPackageWarpRes);
-        } catch (Exception e) {
-            throw new Exception(e);
+        } else {
+            VoViewOpenRedPackageWarpRes voViewOpenRedPackageWarpRes = VoBaseResp.error(VoBaseResp.ERROR, "打开红包失败", VoViewOpenRedPackageWarpRes.class);
+            voViewOpenRedPackageWarpRes.setMoney(0D);
+            return ResponseEntity.ok().body(voViewOpenRedPackageWarpRes);
         }
+
     }
 
     @Override
@@ -305,7 +397,6 @@ public class RedPackageBizImpl implements RedPackageBiz {
         int pageSize = 100, pageindex = 0, totalPageIndex = 0;
         totalPageIndex = count.intValue() / pageSize;
         totalPageIndex = count.intValue() % pageSize == 0 ? totalPageIndex : totalPageIndex + 1;
-   /*
         // ==================================
         // 投资派发红包
         // ==================================
@@ -336,8 +427,9 @@ public class RedPackageBizImpl implements RedPackageBiz {
                     log.error(String.format("投资营销节点触发异常：%s", new Gson().toJson(marketingData)), e);
                 }
             }
-        }*/
+        }
 
+      /*
         // ===============================
         // 用户派发红包
         // ===============================
@@ -377,7 +469,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
                     log.error(String.format("开户营销节点触发异常：%s", new Gson().toJson(marketingData)), e);
                 }
             }
-        }
+        }*/
         return null;
     }
 

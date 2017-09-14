@@ -1,6 +1,5 @@
 package com.gofobao.framework.award.biz;
 
-import com.gofobao.framework.asset.vo.response.VoPreRechargeResp;
 import com.gofobao.framework.award.vo.request.VoOpenRedPackageReq;
 import com.gofobao.framework.award.vo.request.VoRedPackageReq;
 import com.gofobao.framework.award.vo.response.VoViewOpenRedPackageWarpRes;
@@ -35,4 +34,7 @@ public interface RedPackageBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> publishActivity(VoPublishRedReq voPublishRedReq);
+
+
+
 }
