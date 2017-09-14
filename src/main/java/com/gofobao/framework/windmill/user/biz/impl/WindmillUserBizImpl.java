@@ -249,6 +249,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
      * @return
      */
     @Override
+    @Transactional
     public ResponseEntity<VoBasicUserInfoResp> bindLogin(HttpServletRequest request,
                                                          HttpServletResponse response,
                                                          BindLoginReq bindLoginReq) {
@@ -261,15 +262,28 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
         ResponseEntity entity = userBiz.login(request, response, voLoginReq,false);
         //登陸成功
         if (entity.getStatusCode() == HttpStatus.OK) {
+
             log.info("================用户登录成功===============");
             VoBasicUserInfoResp userInfoResp = (VoBasicUserInfoResp) entity.getBody();
             try {
-                Map<String,Object> desDecryptMap = StrToJsonStrUtil.commonUrlParamToMap(bindLoginReq.getParams(),desKey);
 
+                Users user = userService.findByAccount(bindLoginReq.getUserName());
+                Map<String,Object> desDecryptMap = StrToJsonStrUtil.commonUrlParamToMap(bindLoginReq.getParams(),desKey);
                 log.info("解密后的参数：param:" + GSON.toJson(desDecryptMap));
                 UserRegisterReq userRegisterReq = GSON.fromJson(GSON.toJson(desDecryptMap), new TypeToken<UserRegisterReq>() {
                 }.getType());
-                Users user = userService.findByAccount(bindLoginReq.getUserName());
+
+                log.info("风车理财绑定成功");
+                //风车理财绑定成功 将风车理财id 关联到本地用户
+                user.setWindmillId(userRegisterReq.getWrb_user_id());
+                //如果当前用户本地身份信息为空 将风车理财的用户身份保存到本地
+                user.setRealname(StringUtils.isEmpty(user.getRealname()) ? userRegisterReq.getTrue_name() : user.getRealname());
+                user.setCardId(StringUtils.isEmpty(user.getCardId()) ? userRegisterReq.getId_no() : user.getCardId());
+                user.setPhone(StringUtils.isEmpty(user.getPhone()) ? userRegisterReq.getMobile() : user.getPhone());
+                if (!StringUtils.isEmpty(userRegisterReq.getEmail())) {
+                    user.setEmail(userRegisterReq.getEmail());
+                }
+                userService.save(user);
                 String userName = StringUtils.isEmpty(user.getUsername()) ? user.getPhone() : user.getUsername();
                 //拼接参数
                 String requestParam = "wrb_user_id=" + userRegisterReq.getWrb_user_id() +
@@ -291,18 +305,6 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
                     Map<String, Object> resultMap = JacksonHelper.json2map(result);
                     //绑定验证成功
                     if (Integer.valueOf(resultMap.get("retcode").toString()) == VoBaseResp.OK) {
-
-                        log.info("风车理财绑定成功");
-                        //风车理财绑定成功 将风车理财id 关联到本地用户
-                        user.setWindmillId(userRegisterReq.getWrb_user_id());
-                        //如果当前用户本地身份信息为空 将风车理财的用户身份保存到本地
-                        user.setRealname(StringUtils.isEmpty(user.getRealname()) ? userRegisterReq.getTrue_name() : user.getRealname());
-                        user.setCardId(StringUtils.isEmpty(user.getCardId()) ? userRegisterReq.getId_no() : user.getCardId());
-                        user.setPhone(StringUtils.isEmpty(user.getPhone()) ? userRegisterReq.getMobile() : user.getPhone());
-                        if (!StringUtils.isEmpty(userRegisterReq.getEmail())) {
-                            user.setEmail(userRegisterReq.getEmail());
-                        }
-                        userService.save(user);
                         final String token = jwtTokenHelper.generateToken(user, 3);
                         response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
                         // 触发登录队列
@@ -313,9 +315,8 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
                         ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_USER_ID, user.getId().toString());
                         mqConfig.setMsg(body);
                         mqHelper.convertAndSend(mqConfig);
-
                         VoBasicUserInfoResp voBasicUserInfoResp = VoBaseResp.ok("操作成功", VoBasicUserInfoResp.class);
-                        //
+                        //跳转target_url
                         if (StringUtils.isEmpty(userRegisterReq.getTarget_url())) {
                             voBasicUserInfoResp.setTarget_url(h5Domain + "?token=" + token);
                         } else {

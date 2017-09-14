@@ -27,6 +27,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 /**
@@ -68,20 +69,27 @@ public class TenderServiceImpl implements TenderService {
 
         ExampleMatcher matcher = ExampleMatcher.matching().withIgnorePaths("isAuto");
         Example<Tender> ex = Example.of(tender, matcher);
-        Page<Tender> tenderPage = tenderRepository.findAll(ex, new PageRequest(tenderUserReq.getPageIndex(), tenderUserReq.getPageSize(), new Sort(Sort.Direction.DESC, "id")));
+        PageRequest pageRequest = new PageRequest(tenderUserReq.getPageIndex(),
+                tenderUserReq.getPageSize(),
+                new Sort(Sort.Direction.DESC, "id"));
+
+        Page<Tender> tenderPage = tenderRepository.findAll(ex, pageRequest);
         //Optional<List<Tender>> listOptional = Optional.ofNullable(tenderList);
         List<Tender> tenderList = tenderPage.getContent();
         if (CollectionUtils.isEmpty(tenderList)) {
             return Collections.EMPTY_LIST;
         }
-
         tenderList.stream().forEach(item -> {
             VoBorrowTenderUserRes tenderUserRes = new VoBorrowTenderUserRes();
             tenderUserRes.setValidMoney(StringHelper.formatMon(item.getValidMoney() / 100d) + MoneyConstans.RMB);
             tenderUserRes.setDate(DateHelper.dateToString(item.getCreatedAt(), DateHelper.DATE_FORMAT_YMDHMS));
-            tenderUserRes.setType(item.getIsAuto() ? TenderConstans.AUTO+"("+item.getAutoOrder()+")" : TenderConstans.MANUAL);
+            tenderUserRes.setType(item.getIsAuto() ? TenderConstans.AUTO + "(" + item.getAutoOrder() + ")" : TenderConstans.MANUAL);
             Users user = usersRepository.findOne(new Long(item.getUserId()));
-            tenderUserRes.setUserName(UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM));
+            //如果当前用户是管理员或者本人 用户名可见
+            tenderUserRes.setUserName(user.getId().equals(tenderUserReq.getUserId()) || user.getType().equals("manager")
+                    ? user.getPhone()
+                    : UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM)
+            );
             tenderUserResList.add(tenderUserRes);
         });
         return Optional.empty().ofNullable(tenderUserResList).orElse(Collections.emptyList());

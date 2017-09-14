@@ -1204,10 +1204,10 @@ public class TransferBizImpl implements TransferBiz {
             transfer.setValidMoney(StringHelper.formatMon(p.getValidMoney() / 100D));
             transfer.setType(p.getAuto() == true ? "自动" : "手动");
             Users user = usersMap.get(p.getUserId());
-            String userName = StringUtils.isEmpty(user.getUsername()) ?
-                    UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM) :
-                    UserHelper.hideChar(user.getUsername(), UserHelper.USERNAME_NUM);
-            transfer.setUserName(userName);
+            //如果当前用户是管理员或者是投资者本人 用户名可见
+            transfer.setUserName(user.getId().intValue() == transferUserListReq.getUserId() || user.getType().equals("manager")
+                    ? user.getPhone()
+                    : UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM));
             tenderUserResList.add(transfer);
         });
         warpListRes.setVoBorrowTenderUser(tenderUserResList);

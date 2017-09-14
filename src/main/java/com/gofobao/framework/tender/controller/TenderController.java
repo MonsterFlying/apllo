@@ -1,8 +1,10 @@
 package com.gofobao.framework.tender.controller;
 
+import cn.jiguang.common.utils.StringUtils;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
+import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.vo.request.TenderUserReq;
 import com.gofobao.framework.tender.vo.request.VoAdminCancelTender;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 /**
@@ -26,18 +29,33 @@ import javax.validation.Valid;
 @RequestMapping("")
 @RestController
 @Slf4j
+@SuppressWarnings("all")
 public class TenderController {
 
     @Autowired
     private TenderBiz tenderBiz;
 
+    @Autowired
+    private JwtTokenHelper jwtTokenHelper;
 
     @ApiOperation("标的详情-投标记录")
     @GetMapping("/pub/tender/v2/user/list/{pageIndex}/{pageSize}/{borrowId}")
     public ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(@PathVariable Integer pageIndex,
                                                                               @PathVariable Integer pageSize,
-                                                                              @PathVariable Long borrowId) {
+                                                                              @PathVariable Long borrowId,
+                                                                              HttpServletRequest request,
+                                                                              HttpServletResponse response) {
         TenderUserReq borrowTenderList = new TenderUserReq();
+        try {
+          String  token = jwtTokenHelper.getToken(request, response);
+            if (!StringUtils.isEmpty(token)) {
+                jwtTokenHelper.validateSign(token);
+                Long userId = jwtTokenHelper.getUserIdFromToken(token);  // 用户ID
+                borrowTenderList.setUserId(userId);
+            }
+        } catch (Exception e) {
+            log.info("当前用户未登录");
+        }
         borrowTenderList.setPageSize(pageSize);
         borrowTenderList.setPageIndex(pageIndex);
         borrowTenderList.setBorrowId(borrowId);
@@ -53,13 +71,13 @@ public class TenderController {
         voCreateTenderReq.setRequestSource(request.getHeader("requestSource"));
 
         String requestSource = request.getHeader("requestSource");
-        int requestSourceInt =  0;
+        int requestSourceInt = 0;
         try {
             requestSourceInt = NumberHelper.toInt(requestSource);
         } catch (Exception e) {
-            requestSourceInt = 0 ;
+            requestSourceInt = 0;
         }
-        voCreateTenderReq.setRequestSource(requestSourceInt + "") ;
+        voCreateTenderReq.setRequestSource(requestSourceInt + "");
         try {
             return tenderBiz.tender(voCreateTenderReq);
         } catch (Exception e) {

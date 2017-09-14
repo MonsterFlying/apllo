@@ -30,7 +30,7 @@ public class BannerServiceImpl implements BannerService {
 
     LoadingCache<String, List<IndexBanner>> bannerCache = CacheBuilder
             .newBuilder()
-            .expireAfterWrite(60, TimeUnit.MINUTES)
+            .expireAfterWrite(5, TimeUnit.MINUTES)
             .maximumSize(1024)
             .build(new CacheLoader<String, List<IndexBanner>>() {
                 @Override
@@ -52,7 +52,6 @@ public class BannerServiceImpl implements BannerService {
                     return bannerList;
                 }
             });
-
 
     @Override
     public List<IndexBanner> index(String terminal) {

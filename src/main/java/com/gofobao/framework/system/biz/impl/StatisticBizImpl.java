@@ -6,6 +6,7 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.MultiCaculateHelper;
 import com.gofobao.framework.helper.RedisHelper;
+import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.system.biz.StatisticBiz;
 import com.gofobao.framework.system.contants.DictAliasCodeContants;
 import com.gofobao.framework.system.entity.DictItem;
@@ -92,6 +93,7 @@ public class StatisticBizImpl implements StatisticBiz {
                         startCalender.add(Calendar.YEAR, 1);
                         if (startCalender.before(currCalender)) {
                             years++;
+
                         }
                     }
 
@@ -107,23 +109,64 @@ public class StatisticBizImpl implements StatisticBiz {
                     } else if (titel.contains("万")) {
                         titel = titel.substring(0, titel.indexOf("万") + 1);
                     }
-                    newIndexStatisics.setRegsiterCount(formatNumber(register)+"人");
+                    newIndexStatisics.setRegsiterCount(formatNumber(register) + "人");
                     newIndexStatisics.setTotalTransaction(String.format("%s元", titel)); // 交易总额
                     return newIndexStatisics;
+                }
+            });
+
+
+    LoadingCache<String, IndexStatistics> webArtclesCache = CacheBuilder
+            .newBuilder()
+            .expireAfterWrite(60, TimeUnit.MINUTES)
+            .maximumSize(1024)
+            .build(new CacheLoader<String, IndexStatistics>() {
+                @Override
+                public IndexStatistics load(String key) throws Exception {
+                    Statistic statistic = statisticService.findLast();
+                    Long borrowTotal = statistic.getBorrowTotal();
+                    IndexStatistics indexStatistics = new IndexStatistics();
+                    indexStatistics.setTransactionsTotal(borrowTotal);
+                    indexStatistics.setDueTotal(statistic.getWaitRepayTotal());
+                    indexStatistics.setBorrowTotal(statistic.getBorrowItems());
+                    indexStatistics.setEarnings(statistic.getUserIncomeTotal());
+                    indexStatistics.setYesterdayDueTotal(0l);
+                    // 注册人数
+                    BigDecimal registerTotal = incrStatisticService.registerTotal();
+                    indexStatistics.setRegisterTotal(registerTotal);
+                    // 起头金额 & 年华利率
+                    DictItem dictItem = dictItemService.findTopByAliasCodeAndDel(DictAliasCodeContants.INDEX_CONFIG, 0);
+                    List<DictValue> dictValue = dictValueService.findByItemId(dictItem.getId());
+                    Map<String, String> dictValueMap = dictValue.stream().collect(Collectors.toMap(DictValue::getValue02, DictValue::getValue01));
+                    indexStatistics.setApr(Integer.valueOf(dictValueMap.get("annualized").toString()));
+                    indexStatistics.setStartMoney(Integer.valueOf(dictValueMap.get("startMoney").toString()));
+
+                    Map<String, Long> tenderStatistic = tenderService.statistic();
+                    //昨日成交
+                    indexStatistics.setYesterdayDueTotal(tenderStatistic.get("yesterdayTender"));
+                    //今日成功
+                    indexStatistics.setTodayDueTotal(tenderStatistic.get("todayTender"));
+                    return indexStatistics;
                 }
             });
 
     @Override
     @Transactional
     public boolean caculate(Statistic changeEntity) throws Exception {
-        Preconditions.checkNotNull(changeEntity, "StatisticBizImpl.caculate: changeEntity is empty");
-        log.info(String.format("全站统计增加: %s", GSON.toJson(changeEntity)));
-        Statistic statistic = statisticService.findLast();
-        Preconditions.checkNotNull(statistic, "StatisticBizImpl.caculate: statistic is empty");
-        MultiCaculateHelper.caculate(Statistic.class, statistic, changeEntity);
-        statistic.setUpdatedAt(new Date());
-        statisticService.save(statistic);
-        return true;
+        try{
+            Preconditions.checkNotNull(changeEntity, "StatisticBizImpl.caculate: changeEntity is empty");
+            log.info(String.format("全站统计增加: %s", GSON.toJson(changeEntity)));
+            Statistic statistic = statisticService.findLast();
+            Preconditions.checkNotNull(statistic, "StatisticBizImpl.caculate: statistic is empty");
+            MultiCaculateHelper.caculate(Statistic.class, statistic, changeEntity);
+            statistic.setUpdatedAt(new Date());
+            statisticService.save(statistic);
+            return true;
+        }catch (Exception e){
+            log.error("全站统计添加: ", e);
+            return false;
+        }
+
     }
 
     /**
@@ -155,44 +198,12 @@ public class StatisticBizImpl implements StatisticBiz {
      */
     @Override
     public ResponseEntity<VoViewIndexStatisticsWarpRes> query() {
-        try {
-            redisHelper.remove("indexStatistic");
-        }catch (Exception e){
-            log.error("删除首页缓存数据失败",e);
-        }
         IndexStatistics indexStatistics = new IndexStatistics();
-        Gson gson = new Gson();
         try {
-            String redisStr = redisHelper.get("indexStatistic", null);
-            if (!StringUtils.isEmpty(redisStr)) {
-                indexStatistics = gson.fromJson(redisStr, IndexStatistics.class);
-            } else {
-                Statistic statistic = statisticService.findLast();
-                Long borrowTotal = statistic.getBorrowTotal();
-                indexStatistics.setTransactionsTotal(borrowTotal);
-                indexStatistics.setDueTotal(statistic.getWaitRepayTotal());
-                indexStatistics.setBorrowTotal(statistic.getBorrowItems());
-                indexStatistics.setEarnings(statistic.getUserIncomeTotal());
-                indexStatistics.setYesterdayDueTotal(0l);
-                //注册人数
-                BigDecimal registerTotal = incrStatisticService.registerTotal();
-                indexStatistics.setRegisterTotal(registerTotal);
-                //起头金额&年华利率
-                DictItem dictItem = dictItemService.findTopByAliasCodeAndDel(DictAliasCodeContants.INDEX_CONFIG, 0);
-                List<DictValue> dictValue = dictValueService.findByItemId(dictItem.getId());
-                Map<String, String> dictValueMap = dictValue.stream().collect(Collectors.toMap(DictValue::getValue02, DictValue::getValue01));
-                indexStatistics.setApr(Integer.valueOf(dictValueMap.get("annualized").toString()));
-                indexStatistics.setStartMoney(Integer.valueOf(dictValueMap.get("startMoney").toString()));
-
-                Map<String, Long> tenderStatistic = tenderService.statistic();
-                //昨日成交
-                indexStatistics.setYesterdayDueTotal(tenderStatistic.get("yesterdayTender"));
-                //今日成功
-                indexStatistics.setTodayDueTotal(tenderStatistic.get("todayTender"));
-                redisHelper.put("indexStatistic", gson.toJson(indexStatistics),3600);
-            }
-        } catch (Throwable e) {
-            e.printStackTrace();
+            indexStatistics  = webArtclesCache.get("web");
+        } catch (ExecutionException e) {
+            log.error("获取缓存失败");
+            indexStatistics = new IndexStatistics();
         }
 
         VoViewIndexStatisticsWarpRes warpRes = VoBaseResp.ok("查询成功", VoViewIndexStatisticsWarpRes.class);
@@ -234,10 +245,10 @@ public class StatisticBizImpl implements StatisticBiz {
                     //交易总额
                     dataStatistics.setTransactionsTotal(indexStatistics.getTransactionsTotal());
 
-                    Specification<Tender> specification= Specifications.<Tender>and()
+                    Specification<Tender> specification = Specifications.<Tender>and()
                             .eq("status", TenderConstans.SUCCESS)
                             .build();
-                    Long count=tenderService.count(specification);
+                    Long count = tenderService.count(specification);
                     //累计投资人数
                     dataStatistics.setTenderNoOfPeople(count);
 
@@ -259,7 +270,7 @@ public class StatisticBizImpl implements StatisticBiz {
     public ResponseEntity<OperateDataStatistics> queryOperateData() {
 
         try {
-            OperateDataStatistics dataStatistics=operateData.get("");
+            OperateDataStatistics dataStatistics = operateData.get("");
             return ResponseEntity.ok(dataStatistics);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询异常", OperateDataStatistics.class));

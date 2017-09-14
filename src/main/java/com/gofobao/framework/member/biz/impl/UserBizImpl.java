@@ -5,6 +5,7 @@ import com.gofobao.framework.asset.biz.AssetSynBiz;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.collection.biz.PaymentBiz;
+import com.gofobao.framework.collection.contants.BorrowCollectionContants;
 import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.qiniu.common.QiniuException;
@@ -166,7 +167,6 @@ public class UserBizImpl implements UserBiz {
 
         // 2.用户名处理
         if (!StringUtils.isEmpty(voRegisterReq.getUserName())) {
-
             boolean notUserName = userService.notExistsByUserName(voRegisterReq.getUserName());
             if (!notUserName) {
                 return ResponseEntity
@@ -183,6 +183,12 @@ public class UserBizImpl implements UserBiz {
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "无效的邀请码！"));
+            }
+
+            if(invitedUser.getIsLock()){
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "当前邀请人, 已经被平台冻结, 如有疑问请致电官方客服！"));
             }
 
             parentId = invitedUser.getId();
@@ -206,7 +212,7 @@ public class UserBizImpl implements UserBiz {
         users.setPassword(PasswordHelper.encodingPassword(voRegisterReq.getPassword())); // 设置密码
         users.setPayPassword("");
         users.setRealname("");
-        users.setType("");
+        users.setType(voRegisterReq.getType());
         users.setBranch(0);
         users.setSource(channel);
         users.setInviteCode(GenerateInviteCodeHelper.getRandomCode()); // 生成用户邀请码
@@ -251,8 +257,8 @@ public class UserBizImpl implements UserBiz {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍候再试！"));
-
         }
+
         // 5.删除短信验证码
         redisHelper.remove(String.format("%s_%s", MqTagEnum.SMS_REGISTER, voRegisterReq.getPhone()));
         return ResponseEntity.ok(VoBaseResp.ok("注册成功"));
@@ -295,7 +301,7 @@ public class UserBizImpl implements UserBiz {
         // 获取vip状态
         Vip vip = vipService.findTopByUserIdAndStatus(user.getId(), 1);
         voBasicUserInfoResp.setAvatarUrl(StringUtils.isEmpty(user.getAvatarPath()) ? javaDomain + "/images/user/default_avatar.jpg" : user.getAvatarPath());
-        voBasicUserInfoResp.setVipState(ObjectUtils.isEmpty(vip) ? false : DateHelper.diffInDays(vip.getExpireAt(), new Date() ,false) > 0);
+        voBasicUserInfoResp.setVipState(ObjectUtils.isEmpty(vip) ? false : DateHelper.diffInDays(vip.getExpireAt(), new Date(), false) > 0);
         voBasicUserInfoResp.setEmail(StringUtils.isEmpty(user.getEmail()) ? " " : user.getEmail());
         voBasicUserInfoResp.setEmailState(!StringUtils.isEmpty(user.getEmail()));
         voBasicUserInfoResp.setPhone(StringUtils.isEmpty(user.getPhone()) ? " " : user.getPhone());
@@ -308,12 +314,12 @@ public class UserBizImpl implements UserBiz {
         voBasicUserInfoResp.setTenderIntegral(new Long(integral.getUseIntegral() + integral.getNoUseIntegral()));
         voBasicUserInfoResp.setIdNoState(!StringUtils.isEmpty(user.getCardId()));
         voBasicUserInfoResp.setAlias(user.getPushId());
-        String userName = user.getUsername() ;
-        if(StringUtils.isEmpty(userName)){
-            userName = user.getPhone() ;
+        String userName = user.getUsername();
+        if (StringUtils.isEmpty(userName)) {
+            userName = user.getPhone();
         }
-        if(StringUtils.isEmpty(userName)){
-            userName = user.getEmail() ;
+        if (StringUtils.isEmpty(userName)) {
+            userName = user.getEmail();
         }
         voBasicUserInfoResp.setUsername(userName);
         return ResponseEntity.ok(voBasicUserInfoResp);
@@ -735,9 +741,8 @@ public class UserBizImpl implements UserBiz {
                 .build();
         List<BorrowRepayment> borrowRepayments = borrowRepaymentService.findList(repaymentSpecification);
         if (CollectionUtils.isEmpty(borrowRepayments)) {
-
-            //以还
-            Long repayment = borrowRepayments.stream().mapToLong(p -> p.getRepayMoneyYes()).sum();
+            //已还
+            Long repayment = borrowRepayments.stream().filter(p -> p.getStatus() == RepaymentContants.STATUS_YES).mapToLong(p -> p.getRepayMoneyYes()).sum();
             balanceOfPaymentRes.setPayment(StringHelper.formatMon(repayment / 100D));
             //应还
             Long waitRepayment = borrowRepayments.stream().mapToLong(p -> p.getRepayMoney()).sum();
@@ -745,15 +750,14 @@ public class UserBizImpl implements UserBiz {
         }
 
         //已收 待收
-        Specification collectionSpecification = Specifications.<BorrowRepayment>and()
+        Specification<BorrowCollection> collectionSpecification = Specifications.<BorrowCollection>and()
                 .eq("userId", userId)
                 .between("collectionAt", new Range<>(DateHelper.beginOfDate(nowDate), DateHelper.endOfDate(nowDate)))
                 .build();
-
         List<BorrowCollection> borrowCollections = borrowCollectionService.findList(collectionSpecification);
         if (!CollectionUtils.isEmpty(borrowCollections)) {
             //已收
-            Long collection = borrowCollections.stream().mapToLong(p -> p.getCollectionMoneyYes()).sum();
+            Long collection = borrowCollections.stream().filter(w -> w.getStatus() == BorrowCollectionContants.STATUS_YES).mapToLong(p -> p.getCollectionMoneyYes()).sum();
             //待收
             Long waitCollection = borrowCollections.stream().mapToLong(p -> p.getCollectionMoney()).sum();
             balanceOfPaymentRes.setCollection(StringHelper.formatMon(collection / 100D));

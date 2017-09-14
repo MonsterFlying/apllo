@@ -92,8 +92,8 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
                         invest.setInvest_id(p.getId().toString());
                         invest.setInvest_title(p.getName());
                         invest.setInvest_url(h5Address + "/#/borrow/" + p.getId());
-                        invest.setTime_limit(p.getRepayFashion() == 1 ?p.getTimeLimit(): (p.getTimeLimit()*30));
-                        invest.setTime_limit_desc( p.getRepayFashion() == 1 ?p.getTimeLimit()+BorrowContants.DAY: p.getTimeLimit()+BorrowContants.MONTH);
+                        invest.setTime_limit(p.getRepayFashion() == 1 ? p.getTimeLimit() : (p.getTimeLimit() * 30));
+                        invest.setTime_limit_desc(p.getRepayFashion() == 1 ? p.getTimeLimit() + BorrowContants.DAY : p.getTimeLimit() + BorrowContants.MONTH);
                         invest.setBuy_limit(p.getMost() == 0 ? "" : StringHelper.formatDouble(p.getMost() / 100D, false));
                         invest.setBuy_unit(p.getLowest() == 0 ? "" : StringHelper.formatDouble(p.getLowest() / 100D, false));
                         invest.setInvested_amount(StringHelper.formatMon(p.getMoneyYes() / 100D));
@@ -110,7 +110,11 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
                         if (p.getRepayFashion() == 2) {
                             invest.setPayback_way(BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL_STR);
                         }
-                        invest.setInvest_condition(StringUtils.isEmpty(p.getIsNovice()) ? "新手-APP-pc" : "APP-PC");
+                        invest.setInvest_condition(p.getIsNovice()
+                                ? "新手"
+                                : p.getType().intValue() == BorrowContants.JING_ZHI
+                                    ? "净值"
+                                    : "");
                         invest.setProject_description(p.getDescription());
                         invest.setLose_invest(0);
                         invest_list.add(invest);
@@ -176,7 +180,7 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
             VoTender tender = new VoTender();
             try {
                 tender.setIndex(p.getId());
-                tender.setInvest_money(StringHelper.formatDouble(p.getValidMoney()/100D, false));
+                tender.setInvest_money(StringHelper.formatDouble(p.getValidMoney() / 100D, false));
                 tender.setInvest_time(DateHelper.dateToString(p.getCreatedAt()));
                 Users tempUser = usersMap.get(p.getUserId());
                 tender.setInvest_user(UserHelper.hideChar(tempUser.getPhone(), UserHelper.PHONE_NUM));
