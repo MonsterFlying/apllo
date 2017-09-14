@@ -30,10 +30,8 @@ public class WebIndexController {
     }
 
     @GetMapping("/v2/banner/list")
-    public  ResponseEntity<VoIndexResp>index(){
-        String terminal = "pc" ;
+    public ResponseEntity<VoIndexResp> index() {
+        String terminal = "pc";
         return bannerBiz.index(terminal);
     }
-
-
 }
