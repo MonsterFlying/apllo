@@ -374,7 +374,7 @@ public class RedPackageBizImpl implements RedPackageBiz {
         Specification<Tender> specification = Specifications
                 .<Tender>and()
                 .eq("status", 1)
-                .between("createdAt", new Range<>(DateHelper.beginOfDate(beginDate), DateHelper.endOfDate(nowDate))).build();
+                .between("createdAt", new Range<>(DateHelper.beginOfDate(beginDate), DateHelper.endOfDate(beginDate))).build();
 
         Long count = tenderService.count(specification);
         if (count == 0) {
