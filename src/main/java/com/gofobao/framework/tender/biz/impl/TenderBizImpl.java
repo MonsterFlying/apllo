@@ -11,7 +11,6 @@ import com.gofobao.framework.api.model.bid_cancel.BidCancelReq;
 import com.gofobao.framework.api.model.bid_cancel.BidCancelResp;
 import com.gofobao.framework.asset.entity.Asset;
 import com.gofobao.framework.asset.service.AssetService;
-import com.gofobao.framework.asset.vo.response.VoQueryInfoResp;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
@@ -63,9 +62,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.*;
-
-import static com.gofobao.framework.common.assets.AssetChangeTypeEnum.tender;
 
 /**
  * Created by Zeke on 2017/5/31.
@@ -523,6 +521,7 @@ public class TenderBizImpl implements TenderBiz {
     /**
      * 投标用户
      *
+     * @param tenderUserReq
      * @param tenderUserReq
      * @return
      */

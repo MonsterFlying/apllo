@@ -27,6 +27,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 /**
@@ -68,7 +69,11 @@ public class TenderServiceImpl implements TenderService {
 
         ExampleMatcher matcher = ExampleMatcher.matching().withIgnorePaths("isAuto");
         Example<Tender> ex = Example.of(tender, matcher);
-        Page<Tender> tenderPage = tenderRepository.findAll(ex, new PageRequest(tenderUserReq.getPageIndex(), tenderUserReq.getPageSize(), new Sort(Sort.Direction.DESC, "id")));
+        PageRequest pageRequest = new PageRequest(tenderUserReq.getPageIndex(),
+                tenderUserReq.getPageSize(),
+                new Sort(Sort.Direction.DESC, "id"));
+
+        Page<Tender> tenderPage = tenderRepository.findAll(ex, pageRequest);
         //Optional<List<Tender>> listOptional = Optional.ofNullable(tenderList);
         List<Tender> tenderList = tenderPage.getContent();
         if (CollectionUtils.isEmpty(tenderList)) {
@@ -81,7 +86,7 @@ public class TenderServiceImpl implements TenderService {
             tenderUserRes.setType(item.getIsAuto() ? TenderConstans.AUTO + "(" + item.getAutoOrder() + ")" : TenderConstans.MANUAL);
             Users user = usersRepository.findOne(new Long(item.getUserId()));
             //如果当前用户是管理员或者本人 用户名可见
-            tenderUserRes.setUserName(user.getId().intValue() == tenderUserReq.getUserId() || user.getType().equals("manager")
+            tenderUserRes.setUserName(user.getId().equals(tenderUserReq.getUserId()) || user.getType().equals("manager")
                     ? user.getPhone()
                     : UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM)
             );
