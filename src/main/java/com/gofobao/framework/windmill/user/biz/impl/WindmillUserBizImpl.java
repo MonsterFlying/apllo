@@ -249,6 +249,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
      * @return
      */
     @Override
+    @Transactional
     public ResponseEntity<VoBasicUserInfoResp> bindLogin(HttpServletRequest request,
                                                          HttpServletResponse response,
                                                          BindLoginReq bindLoginReq) {
@@ -302,7 +303,7 @@ public class WindmillUserBizImpl implements WindmillUserBiz {
                         if (!StringUtils.isEmpty(userRegisterReq.getEmail())) {
                             user.setEmail(userRegisterReq.getEmail());
                         }
-                        userService.save(user);
+
                         final String token = jwtTokenHelper.generateToken(user, 3);
                         response.addHeader(tokenHeader, String.format("%s %s", prefix, token));
                         // 触发登录队列
