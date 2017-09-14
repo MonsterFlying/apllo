@@ -40,6 +40,6 @@ public class VoRegisterReq  extends VoBaseReq {
     private String inviteCode ;
 
     @ApiModelProperty(hidden = true)
-    private String type;
+    private String type = "";
 
 }

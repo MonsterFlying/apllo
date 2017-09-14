@@ -93,6 +93,7 @@ public class StatisticBizImpl implements StatisticBiz {
                         startCalender.add(Calendar.YEAR, 1);
                         if (startCalender.before(currCalender)) {
                             years++;
+
                         }
                     }
 
