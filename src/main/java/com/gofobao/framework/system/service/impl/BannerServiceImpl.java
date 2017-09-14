@@ -53,7 +53,6 @@ public class BannerServiceImpl implements BannerService {
                 }
             });
 
-
     @Override
     public List<IndexBanner> index(String terminal) {
         try {

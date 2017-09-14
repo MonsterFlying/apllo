@@ -115,7 +115,7 @@ public interface RepaymentBiz {
     /**
      * 新还款处理
      *
-     * @param repaymentId
+     * @param
      * @return
      * @throws Exception
      */

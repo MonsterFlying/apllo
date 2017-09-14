@@ -167,7 +167,6 @@ public class UserBizImpl implements UserBiz {
 
         // 2.用户名处理
         if (!StringUtils.isEmpty(voRegisterReq.getUserName())) {
-
             boolean notUserName = userService.notExistsByUserName(voRegisterReq.getUserName());
             if (!notUserName) {
                 return ResponseEntity
@@ -184,6 +183,12 @@ public class UserBizImpl implements UserBiz {
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "无效的邀请码！"));
+            }
+
+            if(invitedUser.getIsLock()){
+                return ResponseEntity
+                        .badRequest()
+                        .body(VoBaseResp.error(VoBaseResp.ERROR, "当前邀请人, 已经被平台冻结, 如有疑问请致电官方客服！"));
             }
 
             parentId = invitedUser.getId();
@@ -252,8 +257,8 @@ public class UserBizImpl implements UserBiz {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "服务器开小差了，请稍候再试！"));
-
         }
+
         // 5.删除短信验证码
         redisHelper.remove(String.format("%s_%s", MqTagEnum.SMS_REGISTER, voRegisterReq.getPhone()));
         return ResponseEntity.ok(VoBaseResp.ok("注册成功"));

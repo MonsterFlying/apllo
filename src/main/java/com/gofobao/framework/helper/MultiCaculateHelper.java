@@ -18,10 +18,10 @@ public class MultiCaculateHelper {
             String fieldName = null ;
             Method readMethod = null ;
             Method writeMethod = null ;
-            Long lDbValue = null ;
-            Long lChangeValue = null ;
-            Integer iDbValue = null ;
-            Integer iChangeValue = null ;
+            Long longDbValue = null ;
+            Long longChangeValue = null ;
+            Integer intDbValue = null ;
+            Integer intChangeValue = null ;
             String typeName = null ;
             for(Field field: fields){
                 fieldName = field.getName();
@@ -31,21 +31,29 @@ public class MultiCaculateHelper {
                 writeMethod =  pd.getWriteMethod();
                 typeName = field.getGenericType().getTypeName();
                 if(typeName.equals(Long.class.getTypeName())){
-                    lChangeValue = (Long) ClassHelper.getValueByRefler(clazz, change, fieldName);
-                    if(ObjectUtils.isEmpty(lChangeValue)){
+                    log.info(String.format("全局添加[ fieldName:%s ]", fieldName ));
+                    longChangeValue = (Long) ClassHelper.getValueByRefler(clazz, change, fieldName);
+                    log.info(String.format("全局添加[ fieldName: %s,changeValue: %s]", fieldName, longChangeValue));
+                    if(ObjectUtils.isEmpty(longChangeValue)){
                         continue;
                     }
-                    lDbValue = (Long) readMethod.invoke(org);
-                    lDbValue = lDbValue == null ? 0 : lDbValue ;
-                    writeMethod.invoke(org, lDbValue + lChangeValue) ;
+                    longDbValue = (Long) readMethod.invoke(org);
+                    log.info(String.format("全局添加[ fieldName: %s,changeValue: %s, DbchangeValue: %s]", fieldName, longChangeValue, longDbValue));
+                    longDbValue = longDbValue == null ? 0 : longDbValue ;
+                    writeMethod.invoke(org, longDbValue + longChangeValue) ;
+                    log.info(String.format("全局添加[ fieldName: %s,changeValue: %s, DbchangeValue: %s, resultValue: %s]", fieldName, longChangeValue, longDbValue, longDbValue + longChangeValue ));
                 }else if(typeName.equals(Integer.class.getTypeName())){
-                    iChangeValue = (Integer) ClassHelper.getValueByRefler(clazz, change, fieldName);
-                    if(ObjectUtils.isEmpty(iChangeValue)){
+                    log.info(String.format("全局添加[ fieldName:%s ]", fieldName ));
+                    intChangeValue = (Integer) ClassHelper.getValueByRefler(clazz, change, fieldName);
+                    log.info(String.format("全局添加[ fieldName: %s,changeValue: %s]", fieldName, intChangeValue));
+                    if(ObjectUtils.isEmpty(intChangeValue)){
                         continue;
                     }
-                    iDbValue = (Integer) readMethod.invoke(org);
-                    iDbValue = iDbValue == null ? 0 : iDbValue ;
-                    writeMethod.invoke(org, iDbValue + iChangeValue) ;
+                    intDbValue = (Integer) readMethod.invoke(org);
+                    log.info(String.format("全局添加[ fieldName: %s,changeValue: %s, DbchangeValue: %s]", fieldName, intChangeValue, intDbValue));
+                    intDbValue = intDbValue == null ? 0 : intDbValue ;
+                    writeMethod.invoke(org, intDbValue + intChangeValue) ;
+                    log.info(String.format("全局添加[ fieldName: %s,changeValue: %s, DbchangeValue: %s, resultValue: %s]", fieldName, intChangeValue, intDbValue, intDbValue + intChangeValue));
                 }
             }
     }

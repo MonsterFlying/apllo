@@ -192,7 +192,7 @@ public class TenderBizImpl implements TenderBiz {
             try {
                 windmillTenderBiz.tenderNotify(borrowTender);
             } catch (Exception e) {
-                log.error("推送风车理财", e);
+                log.error("推送风车理财异常", e);
             }
         }
 

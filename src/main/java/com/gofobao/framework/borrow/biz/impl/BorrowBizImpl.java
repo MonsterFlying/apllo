@@ -1739,7 +1739,7 @@ public class BorrowBizImpl implements BorrowBiz {
             try {
                 statisticBiz.caculate(statistic);
             } catch (Throwable e) {
-                log.error("borrowProvider updateStatisticByBorrowReview 异常:", e);
+                log.error("borrowProvider updateStatisticByBorrowReview 全站统计异常:", e);
             }
         }
     }
