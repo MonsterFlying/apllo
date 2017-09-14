@@ -426,14 +426,30 @@ public class UserThirdBizImpl implements UserThirdBiz {
             Long userId = userThirdAccount.getUserId();
             Users user = userService.findById(userId);
             Preconditions.checkNotNull(user, "touchMarketingByOpenAccount user is null");
-            if(user.getIsLock()){
+            if (user.getIsLock()) {
                 log.error("触发营销节点失败, 当前用户被冻结了");
+                return;
             }
 
+            Date nowDate = new Date();
             Long parentId = user.getParentId();
             if (!ObjectUtils.isEmpty(parentId)
                     && parentId > 0) {
-                Date nowDate = new Date();
+
+                Users parentUser = userService.findById(parentId);
+                if (ObjectUtils.isEmpty(parentId)) {
+                    log.info("触发营销节点失败. 当前父类不存在");
+                }
+
+                if (parentUser.getIsLock()) {   // 父类被冻结, 直接冻结子类
+                    // 冻结子类
+                    user.setIsLock(true);
+                    user.setUpdatedAt(nowDate);
+                    userService.save(user);
+                    return;
+                }
+
+
                 // 每天每个用户只能邀请100
                 Specification<MarketingRedpackRecord> specifications = Specifications
                         .<MarketingRedpackRecord>and()
@@ -444,17 +460,16 @@ public class UserThirdBizImpl implements UserThirdBiz {
                 if (count >= 20) {
                     // 触发一天超过20个邀请用户
                     // 冻结他的父类和被邀请的子类
-                    Users parentUser = userService.findById(parentId);
-                    if(ObjectUtils.isEmpty(parentId)){
-                        log.info("触发营销节点失败. 当前父类不存在");
-                    }
-                    parentUser.setIsLock(true) ;
-                    parentUser.setUpdatedAt(nowDate);
-                    userService.save(parentUser) ;
 
+                    // 冻结父类
+                    parentUser.setIsLock(true);
+                    parentUser.setUpdatedAt(nowDate);
+                    userService.save(parentUser);
+
+                    // 冻结子类
                     user.setIsLock(true);
                     user.setUpdatedAt(nowDate);
-                    userService.save(user) ;
+                    userService.save(user);
                     log.error("此用户每天邀请好友过20, 系统拒绝执行");
                     return;
                 }
