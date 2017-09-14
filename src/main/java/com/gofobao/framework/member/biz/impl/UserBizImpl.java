@@ -206,7 +206,7 @@ public class UserBizImpl implements UserBiz {
         users.setPassword(PasswordHelper.encodingPassword(voRegisterReq.getPassword())); // 设置密码
         users.setPayPassword("");
         users.setRealname("");
-        users.setType("");
+        users.setType(voRegisterReq.getType());
         users.setBranch(0);
         users.setSource(channel);
         users.setInviteCode(GenerateInviteCodeHelper.getRandomCode()); // 生成用户邀请码
