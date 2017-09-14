@@ -9,9 +9,14 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
+import com.gofobao.framework.api.model.voucher_pay_cancel.VoucherPayCancelRequest;
+import com.gofobao.framework.api.model.voucher_pay_cancel.VoucherPayCancelResponse;
+import com.gofobao.framework.asset.entity.NewAssetLog;
+import com.gofobao.framework.asset.service.NewAssetLogService;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
+import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.financial.biz.FinancialSchedulerBiz;
 import com.gofobao.framework.financial.entity.FinancialScheduler;
 import com.gofobao.framework.financial.service.FinancialSchedulerService;
@@ -20,11 +25,14 @@ import com.gofobao.framework.member.entity.BrokerBouns;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.BrokerBounsService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Range;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -35,6 +43,8 @@ import org.springframework.util.ObjectUtils;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -58,17 +68,20 @@ public class UserBonusScheduler {
     @Autowired
     private FinancialSchedulerBiz financialSchedulerBiz;
 
+    @Autowired
+    private NewAssetLogService newAssetLogService;
+
 
     /**
      * 理财师提成
      */
-    @Transactional(rollbackFor = Exception.class)
     @Scheduled(cron = "0 35 23 * * ? ")
     public void brokerProcess() {
         log.info("理财师调度启动");
 
         //记录调度日志
         FinancialScheduler financialScheduler = new FinancialScheduler();
+        List<Map<String, String>> results = Lists.newArrayList();
         try {
             boolean isExecute = financialSchedulerBiz.isExecute("PUSHMONEY");
             if (isExecute) {
@@ -97,6 +110,15 @@ public class UserBonusScheduler {
                 if (CollectionUtils.isEmpty(resultList)) {
                     return;
                 }
+                //查询今天已发放过的理财师红包
+                Date nowDate = new Date();
+                List<Long> userIds = resultList.stream().map(p -> Long.valueOf(p.get("user_id").toString())).collect(Collectors.toList());
+                Specification<NewAssetLog> specification = Specifications.<NewAssetLog>and()
+                        .in("userId", userIds.toArray())
+                        .between("createTime", new Range(DateHelper.beginOfDate(nowDate), DateHelper.endOfDate(nowDate)))
+                        .build();
+                List<NewAssetLog> newAssetLogs = newAssetLogService.findAll(specification);
+                Map<Long,NewAssetLog> newAssetLogMap=newAssetLogs.stream().collect(Collectors.toMap(NewAssetLog::getUserId, Function.identity()));
                 for (Map<String, Object> map : resultList) {
                     level = 1;
                     awardApr = 0.002;
@@ -123,55 +145,73 @@ public class UserBonusScheduler {
                     long redId = assetChangeProvider.getRedpackAccountId();
                     UserThirdAccount redPacketAccount = userThirdAccountService.findByUserId(redId);
                     //请求即信红包
+                    Map<String, String> paramMaps = Maps.newHashMap();
+                    //流水号
+                    String seqNo = RandomUtil.getRandomString(6);
                     VoucherPayRequest voucherPayRequest = new VoucherPayRequest();
                     voucherPayRequest.setAccountId(redPacketAccount.getAccountId());
-                    voucherPayRequest.setTxAmount(StringHelper.formatDouble(bounsAward, 100, false));
+                    //派发金额
+                    String money = StringHelper.formatDouble(bounsAward, 100, false);
+                    voucherPayRequest.setTxAmount(money);
+                    //接受红包账号
                     voucherPayRequest.setForAccountId(userThirdAccount.getAccountId());
                     voucherPayRequest.setDesLineFlag(DesLineFlagContant.TURE);
                     voucherPayRequest.setDesLine("理财师提成");
+                    voucherPayRequest.setSeqNo(seqNo);
                     voucherPayRequest.setChannel(ChannelContant.HTML);
+                    String orgTxDate = DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM);
+                    String orgTxTime = DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_HMS_NUM);
+                    //派发时间
+                    voucherPayRequest.setTxTime(orgTxTime);
+                    voucherPayRequest.setTxDate(orgTxDate);
+                    paramMaps.put("forAccountId", userThirdAccount.getAccountId());
+                    paramMaps.put("orgTxDate", orgTxDate);
+                    paramMaps.put("orgTxTime", orgTxTime);
+                    paramMaps.put("money", money);
                     VoucherPayResponse response = jixinManager.send(JixinTxCodeEnum.SEND_RED_PACKET, voucherPayRequest, VoucherPayResponse.class);
                     if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
                         String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
                         log.error(new Gson().toJson(response));
                         log.error("理财师调度:" + msg);
+                        paramMaps.put("status", "0");
                         continue;
                     }
+                    try {
+                        // 发放理财师奖励
+                        AssetChange redpackPublish = new AssetChange();
+                        redpackPublish.setMoney(bounsAward.longValue());
+                        redpackPublish.setType(AssetChangeTypeEnum.publishCommissions);  //  扣除红包
+                        redpackPublish.setUserId(redId);
+                        redpackPublish.setRemark(String.format("派发理财师提成奖励 %s元", StringHelper.formatDouble(bounsAward.longValue() / 100D, true)));
+                        redpackPublish.setGroupSeqNo(groupSeqNo);
+                        redpackPublish.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
+                        redpackPublish.setForUserId(userId);
+                        redpackPublish.setSourceId(0L);
+                        assetChangeProvider.commonAssetChange(redpackPublish);
+                        // 接收理财师
+                        AssetChange redpackR = new AssetChange();
+                        redpackR.setMoney(bounsAward.longValue());
+                        redpackR.setType(AssetChangeTypeEnum.receiveCommissions);
+                        redpackR.setUserId(userId);
+                        redpackR.setRemark(String.format("接收理财师提成奖励 %s元", StringHelper.formatDouble(bounsAward.longValue() / 100D, true)));
+                        redpackR.setGroupSeqNo(groupSeqNo);
+                        redpackR.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
+                        redpackR.setForUserId(redId);
+                        redpackR.setSourceId(0L);
+                        assetChangeProvider.commonAssetChange(redpackR);
 
-                    // 发放理财师奖励
-                    AssetChange redpackPublish = new AssetChange();
-                    redpackPublish.setMoney(bounsAward.longValue());
-                    redpackPublish.setType(AssetChangeTypeEnum.publishCommissions);  //  扣除红包
-                    redpackPublish.setUserId(redId);
-                    redpackPublish.setRemark(String.format("派发理财师提成奖励 %s元", StringHelper.formatDouble(bounsAward.longValue() / 100D, true)));
-                    redpackPublish.setGroupSeqNo(groupSeqNo);
-                    redpackPublish.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
-                    redpackPublish.setForUserId(userId);
-                    redpackPublish.setSourceId(0L);
-                    assetChangeProvider.commonAssetChange(redpackPublish);
+                        BrokerBouns brokerBouns = new BrokerBouns();
+                        brokerBouns.setUserId((long) NumberHelper.toInt(map.get("user_id")));
+                        brokerBouns.setLevel(level);
+                        brokerBouns.setCreatedAt(new Date());
+                        brokerBouns.setAwardApr((int) MathHelper.myRound(awardApr * 10000, 0));
+                        brokerBouns.setAwardApr(new Double(MoneyHelper.round(awardApr * 100, 0)).intValue());
+                        brokerBouns.setWaitPrincipalTotal(NumberHelper.toLong(map.get("wait_principal_total")));
+                        brokerBouns.setBounsAward(new Double(MoneyHelper.round(bounsAward, 0)).intValue());
+                        brokerBounsService.save(brokerBouns);
+                    } catch (Exception e) {
 
-
-                    // 接收理财师
-                    AssetChange redpackR = new AssetChange();
-                    redpackR.setMoney(bounsAward.longValue());
-                    redpackR.setType(AssetChangeTypeEnum.receiveCommissions);
-                    redpackR.setUserId(userId);
-                    redpackR.setRemark(String.format("接收理财师提成奖励 %s元", StringHelper.formatDouble(bounsAward.longValue() / 100D, true)));
-                    redpackR.setGroupSeqNo(groupSeqNo);
-                    redpackR.setSeqNo(String.format("%s%s%s", response.getTxDate(), response.getTxTime(), response.getSeqNo()));
-                    redpackR.setForUserId(redId);
-                    redpackR.setSourceId(0L);
-                    assetChangeProvider.commonAssetChange(redpackR);
-
-                    BrokerBouns brokerBouns = new BrokerBouns();
-                    brokerBouns.setUserId((long) NumberHelper.toInt(map.get("user_id")));
-                    brokerBouns.setLevel(level);
-                    brokerBouns.setCreatedAt(new Date());
-                    brokerBouns.setAwardApr((int) MathHelper.myRound(awardApr * 10000, 0));
-                    brokerBouns.setAwardApr(new Double(MoneyHelper.round(awardApr * 100, 0)).intValue());
-                    brokerBouns.setWaitPrincipalTotal(NumberHelper.toLong(map.get("wait_principal_total")));
-                    brokerBouns.setBounsAward(new Double(MoneyHelper.round(bounsAward, 0)).intValue());
-                    brokerBounsService.save(brokerBouns);
+                    }
                 }
                 pageIndex++;
             } while (resultList.size() >= 50);
@@ -190,6 +230,39 @@ public class UserBonusScheduler {
         financialScheduler.setDoNum(1);
         financialSchedulerBiz.save(financialScheduler);
     }
+
+
+    /**
+     * 撤销红包
+     * @param sendRedPackageList
+     */
+    private void revocationRedPackage(List<Map<String, String>> sendRedPackageList) {
+        sendRedPackageList.forEach(p -> {
+            //派发的账户
+            String forAccountId = p.get("forAccountId");
+            //原交易时间
+            String orgTxDate = p.get("orgTxDate");
+            String orgTxTime = p.get("orgTxTime");
+            String bounsAward = p.get("bounsAward");
+            String seqNo = p.get("seqNo");
+            //撤销红包
+            VoucherPayCancelRequest voucherPayCancelRequest = new VoucherPayCancelRequest();
+     //       voucherPayCancelRequest.setAccountId(redPacketAccount.getAccountId());
+            voucherPayCancelRequest.setTxAmount(bounsAward);
+            voucherPayCancelRequest.setOrgTxDate(orgTxDate);
+            voucherPayCancelRequest.setOrgTxTime(orgTxTime);
+            voucherPayCancelRequest.setForAccountId(forAccountId);
+            voucherPayCancelRequest.setOrgSeqNo(seqNo);
+            voucherPayCancelRequest.setAcqRes(forAccountId);
+            voucherPayCancelRequest.setChannel(ChannelContant.HTML);
+            VoucherPayCancelResponse result = jixinManager.send(JixinTxCodeEnum.UNSEND_RED_PACKET, voucherPayCancelRequest, VoucherPayCancelResponse.class);
+            if ((ObjectUtils.isEmpty(result)) || (!JixinResultContants.SUCCESS.equals(result.getRetCode()))) {
+                String msg = ObjectUtils.isEmpty(result) ? "当前网络出现异常, 请稍后尝试！" : result.getRetMsg();
+                log.error(msg);
+            }
+        });
+    }
+
 
     /**
      * 天提成

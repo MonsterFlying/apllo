@@ -1,8 +1,10 @@
 package com.gofobao.framework.tender.controller;
 
+import cn.jiguang.common.utils.StringUtils;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.ThymeleafHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
+import com.gofobao.framework.security.helper.JwtTokenHelper;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.vo.request.*;
 import com.gofobao.framework.tender.vo.response.*;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.Map;
 
@@ -25,6 +28,7 @@ import java.util.Map;
 @RequestMapping
 @Api(description = "债权相关控制器")
 @Slf4j
+@SuppressWarnings("all")
 public class TransferController {
 
     @Autowired
@@ -32,6 +36,9 @@ public class TransferController {
 
     @Autowired
     private ThymeleafHelper thymeleafHelper;
+
+    @Autowired
+    private JwtTokenHelper jwtTokenHelper;
 
     /**
      * 查询债权转让购买记录
@@ -165,8 +172,20 @@ public class TransferController {
     @GetMapping("/pub/transfer/v2/transfer/user/list/{pageIndex}/{pageSize}/{transferId}")
     public ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(@PathVariable Long transferId,
                                                                           @PathVariable Integer pageIndex,
-                                                                          @PathVariable Integer pageSize) {
+                                                                          @PathVariable Integer pageSize,
+                                                                          HttpServletRequest request,
+                                                                          HttpServletResponse response) {
         VoTransferUserListReq transferUserListReq = new VoTransferUserListReq();
+        try {
+            String token = jwtTokenHelper.getToken(request, response);
+            if (!StringUtils.isEmpty(token)) {
+                jwtTokenHelper.validateSign(token);
+                Long userId = jwtTokenHelper.getUserIdFromToken(token);  // 用户ID
+                transferUserListReq.setUserId(userId);
+            }
+        } catch (Exception e) {
+            log.info("当前用户未登录");
+        }
         transferUserListReq.setPageSize(pageSize);
         transferUserListReq.setPageIndex(pageIndex);
         transferUserListReq.setTransferId(transferId);
