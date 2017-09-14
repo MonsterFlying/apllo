@@ -152,14 +152,20 @@ public class StatisticBizImpl implements StatisticBiz {
     @Override
     @Transactional
     public boolean caculate(Statistic changeEntity) throws Exception {
-        Preconditions.checkNotNull(changeEntity, "StatisticBizImpl.caculate: changeEntity is empty");
-        log.info(String.format("全站统计增加: %s", GSON.toJson(changeEntity)));
-        Statistic statistic = statisticService.findLast();
-        Preconditions.checkNotNull(statistic, "StatisticBizImpl.caculate: statistic is empty");
-        MultiCaculateHelper.caculate(Statistic.class, statistic, changeEntity);
-        statistic.setUpdatedAt(new Date());
-        statisticService.save(statistic);
-        return true;
+        try{
+            Preconditions.checkNotNull(changeEntity, "StatisticBizImpl.caculate: changeEntity is empty");
+            log.info(String.format("全站统计增加: %s", GSON.toJson(changeEntity)));
+            Statistic statistic = statisticService.findLast();
+            Preconditions.checkNotNull(statistic, "StatisticBizImpl.caculate: statistic is empty");
+            MultiCaculateHelper.caculate(Statistic.class, statistic, changeEntity);
+            statistic.setUpdatedAt(new Date());
+            statisticService.save(statistic);
+            return true;
+        }catch (Exception e){
+            log.error("全站统计添加: ", e);
+            return false;
+        }
+
     }
 
     /**
