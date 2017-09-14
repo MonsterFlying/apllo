@@ -60,11 +60,11 @@ public class WindmillBorrowServiceImpl implements WindmillBorrowService {
                 new Integer(BorrowContants.PENDING),
                 new Integer(BorrowContants.PASS));
         //過濾掉秒标,净值标
-        List typeArray = Lists.newArrayList(//new Integer(BorrowContants.JING_ZHI),
+        List typeArray = Lists.newArrayList(new Integer(BorrowContants.JING_ZHI),
                 new Integer(BorrowContants.MIAO_BIAO));
         StringBuilder sql = new StringBuilder("SELECT b FROM Borrow  AS b WHERE 1=1 ");
         //条件
-        StringBuilder condition = new StringBuilder("AND b.status NOT IN(:statusArray) AND b.type NOT IN (:typeArray) AND b.closeAt IS NULL AND b.tenderId IS NULL AND b.isWindmill=:isWindmill  ");
+        StringBuilder condition = new StringBuilder("AND b.status NOT IN(:statusArray) AND b.type NOT IN (:typeArray) AND b.closeAt IS NULL AND b.tenderId IS NULL  AND b.isWindmill=:isWindmill  ");
         if (!ObjectUtils.isEmpty(borrowId)) {
             condition.append(" AND  b.id=" + borrowId);
         }
