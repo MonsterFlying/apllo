@@ -16,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Range;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.persistence.EntityManager;
@@ -59,7 +60,7 @@ public class WindmillBorrowServiceImpl implements WindmillBorrowService {
                 new Integer(BorrowContants.PENDING),
                 new Integer(BorrowContants.PASS));
         //過濾掉秒标,净值标
-        List typeArray = Lists.newArrayList(new Integer(BorrowContants.JING_ZHI),
+        List typeArray = Lists.newArrayList(//new Integer(BorrowContants.JING_ZHI),
                 new Integer(BorrowContants.MIAO_BIAO));
         StringBuilder sql = new StringBuilder("SELECT b FROM Borrow  AS b WHERE 1=1 ");
         //条件
@@ -67,7 +68,7 @@ public class WindmillBorrowServiceImpl implements WindmillBorrowService {
         if (!ObjectUtils.isEmpty(borrowId)) {
             condition.append(" AND  b.id=" + borrowId);
         }
-        String orderBy=" ORDER BY  FIELD(b.type, 0, 4, 1, 2), b.status ASC,  b.lendRepayStatus ASC, (b.moneyYes / b.money) DESC,  b.id desc ";
+        String orderBy = " ORDER BY  FIELD(b.type, 0, 4, 1, 2), b.status ASC,  b.lendRepayStatus ASC, (b.moneyYes / b.money) DESC,  b.id desc ";
         Query query = entityManager.createQuery(sql.append(condition).append(orderBy).toString(), Borrow.class);
 
         query.setParameter("statusArray", statusArray);
@@ -89,10 +90,10 @@ public class WindmillBorrowServiceImpl implements WindmillBorrowService {
         Date date = DateHelper.stringToDate(someDayReq.getInvest_date(), DateHelper.DATE_FORMAT_YMD);
 
         Specification<Tender> specification = Specifications.<Tender>and()
-                .between("created_at",new Range<>(DateHelper.beginOfDate(date),DateHelper.endOfDate(date)))
-                .eq("status",TenderConstans.SUCCESS)
+                .between("created_at", new Range<>(DateHelper.beginOfDate(date), DateHelper.endOfDate(date)))
+                .eq("status", TenderConstans.SUCCESS)
                 .build();
-       return tenderRepository.findAll(specification,new PageRequest(someDayReq.getLimit(),someDayReq.getLimit())).getContent();
+        return tenderRepository.findAll(specification, new PageRequest(someDayReq.getLimit(), someDayReq.getLimit())).getContent();
     }
 
     /**
@@ -102,9 +103,17 @@ public class WindmillBorrowServiceImpl implements WindmillBorrowService {
      */
     @Override
     public List<Tender> tenderList(Long borrowId, String date) {
-        StringBuilder sql = new StringBuilder("SELECT t FROM Tender t WHERE t.borrowId=:borrowId AND t.status=:status AND t.createdAt>='" + date + "' ORDER BY t.id ASC");
+        //获取当前标是否是净值标
+        Specification<Borrow> specification = Specifications.<Borrow>and()
+                .eq("id", borrowId)
+                .eq("type", BorrowContants.JING_ZHI)
+                .build();
+        Borrow borrow = borrowRepository.findOne(specification);
+        if (!ObjectUtils.isEmpty(borrow)) {
+            return Lists.newArrayList();
+        }
+        StringBuilder sql = new StringBuilder("SELECT t FROM Tender t WHERE t.borrowId=:borrowId AND t.status=:status   AND t.createdAt>='" + date + "' ORDER BY t.id ASC");
         Query query = entityManager.createQuery(sql.toString(), Tender.class);
-        query.setParameter("borrowId", borrowId);
         query.setParameter("status", TenderConstans.SUCCESS);
         return query.getResultList();
     }
