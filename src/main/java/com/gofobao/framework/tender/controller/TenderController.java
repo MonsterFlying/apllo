@@ -48,7 +48,7 @@ public class TenderController {
         TenderUserReq tenderUserReq=new TenderUserReq();
         try {
             String  token = jwtTokenHelper.getToken(request);
-            if (!cn.jiguang.common.utils.StringUtils.isEmpty(token)) {
+            if (!StringUtils.isEmpty(token)) {
                 jwtTokenHelper.validateSign(token);
                 Long userId = jwtTokenHelper.getUserIdFromToken(token);  // 用户ID
                 tenderUserReq.setUserId(userId);

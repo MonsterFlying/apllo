@@ -1198,6 +1198,17 @@ public class TransferBizImpl implements TransferBiz {
         Map<Long, Users> usersMap = usersList.stream().collect(Collectors.toMap(Users::getId, Function.identity()));
         //装配结果集
         List<VoBorrowTenderUserRes> tenderUserResList = Lists.newArrayList();
+        Users sendUser = usersRepository.findById(transferUserListReq.getUserId());
+        //获取当前用户类型
+        String userType = "";
+        if (!ObjectUtils.isEmpty(sendUser)) {
+            userType = sendUser.getType();
+        }
+
+        if (StringUtils.isEmpty(userType)) {
+            userType = "";
+        }
+        String finalUserType = userType;
         transferBuyLogs.forEach(p -> {
             VoBorrowTenderUserRes transfer = new VoBorrowTenderUserRes();
             transfer.setDate(DateHelper.dateToString(p.getCreatedAt()));
@@ -1205,7 +1216,7 @@ public class TransferBizImpl implements TransferBiz {
             transfer.setType(p.getAuto() == true ? "自动" : "手动");
             Users user = usersMap.get(p.getUserId());
             //如果当前用户是管理员或者是投资者本人 用户名可见
-            transfer.setUserName(user.getId().intValue() == transferUserListReq.getUserId() || user.getType().equals("manager")
+            transfer.setUserName(user.getId().intValue() == transferUserListReq.getUserId() || finalUserType.equals("manager")
                     ? user.getPhone()
                     : UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM));
             tenderUserResList.add(transfer);
