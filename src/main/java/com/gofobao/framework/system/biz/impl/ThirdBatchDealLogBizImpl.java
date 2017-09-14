@@ -7,7 +7,9 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
+import com.gofobao.framework.system.entity.ThirdBatchDealLog;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
+import com.gofobao.framework.system.service.ThirdBatchDealLogService;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.system.vo.request.VoFindLendRepayStatusListReq;
 import com.gofobao.framework.system.vo.response.VoFindLendRepayStatus;
@@ -20,10 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -36,6 +35,32 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
     private BorrowService borrowService;
     @Autowired
     private ThirdBatchLogService thirdBatchLogService;
+    @Autowired
+    private ThirdBatchDealLogService thirdBatchDealLogService;
+
+
+    /**
+     * 记录批次执行记录
+     * @param state
+     * @param type
+     * @return
+     */
+    public ThirdBatchDealLog recordThirdBatchDealLog(String batchNo,long sourceId ,int state,boolean status, int type, String errorMsg){
+        ThirdBatchLog thirdBatchLog = thirdBatchLogService.findByBatchNoAndSourceId(batchNo, sourceId);
+        if (ObjectUtils.isEmpty(thirdBatchLog)) {
+            return null;
+        }
+        Date nowDate = new Date();
+        ThirdBatchDealLog thirdBatchDealLog = new ThirdBatchDealLog();
+        thirdBatchDealLog.setBatchId(thirdBatchLog.getId());
+        thirdBatchDealLog.setState(state);
+        thirdBatchDealLog.setStatus(status);
+        thirdBatchDealLog.setType(type);
+        thirdBatchDealLog.setErrorMsg(errorMsg);
+        thirdBatchDealLog.setCreatedAt(nowDate);
+        thirdBatchDealLog.setUpdatedAt(nowDate);
+        return thirdBatchDealLogService.save(thirdBatchDealLog);
+    }
 
     /**
      * 查询放款状态集合
@@ -149,7 +174,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
             voFindLendRepayStatus.setState(0);
             flag = false;
         } else if (thirdBatchLog.getState() == 4 || thirdBatchLog.getState() == 2) { //1.未通过
-            voFindLendRepayStatus.setDateStr(DateHelper.dateToString(borrow.getVerifyAt()));
+            voFindLendRepayStatus.setDateStr(DateHelper.dateToString(thirdBatchLog.getCreateAt()/*  todo */));
             voFindLendRepayStatus.setState(1);
             flag = false;
         } else { // 2.已通过
@@ -165,7 +190,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
             voFindLendRepayStatus.setDateStr("- -");
             voFindLendRepayStatus.setState(0);
         } else if (thirdBatchLog.getState() == 2 || thirdBatchLog.getState() == 4) { //1.未通过
-            voFindLendRepayStatus.setDateStr(DateHelper.dateToString(borrow.getVerifyAt()));
+            voFindLendRepayStatus.setDateStr(DateHelper.dateToString(thirdBatchLog.getUpdateAt()/*  todo */));
             voFindLendRepayStatus.setState(1);
         } else { // 2.已通过
             voFindLendRepayStatus.setState(2);
