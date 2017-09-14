@@ -177,7 +177,7 @@ public class TransferController {
                                                                           HttpServletResponse response) {
         VoTransferUserListReq transferUserListReq = new VoTransferUserListReq();
         try {
-            String token = jwtTokenHelper.getToken(request, response);
+            String token = jwtTokenHelper.getToken(request);
             if (!StringUtils.isEmpty(token)) {
                 jwtTokenHelper.validateSign(token);
                 Long userId = jwtTokenHelper.getUserIdFromToken(token);  // 用户ID
