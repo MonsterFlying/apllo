@@ -20,8 +20,9 @@ public class ThirdBatchDealLog {
     @Id
     @GeneratedValue
     private Long id;
-    private String batchNo;
+    private Long batchId;
     private Integer state;
+    private Boolean status;
     private String errorMsg;
     private Integer type;
     private Date createdAt;

@@ -1,6 +1,7 @@
 package com.gofobao.framework.system.service.impl;
 
 import com.gofobao.framework.system.entity.ThirdBatchDealLog;
+import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.repository.ThirdBatchDealLogRepository;
 import com.gofobao.framework.system.service.ThirdBatchDealLogService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +9,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -19,7 +22,6 @@ public class ThirdBatchDealLogServiceImpl implements ThirdBatchDealLogService {
 
     @Autowired
     private ThirdBatchDealLogRepository thirdBatchDealLogRepository;
-
     public ThirdBatchDealLog findById(long id) {
         return thirdBatchDealLogRepository.findOne(id);
     }

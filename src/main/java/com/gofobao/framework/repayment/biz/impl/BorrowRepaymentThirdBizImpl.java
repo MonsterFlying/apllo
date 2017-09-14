@@ -45,9 +45,13 @@ import com.gofobao.framework.repayment.contants.ThirdDealStatusContrants;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
+import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
+import com.gofobao.framework.system.contants.ThirdBatchDealLogContants;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
+import com.gofobao.framework.system.entity.ThirdBatchDealLog;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
+import com.gofobao.framework.system.service.ThirdBatchDealLogService;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TransferBiz;
 import com.gofobao.framework.tender.entity.Tender;
@@ -101,13 +105,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     @Autowired
     private BorrowService borrowService;
     @Autowired
-    private BorrowBiz borrowBiz;
-    @Autowired
     private JixinHelper jixinHelper;
     @Autowired
     private BorrowCollectionService borrowCollectionService;
-    @Autowired
-    private UserCacheService userCacheService;
     @Autowired
     private ThirdBatchLogService thirdBatchLogService;
     @Autowired
@@ -128,6 +128,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     private BatchAssetChangeService batchAssetChangeService;
     @Autowired
     private BatchAssetChangeItemService batchAssetChangeItemService;
+    @Autowired
+    private ThirdBatchDealLogBiz thirdBatchDealLogBiz;
 
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
@@ -259,7 +261,10 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         thirdBatchLog.setType(ThirdBatchLogContants.BATCH_LEND_REPAY);
         thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
         thirdBatchLog.setRemark("即信批次放款");
-        thirdBatchLogService.save(thirdBatchLog);
+        thirdBatchLog = thirdBatchLogService.save(thirdBatchLog);
+        //记录批次处理日志
+        thirdBatchDealLogBiz.recordThirdBatchDealLog(thirdBatchLog.getBatchNo(), thirdBatchLog.getSourceId(),
+                ThirdBatchDealLogContants.SEND_REQUEST,true, ThirdBatchLogContants.BATCH_LEND_REPAY, "");
 
         //改变批次放款状态 处理中
         borrow.setLendRepayStatus(ThirdDealStatusContrants.DISPOSING);
@@ -368,7 +373,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             long userId = NumberHelper.toLong(acqResMap.get("userId"));
             UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(userId);
             String freezeOrderId = StringHelper.toString(acqResMap.get("freezeOrderId"));
-            String freezeMoney = StringHelper.formatDouble(MoneyHelper.round(NumberHelper.toDouble(acqResMap.get("freezeMoney")),2),false);//元
+            String freezeMoney = StringHelper.formatDouble(MoneyHelper.round(NumberHelper.toDouble(acqResMap.get("freezeMoney")), 2), false);//元
 
             //解除存管资金冻结
             String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);
@@ -486,11 +491,17 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             Borrow borrow = borrowService.findById(borrowId);
             borrow.setLendRepayStatus(ThirdDealStatusContrants.INDISPOSE);
             borrowService.save(borrow);
+            //记录批次处理日志
+            thirdBatchDealLogBiz.recordThirdBatchDealLog(lendRepayCheckResp.getBatchNo(),borrowId, ThirdBatchDealLogContants.PARAM_CHECK,false,
+                    ThirdBatchLogContants.BATCH_LEND_REPAY, lendRepayCheckResp.getRetMsg());
         } else {
             log.info("=============================即信批次放款检验参数回调===========================");
             log.info("回调成功!");
             //更新批次状态
             thirdBatchLogBiz.updateBatchLogState(lendRepayCheckResp.getBatchNo(), borrowId, 1);
+            //记录批次处理日志
+            thirdBatchDealLogBiz.recordThirdBatchDealLog(lendRepayCheckResp.getBatchNo(),borrowId, ThirdBatchDealLogContants.PARAM_CHECK,true,
+                    ThirdBatchLogContants.BATCH_LEND_REPAY, lendRepayCheckResp.getRetMsg());
         }
 
         return ResponseEntity.ok("success");
@@ -799,7 +810,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             long userId = NumberHelper.toLong(acqResMap.get("userId"));
             UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(userId);
             String freezeOrderId = StringHelper.toString(acqResMap.get("freezeOrderId"));
-            String freezeMoney = StringHelper.formatDouble(MoneyHelper.round(NumberHelper.toDouble(acqResMap.get("freezeMoney")),2),false);//元
+            String freezeMoney = StringHelper.formatDouble(MoneyHelper.round(NumberHelper.toDouble(acqResMap.get("freezeMoney")), 2), false);//元
 
             //解除存管资金冻结
             String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);

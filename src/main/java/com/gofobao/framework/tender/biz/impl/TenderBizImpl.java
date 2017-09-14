@@ -115,10 +115,12 @@ public class TenderBizImpl implements TenderBiz {
     public ResponseEntity<VoBaseResp> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception {
         log.info(String.format("马上投资: 起步: %s", new Gson().toJson(voCreateTenderReq)));
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voCreateTenderReq.getUserId());
-        ResponseEntity<VoBaseResp> thirdAccountConditionResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
-        if (!thirdAccountConditionResponse.getStatusCode().equals(HttpStatus.OK)) {
-            return thirdAccountConditionResponse;
+        if (userThirdAccount.getAutoTenderState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoBaseResp.class));
         }
+
 
         Users user = userService.findByIdLock(voCreateTenderReq.getUserId());
         Preconditions.checkNotNull(user, "投标: 用户信息为空!");

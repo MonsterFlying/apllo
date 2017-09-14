@@ -30,7 +30,9 @@ import com.gofobao.framework.repayment.contants.ThirdDealStatusContrants;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
+import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
+import com.gofobao.framework.system.contants.ThirdBatchDealLogContants;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
@@ -106,6 +108,8 @@ public class ThirdBatchProvider {
     private BorrowRepaymentService borrowRepaymentService;
     @Autowired
     BorrowCollectionService borrowCollectionService;
+    @Autowired
+    private ThirdBatchDealLogBiz thirdBatchDealLogBiz;
 
     @Autowired
     AssetChangeProvider assetChangeProvider;
@@ -623,6 +627,9 @@ public class ThirdBatchProvider {
             //更新批次日志状态
             updateThirdBatchLogState(batchNo, borrowId, ThirdBatchLogContants.BATCH_LEND_REPAY, 4);
             borrowService.save(failureBorrowList);
+            //记录批次处理日志
+            thirdBatchDealLogBiz.recordThirdBatchDealLog(batchNo,borrowId, ThirdBatchDealLogContants.PROCESSED,false,
+                    ThirdBatchLogContants.BATCH_LEND_REPAY, String.format("失败lendPayOrderId:%s",GSON.toJson(failureThirdLendPayOrderIds)));
 
             //改变批次放款状态 处理失败
             Borrow borrow = borrowService.findById(borrowId);
@@ -639,7 +646,11 @@ public class ThirdBatchProvider {
                 log.error("标的放款失败！标的id：" + borrowId);
             } else {
                 //更新批次状态
-                thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), borrowId, 3);
+                thirdBatchLogBiz.updateBatchLogState(batchNo, borrowId, 3);
+                //记录批次处理日志
+                thirdBatchDealLogBiz.recordThirdBatchDealLog(batchNo,borrowId, ThirdBatchDealLogContants.PROCESSED,true,
+                        ThirdBatchLogContants.BATCH_LEND_REPAY, "");
+
             }
 
             //改变批次放款状态 处理成功
