@@ -199,7 +199,7 @@ public class StatisticBizImpl implements StatisticBiz {
     public ResponseEntity<VoViewIndexStatisticsWarpRes> query() {
         IndexStatistics indexStatistics = new IndexStatistics();
         try {
-            webArtclesCache.get("web");
+            indexStatistics  = webArtclesCache.get("web");
         } catch (ExecutionException e) {
             log.error("获取缓存失败");
             indexStatistics = new IndexStatistics();
