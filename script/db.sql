@@ -756,3 +756,17 @@ INSERT INTO `gfb_sms_template` (`ALIAS_CODE`, `TEMPLATE`, `IS_DEL`, `IS_ACTIVE`,
 
 ALTER TABLE gfb_borrow ADD `lend_repay_status` int(11) DEFAULT '0' COMMENT '放款即信通信状态 0.未处理 1.处理中 2.处理失败 3.处理成功';
 ALTER TABLE gfb_borrow_repayment ADD   `repay_status` int(11) DEFAULT '0' COMMENT '还款即信通信状态 0.未处理 1.处理中 2.处理失败 3.处理成功';
+
+
+CREATE TABLE `gfb_third_batch_deal_log` (
+  `id` int(11) NOT NULL,
+  `batch_id` int(11) DEFAULT NULL COMMENT '批次号',
+  `state` int(11) DEFAULT '0' COMMENT '0待处理 1.未通过 2.已通过',
+  `error_msg` varchar(2048) DEFAULT NULL COMMENT '错误信息',
+  `status` int(11) DEFAULT '1' COMMENT '状态：0.失败 1.成功',
+  `type` int(11) DEFAULT NULL COMMENT '1.投资人批次购买债权 2.即信批次放款 3.批次即信批次还款 4.批次担保人垫付 5.批次融资人还担保账户垫款 6.批次结束投资人债权 7.提前结清批次还款',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+

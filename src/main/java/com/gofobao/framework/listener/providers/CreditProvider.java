@@ -81,6 +81,17 @@ public class CreditProvider {
         Preconditions.checkNotNull(borrow, "creditProvider endThirdCredit: 借款不能为空!");
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
         Preconditions.checkNotNull(userThirdAccount, "creditProvider endThirdCredit: 借款人未开户!");
+        //查询是否存在进行中的结束债权
+        Specification<ThirdBatchLog> tbls = Specifications
+                .<ThirdBatchLog>and()
+                .eq("type", ThirdBatchLogContants.BATCH_CREDIT_END)
+                .in("state", 0, 1)
+                .eq("sourceId", borrowId)
+                .build();
+        List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls);
+        if (!CollectionUtils.isEmpty(thirdBatchLogList)) {
+            log.info(String.format("结束债权正在处理中，third_batch:%s", gson.toJson(thirdBatchLogList.get(0))));
+        }
         //构建结束债权集合
         List<CreditEnd> creditEndList = new ArrayList<>();
         if (tag.equals(MqTagEnum.END_CREDIT.getValue())) {  // 结束债权by非转让标

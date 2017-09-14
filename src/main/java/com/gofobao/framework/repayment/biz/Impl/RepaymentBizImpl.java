@@ -999,7 +999,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
             List<BorrowCollection> borrowCollections = borrowCollrctionMaps.get(userId);/* 当前用户的所有回款 */
             Users users = userMaps.get(userId);//投资人会员记录
             long principal = borrowCollections.stream().mapToLong(BorrowCollection::getPrincipal).sum(); /* 当前用户的所有回款本金 */
-            long interest = borrowCollections.stream().mapToLong(BorrowCollection::getInterest).sum();/* 当前用户的所有回款本金 */
+            long collectionMoneyYes = borrowCollections.stream().mapToLong(BorrowCollection::getCollectionMoneyYes).sum();/* 当前用户的所有回款本金 */
+            long interest = collectionMoneyYes - principal;/* 当前用户的所有回款本金 */
             String phone = users.getPhone();/* 投资人手机号 */
             String name = "";
             if (ObjectUtils.isEmpty(phone)) {
@@ -1121,11 +1122,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
         //迭代投标人记录
         borrowCollectionList.stream().forEach(borrowCollection -> {
-            long actualInterest = borrowCollection.getCollectionMoneyYes() - borrowCollection.getPrincipal();/* 实收利息 */
-            String noticeContent = String.format("客户在%s已将借款[%s]第%s期还款,还款金额为%s元", DateHelper.dateToString(new Date(), "yyyy-MM-dd HH:mm:ss"), parentBorrow.getName(), (borrowCollection.getOrder() + 1), StringHelper.formatDouble(actualInterest, 100, true));
+/*            long actualInterest = borrowCollection.getCollectionMoneyYes() - borrowCollection.getPrincipal();*//* 实收利息 */
+            String noticeContent = String.format("客户在%s已将借款[%s]第%s期还款,还款金额为%s元", DateHelper.dateToString(new Date(), "yyyy-MM-dd HH:mm:ss"), parentBorrow.getName(), (borrowCollection.getOrder() + 1), StringHelper.formatDouble(borrowCollection.getCollectionMoneyYes(), 100, true));
             if (advance) {
                 noticeContent = "广富宝在" + DateHelper.dateToString(new Date(), "yyyy-MM-dd HH:mm:ss") + " 已将借款[" + parentBorrow.getName() +
-                        "]第" + (borrowCollection.getOrder() + 1) + "期垫付还款,垫付金额为" + StringHelper.formatDouble(actualInterest, 100, true) + "元";
+                        "]第" + (borrowCollection.getOrder() + 1) + "期垫付还款,垫付金额为" + StringHelper.formatDouble(borrowCollection.getCollectionMoneyYes(), 100, true) + "元";
             }
 
             Notices notices = new Notices();
