@@ -740,9 +740,10 @@ public class TransferBizImpl implements TransferBiz {
         int autoOrder = voBuyTransfer.getAutoOrder(); /* 自动投标order编号 */
 
         UserThirdAccount buyUserThirdAccount = userThirdAccountService.findByUserId(userId);/*购买人存管信息*/
-        ResponseEntity<VoBaseResp> resp = ThirdAccountHelper.allConditionCheck(buyUserThirdAccount);
-        if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
-            return resp;
+        if (buyUserThirdAccount.getAutoTransferState() != 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动债权转让协议！", VoBaseResp.class));
         }
         Transfer transfer = transferService.findByIdLock(transferId);/*债权转让记录*/
         Preconditions.checkNotNull(transfer, "债权转让记录不存在!");
@@ -1610,7 +1611,7 @@ public class TransferBizImpl implements TransferBiz {
             borrowInfoRes.setTenderCount(transfer.getTenderCount() + com.gofobao.framework.borrow.contants.BorrowContants.TIME);
         }
 
-        borrowInfoRes.setSpend(StringHelper.formatMon(NumberHelper.floorDouble(transfer.getTransferMoneyYes()/transfer.getTransferMoney().doubleValue(),2)*100));
+        borrowInfoRes.setSpend(StringHelper.formatMon(NumberHelper.floorDouble(transfer.getTransferMoneyYes() / transfer.getTransferMoney().doubleValue(), 2) * 100));
         borrowInfoRes.setMoney(StringHelper.formatMon(transfer.getTransferMoney() / 100d));
         borrowInfoRes.setRepayFashion(borrow.getRepayFashion());
 

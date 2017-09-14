@@ -68,10 +68,9 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
             }
         }
         //不存在已完成批次，继续获取批次处理记录 0待处理 1.未通过 2.已通过
-        boolean flag = false;
         List<VoFindLendRepayStatus> voFindLendRepayStatusList = new ArrayList<>();
         //填充放款状态数据
-        fillFindLendRepayStatusData(borrow, thirdBatchLog, flag, voFindLendRepayStatusList);
+        fillFindLendRepayStatusData(borrow, thirdBatchLog, voFindLendRepayStatusList);
 
         //修改参数
         repayStatusListRes.setVoFindLendRepayStatusList(voFindLendRepayStatusList);
@@ -83,10 +82,10 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
      *
      * @param borrow
      * @param thirdBatchLog
-     * @param flag
      * @param voFindLendRepayStatusList
      */
-    public void fillFindLendRepayStatusData(Borrow borrow, ThirdBatchLog thirdBatchLog, boolean flag, List<VoFindLendRepayStatus> voFindLendRepayStatusList) {
+    public void fillFindLendRepayStatusData(Borrow borrow, ThirdBatchLog thirdBatchLog, List<VoFindLendRepayStatus> voFindLendRepayStatusList) {
+        boolean flag = false;
         //第一步
         VoFindLendRepayStatus voFindLendRepayStatus = new VoFindLendRepayStatus();
         voFindLendRepayStatus.setName(ThirdBatchLogContants.BORROW_FIRST_STEP);
@@ -103,20 +102,22 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
         }
         voFindLendRepayStatusList.add(voFindLendRepayStatus);
         //第二步
-        Set<Integer> borrowType = new HashSet<Integer>() {
+        Set<Integer> borrowStatus = new HashSet<Integer>() {
         };
-        borrowType.add(2);
-        borrowType.add(4);
-        borrowType.add(5);
-        borrowType.add(6);
+        borrowStatus.add(2);
+        borrowStatus.add(4);
+        borrowStatus.add(5);
+        borrowStatus.add(6);
         voFindLendRepayStatus = new VoFindLendRepayStatus();
         voFindLendRepayStatus.setName(ThirdBatchLogContants.BORROW_SECOND_STEP);
-        if (flag) { // 0待处理
+        if (!flag || borrow.getStatus().intValue() == 1) { // 0待处理
             voFindLendRepayStatus.setDateStr("- -");
             voFindLendRepayStatus.setState(0);
-        } else if (borrowType.contains(borrow.getStatus().intValue())) { //1.未通过
+            flag = false;
+        } else if (borrowStatus.contains(borrow.getStatus().intValue())) { //1.未通过
             voFindLendRepayStatus.setDateStr(DateHelper.dateToString(borrow.getVerifyAt()));
             voFindLendRepayStatus.setState(1);
+            flag = false;
         } else if (borrow.getMoneyYes().intValue() >= borrow.getMoney().intValue() && !ObjectUtils.isEmpty(borrow.getSuccessAt())) { // 2.已通过
             flag = true;
             voFindLendRepayStatus.setState(2);
@@ -126,12 +127,14 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
         //第三步
         voFindLendRepayStatus = new VoFindLendRepayStatus();
         voFindLendRepayStatus.setName(ThirdBatchLogContants.BORROW_THIRD_STEP);
-        if (flag || ObjectUtils.isEmpty(thirdBatchLog)) { // 0待处理
+        if (!flag || ObjectUtils.isEmpty(thirdBatchLog)) { // 0待处理
             voFindLendRepayStatus.setDateStr("- -");
             voFindLendRepayStatus.setState(0);
+            flag = false;
         } else if (thirdBatchLog.getState() == 2 || thirdBatchLog.getState() == 4) { //1.未通过
             voFindLendRepayStatus.setDateStr(DateHelper.dateToString(borrow.getVerifyAt()));
             voFindLendRepayStatus.setState(1);
+            flag = false;
         } else { // 2.已通过
             flag = true;
             voFindLendRepayStatus.setState(2);
@@ -141,12 +144,14 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
         //第四步
         voFindLendRepayStatus = new VoFindLendRepayStatus();
         voFindLendRepayStatus.setName(ThirdBatchLogContants.BORROW_FOUR_STEP);
-        if (flag || thirdBatchLog.getState() != 3) { // 0待处理
+        if (!flag || thirdBatchLog.getState() != 3) { // 0待处理
             voFindLendRepayStatus.setDateStr("- -");
             voFindLendRepayStatus.setState(0);
+            flag = false;
         } else if (thirdBatchLog.getState() == 4 || thirdBatchLog.getState() == 2) { //1.未通过
             voFindLendRepayStatus.setDateStr(DateHelper.dateToString(borrow.getVerifyAt()));
             voFindLendRepayStatus.setState(1);
+            flag = false;
         } else { // 2.已通过
             flag = true;
             voFindLendRepayStatus.setState(2);
@@ -156,7 +161,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
         //第五步
         voFindLendRepayStatus = new VoFindLendRepayStatus();
         voFindLendRepayStatus.setName(ThirdBatchLogContants.BORROW_FIVE_STEP);
-        if (flag || thirdBatchLog.getState() != 3) { // 0待处理
+        if (!flag || thirdBatchLog.getState() != 3) { // 0待处理
             voFindLendRepayStatus.setDateStr("- -");
             voFindLendRepayStatus.setState(0);
         } else if (thirdBatchLog.getState() == 2 || thirdBatchLog.getState() == 4) { //1.未通过
