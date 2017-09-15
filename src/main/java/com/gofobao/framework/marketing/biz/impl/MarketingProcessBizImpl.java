@@ -249,7 +249,7 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                         // tempMoney = validMoney * (timeLimit / 12D) * rule.getApr();
                         // money = tempMoney.longValue();
                         double principal = tender.getValidMoney() ; // 投标金额
-                        double apr = rule.getApr() * 100 ;  // 年化收益
+                        double apr = rule.getApr() * 100 * 100 ;  // 年化收益
                         BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(principal, apr, borrow.getTimeLimit(),  nowDate );
                         Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
                         money = NumberHelper.toInt(calculatorMap.get("earnings"));  // 红包派发领取收益
