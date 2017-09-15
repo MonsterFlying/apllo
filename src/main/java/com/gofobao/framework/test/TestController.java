@@ -24,11 +24,7 @@ import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
-import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
-import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
-import com.gofobao.framework.common.rabbitmq.MqTagEnum;
-import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -38,7 +34,6 @@ import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.AutoTenderBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.swagger.annotations.Api;
@@ -57,7 +52,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -89,8 +83,7 @@ public class TestController {
     @Autowired
     MqHelper mqHelper;
     final Gson GSON = new GsonBuilder().create();
-   /*
-    @Autowired
+ /*   @Autowired
     private ThirdBatchDealBiz thirdBatchDealBiz;*/
 
 
@@ -110,9 +103,8 @@ public class TestController {
         if (CollectionUtils.isEmpty(thirdBatchLogList)) {
             return;
         }
-/*
 
-        try {
+       /* try {
             //批次执行问题
             thirdBatchDealBiz.batchDeal(NumberHelper.toLong(sourceId), StringHelper.toString(batchNo),
                     thirdBatchLogList.get(0).getAcqRes(), "");
@@ -120,8 +112,7 @@ public class TestController {
             log.error("批次执行异常:", e);
         }
 */
-
-        ThirdBatchLog thirdBatchLog = thirdBatchLogList.get(0);
+        /*ThirdBatchLog thirdBatchLog = thirdBatchLogList.get(0);
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
@@ -138,7 +129,7 @@ public class TestController {
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("tenderThirdBizImpl thirdBatchRepayAllRunCall send mq exception", e);
-        }
+        }*/
     }
 
    /* @Transactional(rollbackFor = Exception.class)
@@ -267,6 +258,7 @@ public class TestController {
         System.out.println(val);
         System.out.println(BooleanUtils.toBoolean(12));
     }
+/*
 
     @ApiOperation("解除冻结")
     @RequestMapping("/pub/cancelFreeze")
@@ -288,6 +280,7 @@ public class TestController {
             e.printStackTrace();
         }
     }
+*/
 
     @ApiOperation("冻结查询")
     @RequestMapping("/pub/freeze/find")
@@ -296,7 +289,7 @@ public class TestController {
                            @RequestParam("endDate") Object endDate){
         FreezeDetailsQueryRequest freezeDetailsQueryRequest = new FreezeDetailsQueryRequest();
         freezeDetailsQueryRequest.setChannel(ChannelContant.HTML);
-        freezeDetailsQueryRequest.setState("1");
+        freezeDetailsQueryRequest.setState("0");
         freezeDetailsQueryRequest.setStartDate(String.valueOf(startDate));
         freezeDetailsQueryRequest.setEndDate(String.valueOf(endDate));
         freezeDetailsQueryRequest.setPageNum("1");
