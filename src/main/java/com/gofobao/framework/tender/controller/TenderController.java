@@ -45,17 +45,18 @@ public class TenderController {
                                                                               @PathVariable Long borrowId,
                                                                               HttpServletRequest request,
                                                                               HttpServletResponse response) {
-        TenderUserReq borrowTenderList = new TenderUserReq();
+        TenderUserReq tenderUserReq=new TenderUserReq();
         try {
-          String  token = jwtTokenHelper.getToken(request, response);
+            String  token = jwtTokenHelper.getToken(request);
             if (!StringUtils.isEmpty(token)) {
                 jwtTokenHelper.validateSign(token);
                 Long userId = jwtTokenHelper.getUserIdFromToken(token);  // 用户ID
-                borrowTenderList.setUserId(userId);
+                tenderUserReq.setUserId(userId);
             }
         } catch (Exception e) {
             log.info("当前用户未登录");
         }
+        TenderUserReq borrowTenderList = new TenderUserReq();
         borrowTenderList.setPageSize(pageSize);
         borrowTenderList.setPageIndex(pageIndex);
         borrowTenderList.setBorrowId(borrowId);

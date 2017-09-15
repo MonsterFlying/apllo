@@ -96,6 +96,21 @@ public class WebLendController {
     }
 
     /**
+     * 结束有草出借
+     *
+     * @param voEndLend
+     * @return
+     */
+    @PostMapping(value = "lend/pc/v2/end")
+    @ApiOperation("结束有草出借")
+    public ResponseEntity<VoBaseResp> end(@ModelAttribute @Valid VoEndLend voEndLend,
+                                          @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        voEndLend.setUserId(userId);
+        return lendBiz.end(voEndLend);
+    }
+
+
+    /**
      * 添加有草出借黑名单
      *
      * @param voAddLendBlacklist

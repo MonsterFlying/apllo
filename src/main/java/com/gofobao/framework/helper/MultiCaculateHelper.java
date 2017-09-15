@@ -31,29 +31,21 @@ public class MultiCaculateHelper {
                 writeMethod =  pd.getWriteMethod();
                 typeName = field.getGenericType().getTypeName();
                 if(typeName.equals(Long.class.getTypeName())){
-                    log.info(String.format("全局添加[ fieldName:%s ]", fieldName ));
                     longChangeValue = (Long) ClassHelper.getValueByRefler(clazz, change, fieldName);
-                    log.info(String.format("全局添加[ fieldName: %s,changeValue: %s]", fieldName, longChangeValue));
                     if(ObjectUtils.isEmpty(longChangeValue)){
                         continue;
                     }
                     longDbValue = (Long) readMethod.invoke(org);
-                    log.info(String.format("全局添加[ fieldName: %s,changeValue: %s, DbchangeValue: %s]", fieldName, longChangeValue, longDbValue));
                     longDbValue = longDbValue == null ? 0 : longDbValue ;
                     writeMethod.invoke(org, longDbValue + longChangeValue) ;
-                    log.info(String.format("全局添加[ fieldName: %s,changeValue: %s, DbchangeValue: %s, resultValue: %s]", fieldName, longChangeValue, longDbValue, longDbValue + longChangeValue ));
                 }else if(typeName.equals(Integer.class.getTypeName())){
-                    log.info(String.format("全局添加[ fieldName:%s ]", fieldName ));
                     intChangeValue = (Integer) ClassHelper.getValueByRefler(clazz, change, fieldName);
-                    log.info(String.format("全局添加[ fieldName: %s,changeValue: %s]", fieldName, intChangeValue));
                     if(ObjectUtils.isEmpty(intChangeValue)){
                         continue;
                     }
                     intDbValue = (Integer) readMethod.invoke(org);
-                    log.info(String.format("全局添加[ fieldName: %s,changeValue: %s, DbchangeValue: %s]", fieldName, intChangeValue, intDbValue));
                     intDbValue = intDbValue == null ? 0 : intDbValue ;
                     writeMethod.invoke(org, intDbValue + intChangeValue) ;
-                    log.info(String.format("全局添加[ fieldName: %s,changeValue: %s, DbchangeValue: %s, resultValue: %s]", fieldName, intChangeValue, intDbValue, intDbValue + intChangeValue));
                 }
             }
     }

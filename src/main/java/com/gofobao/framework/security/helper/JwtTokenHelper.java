@@ -3,6 +3,7 @@ package com.gofobao.framework.security.helper;
 import com.gofobao.framework.helper.IpHelper;
 import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.member.entity.Users;
+import com.gofobao.framework.security.exception.LoginException;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import io.jsonwebtoken.Claims;
@@ -208,7 +209,7 @@ public class JwtTokenHelper implements Serializable {
         return refreshedToken;
     }
 
-    public String getToken(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws Exception {
+    public String getToken(HttpServletRequest httpServletRequest) throws Exception {
         //从头部中获取token
         String authToken = httpServletRequest.getHeader(this.tokenHeader);
         if (!StringUtils.isEmpty(authToken) && (authToken.contains(prefix))) {
@@ -220,18 +221,6 @@ public class JwtTokenHelper implements Serializable {
                 return requestToken.substring(7);
             }
         }
-        //该用户没有登录非法访问
-        httpServletResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-        httpServletResponse.setCharacterEncoding("utf-8");
-        httpServletResponse.setContentType("text/html; charset=utf-8");
-        PrintWriter pw = httpServletResponse.getWriter();
-        Map<String, Object> resultMap = Maps.newHashMap();
-        Map<String, Object> result = Maps.newHashMap();
-        resultMap.put("code", 5);
-        resultMap.put("msg", "用户未登录");
-        result.put("state", resultMap);
-        pw.write(new Gson().toJson(result));
-        log.info("记录非法访问ip:" + IpHelper.getIpAddress(httpServletRequest));
         return null;
     }
 
@@ -240,12 +229,12 @@ public class JwtTokenHelper implements Serializable {
         Long userId = getUserIdFromToken(authToken);
         String redisToken = redisHelper.get(String.format("JWT_TOKEN_%s", userId), null);
         if (StringUtils.isEmpty(redisToken)) {
-            throw new Exception("当前账号登录信息已失效,请重新登录!");
+            throw new LoginException("当前账号登录信息已失效,请重新登录!");
         }
 
         if (!redisToken.equals(authToken)) {
             String audienceFromToken = getAudienceFromToken(redisToken);
-            throw new Exception(String.format("当前账号已在%s登录, 请重新登录!", audienceFromToken));
+            throw new LoginException(String.format("当前账号已在%s登录, 请重新登录!", audienceFromToken));
         }
     }
 }

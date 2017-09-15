@@ -79,6 +79,18 @@ public class TenderServiceImpl implements TenderService {
         if (CollectionUtils.isEmpty(tenderList)) {
             return Collections.EMPTY_LIST;
         }
+        Users sendUser = usersRepository.findById(tenderUserReq.getUserId());
+        //获取当前用户类型
+        String userType = "";
+        if (!ObjectUtils.isEmpty(sendUser)) {
+            userType = sendUser.getType();
+        }
+
+        if (StringUtils.isEmpty(userType)) {
+            userType = "";
+        }
+
+        String finalUserType = userType;
         tenderList.stream().forEach(item -> {
             VoBorrowTenderUserRes tenderUserRes = new VoBorrowTenderUserRes();
             tenderUserRes.setValidMoney(StringHelper.formatMon(item.getValidMoney() / 100d) + MoneyConstans.RMB);
@@ -86,7 +98,7 @@ public class TenderServiceImpl implements TenderService {
             tenderUserRes.setType(item.getIsAuto() ? TenderConstans.AUTO + "(" + item.getAutoOrder() + ")" : TenderConstans.MANUAL);
             Users user = usersRepository.findOne(new Long(item.getUserId()));
             //如果当前用户是管理员或者本人 用户名可见
-            tenderUserRes.setUserName(user.getId().equals(tenderUserReq.getUserId()) || user.getType().equals("manager")
+            tenderUserRes.setUserName((user.getId().equals(tenderUserReq.getUserId()) || finalUserType.equals("manager"))
                     ? user.getPhone()
                     : UserHelper.hideChar(user.getPhone(), UserHelper.PHONE_NUM)
             );
