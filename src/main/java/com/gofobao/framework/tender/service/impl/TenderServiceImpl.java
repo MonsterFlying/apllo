@@ -12,6 +12,7 @@ import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
+import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.repository.TenderRepository;
@@ -48,6 +49,9 @@ public class TenderServiceImpl implements TenderService {
 
     @Autowired
     private UsersRepository usersRepository;
+    @Autowired
+    private UserService userService;
+
 
 
     /**
@@ -81,7 +85,7 @@ public class TenderServiceImpl implements TenderService {
         if (CollectionUtils.isEmpty(tenderList)) {
             return Collections.EMPTY_LIST;
         }
-        Users sendUser = usersRepository.findById(tenderUserReq.getUserId());
+        Users sendUser = usersRepository.findOne(tenderUserReq.getUserId());
         //获取当前用户类型
         String userType = "";
         if (!ObjectUtils.isEmpty(sendUser)) {

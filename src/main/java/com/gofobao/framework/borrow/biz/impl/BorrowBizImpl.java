@@ -548,7 +548,7 @@ public class BorrowBizImpl implements BorrowBiz {
         List<Borrow> borrows = borrowService.findList(specification);
         if (!CollectionUtils.isEmpty(borrows)) {
             for (Borrow borrow : borrows) {
-                if ((borrow.getMoneyYes() / borrow.getMoney()) < 1) {
+                if ((borrow.getMoneyYes() / borrow.getMoney()) !=1) {
                     log.info("新增借款：您已经有一个进行中的借款标。");
                     return ResponseEntity
                             .badRequest()
