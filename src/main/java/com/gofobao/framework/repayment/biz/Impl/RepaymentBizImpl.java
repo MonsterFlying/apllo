@@ -37,6 +37,7 @@ import com.gofobao.framework.collection.vo.request.VoCollectionOrderReq;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionDaysWarpRes;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderListWarpResp;
 import com.gofobao.framework.collection.vo.response.VoViewCollectionOrderRes;
+import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
@@ -987,55 +988,66 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param borrowRepayment
      */
     private void smsNoticeByReceivedRepay(List<BorrowCollection> borrowCollectionList, Borrow parentBorrow, BorrowRepayment borrowRepayment) {
-        Set<Long> userIds = borrowCollectionList.stream().map(borrowCollection -> borrowCollection.getUserId()).collect(toSet());/* 回款用户id */
-        Map<Long /* 投资会员id */, List<BorrowCollection>> borrowCollrctionMaps = borrowCollectionList.stream().collect(groupingBy(BorrowCollection::getUserId)); /* 回款记录集合 */
-        Specification<Users> us = Specifications
-                .<Users>and()
-                .in("id", userIds.toArray())
-                .build();
-        List<Users> usersList = userService.findList(us);/* 回款用户缓存记录列表 */
-        Map<Long /* 投资会员id */, Users> userMaps = usersList.stream().collect(Collectors.toMap(Users::getId, Function.identity()));/* 回款用户记录列表*/
-        userIds.stream().forEach(userId -> {
-            List<BorrowCollection> borrowCollections = borrowCollrctionMaps.get(userId);/* 当前用户的所有回款 */
-            Users users = userMaps.get(userId);//投资人会员记录
-            long principal = borrowCollections.stream().mapToLong(BorrowCollection::getPrincipal).sum(); /* 当前用户的所有回款本金 */
-            long collectionMoneyYes = borrowCollections.stream().mapToLong(BorrowCollection::getCollectionMoneyYes).sum();/* 当前用户的所有回款本金 */
-            long interest = collectionMoneyYes - principal;/* 当前用户的所有回款本金 */
-            String phone = users.getPhone();/* 投资人手机号 */
-            String name = "";
-            if (ObjectUtils.isEmpty(phone)) {
-                MqConfig config = new MqConfig();
-                config.setQueue(MqQueueEnum.RABBITMQ_SMS);
-                config.setTag(MqTagEnum.SMS_RECEIVED_REPAY);
-                switch (parentBorrow.getType()) {
-                    case BorrowContants.CE_DAI:
-                        name = "车贷标";
-                        break;
-                    case BorrowContants.JING_ZHI:
-                        name = "净值标";
-                        break;
-                    case BorrowContants.QU_DAO:
-                        name = "渠道标";
-                        break;
-                    default:
-                        name = "投标还款";
-                }
-                Map<String, String> body = new HashMap<>();
-                body.put(MqConfig.PHONE, phone);
-                body.put(MqConfig.IP, "127.0.0.1");
-                body.put(MqConfig.MSG_ID, StringHelper.toString(parentBorrow.getId()));
-                body.put(MqConfig.MSG_NAME, name);
-                body.put(MqConfig.MSG_ORDER, StringHelper.toString(borrowRepayment.getOrder() + 1));
-                body.put(MqConfig.MSG_MONEY, StringHelper.formatDouble(principal, 100, true));
-                body.put(MqConfig.MSG_INTEREST, StringHelper.formatDouble(interest, 100, true));
-                config.setMsg(body);
-
-                boolean state = mqHelper.convertAndSend(config);
-                if (!state) {
-                    log.error(String.format("发送投资人收到还款短信失败:%s", config));
-                }
+        try{
+            Set<Long> userIds = borrowCollectionList.stream().map(borrowCollection -> borrowCollection.getUserId()).collect(Collectors.toSet()); /* 回款用户id */
+            if (CollectionUtils.isEmpty(userIds)) {
+                log.info("回款短信用户为空");
+                return;
             }
-        });
+
+            Map<Long /* 投资会员id */, List<BorrowCollection>> borrowCollrctionMaps = borrowCollectionList.stream().collect(groupingBy(BorrowCollection::getUserId)); /* 回款记录集合 */
+            Specification<Users> us = Specifications
+                    .<Users>and()
+                    .in("id", userIds.toArray())
+                    .build();
+
+            List<Users> usersList = userService.findList(us);/* 回款用户缓存记录列表 */
+            Map<Long /* 投资会员id */, Users> userMaps = usersList.stream().collect(Collectors.toMap(Users::getId, Function.identity()));/* 回款用户记录列表*/
+            userIds.stream().forEach(userId -> {
+                List<BorrowCollection> borrowCollections = borrowCollrctionMaps.get(userId);/* 当前用户的所有回款 */
+                Users users = userMaps.get(userId);//投资人会员记录
+                long principal = borrowCollections.stream().mapToLong(BorrowCollection::getPrincipal).sum(); /* 当前用户的所有回款本金 */
+                long collectionMoneyYes = borrowCollections.stream().mapToLong(BorrowCollection::getCollectionMoneyYes).sum();/* 当前用户的所有回款本金 */
+                long interest = collectionMoneyYes - principal;/* 当前用户的所有回款本金 */
+                String phone = users.getPhone();/* 投资人手机号 */
+                String name = "";
+                if (ObjectUtils.isEmpty(phone)) {
+                    MqConfig config = new MqConfig();
+                    config.setQueue(MqQueueEnum.RABBITMQ_SMS);
+                    config.setTag(MqTagEnum.SMS_RECEIVED_REPAY);
+                    switch (parentBorrow.getType()) {
+                        case BorrowContants.CE_DAI:
+                            name = "车贷标";
+                            break;
+                        case BorrowContants.JING_ZHI:
+                            name = "净值标";
+                            break;
+                        case BorrowContants.QU_DAO:
+                            name = "渠道标";
+                            break;
+                        default:
+                            name = "投标还款";
+                    }
+                    Map<String, String> body = new HashMap<>();
+                    body.put(MqConfig.PHONE, phone);
+                    body.put(MqConfig.IP, "127.0.0.1");
+                    body.put(MqConfig.MSG_ID, StringHelper.toString(parentBorrow.getId()));
+                    body.put(MqConfig.MSG_NAME, name);
+                    body.put(MqConfig.MSG_ORDER, StringHelper.toString(borrowRepayment.getOrder() + 1));
+                    body.put(MqConfig.MSG_MONEY, StringHelper.formatDouble(principal, 100, true));
+                    body.put(MqConfig.MSG_INTEREST, StringHelper.formatDouble(interest, 100, true));
+                    config.setMsg(body);
+
+                    boolean state = mqHelper.convertAndSend(config);
+                    if (!state) {
+                        log.error(String.format("发送投资人收到还款短信失败:%s", config));
+                    }
+                }
+            });
+        }catch (Exception e){
+            log.error("回款发送短信失败", e);
+        }
+
     }
 
     /**

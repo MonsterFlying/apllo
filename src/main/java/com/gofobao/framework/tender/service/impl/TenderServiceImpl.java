@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -56,6 +57,7 @@ public class TenderServiceImpl implements TenderService {
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<VoBorrowTenderUserRes> findBorrowTenderUser(TenderUserReq tenderUserReq) {
         Long borrowId = tenderUserReq.getBorrowId();
         Borrow borrow = borrowRepository.findOne(borrowId);
