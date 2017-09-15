@@ -613,6 +613,7 @@ public class ThirdBatchProvider {
                     assetChange.setType(AssetChangeTypeEnum.unfreeze);
                     assetChange.setUserId(tender.getUserId());
                     assetChange.setForUserId(tender.getUserId());
+                    assetChangeProvider.commonAssetChange(assetChange);
                 }
                 tenderService.save(tenders);
 

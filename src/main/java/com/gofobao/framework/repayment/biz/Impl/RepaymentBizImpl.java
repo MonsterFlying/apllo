@@ -989,11 +989,27 @@ public class RepaymentBizImpl implements RepaymentBiz {
      */
     private void smsNoticeByReceivedRepay(List<BorrowCollection> borrowCollectionList, Borrow parentBorrow, BorrowRepayment borrowRepayment) {
         try{
-            Set<Long> userIds = borrowCollectionList.stream().map(borrowCollection -> borrowCollection.getUserId()).collect(Collectors.toSet()); /* 回款用户id */
-            if (CollectionUtils.isEmpty(userIds)) {
-                log.info("回款短信用户为空");
+            Set<Long> tenderIds = borrowCollectionList.stream().map(borrowCollection -> borrowCollection.getTenderId()).collect(Collectors.toSet()); /* 回款用户id */
+            if (CollectionUtils.isEmpty(tenderIds)) {
+                log.error("回款投标记录ID为空");
                 return;
             }
+
+            Specification<Tender> tenderSpecification = Specifications.
+                    <Tender>and()
+                    .in("id", tenderIds.toArray())
+                    .build() ;
+            List<Tender> tenderList = tenderService.findList(tenderSpecification);
+            if(CollectionUtils.isEmpty(tenderList)){
+                log.error("回款投标记录为空");
+                return;
+            }
+            Set<Long> userIds = tenderList.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet()); /* 回款用户id */
+            if(CollectionUtils.isEmpty(userIds)){
+                log.error("回款用户ID为空");
+                return;
+            }
+
 
             Map<Long /* 投资会员id */, List<BorrowCollection>> borrowCollrctionMaps = borrowCollectionList.stream().collect(groupingBy(BorrowCollection::getUserId)); /* 回款记录集合 */
             Specification<Users> us = Specifications
@@ -1057,8 +1073,24 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param parentBorrow
      */
     private void updateUserCacheByReceivedRepay(List<BorrowCollection> borrowCollectionList, Borrow parentBorrow) {
-        Set<Long> userIds = borrowCollectionList.stream().map(borrowCollection -> borrowCollection.getUserId()).collect(toSet());/* 回款用户id */
-        if (CollectionUtils.isEmpty(userIds)) {
+        Set<Long> tenderIds = borrowCollectionList.stream().map(borrowCollection -> borrowCollection.getTenderId()).collect(Collectors.toSet()); /* 回款用户id */
+        if (CollectionUtils.isEmpty(tenderIds)) {
+            log.error("回款投标记录ID为空");
+            return;
+        }
+
+        Specification<Tender> tenderSpecification = Specifications.
+                <Tender>and()
+                .in("id", tenderIds.toArray())
+                .build() ;
+        List<Tender> tenderList = tenderService.findList(tenderSpecification);
+        if(CollectionUtils.isEmpty(tenderList)){
+            log.error("回款投标记录为空");
+            return;
+        }
+        Set<Long> userIds = tenderList.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet()); /* 回款用户id */
+        if(CollectionUtils.isEmpty(userIds)){
+            log.error("回款用户ID为空");
             return;
         }
         Map<Long, List<BorrowCollection>> borrowCollrctionMaps = borrowCollectionList.stream().collect(groupingBy(BorrowCollection::getUserId)); /* 回款记录集合 */
@@ -1101,12 +1133,40 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param parentBorrow
      */
     private void giveInterest(List<BorrowCollection> borrowCollectionList, Borrow parentBorrow) {
-        borrowCollectionList.stream().forEach(borrowCollection -> {
+        Set<Long> tenderIds = borrowCollectionList.stream().map(borrowCollection -> borrowCollection.getTenderId()).collect(Collectors.toSet()); /* 回款用户id */
+        if (CollectionUtils.isEmpty(tenderIds)) {
+            log.error("回款投标记录ID为空");
+            return;
+        }
+
+        Specification<Tender> tenderSpecification = Specifications.
+                <Tender>and()
+                .in("id", tenderIds.toArray())
+                .build() ;
+        List<Tender> tenderList = tenderService.findList(tenderSpecification);
+        if(CollectionUtils.isEmpty(tenderList)){
+            log.error("回款投标记录为空");
+            return;
+        }
+        Set<Long> userIds = tenderList.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet()); /* 回款用户id */
+        if(CollectionUtils.isEmpty(userIds)){
+            log.error("回款用户ID为空");
+            return;
+        }
+
+        Map<Long, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
+        borrowCollectionList.stream().forEach((BorrowCollection borrowCollection) -> {
             long actualInterest = borrowCollection.getCollectionMoneyYes() - borrowCollection.getPrincipal();/* 实收利息 */
             //投资积分
             long integral = actualInterest / 100 * 10;
             if ((parentBorrow.getType() == 0 || parentBorrow.getType() == 4) && 0 < integral) {
-                Users users = userService.findById(borrowCollection.getUserId());
+                Long userId = borrowCollection.getUserId();
+                if(ObjectUtils.isEmpty(userId)){
+                    Tender tender = tenderMap.get(borrowCollection.getTenderId());
+                    userId = tender.getUserId() ;
+                }
+
+                Users users = userService.findById(userId);
                 if (StringUtils.isEmpty(users.getWindmillId())) {  // 非风车理财派发积分
                     IntegralChangeEntity integralChangeEntity = new IntegralChangeEntity();
                     integralChangeEntity.setType(IntegralChangeEnum.TENDER);
@@ -1131,9 +1191,33 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param parentBorrow
      */
     private void sendCollectionNotices(List<BorrowCollection> borrowCollectionList, boolean advance, Borrow parentBorrow) {
+        Set<Long> tenderIds = borrowCollectionList.stream().map(borrowCollection -> borrowCollection.getTenderId()).collect(Collectors.toSet()); /* 回款用户id */
+        if (CollectionUtils.isEmpty(tenderIds)) {
+            log.error("回款投标记录ID为空");
+            return;
+        }
+
+        Specification<Tender> tenderSpecification = Specifications.
+                <Tender>and()
+                .in("id", tenderIds.toArray())
+                .build() ;
+        List<Tender> tenderList = tenderService.findList(tenderSpecification);
+        if(CollectionUtils.isEmpty(tenderList)){
+            log.error("回款投标记录为空");
+            return;
+        }
+
+        Set<Long> userIds = tenderList.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet()); /* 回款用户id */
+        if(CollectionUtils.isEmpty(userIds)){
+            log.error("回款用户ID为空");
+            return;
+        }
+
+        Map<Long, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
+
 
         //迭代投标人记录
-        borrowCollectionList.stream().forEach(borrowCollection -> {
+        borrowCollectionList.stream().forEach((BorrowCollection borrowCollection) -> {
 /*            long actualInterest = borrowCollection.getCollectionMoneyYes() - borrowCollection.getPrincipal();*//* 实收利息 */
             String noticeContent = String.format("客户在%s已将借款[%s]第%s期还款,还款金额为%s元", DateHelper.dateToString(new Date(), "yyyy-MM-dd HH:mm:ss"), parentBorrow.getName(), (borrowCollection.getOrder() + 1), StringHelper.formatDouble(borrowCollection.getCollectionMoneyYes(), 100, true));
             if (advance) {
@@ -1141,9 +1225,13 @@ public class RepaymentBizImpl implements RepaymentBiz {
                         "]第" + (borrowCollection.getOrder() + 1) + "期垫付还款,垫付金额为" + StringHelper.formatDouble(borrowCollection.getCollectionMoneyYes(), 100, true) + "元";
             }
 
+            Long userId = borrowCollection.getUserId();
+            if(ObjectUtils.isEmpty(userId)){
+                userId = tenderMap.get(borrowCollection.getTenderId()).getUserId()   ;
+            }
             Notices notices = new Notices();
             notices.setFromUserId(1L);
-            notices.setUserId(borrowCollection.getUserId());
+            notices.setUserId(userId);
             notices.setRead(false);
             notices.setName("客户还款");
             notices.setContent(noticeContent);
