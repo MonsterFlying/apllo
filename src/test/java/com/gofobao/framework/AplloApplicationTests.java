@@ -69,6 +69,9 @@ import com.gofobao.framework.migrate.MigrateProtocolBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.scheduler.DealThirdBatchScheduler;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
+import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
+import com.gofobao.framework.system.contants.ThirdBatchDealLogContants;
+import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
@@ -128,6 +131,8 @@ public class AplloApplicationTests {
     private TenderService tenderService;
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    @Autowired
+    private ThirdBatchDealLogBiz thirdBatchDealLogBiz;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -378,9 +383,9 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("215335");
+        batchDetailsQueryReq.setBatchNo("174721");
 
-        batchDetailsQueryReq.setBatchTxDate("20170903");
+        batchDetailsQueryReq.setBatchTxDate("20170914");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -389,6 +394,7 @@ public class AplloApplicationTests {
         if ((ObjectUtils.isEmpty(batchDetailsQueryResp)) || (!JixinResultContants.SUCCESS.equals(batchDetailsQueryResp.getRetCode()))) {
             log.error(ObjectUtils.isEmpty(batchDetailsQueryResp) ? "当前网络不稳定，请稍候重试" : batchDetailsQueryResp.getRetMsg());
         }
+        log.info(GSON.toJson(batchDetailsQueryResp));
     }
 
     private void bidApplyQuery() {
@@ -531,9 +537,11 @@ public class AplloApplicationTests {
 
     @Test
     public void test() {
-
-
-        MqConfig mqConfig = new MqConfig();
+     /*   //记录批次处理日志
+        thirdBatchDealLogBiz.recordThirdBatchDealLog(String.valueOf(113841),169974, ThirdBatchDealLogContants.PROCESSED,true,
+                ThirdBatchLogContants.BATCH_LEND_REPAY, "");
+*/
+        /*MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_TENDER);
         mqConfig.setTag(MqTagEnum.AUTO_TENDER);
         ImmutableMap<String, String> body = ImmutableMap
@@ -543,7 +551,7 @@ public class AplloApplicationTests {
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("borrowProvider autoTender send mq exception", e);
-        }
+        }*/
 
         /*BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
                 NumberHelper.toDouble(StringHelper.toString(9)),
@@ -622,8 +630,8 @@ public class AplloApplicationTests {
         //                  dataMigration();
 
 
-        //批次处理
-       /* batchDeal();
+       /* //批次处理
+       batchDeal();
         //unfrozee();
         //查询存管账户资金信息
         balanceQuery();
@@ -653,7 +661,7 @@ public class AplloApplicationTests {
         //批次状态查询
         //batchQuery();
         //批次详情查询
-        //batchDetailsQuery();
+        batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调

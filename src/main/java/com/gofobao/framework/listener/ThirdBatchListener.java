@@ -28,7 +28,7 @@ public class ThirdBatchListener {
 
     @Autowired
     private ThirdBatchProvider thirdBatchProvider;
-
+/*
     @RabbitHandler
     public void process(String message) {
         log.info(String.format("即信批处理消息队列处理开始: %s", message));
@@ -51,5 +51,5 @@ public class ThirdBatchListener {
                 log.error(String.format("即信批处理消息队列处理失败: %s", message));
             }
         }
-    }
+    }*/
 }

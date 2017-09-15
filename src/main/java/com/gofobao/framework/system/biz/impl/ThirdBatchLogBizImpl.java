@@ -15,10 +15,7 @@ import com.gofobao.framework.asset.service.AdvanceLogService;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.constans.TypeTokenContants;
-import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
-import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
-import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.BooleanHelper;
 import com.gofobao.framework.helper.DateHelper;
@@ -27,6 +24,7 @@ import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
+import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
@@ -38,7 +36,6 @@ import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -55,7 +52,6 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -83,6 +79,9 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
     private TransferService transferService;
     @Autowired
     private MqHelper mqHelper;
+    @Autowired
+    private ThirdBatchDealBiz thirdBatchDealBiz;
+
 
 
     /**
@@ -215,7 +214,17 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
         ThirdBatchLog thirdBatchLog = thirdBatchLogList.get(0);
         log.info(String.format("thirdBatchLog 记录->%s", gson.toJson(thirdBatchLog)));
 
-        MqConfig mqConfig = new MqConfig();
+        try {
+            //批次执行问题
+            thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(),
+                    thirdBatchLog.getAcqRes(), "");
+            return ResponseEntity.ok(VoBaseResp.ok("处理成功!"));
+        } catch (Exception e) {
+            log.error("批次执行异常:", e);
+            return ResponseEntity.ok(VoBaseResp.ok("处理失败!"));
+        }
+
+        /*MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
@@ -233,7 +242,7 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
         } catch (Throwable e) {
             log.error("tenderThirdBizImpl thirdBatchRepayAllRunCall send mq exception", e);
             return ResponseEntity.ok(VoBaseResp.ok("处理失败!"));
-        }
+        }*/
     }
 
     /**

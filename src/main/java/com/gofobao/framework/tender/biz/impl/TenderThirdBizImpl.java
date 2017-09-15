@@ -28,6 +28,7 @@ import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
@@ -89,6 +90,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
     private MqHelper mqHelper;
     @Autowired
     private TransferBuyLogService transferBuyLogService;
+    @Autowired
+    private ThirdBatchDealBiz thirdBatchDealBiz;
 
 
     @Value("${gofobao.javaDomain}")
@@ -219,7 +222,15 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         }
 
         // 触发处理批次购买债权处理队列
-        MqConfig mqConfig = new MqConfig();
+        try {
+            //批次执行问题
+            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("transferId")), batchCreditInvestRunCall.getBatchNo(),
+                    batchCreditInvestRunCall.getAcqRes(), GSON.toJson(batchCreditInvestRunCall));
+        } catch (Exception e) {
+            log.error("批次执行异常:", e);
+        }
+
+       /* MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
@@ -233,7 +244,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq exception", e);
-        }
+        }*/
 
         return ResponseEntity.ok("success");
     }
@@ -382,6 +393,15 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         }
 
         //触发处理批次放款处理结果队列
+        try {
+            //批次执行问题
+            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("borrowId")), batchCreditInvestRunCall.getBatchNo(),
+                    batchCreditInvestRunCall.getAcqRes(), GSON.toJson(batchCreditInvestRunCall));
+        } catch (Exception e) {
+            log.error("批次执行异常:", e);
+        }
+
+/*
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
@@ -396,6 +416,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         } catch (Throwable e) {
             log.error("tenderThirdBizImpl thirdBatchCreditEndRunCall send mq exception", e);
         }
+*/
 
         return ResponseEntity.ok("success");
     }

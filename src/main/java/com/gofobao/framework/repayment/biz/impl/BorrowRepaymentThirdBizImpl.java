@@ -45,6 +45,7 @@ import com.gofobao.framework.repayment.contants.ThirdDealStatusContrants;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoThirdBatchLendRepay;
+import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchDealLogContants;
@@ -95,7 +96,8 @@ import java.util.stream.Collectors;
 public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
     final Gson GSON = new GsonBuilder().create();
-
+    @Autowired
+    private ThirdBatchDealBiz thirdBatchDealBiz;
     @Autowired
     private JixinManager jixinManager;
     @Autowired
@@ -448,7 +450,14 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
         Map<String, Object> acqResMap = GSON.fromJson(repayRunResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
         //触发处理批次放款处理结果队列
-        MqConfig mqConfig = new MqConfig();
+        try {
+            //批次执行问题
+            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("repaymentId")),  StringHelper.toString(repayRunResp.getBatchNo()), repayRunResp.getAcqRes(), GSON.toJson(repayRunResp));
+        } catch (Exception e) {
+            log.error("批次执行异常:", e);
+        }
+
+        /*MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
@@ -462,7 +471,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("tenderThirdBizImpl thirdBatchRepayRunCall send mq exception", e);
-        }
+        }*/
         log.info("即信批次回调处理结束");
         return ResponseEntity.ok("success");
     }
@@ -531,8 +540,15 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         Preconditions.checkState(JixinResultContants.SUCCESS.equals(lendRepayRunResp.getRetCode()), "即信回调反馈：处理失败! msg:" + lendRepayRunResp.getRetMsg());
         Map<String, Object> acqResMap = GSON.fromJson(lendRepayRunResp.getAcqRes(), TypeTokenContants.MAP_TOKEN);
 
+
         //触发处理批次放款处理结果队列
-        MqConfig mqConfig = new MqConfig();
+        try {
+            //批次执行问题
+            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("borrowId")), lendRepayRunResp.getBatchNo(), lendRepayRunResp.getAcqRes(),GSON.toJson(lendRepayRunResp) );
+        } catch (Exception e) {
+            log.error("批次执行异常:", e);
+        }
+        /*MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
@@ -546,7 +562,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("tenderThirdBizImpl thirdBatchLendRepayRunCall send mq exception", e);
-        }
+        }*/
 
         return ResponseEntity.ok("success");
     }
@@ -731,7 +747,15 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             log.error("保存批次名义借款人垫付授权号!", e);
         }
 
-        // 触发批次名义借款人垫付业务处理队列
+        //触发批次名义借款人垫付业务处理队列
+        try {
+            //批次执行问题
+            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("borrowId")), batchBailRepayRunResp.getBatchNo(), batchBailRepayRunResp.getAcqRes(), GSON.toJson(batchBailRepayRunResp));
+        } catch (Exception e) {
+            log.error("批次执行异常:", e);
+        }
+
+        /*// 触发批次名义借款人垫付业务处理队列
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
@@ -745,7 +769,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("borrowRepaymentThirdBizImpl thirdBatchAdvanceRunCall send mq exception", e);
-        }
+        }*/
 
         return ResponseEntity.ok("success");
     }
@@ -880,6 +904,14 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         }
 
         //触发处理批次处理结果队列
+        try {
+            //批次执行问题
+            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("repaymentId")),  batchRepayBailRunResp.getBatchNo(),
+                    batchRepayBailRunResp.getAcqRes(), GSON.toJson(batchRepayBailRunResp));
+        } catch (Exception e) {
+            log.error("批次执行异常:", e);
+        }
+        /*
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
@@ -894,7 +926,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("tenderThirdBizImpl thirdBatchRepayAdvanceRunCall send mq exception", e);
-        }
+        }*/
 
         return ResponseEntity.ok("success");
     }

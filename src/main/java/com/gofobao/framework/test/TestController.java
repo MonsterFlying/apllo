@@ -29,6 +29,7 @@ import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.AutoTenderBiz;
@@ -83,6 +84,8 @@ public class TestController {
     @Autowired
     MqHelper mqHelper;
     final Gson GSON = new GsonBuilder().create();
+    @Autowired
+    private ThirdBatchDealBiz thirdBatchDealBiz;
 
 
     @ApiOperation("获取自动投标列表")
@@ -101,7 +104,16 @@ public class TestController {
         if (CollectionUtils.isEmpty(thirdBatchLogList)) {
             return;
         }
-        ThirdBatchLog thirdBatchLog = thirdBatchLogList.get(0);
+
+        try {
+            //批次执行问题
+            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(sourceId), StringHelper.toString(batchNo),
+                    thirdBatchLogList.get(0).getAcqRes(), "");
+        } catch (Exception e) {
+            log.error("批次执行异常:", e);
+        }
+
+        /*ThirdBatchLog thirdBatchLog = thirdBatchLogList.get(0);
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
@@ -118,7 +130,7 @@ public class TestController {
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("tenderThirdBizImpl thirdBatchRepayAllRunCall send mq exception", e);
-        }
+        }*/
     }
 
    /* @Transactional(rollbackFor = Exception.class)

@@ -78,6 +78,7 @@ import com.gofobao.framework.repayment.vo.response.pc.VoOrdersList;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewCollectionWarpRes;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewOrderListWarpRes;
 import com.gofobao.framework.system.biz.StatisticBiz;
+import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.Notices;
@@ -183,7 +184,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
     private TransferBiz transferBiz;
     @Autowired
     private WindmillTenderBiz windmillTenderBiz;
-
+    @Autowired
+    private ThirdBatchDealBiz thirdBatchDealBiz;
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
     @Autowired
@@ -375,6 +377,14 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("还款处理中，请勿重复点击!")));
         } else if (flag == ThirdBatchLogContants.SUCCESS) {
             //结束债权调用处理
+            try {
+                //批次执行问题
+                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(),
+                        thirdBatchLog.getAcqRes(), "");
+            } catch (Exception e) {
+                log.error("批次执行异常:", e);
+            }
+/*
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
             mqConfig.setTag(MqTagEnum.BATCH_DEAL);
@@ -390,7 +400,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 mqHelper.convertAndSend(mqConfig);
             } catch (Throwable e) {
                 log.error("borrowThirdBizImpl repayAll send mq exception", e);
-            }
+            }*/
         }
         /* 有效未还的还款记录 */
         Specification<BorrowRepayment> brs = Specifications
@@ -1089,24 +1099,25 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param parentBorrow
      */
     private void giveInterest(List<BorrowCollection> borrowCollectionList, Borrow parentBorrow) {
+        //用户来源集合
+        ImmutableSet<Integer> userSourceSet = ImmutableSet.of(12);
+        ImmutableSet<Integer> borrowTypeSet = ImmutableSet.of(0, 4);
         borrowCollectionList.stream().forEach(borrowCollection -> {
             long actualInterest = borrowCollection.getCollectionMoneyYes() - borrowCollection.getPrincipal();/* 实收利息 */
             //投资积分
             long integral = actualInterest / 100 * 10;
-            if ((parentBorrow.getType() == 0 || parentBorrow.getType() == 4) && 0 < integral) {
-                Users users = userService.findById(borrowCollection.getUserId());
-                if (StringUtils.isEmpty(users.getWindmillId())) {  // 非风车理财派发积分
-                    IntegralChangeEntity integralChangeEntity = new IntegralChangeEntity();
-                    integralChangeEntity.setType(IntegralChangeEnum.TENDER);
-                    integralChangeEntity.setValue(integral);
-                    integralChangeEntity.setUserId(borrowCollection.getUserId());
-                    try {
-                        integralChangeHelper.integralChange(integralChangeEntity);
-                    } catch (Exception e) {
-                        log.error("投资人回款积分发放失败：", e);
-                    }
+            //用户记录
+            Users user = userService.findById(borrowCollection.getUserId());
+            if (borrowTypeSet.contains(parentBorrow.getType()) && 0 < integral && !userSourceSet.contains(user.getSource())) {
+                IntegralChangeEntity integralChangeEntity = new IntegralChangeEntity();
+                integralChangeEntity.setType(IntegralChangeEnum.TENDER);
+                integralChangeEntity.setValue(integral);
+                integralChangeEntity.setUserId(borrowCollection.getUserId());
+                try {
+                    integralChangeHelper.integralChange(integralChangeEntity);
+                } catch (Exception e) {
+                    log.error("投资人回款积分发放失败：", e);
                 }
-
             }
         });
     }
@@ -1686,8 +1697,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
             repayAssetChange.setPrincipal(inPr);
             repayAssetChange.setBorrowCollection(borrowCollection);
 
+            //借款类型集合
             ImmutableSet<Integer> borrowTypeSet = ImmutableSet.of(0, 4);
-            if (borrowTypeSet.contains(borrow.getType())) {  // 车贷标和渠道标利息管理费
+            //用户来源集合
+            ImmutableSet<Integer> userSourceSet = ImmutableSet.of(12);
+            // 车贷标和渠道标利息管理费，风车理财不收
+            if (borrowTypeSet.contains(borrow.getType()) && !userSourceSet.contains(tender.getSource())) {
                 ImmutableSet<Long> stockholder = ImmutableSet.of(2480L, 1753L, 1699L,
                         3966L, 1413L, 1857L,
                         183L, 2327L, 2432L,
@@ -2047,7 +2062,14 @@ public class RepaymentBizImpl implements RepaymentBiz {
         } else if (flag == ThirdBatchLogContants.SUCCESS) {
             //墊付批次处理
             //触发处理批次放款处理结果队列
-            MqConfig mqConfig = new MqConfig();
+            try {
+                //批次执行问题
+                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(),
+                        thirdBatchLog.getAcqRes(), "");
+            } catch (Exception e) {
+                log.error("批次执行异常:", e);
+            }
+/*            MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
             mqConfig.setTag(MqTagEnum.BATCH_DEAL);
             ImmutableMap<String, String> body = ImmutableMap
@@ -2061,7 +2083,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 mqHelper.convertAndSend(mqConfig);
             } catch (Throwable e) {
                 log.error("tenderThirdBizImpl repayConditionCheck send mq exception", e);
-            }
+            }*/
             log.info("即信批次回调处理结束");
         }
 
@@ -2179,7 +2201,14 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("垫付处理中，请勿重复点击!")));
         } else if (flag == ThirdBatchLogContants.SUCCESS) {
             //墊付批次处理
-            MqConfig mqConfig = new MqConfig();
+            try {
+                //批次执行问题
+                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(),
+                        thirdBatchLog.getAcqRes(), "");
+            } catch (Exception e) {
+                log.error("批次执行异常:", e);
+            }
+/*            MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
             mqConfig.setTag(MqTagEnum.BATCH_DEAL);
             ImmutableMap<String, String> body = ImmutableMap
@@ -2195,7 +2224,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 mqHelper.convertAndSend(mqConfig);
             } catch (Throwable e) {
                 log.error("borrowThirdBizImpl advanceCheck send mq exception", e);
-            }
+            }*/
         }
 
 
