@@ -85,7 +85,7 @@ public class UserBonusScheduler {
     @Scheduled(cron = "0 35 23 * * ? ")
     public void brokerProcess() {
         Date nowDate = new Date();
-
+        brokerBounsBiz.pushMoney(nowDate);
     }
 
     /**
@@ -104,7 +104,6 @@ public class UserBonusScheduler {
     @Transactional(rollbackFor = Exception.class)
     public void monthProcess() {
         Date nowDate = new Date();
-
-
+        brokerBounsBiz.monthPushMoney(nowDate);
     }
 }
