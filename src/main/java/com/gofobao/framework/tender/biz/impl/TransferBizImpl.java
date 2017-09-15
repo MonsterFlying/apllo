@@ -1178,6 +1178,7 @@ public class TransferBizImpl implements TransferBiz {
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBorrowTenderUserWarpListRes> transferUserList(VoTransferUserListReq transferUserListReq) {
         VoBorrowTenderUserWarpListRes warpListRes = VoBaseResp.ok("查询成功", VoBorrowTenderUserWarpListRes.class);
         //购买记录

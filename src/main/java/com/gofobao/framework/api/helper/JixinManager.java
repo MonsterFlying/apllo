@@ -267,10 +267,10 @@ public class JixinManager {
         String unSign = StringHelper.mergeMap(params);
         String sign = certHelper.doSign(unSign);
         params.put("sign", sign);
-       /* log.info("=============================================");
+        log.info("=============================================");
         log.info(String.format("[%s]报文流水：%s%s%s", txCodeEnum.getName(), req.getTxDate(), req.getTxTime(), req.getSeqNo()));
         log.info("=============================================");
-        log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));*/
+        log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));
         jixinTxLogBiz.saveRequest(txCodeEnum, params);
         initHttps();
         HttpEntity entity = getHttpEntity(params);

@@ -15,16 +15,16 @@ import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
+import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
+import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
+import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryRequest;
+import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryResponse;
 import com.gofobao.framework.asset.service.NewAssetLogService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
-import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
-import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
-import com.gofobao.framework.common.rabbitmq.MqTagEnum;
-import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -34,7 +34,6 @@ import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.AutoTenderBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.swagger.annotations.Api;
@@ -43,15 +42,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -83,6 +83,8 @@ public class TestController {
     @Autowired
     MqHelper mqHelper;
     final Gson GSON = new GsonBuilder().create();
+ /*   @Autowired
+    private ThirdBatchDealBiz thirdBatchDealBiz;*/
 
 
     @ApiOperation("获取自动投标列表")
@@ -101,7 +103,16 @@ public class TestController {
         if (CollectionUtils.isEmpty(thirdBatchLogList)) {
             return;
         }
-        ThirdBatchLog thirdBatchLog = thirdBatchLogList.get(0);
+
+       /* try {
+            //批次执行问题
+            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(sourceId), StringHelper.toString(batchNo),
+                    thirdBatchLogList.get(0).getAcqRes(), "");
+        } catch (Exception e) {
+            log.error("批次执行异常:", e);
+        }
+*/
+        /*ThirdBatchLog thirdBatchLog = thirdBatchLogList.get(0);
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
@@ -118,7 +129,7 @@ public class TestController {
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("tenderThirdBizImpl thirdBatchRepayAllRunCall send mq exception", e);
-        }
+        }*/
     }
 
    /* @Transactional(rollbackFor = Exception.class)
@@ -247,6 +258,49 @@ public class TestController {
         System.out.println(val);
         System.out.println(BooleanUtils.toBoolean(12));
     }
+/*
+
+    @ApiOperation("解除冻结")
+    @RequestMapping("/pub/cancelFreeze")
+    @Transactional
+    public void cancelFreeze() {
+        // 取消冻结
+        AssetChange assetChange = new AssetChange();
+        assetChange.setSourceId(279867l);
+        assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+        assetChange.setMoney(5000);
+        assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+        assetChange.setRemark(String.format("存管系统审核投资标的[老猪，12天]资格失败, 解除资金冻结50元"));
+        assetChange.setType(AssetChangeTypeEnum.unfreeze);
+        assetChange.setUserId(129659l);
+        assetChange.setForUserId(129659l);
+        try {
+            assetChangeProvider.commonAssetChange(assetChange);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+*/
+
+    @ApiOperation("冻结查询")
+    @RequestMapping("/pub/freeze/find")
+    @Transactional
+    public void findFreeze(@RequestParam("accountId") Object accountId,@RequestParam("startDate") Object startDate,
+                           @RequestParam("endDate") Object endDate){
+        FreezeDetailsQueryRequest freezeDetailsQueryRequest = new FreezeDetailsQueryRequest();
+        freezeDetailsQueryRequest.setChannel(ChannelContant.HTML);
+        freezeDetailsQueryRequest.setState("0");
+        freezeDetailsQueryRequest.setStartDate(String.valueOf(startDate));
+        freezeDetailsQueryRequest.setEndDate(String.valueOf(endDate));
+        freezeDetailsQueryRequest.setPageNum("1");
+        freezeDetailsQueryRequest.setPageSize("20");
+        freezeDetailsQueryRequest.setAccountId(String.valueOf(accountId));
+        FreezeDetailsQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.FREEZE_DETAILS_QUERY, freezeDetailsQueryRequest, FreezeDetailsQueryResponse.class);
+        log.info("=========================================================================================");
+        log.info("即信批次状态查询:");
+        log.info("=========================================================================================");
+        log.info(GSON.toJson(balanceQueryResponse));
+    }
 
     @ApiOperation("批次查询")
     @RequestMapping("/pub/batch/find")
@@ -276,6 +330,20 @@ public class TestController {
         log.info(GSON.toJson(batchDetailsQueryResp));
     }
 
+    @ApiOperation("投标申请查询")
+    @RequestMapping("/pub/bid/find")
+    @Transactional
+    public void bidApplyQuery(@RequestParam("orderId") Object orderId, @RequestParam("accountId") Object accountId) {
+        BidApplyQueryReq request = new BidApplyQueryReq();
+        request.setAccountId(String.valueOf(accountId));
+        request.setChannel(ChannelContant.HTML);
+        request.setOrgOrderId(String.valueOf(orderId));
+        BidApplyQueryResp response = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, request, BidApplyQueryResp.class);
+        log.info("=========================================================================================");
+        log.info("即信批次状态详情查询:");
+        log.info("=========================================================================================");
+        log.info(GSON.toJson(response));
+    }
 
     @Autowired
     BorrowBiz borrowBiz;
