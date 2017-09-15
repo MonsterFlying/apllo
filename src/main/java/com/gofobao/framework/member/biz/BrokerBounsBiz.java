@@ -10,28 +10,28 @@ import com.gofobao.framework.member.vo.response.pc.VoViewInviteFriendsWarpRes;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.Date;
 import java.util.Map;
 
 /**
  * Created by admin on 2017/6/7.
  */
-public interface BrokerBounsBiz  {
+public interface BrokerBounsBiz {
 
     ResponseEntity<VoViewInviteFriendersWarpRes> list(VoFriendsReq voFriendsReq);
 
     /**
      * pc 邀请好友投资记录
+     *
      * @param voFriendsReq
      * @return
      */
     ResponseEntity<VoViewInviteFriendsWarpRes> pcFriendsTender(VoFriendsReq voFriendsReq);
 
 
-
-
-
     /**
      * 邀请好友奖励记录
+     *
      * @param voFriendsTenderReq
      * @return
      */
@@ -49,8 +49,30 @@ public interface BrokerBounsBiz  {
 
     /**
      * pc 导出excel
+     *
      * @param friendsTenderReq
      * @param response
      */
-    void  toExcel(VoFriendsTenderReq friendsTenderReq, HttpServletResponse response);
+    void toExcel(VoFriendsTenderReq friendsTenderReq, HttpServletResponse response);
+
+    /**
+     * 天提成
+     */
+    void dayPushMoney(Date date);
+
+
+    /**
+     * 提成
+     * @param date
+     */
+    void pushMoney(Date date);
+
+
+    /**
+     * 月提成
+     * @param date
+     */
+    void monthPushMoney(Date date);
+
+
 }

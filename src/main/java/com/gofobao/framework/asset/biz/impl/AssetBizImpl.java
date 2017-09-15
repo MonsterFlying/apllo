@@ -1203,6 +1203,7 @@ public class AssetBizImpl implements AssetBiz {
                                 DateHelper.beginOfDate(startTime),
                                 DateHelper.endOfDate(endTime)))
                 .eq("userId", voAssetLogReq.getUserId())
+                .eq("del",0)
                 .notIn("localType", types.toArray())
                 .build();
         Page<NewAssetLog> assetLogPage = newAssetLogService.findAll(specification, pageable);

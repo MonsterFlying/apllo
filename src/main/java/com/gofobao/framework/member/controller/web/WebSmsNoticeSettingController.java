@@ -4,6 +4,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.message.biz.SmsNoticeSettingsBiz;
 import com.gofobao.framework.message.entity.SmsNoticeSettingsEntity;
 import com.gofobao.framework.security.contants.SecurityContants;
+import com.gofobao.framework.system.vo.response.SmsNoticeListRes;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +43,7 @@ public class WebSmsNoticeSettingController {
      */
     @ApiOperation("用户短信设置列表")
     @PostMapping("smmSetting/pc/v2/list")
-    public ResponseEntity<List<SmsNoticeSettingsEntity>> list(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+    public ResponseEntity<SmsNoticeListRes> list(@RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         return smsNoticeSettingsBiz.list(userId);
     }
 }

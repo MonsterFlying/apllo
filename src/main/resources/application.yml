@@ -73,6 +73,7 @@ gofobao:
   h5Domain:  http://18164xy341.51mypc.cn
   imageDomain : http://www.gofobao.com
   pcDomain: http://gofobao.55555.io
+  adminDomain: http://m7ocvas9.gofobao.com  #管理员后台地址
   captcha: false # 全站是否开启图形验证码验证
   close-email-send: true # 关闭邮箱发送
   close-phone-send: true # 关闭短信发送

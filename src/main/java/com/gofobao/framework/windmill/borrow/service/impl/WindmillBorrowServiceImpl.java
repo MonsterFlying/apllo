@@ -115,6 +115,7 @@ public class WindmillBorrowServiceImpl implements WindmillBorrowService {
         StringBuilder sql = new StringBuilder("SELECT t FROM Tender t WHERE t.borrowId=:borrowId AND t.status=:status   AND t.createdAt>='" + date + "' ORDER BY t.id ASC");
         Query query = entityManager.createQuery(sql.toString(), Tender.class);
         query.setParameter("status", TenderConstans.SUCCESS);
+        query.setParameter("borrowId",borrowId);
         return query.getResultList();
     }
 }

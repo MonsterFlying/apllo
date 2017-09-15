@@ -128,6 +128,9 @@ public class UserBizImpl implements UserBiz {
     @Value("${qiniu.bucket}")
     String bucketname;
 
+    @Value("${gofobao.adminDomain}")
+    private String adminDomain;
+
     @Autowired
     JwtTokenHelper jwtTokenHelper;
 
@@ -185,7 +188,7 @@ public class UserBizImpl implements UserBiz {
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "无效的邀请码！"));
             }
 
-            if(invitedUser.getIsLock()){
+            if (invitedUser.getIsLock()) {
                 return ResponseEntity
                         .badRequest()
                         .body(VoBaseResp.error(VoBaseResp.ERROR, "当前邀请人, 已经被平台冻结, 如有疑问请致电官方客服！"));
@@ -322,6 +325,9 @@ public class UserBizImpl implements UserBiz {
             userName = user.getEmail();
         }
         voBasicUserInfoResp.setUsername(userName);
+        if (user.getType().equals("manager")) {
+            voBasicUserInfoResp.setAdminUrl(adminDomain);
+        }
         return ResponseEntity.ok(voBasicUserInfoResp);
     }
 

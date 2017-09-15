@@ -75,10 +75,7 @@ import com.gofobao.framework.tender.service.TransferService;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
+import com.google.common.collect.*;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
@@ -320,6 +317,23 @@ public class BorrowBizImpl implements BorrowBiz {
         }
     }
 
+    /**
+     * pc首页表列表
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoPcBorrowList> pcIndexBorrowList() {
+        try {
+            List<VoViewBorrowList> borrowLists = borrowService.pcIndexBorrowList();
+            VoPcBorrowList pcBorrowList = VoBaseResp.ok("查询", VoPcBorrowList.class);
+            pcBorrowList.setBorrowLists(borrowLists);
+            return ResponseEntity.ok(pcBorrowList);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "", VoPcBorrowList.class));
+
+        }
+    }
+
 
     /**
      * 标信息
@@ -548,7 +562,7 @@ public class BorrowBizImpl implements BorrowBiz {
         List<Borrow> borrows = borrowService.findList(specification);
         if (!CollectionUtils.isEmpty(borrows)) {
             for (Borrow borrow : borrows) {
-                if ((borrow.getMoneyYes() / borrow.getMoney()) !=1) {
+                if ((borrow.getMoneyYes() / borrow.getMoney()) != 1) {
                     log.info("新增借款：您已经有一个进行中的借款标。");
                     return ResponseEntity
                             .badRequest()
@@ -1900,5 +1914,6 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "初审失败!"));
         }
     }
+
 
 }

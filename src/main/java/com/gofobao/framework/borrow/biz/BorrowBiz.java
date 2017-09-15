@@ -60,12 +60,19 @@ public interface BorrowBiz {
 
 
     /**
-     * pc：首页标列表
+     * pc：首页理财标列表
      *
      * @param voBorrowListReq
      * @return
      */
     ResponseEntity<VoPcBorrowList> pcFindAll(VoBorrowListReq voBorrowListReq);
+
+
+    /**
+     *首页标
+     * @return
+     */
+    ResponseEntity<VoPcBorrowList>pcIndexBorrowList();
 
     /**
      * 非转让标复审

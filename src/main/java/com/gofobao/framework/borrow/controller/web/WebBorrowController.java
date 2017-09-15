@@ -62,7 +62,7 @@ public class WebBorrowController {
     private TransferBiz transferBiz;
 
 
-    @ApiOperation(value = "pc:首页标列表; type:-1：全部 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
+    @ApiOperation(value = "pc:首页理财标列表; type:-1：全部 0：车贷标；1：净值标；2：秒标；4：渠道标 ; 5流转标")
     @GetMapping("/pub/borrow/pc/v2/list/{type}/{pageIndex}/{pageSize}")
     public ResponseEntity<VoPcBorrowList> pcList(@PathVariable Integer pageIndex,
                                                  @PathVariable Integer pageSize,
@@ -72,6 +72,12 @@ public class WebBorrowController {
         voBorrowListReq.setPageSize(pageSize);
         voBorrowListReq.setType(type);
         return borrowBiz.pcFindAll(voBorrowListReq);
+    }
+
+    @ApiOperation(value = "0：车贷标；1：净值标；2：秒标；4：渠道标 ")
+    @GetMapping("/pub/borrow/pc/v2/index/list")
+    public ResponseEntity<VoPcBorrowList> pcIndexBorrow() {
+        return borrowBiz.pcIndexBorrowList();
     }
 
     @ApiOperation("流转标信息")
@@ -143,6 +149,7 @@ public class WebBorrowController {
 
     /**
      * 后台结束借款
+     *
      * @param voPcCancelThirdBorrow
      * @return
      */
@@ -152,7 +159,7 @@ public class WebBorrowController {
         try {
             return borrowBiz.pcCancelBorrow(voPcCancelThirdBorrow);
         } catch (Exception e) {
-            log.error("后台结束借款异常：",e);
+            log.error("后台结束借款异常：", e);
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后再试!"));
         }
     }
