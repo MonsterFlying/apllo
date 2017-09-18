@@ -445,7 +445,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             /* 开始时间 */
             Date startAt;
             if (borrowRepayment.getOrder() == 0) {
-                startAt = DateHelper.beginOfDate(borrow.getSuccessAt());
+                startAt = DateHelper.beginOfDate(borrow.getReleaseAt());
             } else {
                 startAt = DateHelper.beginOfDate(borrowRepaymentList.get((i - 1)).getRepayAt());
             }

@@ -323,6 +323,7 @@ public class InvestServiceImpl implements InvestService {
         if (StringUtils.isEmpty(tender.getTransferBuyId())) {
             timeLimit = borrow.getTimeLimit();
             apr = borrow.getApr();
+            //满标时间
             successAt = borrow.getRecheckAt();
             //期限
             if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE) {
@@ -348,10 +349,11 @@ public class InvestServiceImpl implements InvestService {
                 Transfer transfer = transfers.get(0);
                 timeLimit=transfer.getTimeLimit();
                 apr = transfer.getApr();
-                successAt = transfer.getSuccessAt();
+                //满标时间
+                successAt = transfer.getRecheckAt();
                 item.setTimeLimit(transfer.getTimeLimit() + BorrowContants.MONTH);
 
-                item.setSuccessAt(transfer.getState() == TransferContants.TRANSFERED ? DateHelper.dateToString(transfer.getSuccessAt()) : "");
+                item.setSuccessAt(transfer.getState() == TransferContants.TRANSFERED ? DateHelper.dateToString(successAt) : "");
             }
             falg=true;
         }
