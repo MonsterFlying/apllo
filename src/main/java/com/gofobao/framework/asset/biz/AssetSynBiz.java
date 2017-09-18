@@ -36,4 +36,13 @@ public interface AssetSynBiz {
      * @return
      */
     boolean doAdminSynAsset(Long userId, Date synDate) throws Exception;
+
+    /**
+     * 后台通知同步
+     * @param userId
+     * @param txAmount
+     * @param orgSeqNo
+     * @param date
+     */
+    void doOfflineSyn(Long userId, String txAmount, String orgSeqNo, String date) throws Exception;
 }
