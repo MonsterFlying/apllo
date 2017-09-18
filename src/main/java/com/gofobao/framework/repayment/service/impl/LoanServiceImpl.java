@@ -250,7 +250,7 @@ public class LoanServiceImpl implements LoanService {
                     voLoanListReq.getStatus(),
                     pageable);
         } else {
-            sort = new Sort(Sort.Direction.DESC, "successAt");  //已结清
+            sort = new Sort(Sort.Direction.DESC, "recheckAt");  //已结清
             pageable = new PageRequest(voLoanListReq.getPageIndex(), voLoanListReq.getPageSize(), sort);
             borrowPage = loanRepository.findByUserIdAndStatusIsAndRecheckAtIsNotNullAndCloseAtIsNotNullAndTenderIdIsNull(
                     voLoanListReq.getUserId(),
