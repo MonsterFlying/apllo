@@ -400,7 +400,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     //复审中
                     status = 6;
                     borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
-                } else if (endAt.getTime() > nowDate.getTime()) {  //招标有效时间大于当前时间
+                } else if (nowDate.getTime()>endAt.getTime() ) {  //招标有效时间大于当前时间
                     borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
                     status = 5; //已过期
                 } else {
