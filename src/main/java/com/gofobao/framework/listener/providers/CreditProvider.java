@@ -92,7 +92,7 @@ public class CreditProvider {
                     .<ThirdBatchLog>and()
                     .eq("type", ThirdBatchLogContants.BATCH_CREDIT_END)
                     .eq("state", 3)
-                    .like("acqRes","\"tag\":\"END_CREDIT\"")
+                    .like("acqRes","%\"tag\":\"END_CREDIT\"%")
                     .eq("sourceId", borrowId)
                     .build();
             List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls);
@@ -104,7 +104,7 @@ public class CreditProvider {
                     .<ThirdBatchLog>and()
                     .eq("type", ThirdBatchLogContants.BATCH_CREDIT_END)
                     .in("state", 0, 1)
-                    .like("acqRes","\"tag\":\"END_CREDIT\"")
+                    .like("acqRes","%\"tag\":\"END_CREDIT\"%")
                     .eq("sourceId", borrowId)
                     .build();
             thirdBatchLogList = thirdBatchLogService.findList(tbls);
@@ -119,7 +119,7 @@ public class CreditProvider {
                     .eq("type", ThirdBatchLogContants.BATCH_CREDIT_END)
                     .eq("state", 3)
                     .eq("sourceId", borrowId)
-                    .like("acqRes","\"tag\":\"END_CREDIT_BY_TRANSFER\"")
+                    .like("acqRes","%\"tag\":\"END_CREDIT_BY_TRANSFER\"%")
                     .build();
             List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls);
             if (!CollectionUtils.isEmpty(thirdBatchLogList)) {
@@ -130,7 +130,7 @@ public class CreditProvider {
                     .<ThirdBatchLog>and()
                     .eq("type", ThirdBatchLogContants.BATCH_CREDIT_END)
                     .in("state", 0, 1)
-                    .like("acqRes","\"tag\":\"END_CREDIT_BY_TRANSFER\"")
+                    .like("acqRes","%\"tag\":\"END_CREDIT_BY_TRANSFER\"%")
                     .eq("sourceId", borrowId)
                     .build();
             thirdBatchLogList = thirdBatchLogService.findList(tbls);

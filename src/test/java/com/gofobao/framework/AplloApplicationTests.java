@@ -1,5 +1,6 @@
 package com.gofobao.framework;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.CertHelper;
@@ -65,6 +66,8 @@ import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchDealLogContants;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchDealLog;
+import com.gofobao.framework.system.entity.ThirdBatchLog;
+import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
@@ -79,8 +82,10 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -534,14 +539,21 @@ public class AplloApplicationTests {
     private UserCacheService userCacheService;
     @Autowired
     private ThirdBatchDealBiz thirdBatchDealBiz;
-
+    @Autowired
+    private ThirdBatchLogService thirdBatchLogService;
     @Test
     public void test() {
 
-        try {
-            thirdBatchDealBiz.batchDeal(296l, "093205", "", "") ;
-        } catch (Exception e) {
-            e.printStackTrace();
+        Specification<ThirdBatchLog> tbls = Specifications
+                .<ThirdBatchLog>and()
+                .eq("type", ThirdBatchLogContants.BATCH_CREDIT_END)
+                .in("state", 0,1)
+                .like("acqRes","%\"tag\":\"END_CREDIT_BY_TRANSFER\"%")
+                .eq("sourceId", 170073)
+                .build();
+        List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls);
+        if (!CollectionUtils.isEmpty(thirdBatchLogList)) {
+            log.info(String.format("结束债权已完成，third_batch:%s", GSON.toJson(thirdBatchLogList.get(0))));
         }
      /*   //记录批次处理日志
         thirdBatchDealLogBiz.recordThirdBatchDealLog(String.valueOf(113841),169974, ThirdBatchDealLogContants.PROCESSED,true,
