@@ -215,7 +215,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz{
                 default:
             }
         } catch (Exception e) {
-            log.error("批次处理异常:", e);
+            log.error("批次处理异常:batchNo:"+batchNo+"sourceId:"+sourceId, e);
             //判断是否有失败的记录，存在失败orderId添加失败日志
             ThirdErrorRemark remark = new ThirdErrorRemark();
             remark.setState(0);
