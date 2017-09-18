@@ -239,4 +239,13 @@ public interface AssetBiz {
      * @return
      */
     ResponseEntity<VoBaseResp> cancelRedPacketNoChangeLog(VoUnsendRedPacket voUnsendRedPacket);
+
+
+    /**
+     * 线下充值回调
+     * @param request
+     * @param response
+     * @return
+     */
+    ResponseEntity<String> offlineRechargeCallback(HttpServletRequest request, HttpServletResponse response);
 }

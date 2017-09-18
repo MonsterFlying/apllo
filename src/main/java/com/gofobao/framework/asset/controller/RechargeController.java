@@ -38,11 +38,31 @@ public class RechargeController {
         return assetBiz.rechargeOnline(request, voRechargeReq) ;
     }
 
-    @ApiOperation("充值回调")
+    /**
+     * 联机充值回调
+     * @param request
+     * @param response
+     * @return
+     * @throws Exception
+     */
     @PostMapping("/pub/asset/recharge/callback")
     public ResponseEntity<String> rechargeCallback(HttpServletRequest request, HttpServletResponse response) throws Exception{
         return assetBiz.rechargeCallback(request, response) ;
     }
+
+
+    /**
+     * 联机充值回调
+     * @param request
+     * @param response
+     * @return
+     * @throws Exception
+     */
+    @PostMapping("/pub/asset/offline/recharge/callback")
+    public ResponseEntity<String> offlineRechargeCallback(HttpServletRequest request, HttpServletResponse response) throws Exception{
+        return assetBiz.offlineRechargeCallback(request, response) ;
+    }
+
 
     @ApiOperation("支付宝转账信息")
     @GetMapping("/asset/recharge/alipay")

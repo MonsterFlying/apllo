@@ -1202,7 +1202,7 @@ public class AssetBizImpl implements AssetBiz {
                                 DateHelper.beginOfDate(startTime),
                                 DateHelper.endOfDate(endTime)))
                 .eq("userId", voAssetLogReq.getUserId())
-                .eq("del",0)
+                .eq("del", 0)
                 .notIn("localType", types.toArray())
                 .build();
         Page<NewAssetLog> assetLogPage = newAssetLogService.findAll(specification, pageable);
@@ -1461,7 +1461,7 @@ public class AssetBizImpl implements AssetBiz {
         String userId = paramMap.get("userId");
 
         UserThirdAccount userThird = userThirdAccountService.findByUserId(Long.parseLong(userId));
-        if(ObjectUtils.isEmpty(userThird)){
+        if (ObjectUtils.isEmpty(userThird)) {
             log.error("当前用户没有开户");
         }
         long redId = 0;
@@ -1499,7 +1499,36 @@ public class AssetBizImpl implements AssetBiz {
             log.error(msg);
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, String.format("撤销红包失败：%s", response.getRetMsg())));
         }
-        log.error("请求撤销用户红包" + new Gson().toJson(voucherPayCancelRequest)) ;
+        log.error("请求撤销用户红包" + new Gson().toJson(voucherPayCancelRequest));
         return ResponseEntity.ok(VoBaseResp.ok(String.format("撤销红包成功：msg->%s", response.getRetMsg())));
+    }
+
+    @Override
+    public ResponseEntity<String> offlineRechargeCallback(HttpServletRequest request, HttpServletResponse response) {
+        log.info("线下充值回调");
+        Map<String, String[]> parameterMap = request.getParameterMap();
+        Set<String> strings = parameterMap.keySet();
+        Iterator<String> iterator = strings.iterator();
+        while (iterator.hasNext()) {
+            String key = iterator.next();
+            log.info("key : " + key);
+            String[] params = parameterMap.get(key);
+            for (String item : params) {
+                log.info("value : " + item);
+            }
+        }
+        String bgData = request.getParameter("bgData");
+        if(StringUtils.isEmpty(bgData)){
+            log.error("offlinerechargeCallback bgData is null");
+        }
+
+        Gson gson = new Gson();
+
+        // 查询即信线下充值
+
+        // 查询本地是否已经处理
+
+        // 对拨正或者取消
+        return null;
     }
 }
