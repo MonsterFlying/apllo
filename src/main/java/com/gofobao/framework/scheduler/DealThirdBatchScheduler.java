@@ -13,6 +13,7 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.google.common.collect.ImmutableMap;
@@ -46,6 +47,8 @@ public class DealThirdBatchScheduler {
     private JixinManager jixinManager;
     @Autowired
     private ThirdBatchLogService thirdBatchLogService;
+    @Autowired
+    private ThirdBatchDealBiz thirdBatchDealBiz;
 
     @Scheduled(cron = "0 0/10 8,9,10,11,12,13,14,15,16,17,18,19,20,21,22 * * ? ")
     @Transactional(rollbackOn = Exception.class)
@@ -71,7 +74,15 @@ public class DealThirdBatchScheduler {
                 if ((!ObjectUtils.isEmpty(resp))
                         && JixinResultContants.SUCCESS.equals(resp.getRetCode())
                         && "S".equals(resp.getBatchState())) {
-                    MqConfig mqConfig = new MqConfig();
+                    try {
+                        //批次执行问题
+                        thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(),
+                                thirdBatchLog.getAcqRes(), "");
+                    } catch (Exception e) {
+                        log.error("批次执行异常:", e);
+                    }
+
+                   /* MqConfig mqConfig = new MqConfig();
                     mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
                     mqConfig.setTag(MqTagEnum.BATCH_DEAL);
                     ImmutableMap<String, String> body = ImmutableMap
@@ -87,7 +98,7 @@ public class DealThirdBatchScheduler {
                         mqHelper.convertAndSend(mqConfig);
                     } catch (Throwable e) {
                         log.error("DealThirdBatchScheduler process send mq exception", e);
-                    }
+                    }*/
                 }
             });
         } while (thirdBatchLogList.size() >= pageSize);

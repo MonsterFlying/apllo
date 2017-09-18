@@ -294,7 +294,9 @@ public class TransferProvider {
         long transferFee = NumberHelper.toLong(iterator.next());
         //增加批次资金变动记录
         addBatchAssetChange(transferId, transfer, transferBuyLogList, transferFee, batchNo);
-
+        //增加successAt时间
+        transfer.setSuccessAt(new Date());
+        transferService.save(transfer);
         log.info(String.format("复审: 批量债权转让申请成功: %s", GSON.toJson(msg)));
         return true;
 

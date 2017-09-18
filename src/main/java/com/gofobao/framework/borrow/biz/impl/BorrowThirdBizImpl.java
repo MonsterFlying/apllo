@@ -43,7 +43,9 @@ import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.scheduler.biz.TaskSchedulerBiz;
 import com.gofobao.framework.scheduler.constants.TaskSchedulerConstants;
 import com.gofobao.framework.scheduler.entity.TaskScheduler;
+import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
+import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -76,7 +78,8 @@ import java.util.Map;
 public class BorrowThirdBizImpl implements BorrowThirdBiz {
 
     final Gson GSON = new GsonBuilder().create();
-
+    @Autowired
+    private ThirdBatchDealBiz thirdBatchDealBiz;
     @Autowired
     private JixinManager jixinManager;
     @Autowired
@@ -353,12 +356,12 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(repayCheckResp.getRetCode())) {
             log.error("=============================(提前结清)即信批次还款检验参数回调===========================");
             log.error("回调失败! msg:" + repayCheckResp.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), borrowId, 2);
+            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), borrowId, 2, ThirdBatchLogContants.BATCH_REPAY_ALL);
             //
             long userId = NumberHelper.toLong(acqResMap.get("userId"));
             UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(userId);
             String freezeOrderId = StringHelper.toString(acqResMap.get("freezeOrderId"));
-            String freezeMoney = StringHelper.formatDouble(MoneyHelper.round(NumberHelper.toDouble(acqResMap.get("freezeMoney")),2),false);//元
+            String freezeMoney = StringHelper.formatDouble(MoneyHelper.round(NumberHelper.toDouble(acqResMap.get("freezeMoney")), 2), false);//元
 
             //解除存管资金冻结
             String orderId = JixinHelper.getOrderId(JixinHelper.BALANCE_UNFREEZE_PREFIX);
@@ -380,7 +383,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             AssetChange assetChange = new AssetChange();
             assetChange.setSourceId(borrowId);
             assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-            assetChange.setMoney(new Double(MoneyHelper.multiply(NumberHelper.toDouble(freezeMoney),100d)).longValue());
+            assetChange.setMoney(new Double(MoneyHelper.multiply(NumberHelper.toDouble(freezeMoney), 100d)).longValue());
             assetChange.setSeqNo(assetChangeProvider.getSeqNo());
             assetChange.setRemark("(提前结清)即信批次还款解除冻结可用资金");
             assetChange.setType(AssetChangeTypeEnum.unfreeze);
@@ -394,7 +397,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             log.info("=============================(提前结清)即信批次放款检验参数回调===========================");
             log.info("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), borrowId, 1);
+            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), borrowId, 1,ThirdBatchLogContants.BATCH_REPAY_ALL);
         }
 
         return ResponseEntity.ok("success");
@@ -433,7 +436,13 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         }
 
         //触发处理批次放款处理结果队列
-        MqConfig mqConfig = new MqConfig();
+        try {
+            //批次执行问题
+            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("borrowId")), StringHelper.toString(repayRunResp.getBatchNo()), repayRunResp.getAcqRes(), GSON.toJson(repayRunResp));
+        } catch (Exception e) {
+            log.error("批次执行异常:", e);
+        }
+        /*MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
@@ -446,7 +455,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("tenderThirdBizImpl thirdBatchRepayAllRunCall send mq exception", e);
-        }
+        }*/
 
         return ResponseEntity.ok("success");
     }

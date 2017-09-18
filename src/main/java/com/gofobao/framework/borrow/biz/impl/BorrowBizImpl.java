@@ -53,6 +53,7 @@ import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.system.biz.IncrStatisticBiz;
 import com.gofobao.framework.system.biz.StatisticBiz;
+import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.IncrStatistic;
@@ -163,10 +164,8 @@ public class BorrowBizImpl implements BorrowBiz {
 
     @Autowired
     private TenderThirdBiz tenderThirdBiz;
-
     @Autowired
-    private JdbcTemplate jdbcTemplate;
-
+    private ThirdBatchDealBiz thirdBatchDealBiz;
     @Autowired
     private LendService lendService;
     @Autowired
@@ -224,7 +223,13 @@ public class BorrowBizImpl implements BorrowBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, StringHelper.toString("复审处理中，请勿重复点击!")));
         } else if (flag == ThirdBatchLogContants.SUCCESS) {
-            //触发处理批次放款处理结果队列
+            try {
+                //批次执行问题
+                thirdBatchDealBiz.batchDeal(thirdBatchLog.getSourceId(), thirdBatchLog.getBatchNo(), thirdBatchLog.getAcqRes(), "");
+            } catch (Exception e) {
+                log.error("批次执行异常:", e);
+            }
+            /*//触发处理批次放款处理结果队列
             MqConfig mqConfig = new MqConfig();
             mqConfig.setTag(MqTagEnum.BATCH_DEAL);
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
@@ -240,7 +245,7 @@ public class BorrowBizImpl implements BorrowBiz {
             } catch (Throwable e) {
                 log.error("borrowBizImpl sendAgainVerify send mq exception", e);
             }
-            log.info("即信批次回调处理结束");
+            log.info("即信批次回调处理结束");*/
         }
 
         if (borrow.getStatus() == 1 && borrow.getMoneyYes() >= borrow.getMoney()) {
@@ -1088,7 +1093,6 @@ public class BorrowBizImpl implements BorrowBiz {
     private void finishBorrow(Borrow borrow) {
         log.info(String.format("批处理: 更改标的为满标 %s", new Gson().toJson(borrow)));
         borrow.setStatus(3);
-        borrow.setSuccessAt(new Date());
         borrowService.save(borrow);
     }
 
