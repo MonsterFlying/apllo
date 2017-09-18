@@ -367,17 +367,28 @@ public enum JixinTxCodeEnum {
             "cardBindDetailsQuery",
             "/p2p/online",
             "绑卡关系查询"
-    );
+    ),
 
+    OFFLINE_RECHARGE_CALL(
+            "offlineRechargeCall",
+            "/p2p/online",
+            "线下充值回调"
+    ),
+
+    FUND_TRANS_QUERY(
+            "fundTransQuery",
+            "/p2p/online",
+            "单笔资金类业务交易查询"
+    );
 
     private String value;
     private String url;
-    private String name ;
+    private String name;
 
     JixinTxCodeEnum(String value, String url, String name) {
         this.value = value;
         this.url = url;
-        this.name = name ;
+        this.name = name;
     }
 
     public String getValue() {

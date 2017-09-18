@@ -5,13 +5,14 @@ import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.vo.request.VoFindThirdBatch;
 import com.gofobao.framework.system.vo.request.VoSendThirdBatch;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
 
 /**
  * Created by Zeke on 2017/7/14.
  */
 public interface ThirdBatchLogBiz {
-
-
 
     /**
      * 查询批次状态
@@ -22,6 +23,7 @@ public interface ThirdBatchLogBiz {
 
     /**
      * 发送即信批次处理
+     *
      * @param voSendThirdBatch
      * @return
      */
@@ -33,7 +35,7 @@ public interface ThirdBatchLogBiz {
      * @param batchNo
      * @return
      */
-    boolean updateBatchLogState(String batchNo, Long sourceId, int state);
+    boolean updateBatchLogState(String batchNo, Long sourceId, int state, int type);
 
     /**
      * 更据sourceId检查批次是否频繁提交

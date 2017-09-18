@@ -29,6 +29,7 @@ import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.AutoTenderBiz;
@@ -83,8 +84,8 @@ public class TestController {
     @Autowired
     MqHelper mqHelper;
     final Gson GSON = new GsonBuilder().create();
- /*   @Autowired
-    private ThirdBatchDealBiz thirdBatchDealBiz;*/
+    @Autowired
+    private ThirdBatchDealBiz thirdBatchDealBiz;
 
 
     @ApiOperation("获取自动投标列表")
@@ -105,13 +106,14 @@ public class TestController {
         }
 
        /* try {
+>>>>>>> 5a5fbea0e39187552bfa814b103148e218aba1b4
             //批次执行问题
             thirdBatchDealBiz.batchDeal(NumberHelper.toLong(sourceId), StringHelper.toString(batchNo),
                     thirdBatchLogList.get(0).getAcqRes(), "");
         } catch (Exception e) {
             log.error("批次执行异常:", e);
         }
-*/
+
         /*ThirdBatchLog thirdBatchLog = thirdBatchLogList.get(0);
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);

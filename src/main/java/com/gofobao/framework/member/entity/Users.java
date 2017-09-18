@@ -8,6 +8,7 @@ import org.hibernate.annotations.DynamicInsert;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by Zeke on 2017/5/16.
@@ -18,7 +19,7 @@ import java.util.Date;
 @DynamicInsert
 @NoArgsConstructor
 @AllArgsConstructor
-public class Users implements Serializable{
+public class Users implements Serializable {
     @Id
     @Column(name = "id")
     @GeneratedValue
@@ -61,16 +62,18 @@ public class Users implements Serializable{
 
     private Date updatedAt;
 
-    private Integer pushState ;
+    private Integer pushState;
 
-    private String pushId ;
+    private String pushId;
 
-    private Integer platform ;
+    private Integer platform;
 
-    private String ip ;
+    private String ip;
 
     private String windmillId;
-    private Date loginTime ;
+
+    private Date loginTime;
 
     private String avatarPath;
+
 }

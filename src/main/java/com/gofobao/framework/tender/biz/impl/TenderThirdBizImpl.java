@@ -28,7 +28,9 @@ import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
+import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
+import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
@@ -89,6 +91,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
     private MqHelper mqHelper;
     @Autowired
     private TransferBuyLogService transferBuyLogService;
+    @Autowired
+    private ThirdBatchDealBiz thirdBatchDealBiz;
 
 
     @Value("${gofobao.javaDomain}")
@@ -169,13 +173,13 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(batchCreditInvestCheckCall.getRetCode())) {
             log.error("=============================即信投资人批次购买债权参数验证回调===========================");
             log.error("回调失败! msg:" + batchCreditInvestCheckCall.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 2);
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 2, ThirdBatchLogContants.BATCH_CREDIT_INVEST);
             ResponseEntity.ok("error");
         } else {
             log.error("=============================即信投资人批次购买债权参数验证回调===========================");
             log.error("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 1);
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 1,ThirdBatchLogContants.BATCH_CREDIT_INVEST);
         }
 
         return ResponseEntity.ok("success");
@@ -219,7 +223,15 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         }
 
         // 触发处理批次购买债权处理队列
-        MqConfig mqConfig = new MqConfig();
+        try {
+            //批次执行问题
+            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("transferId")), batchCreditInvestRunCall.getBatchNo(),
+                    batchCreditInvestRunCall.getAcqRes(), GSON.toJson(batchCreditInvestRunCall));
+        } catch (Exception e) {
+            log.error("批次执行异常:", e);
+        }
+
+       /* MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
         ImmutableMap<String, String> body = ImmutableMap
@@ -233,7 +245,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             log.error("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq exception", e);
-        }
+        }*/
 
         return ResponseEntity.ok("success");
     }
@@ -286,12 +298,12 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         BidApplyQueryResp bidApplyQueryResp = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, bidApplyQueryReq, BidApplyQueryResp.class);
         /* 取消投标orderId */
         String orderId = JixinHelper.getOrderId(JixinHelper.TENDER_CANCEL_PREFIX);
-        if (!JixinResultContants.SUCCESS.equals(bidApplyQueryResp.getRetCode())){
+        if (!JixinResultContants.SUCCESS.equals(bidApplyQueryResp.getRetCode())) {
             String msg = ObjectUtils.isEmpty(bidApplyQueryResp) ? "当前网络不稳定，请稍候重试" : bidApplyQueryResp.getRetMsg();
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
-        }else if ("2".equals(bidApplyQueryResp.getState()) || "4".equals(bidApplyQueryResp.getState())){
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, String.format("投标还款中不能取消借款 tenderId:%s",tenderId)));
-        }else if (!"9".equals(bidApplyQueryResp.getState())) {
+        } else if ("2".equals(bidApplyQueryResp.getState()) || "4".equals(bidApplyQueryResp.getState())) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, String.format("投标还款中不能取消借款 tenderId:%s", tenderId)));
+        } else if (!"9".equals(bidApplyQueryResp.getState())) {
 
             BidCancelReq request = new BidCancelReq();
             request.setAccountId(tenderUserThirdAccount.getAccountId());
@@ -332,12 +344,12 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(batchCreditInvestRunCall.getRetCode())) {
             log.error("=============================投资人批次结束债权参数验证回调===========================");
             log.error("回调失败! msg:" + batchCreditInvestRunCall.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestRunCall.getBatchNo(), borrowId, 2);
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestRunCall.getBatchNo(), borrowId, 2,ThirdBatchLogContants.BATCH_CREDIT_END);
         } else {
             log.error("=============================投资人批次结束债权参数验证回调===========================");
             log.error("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestRunCall.getBatchNo(), borrowId, 1);
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestRunCall.getBatchNo(), borrowId, 1,ThirdBatchLogContants.BATCH_CREDIT_END);
         }
 
         try {
@@ -382,6 +394,15 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         }
 
         //触发处理批次放款处理结果队列
+        try {
+            //批次执行问题
+            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("borrowId")), batchCreditInvestRunCall.getBatchNo(),
+                    batchCreditInvestRunCall.getAcqRes(), GSON.toJson(batchCreditInvestRunCall));
+        } catch (Exception e) {
+            log.error("批次执行异常:", e);
+        }
+
+/*
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
         mqConfig.setTag(MqTagEnum.BATCH_DEAL);
@@ -396,6 +417,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         } catch (Throwable e) {
             log.error("tenderThirdBizImpl thirdBatchCreditEndRunCall send mq exception", e);
         }
+*/
 
         return ResponseEntity.ok("success");
     }

@@ -87,10 +87,21 @@ public class CreditProvider {
         Specification<ThirdBatchLog> tbls = Specifications
                 .<ThirdBatchLog>and()
                 .eq("type", ThirdBatchLogContants.BATCH_CREDIT_END)
-                .in("state", 0, 1)
+                .eq("state", 3)
                 .eq("sourceId", borrowId)
                 .build();
         List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls);
+        if (!CollectionUtils.isEmpty(thirdBatchLogList)) {
+            log.info(String.format("结束债权已完成，third_batch:%s", gson.toJson(thirdBatchLogList.get(0))));
+        }
+
+        tbls = Specifications
+                .<ThirdBatchLog>and()
+                .eq("type", ThirdBatchLogContants.BATCH_CREDIT_END)
+                .in("state", 0, 1)
+                .eq("sourceId", borrowId)
+                .build();
+        thirdBatchLogList = thirdBatchLogService.findList(tbls);
         if (!CollectionUtils.isEmpty(thirdBatchLogList)) {
             log.info(String.format("结束债权正在处理中，third_batch:%s", gson.toJson(thirdBatchLogList.get(0))));
         }
