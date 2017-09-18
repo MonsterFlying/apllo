@@ -365,8 +365,8 @@ public enum JixinTxCodeEnum {
     ),
     CARD_BIND_DETAILS_QUERY(
             "cardBindDetailsQuery",
-                    "/p2p/online",
-                    "绑卡关系查询"
+            "/p2p/online",
+            "绑卡关系查询"
     );
 
 

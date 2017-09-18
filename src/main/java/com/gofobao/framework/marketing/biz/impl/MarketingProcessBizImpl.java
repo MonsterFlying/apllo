@@ -4,12 +4,12 @@ import com.github.wenhao.jpa.PredicateBuilder;
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.asset.entity.RechargeDetailLog;
 import com.gofobao.framework.asset.service.RechargeDetailLogService;
-import com.gofobao.framework.borrow.contants.BorrowContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
-import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
 import com.gofobao.framework.marketing.biz.MarketingProcessBiz;
 import com.gofobao.framework.marketing.constans.MarketingTypeContants;
 import com.gofobao.framework.marketing.entity.*;
@@ -20,7 +20,6 @@ import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
-import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
@@ -242,9 +241,15 @@ public class MarketingProcessBizImpl implements MarketingProcessBiz {
                         remark.append("[投标金额年化率]");
                         Long borrowId = tender.getBorrowId();
                         Borrow borrow = borrowService.findById(borrowId);
-                        Integer timeLimit = borrow.getTimeLimit();
-                        tempMoney = validMoney * (timeLimit / 12D) * rule.getApr();
-                        money = tempMoney.longValue();
+                        //Integer timeLimit = borrow.getTimeLimit();
+                        // 查询标的信息
+                        // tempMoney = validMoney * (timeLimit / 12D) * rule.getApr();
+                        // money = tempMoney.longValue();
+                        double principal = tender.getValidMoney() ; // 投标金额
+                        double apr = rule.getApr() * 100 * 100 ;  // 年化收益
+                        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(principal, apr, borrow.getTimeLimit(),  nowDate );
+                        Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
+                        money = NumberHelper.toInt(calculatorMap.get("earnings"));  // 红包派发领取收益
                         remark.append(StringHelper.formatDouble(money / 100D, true));
                         remark.append("元");
                         break;

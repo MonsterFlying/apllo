@@ -98,7 +98,6 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
-import java.text.DecimalFormat;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -322,6 +321,23 @@ public class BorrowBizImpl implements BorrowBiz {
                             VoBaseResp.ERROR,
                             "查询失败",
                             VoPcBorrowList.class));
+        }
+    }
+
+    /**
+     * pc首页表列表
+     * @return
+     */
+    @Override
+    public ResponseEntity<VoPcBorrowList> pcIndexBorrowList() {
+        try {
+            List<VoViewBorrowList> borrowLists = borrowService.pcIndexBorrowList();
+            VoPcBorrowList pcBorrowList = VoBaseResp.ok("查询", VoPcBorrowList.class);
+            pcBorrowList.setBorrowLists(borrowLists);
+            return ResponseEntity.ok(pcBorrowList);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "", VoPcBorrowList.class));
+
         }
     }
 
@@ -553,7 +569,7 @@ public class BorrowBizImpl implements BorrowBiz {
         List<Borrow> borrows = borrowService.findList(specification);
         if (!CollectionUtils.isEmpty(borrows)) {
             for (Borrow borrow : borrows) {
-                if ((borrow.getMoneyYes() / borrow.getMoney()) < 1) {
+                if ((borrow.getMoneyYes() / borrow.getMoney()) != 1) {
                     log.info("新增借款：您已经有一个进行中的借款标。");
                     return ResponseEntity
                             .badRequest()
@@ -1905,5 +1921,6 @@ public class BorrowBizImpl implements BorrowBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "初审失败!"));
         }
     }
+
 
 }

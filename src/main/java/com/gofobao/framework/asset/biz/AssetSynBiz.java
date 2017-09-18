@@ -1,8 +1,5 @@
 package com.gofobao.framework.asset.biz;
 
-import com.gofobao.framework.asset.vo.response.VoUserAssetInfoResp;
-import org.springframework.http.ResponseEntity;
-
 import java.util.Date;
 
 /**

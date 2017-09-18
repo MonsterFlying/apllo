@@ -1,6 +1,9 @@
 package com.gofobao.framework.member.controller.web;
 
+import com.gofobao.framework.borrow.vo.request.VoDoAgainVerifyReq;
 import com.gofobao.framework.core.vo.VoBaseResp;
+import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.member.biz.BrokerBounsBiz;
 import com.gofobao.framework.member.vo.request.VoFriendsReq;
 import com.gofobao.framework.member.vo.request.VoFriendsTenderReq;
@@ -8,14 +11,19 @@ import com.gofobao.framework.member.vo.response.VoViewInviteAwardStatisticsWarpR
 import com.gofobao.framework.member.vo.response.pc.VoViewBrokerBounsWarpRes;
 import com.gofobao.framework.member.vo.response.pc.VoViewInviteFriendsWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -80,5 +88,40 @@ public class WebFriendsController {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "查询失败"));
         }
     }
+
+    @ApiOperation(" 理财师提成")
+    @PostMapping("pub/financialPlanner/pc/pushMoney")
+    public ResponseEntity pushMoney(VoDoAgainVerifyReq voDoAgainVerifyReq) {
+        //验证签名
+        String paramStr = voDoAgainVerifyReq.getParamStr();
+        if (!SecurityHelper.checkSign(voDoAgainVerifyReq.getSign(), paramStr)) {
+            log.error("BorrowBizImpl doAgainVerify error：签名校验不通过");
+        }
+        //获取参数
+        Map<String, String> paramMap = new Gson().fromJson(paramStr, new TypeToken<Map<String, String>>() {
+        }.getType());
+        //参数验证
+        if (ObjectUtils.isEmpty(paramMap)) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非法访问"));
+        }
+        String typePushMoney = paramMap.get("pushMoneyType").toString();
+        String sendDateStr = paramMap.get("sendDate");
+
+        if (ObjectUtils.isEmpty(sendDateStr) || StringUtils.isEmpty(typePushMoney)) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "非法访问"));
+        }
+        //派发红包
+        Date sendDate = DateHelper.stringToDate(sendDateStr, DateHelper.DATE_FORMAT_YMD);
+        switch (typePushMoney) {
+            case "pushMoney":  //理财提成
+                brokerBounsBiz.pushMoney(sendDate);
+            break;
+            case "dayPushMoney":  //天提成
+                brokerBounsBiz.dayPushMoney(sendDate);
+            break;
+        }
+        return ResponseEntity.ok(VoBaseResp.OK);
+    }
+
 
 }

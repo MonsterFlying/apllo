@@ -5,7 +5,6 @@ import com.gofobao.framework.borrow.vo.request.VoAdminOpenAccountResp;
 import com.gofobao.framework.borrow.vo.request.VoPcDoFirstVerity;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.member.entity.UserThirdAccount;
-import com.gofobao.framework.member.vo.request.UserAccountThirdTxReq;
 import com.gofobao.framework.member.vo.request.VoOpenAccountReq;
 import com.gofobao.framework.member.vo.response.*;
 import org.springframework.http.ResponseEntity;

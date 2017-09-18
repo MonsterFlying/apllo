@@ -12,6 +12,7 @@ import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.helper.project.UserHelper;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.member.repository.UsersRepository;
+import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.tender.contants.TenderConstans;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.repository.TenderRepository;
@@ -28,7 +29,6 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 /**
@@ -48,6 +48,9 @@ public class TenderServiceImpl implements TenderService {
 
     @Autowired
     private UsersRepository usersRepository;
+    @Autowired
+    private UserService userService;
+
 
 
     /**

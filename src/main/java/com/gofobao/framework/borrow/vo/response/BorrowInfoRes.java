@@ -1,6 +1,5 @@
 package com.gofobao.framework.borrow.vo.response;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;

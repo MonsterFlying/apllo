@@ -9,7 +9,6 @@ import com.gofobao.framework.api.helper.JixinTxDateHelper;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
-import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.NumberHelper;

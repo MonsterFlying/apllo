@@ -25,6 +25,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -224,8 +225,8 @@ public class BorrowServiceImpl implements BorrowService {
                     status = 3; //招标中
                     //  进度
                     if (spend == 100) {
-                    status = 6;
-                }
+                        status = 6;
+                    }
 
                 }
             } else if (!ObjectUtils.isEmpty(m.getSuccessAt()) && !ObjectUtils.isEmpty(m.getCloseAt())) {   //满标时间 结清
@@ -262,7 +263,7 @@ public class BorrowServiceImpl implements BorrowService {
 
 
     /**
-     * pc:首页标列表
+     * pc:首页理财标列表
      *
      * @param voBorrowListReq
      * @return
@@ -334,6 +335,67 @@ public class BorrowServiceImpl implements BorrowService {
 
     }
 
+    /**
+     * 首页标列表
+     * @return
+     */
+    @Override
+    public List<VoViewBorrowList> pcIndexBorrowList() {
+        //公共sql
+        List<Integer> typeArray = Lists.newArrayList(BorrowContants.CE_DAI, BorrowContants.JING_ZHI, BorrowContants.QU_DAO);
+        Map<Integer, String> sqlMap = Maps.newHashMap();
+        for (Integer type : typeArray) {
+            String sql = " SELECT b.* FROM gfb_borrow  b  " +
+                    "WHERE " +
+                         "b.product_id IS NOT NULL " +
+                    "AND " +
+                        "b.type =" + type+
+                    " AND " +
+                        "b.status " +
+                    "NOT IN(" + BorrowContants.CANCEL + "," +
+                                BorrowContants.NO_PASS + "," +
+                                BorrowContants.RECHECK_NO_PASS + "," +
+                                BorrowContants.PENDING + ") " +
+                    "AND " +
+                        "b.verify_at IS Not NULL " +
+                    "AND " +
+                        "b.close_at is null " +
+                    "AND " +
+                        "b.product_id IS NOT NULL";
+            sqlMap.put(type, sql);
+        }
+        //车贷排序
+        StringBuffer cheDaiOrderBy = new StringBuffer(" ORDER BY " +
+                "b.status ASC, " +
+                "b.lend_repay_status ASC, " +
+                "( b.money_yes / b.money ) DESC, " +
+                "b.success_at DESC, " +
+                "b.id DESC limit 4");
+        //其他标排序
+        StringBuffer otherOrderBy = new StringBuffer(" ORDER BY " +
+                "b.lend_repay_status ASC, " +
+                "( b.money_yes / b.money ) DESC, " +
+                "b.status, " +
+                "b.success_at DESC, " +
+                "b.id DESC limit 2 ");
+        //拼接
+        String sqlStr = "";
+        for (Integer key : sqlMap.keySet()
+                ) {
+            if (key.intValue() == BorrowContants.CE_DAI)
+                sqlStr += "(" + sqlMap.get(key) + cheDaiOrderBy + ") UNION ALL ";
+            else
+                sqlStr += "(" + sqlMap.get(key) + otherOrderBy + ") UNION ALL ";
+        }
+
+        //调用查询
+        String sql = sqlStr.substring(0, sqlStr.lastIndexOf("UNION ALL "));
+        Query query = entityManager.createNativeQuery(sql, Borrow.class);
+        List<Borrow> borrows = query.getResultList();
+        //装配处理
+        List<VoViewBorrowList> borrowLists= commonHandle( borrows, new VoBorrowListReq() );
+        return borrowLists;
+    }
 
     /**
      * 标详情

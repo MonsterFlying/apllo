@@ -22,7 +22,6 @@ import com.gofobao.framework.api.model.auto_credit_invest_auth.AutoCreditInvestA
 import com.gofobao.framework.api.model.auto_credit_invest_auth.AutoCreditInvestAuthResponse;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
-import com.gofobao.framework.api.model.batch_bail_repay.BatchBailRepayRunResp;
 import com.gofobao.framework.api.model.card_bind.CardBindRequest;
 import com.gofobao.framework.api.model.card_bind.CardBindResponse;
 import com.gofobao.framework.api.model.card_bind_details_query.CardBindDetailsQueryRequest;
@@ -58,7 +57,6 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.marketing.constans.MarketingTypeContants;
-import com.gofobao.framework.marketing.entity.Marketing;
 import com.gofobao.framework.marketing.entity.MarketingData;
 import com.gofobao.framework.marketing.entity.MarketingRedpackRecord;
 import com.gofobao.framework.marketing.service.MarketingRedpackRecordService;
@@ -98,7 +96,6 @@ import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 

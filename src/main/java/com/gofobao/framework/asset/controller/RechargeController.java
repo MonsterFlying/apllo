@@ -10,7 +10,6 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.gofobao.framework.tender.vo.request.VoAdminRechargeReq;
-import com.gofobao.framework.tender.vo.request.VoPublishRedReq;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

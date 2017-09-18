@@ -115,4 +115,7 @@ public interface BorrowService {
      */
     Borrow findNoviceBorrow();
 
+
+    List<VoViewBorrowList> pcIndexBorrowList();
+
 }

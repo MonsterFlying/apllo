@@ -45,7 +45,6 @@ import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.SecurityHelper;
-import com.gofobao.framework.marketing.entity.MarketingRedpackRecord;
 import com.gofobao.framework.marketing.service.MarketingRedpackRecordService;
 import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
@@ -1203,6 +1202,7 @@ public class AssetBizImpl implements AssetBiz {
                                 DateHelper.beginOfDate(startTime),
                                 DateHelper.endOfDate(endTime)))
                 .eq("userId", voAssetLogReq.getUserId())
+                .eq("del",0)
                 .notIn("localType", types.toArray())
                 .build();
         Page<NewAssetLog> assetLogPage = newAssetLogService.findAll(specification, pageable);

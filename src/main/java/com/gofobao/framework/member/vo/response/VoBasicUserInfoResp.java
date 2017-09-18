@@ -88,5 +88,8 @@ public class VoBasicUserInfoResp extends VoBaseResp{
 
     private String target_url;
 
+    @ApiModelProperty("管理地址")
+    private String adminUrl="";
+
 
 }

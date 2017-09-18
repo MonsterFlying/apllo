@@ -3,7 +3,6 @@ package com.gofobao.framework.member.service.impl;
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.common.constans.MoneyConstans;
 import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.member.entity.BrokerBouns;
 import com.gofobao.framework.member.entity.Users;
@@ -161,11 +160,11 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
         if (CollectionUtils.isEmpty(yesterdayBroker)) {
             inviteAwardStatistics.setYesterdayAward("0.00");
         } else {
+            //待收本金
+            Long waitPrincipalTotal=brokerBounss.get(0).getWaitPrincipalTotal();
             //昨日奖励
             Integer yesterdayBounsAward = yesterdayBroker.stream().mapToInt(w -> w.getBounsAward()).sum();
-            inviteAwardStatistics.setYesterdayAward(StringHelper.formatMon(yesterdayBounsAward / 100));
-            //待收本金
-            Long waitPrincipalTotal=brokerBounss.stream().mapToLong(p->p.getWaitPrincipalTotal()).sum();
+            inviteAwardStatistics.setYesterdayAward(StringHelper.formatMon(yesterdayBounsAward / 100D));
             //年化率
             String awardApr = "0.02";
             if ( waitPrincipalTotal>= 80000000) {

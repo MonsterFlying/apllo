@@ -75,6 +75,4 @@ import static com.gofobao.framework.listener.providers.NoticesMessageProvider.GS
 @Component
 @Slf4j
 public class ThirdBatchProvider {
-    
-
 }

@@ -1,24 +1,18 @@
 package com.gofobao.framework.security.helper;
 
-import com.gofobao.framework.helper.IpHelper;
 import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.member.entity.Users;
 import com.gofobao.framework.security.exception.LoginException;
-import com.google.common.collect.Maps;
-import com.google.gson.Gson;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;

@@ -2,7 +2,6 @@ package com.gofobao.framework.tender.vo.request;
 
 import com.gofobao.framework.common.qiniu.util.StringUtils;
 import com.gofobao.framework.core.vo.VoBaseReq;
-import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.MoneyHelper;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;

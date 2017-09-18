@@ -4,6 +4,8 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.message.biz.SmsNoticeSettingsBiz;
 import com.gofobao.framework.message.entity.SmsNoticeSettingsEntity;
 import com.gofobao.framework.message.service.SmsNoticeSettingsService;
+import com.gofobao.framework.system.vo.response.SmsNoticeListRes;
+import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -21,11 +23,16 @@ public class SmsNoticeSettingBizImpl implements SmsNoticeSettingsBiz {
     private SmsNoticeSettingsService smsNoticeSettingsService;
 
     @Override
-    public ResponseEntity<List<SmsNoticeSettingsEntity>> list(Long userId) {
-
-        List<SmsNoticeSettingsEntity> settingsEntityList = smsNoticeSettingsService.findByUserId(userId);
-
-        return ResponseEntity.ok(settingsEntityList);
+    public ResponseEntity<SmsNoticeListRes> list(Long userId) {
+        List<SmsNoticeSettingsEntity> settingsEntityList = Lists.newArrayList();
+        try {
+            settingsEntityList = smsNoticeSettingsService.findByUserId(userId);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "查询异常,请稍后再试", SmsNoticeListRes.class));
+        }
+        SmsNoticeListRes noticeListRes = VoBaseResp.ok("查询成功", SmsNoticeListRes.class);
+        noticeListRes.setSettingsEntities(settingsEntityList);
+        return ResponseEntity.ok(noticeListRes);
     }
 
 

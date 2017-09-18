@@ -6,7 +6,6 @@ import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.MultiCaculateHelper;
 import com.gofobao.framework.helper.RedisHelper;
-import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.system.biz.StatisticBiz;
 import com.gofobao.framework.system.contants.DictAliasCodeContants;
 import com.gofobao.framework.system.entity.DictItem;
@@ -34,7 +33,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.Calendar;

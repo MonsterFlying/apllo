@@ -2,7 +2,6 @@ package com.gofobao.framework.system.biz;
 
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
-import com.gofobao.framework.system.vo.request.VoDealThirdErrorReq;
 import com.gofobao.framework.system.vo.request.VoFindThirdBatch;
 import com.gofobao.framework.system.vo.request.VoSendThirdBatch;
 import org.springframework.http.ResponseEntity;
