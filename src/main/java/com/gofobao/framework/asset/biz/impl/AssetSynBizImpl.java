@@ -196,7 +196,6 @@ public class AssetSynBizImpl implements AssetSynBiz {
             Long money = new Double(MoneyHelper.multiply(Double.parseDouble(accountDetailsQueryItem.getTxAmount()), 100d)).longValue();
             RechargeDetailLog rechargeDetailLog = new RechargeDetailLog();
             log.info("进入同步环节");
-            rechargeDetailLog = new RechargeDetailLog();
             rechargeDetailLog.setUserId(userId);
             rechargeDetailLog.setBankName(userThirdAccount.getBankName());
             rechargeDetailLog.setCallbackTime(nowDate);
@@ -401,7 +400,6 @@ public class AssetSynBizImpl implements AssetSynBiz {
             Long money = new Double(Double.parseDouble(accountDetailsQueryItem.getTxAmount()) * 100).longValue();
             RechargeDetailLog rechargeDetailLog = new RechargeDetailLog();
             log.info(String.format("进入同步环节 %s", gson.toJson(accountDetailsQueryItem)));
-            rechargeDetailLog = new RechargeDetailLog();
             rechargeDetailLog.setUserId(userId);
             rechargeDetailLog.setBankName(userThirdAccount.getBankName());
             rechargeDetailLog.setCallbackTime(synDate);
