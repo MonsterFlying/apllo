@@ -146,9 +146,9 @@ public class BorrowRepaymentServiceImpl implements BorrowRepaymentService {
             VoOrdersList item = new VoOrdersList();
             Object[] objects = (Object[]) p;
             item.setTime((String) objects[0]);
-            item.setCollectionMoney(StringHelper.formatMon((Long) objects[1] / 100D));
-            item.setPrincipal(StringHelper.formatMon((Long) objects[2] / 100D));
-            item.setInterest(StringHelper.formatMon((Long) objects[3] / 100D));
+            item.setCollectionMoney(StringHelper.toString((Long) objects[1] / 100D));
+            item.setPrincipal(StringHelper.toString((Long) objects[2] / 100D));
+            item.setInterest(StringHelper.toString((Long) objects[3] / 100D));
             item.setOrderCount((Long) objects[4]);
             ordersLists.add(item);
         });

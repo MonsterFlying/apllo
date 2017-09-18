@@ -857,11 +857,11 @@ public class AssetBizImpl implements AssetBiz {
         if (!CollectionUtils.isEmpty(assetLogs)) {
             assetLogs.stream().forEach(p -> {
                 AssetLogs assetLog = new AssetLogs();
-                assetLog.setOperationMoney(StringHelper.formatMon(p.getOpMoney() / 100D));
+                assetLog.setOperationMoney(StringHelper.toString(p.getOpMoney() / 100D));
                 assetLog.setRemark(p.getRemark());
                 assetLog.setTime(DateHelper.dateToString(p.getCreateTime()));
                 assetLog.setTypeName(p.getOpName());
-                assetLog.setUsableMoney(StringHelper.formatMon(p.getUseMoney() / 100D));
+                assetLog.setUsableMoney(StringHelper.toString(p.getUseMoney() / 100D));
                 assetLogsList.add(assetLog);
             });
             LinkedHashMap<String, String> paramMaps = Maps.newLinkedHashMap();
