@@ -13,5 +13,5 @@ public class VoTransferUserListReq extends Page {
     private Long transferId;
 
     @ApiModelProperty(hidden = true)
-    private Long userId;
+    private Long userId=0L;
 }

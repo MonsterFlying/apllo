@@ -53,6 +53,28 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
             return null;
         }
         Date nowDate = new Date();
+
+        /*前面一个*/
+        int priorState = state - 1;
+        if (priorState >= 0) {
+            Specification<ThirdBatchDealLog> tbdls = Specifications
+                    .<ThirdBatchDealLog>and()
+                    .eq("batchId", thirdBatchLog.getId())
+                    .eq("state", priorState)
+                    .build();
+            long count = thirdBatchDealLogService.count(tbdls);
+            if (count < 1) {//前一个节点不存在记录
+                ThirdBatchDealLog thirdBatchDealLog = new ThirdBatchDealLog();
+                thirdBatchDealLog.setBatchId(thirdBatchLog.getId());
+                thirdBatchDealLog.setState(priorState);
+                thirdBatchDealLog.setStatus(true);
+                thirdBatchDealLog.setType(type);
+                thirdBatchDealLog.setCreatedAt(DateHelper.subMinutes(nowDate, 1));
+                thirdBatchDealLog.setUpdatedAt(DateHelper.subMinutes(nowDate, 1));
+                thirdBatchDealLogService.save(thirdBatchDealLog);
+            }
+        }
+
         ThirdBatchDealLog thirdBatchDealLog = new ThirdBatchDealLog();
         thirdBatchDealLog.setBatchId(thirdBatchLog.getId());
         thirdBatchDealLog.setState(state);
@@ -168,18 +190,32 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
         ThirdBatchDealLog thirdBatchDealLog = thirdBatchDealLogMap.get(ThirdBatchDealLogContants.SEND_REQUEST);
         voFindLendRepayStatus = new VoFindLendRepayStatus();
         voFindLendRepayStatus.setName(ThirdBatchLogContants.BORROW_THIRD_STEP);
-        if (!flag || ObjectUtils.isEmpty(thirdBatchLog)) { // 0待处理
+        if (!flag) { // 0待处理
             voFindLendRepayStatus.setDateStr("- -");
             voFindLendRepayStatus.setState(0);
             flag = false;
-        } else if (thirdBatchLog.getState() == 2 || thirdBatchLog.getState() == 4 || (ObjectUtils.isEmpty(thirdBatchDealLog) && !thirdBatchDealLog.getStatus())) { //1.未通过
-            voFindLendRepayStatus.setDateStr(DateHelper.dateToString(thirdBatchDealLog.getCreatedAt()));
+        } else if ((!ObjectUtils.isEmpty(thirdBatchLog) && (thirdBatchLog.getState() == 5 || thirdBatchLog.getState() == 2 || thirdBatchLog.getState() == 4)) ||
+                (!ObjectUtils.isEmpty(thirdBatchDealLog) && !thirdBatchDealLog.getStatus())) { //1.未通过
+            Date date = ObjectUtils.isEmpty(borrow.getRecheckAt()) ? borrow.getSuccessAt() : borrow.getRecheckAt();
+            if (!ObjectUtils.isEmpty(thirdBatchDealLog)) {
+                date = thirdBatchDealLog.getCreatedAt();
+            }else if (!ObjectUtils.isEmpty(thirdBatchLog)){
+                date = DateHelper.subMinutes(thirdBatchLog.getCreateAt(), 3);
+            }
+
+            voFindLendRepayStatus.setDateStr(DateHelper.dateToString(date));
             voFindLendRepayStatus.setState(1);
             flag = false;
         } else { // 2.已通过
             flag = true;
+            Date date = ObjectUtils.isEmpty(borrow.getRecheckAt()) ? borrow.getSuccessAt() : borrow.getRecheckAt();
+            if (!ObjectUtils.isEmpty(thirdBatchDealLog)) {
+                date = thirdBatchDealLog.getCreatedAt();
+            }else if (!ObjectUtils.isEmpty(thirdBatchLog)){
+                date = DateHelper.subMinutes(thirdBatchLog.getCreateAt(), 3);
+            }
+            voFindLendRepayStatus.setDateStr(DateHelper.dateToString(date));
             voFindLendRepayStatus.setState(2);
-            voFindLendRepayStatus.setDateStr(DateHelper.dateToString(thirdBatchDealLog.getCreatedAt()));
         }
         voFindLendRepayStatusList.add(voFindLendRepayStatus);
         //第四步
@@ -187,34 +223,60 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
         thirdBatchDealLog = thirdBatchDealLogMap.get(ThirdBatchDealLogContants.PARAM_CHECK);
         voFindLendRepayStatus = new VoFindLendRepayStatus();
         voFindLendRepayStatus.setName(ThirdBatchLogContants.BORROW_FOUR_STEP);
-        if (!flag || thirdBatchLog.getState() != 3) { // 0待处理
+        if (!flag || (!ObjectUtils.isEmpty(thirdBatchLog) && thirdBatchLog.getState() != 3 && thirdBatchLog.getState() != 5)) { // 0待处理
             voFindLendRepayStatus.setDateStr("- -");
             voFindLendRepayStatus.setState(0);
             flag = false;
-        } else if (thirdBatchLog.getState() == 4 || thirdBatchLog.getState() == 2 || (ObjectUtils.isEmpty(thirdBatchDealLog) && !thirdBatchDealLog.getStatus())) { //1.未通过
-            voFindLendRepayStatus.setDateStr(DateHelper.dateToString(thirdBatchDealLog.getCreatedAt()));
+        } else if ((!ObjectUtils.isEmpty(thirdBatchLog) && (thirdBatchLog.getState() == 5 || thirdBatchLog.getState() == 2 || thirdBatchLog.getState() == 4))
+                || (!ObjectUtils.isEmpty(thirdBatchDealLog) && !thirdBatchDealLog.getStatus())) { //1.未通过
+            Date date = ObjectUtils.isEmpty(borrow.getRecheckAt()) ? borrow.getSuccessAt() : borrow.getRecheckAt();
+            if (!ObjectUtils.isEmpty(thirdBatchDealLog)) {
+                date = thirdBatchDealLog.getCreatedAt();
+            }else if (!ObjectUtils.isEmpty(thirdBatchLog)){
+                date = DateHelper.subMinutes(thirdBatchLog.getCreateAt(), 2);
+            }
+            voFindLendRepayStatus.setDateStr(DateHelper.dateToString(date));
             voFindLendRepayStatus.setState(1);
             flag = false;
         } else { // 2.已通过
             flag = true;
+            Date date = ObjectUtils.isEmpty(borrow.getRecheckAt()) ? borrow.getSuccessAt() : borrow.getRecheckAt();
+            if (!ObjectUtils.isEmpty(thirdBatchDealLog)) {
+                date = thirdBatchDealLog.getCreatedAt();
+            }else if (!ObjectUtils.isEmpty(thirdBatchLog)){
+                date = DateHelper.subMinutes(thirdBatchLog.getCreateAt(), 2);
+            }
+            voFindLendRepayStatus.setDateStr(DateHelper.dateToString(date));
             voFindLendRepayStatus.setState(2);
-            voFindLendRepayStatus.setDateStr(DateHelper.dateToString(thirdBatchDealLog.getCreatedAt()));
         }
         voFindLendRepayStatusList.add(voFindLendRepayStatus);
         //第五步
         /* 批次处理节点记录 */
-        thirdBatchDealLog = thirdBatchDealLogMap.get(ThirdBatchDealLogContants.PARAM_CHECK);
+        thirdBatchDealLog = thirdBatchDealLogMap.get(ThirdBatchDealLogContants.PROCESSED);
         voFindLendRepayStatus = new VoFindLendRepayStatus();
         voFindLendRepayStatus.setName(ThirdBatchLogContants.BORROW_FIVE_STEP);
-        if (!flag || thirdBatchLog.getState() != 3) { // 0待处理
+        if (!flag || (!ObjectUtils.isEmpty(thirdBatchLog) &&thirdBatchLog.getState() != 3 && thirdBatchLog.getState() != 5)) { // 0待处理
             voFindLendRepayStatus.setDateStr("- -");
             voFindLendRepayStatus.setState(0);
-        } else if (thirdBatchLog.getState() == 2 || thirdBatchLog.getState() == 4 || (ObjectUtils.isEmpty(thirdBatchDealLog) && !thirdBatchDealLog.getStatus())) { //1.未通过
-            voFindLendRepayStatus.setDateStr(DateHelper.dateToString(thirdBatchDealLog.getCreatedAt()));
+        } else if ((!ObjectUtils.isEmpty(thirdBatchLog) && (thirdBatchLog.getState() == 5 || thirdBatchLog.getState() == 2 || thirdBatchLog.getState() == 4))
+                || (!ObjectUtils.isEmpty(thirdBatchDealLog) && !thirdBatchDealLog.getStatus())) { //1.未通过
+            Date date = ObjectUtils.isEmpty(borrow.getRecheckAt()) ? borrow.getSuccessAt() : borrow.getRecheckAt();
+            if (!ObjectUtils.isEmpty(thirdBatchDealLog)) {
+                date = thirdBatchDealLog.getCreatedAt();
+            }else if (!ObjectUtils.isEmpty(thirdBatchLog)){
+                date = DateHelper.subMinutes(thirdBatchLog.getCreateAt(), 1);
+            }
+            voFindLendRepayStatus.setDateStr(DateHelper.dateToString(date));
             voFindLendRepayStatus.setState(1);
         } else { // 2.已通过
+            Date date = ObjectUtils.isEmpty(borrow.getRecheckAt()) ? borrow.getSuccessAt() : borrow.getRecheckAt();
+            if (!ObjectUtils.isEmpty(thirdBatchDealLog)) {
+                date = thirdBatchDealLog.getCreatedAt();
+            }else if (!ObjectUtils.isEmpty(thirdBatchLog)){
+                date = DateHelper.subMinutes(thirdBatchLog.getCreateAt(), 1);
+            }
+            voFindLendRepayStatus.setDateStr(DateHelper.dateToString(date));
             voFindLendRepayStatus.setState(2);
-            voFindLendRepayStatus.setDateStr(DateHelper.dateToString(thirdBatchDealLog.getCreatedAt()));
         }
         voFindLendRepayStatusList.add(voFindLendRepayStatus);
     }

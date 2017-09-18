@@ -108,20 +108,27 @@ public class AutoTenderBizImpl implements AutoTenderBiz {
                 return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "新手标请在晚上8点后触发"));
             }
 
-            //触发自动投标队列
-            MqConfig mqConfig = new MqConfig();
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_TENDER);
-            mqConfig.setTag(MqTagEnum.AUTO_TENDER);
-            ImmutableMap<String, String> body = ImmutableMap
-                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-            mqConfig.setMsg(body);
-            try {
-                log.info(String.format("borrowProvider autoTender send mq %s", gson.toJson(body)));
-                mqHelper.convertAndSend(mqConfig);
-                return ResponseEntity.ok(VoBaseResp.ok("触发成功!"));
-            } catch (Throwable e) {
-                log.error("borrowProvider autoTender send mq exception", e);
-                return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "触发失败!"));
+            if (borrow.getMoneyYes() == 0 && borrow.getIsLock()) {
+                //触发自动投标队列
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_TENDER);
+                mqConfig.setTag(MqTagEnum.AUTO_TENDER);
+                ImmutableMap<String, String> body = ImmutableMap
+                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                mqConfig.setMsg(body);
+                try {
+                    log.info(String.format("borrowProvider autoTender send mq %s", gson.toJson(body)));
+                    mqHelper.convertAndSend(mqConfig);
+                    return ResponseEntity.ok(VoBaseResp.ok("触发成功!"));
+                } catch (Throwable e) {
+                    log.error("borrowProvider autoTender send mq exception", e);
+                    return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "触发失败!"));
+                }
+
+            } else if (borrow.getMoneyYes() > 0 && borrow.getIsLock()) {
+                borrow.setIsLock(false);
+                borrow.setUpdatedAt(new Date());
+                borrowService.save(borrow);
             }
         }
         return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "触发失败!"));

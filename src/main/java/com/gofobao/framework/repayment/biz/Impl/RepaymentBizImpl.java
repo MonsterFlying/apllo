@@ -445,7 +445,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             /* 开始时间 */
             Date startAt;
             if (borrowRepayment.getOrder() == 0) {
-                startAt = DateHelper.beginOfDate(borrow.getSuccessAt());
+                startAt = DateHelper.beginOfDate(borrow.getReleaseAt());
             } else {
                 startAt = DateHelper.beginOfDate(borrowRepaymentList.get((i - 1)).getRepayAt());
             }
@@ -1016,7 +1016,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 long interest = collectionMoneyYes - principal;/* 当前用户的所有回款本金 */
                 String phone = users.getPhone();/* 投资人手机号 */
                 String name = "";
-                if (ObjectUtils.isEmpty(phone)) {
+                if (!ObjectUtils.isEmpty(phone)) {
                     MqConfig config = new MqConfig();
                     config.setQueue(MqQueueEnum.RABBITMQ_SMS);
                     config.setTag(MqTagEnum.SMS_RECEIVED_REPAY);

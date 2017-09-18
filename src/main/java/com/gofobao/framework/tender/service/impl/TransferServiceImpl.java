@@ -195,7 +195,7 @@ public class TransferServiceImpl implements TransferService {
         tenderList.forEach(p -> {
             Transfered transfered = new Transfered();
             Borrow borrow = borrowMap.get(p.getBorrowId());
-            transfered.setTime(DateHelper.dateToString(p.getSuccessAt()));
+            transfered.setTime(DateHelper.dateToString(p.getRecheckAt()));
             double transferFeeRate = Math.min(0.004 + 0.0008 * (p.getTimeLimit() - 1), 0.0128);
             transfered.setCost(StringHelper.formatMon(Math.round(p.getTransferMoney() * transferFeeRate) / 100D));
             transfered.setName(borrow.getName());
@@ -422,7 +422,7 @@ public class TransferServiceImpl implements TransferService {
         Map<String, Object> borrowMap = Maps.newHashMap();
         Users users = userService.findById(transfer.getUserId());
         borrowMap.put("username",StringUtils.isEmpty(users.getUsername()) ? UserHelper.hideChar(users.getPhone(),UserHelper.PHONE_NUM)  :UserHelper.hideChar(users.getUsername(),UserHelper.USERNAME_NUM));
-        borrowMap.put("successAt", StringUtils.isEmpty(transfer.getSuccessAt()) ? null : DateHelper.dateToString(transfer.getSuccessAt()));
+        borrowMap.put("successAt", StringUtils.isEmpty(transfer.getRecheckAt()) ? null : DateHelper.dateToString(transfer.getRecheckAt()));
         borrowMap.put("cardId",UserHelper.hideChar(users.getCardId(),UserHelper.CARD_ID_NUM));
         Integer apr = transfer.getApr();
         borrowMap.put("apr", StringHelper.formatMon(apr / 100D));
@@ -431,7 +431,7 @@ public class TransferServiceImpl implements TransferService {
         borrowMap.put("repayFashion",repayFashion );
         borrowMap.put("id",transfer.getBorrowId());
         borrowMap.put("money", StringHelper.formatMon(transfer.getTransferMoney() / 100D));
-        borrowMap.put("monthAsReimbursement", StringUtils.isEmpty(transfer.getSuccessAt()) ? null : "每月" + DateHelper.dateToString(transfer.getSuccessAt(),DateHelper.DATE_FORMAT_YMD));
+        borrowMap.put("monthAsReimbursement", StringUtils.isEmpty(transfer.getRecheckAt()) ? null : "每月" + DateHelper.dateToString(transfer.getRecheckAt(),DateHelper.DATE_FORMAT_YMD));
         borrowMap.put("borrowExpireAtStr",DateHelper.dateToString(DateHelper.endOfDate(DateHelper.addDays(transfer.getReleaseAt(),1))));
         Integer timeLimit = transfer.getTimeLimit();
         borrowMap.put("timeLimit", timeLimit);

@@ -273,7 +273,10 @@ public class TransferBizImpl implements TransferBiz {
             assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
             assetChange.setMoney(transferBuyLog.getValidMoney());
             assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-            assetChange.setRemark(String.format("购买债权转让[%s]失败, 冻结解冻资金%s元", transfer.getTitle(), StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100D, true)));
+            assetChange.setRemark(String.format("购买债权转让[%s]失败, 冻结解冻资金%s元",
+                    transfer.getTitle(),
+                    StringHelper.formatDouble(transferBuyLog.getValidMoney() / 100D,
+                            true)));
             assetChange.setType(AssetChangeTypeEnum.unfreeze);
             assetChange.setUserId(transferBuyLog.getUserId());
             try {
@@ -363,7 +366,8 @@ public class TransferBizImpl implements TransferBiz {
      * @param childBorrowCollectionList
      */
     private void updateUserCacheByByTransfer(Borrow parentBorrow, List<Tender> childTenderList, List<BorrowCollection> childBorrowCollectionList) {
-        Map<Long/* 投资id */, List<BorrowCollection>> childBorrowCollectionMaps = childBorrowCollectionList.stream().collect(Collectors.groupingBy(BorrowCollection::getTenderId));
+        Map<Long/* 投资id */, List<BorrowCollection>> childBorrowCollectionMaps = childBorrowCollectionList.stream()
+                .collect(Collectors.groupingBy(BorrowCollection::getTenderId));
         childTenderList.stream().forEach(tender -> {
             List<BorrowCollection> borrowCollectionList = childBorrowCollectionMaps.get(tender.getId());
             UserCache userCache = userCacheService.findById(tender.getUserId());
@@ -427,8 +431,8 @@ public class TransferBizImpl implements TransferBiz {
             log.info(String.format("投标统计: %s", gson.toJson(tender)));
             UserCache userCache = userCacheService.findById(tender.getUserId());
             IncrStatistic incrStatistic = new IncrStatistic();
-            if ((!BooleanUtils.toBoolean(userCache.getTenderTransfer())) && (!BooleanUtils.toBoolean(userCache.getTenderTuijian())) &&
-                    (!BooleanUtils.toBoolean(userCache.getTenderJingzhi())) && (!BooleanUtils.toBoolean(userCache.getTenderMiao()))
+            if ((!BooleanUtils.toBoolean(userCache.getTenderTransfer())) && (!BooleanUtils.toBoolean(userCache.getTenderTuijian()))
+                    && (!BooleanUtils.toBoolean(userCache.getTenderJingzhi())) && (!BooleanUtils.toBoolean(userCache.getTenderMiao()))
                     && (!BooleanUtils.toBoolean(userCache.getTenderQudao()))) {
                 incrStatistic.setTenderCount(1);
                 incrStatistic.setTenderTotal(1);
@@ -1417,6 +1421,12 @@ public class TransferBizImpl implements TransferBiz {
             voViewBorrowList.setIsMortgage(borrow.getIsMortgage());
             voViewBorrowList.setIsPassWord(false);
             voViewBorrowList.setTimeLimit(item.getTimeLimit() + BorrowContants.MONTH);
+            voViewBorrowList.setRecheckAt(!StringUtils.isEmpty(item.getRecheckAt())
+                    ? DateHelper.dateToString(item.getRecheckAt())
+                    : "");
+            voViewBorrowList.setSuccessAt(!StringUtils.isEmpty(item.getSuccessAt())
+                    ? DateHelper.dateToString(item.getSuccessAt())
+                    : "");
             //1.待发布 2.还款中 3.招标中 4.已完成 5.已过期 6.待复审
 
             //待发布时间
@@ -1426,21 +1436,20 @@ public class TransferBizImpl implements TransferBiz {
             //转让中
             if (item.getState() == TransferContants.TRANSFERIND) {
                 if (item.getTransferMoneyYes() / item.getTransferMoney() == 1) {
-                    //待审核
+                    //待复审
                     voViewBorrowList.setStatus(6);
-                    voViewBorrowList.setSuccessAt(DateHelper.dateToString(item.getSuccessAt()));
                 } else {
                     //招标中
                     if (DateHelper.addDays(item.getVerifyAt(), 1).getTime() > new Date().getTime()) {
                         voViewBorrowList.setStatus(3);
                     } else {
                         voViewBorrowList.setStatus(5);
-                        voViewBorrowList.setSuccessAt(DateHelper.dateToString(item.getSuccessAt()));
                     }
                 }
             } else if (item.getState() == TransferContants.TRANSFERED) {
                 //已完成
                 voViewBorrowList.setStatus(4);
+                voViewBorrowList.setRecheckAt(DateHelper.dateToString(item.getRecheckAt()));
             }
             double spend = NumberHelper.floorDouble((item.getTransferMoneyYes().doubleValue() / item.getTransferMoney()) * 100, 2);
             voViewBorrowList.setSpend(spend);
@@ -1526,9 +1535,19 @@ public class TransferBizImpl implements TransferBiz {
             item.setReleaseAt(DateHelper.dateToString(transfer.getReleaseAt()));
             item.setTimeLimit(transfer.getTimeLimit() + BorrowContants.MONTH);
             item.setTenderCount(transfer.getTenderCount());
-            item.setUserName(StringUtils.isEmpty(users.getUsername()) ? UserHelper.hideChar(users.getPhone(), UserHelper.PHONE_NUM) : UserHelper.hideChar(users.getUsername(), UserHelper.USERNAME_NUM));
-            item.setAvatar(StringUtils.isEmpty(users.getAvatarPath()) ? imageDomain + "/images/user/default_avatar.jpg" : users.getAvatarPath());
+            item.setUserName(StringUtils.isEmpty(users.getUsername())
+                    ? UserHelper.hideChar(users.getPhone(), UserHelper.PHONE_NUM)
+                    : UserHelper.hideChar(users.getUsername(), UserHelper.USERNAME_NUM));
+            item.setAvatar(StringUtils.isEmpty(users.getAvatarPath())
+                    ? imageDomain + "/images/user/default_avatar.jpg"
+                    : users.getAvatarPath());
             item.setType(5);
+            item.setSuccessAt(StringUtils.isEmpty(transfer.getSuccessAt())
+                    ? ""
+                    : DateHelper.dateToString(transfer.getSuccessAt()));
+            item.setRecheckAt(StringUtils.isEmpty(transfer.getRecheckAt())
+                    ? ""
+                    : DateHelper.dateToString(transfer.getRecheckAt()));
             double spend = NumberHelper.floorDouble((transfer.getTransferMoneyYes().doubleValue() / transfer.getTransferMoney()) * 100, 2);
             item.setSpend(spend);
             //1.待发布 2.还款中 3.招标中 4.已完成 5.已过期 6.待复审
@@ -1567,7 +1586,10 @@ public class TransferBizImpl implements TransferBiz {
                 .in("state", ImmutableList.of(TransferContants.TRANSFERIND, TransferContants.TRANSFERED).toArray())
                 .eq("type", 0)
                 .build();
-        Pageable pageable = new PageRequest(voBorrowListReq.getPageIndex(), voBorrowListReq.getPageSize(), new Sort(Sort.Direction.DESC, "id"));
+        Pageable pageable = new PageRequest(voBorrowListReq.getPageIndex(),
+                voBorrowListReq.getPageSize(),
+                new Sort(Sort.Direction.DESC,
+                        "id"));
         Page<Transfer> transferPage = transferService.findPageList(ts, pageable);
         resultMaps.put("totalCount", transferPage.getTotalElements());
         resultMaps.put("transfers", transferPage.getContent());
@@ -1604,9 +1626,13 @@ public class TransferBizImpl implements TransferBiz {
             borrowInfoRes.setTimeLimit(transfer.getTimeLimit() + com.gofobao.framework.borrow.contants.BorrowContants.MONTH);
         }
 
-        double principal = 10000D * 100;
-        double apr = NumberHelper.toDouble(StringHelper.toString(borrow.getApr()));
-        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(principal, apr, borrow.getTimeLimit(), borrow.getSuccessAt());
+        //double principal = 10000D * 100;
+        double apr = NumberHelper.toDouble(StringHelper.toString(transfer.getApr()));
+        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(
+                new Double(transfer.getPrincipal()),
+                apr,
+                transfer.getTimeLimit(),
+                transfer.getRecheckAt());
         Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
         Integer earnings = NumberHelper.toInt(calculatorMap.get("earnings"));
         borrowInfoRes.setEarnings(StringHelper.formatMon(earnings / 100d) + MoneyConstans.RMB);
@@ -1628,15 +1654,20 @@ public class TransferBizImpl implements TransferBiz {
         //结束时间
         Date endAt = DateHelper.addDays(DateHelper.beginOfDate(transfer.getReleaseAt()), 3 + 1);
         borrowInfoRes.setEndAt(DateHelper.dateToString(endAt, DateHelper.DATE_FORMAT_YMDHMS));
-        borrowInfoRes.setStatus(transfer.getState());
         //进度
         borrowInfoRes.setSurplusSecond(-1L);
         //0.待审核 1.转让中 2.已转让 3.审核未通过 4.已取消',
         Integer status = transfer.getState();
         if (status == 1) {//招标中
-            borrowInfoRes.setStatus(3);
             if (transfer.getTransferMoneyYes() / transfer.getTransferMoney() == 1) {
+                //复审中
                 borrowInfoRes.setStatus(6);
+                //已过期
+            } else if (DateHelper.addDays(transfer.getReleaseAt(), 1).getTime() > new Date().getTime()) {
+                borrowInfoRes.setStatus(5);
+            } else {
+                //招标中
+                borrowInfoRes.setStatus(3);
             }
         } else {
             borrowInfoRes.setStatus(4);
@@ -1648,9 +1679,17 @@ public class TransferBizImpl implements TransferBiz {
         borrowInfoRes.setType(5);
         borrowInfoRes.setPassWord(false);
         Users users = userService.findById(borrow.getUserId());
-        borrowInfoRes.setUserName(!StringUtils.isEmpty(users.getUsername()) ? users.getUsername() : users.getPhone());
+        borrowInfoRes.setUserName(!StringUtils.isEmpty(users.getUsername())
+                ? users.getUsername() :
+                users.getPhone());
         borrowInfoRes.setIsNovice(borrow.getIsNovice());
-        borrowInfoRes.setSuccessAt(StringUtils.isEmpty(borrow.getSuccessAt()) ? "" : DateHelper.dateToString(borrow.getSuccessAt()));
+        borrowInfoRes.setSuccessAt(StringUtils.isEmpty(transfer.getSuccessAt())
+                ? ""
+                : DateHelper.dateToString(borrow.getSuccessAt()));
+        borrowInfoRes.setRecheckAt(!StringUtils.isEmpty(transfer.getRecheckAt())
+                ? DateHelper.dateToString(transfer.getRecheckAt())
+                : ""
+        );
         borrowInfoRes.setBorrowName(borrow.getName());
         borrowInfoRes.setIsConversion(borrow.getIsConversion());
         borrowInfoRes.setIsNovice(borrow.getIsNovice());
@@ -1660,8 +1699,10 @@ public class TransferBizImpl implements TransferBiz {
         borrowInfoRes.setIsVouch(borrow.getIsVouch());
         borrowInfoRes.setHideLowMoney(borrow.getLowest());
         borrowInfoRes.setIsFlow(true);
-        borrowInfoRes.setAvatar(StringUtils.isEmpty(users.getAvatarPath()) ? imageDomain + "/images/user/default_avatar.jpg" : users.getAvatarPath());
-        borrowInfoRes.setLockStatus(borrow.getIsLock());
+        borrowInfoRes.setAvatar(StringUtils.isEmpty(users.getAvatarPath())
+                ? imageDomain + "/images/user/default_avatar.jpg"
+                : users.getAvatarPath());
+        borrowInfoRes.setLockStatus(transfer.getIsLock());
         return ResponseEntity.ok(borrowInfoRes);
     }
 
@@ -1698,7 +1739,10 @@ public class TransferBizImpl implements TransferBiz {
                 assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
                 assetChange.setMoney(item.getValidMoney());
                 assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-                assetChange.setRemark(String.format("你购买债权转让[%s]已被取消, 成功解冻资金%s元", transfer.getTitle(), StringHelper.formatDouble(item.getValidMoney() / 100D, true)));
+                assetChange.setRemark(String.format("你购买债权转让[%s]已被取消, 成功解冻资金%s元",
+                        transfer.getTitle(),
+                        StringHelper.formatDouble(item.getValidMoney() / 100D,
+                                true)));
                 assetChange.setType(AssetChangeTypeEnum.unfreeze);
                 assetChange.setUserId(item.getUserId());
                 assetChangeProvider.commonAssetChange(assetChange);

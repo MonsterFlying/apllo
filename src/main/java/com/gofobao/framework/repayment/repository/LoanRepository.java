@@ -18,23 +18,23 @@ public interface LoanRepository extends JpaRepository<Borrow,Long>,JpaSpecificat
 
     /**
      * 还款中标列表
-     * userId=? and status=? and successAt!=null and closeAt ==null and tender==null
+     * userId=? and status=? and recheckAt!=null and closeAt ==null and tender==null
      * @param userId
      * @param status
      * @return
      */
-    Page<Borrow> findByUserIdAndStatusIsAndSuccessAtIsNotNullAndCloseAtIsNullAndTenderIdIsNull(Long userId, int status, Pageable pageable);
+    Page<Borrow> findByUserIdAndStatusIsAndRecheckAtIsNotNullAndCloseAtIsNullAndTenderIdIsNull(Long userId, int status, Pageable pageable);
 
 
     /**
      * 已结清标列表
-     * userId=? and status=? and successAt!=null and closeAt !=null and tender==null
+     * userId=? and status=? and recheckAt!=null and closeAt !=null and tender==null
      * @param userId
      * @param status
      * @return
      *
      */
-    Page<Borrow> findByUserIdAndStatusIsAndSuccessAtIsNotNullAndCloseAtIsNotNullAndTenderIdIsNull(Long userId, int status, Pageable pageable);
+    Page<Borrow> findByUserIdAndStatusIsAndRecheckAtIsNotNullAndCloseAtIsNotNullAndTenderIdIsNull(Long userId, int status, Pageable pageable);
 
 
 

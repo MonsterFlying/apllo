@@ -238,7 +238,7 @@ public class LoanServiceImpl implements LoanService {
 
             sort = new Sort(Sort.Direction.DESC, "closeAt");
             pageable = new PageRequest(voLoanListReq.getPageIndex(), voLoanListReq.getPageSize(), sort);
-            borrowPage = loanRepository.findByUserIdAndStatusIsAndSuccessAtIsNotNullAndCloseAtIsNullAndTenderIdIsNull(
+            borrowPage = loanRepository.findByUserIdAndStatusIsAndRecheckAtIsNotNullAndCloseAtIsNullAndTenderIdIsNull(
                     voLoanListReq.getUserId(),
                     voLoanListReq.getStatus(),
                     pageable);
@@ -250,9 +250,9 @@ public class LoanServiceImpl implements LoanService {
                     voLoanListReq.getStatus(),
                     pageable);
         } else {
-            sort = new Sort(Sort.Direction.DESC, "successAt");  //已结清
+            sort = new Sort(Sort.Direction.DESC, "recheckAt");  //已结清
             pageable = new PageRequest(voLoanListReq.getPageIndex(), voLoanListReq.getPageSize(), sort);
-            borrowPage = loanRepository.findByUserIdAndStatusIsAndSuccessAtIsNotNullAndCloseAtIsNotNullAndTenderIdIsNull(
+            borrowPage = loanRepository.findByUserIdAndStatusIsAndRecheckAtIsNotNullAndCloseAtIsNotNullAndTenderIdIsNull(
                     voLoanListReq.getUserId(),
                     voLoanListReq.getStatus(),
                     pageable);
@@ -286,7 +286,9 @@ public class LoanServiceImpl implements LoanService {
         repaymentDetail.setBorrowName(borrow.getName());
         repaymentDetail.setApr(StringHelper.formatMon(borrow.getApr() / 100D));
         repaymentDetail.setMoney(StringHelper.formatMon(borrow.getMoney() / 100D));
-        repaymentDetail.setSuccessAt(StringUtils.isEmpty(borrow.getSuccessAt()) ? "" : DateHelper.dateToString(borrow.getSuccessAt()));
+        repaymentDetail.setSuccessAt(StringUtils.isEmpty(borrow.getRecheckAt())
+                ? ""
+                : DateHelper.dateToString(borrow.getRecheckAt()));
         repaymentDetail.setCreatedAt(DateHelper.dateToString(borrow.getCreatedAt()));
         String repayFashion = "";
         if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE) {
@@ -335,7 +337,11 @@ public class LoanServiceImpl implements LoanService {
             repaymentDetail.setStatus(2);
         }
         //预期收益
-        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(borrow.getMoneyYes()), new Double(borrow.getApr()), borrow.getTimeLimit(), borrow.getSuccessAt());
+        BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(borrow.getMoneyYes()),
+                new Double(borrow.getApr()),
+                borrow.getTimeLimit(),
+                borrow.getRecheckAt());
+
         Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
         receivableInterest = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("earnings")));
         repaymentDetail.setInterest(StringHelper.formatMon(interest / 100D));

@@ -1,5 +1,6 @@
 package com.gofobao.framework;
 
+import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.api.contants.ChannelContant;
 import com.gofobao.framework.api.contants.JixinResultContants;
 import com.gofobao.framework.api.helper.CertHelper;
@@ -32,11 +33,14 @@ import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryRe
 import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryResponse;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
+import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
+import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoQueryThirdBorrowList;
+import com.gofobao.framework.collection.entity.BorrowCollection;
 import com.gofobao.framework.collection.service.BorrowCollectionService;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
@@ -58,6 +62,8 @@ import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.migrate.MigrateBorrowBiz;
 import com.gofobao.framework.migrate.MigrateProtocolBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
+import com.gofobao.framework.repayment.entity.BorrowRepayment;
+import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.scheduler.DealThirdBatchScheduler;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
@@ -65,10 +71,14 @@ import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchDealLogContants;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchDealLog;
+import com.gofobao.framework.system.entity.ThirdBatchLog;
+import com.gofobao.framework.system.service.ThirdBatchLogService;
+import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -79,14 +89,20 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.groupingBy;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -534,15 +550,132 @@ public class AplloApplicationTests {
     private UserCacheService userCacheService;
     @Autowired
     private ThirdBatchDealBiz thirdBatchDealBiz;
+    @Autowired
+    private ThirdBatchLogService thirdBatchLogService;
+    @Autowired
+    private BorrowRepaymentService borrowRepaymentService;
+
+    /**
+     * 项目回款短信通知
+     *
+     * @param borrowCollectionList
+     * @param parentBorrow
+     * @param borrowRepayment
+     */
+    private void smsNoticeByReceivedRepay(List<BorrowCollection> borrowCollectionList, Borrow parentBorrow, BorrowRepayment borrowRepayment) {
+        try {
+            Set<Long> tenderIds = borrowCollectionList.stream().map(borrowCollection -> borrowCollection.getTenderId()).collect(Collectors.toSet()); /* 回款用户id */
+            if (CollectionUtils.isEmpty(tenderIds)) {
+                log.error("回款投标记录ID为空");
+                return;
+            }
+
+            Specification<Tender> tenderSpecification = Specifications.
+                    <Tender>and()
+                    .in("id", tenderIds.toArray())
+                    .build();
+            List<Tender> tenderList = tenderService.findList(tenderSpecification);
+            if (CollectionUtils.isEmpty(tenderList)) {
+                log.error("回款投标记录为空");
+                return;
+            }
+            Set<Long> userIds = tenderList.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet()); /* 回款用户id */
+            if (CollectionUtils.isEmpty(userIds)) {
+                log.error("回款用户ID为空");
+                return;
+            }
+
+
+            Map<Long /* 投资会员id */, List<BorrowCollection>> borrowCollrctionMaps = borrowCollectionList.stream().collect(groupingBy(BorrowCollection::getUserId)); /* 回款记录集合 */
+            Specification<Users> us = Specifications
+                    .<Users>and()
+                    .in("id", userIds.toArray())
+                    .build();
+
+            List<Users> usersList = userService.findList(us);/* 回款用户缓存记录列表 */
+            Map<Long /* 投资会员id */, Users> userMaps = usersList.stream().collect(Collectors.toMap(Users::getId, Function.identity()));/* 回款用户记录列表*/
+            userIds.stream().forEach(userId -> {
+                List<BorrowCollection> borrowCollections = borrowCollrctionMaps.get(userId);/* 当前用户的所有回款 */
+                Users users = userMaps.get(userId);//投资人会员记录
+                long principal = borrowCollections.stream().mapToLong(BorrowCollection::getPrincipal).sum(); /* 当前用户的所有回款本金 */
+                long collectionMoneyYes = borrowCollections.stream().mapToLong(BorrowCollection::getCollectionMoneyYes).sum();/* 当前用户的所有回款本金 */
+                long interest = collectionMoneyYes - principal;/* 当前用户的所有回款本金 */
+                String phone = users.getPhone();/* 投资人手机号 */
+                String name = "";
+                if (!ObjectUtils.isEmpty(phone)) {
+                    MqConfig config = new MqConfig();
+                    config.setQueue(MqQueueEnum.RABBITMQ_SMS);
+                    config.setTag(MqTagEnum.SMS_RECEIVED_REPAY);
+                    switch (parentBorrow.getType()) {
+                        case BorrowContants.CE_DAI:
+                            name = "车贷标";
+                            break;
+                        case BorrowContants.JING_ZHI:
+                            name = "净值标";
+                            break;
+                        case BorrowContants.QU_DAO:
+                            name = "渠道标";
+                            break;
+                        default:
+                            name = "投标还款";
+                    }
+                    Map<String, String> body = new HashMap<>();
+                    body.put(MqConfig.PHONE, phone);
+                    body.put(MqConfig.IP, "127.0.0.1");
+                    body.put(MqConfig.MSG_ID, StringHelper.toString(parentBorrow.getId()));
+                    body.put(MqConfig.MSG_NAME, name);
+                    body.put(MqConfig.MSG_ORDER, StringHelper.toString(borrowRepayment.getOrder() + 1));
+                    body.put(MqConfig.MSG_MONEY, StringHelper.formatDouble(principal, 100, true));
+                    body.put(MqConfig.MSG_INTEREST, StringHelper.formatDouble(interest, 100, true));
+                    config.setMsg(body);
+
+                    boolean state = mqHelper.convertAndSend(config);
+                    if (!state) {
+                        log.error(String.format("发送投资人收到还款短信失败:%s", config));
+                    }
+                }
+            });
+        } catch (Exception e) {
+            log.error("回款发送短信失败", e);
+        }
+
+    }
 
     @Test
     public void test() {
 
-        try {
-            thirdBatchDealBiz.batchDeal(296l, "093205", "", "") ;
-        } catch (Exception e) {
-            e.printStackTrace();
+        //1.查询并判断还款记录是否存在!
+        BorrowRepayment borrowRepayment = borrowRepaymentService.findById(297l);/* 当期还款记录 */
+        Preconditions.checkNotNull(borrowRepayment, "还款记录不存在!");
+        Borrow parentBorrow = borrowService.findById(borrowRepayment.getBorrowId());/* 还款记录对应的借款记录 */
+        Preconditions.checkNotNull(parentBorrow, "借款记录不存在!");
+        /* 还款对应的投标记录  包括债权转让在里面 */
+        Specification<Tender> ts = Specifications
+                .<Tender>and()
+                .eq("status", 1)
+                .eq("borrowId", parentBorrow.getId())
+                .build();
+        List<Tender> tenderList = tenderService.findList(ts);/* 还款对应的投标记录  包括债权转让在里面 */
+        Preconditions.checkNotNull(tenderList, "立即还款: 投标记录为空!");
+        /* 投标记录id */
+        Set<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toSet());
+        /* 查询未转让的投标记录回款记录 */
+        Specification<BorrowCollection> bcs = Specifications
+                .<BorrowCollection>and()
+                .in("tenderId", tenderIds.toArray())
+                .eq("status", 0)
+                .eq("order", borrowRepayment.getOrder())
+                .eq("transferFlag", 0)
+                .build();
+        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
+        Preconditions.checkNotNull(borrowCollectionList, "立即还款: 回款记录为空!");
+        /* 是否垫付 */
+        boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
+        if (!advance) { //非转让标需要统计与发放短信
+            //10.项目回款短信通知
+            smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
         }
+
      /*   //记录批次处理日志
         thirdBatchDealLogBiz.recordThirdBatchDealLog(String.valueOf(113841),169974, ThirdBatchDealLogContants.PROCESSED,true,
                 ThirdBatchLogContants.BATCH_LEND_REPAY, "");
