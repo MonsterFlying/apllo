@@ -48,4 +48,5 @@ public class Transfer {
     private Date verifyAt;
     private Date successAt;
     private Integer type;
+    private Date recheckAt;
 }

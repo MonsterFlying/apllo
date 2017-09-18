@@ -1093,7 +1093,6 @@ public class BorrowBizImpl implements BorrowBiz {
     private void finishBorrow(Borrow borrow) {
         log.info(String.format("批处理: 更改标的为满标 %s", new Gson().toJson(borrow)));
         borrow.setStatus(3);
-        borrow.setSuccessAt(new Date());
         borrowService.save(borrow);
     }
 

@@ -646,7 +646,7 @@ public class TransferBizImpl implements TransferBiz {
         //更新债权转让为已转让
         transfer.setState(2);
         transfer.setUpdatedAt(new Date());
-        transfer.setSuccessAt(new Date());
+        transfer.setRecheckAt(new Date());
         transferService.save(transfer);
         return childTenderList;
     }

@@ -770,3 +770,5 @@ CREATE TABLE `gfb_third_batch_deal_log` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+
+ALTER TABLE gfb_transfer ADD   `recheck_at` datetime DEFAULT NULL COMMENT '即信复审时间';
