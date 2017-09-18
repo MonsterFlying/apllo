@@ -1,6 +1,5 @@
 package com.gofobao.framework.member.vo.response;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -90,7 +89,7 @@ public class VoBasicUserInfoResp extends VoBaseResp{
     private String target_url;
 
     @ApiModelProperty("管理地址")
-    private String adminUrl;
+    private String adminUrl="";
 
 
 }

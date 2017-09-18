@@ -22,7 +22,6 @@ import com.gofobao.framework.common.jxl.ExcelException;
 import com.gofobao.framework.common.jxl.ExcelUtil;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
@@ -164,6 +163,7 @@ public class PaymentBizImpl implements PaymentBiz {
     public void toExcel(HttpServletResponse response, OrderListReq listReq) {
 
         List<CollectionList> collectionLists = borrowCollectionService.toExecl(listReq);
+
         if(!CollectionUtils.isEmpty(collectionLists)){
             LinkedHashMap<String,String >paramMaps=Maps.newLinkedHashMap();
             paramMaps.put("createTime","时间");

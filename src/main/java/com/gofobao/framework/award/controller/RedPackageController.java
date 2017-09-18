@@ -1,6 +1,5 @@
 package com.gofobao.framework.award.controller;
 
-import com.gofobao.framework.asset.vo.response.VoPreRechargeResp;
 import com.gofobao.framework.award.biz.RedPackageBiz;
 import com.gofobao.framework.award.vo.request.VoOpenRedPackageReq;
 import com.gofobao.framework.award.vo.request.VoRedPackageReq;

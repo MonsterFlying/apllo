@@ -20,7 +20,6 @@ import com.gofobao.framework.helper.BeanHelper;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
-import com.gofobao.framework.repayment.contants.RepaymentContants;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.google.common.base.Preconditions;
@@ -35,7 +34,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -165,9 +163,9 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
             CollectionList item = new CollectionList();
             Object[] objects = (Object[]) p;
             item.setCreateTime((String) objects[0]);
-            item.setCollectionMoney(StringHelper.formatMon((Long) objects[1] / 100D));
-            item.setPrincipal(StringHelper.formatMon((Long) objects[2] / 100D));
-            item.setInterest(StringHelper.formatMon((Long) objects[3] / 100D));
+            item.setCollectionMoney(StringHelper.toString((Long) objects[1] / 100D));
+            item.setPrincipal(StringHelper.toString((Long) objects[2] / 100D));
+            item.setInterest(StringHelper.toString((Long) objects[3]/100D));
             item.setOrderCount((Long) objects[4]);
             collectionLists.add(item);
         });

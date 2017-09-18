@@ -105,8 +105,8 @@ public class CashDetailLogServiceImpl implements CashDetailLogService {
             cashLog.setBankNo(UserHelper.hideChar(p.getCardNo(), UserHelper.BANK_ACCOUNT_NUM));
             cashLog.setBanKName(p.getBankName());
             cashLog.setCreateTime(DateHelper.dateToString(p.getCreateTime()));
-            cashLog.setMoney(StringHelper.formatMon(p.getMoney() / 100D));
-            cashLog.setServiceCharge(StringHelper.formatMon(p.getFee() / 100D));
+            cashLog.setMoney(StringHelper.toString(p.getMoney() / 100D));
+            cashLog.setServiceCharge(StringHelper.toString(p.getFee() / 100D));
             if (num[0] == 0) {
                 cashLog.setTotalCount(totalCount.intValue());
                 num[0] = 1;

@@ -4,8 +4,6 @@ import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnumContants;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
-import com.gofobao.framework.helper.NumberHelper;
-import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.listener.providers.TenderProvider;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;

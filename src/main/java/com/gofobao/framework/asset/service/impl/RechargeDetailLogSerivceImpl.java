@@ -122,7 +122,7 @@ public class RechargeDetailLogSerivceImpl implements RechargeDetailLogService {
             RechargeLogs rechargeLogs=new RechargeLogs();
             rechargeLogs.setCreateAt(DateHelper.dateToString(p.getCreateTime()));
             rechargeLogs.setRemark(p.getRemark());
-            rechargeLogs.setMoney(StringHelper.formatMon(p.getMoney()/100D));
+            rechargeLogs.setMoney(StringHelper.toString(p.getMoney()/100D));
             rechargeLogs.setChannel(p.getRechargeChannel());
             rechargeLogs.setStatus(p.getState());
             rechargeLogsList.add(rechargeLogs);

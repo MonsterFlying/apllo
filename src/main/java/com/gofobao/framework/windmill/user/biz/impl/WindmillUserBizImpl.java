@@ -9,7 +9,6 @@ import com.gofobao.framework.core.helper.PasswordHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.member.entity.Users;
-import com.gofobao.framework.member.enums.RegisterSourceEnum;
 import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.vo.response.VoBasicUserInfoResp;
 import com.gofobao.framework.security.helper.JwtTokenHelper;
