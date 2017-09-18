@@ -193,7 +193,7 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
      */
     @Override
     public void dayPushMoney(Date date) {
-        log.info("每日天提成调度启动");
+        log.info(String.format("每日天提成调度启动: %s", DateHelper.dateToString(date, DateHelper.DATE_FORMAT_YMD_NUM)));
         //查询当前调度是否执行成功过
         int pageIndex = 1;
         int pageSize = 50;
