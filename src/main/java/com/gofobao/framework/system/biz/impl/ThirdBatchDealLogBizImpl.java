@@ -23,6 +23,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -41,12 +42,13 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
 
     /**
      * 记录批次执行记录
+     *
      * @param state
      * @param type
      * @return
      */
-    public ThirdBatchDealLog recordThirdBatchDealLog(String batchNo,long sourceId ,int state,boolean status, int type, String errorMsg){
-        ThirdBatchLog thirdBatchLog = thirdBatchLogService.findByBatchNoAndSourceId(batchNo, sourceId);
+    public ThirdBatchDealLog recordThirdBatchDealLog(String batchNo, long sourceId, int state, boolean status, int type, String errorMsg) {
+        ThirdBatchLog thirdBatchLog = thirdBatchLogService.findByBatchNoAndSourceIdAndType(batchNo, sourceId, type);
         if (ObjectUtils.isEmpty(thirdBatchLog)) {
             return null;
         }
@@ -83,6 +85,8 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
         List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls, new Sort(Sort.Direction.DESC, "createAt"));
         /* 批次处理记录 */
         ThirdBatchLog thirdBatchLog = null;
+        List<ThirdBatchDealLog> thirdBatchDealLogList = null;
+        Map<Integer/* state */, ThirdBatchDealLog> thirdBatchDealLogMap = new HashMap<>();
         if (!CollectionUtils.isEmpty(thirdBatchLogList)) {
             //已完成批次
             List<ThirdBatchLog> successThirdBatchLogList = thirdBatchLogList.stream().filter(t -> t.getType().intValue() == 3).collect(Collectors.toList());
@@ -91,11 +95,21 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
             } else {
                 thirdBatchLog = thirdBatchLogList.get(0);
             }
+            /*批次处理节点记录*/
+            Specification<ThirdBatchDealLog> tbdls = Specifications
+                    .<ThirdBatchDealLog>and()
+                    .eq("batchId", thirdBatchLog.getId())
+                    .build();
+            thirdBatchDealLogList = thirdBatchDealLogService.findList(tbdls, new Sort(Sort.Direction.DESC, "batchId,state,createdAt"));
+            thirdBatchDealLogList.stream().forEach(thirdBatchDealLog -> {
+                thirdBatchDealLogMap.put(thirdBatchDealLog.getState(), thirdBatchDealLog);
+            });
         }
+
         //不存在已完成批次，继续获取批次处理记录 0待处理 1.未通过 2.已通过
         List<VoFindLendRepayStatus> voFindLendRepayStatusList = new ArrayList<>();
         //填充放款状态数据
-        fillFindLendRepayStatusData(borrow, thirdBatchLog, voFindLendRepayStatusList);
+        fillFindLendRepayStatusData(borrow, thirdBatchLog, voFindLendRepayStatusList, thirdBatchDealLogMap);
 
         //修改参数
         repayStatusListRes.setVoFindLendRepayStatusList(voFindLendRepayStatusList);
@@ -109,7 +123,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
      * @param thirdBatchLog
      * @param voFindLendRepayStatusList
      */
-    public void fillFindLendRepayStatusData(Borrow borrow, ThirdBatchLog thirdBatchLog, List<VoFindLendRepayStatus> voFindLendRepayStatusList) {
+    public void fillFindLendRepayStatusData(Borrow borrow, ThirdBatchLog thirdBatchLog, List<VoFindLendRepayStatus> voFindLendRepayStatusList, Map<Integer/* state */, ThirdBatchDealLog> thirdBatchDealLogMap) {
         boolean flag = false;
         //第一步
         VoFindLendRepayStatus voFindLendRepayStatus = new VoFindLendRepayStatus();

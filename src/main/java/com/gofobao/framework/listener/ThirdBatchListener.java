@@ -28,28 +28,9 @@ public class ThirdBatchListener {
 
     @Autowired
     private ThirdBatchProvider thirdBatchProvider;
-/*
+
     @RabbitHandler
     public void process(String message) {
-        log.info(String.format("即信批处理消息队列处理开始: %s", message));
-        Preconditions.checkNotNull(message, "BorrowListener process message is empty");
-        Map<String, Object> body = gson.fromJson(message, TypeTokenContants.MAP_TOKEN);
-        Preconditions.checkNotNull(body.get(MqConfig.MSG_TAG), "BorrowListener process tag is empty ");
-        Preconditions.checkNotNull(body.get(MqConfig.MSG_BODY), "BorrowListener process body is empty ");
-        String tag = body.get(MqConfig.MSG_TAG).toString();
-        Map<String, String> msg = (Map<String, String>) body.get(MqConfig.MSG_BODY);
-        if (tag.equals(MqTagEnum.BATCH_DEAL.getValue())) {
-            boolean state = false ;
-            try {
-                state = thirdBatchProvider.batchDeal(msg);
-            } catch (Throwable e) {
-                log.error("批次处理失败!");
-            }
-            if(state){
-                log.info(String.format("即信批处理消息队列处理成功: %s", message));
-            }else{
-                log.error(String.format("即信批处理消息队列处理失败: %s", message));
-            }
-        }
-    }*/
+
+    }
 }

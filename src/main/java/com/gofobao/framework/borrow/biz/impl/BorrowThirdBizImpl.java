@@ -45,6 +45,7 @@ import com.gofobao.framework.scheduler.constants.TaskSchedulerConstants;
 import com.gofobao.framework.scheduler.entity.TaskScheduler;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
+import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -355,7 +356,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(repayCheckResp.getRetCode())) {
             log.error("=============================(提前结清)即信批次还款检验参数回调===========================");
             log.error("回调失败! msg:" + repayCheckResp.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), borrowId, 2);
+            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), borrowId, 2, ThirdBatchLogContants.BATCH_REPAY_ALL);
             //
             long userId = NumberHelper.toLong(acqResMap.get("userId"));
             UserThirdAccount borrowUserThirdAccount = userThirdAccountService.findByUserId(userId);
@@ -396,7 +397,7 @@ public class BorrowThirdBizImpl implements BorrowThirdBiz {
             log.info("=============================(提前结清)即信批次放款检验参数回调===========================");
             log.info("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), borrowId, 1);
+            thirdBatchLogBiz.updateBatchLogState(repayCheckResp.getBatchNo(), borrowId, 1,ThirdBatchLogContants.BATCH_REPAY_ALL);
         }
 
         return ResponseEntity.ok("success");

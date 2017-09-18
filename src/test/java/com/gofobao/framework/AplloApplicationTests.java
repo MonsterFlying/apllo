@@ -30,6 +30,8 @@ import com.gofobao.framework.api.model.credit_auth_query.CreditAuthQueryResponse
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryReq;
 import com.gofobao.framework.api.model.credit_invest_query.CreditInvestQueryResp;
 import com.gofobao.framework.api.model.debt_details_query.DebtDetailsQueryResponse;
+import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryRequest;
+import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryResponse;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
@@ -69,9 +71,11 @@ import com.gofobao.framework.migrate.MigrateProtocolBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.scheduler.DealThirdBatchScheduler;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
+import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchDealLogContants;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
+import com.gofobao.framework.system.entity.ThirdBatchDealLog;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
@@ -186,7 +190,7 @@ public class AplloApplicationTests {
 
     @Test
     public void touchMarketing() {
-        Tender tender=tenderService.findById(262285L);
+        Tender tender = tenderService.findById(262285L);
         borrowBiz.touchMarketingByTender(tender);
 
     }
@@ -303,7 +307,6 @@ public class AplloApplicationTests {
     }
 
 
-
     public AccountQueryByMobileResponse findAccountByMobile() {
         AccountQueryByMobileRequest request = new AccountQueryByMobileRequest();
         request.setMobile("18949830519");
@@ -383,9 +386,9 @@ public class AplloApplicationTests {
 
     private void batchDetailsQuery() {
         BatchDetailsQueryReq batchDetailsQueryReq = new BatchDetailsQueryReq();
-        batchDetailsQueryReq.setBatchNo("174721");
+        batchDetailsQueryReq.setBatchNo("093205");
 
-        batchDetailsQueryReq.setBatchTxDate("20170914");
+        batchDetailsQueryReq.setBatchTxDate("20170918");
         batchDetailsQueryReq.setType("0");
         batchDetailsQueryReq.setPageNum("1");
         batchDetailsQueryReq.setPageSize("10");
@@ -404,7 +407,6 @@ public class AplloApplicationTests {
         request.setOrgOrderId("GFBT_1504058244169462574939");
         BidApplyQueryResp response = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, request, BidApplyQueryResp.class);
         System.out.println(response);
-
     }
 
 
@@ -420,9 +422,22 @@ public class AplloApplicationTests {
         System.out.println(balanceQueryResponse);
     }
 
+    public void freezeDetailsQuery() {
+        FreezeDetailsQueryRequest freezeDetailsQueryRequest = new FreezeDetailsQueryRequest();
+        freezeDetailsQueryRequest.setChannel(ChannelContant.HTML);
+        freezeDetailsQueryRequest.setState("1");
+        freezeDetailsQueryRequest.setStartDate("201709014");
+        freezeDetailsQueryRequest.setEndDate("201709015");
+        freezeDetailsQueryRequest.setPageNum("1");
+        freezeDetailsQueryRequest.setPageSize("20");
+        freezeDetailsQueryRequest.setAccountId("6212462190000000401");
+
+        FreezeDetailsQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.FREEZE_DETAILS_QUERY, freezeDetailsQueryRequest, FreezeDetailsQueryResponse.class);
+        System.out.println(balanceQueryResponse);
+    }
+
     @Test
     public void accountDetailsQuery() {
-
 
         AccountDetailsQueryRequest request = new AccountDetailsQueryRequest();
         request.setAccountId("6212462190000059514");
@@ -534,9 +549,17 @@ public class AplloApplicationTests {
     private AssetChangeProvider assetChangeProvider;
     @Autowired
     private UserCacheService userCacheService;
+    @Autowired
+    private ThirdBatchDealBiz thirdBatchDealBiz;
 
     @Test
     public void test() {
+
+        try {
+            thirdBatchDealBiz.batchDeal(296l, "093205", "", "") ;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
      /*   //记录批次处理日志
         thirdBatchDealLogBiz.recordThirdBatchDealLog(String.valueOf(113841),169974, ThirdBatchDealLogContants.PROCESSED,true,
                 ThirdBatchLogContants.BATCH_LEND_REPAY, "");
@@ -660,8 +683,9 @@ public class AplloApplicationTests {
         // doAgainVerify();
         //批次状态查询
         //batchQuery();
+        //freezeDetailsQuery();
         //批次详情查询
-        batchDetailsQuery();
+        //batchDetailsQuery();
         //查询投标申请
         //bidApplyQuery();
         //转让标复审回调

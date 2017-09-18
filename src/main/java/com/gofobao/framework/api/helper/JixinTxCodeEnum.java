@@ -7,12 +7,21 @@ package com.gofobao.framework.api.helper;
 
 public enum JixinTxCodeEnum {
     /**
+     * 账户资金冻结明细查询
+     */
+    FREEZE_DETAILS_QUERY(
+            "freezeDetailsQuery",
+            "/p2p/online",
+            "移动端开户"),
+
+    /**
      * 开户增强
      */
     OPEN_ACCOUNT_PLUS(
             "accountOpenPlus",
             "/p2p/online",
             "移动端开户"),
+
 
     /**
      * 电子账户手机号修改增强

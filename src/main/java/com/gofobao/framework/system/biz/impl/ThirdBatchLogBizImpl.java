@@ -78,10 +78,7 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
     @Autowired
     private TransferService transferService;
     @Autowired
-    private MqHelper mqHelper;
-    @Autowired
     private ThirdBatchDealBiz thirdBatchDealBiz;
-
 
 
     /**
@@ -251,8 +248,8 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
      * @param batchNo
      * @return
      */
-    public boolean updateBatchLogState(String batchNo, Long sourceId, int state) {
-        ThirdBatchLog thirdBatchLog = thirdBatchLogService.findByBatchNoAndSourceId(batchNo, sourceId);
+    public boolean updateBatchLogState(String batchNo, Long sourceId, int state, int type) {
+        ThirdBatchLog thirdBatchLog = thirdBatchLogService.findByBatchNoAndSourceIdAndType(batchNo, sourceId, type);
         if (ObjectUtils.isEmpty(thirdBatchLog)) {
             return false;
         }
@@ -377,17 +374,6 @@ public class ThirdBatchLogBizImpl implements ThirdBatchLogBiz {
                 als = Specifications
                         .<AdvanceLog>and()
                         .eq("repaymentId", sourceId)
-                        .build();
-                rowNum = advanceLogService.count(als);
-                if (rowNum >= 1) {
-                    return true;
-                }
-                break;
-            case ThirdBatchLogContants.BATCH_REPAY_BAIL: //批次融资人还担保账户垫款
-                als = Specifications
-                        .<AdvanceLog>and()
-                        .eq("repaymentId", sourceId)
-                        .eq("status", 1)
                         .build();
                 rowNum = advanceLogService.count(als);
                 if (rowNum >= 1) {

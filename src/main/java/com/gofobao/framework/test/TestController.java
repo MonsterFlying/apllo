@@ -15,6 +15,10 @@ import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
+import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
+import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
+import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryRequest;
+import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryResponse;
 import com.gofobao.framework.asset.service.NewAssetLogService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.common.assets.AssetChange;
@@ -259,6 +263,49 @@ public class TestController {
         System.out.println(val);
         System.out.println(BooleanUtils.toBoolean(12));
     }
+/*
+
+    @ApiOperation("解除冻结")
+    @RequestMapping("/pub/cancelFreeze")
+    @Transactional
+    public void cancelFreeze() {
+        // 取消冻结
+        AssetChange assetChange = new AssetChange();
+        assetChange.setSourceId(279867l);
+        assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+        assetChange.setMoney(5000);
+        assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+        assetChange.setRemark(String.format("存管系统审核投资标的[老猪，12天]资格失败, 解除资金冻结50元"));
+        assetChange.setType(AssetChangeTypeEnum.unfreeze);
+        assetChange.setUserId(129659l);
+        assetChange.setForUserId(129659l);
+        try {
+            assetChangeProvider.commonAssetChange(assetChange);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+*/
+
+    @ApiOperation("冻结查询")
+    @RequestMapping("/pub/freeze/find")
+    @Transactional
+    public void findFreeze(@RequestParam("accountId") Object accountId,@RequestParam("startDate") Object startDate,
+                           @RequestParam("endDate") Object endDate){
+        FreezeDetailsQueryRequest freezeDetailsQueryRequest = new FreezeDetailsQueryRequest();
+        freezeDetailsQueryRequest.setChannel(ChannelContant.HTML);
+        freezeDetailsQueryRequest.setState("0");
+        freezeDetailsQueryRequest.setStartDate(String.valueOf(startDate));
+        freezeDetailsQueryRequest.setEndDate(String.valueOf(endDate));
+        freezeDetailsQueryRequest.setPageNum("1");
+        freezeDetailsQueryRequest.setPageSize("20");
+        freezeDetailsQueryRequest.setAccountId(String.valueOf(accountId));
+        FreezeDetailsQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.FREEZE_DETAILS_QUERY, freezeDetailsQueryRequest, FreezeDetailsQueryResponse.class);
+        log.info("=========================================================================================");
+        log.info("即信批次状态查询:");
+        log.info("=========================================================================================");
+        log.info(GSON.toJson(balanceQueryResponse));
+    }
 
     @ApiOperation("批次查询")
     @RequestMapping("/pub/batch/find")
@@ -288,6 +335,20 @@ public class TestController {
         log.info(GSON.toJson(batchDetailsQueryResp));
     }
 
+    @ApiOperation("投标申请查询")
+    @RequestMapping("/pub/bid/find")
+    @Transactional
+    public void bidApplyQuery(@RequestParam("orderId") Object orderId, @RequestParam("accountId") Object accountId) {
+        BidApplyQueryReq request = new BidApplyQueryReq();
+        request.setAccountId(String.valueOf(accountId));
+        request.setChannel(ChannelContant.HTML);
+        request.setOrgOrderId(String.valueOf(orderId));
+        BidApplyQueryResp response = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, request, BidApplyQueryResp.class);
+        log.info("=========================================================================================");
+        log.info("即信批次状态详情查询:");
+        log.info("=========================================================================================");
+        log.info(GSON.toJson(response));
+    }
 
     @Autowired
     BorrowBiz borrowBiz;

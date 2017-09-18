@@ -20,7 +20,7 @@ public class ThirdBatchLogServiceImpl implements ThirdBatchLogService {
     @Autowired
     private ThirdBatchLogRepository thirdBatchLogRepository;
 
-    public ThirdBatchLog findById(long id){
+    public ThirdBatchLog findById(long id) {
         return thirdBatchLogRepository.findOne(id);
     }
 
@@ -48,7 +48,7 @@ public class ThirdBatchLogServiceImpl implements ThirdBatchLogService {
         return thirdBatchLogRepository.save(thirdBatchLogList);
     }
 
-    public ThirdBatchLog findByBatchNoAndSourceId(String batchNo, Long sourceId) {
-        return thirdBatchLogRepository.findByBatchNoAndSourceId(batchNo, sourceId);
+    public ThirdBatchLog findByBatchNoAndSourceIdAndType(String batchNo, Long sourceId, int type) {
+        return thirdBatchLogRepository.findByBatchNoAndSourceIdAndType(batchNo, sourceId, type);
     }
 }

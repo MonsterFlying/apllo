@@ -37,6 +37,7 @@ public class ThirdErrorRemarkBizImpl implements ThirdErrorRemarkBiz {
     private TenderThirdBiz tenderThirdBiz;
     @Autowired
     private BorrowRepaymentThirdBiz borrowRepaymentThirdBiz;
+
     /**
      * 处理失败批次
      *
@@ -74,9 +75,6 @@ public class ThirdErrorRemarkBizImpl implements ThirdErrorRemarkBiz {
                 // 即信批次名义借款人垫付处理
                 borrowRepaymentThirdBiz.dealBatchAdvance(GSON.fromJson(thirdErrorRemark.getThirdRespStr(), new TypeToken<BatchBailRepayRunResp>() {
                 }.getType()));
-                break;
-            case ThirdBatchLogContants.BATCH_REPAY_BAIL: //批次融资人还担保账户垫款
-                // 即信批次融资人还担保账户垫款处理
                 break;
             case ThirdBatchLogContants.BATCH_CREDIT_END: //批次结束债权
                 // 批次结束债权

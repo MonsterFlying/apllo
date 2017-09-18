@@ -168,8 +168,12 @@ public class TenderBizImpl implements TenderBiz {
         Date nowDate = new Date();
         int validateMoney = Integer.parseInt(iterator.next());
         Tender borrowTender = createBorrowTenderRecord(voCreateTenderReq, user, nowDate, validateMoney);    // 生成投标记录
-        borrowTender = registerTender(borrow, borrowTender);  // 投标的存管报备
-        updateAssetByTender(borrow, borrowTender); // 扣除用户投标金额
+        //=========================
+        // 投标的存管报备
+        //=========================
+        borrowTender = registerTender(borrow, borrowTender);
+        // 扣除用户投标金额
+        updateAssetByTender(borrow, borrowTender);
         borrow.setMoneyYes(borrow.getMoneyYes() + validateMoney);
         borrow.setTenderCount((borrow.getTenderCount() + 1));
         borrow.setId(borrow.getId());

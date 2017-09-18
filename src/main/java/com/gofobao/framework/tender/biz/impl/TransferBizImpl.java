@@ -1024,7 +1024,7 @@ public class TransferBizImpl implements TransferBiz {
         BorrowCollection lastBorrowCollection = borrowCollectionList.get(borrowCollectionList.size() - 1);
         //计算当期应计利息
         long interest = firstBorrowCollection.getInterest();/* 当期理论应计利息 */
-        Date startAt = DateHelper.beginOfDate(firstBorrowCollection.getStartAt());//理论开始计息时间
+        Date startAt = DateHelper.beginOfDate(ObjectUtils.isEmpty(firstBorrowCollection.getStartAt()) ? firstBorrowCollection.getStartAtYes() : firstBorrowCollection.getStartAt());//理论开始计息时间
         Date collectionAt = DateHelper.beginOfDate(firstBorrowCollection.getCollectionAt());//理论结束还款时间
         Date startAtYes = DateHelper.beginOfDate(firstBorrowCollection.getStartAtYes());//实际开始计息时间
         Date endAt = DateHelper.beginOfDate(new Date());//结束计息时间
@@ -1198,7 +1198,7 @@ public class TransferBizImpl implements TransferBiz {
         Map<Long, Users> usersMap = usersList.stream().collect(Collectors.toMap(Users::getId, Function.identity()));
         //装配结果集
         List<VoBorrowTenderUserRes> tenderUserResList = Lists.newArrayList();
-        Users sendUser = usersRepository.findById(transferUserListReq.getUserId());
+        Users sendUser = usersRepository.findOne(transferUserListReq.getUserId());
         //获取当前用户类型
         String userType = "";
         if (!ObjectUtils.isEmpty(sendUser)) {

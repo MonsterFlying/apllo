@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
@@ -75,9 +76,10 @@ public class CreditProvider {
      * @return
      * @throws Exception
      */
+    @Transactional(rollbackFor = Exception.class)
     public boolean endThirdCredit(Map<String, String> msg, String tag) throws Exception {
         Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
-        Borrow borrow = borrowService.findById(borrowId);
+        Borrow borrow = borrowService.findByIdLock(borrowId);
         Preconditions.checkNotNull(borrow, "creditProvider endThirdCredit: 借款不能为空!");
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
         Preconditions.checkNotNull(userThirdAccount, "creditProvider endThirdCredit: 借款人未开户!");

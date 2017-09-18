@@ -24,6 +24,7 @@ public interface ThirdBatchLogBiz {
 
     /**
      * 发送即信批次处理
+     *
      * @param voSendThirdBatch
      * @return
      */
@@ -35,7 +36,7 @@ public interface ThirdBatchLogBiz {
      * @param batchNo
      * @return
      */
-    boolean updateBatchLogState(String batchNo, Long sourceId, int state);
+    boolean updateBatchLogState(String batchNo, Long sourceId, int state, int type);
 
     /**
      * 更据sourceId检查批次是否频繁提交

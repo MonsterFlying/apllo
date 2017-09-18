@@ -204,11 +204,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz{
                     // 即信批次名义借款人垫付处理
                     bailRepayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
                     break;
-                case ThirdBatchLogContants.BATCH_REPAY_BAIL: //批次融资人还担保账户垫款
-                    // 即信批次融资人还担保账户垫款处理
-                    repayBailDeal(batchNo, sourceId, acqRes, failureOrderIds, successOrderIds);
-                    break;
-                case ThirdBatchLogContants.BATCH_CREDIT_END: //批次结束债权
+               case ThirdBatchLogContants.BATCH_CREDIT_END: //批次结束债权
                     // 批次结束债权
                     creditEndDeal(batchNo, sourceId, acqRes, failureOrderIds, successOrderIds);
                     break;
@@ -270,12 +266,12 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz{
 
         if (CollectionUtils.isEmpty(failureThirdCreditEndOrderIds)) {
             //更新批次日志状态
-            thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), borrowId, 3);
+            thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), borrowId, 3,ThirdBatchLogContants.BATCH_CREDIT_END);
         }
     }
 
     /**
-     * 批次借款人还垫付处理
+     * 提前结清批次还款处理
      *
      * @param borrowId
      * @param failureTRepayAllOrderIds
@@ -318,56 +314,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz{
             } else {
                 //更新批次状态
                 log.error("批次还款处理正常:" + resp.getBody().getState().getMsg());
-                thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), borrowId, 3);
-            }
-        }
-    }
-
-    /**
-     * 批次融资人还担保账户垫款
-     *
-     * @param acqRes
-     * @param failureTRepayBailOrderIds
-     * @param successTRepayBailOrderIds
-     */
-    private void repayBailDeal(String batchNo, long repaymentId, String acqRes, List<String> failureTRepayBailOrderIds, List<String> successTRepayBailOrderIds) {
-
-        if (CollectionUtils.isEmpty(failureTRepayBailOrderIds)) {
-            log.info("================================================================================");
-            log.info("即信批次还款查询：未发现失败批次！");
-            log.info("================================================================================");
-        }
-
-        //登记成功批次
-        if (!CollectionUtils.isEmpty(successTRepayBailOrderIds)) {
-            Specification<BorrowCollection> bcs = Specifications
-                    .<BorrowCollection>and()
-                    .in("tRepayBailOrderId", successTRepayBailOrderIds.toArray())
-                    .build();
-            List<BorrowCollection> successBorrowCollectionList = borrowCollectionService.findList(bcs);
-            successBorrowCollectionList.stream().forEach(borrowCollection -> {
-                /*borrowCollection.setThirdAdvanceFlag(true);*/
-            });
-            borrowCollectionService.save(successBorrowCollectionList);
-        }
-
-
-        // 批次还款处理
-
-        if (CollectionUtils.isEmpty(failureTRepayBailOrderIds)) {
-            VoRepayReq voRepayReq = GSON.fromJson(acqRes, new TypeToken<VoRepayReq>() {
-            }.getType());
-            try {
-                ResponseEntity<VoBaseResp> resp = repaymentBiz.newRepayDeal(voRepayReq.getRepaymentId(), batchNo);
-                if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
-                    log.error("批次融资人还担保账户垫款：" + resp.getBody().getState().getMsg());
-                } else {
-                    //更新批次状态
-                    thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), repaymentId, 3);
-                    log.info("批次融资人还担保账户垫款：" + resp.getBody().getState().getMsg());
-                }
-            } catch (Exception e) {
-                log.error("ThirdBatchProvider repayBailDeal error:", e);
+                thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), borrowId, 3,ThirdBatchLogContants.BATCH_REPAY_ALL);
             }
         }
     }
@@ -471,7 +418,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz{
                 log.error("批次名义借款人垫付操作：" + resp.getBody().getState().getMsg());
             } else {
                 //更新批次状态
-                thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), repaymentId, 3);
+                thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), repaymentId, 3,ThirdBatchLogContants.BATCH_BAIL_REPAY);
                 log.info("批次名义借款人垫付操作：" + resp.getBody().getState().getMsg());
             }
         }
@@ -526,7 +473,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz{
             } else {
                 log.info("批次还款处理:" + resp.getBody().getState().getMsg());
                 //更新批次状态
-                thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), repaymentId, 3);
+                thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), repaymentId, 3,ThirdBatchLogContants.BATCH_REPAY);
             }
         }
     }
@@ -609,6 +556,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz{
                     assetChange.setType(AssetChangeTypeEnum.unfreeze);
                     assetChange.setUserId(tender.getUserId());
                     assetChange.setForUserId(tender.getUserId());
+                    assetChangeProvider.commonAssetChange(assetChange);
                 }
                 tenderService.save(tenders);
 
@@ -642,7 +590,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz{
                 log.error("标的放款失败！标的id：" + borrowId);
             } else {
                 //更新批次状态
-                thirdBatchLogBiz.updateBatchLogState(batchNo, borrowId, 3);
+                thirdBatchLogBiz.updateBatchLogState(batchNo, borrowId, 3,ThirdBatchLogContants.BATCH_LEND_REPAY);
                 //记录批次处理日志
                 thirdBatchDealLogBiz.recordThirdBatchDealLog(batchNo, borrowId, ThirdBatchDealLogContants.PROCESSED, true,
                         ThirdBatchLogContants.BATCH_LEND_REPAY, "");
@@ -822,7 +770,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz{
             ResponseEntity<VoBaseResp> resp = transferBiz.againVerifyTransfer(transferId, batchNo);
             if (resp.getBody().getState().getCode() == VoBaseResp.OK) {
                 //更新批次状态
-                thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), transferId, 3);
+                thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), transferId, 3,ThirdBatchLogContants.BATCH_CREDIT_INVEST);
 
                 Transfer transfer = transferService.findById(transferId);
                 //推送队列结束债权

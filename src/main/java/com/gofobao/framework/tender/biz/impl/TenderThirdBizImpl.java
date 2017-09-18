@@ -30,6 +30,7 @@ import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
+import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
@@ -172,13 +173,13 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(batchCreditInvestCheckCall.getRetCode())) {
             log.error("=============================即信投资人批次购买债权参数验证回调===========================");
             log.error("回调失败! msg:" + batchCreditInvestCheckCall.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 2);
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 2, ThirdBatchLogContants.BATCH_CREDIT_INVEST);
             ResponseEntity.ok("error");
         } else {
             log.error("=============================即信投资人批次购买债权参数验证回调===========================");
             log.error("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 1);
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 1,ThirdBatchLogContants.BATCH_CREDIT_INVEST);
         }
 
         return ResponseEntity.ok("success");
@@ -297,12 +298,12 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         BidApplyQueryResp bidApplyQueryResp = jixinManager.send(JixinTxCodeEnum.BID_APPLY_QUERY, bidApplyQueryReq, BidApplyQueryResp.class);
         /* 取消投标orderId */
         String orderId = JixinHelper.getOrderId(JixinHelper.TENDER_CANCEL_PREFIX);
-        if (!JixinResultContants.SUCCESS.equals(bidApplyQueryResp.getRetCode())){
+        if (!JixinResultContants.SUCCESS.equals(bidApplyQueryResp.getRetCode())) {
             String msg = ObjectUtils.isEmpty(bidApplyQueryResp) ? "当前网络不稳定，请稍候重试" : bidApplyQueryResp.getRetMsg();
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
-        }else if ("2".equals(bidApplyQueryResp.getState()) || "4".equals(bidApplyQueryResp.getState())){
-            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, String.format("投标还款中不能取消借款 tenderId:%s",tenderId)));
-        }else if (!"9".equals(bidApplyQueryResp.getState())) {
+        } else if ("2".equals(bidApplyQueryResp.getState()) || "4".equals(bidApplyQueryResp.getState())) {
+            return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, String.format("投标还款中不能取消借款 tenderId:%s", tenderId)));
+        } else if (!"9".equals(bidApplyQueryResp.getState())) {
 
             BidCancelReq request = new BidCancelReq();
             request.setAccountId(tenderUserThirdAccount.getAccountId());
@@ -343,12 +344,12 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(batchCreditInvestRunCall.getRetCode())) {
             log.error("=============================投资人批次结束债权参数验证回调===========================");
             log.error("回调失败! msg:" + batchCreditInvestRunCall.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestRunCall.getBatchNo(), borrowId, 2);
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestRunCall.getBatchNo(), borrowId, 2,ThirdBatchLogContants.BATCH_CREDIT_END);
         } else {
             log.error("=============================投资人批次结束债权参数验证回调===========================");
             log.error("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestRunCall.getBatchNo(), borrowId, 1);
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestRunCall.getBatchNo(), borrowId, 1,ThirdBatchLogContants.BATCH_CREDIT_END);
         }
 
         try {
