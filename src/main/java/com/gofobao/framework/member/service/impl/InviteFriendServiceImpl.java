@@ -161,11 +161,11 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
         if (CollectionUtils.isEmpty(yesterdayBroker)) {
             inviteAwardStatistics.setYesterdayAward("0.00");
         } else {
+            //待收本金
+            Long waitPrincipalTotal=brokerBounss.get(0).getWaitPrincipalTotal();
             //昨日奖励
             Integer yesterdayBounsAward = yesterdayBroker.stream().mapToInt(w -> w.getBounsAward()).sum();
-            inviteAwardStatistics.setYesterdayAward(StringHelper.formatMon(yesterdayBounsAward / 100));
-            //待收本金
-            Long waitPrincipalTotal=brokerBounss.stream().mapToLong(p->p.getWaitPrincipalTotal()).sum();
+            inviteAwardStatistics.setYesterdayAward(StringHelper.formatMon(yesterdayBounsAward / 100D));
             //年化率
             String awardApr = "0.02";
             if ( waitPrincipalTotal>= 80000000) {
