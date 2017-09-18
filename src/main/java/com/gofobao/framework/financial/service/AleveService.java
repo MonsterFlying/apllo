@@ -24,4 +24,15 @@ public interface AleveService {
     long count(Specification<Aleve> specification);
 
     Page<Aleve> findAll(Specification<Aleve> specification, Pageable pageable);
+
+    Long countOfDateAndTranstype(String date, String type);
+
+    /**
+     * 根据类型查询时间和类型
+     * @param date
+     * @param transtype
+     * @param pageable
+     * @return
+     */
+    Page<Aleve> findByDateAndTranstype(String date, String transtype, Pageable pageable);
 }
