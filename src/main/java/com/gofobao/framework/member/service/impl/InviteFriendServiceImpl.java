@@ -3,7 +3,6 @@ package com.gofobao.framework.member.service.impl;
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.common.constans.MoneyConstans;
 import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.member.entity.BrokerBouns;
 import com.gofobao.framework.member.entity.Users;

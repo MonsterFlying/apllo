@@ -1,6 +1,5 @@
 package com.gofobao.framework.member.vo.response;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;

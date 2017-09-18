@@ -1,6 +1,5 @@
 package com.gofobao.framework.lend.vo.request;
 
-import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.MoneyHelper;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;

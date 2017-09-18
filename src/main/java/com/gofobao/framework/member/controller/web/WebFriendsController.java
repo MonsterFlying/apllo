@@ -13,7 +13,6 @@ import com.gofobao.framework.member.vo.response.pc.VoViewInviteFriendsWarpRes;
 import com.gofobao.framework.security.contants.SecurityContants;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import io.netty.util.internal.ObjectUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;

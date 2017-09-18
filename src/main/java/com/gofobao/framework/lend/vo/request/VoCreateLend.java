@@ -1,6 +1,5 @@
 package com.gofobao.framework.lend.vo.request;
 
-import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.lend.contants.LendContants;
 import io.swagger.annotations.ApiModelProperty;
