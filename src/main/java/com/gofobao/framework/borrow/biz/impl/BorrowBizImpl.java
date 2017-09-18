@@ -396,7 +396,7 @@ public class BorrowBizImpl implements BorrowBiz {
                 if (releaseAt.getTime() >= nowDate.getTime()) {
                     status = 1;
                     borrowInfoRes.setSurplusSecond(((releaseAt.getTime() - nowDate.getTime()) / 1000) + 5);
-                } else if (borrow.getLendRepayStatus() == 1) {
+                } else if (borrow.getLendRepayStatus().intValue() == 1) {
                     //复审中
                     status = 6;
                     borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));

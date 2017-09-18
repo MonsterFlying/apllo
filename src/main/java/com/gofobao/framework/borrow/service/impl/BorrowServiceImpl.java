@@ -693,7 +693,7 @@ public class BorrowServiceImpl implements BorrowService {
                 lender.setMoney(StringHelper.formatMon(p.getValidMoney() / 100d));
                 Users user = usersMap.get(p.getUserId());
                 lender.setName(StringUtils.isEmpty(user.getUsername()) ? user.getPhone() : user.getUsername());
-                BorrowCalculatorHelper userCalculator = new BorrowCalculatorHelper(new Double(p.getValidMoney()), new Double(borrow.getApr()), borrow.getTimeLimit(), borrow.getSuccessAt());
+                BorrowCalculatorHelper userCalculator = new BorrowCalculatorHelper(new Double(p.getValidMoney()), new Double(borrow.getApr()), borrow.getTimeLimit(), borrow.getRecheckAt());
                 Map userCalculatorMap = userCalculator.simpleCount(borrow.getRepayFashion());
                 Double eachRepay1 = new Double(userCalculatorMap.get("eachRepay").toString());
                 lender.setMonthAsReimbursement(StringHelper.formatMon(eachRepay1 / 100));
