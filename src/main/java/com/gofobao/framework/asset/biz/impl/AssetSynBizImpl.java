@@ -313,7 +313,6 @@ public class AssetSynBizImpl implements AssetSynBiz {
 
     @Override
     public boolean doAdminSynAsset(Long userId, Date synDate) throws Exception {
-        Date nowDate = new Date();
         Users user = userService.findByIdLock(userId);
         Preconditions.checkNotNull(user, "资金同步: 查询用户为空");
         Asset asset = assetService.findByUserIdLock(userId);  // 用户资产
@@ -324,7 +323,6 @@ public class AssetSynBizImpl implements AssetSynBiz {
             log.error("当前用户未开户");
             return false;
         }
-
 
         // 用户资金记录查询
         int pageSize = 20, pageIndex = 1, realSize = 0;
@@ -339,7 +337,6 @@ public class AssetSynBizImpl implements AssetSynBiz {
             accountDetailsQueryRequest.setType("9");
             accountDetailsQueryRequest.setTranType("7820"); //  线下转账
             accountDetailsQueryRequest.setAccountId(accountId);
-
             AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
                     accountDetailsQueryRequest,
                     AccountDetailsQueryResponse.class);
@@ -383,6 +380,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
                 while (iterator1.hasNext()) {
                     AccountDetailsQueryItem offRecharge = iterator1.next();
                     if (recharge.getMoney() == (new Double(offRecharge.getTxAmount()) * 100)) {
+                        log.info("匹配成功");
                         iterator.remove();
                         iterator1.remove();
                         break;
@@ -392,6 +390,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
         }
 
         if (CollectionUtils.isEmpty(accountDetailsQueryItemList)) {
+            log.info("为匹配充值金额为空");
             return true;
         }
 
@@ -405,9 +404,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
             rechargeDetailLog = new RechargeDetailLog();
             rechargeDetailLog.setUserId(userId);
             rechargeDetailLog.setBankName(userThirdAccount.getBankName());
-            rechargeDetailLog.setCallbackTime(nowDate);
-            rechargeDetailLog.setCreateTime(nowDate);
-            rechargeDetailLog.setUpdateTime(nowDate);
+            rechargeDetailLog.setCallbackTime(synDate);
             rechargeDetailLog.setCardNo(userThirdAccount.getCardNo());
             rechargeDetailLog.setDel(0);
             rechargeDetailLog.setState(1); // 充值成功
@@ -433,11 +430,144 @@ public class AssetSynBizImpl implements AssetSynBiz {
             MqConfig mqConfig = new MqConfig();
             mqConfig.setTag(MqTagEnum.RECHARGE);
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
-            mqConfig.setSendTime(DateHelper.addSeconds(nowDate, 30));
+            mqConfig.setSendTime(DateHelper.addSeconds(new Date(), 30));
             ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
             mqConfig.setMsg(body);
             mqHelper.convertAndSend(mqConfig);
         }
         return true;
+    }
+
+    @Override
+    public void doOfflineSyn(Long userId, String txAmount, String orgSeqNo, String date) throws Exception {
+        Users user = userService.findByIdLock(userId);
+        Preconditions.checkNotNull(user, "后台触发充值: 查询用户为空");
+        Asset asset = assetService.findByUserIdLock(userId);  // 用户资产
+        Preconditions.checkNotNull(asset, "后台触发充值: 查询用户资产为空");
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
+        ResponseEntity<VoBaseResp> conditionResponse = ThirdAccountHelper.allConditionCheck(userThirdAccount);
+        if (!conditionResponse.getStatusCode().equals(HttpStatus.OK)) {
+            log.error("当前用户未开户");
+            return;
+        }
+
+        // 用户资金记录查询
+        int pageSize = 20, pageIndex = 1, realSize = 0;
+        String accountId = userThirdAccount.getAccountId();  // 存管账户ID
+        List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
+        do {
+            AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
+            accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
+            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
+            accountDetailsQueryRequest.setStartDate(date);
+            accountDetailsQueryRequest.setEndDate(date);
+            accountDetailsQueryRequest.setType("9");
+            accountDetailsQueryRequest.setTranType("7820"); //  线下转账
+            accountDetailsQueryRequest.setAccountId(accountId);
+            AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
+                    accountDetailsQueryRequest,
+                    AccountDetailsQueryResponse.class);
+
+            if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
+                String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
+                log.error(String.format("资金同步失败: %s", msg));
+                return;
+            }
+            pageIndex++;
+            Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
+            }.getType()));
+            List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
+            if (CollectionUtils.isEmpty(accountDetailsQueryItems)) {
+                break;
+            }
+            realSize = accountDetailsQueryItems.size();
+            accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
+        } while (realSize == pageSize);
+
+        // 同步开始
+        if (CollectionUtils.isEmpty(accountDetailsQueryItemList)) {
+            log.info("当前线下用户资金流水为0");
+            return;
+        }
+
+        Date synDate = DateHelper.stringToDate(date, DateHelper.DATE_FORMAT_YMD_NUM);
+        Specification<RechargeDetailLog> rechargeDetailLogSpecification = Specifications
+                .<RechargeDetailLog>and()
+                .between("createTime", new Range<>(DateHelper.beginOfDate(synDate), DateHelper.endOfDate(synDate)))
+                .eq("userId", userId)  // 用户ID
+                .eq("rechargeChannel", 1)  // 线下充值
+                .eq("state", 1)  // 充值成功
+                .build();
+
+        List<RechargeDetailLog> rechargeDetailLogList = rechargeDetailLogService.findAll(rechargeDetailLogSpecification);
+        if (!CollectionUtils.isEmpty(rechargeDetailLogList)) {
+            Iterator<RechargeDetailLog> iterator = rechargeDetailLogList.iterator();
+            while (iterator.hasNext()) {
+                RechargeDetailLog recharge = iterator.next();
+                Iterator<AccountDetailsQueryItem> iterator1 = accountDetailsQueryItemList.iterator();
+                while (iterator1.hasNext()) {
+                    AccountDetailsQueryItem offRecharge = iterator1.next();
+                    if (recharge.getMoney() == (new Double(offRecharge.getTxAmount()) * 100)) {
+                        log.info("线下充值回调匹配成功");
+                        iterator.remove();
+                        iterator1.remove();
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (CollectionUtils.isEmpty(accountDetailsQueryItemList)) {
+            log.info("为匹配充值金额为空");
+            return;
+        }
+
+        String seqNo;
+        Gson gson = new Gson();
+        for (AccountDetailsQueryItem accountDetailsQueryItem : accountDetailsQueryItemList) {
+            seqNo = String.format("%s%s%s", accountDetailsQueryItem.getInpDate(), accountDetailsQueryItem.getInpTime(), accountDetailsQueryItem.getTraceNo());
+
+            if (txAmount.equals(accountDetailsQueryItem.getTxAmount())) {
+                log.info("线下充值回调覆盖原始seqNo");
+                seqNo = orgSeqNo;
+            }
+
+            Long money = new Double(Double.parseDouble(accountDetailsQueryItem.getTxAmount()) * 100).longValue();
+            RechargeDetailLog rechargeDetailLog = new RechargeDetailLog();
+            log.info(String.format("进入线下充值回调同步环节 %s", gson.toJson(accountDetailsQueryItem)));
+            rechargeDetailLog = new RechargeDetailLog();
+            rechargeDetailLog.setUserId(userId);
+            rechargeDetailLog.setBankName(userThirdAccount.getBankName());
+            rechargeDetailLog.setCallbackTime(synDate);
+            rechargeDetailLog.setCardNo(userThirdAccount.getCardNo());
+            rechargeDetailLog.setDel(0);
+            rechargeDetailLog.setState(1); // 充值成功
+            rechargeDetailLog.setMoney(money.longValue());
+            rechargeDetailLog.setRechargeChannel(1);  // 其他渠道
+            rechargeDetailLog.setRechargeType(1); // 线下充值
+            rechargeDetailLog.setSeqNo(seqNo);
+            rechargeDetailLog.setCreateTime(synDate);
+            rechargeDetailLog.setUpdateTime(synDate);
+            rechargeDetailLogService.save(rechargeDetailLog);
+
+            AssetChange assetChange = new AssetChange();
+            assetChange.setType(AssetChangeTypeEnum.offlineRecharge);  // 招标失败解除冻结资金
+            assetChange.setUserId(userId);
+            assetChange.setMoney(money.longValue());
+            assetChange.setRemark(String.format("成功线下充值%s元", StringHelper.formatDouble(money.longValue() / 100D, true)));
+            assetChange.setSourceId(rechargeDetailLog.getId());
+            assetChange.setSeqNo(assetChangeProvider.getSeqNo());
+            assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
+            assetChangeProvider.commonAssetChange(assetChange);
+
+            // 触发用户充值
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setTag(MqTagEnum.RECHARGE);
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
+            mqConfig.setSendTime(DateHelper.addSeconds(new Date(), 30));
+            ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
+            mqConfig.setMsg(body);
+            mqHelper.convertAndSend(mqConfig);
+        }
     }
 }

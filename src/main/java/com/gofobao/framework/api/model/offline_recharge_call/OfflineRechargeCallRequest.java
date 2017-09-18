@@ -22,7 +22,7 @@ public class OfflineRechargeCallRequest extends JixinBaseRequest {
     private String txAmount ;
 
     /** 付款账号*/
-    private String payAccount ;
+    private String payAccountId ;
 
     /** 推送地址*/
     private String noticeAddress ;

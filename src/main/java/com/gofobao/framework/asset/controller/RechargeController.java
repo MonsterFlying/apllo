@@ -52,7 +52,7 @@ public class RechargeController {
 
 
     /**
-     * 联机充值回调
+     * 线下充值回调
      * @param request
      * @param response
      * @return

@@ -236,6 +236,34 @@ public class JixinManager {
     }
 
 
+    /**
+     * 特殊回调
+     *
+     * @param request
+     * @param typeToken
+     * @param <T>
+     * @return
+     */
+    public<T>  T specialCallback(HttpServletRequest request, TypeToken<T> typeToken) {
+        checkNotNull(request, "请求体为null");
+        String bgData = request.getParameter("bgData");
+        log.info(String.format("即信异步响应返回值：%s", bgData));
+        checkNotNull(bgData, "返回值内容为空");
+        T t = gson.fromJson(bgData, typeToken.getType());
+        // 验证参数
+        Map<String, String> param = gson.fromJson(bgData, new TypeToken<Map<String, String>>() {
+        }.getType());
+        jixinTxLogBiz.saveResponse(param);
+        String unsige = StringHelper.mergeMap(param);
+        boolean result = certHelper.verify(unsige, param.get("sign"));
+        if (!result) {
+            log.error("验签失败", bgData);
+            return null;
+        }
+        return t;
+    }
+
+
     public <T extends JixinBaseRequest, S extends JixinBaseResponse> S send(JixinTxCodeEnum txCodeEnum, T req, Class<S> clazz) {
         checkNotNull(req, "请求体为null");
         // 前期初始化
