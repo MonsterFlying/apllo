@@ -1016,7 +1016,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 long interest = collectionMoneyYes - principal;/* 当前用户的所有回款本金 */
                 String phone = users.getPhone();/* 投资人手机号 */
                 String name = "";
-                if (ObjectUtils.isEmpty(phone)) {
+                if (!ObjectUtils.isEmpty(phone)) {
                     MqConfig config = new MqConfig();
                     config.setQueue(MqQueueEnum.RABBITMQ_SMS);
                     config.setTag(MqTagEnum.SMS_RECEIVED_REPAY);
