@@ -121,7 +121,7 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
             inviteFriends.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
             inviteFriends.setMoney(DateHelper.dateToString(p.getCreatedAt()));
             inviteFriends.setLeave(p.getLevel());
-            inviteFriends.setWaitPrincipalTotal(StringHelper.formatMon(p.getWaitPrincipalTotal()));
+            inviteFriends.setWaitPrincipalTotal(StringHelper.toString(p.getWaitPrincipalTotal()/100D));
             inviteFriends.setScale(StringHelper.formatMon(p.getAwardApr()/100D)+MoneyConstans.PERCENT);
             brokerBouns.add(inviteFriends);
         });
