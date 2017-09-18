@@ -197,7 +197,10 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
                         investRecords.setPayback_way(BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL_STR);
                     }
                     //预期收益
-                    BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(w.getValidMoney()), new Double(borrow.getApr()), borrow.getTimeLimit(), borrow.getSuccessAt());
+                    BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(w.getValidMoney()),
+                            new Double(borrow.getApr()),
+                            borrow.getTimeLimit(),
+                            borrow.getRecheckAt());
                     Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
                     Integer earnings = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("earnings")));
                     investRecords.setAll_interest(StringHelper.formatDouble(earnings / 100D, false));
@@ -334,7 +337,7 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
             Map<String, String> paramMap = Maps.newHashMap();
             paramMap.put("from", shortName);
             paramMap.put("param", requestParamStr);
-            paramMap.put("ts",System.currentTimeMillis()+"");
+            paramMap.put("ts", System.currentTimeMillis() + "");
             //发送通知请求
             String reulstStr = OKHttpHelper.get(notifyAddress, paramMap, null);
             log.info("打印通知风车返回的结果:" + reulstStr);
@@ -364,10 +367,10 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
             do {
                 //获取回款用户集合
                 Set<Long> userIds = borrowCollections.stream().map(m -> m.getUserId()).collect(Collectors.toSet());
-                List<Users> usersList=userService.findByIdIn(new ArrayList<>(userIds));
+                List<Users> usersList = userService.findByIdIn(new ArrayList<>(userIds));
                 //过滤不是风车理财的用户
-                List<Users> tempUsers=usersList.stream().filter(users -> !StringUtils.isEmpty(users.getWindmillId())).collect(Collectors.toList());
-                if(CollectionUtils.isEmpty(tempUsers)){
+                List<Users> tempUsers = usersList.stream().filter(users -> !StringUtils.isEmpty(users.getWindmillId())).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(tempUsers)) {
                     log.info("当前批量中没有风车理财的用户");
                     log.info("回款信息:" + JacksonHelper.obj2json(borrowCollections));
                     break;
@@ -408,7 +411,7 @@ public class WindmillTenderBizImpl implements WindmillTenderBiz {
                     Map<String, String> paramMap = Maps.newHashMap();
                     paramMap.put("from", shortName);
                     paramMap.put("param", requestParamStr);
-                    paramMap.put("ts",System.currentTimeMillis()+"");
+                    paramMap.put("ts", System.currentTimeMillis() + "");
                     log.info("参数 param:" + GSON.toJson(paramMap));
                     //发送通知请求
                     String result = OKHttpHelper.get(notifyAddress, paramMap, null);

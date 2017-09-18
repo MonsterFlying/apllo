@@ -87,4 +87,8 @@ public class VoViewBorrowList implements Serializable {
 
     @ApiModelProperty("是否加密")
     private Boolean isPassWord;
+
+    @ApiModelProperty("回调满标时间")
+    private String recheckAt;
+
 }

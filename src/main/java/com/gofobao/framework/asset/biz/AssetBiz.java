@@ -247,5 +247,5 @@ public interface AssetBiz {
      * @param response
      * @return
      */
-    ResponseEntity<String> offlineRechargeCallback(HttpServletRequest request, HttpServletResponse response);
+    ResponseEntity<String> offlineRechargeCallback(HttpServletRequest request, HttpServletResponse response) throws Exception;
 }

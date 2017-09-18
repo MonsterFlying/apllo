@@ -176,7 +176,7 @@ public class InvestServiceImpl implements InvestService {
             Integer apr = borrow.getApr();
 
             //预期收益
-            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(validMoney), new Double(apr), borrow.getTimeLimit(), borrow.getSuccessAt());
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(new Double(validMoney), new Double(apr), borrow.getTimeLimit(), borrow.getRecheckAt());
             Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
             Integer earnings = NumberHelper.toInt(StringHelper.toString(calculatorMap.get("earnings")));
 
@@ -323,7 +323,8 @@ public class InvestServiceImpl implements InvestService {
         if (StringUtils.isEmpty(tender.getTransferBuyId())) {
             timeLimit = borrow.getTimeLimit();
             apr = borrow.getApr();
-            successAt = borrow.getSuccessAt();
+            //满标时间
+            successAt = borrow.getRecheckAt();
             //期限
             if (borrow.getRepayFashion() == BorrowContants.REPAY_FASHION_ONCE) {
                 item.setRepayFashion(BorrowContants.REPAY_FASHION_ONCE_STR);
@@ -332,7 +333,7 @@ public class InvestServiceImpl implements InvestService {
                 item.setTimeLimit(timeLimit + BorrowContants.MONTH);
             }
 
-            item.setSuccessAt(DateHelper.dateToString(borrow.getSuccessAt()));
+            item.setSuccessAt(DateHelper.dateToString(successAt));
         } else {
             String sqlStr = "SELECT transfer.* FROM gfb_transfer transfer  " +
                     "LEFT JOIN " +
@@ -348,10 +349,11 @@ public class InvestServiceImpl implements InvestService {
                 Transfer transfer = transfers.get(0);
                 timeLimit=transfer.getTimeLimit();
                 apr = transfer.getApr();
-                successAt = transfer.getSuccessAt();
+                //满标时间
+                successAt = transfer.getRecheckAt();
                 item.setTimeLimit(transfer.getTimeLimit() + BorrowContants.MONTH);
 
-                item.setSuccessAt(transfer.getState() == TransferContants.TRANSFERED ? DateHelper.dateToString(transfer.getSuccessAt()) : "");
+                item.setSuccessAt(transfer.getState() == TransferContants.TRANSFERED ? DateHelper.dateToString(successAt) : "");
             }
             falg=true;
         }

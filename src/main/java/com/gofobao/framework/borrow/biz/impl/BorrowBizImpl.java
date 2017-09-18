@@ -326,6 +326,7 @@ public class BorrowBizImpl implements BorrowBiz {
 
     /**
      * pc首页表列表
+     *
      * @return
      */
     @Override
@@ -373,7 +374,7 @@ public class BorrowBizImpl implements BorrowBiz {
             }
             double principal = 10000D * 100;
             double apr = NumberHelper.toDouble(StringHelper.toString(borrow.getApr()));
-            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(principal, apr, borrow.getTimeLimit(), borrow.getSuccessAt());
+            BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(principal, apr, borrow.getTimeLimit(), borrow.getRecheckAt());
             Map<String, Object> calculatorMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
             Integer earnings = NumberHelper.toInt(calculatorMap.get("earnings"));
             borrowInfoRes.setEarnings(StringHelper.formatMon(earnings / 100d) + MoneyConstans.RMB);
@@ -395,18 +396,17 @@ public class BorrowBizImpl implements BorrowBiz {
                 if (releaseAt.getTime() >= nowDate.getTime()) {
                     status = 1;
                     borrowInfoRes.setSurplusSecond(((releaseAt.getTime() - nowDate.getTime()) / 1000) + 5);
-                } else if (nowDate.getTime() > endAt.getTime()) {  //当前时间大于招标有效时间
+                } else if (borrow.getLendRepayStatus() == 1) {
+                    //复审中
+                    status = 6;
+                    borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
+                } else if (endAt.getTime() > nowDate.getTime()) {  //招标有效时间大于当前时间
                     borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
                     status = 5; //已过期
                 } else {
                     status = 3; //招标中
-                    //复审中
-                    if (borrow.getLendRepayStatus() == 1) {
-                        status = 6;
-                        borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
-                    }
                 }
-            } else if (!ObjectUtils.isEmpty(borrow.getSuccessAt()) && !ObjectUtils.isEmpty(borrow.getCloseAt())) {   //满标时间 结清
+            } else if (!ObjectUtils.isEmpty(borrow.getRecheckAt()) && !ObjectUtils.isEmpty(borrow.getCloseAt())) {   //满标时间 结清
                 status = 4; //已完成
             } else if (status == BorrowContants.PASS && ObjectUtils.isEmpty(borrow.getCloseAt())) {
                 status = 2; //还款中
@@ -418,10 +418,17 @@ public class BorrowBizImpl implements BorrowBiz {
             }
             borrowInfoRes.setPassWord(StringUtils.isEmpty(borrow.getPassword()) ? false : true);
             Users users = userService.findById(borrow.getUserId());
-            borrowInfoRes.setUserName(!StringUtils.isEmpty(users.getUsername()) ? users.getUsername() : users.getPhone());
+            borrowInfoRes.setUserName(!StringUtils.isEmpty(users.getUsername())
+                    ? users.getUsername()
+                    : users.getPhone());
             borrowInfoRes.setIsNovice(borrow.getIsNovice());
             borrowInfoRes.setStatus(status);
-            borrowInfoRes.setSuccessAt(StringUtils.isEmpty(borrow.getSuccessAt()) ? "" : DateHelper.dateToString(borrow.getSuccessAt()));
+            borrowInfoRes.setSuccessAt(StringUtils.isEmpty(borrow.getSuccessAt())
+                    ? ""
+                    : DateHelper.dateToString(borrow.getSuccessAt()));
+            borrowInfoRes.setRecheckAt(!StringUtils.isEmpty(borrow.getRecheckAt())
+                    ? DateHelper.dateToString(borrow.getRecheckAt())
+                    : "");
             borrowInfoRes.setBorrowName(borrow.getName());
             borrowInfoRes.setIsConversion(borrow.getIsConversion());
             borrowInfoRes.setIsNovice(borrow.getIsNovice());
@@ -1058,7 +1065,7 @@ public class BorrowBizImpl implements BorrowBiz {
         List<BorrowRepayment> borrowRepaymentList = new ArrayList<>();
         // 调用利息计算器得出借款每期应还信息
         BorrowCalculatorHelper borrowCalculatorHelper = new BorrowCalculatorHelper(NumberHelper.toDouble(StringHelper.toString(borrow.getMoney())),
-                NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrow.getSuccessAt());
+                NumberHelper.toDouble(StringHelper.toString(borrow.getApr())), borrow.getTimeLimit(), borrow.getRecheckAt());
         Map<String, Object> rsMap = borrowCalculatorHelper.simpleCount(borrow.getRepayFashion());
         List<Map<String, Object>> repayDetailList = (List<Map<String, Object>>) rsMap.get("repayDetailList");
         BorrowRepayment borrowRepayment = null;
@@ -1569,23 +1576,23 @@ public class BorrowBizImpl implements BorrowBiz {
             borrowMap.put("apr", StringHelper.formatMon(borrow.getApr() / 100d));
             borrowMap.put("successAt", DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD));
             borrowMap.put("money", StringHelper.formatMon(borrow.getMoneyYes() / 100D));
-            if (!ObjectUtils.isEmpty(borrow.getSuccessAt())) { //判断是否存在满标时间
-                boolean successAtBool = DateHelper.getMonth(DateHelper.addMonths(borrow.getSuccessAt(), borrow.getTimeLimit())) % 12
+            if (!ObjectUtils.isEmpty(borrow.getRecheckAt())) { //判断是否存在满标时间
+                boolean successAtBool = DateHelper.getMonth(DateHelper.addMonths(borrow.getRecheckAt(), borrow.getTimeLimit())) % 12
                         !=
-                        (DateHelper.getMonth(borrow.getSuccessAt()) + borrow.getTimeLimit()) % 12;
+                        (DateHelper.getMonth(borrow.getRecheckAt()) + borrow.getTimeLimit()) % 12;
 
                 String borrowExpireAtStr = null;
                 String monthAsReimbursement = null;//月截止还款日
                 if (borrow.getRepayFashion() == 1) {
-                    borrowExpireAtStr = DateHelper.dateToString(DateHelper.addDays(borrow.getSuccessAt(), borrow.getTimeLimit()), "yyyy-MM-dd");
+                    borrowExpireAtStr = DateHelper.dateToString(DateHelper.addDays(borrow.getRecheckAt(), borrow.getTimeLimit()), "yyyy-MM-dd");
                     monthAsReimbursement = borrowExpireAtStr;
                 } else {
                     if (successAtBool) {
-                        borrowExpireAtStr = DateHelper.dateToString(DateHelper.subDays(DateHelper.addDays(DateHelper.setDays(borrow.getSuccessAt(), borrow.getTimeLimit()), 1), 1), "yyyy-MM-dd HH:mm:ss");
+                        borrowExpireAtStr = DateHelper.dateToString(DateHelper.subDays(DateHelper.addDays(DateHelper.setDays(borrow.getRecheckAt(), borrow.getTimeLimit()), 1), 1), "yyyy-MM-dd HH:mm:ss");
                     } else {
-                        borrowExpireAtStr = DateHelper.dateToString(DateHelper.addMonths(borrow.getSuccessAt(), borrow.getTimeLimit()), "yyyy-MM-dd");
+                        borrowExpireAtStr = DateHelper.dateToString(DateHelper.addMonths(borrow.getRecheckAt(), borrow.getTimeLimit()), "yyyy-MM-dd");
                     }
-                    monthAsReimbursement = "每月" + DateHelper.getDay(borrow.getSuccessAt()) + "日";
+                    monthAsReimbursement = "每月" + DateHelper.getDay(borrow.getReleaseAt()) + "日";
                 }
                 borrowMap.put("borrowExpireAtStr", borrowExpireAtStr);
                 borrowMap.put("monthAsReimbursement", monthAsReimbursement);

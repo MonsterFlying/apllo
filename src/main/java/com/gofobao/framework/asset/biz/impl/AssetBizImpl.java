@@ -13,6 +13,9 @@ import com.gofobao.framework.api.model.direct_recharge_online.DirectRechargeOnli
 import com.gofobao.framework.api.model.direct_recharge_online.DirectRechargeOnlineResponse;
 import com.gofobao.framework.api.model.direct_recharge_plus.DirectRechargePlusRequest;
 import com.gofobao.framework.api.model.direct_recharge_plus.DirectRechargePlusResponse;
+import com.gofobao.framework.api.model.offline_recharge_call.OfflineRechargeCallRequest;
+import com.gofobao.framework.api.model.offline_recharge_call.OfflineRechargeCallResponse;
+import com.gofobao.framework.api.model.offline_recharge_call.OfflineRechargeCallbackResponse;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayRequest;
 import com.gofobao.framework.api.model.voucher_pay.VoucherPayResponse;
 import com.gofobao.framework.api.model.voucher_pay_cancel.VoucherPayCancelRequest;
@@ -149,6 +152,7 @@ public class AssetBizImpl implements AssetBiz {
 
     @Autowired
     AssetChangeProvider assetChangeProvider;
+
 
     @Autowired
     MarketingRedpackRecordService marketingRedpackRecordService;
@@ -1504,31 +1508,57 @@ public class AssetBizImpl implements AssetBiz {
     }
 
     @Override
-    public ResponseEntity<String> offlineRechargeCallback(HttpServletRequest request, HttpServletResponse response) {
+    @Transactional(rollbackFor = ExcelException.class)
+    public ResponseEntity<String> offlineRechargeCallback(HttpServletRequest request, HttpServletResponse response) throws Exception {
         log.info("线下充值回调");
-        Map<String, String[]> parameterMap = request.getParameterMap();
-        Set<String> strings = parameterMap.keySet();
-        Iterator<String> iterator = strings.iterator();
-        while (iterator.hasNext()) {
-            String key = iterator.next();
-            log.info("key : " + key);
-            String[] params = parameterMap.get(key);
-            for (String item : params) {
-                log.info("value : " + item);
-            }
-        }
-        String bgData = request.getParameter("bgData");
-        if(StringUtils.isEmpty(bgData)){
-            log.error("offlinerechargeCallback bgData is null");
-        }
-
         Gson gson = new Gson();
+        OfflineRechargeCallbackResponse offlineRechargeCallbackResponse = jixinManager.specialCallback(request, new TypeToken<OfflineRechargeCallbackResponse>() {
+        });
 
-        // 查询即信线下充值
+        if (ObjectUtils.isEmpty(offlineRechargeCallbackResponse)) {
+            log.error("充值回调, 响应体为空");
+            return ResponseEntity.ok("success");
+        }
 
-        // 查询本地是否已经处理
+        // 请求线下充值
+        OfflineRechargeCallRequest offlineRechargeCallRequest = new OfflineRechargeCallRequest();
+        offlineRechargeCallRequest.setAccountId(offlineRechargeCallRequest.getAccountId());
+        offlineRechargeCallRequest.setAcqRes(offlineRechargeCallbackResponse.getAcqRes());
+        offlineRechargeCallRequest.setName(offlineRechargeCallbackResponse.getName());
+        offlineRechargeCallRequest.setNote(offlineRechargeCallbackResponse.getNote());
+        offlineRechargeCallRequest.setNoticeAddress(offlineRechargeCallbackResponse.getNoticeAddress());
+        offlineRechargeCallRequest.setOrgSeqNo(offlineRechargeCallbackResponse.getOrgSeqNo());
+        offlineRechargeCallRequest.setOrgTxDate(offlineRechargeCallbackResponse.getOrgTxDate());
+        offlineRechargeCallRequest.setOrgTxTime(offlineRechargeCallbackResponse.getTxTime());
+        offlineRechargeCallRequest.setPayAccountId(offlineRechargeCallbackResponse.getPayAccountId());
+        offlineRechargeCallRequest.setTxAmount(offlineRechargeCallbackResponse.getTxAmount());
+        offlineRechargeCallRequest.setTxstsFlag(offlineRechargeCallbackResponse.getTxstsFlag());
+        OfflineRechargeCallResponse offlineRechargeCallResponse = jixinManager.send(JixinTxCodeEnum.OFFLINE_RECHARGE_CALL,
+                offlineRechargeCallRequest,
+                OfflineRechargeCallResponse.class);
 
-        // 对拨正或者取消
-        return null;
+        if (ObjectUtils.isEmpty(offlineRechargeCallResponse)
+                || !JixinResultContants.SUCCESS.equals(offlineRechargeCallbackResponse.getTxCode())) {
+            log.error(String.format("充值回调, 请求确认线下充值失败: %s", gson.toJson(offlineRechargeCallRequest)));
+            return ResponseEntity.ok("success");
+        }
+
+        String accountId = offlineRechargeCallbackResponse.getAccountId(); // 当前账户类型
+        String orgSeqNo = offlineRechargeCallbackResponse.getOrgSeqNo();  // 原始流水号
+        String orgTxDate = offlineRechargeCallbackResponse.getOrgTxDate(); // 原始日期
+        String orgTxTime = offlineRechargeCallbackResponse.getOrgTxTime(); // 原始时间
+        String txAmount = offlineRechargeCallbackResponse.getTxAmount(); // 交易金额
+        String txstsFlag = offlineRechargeCallbackResponse.getTxstsFlag(); // 是否为拨正  N 为原始
+
+        UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(accountId);
+        Preconditions.checkNotNull(userThirdAccount, "线下充值, 当前开户信息为空") ;
+        Long userId = userThirdAccount.getUserId();
+
+        // 调用资金同步接口
+        String seqNo = String.format("%s%s%s", orgTxDate, orgTxTime, orgSeqNo) ;
+        // 调用资金同步
+        assetSynBiz.doOfflineSyn(userId, txAmount, seqNo, orgTxDate) ;
+        // 返回成功
+        return ResponseEntity.ok("success");
     }
 }
