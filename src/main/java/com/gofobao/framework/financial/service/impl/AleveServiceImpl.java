@@ -44,7 +44,7 @@ public class AleveServiceImpl implements AleveService {
 
     @Override
     public Page<Aleve> findByDateAndTranstype(String date, String transtype, Pageable pageable) {
-        return aleveRepository.findByDateAndTranstype(date, transtype, pageable) ;
+        return aleveRepository.findBydateQueryAndTranstype(date, transtype, pageable) ;
     }
 
 

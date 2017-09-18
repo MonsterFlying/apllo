@@ -13,6 +13,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.List;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @Slf4j
@@ -24,10 +26,10 @@ public class DbTests {
     @Test
     public void touchMarketing() {
         String transtype = "7820";  // 线下转账类型
-        Pageable pageable = new PageRequest(0, 12, new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
+        Pageable pageable = new PageRequest(0, 3);
         Page<Aleve> byDateAndTranstype = aleveService.findByDateAndTranstype("20170916", transtype, pageable);
-
-        for(Aleve aleve : byDateAndTranstype.getContent()){
+        List<Aleve> content = byDateAndTranstype.getContent();
+        for(Aleve aleve : content){
             log.info(aleve.getCardnbr());
         }
 

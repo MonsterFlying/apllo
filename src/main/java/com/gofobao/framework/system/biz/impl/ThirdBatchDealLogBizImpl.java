@@ -171,7 +171,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
         borrowStatus.add(6);
         voFindLendRepayStatus = new VoFindLendRepayStatus();
         voFindLendRepayStatus.setName(ThirdBatchLogContants.BORROW_SECOND_STEP);
-        if (!flag || borrow.getStatus().intValue() == 1) { // 0待处理
+        if (!flag || borrow.getMoneyYes() == borrow.getMoney()) { // 0待处理
             voFindLendRepayStatus.setDateStr("- -");
             voFindLendRepayStatus.setState(0);
             flag = false;
@@ -199,7 +199,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
             Date date = ObjectUtils.isEmpty(borrow.getRecheckAt()) ? borrow.getSuccessAt() : borrow.getRecheckAt();
             if (!ObjectUtils.isEmpty(thirdBatchDealLog)) {
                 date = thirdBatchDealLog.getCreatedAt();
-            }else if (!ObjectUtils.isEmpty(thirdBatchLog)){
+            } else if (!ObjectUtils.isEmpty(thirdBatchLog)) {
                 date = DateHelper.subMinutes(thirdBatchLog.getCreateAt(), 3);
             }
 
@@ -211,7 +211,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
             Date date = ObjectUtils.isEmpty(borrow.getRecheckAt()) ? borrow.getSuccessAt() : borrow.getRecheckAt();
             if (!ObjectUtils.isEmpty(thirdBatchDealLog)) {
                 date = thirdBatchDealLog.getCreatedAt();
-            }else if (!ObjectUtils.isEmpty(thirdBatchLog)){
+            } else if (!ObjectUtils.isEmpty(thirdBatchLog)) {
                 date = DateHelper.subMinutes(thirdBatchLog.getCreateAt(), 3);
             }
             voFindLendRepayStatus.setDateStr(DateHelper.dateToString(date));
@@ -232,7 +232,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
             Date date = ObjectUtils.isEmpty(borrow.getRecheckAt()) ? borrow.getSuccessAt() : borrow.getRecheckAt();
             if (!ObjectUtils.isEmpty(thirdBatchDealLog)) {
                 date = thirdBatchDealLog.getCreatedAt();
-            }else if (!ObjectUtils.isEmpty(thirdBatchLog)){
+            } else if (!ObjectUtils.isEmpty(thirdBatchLog)) {
                 date = DateHelper.subMinutes(thirdBatchLog.getCreateAt(), 2);
             }
             voFindLendRepayStatus.setDateStr(DateHelper.dateToString(date));
@@ -243,7 +243,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
             Date date = ObjectUtils.isEmpty(borrow.getRecheckAt()) ? borrow.getSuccessAt() : borrow.getRecheckAt();
             if (!ObjectUtils.isEmpty(thirdBatchDealLog)) {
                 date = thirdBatchDealLog.getCreatedAt();
-            }else if (!ObjectUtils.isEmpty(thirdBatchLog)){
+            } else if (!ObjectUtils.isEmpty(thirdBatchLog)) {
                 date = DateHelper.subMinutes(thirdBatchLog.getCreateAt(), 2);
             }
             voFindLendRepayStatus.setDateStr(DateHelper.dateToString(date));
@@ -255,7 +255,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
         thirdBatchDealLog = thirdBatchDealLogMap.get(ThirdBatchDealLogContants.PROCESSED);
         voFindLendRepayStatus = new VoFindLendRepayStatus();
         voFindLendRepayStatus.setName(ThirdBatchLogContants.BORROW_FIVE_STEP);
-        if (!flag || (!ObjectUtils.isEmpty(thirdBatchLog) &&thirdBatchLog.getState() != 3 && thirdBatchLog.getState() != 5)) { // 0待处理
+        if (!flag || (!ObjectUtils.isEmpty(thirdBatchLog) && thirdBatchLog.getState() != 3 && thirdBatchLog.getState() != 5)) { // 0待处理
             voFindLendRepayStatus.setDateStr("- -");
             voFindLendRepayStatus.setState(0);
         } else if ((!ObjectUtils.isEmpty(thirdBatchLog) && (thirdBatchLog.getState() == 5 || thirdBatchLog.getState() == 2 || thirdBatchLog.getState() == 4))
@@ -263,7 +263,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
             Date date = ObjectUtils.isEmpty(borrow.getRecheckAt()) ? borrow.getSuccessAt() : borrow.getRecheckAt();
             if (!ObjectUtils.isEmpty(thirdBatchDealLog)) {
                 date = thirdBatchDealLog.getCreatedAt();
-            }else if (!ObjectUtils.isEmpty(thirdBatchLog)){
+            } else if (!ObjectUtils.isEmpty(thirdBatchLog)) {
                 date = DateHelper.subMinutes(thirdBatchLog.getCreateAt(), 1);
             }
             voFindLendRepayStatus.setDateStr(DateHelper.dateToString(date));
@@ -272,7 +272,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
             Date date = ObjectUtils.isEmpty(borrow.getRecheckAt()) ? borrow.getSuccessAt() : borrow.getRecheckAt();
             if (!ObjectUtils.isEmpty(thirdBatchDealLog)) {
                 date = thirdBatchDealLog.getCreatedAt();
-            }else if (!ObjectUtils.isEmpty(thirdBatchLog)){
+            } else if (!ObjectUtils.isEmpty(thirdBatchLog)) {
                 date = DateHelper.subMinutes(thirdBatchLog.getCreateAt(), 1);
             }
             voFindLendRepayStatus.setDateStr(DateHelper.dateToString(date));

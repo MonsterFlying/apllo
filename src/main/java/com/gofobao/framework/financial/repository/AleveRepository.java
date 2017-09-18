@@ -21,10 +21,12 @@ public interface AleveRepository extends JpaRepository<Aleve, Long>, JpaSpecific
      * @param type
      * @return
      */
-    @Query(value = "select COUNT(cardnbr)  from #{#entityName} where transtype = :transtype  and query_date = :date GROUP BY cardnbr")
-    Long countOfDateAndTranstype(@Param("date")  String date, @Param("transtype") String type);
+    @Query(value = "select COUNT(cardnbr)  from gfb_aleve  where query_date = ?1 and transtype = ?2 GROUP BY cardnbr", nativeQuery = true)
+    Long countOfDateAndTranstype(String date,  String type);
 
 
-    @Query(value = "select cardnbr  from #{#entityName} where transtype = :transtype  and query_date = :date GROUP BY cardnbr ")
-    Page<Aleve> findByDateAndTranstype(@Param("date")  String date, @Param("transtype") String transtype, Pageable pageable);
+    @Query(value = "select *  FROM gfb_aleve where  query_date = ?1  AND transtype = ?2  GROUP BY cardnbr  ORDER BY ?#{#pageable}",
+            countQuery = "select count(id) FROM gfb_aleve where query_date = ?1 and transtype = ?2 GROUP BY cardnbr  ORDER BY ?#{#pageable}",
+            nativeQuery =  true)
+    Page<Aleve> findBydateQueryAndTranstype(String date, String transtype, Pageable pageable);
 }
