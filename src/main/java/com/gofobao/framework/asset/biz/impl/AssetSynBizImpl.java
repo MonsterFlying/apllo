@@ -236,13 +236,8 @@ public class AssetSynBizImpl implements AssetSynBiz {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean doOffLineRechargeByAleve(String date) throws Exception {
-        Specification<Aleve> specification = Specifications
-                .<Aleve>and()
-                .eq("queryDate", date)
-                .eq("transtype", "7820")
-                .build();
-
-        Long account = aleveService.count(specification);
+        String transtype = "7820";  // 线下转账类型
+        Long account = aleveService.countOfDateAndTranstype(date, transtype);  // 查询线下充值总数
         if (account == 0) {
             log.info("全网线下同步: aleve查询记录为空");
             return false;
@@ -251,59 +246,34 @@ public class AssetSynBizImpl implements AssetSynBiz {
         int pageSize = 1000;
         int pageIndexTotal = account.intValue() / pageSize;
         pageIndexTotal = account % pageSize == 0 ? pageIndexTotal : pageIndexTotal + 1;
-        Date nowDate = new Date();
+        Date synDate = DateHelper.stringToDate(date, DateHelper.DATE_FORMAT_YMD_NUM);
 
         // 时间
         for (int pageIndex = 0; pageIndex < pageIndexTotal; pageIndex++) {
             Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
-            Page<Aleve> lists = aleveService.findAll(specification, pageable);
+            Page<Aleve> lists = aleveService.findByDateAndTranstype(date,transtype, pageable);
             if (CollectionUtils.isEmpty(lists.getContent())) {
                 break;
             }
 
             List<Aleve> content = lists.getContent();
             for (Aleve aleve : content) {
-                String seqNo = String.format("%s%s%s", aleve.getInpdate(), aleve.getInptime(), aleve.getTranno());
-                RechargeDetailLog rechargeDetailLog = rechargeDetailLogService.findTopBySeqNo(seqNo);
-                if (!ObjectUtils.isEmpty(rechargeDetailLog)) {
+                String cardnbr = aleve.getCardnbr();
+                if(ObjectUtils.isEmpty(cardnbr)){
+                    log.info("全局同步:  账户信息为空");
                     continue;
                 }
-                UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(aleve.getCardnbr());
-                Preconditions.checkNotNull(userThirdAccount, "AssetSynBizImpl.doOffLineRechargeByAleve: userThirdAccount is empty");
-                Double money = new Double(aleve.getAmount()) * 100;
-                rechargeDetailLog = new RechargeDetailLog();
-                rechargeDetailLog.setUserId(userThirdAccount.getUserId());
-                rechargeDetailLog.setBankName(userThirdAccount.getBankName());
-                rechargeDetailLog.setCallbackTime(nowDate);
-                rechargeDetailLog.setCreateTime(nowDate);
-                rechargeDetailLog.setUpdateTime(nowDate);
-                rechargeDetailLog.setCardNo(userThirdAccount.getCardNo());
-                rechargeDetailLog.setDel(0);
-                rechargeDetailLog.setState(1); // 充值成功
-                rechargeDetailLog.setMoney(money.longValue());
-                rechargeDetailLog.setRechargeChannel(1);  // 其他渠道
-                rechargeDetailLog.setRechargeType(1); // 线下充值
-                rechargeDetailLog.setSeqNo(seqNo);
-                rechargeDetailLogService.save(rechargeDetailLog);
 
-                AssetChange assetChange = new AssetChange();
-                assetChange.setType(AssetChangeTypeEnum.offlineRecharge);  // 线下充值
-                assetChange.setUserId(userThirdAccount.getUserId());
-                assetChange.setMoney(money.longValue());
-                assetChange.setRemark(String.format("成功线下充值%s元", StringHelper.formatDouble(money.longValue() / 100D, true)));
-                assetChange.setSourceId(rechargeDetailLog.getId());
-                assetChange.setSeqNo(assetChangeProvider.getSeqNo());
-                assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
-                assetChangeProvider.commonAssetChange(assetChange);
+                UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(cardnbr);
+                if(ObjectUtils.isEmpty(userThirdAccount)){
+                    log.info("全局同步:  用户开户信息为空");
+                    continue;
+                }
 
-                // 触发用户充值
-                MqConfig mqConfig = new MqConfig();
-                mqConfig.setTag(MqTagEnum.RECHARGE);
-                mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
-                mqConfig.setSendTime(DateHelper.addSeconds(nowDate, 30));
-                ImmutableMap<String, String> body = ImmutableMap.of(MqConfig.MSG_ID, rechargeDetailLog.getId().toString());
-                mqConfig.setMsg(body);
-                mqHelper.convertAndSend(mqConfig);
+                boolean b = doAdminSynAsset(userThirdAccount.getUserId(), synDate);
+                if(!b){
+                    log.info("aleve全局同步失败");
+                }
             }
         }
 

@@ -36,4 +36,16 @@ public class AleveServiceImpl implements AleveService {
     public Page<Aleve> findAll(Specification<Aleve> specification, Pageable pageable) {
         return aleveRepository.findAll(specification, pageable);
     }
+
+    @Override
+    public Long countOfDateAndTranstype(String date, String type) {
+        return aleveRepository.countOfDateAndTranstype(date, type) ;
+    }
+
+    @Override
+    public Page<Aleve> findByDateAndTranstype(String date, String transtype, Pageable pageable) {
+        return aleveRepository.findByDateAndTranstype(date, transtype, pageable) ;
+    }
+
+
 }

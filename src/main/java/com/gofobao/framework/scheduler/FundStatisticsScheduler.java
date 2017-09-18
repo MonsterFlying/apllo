@@ -41,7 +41,7 @@ public class FundStatisticsScheduler {
     AssetSynBiz assetSynBiz;
 
     @Autowired
-    FinancialSchedulerService financialSchedulerService ;
+    FinancialSchedulerService financialSchedulerService;
 
     private final Gson gson = new Gson();
 
@@ -136,7 +136,7 @@ public class FundStatisticsScheduler {
             log.error("ALEVE保存调度信息失败", e);
         }
 
-        /*// 处理未同步的线下转账
+        // 处理未同步的线下转账
         try {
             resMsg = "调度成功";
             if (aleveState) {
@@ -149,7 +149,7 @@ public class FundStatisticsScheduler {
             }
         } catch (Exception e) {
             resMsg = e.getMessage();
-        }*/
+        }
         try {
             FinancialScheduler financialScheduler = new FinancialScheduler();
             ImmutableMap<String, String> data = ImmutableMap.of("date", date);
@@ -170,8 +170,8 @@ public class FundStatisticsScheduler {
     }
 
     public void scheduler(long id) {
-        Gson gson = new Gson() ;
-        FinancialScheduler financialScheduler = financialSchedulerService.findById(id) ;
+        Gson gson = new Gson();
+        FinancialScheduler financialScheduler = financialSchedulerService.findById(id);
         Map<String, String> data = gson.fromJson(financialScheduler.getData(), TypeTokenContants.MAP_TOKEN);
         String date = data.get("date");
         switch (financialScheduler.getType()) {
@@ -183,21 +183,21 @@ public class FundStatisticsScheduler {
                 }
                 break;
 
-            case  "ALEVE":
+            case "ALEVE":
                 try {
                     fundStatisticsBiz.doAleve(date);
                 } catch (Exception e) {
                     log.error("ALEVE下载异常", e);
                 }
                 break;
-            case  "EVE":
+            case "EVE":
                 try {
                     fundStatisticsBiz.doEve(date);
                 } catch (Exception e) {
                     log.error("EVE下载异常", e);
                 }
                 break;
-            case  "CURR_INCOME":
+            case "CURR_INCOME":
                 try {
                     currentIncomeLogBiz.process(date);
                 } catch (Exception e) {
