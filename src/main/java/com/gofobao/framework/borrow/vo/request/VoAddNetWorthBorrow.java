@@ -28,7 +28,7 @@ public class VoAddNetWorthBorrow {
      */
     @ApiModelProperty(name = "timeLimit", value = "借款期限", dataType = "int", required = true)
     @NotNull(message = "借款期限不能为空!")
-/*    @Min(value = DAY_MIN, message = "借款天数不小于7天!")*/
+    @Min(value = DAY_MIN, message = "借款天数不小于7天!")
     @Max(value = DAY_MAX, message = "借款天数不能大于92天!")
     private int timeLimit;
 
@@ -80,7 +80,7 @@ public class VoAddNetWorthBorrow {
     private boolean closeAuto;
 
     public double getMoney() {
-        return  new Double(MoneyHelper.round(money, 0)).longValue();
+        return new Double(MoneyHelper.round(money, 0)).longValue();
     }
 
     public void setMoney(double money) {
