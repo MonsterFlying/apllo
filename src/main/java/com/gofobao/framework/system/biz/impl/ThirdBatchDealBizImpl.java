@@ -24,6 +24,8 @@ import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.member.entity.UserCache;
+import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.contants.ThirdDealStatusContrants;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
@@ -55,6 +57,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
@@ -74,7 +77,7 @@ import static com.gofobao.framework.listener.providers.NoticesMessageProvider.GS
  */
 @Slf4j
 @Service
-public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz{
+public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz {
     final Gson gson = new GsonBuilder().create();
 
     @Autowired
@@ -111,6 +114,8 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz{
     private ThirdBatchDealLogBiz thirdBatchDealLogBiz;
     @Autowired
     AssetChangeProvider assetChangeProvider;
+    @Autowired
+    private UserCacheService userCacheService;
 
     /**
      * 批次处理
@@ -204,7 +209,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz{
                     // 即信批次名义借款人垫付处理
                     bailRepayDeal(batchNo, sourceId, failureOrderIds, successOrderIds);
                     break;
-               case ThirdBatchLogContants.BATCH_CREDIT_END: //批次结束债权
+                case ThirdBatchLogContants.BATCH_CREDIT_END: //批次结束债权
                     // 批次结束债权
                     creditEndDeal(batchNo, sourceId, acqRes, failureOrderIds, successOrderIds);
                     break;
@@ -215,7 +220,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz{
                 default:
             }
         } catch (Exception e) {
-            log.error("批次处理异常:batchNo:"+batchNo+"sourceId:"+sourceId, e);
+            log.error("批次处理异常:batchNo:" + batchNo + "sourceId:" + sourceId, e);
             //判断是否有失败的记录，存在失败orderId添加失败日志
             ThirdErrorRemark remark = new ThirdErrorRemark();
             remark.setState(0);
@@ -266,7 +271,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz{
 
         if (CollectionUtils.isEmpty(failureThirdCreditEndOrderIds)) {
             //更新批次日志状态
-            thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), borrowId, 3,ThirdBatchLogContants.BATCH_CREDIT_END);
+            thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), borrowId, 3, ThirdBatchLogContants.BATCH_CREDIT_END);
         }
     }
 
@@ -314,7 +319,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz{
             } else {
                 //更新批次状态
                 log.error("批次还款处理正常:" + resp.getBody().getState().getMsg());
-                thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), borrowId, 3,ThirdBatchLogContants.BATCH_REPAY_ALL);
+                thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), borrowId, 3, ThirdBatchLogContants.BATCH_REPAY_ALL);
             }
         }
     }
@@ -418,7 +423,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz{
                 log.error("批次名义借款人垫付操作：" + resp.getBody().getState().getMsg());
             } else {
                 //更新批次状态
-                thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), repaymentId, 3,ThirdBatchLogContants.BATCH_BAIL_REPAY);
+                thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), repaymentId, 3, ThirdBatchLogContants.BATCH_BAIL_REPAY);
                 log.info("批次名义借款人垫付操作：" + resp.getBody().getState().getMsg());
             }
         }
@@ -473,7 +478,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz{
             } else {
                 log.info("批次还款处理:" + resp.getBody().getState().getMsg());
                 //更新批次状态
-                thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), repaymentId, 3,ThirdBatchLogContants.BATCH_REPAY);
+                thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), repaymentId, 3, ThirdBatchLogContants.BATCH_REPAY);
             }
         }
     }
@@ -567,6 +572,9 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz{
                 borrow.setSuccessAt(null);
                 borrow.setUpdatedAt(nowDate);
 
+                //取消新手投标标识
+                deleteUserNoviceTender(borrow, tenders);
+
             }
             //更新批次日志状态
             updateThirdBatchLogState(batchNo, borrowId, ThirdBatchLogContants.BATCH_LEND_REPAY, 4);
@@ -590,7 +598,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz{
                 log.error("标的放款失败！标的id：" + borrowId);
             } else {
                 //更新批次状态
-                thirdBatchLogBiz.updateBatchLogState(batchNo, borrowId, 3,ThirdBatchLogContants.BATCH_LEND_REPAY);
+                thirdBatchLogBiz.updateBatchLogState(batchNo, borrowId, 3, ThirdBatchLogContants.BATCH_LEND_REPAY);
                 //记录批次处理日志
                 thirdBatchDealLogBiz.recordThirdBatchDealLog(batchNo, borrowId, ThirdBatchDealLogContants.PROCESSED, true,
                         ThirdBatchLogContants.BATCH_LEND_REPAY, "");
@@ -603,6 +611,32 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz{
             borrowService.save(borrow);
         } else {
             log.info("非流转标复审失败!");
+        }
+    }
+
+    /**
+     * 取消新手投标标识
+     *
+     * @param borrow
+     * @param tenderList
+     */
+    private void deleteUserNoviceTender(Borrow borrow, List<Tender> tenderList) throws Exception {
+        for (Tender tender : tenderList) {
+            log.info(String.format("取消新手投标标识"));
+            UserCache userCache = userCacheService.findById(tender.getUserId());
+
+            if (borrow.isTransfer() && (!BooleanUtils.toBoolean(userCache.getTenderTransfer()))) {
+                userCache.setTenderTransfer(0);
+            } else if ((borrow.getType() == 0) && (!BooleanUtils.toBoolean(userCache.getTenderTuijian()))) {
+                userCache.setTenderTuijian(0);
+            } else if ((borrow.getType() == 1) && (!BooleanUtils.toBoolean(userCache.getTenderJingzhi()))) {
+                userCache.setTenderJingzhi(0);
+            } else if ((borrow.getType() == 2) && (!BooleanUtils.toBoolean(userCache.getTenderMiao()))) {
+                userCache.setTenderMiao(0);
+            } else if ((borrow.getType() == 4) && (!BooleanUtils.toBoolean(userCache.getTenderQudao()))) {
+                userCache.setTenderQudao(0);
+            }
+            userCacheService.save(userCache);
         }
     }
 
@@ -770,7 +804,7 @@ public class ThirdBatchDealBizImpl implements ThirdBatchDealBiz{
             ResponseEntity<VoBaseResp> resp = transferBiz.againVerifyTransfer(transferId, batchNo);
             if (resp.getBody().getState().getCode() == VoBaseResp.OK) {
                 //更新批次状态
-                thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), transferId, 3,ThirdBatchLogContants.BATCH_CREDIT_INVEST);
+                thirdBatchLogBiz.updateBatchLogState(String.valueOf(batchNo), transferId, 3, ThirdBatchLogContants.BATCH_CREDIT_INVEST);
 
                 Transfer transfer = transferService.findById(transferId);
                 //推送队列结束债权

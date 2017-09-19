@@ -105,6 +105,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import jxl.biff.DoubleHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -2600,13 +2601,13 @@ public class RepaymentBizImpl implements RepaymentBiz {
         // 垫付金额 = sum(垫付本金 + 垫付利息)
         double txAmount = 0d;
         for (CreditInvest creditInvest : creditInvestList) {
-            txAmount = MoneyHelper.add(txAmount, NumberHelper.toDouble(creditInvest.getTxAmount()));
+            txAmount = MoneyHelper.add(txAmount, MoneyHelper.round(NumberHelper.toDouble(creditInvest.getTxAmount()), 0));
         }
         // 生成名义借款人垫付批次资产变更记录
         addBatchAssetChangeItemByAdvance(batchAssetChange.getId(), titularBorrowAccount.getUserId(), borrowRepayment, borrow, lateInterest, groupSeqNo);
         try {
             // 垫付还款冻结
-            long frozenMoney = new Double(MoneyHelper.multiply(txAmount, 100)).longValue();
+            long frozenMoney = new Double(MoneyHelper.round(MoneyHelper.multiply(txAmount, 100), 0)).longValue();
             AssetChange freezeAssetChange = new AssetChange();
             freezeAssetChange.setSourceId(borrowRepayment.getId());
             freezeAssetChange.setGroupSeqNo(groupSeqNo);
@@ -2679,10 +2680,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
         /* 垫付记录集合 */
         List<CreditInvest> creditInvestList = new ArrayList<>();
 
-        long txAmount = 0;/* 垫付金额 = 垫付本金 + 垫付利息 */
         long intAmount = 0;/* 交易利息 */
         long principal = 0;/* 还款本金 */
         for (Tender tender : tenderList) {
+            intAmount = 0;
+            principal = 0;
             Transfer transfer = transferMaps.get(tender.getId());
             TransferBuyLog transferBuyLog = transferBuyLogMaps.get(transfer.getId());
 
@@ -2691,33 +2693,36 @@ public class RepaymentBizImpl implements RepaymentBiz {
             Preconditions.checkNotNull(tenderUserThirdAccount, "投资人存管账户未开户!");
             //当前投资的回款记录
             BorrowCollection borrowCollection = borrowCollectionMaps.get(tender.getId());
+            // 已经转让的债权, 可以跳过还款
+            if (tender.getTransferFlag() == 2) {
+                continue;
+            }
+
+            intAmount += borrowCollection.getInterest();//还款利息
+            principal += borrowCollection.getPrincipal(); //还款本金
+            //垫付资金变动
+            AdvanceAssetChange advanceAssetChange = new AdvanceAssetChange();
+            advanceAssetChanges.add(advanceAssetChange);
+            advanceAssetChange.setUserId(borrowCollection.getUserId());
+            advanceAssetChange.setInterest(intAmount);
+            advanceAssetChange.setPrincipal(principal);
+            advanceAssetChange.setBorrowCollection(borrowCollection);
+            //计算借款人逾期罚息
+            if ((lateDays > 0) && (lateInterest > 0)) {
+                double overdueFeeRatio = MoneyHelper.divide(tender.getValidMoney(), new Double(borrow.getMoney()));
+                double singleLateInterest = MoneyHelper.multiply(overdueFeeRatio, lateInterest);
+                long overdueFee = new Double(MoneyHelper.round(MoneyHelper.divide(singleLateInterest, 2d), 0)).longValue();// 出借人收取50% 逾期管理费 ;
+                advanceAssetChange.setOverdueFee(overdueFee);
+                intAmount += overdueFee;
+            }
 
             //判断这笔回款是否已经在即信登记过批次垫付
             if (BooleanHelper.isTrue(transferBuyLog.getThirdTransferFlag())) {
                 continue;
             }
-            if (tender.getTransferFlag() == 2) {  // 已经转让的债权, 可以跳过还款
-                continue;
-            }
 
-            //垫付资金变动
-            AdvanceAssetChange advanceAssetChange = new AdvanceAssetChange();
-            advanceAssetChanges.add(advanceAssetChange);
-
-            intAmount = borrowCollection.getInterest();//还款利息
-            principal = borrowCollection.getPrincipal(); //还款本金
-            advanceAssetChange.setUserId(borrowCollection.getUserId());
-            advanceAssetChange.setInterest(intAmount);
-            advanceAssetChange.setPrincipal(principal);
-            advanceAssetChange.setBorrowCollection(borrowCollection);
-
-            if ((lateDays > 0) && (lateInterest > 0)) {  //借款人逾期罚息
-                int overdueFee = new Double(tender.getValidMoney() / new Double(borrow.getMoney()) * lateInterest / 2D).intValue();// 出借人收取50% 逾期管理费 ;
-                advanceAssetChange.setOverdueFee(overdueFee);
-                intAmount += overdueFee;
-            }
             /* 垫付金额 */
-            txAmount = principal + intAmount; //= 垫付本金 + 垫付利息
+            long txAmount = principal + intAmount; //= 垫付本金 + 垫付利息
             String orderId = JixinHelper.getOrderId(JixinHelper.REPAY_BAIL_PREFIX);
             /* 存管垫付记录 */
             CreditInvest creditInvest = new CreditInvest();

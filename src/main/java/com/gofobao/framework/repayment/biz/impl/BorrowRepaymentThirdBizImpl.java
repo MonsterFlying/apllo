@@ -38,7 +38,10 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
+import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
+import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
 import com.gofobao.framework.repayment.contants.ThirdDealStatusContrants;
@@ -50,6 +53,7 @@ import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchDealLogContants;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
+import com.gofobao.framework.system.entity.IncrStatistic;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TransferBiz;
@@ -67,6 +71,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -130,6 +135,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     private BatchAssetChangeItemService batchAssetChangeItemService;
     @Autowired
     private ThirdBatchDealLogBiz thirdBatchDealLogBiz;
+    @Autowired
+    private UserCacheService userCacheService;
 
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
@@ -276,6 +283,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
 
         //新增放款资产变动记录
         addBorrowLendRepayAssetChange(nowDate, borrowId, borrow, sumNetWorthFee, batchNo);
+        //将新手投标用户置为已投状态
+        recordUserNoviceTender(borrow, tenderList);
 
         //记录日志
         ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
@@ -295,6 +304,32 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         borrow.setLendRepayStatus(ThirdDealStatusContrants.DISPOSING);
         borrowService.save(borrow);
         return null;
+    }
+
+    /**
+     * 标记新手投标标识
+     *
+     * @param borrow
+     * @param tenderList
+     */
+    private void recordUserNoviceTender(Borrow borrow, List<Tender> tenderList) throws Exception {
+        for (Tender tender : tenderList) {
+            log.info(String.format("标记新手投标标识"));
+            UserCache userCache = userCacheService.findById(tender.getUserId());
+
+            if (borrow.isTransfer() && (!BooleanUtils.toBoolean(userCache.getTenderTransfer()))) {
+                userCache.setTenderTransfer(borrow.getId().intValue());
+            } else if ((borrow.getType() == 0) && (!BooleanUtils.toBoolean(userCache.getTenderTuijian()))) {
+                userCache.setTenderTuijian(borrow.getId().intValue());
+            } else if ((borrow.getType() == 1) && (!BooleanUtils.toBoolean(userCache.getTenderJingzhi()))) {
+                userCache.setTenderJingzhi(borrow.getId().intValue());
+            } else if ((borrow.getType() == 2) && (!BooleanUtils.toBoolean(userCache.getTenderMiao()))) {
+                userCache.setTenderMiao(borrow.getId().intValue());
+            } else if ((borrow.getType() == 4) && (!BooleanUtils.toBoolean(userCache.getTenderQudao()))) {
+                userCache.setTenderQudao(borrow.getId().intValue());
+            }
+            userCacheService.save(userCache);
+        }
     }
 
     /**
@@ -571,21 +606,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         } catch (Exception e) {
             log.error("批次执行异常:", e);
         }
-        /*MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
-        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("borrowId")),
-                        MqConfig.BATCH_NO, StringHelper.toString(lendRepayRunResp.getBatchNo()),
-                        MqConfig.BATCH_RESP, GSON.toJson(lendRepayRunResp),
-                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            log.info(String.format("tenderThirdBizImpl thirdBatchLendRepayRunCall send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("tenderThirdBizImpl thirdBatchLendRepayRunCall send mq exception", e);
-        }*/
 
         return ResponseEntity.ok("success");
     }

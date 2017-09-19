@@ -400,7 +400,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     //复审中
                     status = 6;
                     borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
-                } else if (nowDate.getTime()>endAt.getTime() ) {  //招标有效时间大于当前时间
+                } else if (nowDate.getTime() > endAt.getTime()) {  //招标有效时间大于当前时间
                     borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
                     status = 5; //已过期
                 } else {
@@ -1177,23 +1177,18 @@ public class BorrowBizImpl implements BorrowBiz {
             if (borrow.isTransfer() && (!BooleanUtils.toBoolean(userCache.getTenderTransfer()))) {
                 incrStatistic.setTenderLzCount(1);
                 incrStatistic.setTenderLzTotalCount(1);
-                userCache.setTenderTransfer(borrow.getId().intValue());
             } else if ((borrow.getType() == 0) && (!BooleanUtils.toBoolean(userCache.getTenderTuijian()))) {
                 incrStatistic.setTenderTjCount(1);
                 incrStatistic.setTenderTjTotalCount(1);
-                userCache.setTenderTuijian(borrow.getId().intValue());
             } else if ((borrow.getType() == 1) && (!BooleanUtils.toBoolean(userCache.getTenderJingzhi()))) {
                 incrStatistic.setTenderJzCount(1);
                 incrStatistic.setTenderJzTotalCount(1);
-                userCache.setTenderJingzhi(borrow.getId().intValue());
             } else if ((borrow.getType() == 2) && (!BooleanUtils.toBoolean(userCache.getTenderMiao()))) {
                 incrStatistic.setTenderMiaoCount(1);
                 incrStatistic.setTenderMiaoTotalCount(1);
-                userCache.setTenderMiao(borrow.getId().intValue());
             } else if ((borrow.getType() == 4) && (!BooleanUtils.toBoolean(userCache.getTenderQudao()))) {
                 incrStatistic.setTenderQdCount(1);
                 incrStatistic.setTenderQdTotalCount(1);
-                userCache.setTenderQudao(borrow.getId().intValue());
             }
 
             userCacheService.save(userCache);
