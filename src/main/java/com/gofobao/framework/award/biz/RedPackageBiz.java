@@ -46,7 +46,7 @@ public interface RedPackageBiz {
      * @param voPublishRedReq
      * @return
      */
-    ResponseEntity<VoBaseResp> publishActivity(VoPublishRedReq voPublishRedReq);
+    ResponseEntity<VoBaseResp> publishActivity(VoPublishRedReq voPublishRedReq) throws Exception;
 
 
 
