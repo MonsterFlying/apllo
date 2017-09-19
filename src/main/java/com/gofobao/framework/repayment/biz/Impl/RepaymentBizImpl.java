@@ -2409,12 +2409,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "账户余额不足，请先充值"));
         }
-        // 生成垫付还款主记录
-        BatchAssetChange batchAssetChange = addBatchAssetChangeByAdvance(repaymentId, batchNo);
-        // 生成名义借款人垫付批次资产变更记录
-        addBatchAssetChangeItemByAdvance(batchAssetChange.getId(), titularBorrowAccount.getUserId(), borrowRepayment, parentBorrow, lateInterest, groupSeqNo);
         // 存管系统登记垫付
-        resp = newAdvanceProcess(parentBorrow, borrowRepayment, batchAssetChange, lateInterest, lateDays, freezeOrderId, acqResMap, titularBorrowAccount, groupSeqNo, batchNo);
+        resp = newAdvanceProcess(parentBorrow, borrowRepayment, lateInterest, lateDays, freezeOrderId, acqResMap, titularBorrowAccount, groupSeqNo, batchNo);
         if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
             return resp;
         }
@@ -2522,7 +2518,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
      *
      * @param borrow
      * @param borrowRepayment
-     * @param batchAssetChange
      * @param lateInterest
      * @param lateDays
      * @param groupSeqNo
@@ -2530,7 +2525,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
      */
     private ResponseEntity<VoBaseResp> newAdvanceProcess(Borrow borrow,
                                                          BorrowRepayment borrowRepayment,
-                                                         BatchAssetChange batchAssetChange,
                                                          long lateInterest,
                                                          int lateDays,
                                                          String freezeOrderId,
@@ -2582,6 +2576,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     .build();
             transferBuyLogList = transferBuyLogService.findList(tbls);
         }
+        // 生成垫付还款主记录
+        BatchAssetChange batchAssetChange = addBatchAssetChangeByAdvance(borrowRepayment.getId(), batchNo);
         // 生成债权转让记录
         addTransferTenderByAdvance(borrow, transferList, borrowRepayment, transferBuyLogList, tenderList, borrowCollectionMaps, titularBorrowAccount.getUserId());
 
@@ -2597,8 +2593,9 @@ public class RepaymentBizImpl implements RepaymentBiz {
         for (CreditInvest creditInvest : creditInvestList) {
             txAmount = MoneyHelper.add(txAmount, NumberHelper.toDouble(creditInvest.getTxAmount()));
         }
+        // 生成名义借款人垫付批次资产变更记录
+        addBatchAssetChangeItemByAdvance(batchAssetChange.getId(), titularBorrowAccount.getUserId(), borrowRepayment, borrow, lateInterest, groupSeqNo);
         try {
-
             // 垫付还款冻结
             long frozenMoney = new Double(MoneyHelper.multiply(txAmount, 100)).longValue();
             AssetChange freezeAssetChange = new AssetChange();
