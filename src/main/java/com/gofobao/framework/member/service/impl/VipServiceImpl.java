@@ -6,6 +6,8 @@ import com.gofobao.framework.member.service.VipService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
+
 /**
  * Created by Administrator on 2017/6/16 0016.
  */
@@ -18,7 +20,8 @@ public class VipServiceImpl implements VipService {
 
     @Override
     public Vip findTopByUserIdAndStatus(Long userId, int status) {
-        return vipRepository.findTopByUserIdAndStatus(userId, status);
+        Date nowDate=new Date();
+        return vipRepository.findTopByUserIdAndStatusIsAndExpireAtGreaterThan(userId, status,nowDate);
     }
 
     @Override

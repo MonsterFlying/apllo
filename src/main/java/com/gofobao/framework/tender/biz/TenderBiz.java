@@ -29,7 +29,6 @@ public interface TenderBiz {
     /**
      * 投标用户
      * @param tenderUserReq
-     * @param request
      * @return
      */
     ResponseEntity<VoBorrowTenderUserWarpListRes> findBorrowTenderUser(TenderUserReq tenderUserReq);
