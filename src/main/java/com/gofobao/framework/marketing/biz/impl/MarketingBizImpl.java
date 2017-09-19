@@ -3,6 +3,7 @@ package com.gofobao.framework.marketing.biz.impl;
 import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.ExceptionEmailHelper;
 import com.gofobao.framework.marketing.biz.MarketingBiz;
 import com.gofobao.framework.marketing.constans.MarketingConstans;
 import com.gofobao.framework.marketing.entity.Marketing;
@@ -40,25 +41,32 @@ public class MarketingBizImpl implements MarketingBiz {
     @Autowired
     MarketingDimentsionService marketingDimentsionService;
 
+    @Autowired
+    private ExceptionEmailHelper exceptionEmailHelper ;
+
     @Override
     public void autoCancelRedpack() {
-        Date nowDate = new Date();
-        Date startDate = DateHelper.beginOfDate(DateHelper.subDays(nowDate, 2));
-        int realSize = 0, pageIndex = 0, pageSize = 30;
-        do {
-            Pageable pageable = new PageRequest(pageIndex, pageSize);
-            List<MarketingRedpackRecord> marketingRedpackRecordList = marketingRedpackRecordService.findByCancelTimeBetween(startDate, nowDate, pageable);
-            if (CollectionUtils.isEmpty(marketingRedpackRecordList)) {
-                break;
-            }
+        try {
+            Date nowDate = new Date();
+            Date startDate = DateHelper.beginOfDate(DateHelper.subDays(nowDate, 2));
+            int realSize = 0, pageIndex = 0, pageSize = 30;
+            do {
+                Pageable pageable = new PageRequest(pageIndex, pageSize);
+                List<MarketingRedpackRecord> marketingRedpackRecordList = marketingRedpackRecordService.findByCancelTimeBetween(startDate, nowDate, pageable);
+                if (CollectionUtils.isEmpty(marketingRedpackRecordList)) {
+                    break;
+                }
 
-            realSize = marketingRedpackRecordList.size();
-            for (MarketingRedpackRecord item : marketingRedpackRecordList) {
-                item.setState(3);  // 设置为红包已经过期
-            }
-            marketingRedpackRecordService.save(marketingRedpackRecordList);
-            pageIndex++;
-        } while (realSize == pageSize);
+                realSize = marketingRedpackRecordList.size();
+                for (MarketingRedpackRecord item : marketingRedpackRecordList) {
+                    item.setState(3);  // 设置为红包已经过期
+                }
+                marketingRedpackRecordService.save(marketingRedpackRecordList);
+                pageIndex++;
+            } while (realSize == pageSize);
+        }catch (Exception e){
+            exceptionEmailHelper.sendException("红包自动过期调度失败", e);
+        }
     }
 
     @Override

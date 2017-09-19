@@ -4,6 +4,7 @@ import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.common.data.DataObject;
 import com.gofobao.framework.common.data.LtSpecification;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.ExceptionEmailHelper;
 import com.gofobao.framework.lend.entity.Lend;
 import com.gofobao.framework.lend.service.LendService;
 import lombok.extern.slf4j.Slf4j;
@@ -27,22 +28,30 @@ public class LendScheduler {
     @Autowired
     private LendService lendService;
 
+    @Autowired
+    private ExceptionEmailHelper exceptionEmailHelper;
+
     @Scheduled(cron = "0 3 0 * * ? ")
     @Transactional(rollbackOn = Exception.class)
     public void process() {
-        log.info("取消摘草任务调度启动");
-        Specification<Lend> ls = Specifications
-                .<Lend>and()
-                .eq("status", 0)
-                .predicate(new LtSpecification("createdAt", new DataObject(DateHelper.beginOfDate(new Date()))))
-                .build();
+        try {
+            log.info("取消摘草任务调度启动");
+            Specification<Lend> ls = Specifications
+                    .<Lend>and()
+                    .eq("status", 0)
+                    .predicate(new LtSpecification("createdAt", new DataObject(DateHelper.beginOfDate(new Date()))))
+                    .build();
 
-        List<Lend> lendList = lendService.findList(ls);
-        Optional<List<Lend>> lendOptional = Optional.of(lendList);
-        lendOptional.ifPresent(lends -> lendList.forEach(lend -> {
-            lend.setStatus(1);
-        }));
+            List<Lend> lendList = lendService.findList(ls);
+            Optional<List<Lend>> lendOptional = Optional.of(lendList);
+            lendOptional.ifPresent(lends -> lendList.forEach(lend -> {
+                lend.setStatus(1);
+            }));
 
-        lendService.save(lendList);
+            lendService.save(lendList);
+        } catch (Exception e) {
+            exceptionEmailHelper.sendException("取消摘草任务", e);
+        }
+
     }
 }
