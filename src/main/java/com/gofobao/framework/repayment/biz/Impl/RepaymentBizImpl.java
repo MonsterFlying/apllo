@@ -11,6 +11,8 @@ import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
 import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeReq;
 import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeResp;
+import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
+import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
 import com.gofobao.framework.api.model.batch_credit_end.BatchCreditEndResp;
 import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestReq;
 import com.gofobao.framework.api.model.batch_credit_invest.CreditInvest;
@@ -1603,10 +1605,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
         // 冻结还款金额
         long money = new Double(MoneyHelper.round(MoneyHelper.multiply(freezeMoney, 100d), 0)).longValue();
         //改变还款与垫付记录的值
-        /**
-         * @// TODO: 2017/9/8 判断
-         */
         changeRepaymentAndAdvanceRecord(borrowRepayment, lateDays, repayMoney, realLateInterest, advance);
+        //判断金额
         ResponseEntity<VoBaseResp> resp = checkAssetByRepay(repayAsset, money);
         if (resp.getBody().getState().getCode() != VoBaseResp.OK) {
             throw new Exception(resp.getBody().getState().getMsg());
@@ -1651,6 +1651,15 @@ public class RepaymentBizImpl implements RepaymentBiz {
             request.setTxCounts(StringHelper.toString(repays.size()));
             BatchRepayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_REPAY, request, BatchRepayResp.class);
             if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
+                BatchCancelReq batchCancelReq = new BatchCancelReq();
+                batchCancelReq.setBatchNo(batchNo);
+                batchCancelReq.setTxAmount(StringHelper.formatDouble(txAmount, false));
+                batchCancelReq.setTxCounts(StringHelper.toString(repays.size()));
+                batchCancelReq.setChannel(ChannelContant.HTML);
+                BatchCancelResp batchCancelResp = jixinManager.send(JixinTxCodeEnum.BATCH_CANCEL, batchCancelReq, BatchCancelResp.class);
+                if ((ObjectUtils.isEmpty(batchCancelResp)) || (!ObjectUtils.isEmpty(batchCancelResp.getRetCode()))) {
+                    throw new Exception("即信批次撤销失败!");
+                }
                 throw new Exception(response.getRetMsg());
             }
 

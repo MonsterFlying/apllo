@@ -9,6 +9,8 @@ import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeReq;
 import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeResp;
 import com.gofobao.framework.api.model.batch_bail_repay.BatchBailRepayCheckResp;
 import com.gofobao.framework.api.model.batch_bail_repay.BatchBailRepayRunResp;
+import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
+import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
 import com.gofobao.framework.api.model.batch_credit_invest.CreditInvestRun;
 import com.gofobao.framework.api.model.batch_lend_pay.*;
 import com.gofobao.framework.api.model.batch_repay.BatchRepayCheckResp;
@@ -190,7 +192,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         List<LendPay> lendPayList = new ArrayList<>();
         LendPay lendPay;
         UserThirdAccount tenderUserThirdAccount;
-        double sumCount = 0, validMoney, debtFee;
+        double sumTxAmount = 0, validMoney, debtFee;
         double sumNetWorthFee = 0;
         for (Tender tender : tenderList) {
             debtFee = 0;
@@ -213,7 +215,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
             Preconditions.checkNotNull(tenderUserThirdAccount, "投资人未开户!");
 
-            sumCount += validMoney; //放款总金额
+            sumTxAmount += validMoney; //放款总金额
 
             String lendPayOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
             lendPay = new LendPay();
@@ -242,16 +244,33 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         batchLendPayReq.setAcqRes(GSON.toJson(acqResMap));
         batchLendPayReq.setNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/lendrepay/check");
         batchLendPayReq.setRetNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/lendrepay/run");
-        batchLendPayReq.setTxAmount(StringHelper.formatDouble(sumCount, 100, false));
+        batchLendPayReq.setTxAmount(StringHelper.formatDouble(sumTxAmount, 100, false));
         batchLendPayReq.setTxCounts(StringHelper.toString(lendPayList.size()));
         batchLendPayReq.setSubPacks(GSON.toJson(lendPayList));
         batchLendPayReq.setChannel(ChannelContant.HTML);
         BatchLendPayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_LEND_REPAY, batchLendPayReq, BatchLendPayResp.class);
         String retCode = response.getRetCode();
         if ((ObjectUtils.isEmpty(response)) || (!ObjectUtils.isEmpty(retCode) && !JixinResultContants.SUCCESS.equals(retCode))) {
-            throw new Exception("即信批次放款失败:" + response.getRetMsg());
+            BatchCancelReq batchCancelReq = new BatchCancelReq();
+            batchCancelReq.setBatchNo(batchNo);
+            batchCancelReq.setTxAmount(StringHelper.formatDouble(sumTxAmount, 100, false));
+            batchCancelReq.setTxCounts(StringHelper.toString(lendPayList.size()));
+            batchCancelReq.setChannel(ChannelContant.HTML);
+            BatchCancelResp batchCancelResp = jixinManager.send(JixinTxCodeEnum.BATCH_CANCEL, batchCancelReq, BatchCancelResp.class);
+            if ((ObjectUtils.isEmpty(batchCancelResp)) || (!ObjectUtils.isEmpty(batchCancelResp.getRetCode()))) {
+                throw new Exception("即信批次撤销失败!");
+            }
         }
         if ((ObjectUtils.isEmpty(response)) || (!ObjectUtils.isEmpty(retCode) && !JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
+            BatchCancelReq batchCancelReq = new BatchCancelReq();
+            batchCancelReq.setBatchNo(batchNo);
+            batchCancelReq.setTxAmount(StringHelper.formatDouble(sumTxAmount, 100, false));
+            batchCancelReq.setTxCounts(StringHelper.toString(lendPayList.size()));
+            batchCancelReq.setChannel(ChannelContant.HTML);
+            BatchCancelResp batchCancelResp = jixinManager.send(JixinTxCodeEnum.BATCH_CANCEL, batchCancelReq, BatchCancelResp.class);
+            if ((ObjectUtils.isEmpty(batchCancelResp)) || (!ObjectUtils.isEmpty(batchCancelResp.getRetCode()))) {
+                throw new Exception("即信批次撤销失败!");
+            }
             throw new Exception("即信批次放款失败!");
         }
 
