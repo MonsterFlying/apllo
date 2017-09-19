@@ -75,7 +75,7 @@ public class ArticleServiceImpl implements ArticleService {
         Page<Article> articlePage = articleRepository.findAll(specification,
                 new PageRequest(voArticleReq.getPageIndex(),
                         voArticleReq.getPageSize(),
-                        new Sort(Sort.Direction.DESC,"id")));
+                        new Sort(Sort.Direction.DESC,"order","id")));
         Long totalCount = articlePage.getTotalElements();
         List<Article> articles = articlePage.getContent();
         List<ArticleModle> articleModles = Lists.newArrayList();
@@ -85,7 +85,7 @@ public class ArticleServiceImpl implements ArticleService {
             articleModle.setTitle(p.getTitle());
             articleModle.setId(p.getId());
             //如果是公告
-            articleModle.setContent(voArticleReq.getType().equals("notice") ? p.getContent() : "");
+            articleModle.setContent(p.getContent());
             articleModle.setImgUrl(p.getPreviewImg());
             articleModles.add(articleModle);
         });

@@ -65,6 +65,7 @@ import com.gofobao.framework.tender.contants.TransferContants;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.entity.Transfer;
 import com.gofobao.framework.tender.entity.TransferBuyLog;
+import com.gofobao.framework.tender.repository.TransferRepository;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
@@ -145,6 +146,9 @@ public class TransferBizImpl implements TransferBiz {
     private TransferBuyLogService transferBuyLogService;
     @Autowired
     private UsersRepository usersRepository;
+
+    @Autowired
+    private TransferRepository transferRepository;
 
 
     @Value("${gofobao.imageDomain}")
@@ -1581,16 +1585,17 @@ public class TransferBizImpl implements TransferBiz {
 
     private Map<String, Object> commonQuery(VoBorrowListReq voBorrowListReq) {
         Map<String, Object> resultMaps = Maps.newHashMap();
-        Specification<Transfer> ts = Specifications
+/*        Specification<Transfer> ts = Specifications
                 .<Transfer>and()
-                .in("state", ImmutableList.of(TransferContants.TRANSFERIND, TransferContants.TRANSFERED).toArray())
-                .eq("type", 0)
-                .build();
+                .eq("state", TransferContants.TRANSFERIND)
+                .eq("type",0)
+                .predicate(Specifications.or().eq("state", TransferContants.TRANSFERED).le("apr", 1500).build())
+                .build();*/
         Pageable pageable = new PageRequest(voBorrowListReq.getPageIndex(),
                 voBorrowListReq.getPageSize(),
                 new Sort(Sort.Direction.DESC,
                         "id"));
-        Page<Transfer> transferPage = transferService.findPageList(ts, pageable);
+        Page<Transfer> transferPage = transferRepository.findByStateIsOrStateIsAndAprThanLee(pageable);
         resultMaps.put("totalCount", transferPage.getTotalElements());
         resultMaps.put("transfers", transferPage.getContent());
         return resultMaps;
