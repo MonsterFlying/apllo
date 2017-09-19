@@ -221,7 +221,7 @@ public class FundStatisticsBizImpl implements FundStatisticsBiz {
                 aleve.setTranstype(transtype);
                 aleve.setTranstype(transtype);
                 aleve.setDesline(desline);
-                aleve.setCurrBal(new Double(new Long(currBal) / 100D).toString()); // 保证元的问题
+                aleve.setCurrBal(currBal); // 保证元的问题
                 aleve.setForcardnbr(forcardnbr);
                 aleve.setRevind(revind);
                 aleve.setResv(resv);
