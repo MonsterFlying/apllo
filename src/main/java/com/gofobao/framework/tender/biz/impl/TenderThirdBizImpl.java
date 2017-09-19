@@ -17,12 +17,7 @@ import com.gofobao.framework.api.model.bid_cancel.BidCancelResp;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.constans.TypeTokenContants;
-import com.gofobao.framework.common.rabbitmq.MqConfig;
-import com.gofobao.framework.common.rabbitmq.MqHelper;
-import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
-import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
-import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -31,7 +26,6 @@ import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
-import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.entity.TransferBuyLog;
@@ -40,7 +34,6 @@ import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -58,7 +51,6 @@ import org.springframework.util.ObjectUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -81,16 +73,13 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
     private TenderService tenderService;
     @Autowired
     private BorrowService borrowService;
-    @Autowired
-    private JixinHelper jixinHelper;
-    @Autowired
-    private ThirdBatchLogService thirdBatchLogService;
+
     @Autowired
     private ThirdBatchLogBiz thirdBatchLogBiz;
-    @Autowired
-    private MqHelper mqHelper;
+
     @Autowired
     private TransferBuyLogService transferBuyLogService;
+
     @Autowired
     private ThirdBatchDealBiz thirdBatchDealBiz;
 
@@ -140,6 +129,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         BidAutoApplyResponse response = jixinManager.send(JixinTxCodeEnum.BID_AUTO_APPLY, request, BidAutoApplyResponse.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
             String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
+            log.error(String.format("进入投标撤回程序: %s", msg));
+            cancelJixinTenderRecord(request) ;   // 取消自动即信投标
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
         }
 
@@ -150,6 +141,42 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         updTender.setThirdTenderOrderId(orderId);
         tenderService.updateById(updTender);
         return ResponseEntity.ok(VoBaseResp.ok("创建投标成功!"));
+    }
+
+    /**
+     * 即信投标异常主动请求撤销
+     *
+     * @return
+     */
+    @Override
+    public boolean cancelJixinTenderRecord(BidAutoApplyRequest bidAutoApplyRequest) {
+        try {
+            if (ObjectUtils.isEmpty(bidAutoApplyRequest)) {
+                log.error("撤销自动投标请求为空");
+                return false;
+            }
+
+            BidCancelReq bidCancelReq = new BidCancelReq();
+            bidCancelReq.setAccountId(bidAutoApplyRequest.getAccountId());
+            String orderId = JixinHelper.getOrderId(JixinHelper.CANCEL_TENDER_PREFIX);
+            bidCancelReq.setOrderId(orderId);  // 取消投标申请
+            bidCancelReq.setOrgOrderId(bidAutoApplyRequest.getOrderId()); // 原始投标Id
+            bidCancelReq.setProductId(bidAutoApplyRequest.getProductId()); // 投标ID
+            bidCancelReq.setTxAmount(bidAutoApplyRequest.getTxAmount()); // 投标金额
+            bidCancelReq.setAccountId(bidAutoApplyRequest.getAccountId()); // 投标人
+            BidCancelResp bidCancelResp = jixinManager.send(JixinTxCodeEnum.BID_CANCEL, bidCancelReq, BidCancelResp.class);
+            if (ObjectUtils.isEmpty(bidCancelResp) || JixinResultContants.SUCCESS.equals(bidCancelResp.getRetCode())) {
+                String msg = ObjectUtils.isEmpty(bidCancelResp) ? "当前网络不稳定，请稍候重试" : bidCancelResp.getRetMsg();
+                log.error(String.format("请求即信取消自动投标失败: %s", msg));
+                return false;
+            } else {
+                log.info("请求即信取消自动投标成功");
+                return true;
+            }
+        } catch (Exception e) {
+            log.error("请求即信取消自动投标失败!", e);
+            return false;
+        }
     }
 
 
@@ -179,7 +206,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
             log.error("=============================即信投资人批次购买债权参数验证回调===========================");
             log.error("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 1,ThirdBatchLogContants.BATCH_CREDIT_INVEST);
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 1, ThirdBatchLogContants.BATCH_CREDIT_INVEST);
         }
 
         return ResponseEntity.ok("success");
@@ -344,12 +371,12 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         if (!JixinResultContants.SUCCESS.equals(batchCreditInvestRunCall.getRetCode())) {
             log.error("=============================投资人批次结束债权参数验证回调===========================");
             log.error("回调失败! msg:" + batchCreditInvestRunCall.getRetMsg());
-            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestRunCall.getBatchNo(), borrowId, 2,ThirdBatchLogContants.BATCH_CREDIT_END);
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestRunCall.getBatchNo(), borrowId, 2, ThirdBatchLogContants.BATCH_CREDIT_END);
         } else {
             log.error("=============================投资人批次结束债权参数验证回调===========================");
             log.error("回调成功!");
             //更新批次状态
-            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestRunCall.getBatchNo(), borrowId, 1,ThirdBatchLogContants.BATCH_CREDIT_END);
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestRunCall.getBatchNo(), borrowId, 1, ThirdBatchLogContants.BATCH_CREDIT_END);
         }
 
         try {

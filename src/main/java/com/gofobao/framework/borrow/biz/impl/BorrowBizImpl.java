@@ -400,7 +400,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     //复审中
                     status = 6;
                     borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
-                } else if (nowDate.getTime()>endAt.getTime() ) {  //招标有效时间大于当前时间
+                } else if (nowDate.getTime() > endAt.getTime()) {  //招标有效时间大于当前时间
                     borrowInfoRes.setRecheckAt(DateHelper.dateToString(borrow.getRecheckAt()));
                     status = 5; //已过期
                 } else {
@@ -1177,23 +1177,18 @@ public class BorrowBizImpl implements BorrowBiz {
             if (borrow.isTransfer() && (!BooleanUtils.toBoolean(userCache.getTenderTransfer()))) {
                 incrStatistic.setTenderLzCount(1);
                 incrStatistic.setTenderLzTotalCount(1);
-                userCache.setTenderTransfer(borrow.getId().intValue());
             } else if ((borrow.getType() == 0) && (!BooleanUtils.toBoolean(userCache.getTenderTuijian()))) {
                 incrStatistic.setTenderTjCount(1);
                 incrStatistic.setTenderTjTotalCount(1);
-                userCache.setTenderTuijian(borrow.getId().intValue());
             } else if ((borrow.getType() == 1) && (!BooleanUtils.toBoolean(userCache.getTenderJingzhi()))) {
                 incrStatistic.setTenderJzCount(1);
                 incrStatistic.setTenderJzTotalCount(1);
-                userCache.setTenderJingzhi(borrow.getId().intValue());
             } else if ((borrow.getType() == 2) && (!BooleanUtils.toBoolean(userCache.getTenderMiao()))) {
                 incrStatistic.setTenderMiaoCount(1);
                 incrStatistic.setTenderMiaoTotalCount(1);
-                userCache.setTenderMiao(borrow.getId().intValue());
             } else if ((borrow.getType() == 4) && (!BooleanUtils.toBoolean(userCache.getTenderQudao()))) {
                 incrStatistic.setTenderQdCount(1);
                 incrStatistic.setTenderQdTotalCount(1);
-                userCache.setTenderQudao(borrow.getId().intValue());
             }
 
             userCacheService.save(userCache);
@@ -1663,17 +1658,20 @@ public class BorrowBizImpl implements BorrowBiz {
                     content = thymeleafHelper.build("borrowProtocol", templateMap);
 
                     // 使用消息队列发送邮件
-                    MqConfig config = new MqConfig();
-                    config.setQueue(MqQueueEnum.RABBITMQ_EMAIL);
-                    config.setTag(MqTagEnum.SEND_BORROW_PROTOCOL_EMAIL);
-                    ImmutableMap<String, String> body = ImmutableMap
-                            .of(MqConfig.EMAIL, tenderUser.getEmail(),
-                                    MqConfig.IP, "127.0.0.1",
-                                    "subject", "广富宝金服借款协议",
-                                    "content", content);
-                    config.setMsg(body);
-                    mqHelper.convertAndSend(config);
-
+                    try{
+                        MqConfig config = new MqConfig();
+                        config.setQueue(MqQueueEnum.RABBITMQ_EMAIL);
+                        config.setTag(MqTagEnum.SEND_BORROW_PROTOCOL_EMAIL);
+                        ImmutableMap<String, String> body = ImmutableMap
+                                .of(MqConfig.EMAIL, tenderUser.getEmail(),
+                                        MqConfig.IP, "127.0.0.1",
+                                        "subject", "广富宝金服借款协议",
+                                        "content", content);
+                        config.setMsg(body);
+                        mqHelper.convertAndSend(config);
+                    }catch (Exception e){
+                        log.error("发送广富宝金服借款协议异常" , e);
+                    }
                 }
             }
         }

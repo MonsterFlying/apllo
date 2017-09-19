@@ -7,6 +7,8 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeReq;
 import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeResp;
+import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
+import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
 import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestReq;
 import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestResp;
 import com.gofobao.framework.api.model.batch_credit_invest.CreditInvest;
@@ -482,6 +484,15 @@ public class TransferProvider {
         request.setRetNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditinvest/run");
         BatchCreditInvestResp response = jixinManager.send(JixinTxCodeEnum.BATCH_CREDIT_INVEST, request, BatchCreditInvestResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
+            BatchCancelReq batchCancelReq = new BatchCancelReq();
+            batchCancelReq.setBatchNo(batchNo);
+            batchCancelReq.setTxAmount(StringHelper.formatDouble(sumAmount, 100, false));
+            batchCancelReq.setTxCounts(StringHelper.toString(creditInvestList.size()));
+            batchCancelReq.setChannel(ChannelContant.HTML);
+            BatchCancelResp batchCancelResp = jixinManager.send(JixinTxCodeEnum.BATCH_CANCEL, batchCancelReq, BatchCancelResp.class);
+            if ((ObjectUtils.isEmpty(batchCancelResp)) || (!ObjectUtils.isEmpty(batchCancelResp.getRetCode()))) {
+                throw new Exception("即信批次撤销失败!");
+            }
             log.error(String.format("复审: 批量债权转让申请失败: %s", response));
             throw new Exception("投资人批次购买债权失败!:" + response.getRetMsg());
         }

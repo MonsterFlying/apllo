@@ -7,6 +7,7 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryRequest;
 import com.gofobao.framework.api.model.balance_query.BalanceQueryResponse;
+import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyRequest;
 import com.gofobao.framework.api.model.bid_cancel.BidCancelReq;
 import com.gofobao.framework.api.model.bid_cancel.BidCancelResp;
 import com.gofobao.framework.asset.entity.Asset;
@@ -113,21 +114,19 @@ public class TenderBizImpl implements TenderBiz {
      */
     public ResponseEntity<VoBaseResp> createTender(VoCreateTenderReq voCreateTenderReq) throws Exception {
         log.info(String.format("马上投资: 起步: %s", new Gson().toJson(voCreateTenderReq)));
+        Users user = userService.findByIdLock(voCreateTenderReq.getUserId());
+        Preconditions.checkNotNull(user, "投标: 用户信息为空!");
+
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(voCreateTenderReq.getUserId());
+        Preconditions.checkNotNull(userThirdAccount, "投标: 当前用户未开户!");
         if (userThirdAccount.getAutoTenderState() != 1) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoBaseResp.class));
         }
 
-
-        Users user = userService.findByIdLock(voCreateTenderReq.getUserId());
-        Preconditions.checkNotNull(user, "投标: 用户信息为空!");
-
-        Preconditions.checkNotNull(user, "投标: 用户信息为空!");
         Borrow borrow = borrowService.findByIdLock(voCreateTenderReq.getBorrowId());
         Preconditions.checkNotNull(borrow, "投标: 标的信息为空!");
-
         if (!ObjectUtils.isEmpty(borrow.getLendId()) && borrow.getLendId() > 0) {
             Lend lend = lendService.findByIdLock(borrow.getLendId());
             // 对待有草出借,只能是出草人投
@@ -138,11 +137,9 @@ public class TenderBizImpl implements TenderBiz {
             }
         }
 
-        Preconditions.checkNotNull(borrow, "投标: 标的信息为空!");
         Asset asset = assetService.findByUserIdLock(voCreateTenderReq.getUserId());
         Preconditions.checkNotNull(asset, "投标: 资金记录为空!");
 
-        Preconditions.checkNotNull(asset, "投标: 资金记录为空!");
         UserCache userCache = userCacheService.findByUserIdLock(voCreateTenderReq.getUserId());
         Preconditions.checkNotNull(userCache, "投标: 用户缓存信息为空!");
 
@@ -157,7 +154,6 @@ public class TenderBizImpl implements TenderBiz {
         state = verifyUserInfo4Borrow(user, borrow, asset, voCreateTenderReq, extendMessage); // 借款用户资产判断
         Set<String> errorSet = extendMessage.elementSet();
         Iterator<String> iterator = errorSet.iterator();
-
         if (!state) {
             return ResponseEntity
                     .badRequest()
@@ -165,38 +161,58 @@ public class TenderBizImpl implements TenderBiz {
         }
 
         Date nowDate = new Date();
-        int validateMoney = Integer.parseInt(iterator.next());
+        long validateMoney = Long.parseLong(iterator.next());
         Tender borrowTender = createBorrowTenderRecord(voCreateTenderReq, user, nowDate, validateMoney);    // 生成投标记录
+
         //=========================
         // 投标的存管报备
         //=========================
-        borrowTender = registerTender(borrow, borrowTender);
-        // 扣除用户投标金额
-        updateAssetByTender(borrow, borrowTender);
-        borrow.setMoneyYes(borrow.getMoneyYes() + validateMoney);
-        borrow.setTenderCount((borrow.getTenderCount() + 1));
-        borrow.setId(borrow.getId());
-        borrow.setUpdatedAt(nowDate);
-        borrowService.updateById(borrow);  // 更改标的信息
+        borrowTender = registerJixinTenderRecord(borrow, borrowTender);
+        try {
+            // 扣除用户投标金额
+            updateAssetByTender(borrow, borrowTender);
+            borrow.setMoneyYes(borrow.getMoneyYes() + validateMoney);
+            borrow.setTenderCount((borrow.getTenderCount() + 1));
+            borrow.setId(borrow.getId());
+            borrow.setUpdatedAt(nowDate);
+            borrowService.updateById(borrow);  // 更改标的信息
 
-        if (borrow.getMoneyYes() >= borrow.getMoney()) {   // 对于投标金额等于招标金额触发复审
-            MqConfig mqConfig = new MqConfig();
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
-            mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
-            ImmutableMap<String, String> body = ImmutableMap
-                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-            mqConfig.setMsg(body);
-            log.info(String.format("tenderBizImpl tender send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        }
-
-        //如果当前用户是风车理财用户
-        if (!StringUtils.isEmpty(user.getWindmillId())) {
-            try {
-                windmillTenderBiz.tenderNotify(borrowTender);
-            } catch (Exception e) {
-                log.error("推送风车理财异常", e);
+            if (borrow.getMoneyYes() >= borrow.getMoney()) {   // 对于投标金额等于招标金额触发复审
+                MqConfig mqConfig = new MqConfig();
+                mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
+                mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
+                ImmutableMap<String, String> body = ImmutableMap
+                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+                mqConfig.setMsg(body);
+                log.info(String.format("tenderBizImpl tender send mq %s", GSON.toJson(body)));
+                mqHelper.convertAndSend(mqConfig);
             }
+
+            //如果当前用户是风车理财用户
+            if (!StringUtils.isEmpty(user.getWindmillId())) {
+                try {
+                    windmillTenderBiz.tenderNotify(borrowTender);
+                } catch (Exception e) {
+                    log.error("推送风车理财异常", e);
+                }
+            }
+        } catch (Exception e) {
+            if (!borrow.isTransfer()) {
+                // 取消自动投标申请
+                BidAutoApplyRequest bidAutoApplyRequest = new BidAutoApplyRequest();
+                bidAutoApplyRequest.setAccountId(userThirdAccount.getAccountId()); // 用户投标账号
+                bidAutoApplyRequest.setOrderId(borrowTender.getThirdTenderOrderId()); // 原始投标ID
+                bidAutoApplyRequest.setTxAmount(StringHelper.formatDouble(borrowTender.getValidMoney(), 100, false)); // 投标金额
+                bidAutoApplyRequest.setProductId(borrow.getProductId()); // productId
+                boolean result = tenderThirdBiz.cancelJixinTenderRecord(bidAutoApplyRequest);
+                if (result) {
+                    log.info(String.format("自动投标取消申请成功: %s", new Gson().toJson(bidAutoApplyRequest)));
+                } else {
+                    log.error(String.format("自动投标取消申请失败: %s", new Gson().toJson(bidAutoApplyRequest)));
+                }
+            }
+            log.error("创建投标请求异常", e);
+            throw new Exception(e);
         }
 
         try {
@@ -222,8 +238,6 @@ public class TenderBizImpl implements TenderBiz {
                     log.error(String.format("投资营销节点触发异常：%s", new Gson().toJson(marketingData)), e);
                 }
             }
-
-
         } catch (Exception e) {
             log.error("触发派发失败新手红包失败", e);
         }
@@ -251,7 +265,7 @@ public class TenderBizImpl implements TenderBiz {
         assetChangeProvider.commonAssetChange(assetChange);
     }
 
-    private Tender registerTender(Borrow borrow, Tender borrowTender) throws Exception {
+    private Tender registerJixinTenderRecord(Borrow borrow, Tender borrowTender) throws Exception {
         if (!borrow.isTransfer()) {
             log.info(String.format("马上投资: 投资报备: %s", new Gson().toJson(borrowTender)));
             VoCreateThirdTenderReq voCreateThirdTenderReq = new VoCreateThirdTenderReq();

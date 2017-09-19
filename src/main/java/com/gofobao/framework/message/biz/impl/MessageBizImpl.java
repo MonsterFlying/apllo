@@ -562,7 +562,7 @@ public class MessageBizImpl implements MessageBiz {
     @Override
     public ResponseEntity<VoBaseResp> sendBindPhone4Switch(HttpServletRequest request, VoAnonSmsReq voAnonSmsReq, Long userId) {
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
-        if (!ObjectUtils.isEmpty(userThirdAccount)) {
+        if (ObjectUtils.isEmpty(userThirdAccount)) {
             return ResponseEntity
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR_OPEN_ACCOUNT, "你已经开通银行存管，无需再次开通！"));

@@ -52,6 +52,7 @@ public class JixinHelper {
             });
 
     public static final String TENDER_PREFIX = "GFBT_";
+    public static final String CANCEL_TENDER_PREFIX = "GFBCT_";
     public static final String LEND_REPAY_PREFIX = "GFBLR_";
     public static final String REPAY_PREFIX = "GFBR_";
     public static final String REPAY_BAIL_PREFIX = "GFBRB_";

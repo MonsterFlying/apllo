@@ -331,6 +331,11 @@ public class TestController {
         log.info(GSON.toJson(creditDetailsQueryResponse));
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
+    }
+
     @ApiOperation("批次查询")
     @RequestMapping("/pub/batch/find")
     @Transactional

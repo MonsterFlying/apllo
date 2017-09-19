@@ -9,6 +9,8 @@ import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeReq;
 import com.gofobao.framework.api.model.balance_un_freeze.BalanceUnfreezeResp;
 import com.gofobao.framework.api.model.batch_bail_repay.BatchBailRepayCheckResp;
 import com.gofobao.framework.api.model.batch_bail_repay.BatchBailRepayRunResp;
+import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
+import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
 import com.gofobao.framework.api.model.batch_credit_invest.CreditInvestRun;
 import com.gofobao.framework.api.model.batch_lend_pay.*;
 import com.gofobao.framework.api.model.batch_repay.BatchRepayCheckResp;
@@ -36,7 +38,10 @@ import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.BorrowCalculatorHelper;
+import com.gofobao.framework.member.entity.UserCache;
 import com.gofobao.framework.member.entity.UserThirdAccount;
+import com.gofobao.framework.member.service.UserCacheService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.repayment.biz.BorrowRepaymentThirdBiz;
 import com.gofobao.framework.repayment.contants.ThirdDealStatusContrants;
@@ -48,6 +53,7 @@ import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
 import com.gofobao.framework.system.biz.ThirdBatchLogBiz;
 import com.gofobao.framework.system.contants.ThirdBatchDealLogContants;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
+import com.gofobao.framework.system.entity.IncrStatistic;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.biz.TransferBiz;
@@ -65,6 +71,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -128,6 +135,8 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     private BatchAssetChangeItemService batchAssetChangeItemService;
     @Autowired
     private ThirdBatchDealLogBiz thirdBatchDealLogBiz;
+    @Autowired
+    private UserCacheService userCacheService;
 
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
@@ -190,7 +199,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         List<LendPay> lendPayList = new ArrayList<>();
         LendPay lendPay;
         UserThirdAccount tenderUserThirdAccount;
-        double sumCount = 0, validMoney, debtFee;
+        double sumTxAmount = 0, validMoney, debtFee;
         double sumNetWorthFee = 0;
         for (Tender tender : tenderList) {
             debtFee = 0;
@@ -213,7 +222,7 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
             tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
             Preconditions.checkNotNull(tenderUserThirdAccount, "投资人未开户!");
 
-            sumCount += validMoney; //放款总金额
+            sumTxAmount += validMoney; //放款总金额
 
             String lendPayOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
             lendPay = new LendPay();
@@ -242,21 +251,40 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         batchLendPayReq.setAcqRes(GSON.toJson(acqResMap));
         batchLendPayReq.setNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/lendrepay/check");
         batchLendPayReq.setRetNotifyURL(javaDomain + "/pub/repayment/v2/third/batch/lendrepay/run");
-        batchLendPayReq.setTxAmount(StringHelper.formatDouble(sumCount, 100, false));
+        batchLendPayReq.setTxAmount(StringHelper.formatDouble(sumTxAmount, 100, false));
         batchLendPayReq.setTxCounts(StringHelper.toString(lendPayList.size()));
         batchLendPayReq.setSubPacks(GSON.toJson(lendPayList));
         batchLendPayReq.setChannel(ChannelContant.HTML);
         BatchLendPayResp response = jixinManager.send(JixinTxCodeEnum.BATCH_LEND_REPAY, batchLendPayReq, BatchLendPayResp.class);
         String retCode = response.getRetCode();
         if ((ObjectUtils.isEmpty(response)) || (!ObjectUtils.isEmpty(retCode) && !JixinResultContants.SUCCESS.equals(retCode))) {
-            throw new Exception("即信批次放款失败:" + response.getRetMsg());
+            BatchCancelReq batchCancelReq = new BatchCancelReq();
+            batchCancelReq.setBatchNo(batchNo);
+            batchCancelReq.setTxAmount(StringHelper.formatDouble(sumTxAmount, 100, false));
+            batchCancelReq.setTxCounts(StringHelper.toString(lendPayList.size()));
+            batchCancelReq.setChannel(ChannelContant.HTML);
+            BatchCancelResp batchCancelResp = jixinManager.send(JixinTxCodeEnum.BATCH_CANCEL, batchCancelReq, BatchCancelResp.class);
+            if ((ObjectUtils.isEmpty(batchCancelResp)) || (!ObjectUtils.isEmpty(batchCancelResp.getRetCode()))) {
+                throw new Exception("即信批次撤销失败!");
+            }
         }
         if ((ObjectUtils.isEmpty(response)) || (!ObjectUtils.isEmpty(retCode) && !JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
+            BatchCancelReq batchCancelReq = new BatchCancelReq();
+            batchCancelReq.setBatchNo(batchNo);
+            batchCancelReq.setTxAmount(StringHelper.formatDouble(sumTxAmount, 100, false));
+            batchCancelReq.setTxCounts(StringHelper.toString(lendPayList.size()));
+            batchCancelReq.setChannel(ChannelContant.HTML);
+            BatchCancelResp batchCancelResp = jixinManager.send(JixinTxCodeEnum.BATCH_CANCEL, batchCancelReq, BatchCancelResp.class);
+            if ((ObjectUtils.isEmpty(batchCancelResp)) || (!ObjectUtils.isEmpty(batchCancelResp.getRetCode()))) {
+                throw new Exception("即信批次撤销失败!");
+            }
             throw new Exception("即信批次放款失败!");
         }
 
         //新增放款资产变动记录
         addBorrowLendRepayAssetChange(nowDate, borrowId, borrow, sumNetWorthFee, batchNo);
+        //将新手投标用户置为已投状态
+        recordUserNoviceTender(borrow, tenderList);
 
         //记录日志
         ThirdBatchLog thirdBatchLog = new ThirdBatchLog();
@@ -276,6 +304,32 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         borrow.setLendRepayStatus(ThirdDealStatusContrants.DISPOSING);
         borrowService.save(borrow);
         return null;
+    }
+
+    /**
+     * 标记新手投标标识
+     *
+     * @param borrow
+     * @param tenderList
+     */
+    private void recordUserNoviceTender(Borrow borrow, List<Tender> tenderList) throws Exception {
+        for (Tender tender : tenderList) {
+            log.info(String.format("标记新手投标标识"));
+            UserCache userCache = userCacheService.findById(tender.getUserId());
+
+            if (borrow.isTransfer() && (!BooleanUtils.toBoolean(userCache.getTenderTransfer()))) {
+                userCache.setTenderTransfer(borrow.getId().intValue());
+            } else if ((borrow.getType() == 0) && (!BooleanUtils.toBoolean(userCache.getTenderTuijian()))) {
+                userCache.setTenderTuijian(borrow.getId().intValue());
+            } else if ((borrow.getType() == 1) && (!BooleanUtils.toBoolean(userCache.getTenderJingzhi()))) {
+                userCache.setTenderJingzhi(borrow.getId().intValue());
+            } else if ((borrow.getType() == 2) && (!BooleanUtils.toBoolean(userCache.getTenderMiao()))) {
+                userCache.setTenderMiao(borrow.getId().intValue());
+            } else if ((borrow.getType() == 4) && (!BooleanUtils.toBoolean(userCache.getTenderQudao()))) {
+                userCache.setTenderQudao(borrow.getId().intValue());
+            }
+            userCacheService.save(userCache);
+        }
     }
 
     /**
@@ -552,21 +606,6 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         } catch (Exception e) {
             log.error("批次执行异常:", e);
         }
-        /*MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
-        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("borrowId")),
-                        MqConfig.BATCH_NO, StringHelper.toString(lendRepayRunResp.getBatchNo()),
-                        MqConfig.BATCH_RESP, GSON.toJson(lendRepayRunResp),
-                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            log.info(String.format("tenderThirdBizImpl thirdBatchLendRepayRunCall send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("tenderThirdBizImpl thirdBatchLendRepayRunCall send mq exception", e);
-        }*/
 
         return ResponseEntity.ok("success");
     }
