@@ -64,7 +64,6 @@ import java.util.stream.Collectors;
 public class TenderThirdBizImpl implements TenderThirdBiz {
 
     final Gson GSON = new GsonBuilder().create();
-
     @Autowired
     private UserThirdAccountService userThirdAccountService;
     @Autowired
@@ -73,17 +72,12 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
     private TenderService tenderService;
     @Autowired
     private BorrowService borrowService;
-
     @Autowired
     private ThirdBatchLogBiz thirdBatchLogBiz;
-
     @Autowired
     private TransferBuyLogService transferBuyLogService;
-
     @Autowired
     private ThirdBatchDealBiz thirdBatchDealBiz;
-
-
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
 
@@ -91,7 +85,8 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
     public ResponseEntity<VoBaseResp> createThirdTender(VoCreateThirdTenderReq voCreateThirdTenderReq) {
         Long userId = voCreateThirdTenderReq.getUserId();
         String txAmount = voCreateThirdTenderReq.getTxAmount();
-
+        String orderId = voCreateThirdTenderReq.getOrderId();
+        Preconditions.checkNotNull(orderId, "即信投标申请orderId不能为空!");
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
         Preconditions.checkNotNull(userThirdAccount, "投标人未开户!");
 
@@ -114,8 +109,6 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "投标金额超出签约总投标额!"));
         }
 
-        String orderId = JixinHelper.getOrderId(JixinHelper.TENDER_PREFIX);
-
         BidAutoApplyRequest request = new BidAutoApplyRequest();
         request.setAccountId(userThirdAccount.getAccountId());
         request.setOrderId(orderId);
@@ -130,7 +123,7 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
             String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
             log.error(String.format("进入投标撤回程序: %s", msg));
-            cancelJixinTenderRecord(request) ;   // 取消自动即信投标
+            cancelJixinTenderRecord(request);   // 取消自动即信投标
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
         }
 

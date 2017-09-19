@@ -32,4 +32,8 @@ public class VoCreateThirdTenderReq extends VoBaseReq {
      * 请求方保留
      */
     private String acqRes;
+    /**
+     * orderId
+     */
+    private String orderId;
 }
