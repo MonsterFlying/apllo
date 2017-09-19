@@ -17,6 +17,8 @@ import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryResp;
+import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryRequest;
+import com.gofobao.framework.api.model.credit_details_query.CreditDetailsQueryResponse;
 import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryRequest;
 import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryResponse;
 import com.gofobao.framework.asset.service.NewAssetLogService;
@@ -25,6 +27,7 @@ import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.StringHelper;
@@ -53,6 +56,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -287,8 +291,8 @@ public class TestController {
     @ApiOperation("冻结查询")
     @RequestMapping("/pub/freeze/find")
     @Transactional
-    public void findFreeze(@RequestParam("accountId") Object accountId,@RequestParam("startDate") Object startDate,
-                           @RequestParam("endDate") Object endDate){
+    public void findFreeze(@RequestParam("accountId") Object accountId, @RequestParam("startDate") Object startDate,
+                           @RequestParam("endDate") Object endDate) {
         FreezeDetailsQueryRequest freezeDetailsQueryRequest = new FreezeDetailsQueryRequest();
         freezeDetailsQueryRequest.setChannel(ChannelContant.HTML);
         freezeDetailsQueryRequest.setState("0");
@@ -299,9 +303,32 @@ public class TestController {
         freezeDetailsQueryRequest.setAccountId(String.valueOf(accountId));
         FreezeDetailsQueryResponse balanceQueryResponse = jixinManager.send(JixinTxCodeEnum.FREEZE_DETAILS_QUERY, freezeDetailsQueryRequest, FreezeDetailsQueryResponse.class);
         log.info("=========================================================================================");
-        log.info("即信批次状态查询:");
+        log.info("用户即信冻结查询:");
         log.info("=========================================================================================");
         log.info(GSON.toJson(balanceQueryResponse));
+    }
+
+    @ApiOperation("用户债权列表查询")
+    @RequestMapping("/pub/bid/find/all")
+    @Transactional
+    public void findBidList(@RequestParam("accountId") Object accountId, @RequestParam("startDate") Object startDate, @RequestParam("productId") Object productId) {
+        CreditDetailsQueryRequest creditDetailsQueryRequest = new CreditDetailsQueryRequest();
+        creditDetailsQueryRequest.setAccountId(String.valueOf(accountId));
+        creditDetailsQueryRequest.setStartDate(String.valueOf(startDate));
+        if (ObjectUtils.isEmpty(productId)) {
+            creditDetailsQueryRequest.setProductId(String.valueOf(productId));
+        }
+        creditDetailsQueryRequest.setEndDate(DateHelper.dateToString(new Date(), DateHelper.DATE_FORMAT_YMD_NUM));
+        creditDetailsQueryRequest.setState("0");
+        creditDetailsQueryRequest.setPageNum("1");
+        creditDetailsQueryRequest.setPageSize("20");
+        CreditDetailsQueryResponse creditDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.CREDIT_DETAILS_QUERY,
+                creditDetailsQueryRequest,
+                CreditDetailsQueryResponse.class);
+        log.info("=========================================================================================");
+        log.info("用户债权列表查询:");
+        log.info("=========================================================================================");
+        log.info(GSON.toJson(creditDetailsQueryResponse));
     }
 
     @ApiOperation("批次查询")
