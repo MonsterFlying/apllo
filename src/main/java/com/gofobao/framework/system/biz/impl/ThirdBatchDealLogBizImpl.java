@@ -182,7 +182,7 @@ public class ThirdBatchDealLogBizImpl implements ThirdBatchDealLogBiz {
         } else if (borrow.getMoneyYes().intValue() >= borrow.getMoney().intValue() && !ObjectUtils.isEmpty(borrow.getSuccessAt())) { // 2.已通过
             flag = true;
             voFindLendRepayStatus.setState(2);
-            voFindLendRepayStatus.setDateStr(DateHelper.dateToString(borrow.getVerifyAt()));
+            voFindLendRepayStatus.setDateStr(DateHelper.dateToString(borrow.getSuccessAt()));
         }
         voFindLendRepayStatusList.add(voFindLendRepayStatus);
         //第三步
