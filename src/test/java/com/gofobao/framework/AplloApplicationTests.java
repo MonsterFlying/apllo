@@ -20,6 +20,7 @@ import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
+import com.gofobao.framework.api.model.batch_lend_pay.LendPay;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
@@ -47,9 +48,7 @@ import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
-import com.gofobao.framework.helper.DateHelper;
-import com.gofobao.framework.helper.JixinHelper;
-import com.gofobao.framework.helper.StringHelper;
+import com.gofobao.framework.helper.*;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.listener.providers.CreditProvider;
 import com.gofobao.framework.marketing.biz.MarketingProcessBiz;
@@ -644,22 +643,69 @@ public class AplloApplicationTests {
     @Test
     public void test() {
 
+
+        //查询当前借款的所有 状态为1的 tender记录
+        Specification<Tender> ts = Specifications.<Tender>and()
+                .eq("borrowId", 170226)
+                .eq("status", 1)
+                .build();
+
+        List<Tender> tenderList = tenderService.findList(ts);
+        Borrow borrow = borrowService.findById(170226L);
+
+
+        double totalManageFee = 0; // 净值标, 收取账户管理费
+        if (borrow.getType() == 1) {
+            double manageFeeRate = 0.0012;
+            if (borrow.getRepayFashion() == 1) {
+                totalManageFee = MoneyHelper.round(borrow.getMoney() * manageFeeRate / 30 * borrow.getTimeLimit(), 0);
+            } else {
+                totalManageFee = MoneyHelper.round(borrow.getMoney() * manageFeeRate * borrow.getTimeLimit(), 0);
+            }
+        }
+
+        List<LendPay> lendPayList = new ArrayList<>();
+        LendPay lendPay;
+        UserThirdAccount tenderUserThirdAccount;
+        double sumCount = 0, validMoney, debtFee;
+        double sumNetWorthFee = 0;
+        for (Tender tender : tenderList) {
+            debtFee = 0;
+            /*if (BooleanHelper.isTrue(tender.getThirdTenderFlag())) {
+                continue;
+            }*/
+            tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
+            Preconditions.checkNotNull(tenderUserThirdAccount, "投资人未开户!");
+
+            validMoney = tender.getValidMoney();//投标有效金额
+            sumCount += validMoney; //放款总金额
+
+            //净值账户管理费
+            if (borrow.getType() == 1) {
+                double newWorthFee = MoneyHelper.round(MoneyHelper.multiply(MoneyHelper.divide(validMoney, borrow.getMoney()), totalManageFee),0);
+                sumNetWorthFee = MoneyHelper.add(sumNetWorthFee, newWorthFee);
+                debtFee = MoneyHelper.add(debtFee, newWorthFee);
+            }
+            log.info(StringHelper.formatDouble(debtFee, 100, false));
+        }
+        log.info("" + new Double(sumNetWorthFee).longValue());
+
         //1.查询并判断还款记录是否存在!
-        BorrowRepayment borrowRepayment = borrowRepaymentService.findById(297l);/* 当期还款记录 */
+       /* BorrowRepayment borrowRepayment = borrowRepaymentService.findById(297l);*//* 当期还款记录 *//*
         Preconditions.checkNotNull(borrowRepayment, "还款记录不存在!");
-        Borrow parentBorrow = borrowService.findById(borrowRepayment.getBorrowId());/* 还款记录对应的借款记录 */
+        Borrow parentBorrow = borrowService.findById(borrowRepayment.getBorrowId());*//* 还款记录对应的借款记录 *//*
         Preconditions.checkNotNull(parentBorrow, "借款记录不存在!");
-        /* 还款对应的投标记录  包括债权转让在里面 */
+        *//* 还款对应的投标记录  包括债权转让在里面 *//*
         Specification<Tender> ts = Specifications
                 .<Tender>and()
                 .eq("status", 1)
                 .eq("borrowId", parentBorrow.getId())
                 .build();
-        List<Tender> tenderList = tenderService.findList(ts);/* 还款对应的投标记录  包括债权转让在里面 */
+        List<Tender> tenderList = tenderService.findList(ts);*//* 还款对应的投标记录  包括债权转让在里面 *//*
         Preconditions.checkNotNull(tenderList, "立即还款: 投标记录为空!");
-        /* 投标记录id */
+        *//* 投标记录id *//*
         Set<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toSet());
-        /* 查询未转让的投标记录回款记录 */
+        *//* 查询未转让的投标记录回款记录 *//*
         Specification<BorrowCollection> bcs = Specifications
                 .<BorrowCollection>and()
                 .in("tenderId", tenderIds.toArray())
@@ -669,12 +715,12 @@ public class AplloApplicationTests {
                 .build();
         List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
         Preconditions.checkNotNull(borrowCollectionList, "立即还款: 回款记录为空!");
-        /* 是否垫付 */
+        *//* 是否垫付 *//*
         boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
         if (!advance) { //非转让标需要统计与发放短信
             //10.项目回款短信通知
             smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
-        }
+        }*/
 
      /*   //记录批次处理日志
         thirdBatchDealLogBiz.recordThirdBatchDealLog(String.valueOf(113841),169974, ThirdBatchDealLogContants.PROCESSED,true,
