@@ -19,13 +19,6 @@ public interface TenderThirdBiz {
     ResponseEntity<VoBaseResp> cancelThirdTender(VoCancelThirdTenderReq voCancelThirdTenderReq);
 
     /**
-     * 取消借款
-     * @param bidAutoApplyRequest
-     * @return
-     */
-    boolean cancelJixinTenderRecord(BidAutoApplyRequest bidAutoApplyRequest) ;
-
-    /**
      * 处理批次购买债权转让
      * @param batchCreditInvestRunCall
      * @return

@@ -1,5 +1,6 @@
 package com.gofobao.framework.helper.project;
 
+import com.gofobao.framework.common.page.Page;
 import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.RedisHelper;
 import com.gofobao.framework.tender.vo.VoSaveThirdTender;
@@ -30,78 +31,6 @@ public class BorrowHelper {
 
     final Gson gson = new GsonBuilder().create();
 
-    public static final String BORROW_TENDER_KEY = "BORROW_TENDER_KEY";
-
-    /**
-     * 保存即信投标记录到redis里面
-     *
-     * @param voSaveThirdTender
-     */
-    public void saveBorrowTenderInRedis(VoSaveThirdTender voSaveThirdTender) {
-        //获取redis里的即信投标记录
-        List<VoSaveThirdTender> voSaveThirdTenders = getBorrowTenderInRedis();
-        //保存即信投标记录到redis里面
-        voSaveThirdTenders.add(voSaveThirdTender);
-        try {
-            redisHelper.put(BORROW_TENDER_KEY, gson.toJson(voSaveThirdTenders));
-        } catch (Exception e) {
-            log.error("BorrowHelper saveBorrowTenderInRedis 保存即信投标申请失败:", e);
-        }
-    }
-
-    /**
-     * 获取redis里的即信投标记录
-     */
-    public List<VoSaveThirdTender> getBorrowTenderInRedis() {
-        String voSaveThirdTendersStr = "";
-        try {
-            if (redisHelper.hasKey(BORROW_TENDER_KEY)) {
-                voSaveThirdTendersStr = redisHelper.get(BORROW_TENDER_KEY, "");
-            }
-        } catch (Exception e) {
-            log.error("BorrowHelper saveBorrowTenderInRedis 从redis中取出投标申请列表失败:", e);
-        }
-        List<VoSaveThirdTender> voSaveThirdTenders = null;
-        //判断字符串是否存在
-        if (!StringUtils.isEmpty(voSaveThirdTendersStr)) {
-            voSaveThirdTenders = gson.fromJson(voSaveThirdTendersStr, new TypeToken<List<VoSaveThirdTender>>() {
-            }.getType());
-        } else {
-            voSaveThirdTenders = new ArrayList<>();
-        }
-        return voSaveThirdTenders;
-    }
-
-    /**
-     * 获取redis里的即信投标记录
-     */
-    public List<VoSaveThirdTender> getBorrowTenderInRedis(String productId, boolean isAuto) {
-        List<VoSaveThirdTender> voSaveThirdTenderList = getBorrowTenderInRedis();
-        if (CollectionUtils.isEmpty(voSaveThirdTenderList)) {
-            return voSaveThirdTenderList;
-        } else {
-            return voSaveThirdTenderList.stream().filter(voSaveThirdTender ->
-                    voSaveThirdTender.getIsAuto() == isAuto
-                            && productId.equals(voSaveThirdTender.getProductId()))
-                    .collect(Collectors.toList());
-        }
-    }
-
-    /**
-     * 获取redis里的即信投标记录
-     */
-    public void deleteBorrowTenderInRedis(List<VoSaveThirdTender> delVoSaveThirdTenderList) {
-        if (!CollectionUtils.isEmpty(delVoSaveThirdTenderList)) {
-            //全部取消投标申请
-            List<VoSaveThirdTender> voSaveThirdTenderList = getBorrowTenderInRedis();
-            voSaveThirdTenderList.removeAll(delVoSaveThirdTenderList);
-            try {
-                redisHelper.put(BORROW_TENDER_KEY, gson.toJson(voSaveThirdTenderList));
-            } catch (Exception e) {
-                log.error("BorrowHelper saveBorrowTenderInRedis 保存即信投标申请失败:", e);
-            }
-        }
-    }
 
     /**
      * 计算RepayFashions

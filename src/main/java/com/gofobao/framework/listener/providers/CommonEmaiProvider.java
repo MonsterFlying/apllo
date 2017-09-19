@@ -198,11 +198,13 @@ public class CommonEmaiProvider {
         String email = body.get(MqConfig.EMAIL);
         String ip = body.get(MqConfig.IP);
         String content = body.get(MqConfig.CONTENT);//邮件内容
+        String subject = body.get(MqConfig.SUBJECT);//邮件标题
+
 
         checkNotNull(email, "CommonEmaiProvider doSendExceptionEmail email is null");
         checkNotNull(ip, "CommonEmaiProvider doSendExceptionEmail ip is null");
         checkNotNull(content, "CommonEmaiProvider doSendExceptionEmail content is null");
 
-        return  sendEmail(email, "系统异常", content, true);
+        return sendEmail(email, subject, content, true);
     }
 }

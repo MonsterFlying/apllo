@@ -107,6 +107,8 @@ public class RedPackageBizImpl implements RedPackageBiz {
     @Autowired
     NewAssetLogService newAssetLogService;
 
+    private static int looper = 1;
+
     public static final String DATA = "[{\"userId\":294,\"forUserId\":22,\"money\":169,\"principal\":169,\"interest\":0,\"remark\":\"接收理财师提成奖励 1.69元\",\"seqNo\":\"20170912233501295376\",\"type\":\"receiveCommissions\",\"sourceId\":0,\"groupSeqNo\":\"1505230500992\"},\n" +
             "{\"userId\":582,\"forUserId\":22,\"money\":7,\"principal\":7,\"interest\":0,\"remark\":\"接收理财师提成奖励 0.07元\",\"seqNo\":\"20170912233538922664\",\"type\":\"receiveCommissions\",\"sourceId\":0,\"groupSeqNo\":\"1505230538184\"},\n" +
             "{\"userId\":901,\"forUserId\":22,\"money\":449,\"principal\":449,\"interest\":0,\"remark\":\"接收理财师提成奖励 4.49元\",\"seqNo\":\"20170912233539513090\",\"type\":\"receiveCommissions\",\"sourceId\":0,\"groupSeqNo\":\"1505230539026\"},\n" +
@@ -468,7 +470,11 @@ public class RedPackageBizImpl implements RedPackageBiz {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> publishActivity(VoPublishRedReq voPublishRedReq) throws Exception {
+        if (looper > 0) {
+            looper--;
+        }
         Date nowDate = new Date();
         String paramStr = voPublishRedReq.getParamStr();
 

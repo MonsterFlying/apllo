@@ -8,6 +8,7 @@ import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.MoneyHelper;
 import com.gofobao.framework.helper.NumberHelper;
 import com.gofobao.framework.helper.project.BorrowHelper;
+import com.gofobao.framework.helper.project.JixinTenderRecordHelper;
 import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.AutoTender;
@@ -43,7 +44,7 @@ public class TenderProvider {
     TenderBiz tenderBiz;
 
     @Autowired
-    private BorrowHelper borrowHelper;
+    private JixinTenderRecordHelper jixinTenderRecordHelper;
 
     @Autowired
     private TenderThirdBiz tenderThirdBiz;
@@ -181,26 +182,11 @@ public class TenderProvider {
                 borrowService.updateById(updateBorrow);
             }
         } catch (Exception e) {
-            //投标撤回
-            voSaveThirdTenderList = borrowHelper.getBorrowTenderInRedis(String.valueOf(borrowId), true);
-            voSaveThirdTenderList.forEach(voSaveThirdTender -> {
-                // 取消自动投标申请
-                BidAutoApplyRequest bidAutoApplyRequest = new BidAutoApplyRequest();
-                bidAutoApplyRequest.setAccountId(voSaveThirdTender.getAccountId()); // 用户投标账号
-                bidAutoApplyRequest.setOrderId(voSaveThirdTender.getOrderId()); // 原始投标ID
-                bidAutoApplyRequest.setTxAmount(voSaveThirdTender.getTxAmount()); // 投标金额
-                bidAutoApplyRequest.setProductId(voSaveThirdTender.getProductId()); // productId
-                boolean result = tenderThirdBiz.cancelJixinTenderRecord(bidAutoApplyRequest);
-                if (result) {
-                    log.info(String.format("自动投标投标申请取消申请成功: %s", new Gson().toJson(bidAutoApplyRequest)));
-                } else {
-                    log.error(String.format("自动投标投标申请取消申请失败: %s", new Gson().toJson(bidAutoApplyRequest)));
-                }
-            });
+            jixinTenderRecordHelper.cancelJixinTenderByRedisRecord(borrow.getProductId(), true);
             throw new Exception(e);
         } finally {
             //从redis删除投标申请记录
-            borrowHelper.deleteBorrowTenderInRedis(voSaveThirdTenderList);
+            jixinTenderRecordHelper.removeJixinTenderRecordInRedis(borrow.getProductId(), true);
         }
     }
 }
