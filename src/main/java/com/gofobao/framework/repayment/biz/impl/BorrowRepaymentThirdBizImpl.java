@@ -132,6 +132,9 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
     @Value("${gofobao.javaDomain}")
     private String javaDomain;
 
+    public static void main(String[] args) {
+
+    }
 
     /**
      * 非流转标的 即信批次放款 （满标后调用）
@@ -191,21 +194,26 @@ public class BorrowRepaymentThirdBizImpl implements BorrowRepaymentThirdBiz {
         double sumNetWorthFee = 0;
         for (Tender tender : tenderList) {
             debtFee = 0;
+            //投标有效金额
+            validMoney = tender.getValidMoney();
+            /*净值管理费*/
+            double newWorthFee = MoneyHelper.round(MoneyHelper.multiply(MoneyHelper.divide(validMoney, borrow.getMoney()), totalManageFee), 0);
+            //净值账户管理费
+            if (borrow.getType() == 1) {
+                sumNetWorthFee = MoneyHelper.add(sumNetWorthFee, newWorthFee);
+            }
+            //已经处理过的批次不放即信处理
             if (BooleanHelper.isTrue(tender.getThirdTenderFlag())) {
                 continue;
+            }
+            //即信收取净值账户管理费
+            if (borrow.getType() == 1) {
+                debtFee = MoneyHelper.add(debtFee, newWorthFee);
             }
             tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
             Preconditions.checkNotNull(tenderUserThirdAccount, "投资人未开户!");
 
-            validMoney = tender.getValidMoney();//投标有效金额
             sumCount += validMoney; //放款总金额
-
-            //净值账户管理费
-            if (borrow.getType() == 1) {
-                double newWorthFee = MoneyHelper.multiply(MoneyHelper.divide(validMoney, borrow.getMoney()), totalManageFee);
-                sumNetWorthFee = MoneyHelper.add(sumNetWorthFee, newWorthFee);
-                debtFee = MoneyHelper.add(debtFee, newWorthFee);
-            }
 
             String lendPayOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
             lendPay = new LendPay();
