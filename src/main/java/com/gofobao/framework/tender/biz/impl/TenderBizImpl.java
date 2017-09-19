@@ -28,6 +28,7 @@ import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.helper.PasswordHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.project.BorrowHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.lend.entity.Lend;
 import com.gofobao.framework.lend.service.LendService;
@@ -43,6 +44,7 @@ import com.gofobao.framework.tender.biz.TenderBiz;
 import com.gofobao.framework.tender.biz.TenderThirdBiz;
 import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
+import com.gofobao.framework.tender.vo.VoSaveThirdTender;
 import com.gofobao.framework.tender.vo.request.TenderUserReq;
 import com.gofobao.framework.tender.vo.request.VoAdminCancelTender;
 import com.gofobao.framework.tender.vo.request.VoCreateTenderReq;
@@ -82,7 +84,6 @@ public class TenderBizImpl implements TenderBiz {
     private UserCacheService userCacheService;
     @Autowired
     private AssetService assetService;
-
     @Autowired
     private MqHelper mqHelper;
     @Autowired
@@ -95,15 +96,15 @@ public class TenderBizImpl implements TenderBiz {
     private JixinManager jixinManager;
     @Autowired
     private TenderThirdBiz tenderThirdBiz;
-
     @Autowired
     AssetChangeProvider assetChangeProvider;
-
     @Autowired
     private WindmillTenderBiz windmillTenderBiz;
-
     @Autowired
     private LendService lendService;
+    @Autowired
+    private BorrowHelper borrowHelper;
+
 
     /**
      * 新版投标
@@ -168,52 +169,34 @@ public class TenderBizImpl implements TenderBiz {
         // 投标的存管报备
         //=========================
         borrowTender = registerJixinTenderRecord(borrow, borrowTender);
-        try {
-            // 扣除用户投标金额
-            updateAssetByTender(borrow, borrowTender);
-            borrow.setMoneyYes(borrow.getMoneyYes() + validateMoney);
-            borrow.setTenderCount((borrow.getTenderCount() + 1));
-            borrow.setId(borrow.getId());
-            borrow.setUpdatedAt(nowDate);
-            borrowService.updateById(borrow);  // 更改标的信息
+        // 扣除用户投标金额
+        updateAssetByTender(borrow, borrowTender);
+        borrow.setMoneyYes(borrow.getMoneyYes() + validateMoney);
+        borrow.setTenderCount((borrow.getTenderCount() + 1));
+        borrow.setId(borrow.getId());
+        borrow.setUpdatedAt(nowDate);
+        borrowService.updateById(borrow);  // 更改标的信息
 
-            if (borrow.getMoneyYes() >= borrow.getMoney()) {   // 对于投标金额等于招标金额触发复审
-                MqConfig mqConfig = new MqConfig();
-                mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
-                mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
-                ImmutableMap<String, String> body = ImmutableMap
-                        .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-                mqConfig.setMsg(body);
-                log.info(String.format("tenderBizImpl tender send mq %s", GSON.toJson(body)));
-                mqHelper.convertAndSend(mqConfig);
-            }
-
-            //如果当前用户是风车理财用户
-            if (!StringUtils.isEmpty(user.getWindmillId())) {
-                try {
-                    windmillTenderBiz.tenderNotify(borrowTender);
-                } catch (Exception e) {
-                    log.error("推送风车理财异常", e);
-                }
-            }
-        } catch (Exception e) {
-            if (!borrow.isTransfer()) {
-                // 取消自动投标申请
-                BidAutoApplyRequest bidAutoApplyRequest = new BidAutoApplyRequest();
-                bidAutoApplyRequest.setAccountId(userThirdAccount.getAccountId()); // 用户投标账号
-                bidAutoApplyRequest.setOrderId(borrowTender.getThirdTenderOrderId()); // 原始投标ID
-                bidAutoApplyRequest.setTxAmount(StringHelper.formatDouble(borrowTender.getValidMoney(), 100, false)); // 投标金额
-                bidAutoApplyRequest.setProductId(borrow.getProductId()); // productId
-                boolean result = tenderThirdBiz.cancelJixinTenderRecord(bidAutoApplyRequest);
-                if (result) {
-                    log.info(String.format("自动投标取消申请成功: %s", new Gson().toJson(bidAutoApplyRequest)));
-                } else {
-                    log.error(String.format("自动投标取消申请失败: %s", new Gson().toJson(bidAutoApplyRequest)));
-                }
-            }
-            log.error("创建投标请求异常", e);
-            throw new Exception(e);
+        if (borrow.getMoneyYes() >= borrow.getMoney()) {   // 对于投标金额等于招标金额触发复审
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
+            mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            log.info(String.format("tenderBizImpl tender send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
         }
+
+        //如果当前用户是风车理财用户
+        if (!StringUtils.isEmpty(user.getWindmillId())) {
+            try {
+                windmillTenderBiz.tenderNotify(borrowTender);
+            } catch (Exception e) {
+                log.error("推送风车理财异常", e);
+            }
+        }
+
 
         try {
             // 触发新手标活动派发
@@ -265,20 +248,43 @@ public class TenderBizImpl implements TenderBiz {
         assetChangeProvider.commonAssetChange(assetChange);
     }
 
+    /**
+     * 登记即信标的
+     *
+     * @param borrow
+     * @param borrowTender
+     * @return
+     * @throws Exception
+     */
     private Tender registerJixinTenderRecord(Borrow borrow, Tender borrowTender) throws Exception {
         if (!borrow.isTransfer()) {
+            String txAmount = StringHelper.formatDouble(borrowTender.getValidMoney(), 100, false);
+            /* 投标orderId */
+            String orderId = JixinHelper.getOrderId(JixinHelper.TENDER_PREFIX);
+
             log.info(String.format("马上投资: 投资报备: %s", new Gson().toJson(borrowTender)));
             VoCreateThirdTenderReq voCreateThirdTenderReq = new VoCreateThirdTenderReq();
             voCreateThirdTenderReq.setAcqRes(String.valueOf(borrowTender.getId()));
             voCreateThirdTenderReq.setUserId(borrowTender.getUserId());
-            voCreateThirdTenderReq.setTxAmount(StringHelper.formatDouble(borrowTender.getValidMoney(), 100, false));
+            voCreateThirdTenderReq.setTxAmount(txAmount);
             voCreateThirdTenderReq.setProductId(borrow.getProductId());
+            voCreateThirdTenderReq.setOrderId(orderId);
             voCreateThirdTenderReq.setFrzFlag(FrzFlagContant.FREEZE);
             ResponseEntity<VoBaseResp> resp = tenderThirdBiz.createThirdTender(voCreateThirdTenderReq);
             if (resp.getBody().getState().getCode() == VoBaseResp.ERROR) {
                 log.info(String.format("马上投资: 投资报备失败: %s", new Gson().toJson(resp)));
                 String msg = "tenderBizImpl createTender: tenderId->" + borrowTender.getId() + "msg->" + resp.getBody().getState().getMsg();
                 throw new Exception(msg);
+            } else {
+                //保存即信投标申请到redis
+                UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(borrowTender.getUserId());
+                VoSaveThirdTender voSaveThirdTender = new VoSaveThirdTender();
+                voSaveThirdTender.setAccountId(userThirdAccount.getAccountId());
+                voSaveThirdTender.setTxAmount(txAmount);
+                voSaveThirdTender.setProductId(borrow.getProductId()); // productId
+                voSaveThirdTender.setOrderId(orderId);
+                voSaveThirdTender.setIsAuto(borrowTender.getIsAuto());
+                borrowHelper.saveBorrowTenderInRedis(voSaveThirdTender);
             }
         }
         borrowTender.setIsThirdRegister(true);
@@ -529,11 +535,36 @@ public class TenderBizImpl implements TenderBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> tender(VoCreateTenderReq voCreateTenderReq) throws Exception {
-        ResponseEntity<VoBaseResp> voBaseRespResponseEntity = createTender(voCreateTenderReq);
-        if (voBaseRespResponseEntity.getStatusCode().equals(HttpStatus.OK)) {
-            return ResponseEntity.ok(VoBaseResp.ok("投标成功!"));
-        } else {
-            return voBaseRespResponseEntity;
+        //投标撤回集合
+        List<VoSaveThirdTender> voSaveThirdTenderList = null;
+        try {
+            ResponseEntity<VoBaseResp> voBaseRespResponseEntity = createTender(voCreateTenderReq);
+            if (voBaseRespResponseEntity.getStatusCode().equals(HttpStatus.OK)) {
+                return ResponseEntity.ok(VoBaseResp.ok("投标成功!"));
+            } else {
+                return voBaseRespResponseEntity;
+            }
+        } catch (Exception e) {
+            //投标撤回
+            voSaveThirdTenderList = borrowHelper.getBorrowTenderInRedis(String.valueOf(voCreateTenderReq.getBorrowId()), voCreateTenderReq.getIsAutoTender());
+            voSaveThirdTenderList.forEach(voSaveThirdTender -> {
+                // 取消自动投标申请
+                BidAutoApplyRequest bidAutoApplyRequest = new BidAutoApplyRequest();
+                bidAutoApplyRequest.setAccountId(voSaveThirdTender.getAccountId()); // 用户投标账号
+                bidAutoApplyRequest.setOrderId(voSaveThirdTender.getOrderId()); // 原始投标ID
+                bidAutoApplyRequest.setTxAmount(voSaveThirdTender.getTxAmount()); // 投标金额
+                bidAutoApplyRequest.setProductId(voSaveThirdTender.getProductId()); // productId
+                boolean result = tenderThirdBiz.cancelJixinTenderRecord(bidAutoApplyRequest);
+                if (result) {
+                    log.info(String.format("投标申请取消申请成功: %s", new Gson().toJson(bidAutoApplyRequest)));
+                } else {
+                    log.error(String.format("投标申请取消申请失败: %s", new Gson().toJson(bidAutoApplyRequest)));
+                }
+            });
+            throw new Exception(e);
+        } finally {
+            //从redis删除投标申请记录
+            borrowHelper.deleteBorrowTenderInRedis(voSaveThirdTenderList);
         }
     }
 
