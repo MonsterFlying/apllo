@@ -70,7 +70,7 @@ public class RedPackageController {
 
     @ApiOperation("重新触发派发红包")
     @PostMapping("pub/publishActivity/red")
-    public ResponseEntity<VoBaseResp> publishActivity(@ModelAttribute VoPublishRedReq voPublishRedReq) {
+    public ResponseEntity<VoBaseResp> publishActivity(@ModelAttribute VoPublishRedReq voPublishRedReq) throws Exception {
         String paramStr = voPublishRedReq.getParamStr();
         if (!SecurityHelper.checkSign(voPublishRedReq.getSign(), paramStr)) {
             return ResponseEntity
