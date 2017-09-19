@@ -192,4 +192,17 @@ public class CommonEmaiProvider {
 
         return  sendEmail(email, "借款协议", content, true);
     }
+
+    public boolean doSendExceptionEmail(String tag, Map<String, String> body) {
+        checkNotNull(body, "CommonEmaiProvider doSendExceptionEmail body is null");
+        String email = body.get(MqConfig.EMAIL);
+        String ip = body.get(MqConfig.IP);
+        String content = body.get(MqConfig.CONTENT);//邮件内容
+
+        checkNotNull(email, "CommonEmaiProvider doSendExceptionEmail email is null");
+        checkNotNull(ip, "CommonEmaiProvider doSendExceptionEmail ip is null");
+        checkNotNull(content, "CommonEmaiProvider doSendExceptionEmail content is null");
+
+        return  sendEmail(email, "系统异常", content, true);
+    }
 }

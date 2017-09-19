@@ -1658,17 +1658,20 @@ public class BorrowBizImpl implements BorrowBiz {
                     content = thymeleafHelper.build("borrowProtocol", templateMap);
 
                     // 使用消息队列发送邮件
-                    MqConfig config = new MqConfig();
-                    config.setQueue(MqQueueEnum.RABBITMQ_EMAIL);
-                    config.setTag(MqTagEnum.SEND_BORROW_PROTOCOL_EMAIL);
-                    ImmutableMap<String, String> body = ImmutableMap
-                            .of(MqConfig.EMAIL, tenderUser.getEmail(),
-                                    MqConfig.IP, "127.0.0.1",
-                                    "subject", "广富宝金服借款协议",
-                                    "content", content);
-                    config.setMsg(body);
-                    mqHelper.convertAndSend(config);
-
+                    try{
+                        MqConfig config = new MqConfig();
+                        config.setQueue(MqQueueEnum.RABBITMQ_EMAIL);
+                        config.setTag(MqTagEnum.SEND_BORROW_PROTOCOL_EMAIL);
+                        ImmutableMap<String, String> body = ImmutableMap
+                                .of(MqConfig.EMAIL, tenderUser.getEmail(),
+                                        MqConfig.IP, "127.0.0.1",
+                                        "subject", "广富宝金服借款协议",
+                                        "content", content);
+                        config.setMsg(body);
+                        mqHelper.convertAndSend(config);
+                    }catch (Exception e){
+                        log.error("发送广富宝金服借款协议异常" , e);
+                    }
                 }
             }
         }

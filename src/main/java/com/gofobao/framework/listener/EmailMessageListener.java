@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
+import static com.gofobao.framework.common.rabbitmq.MqTagEnum.EXCEPTION_EMAIL;
 import static com.gofobao.framework.common.rabbitmq.MqTagEnum.SEND_BORROW_PROTOCOL_EMAIL;
 import static com.gofobao.framework.common.rabbitmq.MqTagEnum.SMS_EMAIL_BIND;
 
@@ -45,6 +46,8 @@ public class EmailMessageListener {
                 result = commonEmaiProvider.doSendMessageCode(tag, msg);
             } else if (tag.equals(SEND_BORROW_PROTOCOL_EMAIL.getValue())) {
                 result = commonEmaiProvider.doSendBorrowProtocolEmail(tag, msg);
+            } else if(tag.equals(EXCEPTION_EMAIL.getValue())){
+                result = commonEmaiProvider.doSendExceptionEmail(tag, msg);
             }
 
             if (!result) {
