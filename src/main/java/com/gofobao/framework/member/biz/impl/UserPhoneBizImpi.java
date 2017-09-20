@@ -65,8 +65,6 @@ public class UserPhoneBizImpi implements UserPhoneBiz {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBasicUserInfoResp> bindSwitchPhone(VoBindSwitchPhoneReq voBindSwitchPhoneReq) {
-        // TODO 需要添加主动查询即信手机号功能
-
         Long userId = voBindSwitchPhoneReq.getUserId();
         String newPhone = voBindSwitchPhoneReq.getNewPhone();
         Users users = userService.findById(userId);
@@ -84,11 +82,11 @@ public class UserPhoneBizImpi implements UserPhoneBiz {
         }
 
         String phone = users.getPhone();
-        boolean bool =  macthHelper.match( MqTagEnum.SMS_SWICTH_PHONE.getValue(), phone, voBindSwitchPhoneReq.getNewPhoneCaptcha()) ;
+        boolean bool =  macthHelper.match( MqTagEnum.SMS_SWICTH_PHONE.getValue(), phone, voBindSwitchPhoneReq.getPhoneCaptcha() ) ;
         if (!bool) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "原手机验证码错误/或者已过期，请重新发送短信验证码!", VoBasicUserInfoResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "原手机验证码错误或者已过期，请重新发送短信验证码!", VoBasicUserInfoResp.class));
         }
 
         // 修改成验证即信手机
@@ -103,7 +101,7 @@ public class UserPhoneBizImpi implements UserPhoneBiz {
         if (StringUtils.isEmpty(srvTxCode)) {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, "新手机验证码错误/或者已过期，请重新发送短信验证码!", VoBasicUserInfoResp.class));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "新手机验证码错误或者已过期，请重新发送短信验证码!", VoBasicUserInfoResp.class));
         }
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(userId);
@@ -233,7 +231,6 @@ public class UserPhoneBizImpi implements UserPhoneBiz {
                     .badRequest()
                     .body(VoBaseResp.error(VoBaseResp.ERROR, "原手机验证码错误/或者已过期，请重新发送短信验证码!"));
         }
-
 
         return ResponseEntity.ok(VoBaseResp.ok("通过"));
     }

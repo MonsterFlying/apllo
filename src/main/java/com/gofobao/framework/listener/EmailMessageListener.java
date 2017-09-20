@@ -3,7 +3,7 @@ package com.gofobao.framework.listener;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnumContants;
-import com.gofobao.framework.listener.providers.CommonEmaiProvider;
+import com.gofobao.framework.listener.providers.CommonEmailProvider;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -28,7 +28,7 @@ import static com.gofobao.framework.common.rabbitmq.MqTagEnum.SMS_EMAIL_BIND;
 public class EmailMessageListener {
 
     @Autowired
-    CommonEmaiProvider commonEmaiProvider;
+    CommonEmailProvider commonEmailProvider;
 
     static Gson GSON = new GsonBuilder().create();
 
@@ -43,11 +43,11 @@ public class EmailMessageListener {
             Map<String, String> msg = (Map<String, String>) body.get(MqConfig.MSG_BODY);
             boolean result = false;
             if (tag.equals(SMS_EMAIL_BIND.getValue())) {  // 发送邮箱
-                result = commonEmaiProvider.doSendMessageCode(tag, msg);
+                result = commonEmailProvider.doSendMessageCode(tag, msg);
             } else if (tag.equals(SEND_BORROW_PROTOCOL_EMAIL.getValue())) {
-                result = commonEmaiProvider.doSendBorrowProtocolEmail(tag, msg);
+                result = commonEmailProvider.doSendBorrowProtocolEmail(tag, msg);
             } else if(tag.equals(EXCEPTION_EMAIL.getValue())){
-                result = commonEmaiProvider.doSendExceptionEmail(tag, msg);
+                result = commonEmailProvider.doSendExceptionEmail(tag, msg);
             }
 
             if (!result) {

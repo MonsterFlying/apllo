@@ -55,7 +55,7 @@ public class MacthHelper {
             }
             return smsCode.equalsIgnoreCase(redisSmsCode);
         } catch (Throwable e) {
-            log.error("SmsHelper match exception", e);
+            log.error("SmsHelper matchAndNoRemove exception", e);
         }
         return false;
     }

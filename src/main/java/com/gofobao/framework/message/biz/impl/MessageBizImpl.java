@@ -598,7 +598,7 @@ public class MessageBizImpl implements MessageBiz {
             redisHelper.put(
                     String.format("%s_%s", SrvTxCodeContants.MOBILE_MODIFY_PLUS, voAnonSmsReq.getPhone()),
                     body.getSrvAuthCode(),
-                    15 * 60);
+                    150);
 
         } catch (Throwable e) {
             log.error("即信授权码写入redis异常", e);
