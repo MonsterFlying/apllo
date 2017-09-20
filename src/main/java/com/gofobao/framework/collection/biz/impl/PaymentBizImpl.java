@@ -281,12 +281,12 @@ public class PaymentBizImpl implements PaymentBiz {
                     collectionDetail.setName(borrow.getName());
                     collectionDetail.setCollectionAt(DateHelper.dateToString(borrowCollection.getCollectionAt(), DateHelper.DATE_FORMAT_YMD));
                     collectionDetail.setPrincipal(StringHelper.formatDouble(borrowCollection.getPrincipal(), 100, false));
-                    long money = borrowCollection.getInterest();
                     if (borrow.getType().intValue() == 0 || borrow.getType().intValue() == 4) {
-                        money -= new Double(MoneyHelper.round(borrowCollection.getInterest() * 0.9, 0)).longValue();
+                        collectionDetail.setEarnings(StringHelper.formatMon((borrowCollection.getInterest()*0.9)/100D));
+                    }else{
+                        collectionDetail.setEarnings(StringHelper.formatMon(borrowCollection.getInterest()/100D));
                     }
-                    collectionDetail.setEarnings(StringHelper.formatDouble(money, 100, false));
-                    collectionDetail.setInterest(StringHelper.formatDouble(borrowCollection.getInterest(), 100, false));
+                    collectionDetail.setInterest(StringHelper.formatDouble(borrowCollection.getInterest(), 100D, false));
                     collectionDetail.setOrderStr(borrowCollection.getOrder() + 1 + "/" + borrow.getTotalOrder());
                     collectionDetail.setBorrowId(borrow.getId());
                     collectionDetailList.add(collectionDetail);
