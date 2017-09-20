@@ -204,7 +204,6 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
         List<Borrow> borrowList = borrowRepository.findByIdIn(new ArrayList<>(borrowIds));
         Map<Long, Borrow> borrowMaps = borrowList.stream().collect(Collectors.toMap(Borrow::getId, Function.identity()));
 
-
         borrowCollections.stream().forEach(p -> {
             Collection collection = new Collection();
             Borrow borrow = borrowMaps.get(p.getBorrowId());
@@ -214,7 +213,7 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
             collection.setCollectionAt(DateHelper.dateToString(p.getCollectionAt()));
             collection.setOrder(p.getOrder() + 1);
             collection.setTimeLimit(BorrowContants.REPAY_FASHION_ONCE==borrow.getRepayFashion()?BorrowContants.REPAY_FASHION_ONCE:borrow.getTimeLimit());
-            if (borrow.getStatus() == 0 || borrow.getStatus() == 4) { //官标
+            if (borrow.getType().intValue() == 0 || borrow.getType().intValue() == 4) { //官标
                 collection.setEarnings(StringHelper.formatMon((p.getCollectionMoney() * 0.9) / 100D));
             } else {
                 collection.setEarnings(StringHelper.formatMon(p.getCollectionMoney() / 100D));
