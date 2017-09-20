@@ -160,9 +160,11 @@ public class AssetSynBizImpl implements AssetSynBiz {
             return true;
         }
 
+        Date startDate = DateHelper.endOfDate(DateHelper.subDays(nowDate, 1)) ;
+        Date endDate = DateHelper.beginOfDate(DateHelper.addDays(nowDate, 1)) ;
         Specification<RechargeDetailLog> rechargeDetailLogSpecification = Specifications
                 .<RechargeDetailLog>and()
-                .between("createTime", new Range<>(DateHelper.beginOfDate(nowDate), DateHelper.endOfDate(nowDate)))
+                .between("createTime", new Range<>(startDate, endDate))
                 .eq("userId", userId)  // 用户ID
                 .eq("rechargeChannel", 1) // 线下充值
                 .eq("state", 1)  // 充值成功
@@ -177,7 +179,9 @@ public class AssetSynBizImpl implements AssetSynBiz {
                 Iterator<AccountDetailsQueryItem> iterator1 = accountDetailsQueryItemList.iterator();
                 while (iterator1.hasNext()) {
                     AccountDetailsQueryItem offRecharge = iterator1.next();
-                    if (recharge.getMoney() == (new Double(offRecharge.getTxAmount()) * 100)) {
+                    Double recordRecharge = new Double(MoneyHelper.multiply(offRecharge.getTxAmount(), "100", 0));
+                    Long money = recordRecharge.longValue() ;
+                    if (recharge.getMoney() ==  money) {
                         iterator.remove();
                         iterator1.remove();
                         break;
@@ -193,7 +197,8 @@ public class AssetSynBizImpl implements AssetSynBiz {
         String seqNo;
         for (AccountDetailsQueryItem accountDetailsQueryItem : accountDetailsQueryItemList) {
             seqNo = String.format("%s%s%s", accountDetailsQueryItem.getInpDate(), accountDetailsQueryItem.getInpTime(), accountDetailsQueryItem.getTraceNo());
-            Long money = new Double(MoneyHelper.multiply(Double.parseDouble(accountDetailsQueryItem.getTxAmount()), 100d)).longValue();
+            Double recordRecharge = new Double(MoneyHelper.multiply(accountDetailsQueryItem.getTxAmount(), "100", 0));
+            Long money = recordRecharge.longValue() ;
             RechargeDetailLog rechargeDetailLog = new RechargeDetailLog();
             log.info("进入同步环节");
             rechargeDetailLog.setUserId(userId);
@@ -251,7 +256,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
         // 时间
         for (int pageIndex = 0; pageIndex < pageIndexTotal; pageIndex++) {
             Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.DESC, "id")));
-            Page<Aleve> lists = aleveService.findByDateAndTranstype(date,transtype, pageable);
+            Page<Aleve> lists = aleveService.findByDateAndTranstype(date, transtype, pageable);
             if (CollectionUtils.isEmpty(lists.getContent())) {
                 break;
             }
@@ -259,19 +264,19 @@ public class AssetSynBizImpl implements AssetSynBiz {
             List<Aleve> content = lists.getContent();
             for (Aleve aleve : content) {
                 String cardnbr = aleve.getCardnbr();
-                if(ObjectUtils.isEmpty(cardnbr)){
+                if (ObjectUtils.isEmpty(cardnbr)) {
                     log.info("全局同步:  账户信息为空");
                     continue;
                 }
 
                 UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(cardnbr);
-                if(ObjectUtils.isEmpty(userThirdAccount)){
+                if (ObjectUtils.isEmpty(userThirdAccount)) {
                     log.info("全局同步:  用户开户信息为空");
                     continue;
                 }
 
                 boolean b = doAdminSynAsset(userThirdAccount.getUserId(), synDate);
-                if(!b){
+                if (!b) {
                     log.info("aleve全局同步失败");
                 }
             }
@@ -281,6 +286,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean doAdminSynAsset(Long userId, Date synDate) throws Exception {
         Users user = userService.findByIdLock(userId);
         Preconditions.checkNotNull(user, "资金同步: 查询用户为空");
@@ -293,48 +299,74 @@ public class AssetSynBizImpl implements AssetSynBiz {
             return false;
         }
 
-        // 用户资金记录查询
-        int pageSize = 20, pageIndex = 1, realSize = 0;
-        String accountId = userThirdAccount.getAccountId();  // 存管账户ID
+        Date nowDate = new Date();
+        // 同步时间大于两天
+        String transtype = "7820";
         List<AccountDetailsQueryItem> accountDetailsQueryItemList = new ArrayList<>();
-        do {
-            AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
-            accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
-            accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
-            accountDetailsQueryRequest.setStartDate(DateHelper.dateToString(synDate, DateHelper.DATE_FORMAT_YMD_NUM));
-            accountDetailsQueryRequest.setEndDate(DateHelper.dateToString(synDate, DateHelper.DATE_FORMAT_YMD_NUM));
-            accountDetailsQueryRequest.setType("9");
-            accountDetailsQueryRequest.setTranType("7820"); //  线下转账
-            accountDetailsQueryRequest.setAccountId(accountId);
-            AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
-                    accountDetailsQueryRequest,
-                    AccountDetailsQueryResponse.class);
+        if (DateHelper.diffInDays(DateHelper.beginOfDate(nowDate), DateHelper.beginOfDate(synDate), false) > 1) {  // 同步大于一天查询数据库
+            log.info("进入数据库查询数据同步");
+            Specification<Aleve> specification = Specifications
+                    .<Aleve>and()
+                    .eq("cardnbr", userThirdAccount.getAccountId()) // 电子账户
+                    .eq("transtype", transtype) // 线下转账类型
+                    .eq("queryDate", DateHelper.dateToString(synDate, DateHelper.DATE_FORMAT_YMD_NUM))  // 某一天
+                    .build();
+            List<Aleve> aleveLists = aleveService.findAll(specification);
+            if (!ObjectUtils.isEmpty(aleveLists)) {
+                for (Aleve aleve : aleveLists) {
+                    AccountDetailsQueryItem item = new AccountDetailsQueryItem();
+                    item.setInpDate(aleve.getInpdate());
+                    item.setInpTime(aleve.getInptime());
+                    item.setTraceNo(aleve.getTranno());
+                    item.setTxAmount(aleve.getAmount());
+                    accountDetailsQueryItemList.add(item);
+                }
+            }
+        } else {  // 如果一天只能实时查询
+            log.info("进入实时数据查询数据同步");
+            int pageSize = 20, pageIndex = 1, realSize = 0;
+            String accountId = userThirdAccount.getAccountId();  // 存管账户ID
+            do {
+                AccountDetailsQueryRequest accountDetailsQueryRequest = new AccountDetailsQueryRequest();
+                accountDetailsQueryRequest.setPageSize(String.valueOf(pageSize));
+                accountDetailsQueryRequest.setPageNum(String.valueOf(pageIndex));
+                accountDetailsQueryRequest.setStartDate(DateHelper.dateToString(synDate, DateHelper.DATE_FORMAT_YMD_NUM));
+                accountDetailsQueryRequest.setEndDate(DateHelper.dateToString(synDate, DateHelper.DATE_FORMAT_YMD_NUM));
+                accountDetailsQueryRequest.setType("9");
+                accountDetailsQueryRequest.setTranType(transtype); //  线下转账
+                accountDetailsQueryRequest.setAccountId(accountId);
+                AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
+                        accountDetailsQueryRequest,
+                        AccountDetailsQueryResponse.class);
 
-            if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
-                String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
-                log.error(String.format("资金同步失败: %s", msg));
-                return false;
-            }
-            pageIndex++;
-            Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
-            }.getType()));
-            List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
-            if (CollectionUtils.isEmpty(accountDetailsQueryItems)) {
-                break;
-            }
-            realSize = accountDetailsQueryItems.size();
-            accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
-        } while (realSize == pageSize);
+                if ((ObjectUtils.isEmpty(accountDetailsQueryResponse)) || (!JixinResultContants.SUCCESS.equals(accountDetailsQueryResponse.getRetCode()))) {
+                    String msg = ObjectUtils.isEmpty(accountDetailsQueryResponse) ? "当前网络出现异常, 请稍后尝试！" : accountDetailsQueryResponse.getRetMsg();
+                    log.error(String.format("资金同步失败: %s", msg));
+                    return false;
+                }
+                pageIndex++;
+                Optional<List<AccountDetailsQueryItem>> optional = Optional.ofNullable(GSON.fromJson(accountDetailsQueryResponse.getSubPacks(), new TypeToken<List<AccountDetailsQueryItem>>() {
+                }.getType()));
+                List<AccountDetailsQueryItem> accountDetailsQueryItems = optional.orElse(Lists.newArrayList());
+                if (CollectionUtils.isEmpty(accountDetailsQueryItems)) {
+                    break;
+                }
+                realSize = accountDetailsQueryItems.size();
+                accountDetailsQueryItemList.addAll(accountDetailsQueryItems);
+            } while (realSize == pageSize);
+        }
+
 
         // 同步开始
         if (CollectionUtils.isEmpty(accountDetailsQueryItemList)) {
             log.info("当前线下用户资金流水为0");
             return true;
         }
-
+        Date startDate = DateHelper.endOfDate(DateHelper.subDays(synDate, 1)) ;
+        Date endDate = DateHelper.beginOfDate(DateHelper.addDays(synDate, 1)) ;
         Specification<RechargeDetailLog> rechargeDetailLogSpecification = Specifications
                 .<RechargeDetailLog>and()
-                .between("createTime", new Range<>(DateHelper.beginOfDate(synDate), DateHelper.endOfDate(synDate)))
+                .between("createTime", new Range<>(startDate, endDate))
                 .eq("userId", userId)  // 用户ID
                 .eq("rechargeChannel", 1) // 线下充值
                 .eq("state", 1)  // 充值成功
@@ -348,7 +380,8 @@ public class AssetSynBizImpl implements AssetSynBiz {
                 Iterator<AccountDetailsQueryItem> iterator1 = accountDetailsQueryItemList.iterator();
                 while (iterator1.hasNext()) {
                     AccountDetailsQueryItem offRecharge = iterator1.next();
-                    if (recharge.getMoney() == (new Double(offRecharge.getTxAmount()) * 100)) {
+                    Double recordRecharge = new Double(MoneyHelper.multiply(offRecharge.getTxAmount(), "100", 0));
+                    if (recharge.getMoney() ==  recordRecharge.longValue()) {
                         log.info("匹配成功");
                         iterator.remove();
                         iterator1.remove();
@@ -367,7 +400,8 @@ public class AssetSynBizImpl implements AssetSynBiz {
         Gson gson = new Gson();
         for (AccountDetailsQueryItem accountDetailsQueryItem : accountDetailsQueryItemList) {
             seqNo = String.format("%s%s%s", accountDetailsQueryItem.getInpDate(), accountDetailsQueryItem.getInpTime(), accountDetailsQueryItem.getTraceNo());
-            Long money = new Double(Double.parseDouble(accountDetailsQueryItem.getTxAmount()) * 100).longValue();
+            Double recordRecharge = new Double(MoneyHelper.multiply(accountDetailsQueryItem.getTxAmount(), "100", 0));
+            Long money = recordRecharge.longValue() ;
             RechargeDetailLog rechargeDetailLog = new RechargeDetailLog();
             log.info(String.format("进入同步环节 %s", gson.toJson(accountDetailsQueryItem)));
             rechargeDetailLog.setUserId(userId);
@@ -475,7 +509,9 @@ public class AssetSynBizImpl implements AssetSynBiz {
                 Iterator<AccountDetailsQueryItem> iterator1 = accountDetailsQueryItemList.iterator();
                 while (iterator1.hasNext()) {
                     AccountDetailsQueryItem offRecharge = iterator1.next();
-                    if (recharge.getMoney() == (new Double(offRecharge.getTxAmount()) * 100)) {
+                    Double recordRecharge = new Double(MoneyHelper.multiply(offRecharge.getTxAmount(), "100", 0));
+                    Long money = recordRecharge.longValue() ;
+                    if (recharge.getMoney() == money) {
                         log.info("线下充值回调匹配成功");
                         iterator.remove();
                         iterator1.remove();
@@ -499,11 +535,10 @@ public class AssetSynBizImpl implements AssetSynBiz {
                 log.info("线下充值回调覆盖原始seqNo");
                 seqNo = orgSeqNo;
             }
-
-            Long money = new Double(Double.parseDouble(accountDetailsQueryItem.getTxAmount()) * 100).longValue();
+            Double recordRecharge = new Double(MoneyHelper.multiply(accountDetailsQueryItem.getTxAmount(), "100", 0));
+            Long money = recordRecharge.longValue() ;
             RechargeDetailLog rechargeDetailLog = new RechargeDetailLog();
             log.info(String.format("进入线下充值回调同步环节 %s", gson.toJson(accountDetailsQueryItem)));
-            rechargeDetailLog = new RechargeDetailLog();
             rechargeDetailLog.setUserId(userId);
             rechargeDetailLog.setBankName(userThirdAccount.getBankName());
             rechargeDetailLog.setCallbackTime(synDate);

@@ -9,6 +9,7 @@ public class BorrowContants {
      * 车贷标
      */
     public static final int CE_DAI = 0;
+
     /**
      * 净值标
      */
@@ -24,7 +25,6 @@ public class BorrowContants {
      */
     public static final int QU_DAO = 4;
 
-
     /**
      * 发标待审
      */
@@ -34,7 +34,6 @@ public class BorrowContants {
      * 招标中；
      */
     public static final Integer BIDDING = 1;
-
 
     /**
      * 初审不通过；
@@ -56,7 +55,6 @@ public class BorrowContants {
      */
     public static final Integer CANCEL = 5;
 
-
     /**
      * 按月分期
      */
@@ -64,7 +62,6 @@ public class BorrowContants {
 
 
     public static final String REPAY_FASHION_MONTH_STR = "按月分期";
-
 
     /**
      * 一次性还本付息
