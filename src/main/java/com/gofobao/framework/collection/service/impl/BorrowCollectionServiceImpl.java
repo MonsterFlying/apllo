@@ -214,9 +214,9 @@ public class BorrowCollectionServiceImpl implements BorrowCollectionService {
             collection.setOrder(p.getOrder() + 1);
             collection.setTimeLimit(BorrowContants.REPAY_FASHION_ONCE==borrow.getRepayFashion()?BorrowContants.REPAY_FASHION_ONCE:borrow.getTimeLimit());
             if (borrow.getType().intValue() == 0 || borrow.getType().intValue() == 4) { //官标
-                collection.setEarnings(StringHelper.formatMon((p.getCollectionMoney() * 0.9) / 100D));
+                collection.setEarnings(StringHelper.formatMon((p.getInterest() * 0.9) / 100D));
             } else {
-                collection.setEarnings(StringHelper.formatMon(p.getCollectionMoney() / 100D));
+                collection.setEarnings(StringHelper.formatMon(p.getInterest() / 100D));
             }
             collectionList.add(collection);
         });
