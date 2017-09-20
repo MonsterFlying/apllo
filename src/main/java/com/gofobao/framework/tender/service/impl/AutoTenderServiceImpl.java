@@ -110,6 +110,9 @@ public class AutoTenderServiceImpl implements AutoTenderService {
                 "  AND uta.del = 0\n" +
                 "\tAND u.is_lock = '0'\n");
 
+        sql.append(String.format(" AND t.lowest <= %s ", borrow.getMoney()));
+        sql.append(String.format(" AND a.use_money >= %s", borrow.getLowest()));
+
         Integer type = !ObjectUtils.isEmpty(borrow.getTenderId()) ? 3 : borrow.getType();
         sql.append(" and t.tender_" + type + " = 1");
 

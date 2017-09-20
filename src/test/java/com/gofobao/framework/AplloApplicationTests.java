@@ -643,52 +643,17 @@ public class AplloApplicationTests {
     @Test
     public void test() {
 
-
-        //查询当前借款的所有 状态为1的 tender记录
-        Specification<Tender> ts = Specifications.<Tender>and()
-                .eq("borrowId", 170226)
-                .eq("status", 1)
-                .build();
-
-        List<Tender> tenderList = tenderService.findList(ts);
-        Borrow borrow = borrowService.findById(170226L);
-
-
-        double totalManageFee = 0; // 净值标, 收取账户管理费
-        if (borrow.getType() == 1) {
-            double manageFeeRate = 0.0012;
-            if (borrow.getRepayFashion() == 1) {
-                totalManageFee = MoneyHelper.round(borrow.getMoney() * manageFeeRate / 30 * borrow.getTimeLimit(), 0);
-            } else {
-                totalManageFee = MoneyHelper.round(borrow.getMoney() * manageFeeRate * borrow.getTimeLimit(), 0);
-            }
+        MqConfig mqConfig = new MqConfig();
+        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TENDER);
+        mqConfig.setTag(MqTagEnum.AUTO_TENDER);
+        ImmutableMap<String, String> body = ImmutableMap
+                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString("179939"), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+        mqConfig.setMsg(body);
+        try {
+            mqHelper.convertAndSend(mqConfig);
+        } catch (Throwable e) {
+            log.error("borrowProvider autoTender send mq exception", e);
         }
-
-        List<LendPay> lendPayList = new ArrayList<>();
-        LendPay lendPay;
-        UserThirdAccount tenderUserThirdAccount;
-        double sumCount = 0, validMoney, debtFee;
-        double sumNetWorthFee = 0;
-        for (Tender tender : tenderList) {
-            debtFee = 0;
-            /*if (BooleanHelper.isTrue(tender.getThirdTenderFlag())) {
-                continue;
-            }*/
-            tenderUserThirdAccount = userThirdAccountService.findByUserId(tender.getUserId());
-            Preconditions.checkNotNull(tenderUserThirdAccount, "投资人未开户!");
-
-            validMoney = tender.getValidMoney();//投标有效金额
-            sumCount += validMoney; //放款总金额
-
-            //净值账户管理费
-            if (borrow.getType() == 1) {
-                double newWorthFee = MoneyHelper.round(MoneyHelper.multiply(MoneyHelper.divide(validMoney, borrow.getMoney()), totalManageFee),0);
-                sumNetWorthFee = MoneyHelper.add(sumNetWorthFee, newWorthFee);
-                debtFee = MoneyHelper.add(debtFee, newWorthFee);
-            }
-            log.info(StringHelper.formatDouble(debtFee, 100, false));
-        }
-        log.info("" + new Double(sumNetWorthFee).longValue());
 
         //1.查询并判断还款记录是否存在!
        /* BorrowRepayment borrowRepayment = borrowRepaymentService.findById(297l);*//* 当期还款记录 *//*

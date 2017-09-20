@@ -143,7 +143,7 @@ public class TenderProvider {
                             && (!autoTenderIds.contains(NumberHelper.toLong(voFindAutoTender.get("id"))))) {  // 保证自动不能重复
                         ResponseEntity<VoBaseResp> response = tenderBiz.createTender(voCreateBorrowTender);
                         if (response.getBody().getState().getCode() == VoBaseResp.OK) {
-                            moneyYes += lowest;
+                            moneyYes += money;
                             long autoTenderId = NumberHelper.toLong(voFindAutoTender.get("id"));
                             autoTenderIds.add(autoTenderId);
                             tenderUserIds.add(NumberHelper.toLong(voFindAutoTender.get("userId")));
