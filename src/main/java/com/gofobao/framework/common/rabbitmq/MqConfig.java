@@ -30,6 +30,7 @@ public class MqConfig {
     public static final String EMAIL = "email";
     public static final String TIMESTAMP = "timestamp";
     public static final String CONTENT = "content";
+    public static final String SUBJECT = "subject";
     public static final String SOURCE_ID = "sourceId";
     public static final String BATCH_NO = "batch_no";
     public static final String BATCH_RESP = "batch_resp";

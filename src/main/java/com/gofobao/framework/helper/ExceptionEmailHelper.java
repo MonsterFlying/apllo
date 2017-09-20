@@ -31,7 +31,7 @@ public class ExceptionEmailHelper {
         try {
             MqConfig config = new MqConfig();
             config.setQueue(MqQueueEnum.RABBITMQ_EMAIL);
-            config.setTag(MqTagEnum.SEND_BORROW_PROTOCOL_EMAIL);
+            config.setTag(MqTagEnum.EXCEPTION_EMAIL);
             ImmutableMap<String, String> body = ImmutableMap
                     .of(MqConfig.EMAIL, EMAIL,
                             MqConfig.IP, "127.0.0.1",
@@ -53,7 +53,7 @@ public class ExceptionEmailHelper {
         try {
             MqConfig config = new MqConfig();
             config.setQueue(MqQueueEnum.RABBITMQ_EMAIL);
-            config.setTag(MqTagEnum.SEND_BORROW_PROTOCOL_EMAIL);
+            config.setTag(MqTagEnum.EXCEPTION_EMAIL);
             ImmutableMap<String, String> body = ImmutableMap
                     .of(MqConfig.EMAIL, EMAIL,
                             MqConfig.IP, "127.0.0.1",

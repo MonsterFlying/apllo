@@ -21,4 +21,7 @@ public interface IncrStatisticService {
 
 
     BigDecimal registerTotal();
+
+
+    void dayStatistic( Date date);
 }

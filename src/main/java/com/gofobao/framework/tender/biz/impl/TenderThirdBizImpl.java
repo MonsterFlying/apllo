@@ -123,7 +123,6 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.SUCCESS.equals(response.getRetCode()))) {
             String msg = ObjectUtils.isEmpty(response) ? "当前网络不稳定，请稍候重试" : response.getRetMsg();
             log.error(String.format("进入投标撤回程序: %s", msg));
-            cancelJixinTenderRecord(request);   // 取消自动即信投标
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, msg));
         }
 
@@ -136,41 +135,6 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         return ResponseEntity.ok(VoBaseResp.ok("创建投标成功!"));
     }
 
-    /**
-     * 即信投标异常主动请求撤销
-     *
-     * @return
-     */
-    @Override
-    public boolean cancelJixinTenderRecord(BidAutoApplyRequest bidAutoApplyRequest) {
-        try {
-            if (ObjectUtils.isEmpty(bidAutoApplyRequest)) {
-                log.error("撤销自动投标请求为空");
-                return false;
-            }
-
-            BidCancelReq bidCancelReq = new BidCancelReq();
-            bidCancelReq.setAccountId(bidAutoApplyRequest.getAccountId());
-            String orderId = JixinHelper.getOrderId(JixinHelper.CANCEL_TENDER_PREFIX);
-            bidCancelReq.setOrderId(orderId);  // 取消投标申请
-            bidCancelReq.setOrgOrderId(bidAutoApplyRequest.getOrderId()); // 原始投标Id
-            bidCancelReq.setProductId(bidAutoApplyRequest.getProductId()); // 投标ID
-            bidCancelReq.setTxAmount(bidAutoApplyRequest.getTxAmount()); // 投标金额
-            bidCancelReq.setAccountId(bidAutoApplyRequest.getAccountId()); // 投标人
-            BidCancelResp bidCancelResp = jixinManager.send(JixinTxCodeEnum.BID_CANCEL, bidCancelReq, BidCancelResp.class);
-            if (ObjectUtils.isEmpty(bidCancelResp) || JixinResultContants.SUCCESS.equals(bidCancelResp.getRetCode())) {
-                String msg = ObjectUtils.isEmpty(bidCancelResp) ? "当前网络不稳定，请稍候重试" : bidCancelResp.getRetMsg();
-                log.error(String.format("请求即信取消自动投标失败: %s", msg));
-                return false;
-            } else {
-                log.info("请求即信取消自动投标成功");
-                return true;
-            }
-        } catch (Exception e) {
-            log.error("请求即信取消自动投标失败!", e);
-            return false;
-        }
-    }
 
 
     /**

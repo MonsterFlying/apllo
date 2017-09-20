@@ -17,6 +17,7 @@ import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.borrow.vo.request.VoCancelBorrow;
 import com.gofobao.framework.borrow.vo.response.VoBorrowTenderUserRes;
+import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.common.assets.AssetChange;
 import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
@@ -29,6 +30,7 @@ import com.gofobao.framework.core.helper.PasswordHelper;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.*;
 import com.gofobao.framework.helper.project.BorrowHelper;
+import com.gofobao.framework.helper.project.JixinTenderRecordHelper;
 import com.gofobao.framework.helper.project.SecurityHelper;
 import com.gofobao.framework.lend.entity.Lend;
 import com.gofobao.framework.lend.service.LendService;
@@ -63,6 +65,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
@@ -103,7 +106,7 @@ public class TenderBizImpl implements TenderBiz {
     @Autowired
     private LendService lendService;
     @Autowired
-    private BorrowHelper borrowHelper;
+    private JixinTenderRecordHelper jixinTenderRecordHelper;
 
 
     /**
@@ -284,7 +287,7 @@ public class TenderBizImpl implements TenderBiz {
                 voSaveThirdTender.setProductId(borrow.getProductId()); // productId
                 voSaveThirdTender.setOrderId(orderId);
                 voSaveThirdTender.setIsAuto(borrowTender.getIsAuto());
-                borrowHelper.saveBorrowTenderInRedis(voSaveThirdTender);
+                jixinTenderRecordHelper.saveJixinTenderInRedis(voSaveThirdTender);
             }
         }
         borrowTender.setIsThirdRegister(true);
@@ -537,6 +540,7 @@ public class TenderBizImpl implements TenderBiz {
     public ResponseEntity<VoBaseResp> tender(VoCreateTenderReq voCreateTenderReq) throws Exception {
         //投标撤回集合
         List<VoSaveThirdTender> voSaveThirdTenderList = null;
+        Borrow borrow = borrowService.findById(voCreateTenderReq.getBorrowId());
         try {
             ResponseEntity<VoBaseResp> voBaseRespResponseEntity = createTender(voCreateTenderReq);
             if (voBaseRespResponseEntity.getStatusCode().equals(HttpStatus.OK)) {
@@ -546,25 +550,11 @@ public class TenderBizImpl implements TenderBiz {
             }
         } catch (Exception e) {
             //投标撤回
-            voSaveThirdTenderList = borrowHelper.getBorrowTenderInRedis(String.valueOf(voCreateTenderReq.getBorrowId()), voCreateTenderReq.getIsAutoTender());
-            voSaveThirdTenderList.forEach(voSaveThirdTender -> {
-                // 取消自动投标申请
-                BidAutoApplyRequest bidAutoApplyRequest = new BidAutoApplyRequest();
-                bidAutoApplyRequest.setAccountId(voSaveThirdTender.getAccountId()); // 用户投标账号
-                bidAutoApplyRequest.setOrderId(voSaveThirdTender.getOrderId()); // 原始投标ID
-                bidAutoApplyRequest.setTxAmount(voSaveThirdTender.getTxAmount()); // 投标金额
-                bidAutoApplyRequest.setProductId(voSaveThirdTender.getProductId()); // productId
-                boolean result = tenderThirdBiz.cancelJixinTenderRecord(bidAutoApplyRequest);
-                if (result) {
-                    log.info(String.format("投标申请取消申请成功: %s", new Gson().toJson(bidAutoApplyRequest)));
-                } else {
-                    log.error(String.format("投标申请取消申请失败: %s", new Gson().toJson(bidAutoApplyRequest)));
-                }
-            });
+            jixinTenderRecordHelper.cancelJixinTenderByRedisRecord(borrow.getProductId(), false);
             throw new Exception(e);
         } finally {
             //从redis删除投标申请记录
-            borrowHelper.deleteBorrowTenderInRedis(voSaveThirdTenderList);
+            jixinTenderRecordHelper.removeJixinTenderRecordInRedis(borrow.getProductId(), false);
         }
     }
 
