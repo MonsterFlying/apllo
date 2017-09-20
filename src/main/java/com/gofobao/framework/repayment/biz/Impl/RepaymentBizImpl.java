@@ -1497,7 +1497,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             batchAssetChangeItemService.save(batchAssetChangeItem);
         }
 
-        if (advance || borrow.getUserId().intValue() == repayUserId) {
+        if (ObjectUtils.isEmpty(borrow.getTakeUserId()) && borrow.getUserId().intValue() == repayUserId) { //当借款不是受托支付，并且是本人还款才会进行待还扣减
             // 扣除借款人待还
             batchAssetChangeItem = new BatchAssetChangeItem();
             batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);

@@ -976,7 +976,7 @@ public class BorrowBizImpl implements BorrowBiz {
         //发送借款协议
         sendBorrowProtocol(borrow);
         //更新总统计
-        updateStatisticByBorrowReview(borrow);
+        updateStatisticByBorrowReview(borrow, borrowRepaymentList);
         return true;
     }
 
@@ -1117,18 +1117,19 @@ public class BorrowBizImpl implements BorrowBiz {
         long repaymentMoney = borrowRepaymentList.stream().mapToLong(BorrowRepayment::getRepayMoney).sum();
         /* 待还利息 */
         long repaymentInterest = borrowRepaymentList.stream().mapToLong(BorrowRepayment::getInterest).sum();
-
-        // 添加待还
-        AssetChange paymentAssetChangeEntity = new AssetChange();
-        paymentAssetChangeEntity.setSourceId(borrow.getId());
-        paymentAssetChangeEntity.setGroupSeqNo(groupSeqNo);
-        paymentAssetChangeEntity.setMoney(repaymentMoney);
-        paymentAssetChangeEntity.setInterest(repaymentInterest);
-        paymentAssetChangeEntity.setSeqNo(assetChangeProvider.getSeqNo());
-        paymentAssetChangeEntity.setRemark(String.format("添加待还金额%s元", StringHelper.formatDouble(repaymentMoney / 100D, true)));
-        paymentAssetChangeEntity.setType(AssetChangeTypeEnum.paymentAdd);
-        paymentAssetChangeEntity.setUserId(takeUserId);
-        assetChangeProvider.commonAssetChange(paymentAssetChangeEntity);  // 放款
+        if (ObjectUtils.isEmpty(borrow.getTakeUserId())) { //不存在收款人id时  为非受托支付 才需要添加待还
+            // 添加待还
+            AssetChange paymentAssetChangeEntity = new AssetChange();
+            paymentAssetChangeEntity.setSourceId(borrow.getId());
+            paymentAssetChangeEntity.setGroupSeqNo(groupSeqNo);
+            paymentAssetChangeEntity.setMoney(repaymentMoney);
+            paymentAssetChangeEntity.setInterest(repaymentInterest);
+            paymentAssetChangeEntity.setSeqNo(assetChangeProvider.getSeqNo());
+            paymentAssetChangeEntity.setRemark(String.format("添加待还金额%s元", StringHelper.formatDouble(repaymentMoney / 100D, true)));
+            paymentAssetChangeEntity.setType(AssetChangeTypeEnum.paymentAdd);
+            paymentAssetChangeEntity.setUserId(takeUserId);
+            assetChangeProvider.commonAssetChange(paymentAssetChangeEntity);  // 放款
+        }
     }
 
     /**
@@ -1658,7 +1659,7 @@ public class BorrowBizImpl implements BorrowBiz {
                     content = thymeleafHelper.build("borrowProtocol", templateMap);
 
                     // 使用消息队列发送邮件
-                    try{
+                    try {
                         MqConfig config = new MqConfig();
                         config.setQueue(MqQueueEnum.RABBITMQ_EMAIL);
                         config.setTag(MqTagEnum.SEND_BORROW_PROTOCOL_EMAIL);
@@ -1669,8 +1670,8 @@ public class BorrowBizImpl implements BorrowBiz {
                                         "content", content);
                         config.setMsg(body);
                         mqHelper.convertAndSend(config);
-                    }catch (Exception e){
-                        log.error("发送广富宝金服借款协议异常" , e);
+                    } catch (Exception e) {
+                        log.error("发送广富宝金服借款协议异常", e);
                     }
                 }
             }
@@ -1717,20 +1718,14 @@ public class BorrowBizImpl implements BorrowBiz {
      *
      * @param borrow
      */
-    private void updateStatisticByBorrowReview(Borrow borrow) {
-        Specification<BorrowRepayment> brs = Specifications
-                .<BorrowRepayment>and()
-                .eq("borrowId", borrow.getId())
-                .build();
-
-        List<BorrowRepayment> repaymentList = borrowRepaymentService.findList(brs);
-        if (CollectionUtils.isEmpty(repaymentList)) {//查询当前借款 还款记录
+    private void updateStatisticByBorrowReview(Borrow borrow, List<BorrowRepayment> borrowRepaymentList) {
+        if (CollectionUtils.isEmpty(borrowRepaymentList)) {//查询当前借款 还款记录
             return;
         }
 
         long repayMoney = 0;
         long principal = 0;
-        for (BorrowRepayment borrowRepayment : repaymentList) {
+        for (BorrowRepayment borrowRepayment : borrowRepaymentList) {
             repayMoney += borrowRepayment.getRepayMoney();
             principal += borrowRepayment.getPrincipal();
         }

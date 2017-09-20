@@ -337,9 +337,6 @@ public class TransferBizImpl implements TransferBiz {
         }
 
         // 新增子级投标记录,更新老债权记录
-        /**
-         * @// TODO: 2017/9/20 判断是否是全额转让 如果是非全额转让 则原转让用户承接多余的债权（生成新的tender）
-         */
         List<Tender> childTenderList = addChildTender(nowDate, transfer, parentTender, transferBuyLogList);
 
         // 生成子级债权回款记录，标注老债权回款已经转出
