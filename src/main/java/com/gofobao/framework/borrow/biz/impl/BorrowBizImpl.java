@@ -1117,18 +1117,19 @@ public class BorrowBizImpl implements BorrowBiz {
         long repaymentMoney = borrowRepaymentList.stream().mapToLong(BorrowRepayment::getRepayMoney).sum();
         /* 待还利息 */
         long repaymentInterest = borrowRepaymentList.stream().mapToLong(BorrowRepayment::getInterest).sum();
-
-        // 添加待还
-        AssetChange paymentAssetChangeEntity = new AssetChange();
-        paymentAssetChangeEntity.setSourceId(borrow.getId());
-        paymentAssetChangeEntity.setGroupSeqNo(groupSeqNo);
-        paymentAssetChangeEntity.setMoney(repaymentMoney);
-        paymentAssetChangeEntity.setInterest(repaymentInterest);
-        paymentAssetChangeEntity.setSeqNo(assetChangeProvider.getSeqNo());
-        paymentAssetChangeEntity.setRemark(String.format("添加待还金额%s元", StringHelper.formatDouble(repaymentMoney / 100D, true)));
-        paymentAssetChangeEntity.setType(AssetChangeTypeEnum.paymentAdd);
-        paymentAssetChangeEntity.setUserId(takeUserId);
-        assetChangeProvider.commonAssetChange(paymentAssetChangeEntity);  // 放款
+        if (ObjectUtils.isEmpty(borrow.getTakeUserId())) { //不存在收款人id时  为非受托支付 才需要添加待还
+            // 添加待还
+            AssetChange paymentAssetChangeEntity = new AssetChange();
+            paymentAssetChangeEntity.setSourceId(borrow.getId());
+            paymentAssetChangeEntity.setGroupSeqNo(groupSeqNo);
+            paymentAssetChangeEntity.setMoney(repaymentMoney);
+            paymentAssetChangeEntity.setInterest(repaymentInterest);
+            paymentAssetChangeEntity.setSeqNo(assetChangeProvider.getSeqNo());
+            paymentAssetChangeEntity.setRemark(String.format("添加待还金额%s元", StringHelper.formatDouble(repaymentMoney / 100D, true)));
+            paymentAssetChangeEntity.setType(AssetChangeTypeEnum.paymentAdd);
+            paymentAssetChangeEntity.setUserId(takeUserId);
+            assetChangeProvider.commonAssetChange(paymentAssetChangeEntity);  // 放款
+        }
     }
 
     /**
