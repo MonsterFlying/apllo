@@ -95,24 +95,26 @@ public class CreditProvider {
                     .<ThirdBatchLog>and()
                     .eq("type", ThirdBatchLogContants.BATCH_CREDIT_END)
                     .eq("state", 3)
-                    .like("acqRes","%\"tag\":\"END_CREDIT\"%")
+                    .like("acqRes", "%\"tag\":\"END_CREDIT\"%")
                     .eq("sourceId", borrowId)
                     .build();
             List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls);
             if (!CollectionUtils.isEmpty(thirdBatchLogList)) {
                 log.info(String.format("结束债权已完成，third_batch:%s", gson.toJson(thirdBatchLogList.get(0))));
+                return false;
             }
 
             tbls = Specifications
                     .<ThirdBatchLog>and()
                     .eq("type", ThirdBatchLogContants.BATCH_CREDIT_END)
                     .in("state", 0, 1)
-                    .like("acqRes","%\"tag\":\"END_CREDIT\"%")
+                    .like("acqRes", "%\"tag\":\"END_CREDIT\"%")
                     .eq("sourceId", borrowId)
                     .build();
             thirdBatchLogList = thirdBatchLogService.findList(tbls);
             if (!CollectionUtils.isEmpty(thirdBatchLogList)) {
                 log.info(String.format("结束债权正在处理中，third_batch:%s", gson.toJson(thirdBatchLogList.get(0))));
+                return false;
             }
             buildNotTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
         } else if (tag.equals(MqTagEnum.END_CREDIT_BY_TRANSFER.getValue())) { // 结束债权by转让标
@@ -122,23 +124,25 @@ public class CreditProvider {
                     .eq("type", ThirdBatchLogContants.BATCH_CREDIT_END)
                     .eq("state", 3)
                     .eq("sourceId", borrowId)
-                    .like("acqRes","%\"tag\":\"END_CREDIT_BY_TRANSFER\"%")
+                    .like("acqRes", "%\"tag\":\"END_CREDIT_BY_TRANSFER\"%")
                     .build();
             List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls);
             if (!CollectionUtils.isEmpty(thirdBatchLogList)) {
                 log.info(String.format("结束债权已完成，third_batch:%s", gson.toJson(thirdBatchLogList.get(0))));
+                return false;
             }
 
             tbls = Specifications
                     .<ThirdBatchLog>and()
                     .eq("type", ThirdBatchLogContants.BATCH_CREDIT_END)
                     .in("state", 0, 1)
-                    .like("acqRes","%\"tag\":\"END_CREDIT_BY_TRANSFER\"%")
+                    .like("acqRes", "%\"tag\":\"END_CREDIT_BY_TRANSFER\"%")
                     .eq("sourceId", borrowId)
                     .build();
             thirdBatchLogList = thirdBatchLogService.findList(tbls);
             if (!CollectionUtils.isEmpty(thirdBatchLogList)) {
                 log.info(String.format("结束债权正在处理中，third_batch:%s", gson.toJson(thirdBatchLogList.get(0))));
+                return false;
             }
             buildTransferCreditEndList(creditEndList, userThirdAccount.getAccountId(), borrow.getProductId(), borrowId);
         } else {
