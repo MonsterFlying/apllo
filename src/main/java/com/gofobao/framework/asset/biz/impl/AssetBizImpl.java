@@ -522,7 +522,8 @@ public class AssetBizImpl implements AssetBiz {
         rechargeDetailLog.setDel(0);
         rechargeDetailLog.setIp(IpHelper.getIpAddress(request));
         rechargeDetailLog.setMobile(voRechargeReq.getPhone());
-        rechargeDetailLog.setMoney(new Double(voRechargeReq.getMoney() * 100).longValue());
+        Double recordRecharge = MoneyHelper.multiply(voRechargeReq.getMoney(), 100D, 0);
+        rechargeDetailLog.setMoney(recordRecharge.longValue());
         rechargeDetailLog.setRechargeChannel(0);
         rechargeDetailLog.setState(state); // 充值成功
         rechargeDetailLog.setSeqNo(directRechargeOnlineRequest.getTxDate() + directRechargeOnlineRequest.getTxTime() + directRechargeOnlineRequest.getSeqNo());
@@ -1551,13 +1552,13 @@ public class AssetBizImpl implements AssetBiz {
         String txstsFlag = offlineRechargeCallbackResponse.getTxstsFlag(); // 是否为拨正  N 为原始
 
         UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(accountId);
-        Preconditions.checkNotNull(userThirdAccount, "线下充值, 当前开户信息为空") ;
+        Preconditions.checkNotNull(userThirdAccount, "线下充值, 当前开户信息为空");
         Long userId = userThirdAccount.getUserId();
 
         // 调用资金同步接口
-        String seqNo = String.format("%s%s%s", orgTxDate, orgTxTime, orgSeqNo) ;
+        String seqNo = String.format("%s%s%s", orgTxDate, orgTxTime, orgSeqNo);
         // 调用资金同步
-        assetSynBiz.doOfflineSyn(userId, txAmount, seqNo, orgTxDate) ;
+        assetSynBiz.doOfflineSyn(userId, txAmount, seqNo, orgTxDate);
         // 返回成功
         return ResponseEntity.ok("success");
     }
