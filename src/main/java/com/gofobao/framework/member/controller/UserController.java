@@ -69,6 +69,13 @@ public class UserController {
         return userPhoneBiz.bindSwitchPhone(voBindSwitchPhoneReq);
     }
 
+    @ApiOperation("更换手机下一步短信判断")
+    @GetMapping("/user/phone/switchVerify/{smsCode}")
+    public ResponseEntity<VoBaseResp> verfyUnBindPhoneMessage(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable("smsCode") String smsCode) {
+        return userPhoneBiz.verfyUnBindPhoneMessage(userId, smsCode);
+    }
+
+
     @ApiOperation("判断 邮箱/手机/用户名 是否可用")
     @PostMapping("/pub/user/info/checkOnly")
     public ResponseEntity<VoBaseResp> checkOnlyForUserInfo(@Valid @ModelAttribute VoJudgmentAvailableReq VoJudgmentAvailableReq) {
@@ -98,11 +105,6 @@ public class UserController {
     }
 
 
-    @ApiOperation("更换手机下一步短信判断")
-    @GetMapping("/user/phone/switchVerify/{smsCode}")
-    public ResponseEntity<VoBaseResp> verfyUnBindPhoneMessage(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId, @PathVariable("smsCode") String smsCode) {
-        return userPhoneBiz.verfyUnBindPhoneMessage(userId, smsCode);
-    }
 
     @ApiOperation("获取用户配置信息")
     @PostMapping("/user/configInfo")

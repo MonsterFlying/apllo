@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Component
 @Slf4j
-public class CommonEmaiProvider {
+public class CommonEmailProvider {
 
     @Autowired
     SmsTemplateService smsTemplateService;

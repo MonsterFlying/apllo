@@ -1648,7 +1648,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
         Preconditions.checkNotNull(user, "UserThirdBizImpl.queryUserThirdInfo: user is null");
         String phone = user.getPhone();
         if (StringUtils.isEmpty(phone)) {
-            throw new Exception("记录不存在");
+            throw new Exception("当前用户手机号为空");
         }
 
         AccountQueryByMobileRequest accountQueryByMobileRequest = new AccountQueryByMobileRequest();
@@ -1658,7 +1658,7 @@ public class UserThirdBizImpl implements UserThirdBiz {
                 AccountQueryByMobileResponse.class);
         if (ObjectUtils.isEmpty(accountQueryByMobileResponse)
                 || !JixinResultContants.SUCCESS.equals(accountQueryByMobileResponse.getRetCode())) {
-            String msg = accountQueryByMobileResponse == null ? "网路异常请稍后再试" : accountQueryByMobileResponse.getRetMsg();
+            String msg = ObjectUtils.isEmpty(accountQueryByMobileResponse) ? "网路异常请稍后再试" : accountQueryByMobileResponse.getRetMsg();
             throw new Exception(msg);
         }
 
@@ -1667,41 +1667,47 @@ public class UserThirdBizImpl implements UserThirdBiz {
         String idNo = accountQueryByMobileResponse.getIdNo(); // 证件号
         String name = accountQueryByMobileResponse.getName(); // 用户真实姓名
 
-        UserThirdAccount entity = new UserThirdAccount();
+        UserThirdAccount entity = userThirdAccountService.findByDelUseid(user.getId());
         Date nowDate = new Date();
+        if(ObjectUtils.isEmpty(entity)){
+            entity = new UserThirdAccount();
+            entity.setCreateAt(nowDate);
+            // 新用户只能主动查询用户银行卡
+            try {
+                CardBindItem cardInfoByThird = findCardInfoByThird(accountId); // 查询银行卡
+                String cardNo = cardInfoByThird.getCardNo();
+                BankBinHelper.BankInfo bankInfo = bankBinHelper.find(cardNo);
+                if (ObjectUtils.isEmpty(bankInfo) || !bankInfo.getCardType().equals("借记卡")) {
+                    throw new Exception("系统异常");
+                }
+                String bankName = bankInfo.getBankName();
+                if (StringUtils.isEmpty(bankName)) {
+                    throw new Exception("系统异常");
+                }
+
+                DictValue dictValue = bankLimitCache.get(bankName);
+                entity.setBankLogo(dictValue.getValue03());
+                entity.setBankName(bankName);
+            } catch (Exception e) {
+                log.error("系统主动查询开户信息并且写入银行卡信息异常");
+            }
+        }
+
+        entity.setUserId(user.getId());
         entity.setUpdateAt(nowDate);
         entity.setUserId(user.getId());
-        entity.setCreateAt(nowDate);
         entity.setCreateId(user.getId());
-        entity.setUserId(user.getId());
         entity.setDel(0);
         entity.setMobile(mobile);
         entity.setIdType(1);
         entity.setIdNo(idNo);
-        try {
-            CardBindItem cardInfoByThird = findCardInfoByThird(accountId); // 查询银行卡
-            String cardNo = cardInfoByThird.getCardNo();
-            BankBinHelper.BankInfo bankInfo = bankBinHelper.find(cardNo);
-            if (ObjectUtils.isEmpty(bankInfo) || !bankInfo.getCardType().equals("借记卡")) {
-                throw new Exception("系统异常");
-            }
-            String bankName = bankInfo.getBankName();
-            if (StringUtils.isEmpty(bankName)) {
-                throw new Exception("系统异常");
-            }
-
-            DictValue dictValue = bankLimitCache.get(bankName);
-            entity.setBankLogo(dictValue.getValue03());
-            entity.setBankName(bankName);
-        } catch (Exception e) {
-            log.error("系统主动查询开户信息并且写入银行卡信息异常");
-        }
         entity.setAcctUse(1);
         entity.setAccountId(accountId);
         entity.setPasswordState(0);
         entity.setCardNoBindState(1);
         entity.setName(name);
         userThirdAccountService.save(entity);
+
 
         //  9.保存用户实名信息
         user.setRealname(name);

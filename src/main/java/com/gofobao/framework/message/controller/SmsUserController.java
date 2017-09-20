@@ -54,6 +54,14 @@ public class SmsUserController {
     }
 
 
+    @ApiOperation("更换手机---> 发送绑定新手机短信验证码 第二步")
+    @PostMapping("/switch/newPhone/bind")
+    public ResponseEntity<VoBaseResp> sendBindPhone4Switch(HttpServletRequest request,
+                                                           @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
+                                                           @Valid @ModelAttribute VoAnonSmsReq voAnonSmsReq) {
+        return messageBiz.sendBindPhone4Switch(request, voAnonSmsReq, userId);
+    }
+
     @ApiOperation("绑定新手---> 发送用户绑定手机")
     @PostMapping("/bindPhone")
     public ResponseEntity<VoBaseResp> sendBindPhone(HttpServletRequest request,
@@ -63,13 +71,7 @@ public class SmsUserController {
     }
 
 
-    @ApiOperation("更换手机---> 发送绑定新手机短信验证码 ")
-    @PostMapping("/switch/newPhone/bind")
-    public ResponseEntity<VoBaseResp> sendBindPhone4Switch(HttpServletRequest request,
-                                                           @ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
-                                                           @Valid @ModelAttribute VoAnonSmsReq voAnonSmsReq) {
-        return messageBiz.sendBindPhone4Switch(request, voAnonSmsReq, userId);
-    }
+
 
     @ApiOperation("重置交易密码-->发送短信验证码")
     @PostMapping("/rest/payPassWord/sendSms")
