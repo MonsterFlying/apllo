@@ -1042,7 +1042,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                     body.put(MqConfig.MSG_ID, StringHelper.toString(parentBorrow.getId()));
                     body.put(MqConfig.MSG_NAME, name);
                     body.put(MqConfig.MSG_ORDER, StringHelper.toString(borrowRepayment.getOrder() + 1));
-                    body.put(MqConfig.MSG_MONEY, StringHelper.formatDouble(principal, 100, true));
+                    body.put(MqConfig.MSG_MONEY, StringHelper.formatDouble(collectionMoneyYes, 100, true));
                     body.put(MqConfig.MSG_INTEREST, StringHelper.formatDouble(interest, 100, true));
                     config.setMsg(body);
 
@@ -2436,15 +2436,12 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param borrowCollectionMaps
      * @param titularBorrowUserId
      */
-    private void addTransferTenderByAdvance(Borrow borrow, List<Transfer> transferList, BorrowRepayment borrowRepayment, List<TransferBuyLog> transferBuyLogList, List<Tender> tenderList, Map<Long/* tenderId */, BorrowCollection> borrowCollectionMaps, long titularBorrowUserId) {
+    private void addTransferTenderByAdvance(Borrow borrow, List<Transfer> transferList, BorrowRepayment borrowRepayment, List<TransferBuyLog> transferBuyLogList,
+                                            List<Tender> tenderList, Map<Long/* tenderId */, BorrowCollection> borrowCollectionMaps, long titularBorrowUserId,
+                                            long lateDays, long lateInterest) {
         //创建债权转让信息，生成债权转让购买记录
         Map<Long/* 投资id */, Transfer> transferMaps = transferList.stream().collect(Collectors.toMap(Transfer::getTenderId, Function.identity()));
         Map<Long/* 债权转让id */, TransferBuyLog> transferBuyLogMaps = transferBuyLogList.stream().collect(Collectors.toMap(TransferBuyLog::getTransferId, Function.identity()));
-
-        /* 逾期天数*/
-        int lateDays = getLateDays(borrowRepayment);
-        /* 逾期费用 */
-        long lateLateInterest = calculateLateInterest(lateDays, borrowRepayment, borrow);
 
         tenderList.stream().forEach(tender -> {
             /* 债权转让转让是否在存管系统登记成功 */
@@ -2467,8 +2464,15 @@ public class RepaymentBizImpl implements RepaymentBiz {
             Date collectionAt = DateHelper.beginOfDate(borrowCollection.getCollectionAt());//理论结束还款时间
 
             /* 当期应计利息 */
+            long alreadyInterest = 0;
 
-            long alreadyInterest = new Double(MoneyHelper.round(MoneyHelper.divide(borrowCollection.getPrincipal(), borrowRepayment.getPrincipal()) * lateLateInterest, 0)).longValue();
+            //计算借款人逾期罚息
+            if ((lateDays > 0) && (lateInterest > 0)) {
+                double overdueFeeRatio = MoneyHelper.divide(borrowCollection.getPrincipal(), new Double(borrowRepayment.getPrincipal()));
+                double singleLateInterest = MoneyHelper.multiply(overdueFeeRatio, lateInterest);
+                long overdueFee = new Double(MoneyHelper.round(MoneyHelper.divide(singleLateInterest, 2d), 0)).longValue();// 名义借款人收取50% 逾期管理费 ;
+                alreadyInterest += overdueFee;
+            }
             //新增债权转让记录
             Date nowDate = new Date();
             transfer = new Transfer();
@@ -2476,13 +2480,13 @@ public class RepaymentBizImpl implements RepaymentBiz {
             transfer.setType(2);
             transfer.setUserId(tender.getUserId());
             transfer.setTransferMoney(principal + interest + alreadyInterest);
-            transfer.setTransferMoneyYes(1l);
+            transfer.setTransferMoneyYes(principal + interest + alreadyInterest);
             transfer.setVerifyAt(nowDate);
             transfer.setSuccessAt(nowDate);
             transfer.setDel(false);
             transfer.setBorrowId(borrow.getId());
             transfer.setPrincipal(principal);
-            transfer.setAlreadyInterest(alreadyInterest);
+            transfer.setAlreadyInterest(interest + alreadyInterest);
             transfer.setApr(borrow.getApr());
             transfer.setCreatedAt(nowDate);
             transfer.setTimeLimit(borrow.getTimeLimit());/* 垫付是全部期限 */
@@ -2504,8 +2508,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
             transferBuyLog.setType(2);
             transferBuyLog.setState(0);
             transferBuyLog.setAuto(false);
-            transferBuyLog.setBuyMoney(principal + alreadyInterest);
-            transferBuyLog.setValidMoney(principal + alreadyInterest);
+            transferBuyLog.setBuyMoney(principal + interest + alreadyInterest);
+            transferBuyLog.setValidMoney(principal + interest + alreadyInterest);
             transferBuyLog.setPrincipal(principal);
             transferBuyLog.setCreatedAt(nowDate);
             transferBuyLog.setUpdatedAt(nowDate);
@@ -2588,14 +2592,15 @@ public class RepaymentBizImpl implements RepaymentBiz {
         }
         // 生成垫付还款主记录
         BatchAssetChange batchAssetChange = addBatchAssetChangeByAdvance(borrowRepayment.getId(), batchNo);
-        // 生成债权转让记录
-        addTransferTenderByAdvance(borrow, transferList, borrowRepayment, transferBuyLogList, tenderList, borrowCollectionMaps, titularBorrowAccount.getUserId());
 
         Map<Long, Transfer> transferMaps = transferList.stream().collect(Collectors.toMap(Transfer::getTenderId, Function.identity()));
         Map<Long, TransferBuyLog> transferBuyLogMaps = transferBuyLogList.stream().collect(Collectors.toMap(TransferBuyLog::getTransferId, Function.identity()));
         //获取名义借款人垫付记录
-        List<CreditInvest> creditInvestList = calculateAdvancePlan(borrow, titularBorrowAccount, transferMaps, transferBuyLogMaps, tenderList, borrowCollectionMaps, advanceAssetChangeList, lateDays, lateInterest);
+        List<CreditInvest> creditInvestList = calculateAdvancePlan(borrow, borrowRepayment, titularBorrowAccount, transferMaps, transferBuyLogMaps, tenderList,
+                borrowCollectionMaps, advanceAssetChangeList, lateDays, lateInterest);
         Preconditions.checkNotNull(creditInvestList, "存管垫付记录不存在!");
+        // 生成债权转让记录
+        addTransferTenderByAdvance(borrow, transferList, borrowRepayment, transferBuyLogList, tenderList, borrowCollectionMaps, titularBorrowAccount.getUserId(), lateDays, lateInterest);
         // 生成还款记录
         doGenerateAssetChangeRecodeByAdvance(borrow, borrowRepayment, advanceAssetChangeList, batchAssetChange, titularBorrowAccount, assetChangeProvider.getSeqNo(), groupSeqNo);
         // 垫付金额 = sum(垫付本金 + 垫付利息)
@@ -2673,7 +2678,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @return
      * @throws Exception
      */
-    public List<CreditInvest> calculateAdvancePlan(Borrow borrow, UserThirdAccount titularBorrowAccount, Map<Long, Transfer> transferMaps, Map<Long, TransferBuyLog> transferBuyLogMaps,
+    public List<CreditInvest> calculateAdvancePlan(Borrow borrow, BorrowRepayment borrowRepayment, UserThirdAccount titularBorrowAccount, Map<Long, Transfer> transferMaps, Map<Long, TransferBuyLog> transferBuyLogMaps,
                                                    List<Tender> tenderList, Map<Long/* tenderId */, BorrowCollection> borrowCollectionMaps, List<AdvanceAssetChange> advanceAssetChanges,
                                                    int lateDays, long lateInterest) throws Exception {
 
@@ -2709,7 +2714,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             advanceAssetChange.setBorrowCollection(borrowCollection);
             //计算借款人逾期罚息
             if ((lateDays > 0) && (lateInterest > 0)) {
-                double overdueFeeRatio = MoneyHelper.divide(tender.getValidMoney(), new Double(borrow.getMoney()));
+                double overdueFeeRatio = MoneyHelper.divide(borrowCollection.getPrincipal(), new Double(borrowRepayment.getPrincipal()));
                 double singleLateInterest = MoneyHelper.multiply(overdueFeeRatio, lateInterest);
                 long overdueFee = new Double(MoneyHelper.round(MoneyHelper.divide(singleLateInterest, 2d), 0)).longValue();// 出借人收取50% 逾期管理费 ;
                 advanceAssetChange.setOverdueFee(overdueFee);

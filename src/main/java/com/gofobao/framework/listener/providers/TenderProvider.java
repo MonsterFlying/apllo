@@ -182,6 +182,7 @@ public class TenderProvider {
                 borrowService.updateById(updateBorrow);
             }
         } catch (Exception e) {
+            //取消债权
             jixinTenderRecordHelper.cancelJixinTenderByRedisRecord(borrow.getProductId(), true);
             throw new Exception(e);
         } finally {

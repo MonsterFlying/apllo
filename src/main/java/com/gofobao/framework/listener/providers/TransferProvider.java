@@ -417,13 +417,13 @@ public class TransferProvider {
         // 转让管理费
         int sumTransferFee = 0;
         /* 债权转让管理费费率 */
+        /**
+         * @// TODO: 2017/9/20 增加理财计划债权转让判断，不需要收取转让费用
+         */
         double transferFeeRate = BorrowHelper.getTransferFeeRate(transfer.getTimeLimit());
         double transferFee = MoneyHelper.multiply(transfer.getPrincipal(), transferFeeRate);  /* 转让管理费 */
         for (TransferBuyLog transferBuyLog : transferBuyLogList) {
             double txFee = 0;
-            if (BooleanHelper.isTrue(transferBuyLog.getThirdTransferFlag())) {  //判断标的已在存管登记转让
-                continue;
-            }
             /* 债权转让购买人存管账户信息 */
             tenderUserThirdAccount = userThirdAccountService.findByUserId(transferBuyLog.getUserId());
             Preconditions.checkNotNull(tenderUserThirdAccount, "投资人开户记录不存在!");
@@ -435,6 +435,10 @@ public class TransferProvider {
             double tempTransferFee = MoneyHelper.round(MoneyHelper.multiply(transferBuyLog.getValidMoney() / new Double(transfer.getPrincipal()), transferFee), 0);
             txFee += tempTransferFee;  // 分摊转让费用到各项中
             sumTransferFee += tempTransferFee;
+            //判断标的已在存管登记转让
+            if (BooleanHelper.isTrue(transferBuyLog.getThirdTransferFlag())) {
+                continue;
+            }
             /* 购买债权转让orderId */
             String transferOrderId = JixinHelper.getOrderId(JixinHelper.LEND_REPAY_PREFIX);
             creditInvest = new CreditInvest();

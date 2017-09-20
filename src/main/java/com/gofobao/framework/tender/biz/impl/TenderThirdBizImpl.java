@@ -214,23 +214,6 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         } catch (Exception e) {
             log.error("批次执行异常:", e);
         }
-
-       /* MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
-        mqConfig.setTag(MqTagEnum.BATCH_DEAL);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.SOURCE_ID, StringHelper.toString(acqResMap.get("transferId")),
-                        MqConfig.BATCH_NO, StringHelper.toString(batchCreditInvestRunCall.getBatchNo()),
-                        MqConfig.BATCH_RESP, GSON.toJson(batchCreditInvestRunCall),
-                        MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            log.info(String.format("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq %s", GSON.toJson(body)));
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("tenderThirdBizImpl thirdBatchCreditInvestRunCall send mq exception", e);
-        }*/
-
         return ResponseEntity.ok("success");
     }
 
