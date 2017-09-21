@@ -38,6 +38,11 @@ public class AleveServiceImpl implements AleveService {
     }
 
     @Override
+    public List<Aleve> findAll(Specification<Aleve> specification) {
+        return aleveRepository.findAll(specification) ;
+    }
+
+    @Override
     public Long countOfDateAndTranstype(String date, String type) {
         return aleveRepository.countOfDateAndTranstype(date, type) ;
     }
