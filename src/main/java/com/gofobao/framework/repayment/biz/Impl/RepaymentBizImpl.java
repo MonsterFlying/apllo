@@ -1560,7 +1560,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param borrow
      * @return
      * @throws Exception
-     * @// TODO: 2017/9/21 区别理财计划与普通投标
      */
     private ResponseEntity<VoBaseResp> normalRepay(String freezeOrderId, Map<String, Object> acqResMap,
                                                    UserThirdAccount repayUserThirdAccount,
@@ -1671,8 +1670,6 @@ public class RepaymentBizImpl implements RepaymentBiz {
             freezeAssetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
             freezeAssetChange.setSourceId(borrowRepayment.getId());
             assetChangeProvider.commonAssetChange(freezeAssetChange);
-
-            //查询即信投标
 
             //批量放款
             acqResMap.put("freezeMoney", freezeMoney);

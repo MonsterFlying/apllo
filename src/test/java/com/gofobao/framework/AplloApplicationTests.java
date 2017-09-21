@@ -63,6 +63,7 @@ import com.gofobao.framework.migrate.MigrateProtocolBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
+import com.gofobao.framework.scheduler.DailyAssetBackupScheduler;
 import com.gofobao.framework.scheduler.DealThirdBatchScheduler;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
@@ -640,33 +641,13 @@ public class AplloApplicationTests {
 
     }
 
+    @Autowired
+    private DailyAssetBackupScheduler dailyAssetBackupScheduler;
+
     @Test
     public void test() {
 
-        Specification<ThirdBatchLog> tbls = Specifications
-                .<ThirdBatchLog>and()
-                .eq("type", ThirdBatchLogContants.BATCH_CREDIT_END)
-                .eq("state", 3)
-                .like("acqRes", "%\"tag\":\"END_CREDIT\"%")
-                .eq("sourceId", 168749)
-                .build();
-        List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls);
-        if (!CollectionUtils.isEmpty(thirdBatchLogList)) {
-            log.info(String.format("结束债权已完成，third_batch:%s", GSON.toJson(thirdBatchLogList.get(0))));
-        }
-
-        tbls = Specifications
-                .<ThirdBatchLog>and()
-                .eq("type", ThirdBatchLogContants.BATCH_CREDIT_END)
-                .in("state", 0, 1)
-                .like("acqRes", "%\"tag\":\"END_CREDIT\"%")
-                .eq("sourceId", 168749)
-                .build();
-        thirdBatchLogList = thirdBatchLogService.findList(tbls);
-        if (!CollectionUtils.isEmpty(thirdBatchLogList)) {
-            log.info(String.format("结束债权正在处理中，third_batch:%s", GSON.toJson(thirdBatchLogList.get(0))));
-        }
-
+        dailyAssetBackupScheduler.process();
 
      /*   //记录批次处理日志
         thirdBatchDealLogBiz.recordThirdBatchDealLog(String.valueOf(113841),169974, ThirdBatchDealLogContants.PROCESSED,true,

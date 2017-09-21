@@ -229,23 +229,6 @@ public class BorrowBizImpl implements BorrowBiz {
             } catch (Exception e) {
                 log.error("批次执行异常:", e);
             }
-            /*//触发处理批次放款处理结果队列
-            MqConfig mqConfig = new MqConfig();
-            mqConfig.setTag(MqTagEnum.BATCH_DEAL);
-            mqConfig.setQueue(MqQueueEnum.RABBITMQ_THIRD_BATCH);
-            ImmutableMap<String, String> body = ImmutableMap
-                    .of(MqConfig.SOURCE_ID, StringHelper.toString(thirdBatchLog.getSourceId()),
-                            MqConfig.BATCH_NO, StringHelper.toString(thirdBatchLog.getBatchNo()),
-                            MqConfig.ACQ_RES, thirdBatchLog.getAcqRes(),
-                            MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-            mqConfig.setMsg(body);
-            try {
-                log.info(String.format("borrowBizImpl sendAgainVerify send mq %s", GSON.toJson(body)));
-                mqHelper.convertAndSend(mqConfig);
-            } catch (Throwable e) {
-                log.error("borrowBizImpl sendAgainVerify send mq exception", e);
-            }
-            log.info("即信批次回调处理结束");*/
         }
 
         if (borrow.getStatus() == 1 && borrow.getMoneyYes() >= borrow.getMoney()) {

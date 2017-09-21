@@ -11,11 +11,13 @@ import com.gofobao.framework.finance.vo.response.PlanBuyUserListWarpRes;
 import com.gofobao.framework.finance.vo.response.PlanDetail;
 import com.gofobao.framework.finance.vo.response.PlanListWarpRes;
 import com.gofobao.framework.finance.vo.response.VoViewFinancePlanTender;
+import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.validation.Valid;
 
@@ -74,8 +76,9 @@ public class FinanceController {
      */
     @ApiOperation("购买理财计划")
     @PostMapping("/v2/tender/finance/plan")
-    public ResponseEntity<VoBaseResp> tenderFinancePlan(VoTenderFinancePlan voTenderFinancePlan) {
+    public ResponseEntity<VoBaseResp> tenderFinancePlan(@Valid @ModelAttribute VoTenderFinancePlan voTenderFinancePlan,@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
         try {
+            voTenderFinancePlan.setUserId(userId);
             return financePlanBiz.tenderFinancePlan(voTenderFinancePlan);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(VoBaseResp.error(VoBaseResp.ERROR, "系统开小差了，请稍后再试!", VoViewFinancePlanTender.class));
