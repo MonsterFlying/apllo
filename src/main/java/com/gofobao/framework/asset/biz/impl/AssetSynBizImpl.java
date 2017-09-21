@@ -159,11 +159,9 @@ public class AssetSynBizImpl implements AssetSynBiz {
             return true;
         }
 
-        Date startDate = DateHelper.endOfDate(DateHelper.subDays(jixinTxDateHelper.getTxDate(), 1)) ;
-        Date endDate = DateHelper.beginOfDate(DateHelper.addDays(jixinTxDateHelper.getTxDate(), 1)) ;
         Specification<RechargeDetailLog> rechargeDetailLogSpecification = Specifications
                 .<RechargeDetailLog>and()
-                .between("createTime", new Range<>(startDate, endDate))
+                .between("createTime", new Range<>(DateHelper.beginOfDate(nowDate), DateHelper.endOfDate(nowDate)))
                 .eq("userId", userId)  // 用户ID
                 .eq("rechargeChannel", 1) // 线下充值
                 .eq("state", 1)  // 充值成功
