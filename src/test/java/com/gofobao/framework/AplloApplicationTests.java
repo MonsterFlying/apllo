@@ -60,6 +60,7 @@ import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.migrate.MigrateBorrowBiz;
 import com.gofobao.framework.migrate.MigrateProtocolBiz;
+import com.gofobao.framework.repayment.biz.LoanBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
@@ -71,6 +72,7 @@ import com.gofobao.framework.system.contants.ThirdBatchDealLogContants;
 import com.gofobao.framework.system.contants.ThirdBatchLogContants;
 import com.gofobao.framework.system.entity.ThirdBatchDealLog;
 import com.gofobao.framework.system.entity.ThirdBatchLog;
+import com.gofobao.framework.system.service.IncrStatisticService;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.contants.BorrowContants;
 import com.gofobao.framework.tender.entity.Tender;
@@ -893,5 +895,19 @@ public class AplloApplicationTests {
         System.out.println(response);*/
     }
 
+    @Autowired
+    private LoanBiz loanBiz;
+
+    @Test
+    public void timingRepayment(){
+        loanBiz.timingRepayment(new Date());
+    }
+    @Autowired
+    private IncrStatisticService incrStatisticService;
+
+    @Test
+    public void incrstatistic(){
+        incrStatisticService.dayStatistic(new Date());
+    }
 
 }

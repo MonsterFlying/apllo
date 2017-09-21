@@ -11,6 +11,7 @@ spring:
     hibernate:
       naming:
         strategy: org.hibernate.cfg.ImprovedNamingStrategy
+
     properties:
       hibernate:
         dialect : org.hibernate.dialect.MySQL5Dialect
@@ -66,7 +67,7 @@ jixin: #银行存管
   bankCode: "30050000" #交易机构代码
   product-no: "0105" # 产品编号
   bank-no: "3005" #产品编号
-  query-time-init: "20170425" # 与存管系统查询时间
+  query-time-init: "20170429" # 与存管系统查询时间
   crt-path:  # crt证书路径
   p12-path:  # p12证书路径
 

@@ -118,4 +118,10 @@ public interface BorrowService {
 
     List<VoViewBorrowList> pcIndexBorrowList();
 
+    /**
+     * 查询标集合
+     * @param ids
+     * @return
+     */
+    List<Borrow>findByBorrowIds(List<Long> ids);
 }
