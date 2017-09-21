@@ -4,6 +4,8 @@ import com.gofobao.framework.common.page.Page;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.finance.biz.FinancePlanBiz;
 import com.gofobao.framework.finance.biz.FinancePlanBuyerBiz;
+import com.gofobao.framework.finance.vo.request.VoFinanceAgainVerifyTransfer;
+import com.gofobao.framework.finance.vo.request.VoFinancePlanAssetChange;
 import com.gofobao.framework.finance.vo.request.VoTenderFinancePlan;
 import com.gofobao.framework.finance.vo.response.PlanBuyUserListWarpRes;
 import com.gofobao.framework.finance.vo.response.PlanDetail;
@@ -14,6 +16,8 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
 
 /**
  * Created by Zeke on 2017/8/10.
@@ -28,6 +32,17 @@ public class FinanceController {
 
     @Autowired
     private FinancePlanBuyerBiz financePlanBuyerBiz;
+
+    /**
+     * 理财计划复审
+     *
+     * @param voFinanceAgainVerifyTransfer
+     */
+    @ApiOperation("理财计划复审")
+    @GetMapping("/pub/again/verify")
+    public ResponseEntity<VoBaseResp> financeAgainVerifyTransfer(@Valid @ModelAttribute VoFinanceAgainVerifyTransfer voFinanceAgainVerifyTransfer) {
+        return financePlanBiz.financeAgainVerifyTransfer(voFinanceAgainVerifyTransfer);
+    }
 
     @ApiOperation("理财列表")
     @GetMapping("/plan/list/{pageIndex}/{pageSize}")
@@ -50,7 +65,6 @@ public class FinanceController {
     public ResponseEntity<PlanBuyUserListWarpRes> buyUserList(@PathVariable Long id) {
         return financePlanBuyerBiz.buyUserList(id);
     }
-
 
     /**
      * 购买理财计划

@@ -79,14 +79,13 @@ public class CreditProvider {
      * @return
      * @throws Exception
      */
-    @Transactional(rollbackFor = Exception.class)
     public boolean endThirdCredit(Map<String, String> msg, String tag) throws Exception {
         Long borrowId = NumberHelper.toLong(StringHelper.toString(msg.get(MqConfig.MSG_BORROW_ID)));
-        Borrow borrow = borrowService.findByIdLock(borrowId);
+        Borrow borrow = borrowService.findById(borrowId);
         Preconditions.checkNotNull(borrow, "creditProvider endThirdCredit: 借款不能为空!");
         UserThirdAccount userThirdAccount = userThirdAccountService.findByUserId(borrow.getUserId());
         Preconditions.checkNotNull(userThirdAccount, "creditProvider endThirdCredit: 借款人未开户!");
-
+        Thread.sleep(60 * 1000);//休眠一分钟
         //构建结束债权集合
         List<CreditEnd> creditEndList = new ArrayList<>();
         if (tag.equals(MqTagEnum.END_CREDIT.getValue())) {  // 结束债权by非转让标

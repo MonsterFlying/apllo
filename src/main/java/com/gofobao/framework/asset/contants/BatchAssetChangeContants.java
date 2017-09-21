@@ -10,4 +10,5 @@ public class BatchAssetChangeContants {
     public static final int BATCH_CREDIT_INVEST = 4;/* 批次投资人购买债权 */
     public static final int BATCH_BAIL_REPAY = 5;/* 批次名义借款人垫付 */
     public static final int BATCH_REPAY_ALL = 6;/* 批次提前结清 */
+    public static final int BATCH_FINANCE_CREDIT_INVEST = 7; /*理财计划批次购买债权 */
 }

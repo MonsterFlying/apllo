@@ -341,16 +341,72 @@ public class TransferProvider {
         ImmutableList<Object> result = registerFinanceThirdTransferTender(transfer, transferBuyLogList, parentTender, transferUserThirdAccount, parentBorrow);
         Iterator<Object> iterator = result.iterator();
         String batchNo = StringHelper.toString(iterator.next());
-        /* 转让管理费 */
-        long transferFee = NumberHelper.toLong(iterator.next());
         //增加批次资金变动记录
-        addBatchAssetChange(transferId, transfer, transferBuyLogList, transferFee, batchNo);
+        addFinanceBatchAssetChange(transferId, transfer, transferBuyLogList, batchNo);
         //增加successAt时间
         transfer.setSuccessAt(new Date());
         transferService.save(transfer);
         log.info(String.format("复审: 理财计划批量债权转让申请成功: %s", GSON.toJson(msg)));
         return true;
 
+    }
+
+    /**
+     * 增加批次资金变动记录
+     *
+     * @param transferId
+     * @param transfer
+     * @param transferBuyLogList
+     * @param batchNo
+     */
+    private void addFinanceBatchAssetChange(long transferId, Transfer transfer, List<TransferBuyLog> transferBuyLogList, String batchNo) throws ExecutionException {
+        String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+        Date nowDate = new Date();
+        // 扣除债权购买人冻结资金
+        BatchAssetChange batchAssetChange = new BatchAssetChange();
+        batchAssetChange.setBatchNo(batchNo);
+        batchAssetChange.setSourceId(transferId);
+        batchAssetChange.setType(BatchAssetChangeContants.BATCH_FINANCE_CREDIT_INVEST);
+        batchAssetChange.setState(0);
+        batchAssetChange.setCreatedAt(nowDate);
+        batchAssetChange.setUpdatedAt(nowDate);
+        batchAssetChange = batchAssetChangeService.save(batchAssetChange);
+
+        long batchAssetChangeId = batchAssetChange.getId();
+        // 债权转让人收款 = 转让本金加应收利息
+        BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
+        batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
+        batchAssetChangeItem.setState(0);
+        batchAssetChangeItem.setType(AssetChangeTypeEnum.financeBatchSellBonds.getLocalType());  // 出售债权
+        batchAssetChangeItem.setUserId(transfer.getUserId());
+        batchAssetChangeItem.setMoney(transfer.getPrincipal() + transfer.getAlreadyInterest());
+        batchAssetChangeItem.setRemark(String.format("出售理财计划匹配债权[%s]获得待收本金和应计利息%s元", transfer.getTitle(),
+                StringHelper.formatDouble((transfer.getPrincipal() + transfer.getAlreadyInterest()), 100D, true)));
+        batchAssetChangeItem.setCreatedAt(nowDate);
+        batchAssetChangeItem.setUpdatedAt(nowDate);
+        batchAssetChangeItem.setSourceId(transferId);
+        batchAssetChangeItem.setSeqNo(assetChangeProvider.getSeqNo());
+        batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+        batchAssetChangeItemService.save(batchAssetChangeItem);
+
+        for (TransferBuyLog transferBuyLog : transferBuyLogList) {
+            // 扣除债权转让购买人冻结资金
+            batchAssetChangeItem = new BatchAssetChangeItem();
+            batchAssetChangeItem.setState(0);
+            batchAssetChangeItem.setType(AssetChangeTypeEnum.financeBatchBuyClaims.getLocalType());
+            batchAssetChangeItem.setUserId(transferBuyLog.getUserId());
+            batchAssetChangeItem.setForUserId(transfer.getUserId());
+            batchAssetChangeItem.setBatchAssetChangeId(batchAssetChangeId);
+            batchAssetChangeItem.setMoney(transferBuyLog.getValidMoney());
+            batchAssetChangeItem.setRemark(String.format("购买理财计划匹配债权[%s], 成功扣除资金%s元", transfer.getTitle(),
+                    StringHelper.formatDouble(transferBuyLog.getValidMoney(), 100D, true)));
+            batchAssetChangeItem.setCreatedAt(nowDate);
+            batchAssetChangeItem.setUpdatedAt(nowDate);
+            batchAssetChangeItem.setSeqNo(assetChangeProvider.getSeqNo());
+            batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+            batchAssetChangeItem.setSourceId(transferBuyLog.getId());
+            batchAssetChangeItemService.save(batchAssetChangeItem);
+        }
     }
 
     /**
@@ -428,8 +484,8 @@ public class TransferProvider {
         request.setSubPacks(GSON.toJson(creditInvestList));
         request.setAcqRes(GSON.toJson(acqResMap));
         request.setChannel(ChannelContant.HTML);
-        request.setNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditinvest/check");
-        request.setRetNotifyURL(javaDomain + "/pub/tender/v2/third/batch/creditinvest/run");
+        request.setNotifyURL(javaDomain + "/pub/tender/v2/third/batch/finance/creditinvest/check");
+        request.setRetNotifyURL(javaDomain + "/pub/tender/v2/third/batch/finance/creditinvest/run");
         BatchCreditInvestResp response = jixinManager.send(JixinTxCodeEnum.BATCH_CREDIT_INVEST, request, BatchCreditInvestResp.class);
         if ((ObjectUtils.isEmpty(response)) || (!JixinResultContants.BATCH_SUCCESS.equalsIgnoreCase(response.getReceived()))) {
             BatchCancelReq batchCancelReq = new BatchCancelReq();
@@ -439,10 +495,10 @@ public class TransferProvider {
             batchCancelReq.setChannel(ChannelContant.HTML);
             BatchCancelResp batchCancelResp = jixinManager.send(JixinTxCodeEnum.BATCH_CANCEL, batchCancelReq, BatchCancelResp.class);
             if ((ObjectUtils.isEmpty(batchCancelResp)) || (!ObjectUtils.isEmpty(batchCancelResp.getRetCode()))) {
-                throw new Exception("即信批次撤销失败!");
+                throw new Exception("即信批次撤销失败!:" + response.getRetMsg());
             }
-            log.error(String.format("复审: 批量债权转让申请失败: %s", response));
-            throw new Exception("投资人批次购买债权失败!:" + response.getRetMsg());
+            log.error(String.format("复审: 批量理财计划债权转让申请失败: %s", response));
+            throw new Exception("理财计划批次购买债权失败!:" + response.getRetMsg());
         }
 
         //记录日志
@@ -451,7 +507,7 @@ public class TransferProvider {
         thirdBatchLog.setCreateAt(nowDate);
         thirdBatchLog.setUpdateAt(nowDate);
         thirdBatchLog.setSourceId(transfer.getId());
-        thirdBatchLog.setType(ThirdBatchLogContants.BATCH_CREDIT_INVEST);
+        thirdBatchLog.setType(ThirdBatchLogContants.BATCH_FINANCE_CREDIT_INVEST);
         thirdBatchLog.setAcqRes(GSON.toJson(acqResMap));
         thirdBatchLog.setRemark("投资人批次购买债权");
         thirdBatchLogService.save(thirdBatchLog);

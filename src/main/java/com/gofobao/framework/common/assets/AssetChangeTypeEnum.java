@@ -43,10 +43,21 @@ public enum AssetChangeTypeEnum {
      */
     freeze("资金冻结", "freeze", "0", "sub@useMoney,add@noUseMoney", "", "B"),
 
+
     /**
      * 理财计划冻结
      */
     financePlanFreeze("理财计划资金冻结", "finance_plan_freeze", "", "sub@useMoney,add@financePlanMoney", "", "B"),
+
+    /**
+     * 用户购买理财计划债权
+     */
+    financeBatchBuyClaims("购买理财计划债权", "finance_batch_buy_claims", "2789", "sub@financePlanMoney", "", "C"),
+
+    /**
+     * 出售理财计划债权
+     */
+    financeBatchSellBonds("出售理财计划债权", "finance_batch_sell_bonds", "7785", "add@financePlanMoney", "", "D"),
 
     /**
      * 理财计划接触冻结

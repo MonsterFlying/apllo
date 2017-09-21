@@ -253,17 +253,6 @@ public class TestController {
         }
     }
 
-    public static void main(String[] args) {
-        System.out.println(NumberHelper.floorDouble(0.15d, 2) - NumberHelper.floorDouble(0.05d, 2)); // 0.09999999999999999
-        System.out.println(2.08f - 3.7f); // -1.6200001
-        System.out.println(13.2d * 7);//92.39999999999999
-
-        BigDecimal b1 = new BigDecimal(String.valueOf(0.15d));
-        BigDecimal b2 = new BigDecimal(String.valueOf(0.05d));
-        double val = b1.subtract(b2).doubleValue();
-        System.out.println(val);
-        System.out.println(BooleanUtils.toBoolean(12));
-    }
 /*
 
     @ApiOperation("解除冻结")
@@ -378,6 +367,7 @@ public class TestController {
         log.info("=========================================================================================");
         log.info(GSON.toJson(response));
     }
+
 
     @Autowired
     BorrowBiz borrowBiz;

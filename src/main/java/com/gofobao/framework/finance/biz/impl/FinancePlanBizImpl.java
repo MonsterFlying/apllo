@@ -18,6 +18,10 @@ import com.gofobao.framework.common.assets.AssetChangeProvider;
 import com.gofobao.framework.common.assets.AssetChangeTypeEnum;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.common.page.Page;
+import com.gofobao.framework.common.rabbitmq.MqConfig;
+import com.gofobao.framework.common.rabbitmq.MqHelper;
+import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
+import com.gofobao.framework.common.rabbitmq.MqTagEnum;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.finance.biz.FinancePlanBiz;
 import com.gofobao.framework.finance.constants.FinannceContants;
@@ -25,6 +29,7 @@ import com.gofobao.framework.finance.entity.FinancePlan;
 import com.gofobao.framework.finance.entity.FinancePlanBuyer;
 import com.gofobao.framework.finance.service.FinancePlanBuyerService;
 import com.gofobao.framework.finance.service.FinancePlanService;
+import com.gofobao.framework.finance.vo.request.VoFinanceAgainVerifyTransfer;
 import com.gofobao.framework.finance.vo.request.VoFinancePlanAssetChange;
 import com.gofobao.framework.finance.vo.request.VoFinancePlanTender;
 import com.gofobao.framework.finance.vo.request.VoTenderFinancePlan;
@@ -45,6 +50,7 @@ import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultiset;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multiset;
 import com.google.gson.Gson;
@@ -89,6 +95,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
     private UserService userService;
     @Autowired
     private AssetChangeProvider assetChangeProvider;
+    @Autowired
+    private MqHelper mqHelper;
 
     //过滤掉 状态; 1:发标待审 ；2：初审不通过；4：复审不通过；5：已取消
     private static List<Integer> statusArray = Lists.newArrayList(FinannceContants.CANCEL,
@@ -268,8 +276,8 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
      * @throws Exception
      */
     private void updateAssetByBuyFinancePlan(FinancePlan financePlan, UserThirdAccount buyUserAccount, long validateMoney, FinancePlanBuyer financePlanBuyer, String orderId) throws Exception {
-        //冻结资金，将购买资金划到计划冻结
-        AssetChange assetChange = new AssetChange();
+        //冻结资金，将购买资金划到计划冻结 不要冻结
+/*        AssetChange assetChange = new AssetChange();
         assetChange.setForUserId(financePlanBuyer.getUserId());
         assetChange.setUserId(financePlanBuyer.getUserId());
         assetChange.setType(AssetChangeTypeEnum.financePlanFreeze);
@@ -278,7 +286,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         assetChange.setMoney(validateMoney);
         assetChange.setGroupSeqNo(assetChangeProvider.getGroupSeqNo());
         assetChange.setSourceId(financePlanBuyer.getId());
-        assetChangeProvider.commonAssetChange(assetChange);
+        assetChangeProvider.commonAssetChange(assetChange);*/
         //冻结购买债权转让人资金账户
         BalanceFreezeReq balanceFreezeReq = new BalanceFreezeReq();
         balanceFreezeReq.setAccountId(buyUserAccount.getAccountId());
@@ -290,7 +298,7 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
             throw new Exception("即信批次还款冻结资金失败：" + balanceFreezeResp.getRetMsg());
         }
         //保存存管冻结orderId
-        financePlanBuyer.setFreezeOrderId(orderId);
+/*        financePlanBuyer.setFreezeOrderId(orderId);*/
         financePlanBuyerService.save(financePlanBuyer);
     }
 
@@ -438,9 +446,49 @@ public class FinancePlanBizImpl implements FinancePlanBiz {
         //理财计划购买债权转让
         financePlanBuyTransfer(nowDate, money, transferId, userId, financePlanBuyer, transfer, validMoney);
 
-        /* gfb_asset finance_plan_money 成功后需要扣减 */
+        if (transfer.getTransferMoneyYes() >= transfer.getTransferMoney()) {
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
+            mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_FINANCE_TRANSFER);
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            log.info(String.format("FinancePlanBizImpl financePlanTender send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+        }
         // /更改购买计划状态、资金信息
         return ResponseEntity.ok(VoBaseResp.ok("理财计划投标成功!", VoViewFinancePlanTender.class));
+    }
+
+    /**
+     * 理财计划复审
+     *
+     * @param voFinanceAgainVerifyTransfer
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<VoBaseResp> financeAgainVerifyTransfer(VoFinanceAgainVerifyTransfer voFinanceAgainVerifyTransfer) {
+        String paramStr = voFinanceAgainVerifyTransfer.getParamStr();
+        if (!SecurityHelper.checkSign(voFinanceAgainVerifyTransfer.getSign(), paramStr)) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, "pc理财计划复审 签名验证不通过!"));
+        }
+        Map<String, String> paramMap = GSON.fromJson(paramStr, TypeTokenContants.MAP_ALL_STRING_TOKEN);
+        Long transferId = NumberHelper.toLong(paramMap.get("transferId"));
+        /* 理财计划债权转让记录 */
+        Transfer transfer = transferService.findByIdLock(transferId);
+        if (transfer.getTransferMoneyYes() >= transfer.getTransferMoney() && transfer.getType().intValue() == 1 && transfer.getState().intValue() == 1) {
+            MqConfig mqConfig = new MqConfig();
+            mqConfig.setQueue(MqQueueEnum.RABBITMQ_TRANSFER);
+            mqConfig.setTag(MqTagEnum.AGAIN_VERIFY_FINANCE_TRANSFER);
+            ImmutableMap<String, String> body = ImmutableMap
+                    .of(MqConfig.MSG_TRANSFER_ID, StringHelper.toString(transferId), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
+            mqConfig.setMsg(body);
+            log.info(String.format("FinancePlanBizImpl financeAgainVerifyTransfer send mq %s", GSON.toJson(body)));
+            mqHelper.convertAndSend(mqConfig);
+            return ResponseEntity.ok(VoBaseResp.ok("复审成功!"));
+        }
+        return ResponseEntity.ok(VoBaseResp.ok("复审失败!"));
     }
 
     /**

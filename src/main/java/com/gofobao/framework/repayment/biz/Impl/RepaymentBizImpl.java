@@ -570,7 +570,8 @@ public class RepaymentBizImpl implements RepaymentBiz {
         /* 总还款本金 */
         double sumTxAmount = repays.stream().mapToDouble(repay -> NumberHelper.toDouble(repay.getTxAmount())).sum();
         //========================处理提前结清违约金开始============================
-        dealRepayAllPenalty(borrowId, borrow, titularBorrowAccount, groupSeqNo, penalty, batchAssetChange, nowDate, repays, sumTxAmount);
+        Map<String/*authCode*/, Tender> tenderMaps = tenderList.stream().collect(Collectors.toMap(Tender::getAuthCode, Function.identity()));
+        dealRepayAllPenalty(borrowId, borrow, tenderMaps, titularBorrowAccount, groupSeqNo, penalty, batchAssetChange, nowDate, repays, sumTxAmount);
         //========================处理提前结清违约金结束============================
         //所有交易利息
         double intAmount = repays.stream().mapToDouble(r -> NumberHelper.toDouble(r.getIntAmount())).sum();
@@ -668,32 +669,36 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param repays
      * @param sumTxAmount
      */
-    private void dealRepayAllPenalty(long borrowId, Borrow borrow, UserThirdAccount titularBorrowAccount, String groupSeqNo, long penalty, BatchAssetChange batchAssetChange, Date nowDate, List<Repay> repays, double sumTxAmount) {
+    private void dealRepayAllPenalty(long borrowId, Borrow borrow, Map<String/*authCode*/, Tender> tenderMaps, UserThirdAccount titularBorrowAccount, String groupSeqNo, long penalty, BatchAssetChange batchAssetChange, Date nowDate, List<Repay> repays, double sumTxAmount) {
         //扣除提前结清的违约金
         if (penalty > 0) {
             /* 实际收取总违约金 */
             double sumPenalty = 0;
             for (Repay repay : repays) {
-                double partPenalty = MoneyHelper.round(NumberHelper.toDouble(repay.getTxAmount()) / sumTxAmount * penalty, 0);/*分摊违约金*/
-                sumPenalty += partPenalty;
+                /*取出关联的tender记录*/
+                Tender tender = tenderMaps.get(repay.getAuthCode());
+                if (tender.getType().intValue() != 1) { //理财计划不需要收取违约金
+                    double partPenalty = MoneyHelper.round(NumberHelper.toDouble(repay.getTxAmount()) / sumTxAmount * penalty, 0);/*分摊违约金*/
+                    sumPenalty += partPenalty;
 
-                UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(repay.getForAccountId());
-                BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
-                batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
-                batchAssetChangeItem.setState(0);
-                batchAssetChangeItem.setType(AssetChangeTypeEnum.receivedPaymentsViolation.getLocalType());  //  收到提前结清的违约金
-                batchAssetChangeItem.setUserId(userThirdAccount.getUserId());
-                batchAssetChangeItem.setMoney(NumberHelper.toLong(partPenalty));
-                batchAssetChangeItem.setRemark(String.format("收到[%s]提前结清的违约金", borrow.getName()));
-                batchAssetChangeItem.setCreatedAt(nowDate);
-                batchAssetChangeItem.setUpdatedAt(nowDate);
-                batchAssetChangeItem.setSeqNo(assetChangeProvider.getSeqNo());
-                batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
-                batchAssetChangeItemService.save(batchAssetChangeItem);
-                //给每期回款分摊违约金
-                repay.setIntAmount(StringHelper.formatDouble(MoneyHelper.round(NumberHelper.toDouble(repay.getIntAmount()) + MoneyHelper.divide(partPenalty, 100d), 0), false));
-                repay.setIntAmount(StringHelper.formatDouble(MoneyHelper.round(NumberHelper.toDouble(repay.getIntAmount()) + MoneyHelper.divide(partPenalty, 100d), 0), false));
-                repay.setTxFeeOut(StringHelper.formatDouble((MoneyHelper.round(NumberHelper.toDouble(repay.getTxFeeOut()) + MoneyHelper.divide(partPenalty, 100.d), 0)), false));
+                    UserThirdAccount userThirdAccount = userThirdAccountService.findByAccountId(repay.getForAccountId());
+                    BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
+                    batchAssetChangeItem.setBatchAssetChangeId(batchAssetChange.getId());
+                    batchAssetChangeItem.setState(0);
+                    batchAssetChangeItem.setType(AssetChangeTypeEnum.receivedPaymentsViolation.getLocalType());  //  收到提前结清的违约金
+                    batchAssetChangeItem.setUserId(userThirdAccount.getUserId());
+                    batchAssetChangeItem.setMoney(NumberHelper.toLong(partPenalty));
+                    batchAssetChangeItem.setRemark(String.format("收到[%s]提前结清的违约金", borrow.getName()));
+                    batchAssetChangeItem.setCreatedAt(nowDate);
+                    batchAssetChangeItem.setUpdatedAt(nowDate);
+                    batchAssetChangeItem.setSeqNo(assetChangeProvider.getSeqNo());
+                    batchAssetChangeItem.setGroupSeqNo(groupSeqNo);
+                    batchAssetChangeItemService.save(batchAssetChangeItem);
+                    //给每期回款分摊违约金
+                    repay.setIntAmount(StringHelper.formatDouble(MoneyHelper.round(NumberHelper.toDouble(repay.getIntAmount()) + MoneyHelper.divide(partPenalty, 100d), 0), false));
+                    repay.setIntAmount(StringHelper.formatDouble(MoneyHelper.round(NumberHelper.toDouble(repay.getIntAmount()) + MoneyHelper.divide(partPenalty, 100d), 0), false));
+                    repay.setTxFeeOut(StringHelper.formatDouble((MoneyHelper.round(NumberHelper.toDouble(repay.getTxFeeOut()) + MoneyHelper.divide(partPenalty, 100.d), 0)), false));
+                }
             }
             //收取借款人违约金
             BatchAssetChangeItem batchAssetChangeItem = new BatchAssetChangeItem();
@@ -996,6 +1001,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
                 log.error("回款投标记录为空");
                 return;
             }
+            Map<Long, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
             Set<Long> userIds = tenderList.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet()); /* 回款用户id */
             if (CollectionUtils.isEmpty(userIds)) {
                 log.error("回款用户ID为空");
@@ -1014,9 +1020,22 @@ public class RepaymentBizImpl implements RepaymentBiz {
             userIds.stream().forEach(userId -> {
                 List<BorrowCollection> borrowCollections = borrowCollrctionMaps.get(userId);/* 当前用户的所有回款 */
                 Users users = userMaps.get(userId);//投资人会员记录
-                long principal = borrowCollections.stream().mapToLong(BorrowCollection::getPrincipal).sum(); /* 当前用户的所有回款本金 */
-                long collectionMoneyYes = borrowCollections.stream().mapToLong(BorrowCollection::getCollectionMoneyYes).sum();/* 当前用户的所有回款本金 */
-                long interest = collectionMoneyYes - principal;/* 当前用户的所有回款本金 */
+                long principal = 0; /* 当前用户的所有回款本金 */
+                long collectionMoneyYes = 0;/* 当前用户的所有回款本金 */
+                for (BorrowCollection borrowCollection : borrowCollections) {
+                    Tender tender = tenderMap.get(borrowCollection.getTenderId());
+                    if (tender.getType().intValue() == 1) { //如果是理财计划投标则不需要加入统计
+                        continue;
+                    }
+                    principal += borrowCollection.getPrincipal();
+                    collectionMoneyYes += borrowCollection.getCollectionMoneyYes();
+                }
+
+                if (principal <= 0 && collectionMoneyYes <= 0) {
+                    return;
+                }
+
+                long interest = collectionMoneyYes - principal;/* 当前用户的所有回款利息 */
                 String phone = users.getPhone();/* 投资人手机号 */
                 String name = "";
                 if (!ObjectUtils.isEmpty(phone)) {
@@ -1080,6 +1099,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             log.error("回款投标记录为空");
             return;
         }
+        Map<Long, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
         Set<Long> userIds = tenderList.stream().map(tender -> tender.getUserId()).collect(Collectors.toSet()); /* 回款用户id */
         if (CollectionUtils.isEmpty(userIds)) {
             log.error("回款用户ID为空");
@@ -1094,8 +1114,17 @@ public class RepaymentBizImpl implements RepaymentBiz {
         Map<Long, UserCache> userCacheMaps = userCaches.stream().collect(Collectors.toMap(UserCache::getUserId, Function.identity()));/* 回款用户缓存记录列表*/
         userIds.stream().forEach(userId -> {
             List<BorrowCollection> borrowCollections = borrowCollrctionMaps.get(userId);/* 当前用户的所有回款 */
-            long principal = borrowCollections.stream().mapToLong(BorrowCollection::getPrincipal).sum(); /* 当前用户的所有回款本金 */
-            long interest = borrowCollections.stream().mapToLong(BorrowCollection::getInterest).sum();/* 当前用户的所有回款本金 */
+            long principal = 0; /* 当前用户的所有回款本金 */
+            long interest = 0;/* 当前用户的所有回款本金 */
+            for (BorrowCollection borrowCollection : borrowCollections) {
+                Tender tender = tenderMap.get(borrowCollection.getTenderId());
+                if (tender.getType().intValue() == 1) { //如果是理财计划投标则不需要加入统计
+                    continue;
+                }
+
+                principal += borrowCollection.getPrincipal();
+                interest += borrowCollection.getInterest();
+            }
             UserCache userCache = userCacheMaps.get(userId);
             if (parentBorrow.getType() == 0) {
                 userCache.setTjWaitCollectionPrincipal(userCache.getTjWaitCollectionPrincipal() - principal);
@@ -1148,13 +1177,16 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
         Map<Long, Tender> tenderMap = tenderList.stream().collect(Collectors.toMap(Tender::getId, Function.identity()));
         borrowCollectionList.stream().forEach((BorrowCollection borrowCollection) -> {
+            Tender tender = tenderMap.get(borrowCollection.getTenderId());
+            if (tender.getType().intValue() == 1) { //如果是理财计划投标则不发放积分
+                return;
+            }
             long actualInterest = borrowCollection.getCollectionMoneyYes() - borrowCollection.getPrincipal();/* 实收利息 */
             //投资积分
             long integral = actualInterest / 100 * 10;
             if ((parentBorrow.getType() == 0 || parentBorrow.getType() == 4) && 0 < integral) {
                 Long userId = borrowCollection.getUserId();
                 if (ObjectUtils.isEmpty(userId)) {
-                    Tender tender = tenderMap.get(borrowCollection.getTenderId());
                     userId = tender.getUserId();
                 }
 
@@ -1210,7 +1242,11 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
         //迭代投标人记录
         borrowCollectionList.stream().forEach((BorrowCollection borrowCollection) -> {
-/*            long actualInterest = borrowCollection.getCollectionMoneyYes() - borrowCollection.getPrincipal();*//* 实收利息 */
+            Tender tender = tenderMap.get(borrowCollection.getTenderId());
+            if (tender.getType().intValue() == 1) { //如果是理财计划投标则不发送短信
+                return;
+            }
+
             String noticeContent = String.format("客户在%s已将借款[%s]第%s期还款,还款金额为%s元", DateHelper.dateToString(new Date(), "yyyy-MM-dd HH:mm:ss"), parentBorrow.getName(), (borrowCollection.getOrder() + 1), StringHelper.formatDouble(borrowCollection.getCollectionMoneyYes(), 100, true));
             if (advance) {
                 noticeContent = "广富宝在" + DateHelper.dateToString(new Date(), "yyyy-MM-dd HH:mm:ss") + " 已将借款[" + parentBorrow.getName() +
@@ -1219,7 +1255,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
 
             Long userId = borrowCollection.getUserId();
             if (ObjectUtils.isEmpty(userId)) {
-                userId = tenderMap.get(borrowCollection.getTenderId()).getUserId();
+                userId = tender.getUserId();
             }
             Notices notices = new Notices();
             notices.setFromUserId(1L);
@@ -1524,6 +1560,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
      * @param borrow
      * @return
      * @throws Exception
+     * @// TODO: 2017/9/21 区别理财计划与普通投标
      */
     private ResponseEntity<VoBaseResp> normalRepay(String freezeOrderId, Map<String, Object> acqResMap,
                                                    UserThirdAccount repayUserThirdAccount,
@@ -1822,9 +1859,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             repayAssetChange.setInterestFee(inFee);  // 利息管理费
             long overdueFee = 0;
             long platformOverdueFee = 0;
-            if ((lateDays > 0) && (lateInterest > 0)) {  //借款人逾期罚息
-                //  overdueFee = new Double(MoneyHelper.round(borrowCollection.getInterest() / new Double(sumCollectionInterest) * lateInterest / 2, 0)).longValue();// 出借人收取50% 逾期管理费 ;
-                // platformOverdueFee = new Double(MoneyHelper.round(borrowCollection.getInterest() / new Double(sumCollectionInterest) * lateInterest / 2, 0)).longValue(); // 平台收取50% 逾期管理费
+            if ((lateDays > 0) && (lateInterest > 0) && tender.getType().intValue() != 1) {  //借款人逾期罚息,理财计划不需要算逾期费
                 double preve = MoneyHelper.divide(borrowCollection.getInterest(), sumCollectionInterest);  // 逾期收益百分比
                 double overdueFeeDouble = MoneyHelper.multiply(MoneyHelper.multiply(preve, lateInterest), 0.5, 0);// 出借人逾期手续费
                 overdueFee = MoneyHelper.doubleToLong(overdueFeeDouble);
@@ -2467,7 +2502,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             long alreadyInterest = 0;
 
             //计算借款人逾期罚息
-            if ((lateDays > 0) && (lateInterest > 0)) {
+            if ((lateDays > 0) && (lateInterest > 0) && tender.getType().intValue() != 1) {//理财计划不需要收取罚息
                 double overdueFeeRatio = MoneyHelper.divide(borrowCollection.getPrincipal(), new Double(borrowRepayment.getPrincipal()));
                 double singleLateInterest = MoneyHelper.multiply(overdueFeeRatio, lateInterest);
                 long overdueFee = new Double(MoneyHelper.round(MoneyHelper.divide(singleLateInterest, 2d), 0)).longValue();// 名义借款人收取50% 逾期管理费 ;
@@ -2713,7 +2748,7 @@ public class RepaymentBizImpl implements RepaymentBiz {
             advanceAssetChange.setPrincipal(principal);
             advanceAssetChange.setBorrowCollection(borrowCollection);
             //计算借款人逾期罚息
-            if ((lateDays > 0) && (lateInterest > 0)) {
+            if ((lateDays > 0) && (lateInterest > 0) && tender.getType().intValue() != 1) {//理财计划不需要收取罚息
                 double overdueFeeRatio = MoneyHelper.divide(borrowCollection.getPrincipal(), new Double(borrowRepayment.getPrincipal()));
                 double singleLateInterest = MoneyHelper.multiply(overdueFeeRatio, lateInterest);
                 long overdueFee = new Double(MoneyHelper.round(MoneyHelper.divide(singleLateInterest, 2d), 0)).longValue();// 出借人收取50% 逾期管理费 ;

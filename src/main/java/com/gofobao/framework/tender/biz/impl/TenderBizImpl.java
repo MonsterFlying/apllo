@@ -227,7 +227,6 @@ public class TenderBizImpl implements TenderBiz {
         } catch (Exception e) {
             log.error("触发派发失败新手红包失败", e);
         }
-
         return ResponseEntity.ok(VoBaseResp.ok("投资成功"));
     }
 

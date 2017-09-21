@@ -643,49 +643,30 @@ public class AplloApplicationTests {
     @Test
     public void test() {
 
-        MqConfig mqConfig = new MqConfig();
-        mqConfig.setQueue(MqQueueEnum.RABBITMQ_TENDER);
-        mqConfig.setTag(MqTagEnum.AUTO_TENDER);
-        ImmutableMap<String, String> body = ImmutableMap
-                .of(MqConfig.MSG_BORROW_ID, StringHelper.toString("179939"), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
-        mqConfig.setMsg(body);
-        try {
-            mqHelper.convertAndSend(mqConfig);
-        } catch (Throwable e) {
-            log.error("borrowProvider autoTender send mq exception", e);
+        Specification<ThirdBatchLog> tbls = Specifications
+                .<ThirdBatchLog>and()
+                .eq("type", ThirdBatchLogContants.BATCH_CREDIT_END)
+                .eq("state", 3)
+                .like("acqRes", "%\"tag\":\"END_CREDIT\"%")
+                .eq("sourceId", 168749)
+                .build();
+        List<ThirdBatchLog> thirdBatchLogList = thirdBatchLogService.findList(tbls);
+        if (!CollectionUtils.isEmpty(thirdBatchLogList)) {
+            log.info(String.format("结束债权已完成，third_batch:%s", GSON.toJson(thirdBatchLogList.get(0))));
         }
 
-        //1.查询并判断还款记录是否存在!
-       /* BorrowRepayment borrowRepayment = borrowRepaymentService.findById(297l);*//* 当期还款记录 *//*
-        Preconditions.checkNotNull(borrowRepayment, "还款记录不存在!");
-        Borrow parentBorrow = borrowService.findById(borrowRepayment.getBorrowId());*//* 还款记录对应的借款记录 *//*
-        Preconditions.checkNotNull(parentBorrow, "借款记录不存在!");
-        *//* 还款对应的投标记录  包括债权转让在里面 *//*
-        Specification<Tender> ts = Specifications
-                .<Tender>and()
-                .eq("status", 1)
-                .eq("borrowId", parentBorrow.getId())
+        tbls = Specifications
+                .<ThirdBatchLog>and()
+                .eq("type", ThirdBatchLogContants.BATCH_CREDIT_END)
+                .in("state", 0, 1)
+                .like("acqRes", "%\"tag\":\"END_CREDIT\"%")
+                .eq("sourceId", 168749)
                 .build();
-        List<Tender> tenderList = tenderService.findList(ts);*//* 还款对应的投标记录  包括债权转让在里面 *//*
-        Preconditions.checkNotNull(tenderList, "立即还款: 投标记录为空!");
-        *//* 投标记录id *//*
-        Set<Long> tenderIds = tenderList.stream().map(tender -> tender.getId()).collect(Collectors.toSet());
-        *//* 查询未转让的投标记录回款记录 *//*
-        Specification<BorrowCollection> bcs = Specifications
-                .<BorrowCollection>and()
-                .in("tenderId", tenderIds.toArray())
-                .eq("status", 0)
-                .eq("order", borrowRepayment.getOrder())
-                .eq("transferFlag", 0)
-                .build();
-        List<BorrowCollection> borrowCollectionList = borrowCollectionService.findList(bcs);
-        Preconditions.checkNotNull(borrowCollectionList, "立即还款: 回款记录为空!");
-        *//* 是否垫付 *//*
-        boolean advance = !ObjectUtils.isEmpty(borrowRepayment.getAdvanceAtYes());
-        if (!advance) { //非转让标需要统计与发放短信
-            //10.项目回款短信通知
-            smsNoticeByReceivedRepay(borrowCollectionList, parentBorrow, borrowRepayment);
-        }*/
+        thirdBatchLogList = thirdBatchLogService.findList(tbls);
+        if (!CollectionUtils.isEmpty(thirdBatchLogList)) {
+            log.info(String.format("结束债权正在处理中，third_batch:%s", GSON.toJson(thirdBatchLogList.get(0))));
+        }
+
 
      /*   //记录批次处理日志
         thirdBatchDealLogBiz.recordThirdBatchDealLog(String.valueOf(113841),169974, ThirdBatchDealLogContants.PROCESSED,true,

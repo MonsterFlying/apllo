@@ -135,7 +135,85 @@ public class TenderThirdBizImpl implements TenderThirdBiz {
         return ResponseEntity.ok(VoBaseResp.ok("创建投标成功!"));
     }
 
+    /**
+     * 理财计划批次购买债权参数验证回调
+     *
+     * @return
+     */
+    public ResponseEntity<String> thirdBatchCreditInvestFinanceCheckCall(HttpServletRequest request, HttpServletResponse response) {
+        BatchCreditInvestCheckCall batchCreditInvestCheckCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestCheckCall>() {
+        });
 
+        if (ObjectUtils.isEmpty(batchCreditInvestCheckCall)) {
+            log.error("=============================理财计划批次购买债权参数验证回调===========================");
+            log.error("请求体为空!");
+            ResponseEntity.ok("error");
+        }
+
+        Map<String, Object> acqResMap = GSON.fromJson(batchCreditInvestCheckCall.getAcqRes(), TypeTokenContants.MAP_TOKEN);
+        Long transferId = NumberHelper.toLong(acqResMap.get("transferId"));
+        if (!JixinResultContants.SUCCESS.equals(batchCreditInvestCheckCall.getRetCode())) {
+            log.error("=============================理财计划批次购买债权参数验证回调===========================");
+            log.error("回调失败! msg:" + batchCreditInvestCheckCall.getRetMsg());
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 2, ThirdBatchLogContants.BATCH_FINANCE_CREDIT_INVEST);
+            ResponseEntity.ok("error");
+        } else {
+            log.error("=============================理财计划批次购买债权参数验证回调===========================");
+            log.error("回调成功!");
+            //更新批次状态
+            thirdBatchLogBiz.updateBatchLogState(batchCreditInvestCheckCall.getBatchNo(), transferId, 1, ThirdBatchLogContants.BATCH_FINANCE_CREDIT_INVEST);
+        }
+
+        return ResponseEntity.ok("success");
+    }
+
+    /**
+     * 理财计划批次购买债权参数运行回调
+     *
+     * @return
+     */
+    public ResponseEntity<String> thirdBatchCreditInvestFinanceRunCall(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        BatchCreditInvestRunCall batchCreditInvestRunCall = jixinManager.callback(request, new TypeToken<BatchCreditInvestRunCall>() {
+        });
+        return dealFinanceBatchCreditInvest(batchCreditInvestRunCall);
+    }
+
+    /**
+     * 处理理财计划批次购买债权转让
+     *
+     * @param batchCreditInvestRunCall
+     * @return
+     */
+    public ResponseEntity<String> dealFinanceBatchCreditInvest(BatchCreditInvestRunCall batchCreditInvestRunCall) {
+        Gson gson = new Gson();
+        log.info(String.format("理财计划批量债权购买回调信息打印: %s", gson.toJson(batchCreditInvestRunCall)));
+        Preconditions.checkNotNull(batchCreditInvestRunCall, "理财计划批量债权转让回调: 回调信息为空!");
+        Preconditions.checkArgument(JixinResultContants.SUCCESS.equals(batchCreditInvestRunCall.getRetCode()),
+                "理财计划批量债权转让回调: 请求失败!");
+        Map<String, Object> acqResMap = GSON.fromJson(batchCreditInvestRunCall.getAcqRes(), TypeTokenContants.MAP_TOKEN);
+
+        //=============================================
+        // 保存第三方债权转让授权码
+        //=============================================
+        try {
+            List<CreditInvestRun> creditInvestRunList = GSON.fromJson(batchCreditInvestRunCall.getSubPacks(), new TypeToken<List<CreditInvestRun>>() {
+            }.getType());
+            Preconditions.checkNotNull(creditInvestRunList, "理财计划批量债权转让回调: 查询批次详情为空");
+            saveThirdTransferAuthCode(creditInvestRunList);
+        } catch (JsonSyntaxException e) {
+            log.error("理财计划批量债权转让保存第三方债权转让授权码!", e);
+        }
+
+        // 触发处理批次购买债权处理队列
+        try {
+            //批次执行问题
+            thirdBatchDealBiz.batchDeal(NumberHelper.toLong(acqResMap.get("transferId")), batchCreditInvestRunCall.getBatchNo(),
+                    batchCreditInvestRunCall.getAcqRes(), GSON.toJson(batchCreditInvestRunCall));
+        } catch (Exception e) {
+            log.error("批次执行异常:", e);
+        }
+        return ResponseEntity.ok("success");
+    }
 
     /**
      * 投资人批次购买债权参数验证回调
