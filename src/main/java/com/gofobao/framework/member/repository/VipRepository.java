@@ -11,5 +11,12 @@ import java.util.Date;
  */
 @Repository
 public interface VipRepository extends JpaRepository<Vip, Long> {
+    /**
+     * vip信息
+     * @param userId
+     * @param status
+     * @param date
+     * @return
+     */
     Vip findTopByUserIdAndStatusIsAndExpireAtGreaterThan(Long userId, int status, Date date);
 }

@@ -10,7 +10,11 @@ import org.springframework.data.repository.query.Param;
  * Created by admin on 2017/6/7.
  */
 public interface BrokerBounsRepository extends JpaRepository<BrokerBouns, Long>, JpaSpecificationExecutor<BrokerBouns> {
-
+    /**
+     * 用户总奖励
+     * @param userId
+     * @return
+     */
     @Query("select sum(b.bounsAward) from BrokerBouns b where b.userId=:userId")
     Integer sumBounsAward( @Param("userId") Long userId);
 

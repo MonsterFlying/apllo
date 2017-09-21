@@ -12,7 +12,11 @@ import java.util.List;
  */
 @Repository
 public interface UserAttachmentRepository extends JpaRepository<UserAttachment,Long>,JpaSpecificationExecutor<UserAttachment>{
-
+        /**
+         * 用户附件
+         * @param userId
+         * @return
+         */
         List<UserAttachment>findByUserId(Long userId);
 
 }

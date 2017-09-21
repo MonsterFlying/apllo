@@ -20,12 +20,21 @@ public interface TransferRepository extends JpaSpecificationExecutor<Transfer>, 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Transfer findById(long id);
 
-
+    /**
+     * 根据债券ids查询债券集合
+     * @param ids
+     * @return
+     */
     List<Transfer> findByIdIn(List<Long> ids);
 
 
     List<Transfer>findByBorrowId(Long borrowId);
 
+    /**
+     * 首页理财 流转标列表
+     * @param pageable
+     * @return
+     */
     @Query("select transfer from Transfer transfer where (transfer.state=1 or (transfer.state=2 and transfer.apr<1500)) and transfer.type =0")
     Page<Transfer> findByStateIsOrStateIsAndAprThanLee(Pageable pageable);
 
