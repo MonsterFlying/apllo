@@ -133,7 +133,6 @@ public class AssetSynBizImpl implements AssetSynBiz {
             accountDetailsQueryRequest.setType("9");
             accountDetailsQueryRequest.setTranType("7820"); //  线下转账
             accountDetailsQueryRequest.setAccountId(accountId);
-
             AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
                     accountDetailsQueryRequest,
                     AccountDetailsQueryResponse.class);
@@ -181,8 +180,10 @@ public class AssetSynBizImpl implements AssetSynBiz {
                     AccountDetailsQueryItem offRecharge = iterator1.next();
                     Double recordRecharge = new Double(MoneyHelper.multiply(offRecharge.getTxAmount(), "100", 0));
                     long money = recordRecharge.longValue() ;
-                    if (recharge.getMoney().longValue() ==  money) {
-                        log.error("充值成功");
+                    long localMoney = recharge.getMoney().longValue();
+                    log.info("待同步金额: %s , %s", localMoney, money );
+                    if (localMoney ==  money) {
+                        log.info("已成功同步金额: %s , %s", localMoney, money );
                         iterator.remove();
                         iterator1.remove();
                         break;
@@ -238,9 +239,6 @@ public class AssetSynBizImpl implements AssetSynBiz {
 
         return true;
     }
-
-
-
 
     @Override
     @Transactional(rollbackFor = Exception.class)
