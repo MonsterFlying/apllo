@@ -52,6 +52,7 @@ import com.gofobao.framework.helper.*;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.listener.providers.CreditProvider;
 import com.gofobao.framework.marketing.biz.MarketingProcessBiz;
+import com.gofobao.framework.member.biz.BrokerBounsBiz;
 import com.gofobao.framework.member.biz.impl.WebUserThirdBizImpl;
 import com.gofobao.framework.member.entity.UserThirdAccount;
 import com.gofobao.framework.member.entity.Users;
@@ -902,6 +903,7 @@ public class AplloApplicationTests {
     public void timingRepayment(){
         loanBiz.timingRepayment(new Date());
     }
+
     @Autowired
     private IncrStatisticService incrStatisticService;
 
@@ -910,4 +912,11 @@ public class AplloApplicationTests {
         incrStatisticService.dayStatistic(new Date());
     }
 
+    @Autowired
+    private BrokerBounsBiz brokerBounsBiz;
+
+    @Test
+    public  void monthPushMoney(){
+        brokerBounsBiz.monthPushMoney(new Date());
+    }
 }
