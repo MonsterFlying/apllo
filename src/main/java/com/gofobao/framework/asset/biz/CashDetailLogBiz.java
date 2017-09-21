@@ -113,11 +113,11 @@ public interface CashDetailLogBiz {
      */
     void toExcel(VoPcCashLogs cashLogs, HttpServletResponse response);
 
-
-    /**
+/*
+    *//**
      * 自动判断取消提现
      * @param cashId
      * @return
-     */
-    boolean doCancelCash(Long cashId) throws Exception;
+     *//*
+    boolean doCancelCash(Long cashId) throws Exception;*/
 }

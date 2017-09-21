@@ -571,7 +571,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                 entity.setType(AssetChangeTypeEnum.platformBigCashFee);
                 assetChangeProvider.commonAssetChange(entity);
             }
-
+            /*
             // 10 分钟查询, 总共查询  2个小时
             TaskScheduler taskScheduler = new TaskScheduler();
             taskScheduler.setCreateAt(new Date());
@@ -585,7 +585,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             taskScheduler = taskSchedulerBiz.save(taskScheduler);
             if (ObjectUtils.isEmpty(taskScheduler.getId())) {
                 log.error(String.format("添加大额提现查询失败 %s", gson.toJson(data)));
-            }
+            }*/
             titel = "存管已接收提现受理";
             content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 已被银行受理, 你可以 T + 1后查看结果. 如有疑问, 请联系平台客服!.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
                     StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
@@ -743,7 +743,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             }
         }
     }
-
+/*
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean doCancelCash(Long cashId) throws Exception {
@@ -865,7 +865,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
         }
 
         return false;
-    }
+    }*/
 
 
     /**

@@ -133,7 +133,6 @@ public class AssetSynBizImpl implements AssetSynBiz {
             accountDetailsQueryRequest.setType("9");
             accountDetailsQueryRequest.setTranType("7820"); //  线下转账
             accountDetailsQueryRequest.setAccountId(accountId);
-
             AccountDetailsQueryResponse accountDetailsQueryResponse = jixinManager.send(JixinTxCodeEnum.ACCOUNT_DETAILS_QUERY,
                     accountDetailsQueryRequest,
                     AccountDetailsQueryResponse.class);
@@ -160,11 +159,9 @@ public class AssetSynBizImpl implements AssetSynBiz {
             return true;
         }
 
-        Date startDate = DateHelper.endOfDate(DateHelper.subDays(nowDate, 1)) ;
-        Date endDate = DateHelper.beginOfDate(DateHelper.addDays(nowDate, 1)) ;
         Specification<RechargeDetailLog> rechargeDetailLogSpecification = Specifications
                 .<RechargeDetailLog>and()
-                .between("createTime", new Range<>(startDate, endDate))
+                .between("createTime", new Range<>(DateHelper.beginOfDate(nowDate), DateHelper.endOfDate(nowDate)))
                 .eq("userId", userId)  // 用户ID
                 .eq("rechargeChannel", 1) // 线下充值
                 .eq("state", 1)  // 充值成功
@@ -180,8 +177,11 @@ public class AssetSynBizImpl implements AssetSynBiz {
                 while (iterator1.hasNext()) {
                     AccountDetailsQueryItem offRecharge = iterator1.next();
                     Double recordRecharge = new Double(MoneyHelper.multiply(offRecharge.getTxAmount(), "100", 0));
-                    Long money = recordRecharge.longValue() ;
-                    if (recharge.getMoney() ==  money) {
+                    long money = recordRecharge.longValue() ;
+                    long localMoney = recharge.getMoney().longValue();
+                    log.info("待同步金额: %s , %s", localMoney, money );
+                    if (localMoney ==  money) {
+                        log.info("已成功同步金额: %s , %s", localMoney, money );
                         iterator.remove();
                         iterator1.remove();
                         break;
@@ -510,7 +510,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
                 while (iterator1.hasNext()) {
                     AccountDetailsQueryItem offRecharge = iterator1.next();
                     Double recordRecharge = new Double(MoneyHelper.multiply(offRecharge.getTxAmount(), "100", 0));
-                    Long money = recordRecharge.longValue() ;
+                    long money = recordRecharge.longValue() ;
                     if (recharge.getMoney() == money) {
                         log.info("线下充值回调匹配成功");
                         iterator.remove();

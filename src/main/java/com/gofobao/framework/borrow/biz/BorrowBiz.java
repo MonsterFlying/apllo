@@ -143,8 +143,8 @@ public interface BorrowBiz {
      *
      * @param borrowId
      * @return
-     */
-    boolean doTrusteePay(Long borrowId);
+     *//*
+    boolean doTrusteePay(Long borrowId);*/
 
     /**
      * 初审
