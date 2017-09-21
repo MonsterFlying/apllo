@@ -351,11 +351,11 @@ public class BrokerBounsBizImpl implements BrokerBounsBiz {
                     if (sum < Math.pow(10, 9)) {
                         money = (int) MoneyHelper.round(sum * 0.0002, 0);
                     } else if (sum > Math.pow(10, 9) && sum <= 5 * Math.pow(10, 9)) {
-                        money = 200 + (int) MoneyHelper.round((sum - Math.pow(10, 9)) * .0003, 0);
+                        money = 20000 + (int) MoneyHelper.round((sum - Math.pow(10, 9)) * .0003, 0);
                     } else if (sum > 5 * Math.pow(10, 9) && sum <= Math.pow(10, 10)) {
-                        money = 1400 + (int) MoneyHelper.round((sum - 5 * Math.pow(10, 9)) * .0004, 0);
+                        money = 140000 + (int) MoneyHelper.round((sum - 5 * Math.pow(10, 9)) * .0004, 0);
                     } else {
-                        money = 3400 + (int) MoneyHelper.round((sum - Math.pow(10, 10)) * .0005, 0);
+                        money = 340000 + (int) MoneyHelper.round((sum - Math.pow(10, 10)) * .0005, 0);
                     }
 
                     Long userId = NumberHelper.toLong(map.get("userId"));

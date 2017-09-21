@@ -7,12 +7,11 @@ import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.data.DataObject;
 import com.gofobao.framework.common.data.LtSpecification;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.repayment.biz.LoanBiz;
 import com.gofobao.framework.repayment.biz.RepaymentBiz;
 import com.gofobao.framework.repayment.entity.BorrowRepayment;
 import com.gofobao.framework.repayment.service.BorrowRepaymentService;
 import com.gofobao.framework.repayment.vo.request.VoRepayReq;
-import com.gofobao.framework.tender.contants.BorrowContants;
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -20,11 +19,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
-
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -38,14 +32,15 @@ public class BorrowRepayScanduler {
 
     @Autowired
     private BorrowRepaymentService borrowRepaymentService;
+
     @Autowired
     private BorrowService borrowService;
-    @Autowired
-    private EntityManager entityManager;
-
 
     @Autowired
     private RepaymentBiz repaymentBiz;
+
+    @Autowired
+    private LoanBiz loanBiz;
 
     //@Scheduled(cron = "0 50 23 * * ? ")
     public void process() {
@@ -63,9 +58,10 @@ public class BorrowRepayScanduler {
         Specification<BorrowRepayment> brs = Specifications
                 .<BorrowRepayment>and()
                 .eq("status", 0)
-                .predicate(new LtSpecification("repayAt", new DataObject(DateHelper.beginOfDate(DateHelper.addDays(new Date(), 1)))))
+                .predicate(new LtSpecification("repayAt",
+                        new DataObject(DateHelper.beginOfDate(DateHelper.addDays(new Date(),
+                                1)))))
                 .build();
-
         List<BorrowRepayment> borrowRepaymentList = null;
         List<Borrow> borrowList = null;
         List<Long> borrowIds = null;
@@ -110,49 +106,14 @@ public class BorrowRepayScanduler {
 
     }
 
+
     /**
-     * 每天早上9点 调度还款当日所需要还款的的官表
+     * 每天早上9点 调度还款当日所需要还款的的官标
      */
-    // @Scheduled(cron = "0 30 9 ? * *" )
-    @Transactional(rollbackOn = Exception.class)
+    //@Scheduled(cron = "0 00 23 * * ? ")
+    // @Transactional(rollbackOn = Exception.class)
     public void todayRepayment() {
         log.info("自动还款调度启动");
-        Date nowDate = new Date();
-        String sqlStr = "SELECT r.* FROM  gfb_borrow_repayment r " +
-                "LEFT JOIN " +
-                    "gfb_borrow b " +
-                "ON " +
-                    "b.id=r.borrow_id  " +
-                "WHERE " +
-                    "r.status=:status " +
-                "AND  " +
-                    "r.repay_at<=:repayAt " +
-                "AND " +
-                    "b.product_id IS NOT NULL "+
-                "AND " +
-                    "(b.type=:type1 OR b.type=:type2)";
-        Query query = entityManager.createNativeQuery(sqlStr, BorrowRepayment.class);
-        query.setParameter("status", RepaymentContants.STATUS_NO);
-        query.setParameter("repayAt", DateHelper.dateToString(DateHelper.endOfDate(nowDate)));
-        query.setParameter("type1", BorrowContants.CE_DAI);
-        query.setParameter("type2", BorrowContants.QU_DAO);
-        List<BorrowRepayment> repayments = query.getResultList();
-        if (!CollectionUtils.isEmpty(repayments)) {
-            repayments.forEach(p -> {
-                VoRepayReq voRepayReq = new VoRepayReq();
-                voRepayReq.setRepaymentId(p.getId());
-                voRepayReq.setUserId(p.getUserId());
-                voRepayReq.setIsUserOpen(false);
-                try {
-                    repaymentBiz.newRepay(voRepayReq);
-                    log.info(String.format("调度还款成功：打印还款期数信息:%s", new Gson().toJson(p)));
-                } catch (Exception e) {
-                    log.error("调度还款失败原因" , e);
-                    log.error(String.format("调度还款失败： 打印应款期数信息:%s", new Gson().toJson(p)));
-                }
-            });
-        } else {
-            log.info("今日没有要还款的批次！");
-        }
+        loanBiz.timingRepayment(new Date());
     }
 }
