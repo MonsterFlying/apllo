@@ -9,8 +9,8 @@ import java.util.List;
  */
 public interface TaskSchedulerBiz {
 
-    List<TaskScheduler> findByType(int pageIndex, int pageSize, int type);
+   // List<TaskScheduler> findByType(int pageIndex, int pageSize, int type);
 
-    TaskScheduler save(TaskScheduler taskScheduler);
+    //TaskScheduler save(TaskScheduler taskScheduler);
 
 }

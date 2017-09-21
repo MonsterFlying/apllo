@@ -20,7 +20,7 @@ public class TaskSchedulerBizImpl implements TaskSchedulerBiz {
     @Autowired
     TaskSchedulerService taskSchedulerService ;
 
-    @Override
+   /* @Override
     public List<TaskScheduler> findByType(int pageIndex, int pageSize, int type) {
         Pageable pageable = new PageRequest(pageIndex, pageSize, new Sort(new Sort.Order(Sort.Direction.ASC, "id"))) ;
         return taskSchedulerService.findByType(type, pageable) ;
@@ -30,5 +30,5 @@ public class TaskSchedulerBizImpl implements TaskSchedulerBiz {
     public TaskScheduler save(TaskScheduler taskScheduler) {
         List<TaskScheduler> taskSchedulers = taskSchedulerService.findByTypeAndTaskData(taskScheduler.getType(), taskScheduler.getTaskData()) ;
         return taskSchedulerService.save(taskScheduler) ;
-    }
+    }*/
 }

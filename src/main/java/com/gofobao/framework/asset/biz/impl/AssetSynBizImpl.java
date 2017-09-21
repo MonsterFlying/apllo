@@ -160,8 +160,8 @@ public class AssetSynBizImpl implements AssetSynBiz {
             return true;
         }
 
-        Date startDate = DateHelper.endOfDate(DateHelper.subDays(nowDate, 1)) ;
-        Date endDate = DateHelper.beginOfDate(DateHelper.addDays(nowDate, 1)) ;
+        Date startDate = DateHelper.endOfDate(DateHelper.subDays(jixinTxDateHelper.getTxDate(), 1)) ;
+        Date endDate = DateHelper.beginOfDate(DateHelper.addDays(jixinTxDateHelper.getTxDate(), 1)) ;
         Specification<RechargeDetailLog> rechargeDetailLogSpecification = Specifications
                 .<RechargeDetailLog>and()
                 .between("createTime", new Range<>(startDate, endDate))
@@ -180,8 +180,9 @@ public class AssetSynBizImpl implements AssetSynBiz {
                 while (iterator1.hasNext()) {
                     AccountDetailsQueryItem offRecharge = iterator1.next();
                     Double recordRecharge = new Double(MoneyHelper.multiply(offRecharge.getTxAmount(), "100", 0));
-                    Long money = recordRecharge.longValue() ;
-                    if (recharge.getMoney() ==  money) {
+                    long money = recordRecharge.longValue() ;
+                    if (recharge.getMoney().longValue() ==  money) {
+                        log.error("充值成功");
                         iterator.remove();
                         iterator1.remove();
                         break;
@@ -237,6 +238,9 @@ public class AssetSynBizImpl implements AssetSynBiz {
 
         return true;
     }
+
+
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -510,7 +514,7 @@ public class AssetSynBizImpl implements AssetSynBiz {
                 while (iterator1.hasNext()) {
                     AccountDetailsQueryItem offRecharge = iterator1.next();
                     Double recordRecharge = new Double(MoneyHelper.multiply(offRecharge.getTxAmount(), "100", 0));
-                    Long money = recordRecharge.longValue() ;
+                    long money = recordRecharge.longValue() ;
                     if (recharge.getMoney() == money) {
                         log.info("线下充值回调匹配成功");
                         iterator.remove();

@@ -1503,7 +1503,7 @@ public class BorrowBizImpl implements BorrowBiz {
         }
     }
 
-    @Override
+   /* @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean doTrusteePay(Long borrowId) {
         Borrow borrow = borrowService.findByIdLock(borrowId);
@@ -1540,7 +1540,7 @@ public class BorrowBizImpl implements BorrowBiz {
             log.error("borrowBizImpl firstVerify send mq exception", e);
         }
         return true;
-    }
+    }*/
 
     /**
      * 发送借款协议
