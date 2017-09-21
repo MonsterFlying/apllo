@@ -42,4 +42,5 @@ public class FinancePlan {
     private String description;
     private Date createdAt;
     private Date updatedAt;
+    private Integer type;
 }
