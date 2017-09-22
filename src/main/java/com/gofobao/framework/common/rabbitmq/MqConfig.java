@@ -36,6 +36,7 @@ public class MqConfig {
     public static final String BATCH_RESP = "batch_resp";
     public static final String ACQ_RES = "acq_res";
     public static final String PASSWORD = "password";
+    public static final String TYPE = "type";
 
 
     private MqQueueEnum queue;

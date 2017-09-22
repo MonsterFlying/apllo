@@ -571,21 +571,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
                 entity.setType(AssetChangeTypeEnum.platformBigCashFee);
                 assetChangeProvider.commonAssetChange(entity);
             }
-            /*
-            // 10 分钟查询, 总共查询  2个小时
-            TaskScheduler taskScheduler = new TaskScheduler();
-            taskScheduler.setCreateAt(new Date());
-            taskScheduler.setUpdateAt(new Date());
-            taskScheduler.setType(TaskSchedulerConstants.CASH_FORM);
-            Map<String, String> data = new HashMap<>(1);
-            data.put("cashId", cashDetailLog.getId().toString());
-            Gson gson = new Gson();
-            taskScheduler.setTaskData(gson.toJson(data));
-            taskScheduler.setTaskNum(24);
-            taskScheduler = taskSchedulerBiz.save(taskScheduler);
-            if (ObjectUtils.isEmpty(taskScheduler.getId())) {
-                log.error(String.format("添加大额提现查询失败 %s", gson.toJson(data)));
-            }*/
+
             titel = "存管已接收提现受理";
             content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 已被银行受理, 你可以 T + 1后查看结果. 如有疑问, 请联系平台客服!.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
                     StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
@@ -927,7 +913,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
      * @param cash
      * @throws Exception
      */
-    private void deductionAsset(CashDetailLog cashDetailLog, AccountDetailsQueryItem cash) throws Exception {
+   /* private void deductionAsset(CashDetailLog cashDetailLog, AccountDetailsQueryItem cash) throws Exception {
         Date nowDate = new Date();
         String querySeqNo = String.format("%s%s%s", cash.getInpDate(), cash.getInpTime(), cash.getTraceNo());
         // 更改用户提现记录
@@ -998,7 +984,7 @@ public class CashDetailLogBizImpl implements CashDetailLogBiz {
             log.error("CashDetailLogBizImpl doFormCash send mq exception", e);
         }
     }
-
+*/
     @Override
     public ResponseEntity<VoHtmlResp> adminWebCash(HttpServletRequest httpServletRequest, VoAdminCashReq voAdminCashReq) throws Exception {
         String paramStr = voAdminCashReq.getParamStr();

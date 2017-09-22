@@ -42,7 +42,8 @@ public enum MqTagEnum {
     REPAY_ALL("REPAY_ALL"),//提前结清
     REPAY_ADVANCE("REPAY_ADVANCE"),//提前结清
     ADVANCE("ADVANCE"),//名义借款人垫付
-    REPAY("REPAY");//立即还款
+    REPAY("REPAY"), //立即还款
+    OP_JIXIN_QUERY("OP_JIXIN_QUERY");  // 即信确认查询
 
 
     private String value;

@@ -493,6 +493,7 @@ public class AssetBizImpl implements AssetBiz {
         String msg = "";
         Date now = new Date();
         if (!directRechargeOnlineResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
+
             log.error(String.format("请求即信联机充值异常: %s", gson.toJson(directRechargeOnlineResponse)));
             state = 2;
             msg = directRechargeOnlineResponse.getRetMsg();
@@ -1511,6 +1512,18 @@ public class AssetBizImpl implements AssetBiz {
     @Override
     @Transactional(rollbackFor = ExcelException.class)
     public ResponseEntity<String> offlineRechargeCallback(HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+        Map<String, String[]> parameterMap = request.getParameterMap();
+        Iterator<String> iterator = parameterMap.keySet().iterator();
+        while (iterator.hasNext()) {
+            String next = iterator.next();
+            String[] strings = parameterMap.get(next);
+            log.info("key = " + next);
+            for (String item : strings) {
+                log.info("value = " + item);
+            }
+        }
+
         log.info("线下充值回调");
         Gson gson = new Gson();
         OfflineRechargeCallbackResponse offlineRechargeCallbackResponse = jixinManager.specialCallback(request, new TypeToken<OfflineRechargeCallbackResponse>() {
