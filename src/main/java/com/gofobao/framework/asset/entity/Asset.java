@@ -34,6 +34,8 @@ public class Asset {
 
     private Date updatedAt;
 
+    private Long financePlanMoney;
+
     public long getTotal() {
         return this.useMoney + this.noUseMoney + this.collection;
     }

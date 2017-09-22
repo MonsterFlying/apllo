@@ -328,6 +328,8 @@ public class AssetBizImpl implements AssetBiz {
         voUserAssetInfoResp.setVirtualMoney(asset.getVirtualMoney());
         voUserAssetInfoResp.setNetWorthQuota(netWorthQuota);
         voUserAssetInfoResp.setNetAsset(StringHelper.formatMon(netAsset / 100D));
+        voUserAssetInfoResp.setIncomeTotal(StringHelper.formatMon(userCache.getIncomeTotal()/100D));
+        voUserAssetInfoResp.setHideIncomeTotal(userCache.getIncomeTotal());
         return ResponseEntity.ok(voUserAssetInfoResp);
     }
 
