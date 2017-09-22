@@ -102,10 +102,10 @@ public class WindmillBorrowBizImpl implements WindmillBorrowBiz {
                         invest.setProgress(NumberHelper.floorDouble((p.getMoneyYes().doubleValue() / p.getMoney().doubleValue()) * 100, 2) + "");
                         invest.setStart_time(DateHelper.dateToString(p.getReleaseAt()));
                         if (p.getRepayFashion() == 0) {
-                            invest.setPayback_way(BorrowContants.REPAY_FASHION_MONTH_STR);
+                            invest.setPayback_way("等额本息");
                         }
                         if (p.getRepayFashion() == 1) {
-                            invest.setPayback_way(BorrowContants.REPAY_FASHION_ONCE_STR);
+                            invest.setPayback_way("到期一次性还本付息");
                         }
                         if (p.getRepayFashion() == 2) {
                             invest.setPayback_way(BorrowContants.REPAY_FASHION_INTEREST_THEN_PRINCIPAL_STR);
