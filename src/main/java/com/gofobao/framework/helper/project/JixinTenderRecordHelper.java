@@ -5,7 +5,6 @@ import com.gofobao.framework.api.helper.JixinManager;
 import com.gofobao.framework.api.helper.JixinTxCodeEnum;
 import com.gofobao.framework.api.model.bid_cancel.BidCancelReq;
 import com.gofobao.framework.api.model.bid_cancel.BidCancelResp;
-import com.gofobao.framework.collection.vo.response.web.Collection;
 import com.gofobao.framework.helper.ExceptionEmailHelper;
 import com.gofobao.framework.helper.JixinHelper;
 import com.gofobao.framework.helper.RedisHelper;

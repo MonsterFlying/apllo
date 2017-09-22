@@ -8,7 +8,6 @@ import org.hibernate.annotations.DynamicInsert;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
-import java.util.List;
 
 /**
  * Created by Zeke on 2017/5/16.

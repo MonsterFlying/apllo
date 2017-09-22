@@ -49,8 +49,6 @@ import com.gofobao.framework.member.service.UserService;
 import com.gofobao.framework.member.service.UserThirdAccountService;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.scheduler.biz.TaskSchedulerBiz;
-import com.gofobao.framework.scheduler.constants.TaskSchedulerConstants;
-import com.gofobao.framework.scheduler.entity.TaskScheduler;
 import com.gofobao.framework.system.entity.Notices;
 import com.gofobao.framework.system.service.DictItemService;
 import com.gofobao.framework.system.service.DictValueService;
@@ -82,7 +80,6 @@ import org.springframework.util.StringUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.gofobao.framework.core.vo.VoBaseResp.ERROR_BIND_BANK_CARD;
 

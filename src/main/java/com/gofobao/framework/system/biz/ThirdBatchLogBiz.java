@@ -5,9 +5,6 @@ import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.vo.request.VoFindThirdBatch;
 import com.gofobao.framework.system.vo.request.VoSendThirdBatch;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Map;
 
 /**
  * Created by Zeke on 2017/7/14.

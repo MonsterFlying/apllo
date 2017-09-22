@@ -1,7 +1,6 @@
 package com.gofobao.framework.scheduler;
 
 import com.github.wenhao.jpa.Specifications;
-import com.gofobao.framework.borrow.contants.RepaymentContants;
 import com.gofobao.framework.borrow.entity.Borrow;
 import com.gofobao.framework.borrow.service.BorrowService;
 import com.gofobao.framework.common.data.DataObject;
@@ -19,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;

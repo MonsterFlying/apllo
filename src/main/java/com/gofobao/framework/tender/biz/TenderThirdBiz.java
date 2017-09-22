@@ -1,7 +1,6 @@
 package com.gofobao.framework.tender.biz;
 
 import com.gofobao.framework.api.model.batch_credit_invest.BatchCreditInvestRunCall;
-import com.gofobao.framework.api.model.bid_auto_apply.BidAutoApplyRequest;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.tender.vo.request.VoCancelThirdTenderReq;
 import com.gofobao.framework.tender.vo.request.VoCreateThirdTenderReq;
