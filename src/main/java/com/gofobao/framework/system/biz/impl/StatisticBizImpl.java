@@ -1,11 +1,11 @@
 package com.gofobao.framework.system.biz.impl;
 
-import com.github.wenhao.jpa.Specifications;
 import com.gofobao.framework.core.vo.VoBaseResp;
 import com.gofobao.framework.helper.DateHelper;
 import com.gofobao.framework.helper.MathHelper;
 import com.gofobao.framework.helper.MultiCaculateHelper;
 import com.gofobao.framework.helper.RedisHelper;
+import com.gofobao.framework.member.repository.UserCacheRepository;
 import com.gofobao.framework.system.biz.StatisticBiz;
 import com.gofobao.framework.system.contants.DictAliasCodeContants;
 import com.gofobao.framework.system.entity.DictItem;
@@ -19,8 +19,7 @@ import com.gofobao.framework.system.vo.response.IndexStatistics;
 import com.gofobao.framework.system.vo.response.NewIndexStatisics;
 import com.gofobao.framework.system.vo.response.OperateDataStatistics;
 import com.gofobao.framework.system.vo.response.VoViewIndexStatisticsWarpRes;
-import com.gofobao.framework.tender.contants.TenderConstans;
-import com.gofobao.framework.tender.entity.Tender;
+import com.gofobao.framework.tender.repository.TenderRepository;
 import com.gofobao.framework.tender.service.TenderService;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
@@ -29,7 +28,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,6 +63,12 @@ public class StatisticBizImpl implements StatisticBiz {
 
     @Autowired
     private IncrStatisticService incrStatisticService;
+
+    @Autowired
+    private UserCacheRepository userCacheRepository;
+
+    @Autowired
+    private TenderRepository tenderRepository;
 
     private static final Gson GSON = new Gson();
 
@@ -127,7 +131,9 @@ public class StatisticBizImpl implements StatisticBiz {
                     indexStatistics.setTransactionsTotal(borrowTotal);
                     indexStatistics.setDueTotal(statistic.getWaitRepayTotal());
                     indexStatistics.setBorrowTotal(statistic.getBorrowItems());
-                    indexStatistics.setEarnings(statistic.getUserIncomeTotal());
+                    //为用户赚取收益
+                    Long userIncomeTotal=userCacheRepository.userIncomeTotal();
+                    indexStatistics.setEarnings(userIncomeTotal);
                     indexStatistics.setYesterdayDueTotal(0l);
                     // 注册人数
                     BigDecimal registerTotal = incrStatisticService.registerTotal();
@@ -219,6 +225,7 @@ public class StatisticBizImpl implements StatisticBiz {
     }
 
 
+
     LoadingCache<String, OperateDataStatistics> operateData = CacheBuilder
             .newBuilder()
             .expireAfterWrite(60, TimeUnit.MINUTES)
@@ -237,18 +244,15 @@ public class StatisticBizImpl implements StatisticBiz {
                     //注册人数
                     dataStatistics.setRegisterTotal(indexStatistics.getRegisterTotal());
                     //为用户赚取收益
-                    dataStatistics.setEarnings(indexStatistics.getEarnings());
+                    Long userIncomeTotal=userCacheRepository.userIncomeTotal();
+                    dataStatistics.setEarnings(userIncomeTotal);
                     //累计成交笔数
                     dataStatistics.setBorrowTotal(indexStatistics.getBorrowTotal());
                     //交易总额
                     dataStatistics.setTransactionsTotal(indexStatistics.getTransactionsTotal());
-
-                    Specification<Tender> specification = Specifications.<Tender>and()
-                            .eq("status", TenderConstans.SUCCESS)
-                            .build();
-                    Long count = tenderService.count(specification);
                     //累计投资人数
-                    dataStatistics.setTenderNoOfPeople(count);
+                    Long userCount=tenderRepository.tenderUserCount();
+                    dataStatistics.setTenderNoOfPeople(userCount);
 
                 /*    //已还本息
                     dataStatistics.setSettleCapitalTotal(indexStatistics.);*/

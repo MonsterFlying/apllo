@@ -49,4 +49,6 @@ public interface TenderService {
      * @return
      */
     Map<String, Long> statistic();
+
+
 }

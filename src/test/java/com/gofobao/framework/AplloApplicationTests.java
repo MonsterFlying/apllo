@@ -20,7 +20,6 @@ import com.gofobao.framework.api.model.batch_cancel.BatchCancelReq;
 import com.gofobao.framework.api.model.batch_cancel.BatchCancelResp;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryReq;
 import com.gofobao.framework.api.model.batch_details_query.BatchDetailsQueryResp;
-import com.gofobao.framework.api.model.batch_lend_pay.LendPay;
 import com.gofobao.framework.api.model.batch_query.BatchQueryReq;
 import com.gofobao.framework.api.model.batch_query.BatchQueryResp;
 import com.gofobao.framework.api.model.bid_apply_query.BidApplyQueryReq;
@@ -34,7 +33,6 @@ import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryRe
 import com.gofobao.framework.api.model.freeze_details_query.FreezeDetailsQueryResponse;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryReq;
 import com.gofobao.framework.api.model.trustee_pay_query.TrusteePayQueryResp;
-import com.gofobao.framework.asset.contants.BatchAssetChangeContants;
 import com.gofobao.framework.asset.service.AssetService;
 import com.gofobao.framework.borrow.biz.BorrowBiz;
 import com.gofobao.framework.borrow.biz.BorrowThirdBiz;
@@ -48,7 +46,9 @@ import com.gofobao.framework.common.rabbitmq.MqConfig;
 import com.gofobao.framework.common.rabbitmq.MqHelper;
 import com.gofobao.framework.common.rabbitmq.MqQueueEnum;
 import com.gofobao.framework.common.rabbitmq.MqTagEnum;
-import com.gofobao.framework.helper.*;
+import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.JixinHelper;
+import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.listener.providers.BorrowProvider;
 import com.gofobao.framework.listener.providers.CreditProvider;
 import com.gofobao.framework.marketing.biz.MarketingProcessBiz;
@@ -69,10 +69,6 @@ import com.gofobao.framework.scheduler.DealThirdBatchScheduler;
 import com.gofobao.framework.scheduler.biz.FundStatisticsBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealBiz;
 import com.gofobao.framework.system.biz.ThirdBatchDealLogBiz;
-import com.gofobao.framework.system.contants.ThirdBatchDealLogContants;
-import com.gofobao.framework.system.contants.ThirdBatchLogContants;
-import com.gofobao.framework.system.entity.ThirdBatchDealLog;
-import com.gofobao.framework.system.entity.ThirdBatchLog;
 import com.gofobao.framework.system.service.IncrStatisticService;
 import com.gofobao.framework.system.service.ThirdBatchLogService;
 import com.gofobao.framework.tender.contants.BorrowContants;
@@ -80,7 +76,6 @@ import com.gofobao.framework.tender.entity.Tender;
 import com.gofobao.framework.tender.service.TenderService;
 import com.gofobao.framework.tender.service.TransferBuyLogService;
 import com.gofobao.framework.tender.service.TransferService;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -94,6 +89,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -900,7 +896,7 @@ public class AplloApplicationTests {
     private LoanBiz loanBiz;
 
     @Test
-    public void timingRepayment(){
+    public void timingRepayment() {
         loanBiz.timingRepayment(new Date());
     }
 
@@ -908,7 +904,7 @@ public class AplloApplicationTests {
     private IncrStatisticService incrStatisticService;
 
     @Test
-    public void incrstatistic(){
+    public void incrstatistic() {
         incrStatisticService.dayStatistic(new Date());
     }
 
@@ -916,7 +912,18 @@ public class AplloApplicationTests {
     private BrokerBounsBiz brokerBounsBiz;
 
     @Test
-    public  void monthPushMoney(){
-        brokerBounsBiz.monthPushMoney(new Date());
+    public void monthPushMoney() {
+
+        aaaaa();
     }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void aaaaa() {
+        Borrow borrow1 = borrowService.findByIdLock(179937l);
+        borrow1.setMoneyYes(10l);
+        borrowService.save(borrow1);
+        System.out.println(GSON.toJson(borrow1));
+    }
+
+
 }
