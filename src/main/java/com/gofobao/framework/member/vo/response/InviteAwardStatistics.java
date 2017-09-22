@@ -18,7 +18,7 @@ public class InviteAwardStatistics {
     public Integer countNum=0;
 
     @ApiModelProperty("年华利率")
-    private String apr="0.02";
+    private String apr="0.2";
 
     @ApiModelProperty("好友待收本金")
     private String waitPrincipalTotal="0";
@@ -28,5 +28,9 @@ public class InviteAwardStatistics {
 
     @ApiModelProperty("邀请码2")
     private String inviteCode2;
+
+    @ApiModelProperty("等级")
+    private Integer level=1;
+
 
 }

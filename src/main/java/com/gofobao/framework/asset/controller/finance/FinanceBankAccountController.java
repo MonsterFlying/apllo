@@ -1,8 +1,11 @@
 package com.gofobao.framework.asset.controller.finance;
 
 import com.gofobao.framework.asset.biz.BankAccountBiz;
+import com.gofobao.framework.asset.biz.UnionLineNumberBiz;
+import com.gofobao.framework.asset.vo.request.VoUnionLineNoReq;
 import com.gofobao.framework.asset.vo.response.VoBankListResp;
 import com.gofobao.framework.asset.vo.response.VoBankTypeInfoResp;
+import com.gofobao.framework.asset.vo.response.pc.UnionLineNoWarpRes;
 import com.gofobao.framework.member.vo.response.VoHtmlResp;
 import com.gofobao.framework.security.contants.SecurityContants;
 import io.swagger.annotations.Api;
@@ -25,6 +28,9 @@ public class FinanceBankAccountController {
     @Autowired
     private BankAccountBiz bankAccountBiz ;
 
+    @Autowired
+    private UnionLineNumberBiz lineNumberBiz;
+
     @GetMapping("/bank/finance/typeinfo/{account}")
     @ApiOperation("根据银行卡获取银行卡基础信息和限额")
     public ResponseEntity<VoBankTypeInfoResp> findTypeInfo(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId,
@@ -45,6 +51,14 @@ public class FinanceBankAccountController {
     @ApiOperation("银行卡列表")
     public ResponseEntity<VoBankListResp> list(@ApiIgnore @RequestAttribute(SecurityContants.USERID_KEY) Long userId){
         return bankAccountBiz.list(userId) ;
+    }
+
+    @ApiOperation("联行号")
+    @GetMapping("finance/unionLineNo/pc/list")
+    public ResponseEntity<UnionLineNoWarpRes> unionLineNOList(VoUnionLineNoReq unionLineNoReq,
+                                                              @RequestAttribute(SecurityContants.USERID_KEY) Long userId) {
+        unionLineNoReq.setUserId(userId);
+        return lineNumberBiz.list(unionLineNoReq);
     }
 
 }

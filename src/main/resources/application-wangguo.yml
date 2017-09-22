@@ -1,7 +1,7 @@
 spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
-    url: jdbc:mysql://192.168.1.5:3306/gfb0908?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&&useSSL=true&&zeroDateTimeBehavior=round
+    url: jdbc:mysql://192.168.1.5:3306/gfb0918?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&&useSSL=true&&zeroDateTimeBehavior=round
     username: root
     password:
     driver-class-name: com.mysql.jdbc.Driver
@@ -11,6 +11,7 @@ spring:
     hibernate:
       naming:
         strategy: org.hibernate.cfg.ImprovedNamingStrategy
+
     properties:
       hibernate:
         dialect : org.hibernate.dialect.MySQL5Dialect
@@ -66,7 +67,7 @@ jixin: #银行存管
   bankCode: "30050000" #交易机构代码
   product-no: "0105" # 产品编号
   bank-no: "3005" #产品编号
-  query-time-init: "20170425" # 与存管系统查询时间
+  query-time-init: "20170429" # 与存管系统查询时间
   crt-path:  # crt证书路径
   p12-path:  # p12证书路径
 
@@ -84,7 +85,6 @@ gofobao:
   aliyun-bankinfo-url: http://jisuyhkgsd.market.alicloudapi.com/bankcard/query
   aliyun-bankaps-url: http://cnaps.market.alicloudapi.com/lianzhuo/querybankaps
   aliyun-bankinfo-appcode: 1fa8442456704a4686d950b099c188b9 #阿里云api管理中的appcode
-  error-email: 474536890@qq.com
   flowConfig: #易蜂享
     url: http://xc.aipipi.mobi/trafgatewate/apply.do
     id: 10

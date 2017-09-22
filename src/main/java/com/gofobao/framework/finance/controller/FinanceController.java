@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @Api(description = "理财")
-@RequestMapping("/pub/finance")
+@RequestMapping("")
 public class FinanceController {
 
     @Autowired
@@ -30,7 +30,7 @@ public class FinanceController {
     private FinancePlanBuyerBiz financePlanBuyerBiz;
 
     @ApiOperation("理财列表")
-    @GetMapping("/plan/list/{pageIndex}/{pageSize}")
+    @GetMapping("/pub/finance/plan/list/{pageIndex}/{pageSize}")
     public ResponseEntity<PlanListWarpRes> list(@PathVariable Integer pageIndex, @PathVariable Integer pageSize) {
         Page page = new Page();
         page.setPageIndex(pageIndex);
@@ -39,14 +39,14 @@ public class FinanceController {
     }
 
     @ApiOperation("理财标详情")
-    @GetMapping("/plan/info/{id}")
+    @GetMapping("/pub/finance/plan/info/{id}")
     public ResponseEntity<PlanDetail> info(@PathVariable Long id) {
         return financePlanBiz.details(id);
     }
 
 
     @ApiOperation("投资记录")
-    @GetMapping("/plan/tender/list/logs/{id}")
+    @GetMapping("/pub/finance/plan/tender/list/logs/{id}")
     public ResponseEntity<PlanBuyUserListWarpRes> buyUserList(@PathVariable Long id) {
         return financePlanBuyerBiz.buyUserList(id);
     }
@@ -59,7 +59,7 @@ public class FinanceController {
      * @return
      */
     @ApiOperation("购买理财计划")
-    @PostMapping("/v2/tender/finance/plan")
+    @PostMapping("finance/v2/tender/plan")
     public ResponseEntity<VoBaseResp> tenderFinancePlan(VoTenderFinancePlan voTenderFinancePlan) {
         try {
             return financePlanBiz.tenderFinancePlan(voTenderFinancePlan);

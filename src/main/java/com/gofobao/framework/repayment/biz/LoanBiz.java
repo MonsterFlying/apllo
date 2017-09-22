@@ -7,6 +7,8 @@ import com.gofobao.framework.repayment.vo.response.*;
 import com.gofobao.framework.repayment.vo.response.pc.VoViewLoanStatisticsWarpRes;
 import org.springframework.http.ResponseEntity;
 
+import java.util.Date;
+
 /**
  * Created by admin on 2017/6/5.
  */
@@ -75,5 +77,11 @@ public interface LoanBiz {
      * @return
      */
     ResponseEntity<VoViewLoanStatisticsWarpRes>repaymentStatistics(VoStatisticsReq voStatisticsReq);
+
+    /**
+     * 调度每天早上9点钟自动官标还款
+     * @param date
+     */
+    void timingRepayment(Date date);
 
 }

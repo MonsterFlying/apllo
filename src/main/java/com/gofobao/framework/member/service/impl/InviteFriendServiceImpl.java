@@ -75,8 +75,12 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
     public Map<String, Object> pcBrokerBounsList(VoFriendsTenderReq friendsTenderReq) {
         Map<String, Object> resultMaps = Maps.newHashMap();
 
-        Date beginAt = DateHelper.beginOfDate(DateHelper.stringToDate(friendsTenderReq.getBeginAt(),DateHelper.DATE_FORMAT_YMD));
-        Date endAt = DateHelper.endOfDate(DateHelper.stringToDate(friendsTenderReq.getEndAt(),DateHelper.DATE_FORMAT_YMD));
+        Date beginAt = DateHelper.beginOfDate(
+                DateHelper.stringToDate(friendsTenderReq.getBeginAt(),
+                        DateHelper.DATE_FORMAT_YMD));
+        Date endAt = DateHelper.endOfDate(DateHelper.stringToDate(
+                friendsTenderReq.getEndAt(),
+                DateHelper.DATE_FORMAT_YMD));
         Specification specification = Specifications.<BrokerBouns>and()
                 .eq("userId", friendsTenderReq.getUserId())
                 .between("createdAt", new Range<>(beginAt, endAt))
@@ -84,27 +88,27 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
         Page<BrokerBouns> bounsPage = brokerBounsRepository.findAll(specification,
                 new PageRequest(friendsTenderReq.getPageIndex(),
                         friendsTenderReq.getPageSize(),
-                        new Sort("userId")));
+                        new Sort(Sort.Direction.DESC, "id")));
 
         Long totalCount = bounsPage.getTotalElements();
         List<BrokerBouns> bounsList = bounsPage.getContent();
 
         resultMaps.put("totalCount", totalCount);
-        if(CollectionUtils.isEmpty(bounsList)){
-            resultMaps.put("bounsList",new ArrayList<>(0));
+        if (CollectionUtils.isEmpty(bounsList)) {
+            resultMaps.put("bounsList", new ArrayList<>(0));
             return resultMaps;
         }
-        List<InviteFriends> brokerBouns= Lists.newArrayList();
-        bounsList.stream().forEach(p->{
-            InviteFriends friends=new InviteFriends();
-            friends.setScale(StringHelper.formatMon(p.getAwardApr()/100D));
-            friends.setWaitPrincipalTotal(StringHelper.formatMon(p.getWaitPrincipalTotal()/100D));
+        List<InviteFriends> brokerBouns = Lists.newArrayList();
+        bounsList.stream().forEach(p -> {
+            InviteFriends friends = new InviteFriends();
+            friends.setScale(StringHelper.formatMon(p.getAwardApr() / 100D));
+            friends.setWaitPrincipalTotal(StringHelper.formatMon(p.getWaitPrincipalTotal() / 100D));
             friends.setLeave(p.getLevel());
-            friends.setMoney(StringHelper.formatMon(p.getBounsAward()/100D));
+            friends.setMoney(StringHelper.formatMon(p.getBounsAward() / 100D));
             friends.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
             brokerBouns.add(friends);
         });
-        resultMaps.put("bounsList",brokerBouns);
+        resultMaps.put("bounsList", brokerBouns);
         return resultMaps;
     }
 
@@ -114,15 +118,15 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
         Specification specification = Specifications.<BrokerBouns>and()
                 .eq("userId", friendsTenderReq.getUserId())
                 .build();
-        List<BrokerBouns> bounsList=brokerBounsRepository.findAll(specification);
-        List<InviteFriends> brokerBouns= new ArrayList<>(bounsList.size());
-        bounsList.forEach(p->{
-            InviteFriends inviteFriends=new InviteFriends();
+        List<BrokerBouns> bounsList = brokerBounsRepository.findAll(specification, new Sort(Sort.Direction.DESC, "id"));
+        List<InviteFriends> brokerBouns = new ArrayList<>(bounsList.size());
+        bounsList.forEach(p -> {
+            InviteFriends inviteFriends = new InviteFriends();
             inviteFriends.setCreatedAt(DateHelper.dateToString(p.getCreatedAt()));
-            inviteFriends.setMoney(DateHelper.dateToString(p.getCreatedAt()));
+            inviteFriends.setMoney(StringHelper.formatMon(p.getBounsAward() / 100D));
             inviteFriends.setLeave(p.getLevel());
-            inviteFriends.setWaitPrincipalTotal(StringHelper.toString(p.getWaitPrincipalTotal()/100D));
-            inviteFriends.setScale(StringHelper.formatMon(p.getAwardApr()/100D)+MoneyConstans.PERCENT);
+            inviteFriends.setWaitPrincipalTotal(StringHelper.toString(p.getWaitPrincipalTotal() / 100D));
+            inviteFriends.setScale(StringHelper.formatMon(p.getAwardApr() / 100D) + MoneyConstans.PERCENT);
             brokerBouns.add(inviteFriends);
         });
         return brokerBouns;
@@ -130,61 +134,51 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
 
     @Override
     public InviteAwardStatistics query(Long userId) {
-        InviteAwardStatistics inviteAwardStatistics = new InviteAwardStatistics();
-        Users users1=usersRepository.getOne(userId);
-        inviteAwardStatistics.setInviteCode1(users1.getInviteCode());
-        inviteAwardStatistics.setInviteCode2(StringUtils.isEmpty(users1.getPhone())?"": users1.getPhone());
-        Users users = new Users();
-        users.setParentId(userId);
-        Example<Users> example = Example.of(users);
-        Long count = usersRepository.count(example);
-        //邀请总人数
-        inviteAwardStatistics.setCountNum(count.intValue());
-
-        Specification<BrokerBouns> specification = Specifications.<BrokerBouns>and()
-                .eq("userId", userId)
-                .build();
-        List<BrokerBouns> brokerBounss = brokerBounsRepository.findAll(specification,new Sort(Sort.Direction.DESC,"id"));
-        if (CollectionUtils.isEmpty(brokerBounss)) {
-            return inviteAwardStatistics;
-        }
-        Date yesterdayDate = DateHelper.subDays(new Date(), 1);
-        Long yesterdayBegin = DateHelper.beginOfDate(yesterdayDate).getTime();
-        Long yesterdayEnd = DateHelper.endOfDate(yesterdayDate).getTime();
-
-        List<BrokerBouns> yesterdayBroker = brokerBounss.stream()
-                .filter(p ->
-                        p.getCreatedAt().getTime() <= yesterdayEnd && p.getCreatedAt().getTime() >= yesterdayBegin)
-                .collect(Collectors.toList());
-        //昨日奖励
-        if (CollectionUtils.isEmpty(yesterdayBroker)) {
-            inviteAwardStatistics.setYesterdayAward("0.00");
-        } else {
-            //待收本金
-            Long waitPrincipalTotal=brokerBounss.get(0).getWaitPrincipalTotal();
-            //昨日奖励
-            Integer yesterdayBounsAward = yesterdayBroker.stream().mapToInt(w -> w.getBounsAward()).sum();
-            inviteAwardStatistics.setYesterdayAward(StringHelper.formatMon(yesterdayBounsAward / 100D));
-            //年化率
-            String awardApr = "0.02";
-            if ( waitPrincipalTotal>= 80000000) {
-                awardApr = "0.05";
-            } else if ( waitPrincipalTotal>= 20000000) {
-                awardApr = "0.03";
+        try {
+            InviteAwardStatistics inviteAwardStatistics = new InviteAwardStatistics();
+            Users users1 = usersRepository.getOne(userId);
+            inviteAwardStatistics.setInviteCode1(users1.getInviteCode());
+            inviteAwardStatistics.setInviteCode2(StringUtils.isEmpty(users1.getPhone()) ? "" : users1.getPhone());
+            Users users = new Users();
+            users.setParentId(userId);
+            Example<Users> example = Example.of(users);
+            Long count = usersRepository.count(example);
+            //邀请总人数
+            inviteAwardStatistics.setCountNum(count.intValue());
+            //奖励
+            Specification<BrokerBouns> specification = Specifications.<BrokerBouns>and()
+                    .eq("userId", userId)
+                    .build();
+            Page<BrokerBouns> brokerBounsPage = brokerBounsRepository.findAll(specification,
+                    new PageRequest(0,
+                            1,
+                            new Sort(Sort.Direction.DESC, "id")));
+            List<BrokerBouns> brokerBounss = brokerBounsPage.getContent();
+            if (!ObjectUtils.isEmpty(brokerBounss)) {
+                BrokerBouns brokerBouns = brokerBounss.get(0);
+                //昨日奖励
+                Integer yestodayBounsAward = brokerBouns.getBounsAward();
+                //昨日奖励
+                inviteAwardStatistics.setYesterdayAward(StringHelper.formatMon(yestodayBounsAward / 100D));
+                //年化率
+                inviteAwardStatistics.setApr(StringHelper.formatMon(brokerBouns.getAwardApr() / 100D));
+                //待收本金
+                Long waitPrincipalTotal = brokerBouns.getWaitPrincipalTotal();
+                inviteAwardStatistics.setWaitPrincipalTotal(StringHelper.formatMon(waitPrincipalTotal / 100D));
+                inviteAwardStatistics.setLevel(brokerBouns.getLevel());
             }
-            inviteAwardStatistics.setApr( awardApr);
-            inviteAwardStatistics.setWaitPrincipalTotal(StringHelper.formatMon(waitPrincipalTotal/100D));
+            //总奖励
+            Integer sumBounsAward = brokerBounsRepository.sumBounsAward(userId);
+            inviteAwardStatistics.setSumAward(StringHelper.formatMon(StringUtils.isEmpty(sumBounsAward) ? 0 : sumBounsAward / 100D));
+            return inviteAwardStatistics;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new InviteAwardStatistics();
         }
-        //总奖励
-        if(!CollectionUtils.isEmpty(brokerBounss)){
-            Integer sumAward = brokerBounss.stream().mapToInt(w -> w.getBounsAward()).sum();
-            inviteAwardStatistics.setSumAward(StringHelper.formatMon(sumAward / 100D));
-        }
-        return inviteAwardStatistics;
+
     }
 
     /**
-     *
      * @param voFriendsReq
      * @return
      */
@@ -225,6 +219,7 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
 
     /**
      * PC:邀请用户投标记录
+     *
      * @param voFriendsReq
      * @return
      */
@@ -241,12 +236,12 @@ public class InviteFriendServiceImpl implements InviteFriendsService {
         } else if (voFriendsReq.getType() == 1) {
             specification = Specifications.<Users>and()
                     .eq("parentId", voFriendsReq.getUserId())
-                    .between("createdAt", new Range<>( DateHelper.subDays(new Date(),365),new Date()))
+                    .between("createdAt", new Range<>(DateHelper.subDays(new Date(), 365), new Date()))
                     .build();
         }
 
-        if(voFriendsReq.getPageIndex().intValue()>new Integer(1)){
-            voFriendsReq.setPageIndex((voFriendsReq.getPageIndex()-1)*voFriendsReq.getPageSize());
+        if (voFriendsReq.getPageIndex().intValue() > new Integer(1)) {
+            voFriendsReq.setPageIndex((voFriendsReq.getPageIndex() - 1) * voFriendsReq.getPageSize());
         }
         Page<Users> usersPage = usersRepository.findAll(specification,
                 new PageRequest(voFriendsReq.getPageIndex(),

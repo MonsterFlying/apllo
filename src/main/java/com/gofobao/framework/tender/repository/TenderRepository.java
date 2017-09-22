@@ -23,9 +23,27 @@ public interface TenderRepository extends JpaRepository<Tender, Long>, JpaSpecif
 
     List<Tender> findByBorrowIdAndUserIdIs(Long borrowId, Long userId);
 
+    /**
+     * 用户债券查询
+     * @param userId
+     * @param type
+     * @param status
+     * @param transferFlag
+     * @param pa
+     * @return
+     */
     Page<Tender> findByUserIdAndTypeIsAndStatusIsAndTransferFlagIs(Long userId,Integer type, Integer status, Integer transferFlag, Pageable pa);
 
     Tender findByAuthCode(String authCode);
 
+    /**
+     * 根据tenderIds集合查询tender集合
+     * @param ids
+     * @return
+     */
     List<Tender> findByIdIn(List<Long> ids);
+
+
+    @Query("SELECT COUNT ( DISTINCT tender.userId) FROM Tender tender ")
+    Long  tenderUserCount();
 }

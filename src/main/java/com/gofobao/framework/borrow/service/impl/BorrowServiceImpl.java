@@ -841,4 +841,9 @@ public class BorrowServiceImpl implements BorrowService {
             return null;
         }
     }
+
+    @Override
+    public List<Borrow> findByBorrowIds(List<Long> ids) {
+        return borrowRepository.findByIdIn(ids);
+    }
 }

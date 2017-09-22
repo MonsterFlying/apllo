@@ -12,6 +12,11 @@ import java.util.List;
  */
 @Repository
 public interface AutoTenderRepository extends JpaRepository<AutoTender,Long>,JpaSpecificationExecutor<AutoTender>{
+    /**
+     * 根据用户id查询用户自动投标规则
+     * @param userId
+     * @return
+     */
     List<AutoTender> findByUserId(Long userId);
 
 }
