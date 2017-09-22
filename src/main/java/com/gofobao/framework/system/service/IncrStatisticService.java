@@ -2,7 +2,6 @@ package com.gofobao.framework.system.service;
 
 import com.gofobao.framework.system.entity.IncrStatistic;
 
-import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -20,7 +19,7 @@ public interface IncrStatisticService {
     IncrStatistic save(IncrStatistic dbIncrStatistic);
 
 
-    BigDecimal registerTotal();
+    Long registerTotal();
 
 
     void dayStatistic( Date date);

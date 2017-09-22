@@ -103,15 +103,14 @@ public class StatisticBizImpl implements StatisticBiz {
                     int days = DateHelper.diffInDays(currCalender.getTime(), currYearDate, false);
                     newIndexStatisics.setSafeOperation(String.format("%s年%s天", years, days));
                     //注册人数
-                    BigDecimal registerTotal = incrStatisticService.registerTotal();
-                    long register = registerTotal.longValue();
+                    Long registerTotal = incrStatisticService.registerTotal();
                     String titel = formatNumber(borrowTotal / 100);
                     if (titel.contains("亿")) {
                         titel = titel.substring(0, titel.indexOf("亿") + 1);
                     } else if (titel.contains("万")) {
                         titel = titel.substring(0, titel.indexOf("万") + 1);
                     }
-                    newIndexStatisics.setRegsiterCount(formatNumber(register) + "人");
+                    newIndexStatisics.setRegsiterCount(formatNumber(registerTotal) + "人");
                     newIndexStatisics.setTotalTransaction(String.format("%s元", titel)); // 交易总额
                     return newIndexStatisics;
                 }
@@ -136,7 +135,7 @@ public class StatisticBizImpl implements StatisticBiz {
                     indexStatistics.setEarnings(userIncomeTotal);
                     indexStatistics.setYesterdayDueTotal(0l);
                     // 注册人数
-                    BigDecimal registerTotal = incrStatisticService.registerTotal();
+                    Long registerTotal = incrStatisticService.registerTotal();
                     indexStatistics.setRegisterTotal(registerTotal);
                     // 起头金额 & 年华利率
                     DictItem dictItem = dictItemService.findTopByAliasCodeAndDel(DictAliasCodeContants.INDEX_CONFIG, 0);
