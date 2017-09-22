@@ -129,7 +129,7 @@ public class TenderBizImpl implements TenderBiz {
                     .body(VoBaseResp.error(VoBaseResp.ERROR_CREDIT, "请先签订自动投标协议！", VoBaseResp.class));
         }
 
-        Borrow borrow = borrowService.findByIdLock(voCreateTenderReq.getBorrowId());
+        Borrow borrow = borrowService.findByIdLock(voCreateTenderReq.getBorrowId());  //
         Preconditions.checkNotNull(borrow, "投标: 标的信息为空!");
         if (!ObjectUtils.isEmpty(borrow.getLendId()) && borrow.getLendId() > 0) {
             Lend lend = lendService.findByIdLock(borrow.getLendId());
@@ -184,6 +184,7 @@ public class TenderBizImpl implements TenderBiz {
             MqConfig mqConfig = new MqConfig();
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_BORROW);
             mqConfig.setTag(MqTagEnum.AGAIN_VERIFY);
+            mqConfig.setSendTime(DateHelper.addSeconds(nowDate, 1));
             ImmutableMap<String, String> body = ImmutableMap
                     .of(MqConfig.MSG_BORROW_ID, StringHelper.toString(borrow.getId()), MqConfig.MSG_TIME, DateHelper.dateToString(new Date()));
             mqConfig.setMsg(body);
@@ -539,8 +540,7 @@ public class TenderBizImpl implements TenderBiz {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<VoBaseResp> tender(VoCreateTenderReq voCreateTenderReq) throws Exception {
         //投标撤回集合
-        List<VoSaveThirdTender> voSaveThirdTenderList = null;
-        Borrow borrow = borrowService.findById(voCreateTenderReq.getBorrowId());
+        String borrowId = String.valueOf(voCreateTenderReq.getBorrowId()) ;
         try {
             ResponseEntity<VoBaseResp> voBaseRespResponseEntity = createTender(voCreateTenderReq);
             if (voBaseRespResponseEntity.getStatusCode().equals(HttpStatus.OK)) {
@@ -550,11 +550,11 @@ public class TenderBizImpl implements TenderBiz {
             }
         } catch (Exception e) {
             //投标撤回
-            jixinTenderRecordHelper.cancelJixinTenderByRedisRecord(borrow.getProductId(), false);
+            jixinTenderRecordHelper.cancelJixinTenderByRedisRecord(borrowId, false);
             throw new Exception(e);
         } finally {
             //从redis删除投标申请记录
-            jixinTenderRecordHelper.removeJixinTenderRecordInRedis(borrow.getProductId(), false);
+            jixinTenderRecordHelper.removeJixinTenderRecordInRedis(borrowId, false);
         }
     }
 

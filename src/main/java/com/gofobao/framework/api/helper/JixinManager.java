@@ -7,6 +7,7 @@ import com.gofobao.framework.api.request.JixinBaseRequest;
 import com.gofobao.framework.common.constans.TypeTokenContants;
 import com.gofobao.framework.core.helper.RandomHelper;
 import com.gofobao.framework.helper.DateHelper;
+import com.gofobao.framework.helper.ExceptionEmailHelper;
 import com.gofobao.framework.helper.StringHelper;
 import com.gofobao.framework.system.biz.impl.JixinTxLogBizImpl;
 import com.google.common.reflect.TypeToken;
@@ -19,6 +20,8 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import javax.net.ssl.*;
@@ -37,6 +40,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class JixinManager {
     @Autowired
     CertHelper certHelper;
+
+    @Autowired
+    ExceptionEmailHelper exceptionEmailHelper;
 
     Gson gson = new Gson();
 
@@ -117,7 +123,7 @@ public class JixinManager {
         Set<String> keys = params.keySet();
         for (String key : keys) {
             String value = params.get(key);
-            KeyValuePair keyValuePair = new KeyValuePair() ;
+            KeyValuePair keyValuePair = new KeyValuePair();
             keyValuePair.setKey(key);
             keyValuePair.setValue(value);
             datas.add(keyValuePair);
@@ -157,10 +163,10 @@ public class JixinManager {
         String sign = certHelper.doSign(unSign);
         params.put("sign", sign);
         jixinTxLogBiz.saveRequest(txCodeEnum, params);
-      /*  log.info("=============================================");
+        log.info("=============================================");
         log.info(String.format("[%s] 报文流水：%s%s%s", txCodeEnum.getName(), req.getTxDate(), req.getTxTime(), req.getSeqNo()));
         log.info("=============================================");
-        log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));*/
+        log.info(String.format("即信请求报文: url=%s body=%s", url, gson.toJson(params)));
         return genFormHtml(params, url);
     }
 
@@ -244,7 +250,7 @@ public class JixinManager {
      * @param <T>
      * @return
      */
-    public<T>  T specialCallback(HttpServletRequest request, TypeToken<T> typeToken) {
+    public <T> T specialCallback(HttpServletRequest request, TypeToken<T> typeToken) {
         checkNotNull(request, "请求体为null");
         String bgData = request.getParameter("bgData");
         log.info(String.format("即信异步响应返回值：%s", bgData));
@@ -307,6 +313,27 @@ public class JixinManager {
         try {
             response = restTemplate.exchange(url, HttpMethod.POST, entity, clazz);
         } catch (Throwable e) {
+            // 触发邮件发送
+            exceptionEmailHelper.sendErrorMessage(String.format("请求即信异常: %s  %s", req.getTxCode(), e.getMessage()), gson.toJson(req));
+            if (e instanceof HttpClientErrorException) {
+                return null;
+            } else if (e instanceof HttpServerErrorException) {
+                try {
+                    S s = clazz.newInstance();
+                    if (e.getMessage().contains("502")) {
+                        s.setRetCode("GFB502");
+                    } else if (e.getMessage().contains("504")) {
+                        s.setRetCode("GFB504");
+                    } else {
+                        s.setRetCode("GFBOTHER");
+                    }
+
+                    return s;
+                } catch (Exception e1) {
+                    return null;
+                }
+
+            }
             log.error("请求即信服务器异常", e);
             return null;
         }
@@ -323,8 +350,8 @@ public class JixinManager {
             log.error("即信请求返回值验证不通过");
             return null;
         }
-        /*log.info(String.format("即信响应报文:url=%s body=%s", url, gson.toJson(body)));*/
 
+        log.info(String.format("即信响应报文:url=%s body=%s", url, gson.toJson(body)));
         body.setRetMsg(JixinResultContants.getMessage(body.getRetCode()));
         // 请求插入数据
         return body;

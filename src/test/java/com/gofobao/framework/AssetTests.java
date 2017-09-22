@@ -10,10 +10,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpMethod;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Date;
+import java.util.Map;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -38,5 +43,29 @@ public class AssetTests {
     @Test
     public void test02() throws Exception {
         exceptionEmailHelper.sendErrorMessage("测试多人发送", "测试多人发送");
+    }
+
+
+
+    @Test
+    public void test03() throws Exception{
+        String url = "http://gofobao-admin.dev/504" ;
+        try{
+            RestTemplate restTemplate = new RestTemplate();
+            restTemplate.exchange(url, HttpMethod.POST, null, Map.class);
+        }catch (Exception e){
+            log.error("请求异常", e.getMessage());
+            if(e instanceof HttpClientErrorException){
+                if(e.getMessage().contains("405")){
+                    log.error("405");
+                }
+            }else if(e instanceof HttpServerErrorException){
+                if(e.getMessage().contains("502")){
+                    log.error("502");
+                }else if(e.getMessage().contains("504")){
+                    log.error("504");
+                }
+            }
+        }
     }
 }

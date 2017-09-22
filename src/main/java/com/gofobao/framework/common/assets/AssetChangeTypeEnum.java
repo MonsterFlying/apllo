@@ -253,7 +253,7 @@ public enum AssetChangeTypeEnum {
     /**
      * 取消大额提现手续费
      */
-    cancelBigCashFee("返还大额提现手续费", "cancelBigCashFee", "4820", "add@useMoney", "sub@expenditureFee", "D"),
+    cancelBigCashFee("冲正大额提现手续费", "cancelBigCashFee", "4820", "add@useMoney", "sub@expenditureFee", "D"),
 
     /**
      * 小额提现
