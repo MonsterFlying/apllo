@@ -313,6 +313,7 @@ public class JixinManager {
         try {
             response = restTemplate.exchange(url, HttpMethod.POST, entity, clazz);
         } catch (Throwable e) {
+            log.error("请求即信服务器异常", e);
             // 触发邮件发送
             exceptionEmailHelper.sendErrorMessage(String.format("请求即信异常: %s  %s", req.getTxCode(), e.getMessage()), gson.toJson(req));
             if (e instanceof HttpClientErrorException) {
@@ -321,22 +322,21 @@ public class JixinManager {
                 try {
                     S s = clazz.newInstance();
                     if (e.getMessage().contains("502")) {
-                        s.setRetCode("GFB502");
+                        s.setRetCode(JixinResultContants.ERROR_502);
+                        s.setRetMsg("请求即信502");
                     } else if (e.getMessage().contains("504")) {
-                        s.setRetCode("GFB504");
+                        s.setRetCode(JixinResultContants.ERROR_502);
+                        s.setRetMsg("请求即信504");
                     } else {
-                        s.setRetCode("GFBOTHER");
+                        return null;
                     }
-
                     return s;
                 } catch (Exception e1) {
                     return null;
                 }
-
             }
-            log.error("请求即信服务器异常", e);
-            return null;
         }
+
 
         checkNotNull(response);
         S body = response.getBody();

@@ -222,9 +222,9 @@ public class UserActiveProvider {
             result = doRechargeOpQuery(Long.parseLong(sourceId), userThirdAccount);
         }
 
-        if(result){
+        if (result) {
             log.info(String.format("单笔资金操作处理成功处理成功:%s", gson.toJson(msg)));
-        }else{
+        } else {
             log.error(String.format("单笔资金操作处理成功处理失败:%s", gson.toJson(msg)));
         }
 
@@ -256,7 +256,12 @@ public class UserActiveProvider {
             return false;
         }
 
-        if ("00".equalsIgnoreCase(fundTransQueryResponse.getResult())) {  // 进行增加用户资金操作
+        if ("00".equalsIgnoreCase(fundTransQueryResponse.getResult())
+                && "0".equalsIgnoreCase(fundTransQueryResponse.getOrFlag())) {  // 进行增加用户资金操作
+            rechargeDetailLog.setState(1);
+            rechargeDetailLog.setCallbackTime(nowDate);
+            rechargeDetailLogService.save(rechargeDetailLog);
+
             AssetChange entity = new AssetChange();
             String groupSeqNo = assetChangeProvider.getGroupSeqNo();
             entity.setGroupSeqNo(groupSeqNo);
@@ -276,7 +281,7 @@ public class UserActiveProvider {
             mqConfig.setMsg(body);
             mqHelper.convertAndSend(mqConfig);
         } else {  // 失败发送用户, 通知
-            exceptionEmailHelper.sendErrorMessage("充值单笔资金查询失败!",  String.format("充值Id: %s", sourceId));
+            exceptionEmailHelper.sendErrorMessage("充值单笔资金查询失败!", String.format("充值Id: %s", sourceId));
             String titel = "充值失败";
             String content = String.format("敬爱的用户您好! 你在[%s]充值%s元, 存管系统处理失败!", DateHelper.dateToString(rechargeDetailLog.getCreateTime()),
                     StringHelper.formatDouble(rechargeDetailLog.getMoney() / 100D, true));
@@ -328,7 +333,7 @@ public class UserActiveProvider {
                 FundTransQueryResponse.class);
 
         if (ObjectUtils.isEmpty(fundTransQueryResponse)
-                || !JixinResultContants.SUCCESS.equalsIgnoreCase(fundTransQueryResponse.getTxCode())) {
+                || !JixinResultContants.SUCCESS.equalsIgnoreCase(fundTransQueryResponse.getRetCode())) {
             try {
                 Thread.sleep(2 * 1000L);
             } catch (InterruptedException e) {
@@ -369,57 +374,32 @@ public class UserActiveProvider {
         String content = null;
         // 查询操作是否成功
         if ("00".equalsIgnoreCase(fundTransQueryResponse.getResult())) {
-            titel = "提现成功";
-            content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 已经处理成功!.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
-                    StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
-        } else { // 失败进行撤销
-            try {
-                exceptionEmailHelper.sendErrorMessage("提现失败, 发生资金撤回", String.format("提现Id: %s", sourceId));
-                cashDetailLog.setState(4);  // 更改用户提现记录
-                cashDetailLog.setCallbackTime(nowDate);
-                cashDetailLogService.save(cashDetailLog);
-                long userId = cashDetailLog.getUserId();
-
-                // 更改用户资金
-                AssetChange entity = new AssetChange();
-                long realCashMoney = cashDetailLog.getMoney() - cashDetailLog.getFee();
-                String groupSeqNo = assetChangeProvider.getGroupSeqNo();
-                entity.setGroupSeqNo(groupSeqNo);
-                entity.setMoney(realCashMoney);
-                entity.setSeqNo(seqNo);
-                entity.setUserId(userId);
-                entity.setRemark(String.format("你在 %s 成功返还提现%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(realCashMoney / 100D, true)));
-                entity.setType(AssetChangeTypeEnum.cancelBigCash);
-                assetChangeProvider.commonAssetChange(entity);
-                if (cashDetailLog.getFee() > 0) {   // 扣除用户提现手续费
-                    Long feeAccountId = assetChangeProvider.getFeeAccountId();
-                    entity = new AssetChange();
-                    entity.setGroupSeqNo(groupSeqNo);
-                    entity.setMoney(cashDetailLog.getFee());
-                    entity.setSeqNo(seqNo);
-                    entity.setUserId(userId);
-                    entity.setForUserId(feeAccountId);
-                    entity.setRemark(String.format("你在 %s 成功返还提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
-                    entity.setType(AssetChangeTypeEnum.cancelBigCashFee);
-                    assetChangeProvider.commonAssetChange(entity);
-
-                    // 平台收取提现手续费
-                    entity = new AssetChange();
-                    entity.setGroupSeqNo(groupSeqNo);
-                    entity.setMoney(cashDetailLog.getFee());
-                    entity.setSeqNo(seqNo);
-                    entity.setUserId(feeAccountId);
-                    entity.setForUserId(userId);
-                    entity.setRemark(String.format("你在 %s 成功返还提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
-                    entity.setType(AssetChangeTypeEnum.cancelPlatformBigCashFee);
-                    assetChangeProvider.commonAssetChange(entity);
-                }
-
+            if (fundTransQueryResponse.getOrFlag().equalsIgnoreCase("1")) {  // 发生拨正
                 titel = "提现失败";
                 content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 由于已被银行拒绝受理, 现在归还提现资金. 如有疑问联系平台客服!", DateHelper.dateToString(cashDetailLog.getCreateTime()),
                         StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
+
+                try {
+                    exceptionEmailHelper.sendErrorMessage("提现失败, 资金发生拨正现象", String.format("提现Id: %s", sourceId));
+                    doCancelCash(cashDetailLog, nowDate, seqNo);     // 拨正提现
+                } catch (Exception e) {
+                    exceptionEmailHelper.sendException("提现资金拨正错误", e);
+                    throw new Exception(e);
+                }
+            } else {  // 处理成功
+                titel = "提现成功";
+                content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 已经处理成功!.", DateHelper.dateToString(cashDetailLog.getCreateTime()),
+                        StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
+            }
+        } else { // 失败进行撤销
+            titel = "提现失败";
+            content = String.format("敬爱的用户您好! 你在[%s]提交%s元的提现请求, 由于已被银行拒绝受理, 现在归还提现资金. 如有疑问联系平台客服!", DateHelper.dateToString(cashDetailLog.getCreateTime()),
+                    StringHelper.formatDouble(cashDetailLog.getMoney() / 100D, true));
+            try {
+                exceptionEmailHelper.sendErrorMessage("提现操作确定, 发生资金撤回", String.format("提现Id: %s", sourceId));
+                doCancelCash(cashDetailLog, nowDate, seqNo);  // 拨正提现
             } catch (Exception e) {
-                exceptionEmailHelper.sendException("提现资金拨正错误", e);
+                exceptionEmailHelper.sendException(String.format("提现操作确定. 查询结果失败: result: %s", fundTransQueryResponse.getResult()), e);
                 throw new Exception(e);
             }
         }
@@ -446,5 +426,47 @@ public class UserActiveProvider {
         }
 
         return true;
+    }
+
+    private void doCancelCash(CashDetailLog cashDetailLog, Date nowDate, String seqNo) throws Exception {
+        cashDetailLog.setState(4);  // 更改用户提现记录
+        cashDetailLog.setCallbackTime(nowDate);
+        cashDetailLogService.save(cashDetailLog);
+        long userId = cashDetailLog.getUserId();
+
+        // 更改用户资金
+        AssetChange entity = new AssetChange();
+        long realCashMoney = cashDetailLog.getMoney() - cashDetailLog.getFee();
+        String groupSeqNo = assetChangeProvider.getGroupSeqNo();
+        entity.setGroupSeqNo(groupSeqNo);
+        entity.setMoney(realCashMoney);
+        entity.setSeqNo(seqNo);
+        entity.setUserId(userId);
+        entity.setRemark(String.format("你在 %s 成功返还提现%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(realCashMoney / 100D, true)));
+        entity.setType(AssetChangeTypeEnum.cancelBigCash);
+        assetChangeProvider.commonAssetChange(entity);
+        if (cashDetailLog.getFee() > 0) {   // 扣除用户提现手续费
+            Long feeAccountId = assetChangeProvider.getFeeAccountId();
+            entity = new AssetChange();
+            entity.setGroupSeqNo(groupSeqNo);
+            entity.setMoney(cashDetailLog.getFee());
+            entity.setSeqNo(seqNo);
+            entity.setUserId(userId);
+            entity.setForUserId(feeAccountId);
+            entity.setRemark(String.format("你在 %s 成功返还提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
+            entity.setType(AssetChangeTypeEnum.cancelBigCashFee);
+            assetChangeProvider.commonAssetChange(entity);
+
+            // 平台收取提现手续费
+            entity = new AssetChange();
+            entity.setGroupSeqNo(groupSeqNo);
+            entity.setMoney(cashDetailLog.getFee());
+            entity.setSeqNo(seqNo);
+            entity.setUserId(feeAccountId);
+            entity.setForUserId(userId);
+            entity.setRemark(String.format("你在 %s 成功返还提现手续费%s元", DateHelper.dateToString(nowDate), StringHelper.formatDouble(cashDetailLog.getFee() / 100D, true)));
+            entity.setType(AssetChangeTypeEnum.cancelPlatformBigCashFee);
+            assetChangeProvider.commonAssetChange(entity);
+        }
     }
 }

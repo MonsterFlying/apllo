@@ -101,6 +101,9 @@ import java.util.concurrent.TimeUnit;
 public class AssetBizImpl implements AssetBiz {
 
     @Autowired
+    RechargeAndCashAndRedpackQueryHelper rechargeAndCashAndRedpackQueryHelper ;
+
+    @Autowired
     JixinTxDateHelper jixinTxDateHelper;
 
     @Autowired
@@ -492,14 +495,11 @@ public class AssetBizImpl implements AssetBiz {
         int state;
         String msg = "";
         Date now = new Date();
-        if (!directRechargeOnlineResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {
-
-            log.error(String.format("请求即信联机充值异常: %s", gson.toJson(directRechargeOnlineResponse)));
-            state = 2;
-            msg = directRechargeOnlineResponse.getRetMsg();
-        } else {
+        boolean toBeConform = false ;  // 是否待查询
+        if (directRechargeOnlineResponse.getRetCode().equals(JixinResultContants.SUCCESS)) {  // 充值成功
             log.info(String.format("充值成功: %s", gson.toJson(directRechargeOnlineResponse)));
             state = 1;
+            msg = directRechargeOnlineResponse.getRetMsg();
             AssetChange entity = new AssetChange();
             String groupSeqNo = assetChangeProvider.getGroupSeqNo();
             String seqNo = String.format("%s%s%s", directRechargeOnlineResponse.getTxDate(), directRechargeOnlineResponse.getTxTime(), directRechargeOnlineResponse.getSeqNo());
@@ -510,6 +510,15 @@ public class AssetBizImpl implements AssetBiz {
             entity.setRemark(String.format("你在 %s 成功充值%s元", DateHelper.dateToString(now), voRechargeReq.getMoney()));
             entity.setType(AssetChangeTypeEnum.onlineRecharge);
             assetChangeProvider.commonAssetChange(entity);
+        } else if (JixinResultContants.toBeConfirm(directRechargeOnlineResponse)) { // 需要确认
+            log.info(String.format("充值待确认: %s", gson.toJson(directRechargeOnlineResponse)));
+            state = 2; // 充值失败
+            msg = "非常抱歉, 当前充值状态不明确, 系统需要在10分钟后确认是否充值成功!" ;
+            toBeConform = true ;
+        } else {
+            log.error(String.format("请求即信联机充值异常: %s", gson.toJson(directRechargeOnlineResponse)));
+            state = 2;
+            msg = directRechargeOnlineResponse.getRetMsg();
         }
 
         // 插入充值记录
@@ -529,10 +538,14 @@ public class AssetBizImpl implements AssetBiz {
         rechargeDetailLog.setState(state); // 充值成功
         rechargeDetailLog.setSeqNo(directRechargeOnlineRequest.getTxDate() + directRechargeOnlineRequest.getTxTime() + directRechargeOnlineRequest.getSeqNo());
         rechargeDetailLog.setResponseMessage(gson.toJson(directRechargeOnlineResponse));  // 响应吗
-        rechargeDetailLogService.save(rechargeDetailLog);
+        RechargeDetailLog saveRechargeDetailLog = rechargeDetailLogService.save(rechargeDetailLog);
+
+        // 触发发送短信
+        if(toBeConform){
+            rechargeAndCashAndRedpackQueryHelper.save(RechargeAndCashAndRedpackQueryHelper.QueryType.QUERY_RECHARGE, users.getId(), saveRechargeDetailLog.getId(), false);
+        }
 
         if (state == 1) {
-            // 触发用户充值
             MqConfig mqConfig = new MqConfig();
             mqConfig.setTag(MqTagEnum.RECHARGE);
             mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE);
@@ -545,7 +558,7 @@ public class AssetBizImpl implements AssetBiz {
         } else {
             return ResponseEntity
                     .badRequest()
-                    .body(VoBaseResp.error(VoBaseResp.ERROR, String.format("充值失败！%s", msg)));
+                    .body(VoBaseResp.error(VoBaseResp.ERROR, String.format("充值失败, %s", msg)));
         }
     }
 

@@ -67,10 +67,6 @@ public class RechargeAndCashAndRedpackQueryHelper {
      * @param isWeb
      */
     public void save(QueryType type, long userId, long sourceId, boolean isWeb) {
-        // 触发时间
-        int inTime = isWeb ? 21 : 11; // 查询间隔时间
-        Date nowDate = new Date();
-        Gson gson = new Gson();
         log.info("触发查询接口");
         MqConfig mqConfig = new MqConfig();
         mqConfig.setQueue(MqQueueEnum.RABBITMQ_USER_ACTIVE); // 用户行为
@@ -80,9 +76,14 @@ public class RechargeAndCashAndRedpackQueryHelper {
                         MqConfig.SOURCE_ID, sourceId + "",
                         MqConfig.TYPE, type.getValue());
 
-        mqConfig.setSendTime(DateHelper.addMonths(nowDate, inTime));
-        mqConfig.setMsg(body);
+        Gson gson = new Gson();
         try {
+            // 触发时间
+            int inTime = isWeb ? 21 : 11; // 查询间隔时间
+            Date nowDate = new Date();
+            mqConfig.setSendTime(DateHelper.addMinutes(nowDate, inTime));
+            mqConfig.setMsg(body);
+
             mqHelper.convertAndSend(mqConfig);
         } catch (Throwable e) {
             exceptionEmailHelper.sendErrorMessage("发送即信查询MQ失败", gson.toJson(body));

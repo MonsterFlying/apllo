@@ -50,7 +50,7 @@ public class DealThirdBatchScheduler {
     @Autowired
     private ThirdBatchDealBiz thirdBatchDealBiz;
 
-    @Scheduled(cron = "0 0/10 8,9,10,11,12,13,14,15,16,17,18,19,20,21,22 * * ? ")
+    @Scheduled(cron = "0 0/30 8,9,10,11,12,13,14,15,16,17,18,19,20,21,22 * * ? ")
     @Transactional(rollbackOn = Exception.class)
     public void process() {
         log.info("处理第三方批次任务调度启动");
